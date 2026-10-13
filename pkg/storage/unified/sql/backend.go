@@ -24,6 +24,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -1102,7 +1103,7 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 
 // BatchReadResource is unsupported: the SQL backend is retiring, so batched
 // search-list reads live only on the KV backend.
-func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*resource.BackendReadResponse], error) {
+func (*backend) BatchReadResource(context.Context, []resource.BatchReadRequest, bool) (iter.Seq[*resource.BackendReadResponse], error) {
 	return nil, resource.ErrBatchReadUnsupported
 }
 
@@ -1511,6 +1512,12 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 		return cb(iter)
 	})
 	return iter.listRV, err
+}
+
+// WatchWrittenKeys is not supported: only the KV backend reads written keys
+// from NATS.
+func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resourcepb.ResourceKey, error) {
+	return nil, resource.ErrWrittenKeysUnsupported
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {

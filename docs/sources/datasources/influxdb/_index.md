@@ -106,6 +106,27 @@ On self-managed Grafana, you control the plugin version. To roll back after a pr
 In Grafana Cloud, plugin updates are managed automatically. You can't pin the plugin to a specific version or roll back to a previous one yourself. If a plugin update causes problems with your dashboards or queries, contact Grafana Support.
 {{< /admonition >}}
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to query your InfluxDB data source, use the `gcx datasources influxdb` commands:
+
+```sh
+# Run a query (InfluxQL, Flux, or SQL, auto-detected from the data source)
+gcx datasources influxdb query -d <DATASOURCE_UID> 'SELECT mean("value") FROM "cpu" WHERE time > now() - 1h'
+
+# List measurements (add --bucket to use Flux mode)
+gcx datasources influxdb list-measurements -d <DATASOURCE_UID>
+
+# List field keys and tag keys, optionally filtered by measurement
+gcx datasources influxdb list-field-keys -d <DATASOURCE_UID> --measurement cpu
+gcx datasources influxdb list-tag-keys -d <DATASOURCE_UID> --measurement cpu
+
+# List the values for a tag key
+gcx datasources influxdb list-tag-values -d <DATASOURCE_UID> --key host
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your InfluxDB data source. You can omit the `-d` flag when `datasources.influxdb` is configured in your `gcx` context. The `list-field-keys`, `list-tag-keys`, and `list-tag-values` commands work in InfluxQL mode only.
+
 ## Related resources
 
 - [Official InfluxDB documentation](https://docs.influxdata.com/)

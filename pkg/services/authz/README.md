@@ -28,6 +28,10 @@ The `mode` setting can be set to either `cloud`, `grpc` or `inproc`. When set to
 
 The `listen` setting determines whether the authorization server should listen for incoming requests. When set to `true`, the authorization service will be registered to the Grafana GRPC server.
 
+For MySQL, set `force_permission_role_action_index = true` in `[authorization]` to force action-filtered AuthZ permission queries to use `IDX_permission_role_id_action`. The default is `false`; set `GF_AUTHORIZATION_FORCE_PERMISSION_ROLE_ACTION_INDEX` to override it from the environment.
+
+For the standalone AuthZ service, set the same option in `[authz_server]`. The default is `false`; the environment variable is `GF_AUTHZ_SERVER_FORCE_PERMISSION_ROLE_ACTION_INDEX`.
+
 The default configuration does not register the authorization service on the Grafana GRPC server and binds the client to it `inproc`:
 
 ```ini

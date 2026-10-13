@@ -18,7 +18,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -32,7 +32,7 @@ func grpcErrorWithResult(code grpccodes.Code, res *resourcepb.ErrorResult) error
 	return st.Err()
 }
 
-func testStorage(t *testing.T, client resource.ResourceClient) *Storage {
+func testStorage(t *testing.T, client resourceclient.ResourceClient) *Storage {
 	t.Helper()
 	return &Storage{
 		serializer: &jsonSerializer{},
@@ -67,7 +67,7 @@ func testObject(t *testing.T) []byte {
 }
 
 type createRetryClient struct {
-	resource.ResourceClient
+	resourceclient.ResourceClient
 	attempts int
 	result   func(int) (*resourcepb.CreateResponse, error)
 }
@@ -77,7 +77,7 @@ func (c *createRetryClient) Create(_ context.Context, _ *resourcepb.CreateReques
 	return c.result(c.attempts)
 }
 
-func callCreate(t *testing.T, ctx context.Context, client resource.ResourceClient) (*unstructured.Unstructured, error) {
+func callCreate(t *testing.T, ctx context.Context, client resourceclient.ResourceClient) (*unstructured.Unstructured, error) {
 	t.Helper()
 	obj := &unstructured.Unstructured{}
 	require.NoError(t, obj.UnmarshalJSON(testObject(t)))
@@ -195,7 +195,7 @@ func TestCreateConflictRetryHonorsCancellation(t *testing.T) {
 // notFoundReadClient reports NotFound the way the newer server does: as a gRPC error with no
 // ReadResponse at all.
 type notFoundReadClient struct {
-	resource.ResourceClient
+	resourceclient.ResourceClient
 	readErr error
 	created int
 }
@@ -242,7 +242,7 @@ func TestGuaranteedUpdateNotFoundAsGRPCError(t *testing.T) {
 // conflictClient fails the first update or delete with a conflict, then succeeds, so a test can
 // assert the retry loop classified the conflict.
 type conflictClient struct {
-	resource.ResourceClient
+	resourceclient.ResourceClient
 	value          []byte
 	conflict       func() (*resourcepb.ErrorResult, error)
 	updates        int
@@ -322,7 +322,7 @@ func TestRetriesConflictFromBothErrorShapes(t *testing.T) {
 // alwaysFailsClient returns the same failure on every attempt, so a test can drive the retry
 // budget to exhaustion or assert a non-retryable error is returned immediately.
 type alwaysFailsClient struct {
-	resource.ResourceClient
+	resourceclient.ResourceClient
 	value   []byte
 	err     error
 	updates int

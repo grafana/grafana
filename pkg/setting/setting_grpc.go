@@ -168,5 +168,5 @@ func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&c.MaxConnectionIdle, "grpc-server-max-connection-idle", 0, "Maximum amount of idle time before a connection is closed (e.g. 15s)")
 	fs.DurationVar(&c.KeepaliveTime, "grpc-server-keepalive-time", 0, "Frequency of server-to-client pings to check if a connection is still active (e.g. 10s)")
 	fs.DurationVar(&c.KeepaliveTimeout, "grpc-server-keepalive-timeout", 0, "Amount of time the server waits for a response to keepalive pings before closing the connection (e.g. 3s)")
-	fs.DurationVar(&c.KeepaliveMinTime, "grpc-server-keepalive-min-time", 0, "Minimum amount of time a client should wait before sending a keepalive ping (e.g. 5s)")
+	fs.DurationVar(&c.KeepaliveMinTime, "grpc-server-keepalive-min-time", 0, "Minimum amount of time a client should wait before sending a keepalive ping, including on connections without active calls (e.g. 5s)")
 }

@@ -12,7 +12,11 @@ import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setLogger } from '../logging/registry';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { FALLBACK_TO_LEGACY_INSTANCE_WARNING, PLUGIN_CACHE_UID_MISMATCH_WARNING } from './constants';
+import {
+  FALLBACK_TO_LEGACY_INSTANCE_WARNING,
+  NUMERIC_ID_REF_WARNING,
+  PLUGIN_CACHE_UID_MISMATCH_WARNING,
+} from './constants';
 import {
   _resetForTests as resetPlugin,
   getDataSourceInstance,
@@ -114,6 +118,23 @@ describe('plugin', () => {
 
       expect(mockImport).toHaveBeenCalledTimes(1);
       expect(first).toBe(second);
+    });
+
+    it('names getDataSourceInstance in the warning stack when it resolves a numeric id', async () => {
+      const settings = ds({ id: 42 });
+      setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      setDataSourcePluginImporter(
+        jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
+      );
+
+      const result = await getDataSourceInstance('42');
+
+      expect(result).toBe(instance);
+      expect(logWarning).toHaveBeenCalledWith(
+        NUMERIC_ID_REF_WARNING,
+        expect.objectContaining({ id: '42', stack: expect.stringMatching(/at (async )?getDataSourceInstance \(/) })
+      );
     });
 
     it('throws when the datasource is not found', async () => {
