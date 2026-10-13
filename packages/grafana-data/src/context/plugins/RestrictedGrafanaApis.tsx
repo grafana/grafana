@@ -20,11 +20,24 @@ export interface DashboardMutationAPI {
   getAvailableCommands(): string[];
 }
 
+/**
+ * Composer for dashboards. Only the entry point is typed here; consumers declare the session contract
+ * themselves and check it at runtime until the shape settles.
+ *
+ * @alpha
+ */
+export interface DashboardComposerAPI {
+  readonly version: 1;
+  canEnter(): { ok: true } | { ok: false; reason: 'not_dashboard' | 'no_permission' | 'unsupported' };
+  enter(): Promise<unknown>;
+}
+
 interface RestrictedGrafanaApisContextTypeInternal {
   // Add types for restricted Grafana APIs here
   // (Make sure that they are typed as optional properties)
   alertingAlertRuleFormSchema?: ZodSchema;
   dashboardMutationAPI?: DashboardMutationAPI;
+  dashboardComposer?: DashboardComposerAPI;
 }
 
 // We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).

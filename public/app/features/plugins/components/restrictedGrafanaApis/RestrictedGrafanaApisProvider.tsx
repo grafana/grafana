@@ -2,8 +2,10 @@ import { useMemo, type PropsWithChildren, type ReactElement } from 'react';
 
 import { RestrictedGrafanaApisContextProvider, type RestrictedGrafanaApisContextType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useFlagGrafanaDashboardComposer } from '@grafana/runtime/internal';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
+import { dashboardComposerApi } from './dashboardComposer/dashboardComposerApi';
 import { createDashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
 
 // This existing flag is only generated for the legacy frontend API.
@@ -22,12 +24,19 @@ export function RestrictedGrafanaApisProvider({
   children,
   pluginId,
 }: PropsWithChildren<{ pluginId: string }>): ReactElement {
+  const mutationApi = useMemo(
+    () => (restrictedApisEnabled ? createDashboardMutationApi(pluginId) : undefined),
+    [pluginId]
+  );
+  // Composer exists only while its flag is on; flipping it off removes the API (and ends open sessions).
+  const composerEnabled = useFlagGrafanaDashboardComposer();
   const apis = useMemo(
     () => ({
       ...restrictedGrafanaApis,
-      ...(restrictedApisEnabled ? { dashboardMutationAPI: createDashboardMutationApi(pluginId) } : {}),
+      ...(mutationApi ? { dashboardMutationAPI: mutationApi } : {}),
+      ...(restrictedApisEnabled && composerEnabled ? { dashboardComposer: dashboardComposerApi } : {}),
     }),
-    [pluginId]
+    [mutationApi, composerEnabled]
   );
   return (
     <RestrictedGrafanaApisContextProvider
