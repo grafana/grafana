@@ -114,7 +114,7 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 		}
 
 		// Explicitly empty string is not valid
-		if _, found := obj.GetAnnotations()[utils.AnnoKeyFolder]; !found {
+		if _, found := obj.GetAnnotations()[utils.AnnoKeyFolder]; found {
 			return apierrors.NewInvalid(
 				obj.GetGroupVersionKind().GroupKind(),
 				obj.GetName(),
@@ -128,6 +128,7 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 		}
 		// TODO? we COULD fill in a default folder automatically here
 		// We should avoid defaulting to the root folder if possible
+		// Fall though to the logic that validates explicit folders
 	}
 
 	if folderUID == "" {
