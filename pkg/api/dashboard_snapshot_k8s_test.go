@@ -47,11 +47,16 @@ func snapshotAPIContext(t *testing.T, path string) (*HTTPServer, *contextmodel.R
 func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 	for _, tc := range []struct {
 		name                         string
+		orgID                        int64
+		stack                        string
 		anonymous, expired, noExpiry bool
 		status                       int
 	}{
 		{name: "authenticated", status: 200},
 		{name: "anonymous", anonymous: true, status: 200},
+		{name: "viewer in another org", orgID: 2, status: 200},
+		{name: "anonymous in another org", orgID: 2, anonymous: true, status: 200},
+		{name: "cloud stack", stack: "123", status: 200},
 		{name: "expired", expired: true, status: 404},
 		{name: "never expires", noExpiry: true, status: 200},
 	} {
@@ -61,6 +66,10 @@ func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 				c.IsSignedIn = false
 				c.SignedInUser = &user.SignedInUser{IsAnonymous: true}
 			}
+			if tc.orgID != 0 {
+				c.OrgID = tc.orgID
+			}
+			hs.Cfg.StackID = tc.stack
 			expires := time.Now().Add(time.Hour).UnixMilli()
 			if tc.expired {
 				expires = time.Now().Add(-time.Hour).UnixMilli()
@@ -73,10 +82,12 @@ func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 				calls++
 				requester, err := identity.GetRequester(r.Context())
 				require.NoError(t, err)
-				require.Equal(t, int64(1), requester.GetOrgID())
-				if tc.anonymous {
-					require.Equal(t, "default", requester.GetNamespace())
+				expectedOrgID := c.GetOrgID()
+				if expectedOrgID < 1 {
+					expectedOrgID = 1
 				}
+				require.Equal(t, expectedOrgID, requester.GetOrgID())
+				require.Equal(t, c.GetIdentityType(), requester.GetIdentityType())
 				switch r.URL.Path {
 				case "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/snapshot-key":
 					return snapshotAPIResponse(r, 200, fmt.Sprintf(`{"metadata":{"name":"snapshot-key","creationTimestamp":"2026-10-01T10:00:00Z"},"spec":{"expires":%d}}`, expires)), nil
@@ -229,7 +240,7 @@ func TestSnapshotAPINamespaceMapping(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			hs, c := snapshotAPIContext(t, "/api/dashboard/snapshots")
 			hs.Cfg.StackID = tc.stack
-			c.SignedInUser.OrgID = tc.orgID
+			c.OrgID = tc.orgID
 			hs.clientConfigProvider = &mockDirectRestConfigProvider{host: "http://localhost", transport: snapshotAPIRoundTripper(func(r *http.Request) (*http.Response, error) {
 				require.Equal(t, "/apis/dashboard.grafana.app/v0alpha1/namespaces/"+tc.namespace+"/snapshots", r.URL.Path)
 				return snapshotAPIResponse(r, 200, `{"items":[]}`), nil

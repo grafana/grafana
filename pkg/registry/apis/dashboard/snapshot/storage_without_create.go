@@ -68,7 +68,7 @@ func (n *storageWrapper) ConvertToTable(ctx context.Context, object runtime.Obje
 	return n.inner.(rest.TableConvertor).ConvertToTable(ctx, object, tableOptions)
 }
 func (n *storageWrapper) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	obj, err := n.inner.(rest.Getter).Get(ctx, name, options)
+	obj, err := getPublicSnapshot(ctx, n.inner.(rest.Getter), name, options)
 	if err != nil {
 		return nil, err
 	}

@@ -64,10 +64,12 @@ func snapshotRequest(client rest.Interface, method, namespace string) *rest.Requ
 // The native API's storage dualwriter resolves migration mode on every operation.
 // Calling it also preserves snapshot-specific authorization and external deletion.
 func (hs *HTTPServer) getSnapshotFromAPI(c *contextmodel.ReqContext, key string) (*dashboardsnapshots.DashboardSnapshot, error) {
-	client, ctx, namespace, err := hs.snapshotClient(c)
+	client, ctx, _, err := hs.snapshotClient(c)
 	if err != nil {
 		return nil, err
 	}
+	// Public keys are global; default enables lookup outside the viewer's namespace.
+	const namespace = "default"
 	value, err := snapshotRequest(client, http.MethodGet, namespace).Name(key).Do(ctx).Raw()
 	if err != nil {
 		return nil, err
