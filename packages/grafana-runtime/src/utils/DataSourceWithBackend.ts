@@ -99,7 +99,6 @@ export interface HealthCheckResult {
 
 /**
  * Response shape from the /apis/{group}/v0alpha1/.../datasources/{uid}/health endpoint.
- * Used when datasourcesApiServerEnableHealthEndpointFrontend is enabled.
  *
  * @internal
  */
@@ -425,11 +424,7 @@ class DataSourceWithBackend<
    */
   buildResourcesDatasourceUrl(rawPath: string): string {
     const path = rawPath.replace(/^\/+/, '');
-    const enabledRedirect = getFeatureFlagClient().getBooleanValue(
-      'datasources.apiserver.useNewAPIsForDatasourceResources',
-      false
-    );
-    if (enabledRedirect) {
+    if (this.supportsDatasourceApi('resources')) {
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
@@ -438,14 +433,24 @@ class DataSourceWithBackend<
     return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }
 
+  private supportsDatasourceApi(endpoint: 'resources' | 'health'): boolean {
+    // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
+      resources: [],
+      health: [],
+    });
+    if (!allowedTypes || typeof allowedTypes !== 'object' || Array.isArray(allowedTypes)) {
+      return false;
+    }
+    const pluginIds = allowedTypes[endpoint];
+    return Array.isArray(pluginIds) && (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type));
+  }
+
   /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = getFeatureFlagClient().getBooleanValue(
-      FlagKeys.DatasourcesApiServerEnableHealthEndpointFrontend,
-      false
-    );
+    const useNewApi = this.supportsDatasourceApi('health');
     const healthCheckURL = useNewApi
       ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
       : `/api/datasources/uid/${this.uid}/health`;

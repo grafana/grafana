@@ -256,7 +256,7 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('keeps the grid item width for a horizontal repeat', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
 
@@ -469,8 +469,10 @@ describe('LibraryPanelBehavior', () => {
 
   describe('horizontal repeat width with dashboards.libraryPanelHorizontalRepeatFullWidth enabled', () => {
     beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = false;
-      setTestFlags({ [FlagKeys.DashboardsLibraryPanelHorizontalRepeatFullWidth]: true });
+      setTestFlags({
+        dashboardNewLayouts: false,
+        [FlagKeys.DashboardsLibraryPanelHorizontalRepeatFullWidth]: true,
+      });
     });
 
     afterEach(() => {

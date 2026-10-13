@@ -3,7 +3,9 @@ package pluginroute
 import (
 	"context"
 	"fmt"
+	"net/http"
 
+	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -32,6 +34,7 @@ type manifestBuilder struct {
 	clientV3      appclientv3.Client
 	decrypter     *secureValueLookup
 	accessChecker appplugin.PluginAccessChecker
+	accessClient  authlib.AccessChecker
 	search        resourcepb.ResourceIndexClient
 	store         resourcepb.ResourceStoreClient
 	tracer        tracing.Tracer
@@ -39,15 +42,18 @@ type manifestBuilder struct {
 	getter        getter
 	kinds         map[schema.GroupVersionResource]*kindstore.Store
 	kindPolicies  map[string]kindPolicy
+
+	// documents serves what the API server cannot for versions without kinds.
+	// NewHandler sets it before the handler chain is built.
+	documents func(next http.Handler) http.Handler
 }
 
 // GetGroupVersions returns the served versions, preferred version first.
 func (b *manifestBuilder) GetGroupVersions() []schema.GroupVersion {
 	group := APIGroup(b.manifest)
-	gvs := make([]schema.GroupVersion, 0, len(group.Versions))
-	for _, v := range group.Versions {
-		gv := schema.GroupVersion{Group: group.Name, Version: v.Version}
-		gvs = append(gvs, gv)
+	gvs := make([]schema.GroupVersion, len(group.Versions))
+	for i, v := range group.Versions {
+		gvs[i] = schema.GroupVersion{Group: group.Name, Version: v.Version}
 	}
 	return gvs
 }
@@ -157,12 +163,6 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 					}
 				}
 			}
-		}
-
-		// Checked against the mounted routes rather than the manifest, since
-		// routes that shadow a resource or use unservable methods are dropped.
-		if len(storage) == 0 && hasRoutes(b.GetAPIRoutes(gv)) {
-			storage[routesOnlyStorageKey] = &routesOnlyStorage{}
 		}
 
 		if len(storage) > 0 {

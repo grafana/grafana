@@ -51,16 +51,11 @@ jest.mock('@grafana/runtime', () => ({
     getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
     getInstanceSettings: (ref?: DataSourceRef | string | null) => mockGetInstanceSettings(ref),
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(() => Promise.resolve({ ...mockDS, getRef: () => {} })),
   getDataSourceInstanceSettings: jest.fn((ref?: DataSourceRef | string | null) =>
     Promise.resolve(mockGetInstanceSettings(ref))
   ),
 }));
-
 describe('QueryGroup', () => {
   // QueryGroup relies on this being present
   Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: jest.fn() });
