@@ -1,11 +1,16 @@
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { usePluginBridge } from '../hooks/usePluginBridge';
 
 import { WatchersBanner, getWatchersBannerDismissedKey } from './WatchersBanner';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 jest.mock('../hooks/usePluginBridge');
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
@@ -20,6 +25,7 @@ const ui = {
 
 describe('WatchersBanner', () => {
   beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
     localStorage.removeItem(dismissedKey);
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: true });
   });
@@ -70,5 +76,25 @@ describe('WatchersBanner', () => {
     render(<WatchersBanner />);
 
     expect(ui.banner.get()).toBeInTheDocument();
+  });
+
+  describe('analytics', () => {
+    it('reports a click on the CTA', async () => {
+      const { user } = render(<WatchersBanner />);
+      // jsdom does not implement navigation, so stop the link from following its href
+      ui.openButton.get().addEventListener('click', (event) => event.preventDefault());
+
+      await user.click(ui.openButton.get());
+
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_alerting_watchers_banner_click');
+    });
+
+    it('reports a dismissal', async () => {
+      const { user } = render(<WatchersBanner />);
+
+      await user.click(ui.closeButton.get());
+
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_alerting_watchers_banner_dismiss');
+    });
   });
 });

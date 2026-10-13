@@ -5,6 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, LinkButton, Stack, Text } from '@grafana/ui';
 
+import { trackWatchersBannerClick, trackWatchersBannerDismiss } from '../Analytics';
 import { usePluginBridge } from '../hooks/usePluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 import { createRelativeUrl } from '../utils/url';
@@ -28,6 +29,7 @@ export function WatchersBanner() {
   const dismiss = useCallback(() => {
     store.set(key, true);
     setDismissed(true);
+    trackWatchersBannerDismiss();
   }, [key]);
 
   if (!installed || dismissed) {
@@ -48,7 +50,12 @@ export function WatchersBanner() {
           </Trans>
         </Text>
         <div>
-          <LinkButton href={createRelativeUrl(WATCHERS_PATH)} variant="primary" size="sm">
+          <LinkButton
+            href={createRelativeUrl(WATCHERS_PATH)}
+            variant="primary"
+            size="sm"
+            onClick={trackWatchersBannerClick}
+          >
             <Trans i18nKey="alerting.watchers-banner.open-button">Create a Watcher</Trans>
           </LinkButton>
         </div>
