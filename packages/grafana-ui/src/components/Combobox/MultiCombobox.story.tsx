@@ -40,6 +40,7 @@ const commonArgs = {
   ],
   value: ['option2'],
   placeholder: 'Select multiple options...',
+  size: 'md' as const,
 };
 
 export default meta;
