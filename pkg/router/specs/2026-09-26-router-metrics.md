@@ -46,7 +46,7 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_source_polls_total` | counter | `source`, `result` | Load or poll attempts: `success` or `failure` |
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
 
-Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`
+Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `core-app`, `local-plugin`
 and `dummy`.
 
 Every cloud source (`aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`) is polled

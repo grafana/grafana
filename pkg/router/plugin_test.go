@@ -88,7 +88,8 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 			for _, entry := range router.served {
 				t.Cleanup(entry.handler.(interface{ Destroy() }).Destroy)
 			}
-			require.Len(t, router.served, 1)
+			require.Len(t, router.served, 2)
+			require.Contains(t, router.served, "playlist.grafana.app", "middleware mode serves the core apps too")
 			require.Equal(t, 1, roles.calls, "reconciliation must not redeclare roles")
 			require.Equal(t, 3, discoveries, "each Load must discover backends afresh")
 
@@ -101,7 +102,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 			require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 			var discovery handler3.OpenAPIV3Discovery
 			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &discovery))
-			for _, gv := range []string{"manifest.ext.grafana.app/v1"} {
+			for _, gv := range []string{"manifest.ext.grafana.app/v1", "playlist.grafana.app/v1"} {
 				require.Contains(t, discovery.Paths, "apis/"+gv)
 				path := discovery.Paths["apis/"+gv].ServerRelativeURL
 				document := httptest.NewRecorder()

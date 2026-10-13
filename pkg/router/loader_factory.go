@@ -28,6 +28,7 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 
 	// Plugin sources
 	if deps.PluginSources != nil {
+		loader := &PluginLoader{deps: deps}
 		//nolint:staticcheck
 		middleware := deps.Features != nil && deps.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 		if middleware {
@@ -35,8 +36,10 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 			if err := initLocalPlugins(context.Background(), deps); err != nil {
 				return nil, err
 			}
+			// The router intercepts these core APIs from the embedded API server.
+			loader.coreApps = coreApps()
 		}
-		return &PluginLoader{deps: deps}, nil
+		return loader, nil
 	}
 
 	return dummyRoutesLoader{groups: []string{
