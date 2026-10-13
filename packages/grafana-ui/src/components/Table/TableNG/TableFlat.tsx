@@ -70,10 +70,10 @@ type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellC
 const EMPTY_EXPANDED_ROWS: Set<string> = new Set();
 const NOOP_STABLE_KEY = () => '';
 
-// Must match useSplitter's unexported `sm` handle width.
 const COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH = 220;
 const COLUMN_VISIBILITY_PANEL_MIN_WIDTH = 160;
 const COLUMN_VISIBILITY_PANEL_MAX_WIDTH = 400;
+// Must match useSplitter's unexported `sm` handle width.
 const COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH = 8;
 const COLUMN_VISIBILITY_TABLE_BORDER_WIDTH = 1;
 
