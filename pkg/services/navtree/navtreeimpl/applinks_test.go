@@ -644,6 +644,77 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		}
 		require.True(t, hasAssertsApplication, "expected the asserts Application page to stay visible when appo11y contributes no nav node")
 	})
+
+	// Same as assertsApp, plus the fleet-wide Operations page.
+	assertsAppWithOperations := assertsApp
+	assertsAppWithOperations.Includes = append(
+		append([]*plugins.Includes{}, assertsApp.Includes...),
+		&plugins.Includes{Name: "Operations", Path: "/a/grafana-asserts-app/operations", Type: "page", AddToNav: true},
+	)
+
+	childByText := func(parent *navtree.NavLink, text string) *navtree.NavLink {
+		for _, child := range parent.Children {
+			if child.Text == text {
+				return child
+			}
+		}
+		return nil
+	}
+
+	t.Run("Operations is nested under the asserts Application page when App Observability is absent", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsAppWithOperations, frontendApp})
+
+		treeRoot := navtree.NavTreeRoot{}
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+		treeRoot.Sort()
+
+		observability := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, observability)
+		require.Nil(t, childByText(observability, "Operations"), "Operations must not stay at the top level")
+
+		application := childByText(observability, "Application")
+		require.NotNil(t, application)
+		require.Equal(t, "/a/grafana-asserts-app/services", application.Url)
+		require.Len(t, application.Children, 1)
+		require.Equal(t, "Operations", application.Children[0].Text)
+		require.Equal(t, "/a/grafana-asserts-app/operations", application.Children[0].Url)
+	})
+
+	t.Run("Operations is nested under the App Observability Application page when it is present", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsAppWithOperations, frontendApp, applicationApp})
+
+		treeRoot := navtree.NavTreeRoot{}
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+		treeRoot.Sort()
+
+		observability := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, observability)
+		require.Nil(t, childByText(observability, "Operations"), "Operations must not stay at the top level")
+
+		application := treeRoot.FindById("plugin-page-grafana-app-observability-app")
+		require.NotNil(t, application)
+		operations := childByText(application, "Operations")
+		require.NotNil(t, operations, "Operations must be kept, not dropped with the hidden asserts Application page")
+		require.Equal(t, "/a/grafana-asserts-app/operations", operations.Url)
+		// Appended after the Application's existing children.
+		require.Equal(t, "Operations", application.Children[len(application.Children)-1].Text)
+	})
+
+	t.Run("Operations stays at the top level when there is no Application page to nest under", func(t *testing.T) {
+		assertsOperationsOnly := assertsAppWithOperations
+		assertsOperationsOnly.Includes = []*plugins.Includes{
+			{Name: "Knowledge graph", Path: "/a/grafana-asserts-app/", Type: "page", AddToNav: true, DefaultNav: true},
+			{Name: "Operations", Path: "/a/grafana-asserts-app/operations", Type: "page", AddToNav: true},
+		}
+		service := newService([]pluginstore.Plugin{assertsOperationsOnly})
+
+		treeRoot := navtree.NavTreeRoot{}
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		observability := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, observability)
+		require.NotNil(t, childByText(observability, "Operations"))
+	})
 }
 
 func TestAddAppLinksDrilldownPruning(t *testing.T) {

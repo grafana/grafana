@@ -410,10 +410,10 @@ var (
 		{
 			Name:            "grafana.newPanelQueryErrorsUI",
 			Description:     "Enables a new UI for query errors and notices",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
-			Expression:      "false",
+			Expression:      "true",
 			Generate:        Generate{React: true},
 		},
 
@@ -2196,6 +2196,16 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
+		},
+		{
+			Name:            "grafana.publishLegacySQLEvents",
+			Description:     "Publish watch events when values are saved to legacy SQL tables",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true},
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		{
 			Name:         "plugins.useMTPlugins",

@@ -1281,6 +1281,30 @@ func TestService_listPermission(t *testing.T) {
 
 	testCases := []testCase{
 		{
+			name: "unscoped snapshot read grants access to all snapshots",
+			permissions: []accesscontrol.Permission{
+				{Action: "snapshots:read", Scope: ""},
+			},
+			list: listRequest{
+				Action:   "snapshots:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "snapshots",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+			expectedAll: true,
+		},
+		{
+			name: "no snapshot read grant returns no snapshots",
+			list: listRequest{
+				Action:   "snapshots:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "snapshots",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+		},
+		{
 			name: "should return wildcard if user has a wildcard permission",
 			permissions: []accesscontrol.Permission{
 				{
