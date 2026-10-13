@@ -465,6 +465,9 @@ message HybridSearchResult {
 
   // Field names and values returned by the lexical search, including metadata.
   // Values are strings or arrays of strings.
+  // Limited to 4 KiB of serialized data per result, prioritizing title,
+  // then fields in name order. Values may be truncated and later fields
+  // or array elements omitted.
   // Absent for semantic-only hits, external collections, and legacy table responses.
   map<string, google.protobuf.Value> lexical = 9;
 }

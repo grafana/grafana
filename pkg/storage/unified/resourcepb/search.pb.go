@@ -1414,6 +1414,9 @@ type HybridSearchResult struct {
 	ManagedById string `protobuf:"bytes,8,opt,name=managed_by_id,json=managedById,proto3" json:"managed_by_id,omitempty"`
 	// Field names and values returned by the lexical search, including metadata.
 	// Values are strings or arrays of strings.
+	// Limited to 4 KiB of serialized data per result, prioritizing title,
+	// then fields in name order. Values may be truncated and later fields
+	// or array elements omitted.
 	// Absent for semantic-only hits, external collections, and legacy table responses.
 	Lexical       map[string]*structpb.Value `protobuf:"bytes,9,rep,name=lexical,proto3" json:"lexical,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields

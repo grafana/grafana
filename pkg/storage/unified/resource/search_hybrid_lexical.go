@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -13,6 +14,9 @@ import (
 
 // Bound the extra reranking context across all fields and array elements.
 const maxLexicalRerankTextBytes = 4096
+
+// Bound the returned fields separately from the text sent to the reranker.
+const maxHybridLexicalBytes = 4096
 
 func (s *searchServer) hybridLexicalFields(key *resourcepb.ResourceKey, skipRerank bool) (queryFields []*resourcepb.ResourceSearchRequest_QueryField, rerankFields []string) {
 	definitions := StandardSearchFieldDefinitions()
@@ -34,6 +38,80 @@ func (s *searchServer) hybridLexicalFields(key *resourcepb.ResourceKey, skipRera
 		}
 	}
 	return queryFields, rerankFields
+}
+
+// Keep title first and truncate deterministically within the serialized byte budget.
+func boundedLexicalFields(values map[string]any) map[string]*structpb.Value {
+	names := make([]string, 1, len(values)+1)
+	names[0] = SEARCH_FIELD_TITLE
+	for name := range values {
+		if name != SEARCH_FIELD_TITLE {
+			names = append(names, name)
+		}
+	}
+	slices.Sort(names[1:])
+	fields := make(map[string]*structpb.Value)
+	remaining := maxHybridLexicalBytes
+	for _, name := range names {
+		var texts []string
+		array := false
+		switch value := values[name].(type) {
+		case string:
+			texts = []string{value}
+		case []string:
+			texts, array = value, true
+		default:
+			continue
+		}
+		var value *structpb.Value
+		list := &structpb.ListValue{}
+		listSize := 0
+		size := 0
+		if array {
+			value = structpb.NewListValue(list)
+			size = lexicalFieldSize(name, protowire.SizeTag(6)+protowire.SizeBytes(0))
+		}
+		fieldSize := func(text string) int {
+			size := protowire.SizeTag(3) + protowire.SizeBytes(len(text))
+			if array {
+				// Track the list size incrementally so large arrays stay linear.
+				size = protowire.SizeTag(6) + protowire.SizeBytes(listSize+protowire.SizeTag(1)+protowire.SizeBytes(size))
+			}
+			return lexicalFieldSize(name, size)
+		}
+		for _, text := range texts {
+			truncated := util.TruncateUTF8(text, remaining)
+			if excess := fieldSize(truncated) - remaining; excess > 0 {
+				truncated = util.TruncateUTF8(truncated, max(0, len(truncated)-excess))
+			}
+			if fieldSize(truncated) > remaining {
+				break
+			}
+			size = fieldSize(truncated)
+			item := structpb.NewStringValue(truncated)
+			if array {
+				list.Values = append(list.Values, item)
+				listSize += protowire.SizeTag(1) + protowire.SizeBytes(protowire.SizeTag(3)+protowire.SizeBytes(len(truncated)))
+			} else {
+				value = item
+			}
+			if len(truncated) < len(text) {
+				break
+			}
+		}
+		if value != nil && size <= remaining {
+			fields[name] = value
+			remaining -= size
+		}
+	}
+	return fields
+}
+
+// Include the map entry and HybridSearchResult.lexical wrappers in the budget.
+func lexicalFieldSize(name string, valueSize int) int {
+	entrySize := protowire.SizeTag(1) + protowire.SizeBytes(len(name)) +
+		protowire.SizeTag(2) + protowire.SizeBytes(valueSize)
+	return protowire.SizeTag(9) + protowire.SizeBytes(entrySize)
 }
 
 func lexicalRerankText(fields map[string]*structpb.Value) string {

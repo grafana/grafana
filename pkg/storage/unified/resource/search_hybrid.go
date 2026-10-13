@@ -783,19 +783,7 @@ func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexi
 		if hit.managerID, err = searchStringValue(values, SEARCH_FIELD_MANAGER_ID); err != nil {
 			return nil, fmt.Errorf("row %d: %w", i, err)
 		}
-		hit.lexical = make(map[string]*structpb.Value, len(values))
-		for name, value := range values {
-			switch value := value.(type) {
-			case string:
-				hit.lexical[name] = structpb.NewStringValue(value)
-			case []string:
-				items := make([]*structpb.Value, len(value))
-				for j, text := range value {
-					items[j] = structpb.NewStringValue(text)
-				}
-				hit.lexical[name] = structpb.NewListValue(&structpb.ListValue{Values: items})
-			}
-		}
+		hit.lexical = boundedLexicalFields(values)
 		hits = append(hits, hit)
 	}
 	return hits, nil

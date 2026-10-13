@@ -2,6 +2,7 @@ package resource
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -166,4 +168,117 @@ func TestLexicalRerankText(t *testing.T) {
 		assert.True(t, strings.HasPrefix(text, "Details\n界"))
 		assert.Equal(t, values[1], hit.Fields["messages"].GetListValue().Values[1].GetStringValue())
 	})
+}
+
+func TestBoundedLexicalFields(t *testing.T) {
+	emptyFields := map[string]any{SEARCH_FIELD_TITLE: "Overview"}
+	for i := range 2000 {
+		emptyFields[fmt.Sprintf("field-%04d", i)] = ""
+	}
+	longName := strings.Repeat("x", maxHybridLexicalBytes)
+	for _, tt := range []struct {
+		name   string
+		values map[string]any
+		check  func(*testing.T, map[string]*structpb.Value)
+	}{
+		{
+			name: "small values are preserved",
+			values: map[string]any{
+				SEARCH_FIELD_TITLE: "Overview", "description": "", "messages": []string{"", "é", "é"}, "empty": []string{}, "count": 42,
+			},
+			check: func(t *testing.T, fields map[string]*structpb.Value) {
+				want, err := structpb.NewStruct(map[string]any{
+					SEARCH_FIELD_TITLE: "Overview", "description": "", "messages": []any{"", "é", "é"}, "empty": []any{},
+				})
+				require.NoError(t, err)
+				assert.True(t, proto.Equal(want, &structpb.Struct{Fields: fields}))
+			},
+		},
+		{
+			name:   "title precedes an oversized scalar",
+			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", "aaa": strings.Repeat("界", maxHybridLexicalBytes), "zzz": "last"},
+			check: func(t *testing.T, fields map[string]*structpb.Value) {
+				text := fields["aaa"].GetStringValue()
+				assert.NotEmpty(t, text)
+				assert.Less(t, len(text), maxHybridLexicalBytes)
+				assert.True(t, utf8.ValidString(text))
+				assert.True(t, strings.HasPrefix(strings.Repeat("界", maxHybridLexicalBytes), text))
+				assert.NotContains(t, fields, "zzz")
+			},
+		},
+		{
+			name:   "array order and UTF-8 survive truncation",
+			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", "messages": []string{"", "first", strings.Repeat("界", maxHybridLexicalBytes), "last"}},
+			check: func(t *testing.T, fields map[string]*structpb.Value) {
+				values := fields["messages"].GetListValue().GetValues()
+				require.Len(t, values, 3)
+				assert.Equal(t, "", values[0].GetStringValue())
+				assert.Equal(t, "first", values[1].GetStringValue())
+				assert.NotEmpty(t, values[2].GetStringValue())
+				assert.True(t, utf8.ValidString(values[2].GetStringValue()))
+				assert.True(t, strings.HasPrefix(strings.Repeat("界", maxHybridLexicalBytes), values[2].GetStringValue()))
+			},
+		},
+		{
+			name:   "empty array elements still consume the budget",
+			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", "messages": make([]string, maxHybridLexicalBytes)},
+			check: func(t *testing.T, fields map[string]*structpb.Value) {
+				values := fields["messages"].GetListValue().GetValues()
+				assert.NotEmpty(t, values)
+				assert.Less(t, len(values), maxHybridLexicalBytes)
+			},
+		},
+		{
+			name:   "field names consume the budget",
+			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", longName: ""},
+			check: func(t *testing.T, fields map[string]*structpb.Value) {
+				assert.NotContains(t, fields, longName)
+			},
+		},
+		{
+			name:   "many empty fields",
+			values: emptyFields,
+			check: func(t *testing.T, fields map[string]*structpb.Value) {
+				assert.Contains(t, fields, "field-0000")
+				assert.Less(t, len(fields), len(emptyFields))
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			before, err := json.Marshal(tt.values)
+			require.NoError(t, err)
+			fields := boundedLexicalFields(tt.values)
+			assert.LessOrEqual(t, proto.Size(&resourcepb.HybridSearchResult{Lexical: fields}), maxHybridLexicalBytes)
+			assert.Equal(t, "Overview", fields[SEARCH_FIELD_TITLE].GetStringValue())
+			tt.check(t, fields)
+			for range 3 {
+				assert.True(t, proto.Equal(&structpb.Struct{Fields: fields}, &structpb.Struct{Fields: boundedLexicalFields(tt.values)}), "map iteration must not change retained values")
+			}
+			after, err := json.Marshal(tt.values)
+			require.NoError(t, err)
+			assert.Equal(t, before, after, "truncation must not mutate the search response values")
+		})
+	}
+}
+
+func TestHybridSearch_LargeLexicalResponseFitsGRPCLimit(t *testing.T) {
+	rows := make([][3]string, 200)
+	for i := range rows {
+		rows[i] = [3]string{fmt.Sprintf("resource-%03d", i), "Overview", ""}
+	}
+	lexical := lexFieldValueResponse(rows...)
+	lexical.Fields = append(lexical.Fields, &resourcepb.ResourceSearchField{Name: SEARCH_FIELD_DESCRIPTION, Type: resourcepb.ResourceSearchField_STRING})
+	for _, row := range lexical.Rows {
+		row.Values = append(row.Values, &resourcepb.ResourceSearchValue{FieldIndex: 2, StringValues: []string{strings.Repeat("database ", 4096)}})
+	}
+	s, _, _ := newHybridTestServer(lexical, &fakeVectorBackend{})
+	s.reranker = rerankTestReranker(&fakeRerankScorer{}, rerank.RelevanceThresholds{})
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{Key: validKey(), Query: "database", Limit: 200})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, len(rows))
+	for _, result := range resp.Results {
+		assert.NotEmpty(t, result.Lexical[SEARCH_FIELD_DESCRIPTION].GetStringValue())
+		assert.LessOrEqual(t, proto.Size(&resourcepb.HybridSearchResult{Lexical: result.Lexical}), maxHybridLexicalBytes)
+	}
+	assert.Less(t, proto.Size(resp), 4*1024*1024, "the complete response must fit the default gRPC receive limit")
 }
