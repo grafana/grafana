@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 
+import { identifyOTelLanguages } from '../otel/formats';
 import { useLogListContext } from '../panel/LogListContext';
 import { reportInteractionOnce } from '../panel/analytics';
 import { type LogListModel } from '../panel/processing';
@@ -109,6 +110,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
     setShowLevel(!showLevel);
   }, [setShowLevel, showLevel]);
 
+  const otelLanguages = useMemo(() => identifyOTelLanguages(logs), [logs]);
   const suggestedFields = useMemo(
     () => getSuggestedFieldsFromLogList(logs, displayedFields, [], otelLogsFormattingEnabled),
     [displayedFields, logs, otelLogsFormattingEnabled]
@@ -144,6 +146,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
           collapse={collapse}
           fields={fields}
           logLevelActive={showLevel}
+          otelLanguages={otelLanguages}
           reorder={setDisplayedFields}
           suggestedFields={suggestedFields}
           toggle={toggleField}

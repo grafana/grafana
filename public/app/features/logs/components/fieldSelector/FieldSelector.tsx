@@ -31,6 +31,7 @@ export interface FieldSelectorProps {
   collapse(): void;
   fields: FieldWithStats[];
   logLevelActive?: boolean;
+  otelLanguages?: string[];
   reorder(fields: string[]): void;
   suggestedFields: FieldWithStats[];
   toggle: (key: string) => void;
@@ -43,6 +44,7 @@ export const FieldSelector = ({
   collapse,
   fields,
   logLevelActive,
+  otelLanguages,
   reorder,
   suggestedFields,
   toggle,
@@ -92,6 +94,7 @@ export const FieldSelector = ({
         clear={clear}
         fields={filteredFields}
         logLevelActive={logLevelActive}
+        otelLanguages={otelLanguages}
         reorder={reorder}
         suggestedFields={filteredSuggestedFields}
         toggle={toggle}

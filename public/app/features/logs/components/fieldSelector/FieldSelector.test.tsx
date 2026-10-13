@@ -226,6 +226,90 @@ describe('LogListFieldSelector', () => {
     expect(screen.getAllByText('message').length).toBeGreaterThan(0);
     expect(screen.getAllByText('app').length).toBeGreaterThan(0);
   });
+
+  test('groups available fields by otel category when logs include otel languages', async () => {
+    onClickShowField.mockClear();
+
+    const otelLogs: LogListModel[] = [
+      createLogLine({
+        uid: '1',
+        entry: 'log 1',
+        labels: { severity_number: '9', telemetry_sdk_language: 'java' },
+      }),
+      createLogLine({
+        uid: '2',
+        entry: 'log 2',
+        labels: { severity_number: '13', telemetry_sdk_language: 'go' },
+      }),
+    ];
+
+    const otelDataFrames: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'timestamp', type: FieldType.time, values: [1] },
+          { name: 'body', type: FieldType.string, values: ['log 1'] },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [{ 'service.name': 'checkout', 'http.method': 'GET', app: 'web' }],
+          },
+        ],
+      }),
+    ];
+
+    render(
+      <LogListContext.Provider value={{ ...defaultContextValue, displayedFields: [] }}>
+        <LogListFieldSelector containerElement={containerElement} logs={otelLogs} dataFrames={otelDataFrames} />
+      </LogListContext.Provider>
+    );
+
+    expect(screen.getByText('Service')).toBeInTheDocument();
+    expect(screen.getByText('HTTP')).toBeInTheDocument();
+    expect(screen.getByText('Other')).toBeInTheDocument();
+    expect(screen.getByText('service.name')).toBeInTheDocument();
+    expect(screen.getByText('http.method')).toBeInTheDocument();
+    expect(screen.getByText('app')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('http.method'));
+
+    expect(onClickShowField).toHaveBeenCalledWith('http.method');
+  });
+
+  test('keeps a flat field list when logs have no otel language', () => {
+    const plainLogs: LogListModel[] = [
+      createLogLine({
+        uid: '1',
+        entry: 'log 1',
+        labels: { 'service.name': 'checkout', 'http.method': 'GET', app: 'web' },
+      }),
+    ];
+
+    const plainDataFrames: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'timestamp', type: FieldType.time, values: [1] },
+          { name: 'body', type: FieldType.string, values: ['log 1'] },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [{ 'service.name': 'checkout', 'http.method': 'GET', app: 'web' }],
+          },
+        ],
+      }),
+    ];
+
+    render(
+      <LogListContext.Provider value={{ ...defaultContextValue, displayedFields: [] }}>
+        <LogListFieldSelector containerElement={containerElement} logs={plainLogs} dataFrames={plainDataFrames} />
+      </LogListContext.Provider>
+    );
+
+    expect(screen.getByText('Fields')).toBeInTheDocument();
+    expect(screen.queryByText('Service')).not.toBeInTheDocument();
+    expect(screen.queryByText('HTTP')).not.toBeInTheDocument();
+    expect(screen.getByText('service.name')).toBeInTheDocument();
+    expect(screen.getByText('http.method')).toBeInTheDocument();
+  });
 });
 
 describe('LogsTableFieldSelector', () => {

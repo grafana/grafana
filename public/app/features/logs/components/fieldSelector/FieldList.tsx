@@ -13,6 +13,7 @@ interface Props {
   clear: () => void;
   fields: FieldWithStats[];
   logLevelActive?: boolean;
+  otelLanguages?: string[];
   reorder: (columns: string[]) => void;
   suggestedFields: FieldWithStats[];
   toggle: (columnName: string) => void;
@@ -24,6 +25,7 @@ export const FieldList = ({
   clear,
   fields,
   logLevelActive,
+  otelLanguages,
   reorder,
   suggestedFields,
   toggle,
@@ -50,7 +52,13 @@ export const FieldList = ({
         <div className={styles.columnHeader}>
           <Trans i18nKey="explore.logs-table-multi-select.fields">Fields</Trans>
         </div>
-        <AvailableFields activeFields={activeFields} fields={fields} reorder={reorder} toggle={toggle} />
+        <AvailableFields
+          activeFields={activeFields}
+          fields={fields}
+          otelLanguages={otelLanguages}
+          reorder={reorder}
+          toggle={toggle}
+        />
       </>
     </div>
   );
