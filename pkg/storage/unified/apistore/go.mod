@@ -6,8 +6,8 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600
-	github.com/grafana/grafana-app-sdk v0.60.14
-	github.com/grafana/grafana-app-sdk/logging v0.60.14
+	github.com/grafana/grafana-app-sdk v0.60.15
+	github.com/grafana/grafana-app-sdk/logging v0.60.15
 	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0-20260930150852-c73965d1f90d
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260930150852-c73965d1f90d
 	github.com/grafana/grafana/apps/folder v0.0.0-20260930143952-2d0116f02123
