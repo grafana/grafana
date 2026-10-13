@@ -16,7 +16,7 @@ replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
-	github.com/grafana/authlib v0.0.0-20260930185708-1712fc9b273a
+	github.com/grafana/authlib v0.0.0-20261012083909-accb40645dc4
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.60.14

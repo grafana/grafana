@@ -11,8 +11,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,7 +27,10 @@ const backendGRPCSection = "router.backend_grpc"
 // pluginGRPCConfig configures the router's gRPC connections to plugin
 // deployments, from the [router.backend_grpc] section.
 type pluginGRPCConfig struct {
-	Retry pluginGRPCRetryConfig
+	Retry     pluginGRPCRetryConfig
+	Connect   pluginGRPCConnectConfig
+	Keepalive pluginGRPCKeepaliveConfig
+	Message   pluginGRPCMessageConfig
 }
 
 // pluginGRPCRetryConfig configures retries of unary plugin calls that fail
@@ -38,12 +43,50 @@ type pluginGRPCRetryConfig struct {
 	Jitter  float64
 }
 
+// pluginGRPCConnectConfig configures how a connection to a plugin deployment
+// is established, and re-established after it fails.
+type pluginGRPCConnectConfig struct {
+	// Timeout is the minimum time allowed for each connection attempt.
+	Timeout time.Duration
+	// BaseDelay and MaxDelay bound the backoff between connection attempts.
+	BaseDelay time.Duration
+	MaxDelay  time.Duration
+}
+
+// pluginGRPCKeepaliveConfig configures keepalive pings on idle connections to
+// plugin deployments.
+type pluginGRPCKeepaliveConfig struct {
+	// Time is the idle time after which the client pings; 0 disables pings.
+	Time    time.Duration
+	Timeout time.Duration
+}
+
+// pluginGRPCMessageConfig limits the size of messages to and from plugin
+// deployments, in bytes.
+type pluginGRPCMessageConfig struct {
+	MaxRecvSize int
+	MaxSendSize int
+}
+
 func defaultPluginGRPCConfig() pluginGRPCConfig {
 	return pluginGRPCConfig{
 		Retry: pluginGRPCRetryConfig{
 			Max:     3,
 			Backoff: time.Second,
 			Jitter:  0.1,
+		},
+		Connect: pluginGRPCConnectConfig{
+			Timeout:   5 * time.Second,
+			BaseDelay: time.Second,
+			MaxDelay:  10 * time.Second,
+		},
+		Keepalive: pluginGRPCKeepaliveConfig{
+			Time:    20 * time.Second,
+			Timeout: 10 * time.Second,
+		},
+		Message: pluginGRPCMessageConfig{
+			MaxRecvSize: 100 << 20,
+			MaxSendSize: 100 << 20,
 		},
 	}
 }
@@ -71,6 +114,30 @@ func parsePluginGRPCSection(section *setting.DynamicSection) (pluginGRPCConfig, 
 	if cfg.Retry.Jitter, err = parseFractionKey(section, "retry_jitter", cfg.Retry.Jitter); err != nil {
 		return cfg, err
 	}
+	if cfg.Connect.Timeout, err = parsePositiveDurationKey(section, "connect_timeout", cfg.Connect.Timeout); err != nil {
+		return cfg, err
+	}
+	if cfg.Connect.BaseDelay, err = parsePositiveDurationKey(section, "connect_base_delay", cfg.Connect.BaseDelay); err != nil {
+		return cfg, err
+	}
+	if cfg.Connect.MaxDelay, err = parsePositiveDurationKey(section, "connect_max_delay", cfg.Connect.MaxDelay); err != nil {
+		return cfg, err
+	}
+	if cfg.Connect.BaseDelay > cfg.Connect.MaxDelay {
+		return cfg, fmt.Errorf("connect_base_delay (%s) must not exceed connect_max_delay (%s)", cfg.Connect.BaseDelay, cfg.Connect.MaxDelay)
+	}
+	if cfg.Keepalive.Time, err = parseDurationKey(section, "keepalive_time", cfg.Keepalive.Time); err != nil {
+		return cfg, err
+	}
+	if cfg.Keepalive.Timeout, err = parsePositiveDurationKey(section, "keepalive_timeout", cfg.Keepalive.Timeout); err != nil {
+		return cfg, err
+	}
+	if cfg.Message.MaxRecvSize, err = parsePositiveIntKey(section, "max_recv_msg_size", cfg.Message.MaxRecvSize); err != nil {
+		return cfg, err
+	}
+	if cfg.Message.MaxSendSize, err = parsePositiveIntKey(section, "max_send_msg_size", cfg.Message.MaxSendSize); err != nil {
+		return cfg, err
+	}
 	return cfg, nil
 }
 
@@ -78,7 +145,7 @@ func parsePluginGRPCSection(section *setting.DynamicSection) (pluginGRPCConfig, 
 // requestDuration and requestRetries must already be curried with the plugin
 // ID.
 func (c pluginGRPCConfig) dialOptions(requestDuration *prometheus.HistogramVec, requestRetries *prometheus.CounterVec) []grpc.DialOption {
-	return []grpc.DialOption{
+	opts := []grpc.DialOption{
 		// Plugin deployments expose plaintext gRPC on the internal cluster network.
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
@@ -96,7 +163,31 @@ func (c pluginGRPCConfig) dialOptions(requestDuration *prometheus.HistogramVec, 
 		// Don't look up service config in DNS TXT records; the default above
 		// still applies.
 		grpc.WithDisableServiceConfig(),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoff.Config{
+				BaseDelay:  c.Connect.BaseDelay,
+				Multiplier: backoff.DefaultConfig.Multiplier,
+				Jitter:     backoff.DefaultConfig.Jitter,
+				MaxDelay:   c.Connect.MaxDelay,
+			},
+			MinConnectTimeout: c.Connect.Timeout,
+		}),
 	}
+	opts = append(opts, grpc.WithDefaultCallOptions(
+		grpc.MaxCallRecvMsgSize(c.Message.MaxRecvSize),
+		grpc.MaxCallSendMsgSize(c.Message.MaxSendSize),
+	))
+	if c.Keepalive.Time > 0 {
+		// The plugin deployment's server must allow pings this often, and on
+		// connections without active calls: by default, gRPC servers allow one
+		// ping every 5 minutes and close connections that ping more often.
+		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                c.Keepalive.Time,
+			Timeout:             c.Keepalive.Timeout,
+			PermitWithoutStream: true,
+		}))
+	}
+	return opts
 }
 
 // pluginGRPCRetryCodes are the codes a plugin call is retried on. Unlike the
@@ -136,6 +227,18 @@ func parseUintKey(section *setting.DynamicSection, key string, def uint) (uint, 
 	return uint(n), nil
 }
 
+func parsePositiveIntKey(section *setting.DynamicSection, key string, def int) (int, error) {
+	value := section.Key(key).String()
+	if value == "" {
+		return def, nil
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil || n <= 0 {
+		return 0, fmt.Errorf("%s must be a positive integer, got %q", key, value)
+	}
+	return n, nil
+}
+
 func parseDurationKey(section *setting.DynamicSection, key string, def time.Duration) (time.Duration, error) {
 	value := section.Key(key).String()
 	if value == "" {
@@ -144,6 +247,18 @@ func parseDurationKey(section *setting.DynamicSection, key string, def time.Dura
 	d, err := time.ParseDuration(value)
 	if err != nil || d < 0 {
 		return 0, fmt.Errorf("%s must be a non-negative duration, got %q", key, value)
+	}
+	return d, nil
+}
+
+func parsePositiveDurationKey(section *setting.DynamicSection, key string, def time.Duration) (time.Duration, error) {
+	value := section.Key(key).String()
+	if value == "" {
+		return def, nil
+	}
+	d, err := time.ParseDuration(value)
+	if err != nil || d <= 0 {
+		return 0, fmt.Errorf("%s must be a positive duration, got %q", key, value)
 	}
 	return d, nil
 }
