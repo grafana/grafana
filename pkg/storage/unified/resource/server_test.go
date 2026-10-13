@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -28,10 +29,11 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -42,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -3744,8 +3747,6 @@ func TestClassifyAuthError(t *testing.T) {
 	}{
 		{"nil", nil, ""},
 		{"namespace mismatch", authlib.ErrNamespaceMismatch, "auth_namespace_mismatch"},
-		{"service permission missing", fmt.Errorf("wrap: %w", ErrServicePermissionMissing), "auth_rejected"},
-		{"service cannot delegate", ErrServiceCannotDelegate, "auth_rejected"},
 		{"unavailable", status.Error(codes.Unavailable, "down"), "auth_unavailable"},
 		{"deadline exceeded", status.Error(codes.DeadlineExceeded, "slow"), "auth_unavailable"},
 		{"resource exhausted", status.Error(codes.ResourceExhausted, "rate"), "auth_unavailable"},
@@ -4692,7 +4693,7 @@ func (c *compileErrAccessClient) Compile(context.Context, authlib.AuthInfo, auth
 }
 
 func TestServicePermissionDenialIsForbidden(t *testing.T) {
-	denied := fmt.Errorf("%w: %s/%s:%s", ErrServicePermissionMissing, watchTestGroup, watchTestResource, utils.VerbGet)
+	denied := newServicePermissionError(ErrServicePermissionMissing, watchTestGroup, watchTestResource, utils.VerbGet)
 	ac := &compileErrAccessClient{
 		callbackAccessClient: callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }},
 		err:                  denied,
@@ -4721,7 +4722,29 @@ func TestServicePermissionDenialIsForbidden(t *testing.T) {
 
 	t.Run("watch", func(t *testing.T) {
 		err := srv.Watch(&resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: key}}, newMockWatchServer(ctx))
-		require.Error(t, err)
-		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+	})
+
+	t.Run("watch over grpc", func(t *testing.T) {
+		listener := bufconn.Listen(1 << 20)
+		grpcServer := grpc.NewServer(grpc.ChainStreamInterceptor(func(_ any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, next grpc.StreamHandler) error {
+			return next(srv, contextStream{ServerStream: stream, ctx: ctx})
+		}))
+		resourcepb.RegisterResourceStoreServer(grpcServer, srv)
+		go func() { _ = grpcServer.Serve(listener) }()
+		t.Cleanup(func() { grpcServer.Stop(); _ = listener.Close() })
+		conn, err := grpc.NewClient("passthrough:///watch", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = conn.Close() })
+
+		stream, err := resourcepb.NewResourceStoreClient(conn).Watch(t.Context(), &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: key}})
+		require.NoError(t, err)
+		_, err = stream.Recv()
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+		res := resourceutil.ErrorResultFromGRPCDetails(err)
+		require.NotNil(t, res, "the structured error must reach the client")
+		require.Equal(t, int32(http.StatusForbidden), res.Code)
+		require.Equal(t, string(metav1.StatusReasonForbidden), res.Reason)
+		require.Contains(t, res.Message, "playlist.grafana.app/playlists:get")
 	})
 }

@@ -19,14 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// ErrServiceCannotDelegate is returned by the limited authz client when the
-// service's token has no delegated permission for the resource.
-var ErrServiceCannotDelegate = errors.New("this service's token has no delegated permission for the resource")
-
-// ErrServicePermissionMissing is returned by the limited authz client when the
-// service's token has no permission for the resource.
-var ErrServicePermissionMissing = errors.New("this service's token has no permission for the resource")
-
 func NewResourceVersionExpiredError(rv int64) error {
 	result := &resourcepb.ErrorResult{
 		Message: fmt.Sprintf("too old resource version: %d", rv),
@@ -109,16 +101,6 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 	if errors.Is(err, claims.ErrNamespaceMismatch) {
 		return &resourcepb.ErrorResult{
 			Message: claims.ErrNamespaceMismatch.Error(),
-			Reason:  string(metav1.StatusReasonForbidden),
-			Code:    http.StatusForbidden,
-		}
-	}
-
-	// A service token lacking permission is an authorization outcome, not a
-	// server fault, so it must not fall through to the generic 500 below.
-	if errors.Is(err, ErrServicePermissionMissing) || errors.Is(err, ErrServiceCannotDelegate) {
-		return &resourcepb.ErrorResult{
-			Message: err.Error(),
 			Reason:  string(metav1.StatusReasonForbidden),
 			Code:    http.StatusForbidden,
 		}

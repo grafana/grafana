@@ -546,15 +546,17 @@ func TestAsErrorResult_ServicePermissionIsForbidden(t *testing.T) {
 		"permission missing": ErrServicePermissionMissing,
 		"cannot delegate":    ErrServiceCannotDelegate,
 	} {
-		wrapped := fmt.Errorf("transactional operation: %w", fmt.Errorf("%w: folder.grafana.app/folders:get", sentinel))
-		for variant, err := range map[string]error{"bare": sentinel, "wrapped": wrapped} {
+		denied := newServicePermissionError(sentinel, "folder.grafana.app", "folders", "get")
+		wrapped := fmt.Errorf("transactional operation: %w", denied)
+		for variant, err := range map[string]error{"bare": denied, "wrapped": wrapped} {
 			t.Run(name+"/"+variant, func(t *testing.T) {
 				t.Parallel()
 
 				got := AsErrorResult(err)
 				require.Equal(t, int32(http.StatusForbidden), got.Code, "an authorization outcome must not burn the 5xx error budget")
 				require.Equal(t, string(metav1.StatusReasonForbidden), got.Reason)
-				require.Equal(t, err.Error(), got.Message)
+				require.ErrorIs(t, err, sentinel)
+				require.Contains(t, got.Message, "folder.grafana.app/folders:get")
 				require.True(t, apierrors.IsForbidden(StatusError(got)), "callers should see a typed Forbidden error")
 			})
 		}
