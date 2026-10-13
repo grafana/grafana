@@ -1,3 +1,4 @@
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
 
 import { CoreApp, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
@@ -56,12 +57,11 @@ describe('NotebookPanelActions', () => {
   beforeEach(() => {
     getDefaultQuery.mockReset().mockReturnValue({ queryType: 'randomWalk' });
     jest.mocked(tryGetExploreUrlForPanel).mockResolvedValue('/explore?panel=1');
-    jest.mocked(getDataSourceInstance).mockImplementation(
-      async (ref) =>
-        ({
-          uid: (typeof ref === 'string' ? ref : ref?.uid) ?? 'grafana',
-          getDefaultQuery,
-        }) as Awaited<ReturnType<typeof getDataSourceInstance>>
+    jest.mocked(getDataSourceInstance).mockImplementation(async (ref) =>
+      Object.assign(new MockDataSourceApi(), {
+        uid: (typeof ref === 'string' ? ref : ref?.uid) ?? 'grafana',
+        getDefaultQuery,
+      })
     );
   });
 
