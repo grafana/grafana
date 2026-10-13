@@ -96,8 +96,6 @@ export const FlagKeys = {
   DashboardRecentlyDeletedViaTrash: "dashboard.recentlyDeletedViaTrash",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
-  /** Supports __from and __to macros that always use the dashboard level time range */
-  DashboardLevelTimeMacros: "dashboardLevelTimeMacros",
   /** Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page */
   DashboardLibrary: "dashboardLibrary",
   /** Enables new dashboard layouts */
@@ -823,17 +821,6 @@ export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvalu
  */
 export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboard.vectorSearch", false, options).value;
-};
-
-/**
- * Supports __from and __to macros that always use the dashboard level time range
- *
- * **Details:**
- * - flag key: `dashboardLevelTimeMacros`
- * - default value: `false`
- */
-export const useFlagDashboardLevelTimeMacros = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboardLevelTimeMacros", false, options).value;
 };
 
 /**

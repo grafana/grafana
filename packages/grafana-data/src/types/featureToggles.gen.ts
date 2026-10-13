@@ -956,11 +956,6 @@ export interface FeatureToggles {
   */
   alertingNotificationHistory?: boolean;
   /**
-  * Supports __from and __to macros that always use the dashboard level time range
-  * @default false
-  */
-  dashboardLevelTimeMacros?: boolean;
-  /**
   * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
   * @default false
   */

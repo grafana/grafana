@@ -110,7 +110,6 @@ declare module "@openfeature/core" {
     | "enableDashboardEmptyExtensions"
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
-    | "dashboardLevelTimeMacros"
     | "favoriteDatasources"
     | "grafana.starredFolders"
     | "grafana.newTextPanel"

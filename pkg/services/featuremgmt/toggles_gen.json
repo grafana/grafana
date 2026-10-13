@@ -1523,7 +1523,8 @@
       "metadata": {
         "name": "dashboardLevelTimeMacros",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-31T09:49:07Z"
+        "creationTimestamp": "2025-07-31T09:49:07Z",
+        "deletionTimestamp": "2026-10-13T13:37:24Z"
       },
       "spec": {
         "description": "Supports __from and __to macros that always use the dashboard level time range",
