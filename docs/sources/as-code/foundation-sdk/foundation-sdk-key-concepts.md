@@ -12,7 +12,7 @@ title: Foundation SDK key concepts
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/foundation-sdk/foundation-sdk-key-concepts/
 aliases:
-  - ../../observability-as-code/foundation-sdk/foundation-sdk-key-concepts/
+  - ../observability-as-code/foundation-sdk/foundation-sdk-key-concepts/
 ---
 
 # Foundation SDK key concepts

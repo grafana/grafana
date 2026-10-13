@@ -10,7 +10,7 @@ menuTitle: Manage dashboards with ArgoCD
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/grafana-operator/manage-dashboards-argocd/
 aliases:
-  - ../../infrastructure-as-code/grafana-operator/manage-dashboards-argocd/
+  - ../infrastructure-as-code/grafana-operator/manage-dashboards-argocd/
 ---
 
 # Manage Grafana dashboards with GitOps using ArgoCD

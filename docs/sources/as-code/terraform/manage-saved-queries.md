@@ -16,7 +16,7 @@ menuTitle: Manage saved queries
 weight: 400
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/manage-saved-queries/
 aliases:
-  - ../../infrastructure-as-code/terraform/manage-saved-queries/
+  - ../infrastructure-as-code/terraform/manage-saved-queries/
 ---
 
 # Manage saved queries using Terraform

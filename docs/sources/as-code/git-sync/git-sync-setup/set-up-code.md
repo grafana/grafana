@@ -18,7 +18,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/git-sync-set
 aliases:
   - ../../../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
   - ../provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
-  - ../../../observability-as-code/git-sync/git-sync-setup/set-up-code/
+  - ../../observability-as-code/git-sync/git-sync-setup/set-up-code/
 ---
 
 # Set up Git Sync as code

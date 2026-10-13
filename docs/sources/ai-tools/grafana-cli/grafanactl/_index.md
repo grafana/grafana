@@ -21,7 +21,7 @@ aliases:
   - ../../../observability-as-code/grafana-cli/set-up-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/set-up-grafana-cli/
   - ../../observability-as-code/grafana-cli/set-up-grafana-cli/
   - ../../observability-as-code/grafana-cli/install-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/install-grafana-cli/
-  - ../../../as-code/observability-as-code/grafana-cli/grafanactl/
+  - ../../as-code/observability-as-code/grafana-cli/grafanactl/
 ---
 
 # Install and set up the `grafanactl` CLI

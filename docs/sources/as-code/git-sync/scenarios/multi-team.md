@@ -5,7 +5,7 @@ description: Use multiple Git repositories with one Grafana instance, one reposi
 weight: 60
 aliases:
   - ../../provision-resources/git-sync-deployment-scenarios/multi-team
-  - ../../../observability-as-code/git-sync/scenarios/multi-team/
+  - ../../observability-as-code/git-sync/scenarios/multi-team/
 ---
 
 # Git Sync in a Grafana instance shared by multiple teams

@@ -9,7 +9,7 @@ menuTitle: Manage resources with the Grafana Operator
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/grafana-operator/operator-dashboards-folders-datasources/
 aliases:
-  - ../../infrastructure-as-code/grafana-operator/operator-dashboards-folders-datasources/
+  - ../infrastructure-as-code/grafana-operator/operator-dashboards-folders-datasources/
 ---
 
 # Manage folders, data sources, and dashboards using the Grafana Operator

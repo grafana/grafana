@@ -16,7 +16,7 @@ menuTitle: Migrate existing dashboards
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/add-resources/dashboards-migrate
 aliases:
-  - ../../../observability-as-code/git-sync/add-resources/dashboards-migrate/
+  - ../../observability-as-code/git-sync/add-resources/dashboards-migrate/
 ---
 
 # Migrate existing dashboards to Git Sync

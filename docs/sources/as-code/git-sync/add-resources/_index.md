@@ -18,7 +18,6 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/add-resource
 aliases:
   - ../../as-code/observability-as-code/git-sync/add-resources/ # /docs/grafana/next/as-code/observability-as-code/git-sync/add-resources/
   - ./export-resources/ # /docs/grafana/next/as-code/observability-as-code/git-sync/export-resources/
-  - ../../observability-as-code/git-sync/add-resources/
 ---
 
 # Add non-provisioned resources from Grafana

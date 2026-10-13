@@ -17,7 +17,7 @@ aliases:
   - ../../../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
   - ../provision-resources/git-sync-setup/
   - ./git-sync-setup/
-  - ../../observability-as-code/git-sync/git-sync-setup/
+  - ../observability-as-code/git-sync/git-sync-setup/
 ---
 
 # Set up Git Sync

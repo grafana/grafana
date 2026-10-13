@@ -15,7 +15,7 @@ title: Set up Git Sync with Terraform
 weight: 210
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/git-sync-setup/set-up-terraform
 aliases:
-  - ../../../observability-as-code/git-sync/git-sync-setup/set-up-terraform/
+  - ../../observability-as-code/git-sync/git-sync-setup/set-up-terraform/
 ---
 
 # Set up Git Sync with Terraform

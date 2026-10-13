@@ -16,7 +16,7 @@ menuTitle: Copy individual dashboards
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/add-resources/dashboards-copy
 aliases:
-  - ../../../observability-as-code/git-sync/add-resources/dashboards-copy/
+  - ../../observability-as-code/git-sync/add-resources/dashboards-copy/
 ---
 
 # Cherry-pick and copy individual dashboards

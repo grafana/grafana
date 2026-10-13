@@ -17,7 +17,7 @@ menuTitle: Git repository protection
 weight: 710
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/repository-protection/
 aliases:
-  - ../../observability-as-code/git-sync/permissions-git/
+  - ../observability-as-code/git-sync/permissions-git/
 ---
 
 # Configure Git repository protection

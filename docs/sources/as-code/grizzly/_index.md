@@ -11,7 +11,7 @@ weight: 600
 canonical: https://grafana.com/docs/grafana/latest/as-code/grizzly/
 aliases:
   - ../infrastructure-as-code/grizzly/dashboards-folders-datasources
-  - ../infrastructure-as-code/grizzly/
+  - ./infrastructure-as-code/grizzly/
 ---
 
 # Grizzly (deprecated)
