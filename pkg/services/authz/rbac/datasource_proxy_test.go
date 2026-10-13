@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -47,4 +48,28 @@ func TestDatasourceProxyUnmappedAction(t *testing.T) {
 	require.ErrorContains(t, err, "unsupported verb")
 	require.NotNil(t, res)
 	require.False(t, res.Allowed)
+}
+
+func TestDatasourceProxyAlertmanagerPermissions(t *testing.T) {
+	actions := []string{
+		accesscontrol.ActionAlertingInstancesExternalRead,
+		accesscontrol.ActionAlertingInstancesExternalWrite,
+		accesscontrol.ActionAlertingNotificationsExternalRead,
+		accesscontrol.ActionAlertingNotificationsExternalWrite,
+	}
+	for _, granted := range actions {
+		for _, scope := range []string{"datasources:uid:ds-1", "datasources:uid:ds-2", "datasources:*", "*"} {
+			t.Run(granted+"/"+scope, func(t *testing.T) {
+				service := NewTestService("user-1", []accesscontrol.Permission{{Action: granted, Scope: scope}}, nil)
+				ctx := types.WithAuthInfo(t.Context(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{Namespace: "default"}}))
+				for _, action := range actions {
+					res, err := service.Check(ctx, &authzv1.CheckRequest{Namespace: "default", Subject: "user:user-1", Group: "alertmanager.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Verb: action})
+					require.NoError(t, err)
+					require.Equal(t, action == granted && scope != "datasources:uid:ds-2", res.Allowed, action)
+					legacyAllowed := pluginac.GetDataSourceRouteEvaluator("ds-1", action).Evaluate(map[string][]string{granted: {scope}})
+					require.Equal(t, legacyAllowed, res.Allowed, "authz must match the legacy route permission for %s", action)
+				}
+			})
+		}
+	}
 }

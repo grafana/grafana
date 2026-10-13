@@ -261,9 +261,13 @@ func newDatasourceQueryTranslation() translation {
 
 	// Proxy routes carry existing RBAC actions as verbs and retain datasource UID scopes.
 	maps.Copy(dsTranslation.verbMapping, map[string]string{
-		datasources.ActionQuery:                       datasources.ActionQuery,
-		accesscontrol.ActionAlertingRuleExternalRead:  accesscontrol.ActionAlertingRuleExternalRead,
-		accesscontrol.ActionAlertingRuleExternalWrite: accesscontrol.ActionAlertingRuleExternalWrite,
+		datasources.ActionQuery:                                datasources.ActionQuery,
+		accesscontrol.ActionAlertingRuleExternalRead:           accesscontrol.ActionAlertingRuleExternalRead,
+		accesscontrol.ActionAlertingRuleExternalWrite:          accesscontrol.ActionAlertingRuleExternalWrite,
+		accesscontrol.ActionAlertingInstancesExternalRead:      accesscontrol.ActionAlertingInstancesExternalRead,
+		accesscontrol.ActionAlertingInstancesExternalWrite:     accesscontrol.ActionAlertingInstancesExternalWrite,
+		accesscontrol.ActionAlertingNotificationsExternalRead:  accesscontrol.ActionAlertingNotificationsExternalRead,
+		accesscontrol.ActionAlertingNotificationsExternalWrite: accesscontrol.ActionAlertingNotificationsExternalWrite,
 	})
 
 	dsTranslation.actionSetMapping = map[string][]string{
