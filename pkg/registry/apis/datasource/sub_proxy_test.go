@@ -165,7 +165,9 @@ func TestSubProxyREST_ValidatesFinalDestination(t *testing.T) {
 				Headers: []plugins.Header{{Name: "Authorization", Content: "Bearer route-token"}},
 			}}
 			validator := &proxyDestinationValidator{destination: target.URL}
-			builder.proxyDeps.RequestValidator = validator
+			deps, err := builder.proxyDependencies(t.Context(), nil)
+			require.NoError(t, err)
+			deps.RequestValidator = validator
 			storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
 			t.Cleanup(storage.Destroy)
 			ctx := krequest.WithNamespace(proxyTestContext(), "stacks-1")
