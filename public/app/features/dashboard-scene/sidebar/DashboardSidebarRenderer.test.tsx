@@ -153,7 +153,7 @@ describe('DashboardSidebarRenderer', () => {
 
     it('restores the docked dashboard options pane after switching back to Editing', async () => {
       const scene = buildTestScene();
-      scene.setState({ meta: { canEdit: true, canSave: true } });
+      scene.setState({ uid: 'saved-dashboard', meta: { canEdit: true, canSave: true } });
       act(() => activateFullSceneTree(scene));
       function SidebarWithMode() {
         const state = scene.useState();
@@ -214,7 +214,7 @@ describe('DashboardSidebarRenderer', () => {
   it('hides the Editing sidebar when switching to Viewing with an active edit session', async () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const scene = buildTestScene();
-    scene.setState({ mode: 'edit', meta: { canEdit: true, canSave: true } });
+    scene.setState({ uid: 'saved-dashboard', mode: 'edit', meta: { canEdit: true, canSave: true } });
     act(() => activateFullSceneTree(scene));
     render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
