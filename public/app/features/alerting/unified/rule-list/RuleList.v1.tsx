@@ -9,7 +9,6 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { trackRuleListNavigation } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import { WatchersBanner } from '../components/WatchersBanner';
 import { ImportToGMABanner } from '../components/import-to-gma/ImportToGMABanner';
 import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useShowImportToGMARulesBanner';
 import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
@@ -141,7 +140,6 @@ const RuleListV1 = () => {
       <Stack direction="column">
         <RuleListV1DeprecationNotice />
         {showImportToGMABanner && <ImportToGMABanner />}
-        <WatchersBanner />
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (
