@@ -331,3 +331,42 @@ func TestSQLServiceTimeSeriesSecondTimeField(t *testing.T) {
 	require.True(t, ok)
 	require.True(t, time.Unix(11, 0).Equal(updated.(time.Time)))
 }
+
+func TestSQLServiceTimeSeriesUnnamedStringFields(t *testing.T) {
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, []time.Time{time.Unix(10, 0)}),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+				data.NewField("", nil, []string{"x"}),
+				data.NewField("", nil, []string{"y"}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+		}},
+	}
+	queries := []Query{
+		{
+			RefID:      "A",
+			DataSource: &datasources.DataSource{OrgID: 1, UID: "test", Type: "test"},
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange:  AbsoluteTimeRange{},
+		},
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT __value__ FROM A" }`),
+			TimeRange:  AbsoluteTimeRange{},
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	require.NoError(t, err)
+	require.NoError(t, rsp.Responses["A"].Error)
+	require.NoError(t, rsp.Responses["B"].Error)
+	require.Len(t, rsp.Responses["B"].Frames, 1)
+	require.Equal(t, 1, rsp.Responses["B"].Frames[0].Rows())
+}
