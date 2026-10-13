@@ -5,7 +5,6 @@ import { colorManipulator, FALLBACK_COLOR, type PanelProps } from '@grafana/data
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
-  LegendDisplayMode,
   TooltipDisplayMode,
   TooltipPlugin2,
   UPlotChart,
@@ -17,7 +16,7 @@ import {
   useTheme2,
   usePanelContext,
 } from '@grafana/ui';
-import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
+import { getDisplayValuesForCalcs, shouldShowLegend, TooltipHoverMode } from '@grafana/ui/internal';
 
 import { XYChartTooltip } from './XYChartTooltip';
 import { type Options } from './panelcfg.gen';
@@ -60,7 +59,7 @@ export const XYChartPanel2 = (props: Props2) => {
 
   // TODO: React.memo()
   const renderLegend = () => {
-    if (!props.options.legend.showLegend || props.options.legend.displayMode === LegendDisplayMode.Hidden) {
+    if (!shouldShowLegend(props.options.legend)) {
       return null;
     }
 

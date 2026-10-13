@@ -11,7 +11,7 @@ import {
   type PanelProps,
   VizOrientation,
 } from '@grafana/data';
-import { BarGaugeSizing, BarGaugeValueMode, BigValueTextMode, LegendDisplayMode } from '@grafana/schema';
+import { BarGaugeSizing, BarGaugeValueMode, BigValueTextMode } from '@grafana/schema';
 import {
   BarGauge,
   DataLinksContextMenu,
@@ -20,7 +20,7 @@ import {
   VizRepeater,
   type VizRepeaterRenderValueProps,
 } from '@grafana/ui';
-import { type DataLinksContextMenuApi } from '@grafana/ui/internal';
+import { type DataLinksContextMenuApi, shouldShowLegend } from '@grafana/ui/internal';
 
 import { BarGaugeLegend } from './BarGaugeLegend';
 import { defaultOptions, type Options } from './panelcfg.gen';
@@ -165,7 +165,7 @@ export function calcBarSize(options: Options, orientation: VizOrientation) {
 export function getLegend(options: Options, data: BarGaugePanelProps['data']) {
   const { legend } = options;
 
-  if (legend.showLegend && legend.displayMode !== LegendDisplayMode.Hidden && data && data.series.length > 0) {
+  if (shouldShowLegend(legend) && data && data.series.length > 0) {
     return <BarGaugeLegend data={data.series} {...legend} />;
   }
 

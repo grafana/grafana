@@ -268,7 +268,7 @@ describe('BarChartPanel', () => {
         },
       });
 
-      expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
     });
   });

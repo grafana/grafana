@@ -18,7 +18,6 @@ import {
   AxisPlacement,
   ScaleDirection,
   ScaleOrientation,
-  LegendDisplayMode,
 } from '@grafana/schema';
 import {
   type Themeable2,
@@ -29,7 +28,7 @@ import {
   measureText,
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
-import { getStackingGroups, preparePlotData2 } from '@grafana/ui/internal';
+import { getStackingGroups, preparePlotData2, shouldShowLegend } from '@grafana/ui/internal';
 
 import { defaultFieldConfig, type FieldConfig, type Options } from './panelcfg.gen';
 
@@ -344,7 +343,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
 
-    if (!config || legend.showLegend === false || legend.displayMode === LegendDisplayMode.Hidden) {
+    if (!config || !shouldShowLegend(legend)) {
       return null;
     }
 

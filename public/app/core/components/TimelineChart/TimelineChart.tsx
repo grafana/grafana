@@ -2,13 +2,13 @@ import { useCallback } from 'react';
 
 import { type DataFrame, FALLBACK_COLOR, FieldType, type TimeRange } from '@grafana/data';
 import {
-  LegendDisplayMode,
   type TimelineValueAlignment,
   TooltipDisplayMode,
   type VisibilityMode,
   type VizTooltipOptions,
 } from '@grafana/schema';
 import { type UPlotConfigBuilder, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
+import { shouldShowLegend } from '@grafana/ui/internal';
 
 import { GraphNG, type GraphNGProps } from '../GraphNG/GraphNG';
 import { getXAxisConfig } from '../TimeSeries/utils';
@@ -82,13 +82,7 @@ export const TimelineChart = (props: TimelineProps) => {
 
   const renderLegend = useCallback(
     (config: UPlotConfigBuilder) => {
-      if (
-        !config ||
-        !legendItems ||
-        !legend ||
-        legend.showLegend === false ||
-        legend.displayMode === LegendDisplayMode.Hidden
-      ) {
+      if (!config || !legendItems || !legend || !shouldShowLegend(legend)) {
         return null;
       }
 

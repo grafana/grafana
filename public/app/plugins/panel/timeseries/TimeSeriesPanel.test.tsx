@@ -159,7 +159,7 @@ describe('TimeSeriesPanel', () => {
   it('should hide legend when displayMode is hidden, even if showLegend is true', () => {
     renderPanel({ legend: { ...defaultOptions.legend, showLegend: true, displayMode: LegendDisplayMode.Hidden } });
 
-    expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
   });
 
