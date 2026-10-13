@@ -1939,14 +1939,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "dashboardLevelTimeMacros",
-			Description: "Supports __from and __to macros that always use the dashboard level time range",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDashboardsSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "false",
-		},
-		{
 			Name:         "alertmanagerRemoteSecondaryWithRemoteState",
 			Description:  "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
 			Stage:        FeatureStageExperimental,
