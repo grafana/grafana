@@ -138,8 +138,11 @@ export function findByType(type: string): DataSourceInstanceListItem | undefined
   if (!matches.length) {
     return undefined;
   }
-  const defaultUid = getDefaultListItem()?.uid;
-  return matches.find((item) => item.uid === defaultUid) ?? matches[0];
+  // The default falls back to `-- Grafana --` when no instance is the org default. applyFilters
+  // appends that built-in to every match list, but it is not an instance of the type.
+  const defaultItem = getDefaultListItem();
+  const typeDefault = defaultItem?.meta.builtIn ? undefined : matches.find((item) => item.uid === defaultItem?.uid);
+  return typeDefault ?? matches[0];
 }
 
 function getBuiltIn(name: string): DataSourceInstanceListItem | undefined {

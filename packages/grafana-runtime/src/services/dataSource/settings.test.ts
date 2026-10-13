@@ -231,6 +231,22 @@ describe('instanceSettings', () => {
       expect(result?.type).toBe('test-db');
     });
 
+    it('resolves a type-only DataSourceRef to an instance of the type when -- Grafana -- is the default', async () => {
+      const grafana = fixtures['-- Grafana --'];
+      initDataSourceInstanceSettings(
+        {
+          ...fixtures,
+          Bravo: { ...fixtures.Bravo, isDefault: false },
+          '-- Grafana --': { ...grafana, meta: { ...grafana.meta, builtIn: true } },
+        },
+        '-- Grafana --'
+      );
+
+      const result = await getDataSourceInstanceSettings({ type: 'test-db' });
+
+      expect(result?.uid).toBe('uid-alpha');
+    });
+
     it('returns a result for a type-only DataSourceRef even when no exact match exists', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       const result = await getDataSourceInstanceSettings({ type: 'nonexistent' });
