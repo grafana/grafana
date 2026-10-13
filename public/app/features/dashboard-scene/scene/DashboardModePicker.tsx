@@ -5,6 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, useStyles2, type IconName } from '@grafana/ui';
 
+import { isNewDashboard } from '../saving/shared';
+
 import { type DashboardScene } from './DashboardScene';
 import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from './dashboardModes';
 
@@ -15,6 +17,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const [isCaretMenuOpen, setIsCaretMenuOpen] = useState(false);
   const mode = getDashboardMode(state);
   const nextMode = mode === 'edit' ? 'view' : 'edit';
+  const viewingDisabled = isNewDashboard(state);
   const disabled = dashboard.managedResourceCannotBeEdited();
   const hidden =
     !dashboardModesEnabled() ||
@@ -33,11 +36,15 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     return null;
   }
 
+  const saveBeforeViewing = t('dashboard.modes.save-before-viewing', 'Save the dashboard before switching to Viewing.');
+
   const options: Array<{ value: DashboardMode; label: string; description: string; icon: IconName }> = [
     {
       value: 'view',
       label: t('dashboard.modes.view', 'Viewing'),
-      description: t('dashboard.modes.view-description', 'View and explore the dashboard.'),
+      description: viewingDisabled
+        ? saveBeforeViewing
+        : t('dashboard.modes.view-description', 'View and explore the dashboard.'),
       icon: 'eye',
     },
     {
@@ -63,7 +70,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             icon={option.icon}
             role="menuitemradio"
             ariaChecked={mode === option.value}
-            disabled={!state.editable && option.value !== 'view'}
+            disabled={(viewingDisabled && option.value === 'view') || (!state.editable && option.value !== 'view')}
             className={styles.item}
             component={mode === option.value ? SelectedMode : undefined}
             onClick={() => dashboard.setDashboardMode(option.value, 'picker')}
@@ -80,11 +87,13 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
         icon={current.icon}
         aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
         tooltip={
-          nextMode === 'view'
-            ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
-            : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
+          viewingDisabled && nextMode === 'view'
+            ? saveBeforeViewing
+            : nextMode === 'view'
+              ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
+              : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
         }
-        disabled={disabled || (!state.editable && nextMode === 'edit')}
+        disabled={disabled || (viewingDisabled && nextMode === 'view') || (!state.editable && nextMode === 'edit')}
         onClick={() => dashboard.setDashboardMode(nextMode, 'picker')}
       >
         {current.label}
@@ -105,7 +114,8 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
           icon={isCaretMenuOpen ? 'angle-up' : 'angle-down'}
           aria-label={t('dashboard.modes.change-mode', 'Change dashboard mode')}
           aria-haspopup="menu"
-          disabled={disabled}
+          disabled={disabled || viewingDisabled}
+          tooltip={viewingDisabled ? saveBeforeViewing : undefined}
         />
       </Dropdown>
     </ButtonGroup>

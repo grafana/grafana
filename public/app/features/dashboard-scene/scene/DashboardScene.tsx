@@ -71,7 +71,7 @@ import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-import { type DashboardChangeInfo } from '../saving/shared';
+import { isNewDashboard, type DashboardChangeInfo } from '../saving/shared';
 import {
   type DashboardSceneSerializerLike,
   getDashboardSceneSerializer,
@@ -677,7 +677,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     ) {
       return false;
     }
-    if (mode !== 'view' && !this.state.editable) {
+    if ((mode === 'view' && isNewDashboard(this.state)) || (mode !== 'view' && !this.state.editable)) {
       return false;
     }
     const previous = getDashboardMode(this.state);

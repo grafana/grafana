@@ -62,12 +62,12 @@ afterEach(() => {
   setTestFlags({});
 });
 
-function setup(withPanel = false) {
+function setup(withPanel = false, isNew = false) {
   const scene = transformSaveModelToScene({
     dashboard: {
       title: 'Original title',
-      uid: 'modes-test',
-      version: 1,
+      uid: isNew ? '' : 'modes-test',
+      version: isNew ? 0 : 1,
       schemaVersion: 39,
       panels: withPanel
         ? [
@@ -240,6 +240,59 @@ it('switches modes directly from the main button and describes the next mode in 
   expect(
     jest.mocked(reportInteraction).mock.calls.filter(([event]) => event === 'dashboards_mode_picker_opened')
   ).toEqual([]);
+});
+
+it('disables the mode picker until the first successful save while keeping Save available', async () => {
+  const dashboard = setup(false, true);
+  dashboard.onEnterEditMode();
+  render(
+    <TestProvider>
+      <DashboardModePicker dashboard={dashboard} />
+      <SaveDashboard dashboard={dashboard} />
+    </TestProvider>
+  );
+  const user = userEvent.setup();
+  const editingButton = screen.getByRole('button', { name: 'Dashboard mode: Editing' });
+  expect(editingButton).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+  await user.hover(editingButton);
+  expect(await screen.findByRole('tooltip')).toHaveTextContent('Save the dashboard before switching to Viewing.');
+  await user.unhover(editingButton);
+  const dropdownButton = screen.getByRole('button', { name: 'Change dashboard mode' });
+  expect(dropdownButton).toBeDisabled();
+  await user.hover(dropdownButton);
+  expect(await screen.findByRole('tooltip')).toHaveTextContent('Save the dashboard before switching to Viewing.');
+  await user.unhover(dropdownButton);
+  await user.click(dropdownButton);
+  expect(screen.queryByRole('menu', { name: 'Dashboard mode' })).not.toBeInTheDocument();
+  expect(getDashboardMode(dashboard.state)).toBe('edit');
+
+  const { result } = renderHook(() => useSaveDashboard(), { wrapper: TestProvider });
+  mockSaveDashboard.mockResolvedValue({ error: { status: 500, data: { message: 'Save failed' } } });
+  await act(async () => {
+    await result.current.onSaveDashboard(dashboard, { isNew: true, saveAsCopy: true });
+  });
+  expect(editingButton).toBeDisabled();
+  expect(dropdownButton).toBeDisabled();
+  mockSaveDashboard.mockResolvedValue({
+    data: { uid: 'saved-dashboard', version: 1, url: '/d/saved-dashboard', status: 'success' },
+  });
+  await act(async () => {
+    await result.current.onSaveDashboard(dashboard, { isNew: true, saveAsCopy: true });
+  });
+  expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeEnabled();
+  expect(screen.getByRole('button', { name: 'Change dashboard mode' })).toBeEnabled();
+  await user.click(screen.getByRole('button', { name: 'Change dashboard mode' }));
+  expect(screen.getByRole('menuitemradio', { name: /Viewing/ })).toBeEnabled();
+  await user.click(screen.getByRole('menuitemradio', { name: /Viewing/ }));
+  expect(screen.getByRole('button', { name: 'Dashboard mode: Viewing' })).toBeInTheDocument();
+});
+
+it.each(['picker', 'navigation', 'restore'] as const)('refuses Viewing for an unsaved dashboard via %s', (trigger) => {
+  const dashboard = setup(false, true);
+  dashboard.onEnterEditMode();
+  expect(dashboard.setDashboardMode('view', trigger)).toBe(false);
+  expect(getDashboardMode(dashboard.state)).toBe('edit');
 });
 
 it('takes over Agent editing from the main button without dropping the Assistant draft', async () => {
