@@ -11,6 +11,7 @@ import (
 	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -55,7 +56,9 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 		}
 		c.Req.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
 			namespaceMapper(c.GetOrgID()) + "/snapshots/create"
-		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
+		// Direct dispatch bypasses the API proxy that normally installs SignedInUser as the requester.
+		req := c.Req.WithContext(identity.WithRequester(ctx, c.SignedInUser))
+		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, req)
 	}
 }
 
