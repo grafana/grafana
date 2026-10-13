@@ -184,13 +184,14 @@ export function useQueryProposalTransaction({
     (baseline: DataQuery): boolean => synchronizeCoauthoringBaselineQuery(queryRef.current, baseline, updateQuery),
     [updateQuery]
   );
+  const activeProposal = transactionRef.current?.queryKey === queryKey ? proposal : undefined;
 
   return {
     accept,
-    editorQueries: proposal
-      ? queries.map((candidate) => (candidate.refId === proposal.refId ? proposal : candidate))
+    editorQueries: activeProposal
+      ? queries.map((candidate) => (candidate.refId === activeProposal.refId ? activeProposal : candidate))
       : queries,
-    editorQuery: proposal?.refId === query?.refId ? proposal : query,
+    editorQuery: activeProposal?.refId === query?.refId ? activeProposal : query,
     onChange,
     preview,
     previewPhase,
