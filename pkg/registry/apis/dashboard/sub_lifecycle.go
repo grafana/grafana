@@ -57,7 +57,7 @@ type lifecycleRequest struct {
 
 func (c *lifecycleConnector) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if !draftsAndPendingChangesEnabled(ctx) {
+		if !draftsEnabled(ctx) {
 			responder.Error(apierrors.NewForbidden(c.resource, name, fmt.Errorf("dashboard drafts are not enabled")))
 			return
 		}

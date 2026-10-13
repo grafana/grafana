@@ -34,7 +34,7 @@ func mutateDashboardLifecycle(ctx context.Context, a admission.Attributes) error
 			obj.SetLabels(labels)
 			return nil
 		case utils.LifecycleDraft:
-			if !draftsAndPendingChangesEnabled(ctx) {
+			if !draftsEnabled(ctx) {
 				return apierrors.NewBadRequest("dashboard drafts are not enabled")
 			}
 			user, err := identity.GetRequester(ctx)

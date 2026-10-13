@@ -984,19 +984,6 @@
     },
     {
       "metadata": {
-        "name": "assistant.dashboard.draftsAndPendingChanges",
-        "resourceVersion": "1791811949469",
-        "creationTimestamp": "2026-10-12T13:32:29Z"
-      },
-      "spec": {
-        "description": "Enables dashboard drafts and pending changes: private unpublished dashboards, and private changes to a dashboard that their author previews and applies explicitly, used by Grafana Assistant",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "assistant.dashboardPlanning",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-05T14:53:48Z"
@@ -1471,6 +1458,19 @@
         "description": "Uses field-value results for requests from the /api/search endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboard.drafts",
+        "resourceVersion": "1791900546713",
+        "creationTimestamp": "2026-10-13T14:09:06Z"
+      },
+      "spec": {
+        "description": "Enables dashboard drafts: private unpublished dashboards that only their owner sees until they publish them, used by Grafana Assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },

@@ -3141,8 +3141,8 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:        "assistant.dashboard.draftsAndPendingChanges",
-			Description: "Enables dashboard drafts and pending changes: private unpublished dashboards, and private changes to a dashboard that their author previews and applies explicitly, used by Grafana Assistant",
+			Name:        "dashboard.drafts",
+			Description: "Enables dashboard drafts: private unpublished dashboards that only their owner sees until they publish them, used by Grafana Assistant",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",

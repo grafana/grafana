@@ -26,8 +26,8 @@ import (
 // The feature flag gates creating drafts and the lifecycle subresources. Visibility, label preservation, and cleanup act regardless of the flag,
 // so turning the flag off never exposes leftover drafts.
 
-func draftsAndPendingChangesEnabled(ctx context.Context) bool {
-	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAssistantDashboardDraftsAndPendingChanges, false, openfeature.TransactionContext(ctx))
+func draftsEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDashboardDrafts, false, openfeature.TransactionContext(ctx))
 }
 
 // lifecycleOf returns the lifecycle state of a dashboard; published when unset.

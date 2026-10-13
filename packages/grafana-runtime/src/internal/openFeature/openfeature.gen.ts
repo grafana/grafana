@@ -62,8 +62,6 @@ export const FlagKeys = {
   AlertingUIUseFullyCompatBackendFilters: "alertingUIUseFullyCompatBackendFilters",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
-  /** Enables dashboard drafts and pending changes: private unpublished dashboards, and private changes to a dashboard that their author previews and applies explicitly, used by Grafana Assistant */
-  AssistantDashboardDraftsAndPendingChanges: "assistant.dashboard.draftsAndPendingChanges",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
@@ -92,6 +90,8 @@ export const FlagKeys = {
   CreateAlertRuleFromPanel: "createAlertRuleFromPanel",
   /** Enables Critical User Journey (CUJ) tracking */
   CujTracking: "cujTracking",
+  /** Enables dashboard drafts: private unpublished dashboards that only their owner sees until they publish them, used by Grafana Assistant */
+  DashboardDrafts: "dashboard.drafts",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
@@ -641,17 +641,6 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
- * Enables dashboard drafts and pending changes: private unpublished dashboards, and private changes to a dashboard that their author previews and applies explicitly, used by Grafana Assistant
- *
- * **Details:**
- * - flag key: `assistant.dashboard.draftsAndPendingChanges`
- * - default value: `false`
- */
-export const useFlagAssistantDashboardDraftsAndPendingChanges = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("assistant.dashboard.draftsAndPendingChanges", false, options).value;
-};
-
-/**
  * Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built
  *
  * **Details:**
@@ -803,6 +792,17 @@ export const useFlagCreateAlertRuleFromPanel = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagCujTracking = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("cujTracking", false, options).value;
+};
+
+/**
+ * Enables dashboard drafts: private unpublished dashboards that only their owner sees until they publish them, used by Grafana Assistant
+ *
+ * **Details:**
+ * - flag key: `dashboard.drafts`
+ * - default value: `false`
+ */
+export const useFlagDashboardDrafts = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.drafts", false, options).value;
 };
 
 /**

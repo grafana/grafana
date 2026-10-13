@@ -38,7 +38,7 @@ func lifecycleDashboard(name string, generation int64, labels, annotations map[s
 }
 
 func TestMutateDashboardLifecycle(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAssistantDashboardDraftsAndPendingChanges)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDashboardDrafts)
 	ctx := lifecycleUser("alice", identity.RoleViewer)
 	attrs := func(obj, old runtime.Object, op admission.Operation) admission.Attributes {
 		return admission.NewAttributesRecord(obj, old, dashv2.DashboardResourceInfo.GroupVersionKind(), "default", "d1",

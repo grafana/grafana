@@ -396,7 +396,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagAssistantDashboardDraftsAndPendingChanges, false, openfeature.TransactionContext(c.Req.Context())) {
+		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagDashboardDrafts, false, openfeature.TransactionContext(c.Req.Context())) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Drafts",
 				SubTitle: "Your unpublished dashboards. Drafts not edited for 30 days move to Recently deleted.",

@@ -1,5 +1,4 @@
 import { locationService } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
@@ -104,10 +103,6 @@ export function isPreviewingPendingChanges(uid: string | undefined): boolean {
   return Boolean(getPendingChangePreview('page', uid)?.previewing);
 }
 
-function pendingChangesEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardDraftsAndPendingChanges, false);
-}
-
 /** The id of the pending changes the dashboard page URL asks for. */
 export function pendingChangesIdFromLocation(): string | undefined {
   const value = locationService.getSearchObject()[PENDING_CHANGES_QUERY_PARAM];
@@ -146,7 +141,9 @@ export async function loadPendingChangePreview(
     return undefined;
   }
   previews.delete(previewKey(view, uid));
-  if (!id || !pendingChangesEnabled()) {
+  // No flag here: nothing happens without an id in the URL and a plugin that returns
+  // changes for it, and the plugin decides whether it does.
+  if (!id) {
     return undefined;
   }
   for (const load of await getLoaders()) {

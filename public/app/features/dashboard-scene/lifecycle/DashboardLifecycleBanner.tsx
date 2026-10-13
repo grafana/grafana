@@ -4,10 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import {
-  useFlagAssistantDashboardDraftsAndPendingChanges,
-  useFlagGrafanaVisualDesignRefresh,
-} from '@grafana/runtime/internal';
+import { useFlagDashboardDrafts, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Alert, Button, ConfirmModal, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -47,18 +44,21 @@ interface Props {
  * back to the preview.
  */
 export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload }: Props) {
-  const enabled = useFlagAssistantDashboardDraftsAndPendingChanges();
+  const draftsEnabled = useFlagDashboardDrafts();
   const visualRefresh = useFlagGrafanaVisualDesignRefresh();
   // With the visual refresh, a dashboard page is a card inset from the page edge; line up with it.
   const inset: BannerInset = placement === 'page' ? (visualRefresh ? 'card' : 'page') : 'embedded';
   const { meta, uid, isEditing } = dashboard.useState();
   const info = useMemo(() => getDashboardLifecycle(dashboard), [dashboard, meta]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!enabled || !uid || isEditing) {
+  if (!uid || isEditing) {
     return null;
   }
   const load = reload ?? (() => reloadDashboardPage(uid));
   if (info.lifecycle === 'draft') {
+    if (!draftsEnabled) {
+      return null;
+    }
     return (
       <DraftBanner
         dashboard={dashboard}
