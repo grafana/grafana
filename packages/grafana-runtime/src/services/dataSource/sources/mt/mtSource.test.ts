@@ -14,8 +14,8 @@ import {
   MISSING_PLUGIN_DROPPED_WARNING,
   MT_FILL_FAILED,
   NUMERIC_ID_REF_WARNING,
-  SETTINGS_FETCH_FAILED,
-  SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
+  MT_SETTINGS_FETCH_FAILED,
+  MT_SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
 } from '../../constants';
 import { getDataSourceInstance, setDataSourcePluginImporter } from '../../dataSource';
 import { DataSourceListFetchError, DataSourceSettingsFetchError } from '../../errors';
@@ -253,7 +253,7 @@ describe('settings', () => {
 
     expect(await getDataSourceInstanceSettings('uid-prom')).toBeUndefined();
     expect(getInstanceSettings).not.toHaveBeenCalled();
-    expect(logWarning).toHaveBeenCalledWith(SETTINGS_NOT_FOUND_STALE_LIST_WARNING, { uid: 'uid-prom' });
+    expect(logWarning).toHaveBeenCalledWith(MT_SETTINGS_NOT_FOUND_STALE_LIST_WARNING, { uid: 'uid-prom' });
   });
 
   it('rejects with DataSourceSettingsFetchError on a failed request, and retries on the next lookup', async () => {
@@ -262,7 +262,7 @@ describe('settings', () => {
 
     await expect(getDataSourceInstanceSettings('uid-prom')).rejects.toBeInstanceOf(DataSourceSettingsFetchError);
     expect(logError).toHaveBeenCalledWith(expect.anything(), { uid: 'uid-prom', status: '500' });
-    expect(logError.mock.calls[0][0].message).toBe(SETTINGS_FETCH_FAILED);
+    expect(logError.mock.calls[0][0].message).toBe(MT_SETTINGS_FETCH_FAILED);
 
     routes[PROM_URL] = { status: 200, body: promResource };
     expect((await getDataSourceInstanceSettings('uid-prom'))?.name).toBe('Prom');

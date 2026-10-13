@@ -10,8 +10,8 @@ import { getDatasourcePluginMetas } from '../../../pluginMeta/datasources';
 import {
   DIRECT_ACCESS_UNSUPPORTED_WARNING,
   MISSING_PLUGIN_DROPPED_WARNING,
-  SETTINGS_FETCH_FAILED,
-  SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
+  MT_SETTINGS_FETCH_FAILED,
+  MT_SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
 } from '../../constants';
 import { DataSourceSettingsFetchError } from '../../errors';
 import { logDataSourceInstanceError, logDataSourceWarning } from '../../logging';
@@ -77,7 +77,7 @@ export class MTDataSource implements DataSourceCacheSource {
     try {
       resource = await fetchDataSourceResource(connection);
     } catch (error) {
-      logDataSourceInstanceError(SETTINGS_FETCH_FAILED, error, {
+      logDataSourceInstanceError(MT_SETTINGS_FETCH_FAILED, error, {
         uid,
         status: isFetchError(error) ? String(error.status) : 'network',
       });
@@ -85,7 +85,7 @@ export class MTDataSource implements DataSourceCacheSource {
     }
 
     if (!resource) {
-      logDataSourceWarning(SETTINGS_NOT_FOUND_STALE_LIST_WARNING, { uid });
+      logDataSourceWarning(MT_SETTINGS_NOT_FOUND_STALE_LIST_WARNING, { uid });
       return undefined;
     }
 
