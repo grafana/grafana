@@ -50,7 +50,9 @@ function exploreSession(search: string): string | undefined {
 
 /**
  * Params that reopen a panel editor, settings view, inspect drawer, share drawer or kiosk mode; a row must bring
- * the user back to the dashboard, not into one of those.
+ * the user back to the dashboard, not into one of those. `DashboardSceneUrlSync.getKeys()` lists the scene's
+ * URL state; `viewPanel` is left in on purpose, a viewed panel is a state worth returning to, and `kiosk` is
+ * the chrome's, not the scene's.
  */
 const DASHBOARD_TRANSIENT_PARAMS = ['editPanel', 'editview', 'inspect', 'shareView', 'kiosk', 'drow'];
 

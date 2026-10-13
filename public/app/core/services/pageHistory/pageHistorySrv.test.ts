@@ -7,11 +7,16 @@ import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { PAGE_HISTORY_MAX_ENTRY_CHARS, PAGE_HISTORY_PERSIST_MS, PageHistorySrv } from './pageHistorySrv';
-import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry } from './types';
+import {
+  PAGE_HISTORY_MAX_ENTRY_CHARS,
+  PAGE_HISTORY_MAX_PER_KIND,
+  PAGE_HISTORY_PERSIST_MS,
+  PageHistorySrv,
+} from './pageHistorySrv';
+import { type PageHistoryEntry } from './types';
 
-/** UserStorage's localStorage fallback key for the anonymous user in org 1. */
-const STORAGE_KEY = 'grafana-page-history:0:org-1';
+/** UserStorage's localStorage fallback key for the anonymous user. */
+const STORAGE_KEY = 'grafana-page-history:0:history';
 
 const T0 = 1_700_000_000_000;
 const T1 = T0 + 60_000;
@@ -20,7 +25,6 @@ const T3 = T0 + 180_000;
 
 let stop: (() => void) | undefined;
 const originalUser = { ...config.bootData.user };
-const originalOrgId = contextSrv.user.orgId;
 const originalAuthenticatedBy = contextSrv.user.authenticatedBy;
 
 let chrome: AppChromeService;
@@ -70,11 +74,10 @@ function hideTab() {
 beforeEach(() => {
   jest.useFakeTimers({ now: T0 });
   window.localStorage.clear();
-  // Anonymous user in org 1: UserStorage keys on `uid || id`, the service keys on `contextSrv.user.orgId`.
+  // Anonymous user: UserStorage keys on `uid || id`.
   config.bootData.user.uid = '';
   config.bootData.user.id = 0;
   config.bootData.user.isSignedIn = false;
-  contextSrv.user.orgId = 1;
 });
 
 afterEach(() => {
@@ -83,7 +86,6 @@ afterEach(() => {
   jest.useRealTimers();
   jest.restoreAllMocks();
   Object.assign(config.bootData.user, originalUser);
-  contextSrv.user.orgId = originalOrgId;
   contextSrv.user.authenticatedBy = originalAuthenticatedBy;
   Reflect.deleteProperty(document, 'visibilityState');
 });
@@ -252,6 +254,25 @@ describe('PageHistorySrv', () => {
     });
   });
 
+  it('carries the previous page title onto a new row within one route until the new page sets its nav', async () => {
+    const srv = startAt('/a/grafana-irm-app/incidents/1');
+    await srv.getEntries();
+    // Both incident pages match `/a/:pluginId/*`, so the chrome keeps the first page's nav across the navigation.
+    chrome.setMatchedRoute({ path: '/a/:pluginId/*', component: () => null });
+    renderPage('Incidents', 'IRM', 'Incident 1');
+
+    locationService.push('/a/grafana-irm-app/incidents/2');
+    chrome.setMegaMenuOpen(true); // any chrome change before the new page renders
+
+    expect((await srv.getEntries())[0]).toEqual(
+      expect.objectContaining({ pathname: '/a/grafana-irm-app/incidents/2', title: 'Incident 1' })
+    );
+
+    renderPage('Incidents', 'IRM', 'Incident 2');
+
+    expect((await srv.getEntries()).map((e) => e.title)).toEqual(['Incident 2', 'Incident 1']);
+  });
+
   it('ignores the home dashboard rewrite', async () => {
     const srv = startAt('/');
     await srv.getEntries();
@@ -295,6 +316,24 @@ describe('PageHistorySrv', () => {
     expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/explore', '/d/abc', '/alerting/list']);
   });
 
+  it('drops a title that would push the row over the cap and keeps the URL', async () => {
+    const srv = startAt('/');
+    await srv.getEntries();
+    const base = JSON.stringify({ pathname: '/alerting/list', search: '?q=', lastVisited: T0 }).length;
+    const search = `?q=${'x'.repeat(PAGE_HISTORY_MAX_ENTRY_CHARS - base)}`; // the row sits exactly at the cap
+
+    locationService.push(`/alerting/list${search}`);
+    renderPage('Alert rules', 'Alerting');
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+
+    const row = { pathname: '/alerting/list', search, lastVisited: T0 };
+    expect(await srv.getEntries()).toEqual([{ kind: 'alerting', ...row }]);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!).entries).toEqual([row]);
+    // A row over the cap would be dropped on the next load.
+    stop?.();
+    expect((await startAt('/').getEntries()).map((e) => e.pathname)).toEqual(['/alerting/list']);
+  });
+
   it('persists 30s after the first change; later changes do not postpone it', async () => {
     const setSpy = jest.spyOn(store, 'set');
     const writes = () => setSpy.mock.calls.filter(([key]) => key === STORAGE_KEY);
@@ -336,6 +375,38 @@ describe('PageHistorySrv', () => {
     expect(await srv.getEntries()).toEqual(expected);
   });
 
+  it('keeps the title another browser stored for a visit this tab holds untitled', async () => {
+    const untitled = { pathname: '/alerting/list', search: '', lastVisited: T0 };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ clearedAt: 0, entries: [untitled] }));
+    const srv = startAt('/');
+    await srv.getEntries();
+    // The other browser's page set its nav and it wrote the title.
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ clearedAt: 0, entries: [{ ...untitled, title: 'Alert rules' }] })
+    );
+
+    locationService.push('/d/x');
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!).entries).toEqual([
+      { pathname: '/d/x', search: '', lastVisited: T0 },
+      { ...untitled, title: 'Alert rules' },
+    ]);
+  });
+
+  it('lets a page replace the title it stored for the same visit', async () => {
+    const srv = startAt('/alerting/grafana/abc/view');
+    renderPage('Alert rules', 'Alerting', 'Loading rule');
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+
+    renderPage('Alert rules', 'Alerting', 'High CPU');
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+
+    expect((await srv.getEntries())[0].title).toBe('High CPU');
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!).entries[0].title).toBe('High CPU');
+  });
+
   it('adopts a clear from another tab, drops the rows it predates and resumes recording the page the user is on', async () => {
     const srv = startAt('/d/a?from=now-1h&to=now');
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ clearedAt: T1, entries: [] }));
@@ -368,6 +439,44 @@ describe('PageHistorySrv', () => {
     );
 
     expect(await srv.getEntries()).toEqual([]);
+  });
+
+  it('keeps recording after a clear from a device whose clock is ahead', async () => {
+    const srv = startAt('/');
+    await srv.getEntries();
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ clearedAt: T1, entries: [] }));
+    await srv.getEntries(); // the clear is seen while this clock still reads T0
+
+    locationService.push('/d/abc');
+
+    // Stamped just past the clear, so no later sync takes the visit for one the clear predates.
+    const row: PageHistoryEntry = {
+      kind: 'dashboard',
+      uid: 'abc',
+      pathname: '/d/abc',
+      search: '',
+      lastVisited: T1 + 1,
+    };
+    expect(await srv.getEntries()).toEqual([row]);
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({
+      clearedAt: T1,
+      entries: stored([row]).entries,
+    });
+  });
+
+  it('clears from a device whose clock lags the last clear', async () => {
+    const srv = startAt('/');
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ clearedAt: T1, entries: [{ pathname: '/d/abc', search: '', lastVisited: T1 + 1 }] })
+    );
+    expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/d/abc']);
+
+    await srv.clear(); // this clock reads T0, before the clear already stored
+
+    expect(await srv.getEntries()).toEqual([]);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({ clearedAt: T1 + 1, entries: [] });
   });
 
   it('keeps a failed write in memory and retries it with the next change or when the tab is hidden', async () => {
@@ -513,7 +622,15 @@ describe('PageHistorySrv', () => {
   });
 
   describe('seeding from the recently-viewed impressions', () => {
+    // impressionSrv keys its localStorage list on the org.
     const IMPRESSIONS_KEY = 'dashboard_impressions-1';
+    const originalOrgId = contextSrv.user.orgId;
+    beforeEach(() => {
+      contextSrv.user.orgId = 1;
+    });
+    afterEach(() => {
+      contextSrv.user.orgId = originalOrgId;
+    });
     const uids = Array.from({ length: 12 }, (_, i) => `d${i + 1}`);
     const seededRows = uids.slice(0, PAGE_HISTORY_MAX_PER_KIND).map((uid) => ({ pathname: `/d/${uid}`, search: '' }));
     const seededEntries = seededRows.map((row) => ({ kind: 'dashboard', uid: row.pathname.slice(3), ...row }));

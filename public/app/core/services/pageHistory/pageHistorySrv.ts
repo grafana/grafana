@@ -6,15 +6,18 @@ import { locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { type AppChromeService, getPageTitle } from 'app/core/components/AppChrome/AppChromeService';
 import { isUrlRewrite } from 'app/core/navigation/urlRewrite';
-import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { parseJsonWithSchema } from 'app/core/utils/parseJsonWithSchema';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 import { classifyPage, pageKey, recordableSearch } from './classifyPage';
-import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry, type PageHistoryKind } from './types';
+import { type PageHistoryEntry, type PageHistoryKind } from './types';
 
 const STORAGE_SERVICE = 'grafana-page-history';
+/** One envelope per user; the user-storage namespace already separates orgs. */
+const STORAGE_KEY = 'history';
+/** Newest entries kept per kind, so a burst of one kind of page never evicts the others. */
+export const PAGE_HISTORY_MAX_PER_KIND = 10;
 /** Ordinary URL changes coalesce into one write per window; hiding the tab and `clear()` write at once. */
 export const PAGE_HISTORY_PERSIST_MS = 30_000;
 /**
@@ -39,13 +42,14 @@ const StoredEntrySchema = z.object({
 
 type StoredEntry = z.infer<typeof StoredEntrySchema>;
 
-/** Everything stored under the org key. `clearedAt` is the epoch ms of the last clear, 0 when never cleared. */
+/** Everything stored under the key. `clearedAt` is the epoch ms of the last clear, 0 when never cleared. */
 const StoredSchema = z.object({
   clearedAt: z.number().int().min(0).max(MAX_EPOCH_MS),
   entries: z.array(z.unknown()),
 });
 
-interface Stored {
+/** The stored copy as read: its `clearedAt`, and the rows that validated and still classify, as entries. */
+interface Snapshot {
   clearedAt: number;
   entries: PageHistoryEntry[];
 }
@@ -55,15 +59,25 @@ function toStored({ pathname, search, lastVisited, title }: PageHistoryEntry): S
 }
 
 /**
- * Per page, keeps the entry with the larger `lastVisited`; `current` wins ties. Result is newest first; rows
- * without a time come last in their given order.
+ * Whether `candidate` is the later revision of the page `existing` describes. A later visit wins; between equal
+ * visits a titled row beats an untitled one, since the title arrives after the visit and carries no time of its
+ * own; otherwise `existing` stays.
+ */
+function supersedes(candidate: PageHistoryEntry, existing: PageHistoryEntry): boolean {
+  const byVisit = (candidate.lastVisited ?? 0) - (existing.lastVisited ?? 0);
+  return byVisit !== 0 ? byVisit > 0 : Boolean(candidate.title) && !existing.title;
+}
+
+/**
+ * Per page, keeps the later revision (`supersedes`); `current` is seen first, so it wins exact ties. Result is
+ * newest first; rows without a time come last in their given order.
  */
 function mergeByPage(current: PageHistoryEntry[], stored: PageHistoryEntry[]): PageHistoryEntry[] {
   const byKey = new Map<string, PageHistoryEntry>();
   for (const entry of [...current, ...stored]) {
     const key = pageKey(entry);
     const existing = byKey.get(key);
-    if (!existing || (entry.lastVisited ?? 0) > (existing.lastVisited ?? 0)) {
+    if (!existing || supersedes(entry, existing)) {
       byKey.set(key, entry);
     }
   }
@@ -88,7 +102,7 @@ function capEntries(entries: PageHistoryEntry[]): PageHistoryEntry[] {
  * Validates the stored copy row by row so one bad or oversized entry drops only itself. Rows that no longer
  * classify are dropped. Anything but the envelope loads as empty.
  */
-function parseStored(raw: string | null): Stored {
+function parseStored(raw: string | null): Snapshot {
   const { clearedAt, entries: rows } = parseJsonWithSchema(raw, StoredSchema, { clearedAt: 0, entries: [] });
   const entries: PageHistoryEntry[] = [];
   for (const row of rows) {
@@ -118,7 +132,8 @@ function serialize(clearedAt: number, entries: PageHistoryEntry[]): string {
  * hiding the tab and `clear()` write immediately; every `getEntries()` and the startup load each cost one read.
  * A write is one read plus one write, plus one more pair per version conflict. A failed write is retried by the
  * next change or tab hide, never on a timer. Overlapping operations in one tab serialize on `UserStorage`'s
- * lock; a change made while a write is in flight is picked up by the next one.
+ * lock; a change made while a write is in flight is picked up by the next one. The write on tab hide is a plain
+ * request, so closing the tab can lose the changes of the current window.
  */
 export class PageHistorySrv {
   /** Newest first by construction; `lastVisited` is only used for merging and display. */
@@ -128,7 +143,6 @@ export class PageHistorySrv {
   /** Memory holds a change that storage has not confirmed. */
   private dirty = false;
   private readonly storage = new UserStorage(STORAGE_SERVICE);
-  private readonly key = `org-${contextSrv.user.orgId}`;
   private ready: Promise<void> | undefined;
 
   private readonly scheduleWrite = throttle(() => this.write(), PAGE_HISTORY_PERSIST_MS, {
@@ -186,9 +200,9 @@ export class PageHistorySrv {
       return;
     }
     await this.ready;
-    this.clearedAt = Date.now();
+    this.clearedAt = this.now();
     this.entries = [];
-    this.persist();
+    this.dirty = true;
     await this.writeNow();
   }
 
@@ -201,7 +215,8 @@ export class PageHistorySrv {
 
   /**
    * First use for this user and org: carries the newest dashboards over from the recently-viewed impressions.
-   * They have no visit time, so they sort after every recorded page and are the first to be evicted.
+   * They have no visit time, so they sort after every recorded page and are the first to be evicted. A bridge
+   * for users who had a Recent tab before page history; remove once that is a few releases back.
    */
   private async seed(): Promise<void> {
     let uids: string[] = [];
@@ -218,10 +233,10 @@ export class PageHistorySrv {
   }
 
   /** Folds the stored copy into memory: the latest clear wins and drops the rows it predates; rows merge by page. */
-  private absorb(stored: Stored): void {
-    this.clearedAt = Math.max(this.clearedAt, stored.clearedAt);
+  private absorb(snapshot: Snapshot): void {
+    this.clearedAt = Math.max(this.clearedAt, snapshot.clearedAt);
     this.entries = capEntries(
-      mergeByPage(this.entries, stored.entries).filter(
+      mergeByPage(this.entries, snapshot.entries).filter(
         // Rows without a time (seeded) survive only while nothing was ever cleared.
         (entry) => this.clearedAt === 0 || (entry.lastVisited ?? 0) > this.clearedAt
       )
@@ -235,7 +250,7 @@ export class PageHistorySrv {
   private async sync(persist: boolean): Promise<'merged' | 'empty' | 'unreachable'> {
     let outcome: 'merged' | 'empty' = 'empty';
     try {
-      await this.storage.updateItem(this.key, (raw) => {
+      await this.storage.updateItem(STORAGE_KEY, (raw) => {
         outcome = raw === null ? 'empty' : 'merged';
         // Runs again after a version conflict, so this must stay idempotent: `absorb` merges by key.
         this.absorb(parseStored(raw));
@@ -266,7 +281,7 @@ export class PageHistorySrv {
     const entry: PageHistoryEntry = {
       ...page,
       search: recordableSearch(page, location.search),
-      lastVisited: Date.now(),
+      lastVisited: this.now(),
       // Kept until the page sets its nav again, in case the user leaves before it does.
       title: existing?.title,
     };
@@ -278,7 +293,13 @@ export class PageHistorySrv {
     this.persist();
   }
 
-  /** Stamps the chrome's title onto the row of the page the user is on, if that page has one. */
+  /**
+   * Stamps the chrome's title onto the row of the page the user is on, if that page has one. The chrome does
+   * not say which page set its nav, and keeps the previous page's nav across a navigation within one route
+   * (dashboard to dashboard, one app page to another), so a new row can briefly carry the previous page's title;
+   * the page's own nav replaces it once set. A title that would push the row over the size cap is dropped and
+   * the row keeps its URL.
+   */
   private setTitle(title: string | undefined): void {
     if (!title) {
       return;
@@ -290,8 +311,21 @@ export class PageHistorySrv {
     if (index === -1 || this.entries[index].title === title) {
       return;
     }
-    this.entries[index] = { ...this.entries[index], title };
+    const titled = { ...this.entries[index], title };
+    if (!fitsEntryCap(toStored(titled))) {
+      return;
+    }
+    this.entries = this.entries.map((entry, i) => (i === index ? titled : entry));
     this.persist();
+  }
+
+  /**
+   * Revision stamp for a change made now: the wall clock, but always past the last clear seen. A device whose
+   * clock lags the one that cleared would otherwise record visits the clear predates, and they would vanish on
+   * every sync until its clock caught up.
+   */
+  private now(): number {
+    return Math.max(Date.now(), this.clearedAt + 1);
   }
 
   /** Something changed: written at the end of the current window. */

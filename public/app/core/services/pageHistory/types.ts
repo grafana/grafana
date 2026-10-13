@@ -1,6 +1,3 @@
-/** Newest entries kept per kind, so a burst of one kind of page never evicts the others. */
-export const PAGE_HISTORY_MAX_PER_KIND = 10;
-
 /**
  * What a visited URL resolves to, with the pathname it was derived from (base-url-less, no trailing slash);
  * one history row per identity. Derived again on every load from the stored pathname and search, never
