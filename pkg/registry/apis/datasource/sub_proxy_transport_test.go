@@ -173,8 +173,10 @@ func TestSubProxyREST_ReusesConnectionsWithCurrentUserHeaders(t *testing.T) {
 	provider := &proxyMockDatasourceProvider{ds: ds}
 	provider.instanceSettings = &backend.DataSourceInstanceSettings{UID: "ds-1", Type: "test", URL: upstream.URL, JSONData: []byte(`{}`)}
 	builder := newProxyTestBuilder(provider)
-	builder.proxyDeps.OAuthTokenService = nil
-	builder.proxyDeps.ProxyCfg.SendUserHeader = true
+	deps, err := builder.proxyDependencies(t.Context(), nil)
+	require.NoError(t, err)
+	deps.OAuthTokenService = nil
+	deps.ProxyCfg.SendUserHeader = true
 	storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
 	t.Cleanup(storage.Destroy)
 	for _, tc := range []struct {
@@ -189,7 +191,7 @@ func TestSubProxyREST_ReusesConnectionsWithCurrentUserHeaders(t *testing.T) {
 		{"stacks-1", "alice", "config-2", "rotated", 3},
 		{"stacks-2", "carol", "config-2", "rotated", 4},
 	} {
-		builder.proxyDeps.TransportConfigKey = tc.config
+		deps.TransportConfigKey = tc.config
 		provider.instanceSettings.DecryptedSecureJSONData = map[string]string{"password": tc.secret}
 		userID := int64(1)
 		switch tc.login {
