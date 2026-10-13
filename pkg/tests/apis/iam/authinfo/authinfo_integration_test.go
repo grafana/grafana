@@ -272,6 +272,9 @@ func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.D
 		if mode < rest.Mode4 {
 			require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
 		}
+		if mode >= rest.Mode1 {
+			requireAuthInfoInUnified(t, helper, created.GetName(), true, "sanity check: the object should reach unified storage")
+		}
 
 		err = authInfoClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
@@ -284,6 +287,9 @@ func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.D
 
 		if mode < rest.Mode4 {
 			require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once the object is deleted")
+		}
+		if mode >= rest.Mode1 {
+			requireAuthInfoInUnified(t, helper, created.GetName(), false, "AuthInfo object should be gone from unified storage")
 		}
 	})
 
@@ -337,11 +343,7 @@ func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, m
 		}
 		if mode >= rest.Mode1 {
 			// Dual-write modes write to unified storage in the background.
-			require.EventuallyWithT(t, func(c *assert.CollectT) {
-				exists, err := authInfoExistsInUnified(helper, created.GetName())
-				require.NoError(c, err)
-				assert.True(c, exists)
-			}, 5*time.Second, 50*time.Millisecond, "sanity check: the object should reach unified storage")
+			requireAuthInfoInUnified(t, helper, created.GetName(), true, "sanity check: the object should reach unified storage")
 		}
 
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -369,13 +371,19 @@ func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, m
 
 		// Reads in dual-write modes are served from legacy, so check unified storage directly.
 		if mode >= rest.Mode1 {
-			require.EventuallyWithT(t, func(c *assert.CollectT) {
-				exists, err := authInfoExistsInUnified(helper, created.GetName())
-				require.NoError(c, err)
-				assert.False(c, exists)
-			}, 5*time.Second, 50*time.Millisecond, "AuthInfo object should be gone from unified storage")
+			requireAuthInfoInUnified(t, helper, created.GetName(), false, "AuthInfo object should be gone from unified storage")
 		}
 	})
+}
+
+// requireAuthInfoInUnified waits for the object to be present (or absent) in unified storage.
+func requireAuthInfoInUnified(t *testing.T, helper *apis.K8sTestHelper, name string, want bool, msg string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		exists, err := authInfoExistsInUnified(helper, name)
+		require.NoError(c, err)
+		assert.Equal(c, want, exists)
+	}, 5*time.Second, 50*time.Millisecond, msg)
 }
 
 func authInfoExistsInUnified(helper *apis.K8sTestHelper, name string) (bool, error) {
