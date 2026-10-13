@@ -7,11 +7,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/admission"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
@@ -68,17 +71,33 @@ func TestMutateDashboardLifecycle(t *testing.T) {
 	})
 }
 
-// getOnlyStorage serves Get from a fixed set of objects; the guard tests need nothing else.
+// getOnlyStorage serves Get from a fixed set of objects, and Watch from a fake
+// watcher; the guard tests need nothing else.
 type getOnlyStorage struct {
 	grafanarest.Storage
 	objects map[string]runtime.Object
+	getErr  error
+	updated []string
+	watcher *watch.FakeWatcher
 }
 
 func (s *getOnlyStorage) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+	if s.getErr != nil {
+		return nil, s.getErr
+	}
 	if obj, ok := s.objects[name]; ok {
 		return obj.DeepCopyObject(), nil
 	}
 	return nil, apierrors.NewNotFound(dashv2.DashboardResourceInfo.GroupResource(), name)
+}
+
+func (s *getOnlyStorage) Update(_ context.Context, name string, _ rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	s.updated = append(s.updated, name)
+	return nil, false, nil
+}
+
+func (s *getOnlyStorage) Watch(context.Context, *metainternalversion.ListOptions) (watch.Interface, error) {
+	return s.watcher, nil
 }
 
 func TestLifecycleGuardHidesDraftsFromOtherUsers(t *testing.T) {
@@ -95,6 +114,34 @@ func TestLifecycleGuardHidesDraftsFromOtherUsers(t *testing.T) {
 	require.True(t, apierrors.IsNotFound(err), "another user doesn't see it")
 	_, err = guard.Get(lifecycleUser("carol", identity.RoleAdmin), "draft", &metav1.GetOptions{})
 	require.NoError(t, err, "org admins see it")
+}
+
+func TestLifecycleGuardRefusesWritesItCantCheck(t *testing.T) {
+	store := &getOnlyStorage{getErr: apierrors.NewServiceUnavailable("storage is down")}
+	guard := newLifecycleGuard(store, dashv2.DashboardResourceInfo.GroupResource())
+	_, _, err := guard.Update(lifecycleUser("bob", identity.RoleEditor), "draft", nil, nil, nil, false, &metav1.UpdateOptions{})
+	require.True(t, apierrors.IsServiceUnavailable(err))
+	require.Empty(t, store.updated, "a write the guard couldn't check never reaches storage")
+
+	store.getErr = nil
+	_, _, err = guard.Update(lifecycleUser("bob", identity.RoleEditor), "new", nil, nil, nil, false, &metav1.UpdateOptions{})
+	require.NoError(t, err, "a dashboard that doesn't exist yet is left to storage")
+	require.Equal(t, []string{"new"}, store.updated)
+}
+
+func TestLifecycleGuardWatchHidesDraftsFromOtherUsers(t *testing.T) {
+	store := &getOnlyStorage{watcher: watch.NewFakeWithChanSize(3, false)}
+	guard := newLifecycleGuard(store, dashv2.DashboardResourceInfo.GroupResource())
+	events, err := guard.(rest.Watcher).Watch(lifecycleUser("bob", identity.RoleEditor), &metainternalversion.ListOptions{})
+	require.NoError(t, err)
+	defer events.Stop()
+
+	store.watcher.Add(lifecycleDashboard("alices-draft", 1, map[string]string{
+		utils.LabelKeyLifecycle: utils.LifecycleDraft, utils.LabelKeyLifecycleOwner: "alice",
+	}, nil))
+	store.watcher.Add(lifecycleDashboard("published", 1, nil, nil))
+	event := <-events.ResultChan()
+	require.Equal(t, "published", event.Object.(*dashv2.Dashboard).Name, "another user's draft is filtered out")
 }
 
 func TestLifecycleSearchRequirements(t *testing.T) {

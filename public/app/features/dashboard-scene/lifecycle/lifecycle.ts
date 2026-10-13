@@ -3,13 +3,12 @@ import { t } from '@grafana/i18n';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 // Keep in sync with pkg/apimachinery/utils/meta.go.
-export const LabelKeyLifecycle = 'grafana.app/lifecycle';
-export const LabelKeyLifecycleOwner = 'grafana.app/lifecycle-owner';
-export const AnnoKeyOrigin = 'grafana.app/origin';
-export const AnnoKeyOriginRef = 'grafana.app/origin-ref';
-export const AnnoKeyUpdatedTimestamp = 'grafana.app/updatedTimestamp';
+const LabelKeyLifecycle = 'grafana.app/lifecycle';
+const AnnoKeyOrigin = 'grafana.app/origin';
+const AnnoKeyOriginRef = 'grafana.app/origin-ref';
+const AnnoKeyUpdatedTimestamp = 'grafana.app/updatedTimestamp';
 
-export type DashboardLifecycle = 'draft' | 'published';
+type DashboardLifecycle = 'draft' | 'published';
 
 export interface DashboardLifecycleInfo {
   lifecycle: DashboardLifecycle;
@@ -32,7 +31,7 @@ function stringAnnotation(annotations: Partial<Record<string, unknown>>, key: st
   return typeof value === 'string' ? value : undefined;
 }
 
-export function lifecycleFromMetadata(meta: LifecycleMeta | undefined): DashboardLifecycleInfo {
+function lifecycleFromMetadata(meta: LifecycleMeta | undefined): DashboardLifecycleInfo {
   const labels = meta?.labels ?? {};
   const annotations = meta?.annotations ?? {};
   const value = labels[LabelKeyLifecycle];
@@ -51,7 +50,7 @@ export function getDashboardLifecycle(dashboard: DashboardScene): DashboardLifec
 }
 
 /** Days until an idle draft moves to Recently deleted, or idle pending changes are discarded. */
-export const DRAFT_IDLE_DAYS = 30;
+const DRAFT_IDLE_DAYS = 30;
 
 export function daysUntilExpiry(updatedAt: Date | undefined, now = new Date()): number | undefined {
   if (!updatedAt || Number.isNaN(updatedAt.getTime())) {

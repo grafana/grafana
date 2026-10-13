@@ -22,7 +22,7 @@ function same(a: unknown, b: unknown): boolean {
 }
 
 export type SpecChangeType = 'added' | 'edited' | 'removed';
-export type SpecChangeTarget = 'panel' | 'variable' | 'layout' | 'settings';
+type SpecChangeTarget = 'panel' | 'variable' | 'layout' | 'settings';
 
 export interface SpecChange {
   type: SpecChangeType;

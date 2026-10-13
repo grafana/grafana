@@ -11,17 +11,17 @@ import { preloadPlugins } from 'app/features/plugins/pluginPreloader';
  * PENDING_CHANGES_EXTENSION_POINT. A dashboard opens with one set of them, read-only, under a
  * banner, when the page URL has `?pendingChanges=<id>` or the embedded dashboard view is given
  * an id. **Show original** switches to the saved dashboard; the choice is kept per dashboard
- * and id for the browser tab, so a reload keeps it. The page and the embedded view share this
- * state.
+ * and id for the browser tab, so a reload keeps it. The page and the embedded view each keep
+ * their own preview, so the same dashboard can be open in both.
  */
 
 /** Plugins register a DashboardPendingChangesLoader here (addFunction). */
-export const PENDING_CHANGES_EXTENSION_POINT = 'grafana/dashboard/pending-changes/v1';
+const PENDING_CHANGES_EXTENSION_POINT = 'grafana/dashboard/pending-changes/v1';
 
 /** The dashboard page query parameter naming the pending changes to preview. */
 export const PENDING_CHANGES_QUERY_PARAM = 'pendingChanges';
 
-export type ApplyPendingChangesResult = { applied: true } | { applied: false; currentGeneration: number };
+type ApplyPendingChangesResult = { applied: true } | { applied: false; currentGeneration: number };
 
 /** One set of pending changes to a dashboard, as its plugin supplies them. */
 export interface DashboardPendingChanges {
@@ -42,12 +42,12 @@ export interface DashboardPendingChanges {
   update?(): void;
 }
 
-export type DashboardPendingChangesLoader = (request: {
-  uid: string;
-  id: string;
-}) => Promise<DashboardPendingChanges | null>;
+type DashboardPendingChangesLoader = (request: { uid: string; id: string }) => Promise<DashboardPendingChanges | null>;
 
 const ORIGINAL_VIEW_KEY = 'grafana.dashboard.pendingChanges.showOriginal';
+
+/** Where a dashboard is shown: the dashboard page, or the embedded dashboard view. */
+export type PendingChangesView = 'page' | 'embedded';
 
 export interface PendingChangePreview {
   id: string;
@@ -57,6 +57,8 @@ export interface PendingChangePreview {
 }
 
 const previews = new Map<string, PendingChangePreview>();
+
+const previewKey = (view: PendingChangesView, uid: string) => `${view}/${uid}`;
 
 const viewKey = (uid: string, id: string) => `${uid}/${id}`;
 
@@ -89,13 +91,17 @@ export function setShowOriginal(uid: string, id: string, showOriginal: boolean) 
   }
 }
 
-/** The pending changes state of a dashboard as last loaded, if it has any. */
-export function getPendingChangePreview(uid: string | undefined): PendingChangePreview | undefined {
-  return uid ? previews.get(uid) : undefined;
+/** The pending changes state of a dashboard as last loaded in this view, if it has any. */
+export function getPendingChangePreview(
+  view: PendingChangesView,
+  uid: string | undefined
+): PendingChangePreview | undefined {
+  return uid ? previews.get(previewKey(view, uid)) : undefined;
 }
 
+/** Whether the dashboard page shows pending changes to this dashboard. */
 export function isPreviewingPendingChanges(uid: string | undefined): boolean {
-  return Boolean(getPendingChangePreview(uid)?.previewing);
+  return Boolean(getPendingChangePreview('page', uid)?.previewing);
 }
 
 function pendingChangesEnabled(): boolean {
@@ -132,13 +138,14 @@ async function getLoaders(): Promise<DashboardPendingChangesLoader[]> {
  * the scene should show them. Failures leave the saved dashboard on screen.
  */
 export async function loadPendingChangePreview(
+  view: PendingChangesView,
   uid: string | undefined,
   id: string | undefined
 ): Promise<PendingChangePreview | undefined> {
   if (!uid) {
     return undefined;
   }
-  previews.delete(uid);
+  previews.delete(previewKey(view, uid));
   if (!id || !pendingChangesEnabled()) {
     return undefined;
   }
@@ -146,15 +153,19 @@ export async function loadPendingChangePreview(
     const pending = await load({ uid, id }).catch(() => null);
     if (pending) {
       const preview = { id, pending, previewing: !isShowingOriginal(uid, id) };
-      previews.set(uid, preview);
+      previews.set(previewKey(view, uid), preview);
       return preview;
     }
   }
   return undefined;
 }
 
-/** Forgets a dashboard's pending changes after they were applied or discarded. */
+/** Forgets a dashboard's pending changes, in every view, after they were applied or discarded. */
 export function clearPendingChangePreview(uid: string, id: string) {
-  previews.delete(uid);
+  for (const view of ['page', 'embedded'] as const) {
+    if (previews.get(previewKey(view, uid))?.id === id) {
+      previews.delete(previewKey(view, uid));
+    }
+  }
   setShowOriginal(uid, id, false);
 }

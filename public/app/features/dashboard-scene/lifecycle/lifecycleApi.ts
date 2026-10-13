@@ -2,6 +2,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { getAPINamespace } from 'app/api/utils';
 import { type Resource } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 /** The dashboard API version lifecycle operations use; publishes write through it. */
 function dashboardsURL() {
@@ -50,15 +51,11 @@ export async function getSavedDashboard(uid: string): Promise<SavedDashboard> {
   };
 }
 
-/** The spec of a dashboard at a past generation, if history still has it. */
-export async function getDashboardSpecAtGeneration(uid: string, generation: number): Promise<unknown | undefined> {
-  const list = await getBackendSrv().get<{ items?: Array<{ metadata: { generation?: number }; spec: unknown }> }>(
-    dashboardsURL(),
-    { labelSelector: 'grafana.app/get-history=true', fieldSelector: `metadata.name=${uid}`, limit: 100 },
-    undefined,
-    { showErrorAlert: false }
-  );
-  return list.items?.find((item) => item.metadata.generation === generation)?.spec;
+/** The spec of a dashboard at a past generation; rejects when history no longer has it. */
+export async function getDashboardSpecAtGeneration(uid: string, generation: number): Promise<unknown> {
+  // Pages through the whole history: a version can be well past the first page.
+  const [version] = await (await getDashboardAPI('v2')).getDashboardHistoryVersions(uid, [generation]);
+  return version?.spec;
 }
 
 export function publishDraft(uid: string, body: { folder?: string; title?: string }): Promise<LifecycleResource> {

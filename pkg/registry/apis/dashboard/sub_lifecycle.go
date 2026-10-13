@@ -14,10 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 const maxLifecycleRequestBytes = 64 * 1024
@@ -88,16 +86,6 @@ func (c *lifecycleConnector) badRequest(name, msg string) error {
 	return apierrors.NewBadRequest(fmt.Sprintf("%s %q: %s", c.resource.Resource, name, msg))
 }
 
-// serviceContext runs storage calls as Grafana itself after the connector has checked
-// the requester's ownership and permissions.
-func serviceContext(ctx context.Context) (context.Context, error) {
-	ns, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	return identity.WithServiceIdentityContext(ctx, ns.OrgID), nil
-}
-
 // loadDraft loads a draft the requester owns (or administers).
 func (c *lifecycleConnector) loadDraft(ctx context.Context, name string) (runtime.Object, utils.GrafanaMetaAccessor, error) {
 	obj, err := c.store.Get(ctx, name, &metav1.GetOptions{})
@@ -166,18 +154,6 @@ func copyObjectForUpdate(obj runtime.Object, edit func(map[string]any)) (runtime
 	})
 }
 
-func specOf(obj runtime.Object) (any, error) {
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return nil, err
-	}
-	var m map[string]any
-	if err := json.Unmarshal(data, &m); err != nil {
-		return nil, err
-	}
-	return m["spec"], nil
-}
-
 func roundTrip(obj runtime.Object, edit func(map[string]any)) (runtime.Object, error) {
 	data, err := json.Marshal(obj)
 	if err != nil {
@@ -214,12 +190,6 @@ func annotationsOf(obj utils.GrafanaMetaAccessor) map[string]string {
 		return annotations
 	}
 	return map[string]string{}
-}
-
-func setOptional(m map[string]string, key, value string) {
-	if value != "" {
-		m[key] = value
-	}
 }
 
 func messageOr(message, fallback string) string {

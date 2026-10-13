@@ -1457,7 +1457,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
         manager.fetchDashboard(options)
       ),
       options.route === DashboardRoutes.Normal || options.route === DashboardRoutes.Embedded
-        ? loadPendingChangePreview(options.uid, id)
+        ? loadPendingChangePreview(options.route === DashboardRoutes.Normal ? 'page' : 'embedded', options.uid, id)
         : undefined,
     ]);
     return this.withPendingChanges(rsp, options, preview);

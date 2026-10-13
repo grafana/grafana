@@ -23,18 +23,20 @@ import {
   clearPendingChangePreview,
   type DashboardPendingChanges,
   getPendingChangePreview,
+  type PendingChangesView,
   setShowOriginal,
 } from './pendingChangePreview';
 import { useChangeHighlights } from './useChangeHighlights';
 import { usePendingChangeDiff } from './usePendingChangeDiff';
 
-/** Where the banner renders: above a dashboard page, or inside an embedded dashboard view. */
-type BannerPlacement = 'page' | 'embedded';
-
 interface Props {
   dashboard: DashboardScene;
-  placement?: BannerPlacement;
-  /** Loads the dashboard again after the preview is switched, applied, or discarded. */
+  /** Where the banner renders: above a dashboard page, or inside an embedded dashboard view. */
+  placement?: PendingChangesView;
+  /**
+   * Loads the dashboard again in this view after a draft is published or discarded, or
+   * pending changes are switched, applied, or discarded. Defaults to the dashboard page.
+   */
   reload?: () => Promise<void>;
 }
 
@@ -55,15 +57,24 @@ export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload
   if (!enabled || !uid || isEditing) {
     return null;
   }
+  const load = reload ?? (() => reloadDashboardPage(uid));
   if (info.lifecycle === 'draft') {
-    return <DraftBanner dashboard={dashboard} uid={uid} updatedAt={info.updatedAt} inset={inset} />;
+    return (
+      <DraftBanner
+        dashboard={dashboard}
+        uid={uid}
+        updatedAt={info.updatedAt}
+        inset={inset}
+        placement={placement}
+        reload={load}
+      />
+    );
   }
   // The scene was loaded for this state (see pendingChangePreview.ts), so it is current.
-  const preview = getPendingChangePreview(uid);
+  const preview = getPendingChangePreview(placement, uid);
   if (!preview) {
     return null;
   }
-  const load = reload ?? (() => reloadDashboardPage(uid));
   return preview.previewing ? (
     <PendingChangesBanner
       key={dashboard.state.key}
@@ -88,11 +99,15 @@ function DraftBanner({
   uid,
   updatedAt,
   inset,
+  placement,
+  reload,
 }: {
   dashboard: DashboardScene;
   uid: string;
   updatedAt?: Date;
   inset: BannerInset;
+  placement: PendingChangesView;
+  reload: () => Promise<void>;
 }) {
   const styles = useStyles2(getStyles, inset);
   const [publishing, setPublishing] = useState(false);
@@ -136,7 +151,7 @@ function DraftBanner({
             setPublishing(false);
             appEvents.emit(AppEvents.alertSuccess, [t('dashboard-scene.lifecycle.published', 'Dashboard published')]);
             getDashboardScenePageStateManager().removeSceneCache(uid);
-            await getDashboardScenePageStateManager().reloadDashboard({});
+            await reload();
           }}
         />
       )}
@@ -153,7 +168,13 @@ function DraftBanner({
           onConfirm={async () => {
             await discardDashboard(uid);
             getDashboardScenePageStateManager().removeSceneCache(uid);
-            locationService.push('/dashboards');
+            setDiscarding(false);
+            // The page leaves the discarded draft; an embedded view stays with its host.
+            if (placement === 'page') {
+              locationService.push('/dashboards');
+            } else {
+              await reload();
+            }
           }}
         />
       )}

@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -75,12 +76,36 @@ func (g *lifecycleGuard) Delete(ctx context.Context, name string, deleteValidati
 	return g.Storage.Delete(ctx, name, deleteValidation, options)
 }
 
+// Watch passes the store's watch through without events for dashboards the
+// requester can't see. Wrapping the store would otherwise drop the endpoint.
+func (g *lifecycleGuard) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	watcher, ok := g.Storage.(rest.Watcher)
+	if !ok {
+		return nil, apierrors.NewMethodNotSupported(g.resource, "watch")
+	}
+	events, err := watcher.Watch(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	return watch.Filter(events, func(event watch.Event) (watch.Event, bool) {
+		switch event.Type {
+		case watch.Error, watch.Bookmark:
+			return event, true
+		}
+		return event, canAccessPrivateLifecycleObject(ctx, event.Object)
+	}), nil
+}
+
 // checkExisting refuses writes to a hidden dashboard. A missing dashboard is left
-// to the underlying storage so creates and not-found errors behave as before.
+// to the underlying storage so creates and not-found errors behave as before; any
+// other read failure refuses the write rather than skipping the check.
 func (g *lifecycleGuard) checkExisting(ctx context.Context, name string) error {
 	obj, err := g.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
+	if apierrors.IsNotFound(err) {
 		return nil
+	}
+	if err != nil {
+		return err
 	}
 	if !canAccessPrivateLifecycleObject(ctx, obj) {
 		return apierrors.NewNotFound(g.resource, name)

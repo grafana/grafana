@@ -663,7 +663,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/dashboard/drafts',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardDraftsPage" */ 'app/features/dashboard-scene/lifecycle/DashboardDraftsPage')
+        () =>
+          import(
+            /* webpackChunkName: "DashboardDraftsPage" */ 'app/features/dashboard-scene/lifecycle/DashboardDraftsPage'
+          )
       ),
     },
     {

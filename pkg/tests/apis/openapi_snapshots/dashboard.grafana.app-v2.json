@@ -808,6 +808,55 @@
           }
         }
       ]
+    },
+    "/apis/dashboard.grafana.app/v2/namespaces/{namespace}/dashboards/{name}/publish": {
+      "post": {
+        "tags": [
+          "Dashboard"
+        ],
+        "description": "connect POST requests to publish of Dashboard",
+        "operationId": "createDashboardPublish",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.Dashboard"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2",
+          "kind": "Dashboard"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Dashboard",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
