@@ -34,7 +34,7 @@ import {
  * needs the first, and the permission gates need the second. That is why the
  * metas can be read synchronously further down.
  *
- * Prune after buildStaticNavTree has sorted, not before: pruning first removes
+ * Prune after buildNavTree has sorted, not before: pruning first removes
  * siblings, and the index fallback in sortNavTree would then number the
  * remaining unweighted ones differently. applyAppSubUrl goes last of all, and
  * runs exactly once over the finished tree.
@@ -47,7 +47,7 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  return applyAppSubUrl(pruneEmptyNavSections(buildStaticNavTree()));
+  return applyAppSubUrl(pruneEmptyNavSections(buildNavTree()));
 }
 
 /**
@@ -78,7 +78,7 @@ const NAV_ENTRIES: NavEntryBuilder[] = [
  * into their target sections before the sort. Attachment shells that ended up
  * empty are left in place for getInitialNavTree to prune.
  */
-export function buildStaticNavTree(): NavModelItem[] {
+export function buildNavTree(): NavModelItem[] {
   const tree = [getHomeNode(), ...buildEntries(NAV_ENTRIES)];
   return sortNavTree(applyRegisteredNavEntries(tree));
 }
