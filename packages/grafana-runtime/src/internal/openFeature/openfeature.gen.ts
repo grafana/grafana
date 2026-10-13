@@ -216,6 +216,8 @@ export const FlagKeys = {
   GrafanaScopesDashboardsMegaMenu: "grafana.scopesDashboardsMegaMenu",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
+  /** Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service */
+  GrafanaSmtpSettingsPage: "grafana.smtpSettingsPage",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
@@ -1485,6 +1487,17 @@ export const useFlagGrafanaScopesDashboardsMegaMenu = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.secretsReferenceValueUI", false, options).value;
+};
+
+/**
+ * Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service
+ *
+ * **Details:**
+ * - flag key: `grafana.smtpSettingsPage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSmtpSettingsPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.smtpSettingsPage", false, options).value;
 };
 
 /**
