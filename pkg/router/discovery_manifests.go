@@ -516,9 +516,9 @@ const indexHTMLFoot = "</body>\n</html>\n"
 // renderIndexHTML renders the markdown index as a plain page. Raw HTML in the
 // markdown is dropped, so manifest text can only ever be text.
 func renderIndexHTML(markdown []byte) []byte {
-	renderer := blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
+	renderer := relativeLinksRenderer{blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
 		Flags: blackfriday.SkipHTML | blackfriday.Safelink,
-	})
+	})}
 	body := blackfriday.Run(markdown,
 		blackfriday.WithExtensions(blackfriday.NoIntraEmphasis|blackfriday.Tables|blackfriday.SpaceHeadings),
 		blackfriday.WithRenderer(renderer))
@@ -526,6 +526,24 @@ func renderIndexHTML(markdown []byte) []byte {
 	page = append(page, indexHTMLHead...)
 	page = append(page, body...)
 	return append(page, indexHTMLFoot...)
+}
+
+// relativeLinksRenderer renders a link or image only when its target is a
+// path on this server, the only kind the index writes. Any other keeps just
+// its text, so a gap in escaping can never link the page elsewhere.
+type relativeLinksRenderer struct{ *blackfriday.HTMLRenderer }
+
+func (r relativeLinksRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool) blackfriday.WalkStatus {
+	if (node.Type == blackfriday.Link || node.Type == blackfriday.Image) && !isRelativePath(string(node.Destination)) {
+		return blackfriday.GoToNext // skip the tag; its children render as text
+	}
+	return r.HTMLRenderer.RenderNode(w, node, entering)
+}
+
+// isRelativePath reports whether target is a path on this server. "//host"
+// and "/\\host" are excluded: browsers read both as another host.
+func isRelativePath(target string) bool {
+	return strings.HasPrefix(target, "/") && !strings.HasPrefix(target, "//") && !strings.HasPrefix(target, "/\\")
 }
 
 // mdEscaper backslash-escapes the characters that are active inside a markdown
@@ -554,9 +572,15 @@ func mdText(s string) string {
 
 // mdLink links text, shown as code, to target. The caller URL-escapes every
 // part of target it did not write itself, which leaves nothing in it that can
-// end the link.
+// end the link. Brackets are dropped from the text: markdown ends a link's
+// text at the first "]" even inside a code span, where it cannot be escaped,
+// so a name could otherwise close the text early and supply its own target.
 func mdLink(text, target string) string {
-	return "[" + mdCode(text) + "](" + target + ")"
+	label := mdCode(strings.NewReplacer("[", "", "]", "").Replace(text))
+	if !isRelativePath(target) {
+		return label // the index only links to this server
+	}
+	return "[" + label + "](" + target + ")"
 }
 
 // mdCode renders s as an inline code span that can sit in a table cell.

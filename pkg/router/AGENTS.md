@@ -200,7 +200,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     Its requests have no `group` metric label.
   - Manifest text is plugin-controlled. `mdText` and `mdCode` keep it to one line, unable to break
     tables or code spans, and bounded in length. The HTML page renders the markdown with raw HTML
-    dropped and only safe links.
+    dropped, and keeps only links to paths on this server (`isRelativePath`); any other keeps
+    just its text. Link text drops `[` and `]`, which a code span cannot escape.
   - It needs authentication like `/apis`, GET and HEAD only. In middleware mode it covers only
     the router's groups; the embedded server's groups are listed in `/apis` only.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.

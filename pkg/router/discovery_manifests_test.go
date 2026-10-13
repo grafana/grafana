@@ -6,6 +6,7 @@ import (
 	"maps"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -415,6 +416,46 @@ func TestManifestTextCannotBreakTheIndex(t *testing.T) {
 		}
 	}
 	require.Contains(t, page, "[x](https://evil.example)", "the text itself survives, as text")
+}
+
+// TestIndexLinksCannotBeTakenOverByNames serves groups whose names hold link
+// syntax, which aggregate targets can report, and checks that no link in the
+// page leads anywhere but the router.
+func TestIndexLinksCannotBeTakenOverByNames(t *testing.T) {
+	names := []string{"x](https://evil.example/a)", "[y](https://evil.example/b)", "z]](https://evil.example/c)[w"}
+	backends := make([]Backend, 0, len(names)+1)
+	for i, name := range names {
+		backends = append(backends, &fakeBackend{key: strconv.Itoa(i), group: testAPIGroup(name, "v1")})
+	}
+	manifest := testManifestBackends()[0].(*fakeManifestBackend)
+	manifest.group.Name = "m](https://evil.example/d)"
+	manifest.manifest.Group = manifest.group.Name
+	backends = append(backends, manifest)
+	docs, _ := buildManifestDocsFrom(t.Context(), sortedManifestBackends(backends), nil)
+	_, page := docs.indexDocs()
+
+	hrefs := regexp.MustCompile(`href="([^"]*)"`).FindAllStringSubmatch(string(page.body), -1)
+	require.NotEmpty(t, hrefs)
+	for _, href := range hrefs {
+		require.True(t, isRelativePath(href[1]), "link to %q", href[1])
+	}
+	require.NotContains(t, string(page.body), "https://evil.example/a\">")
+}
+
+// TestRenderIndexHTMLKeepsOnlyRelativeLinks renders raw markdown, past the
+// escaping, to check the renderer drops every link that leaves the server.
+func TestRenderIndexHTMLKeepsOnlyRelativeLinks(t *testing.T) {
+	// In markdown, a doubled backslash is one literal backslash: /\evil.example.
+	page := string(renderIndexHTML([]byte(`[a](https://evil.example/a) [b](//evil.example/b) [c](/\\evil.example/c) ` +
+		"[d](javascript:alert(1)) [e](mailto:x@evil.example) ![f](https://evil.example/f.png) <https://evil.example/g> [ok](/apis/x)")))
+	hrefs := regexp.MustCompile(`(?:href|src)="([^"]*)"`).FindAllStringSubmatch(page, -1)
+	require.Len(t, hrefs, 1)
+	require.Equal(t, "/apis/x", hrefs[0][1])
+	require.NotContains(t, page, "<img")
+	require.Contains(t, page, "<p>a b c d) e f https://evil.example/g", "dropped links keep their text")
+
+	require.Equal(t, "`/a`", mdLink("/a", "https://evil.example"))
+	require.Equal(t, "[`/a`](/a)", mdLink("/a", "/a"))
 }
 
 func TestIndexLinksEscapeNamesAndKeys(t *testing.T) {
