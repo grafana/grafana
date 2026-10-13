@@ -47,7 +47,8 @@ func (c *AMConfigDB) UnmarshalJSON(b []byte) error {
 		if ir == nil {
 			continue
 		}
-		if err := validateInhibitRuleLabelNames(ir.SourceMatch, ir.TargetMatch, ir.Equal); err != nil {
+		// InhibitionRuleDB only has Equal to validate (no SourceMatch/TargetMatch).
+		if err := validateInhibitRuleLabelNames(nil, nil, ir.Equal); err != nil {
 			return err
 		}
 	}
@@ -75,19 +76,12 @@ func (mr *ManagedRoutesDB) UnmarshalJSON(b []byte) error {
 // ManagedInhibitionRulesDB is the persisted "managed_inhibition_rules" map.
 type ManagedInhibitionRulesDB map[string]*InhibitionRuleDB
 
-// InhibitionRuleDB is the persisted representation of an inhibition rule with metadata. Its
-// matcher fields are a flattened copy of config.InhibitRule's, rather than an embed - embedding
-// would hit the same Unmarshaler-promotion trap ReceiverDB warns about above, since
-// config.InhibitRule has its own UnmarshalYAML (used to get its matcher validation for free via
-// the yaml.Unmarshal divert below; label-name validation now runs explicitly in
-// AMConfigDB.UnmarshalJSON instead, via validateInhibitRuleLabelNames).
+// InhibitionRuleDB is the persisted representation of a managed inhibition rule. Only a subset
+// of config.InhibitRule's fields are here: SourceMatch/SourceMatchRE/TargetMatch/TargetMatchRE
+// (the deprecated map/regex-based matchers) are not supported.
 type InhibitionRuleDB struct {
 	Name           string                `json:"name" yaml:"name"`
-	SourceMatch    map[string]string     `yaml:"source_match,omitempty" json:"source_match,omitempty"`
-	SourceMatchRE  common.MatchRegexps   `yaml:"source_match_re,omitempty" json:"source_match_re,omitempty"`
 	SourceMatchers common.Matchers       `yaml:"source_matchers,omitempty" json:"source_matchers,omitempty"`
-	TargetMatch    map[string]string     `yaml:"target_match,omitempty" json:"target_match,omitempty"`
-	TargetMatchRE  common.MatchRegexps   `yaml:"target_match_re,omitempty" json:"target_match_re,omitempty"`
 	TargetMatchers common.Matchers       `yaml:"target_matchers,omitempty" json:"target_matchers,omitempty"`
 	Equal          []string              `yaml:"equal,omitempty" json:"equal,omitempty"`
 	Provenance     definition.Provenance `json:"provenance,omitempty"`
