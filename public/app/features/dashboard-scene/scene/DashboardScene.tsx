@@ -58,7 +58,6 @@ import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } 
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
 
 import {
-  AnnoKeyInsights,
   AnnoKeyManagerAllowsEdits,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
@@ -701,8 +700,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Serializer annotations are mutated outside scene state when editing the cross-dashboard
-   * variables selection or Insights questions. Restore them from the edit-session baseline when discarding.
+   * Serializer annotations are mutated outside scene state when editing the selection.
+   * Restore them from the edit-session baseline when discarding.
    */
   private restoreSerializerAnnotationsFromInitialState() {
     // Drop any in-flight refresh that captured the discarded denylist.
@@ -718,13 +717,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         annotations[key] = value;
       }
     }
-    for (const key of [AnnoKeyUseCrossDashboardVariables, AnnoKeyInsights] as const) {
-      const initialValue = this._initialState?.meta.k8s?.annotations?.[key];
-      if (typeof initialValue === 'string') {
-        annotations[key] = initialValue;
-      } else {
-        delete annotations[key];
-      }
+    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
+    if (typeof initialValue === 'string') {
+      annotations[AnnoKeyUseCrossDashboardVariables] = initialValue;
+    } else {
+      delete annotations[AnnoKeyUseCrossDashboardVariables];
     }
     this.serializer.setK8SAnnotations(annotations);
   }

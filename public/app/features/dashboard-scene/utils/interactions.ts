@@ -198,7 +198,6 @@ export const DashboardInteractions = {
     item:
       | 'configure'
       | 'configure_dropdown'
-      | 'configure_insight'
       | 'edit'
       | 'settings'
       | 'copy'

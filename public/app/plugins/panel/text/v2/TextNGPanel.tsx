@@ -24,7 +24,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import config from 'app/core/config';
-import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import {
@@ -41,11 +40,8 @@ import { TextNGCodeView } from './TextNGCodeView';
 import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
-import { TextNGModePicker } from './editor/TextNGModePicker';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
-import { InsightView } from './insight/lazy';
-import { usePanelDashboard } from './insight/usePanelDashboard';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
@@ -63,43 +59,6 @@ const viewModeByPanel = new WeakMap<EventBus, ViewMode>();
 export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
-  // Insight mode has no content template, so it shares none of the render, pagination, or
-  // editor machinery below. Split into its own component so neither side runs the other's hooks.
-  if (props.options.mode === TextMode.Insight) {
-    return <TextNGInsightPanel {...props} />;
-  }
-
-  return <TextNGContentPanel {...props} />;
-}
-
-function TextNGInsightPanel({ id, options, onOptionsChange, fitContent }: Props) {
-  const { app } = usePanelContext();
-  const dashboard = usePanelDashboard();
-  const isEditing = app === CoreApp.PanelEditor;
-  const content = options.content ?? defaultOptions.content ?? '';
-
-  return (
-    <InsightView
-      dashboard={dashboard}
-      sessionId={getVizPanelKeyForPanelId(id)}
-      options={options.insight ?? { question: '', sourcePanelKeys: [], followUps: [] }}
-      fitContent={fitContent && !isEditing}
-      // Leaving insight mode keeps whatever content the panel already had, so switching
-      // back and forth does not lose a template.
-      modePicker={
-        isEditing ? (
-          <TextNGModePicker
-            mode={options.mode}
-            codeLanguage={options.code?.language}
-            onChange={(change) => onOptionsChange(applyEditorChange(options, { ...change, content }))}
-          />
-        ) : undefined
-      }
-    />
-  );
-}
-
-function TextNGContentPanel(props: Props) {
   const { app } = usePanelContext();
   const {
     eventBus,

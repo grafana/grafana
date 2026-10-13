@@ -102,13 +102,6 @@ export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
  */
 export const AnnoKeyUseCrossDashboardVariables = 'grafana.app/useCrossDashboardVariables';
 
-/**
- * JSON annotation with the saved Insights questions shown in the dashboard sidebar.
- * Value shape: `{"version":1,"questions":[{"id":string,"question":string,"sourcePanelKeys":string[]}]}`.
- * An empty question list omits this key.
- */
-export const AnnoKeyInsights = 'grafana.app/insights';
-
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
 
@@ -149,7 +142,6 @@ type GrafanaClientAnnotations = {
   [AnnoKeyDashboardGnetId]?: string;
 
   [AnnoKeyUseCrossDashboardVariables]?: string;
-  [AnnoKeyInsights]?: string;
 };
 
 // Labels

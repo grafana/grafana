@@ -1,34 +1,18 @@
 import { type DataFrame, FieldConfigProperty, PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import {
-  defaultCodeOptions,
-  defaultInsightOptions,
-  defaultOptions,
-  type Options,
-  RenderMode,
-  TextMode,
-} from '../panelcfg.gen';
+import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
-import {
-  InsightBreakdownEditor,
-  InsightFollowUpsEditor,
-  InsightQuestionEditor,
-  InsightSourcesEditor,
-} from './insight/lazy';
 import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 import { isTextNewFeaturesEnabled } from './utils';
 
 const showForData = (_options: Options, data?: DataFrame[]) => isTextNewFeaturesEnabled() && hasRenderableData(data);
 
-const showForInsight = (options: Options) => options.mode === TextMode.Insight;
-
 export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   const category = [t('textng.category-text', 'Text')];
   const dataCategory = [t('textng.category-data', 'Data')];
-  const insightCategory = [t('textng.category-insight', 'Insight')];
 
   // Everything is edited in the panel itself, so options are registered here
   // only so their defaults are applied.
@@ -84,71 +68,6 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
     },
     showIf: (options, data) => showForData(options, data) && options.renderMode === RenderMode.PerRow,
   });
-
-  // Insight mode has no text to write, so unlike the other modes its inputs live here
-  // rather than in the panel's own editor.
-  builder
-    .addCustomEditor({
-      id: 'insight.question',
-      path: 'insight.question',
-      name: t('textng.insight.question-label', 'Question'),
-      description: t(
-        'textng.insight.question-description',
-        'What Assistant answers using only the data the source panels show.'
-      ),
-      category: insightCategory,
-      defaultValue: defaultInsightOptions.question,
-      editor: InsightQuestionEditor,
-      showIf: showForInsight,
-    })
-    .addCustomEditor({
-      id: 'insight.sourcePanelKeys',
-      path: 'insight.sourcePanelKeys',
-      name: t('textng.insight.sources-label', 'Source panels'),
-      description: t(
-        'textng.insight.sources-description',
-        'Assistant answers using only the data these panels show. Selecting a tab or row includes every panel in it.'
-      ),
-      category: insightCategory,
-      defaultValue: defaultInsightOptions.sourcePanelKeys,
-      editor: InsightSourcesEditor,
-      showIf: showForInsight,
-    })
-    .addCustomEditor({
-      id: 'insight.followUps',
-      path: 'insight.followUps',
-      name: t('textng.insight.follow-ups-editor-label', 'Follow-up questions'),
-      description: t(
-        'textng.insight.follow-ups-description',
-        'Offered after the answer. Each one is answered inside the panel against the same data.'
-      ),
-      category: insightCategory,
-      defaultValue: defaultInsightOptions.followUps,
-      editor: InsightFollowUpsEditor,
-      showIf: showForInsight,
-    })
-    .addBooleanSwitch({
-      path: 'insight.compareWithPreviousPeriod',
-      name: t('textng.insight.compare-label', 'Compare with previous period'),
-      description: t(
-        'textng.insight.compare-description',
-        'Also captures the source panels over the period just before the time range, so the answer can say what changed. Runs extra queries when asking.'
-      ),
-      category: insightCategory,
-      showIf: showForInsight,
-    })
-    .addCustomEditor({
-      id: 'insight.breakdownVariable',
-      path: 'insight.breakdownVariable',
-      name: t('textng.insight.breakdown-label', 'Break down by'),
-      description: t(
-        'textng.insight.breakdown-description',
-        'Optional. Captures the source panels that use this variable once per selected value, so the answer can compare them. Runs extra queries when asking.'
-      ),
-      category: insightCategory,
-      editor: InsightBreakdownEditor,
-      showIf: showForInsight,
-    });
 };
 
 const SUPPORTED_FIELD_CONFIGS = new Set<FieldConfigProperty>([

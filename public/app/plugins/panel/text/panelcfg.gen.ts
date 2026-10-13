@@ -13,7 +13,6 @@
 export enum TextMode {
   Code = 'code',
   HTML = 'html',
-  Insight = 'insight',
   Markdown = 'markdown',
 }
 
@@ -54,39 +53,6 @@ export const defaultCodeOptions: Partial<CodeOptions> = {
   showMiniMap: false,
 };
 
-/**
- * Insight mode asks Assistant a saved question about the data shown by the selected panels.
- */
-export interface InsightOptions {
-  /**
-   * Name of a dashboard variable to break the answer down by. The source panels are captured once per value.
-   */
-  breakdownVariable?: string;
-  /**
-   * Also send the source panels over the period just before the time range, so the answer can say what changed.
-   */
-  compareWithPreviousPeriod?: boolean;
-  /**
-   * Questions the viewer can ask after the answer, each answered inside the panel.
-   */
-  followUps: Array<string>;
-  /**
-   * The question Assistant answers about the source panels.
-   */
-  question: string;
-  /**
-   * Scene keys of the panels whose loaded data Assistant may use, such as "panel-3".
-   * A "section:" prefixed key references every panel in a tab or row; "section:[]" references every panel on the dashboard.
-   */
-  sourcePanelKeys: Array<string>;
-}
-
-export const defaultInsightOptions: Partial<InsightOptions> = {
-  followUps: [],
-  question: '',
-  sourcePanelKeys: [],
-};
-
 export interface Options {
   code?: CodeOptions;
   content: string;
@@ -94,7 +60,6 @@ export interface Options {
    * Index of the selected frame, when the query returns more than one
    */
   frameIndex?: number;
-  insight?: InsightOptions;
   mode: TextMode;
   /**
    * Rows per page once a per-row render pages its content. Unset fits the page to the panel height.

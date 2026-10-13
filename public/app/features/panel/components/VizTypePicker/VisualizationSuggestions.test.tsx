@@ -9,7 +9,7 @@ import {
   FieldType,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/utils/unconfiguredPanelUtils';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import * as getAllSuggestionsModule from '../../suggestions/getAllSuggestions';
 
