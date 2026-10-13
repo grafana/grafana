@@ -23,11 +23,10 @@ const (
 )
 
 type authzClientSettings struct {
-	remoteAddress                  string
-	certFile                       string
-	mode                           clientMode
-	loadBalancingEnabled           bool
-	forcePermissionRoleActionIndex bool
+	remoteAddress        string
+	certFile             string
+	mode                 clientMode
+	loadBalancingEnabled bool
 
 	token            string
 	tokenExchangeURL string
@@ -48,7 +47,6 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 	s := &authzClientSettings{}
 	// Cache duration applies to the server cache in proc, so it's relevant for both modes.
 	s.cacheTTL = authzSection.Key("cache_ttl").MustDuration(30 * time.Second)
-	s.forcePermissionRoleActionIndex = authzSection.Key("force_permission_role_action_index").MustBool(false)
 
 	s.mode = mode
 	if s.mode == clientModeInproc {
@@ -76,6 +74,12 @@ type RBACServerSettings struct {
 	CacheTTL                       time.Duration
 	LocalFolderCacheTTL            time.Duration
 	ForcePermissionRoleActionIndex bool
+}
+
+func readEmbeddedRBACServerSettings(cfg *setting.Cfg) RBACServerSettings {
+	return RBACServerSettings{
+		ForcePermissionRoleActionIndex: cfg.SectionWithEnvOverrides("authorization").Key("force_permission_role_action_index").MustBool(false),
+	}
 }
 
 type FolderAPISettings struct {

@@ -9,17 +9,17 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestReadAuthzClientSettingsForcePermissionRoleActionIndex(t *testing.T) {
+func TestReadEmbeddedRBACServerSettingsForcePermissionRoleActionIndex(t *testing.T) {
 	tests := []struct {
 		name      string
 		ini       string
 		env       string
 		wantForce bool
 	}{
-		{name: "default disabled", ini: "[authorization]\nmode = inproc\n"},
-		{name: "enabled in ini", ini: "[authorization]\nmode = inproc\nforce_permission_role_action_index = true\n", wantForce: true},
-		{name: "disabled in ini", ini: "[authorization]\nmode = inproc\nforce_permission_role_action_index = false\n"},
-		{name: "environment overrides ini", ini: "[authorization]\nmode = inproc\nforce_permission_role_action_index = false\n", env: "true", wantForce: true},
+		{name: "default disabled", ini: "[authorization]\n"},
+		{name: "enabled in ini", ini: "[authorization]\nforce_permission_role_action_index = true\n", wantForce: true},
+		{name: "disabled in ini", ini: "[authorization]\nforce_permission_role_action_index = false\n"},
+		{name: "environment overrides ini", ini: "[authorization]\nforce_permission_role_action_index = false\n", env: "true", wantForce: true},
 	}
 
 	for _, test := range tests {
@@ -33,10 +33,8 @@ func TestReadAuthzClientSettingsForcePermissionRoleActionIndex(t *testing.T) {
 			require.NoError(t, err)
 			cfg.Raw = parsed
 
-			got, err := readAuthzClientSettings(cfg)
-			require.NoError(t, err)
-			require.Equal(t, clientModeInproc, got.mode)
-			require.Equal(t, test.wantForce, got.forcePermissionRoleActionIndex)
+			got := readEmbeddedRBACServerSettings(cfg)
+			require.Equal(t, test.wantForce, got.ForcePermissionRoleActionIndex)
 		})
 	}
 }

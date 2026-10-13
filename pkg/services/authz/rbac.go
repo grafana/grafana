@@ -111,6 +111,7 @@ func ProvideAuthZClients(
 		}
 		return newAuthZClients(accessClient, rbacClient), nil
 	default:
+		serverCfg := readEmbeddedRBACServerSettings(cfg)
 		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
 		if !ok {
 			return nil, errors.New("access control service does not support local user permission evaluation")
@@ -139,7 +140,7 @@ func ProvideAuthZClients(
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
-				store.NewSQLPermissionStore(sql, tracer, authCfg.forcePermissionRoleActionIndex),
+				store.NewSQLPermissionStore(sql, tracer, serverCfg.ForcePermissionRoleActionIndex),
 			),
 			userPermissionsEvaluator,
 			nil,
