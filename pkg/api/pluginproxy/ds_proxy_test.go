@@ -1521,7 +1521,7 @@ func TestDataSourceProxyLocalRouteAccess(t *testing.T) {
 			ctx := newReqContext(t)
 			ctx.SignedInUser = &user.SignedInUser{OrgID: 1, OrgRole: tc.role}
 			if tc.scope != "" {
-				ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"datasources:query": {tc.scope}}}
+				ctx.Permissions = map[int64]map[string][]string{1: {"datasources:query": {tc.scope}}}
 			}
 			proxy, err := setupDSProxyTest(t, ctx, &datasources.DataSource{UID: "ds-1"}, nil, "")
 			require.NoError(t, err)
