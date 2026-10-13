@@ -57,8 +57,12 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 		return nil, fmt.Errorf("expected exactly one frame for wide format, but got %d", len(frames))
 	}
 	inputFrame := frames[0]
-	if inputFrame.Rows() > 1 {
-		return nil, fmt.Errorf("expected no more than one row in the frame, but got %d", inputFrame.Rows())
+	// Check every field: Rows() reads only the first one, and fields merged from
+	// numeric-multi frames can have different lengths.
+	for _, field := range inputFrame.Fields {
+		if field.Len() > 1 {
+			return nil, fmt.Errorf("expected no more than one row in the frame, but field %q has %d rows", field.Name, field.Len())
+		}
 	}
 
 	var (
