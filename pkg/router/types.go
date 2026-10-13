@@ -35,8 +35,9 @@ type DiscoveryProvider interface {
 // discovery depends on the caller. What the router advertises for it is only
 // a default: when the unregistered-group handler answers root discovery for a
 // request, that answer replaces the default. next never serves these groups,
-// so its answer is merged with them instead. Its discovery and OpenAPI
-// documents are never cached across callers.
+// so its answer is merged with them instead. The router never caches its
+// discovery and OpenAPI documents across callers; the backend decides what
+// callers may share.
 type CallerScopedDiscovery interface {
 	CallerScopedDiscovery()
 }

@@ -107,7 +107,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
-| Single-tenant (ST) fallback | `st_fallback.go` |
+| Single-tenant (ST) fallback, and its per-stack discovery cache | `st_fallback.go`, `st_discovery_cache.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
 | Dummy loader (the default when nothing is configured) | `dummy.go` |
 
@@ -153,10 +153,18 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   not a stack (such as `*`) or whose stack doesn't exist gets the defaults: the groups polled from
   `st_discovery_url`, served from the snapshot without a request. Group and version discovery
   (`/apis/<g>[/<v>]`, `/openapi/v3/apis/<g>/<v>`) follow the same rule.
+- **The ST discovery cache** (`stackDiscoveryCache`) shares what the fallback fetches among every
+  caller that the same stack serves, root discovery included. It is keyed by destination, path,
+  query, `Accept` and `Accept-Encoding`, and expires entries after
+  `singleTenantDiscoveryCacheTTL`. It stores only a 200 that `cacheableOpenAPIResponse` accepts,
+  so a refused caller never replaces a good entry, and a stack's private or per-caller answer is
+  never shared. It is bounded by `st_discovery_cache_bytes`; a document larger than
+  `maxSingleTenantCachedDiscoveryBytes` streams to the caller and isn't stored.
 - **Caller-scoped backends** (`CallerScopedDiscovery`, such as ST groups) are only defaults: when
   the ST fallback answers root discovery for a request, their groups are left out and its view is
-  used. An answer from `next` never replaces them. Their aggregated discovery
-  and OpenAPI documents are never cached across callers.
+  used. An answer from `next` never replaces them. The router's own discovery and OpenAPI caches
+  never hold them; the source decides what callers may share, as the ST discovery cache does per
+  stack.
   - Root discovery through the fallback is bounded by `discoveryFetchTimeout`.
   - All discovery through the fallback, root or proxied, is sent with `Cache-Control: private`,
     so a shared cache can't serve one caller's documents to another.
@@ -234,6 +242,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
+| `st_discovery_cache_bytes` | Total size of the discovery documents the ST fallback caches per stack. Default 64 MiB; `0` disables the cache. |
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.

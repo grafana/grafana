@@ -128,6 +128,10 @@ type singleTenantFallback struct {
 	cooldown  *cooldown
 	status    pollStatus
 	lookupsBy stackLookupCounts
+
+	// discoveryDocs is nil when discovery is not cached.
+	discoveryDocs                  *stackDiscoveryCache
+	discoveryHits, discoveryMisses atomic.Uint64
 }
 
 type singleTenantFallbackOptions struct {
@@ -136,11 +140,13 @@ type singleTenantFallbackOptions struct {
 	// group, so it may need to be larger than the host cache.
 	breakerCacheSize int
 	// lookupRate is the sustained grafana.com lookups per second; zero disables the limit.
-	lookupRate    float64
-	lookupBurst   int
-	resolveHost   func(context.Context, int64) (singleTenantStack, error)
-	discoveryHost *url.URL
-	transport     *http.Transport
+	lookupRate  float64
+	lookupBurst int
+	// discoveryCacheBytes bounds the discovery documents cached per stack; zero disables the cache.
+	discoveryCacheBytes int
+	resolveHost         func(context.Context, int64) (singleTenantStack, error)
+	discoveryHost       *url.URL
+	transport           *http.Transport
 }
 
 func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFallback, error) {
@@ -168,6 +174,16 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		limiter = rate.NewLimiter(rate.Limit(opts.lookupRate), opts.lookupBurst)
 	}
 
+	var discoveryDocs *stackDiscoveryCache
+	switch {
+	case opts.discoveryCacheBytes < 0:
+		return nil, fmt.Errorf("single-tenant discovery cache size must not be negative")
+	case opts.discoveryCacheBytes > 0:
+		if discoveryDocs, err = newStackDiscoveryCache(opts.discoveryCacheBytes); err != nil {
+			return nil, fmt.Errorf("single-tenant discovery cache: %w", err)
+		}
+	}
+
 	if opts.resolveHost == nil {
 		return nil, fmt.Errorf("single-tenant host resolver is required")
 	}
@@ -184,6 +200,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		breakers:      breakers,
 		cache:         cache,
 		lookupLimiter: limiter,
+		discoveryDocs: discoveryDocs,
 		resolveHost:   opts.resolveHost,
 		discoveryHost: opts.discoveryHost,
 		transport:     opts.transport,
@@ -283,7 +300,7 @@ func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Reque
 			http.NotFound(w, req)
 			return
 		}
-		st.forward(host, parts[1], w, req)
+		st.forward(host, parts[1], w, req, nil)
 		return
 	}
 	// Namespaced requests require a nonempty group, so discovery cannot collide with them.
@@ -311,12 +328,12 @@ func (st *singleTenantFallback) serveDiscovery(w http.ResponseWriter, req *http.
 	case err != nil:
 		http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
 	case host != nil:
-		st.forward(host, "", w, req)
+		st.forwardDiscovery(host, w, req)
 	case st.discoveryHost == nil || isRootDiscoveryPath(req.URL.Path):
 		http.NotFound(w, req)
 	default:
 		// The discovery host supplies metadata, never tenant resources or mutations.
-		st.forward(&singleTenantTarget{url: st.discoveryHost}, "", w, req)
+		st.forwardDiscovery(&singleTenantTarget{url: st.discoveryHost}, w, req)
 	}
 }
 
@@ -338,8 +355,9 @@ func isSingleTenantDiscoveryPath(path string) bool {
 	return ok
 }
 
-// forward proxies req to host. An empty group means discovery.
-func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, w http.ResponseWriter, req *http.Request) {
+// forward proxies req to host. An empty group means discovery. observe, when
+// set, sees the response as the stack sent it, before it is changed here.
+func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, w http.ResponseWriter, req *http.Request, observe func(*http.Response)) {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			rewriteOutbound(pr, host.url)
@@ -352,6 +370,9 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err
+			}
+			if observe != nil {
+				observe(resp)
 			}
 			if group == "" {
 				// The same discovery URL answers each caller from their own
