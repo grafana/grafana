@@ -12,6 +12,7 @@ labels:
 [//]: # '/docs/sources/datasources/pyroscope/_index.md'
 [//]: # '/docs/sources/datasources/mysql/_index.md'
 [//]: # '/docs/sources/datasources/aws-cloudwatch/_index.md'
+[//]: # '/docs/sources/datasources/influxdb/_index.md'
 [//]: #
 [//]: # 'If you make changes to this file, verify that the meaning and content are not changed in any place where the file is included.'
 [//]: # 'Any links should be fully qualified and not relative: /docs/grafana/ instead of ../grafana/.'
