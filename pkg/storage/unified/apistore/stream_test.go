@@ -75,7 +75,7 @@ func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 			},
 		}
 
-		decoder := newStreamDecoder(client, newFunc, predicate, &jsonSerializer{}, func() {}, true)
+		decoder := newStreamDecoder(client, newFunc, predicate, (&jsonSerializer{}).Decode, func() {}, true)
 
 		// First bookmark should have the initial-events-end annotation.
 		action, obj, err := decoder.Decode()
@@ -113,7 +113,7 @@ func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 			},
 		}
 
-		decoder := newStreamDecoder(client, newFunc, predicate, &jsonSerializer{}, func() {}, false)
+		decoder := newStreamDecoder(client, newFunc, predicate, (&jsonSerializer{}).Decode, func() {}, false)
 
 		for range 2 {
 			action, obj, err := decoder.Decode()
@@ -156,7 +156,7 @@ func TestStreamDecoderExpiredResourceVersion(t *testing.T) {
 				cancel()
 			}
 			client := &errWatchClient{ctx: ctx, err: resourceutil.NewResourceVersionExpiredError(1234)}
-			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, (&jsonSerializer{}).Decode, cancel, false)
 			t.Cleanup(decoder.Close)
 
 			action, obj, err := decoder.Decode()
@@ -252,7 +252,7 @@ func TestStreamDecoderGRPCTermination(t *testing.T) {
 				}
 				return tc.err
 			})
-			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, (&jsonSerializer{}).Decode, cancel, false)
 			t.Cleanup(decoder.Close)
 
 			action, obj, err := decoder.Decode()
@@ -285,7 +285,7 @@ func TestStreamDecoderCallerCancellation(t *testing.T) {
 		<-stream.Context().Done()
 		return status.FromContextError(stream.Context().Err()).Err()
 	})
-	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, (&jsonSerializer{}).Decode, cancel, false)
 	t.Cleanup(decoder.Close)
 
 	cancel()
@@ -321,7 +321,7 @@ func TestStreamDecoderSerializerContext(t *testing.T) {
 			return JSONSerializer().Decode(gotCtx, data, into)
 		},
 	}
-	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, serializer, cancel, false)
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, serializer.Decode, cancel, false)
 	t.Cleanup(decoder.Close)
 	action, obj, err := decoder.Decode()
 	require.NoError(t, err)
@@ -337,16 +337,27 @@ func TestStreamDecoderSerializerContext(t *testing.T) {
 
 func TestFolderNormalizationOnReadAndWatch(t *testing.T) {
 	for _, enabled := range []bool{false, true} {
-		for _, parent := range []string{"", "general", "parent"} {
-			t.Run(fmt.Sprintf("enabled=%t,parent=%q", enabled, parent), func(t *testing.T) {
+		for _, tc := range []struct {
+			name    string
+			parent  string
+			present bool
+		}{
+			{name: "missing"},
+			{name: "empty", present: true},
+			{name: "general", parent: "general", present: true},
+			{name: "parent", parent: "parent", present: true},
+		} {
+			t.Run(fmt.Sprintf("enabled=%t,parent=%s", enabled, tc.name), func(t *testing.T) {
 				s := &Storage{serializer: JSONSerializer(), opts: StorageOptions{EnableFolderSupport: enabled}}
-				obj := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "example.com/v1", "kind": "Widget", "metadata": map[string]interface{}{"name": "test", "annotations": map[string]interface{}{utils.AnnoKeyFolder: parent}}}}
-				data, err := s.serializer.Encode(t.Context(), obj)
-				require.NoError(t, err)
-				expected := parent
-				if enabled && parent == "" {
+				obj := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "example.com/v1", "kind": "Widget", "metadata": map[string]interface{}{"name": "test"}}}
+				expected := tc.parent
+				if tc.present {
+					obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: tc.parent})
+				} else if enabled {
 					expected = "general"
 				}
+				data, err := s.serializer.Encode(t.Context(), obj)
+				require.NoError(t, err)
 				read, err := s.convertToObject(t.Context(), data, &unstructured.Unstructured{})
 				require.NoError(t, err)
 				require.Equal(t, expected, read.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
@@ -367,9 +378,8 @@ func TestFolderNormalizationOnReadAndWatch(t *testing.T) {
 							Type: event.typeID, Resource: current,
 							Previous: &resourcepb.WatchEvent_Resource{Value: data, Version: 41},
 						}}}
-						decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, s.serializer, func() {}, false)
+						decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, s.decodeObject, func() {}, false)
 						t.Cleanup(decoder.Close)
-						decoder.decodeObject = s.convertToObject
 						action, watched, err := decoder.Decode()
 						require.NoError(t, err)
 						require.Equal(t, event.action, action)
@@ -403,7 +413,7 @@ func TestStreamDecoderDeletedEvents(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{event}}
-			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), func() {}, false)
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer().Decode, func() {}, false)
 			t.Cleanup(decoder.Close)
 			action, obj, err := decoder.Decode()
 			require.NoError(t, err)
@@ -419,7 +429,7 @@ func TestStreamDecoderDeletedEventWithoutObject(t *testing.T) {
 		Type:     resourcepb.WatchEvent_DELETED,
 		Resource: &resourcepb.WatchEvent_Resource{Version: 13},
 	}}}
-	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), func() {}, false)
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer().Decode, func() {}, false)
 	t.Cleanup(decoder.Close)
 
 	action, obj, err := decoder.Decode()
@@ -454,7 +464,7 @@ func TestStreamDecoderDeletedEventsSharedStorage(t *testing.T) {
 		},
 		served: "served.example.com",
 	}
-	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, serializer, func() {}, false)
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, serializer.Decode, func() {}, false)
 	t.Cleanup(decoder.Close)
 
 	action, obj, err := decoder.Decode()

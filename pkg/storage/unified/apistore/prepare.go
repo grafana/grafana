@@ -95,7 +95,7 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 	folderUID := obj.GetFolder()
 	if !s.opts.EnableFolderSupport {
 		if folderUID == "" {
-			return nil
+			return nil // OK, there is no folder
 		}
 		return apierrors.NewInvalid(
 			obj.GetGroupVersionKind().GroupKind(),
@@ -109,11 +109,27 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 		)
 	}
 	if !s.opts.RequireFolder {
-		if folderUID == "" {
-			obj.SetFolder(generalFolderUID)
+		if folderUID != "" {
+			return nil // OK
 		}
-		return nil
+
+		// Explicitly empty string is not valid
+		if _, found := obj.GetAnnotations()[utils.AnnoKeyFolder]; !found {
+			return apierrors.NewInvalid(
+				obj.GetGroupVersionKind().GroupKind(),
+				obj.GetName(),
+				field.ErrorList{
+					field.Required(
+						field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+						fmt.Sprintf("non-empty folder is required for %s", s.gr.String()),
+					),
+				},
+			)
+		}
+		// TODO? we COULD fill in a default folder automatically here
+		// We should avoid defaulting to the root folder if possible
 	}
+
 	if folderUID == "" {
 		return apierrors.NewInvalid(
 			obj.GetGroupVersionKind().GroupKind(),

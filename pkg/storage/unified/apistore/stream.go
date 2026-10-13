@@ -20,11 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+type objectDecoder func(context.Context, []byte, runtime.Object) (runtime.Object, error)
+
 type streamDecoder struct {
 	client       resourcepb.ResourceStore_WatchClient
 	newFunc      func() runtime.Object
 	predicate    storage.SelectionPredicate
-	decodeObject func(context.Context, []byte, runtime.Object) (runtime.Object, error)
+	decodeObject objectDecoder
 	cancelWatch  context.CancelFunc
 	done         sync.WaitGroup
 
@@ -33,12 +35,12 @@ type streamDecoder struct {
 	expiredSent         bool
 }
 
-func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, serializer Serializer, cancelWatch context.CancelFunc, sendInitialEvents bool) *streamDecoder {
+func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, decoder objectDecoder, cancelWatch context.CancelFunc, sendInitialEvents bool) *streamDecoder {
 	return &streamDecoder{
 		client:            client,
 		newFunc:           newFunc,
 		predicate:         predicate,
-		decodeObject:      serializer.Decode,
+		decodeObject:      decoder,
 		cancelWatch:       cancelWatch,
 		sendInitialEvents: sendInitialEvents,
 	}

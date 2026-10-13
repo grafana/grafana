@@ -1261,11 +1261,8 @@ func TestFolderNormalizationOnSave(t *testing.T) {
 				require.NoError(t, err)
 				meta, err := utils.MetaAccessor(decoded)
 				require.NoError(t, err)
-				expected := nextFolder
-				if expected == "" {
-					expected = generalFolderUID
-				}
-				require.Equal(t, expected, meta.GetFolder())
+				// An explicit "" is kept as written so applied manifests do not drift.
+				require.Equal(t, nextFolder, meta.GetFolder())
 				generation := int64(3)
 				if toLegacyFolderUID(previousFolder) != toLegacyFolderUID(nextFolder) {
 					generation++
@@ -1281,6 +1278,15 @@ func TestFolderNormalizationOnSave(t *testing.T) {
 		var obj dashv1.Dashboard
 		require.NoError(t, json.Unmarshal(saved.raw, &obj))
 		require.Equal(t, generalFolderUID, obj.Annotations[utils.AnnoKeyFolder])
+	})
+	t.Run("create keeps explicit empty annotation", func(t *testing.T) {
+		saved, err := s.prepareObjectForStorage(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash", Annotations: map[string]string{utils.AnnoKeyFolder: ""}}})
+		require.NoError(t, err)
+		var obj dashv1.Dashboard
+		require.NoError(t, json.Unmarshal(saved.raw, &obj))
+		folder, found := obj.Annotations[utils.AnnoKeyFolder]
+		require.True(t, found)
+		require.Empty(t, folder)
 	})
 	t.Run("required folder rejects root", func(t *testing.T) {
 		required := &Storage{opts: StorageOptions{EnableFolderSupport: true, RequireFolder: true}}
