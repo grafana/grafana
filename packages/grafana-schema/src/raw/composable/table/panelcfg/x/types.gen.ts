@@ -12,7 +12,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "12.4.12";
+export const pluginVersion = "12.4.13";
 
 export interface Options extends ui.TableOptions {}
 

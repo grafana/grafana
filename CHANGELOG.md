@@ -1,3 +1,17 @@
+<!-- 12.4.13 START -->
+
+# 12.4.13 (2026-10-13)
+
+### Features and enhancements
+
+- **Alerting:** Strip sensitive headers from oauth2 cross-host redirects [#134424](https://github.com/grafana/grafana/pull/134424), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Dashboard:** Fall back when collection deletion is unsupported (#128259) [#134229](https://github.com/grafana/grafana/pull/134229), [@bestend](https://github.com/bestend)
+
+### Bug fixes
+
+- **CVE-2026-92539:** IAM: Fix CVE-2026-92539: Scim endpoints (Enterprise)
+
+<!-- 12.4.13 END -->
 <!-- 12.4.12 START -->
 
 # 12.4.12 (2026-09-29)
