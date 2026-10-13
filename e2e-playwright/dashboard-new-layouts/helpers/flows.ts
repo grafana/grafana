@@ -115,8 +115,6 @@ export const flows = {
 
       await sidebar.variableOptions.selectVariableType(variable.type);
 
-      // We wait for the name input to autofocus because it can happen late: we used to sleep 250ms, and under load the
-      // focus then landed mid-test, wiping the label or closing the type dropdown, so tests failed at random.
       await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
 
       await sidebar.variableOptions.setName(variable.name);

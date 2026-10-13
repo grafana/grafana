@@ -208,11 +208,7 @@ export class VariableOptions extends PageObject {
     /** Selects the datasource the query runs against */
     selectTargetDatasource: async (dataSource: string) => {
       await test.step(`Select target datasource "${dataSource}"`, async () => {
-        // same keyboard sequence as plugin-e2e's DataSourcePicker.set(), which only scopes to the whole page
-        await this.query.getTargetDatasourceInput().fill(dataSource);
-        await this.page.keyboard.press('ArrowDown');
-        await this.page.keyboard.press('ArrowUp');
-        await this.page.keyboard.press('Enter');
+        await this.components.dataSourcePicker.within(this.query.getEditor()).set(dataSource);
       });
     },
     /** Returns the query input of datasources using the standard variable query editor (e.g. TestData) */
