@@ -24,6 +24,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -31,6 +32,34 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationProvisioning(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationProvisioning)
+}
+
+func TestIntegrationProvisioningRules(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationProvisioningRules)
+}
+
+func TestMuteTimings(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testMuteTimings)
+}
+
+func TestIntegrationExportFileProvision(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationExportFileProvision)
+}
+
+func TestIntegrationExportFileProvisionMixed(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationExportFileProvisionMixed)
+}
+
+func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationExportFileProvisionContactPoints)
+}
+
+func TestIntegrationFullpath(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationFullpath)
+}
 
 func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder string, nfSettings *definitions.AlertRuleNotificationSettings) (definitions.PostableRuleGroupConfig, string) {
 	t.Helper()
@@ -76,7 +105,7 @@ func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder s
 	return rules, resp.Created[0]
 }
 
-func TestIntegrationProvisioning(t *testing.T) {
+func testIntegrationProvisioning(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -560,7 +589,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 }
 
-func TestIntegrationProvisioningRules(t *testing.T) {
+func testIntegrationProvisioningRules(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -710,7 +739,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 	})
 }
 
-func TestMuteTimings(t *testing.T) {
+func testMuteTimings(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -983,7 +1012,7 @@ func createTestRequest(method string, url string, user string, body string) *htt
 	return req
 }
 
-func TestIntegrationExportFileProvision(t *testing.T) {
+func testIntegrationExportFileProvision(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1082,7 +1111,7 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 	})
 }
 
-func TestIntegrationExportFileProvisionMixed(t *testing.T) {
+func testIntegrationExportFileProvisionMixed(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1130,7 +1159,7 @@ func TestIntegrationExportFileProvisionMixed(t *testing.T) {
 	})
 }
 
-func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
+func testIntegrationExportFileProvisionContactPoints(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1189,7 +1218,7 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 	})
 }
 
-func TestIntegrationFullpath(t *testing.T) {
+func testIntegrationFullpath(t *testing.T) {
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAuthZClientCache: true,
 		DisableLegacyAlerting:   true,

@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
@@ -218,8 +219,20 @@ describe('VariablesEditView', () => {
     let variableView: VariablesEditView;
 
     beforeEach(async () => {
+      // New layouts plus the settings redesign replace this list with a sidebar redirect.
+      // setTestFlags replaces the whole config, so keep the redesign flag from beforeAll.
+      setTestFlags({
+        [FlagKeys.GrafanaDashboardSettingsRedesign]: false,
+        dashboardNewLayouts: false,
+      });
       const result = await buildTestScene();
       variableView = result.variableView;
+    });
+
+    afterEach(() => {
+      act(() => {
+        setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+      });
     });
 
     it('should not show Provisioned by data source section when no variables have origin', async () => {

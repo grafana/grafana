@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	BlobDataSection   = "unified/blob-data"
 	resourceBlobTable = "resource_blob"
 	blobValueVersion  = 1
 )

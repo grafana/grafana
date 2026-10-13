@@ -25,28 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-// drainWake consumes a wake already queued on dirty, if any. It returns nil
-// once dirty is closed, so the caller stops selecting on it.
-func drainWake(dirty <-chan struct{}) <-chan struct{} {
-	if dirty == nil {
-		return nil
-	}
-	select {
-	case _, ok := <-dirty:
-		if !ok {
-			return nil
-		}
-	default:
-	}
-	return dirty
-}
-
-// Backoff for retrying a failed reconcile.
-const (
-	reconcileRetryMin = time.Second
-	reconcileRetryMax = time.Minute
-)
-
 const (
 	apisPrefix      = "/apis"
 	openapiV3Prefix = "/openapi/v3"
@@ -93,6 +71,9 @@ type servingEntry struct {
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
 	discovery *apidiscoveryv2.APIGroupDiscovery
+
+	// callerScoped is set when the backend is a CallerScopedDiscovery.
+	callerScoped bool
 }
 
 type phase int
@@ -152,11 +133,6 @@ type GrafanaRouter struct {
 
 	// Set before serving by the standalone target; middleware keeps its delegate.
 	unregisteredGroupHandler http.Handler
-
-	// acceptGroup, when set, limits which groups reconcile will serve. Set
-	// before Run; the middleware uses it so the router never shadows a group
-	// the embedded API server owns.
-	acceptGroup func(group string) bool
 
 	// reconciles and reconcileErrors count completed reconciles, and
 	// lastReconcile is when the latest one finished (Unix nanoseconds), for
@@ -308,6 +284,18 @@ func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.
 	next.ServeHTTP(w, req)
 }
 
+// discoverySource is where root discovery reads the groups the router does
+// not serve: the unregistered-group handler when one is set, otherwise next.
+// callerScoped reports whether the source answers for the caller, so its
+// answer replaces the defaults of caller-scoped backends. next never serves
+// those groups, so its answer must not hide them.
+func (r *GrafanaRouter) discoverySource(next http.Handler) (source http.Handler, callerScoped bool) {
+	if r.unregisteredGroupHandler != nil {
+		return r.unregisteredGroupHandler, true
+	}
+	return next, false
+}
+
 // groupFromPath returns the group segment of an /apis/<group>[/...] path.
 // The caller guarantees the /apis/ prefix and a non-root path.
 func groupFromPath(path string) string {
@@ -407,7 +395,9 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	}
 
 	cacheKey := group + "/" + version
-	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
+	// A caller-scoped backend may answer each caller differently, and the
+	// cache is shared.
+	cacheableRequest := !entry.callerScoped && req.Method == http.MethodGet && req.Header.Get("Range") == ""
 	if cached, ok := r.openapiDocs.Load(cacheKey); ok && cacheableRequest {
 		c := cached.(openapiCacheEntry)
 		if c.key == entry.key && c.accept == req.Header.Get("Accept") && c.encoding == req.Header.Get("Accept-Encoding") {
@@ -424,9 +414,13 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	}
 
 	// Cache miss or stale key: proxy through the breaker and capture the
-	// response so it can be cached.
+	// response so it can be cached. Conditional headers are stripped only
+	// when this cache may store the response; otherwise the backend answers
+	// them, as a caller-scoped backend's own cache does.
 	proxyReq := req.Clone(req.Context())
-	stripConditionalHeaders(proxyReq)
+	if cacheableRequest {
+		stripConditionalHeaders(proxyReq)
+	}
 	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter(maxCachedOpenAPIDocBytes, w)
 	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)
@@ -533,6 +527,28 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 	return nil
 }
 
+// drainWake consumes a wake already queued on dirty, if any. It returns nil
+// once dirty is closed, so the caller stops selecting on it.
+func drainWake(dirty <-chan struct{}) <-chan struct{} {
+	if dirty == nil {
+		return nil
+	}
+	select {
+	case _, ok := <-dirty:
+		if !ok {
+			return nil
+		}
+	default:
+	}
+	return dirty
+}
+
+// Backoff for retrying a failed reconcile.
+const (
+	reconcileRetryMin = time.Second
+	reconcileRetryMax = time.Minute
+)
+
 // storeServing records a completed reconcile's outcome. Errors are logged
 // here; Ready decides whether they affect readiness.
 func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
@@ -581,7 +597,7 @@ func (r *GrafanaRouter) Alive(context.Context) error {
 func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	rawBackends, err := r.loader.Load(ctx)
 	if err != nil {
-		// Keep serving last-known-good; a later wake retries.
+		// Keep serving last-known-good; Run retries with backoff.
 		return fmt.Errorf("router: load failed, keeping current routes: %w", err)
 	}
 
@@ -590,10 +606,6 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	seen := make(map[string]struct{}, len(rawBackends))
 	for _, b := range rawBackends {
 		group := b.Group().Name
-		if r.acceptGroup != nil && !r.acceptGroup(group) {
-			logging.FromContext(ctx).Warn("router: group not allowed in this mode, skipping", "group", group)
-			continue
-		}
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group. A duplicate is a config
 			// error; the last one wins rather than crashing the router.
@@ -609,7 +621,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		handler, err := loadBackend(ctx, b)
 		if err != nil {
 			// Keep last-known-good for this group. lastKey is not advanced, so
-			// a later wake retries.
+			// Run's retry loads it again.
 			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
 			continue
 		}
@@ -619,8 +631,9 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 			r.served[group] = r.newHandlerEntry(b, handler, group)
 			continue
 		}
-		// Changed: replace the entry. Connection pools survive through the
-		// loader's shared transports; the breaker is reset (see handlerEntry).
+		// Changed: replace the entry. Connection pools survive because each
+		// source owns its transports and connections, not the backend; the
+		// breaker is reset (see handlerEntry).
 		retired = append(retired, e)
 		r.served[group] = r.newHandlerEntry(b, handler, group)
 	}
@@ -671,6 +684,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 					entry.discovery = &d
 				}
 			}
+			_, entry.callerScoped = e.backend.(CallerScopedDiscovery)
 		}
 		snap[group] = entry
 	}

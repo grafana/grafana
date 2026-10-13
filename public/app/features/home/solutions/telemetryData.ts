@@ -6,8 +6,7 @@ import {
   FieldType,
   getMinMaxAndDelta,
 } from '@grafana/data';
-import { type DataSourceWithBackend, isFetchError } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type DataSourceWithBackend, isFetchError, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
 import { type MetricsDiskScope } from './metricsFilter';
