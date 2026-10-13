@@ -194,7 +194,7 @@ func TestSubProxyREST_ValidatesFinalDestination(t *testing.T) {
 				ds.Spec.URL(), target.URL + "/values",
 				ds.Spec.URL(), target.URL + "/values",
 			}, validator.checked)
-			require.Equal(t, 1, storage.transports.entries.EstimatedSize())
+			require.Equal(t, 1, len(storage.transports.entries))
 		})
 	}
 }
