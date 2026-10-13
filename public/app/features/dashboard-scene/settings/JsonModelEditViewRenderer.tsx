@@ -1,0 +1,292 @@
+import { css } from '@emotion/css';
+import { useCallback, useState } from 'react';
+
+import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import { useFlagDashboardNewLayouts, useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import { type SceneComponentProps, SceneObjectRef } from '@grafana/scenes';
+import { Alert, Box, Button, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { Page } from 'app/core/components/Page/Page';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
+import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+
+import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
+import { getSaveDashboardErrorInfo } from '../saving/saveErrors';
+import { SaveDashboardErrorAlert } from '../saving/shared';
+import { useSaveDashboard } from '../saving/useSaveDashboard';
+import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { DashboardCodePane } from '../sidebar/DashboardCodePane';
+import { DashboardInteractions } from '../utils/interactions';
+import { getDashboardSceneFor } from '../utils/utils';
+import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
+
+import { type JsonModelEditView } from './JsonModelEditView';
+import { useDashboardEditPageNav } from './utils';
+
+export function JsonModelEditViewRenderer({ model }: SceneComponentProps<JsonModelEditView>) {
+  const { state, onSaveDashboard } = useSaveDashboard(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasValidationErrors, setHasValidationErrors] = useState(false);
+  const [resourceError, setResourceError] = useState<string | undefined>();
+  const [editorFormat, setSchemaEditorFormat] = useState<SchemaEditorFormat>('json');
+
+  const dashboard = model.getDashboard();
+  const { isProvisioned: isProvisionedNG, status: repoStatus } = useDashboardRepositoryView(dashboard);
+  const isResolvingRepo = repoStatus === RepoViewStatus.Loading;
+  const saveModel = model.getSaveModel();
+  const isV2Dashboard = isDashboardV2Spec(saveModel);
+
+  const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
+  const canSave = dashboard.useState().meta.canSave;
+  const { jsonText } = model.useState();
+
+  const isDynamicDashboardsEnabled = useFlagDashboardNewLayouts();
+  const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
+
+  const handleValidationChange = useCallback((hasErrors: boolean) => {
+    setHasValidationErrors(hasErrors);
+  }, []);
+
+  const handleEditorChange = useCallback(
+    (value: string) => {
+      model.onCodeEditorBlur(value);
+    },
+    [model]
+  );
+
+  const goToSidebar = () => {
+    // close settings and open the "Edit as code" sidebar pane
+    const dashboard = getDashboardSceneFor(model);
+    dashboard.state.sidebar.openPane(new DashboardCodePane({}));
+    locationService.partial({ editview: null });
+
+    DashboardInteractions.takeMeToSidebarClicked({ item: 'json-model' });
+  };
+
+  const onSave = async (overwrite: boolean) => {
+    const validation = model.validateEditedResource();
+    if (!validation.success) {
+      setResourceError(validation.error);
+      return;
+    }
+    setResourceError(undefined);
+
+    if (isProvisionedNG) {
+      const drawer = new SaveDashboardDrawer({
+        dashboardRef: new SceneObjectRef(dashboard),
+      });
+      dashboard.showModal(drawer);
+      return;
+    }
+
+    const result = await onSaveDashboard(dashboard, {
+      folderUid: dashboard.state.meta.folderUid,
+      overwrite,
+      rawDashboardJSON: model.getEditedSaveModel(),
+      k8s: dashboard.state.meta.k8s,
+    });
+
+    setIsSaving(true);
+    if (result.status === 'success') {
+      await model.onSaveSuccess(result);
+      setIsSaving(false);
+    } else {
+      setIsSaving(true);
+    }
+  };
+
+  const hasBlockingValidationErrors = isV2Dashboard && hasValidationErrors;
+
+  const saveTooltip =
+    editorFormat === 'yaml'
+      ? t(
+          'dashboard-settings.json-editor.save-button-disabled-tooltip-yaml',
+          'Document has validation errors. Switch to JSON to see inline error details.'
+        )
+      : t('dashboard-settings.json-editor.save-button-disabled-tooltip', 'Fix validation errors before saving');
+
+  const saveButton = (overwrite: boolean, disabled = false) => (
+    // Narrower than `disabled`: the tooltip talks about validation errors, so it must stay hidden
+    // while the button is only disabled by the pending repository lookup
+    <Tooltip content={saveTooltip} placement="top" show={hasBlockingValidationErrors ? undefined : false}>
+      <Button
+        type="submit"
+        onClick={() => {
+          onSave(overwrite);
+        }}
+        variant={overwrite ? 'destructive' : 'primary'}
+        disabled={disabled}
+      >
+        {overwrite ? (
+          <Trans i18nKey="dashboard-scene.json-model-edit-view.save-and-overwrite">Save and overwrite</Trans>
+        ) : (
+          <Trans i18nKey="dashboard-settings.json-editor.save-button">Save changes</Trans>
+        )}
+      </Button>
+    </Tooltip>
+  );
+
+  const cancelButton = (
+    <Button variant="secondary" onClick={() => setIsSaving(false)} fill="outline">
+      <Trans i18nKey="dashboard-scene.json-model-edit-view.cancel-button.cancel">Cancel</Trans>
+    </Button>
+  );
+  const styles = useStyles2(getStyles);
+
+  function renderSaveButtonAndError(error?: Error, disabled = false) {
+    const errorInfo = isSaving ? getSaveDashboardErrorInfo(error) : undefined;
+
+    if (errorInfo) {
+      if (errorInfo.kind === 'version-mismatch') {
+        return (
+          <Alert
+            title={t(
+              'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-someone-else-has-updated-this-dashboard',
+              'Someone else has updated this dashboard'
+            )}
+            severity="error"
+          >
+            <p>
+              <Trans i18nKey="dashboard-scene.json-model-edit-view.render-save-button-and-error.would-still-dashboard">
+                Would you still like to save this dashboard?
+              </Trans>
+            </p>
+            <Box paddingTop={2}>
+              <Stack alignItems="center">
+                {cancelButton}
+                {saveButton(true, disabled)}
+              </Stack>
+            </Box>
+          </Alert>
+        );
+      }
+
+      if (errorInfo.kind === 'plugin-dashboard') {
+        return (
+          <Alert
+            title={t(
+              'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-plugin-dashboard',
+              'Plugin dashboard'
+            )}
+            severity="error"
+          >
+            <p>
+              <Trans i18nKey="dashboard-scene.json-model-edit-view.render-save-button-and-error.body-plugin-dashboard">
+                Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom
+                version.
+              </Trans>
+            </p>
+            <Box paddingTop={2}>
+              <Stack alignItems="center">{saveButton(true, disabled)}</Stack>
+            </Box>
+          </Alert>
+        );
+      }
+    }
+
+    // Everything else, `already-exists` included, keeps the save button. The identifier can't be
+    // changed from this editor, so the "pick a different name or folder" alert would be
+    // unactionable advice that also removed the only way to retry.
+    return (
+      <>
+        {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
+        <Stack alignItems="center">{saveButton(false, disabled)}</Stack>
+      </>
+    );
+  }
+  // Saving before repository resolution settles would silently take the database path on a Git target
+  const isSaveDisabled = hasBlockingValidationErrors || isResolvingRepo;
+
+  if (isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled) {
+    return (
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <NavToolbarActions dashboard={dashboard} />
+        <Alert
+          severity="info"
+          title={t('dashboard-scene.dashboard-settings.json.title-moved', 'Looking for the JSON model?')}
+        >
+          <Trans i18nKey="dashboard-scene.dashboard-settings.json.description-moved">
+            The JSON model has moved to the dashboard&apos;s sidebar, under &quot;Edit as code&quot;.
+          </Trans>
+          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
+            <Trans i18nKey="dashboard-scene.dashboard-settings.json.button-moved">Take me there</Trans>
+          </Button>
+        </Alert>
+      </Page>
+    );
+  }
+
+  return (
+    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+      <NavToolbarActions dashboard={dashboard} />
+      <div className={styles.wrapper}>
+        <Trans i18nKey="dashboard-settings.json-editor.subtitle">
+          The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
+          settings, layout, queries, and so on.
+        </Trans>
+        <div className={styles.editorContainer}>
+          {isV2Dashboard ? (
+            <DashboardSchemaEditor
+              value={jsonText}
+              onChange={handleEditorChange}
+              onValidationChange={handleValidationChange}
+              onFormatChange={setSchemaEditorFormat}
+              containerStyles={styles.codeEditor}
+              showFormatToggle={true}
+            />
+          ) : (
+            <div className={styles.codeEditor}>
+              <CodeMirrorEditor
+                value={jsonText}
+                language="json"
+                height="100%"
+                aria-label={t('dashboard-settings.json-editor.aria-label', 'Dashboard JSON model')}
+                onChange={() => {}}
+                onBlur={model.onCodeEditorBlur}
+              />
+            </div>
+          )}
+        </div>
+        {resourceError && (
+          <Alert
+            title={t('dashboard-scene.json-model-edit-view.resource-validation-error-title', 'Unable to save changes')}
+            severity="error"
+            topSpacing={0}
+            bottomSpacing={0}
+            className={styles.errorAlert}
+            onRemove={() => setResourceError(undefined)}
+          >
+            {resourceError}
+          </Alert>
+        )}
+        {canSave && <Box paddingTop={2}>{renderSaveButtonAndError(state.error, isSaveDisabled)}</Box>}
+      </div>
+    </Page>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    display: 'flex',
+    height: '100%',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+  }),
+  // The editor grows to fill the space above the (natural-height) error alert and save button,
+  // so a validation error renders as a compact box at the bottom rather than resizing the editor.
+  editorContainer: css({
+    flex: 1,
+    minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  errorAlert: css({
+    flex: '0 0 auto',
+  }),
+  codeEditor: css({
+    height: '100%',
+  }),
+});

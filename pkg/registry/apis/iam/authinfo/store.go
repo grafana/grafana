@@ -14,6 +14,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -443,6 +444,10 @@ func mapToAuthInfoObject(ns claims.NamespaceInfo, userUID string, ua *login.User
 	if !ua.Created.IsZero() {
 		created := ua.Created.UnixMilli()
 		result.Spec.Created = &created
+	}
+
+	if meta, err := utils.MetaAccessor(&result); err == nil {
+		meta.SetDeprecatedInternalID(ua.Id) // nolint:staticcheck
 	}
 
 	return result

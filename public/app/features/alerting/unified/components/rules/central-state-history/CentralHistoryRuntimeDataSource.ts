@@ -1,6 +1,11 @@
 import { useEffect, useMemo } from 'react';
 
-import { type DataQueryRequest, type DataQueryResponse, type TestDataSourceResponse } from '@grafana/data';
+import {
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type RawTimeRange,
+  type TestDataSourceResponse,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';
@@ -53,8 +58,6 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
   }
 
   async query(request: DataQueryRequest<HistoryAPIQuery>): Promise<DataQueryResponse> {
-    const from = request.range.from.unix();
-    const to = request.range.to.unix();
     // get the query from the request
     const query = request.targets[0]!;
 
@@ -66,8 +69,7 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
     const stateFrom = templateSrv.replace(query.stateFrom ?? '', request.scopedVars);
 
     const historyResult = await getHistory(
-      from,
-      to,
+      { from: request.range.from, to: request.range.to },
       toMatchersParam(labels),
       stateTo !== 'all' ? stateTo : undefined,
       stateFrom !== 'all' ? stateFrom : undefined
@@ -89,17 +91,15 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
 
 /**
  * Fetch the history events from the history api.
- * @param from the start time
- * @param to the end time
+ * @param timeRange the time range to fetch, relative ("now-1h") or absolute
  * @param matchers optional PromQL selector string for backend filtering, e.g. `{severity=~"crit.*",env!="dev"}`
  * @returns the history events filtered by time and labels
  */
-export const getHistory = (from: number, to: number, matchers?: string, current?: string, previous?: string) => {
+export const getHistory = (timeRange: RawTimeRange, matchers?: string, current?: string, previous?: string) => {
   return dispatch(
     stateHistoryApi.endpoints.getRuleHistory.initiate(
       {
-        from: from,
-        to: to,
+        timeRange,
         limit: LIMIT_EVENTS,
         matchers: matchers,
         current: current,

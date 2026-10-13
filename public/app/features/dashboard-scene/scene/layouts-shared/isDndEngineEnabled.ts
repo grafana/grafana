@@ -1,5 +1,5 @@
 import { store } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 /**
  * Spike toggle for the unified drag and drop engine (custom grid, rows and tabs). Set to 'legacy'
@@ -8,9 +8,7 @@ import { config } from '@grafana/runtime';
 export const DND_ENGINE_STORAGE_KEY = 'grafana.dashboard.dndEngine';
 
 export function isDndEngineEnabled(): boolean {
-  // dashboardNewLayouts has no OpenFeature flag key yet, this matches how the rest of the layouts read it
-  // eslint-disable-next-line @grafana/no-config-feature-toggles
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     return false;
   }
 

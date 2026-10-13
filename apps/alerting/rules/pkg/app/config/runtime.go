@@ -48,10 +48,8 @@ type RuntimeConfig struct {
 	// watches all namespaces (on-prem default); in cloud it must be the stack
 	// namespace, else the all-namespace watch is rejected as a mismatch.
 	WatchNamespace string
-	// The search handlers are built by the registry with access to the alerting
-	// services. The cross-kind handler preserves the original /searchRules
-	// contract; the other two back the per-kind compatibility routes.
-	SearchRulesHandler          simple.AppCustomRouteHandler
+	// The search handlers back the per-kind compatibility routes. They are built
+	// by the registry with access to the alerting services.
 	SearchAlertRulesHandler     simple.AppCustomRouteHandler
 	SearchRecordingRulesHandler simple.AppCustomRouteHandler
 	// CheckExternalRulerSyncDatasource validates that uid is usable as an

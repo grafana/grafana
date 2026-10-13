@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useMemo, useState, type Ref } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState, type Ref } from 'react';
 import { useDebounce } from 'react-use';
 
 import {
   CoreApp,
   getFrameDisplayName,
   type DataFrame,
+  type EventBus,
   type GrafanaTheme2,
   type PanelProps,
   type InterpolateFunction,
@@ -38,20 +39,39 @@ import {
 import { TextNGCodeView } from './TextNGCodeView';
 import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
-import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
+import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
+import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
+// The view mode has to outlive the component, since the panel remounts while panel edit stays open
+// (toggling the table view is one way), but it must not be saved into the panel's options.
+// PanelContext.instanceState is meant for this, but writing it makes scenes spread the context,
+// which flattens the `app` getter the dashboard installs and leaves Text stuck in edit mode.
+// So keep it here until that is fixed in scenes, keyed on the event bus: the only handle in
+// PanelProps unique to a panel instance, as ids repeat across dashboards.
+const viewModeByPanel = new WeakMap<EventBus, ViewMode>();
+
 export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, transparent, height, width } =
-    props;
+  const {
+    eventBus,
+    options,
+    onOptionsChange,
+    replaceVariables,
+    data,
+    renderCounter,
+    fitContent,
+    transparent,
+    height,
+    width,
+  } = props;
   const styles = useStyles2(getStyles);
   const isEditing = app === CoreApp.PanelEditor;
   // Fit-content only applies to the rendered view: the inline editor keeps its
@@ -64,6 +84,7 @@ export function TextNGPanel(props: Props) {
   const renderMode = newFeatures ? options.renderMode : RenderMode.Once;
 
   const frames = data.series;
+  const hasData = frames.length > 0;
   // Withheld with the selector: a saved index would otherwise pick a frame the reader
   // has no UI to change, and the macros read every frame again, as they did before it.
   const currentFrameIndex = newFeatures ? getCurrentFrameIndex(frames, options) : 0;
@@ -78,7 +99,17 @@ export function TextNGPanel(props: Props) {
     [isEditing, series]
   );
 
-  const [view, setView] = useState<ViewMode>('split');
+  const [view, setViewState] = useState<ViewMode>(() => viewModeByPanel.get(eventBus) ?? DEFAULT_VIEW_MODE);
+  const setView = (next: ViewMode) => {
+    setViewState(next);
+    viewModeByPanel.set(eventBus, next);
+  };
+
+  useEffect(() => {
+    if (!isEditing) {
+      viewModeByPanel.delete(eventBus);
+    }
+  }, [isEditing, eventBus]);
 
   const { active, page, numPages, rangeStart, rangeEnd, rowCount, rowWindow, smallVersion, setPage, contentRef } =
     usePagination({
@@ -96,7 +127,7 @@ export function TextNGPanel(props: Props) {
   const [processed, setProcessed] = useState<ProcessedContent>(() =>
     // The editor renders its own preview, so skip the render pass on entry.
     isEditing
-      ? { mode: options.mode, content: EMPTY_CONTENT }
+      ? { mode: options.mode, content: EMPTY_CONTENT, hasData }
       : renderPanelContent(options, renderMode, series, replaceVariables, rowWindow)
   );
 
@@ -111,7 +142,8 @@ export function TextNGPanel(props: Props) {
     wasEditing !== isEditing ||
     prevWindow?.start !== rowWindow?.start ||
     prevWindow?.count !== rowWindow?.count ||
-    prevTemplate !== template
+    prevTemplate !== template ||
+    (!isEditing && processed.hasData !== hasData)
   ) {
     setWasEditing(isEditing);
     setPrevWindow(rowWindow);
@@ -130,7 +162,12 @@ export function TextNGPanel(props: Props) {
         return;
       }
       const next = renderPanelContent(options, renderMode, series, replaceVariables, rowWindow);
-      if (next.content !== processed.content || next.mode !== processed.mode || next.error !== processed.error) {
+      if (
+        next.content !== processed.content ||
+        next.mode !== processed.mode ||
+        next.error !== processed.error ||
+        next.hasData !== processed.hasData
+      ) {
         setProcessed(next);
       }
     },
@@ -261,6 +298,7 @@ function templateOf(options: Options, renderMode?: RenderMode): string {
 
 interface ProcessedContent extends RenderedContent {
   mode: TextMode;
+  hasData: boolean;
 }
 
 interface TextNGViewProps extends ProcessedContent {
@@ -270,7 +308,7 @@ interface TextNGViewProps extends ProcessedContent {
   transparent?: boolean;
 }
 
-function TextNGView({ mode, content, error, code, fitContent, contentRef, transparent }: TextNGViewProps) {
+function TextNGView({ mode, content, error, code, fitContent, contentRef, transparent, hasData }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
 
   if (error) {
@@ -301,6 +339,7 @@ function TextNGView({ mode, content, error, code, fitContent, contentRef, transp
   const rendered = (
     <TextNGHtmlView
       html={content}
+      hasData={hasData}
       className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
       testId="TextNGPanel-converted-content"
     />
@@ -394,6 +433,7 @@ function renderPanelContent(
 ): ProcessedContent {
   return {
     mode: options.mode,
+    hasData: series.length > 0,
     ...catchTemplateError(() =>
       renderContent(
         {

@@ -76,7 +76,6 @@ export interface SearchState {
   // is "iam.grafana.app/Team/{teamUID}"
   ownerReference?: string[];
   starred: boolean;
-  explain?: boolean; // adds debug info
   datasource?: string;
   panel_type?: string;
   createdBy?: string;

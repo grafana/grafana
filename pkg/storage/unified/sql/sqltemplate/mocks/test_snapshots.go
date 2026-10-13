@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -41,6 +42,12 @@ func (t *testingSQLTemplate) Arg(x any) string {
 		if !ok {
 			return fmt.Sprintf("%v", x)
 		}
+	}
+
+	// Snapshots must not depend on the Go version: with JSON v2 (default since
+	// Go 1.27) %v prints json.RawMessage as text, before that as a byte list.
+	if raw, ok := x.(json.RawMessage); ok {
+		return fmt.Sprintf("'%s'", raw)
 	}
 
 	return fmt.Sprintf("'%v'", x) // single quotes

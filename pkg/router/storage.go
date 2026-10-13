@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -45,7 +46,8 @@ func NewRemoteResourceClient(cfg *setting.Cfg, tracer trace.Tracer, reg promethe
 		AllowInsecure:         allowInsecure,
 		Namespace:             clientCfg.TokenNamespace,
 		Audiences:             []string{"resourceStore"},
-		TokenExchanger:        &oboTokenExchanger{delegate: baseExchanger},
-		CarriesCallerIdentity: true,
+		TokenExchanger:        baseExchanger,
+		OnBehalfOf:            func(context.Context) bool { return true },
+		RequireCallerIdentity: func(context.Context) bool { return true },
 	})
 }

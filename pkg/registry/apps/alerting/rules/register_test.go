@@ -2,17 +2,23 @@ package rules
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/emicklei/go-restful/v3"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/generic"
 
+	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -25,6 +31,60 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+type hybridRouteInstaller struct {
+	appsdkapiserver.AppInstaller
+}
+
+func (hybridRouteInstaller) InstallAPIs(appsdkapiserver.GenericAPIServer, generic.RESTOptionsGetter) error {
+	return nil
+}
+
+type hybridRouteServer struct {
+	appsdkapiserver.GenericAPIServer
+	services []*restful.WebService
+}
+
+func (s hybridRouteServer) RegisteredWebServices() []*restful.WebService { return s.services }
+
+func TestInstallHybridSearchRoute(t *testing.T) {
+	ws := new(restful.WebService).Path("/apis/rules.alerting.grafana.app/v0alpha1")
+	server := hybridRouteServer{services: []*restful.WebService{ws}}
+	installer := &AppInstaller{
+		AppInstaller: hybridRouteInstaller{},
+		hybridSearch: func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, "stacks-123", genericapirequest.NamespaceValue(r.Context()))
+			w.WriteHeader(http.StatusNoContent)
+		},
+	}
+	require.NoError(t, installer.InstallAPIs(server, nil))
+	container := restful.NewContainer()
+	container.Add(ws)
+	rec := httptest.NewRecorder()
+	container.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, ws.RootPath()+"/namespaces/stacks-123/search/hybrid?query=cpu", nil))
+	require.Equal(t, http.StatusNoContent, rec.Code)
+}
+
+func TestHybridSearchAuthorizer(t *testing.T) {
+	factory := genericapirequest.RequestInfoFactory{APIPrefixes: sets.NewString("apis"), GrouplessAPIPrefixes: sets.NewString()}
+	req := httptest.NewRequest(http.MethodGet, "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/stacks-123/search/hybrid?query=cpu", nil)
+	info, err := factory.NewRequestInfo(req)
+	require.NoError(t, err)
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "stacks-123"})
+	for _, allowed := range []bool{true, false} {
+		installer := &AppInstaller{ng: &ngalert.AlertNG{Api: &api.API{AccessControl: actest.FakeAccessControl{ExpectedEvaluate: allowed}}}}
+		decision, _, err := installer.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+			Verb: info.Verb, Namespace: info.Namespace, APIGroup: info.APIGroup, APIVersion: info.APIVersion,
+			Resource: info.Resource, Subresource: info.Subresource, Name: info.Name, ResourceRequest: info.IsResourceRequest,
+		})
+		require.NoError(t, err)
+		if allowed {
+			require.Equal(t, authorizer.DecisionAllow, decision)
+		} else {
+			require.Equal(t, authorizer.DecisionDeny, decision)
+		}
+	}
+}
 
 func TestRuleSearchReadAttributes(t *testing.T) {
 	request := func(resource, name string) authorizer.AttributesRecord {
@@ -41,7 +101,7 @@ func TestRuleSearchReadAttributes(t *testing.T) {
 			alertrule.ResourceInfo.GroupResource().Resource,
 			recordingrule.ResourceInfo.GroupResource().Resource,
 		} {
-			got := ruleSearchReadAttributes(request(resource, search.RouteResource))
+			got := ruleSearchReadAttributes(request(resource, rulesApp.SearchRulesPathSegment))
 			require.Equal(t, "list", got.GetVerb(), resource)
 			require.Empty(t, got.GetName(), resource)
 		}
@@ -53,19 +113,19 @@ func TestRuleSearchReadAttributes(t *testing.T) {
 	})
 
 	t.Run("another resource is unchanged", func(t *testing.T) {
-		got := ruleSearchReadAttributes(request("rulesequences", search.RouteResource))
+		got := ruleSearchReadAttributes(request("rulesequences", rulesApp.SearchRulesPathSegment))
 		require.Equal(t, "create", got.GetVerb())
 	})
 
 	t.Run("a subresource request is unchanged", func(t *testing.T) {
-		attr := request(alertrule.ResourceInfo.GroupResource().Resource, search.RouteResource)
+		attr := request(alertrule.ResourceInfo.GroupResource().Resource, rulesApp.SearchRulesPathSegment)
 		attr.Subresource = "status"
 		got := ruleSearchReadAttributes(attr)
 		require.Equal(t, "create", got.GetVerb())
 	})
 
 	t.Run("a non-resource request is unchanged", func(t *testing.T) {
-		attr := request(alertrule.ResourceInfo.GroupResource().Resource, search.RouteResource)
+		attr := request(alertrule.ResourceInfo.GroupResource().Resource, rulesApp.SearchRulesPathSegment)
 		attr.ResourceRequest = false
 		got := ruleSearchReadAttributes(attr)
 		require.Equal(t, "create", got.GetVerb())

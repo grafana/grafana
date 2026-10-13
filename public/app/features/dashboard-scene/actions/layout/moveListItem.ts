@@ -42,6 +42,7 @@ export function moveListItem({ item, source, destination, index }: MoveListItemP
     nextItems.splice(insertAt, 0, item);
 
     moveElement({
+      meta: { actionId: item instanceof RowItem ? 'row.reorder' : 'tab.reorder' },
       source,
       movedObject: item,
       perform: () => {
@@ -73,6 +74,7 @@ export function moveListItem({ item, source, destination, index }: MoveListItemP
   const prevDestinationSlug = destination instanceof TabsLayoutManager ? destination.state.currentTabSlug : undefined;
 
   moveElement({
+    meta: { actionId: item instanceof RowItem ? 'row.move' : 'tab.move' },
     source,
     movedObject: item,
     selectOnMove: false,
@@ -135,6 +137,7 @@ export function groupRowIntoTab({ row, source, tab }: GroupRowIntoTabProps): voi
     : prevTitle;
 
   moveElement({
+    meta: { actionId: 'row.move', scope: 'group-into-tab' },
     source,
     movedObject: row,
     selectOnMove: false,

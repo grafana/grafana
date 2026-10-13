@@ -24,6 +24,7 @@ var callerSuppliedFields = map[string]string{
 	"UseChannelNotifier":       "derived from high-availability detection, not from a single setting",
 	"RvManager":                "built by the caller from a live database connection",
 	"EventPublisher":           "NATS publisher injected by the caller",
+	"WatchInvalidator":         "shared watch invalidation injected by the caller",
 	"EventSubscriber":          "NATS subscriber injected by the caller",
 	"EnableNatsNotifier":       "set together with EventSubscriber by the caller",
 	"EnableNatsNotifierShadow": "set together with EventSubscriber by the caller",

@@ -289,6 +289,7 @@ export class CustomGridController {
     const after = preview;
 
     moveElement({
+      meta: { actionId: 'panel.moveOrResize', scope: 'move' },
       source: this._editSource,
       movedObject: gridItem.state.body,
       selectOnMove: false,
@@ -455,6 +456,7 @@ export class CustomGridController {
     const before = resize.startLayout;
     const after = preview;
     edit({
+      meta: { actionId: 'panel.moveOrResize', scope: 'resize' },
       description: t('dashboard.custom-grid.resize-panel', 'Resize panel'),
       source: this._editSource,
       perform: () => this.applyLayout(after),

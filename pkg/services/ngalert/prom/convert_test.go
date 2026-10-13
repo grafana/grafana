@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
@@ -340,7 +339,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				expectedLabels = withInternalLabel(expectedLabels)
 
 				uidData := fmt.Sprintf("%d|%s|%s|%d", tc.orgID, tc.namespace, tc.promGroup.Name, j)
-				u := uuid.NewSHA1(uuid.NameSpaceOID, []byte(uidData))
+				u := ruleUUID(uidData)
 				require.Equal(t, u.String(), grafanaRule.UID, tc.name)
 
 				require.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)
@@ -1117,4 +1116,22 @@ func withInternalLabel(l map[string]string) map[string]string {
 	maps.Copy(result, l)
 
 	return result
+}
+
+func TestGetUIDCompatibility(t *testing.T) {
+	t.Run("1-0", func(t *testing.T) {
+		got, err := getUID(1, "some-namespace", "test-group-1", 0, PrometheusRule{})
+		require.NoError(t, err)
+		require.Equal(t, "81c1654f-6883-557f-93ce-1b3b6d880d9c", got)
+	})
+	t.Run("1-1", func(t *testing.T) {
+		got, err := getUID(1, "some-namespace", "test-group-1", 1, PrometheusRule{})
+		require.NoError(t, err)
+		require.Equal(t, "c87b7b23-7f6c-5d11-93f9-5b425372f9b0", got)
+	})
+	t.Run("2-0", func(t *testing.T) {
+		got, err := getUID(2, "other-namespace", "test-group-2", 0, PrometheusRule{})
+		require.NoError(t, err)
+		require.Equal(t, "73a82869-8171-5574-bad1-8878c7ddf75d", got)
+	})
 }

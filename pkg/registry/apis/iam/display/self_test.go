@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -38,14 +39,45 @@ func selfRequest(t *testing.T, auth authlib.AuthInfo) *http.Request {
 	return req
 }
 
+func TestDisplayHandlersPreserveErrorStatus(t *testing.T) {
+	caller := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "default"}
+	for name, input := range map[string]struct {
+		err  error
+		code int
+	}{
+		"typed": {err: apierrors.NewServiceUnavailable("index unavailable"), code: http.StatusServiceUnavailable},
+		"plain": {err: errors.New("private database failure"), code: http.StatusInternalServerError},
+	} {
+		for _, endpoint := range []string{"display", "self"} {
+			t.Run(name+"/"+endpoint, func(t *testing.T) {
+				h := NewDisplayHandler(&fakeResolver{err: input.err})
+				req := httptest.NewRequest(http.MethodGet, "/display?key=user:u1", nil)
+				req = req.WithContext(authlib.WithAuthInfo(req.Context(), caller))
+				rec := httptest.NewRecorder()
+				if endpoint == "display" {
+					h.handleDisplay(rec, req)
+				} else {
+					h.handleSelf(rec, req)
+				}
+				require.Equal(t, input.code, rec.Code)
+				if name == "plain" {
+					require.NotContains(t, rec.Body.String(), input.err.Error())
+				}
+			})
+		}
+	}
+}
+
 func TestDisplayHandler_handleSelf(t *testing.T) {
 	caller := &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		UserUID:   "u1",
-		UserID:    1,
-		OrgID:     1,
-		OrgRole:   identity.RoleEditor,
-		Namespace: "default",
+		Type:            authlib.TypeUser,
+		UserUID:         "u1",
+		UserID:          1,
+		OrgID:           1,
+		OrgRole:         identity.RoleEditor,
+		AuthenticatedBy: "oauth_github",
+		Email:           "alice@example.com",
+		Namespace:       "default",
 	}
 
 	t.Run("missing auth info returns 401", func(t *testing.T) {
@@ -59,9 +91,11 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 
 	t.Run("caller display is resolved from context and returned", func(t *testing.T) {
 		want := iam.Display{
-			Identity:    iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
-			DisplayName: "Alice",
-			InternalID:  1,
+			Identity:        iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
+			DisplayName:     "Alice",
+			InternalID:      1,
+			AuthenticatedBy: "oauth_github",
+			Email:           "alice@example.com",
 		}
 		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want}}}
 		h := NewDisplayHandler(resolver)

@@ -96,7 +96,7 @@ func hasK6Ancestor(info *folders.FolderInfoList, self string) bool {
 	return false
 }
 
-func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
+func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int, dryRun bool) error {
 	id := f.Name
 
 	if slices.Contains([]string{
@@ -153,6 +153,16 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
 
+	// Git Sync previews use dry-run creates with parents that may only exist
+	// on a repository branch. Require a complete chain only when persisting.
+	if !dryRun {
+		for _, parent := range parents.Items {
+			if parent.Detached {
+				return folder.ErrBadRequest.Errorf("cannot create folder under missing or unreadable ancestor %s", parent.Name)
+			}
+		}
+	}
+
 	if hasK6Ancestor(parents, f.Name) && !isServiceAccount(ctx) {
 		return folder.ErrFolderCannotBeCreatedInK6.Errorf("folders may not be created in the k6 project")
 	}
@@ -194,7 +204,7 @@ func validateOnUpdate(ctx context.Context,
 		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
-	if folderObj.GetFolder() == oldFolder.GetFolder() {
+	if folder.ToLegacyFolderUID(folderObj.GetFolder()) == folder.ToLegacyFolderUID(oldFolder.GetFolder()) {
 		return nil
 	}
 
@@ -500,7 +510,7 @@ func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceI
 		var children []string
 		children, hasMore, err = getChildrenBatch(ctx, searcher, namespace, parentUIDs, pageSize, offset)
 		if err != nil {
-			return fmt.Errorf("failed to get children: %w", err)
+			return err
 		}
 
 		if len(children) == 0 {
@@ -550,8 +560,9 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		Offset:       offset,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
-		return nil, false, fmt.Errorf("failed to search folders: %w", err)
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		logging.FromContext(ctx).Error("Failed to search folders", "namespace", namespace, "parents", parentUIDs, "error", err)
+		return nil, false, err
 	}
 
 	rows, err := decodeSearchRows(resp)
@@ -592,8 +603,9 @@ func validateOnDelete(ctx context.Context,
 	}
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
-	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
-		return fmt.Errorf("could not verify if folder is empty: %w", err)
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		logging.FromContext(ctx).Error("Could not verify if folder is empty", "namespace", f.Namespace, "folder", f.Name, "error", err)
+		return err
 	}
 
 	if resp.Stats == nil {

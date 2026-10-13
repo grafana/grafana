@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/authn"
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -444,4 +446,26 @@ func (m *mockProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 
 func ptr(s string) *string {
 	return &s
+}
+
+func TestCallerIdentity(t *testing.T) {
+	t.Run("returns unknown when context has no auth info", func(t *testing.T) {
+		assert.Equal(t, "unknown", callerIdentity(context.Background()))
+	})
+
+	t.Run("returns unknown when auth info has no service identity", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{})
+		ctx := authtypes.WithAuthInfo(context.Background(), authInfo)
+
+		assert.Equal(t, "unknown", callerIdentity(ctx))
+	})
+
+	t.Run("returns the caller's service identity", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{ServiceIdentity: "advisor"},
+		})
+		ctx := authtypes.WithAuthInfo(context.Background(), authInfo)
+
+		assert.Equal(t, "advisor", callerIdentity(ctx))
+	})
 }

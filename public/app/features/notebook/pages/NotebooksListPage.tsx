@@ -2,9 +2,11 @@ import { useEffect, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { FeatureState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
-import { Alert, Box, Button, Checkbox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
+import { Alert, Box, Button, Checkbox, EmptyState, FeatureBadge, FilterInput, Stack, Text } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -28,7 +30,6 @@ export function NotebooksListPage() {
     rows,
     totalCount,
     isTotalExact,
-    loadedCount,
     isTruncated,
     isLoadingMore,
     isFiltered,
@@ -40,7 +41,6 @@ export function NotebooksListPage() {
     canFilterByMe,
     tagFilter,
     setTagFilter,
-    loadedTags,
     addTagFilter,
     isLoading,
     isReloading,
@@ -86,7 +86,7 @@ export function NotebooksListPage() {
   const onCreate = () => navigate(notebookNewEditUrl());
 
   const createButton = canCreate ? (
-    <Button icon="plus" onClick={onCreate}>
+    <Button icon="plus" onClick={onCreate} data-testid={selectors.pages.Notebooks.List.newButton}>
       <Trans i18nKey="notebooks.list.new-notebook">New notebook</Trans>
     </Button>
   ) : undefined;
@@ -115,7 +115,12 @@ export function NotebooksListPage() {
     // When nothing exists the empty state carries the create button, so drop it from the header.
     <Page
       navId="notebooks"
-      renderTitle={(title) => <Text element="h1">{title}</Text>}
+      renderTitle={(title) => (
+        <Stack alignItems="center">
+          <Text element="h1">{title}</Text>
+          <FeatureBadge featureState={FeatureState.preview} />
+        </Stack>
+      )}
       actions={hasNoNotebooks ? undefined : createButton}
     >
       <Page.Contents isLoading={isLoading}>
@@ -169,15 +174,13 @@ export function NotebooksListPage() {
                   onChange={setSearchQuery}
                   escapeRegex={false}
                   placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                  data-testid={selectors.pages.Notebooks.List.searchInput}
                 />
                 <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                   <Stack alignItems="center" gap={1} wrap="wrap">
                     <NotebookTagsField
                       value={tagFilter}
                       onChange={setTagFilter}
-                      // Where the search route is not served the facet cannot answer, and these are
-                      // the only tags there are to offer.
-                      fallbackTags={loadedTags}
                       placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
                     />
                     {canFilterByMe && (
@@ -186,6 +189,7 @@ export function NotebooksListPage() {
                         value={createdByMe}
                         onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
                         label={t('notebooks.list.created-by-me', 'Created by me')}
+                        data-testid={selectors.pages.Notebooks.List.createdByMeCheckbox}
                       />
                     )}
                   </Stack>
@@ -197,7 +201,6 @@ export function NotebooksListPage() {
                     ) : (
                       <CountSummary
                         shown={rows.length}
-                        loadedCount={loadedCount}
                         totalCount={totalCount}
                         isTotalExact={isTotalExact}
                         isTruncated={isTruncated}
@@ -240,22 +243,16 @@ const COUNT_SKELETON_WIDTH = 120;
 interface CountSummaryProps {
   /** Rows on screen. */
   shown: number;
-  /** Rows the request returned, before client-side filtering. */
-  loadedCount: number;
-  /** Matches the server counted, or undefined when it reports no total. */
-  totalCount: number | undefined;
+  /** Matches the server counted. */
+  totalCount: number;
   isTotalExact: boolean;
   isTruncated: boolean;
   /** Pages are still arriving, so every number here is still climbing. */
   isLoadingMore: boolean;
 }
 
-/**
- * Says how much of the library is on screen, phrased by what the serving path can honestly claim.
- * Nothing here invents a total: when the server does not report one, the size of the window it
- * returned is all there is to say.
- */
-function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncated, isLoadingMore }: CountSummaryProps) {
+/** Says how much of the library is on screen, phrased by what the server can honestly claim. */
+function CountSummary({ shown, totalCount, isTotalExact, isTruncated, isLoadingMore }: CountSummaryProps) {
   const matches = (
     <Text variant="bodySmall" color="secondary">
       {t('notebooks.list.count', '', {
@@ -267,7 +264,7 @@ function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncate
   );
 
   // Say so rather than letting the count climb on its own, which reads as a miscount.
-  if (isLoadingMore && totalCount !== undefined) {
+  if (isLoadingMore) {
     return (
       <Text variant="bodySmall" color="secondary">
         {t('notebooks.list.count-loading', 'Loading {{shown}} of {{total}}...', { shown, total: totalCount })}
@@ -277,23 +274,6 @@ function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncate
 
   if (!isTruncated) {
     return matches;
-  }
-
-  // No server-side total: two numbers, because how many were loaded and how many of those matched
-  // are different facts, and folding them into one would misreport both.
-  if (totalCount === undefined) {
-    return (
-      <>
-        <Text variant="bodySmall" color="secondary">
-          {t('notebooks.list.count-truncated', '', {
-            count: loadedCount,
-            defaultValue_one: 'First {{count}} notebook loaded',
-            defaultValue_other: 'First {{count}} notebooks loaded',
-          })}
-        </Text>
-        {matches}
-      </>
-    );
   }
 
   return (

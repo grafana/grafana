@@ -18,7 +18,6 @@ import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -191,6 +190,7 @@ export class RowsLayoutManager
     }
 
     addElement({
+      meta: { actionId: 'row.add' },
       addedObject: newRow,
       source: this,
       perform: () => {
@@ -348,6 +348,7 @@ export class RowsLayoutManager
     let nextVariables: SceneVariable[] | undefined;
 
     edit({
+      meta: { actionId: 'row.ungroup' },
       description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
       source: scene,
       perform: () => {
@@ -519,20 +520,13 @@ export class RowsLayoutManager
       perform();
     } else {
       removeElement({
+        meta: { actionId: 'row.remove' },
         removedObject: row,
         source: this,
         perform,
         undo,
       });
     }
-  }
-
-  public moveRow(_rowKey: string, fromIndex: number, toIndex: number) {
-    const rows = [...this.state.rows];
-    const [removed] = rows.splice(fromIndex, 1);
-    rows.splice(toIndex, 0, removed);
-    this.setState({ rows });
-    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public forceSelectRow(rowKey: string) {
@@ -681,6 +675,7 @@ export class RowsLayoutManager
     }
 
     edit({
+      meta: { actionId: collapse ? 'row.collapseAll' : 'row.expandAll' },
       source: this,
       description,
       perform: () => rowsToToggle.forEach((row) => row.setCollapsedState(collapse)),
