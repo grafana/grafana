@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { sceneGraph, SceneReactObject, type SceneObject, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Button, IconButton, Input, LinkButton, Spinner, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
@@ -13,7 +13,6 @@ import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/url
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { VisualizationSuggestionCard } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestionCard';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NOTEBOOK_CELL_CONTROLS_CLASS } from './edit/cellClassNames';
@@ -217,7 +216,11 @@ function PanelExploreLinkWithRunner({ panel, runner }: { panel: VizPanel; runner
           }
           try {
             const queryDatasource = await getDataSourceInstance(query.datasource ?? datasource);
-            return queryDatasource.uid === 'grafana' ? { ...query, queryType: GrafanaQueryType.RandomWalk } : query;
+            if (queryDatasource.uid !== 'grafana') {
+              return query;
+            }
+            const queryType = queryDatasource.getDefaultQuery?.(CoreApp.Explore)?.queryType;
+            return queryType ? { ...query, queryType } : query;
           } catch {
             return query;
           }
