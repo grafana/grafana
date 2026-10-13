@@ -36,7 +36,7 @@ function notify(frame: HTMLIFrameElement, type: string, extra = {}, envelope = {
     new MessageEvent('message', {
       source: frame.contentWindow,
       origin: frame.hasAttribute('sandbox') ? 'null' : window.location.origin,
-      data: { protocol: TEXT_FRAME_PROTOCOL, channel, type, ...extra },
+      data: { protocol: TEXT_FRAME_PROTOCOL, channel, type, ...(type === 'ready' && { document: 'first' }), ...extra },
       ...envelope,
     })
   );
@@ -106,6 +106,27 @@ it('rejects foreign sources, origins, channels, and premature rendered messages'
   notify(element, 'ready');
   notify(element, 'ready');
   expect(postMessage).toHaveBeenCalledTimes(1);
+});
+
+it('renders again into a reloaded document and fails closed if it never completes', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+
+  notify(element, 'ready', { document: 'reloaded' });
+  notify(element, 'ready', { document: 'reloaded' });
+  expect(postMessage).toHaveBeenCalledTimes(2);
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'render', html: '<p>Private content</p>' }),
+    '*'
+  );
+
+  act(() => jest.advanceTimersByTime(WATCHDOG_TIMEOUT_MS));
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
 });
 
 it('retains the visible frame and reports a late violation', async () => {
