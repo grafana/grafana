@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -30,6 +31,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -3741,6 +3744,8 @@ func TestClassifyAuthError(t *testing.T) {
 	}{
 		{"nil", nil, ""},
 		{"namespace mismatch", authlib.ErrNamespaceMismatch, "auth_namespace_mismatch"},
+		{"service permission missing", fmt.Errorf("wrap: %w", ErrServicePermissionMissing), "auth_rejected"},
+		{"service cannot delegate", ErrServiceCannotDelegate, "auth_rejected"},
 		{"unavailable", status.Error(codes.Unavailable, "down"), "auth_unavailable"},
 		{"deadline exceeded", status.Error(codes.DeadlineExceeded, "slow"), "auth_unavailable"},
 		{"resource exhausted", status.Error(codes.ResourceExhausted, "rate"), "auth_unavailable"},
@@ -4666,4 +4671,57 @@ func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
 		"a keys page must respect maxPageSizeBytes; got %d bytes for %d items", size, len(rsp.Items))
 	require.NotEmpty(t, rsp.NextPageToken, "a truncated page must hand back a continue token")
 	require.Less(t, len(rsp.Items), 50, "the byte budget must have truncated the page")
+}
+
+// compileErrAccessClient fails Compile and, once failBatch is set, BatchCheck with a fixed error.
+type compileErrAccessClient struct {
+	callbackAccessClient
+	err       error
+	failBatch atomic.Bool
+}
+
+func (c *compileErrAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	if c.failBatch.Load() {
+		return authlib.BatchCheckResponse{}, c.err
+	}
+	return c.callbackAccessClient.BatchCheck(ctx, id, req)
+}
+
+func (c *compileErrAccessClient) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return nil, nil, c.err
+}
+
+func TestServicePermissionDenialIsForbidden(t *testing.T) {
+	denied := fmt.Errorf("%w: %s/%s:%s", ErrServicePermissionMissing, watchTestGroup, watchTestResource, utils.VerbGet)
+	ac := &compileErrAccessClient{
+		callbackAccessClient: callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }},
+		err:                  denied,
+	}
+	srv := newWatchTestServer(t, watchTestServerOpts{AccessClient: ac})
+	ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+	key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace}
+
+	// Seed one item so List has something to authorize.
+	value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"p1","uid":"uid-p1","namespace":"` + watchTestNamespace + `"},"spec":{"title":"t","interval":"5m","items":[]}}`)
+	created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+		Key:   &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "p1"},
+		Value: value,
+	})
+	require.NoError(t, err)
+	require.Nil(t, created.Error)
+	ac.failBatch.Store(true)
+
+	t.Run("list", func(t *testing.T) {
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{Key: key}})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		require.Equal(t, string(metav1.StatusReasonForbidden), rsp.Error.Reason)
+	})
+
+	t.Run("watch", func(t *testing.T) {
+		err := srv.Watch(&resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: key}}, newMockWatchServer(ctx))
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+	})
 }

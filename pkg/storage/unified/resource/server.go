@@ -2441,6 +2441,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		Verb:      utils.VerbGet,
 	})
 	if err != nil {
+		if errors.Is(err, ErrServicePermissionMissing) || errors.Is(err, ErrServiceCannotDelegate) {
+			return StatusError(AsErrorResult(err))
+		}
 		return err
 	}
 	if checker == nil {
@@ -3205,6 +3208,9 @@ func classifyAuthError(err error) string {
 	}
 	if errors.Is(err, claims.ErrNamespaceMismatch) {
 		return "auth_namespace_mismatch"
+	}
+	if errors.Is(err, ErrServicePermissionMissing) || errors.Is(err, ErrServiceCannotDelegate) {
+		return "auth_rejected"
 	}
 	switch status.Code(err) {
 	case codes.Unavailable, codes.DeadlineExceeded, codes.Canceled, codes.ResourceExhausted:
