@@ -93,6 +93,10 @@ export async function getDataSourceInstance(
       inflightLoads.delete(cacheUid);
     }
   } catch (err) {
+    // The list or the settings failed to load. Boot data would hide that failure, so do not fall back.
+    if (isDataSourceLoadError(err)) {
+      throw err;
+    }
     return getDataSourceInstanceFallback(ref, scopedVars, err);
   }
 }
@@ -189,10 +193,6 @@ async function getDataSourceInstanceFallback(
   scopedVars: ScopedVars | undefined,
   originalError: unknown
 ): Promise<DataSourceApi> {
-  // The list or the settings failed to load. Boot data would hide that failure, so do not fall back.
-  if (isDataSourceLoadError(originalError)) {
-    throw originalError;
-  }
   const srv = getDataSourceSrv();
   if (srv) {
     const legacy = await srv.get(ref, scopedVars).catch(() => undefined);
