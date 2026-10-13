@@ -504,7 +504,7 @@ var (
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // Adds a route at startup
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:            "useNewAPIsForDatasourceCRUD",
@@ -1059,6 +1059,14 @@ var (
 			Description: "Enables custom dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true, React: true},
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.smtpSettingsPage",
+			Description: "Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaBackendServicesSquad,
 			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
 		},
