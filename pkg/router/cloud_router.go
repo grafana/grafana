@@ -440,18 +440,19 @@ func newAggregateBaseTransport(tlsCfg *tls.Config) *http.Transport {
 	return t
 }
 
-// buildAggregateTLSConfig builds the TLS config for one aggregate target or
-// plugin manifests source from its ca_file/insecure settings. insecure wins
-// over caFile if both are set.
+// buildAggregateTLSConfig builds the TLS config for one aggregate target,
+// plugin manifests source or the plugin gRPC connections from its
+// ca_file/insecure settings. insecure wins over caFile if both are set.
 func buildAggregateTLSConfig(caFile string, insecure bool) (*tls.Config, error) {
 	// nosemgrep: problem-based-packs.insecure-transport.go-stdlib.bypass-tls-verification.bypass-tls-verification
 	tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12}
 	switch {
 	case insecure:
 		// Operator-gated via router.aggregate.<name> insecure (or
-		// plugins_insecure/core_insecure): only enable for a target reached
-		// over a link that's actually trusted, since this disables both CA
-		// and hostname verification (MITM exposure).
+		// plugins_insecure, core_insecure or router.backend_grpc
+		// tls_insecure): only enable for a target reached over a link that's
+		// actually trusted, since this disables both CA and hostname
+		// verification (MITM exposure).
 		tlsCfg.InsecureSkipVerify = true // #nosec G402 -- operator-gated, trusted-link only
 	case caFile != "":
 		caData, err := os.ReadFile(caFile) // #nosec G304 -- operator-supplied config path, not user input
