@@ -60,6 +60,7 @@ function AnnotationDataSourcePicker({ layer }: { layer: AnnotationLayer }) {
           : { ...query, datasource: dsRef };
 
       edit({
+        meta: { actionId: 'annotation.changeDataSource' },
         description: t('dashboard.sidebar.annotation.change-data-source', 'Change annotation data source'),
         source: layer,
         perform: () => {

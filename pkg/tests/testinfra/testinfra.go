@@ -180,12 +180,14 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		env.Cfg.DisablePruner = db.IsTestDbSQLite()
 		eDB, err := sql.ProvideResourceDB(env.Cfg, env.SQLStore)
 		require.NoError(t, err)
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, nil, nil)
+		kvStore, err := sql.ProvideKV(env.Cfg, eDB)
+		require.NoError(t, err)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, kvStore, nil)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
-		backendService := storageBackend.(services.Service)
-		require.NotNil(t, backendService)
-		require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
+		if backendService, ok := storageBackend.(services.Service); ok {
+			require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
+		}
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
 			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, nil, grpcService)
@@ -545,6 +547,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	_, err = grpcServerAuth.NewKey("allowed_audiences", "org:1")
 	require.NoError(t, err)
+	if opts.UnsafeGRPCServerAuthentication {
+		_, err = grpcServerAuth.NewKey("unsafe", "true")
+		require.NoError(t, err)
+	}
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
 		section, err := cfg.GetSection(name)
@@ -782,6 +788,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 			require.NoError(t, err)
 		}
 	}
+	{
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("grpc_error_result_to_status", "true")
+		require.NoError(t, err)
+	}
 	if opts.UnifiedStorageDisableSearch {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -972,13 +984,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		apiserverSection, err := getOrCreateSection("grafana-apiserver")
 		require.NoError(t, err)
 		_, err = apiserverSection.NewKey("disable_controllers", "true")
-		require.NoError(t, err)
-	}
-
-	if opts.EnableSearchAPI {
-		apiserverSection, err := getOrCreateSection("grafana-apiserver")
-		require.NoError(t, err)
-		_, err = apiserverSection.NewKey("enable_search_api", "true")
 		require.NoError(t, err)
 	}
 
@@ -1209,9 +1214,6 @@ type GrafanaOpts struct {
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool
 
-	// EnableSearchAPI turns on the per-resource /search endpoints, which are off
-	// by default.
-	EnableSearchAPI bool
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver
@@ -1242,6 +1244,9 @@ type GrafanaOpts struct {
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
+
+	// Accept local test-exchanger tokens without an external signing-key service.
+	UnsafeGRPCServerAuthentication bool
 
 	// Remote alertmanager configuration
 	RemoteAlertmanagerURL string
@@ -1286,4 +1291,22 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	u, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u
+}
+
+// RunWithFeatureToggle runs each mode sequentially so the environment override is
+// restored after its servers are stopped. The callback must create a fresh test environment.
+func RunWithFeatureToggle(t *testing.T, flag string, run func(t *testing.T)) {
+	t.Helper()
+
+	for _, enabled := range []bool{
+		false,
+		// TODO: Uncomment when https://github.com/grafana/identity-access-team/issues/2436 is completed.
+		// true,
+	} {
+		t.Run(fmt.Sprintf("%s=%t", flag, enabled), func(t *testing.T) {
+			t.Setenv(fmt.Sprintf("GF_FEATURE_TOGGLES_%s", flag), strconv.FormatBool(enabled))
+
+			run(t)
+		})
+	}
 }

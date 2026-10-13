@@ -29,8 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
-	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -703,7 +702,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			opts:         StorageOptions{EnableFolderSupport: true},
 			getDynClient: failingDynClient(errors.New("dynamic client should not be consulted for root parent")),
 		}
-		obj := makeDashboard(t, folder.GeneralFolderUID, nil)
+		obj := makeDashboard(t, "general", nil)
 		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
 	})
 }
@@ -728,7 +727,7 @@ func TestVerifyFolder(t *testing.T) {
 		}
 		obj := makeDash(t, "")
 		require.NoError(t, s.verifyFolder(obj))
-		require.Equal(t, folder.GeneralFolderUID, obj.GetFolder())
+		require.Equal(t, generalFolderUID, obj.GetFolder())
 	})
 
 	t.Run("support enabled, folder set passes unchanged", func(t *testing.T) {
@@ -1038,7 +1037,7 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 		}
 		raw, err := s.encode(context.Background(), dashboardAt("v1"), true)
 		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
-		require.Contains(t, err.Error(), "does not match resource group")
+		require.Contains(t, err.Error(), "does not match storage group")
 		require.Nil(t, raw)
 	})
 
@@ -1250,8 +1249,8 @@ func TestCheckGVK(t *testing.T) {
 func TestFolderNormalizationOnSave(t *testing.T) {
 	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser})
 	s := &Storage{serializer: JSONSerializer(), opts: StorageOptions{EnableFolderSupport: true}}
-	for _, previousFolder := range []string{"", folder.GeneralFolderUID, "parent"} {
-		for _, nextFolder := range []string{"", folder.GeneralFolderUID, "parent"} {
+	for _, previousFolder := range []string{"", generalFolderUID, "parent"} {
+		for _, nextFolder := range []string{"", generalFolderUID, "parent"} {
 			t.Run(fmt.Sprintf("%q to %q", previousFolder, nextFolder), func(t *testing.T) {
 				previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash", UID: "uid", Generation: 3, Annotations: map[string]string{utils.AnnoKeyFolder: previousFolder}}}
 				next := previous.DeepCopy()
@@ -1264,11 +1263,11 @@ func TestFolderNormalizationOnSave(t *testing.T) {
 				require.NoError(t, err)
 				expected := nextFolder
 				if expected == "" {
-					expected = folder.GeneralFolderUID
+					expected = generalFolderUID
 				}
 				require.Equal(t, expected, meta.GetFolder())
 				generation := int64(3)
-				if folder.ToLegacyFolderUID(previousFolder) != folder.ToLegacyFolderUID(nextFolder) {
+				if toLegacyFolderUID(previousFolder) != toLegacyFolderUID(nextFolder) {
 					generation++
 				}
 				require.Equal(t, generation, meta.GetGeneration())
@@ -1281,11 +1280,11 @@ func TestFolderNormalizationOnSave(t *testing.T) {
 		require.NoError(t, err)
 		var obj dashv1.Dashboard
 		require.NoError(t, json.Unmarshal(saved.raw, &obj))
-		require.Equal(t, folder.GeneralFolderUID, obj.Annotations[utils.AnnoKeyFolder])
+		require.Equal(t, generalFolderUID, obj.Annotations[utils.AnnoKeyFolder])
 	})
 	t.Run("required folder rejects root", func(t *testing.T) {
 		required := &Storage{opts: StorageOptions{EnableFolderSupport: true, RequireFolder: true}}
-		for _, parent := range []string{"", folder.GeneralFolderUID} {
+		for _, parent := range []string{"", generalFolderUID} {
 			obj, err := utils.MetaAccessor(&dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Annotations: map[string]string{utils.AnnoKeyFolder: parent}}})
 			require.NoError(t, err)
 			require.True(t, apierrors.IsInvalid(required.verifyFolder(obj)))

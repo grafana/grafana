@@ -105,6 +105,7 @@ func New(
 	gvk schema.GroupVersionKind,
 	kind app.ManifestVersionKind,
 	admission appclientv3.AdmissionClient,
+	conversion appclientv3.ConversionClient,
 	opts Options,
 	defs map[string]common.OpenAPIDefinition,
 ) (*Store, error) {
@@ -115,6 +116,9 @@ func New(
 	}
 	if opts.StorageOptsGetter == nil {
 		return nil, fmt.Errorf("kind %s has no storage options getter", gvk.Kind)
+	}
+	if kind.Conversion && conversion == nil {
+		return nil, fmt.Errorf("kind %s declares conversion but has no plugin client", gvk.Kind)
 	}
 
 	gr := schema.GroupResource{Group: gvk.Group, Resource: strings.ToLower(kind.Plural)}
@@ -177,12 +181,19 @@ func New(
 	// Scoped to this group+version+resource, so a kind that changes its folder
 	// scope between versions gets what each version declared.
 	folder := IsFolderScoped(kind)
-	optsGetter := opts.StorageOptsGetter(apistore.StorageOptions{
+	storageOpts := apistore.StorageOptions{
 		GVK:                  gvk,
 		EnableFolderSupport:  folder,
 		RequireFolder:        folder, // always true for manifest based kinds with folder support
 		DeprecatedInternalID: apistore.DeprecatedID_None,
-	})
+	}
+	if conversion != nil {
+		storageOpts.Serializer = &conversionSerializer{
+			client: conversion,
+			gvk:    gvk,
+		}
+	}
+	optsGetter := opts.StorageOptsGetter(storageOpts)
 
 	store := &registry.Store{
 		NewFunc: func() runtime.Object {

@@ -26,6 +26,8 @@ import {
   type NotebookExportedProperties,
   type NotebookExportDestination,
   type NotebookExportSource,
+  type NotebookIncidentAction,
+  type NotebookIncidentActionClickedProperties,
   type NotebookLinkCopiedProperties,
   type NotebookLinkCopySource,
   type NotebookListFilteredProperties,
@@ -80,6 +82,10 @@ const createExportedEvent = createNotebookEvent<NotebookExportedProperties>('exp
 
 /** Fired once a copy-link click actually put the link on the clipboard. */
 const createLinkCopiedEvent = createNotebookEvent<NotebookLinkCopiedProperties>('link_copied');
+
+/** Fired when an IRM action is picked from the notebook's menu, as its form opens. */
+const createIncidentActionClickedEvent =
+  createNotebookEvent<NotebookIncidentActionClickedProperties>('incident_action_clicked');
 
 /** Fired once per committed filter change on the notebooks list, as the change commits. */
 const createListFilteredEvent = createNotebookEvent<NotebookListFilteredProperties>('list_filtered');
@@ -172,6 +178,10 @@ export const NotebookAnalytics = {
 
   linkCopied(notebookUid: string, source: NotebookLinkCopySource): void {
     createLinkCopiedEvent({ notebookUid, source });
+  },
+
+  incidentActionClicked(notebookUid: string, action: NotebookIncidentAction): void {
+    createIncidentActionClickedEvent({ notebookUid, action });
   },
 
   listFiltered(filterType: NotebookListFilterType, filters: NotebookListFilterState): void {

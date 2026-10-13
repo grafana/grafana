@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -64,7 +64,10 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
   // memo below, and one hook per query would break the rules of hooks as queries come and go.
   // `all` because a query can target any datasource, whatever capabilities its plugin reports, and
   // `mixed` so a Mixed pane's own datasource resolves for a query that carries no ref of its own.
-  const { items: dataSourceItems } = useDataSourceInstanceList({ all: true, mixed: true });
+  const { items: dataSourceItems, isLoading: dataSourcesLoading } = useDataSourceInstanceList({
+    all: true,
+    mixed: true,
+  });
   // Logos come from the plugin metas keyed by type, not from the resolved instance, so a ref that
   // matches no instance still shows its plugin's logo alongside the type it names.
   const { value: pluginMetas } = useDatasourcePluginMetas();
@@ -154,6 +157,22 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
     });
   }, [cards]);
 
+  // Opens a Prometheus first card once per mount, so a user's collapse sticks. A layout effect, so the
+  // card never paints closed first.
+  const defaultExpansionDecidedRef = useRef(false);
+  useLayoutEffect(() => {
+    const first = cards[0];
+    // A ref without a type only resolves with the datasource list, and may never resolve at all.
+    if (defaultExpansionDecidedRef.current || (first && !first.dsType && dataSourcesLoading)) {
+      return;
+    }
+
+    defaultExpansionDecidedRef.current = true;
+    if (first?.isExpandable) {
+      setExpandedRefIds((prev) => new Set(prev).add(first.refId));
+    }
+  }, [cards, dataSourcesLoading]);
+
   // A new range fetches a new catalog, which need not still hold the selected metric. Keyed on
   // `rangeKey`, not the range object Explore rebuilds every refresh tick, so a refresh changes
   // nothing here for the same reason it refetches nothing.
@@ -211,41 +230,44 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
       </div>
 
       <div className={styles.sectionLabel}>{t('explore.signal-explorer.section-label-queries', 'Queries')}</div>
-      <ScrollContainer>
-        <div className={styles.cards}>
-          {/* Explore always hands over at least one query today, because the sidebar is
-              gated on a Prometheus datasource being present. Kept because an empty list
-              is a legal input to this component. */}
-          {cards.length === 0 ? (
-            <div className={styles.emptyText}>
-              {t('explore.signal-explorer.empty-text', 'Add a query to browse its datasource.')}
-            </div>
-          ) : (
-            cards.map((card) => (
-              <SignalCard
-                key={card.refId}
-                refId={card.refId}
-                datasourceName={card.datasourceName}
-                datasourceLogo={card.datasourceLogo}
-                isExpandable={card.isExpandable}
-                isExpanded={expandedRefIds.has(card.refId)}
-                onToggleExpanded={() => toggleExpanded(card.refId)}
-                onJumpToQuery={() => jumpToQuery(card.refId)}
-              >
-                <MetricsList
+      <div className={styles.cardsViewport}>
+        <ScrollContainer>
+          <div className={styles.cards}>
+            {/* Explore always hands over at least one query today, because the sidebar is
+                gated on a Prometheus datasource being present. Kept because an empty list
+                is a legal input to this component. */}
+            {cards.length === 0 ? (
+              <div className={styles.emptyText}>
+                {t('explore.signal-explorer.empty-text', 'Add a query to browse its datasource.')}
+              </div>
+            ) : (
+              cards.map((card) => (
+                <SignalCard
+                  key={card.refId}
                   refId={card.refId}
-                  dsUid={card.dsUid}
-                  dsType={card.dsType}
-                  stackedQueriesCount={cards.length}
-                  timeRange={timeRange}
-                  selectedMetric={selectedMetric?.refId === card.refId ? selectedMetric.metric.name : undefined}
-                  onSelectMetric={selectMetric}
-                />
-              </SignalCard>
-            ))
-          )}
-        </div>
-      </ScrollContainer>
+                  datasourceName={card.datasourceName}
+                  datasourceLogo={card.datasourceLogo}
+                  isExpandable={card.isExpandable}
+                  isExpanded={expandedRefIds.has(card.refId)}
+                  isOnlyCard={cards.length === 1}
+                  onToggleExpanded={() => toggleExpanded(card.refId)}
+                  onJumpToQuery={() => jumpToQuery(card.refId)}
+                >
+                  <MetricsList
+                    refId={card.refId}
+                    dsUid={card.dsUid}
+                    dsType={card.dsType}
+                    stackedQueriesCount={cards.length}
+                    timeRange={timeRange}
+                    selectedMetric={selectedMetric?.refId === card.refId ? selectedMetric.metric.name : undefined}
+                    onSelectMetric={selectMetric}
+                  />
+                </SignalCard>
+              ))
+            )}
+          </div>
+        </ScrollContainer>
+      </div>
 
       {/* A sibling of the scroll region, not the last thing inside it, so it stays put while the
           cards scroll. */}
@@ -305,6 +327,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
     }),
+    // A size container, so an expanded card can size itself to the visible card area in `cqh`.
+    cardsViewport: css({
+      label: 'signal-explorer-cards-viewport',
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 auto',
+      minHeight: 0,
+      containerType: 'size',
+    }),
+    // SignalCard's expanded height subtracts this gap and bottom padding, so change them together.
     cards: css({
       label: 'signal-explorer-cards',
       display: 'flex',

@@ -3893,6 +3893,74 @@
           }
         }
       ]
+    },
+    "/search/hybrid": {
+      "get": {
+        "description": "Experimental hybrid search for alert rules",
+        "operationId": "getHybridSearchAlertRules",
+        "responses": {
+          "default": {
+            "description": "Default Response."
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "folder",
+          "in": "query",
+          "description": "Filter by the stored folder UID",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "Maximum number of results (default 50)",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "minRelevance",
+          "in": "query",
+          "description": "Minimum reranker relevance: lowest, low, medium, high, or highest. Cannot be combined with skipRerank",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "description": "Search text for lexical and semantic retrieval",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "semanticQuery",
+          "in": "query",
+          "description": "Optional text to embed for semantic retrieval instead of query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "skipRerank",
+          "in": "query",
+          "description": "Skip reranking and return the fused lexical and semantic ordering",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -4688,7 +4756,7 @@
         }
       },
       "ListAlertRuleSearchRulesV0alpha1SearchRegexLeaf": {
-        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "description": "Supported on the \"labels\" field only, as \"key=<value regex>\": the key is\nliteral, and the value regex matches the whole label value, case-sensitively\nunless it starts with (?i). A missing label is matched as an empty value.",
         "type": "object",
         "required": ["field", "pattern"],
         "properties": {
@@ -4792,7 +4860,7 @@
         }
       },
       "ListAlertRuleSearchRulesV0alpha1SearchWhereNode": {
-        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter/regex leaf or a top-level \"and\" of those leaves.",
         "type": "object",
         "properties": {
           "and": {
@@ -5019,7 +5087,7 @@
         }
       },
       "ListRecordingRuleSearchRulesV0alpha1SearchRegexLeaf": {
-        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "description": "Supported on the \"labels\" field only, as \"key=<value regex>\": the key is\nliteral, and the value regex matches the whole label value, case-sensitively\nunless it starts with (?i). A missing label is matched as an empty value.",
         "type": "object",
         "required": ["field", "pattern"],
         "properties": {
@@ -5123,7 +5191,7 @@
         }
       },
       "ListRecordingRuleSearchRulesV0alpha1SearchWhereNode": {
-        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter/regex leaf or a top-level \"and\" of those leaves.",
         "type": "object",
         "properties": {
           "and": {
