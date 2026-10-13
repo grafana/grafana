@@ -97,6 +97,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/dashboards/${queryArg.name}/dto` }),
         providesTags: ['Dashboard'],
       }),
+      createDashboardPublish: build.mutation<CreateDashboardPublishApiResponse, CreateDashboardPublishApiArg>({
+        query: (queryArg) => ({ url: `/dashboards/${queryArg.name}/publish`, method: 'POST' }),
+        invalidatesTags: ['Dashboard'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -200,6 +204,11 @@ export type UpdateDashboardApiArg = {
 export type GetDashboardDtoApiResponse = /** status 200 OK */ DashboardWithAccessInfo;
 export type GetDashboardDtoApiArg = {
   /** name of the DashboardWithAccessInfo */
+  name: string;
+};
+export type CreateDashboardPublishApiResponse = /** status 200 OK */ Dashboard;
+export type CreateDashboardPublishApiArg = {
+  /** name of the Dashboard */
   name: string;
 };
 export type ApiResource = {
@@ -451,4 +460,5 @@ export const {
   useUpdateDashboardMutation,
   useGetDashboardDtoQuery,
   useLazyGetDashboardDtoQuery,
+  useCreateDashboardPublishMutation,
 } = injectedRtkApi;

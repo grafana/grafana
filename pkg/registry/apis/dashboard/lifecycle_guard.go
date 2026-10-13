@@ -88,8 +88,7 @@ func (g *lifecycleGuard) Watch(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 	return watch.Filter(events, func(event watch.Event) (watch.Event, bool) {
-		switch event.Type {
-		case watch.Error, watch.Bookmark:
+		if event.Type == watch.Error || event.Type == watch.Bookmark {
 			return event, true
 		}
 		return event, canAccessPrivateLifecycleObject(ctx, event.Object)
