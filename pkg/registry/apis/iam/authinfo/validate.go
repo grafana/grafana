@@ -2,6 +2,7 @@ package authinfo
 
 import (
 	"context"
+	"errors"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,8 +17,9 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.AuthInfo, userGetter
 		return apierrors.NewUnauthorized("no identity found")
 	}
 
+	// userGetter is only set when the Users API is enabled.
 	if userGetter == nil {
-		return nil
+		return apierrors.NewInternalError(errors.New("cannot validate the referenced user: the Users API is not enabled"))
 	}
 
 	if _, err := userGetter.Get(ctx, obj.Spec.UserRef.Name, &metav1.GetOptions{}); err != nil {

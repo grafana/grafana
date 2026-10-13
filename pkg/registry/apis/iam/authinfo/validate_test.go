@@ -63,10 +63,12 @@ func TestValidateOnCreate(t *testing.T) {
 			check:      func(t *testing.T, err error) { require.ErrorIs(t, err, someErr) },
 		},
 		{
-			name:       "no getter skips the lookup",
+			name:       "no getter fails closed",
 			ctx:        adminCtx,
 			userGetter: nil,
-			check:      func(t *testing.T, err error) { require.NoError(t, err) },
+			check: func(t *testing.T, err error) {
+				require.True(t, apierrors.IsInternalError(err), "got %v", err)
+			},
 		},
 		{
 			name:       "no identity is unauthorized",
