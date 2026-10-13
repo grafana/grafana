@@ -164,6 +164,16 @@ export class VariableOptions extends PageObject {
   };
 
   readonly adhoc = {
+    toggleGroupBy: async () => {
+      await test.step('Toggle group by for Filter variable', async () => {
+        await this.adhoc.getEnableGroupByCheckbox().locator('+ label').click();
+      });
+    },
+    getEnableGroupByCheckbox: (): Locator =>
+      this.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle,
+        { root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container) }
+      ),
     /** Returns the datasource picker input; it shows the selected datasource as its placeholder, not its value */
     getDatasourceInput: (): Locator =>
       this.getByGrafanaSelector(

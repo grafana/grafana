@@ -99,6 +99,20 @@ export const flows = {
     },
   },
   variables: {
+    async addNewFilterVariable(
+      controls: Controls,
+      sidebar: Sidebar,
+      variable: { name: string; label: string; dataSource: string }
+    ): Promise<void> {
+      await test.step('Create a Filter variable using unified controls', async () => {
+        await controls.enterEditMode();
+        await sidebar.toolbar.clickButton('Add');
+        await sidebar.addOptions.addFilter();
+        await sidebar.variableOptions.setName(variable.name);
+        await sidebar.variableOptions.setLabel(variable.label);
+        await sidebar.variableOptions.adhoc.selectDatasource(variable.dataSource);
+      });
+    },
     async addNewGenericVariable(
       page: Page,
       sidebar: Sidebar,
