@@ -87,6 +87,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   }
 
   // Loads a node from the API and adds it to the nodes cache
+  public getScope = async (scopeId: string) => {
+    return this.state.scopes[scopeId] ?? (await this.apiClient.fetchScope(scopeId));
+  };
+
   public getScopeNode = async (scopeNodeId: string) => {
     if (this.state.nodes[scopeNodeId]) {
       return this.state.nodes[scopeNodeId];

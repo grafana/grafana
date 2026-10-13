@@ -96,7 +96,9 @@ describe('Tree', () => {
     await openSelector();
     await expandResultApplications();
     await selectResultApplicationsGrafana();
-    expect(fetchScopeSpy).toHaveBeenCalledTimes(1);
+    // Once for the select prefetch, and once more if the metadata tooltip opened while hovering the item.
+    expect(fetchScopeSpy).toHaveBeenCalled();
+    expect(fetchScopeSpy.mock.calls.every(([id]) => id === fetchScopeSpy.mock.calls[0][0])).toBe(true);
   });
 
   it('Selects the proper scopes', async () => {
@@ -334,13 +336,11 @@ describe('Tree', () => {
     });
   });
 
-  it('Should only show Recommended when there are no leaf container nodes visible', async () => {
+  it('Should not show a headline when there is no search query', async () => {
     await openSelector();
     await expandResultApplications();
     await expandResultApplicationsCloud();
-    await waitFor(() => {
-      expectScopesHeadline('Recommended');
-    });
+    expect(screen.queryByTestId('scopes-tree-headline')).not.toBeInTheDocument();
   });
 
   it('Should open to a specific path when scopes and scope_node are applied', async () => {

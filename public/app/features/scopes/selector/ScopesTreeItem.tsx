@@ -2,10 +2,11 @@ import { css, cx } from '@emotion/css';
 import Highlighter from 'react-highlight-words';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Icon, RadioButtonDot, useStyles2, Text } from '@grafana/ui';
+import { Checkbox, Icon, RadioButtonDot, Tooltip, useStyles2, Text } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
+import { ScopeNodeMetadata } from './ScopeMetadata';
 import { ScopesTree } from './ScopesTree';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { type NodesMap, type SelectedScope, type TreeNode } from './types';
@@ -174,6 +175,25 @@ function ScopeExpandButton({
   );
 }
 
+interface ScopeMetadataTooltipProps {
+  enabled: boolean;
+  description?: string;
+  scopeId?: string;
+  children: React.ReactElement;
+}
+
+// Skips the tooltip entirely when disabled, so nodes without metadata never render an empty tooltip.
+function ScopeMetadataTooltip({ enabled, description, scopeId, children }: ScopeMetadataTooltipProps) {
+  if (!enabled) {
+    return children;
+  }
+  return (
+    <Tooltip content={<ScopeNodeMetadata description={description} scopeId={scopeId} />} placement="right">
+      {children}
+    </Tooltip>
+  );
+}
+
 export interface ScopesTreeItemProps {
   anyChildExpanded: boolean;
   loadingNodeName: string | undefined;
@@ -219,6 +239,9 @@ export function ScopesTreeItem({
   const shouldHighlight = Boolean(treeNode.query && !treeNode.expanded);
   const searchWords = shouldHighlight ? getSearchWordsFromQuery(treeNode.query) : [];
 
+  // Only scopes carry metadata, not the categories above them
+  const hasMetadata = scopeNode.spec.nodeType === 'leaf' && isSelectable && Boolean(scopeNode.spec.linkId);
+
   const childrenId = getTreeItemElementId(treeNode.scopeNodeId) + '-children';
 
   return (
@@ -231,63 +254,69 @@ export function ScopesTreeItem({
       aria-expanded={isExpandable ? treeNode.expanded : undefined}
       className={anyChildExpanded ? styles.expandedContainer : undefined}
     >
-      <div
-        className={cx(
-          styles.title,
-          isSelectable && !treeNode.expanded && styles.titlePadding,
-          highlighted && styles.highlighted
-        )}
-        data-testid={`scopes-tree-${treeNode.scopeNodeId}`}
+      <ScopeMetadataTooltip
+        enabled={hasMetadata}
+        description={scopeNode.spec.description}
+        scopeId={scopeNode.spec.linkId}
       >
-        {isSelectable && !isExpandable && !treeNode.expanded && (
-          <>
-            {disableMultiSelect && (
-              <ScopeLinkLikeButton
-                scopeNodeId={treeNode.scopeNodeId}
-                onClick={() => {
-                  selectScope(treeNode.scopeNodeId);
-                  closeAndApply?.();
-                }}
-              >
-                <TitleContent shouldHighlight={shouldHighlight} titleText={titleText} searchWords={searchWords} />
-              </ScopeLinkLikeButton>
-            )}
-            {!disableMultiSelect && (
-              <ScopeCheckboxWithLabel
-                scopeNodeId={treeNode.scopeNodeId}
-                selected={selected}
-                showLabel={!isExpandable}
-                onChange={() => {
-                  selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
-                }}
-              >
-                <TitleContent shouldHighlight={shouldHighlight} titleText={titleText} searchWords={searchWords} />
-              </ScopeCheckboxWithLabel>
-            )}
-          </>
-        )}
+        <div
+          className={cx(
+            styles.title,
+            isSelectable && !treeNode.expanded && styles.titlePadding,
+            highlighted && styles.highlighted
+          )}
+          data-testid={`scopes-tree-${treeNode.scopeNodeId}`}
+        >
+          {isSelectable && !isExpandable && !treeNode.expanded && (
+            <>
+              {disableMultiSelect && (
+                <ScopeLinkLikeButton
+                  scopeNodeId={treeNode.scopeNodeId}
+                  onClick={() => {
+                    selectScope(treeNode.scopeNodeId);
+                    closeAndApply?.();
+                  }}
+                >
+                  <TitleContent shouldHighlight={shouldHighlight} titleText={titleText} searchWords={searchWords} />
+                </ScopeLinkLikeButton>
+              )}
+              {!disableMultiSelect && (
+                <ScopeCheckboxWithLabel
+                  scopeNodeId={treeNode.scopeNodeId}
+                  selected={selected}
+                  showLabel={!isExpandable}
+                  onChange={() => {
+                    selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
+                  }}
+                >
+                  <TitleContent shouldHighlight={shouldHighlight} titleText={titleText} searchWords={searchWords} />
+                </ScopeCheckboxWithLabel>
+              )}
+            </>
+          )}
 
-        {isExpandable && (
-          <ScopeExpandButton
-            scopeNodeId={treeNode.scopeNodeId}
-            expanded={treeNode.expanded}
-            controlsId={childrenId}
-            onClick={() => toggleExpandedNode(treeNode.scopeNodeId)}
-            onSelect={() => (selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId))}
-            isSelectable={isSelectable}
-            disableMultiSelect={disableMultiSelect}
-            selected={selected}
-          >
-            <TitleContent shouldHighlight={shouldHighlight} titleText={titleText} searchWords={searchWords} />
-          </ScopeExpandButton>
-        )}
+          {isExpandable && (
+            <ScopeExpandButton
+              scopeNodeId={treeNode.scopeNodeId}
+              expanded={treeNode.expanded}
+              controlsId={childrenId}
+              onClick={() => toggleExpandedNode(treeNode.scopeNodeId)}
+              onSelect={() => (selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId))}
+              isSelectable={isSelectable}
+              disableMultiSelect={disableMultiSelect}
+              selected={selected}
+            >
+              <TitleContent shouldHighlight={shouldHighlight} titleText={titleText} searchWords={searchWords} />
+            </ScopeExpandButton>
+          )}
 
-        {scopeNode.spec.subTitle && (
-          <Text truncate variant="body" color="secondary">
-            {scopeNode.spec.subTitle}
-          </Text>
-        )}
-      </div>
+          {scopeNode.spec.subTitle && (
+            <Text truncate variant="body" color="secondary">
+              {scopeNode.spec.subTitle}
+            </Text>
+          )}
+        </div>
+      </ScopeMetadataTooltip>
 
       <div id={childrenId} className={styles.children}>
         {treeNode.expanded && (
@@ -334,6 +363,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.pxToRem(14),
       lineHeight: theme.typography.pxToRem(22),
       padding: theme.spacing(0.5, 0),
+      // The nested containers are height constrained, without this deep rows shrink below their content and the
+      // tooltip target no longer matches what is visible
+      flexShrink: 0,
 
       '& > label :last-child': css({
         fontSize: theme.typography.pxToRem(14),

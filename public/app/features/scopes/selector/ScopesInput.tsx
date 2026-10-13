@@ -6,6 +6,7 @@ import { useFlagGrafanaEnableScopesFirstMode } from '@grafana/runtime/internal';
 import { getInputStyles, Icon, LinkButton, Spinner, Tooltip, useStyles2, Text, Stack } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
+import { ScopeMetadata, hasScopeMetadata } from './ScopeMetadata';
 import { getPathOfNode } from './scopesTreeUtils';
 import { type NodesMap, type ScopesMap, type SelectedScope } from './types';
 import { useScopeNode } from './useScopeNode';
@@ -159,6 +160,7 @@ export interface ScopesTooltipProps {
 }
 
 export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disabled }: ScopesTooltipProps) {
+  const styles = useStyles2(getStyles);
   if (appliedScopes.length === 0) {
     return t('scopes.selector.input.tooltip', 'Select scope');
   }
@@ -176,21 +178,37 @@ export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, 
 
   const parentPaths = nicePath && nicePath.length > 0 ? nicePath.join(' > ') + ' > ' : '';
 
+  const metadata = appliedScopes
+    .map((s, i) => ({
+      scopeId: s.scopeId,
+      title: appliedScopes.length > 1 ? scopeNames[i] : undefined,
+      description: s.scopeNodeId ? nodes[s.scopeNodeId]?.spec.description : undefined,
+      filters: scopes[s.scopeId]?.spec.filters,
+    }))
+    .filter(hasScopeMetadata);
+  const showRemoveAll = !disabled && onRemoveAllClick;
+
   return (
-    <Stack direction="column" gap={1} justifyContent="center" alignItems={'center'}>
-      <span>{parentPaths + scopeNames.join(', ')}</span>
-      {!disabled && onRemoveAllClick && (
-        <LinkButton
-          onClick={onRemoveAllClick}
-          aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
-          name="times"
-          data-testid="scopes-selector-input-clear"
-          size="sm"
-          fill="text"
-          icon="times"
-        >
-          <Trans i18nKey="scopes.selector.input.remove-all">Remove all</Trans>
-        </LinkButton>
+    <Stack direction="column" gap={1} alignItems="flex-start">
+      <span className={styles.tooltipPath}>{parentPaths + scopeNames.join(', ')}</span>
+      {metadata.map(({ scopeId, title, description, filters }) => (
+        <ScopeMetadata key={scopeId} title={title} description={description} filters={filters} />
+      ))}
+      {showRemoveAll && (
+        <>
+          {metadata.length > 0 && <hr className={styles.divider} />}
+          <LinkButton
+            onClick={onRemoveAllClick}
+            aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
+            name="times"
+            data-testid="scopes-selector-input-clear"
+            size="sm"
+            fill="text"
+            icon="times"
+          >
+            <Trans i18nKey="scopes.selector.input.remove-all">Remove all</Trans>
+          </LinkButton>
+        </>
       )}
     </Stack>
   );
@@ -200,6 +218,15 @@ const getStyles = (theme: GrafanaTheme2) => {
   const baseStyles = getInputStyles({ theme });
 
   return {
+    tooltipPath: css({
+      textAlign: 'left',
+    }),
+    divider: css({
+      alignSelf: 'stretch',
+      margin: 0,
+      border: 0,
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+    }),
     prefix: baseStyles.prefix,
     suffix: baseStyles.suffix,
     fakeInput: css([
