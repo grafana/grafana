@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apiserver/pkg/endpoints"
 	"k8s.io/kube-openapi/pkg/spec3"
 
@@ -147,6 +148,8 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 		serveCachedDoc(w, req, &discoveryResourcesDoc)
 	case manifestDiscoveryList:
 		serveCachedDoc(w, req, &docs.list)
+	case manifestDiscoveryStatus:
+		r.serveRouterStatus(w, req)
 	case manifestDiscoveryIndex:
 		serveCachedDoc(w, req, &docs.index)
 	case manifestDiscoveryIndexHTML:
@@ -257,6 +260,7 @@ Grafana's APIs follow Kubernetes API conventions. Every request needs the same c
 
 - ` + "`GET " + manifestDiscoveryList + "`" + ` (the ` + "`manifests`" + ` resource of the ` + "`" + discoveryGroup + "`" + ` group, so ` + "`kubectl get manifests." + discoveryGroup + "`" + ` works too): every app manifest listed below, as an ` + "`AppManifestList` (`" + appmanifestv1alpha2.GroupVersion.String() + "`)" + `.
 - ` + "`GET " + manifestDiscoveryGroups + "{group}`" + `: one group's ` + "`AppManifest`" + `, with its kinds, schemas, custom routes and roles.
+- ` + "`GET " + manifestDiscoveryStatus + "`" + `: the router's live status, for debugging: each group's source, breaker and backend.
 - ` + "`GET /apis`" + `: Kubernetes API discovery. Send ` + "`Accept: " + aggregatedDiscoveryJSON + "`" + ` to get every resource in one response. Groups listed there but not here publish no manifest.
 - ` + "`GET /openapi/v3/apis/{group}/{version}`" + `: the OpenAPI v3 document for one group version.
 
@@ -294,7 +298,7 @@ A list request returns a ` + "`{Kind}List`" + `; a watch adds ` + "`?watch=true`
 		}
 		fmt.Fprintf(&b, "\n## %s\n\n", title)
 		if _, ok := published[group.Name]; ok {
-			fmt.Fprintf(&b, "Manifest: [%s%s](%s%s)\n", manifestDiscoveryGroups, group.Name, manifestDiscoveryGroups, group.Name)
+			b.WriteString("Manifest: " + mdLink(manifestDiscoveryGroups, group.Name) + "\n")
 		} else {
 			b.WriteString("No app manifest is published for this group; see `/apis` and OpenAPI for its resources.\n")
 		}
@@ -326,7 +330,7 @@ func writeGroupVersions(b *strings.Builder, backend Backend, manifest *app.Manif
 		if gv.Version == group.PreferredVersion.Version {
 			heading += " (preferred)"
 		}
-		fmt.Fprintf(b, "\n### %s\n\nOpenAPI: `/openapi/v3/apis/%s?hash=%s`\n", mdText(heading), gv.GroupVersion, backend.Key())
+		fmt.Fprintf(b, "\n### %s\n\nOpenAPI: %s\n", mdText(heading), mdCode(openapiV3Prefix+"/apis/"+gv.GroupVersion+"?hash="+backend.Key()))
 
 		switch {
 		case manifest != nil:
@@ -438,21 +442,44 @@ func renderIndexHTML(markdown []byte) []byte {
 	return append(page, indexHTMLFoot...)
 }
 
+// mdEscaper backslash-escapes the characters that are active inside a markdown
+// line, the backslash itself among them, so escaped text is only ever text: it
+// cannot open a code span, link, image, emphasis, entity or HTML, nor end a
+// table cell. Text never starts a line here, so block syntax needs no escape.
+var mdEscaper = func() *strings.Replacer {
+	const active = "\\`*_[]<>|&~"
+	pairs := make([]string, 0, 2*len(active))
+	for _, c := range active {
+		pairs = append(pairs, string(c), `\`+string(c))
+	}
+	return strings.NewReplacer(pairs...)
+}()
+
 // mdText makes manifest-supplied text safe for one markdown line or table
-// cell: a single line, no table or HTML syntax, and bounded in length.
+// cell: a single line, escaped, and bounded in length. It truncates before
+// escaping, so it never splits an escape.
 func mdText(s string) string {
 	s = strings.Join(strings.Fields(s), " ")
-	s = strings.NewReplacer("|", `\|`, "<", "&lt;", ">", "&gt;").Replace(s)
 	if r := []rune(s); len(r) > maxIndexTextLen {
 		s = string(r[:maxIndexTextLen]) + "…"
 	}
-	return s
+	return mdEscaper.Replace(s)
 }
 
-// mdCode renders s as an inline code span that can sit in a table cell; s
-// cannot end the span early.
+// mdLink links to prefix+group when the group is a valid name, so it can
+// carry nothing but name characters into the link; otherwise it is plain code.
+func mdLink(prefix, group string) string {
+	if len(validation.IsDNS1123Subdomain(group)) > 0 {
+		return mdCode(prefix + group)
+	}
+	return "[" + mdCode(prefix+group) + "](" + prefix + group + ")"
+}
+
+// mdCode renders s as an inline code span that can sit in a table cell.
+// Backticks and backslashes are dropped, since a code span has no escapes:
+// one would end the span, the other could escape the pipe after it.
 func mdCode(s string) string {
-	s = strings.NewReplacer("`", "", "|", `\|`).Replace(strings.Join(strings.Fields(s), " "))
+	s = strings.NewReplacer("`", "", `\`, "", "|", `\|`).Replace(strings.Join(strings.Fields(s), " "))
 	if s == "" {
 		return ""
 	}

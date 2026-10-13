@@ -47,6 +47,11 @@ type handlerEntry struct {
 	// the handler is replaced or removed, so those watches move to the new one.
 	watches    context.Context
 	endWatches context.CancelFunc
+
+	// loadedAt and watching are for the status page: when this handler was
+	// loaded, and how many watches it is serving.
+	loadedAt time.Time
+	watching *atomic.Int64
 }
 
 func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group string) *handlerEntry {
@@ -54,6 +59,7 @@ func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group s
 	return &handlerEntry{
 		backend: b, handler: handler, lastKey: b.Key(), breaker: newObservedGroupBreaker(group, r.onBreakerChange),
 		watches: watches, endWatches: endWatches,
+		loadedAt: time.Now(), watching: &atomic.Int64{},
 	}
 }
 
@@ -71,6 +77,13 @@ type servingEntry struct {
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
 	discovery *apidiscoveryv2.APIGroupDiscovery
+
+	// For the status page; see handlerEntry. plugin is set when the backend
+	// serves a plugin's APIs.
+	loadedAt    time.Time
+	watching    *atomic.Int64
+	plugin      *PluginStatus
+	hasManifest bool
 }
 
 type phase int
@@ -233,6 +246,10 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 		serveThroughBreaker(entry.breaker, group, entry.handler, w, req)
 	}
 	if requestVerb(req) == "watch" {
+		if entry.watching != nil {
+			entry.watching.Add(1)
+			defer entry.watching.Add(-1)
+		}
 		r.serveWatch(w, req, entry.watches, serve)
 		return
 	}
@@ -684,7 +701,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches}
+		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches, loadedAt: e.loadedAt, watching: e.watching}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
 			entry.source = e.backend.Source()
@@ -694,6 +711,12 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 					entry.discovery = &d
 				}
 			}
+			if provider, ok := e.backend.(PluginStatusProvider); ok {
+				if plugin, ok := provider.PluginStatus(); ok {
+					entry.plugin = &plugin
+				}
+			}
+			_, entry.hasManifest = backendManifest(e.backend)
 		}
 		snap[group] = entry
 	}

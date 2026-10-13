@@ -19,22 +19,22 @@ func aggregateSource(target string) string { return aggregateSourceName + target
 
 // sourceStatus is how a route source's loads or polls are going.
 type sourceStatus struct {
-	Source string
+	Source string `json:"source"`
 	// LastSuccess is when the source last loaded successfully; zero if never.
-	LastSuccess time.Time
+	LastSuccess time.Time `json:"lastSuccess"`
 	// Successes and Failures count attempts since the router started.
-	Successes uint64
-	Failures  uint64
+	Successes uint64 `json:"successes"`
+	Failures  uint64 `json:"failures"`
 	// Skipped is the number of backends the latest successful load skipped.
-	Skipped int
+	Skipped int `json:"skipped"`
 }
 
 // shadowedGroup is a group that one source offered but a higher-priority
 // source serves instead.
 type shadowedGroup struct {
-	Group  string
-	Source string
-	By     string
+	Group  string `json:"group"`
+	Source string `json:"source"`
+	By     string `json:"servedBy"`
 }
 
 // loaderStatus is an optional RoutesLoader interface for loaders that report

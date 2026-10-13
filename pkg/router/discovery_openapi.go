@@ -92,6 +92,10 @@ func buildDiscoveryOpenAPI(schemas map[string]any) map[string]any {
 		"properties": map[string]any{"name": map[string]any{"type": "string", "description": "The API group the manifest describes."}},
 	}
 	schemas["ListMeta"] = map[string]any{"type": "object"}
+	schemas["RouterStatus"] = map[string]any{
+		"type":        "object",
+		"description": "The router's live status, for debugging. Its shape may change between releases.",
+	}
 
 	jsonResponse := func(description, schemaName string) map[string]any {
 		return map[string]any{"200": map[string]any{
@@ -113,6 +117,14 @@ func buildDiscoveryOpenAPI(schemas map[string]any) map[string]any {
 					"description": "List the app manifest of every served API group that has one.",
 					"tags":        []string{discoveryGroup + "_" + manifestDiscoveryVersion},
 					"responses":   jsonResponse("OK", "AppManifestList"),
+				},
+			},
+			manifestDiscoveryStatus: map[string]any{
+				"get": map[string]any{
+					"operationId": "readDiscoveryV1alpha2Status",
+					"description": "Read the router's live status: each served group's source, breaker, backend and caches.",
+					"tags":        []string{discoveryGroup + "_" + manifestDiscoveryVersion},
+					"responses":   jsonResponse("OK", "RouterStatus"),
 				},
 			},
 			manifestDiscoveryGroups + "{name}": map[string]any{

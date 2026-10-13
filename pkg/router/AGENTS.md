@@ -97,7 +97,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Engine: reconcile loop, dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
 | Root discovery (`/apis`, `/openapi/v3`) | `discovery.go`, `discovery_handler.go` |
 | Per-group-version OpenAPI cache | `openapi_cache.go` |
-| App manifest discovery (`/apis/discovery`) | `discovery_manifests.go`, `discovery_openapi.go` |
+| App manifest discovery (`/apis/discovery`) | `discovery_manifests.go`, `discovery_openapi.go`, `discovery_status.go` |
 | Circuit breaker, status recorder | `breaker.go`, `plugin_breaker.go` |
 | dskit service, middleware entry point | `service.go` |
 | Watch handling, upgrade rejection, verb classification | `watch.go` |
@@ -148,6 +148,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served `ManifestProvider` backend. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
+| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): router phase and readiness, reconcile counts, each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status and shadowed groups. |
 | `/apis/discovery/v1alpha2/index.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/index.html` | The same index rendered as a static page, with a CSP that allows no scripts. |
@@ -172,6 +173,11 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     in both formats, so Kubernetes clients find it like any other group (`kubectl get
     manifests.discovery`). Each `AppManifest` is named by its group.
   - Errors are Kubernetes `Status` objects; watch and writes are refused with 405.
+  - The status page (`discovery_status.go`) is readable by any authenticated caller, so it holds
+    only names, states and counts: never credentials, addresses, URLs or error text, which carry
+    internal hosts. A backend that serves a plugin's APIs reports the plugin through the optional
+    `PluginStatusProvider` interface, under the same rule. Breaker thresholds are the constants `breakerOpenAfter` and `breakerOpenFor`,
+    which the page reports, so change them there.
   - Its OpenAPI document (`/openapi/v3/apis/discovery/v1alpha2`, also in the `/openapi/v3` index) is
     built once at startup in `discovery_openapi.go`, from the `AppManifest` schema in the app-sdk's own
     manifest (`app/manifestdata`). Its schemas carry `x-kubernetes-group-version-kind` for both

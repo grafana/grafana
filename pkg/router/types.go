@@ -40,6 +40,24 @@ type ManifestProvider interface {
 	Manifest() (*app.ManifestData, bool)
 }
 
+// PluginStatusProvider is an optional Backend interface for a backend that
+// serves a plugin's APIs, so the router's status page can show the plugin.
+// The result must change only when Key does.
+type PluginStatusProvider interface {
+	PluginStatus() (PluginStatus, bool)
+}
+
+// PluginStatus is what the status page shows about a group's plugin. Any
+// authenticated caller can read the page, so it must hold no credentials,
+// addresses, URLs or error text.
+type PluginStatus struct {
+	ID      string `json:"id"`
+	Version string `json:"version,omitempty"`
+	// HasBackend reports whether the plugin runs a backend process for the
+	// router to call; without one, only storage-backed kinds work.
+	HasBackend bool `json:"hasBackend"`
+}
+
 type RoutesLoader interface {
 	// Load all known routes
 	// NOTE: this implies that the set of ALL routes is always reasonable to hold in memory

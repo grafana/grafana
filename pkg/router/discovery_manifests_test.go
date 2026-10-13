@@ -115,7 +115,7 @@ func TestBuildManifestDocs(t *testing.T) {
 	require.Equal(t, "text/markdown; charset=utf-8", docs.index.contentType)
 	require.Contains(t, index, "| `"+manifestTestGroup+"` | Widgets | v1 | v1 |")
 	require.Contains(t, index, "## Widgets (`"+manifestTestGroup+"`)")
-	require.Contains(t, index, "Manifest: [/apis/discovery/v1alpha2/manifests/"+manifestTestGroup+"]")
+	require.Contains(t, index, "Manifest: [`/apis/discovery/v1alpha2/manifests/"+manifestTestGroup+"`](/apis/discovery/v1alpha2/manifests/"+manifestTestGroup+")")
 	require.Contains(t, index, "| Widget | `widgets` | Namespaced |")
 	require.Contains(t, index, "- `GET /apis/"+manifestTestGroup+"/v1/namespaces/{namespace}/stats`: Widget stats \\| totals per namespace\n",
 		"manifest text stays on one line and cannot break a table")
@@ -271,6 +271,7 @@ func TestDiscoveryGroupWithKubernetesClients(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, doc.Paths.Paths, "/apis/discovery/v1alpha2/manifests")
 	require.Contains(t, doc.Paths.Paths, "/apis/discovery/v1alpha2/manifests/{name}")
+	require.Contains(t, doc.Paths.Paths, "/apis/discovery/v1alpha2/status")
 	found := ""
 	for name, s := range doc.Components.Schemas {
 		gvks, _ := s.Extensions["x-kubernetes-group-version-kind"].([]any)
@@ -381,9 +382,38 @@ func TestRenderIndexHTML(t *testing.T) {
 	require.NotContains(t, page, `href="javascript:`)
 }
 
+// TestManifestTextCannotBreakTheIndex feeds markdown syntax through every
+// place the index puts manifest text, and checks that it stays text.
+func TestManifestTextCannotBreakTheIndex(t *testing.T) {
+	const hostile = "a`b\\ | [x](https://evil.example) ![i](https://evil.example/i.png) *em* _u_ <b>h</b> &amp; \\"
+	backends := testManifestBackends()
+	m := backends[0].(*fakeManifestBackend).manifest
+	m.AppDisplayName = hostile
+	m.Versions[0].Kinds[0].Kind = hostile
+	m.Versions[0].OpenAPI.Paths["/namespaces/{namespace}/stats"].Get.Summary = hostile
+	docs := buildManifestDocs(t.Context(), backends)
+	page := string(docs.indexHTML.body)
+
+	for _, unwanted := range []string{"<a href=\"https://evil", "<img", "<em>", "<strong>", "<b>"} {
+		require.NotContains(t, page, unwanted)
+	}
+	// Every table keeps its column count.
+	for _, table := range strings.Split(page, "<table>")[1:] {
+		table = table[:strings.Index(table, "</table>")]
+		rows := strings.Split(table, "<tr>")[1:]
+		want := strings.Count(rows[0], "<th")
+		for _, row := range rows[1:] {
+			require.Equal(t, want, strings.Count(row, "<td"), "row %q", row)
+		}
+	}
+	require.Contains(t, page, "[x](https://evil.example)", "the text itself survives, as text")
+}
+
 func TestMDText(t *testing.T) {
-	require.Equal(t, `a \| b &lt;script&gt;`, mdText("a |\n\tb <script>"))
+	require.Equal(t, `a \| b \<script\>`, mdText("a |\n\tb <script>"))
+	require.Equal(t, "\\\\\\` \\[x\\](y)", mdText("\\` [x](y)"), "backslashes and backticks are escaped")
 	require.Equal(t, strings.Repeat("é", maxIndexTextLen)+"…", mdText(strings.Repeat("é", maxIndexTextLen+5)))
 	require.Equal(t, "`GET /a\\|b`", mdCode("GET /a|`b"))
+	require.Equal(t, "`a\\|`", mdCode("a\\|"), "a backslash cannot escape the pipe's escape")
 	require.Empty(t, mdCode(""))
 }

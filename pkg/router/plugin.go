@@ -260,6 +260,7 @@ func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definit
 				continue
 			}
 			backend.info = plugin.JSONData.Info
+			backend.hasBackend = plugin.JSONData.Backend
 			backends = append(backends, backend)
 		}
 	}
@@ -359,6 +360,15 @@ type PluginBackend struct {
 	manifest *app.ManifestData
 	client   PluginClientProvider
 	deps     PluginDependencies
+
+	// hasBackend is whether the plugin runs a backend process, for the
+	// status page.
+	hasBackend bool
+}
+
+// PluginStatus implements [PluginStatusProvider].
+func (b *PluginBackend) PluginStatus() (PluginStatus, bool) {
+	return PluginStatus{ID: b.pluginID, Version: b.info.Version, HasBackend: b.hasBackend}, true
 }
 
 func (b *PluginBackend) Group() metav1.APIGroup {
