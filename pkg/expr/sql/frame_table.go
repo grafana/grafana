@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strconv"
 	"strings"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -102,6 +103,8 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 			if math.IsNaN(v) || math.IsInf(v, 0) {
 				continue
 			}
+		case data.EnumItemIndex:
+			val = enumText(field, v)
 		}
 
 		// If the field is JSON, convert json.RawMessage to types.JSONDocument
@@ -121,6 +124,17 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 
 	ri.row++
 	return row, nil
+}
+
+// enumText returns the display text for an enum index, or the index as text
+// when the field has no enum config or the index is out of range.
+func enumText(field *data.Field, idx data.EnumItemIndex) string {
+	if field.Config != nil && field.Config.TypeConfig != nil && field.Config.TypeConfig.Enum != nil {
+		if text := field.Config.TypeConfig.Enum.Text; int(idx) < len(text) {
+			return text[idx]
+		}
+	}
+	return strconv.Itoa(int(idx))
 }
 
 // Close implements the mysql.RowIter interface.
@@ -176,7 +190,8 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 		return types.Float32
 	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
 		return types.Float64
-	case data.FieldTypeString, data.FieldTypeNullableString:
+	case data.FieldTypeString, data.FieldTypeNullableString,
+		data.FieldTypeEnum, data.FieldTypeNullableEnum:
 		return types.Text
 	case data.FieldTypeBool, data.FieldTypeNullableBool:
 		return types.Boolean
