@@ -1,6 +1,8 @@
 package foldermetadata
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -170,6 +172,47 @@ func TestIntegrationProvisioning_HiddenPaths_KeepTypeChange(t *testing.T) {
 			common.RequireRepoFolderUID(t, helper.Folders, repoName, folderUID)
 		})
 	}
+}
+
+func TestIntegrationProvisioning_HiddenPaths_LocalFolderRepair(t *testing.T) {
+	helper := sharedHelper(t)
+	const repoName = "local-hidden-paths"
+	helper.CreateLocalRepo(t, common.TestRepo{Name: repoName, SyncTarget: "folder", Workflows: []string{"write"}})
+	hidden := map[string][]byte{
+		".git/objects/ab/object": []byte("git object"),
+		".git/.keep":             {},
+		".ci/_folder.json":       []byte("invalid metadata"),
+		".ci/nested/config.json": []byte("invalid resource"),
+	}
+	for path, content := range hidden {
+		helper.WriteToProvisioningPath(t, path, content)
+	}
+	helper.WriteToProvisioningPath(t, "visible/.keep", []byte{})
+
+	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{Action: provisioning.JobActionFixFolderMetadata})
+	common.HasState(provisioning.JobStateSuccess)(t, job)
+	common.HasNoErrors()(t, job)
+	requireNoHiddenPathWarnings(t, job)
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "visible/_folder.json"))
+	require.NoFileExists(t, filepath.Join(helper.ProvisioningPath, "visible/.keep"))
+	for path, content := range hidden {
+		got, err := os.ReadFile(filepath.Join(helper.ProvisioningPath, path)) //nolint:gosec
+		require.NoError(t, err)
+		require.Equal(t, content, got)
+	}
+	for _, dir := range []string{".git", ".git/objects", ".git/objects/ab", ".ci/nested"} {
+		require.NoFileExists(t, filepath.Join(helper.ProvisioningPath, dir, "_folder.json"))
+	}
+
+	job = helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	common.HasState(provisioning.JobStateSuccess)(t, job)
+	common.HasNoErrors()(t, job)
+	requireNoHiddenPathWarnings(t, job)
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"", "visible"})
+	helper.RequireRepoDashboardCount(t, repoName, 0)
 }
 
 func requireNoHiddenPathWarnings(t *testing.T, job *unstructured.Unstructured) {

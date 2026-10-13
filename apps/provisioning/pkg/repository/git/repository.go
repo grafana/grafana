@@ -467,7 +467,7 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) (out []reposit
 	for _, entry := range tree.Entries {
 		isBlob := entry.Type == protocol.ObjectTypeBlob
 		relativePath, err := safepath.RelativeTo(entry.Path, r.gitConfig.Path)
-		if err != nil || isIgnoredPath(relativePath, !isBlob) {
+		if err != nil || repository.IsIgnoredPath(relativePath, !isBlob) {
 			continue
 		}
 
@@ -814,7 +814,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 	changes = make([]repository.VersionedFileChange, 0)
 	for _, f := range files {
 		currentPath, pathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-		ignoreCurrentPath := pathErr != nil || isIgnoredPath(currentPath, f.Type == protocol.ObjectTypeTree)
+		ignoreCurrentPath := pathErr != nil || repository.IsIgnoredPath(currentPath, f.Type == protocol.ObjectTypeTree)
 
 		switch f.Status {
 		case protocol.FileStatusAdded:
@@ -867,7 +867,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 
 			// A rename can cross the configured path or move into or out of a hidden directory.
 			newInsidePath := !ignoreCurrentPath
-			oldInsidePath := oldPathErr == nil && !isIgnoredPath(oldPath, f.Type == protocol.ObjectTypeTree)
+			oldInsidePath := oldPathErr == nil && !repository.IsIgnoredPath(oldPath, f.Type == protocol.ObjectTypeTree)
 
 			// Tree entries (directories) are emitted with trailing slashes so
 			// downstream code can identify them via safepath.IsDir.
@@ -910,14 +910,6 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 	}
 
 	return changes, nil
-}
-
-func isIgnoredPath(path string, isDir bool) bool {
-	// Keep empty-folder markers available for folder metadata repair.
-	if !isDir && safepath.Base(path) == ".keep" {
-		path = safepath.Dir(path)
-	}
-	return safepath.IsHidden(path)
 }
 
 func (r *gitRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {

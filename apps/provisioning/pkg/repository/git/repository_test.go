@@ -5293,57 +5293,23 @@ func TestGitRepository_AuditLog(t *testing.T) {
 	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
 }
 
-func TestGitRepository_HiddenPaths(t *testing.T) {
-	for _, prefix := range []string{"", "configs/", ".configured/"} {
-		for _, tt := range []struct {
-			path     string
-			kind     protocol.ObjectType
-			included bool
-		}{
-			{"dashboard.json", protocol.ObjectTypeBlob, true},
-			{"team.v2", protocol.ObjectTypeTree, true},
-			{"team/dashboard.json", protocol.ObjectTypeBlob, true},
-			{"team/.keep", protocol.ObjectTypeBlob, true},
-			{".config.json", protocol.ObjectTypeBlob, false},
-			{".ci", protocol.ObjectTypeTree, false},
-			{".ci/pipeline.yaml", protocol.ObjectTypeBlob, false},
-			{".ci/_folder.json", protocol.ObjectTypeBlob, false},
-			{".ci/.keep", protocol.ObjectTypeBlob, false},
-			{".github/workflows", protocol.ObjectTypeTree, false},
-			{".github/workflows/lint.yml", protocol.ObjectTypeBlob, false},
-			{"team/.ci/config.json", protocol.ObjectTypeBlob, false},
-			{"team/.hidden & config/_folder.json", protocol.ObjectTypeBlob, false},
-			{"team/.keep", protocol.ObjectTypeTree, false},
-		} {
-			t.Run(prefix+tt.path+string(tt.kind), func(t *testing.T) {
-				mockClient := &mocks.FakeClient{}
-				mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
-				mockClient.GetFlatTreeReturns(&nanogit.FlatTree{Entries: []nanogit.FlatTreeEntry{
-					{Path: prefix + tt.path, Type: tt.kind},
-				}}, nil)
-				repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: prefix}, config: &provisioning.Repository{}}
-				entries, err := repo.ReadTree(t.Context(), "main")
-				require.NoError(t, err)
-				if tt.included {
-					require.Len(t, entries, 1)
-					require.Equal(t, tt.path, strings.TrimSuffix(entries[0].Path, "/"))
-				} else {
-					require.Empty(t, entries)
-				}
-
-				for _, status := range []protocol.FileStatus{protocol.FileStatusAdded, protocol.FileStatusModified, protocol.FileStatusDeleted, protocol.FileStatusTypeChanged} {
-					mockClient.CompareCommitsReturns([]nanogit.CommitFile{{Path: prefix + tt.path, Type: tt.kind, Status: status}}, nil)
-					changes, err := repo.CompareFiles(t.Context(), "main", "feature")
-					require.NoError(t, err)
-					if tt.included {
-						require.Len(t, changes, 1, "status %s", status)
-						require.Equal(t, tt.path, changes[0].Path)
-					} else {
-						require.Empty(t, changes, "status %s", status)
-					}
-				}
-			})
-		}
+func TestGitRepository_CompareFiles_HiddenPaths(t *testing.T) {
+	for _, status := range []protocol.FileStatus{protocol.FileStatusAdded, protocol.FileStatusModified, protocol.FileStatusDeleted, protocol.FileStatusTypeChanged} {
+		t.Run(string(status), func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+			mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+				{Path: "configs/.ci/dashboard.json", Type: protocol.ObjectTypeBlob, Status: status},
+				{Path: "configs/.ci/.keep", Type: protocol.ObjectTypeBlob, Status: status},
+				{Path: "configs/team/.keep", Type: protocol.ObjectTypeTree, Status: status},
+				{Path: "configs/visible/.keep", Type: protocol.ObjectTypeBlob, Status: status},
+			}, nil)
+			repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: "configs"}, config: &provisioning.Repository{}}
+			changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+			require.NoError(t, err)
+			require.Len(t, changes, 1)
+			require.Equal(t, "visible/.keep", changes[0].Path)
+		})
 	}
 }
 

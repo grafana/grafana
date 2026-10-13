@@ -1389,6 +1389,47 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 	}
 }
 
+func TestLocalRepository_ReadTree_HiddenPaths(t *testing.T) {
+	root := filepath.Join(t.TempDir(), ".configured")
+	for _, path := range []string{
+		"dashboard.json", "team/.keep", "team/dashboard.json", "team.v2/dashboard.json",
+		".config.json", ".git/config", ".git/objects/ab/object", ".ci/_folder.json", ".ci/.keep",
+		"team/.hidden.json", "team/.ci/config.json", ".keep/dashboard.json",
+	} {
+		filePath := filepath.Join(root, path)
+		require.NoError(t, os.MkdirAll(filepath.Dir(filePath), 0700))
+		require.NoError(t, os.WriteFile(filePath, []byte("content"), 0600))
+	}
+
+	// A dangling hidden symlink fails if ReadTree tries to hash it.
+	require.NoError(t, os.Symlink(filepath.Join(root, "missing.json"), filepath.Join(root, ".unreadable.json")))
+
+	repo := NewRepository(&provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Local: &provisioning.LocalRepositoryConfig{Path: root},
+		},
+	}, &LocalFolderResolver{PermittedPrefixes: []string{root}}, nil)
+
+	entries, err := repo.ReadTree(t.Context(), "")
+	require.NoError(t, err)
+	for i := range entries {
+		if entries[i].Blob {
+			require.EqualValues(t, len("content"), entries[i].Size)
+			require.NotEmpty(t, entries[i].Hash)
+		}
+		entries[i].Hash = ""
+		entries[i].Size = 0
+	}
+	require.ElementsMatch(t, []repository.FileTreeEntry{
+		{Path: "dashboard.json", Blob: true},
+		{Path: "team/"},
+		{Path: "team/.keep", Blob: true},
+		{Path: "team/dashboard.json", Blob: true},
+		{Path: "team.v2/"},
+		{Path: "team.v2/dashboard.json", Blob: true},
+	}, entries)
+}
+
 func TestLocalRepository_Config(t *testing.T) {
 	testCases := []struct {
 		name   string

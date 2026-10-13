@@ -258,6 +258,13 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) (tree []repo
 			return nil // skip the root file
 		}
 
+		if repository.IsIgnoredPath(entry.Path, info.IsDir()) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
 		if !info.IsDir() {
 			entry.Blob = true
 			entry.Hash, _, err = r.calculateFileHash(path)
