@@ -1,7 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { act, getByLabelText, render, screen, userEvent, within } from 'test/test-utils';
 
-
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import { searchRoute } from '@grafana/test-utils/handlers';
@@ -163,7 +162,6 @@ describe('browse-dashboards BrowseView', () => {
           rootItems: fullyLoadedViewItemCollection([folder]),
           childrenByParentUID: { 'same-uid': fullyLoadedViewItemCollection([dashboard]) },
           openFolders: { 'same-uid': true },
-          folderEditAccess: {},
           selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
         },
       },
@@ -195,8 +193,11 @@ describe('browse-dashboards BrowseView', () => {
       );
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    afterEach(async () => {
+      // The flag hooks re-render mounted rows when the flags change
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('shows a read only badge on folders the user cannot edit', async () => {

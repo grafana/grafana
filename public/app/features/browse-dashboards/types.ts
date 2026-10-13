@@ -31,9 +31,6 @@ export interface BrowseDashboardsState {
 
   // Only folders can ever be open or closed, so no need to seperate this by kind
   openFolders: Record<string, boolean>;
-
-  // Keyed by folder UID in the tree. Folders that have not been checked are absent.
-  folderEditAccess: Record<string, boolean>;
 }
 
 export interface UIDashboardViewItem {

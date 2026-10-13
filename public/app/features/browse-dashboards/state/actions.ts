@@ -3,22 +3,9 @@ import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features
 import { createAsyncThunk } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
-import {
-  listDashboards,
-  listEditableFolderUIDs,
-  listFolders,
-  listStarredFolders,
-  listTeamFolders,
-} from '../api/services';
+import { listDashboards, listFolders, listStarredFolders, listTeamFolders } from '../api/services';
 import { type DashboardViewItemWithUIItems, type UIDashboardViewItem } from '../types';
-import {
-  folderEditAccessEnabled,
-  isSharedWithMe,
-  isVirtualStarredFolder,
-  isVirtualTeamFolder,
-  reapplyVirtualFolderPrefix,
-  stripVirtualFolderPrefix,
-} from '../utils/dashboards';
+import { reapplyVirtualFolderPrefix, stripVirtualFolderPrefix } from '../utils/dashboards';
 
 import { findItem } from './utils';
 
@@ -58,33 +45,6 @@ interface RefetchChildrenResult {
   lastPageOfKind: boolean;
 }
 
-/**
- * Looks up which of the given folders the user can edit, keyed by the folder's UID in the tree.
- * Runs separately from the children fetch so it never delays rendering the tree.
- */
-export const fetchFolderEditAccess = createAsyncThunk(
-  'browseDashboards/fetchFolderEditAccess',
-  async (items: DashboardViewItem[]): Promise<Record<string, boolean>> => {
-    const folders = items.filter(
-      (item) =>
-        item.kind === 'folder' &&
-        !isSharedWithMe(item.uid) &&
-        !isVirtualTeamFolder(item.uid) &&
-        !isVirtualStarredFolder(item.uid)
-    );
-
-    // Tree UIDs under a virtual root carry its prefix, but the search API only knows the real folder UID
-    const editableUIDs = new Set(
-      await listEditableFolderUIDs(folders.map((folder) => stripVirtualFolderPrefix(folder.uid)))
-    );
-
-    return Object.fromEntries(
-      folders.map((folder) => [folder.uid, editableUIDs.has(stripVirtualFolderPrefix(folder.uid))])
-    );
-  },
-  { condition: (items) => folderEditAccessEnabled() && items.some((item) => item.kind === 'folder') }
-);
-
 interface RefreshParentsArgs {
   kind: DashboardViewItemKind;
   uids: string[];
@@ -118,16 +78,14 @@ export const refreshParents = createAsyncThunk(
  */
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
-  async ({ parentUID, pageSize }: RefetchChildrenArgs, { dispatch }): Promise<RefetchChildrenResult> => {
+  async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
     if (parentUID === TEAM_FOLDERS_UID) {
       const children = await listSafe('team folders', listTeamFolders);
-      dispatch(fetchFolderEditAccess(children));
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
     if (parentUID === STARRED_FOLDERS_UID) {
       const children = await listSafe('starred folders', listStarredFolders);
-      dispatch(fetchFolderEditAccess(children));
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
@@ -163,8 +121,6 @@ export const refetchChildren = createAsyncThunk(
       }));
     }
 
-    dispatch(fetchFolderEditAccess(children));
-
     return {
       children,
       lastPageOfKind: lastPageOfKind,
@@ -178,27 +134,25 @@ export const fetchNextChildrenPage = createAsyncThunk(
   'browseDashboards/fetchNextChildrenPage',
   async (
     { parentUID, excludeKinds = [], pageSize }: FetchNextChildrenPageArgs,
-    { dispatch, getState }
+    thunkAPI
   ): Promise<undefined | FetchNextChildrenPageResult> => {
     if (parentUID === TEAM_FOLDERS_UID) {
-      const state = getState().browseDashboards;
+      const state = thunkAPI.getState().browseDashboards;
       const collection = state.childrenByParentUID[parentUID];
       if (collection?.isFullyLoaded) {
         return undefined;
       }
       const children = await listSafe('team folders', listTeamFolders);
-      dispatch(fetchFolderEditAccess(children));
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
     if (parentUID === STARRED_FOLDERS_UID) {
-      const state = getState().browseDashboards;
+      const state = thunkAPI.getState().browseDashboards;
       const collection = state.childrenByParentUID[parentUID];
       if (collection?.isFullyLoaded) {
         return undefined;
       }
       const children = await listSafe('starred folders', listStarredFolders);
-      dispatch(fetchFolderEditAccess(children));
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
@@ -208,7 +162,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
     const strippedUID = parentUID ? stripVirtualFolderPrefix(parentUID) : parentUID;
     const uid = isRootFolderUID(strippedUID) ? undefined : strippedUID;
 
-    const state = getState().browseDashboards;
+    const state = thunkAPI.getState().browseDashboards;
     const collectionKey = isRootFolderUID(parentUID) ? undefined : parentUID;
     const collection = collectionKey ? state.childrenByParentUID[collectionKey] : state.rootItems;
 
@@ -266,8 +220,6 @@ export const fetchNextChildrenPage = createAsyncThunk(
         uid: reapplyVirtualFolderPrefix(parentUID, child.uid),
       }));
     }
-
-    dispatch(fetchFolderEditAccess(children));
 
     return {
       children,

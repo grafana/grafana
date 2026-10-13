@@ -20,7 +20,6 @@ function createInitialState(partial: Partial<BrowseDashboardsState>): BrowseDash
     rootItems: undefined,
     childrenByParentUID: {},
     openFolders: {},
-    folderEditAccess: {},
     selectedItems: {
       $all: false,
       dashboard: {},

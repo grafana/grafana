@@ -1,6 +1,9 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
+import { useGetEditableFolderNamesQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
@@ -12,7 +15,13 @@ import {
   type DashboardViewItemWithUIItems,
   type UIDashboardViewItem,
 } from '../types';
-import { isVirtualStarredFolder, isVirtualTeamFolder, starredFoldersEnabled } from '../utils/dashboards';
+import {
+  isSharedWithMe,
+  isVirtualStarredFolder,
+  isVirtualTeamFolder,
+  starredFoldersEnabled,
+  stripVirtualFolderPrefix,
+} from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
 import { getPaginationPlaceholders } from './utils';
@@ -101,11 +110,56 @@ export function useChildrenByParentUIDState() {
   return useSelector((wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID);
 }
 
-// Undefined when the folder has not been checked, e.g. while loading or when the feature is off
-export function useFolderEditAccess(folderUID: string | undefined): boolean | undefined {
-  return useSelector((wholeState: StoreState) =>
-    folderUID ? wholeState.browseDashboards.folderEditAccess[folderUID] : undefined
+const folderPagesByItems = new WeakMap<DashboardViewItem[], Map<string, string[]>>();
+
+// Splits a collection's folders into pages, and returns the page holding the given folder as search API names.
+// Every folder in a page gets the same array, so sibling rows share one query. Memoised per items array, which
+// redux replaces whenever the collection changes.
+function getFolderPageNames(items: DashboardViewItem[], folderUID: string): string[] | undefined {
+  let pages = folderPagesByItems.get(items);
+  if (!pages) {
+    pages = new Map();
+    const folders = items.filter(
+      (item) =>
+        item.kind === 'folder' &&
+        !isSharedWithMe(item.uid) &&
+        !isVirtualTeamFolder(item.uid) &&
+        !isVirtualStarredFolder(item.uid)
+    );
+    for (let i = 0; i < folders.length; i += PAGE_SIZE) {
+      const page = folders.slice(i, i + PAGE_SIZE);
+      // Tree UIDs under a virtual root carry its prefix, but the search API only knows the real folder UID
+      const names = page.map((folder) => stripVirtualFolderPrefix(folder.uid));
+      for (const folder of page) {
+        pages.set(folder.uid, names);
+      }
+    }
+    folderPagesByItems.set(items, pages);
+  }
+  return pages.get(folderUID);
+}
+
+/**
+ * Whether the user is unable to edit this folder. False for anything that isn't a folder, and while the
+ * folder's access is still loading.
+ */
+export function useIsReadOnlyFolder({ item, parentUID }: DashboardsTreeItem): boolean {
+  const isFolderEditAccessEnabled = useBooleanFlagValue('grafana.browseDashboardsFolderEditAccess', false);
+  // Edit access comes from the search API, which only backs the browse list with the app platform folder API
+  const isFoldersAppPlatformAPIEnabled = useBooleanFlagValue('foldersAppPlatformAPI', true);
+  const siblings = useSelector(
+    (wholeState) =>
+      (parentUID ? wholeState.browseDashboards.childrenByParentUID[parentUID] : wholeState.browseDashboards.rootItems)
+        ?.items
   );
+
+  const names =
+    isFolderEditAccessEnabled && isFoldersAppPlatformAPIEnabled && siblings && item.kind === 'folder'
+      ? getFolderPageNames(siblings, item.uid)
+      : undefined;
+  const { currentData: editableNames } = useGetEditableFolderNamesQuery(names ? { names } : skipToken);
+
+  return editableNames !== undefined && !editableNames.includes(stripVirtualFolderPrefix(item.uid));
 }
 
 export function useActionSelectionState() {
