@@ -861,8 +861,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
 	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
 	// Jobs mutator and validator. The mutator attributes each job to the acting
-	// user at creation time (gated by the provisioning.userAttribution flag) and
-	// the validator enforces that the recorded author is immutable.
+	// user at creation time and the validator enforces that the recorded author
+	// is immutable.
 	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
 	for _, r := range b.supportedResources {
 		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
@@ -871,7 +871,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 			Disabled: !r.IsActive(),
 		})
 	}
-	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator(userAttributionEnabled))
+	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
@@ -958,13 +958,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
-}
-
-// userAttributionEnabled reports whether Git Sync commits should be attributed
-// to the acting user. It lives here (rather than in apps/provisioning) because
-// the feature flag machinery is only available in the main Grafana module.
-func userAttributionEnabled(ctx context.Context) bool {
-	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx))
 }
 
 // performanceEnabled reports whether the synthetic "test" job type is enabled.

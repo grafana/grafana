@@ -3,19 +3,24 @@ package authinfo
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -55,7 +60,7 @@ func TestIntegrationAuthInfo(t *testing.T) {
 			doAuthInfoListRequiresFieldSelectorTest(t, helper)
 			doAuthInfoListByAuthIDTest(t, helper)
 			doAuthInfoDeleteTests(t, helper)
-			doAuthInfoUserDeleteCascadeTest(t, helper)
+			doAuthInfoUserDeleteCascadeTest(t, helper, mode)
 		})
 	}
 }
@@ -313,18 +318,26 @@ func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-// doAuthInfoUserDeleteCascadeTest checks whether deleting a user through the
-// new User API also removes its user_auth row.
-func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("deleting the user via the new API removes its user_auth row", func(t *testing.T) {
+// doAuthInfoUserDeleteCascadeTest checks that deleting a user through the
+// new User API also removes its AuthInfo objects and user_auth row.
+func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
+	t.Run("deleting the user via the new API removes its AuthInfo objects and user_auth row", func(t *testing.T) {
 		ctx := context.Background()
 		userUID := createTestUser(t, helper, "authinfo-cascade-user", "authinfo-cascade-user@example.com")
 
 		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
 		authID := "cascade-test-" + userUID
-		_, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
+		if mode >= rest.Mode1 {
+			// Dual-write modes write to unified storage in the background.
+			require.EventuallyWithT(t, func(c *assert.CollectT) {
+				exists, err := authInfoExistsInUnified(helper, created.GetName())
+				require.NoError(c, err)
+				assert.True(c, exists)
+			}, 5*time.Second, 50*time.Millisecond, "sanity check: the object should reach unified storage")
+		}
 
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Admin,
@@ -335,7 +348,48 @@ func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 
 		require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once its user is deleted")
+
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.userRef.name=%s", userUID),
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items, "AuthInfo objects should be gone once their user is deleted")
+
+		_, err = authInfoClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+
+		// Reads in dual-write modes are served from legacy, so check unified storage directly.
+		if mode >= rest.Mode1 {
+			require.EventuallyWithT(t, func(c *assert.CollectT) {
+				exists, err := authInfoExistsInUnified(helper, created.GetName())
+				require.NoError(c, err)
+				assert.False(c, exists)
+			}, 5*time.Second, 50*time.Millisecond, "AuthInfo object should be gone from unified storage")
+		}
 	})
+}
+
+func authInfoExistsInUnified(helper *apis.K8sTestHelper, name string) (bool, error) {
+	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(context.Background(), ns)
+	rsp, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+		Namespace: ns,
+		Group:     gvrAuthInfo.Group,
+		Resource:  gvrAuthInfo.Resource,
+		Name:      name,
+	}})
+	if err != nil {
+		return false, err
+	}
+	if rsp.Error != nil {
+		if rsp.Error.Code == http.StatusNotFound {
+			return false, nil
+		}
+		return false, fmt.Errorf("unexpected unified read error: %v", rsp.Error)
+	}
+	return true, nil
 }
 
 func countUserAuthRowsByAuthID(t *testing.T, helper *apis.K8sTestHelper, authID string) int64 {
