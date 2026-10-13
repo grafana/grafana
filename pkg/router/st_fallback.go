@@ -323,15 +323,20 @@ func (st *singleTenantFallback) serveDiscovery(w http.ResponseWriter, req *http.
 	if requester, _ := identity.GetRequester(req.Context()); requester != nil {
 		host, err = st.hostForNamespace(req.Context(), requester.GetNamespace())
 	}
+	// The errors below answer for this caller alone, on a URL that does not
+	// name their stack.
 	switch {
 	case errors.Is(err, errStackLookupThrottled):
+		w.Header().Set("Cache-Control", "private")
 		w.Header().Set("Retry-After", "1")
 		http.Error(w, "stack lookup throttled", http.StatusServiceUnavailable)
 	case err != nil:
+		w.Header().Set("Cache-Control", "private")
 		http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
 	case host != nil:
 		st.forwardDiscovery(host, w, req)
 	case st.discoveryHost == nil || isRootDiscoveryPath(req.URL.Path):
+		w.Header().Set("Cache-Control", "private")
 		http.NotFound(w, req)
 	default:
 		// The discovery host supplies metadata, never tenant resources or mutations.

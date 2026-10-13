@@ -414,9 +414,13 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	}
 
 	// Cache miss or stale key: proxy through the breaker and capture the
-	// response so it can be cached.
+	// response so it can be cached. Conditional headers are stripped only
+	// when this cache may store the response; otherwise the backend answers
+	// them, as a caller-scoped backend's own cache does.
 	proxyReq := req.Clone(req.Context())
-	stripConditionalHeaders(proxyReq)
+	if cacheableRequest {
+		stripConditionalHeaders(proxyReq)
+	}
 	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter(maxCachedOpenAPIDocBytes, w)
 	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)

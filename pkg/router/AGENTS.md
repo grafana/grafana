@@ -46,8 +46,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - Backend redirects become a 502 (`rejectBackendRedirects`).
   - Every configured URL must be absolute; `url.Parse` accepts `""` and relative paths, so check
     explicitly.
-  - On an OpenAPI cache miss, strip conditional headers and the `hash` query parameter before
-    proxying.
+  - On an OpenAPI cache miss, strip the `hash` query parameter before proxying, and strip
+    conditional headers when the router may cache the response. A caller-scoped group's backend
+    gets them, so its own cache can answer with a 304.
   - Any 304 must carry an `ETag`.
 - **The router may replace groups the embedded API server serves, core groups included.** APIs move
   to the router gradually, so in middleware mode a group the router serves takes over that group from

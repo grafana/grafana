@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/time/rate"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -385,4 +386,69 @@ func TestRouterRootDiscoveryIsSharedByTheStacksCallers(t *testing.T) {
 		require.NotContains(t, res.Body.String(), "default.grafana.app")
 	}
 	require.Equal(t, []string{"first.example.com/apis"}, calls())
+}
+
+func TestRouterRevalidatesCallerScopedOpenAPI(t *testing.T) {
+	st, calls := cachingFallback(t, func(req *http.Request) *http.Response {
+		require.Empty(t, req.Header.Get("If-None-Match"), "the stack is only asked for a body to cache")
+		if req.URL.Path == apisPrefix {
+			return discoveryResponse(http.Header{"Content-Type": {"application/json"}},
+				`{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"example","versions":[{"groupVersion":"example/v1","version":"v1"}]}]}`)
+		}
+		return discoveryResponse(nil, "document")
+	})
+	router := NewGrafanaRouter(st, nil)
+	router.unregisteredGroupHandler = st
+	pollDiscovery(t, st)
+	require.NoError(t, router.reconcile(t.Context()))
+	require.True(t, router.KnownGroup("example"))
+	calls()
+
+	serve := func(user, etag string) *httptest.ResponseRecorder {
+		req := requestAs(user, "stacks-123", "/openapi/v3/apis/example/v1?hash=st")
+		if etag != "" {
+			req.Header.Set("If-None-Match", etag)
+		}
+		res := httptest.NewRecorder()
+		router.HandleFunc(res, req, http.NotFoundHandler())
+		return res
+	}
+	first := serve("alice", "")
+	require.Equal(t, http.StatusOK, first.Code)
+	etag := first.Header().Get("ETag")
+	require.NotEmpty(t, etag)
+	for _, user := range []string{"alice", "bob"} {
+		res := serve(user, etag)
+		require.Equal(t, http.StatusNotModified, res.Code)
+		require.Equal(t, etag, res.Header().Get("ETag"))
+		require.Empty(t, res.Body.String())
+	}
+	require.Equal(t, []string{"first.example.com/openapi/v3/apis/example/v1"}, calls())
+}
+
+func TestSingleTenantDiscoveryErrorsArePrivate(t *testing.T) {
+	st, calls := cachingFallback(t, func(*http.Request) *http.Response { return discoveryResponse(nil, "ok") })
+	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+		return singleTenantStack{}, context.DeadlineExceeded
+	}
+	for _, tc := range []struct {
+		name, namespace, path string
+		status                int
+		throttle              bool
+	}{
+		{name: "lookup failed", namespace: "stacks-123", path: "/apis/example/v1", status: http.StatusServiceUnavailable},
+		{name: "lookup throttled", namespace: "stacks-123", path: "/apis/example/v1", status: http.StatusServiceUnavailable, throttle: true},
+		{name: "defaults held by the router", namespace: "*", path: "/apis", status: http.StatusNotFound},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.throttle {
+				st.lookupLimiter = rate.NewLimiter(0, 0)
+			}
+			res := httptest.NewRecorder()
+			st.ServeHTTP(res, requestAs("alice", tc.namespace, tc.path))
+			require.Equal(t, tc.status, res.Code)
+			require.Equal(t, "private", res.Header().Get("Cache-Control"))
+			require.Empty(t, calls())
+		})
+	}
 }
