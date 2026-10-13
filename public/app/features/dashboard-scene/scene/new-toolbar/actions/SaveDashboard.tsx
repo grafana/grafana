@@ -9,6 +9,7 @@ import { canManageDashboardTemplates } from 'app/features/dashboard/dashgrid/Das
 import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
+import { useComposerPaused } from '../../../composer/useComposerPaused';
 import { getDashboardSaveActions } from '../../../saving/dashboardSaveActions';
 import { dashboardModesEnabled } from '../../dashboardModes';
 import { type ToolbarActionProps } from '../types';
@@ -19,6 +20,11 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
   const showChanges = dashboardModesEnabled() && isEditing;
+  // Saving or discarding mid-turn would race Assistant's edits; exiting Composer stays possible.
+  const busy = useComposerPaused(dashboard);
+  const busyTooltip = busy
+    ? t('dashboard.composer.wait-for-assistant', 'Wait for Assistant to finish editing')
+    : undefined;
 
   const { save, saveAsCopy: onSaveAsCopy, isNew } = getDashboardSaveActions(dashboard, isDashboardTemplatesFlagEnabled);
   const isManaged = dashboard.isManaged();
@@ -62,6 +68,8 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                     label={t('dashboard.modes.discard', 'Discard changes')}
                     icon="trash-alt"
                     onClick={() => setConfirmDiscard(true)}
+                    disabled={busy}
+                    description={busyTooltip}
                   />
                 )}
               </Menu>
@@ -88,7 +96,8 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     return renderSaveButton(
       <Button
         onClick={save}
-        tooltip={t('dashboard.toolbar.new.save-template.tooltip', 'Save template changes')}
+        disabled={busy}
+        tooltip={busyTooltip ?? t('dashboard.toolbar.new.save-template.tooltip', 'Save template changes')}
         size={buttonSize}
         variant={isDirty ? 'primary' : 'secondary'}
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
@@ -103,7 +112,8 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     return renderSaveButton(
       <Button
         onClick={save}
-        tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
+        disabled={busy}
+        tooltip={busyTooltip ?? t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
         size={buttonSize}
         variant="primary"
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
@@ -118,7 +128,8 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     return renderSaveButton(
       <Button
         onClick={onSaveAsCopy}
-        tooltip={t('dashboard.toolbar.new.save-dashboard-copy.tooltip', 'Save as copy')}
+        disabled={busy}
+        tooltip={busyTooltip ?? t('dashboard.toolbar.new.save-dashboard-copy.tooltip', 'Save as copy')}
         size={buttonSize}
         variant={isDirty ? 'primary' : 'secondary'}
       >
@@ -130,7 +141,8 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   return renderSaveButton(
     <Button
       onClick={save}
-      tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
+      disabled={busy}
+      tooltip={busyTooltip ?? t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
       size={buttonSize}
       data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
       variant={isDirty ? 'primary' : 'secondary'}
@@ -139,11 +151,19 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
       <Trans i18nKey="dashboard.toolbar.new.save-dashboard.label">Save</Trans>
     </Button>,
     <>
-      <Menu.Item label={t('dashboard.toolbar.new.save-dashboard-short', 'Save')} icon="save" onClick={save} />
+      <Menu.Item
+        label={t('dashboard.toolbar.new.save-dashboard-short', 'Save')}
+        icon="save"
+        onClick={save}
+        disabled={busy}
+        description={busyTooltip}
+      />
       <Menu.Item
         label={t('dashboard.toolbar.new.save-dashboard-copy.label', 'Save as copy')}
         icon="copy"
         onClick={onSaveAsCopy}
+        disabled={busy}
+        description={busyTooltip}
         testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
       />
       {isDashboardTemplatesFlagEnabled &&
@@ -153,6 +173,8 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
           <Menu.Item
             label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
             icon="grid"
+            disabled={busy}
+            description={busyTooltip}
             onClick={() => {
               CustomDashboardTemplateInteractions.saveAsOpened({
                 dashboardUid: uid ?? '',

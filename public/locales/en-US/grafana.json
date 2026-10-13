@@ -5593,7 +5593,8 @@
     },
     "composer": {
       "apply-undo-title": "Assistant Composer edit",
-      "untitled-panel": "Panel {{panelId}}"
+      "untitled-panel": "Panel {{panelId}}",
+      "wait-for-assistant": "Wait for Assistant to finish editing"
     },
     "conditional-rendering": {
       "conditions": {
