@@ -58,35 +58,15 @@ describe('buildCategories', () => {
     expect(enterprisePluginsCategory.plugins[enterprisePluginsCategory.plugins.length - 1].name).toBe('Zendesk');
   });
 
-  it('should add a Learn more link using Documentation when available', () => {
-    const plugin = getMockPlugin({ id: 'links-test' });
-    plugin.info.links = [
-      { name: 'Website', url: 'https://example.com' },
-      { name: 'Documentation', url: 'https://example.com/docs' },
-    ];
+  it('should preserve links for an installed Enterprise plugin', () => {
+    const plugin = getMockPlugin({ id: 'grafana-splunk-datasource' });
+    plugin.enterprise = true;
+    const documentationLink = { name: 'Documentation', url: 'https://example.com/docs' };
+    plugin.info.links = [documentationLink];
 
-    const result = buildCategories([plugin]).flatMap((category) => category.plugins).find((item) => item.id === plugin.id);
-
-    expect(result?.info.links).toContainEqual({ name: 'Learn more', url: 'https://example.com/docs' });
-  });
-
-  it('should use the first link when Documentation is unavailable', () => {
-    const plugin = getMockPlugin({ id: 'links-fallback-test' });
-    plugin.info.links = [{ name: 'Website', url: 'https://example.com' }];
-
-    const result = buildCategories([plugin]).flatMap((category) => category.plugins).find((item) => item.id === plugin.id);
-
-    expect(result?.info.links).toContainEqual({ name: 'Learn more', url: 'https://example.com' });
-  });
-
-  it('should preserve an existing Learn more link', () => {
-    const plugin = getMockPlugin({ id: 'learn-more-test' });
-    const learnMoreLink = { name: 'Learn more', url: 'https://example.com/learn' };
-    plugin.info.links = [learnMoreLink, { name: 'Documentation', url: 'https://example.com/docs' }];
-
-    const result = buildCategories([plugin]).flatMap((category) => category.plugins).find((item) => item.id === plugin.id);
-
-    expect(result?.info.links).toEqual(plugin.info.links);
-    expect(result?.info.links?.filter((link) => link.name === 'Learn more')).toHaveLength(1);
+    const result = buildCategories([plugin])
+      .flatMap((category) => category.plugins)
+      .find((item) => item.id === plugin.id);
+    expect(result?.info.links).toEqual([documentationLink]);
   });
 });

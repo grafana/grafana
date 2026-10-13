@@ -15,10 +15,13 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
   const isClickable = !isPhantom && !dataSourcePlugin.unlicensed;
 
   const links = dataSourcePlugin.info?.links ?? [];
-  const learnMoreLink = links.find((link) => link.name.toLowerCase() === 'learn more') ??
-                        links.find((link) => link.name.toLowerCase() === 'documentation') ??
-                        (links.length > 0 ? links[0] : null);
-
+  const learnMoreLink =
+    links.find((link) => link.name.toLowerCase() === 'learn more') ??
+    links.find((link) => link.name.toLowerCase() === 'documentation') ??
+    links[0];
+  const learnMoreLinkLabel = isPhantom
+    ? learnMoreLink?.name
+    : t('datasources.data-source-type-card.learn-more', 'Learn more');
   const learnMoreLinkTarget = learnMoreLink?.target ?? '_blank';
 
   const styles = useStyles2(getStyles);
@@ -62,7 +65,7 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
             target={learnMoreLinkTarget}
             variant="secondary"
           >
-            {learnMoreLink.name}
+            {learnMoreLinkLabel}
           </LinkButton>
         )}
       </Card.Actions>
