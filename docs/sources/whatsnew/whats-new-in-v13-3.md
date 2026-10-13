@@ -23,7 +23,7 @@ posts:
   - title: Dashboards and visualizations
     items:
       - whats-new/2026-09-17-define-variables-once-use-them-across-dashboards.md
-      - docs/grafana-cloud/whats-new/2026-10-09-custom-headers-and-footers-for-report-pdfs.md
+      - whats-new/2026-10-09-custom-headers-and-footers-for-report-pdfs.md
       - whats-new/2026-07-29-panel-thresholds-interpolation.md
       - whats-new/2026-07-30-new-panel-query-errors-and-notices-ui.md
       - whats-new/2026-08-06-more-filterable-panels.md
