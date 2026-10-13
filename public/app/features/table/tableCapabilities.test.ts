@@ -11,11 +11,12 @@ const frame = () =>
   });
 
 describe('withAdHocTransformCapabilities', () => {
-  it('opts every column into filtering, reordering and hiding', () => {
+  it('opts every column into filtering and hiding', () => {
     const withCapabilities = withAdHocTransformCapabilities(frame());
 
     for (const field of withCapabilities.fields) {
-      expect(field.config.custom).toMatchObject({ filterable: true, reorderable: true, hideable: true });
+      expect(field.config.custom).toMatchObject({ filterable: true, hideable: true });
+      expect(field.config.custom).not.toHaveProperty('reorderable');
     }
   });
 
@@ -58,7 +59,7 @@ describe('withAdHocTransformCapabilities', () => {
     expect(supportsColumnManagement(nested)).toBe(false);
 
     for (const field of withAdHocTransformCapabilities(nested).fields) {
-      expect(field.config.custom).toMatchObject({ filterable: true, reorderable: false, hideable: false });
+      expect(field.config.custom).toMatchObject({ filterable: true, hideable: false });
     }
   });
 });

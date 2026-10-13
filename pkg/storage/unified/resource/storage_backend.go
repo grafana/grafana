@@ -79,14 +79,18 @@ type GarbageCollectionConfig struct {
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	resourceVersions        *snowflakeResourceVersionGenerator
-	resourceVersionMaxWait  time.Duration
-	kv                      KV
-	bulkLock                *BulkLock
-	dataStore               *dataStore
-	eventStore              *eventStore
-	notifier                notifier
-	eventPublisher          EventPublisher
+	resourceVersions       *snowflakeResourceVersionGenerator
+	resourceVersionMaxWait time.Duration
+	kv                     KV
+	bulkLock               *BulkLock
+	dataStore              *dataStore
+	eventStore             *eventStore
+	notifier               notifier
+	eventPublisher         EventPublisher
+	// keysSubscriber lets search watch written keys straight from the bus. Set only
+	// when the NATS notifier is on: shadow mode is for observation, and must not
+	// change how anything receives updates.
+	keysSubscriber          EventSubscriber
 	natsShadow              *natsShadow
 	log                     logging.Logger
 	disableStorageServices  bool
@@ -460,6 +464,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			invalidator:        opts.WatchInvalidator,
 		}),
 		eventPublisher:          opts.EventPublisher,
+		keysSubscriber:          keysSubscriber(opts),
 		watchOpts:               opts.WatchOptions.normalize(),
 		resourceVersions:        processResourceVersions,
 		resourceVersionMaxWait:  resourceVersionMaxWait,
@@ -3155,4 +3160,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 func readAndClose(r io.ReadCloser) ([]byte, error) {
 	data, err := io.ReadAll(r)
 	return data, errors.Join(err, r.Close())
+}
+
+// keysSubscriber is the subscriber search may watch written keys with: the one
+// the NATS notifier uses, and none when that notifier is off, so turning on only
+// the shadow notifier changes nothing but its metrics.
+func keysSubscriber(opts KVBackendOptions) EventSubscriber {
+	if !opts.EnableNatsNotifier {
+		return nil
+	}
+	return opts.EventSubscriber
 }

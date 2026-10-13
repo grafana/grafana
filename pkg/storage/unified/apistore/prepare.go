@@ -25,8 +25,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/folder"
+	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -124,7 +123,7 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 			},
 		)
 	}
-	if folder.IsRootFolderUID(folderUID) {
+	if isRootFolderUID(folderUID) {
 		return apierrors.NewInvalid(
 			obj.GetGroupVersionKind().GroupKind(),
 			obj.GetName(),
@@ -391,7 +390,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport || folder.IsRootFolderUID(obj.GetFolder()) {
+	if !s.opts.EnableFolderSupport || isRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)
@@ -506,4 +505,10 @@ func persistedVersion(encoded []byte, obj runtime.Object) schema.GroupVersion {
 		}
 	}
 	return obj.GetObjectKind().GroupVersionKind().GroupVersion()
+}
+
+// isRootFolderUID matches folder.IsRootFolderUID ("" is the legacy root, "general" the canonical
+// one). apistore cannot import pkg/services/folder, which is in the core module.
+func isRootFolderUID(uid string) bool {
+	return uid == "" || uid == "general"
 }

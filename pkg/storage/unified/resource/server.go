@@ -24,6 +24,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
@@ -243,6 +244,18 @@ type StorageBackend interface {
 
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
+
+	// WatchWrittenKeys delivers the key of each write to the given resource
+	// types, straight from the bus: without its body and in no particular order,
+	// so without the delay WatchWriteEvents holds events for to put them in
+	// order. It suits a consumer that re-reads what it is told about. Delivery is
+	// at-most-once, so onLost is called when keys may have been lost: with the
+	// namespace of a key dropped because the consumer was not keeping up, or with
+	// an empty namespace, meaning any, once a lost connection is restored. It must
+	// not block. The channel is never closed; cancel ctx to stop.
+	// ErrWrittenKeysUnsupported means the backend, or its configuration, cannot
+	// do this at all.
+	WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error)
 
 	// ListModifiedSince will return all resources that have changed since the given resource version.
 	// If a resource has changes, only the latest change will be returned.

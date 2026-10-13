@@ -3353,6 +3353,13 @@ func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string,
 	})
 }
 
+func (h *GitTestHelper) CreateFolderlessTargetGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createGitRepo(t, repoName, "folderless", createRepoOpts{
+		initialFiles: initialFiles,
+		workflows:    workflows,
+	})
+}
+
 // CreateSyncEnabledGitRepo creates a git repository with sync target "instance"
 // and sync.enabled=true. Sync must be on for the provisioning files endpoint to
 // dual-write into unified storage — without it, callers that write a new

@@ -1738,9 +1738,6 @@
         "will-import-rules": "将导入规则",
         "will-import-rules-count_other": "将导入 {{count}} 条规则"
       },
-      "routing-tree": {
-        "default-policy": "默认策略"
-      },
       "source": {
         "datasource": "现有数据源管理的规则",
         "datasource-description": "从现有数据源导入规则",
@@ -2588,15 +2585,11 @@
       "aria-label": "选择通知策略",
       "change": "更改",
       "change-aria": "更改通知策略",
-      "custom-policy-desc": "通过{{name}}策略树路由警报",
       "default-badge": "默认策略",
       "default-info": "警报实例会使用默认通知策略树进行路由。",
-      "default-policy": "默认策略",
-      "default-policy-desc": "使用默认通知策略树对警报进行路由",
       "description": "选择应由哪个通知策略树处理此警报规则的路由。",
+      "missing-policy": "",
       "placeholder": "选择一个策略...",
-      "reset": "重置为默认值",
-      "reset-aria": "重置为默认策略",
       "view-policies": "查看策略",
       "view-policies-aria": "查看通知策略"
     },
@@ -5752,6 +5745,7 @@
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
       "remove-multiple": "",
+      "replace-panel": "",
       "row-fill-screen-disable": "",
       "row-fill-screen-enable": "",
       "row-hide-header": "",
@@ -6255,16 +6249,13 @@
       },
       "cross-dashboard-variables": {
         "description": "",
-        "empty-folder": "",
-        "empty-global": "",
+        "filters-description": "",
         "folder-section": "",
         "global-section": "",
         "load-error": "",
         "pane-header": "",
         "select-all-folder": "",
-        "select-all-global": "",
-        "title": "",
-        "tooltip": ""
+        "select-all-global": ""
       },
       "dashboard-options": {
         "annotations": "注释",
@@ -6304,7 +6295,8 @@
         "copy-tooltip": "复制",
         "delete": "删除",
         "duplicate": "生成副本",
-        "paste": "粘贴"
+        "paste": "粘贴",
+        "remove": ""
       },
       "elements": {
         "annotation": "注释",
@@ -6337,7 +6329,9 @@
       "feedback-title": "提供有关新数据面板编辑体验的反馈",
       "filters": {
         "add-filter": "添加筛选条件",
+        "global-or-folder-title": "",
         "reorder-description": "重新排序筛选条件列表",
+        "select-type": "",
         "title": "筛选条件",
         "title-above-dashboard": "数据面板上方",
         "title-controls-menu": "控件菜单",
@@ -6403,6 +6397,10 @@
           "type": "类型",
           "type-placeholder": "选择数据源类型"
         },
+        "defined-globally": "",
+        "defined-on-folder": "",
+        "defined-on-folder-level": "",
+        "defined-on-global-level": "",
         "description": "描述",
         "description-placeholder": "描述性文本",
         "display": "显示",
@@ -6424,6 +6422,7 @@
           "old-modal-title": "查询变量",
           "preview": "预览"
         },
+        "remove": "",
         "selection-options": {
           "allow-custom-values": "允许自定义值",
           "allow-custom-values-description": "允许用户输入值",
@@ -6439,6 +6438,8 @@
       "variables": {
         "add-variable": "添加变量",
         "change-type": "更改变量类型",
+        "global-or-folder-description": "",
+        "global-or-folder-title": "",
         "reorder-description": "重新排序变量列表",
         "select-type": "选择变量类型",
         "select-type-card-tooltip": "点击以选择类型",
@@ -6942,7 +6943,9 @@
       "delete-tooltip-disabled": "重复的面板无法单独删除",
       "duplicate-tooltip": "复制",
       "duplicate-tooltip-disabled": "重复的面板无法单独复制",
-      "settings": "设置"
+      "remove-tooltip": "",
+      "settings": "设置",
+      "view": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "显示/隐藏规则将不起作用",
@@ -7797,7 +7800,10 @@
     "variable-editable-element": {
       "delete-confirm": "删除变量",
       "delete-text": "您确定要删除{{name}}吗？",
-      "delete-title": "删除变量"
+      "delete-title": "删除变量",
+      "remove-confirm": "",
+      "remove-text": "",
+      "remove-title": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "变量编辑器表单",
@@ -8944,7 +8950,6 @@
       "attribute-category": {
         "other": "其他"
       },
-      "error-indicator": "",
       "exception-message": "",
       "exception-stacktrace": "",
       "exception-title": "",
@@ -9090,7 +9095,7 @@
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "此追踪最初被 Adaptive Traces 丢弃，现已恢复。恢复的追踪不包含在 TraceQL 查询中，只能通过追踪 ID 查询。请查看<2>文档</2>，了解更多详情。",
+        "body": "",
         "title": "由 Adaptive Traces 恢复的追踪"
       },
       "application-observability-promo": {
@@ -10675,6 +10680,7 @@
       "placeholder": "选择"
     },
     "table": {
+      "add-to-assistant": "",
       "cell-actions": "",
       "cell-filter-on": "筛选值",
       "cell-filter-out": "筛除值",
@@ -11319,6 +11325,7 @@
         "clear": "",
         "edit": "",
         "ignored-tooltip": "",
+        "no-match-hint": "",
         "save": "",
         "save-failed": ""
       },
@@ -11332,7 +11339,6 @@
           "cluster": "",
           "namespaces": "",
           "no-match": "",
-          "no-match-hint": "",
           "nodes": "",
           "open": "",
           "summary-cluster": "",
@@ -11392,6 +11398,20 @@
         "create-check": "创建检查",
         "description": "通过世界各地的探测器监测端点的正常运行时间和性能。",
         "failing-worst": "{{check}} 为 {{percent}}%",
+        "filter": {
+          "instances": "",
+          "jobs": "",
+          "no-instances": "",
+          "no-jobs": "",
+          "no-match": "",
+          "no-probes": "",
+          "open": "",
+          "probes": "",
+          "summary-instances": "",
+          "summary-jobs": "",
+          "summary-probes": "",
+          "title": ""
+        },
         "setup-hint": "创建检查",
         "stats": "{{percent}}% 成功 · 24 小时",
         "success-trend": "成功率 · 过去 24 小时",
@@ -13929,11 +13949,13 @@
     "preview-banner": {
       "behind-branch-text": "此资源位于 {{repoType}} 的分支之后。",
       "branch-targets": "目标",
+      "create-pull-request-in-repository": "",
       "delete-from-branch": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到此资源",
       "move-from-branch": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到当前版本",
       "not-saved": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到保存到已配置默认分支的当前版本",
       "open-in-repo-button": "在 {{repoType}} 中打开",
       "open-pull-request-in-repo": "在以下位置打开拉取请求：{{repoType}}",
+      "open-repository": "",
       "update-from-branch": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到当前版本",
       "view-in-repo-button": "在中查看 {{repoType}}，以查看最新更改。",
       "view-pull-request-in-repo": "在以下位置查看拉取请求：{{repoType}}",
@@ -15586,12 +15608,12 @@
       "collapse": "收起",
       "exchange": "将根作用域更改为 {{scope}}",
       "expand": "展开",
+      "filter": "",
       "loading": "正在加载数据面板",
       "noResultsForFilter": "未找到与您的查询相关的结果",
       "noResultsForFilterClear": "清除搜索",
       "noResultsForScopes": "未找到所选范围的数据面板或链接",
       "noResultsNoScopes": "未选择范围",
-      "search": "搜索",
       "toggle": {
         "collapse": "收起建议的数据面板列表",
         "disabled": "建议的数据面板列表已被禁用，因为当前处于只读模式",
@@ -16891,6 +16913,8 @@
       "placeholder-value-or-variable": "值或变量"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "",
+      "aria-label-right-operand": "",
       "label-operation": "运算",
       "placeholder-field-or-number": "字段或数字",
       "placeholder-fields-or-number": "字段或数字"

@@ -24,8 +24,7 @@ export const shouldAllowRecoveringDeletedRules = () =>
   getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingRuleRecoverDeleted, true) &&
   getFeatureFlagClient().getBooleanValue(FlagKeys.AlertRuleRestore, true);
 
-export const shouldAllowPermanentlyDeletingRules = () =>
-  (shouldAllowRecoveringDeletedRules() && config.featureToggles.alertingRulePermanentlyDelete) ?? false;
+export const shouldAllowPermanentlyDeletingRules = () => shouldAllowRecoveringDeletedRules();
 
 export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUseBackendFilters ?? false;
 

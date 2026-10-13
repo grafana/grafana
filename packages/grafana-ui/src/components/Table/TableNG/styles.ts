@@ -68,6 +68,7 @@ const headerCornerMask = (radius: string) =>
     blockSize: radius,
     pointerEvents: 'none',
   }) as const;
+
 // Drag states derive from the header surface.
 const HEADER_DRAGGING_EMPHASIS = 0.1;
 const HEADER_DRAG_TARGET_EMPHASIS = 0.05;
@@ -107,6 +108,7 @@ export const getGridStyles = memoize(
     const headerBorderColor = colorManipulator
       .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
       .toHexString();
+
     const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerBackgroundColor, HEADER_DRAGGING_EMPHASIS);
     const headerCellDragTargetBackgroundColor = theme.colors.emphasize(
       headerBackgroundColor,

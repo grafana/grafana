@@ -1,6 +1,6 @@
 import { FieldType, getFrameMatchers, toDataFrame, type DataTransformerConfig } from '@grafana/data';
 
-import { frameFilterFor } from './columnContext';
+import { getFrameFilter } from './columnContext';
 import { readColumnVisibility, encodeHiddenColumns } from './columnVisibility';
 import { findColumnsEntry } from './organizeFields';
 
@@ -123,28 +123,35 @@ describe('frame scoping', () => {
   });
 });
 
-describe('frameFilterFor', () => {
+describe('getFrameFilter', () => {
   const frame = (refId?: string) =>
     toDataFrame({ refId, fields: [{ name: 'A', type: FieldType.number, values: [1] }] });
 
-  it('does not scope a single frame', () => {
-    expect(frameFilterFor([frame('A')], 0)).toBeUndefined();
+  it('keeps the same scope when another frame appears or disappears', () => {
+    const singleScope = getFrameFilter([frame('A')], 0);
+    const multipleScope = getFrameFilter([frame('A'), frame('B')], 0);
+    expect(singleScope).toEqual({ id: 'byRefId', options: 'A' });
+    expect(multipleScope).toEqual(singleScope);
+
+    const hidden = encodeHiddenColumns([], new Set(['B']), singleScope);
+    expect(readColumnVisibility(hidden, multipleScope).hiddenColumns).toEqual(new Set(['B']));
+    expect(encodeHiddenColumns(hidden, new Set(), multipleScope)).toEqual([]);
   });
 
   it('scopes to the selected frame when there are several', () => {
-    expect(frameFilterFor([frame('A'), frame('B')], 1)).toEqual({ id: 'byRefId', options: 'B' });
+    expect(getFrameFilter([frame('A'), frame('B')], 1)).toEqual({ id: 'byRefId', options: 'B' });
   });
 
   it('produces a filter the frame matcher registry can resolve', () => {
     const frames = [frame('A'), frame('B')];
-    const matches = getFrameMatchers(frameFilterFor(frames, 1)!);
+    const matches = getFrameMatchers(getFrameFilter(frames, 1)!);
 
     expect(matches(frames[1])).toBe(true);
     expect(matches(frames[0])).toBe(false);
   });
 
   it('does not scope when the frames have no refId to scope by', () => {
-    expect(frameFilterFor([frame(), frame()], 0)).toBeUndefined();
+    expect(getFrameFilter([frame(), frame()], 0)).toBeUndefined();
   });
 
   it('writes the filter to the encoded entry', () => {

@@ -341,6 +341,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/options"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	_ "github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/utils"

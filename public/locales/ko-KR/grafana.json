@@ -1738,9 +1738,6 @@
         "will-import-rules": "규칙 가져올 예정",
         "will-import-rules-count_other": "규칙 {{count}}개 가져올 예정"
       },
-      "routing-tree": {
-        "default-policy": "기본 정책"
-      },
       "source": {
         "datasource": "기존 데이터 소스 관리 규칙",
         "datasource-description": "기존 데이터 소스에서 규칙 가져오기",
@@ -2588,15 +2585,11 @@
       "aria-label": "알림 정책 선택",
       "change": "변경",
       "change-aria": "알림 정책 변경",
-      "custom-policy-desc": "{{name}} 정책 트리를 통해 경고 라우팅",
       "default-badge": "기본 정책",
       "default-info": "경고 인스턴스는 기본 알림 정책 트리를 사용하여 라우팅됩니다.",
-      "default-policy": "기본 정책",
-      "default-policy-desc": "기본 알림 정책 트리를 사용하여 경고를 라우팅합니다.",
       "description": "이 경고 규칙에 대한 라우팅을 처리할 공지 정책 트리를 선택하세요.",
+      "missing-policy": "",
       "placeholder": "정책 선택...",
-      "reset": "기본값으로 재설정",
-      "reset-aria": "기본 정책으로 재설정",
       "view-policies": "정책 보기",
       "view-policies-aria": "알림 정책 보기"
     },
@@ -5752,6 +5745,7 @@
       "paste-panel": "패널 붙여넣기",
       "remove": "{{typeName}} 제거",
       "remove-multiple": "",
+      "replace-panel": "",
       "row-fill-screen-disable": "",
       "row-fill-screen-enable": "",
       "row-hide-header": "",
@@ -6255,16 +6249,13 @@
       },
       "cross-dashboard-variables": {
         "description": "",
-        "empty-folder": "",
-        "empty-global": "",
+        "filters-description": "",
         "folder-section": "",
         "global-section": "",
         "load-error": "",
         "pane-header": "",
         "select-all-folder": "",
-        "select-all-global": "",
-        "title": "",
-        "tooltip": ""
+        "select-all-global": ""
       },
       "dashboard-options": {
         "annotations": "주석",
@@ -6304,7 +6295,8 @@
         "copy-tooltip": "복사",
         "delete": "삭제",
         "duplicate": "복제",
-        "paste": "붙여넣기"
+        "paste": "붙여넣기",
+        "remove": ""
       },
       "elements": {
         "annotation": "주석",
@@ -6337,7 +6329,9 @@
       "feedback-title": "새 대시보드 편집 경험에 대한 피드백을 제공해 주세요",
       "filters": {
         "add-filter": "필터 추가",
+        "global-or-folder-title": "",
         "reorder-description": "필터 목록 순서 변경",
+        "select-type": "",
         "title": "필터",
         "title-above-dashboard": "대시보드 위",
         "title-controls-menu": "컨트롤 메뉴",
@@ -6403,6 +6397,10 @@
           "type": "유형",
           "type-placeholder": "데이터 소스 선택"
         },
+        "defined-globally": "",
+        "defined-on-folder": "",
+        "defined-on-folder-level": "",
+        "defined-on-global-level": "",
         "description": "설명",
         "description-placeholder": "설명 텍스트",
         "display": "디스플레이",
@@ -6424,6 +6422,7 @@
           "old-modal-title": "쿼리 변수",
           "preview": "미리 보기"
         },
+        "remove": "",
         "selection-options": {
           "allow-custom-values": "사용자 지정 값 허용",
           "allow-custom-values-description": "사용자가 값을 입력할 수 있도록 활성화합니다",
@@ -6439,6 +6438,8 @@
       "variables": {
         "add-variable": "변수 추가",
         "change-type": "변수 유형 변경",
+        "global-or-folder-description": "",
+        "global-or-folder-title": "",
         "reorder-description": "변수 목록 순서 변경",
         "select-type": "변수 유형 선택",
         "select-type-card-tooltip": "클릭하여 유형 선택",
@@ -6942,7 +6943,9 @@
       "delete-tooltip-disabled": "반복된 패널은 개별적으로 삭제할 수 없습니다",
       "duplicate-tooltip": "복제",
       "duplicate-tooltip-disabled": "반복된 패널은 개별적으로 복제할 수 없습니다",
-      "settings": "설정"
+      "remove-tooltip": "",
+      "settings": "설정",
+      "view": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "규칙 표시/숨기기가 작동하지 않습니다",
@@ -7797,7 +7800,10 @@
     "variable-editable-element": {
       "delete-confirm": "변수 삭제",
       "delete-text": "정말 {{name}}을(를) 삭제하시겠어요?",
-      "delete-title": "변수 삭제"
+      "delete-title": "변수 삭제",
+      "remove-confirm": "",
+      "remove-text": "",
+      "remove-title": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "변수 편집기 양식",
@@ -8944,7 +8950,6 @@
       "attribute-category": {
         "other": "기타"
       },
-      "error-indicator": "",
       "exception-message": "",
       "exception-stacktrace": "",
       "exception-title": "",
@@ -9090,7 +9095,7 @@
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "이 트레이스는 원래 적응형 트레이스에 의해 삭제되었으나 복원되었습니다. 복원된 트레이스는 TraceQL 쿼리에 포함되지 않으며 트레이스 ID로만 쿼리할 수 있습니다. 자세한 내용은 <2>문서</2>를 참고하세요.",
+        "body": "",
         "title": "적응형 트레이스로 복원된 트레이스"
       },
       "application-observability-promo": {
@@ -10675,6 +10680,7 @@
       "placeholder": "선택"
     },
     "table": {
+      "add-to-assistant": "",
       "cell-actions": "",
       "cell-filter-on": "값 필터링하여 포함",
       "cell-filter-out": "값 필터링하여 제외",
@@ -11319,6 +11325,7 @@
         "clear": "",
         "edit": "",
         "ignored-tooltip": "",
+        "no-match-hint": "",
         "save": "",
         "save-failed": ""
       },
@@ -11332,7 +11339,6 @@
           "cluster": "",
           "namespaces": "",
           "no-match": "",
-          "no-match-hint": "",
           "nodes": "",
           "open": "",
           "summary-cluster": "",
@@ -11392,6 +11398,20 @@
         "create-check": "검사 생성",
         "description": "전 세계 프로브를 통해 엔드포인트의 가동 시간 및 성능을 모니터링하세요.",
         "failing-worst": "{{check}}: {{percent}}%",
+        "filter": {
+          "instances": "",
+          "jobs": "",
+          "no-instances": "",
+          "no-jobs": "",
+          "no-match": "",
+          "no-probes": "",
+          "open": "",
+          "probes": "",
+          "summary-instances": "",
+          "summary-jobs": "",
+          "summary-probes": "",
+          "title": ""
+        },
         "setup-hint": "검사 생성",
         "stats": "{{percent}}% 성공 · 24시간",
         "success-trend": "성공률 · 지난 24시간",
@@ -13929,11 +13949,13 @@
     "preview-banner": {
       "behind-branch-text": "이 리소스는 {{repoType}}의 브랜치보다 이전 상태입니다.",
       "branch-targets": "대상",
+      "create-pull-request-in-repository": "",
       "delete-from-branch": "이 브랜치가 병합될 때까지 조직의 다른 Grafana 사용자에게는 이 리소스가 계속 표시됩니다.",
       "move-from-branch": "이 브랜치가 병합될 때까지 조직의 다른 Grafana 사용자는 계속 현재 버전을 보게 됩니다",
       "not-saved": "이 브랜치가 머지될 때까지 조직의 다른 Grafana 사용자에게는 구성된 기본 브랜치에 저장된 현재 버전이 계속 표시됩니다",
       "open-in-repo-button": "{{repoType}}에서 열기",
       "open-pull-request-in-repo": "{{repoType}}에서 풀 요청 열기",
+      "open-repository": "",
       "update-from-branch": "이 브랜치가 병합될 때까지 조직의 다른 Grafana 사용자에게는 현재 버전이 계속 표시됩니다.",
       "view-in-repo-button": "최신 변경 사항은 {{repoType}}에서 확인하세요.",
       "view-pull-request-in-repo": "{{repoType}}에서 풀 요청 보기",
@@ -15586,12 +15608,12 @@
       "collapse": "접기",
       "exchange": "{{scope}}로 루트 범위 변경",
       "expand": "펼치기",
+      "filter": "",
       "loading": "대시보드 로딩 중",
       "noResultsForFilter": "쿼리에 대해 찾은 결과 없음",
       "noResultsForFilterClear": "검색 초기화",
       "noResultsForScopes": "선택한 범위에 대해 찾은 대시보드 또는 링크 없음",
       "noResultsNoScopes": "선택된 범위 없음",
-      "search": "검색",
       "toggle": {
         "collapse": "추천 대시보드 목록 접기",
         "disabled": "읽기 전용 모드로 인해 추천 대시보드 목록이 비활성화되었습니다.",
@@ -16891,6 +16913,8 @@
       "placeholder-value-or-variable": "값 또는 변수"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "",
+      "aria-label-right-operand": "",
       "label-operation": "연산",
       "placeholder-field-or-number": "필드 또는 숫자",
       "placeholder-fields-or-number": "필드 또는 숫자"

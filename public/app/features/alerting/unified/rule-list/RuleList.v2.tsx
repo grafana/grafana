@@ -87,7 +87,7 @@ export function RuleListActions() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  const canImportRulesToGMA = config.featureToggles.alertingMigrationUI && hasImportToGMAPermissions;
+  const canImportRulesToGMA = hasImportToGMAPermissions;
 
   const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && hasImportToGMAPermissions;
 

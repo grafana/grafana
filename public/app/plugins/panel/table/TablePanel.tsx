@@ -75,12 +75,12 @@ export function TablePanel(props: Props) {
   const sourceSeries = tableRefreshNewFeaturesEnabled
     ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
-  const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : undefined;
+  const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
   const getFrameScope = useTableFrameScope(sourceSeries ?? frames);
   // Rebuild against original rows while retaining cross-frame display and data-link context.
   const displayFrames = useMemo(
     () =>
-      sourceSeries && sourceFrameIndex !== undefined
+      sourceSeries && sourceFrameIndex >= 0
         ? applyFieldOverrides({
             data: [...sourceSeries],
             fieldConfig,
@@ -103,9 +103,9 @@ export function TablePanel(props: Props) {
     ]
   );
   useCacheFieldDisplayNames(displayFrames);
-  const rawMain = displayFrames[sourceFrameIndex ?? currentIndex] ?? outputMain;
+  const rawMain = displayFrames[sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex] ?? outputMain;
   const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
-  const adHocColumns = useAdHocColumnState(frames, currentIndex, columnManagementEnabled);
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, tableRefreshNewFeaturesEnabled);
   const main = useMemo(
     () =>
       tableRefreshNewFeaturesEnabled && rawMain
@@ -136,10 +136,11 @@ export function TablePanel(props: Props) {
     <TableNG
       {...commonTableProps}
       {...adHocColumns}
+      reorderable={Boolean(adHocColumns)}
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       rowTransformationsEnabled={tableRefreshNewFeaturesEnabled}
       rowTransformations={
-        tableRefreshNewFeaturesEnabled && panelContext.adHocTransformations && sourceFrameIndex !== undefined
+        tableRefreshNewFeaturesEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,

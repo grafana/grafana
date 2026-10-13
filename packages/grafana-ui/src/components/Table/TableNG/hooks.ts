@@ -43,6 +43,7 @@ import {
   SCROLL_SHADOW_THRESHOLD,
   TABLE,
 } from './constants';
+import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import { transformTableFilters } from './transformations/rowProjection';
 import {
@@ -459,6 +460,7 @@ interface UseHeaderHeightOptions {
   /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
 }
 
 export function useHeaderHeight({
@@ -472,6 +474,7 @@ export function useHeaderHeight({
   filter,
   lastColumnExtraPadding = 0,
   hasColumnSidebar = false,
+  reorderable = false,
   hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
@@ -505,8 +508,14 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
-          hasColumnSidebar,
-          hasAssistantAction,
+          reorderable,
+          hasColumnOptions:
+            getColumnMenuOptions({
+              filterable: field.config.custom?.filterable,
+              hideable: field.config.custom?.hideable,
+              hasColumnSidebar,
+              hasAssistantAction,
+            }).length > 0,
         });
         return Math.floor(width);
       }),
@@ -519,6 +528,7 @@ export function useHeaderHeight({
       filteredKeys,
       lastColumnExtraPadding,
       hasColumnSidebar,
+      reorderable,
       hasAssistantAction,
     ]
   );
@@ -895,7 +905,55 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
+export function useNativeScrollbarWidth(ref: RefObject<DataGridHandle | null>) {
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const grid = ref.current?.element;
+    if (!grid || IS_SAFARI_26) {
+      return;
+    }
+    // Measuring the grid after applying stable would detect the space we introduced ourselves.
+    // Match its scrollbar styling, but force overflow and an auto gutter on an isolated probe.
+    const probe = document.createElement('div');
+    probe.className = grid.className;
+    probe.setAttribute('role', 'grid');
+    probe.setAttribute('aria-hidden', 'true');
+    Object.assign(probe.style, {
+      position: 'absolute',
+      visibility: 'hidden',
+      pointerEvents: 'none',
+      inset: '0 auto auto 0',
+      width: '100px',
+      height: '100px',
+      inlineSize: '100px',
+      blockSize: '100px',
+      display: 'block',
+      border: '0',
+      padding: '0',
+      contain: 'strict',
+      contentVisibility: 'visible',
+      overflowX: 'hidden',
+      overflowY: 'scroll',
+      scrollbarGutter: 'auto',
+      scrollbarWidth: getComputedStyle(grid).scrollbarWidth,
+    });
+    const content = document.createElement('div');
+    content.style.height = '200px';
+    probe.appendChild(content);
+    grid.parentElement?.appendChild(probe);
+    const measure = () => setWidth(probe.offsetWidth - probe.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(probe);
+    return () => {
+      observer.disconnect();
+      probe.remove();
+    };
+  }, [ref]);
+  return width;
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number, reserveGutter?: boolean) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(() => {
@@ -915,7 +973,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
       resizeObserver.disconnect();
       updateScrollbarDimensions.cancel();
     };
-  }, [ref, height]);
+  }, [ref, height, reserveGutter]);
 
   return scrollbarWidth;
 }
@@ -1013,6 +1071,7 @@ export interface ContentAwareWidths {
   filter?: FilterType;
   isFiltered?: (field: Field) => boolean;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1064,6 +1123,7 @@ interface UseContentAwareWidthsOptions {
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1082,6 +1142,7 @@ export function useContentAwareWidths({
   tableRefreshEnabled = false,
   filter,
   hasColumnSidebar = false,
+  reorderable = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
@@ -1104,6 +1165,7 @@ export function useContentAwareWidths({
             filter,
             isFiltered,
             hasColumnSidebar,
+            reorderable,
             noPanelPadding,
             preventHorizontalOverflow,
           }
@@ -1121,6 +1183,7 @@ export function useContentAwareWidths({
       tableRefreshEnabled,
       theme,
       hasColumnSidebar,
+      reorderable,
       noPanelPadding,
       preventHorizontalOverflow,
     ]
@@ -1345,7 +1408,6 @@ interface ColumnViewState {
   hiddenColumns: ReadonlySet<string>;
   setColumnOrder: (columnOrder: string[]) => void;
   setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
-  isControlled: boolean;
 }
 
 const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
@@ -1358,8 +1420,6 @@ export function useColumnViewState({
   onHiddenColumnsChange,
   structureRev,
 }: ColumnViewStateOptions): ColumnViewState {
-  const isControlled = onColumnOrderChange != null || onHiddenColumnsChange != null;
-
   const [localColumnOrder, setLocalColumnOrder] = useState<string[]>();
   const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
 
@@ -1388,6 +1448,5 @@ export function useColumnViewState({
     hiddenColumns: (onHiddenColumnsChange ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
     setColumnOrder,
     setHiddenColumns,
-    isControlled,
   };
 }

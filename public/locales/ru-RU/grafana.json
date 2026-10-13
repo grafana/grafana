@@ -1762,9 +1762,6 @@
         "will-import-rules-count_many": "Будет импортировано {{count}} правил",
         "will-import-rules-count_other": "Будет импортировано {{count}} правила"
       },
-      "routing-tree": {
-        "default-policy": "Политика по умолчанию"
-      },
       "source": {
         "datasource": "Существующие правила, управляемые источником данных",
         "datasource-description": "Импорт правил из существующих источников данных",
@@ -2651,15 +2648,11 @@
       "aria-label": "Выбрать политику уведомлений",
       "change": "Изменить",
       "change-aria": "Изменить политику уведомлений",
-      "custom-policy-desc": "Направляйте оповещения через дерево политик {{name}}",
       "default-badge": "Политика по умолчанию",
       "default-info": "Маршрутизация экземпляров оповещений осуществляется с помощью дерева политик уведомлений по умолчанию.",
-      "default-policy": "Политика по умолчанию",
-      "default-policy-desc": "Направляет оповещения с помощью дерева политик уведомлений по умолчанию",
       "description": "Выберите, какое дерево политик уведомлений следует использовать для маршрутизации этого правила оповещения.",
+      "missing-policy": "",
       "placeholder": "Выбрать политику...",
-      "reset": "Сброс до значений по умолчанию",
-      "reset-aria": "Сброс до политики по умолчанию",
       "view-policies": "Просмотр политик",
       "view-policies-aria": "Просмотр политик уведомлений"
     },
@@ -5893,6 +5886,7 @@
       "paste-panel": "Вставка панели",
       "remove": "Удалить {{typeName}}",
       "remove-multiple": "",
+      "replace-panel": "",
       "row-fill-screen-disable": "",
       "row-fill-screen-enable": "",
       "row-hide-header": "",
@@ -6399,16 +6393,13 @@
       },
       "cross-dashboard-variables": {
         "description": "",
-        "empty-folder": "",
-        "empty-global": "",
+        "filters-description": "",
         "folder-section": "",
         "global-section": "",
         "load-error": "",
         "pane-header": "",
         "select-all-folder": "",
-        "select-all-global": "",
-        "title": "",
-        "tooltip": ""
+        "select-all-global": ""
       },
       "dashboard-options": {
         "annotations": "Аннотации",
@@ -6448,7 +6439,8 @@
         "copy-tooltip": "Копировать",
         "delete": "Удалить",
         "duplicate": "Дублировать",
-        "paste": "Вставить"
+        "paste": "Вставить",
+        "remove": ""
       },
       "elements": {
         "annotation": "Аннотация",
@@ -6481,7 +6473,9 @@
       "feedback-title": "Оставьте отзыв о новой функции редактирования дашбордов",
       "filters": {
         "add-filter": "Добавить фильтр",
+        "global-or-folder-title": "",
         "reorder-description": "Изменить порядок фильтров",
+        "select-type": "",
         "title": "Фильтры",
         "title-above-dashboard": "Над дашбордом",
         "title-controls-menu": "Меню управления",
@@ -6547,6 +6541,10 @@
           "type": "Тип",
           "type-placeholder": "Выбрать тип источника данных"
         },
+        "defined-globally": "",
+        "defined-on-folder": "",
+        "defined-on-folder-level": "",
+        "defined-on-global-level": "",
         "description": "Описание",
         "description-placeholder": "Поясняющий текст",
         "display": "Отобразить",
@@ -6568,6 +6566,7 @@
           "old-modal-title": "Переменная запроса",
           "preview": "Предварительный просмотр"
         },
+        "remove": "",
         "selection-options": {
           "allow-custom-values": "Разрешить пользовательские значения",
           "allow-custom-values-description": "Позволяет пользователям вводить значения.",
@@ -6583,6 +6582,8 @@
       "variables": {
         "add-variable": "Добавить переменную",
         "change-type": "Изменить тип переменной",
+        "global-or-folder-description": "",
+        "global-or-folder-title": "",
         "reorder-description": "Измените порядок в списке переменных",
         "select-type": "Выберите тип переменной",
         "select-type-card-tooltip": "Нажмите, чтобы выбрать тип",
@@ -7092,7 +7093,9 @@
       "delete-tooltip-disabled": "Повторяющиеся панели нельзя удалить по отдельности",
       "duplicate-tooltip": "Дублировать",
       "duplicate-tooltip-disabled": "Повторяющиеся панели нельзя дублировать по отдельности",
-      "settings": "Параметры"
+      "remove-tooltip": "",
+      "settings": "Параметры",
+      "view": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Правила отображения/скрытия не будут действовать",
@@ -7953,7 +7956,10 @@
     "variable-editable-element": {
       "delete-confirm": "Удалить переменную",
       "delete-text": "Удалить {{name}}?",
-      "delete-title": "Удаление переменной"
+      "delete-title": "Удаление переменной",
+      "remove-confirm": "",
+      "remove-text": "",
+      "remove-title": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Форма редактора переменных",
@@ -9115,7 +9121,6 @@
       "attribute-category": {
         "other": "Прочее"
       },
-      "error-indicator": "",
       "exception-message": "",
       "exception-stacktrace": "",
       "exception-title": "",
@@ -9264,7 +9269,7 @@
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "Эта трассировка была изначально отклонена с помощью адаптивных трассировок, но затем восстановлена. Восстановленная трассировка не включается в запросы TraceQL и может быть запрошена только по идентификатору трассировки. Подробнее см. в <2>документации</2>.",
+        "body": "",
         "title": "Трассировка восстановлена с помощью адаптивных трассировок"
       },
       "application-observability-promo": {
@@ -10879,6 +10884,7 @@
       "placeholder": "Выбрать"
     },
     "table": {
+      "add-to-assistant": "",
       "cell-actions": "",
       "cell-filter-on": "Фильтровать по значению",
       "cell-filter-out": "Отсеять значение",
@@ -11529,6 +11535,7 @@
         "clear": "",
         "edit": "",
         "ignored-tooltip": "",
+        "no-match-hint": "",
         "save": "",
         "save-failed": ""
       },
@@ -11542,7 +11549,6 @@
           "cluster": "",
           "namespaces": "",
           "no-match": "",
-          "no-match-hint": "",
           "nodes": "",
           "open": "",
           "summary-cluster": "",
@@ -11635,6 +11641,20 @@
         "create-check": "Создайте проверку",
         "description": "Отслеживайте доступность и производительность конечных точек с помощью проб по всему миру.",
         "failing-worst": "{{check}} на {{percent}}%",
+        "filter": {
+          "instances": "",
+          "jobs": "",
+          "no-instances": "",
+          "no-jobs": "",
+          "no-match": "",
+          "no-probes": "",
+          "open": "",
+          "probes": "",
+          "summary-instances": "",
+          "summary-jobs": "",
+          "summary-probes": "",
+          "title": ""
+        },
         "setup-hint": "создайте проверку",
         "stats": "{{percent}}% выполнено · 24 часа",
         "success-trend": "Коэффициент успешности · последние 24 часа",
@@ -14226,11 +14246,13 @@
     "preview-banner": {
       "behind-branch-text": "Этот ресурс находится за ветвью в {{repoType}}.",
       "branch-targets": "цели",
+      "create-pull-request-in-repository": "",
       "delete-from-branch": "Остальные пользователи Grafana в вашей организации будут видеть этот ресурс до тех пор, пока эта ветвь не будет объединена",
       "move-from-branch": "Остальные пользователи Grafana в вашей организации будут видеть текущую версию до тех пор, пока эта ветвь не будет объединена",
       "not-saved": "Остальные пользователи Grafana в вашей организации будут по-прежнему видеть текущую версию, сохраненную в заданной ветви по умолчанию, до тех пор, пока эта ветвь не будет объединена",
       "open-in-repo-button": "Открыть в {{repoType}}",
       "open-pull-request-in-repo": "Открыть запрос на включение изменений в {{repoType}}",
+      "open-repository": "",
       "update-from-branch": "Остальные пользователи Grafana в вашей организации будут видеть текущую версию до тех пор, пока эта ветвь не будет объединена",
       "view-in-repo-button": "Просмотрите его в {{repoType}}, чтобы увидеть последние изменения.",
       "view-pull-request-in-repo": "Просмотреть запрос на включение изменений в {{repoType}}",
@@ -15967,12 +15989,12 @@
       "collapse": "Свернуть",
       "exchange": "Изменить корневую область на {{scope}}",
       "expand": "Развернуть",
+      "filter": "",
       "loading": "Загрузка дашбордов",
       "noResultsForFilter": "По вашему запросу ничего не найдено",
       "noResultsForFilterClear": "Очистить поиск",
       "noResultsForScopes": "Не найдены дашборды или ссылки для выбранных областей",
       "noResultsNoScopes": "Нет выбранных областей",
-      "search": "Поиск",
       "toggle": {
         "collapse": "Свернуть список рекомендуемых дашбордов",
         "disabled": "Список рекомендуемых дашбордов отключен в связи с режимом «только для чтения»",
@@ -17278,6 +17300,8 @@
       "placeholder-value-or-variable": "Значение или переменная"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "",
+      "aria-label-right-operand": "",
       "label-operation": "Операция",
       "placeholder-field-or-number": "Поле или число",
       "placeholder-fields-or-number": "Поля или число"

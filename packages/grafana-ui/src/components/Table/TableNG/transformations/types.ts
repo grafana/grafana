@@ -5,7 +5,7 @@ export interface ColumnContext {
   frameFilter?: MatcherConfig;
 }
 
-export interface TableTransformation<State, Value, Context> {
+export interface TableTransformation<State = unknown, Value = unknown, Context = unknown> {
   read(configs: readonly DataTransformerConfig[], context: Context): State;
   write(configs: readonly DataTransformerConfig[], value: Value, context: Context): readonly DataTransformerConfig[];
 }

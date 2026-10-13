@@ -46,11 +46,12 @@ import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS } from './constants';
+import { getCellMenuOptions } from './menuOptions';
 import {
   getCellActionStyles,
-  getColumnSettleStyles,
   getDefaultCellStyles,
   getHeaderCellStyles,
+  getColumnSettleStyles,
   getLinkStyles,
   getMaxHeightCellStyles,
   getTooltipStyles,
@@ -88,7 +89,6 @@ import {
   rendersAsJson,
   shouldTextOverflow,
   shouldTextWrap,
-  isFieldReorderable,
 } from './utils';
 
 // -----------------------------------------------------------------------------
@@ -159,6 +159,7 @@ export interface ColumnBuildConfig {
   hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
@@ -284,6 +285,7 @@ function buildColumnsFromFields(
     hoverOverflow = true,
     disableSanitizeHtml,
     hasColumnSidebar,
+    reorderable = false,
     settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
@@ -367,8 +369,9 @@ function buildColumnsFromFields(
     const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
     const cellInspect = wrappingDisabled || isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
-    const showAssistant = tableRefreshEnabled && onCellAddToAssistant != null;
-    const showActions = cellInspect || showFilters || showAssistant;
+    const showAssistant = Boolean(tableRefreshEnabled && onCellAddToAssistant != null);
+    const cellMenuOptions = getCellMenuOptions({ cellInspect, showFilters, hasAssistantAction: showAssistant });
+    const showActions = cellMenuOptions.length > 0;
     const width = widths[i];
     const contentWidth =
       width -
@@ -501,6 +504,7 @@ function buildColumnsFromFields(
           />
           {showActions && (
             <TableCellActions
+              groups={cellMenuOptions}
               tableRefreshEnabled={tableRefreshEnabled}
               field={field}
               value={value}
@@ -617,7 +621,7 @@ function buildColumnsFromFields(
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       resizable: field.config.custom?.resizable,
       sortable: isSortableField(field),
-      draggable: isFieldReorderable(field),
+      draggable: reorderable,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

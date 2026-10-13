@@ -1762,9 +1762,6 @@
         "will-import-rules-count_many": "Importuje {{count}} pravidel",
         "will-import-rules-count_other": "Importuje {{count}} pravidel"
       },
-      "routing-tree": {
-        "default-policy": "Výchozí zásada"
-      },
       "source": {
         "datasource": "Stávající pravidla spravovaná zdrojem dat",
         "datasource-description": "Importovat pravidla ze stávajících zdrojů dat",
@@ -2651,15 +2648,11 @@
       "aria-label": "Vybrat zásadu oznamování",
       "change": "Změnit",
       "change-aria": "Změnit zásadu oznamování",
-      "custom-policy-desc": "Směrovat výstrahy přes strom zásad {{name}}",
       "default-badge": "Výchozí zásada",
       "default-info": "Instance výstrah jsou přesměrovány pomocí stromu výchozí zásady oznamování.",
-      "default-policy": "Výchozí zásada",
-      "default-policy-desc": "Směruje výstrahy pomocí stromu výchozí zásady oznamování",
       "description": "Vyberte, který strom zásad oznamování by měl zajišťovat směrování pro toto pravidlo výstrahy.",
+      "missing-policy": "",
       "placeholder": "Vyberte zásadu…",
-      "reset": "Obnovit výchozí nastavení",
-      "reset-aria": "Obnovit výchozí zásadu",
       "view-policies": "Zobrazit zásady",
       "view-policies-aria": "Zobrazit zásady oznamování"
     },
@@ -5893,6 +5886,7 @@
       "paste-panel": "Vložit panel",
       "remove": "Odebrat {{typeName}}",
       "remove-multiple": "",
+      "replace-panel": "",
       "row-fill-screen-disable": "",
       "row-fill-screen-enable": "",
       "row-hide-header": "",
@@ -6399,16 +6393,13 @@
       },
       "cross-dashboard-variables": {
         "description": "",
-        "empty-folder": "",
-        "empty-global": "",
+        "filters-description": "",
         "folder-section": "",
         "global-section": "",
         "load-error": "",
         "pane-header": "",
         "select-all-folder": "",
-        "select-all-global": "",
-        "title": "",
-        "tooltip": ""
+        "select-all-global": ""
       },
       "dashboard-options": {
         "annotations": "Vysvětlivky",
@@ -6448,7 +6439,8 @@
         "copy-tooltip": "Kopírovat",
         "delete": "Odstranit",
         "duplicate": "Duplikovat",
-        "paste": "Vložit"
+        "paste": "Vložit",
+        "remove": ""
       },
       "elements": {
         "annotation": "Vysvětlivky",
@@ -6481,7 +6473,9 @@
       "feedback-title": "Poskytněte zpětnou vazbu k nové zkušenosti s úpravami nástěnky",
       "filters": {
         "add-filter": "Přidat filtr",
+        "global-or-folder-title": "",
         "reorder-description": "Změnit pořadí seznamu filtrů",
+        "select-type": "",
         "title": "Filtry",
         "title-above-dashboard": "Nad nástěnkou",
         "title-controls-menu": "Nabídka ovládacích prvků",
@@ -6547,6 +6541,10 @@
           "type": "Typ",
           "type-placeholder": "Vyberte typ zdroje dat"
         },
+        "defined-globally": "",
+        "defined-on-folder": "",
+        "defined-on-folder-level": "",
+        "defined-on-global-level": "",
         "description": "Popis",
         "description-placeholder": "Popisný text",
         "display": "Zobrazit",
@@ -6568,6 +6566,7 @@
           "old-modal-title": "Proměnná dotazu",
           "preview": "Náhled"
         },
+        "remove": "",
         "selection-options": {
           "allow-custom-values": "Povolit vlastní hodnoty",
           "allow-custom-values-description": "Umožňuje uživatelům zadávat hodnoty",
@@ -6583,6 +6582,8 @@
       "variables": {
         "add-variable": "Přidat proměnnou",
         "change-type": "Změnit typ proměnné",
+        "global-or-folder-description": "",
+        "global-or-folder-title": "",
         "reorder-description": "Změnit pořadí seznamu proměnných",
         "select-type": "Vyberte typ proměnné",
         "select-type-card-tooltip": "Klikněte pro výběr typu",
@@ -7092,7 +7093,9 @@
       "delete-tooltip-disabled": "Opakované panely nelze odstranit jednotlivě",
       "duplicate-tooltip": "Duplikovat",
       "duplicate-tooltip-disabled": "Opakované panely nelze duplikovat jednotlivě",
-      "settings": "Nastavení"
+      "remove-tooltip": "",
+      "settings": "Nastavení",
+      "view": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Pravidla pro zobrazení/skrytí nebudou fungovat",
@@ -7953,7 +7956,10 @@
     "variable-editable-element": {
       "delete-confirm": "Odstranit proměnnou",
       "delete-text": "Opravdu chcete odstranit: {{name}}?",
-      "delete-title": "Odstranit proměnnou"
+      "delete-title": "Odstranit proměnnou",
+      "remove-confirm": "",
+      "remove-text": "",
+      "remove-title": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulář editoru proměnné",
@@ -9115,7 +9121,6 @@
       "attribute-category": {
         "other": "Ostatní"
       },
-      "error-indicator": "",
       "exception-message": "",
       "exception-stacktrace": "",
       "exception-title": "",
@@ -9264,7 +9269,7 @@
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "Toto trasování bylo původně vyřazeno adaptivním trasováním a bylo obnoveno. Obnovená stopa není zahrnuta do dotazů TraceQL a může být vyhledána pouze pomocí ID stopy. Další podrobnosti najdete v <2>dokumentaci</2>.",
+        "body": "",
         "title": "Trasování obnoveno adaptivním trasováním"
       },
       "application-observability-promo": {
@@ -10879,6 +10884,7 @@
       "placeholder": "Vybrat "
     },
     "table": {
+      "add-to-assistant": "",
       "cell-actions": "",
       "cell-filter-on": "Filtrovat podle hodnoty",
       "cell-filter-out": "Odfiltrovat hodnotu",
@@ -11529,6 +11535,7 @@
         "clear": "",
         "edit": "",
         "ignored-tooltip": "",
+        "no-match-hint": "",
         "save": "",
         "save-failed": ""
       },
@@ -11542,7 +11549,6 @@
           "cluster": "",
           "namespaces": "",
           "no-match": "",
-          "no-match-hint": "",
           "nodes": "",
           "open": "",
           "summary-cluster": "",
@@ -11635,6 +11641,20 @@
         "create-check": "Vytvořit kontrolu",
         "description": "Sledujte provozní dostupnost a výkon svých koncových bodů pomocí sond po celém světě.",
         "failing-worst": "{{check}} na {{percent}} %",
+        "filter": {
+          "instances": "",
+          "jobs": "",
+          "no-instances": "",
+          "no-jobs": "",
+          "no-match": "",
+          "no-probes": "",
+          "open": "",
+          "probes": "",
+          "summary-instances": "",
+          "summary-jobs": "",
+          "summary-probes": "",
+          "title": ""
+        },
         "setup-hint": "vytvořit kontrolu",
         "stats": "{{percent}}% úspěšnost · 24 hodin",
         "success-trend": "Míra úspěšnosti · posledních 24 hodin",
@@ -14226,11 +14246,13 @@
     "preview-banner": {
       "behind-branch-text": "Tento zdroj je za větví v úložišti {{repoType}}.",
       "branch-targets": "cíle",
+      "create-pull-request-in-repository": "",
       "delete-from-branch": "Zbytek uživatelů Grafany ve vaší organizaci i nadále uvidí tento zdroj, dokud nebude tato větev sloučena",
       "move-from-branch": "Zbytek uživatelů Grafany ve vaší organizaci i nadále uvidí aktuální verzi, dokud nebude tato větev sloučena",
       "not-saved": "Zbytek uživatelů Grafany ve vaší organizaci bude i nadále vidět aktuální verzi uloženou do nakonfigurované výchozí větve, dokud nebude tato větev sloučena",
       "open-in-repo-button": "Otevřít v úložišti {{repoType}}",
       "open-pull-request-in-repo": "Otevřít žádost o stažení v úložišti {{repoType}}",
+      "open-repository": "",
       "update-from-branch": "Zbytek uživatelů Grafany ve vaší organizaci i nadále uvidí aktuální verzi, dokud nebude tato větev sloučena",
       "view-in-repo-button": "Zobrazte si ji v úložišti {{repoType}}, kde uvidíte nejnovější změny.",
       "view-pull-request-in-repo": "Zobrazit žádost o stažení v úložišti {{repoType}}",
@@ -15967,12 +15989,12 @@
       "collapse": "Sbalit",
       "exchange": "Změnit kořenový rozsah na {{scope}}",
       "expand": "Rozbalit",
+      "filter": "",
       "loading": "Načítání nástěnek",
       "noResultsForFilter": "Nebyly nalezeny žádné výsledky pro váš dotaz",
       "noResultsForFilterClear": "Vymazat vyhledávání",
       "noResultsForScopes": "Nebyly nalezeny žádné nástěnky nebo odkazy pro vybrané rozsahy",
       "noResultsNoScopes": "Nejsou vybrány žádné rozsahy",
-      "search": "Hledat",
       "toggle": {
         "collapse": "Sbalit seznam navrhovaných nástěnek",
         "disabled": "Seznam navrhovaných nástěnek je zakázán z důvodu režimu jen pro čtení",
@@ -17278,6 +17300,8 @@
       "placeholder-value-or-variable": "Hodnota nebo proměnná"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "",
+      "aria-label-right-operand": "",
       "label-operation": "Činnost",
       "placeholder-field-or-number": "Pole nebo číslo",
       "placeholder-fields-or-number": "Pole nebo číslo"

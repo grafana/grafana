@@ -18,7 +18,6 @@ export function withAdHocTransformCapabilities(
         custom: {
           ...field.config.custom,
           filterable: true,
-          reorderable: columnManagementEnabled,
           hideable: columnManagementEnabled,
         },
       },

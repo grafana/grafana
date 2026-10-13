@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 )
 
-// Defaults for background discovery polling. Not configurable yet.
+// Defaults for background discovery polling.
 const (
 	// defaultAggregatePollInterval is the cooldown's interval while healthy.
 	defaultAggregatePollInterval = 30 * time.Second
@@ -25,7 +25,7 @@ const (
 	defaultAggregateDiscoveryTimeout = 10 * time.Second
 )
 
-// aggregateTarget owns one fixed upstream apiserver's discovery poll loop.
+// aggregateTarget owns one configured upstream apiserver's discovery poll loop.
 // Backends() is read by cloudLoader.Load() (any goroutine); run() is the
 // sole writer of snapshot, on its own goroutine -- hence atomic.Pointer
 // rather than a mutex.
@@ -66,13 +66,17 @@ func newAggregateTarget(cfg aggregateTargetConfig, client *http.Client, proxyTra
 	if err != nil {
 		return nil, err
 	}
+	interval := cfg.PollInterval
+	if interval == 0 {
+		interval = defaultAggregatePollInterval
+	}
 	t := &aggregateTarget{
 		name:           cfg.Name,
 		base:           base,
 		client:         client,
 		proxyTransport: proxyTransport,
 		patterns:       patterns,
-		cooldown:       newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
+		cooldown:       newCooldown(interval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
 	empty := []Backend{}
 	t.snapshot.Store(&empty)

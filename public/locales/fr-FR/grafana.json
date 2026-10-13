@@ -1746,9 +1746,6 @@
         "will-import-rules-count_one": "Importera {{count}} règle",
         "will-import-rules-count_other": "Importera {{count}} règles"
       },
-      "routing-tree": {
-        "default-policy": "Politique par défaut"
-      },
       "source": {
         "datasource": "Règles existantes gérées par la source de données",
         "datasource-description": "Importer des règles à partir de sources de données existantes",
@@ -2609,15 +2606,11 @@
       "aria-label": "Sélectionner une politique de notification",
       "change": "Modifier",
       "change-aria": "Modifier la politique de notification",
-      "custom-policy-desc": "Acheminer les alertes via l’arborescence de la politique {{name}}",
       "default-badge": "Politique par défaut",
       "default-info": "Les instances d’alerte sont acheminées à l’aide de l’arborescence des politiques de notification par défaut.",
-      "default-policy": "Politique par défaut",
-      "default-policy-desc": "Achemine les alertes à l’aide de l’arborescence des politiques de notification par défaut",
       "description": "Sélectionnez l’arborescence des politiques de notification qui doit prendre en charge le routage pour cette règle d’alerte.",
+      "missing-policy": "",
       "placeholder": "Sélectionner une politique…",
-      "reset": "Rétablir la valeur par défaut",
-      "reset-aria": "Rétablir la politique par défaut",
       "view-policies": "Afficher les politiques",
       "view-policies-aria": "Afficher les politiques de notification"
     },
@@ -5799,6 +5792,7 @@
       "paste-panel": "Coller le panneau",
       "remove": "Supprimer {{typeName}}",
       "remove-multiple": "",
+      "replace-panel": "",
       "row-fill-screen-disable": "",
       "row-fill-screen-enable": "",
       "row-hide-header": "",
@@ -6303,16 +6297,13 @@
       },
       "cross-dashboard-variables": {
         "description": "",
-        "empty-folder": "",
-        "empty-global": "",
+        "filters-description": "",
         "folder-section": "",
         "global-section": "",
         "load-error": "",
         "pane-header": "",
         "select-all-folder": "",
-        "select-all-global": "",
-        "title": "",
-        "tooltip": ""
+        "select-all-global": ""
       },
       "dashboard-options": {
         "annotations": "Annotations",
@@ -6352,7 +6343,8 @@
         "copy-tooltip": "Copier",
         "delete": "Supprimer",
         "duplicate": "Dupliquer",
-        "paste": "Coller"
+        "paste": "Coller",
+        "remove": ""
       },
       "elements": {
         "annotation": "Annotation",
@@ -6385,7 +6377,9 @@
       "feedback-title": "Donnez votre avis sur la nouvelle expérience d’édition des tableaux de bord",
       "filters": {
         "add-filter": "Ajoutez un filtre",
+        "global-or-folder-title": "",
         "reorder-description": "Réorganiser la liste des filtres",
+        "select-type": "",
         "title": "Filtres",
         "title-above-dashboard": "Au-dessus du tableau de bord",
         "title-controls-menu": "Menu des commandes",
@@ -6451,6 +6445,10 @@
           "type": "Type",
           "type-placeholder": "Choisissez le type de source de données"
         },
+        "defined-globally": "",
+        "defined-on-folder": "",
+        "defined-on-folder-level": "",
+        "defined-on-global-level": "",
         "description": "Description",
         "description-placeholder": "Texte descriptif",
         "display": "Affichage",
@@ -6472,6 +6470,7 @@
           "old-modal-title": "Variable de requête",
           "preview": "Aperçu"
         },
+        "remove": "",
         "selection-options": {
           "allow-custom-values": "Autoriser les valeurs personnalisées",
           "allow-custom-values-description": "Permet aux utilisateurs de saisir des valeurs",
@@ -6487,6 +6486,8 @@
       "variables": {
         "add-variable": "Ajoutez une variable",
         "change-type": "Modifiez le type de variable",
+        "global-or-folder-description": "",
+        "global-or-folder-title": "",
         "reorder-description": "Réorganiser la liste des variables",
         "select-type": "Choisissez le type de variable",
         "select-type-card-tooltip": "Cliquez pour sélectionner le type",
@@ -6992,7 +6993,9 @@
       "delete-tooltip-disabled": "Les panneaux répétés ne peuvent pas être supprimés individuellement",
       "duplicate-tooltip": "Dupliquer",
       "duplicate-tooltip-disabled": "Les panneaux répétés ne peuvent pas être dupliqués individuellement",
-      "settings": "Paramètres"
+      "remove-tooltip": "",
+      "settings": "Paramètres",
+      "view": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Les règles d’affichage et de masquage ne fonctionneront pas",
@@ -7849,7 +7852,10 @@
     "variable-editable-element": {
       "delete-confirm": "Supprimer la variable",
       "delete-text": "Voulez-vous vraiment supprimer {{name}} ?",
-      "delete-title": "Supprimer la variable"
+      "delete-title": "Supprimer la variable",
+      "remove-confirm": "",
+      "remove-text": "",
+      "remove-title": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulaire de l’éditeur de variables",
@@ -9001,7 +9007,6 @@
       "attribute-category": {
         "other": "Autre"
       },
-      "error-indicator": "",
       "exception-message": "",
       "exception-stacktrace": "",
       "exception-title": "",
@@ -9148,7 +9153,7 @@
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "Cette trace a été initialement rejetée par Adaptive Traces et a été restaurée. Une trace restaurée n’est pas incluse dans les requêtes TraceQL et ne peut être recherchée que par son identifiant (ID). Veuillez consulter la <2>documentation</2> pour en savoir plus.",
+        "body": "",
         "title": "Trace restaurée par Adaptive Traces"
       },
       "application-observability-promo": {
@@ -10743,6 +10748,7 @@
       "placeholder": "Choisir"
     },
     "table": {
+      "add-to-assistant": "",
       "cell-actions": "",
       "cell-filter-on": "Filtrer par valeur",
       "cell-filter-out": "Filtrer la valeur",
@@ -11389,6 +11395,7 @@
         "clear": "",
         "edit": "",
         "ignored-tooltip": "",
+        "no-match-hint": "",
         "save": "",
         "save-failed": ""
       },
@@ -11402,7 +11409,6 @@
           "cluster": "",
           "namespaces": "",
           "no-match": "",
-          "no-match-hint": "",
           "nodes": "",
           "open": "",
           "summary-cluster": "",
@@ -11473,6 +11479,20 @@
         "create-check": "Créer une vérification",
         "description": "Surveillez la disponibilité et les performances de vos points de terminaison depuis des sondes réparties dans le monde entier.",
         "failing-worst": "{{check}} à {{percent}} %",
+        "filter": {
+          "instances": "",
+          "jobs": "",
+          "no-instances": "",
+          "no-jobs": "",
+          "no-match": "",
+          "no-probes": "",
+          "open": "",
+          "probes": "",
+          "summary-instances": "",
+          "summary-jobs": "",
+          "summary-probes": "",
+          "title": ""
+        },
         "setup-hint": "créer une vérification",
         "stats": "{{percent}} % de réussite · 24 heures",
         "success-trend": "Taux de réussite · dernières 24 heures",
@@ -14028,11 +14048,13 @@
     "preview-banner": {
       "behind-branch-text": "Cette ressource est en retard par rapport à la branche dans {{repoType}}.",
       "branch-targets": "cibles",
+      "create-pull-request-in-repository": "",
       "delete-from-branch": "Les autres utilisateurs Grafana de votre entreprise continueront à voir cette ressource jusqu’à ce que cette branche soit fusionnée",
       "move-from-branch": "Jusqu’à ce que cette branche soit fusionnée, les autres utilisateurs Grafana de votre organisation continueront à voir la version actuelle",
       "not-saved": "Les autres utilisateurs Grafana de votre entreprise verront toujours la version actuelle enregistrée sur la branche par défaut configurée, jusqu’à ce que cette branche soit fusionnée",
       "open-in-repo-button": "Ouvrir dans {{repoType}}",
       "open-pull-request-in-repo": "Ouvrir une demande de tirage dans {{repoType}}",
+      "open-repository": "",
       "update-from-branch": "Les autres utilisateurs Grafana de votre entreprise verront toujours la version actuelle, jusqu’à ce que cette branche soit fusionnée",
       "view-in-repo-button": "Affichez-la dans {{repoType}} pour consulter les dernières modifications.",
       "view-pull-request-in-repo": "Afficher la demande de tirage dans {{repoType}}",
@@ -15713,12 +15735,12 @@
       "collapse": "Réduire",
       "exchange": "Changer la portée racine vers {{scope}}",
       "expand": "Développer",
+      "filter": "",
       "loading": "Chargement des tableaux de bord",
       "noResultsForFilter": "Aucun résultat n'a été trouvé pour votre requête",
       "noResultsForFilterClear": "Effacer la recherche",
       "noResultsForScopes": "Aucun tableau de bord ou lien trouvé pour les portées sélectionnées",
       "noResultsNoScopes": "Aucune portée sélectionnée",
-      "search": "Rechercher",
       "toggle": {
         "collapse": "Réduire la liste des tableaux de bord suggérés",
         "disabled": "La liste des tableaux de bord suggérés est désactivée en raison du mode lecture seule",
@@ -17020,6 +17042,8 @@
       "placeholder-value-or-variable": "Valeur ou variable"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "",
+      "aria-label-right-operand": "",
       "label-operation": "Opération",
       "placeholder-field-or-number": "Champ ou numéro",
       "placeholder-fields-or-number": "Champ(s) ou numéro"

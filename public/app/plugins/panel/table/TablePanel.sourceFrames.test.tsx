@@ -169,6 +169,37 @@ it.each(['missing', 'ambiguous'])('keeps the output frame when the source match 
   expect(await screen.findByRole('link', { name: 'Inspect' })).toHaveAttribute('href', '/row/99');
 });
 
+it.each(['missing', 'ambiguous'])('keeps row filters local when the source match is %s', async (match) => {
+  const sourceSeries = [makeFrame('First', 'A'), makeFrame('Second', match === 'ambiguous' ? 'A' : 'B')];
+  const outputSeries = [
+    toDataFrame({
+      name: 'Output',
+      refId: match === 'ambiguous' ? 'A' : 'C',
+      fields: [{ name: 'label', type: FieldType.string, values: ['keep', 'remove'] }],
+    }),
+  ];
+  const set = jest.fn();
+  render(
+    panel(
+      sourceSeries,
+      ({ linkModel, field, config }) => ({ ...linkModel, href: `/row/${field.values[config.valueRowIndex!]}` }),
+      0,
+      outputSeries,
+      set
+    )
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByLabelText('Column options for label'));
+  await user.click(await screen.findByText('Filter values'));
+  await user.click(screen.getByRole('checkbox', { name: 'keep' }));
+  await user.click(screen.getByRole('button', { name: 'Ok' }));
+
+  expect((await screen.findAllByRole('link', { name: 'Inspect' })).map((link) => link.getAttribute('href'))).toEqual([
+    '/row/keep',
+  ]);
+  expect(set).not.toHaveBeenCalled();
+});
+
 it('writes row filters with the matched source index and scope', async () => {
   const sourceSeries = ['A', 'B'].map((refId) =>
     toDataFrame({
