@@ -10,9 +10,10 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
 }
 
 /**
- * `displayMode: hidden` is deprecated in favour of `showLegend: false`, but saved dashboards still carry it,
- * usually without `showLegend: false`. VizLegend renders nothing for it, so a legend passed to VizLayout
- * would reserve an empty slot that measures 0px, and the viz is never sized.
+ * `displayMode: hidden` is deprecated in favour of `showLegend: false`. The v37 migration normalizes stored
+ * v1 dashboards, but the value can still arrive via v2 dashboards, dashboards written at schemaVersion >= 37,
+ * or options built in code. VizLegend renders nothing for it, so a legend passed to VizLayout would reserve
+ * an empty slot that measures 0px, and the viz is never sized.
  *
  * @internal
  */
