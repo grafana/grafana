@@ -3074,6 +3074,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.smtpSettingsPage",
+        "resourceVersion": "1791896266088",
+        "creationTimestamp": "2026-10-13T12:57:46Z"
+      },
+      "spec": {
+        "description": "Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.ssoSettingsToMTSettings",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-13T09:18:35Z"

@@ -115,6 +115,11 @@ export class Controls extends PageObject {
       // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
       return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
     },
+    /** Returns an ad hoc variable's applied filter pill; its text is "<key> <operator> <value>" */
+    getFilter: (variableLabel: string, key: string): Locator =>
+      this.variables
+        .getDropdownTrigger(variableLabel)
+        .getByRole('button', { name: `Edit filter with key ${key}`, exact: true }),
     /** Returns the dropdown option with the given label (the dropdown must be open) */
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
     /** Opens the variable's dropdown by clicking its input */

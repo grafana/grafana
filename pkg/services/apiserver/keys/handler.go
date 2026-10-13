@@ -16,10 +16,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"reflect"
-	"slices"
 	"strconv"
-	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -31,23 +28,15 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-// ListOptions is small, so anything larger is a client bug or an attack.
+// ListKeyRequest is small, so anything larger is a client bug or an attack.
 const maxRequestBody = 1 << 20 // 1 MiB
-
-// kindRef identifies the kind a route serves. Only group and resource reach the
-// storage key (which is group/resource/namespace/name); version serves the trace
-// attribute and the per-version operation ID.
-type kindRef struct {
-	group    string
-	version  string
-	resource string
-}
 
 type Handler struct {
 	store  resourcepb.ResourceStoreClient
@@ -117,7 +106,7 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 			return
 		}
 
-		opts, err := decodeListOptions(r)
+		opts, err := decodeListKeyRequest(r)
 		if err != nil {
 			errhttp.Write(ctx, err, w)
 			return
@@ -169,6 +158,15 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 	}
 }
 
+// kindRef identifies the kind a route serves. Only group and resource reach the
+// storage key (which is group/resource/namespace/name); version serves the trace
+// attribute and the per-version operation ID.
+type kindRef struct {
+	group    string
+	version  string
+	resource string
+}
+
 const wildcardNamespace = "*"
 
 // namespaceFrom resolves the namespace the route was mounted with.
@@ -215,32 +213,9 @@ func (h *Handler) requireClusterWideServiceCaller(ctx context.Context, kind kind
 	return nil
 }
 
-// honoredListOptions are the only ListOptions fields listing keys reads. Keeping
-// it an allowlist means a field added upstream is refused rather than silently
-// ignored, which for a selector would hand the caller an unfiltered list.
-var honoredListOptions = []string{"limit", "continue", "resourceVersion"}
-
-// firstUnhonoredField names the first field set that listing keys does not read,
-// or "" when the caller sent only honored ones. Names come from the struct tags so
-// there is no second list to fall out of step.
-func firstUnhonoredField(opts *metav1.ListOptions) string {
-	v := reflect.ValueOf(*opts)
-	for i := range v.NumField() {
-		name, _, _ := strings.Cut(v.Type().Field(i).Tag.Get("json"), ",")
-		// TypeMeta is inline and so unnamed; its kind is checked separately.
-		if name == "" || name == "-" || slices.Contains(honoredListOptions, name) {
-			continue
-		}
-		if !v.Field(i).IsZero() {
-			return name
-		}
-	}
-	return ""
-}
-
 // An empty body means all defaults.
-func decodeListOptions(r *http.Request) (*metav1.ListOptions, error) {
-	opts := &metav1.ListOptions{}
+func decodeListKeyRequest(r *http.Request) (*storagev0.ListKeyRequest, error) {
+	opts := &storagev0.ListKeyRequest{}
 
 	body := http.MaxBytesReader(nil, r.Body, maxRequestBody)
 	dec := json.NewDecoder(body)
@@ -256,17 +231,14 @@ func decodeListOptions(r *http.Request) (*metav1.ListOptions, error) {
 		return nil, apierrors.NewBadRequest("request body must contain a single JSON object")
 	}
 
-	if opts.Kind != "" && opts.Kind != "ListOptions" {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected kind ListOptions, got %q", opts.Kind))
+	if opts.APIVersion != "" && opts.APIVersion != storagev0.APIVERSION {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("apiVersion must be %q, got %q", storagev0.APIVERSION, opts.APIVersion))
+	}
+	if opts.Kind != "" && opts.Kind != storagev0.KindListKeyRequest {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("kind must be %q, got %q", storagev0.KindListKeyRequest, opts.Kind))
 	}
 	if opts.Limit < 0 {
 		return nil, apierrors.NewBadRequest("limit must not be negative")
-	}
-
-	if name := firstUnhonoredField(opts); name != "" {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf(
-			"%s is not supported; listing keys accepts only %s",
-			name, strings.Join(honoredListOptions, ", ")))
 	}
 
 	return opts, nil
