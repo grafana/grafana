@@ -188,7 +188,6 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 		inline.Blobs.Dashboard = nil
 		inline.Spec.Dashboard = map[string]any{"title": "CPU"}
 		getter := grafanarest.NewMockStorage(t)
-		getter.On("Get", mock.Anything, "snap-1", mock.Anything).Return(inline, nil)
 		getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*inline}}, nil)
 		r, err := NewDashboardREST(getter, nil)
 		require.NoError(t, err)

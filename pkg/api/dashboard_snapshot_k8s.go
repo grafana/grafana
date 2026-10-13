@@ -79,9 +79,6 @@ func (hs *HTTPServer) getSnapshotFromAPI(c *contextmodel.ReqContext, key string)
 	if err := json.Unmarshal(value, &snap); err != nil {
 		return nil, err
 	}
-	if snap.Spec.Expires != nil && *snap.Spec.Expires > 0 && time.UnixMilli(*snap.Spec.Expires).Before(time.Now()) {
-		return nil, apierrors.NewNotFound(snapshot.SnapshotResourceInfo.GroupResource(), key)
-	}
 	value, err = snapshotRequest(client, http.MethodGet, namespace).Name(key).SubResource("dashboard").Do(ctx).Raw()
 	if err != nil {
 		return nil, err

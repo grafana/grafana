@@ -63,7 +63,6 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
 			// Snapshot resolution is mocked so this test isolates blob-read credentials.
 			getter := grafanarest.NewMockStorage(t)
-			getter.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
 			getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
 			r, err := NewDashboardREST(getter, client)
 			require.NoError(t, err)
