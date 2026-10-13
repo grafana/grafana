@@ -7,11 +7,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-// GuardedStore enforces on the unified store the same list and deleteCollection
+// GuardedStore enforces on the unified store the same list, watch and deleteCollection
 // restrictions that LegacyStore applies, so they hold when the legacy store is bypassed.
 type GuardedStore struct {
 	*registry.Store
@@ -27,6 +28,14 @@ func (s *GuardedStore) List(ctx context.Context, options *internalversion.ListOp
 		return nil, err
 	}
 	return s.Store.List(ctx, options)
+}
+
+// Watch implements rest.Watcher.
+func (s *GuardedStore) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	if err := requireListSelector(options); err != nil {
+		return nil, err
+	}
+	return s.Store.Watch(ctx, options)
 }
 
 // DeleteCollection implements rest.CollectionDeleter.

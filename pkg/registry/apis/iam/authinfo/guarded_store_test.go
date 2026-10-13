@@ -1,6 +1,7 @@
 package authinfo
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -36,4 +37,9 @@ func TestRequireListSelector(t *testing.T) {
 func TestGuardedStoreDeleteCollection(t *testing.T) {
 	_, err := (&GuardedStore{}).DeleteCollection(nil, nil, nil, nil) //nolint:staticcheck
 	require.True(t, apierrors.IsMethodNotSupported(err), "got %v", err)
+}
+
+func TestGuardedStoreWatchRequiresSelector(t *testing.T) {
+	_, err := (&GuardedStore{}).Watch(context.Background(), &internalversion.ListOptions{})
+	require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 }
