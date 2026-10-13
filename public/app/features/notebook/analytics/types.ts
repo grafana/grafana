@@ -68,6 +68,8 @@ export interface NotebookLoadedProperties extends EventProperty, NotebookShape {
  */
 export const NOTEBOOK_ENTRY_POINT = {
   NOTEBOOK_LIST: 'notebook_list',
+  COMMAND_PALETTE: 'command_palette',
+  QUICK_ADD: 'quick_add',
   EXPLORE: 'explore',
   DASHBOARD_PANEL: 'dashboard_panel',
   ASSISTANT: 'assistant',
