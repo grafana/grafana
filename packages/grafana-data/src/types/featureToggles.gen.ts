@@ -896,11 +896,6 @@ export interface FeatureToggles {
   */
   recentlyViewedDashboards?: boolean;
   /**
-  * A/A test for recently viewed dashboards feature
-  * @default false
-  */
-  experimentRecentlyViewedDashboards?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -952,7 +947,7 @@ export interface FeatureToggles {
   foldersAppPlatformAPI?: boolean;
   /**
   * Applies OTel formatting templates to displayed logs
-  * @default false
+  * @default true
   */
   otelLogsFormatting?: boolean;
   /**
@@ -1087,11 +1082,6 @@ export interface FeatureToggles {
   */
   lokiQueryLimitsContext?: boolean;
   /**
-  * Adds support for Kubernetes alerting historian APIs
-  * @default true
-  */
-  kubernetesAlertingHistorian?: boolean;
-  /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
   */
@@ -1131,6 +1121,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersApi?: boolean;
+  /**
+  * Enables read-only user APIs in the app platform
+  * @default false
+  */
+  kubernetesUsersReadApi?: boolean;
   /**
   * Enables service account APIs in the app platform
   * @default false
@@ -1197,26 +1192,6 @@ export interface FeatureToggles {
   */
   alertingIgnorePendingForNoDataAndError?: boolean;
   /**
-  * Enables the notification history tab in the rule viewer
-  * @default true
-  */
-  alertingNotificationHistoryRuleViewer?: boolean;
-  /**
-  * Enables the notification history global menu item viewer
-  * @default true
-  */
-  alertingNotificationHistoryGlobal?: boolean;
-  /**
-  * Enables the notification history timeline in the triage instance details drawer
-  * @default true
-  */
-  alertingNotificationHistoryTriage?: boolean;
-  /**
-  * Enables the notification history detail page
-  * @default true
-  */
-  alertingNotificationHistoryDetail?: boolean;
-  /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
   */
@@ -1237,18 +1212,13 @@ export interface FeatureToggles {
   */
   analyticsFramework?: boolean;
   /**
-  * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
-  * @default false
-  */
-  datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
-  /**
   * Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
   * Enables an inline version of Log Details that creates no new scrolls
-  * @default false
+  * @default true
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
@@ -1268,7 +1238,7 @@ export interface FeatureToggles {
   streamingForwardTeamHeadersTempo?: boolean;
   /**
   * Aligns query splitting chunks with UTC midnight
-  * @default false
+  * @default true
   */
   lokiAlignedQuerySplitting?: boolean;
   /**

@@ -18,12 +18,6 @@ import { trackDashboardSceneCreatedOrSaved, trackDashboardSceneLoaded } from './
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      dashboardNewLayouts: true,
-    },
-  },
   getDataSourceSrv: () => ({
     getInstanceSettings: () => {
       return { apiVersion: 'v1', meta: { multiValueFilterOperators: true } };
@@ -85,8 +79,14 @@ function buildSceneWithTextPanels(panelOptions: Array<Record<string, unknown>>) 
   });
 }
 
+const defaultFlags = { dashboardNewLayouts: true };
+
 describe('dashboard tracking', () => {
+  beforeEach(() => {
+    setTestFlags(defaultFlags);
+  });
   afterEach(() => {
+    setTestFlags({});
     jest.clearAllMocks();
     jest.resetAllMocks();
   });
@@ -164,7 +164,7 @@ describe('dashboard tracking', () => {
     });
 
     it('fires when on the template route with dashboardTemplateUid and the FF is enabled', async () => {
-      setTestFlags({ 'grafana.customDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true, ...defaultFlags });
       locationService.push('/dashboard/template?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
@@ -176,7 +176,7 @@ describe('dashboard tracking', () => {
     });
 
     it('does not fire when the route is something other than /dashboard/template', async () => {
-      setTestFlags({ 'grafana.customDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true, ...defaultFlags });
       locationService.push('/d/abc/my-dash?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
@@ -290,7 +290,7 @@ describe('dashboard tracking', () => {
     const mermaidMarkdown = '# Diagram\n\n```mermaid\ngraph TD;\nA-->B;\n```';
 
     beforeEach(() => {
-      setTestFlags({ 'grafana.newTextPanel': true, 'text.newFeatures': true });
+      setTestFlags({ 'grafana.newTextPanel': true, 'text.newFeatures': true, ...defaultFlags });
     });
 
     afterEach(() => {
