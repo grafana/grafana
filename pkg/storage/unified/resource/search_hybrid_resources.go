@@ -16,6 +16,7 @@ func hybridSearchKeys(req *resourcepb.HybridSearchRequest) ([]*resourcepb.Resour
 	if req == nil {
 		return nil, invalid("missing namespace, group or resource")
 	}
+	//nolint:staticcheck // Continue accepting requests from older clients.
 	if req.Key != nil {
 		if req.Namespace != "" || len(req.Resources) > 0 {
 			return nil, invalid("use either key or namespace and resources")

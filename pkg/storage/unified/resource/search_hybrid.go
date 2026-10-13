@@ -46,6 +46,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	// Labels captured before validation so the missing-key early returns
 	// still observe a labeled sample, mirroring VectorSearch.
 	group, resource := "unknown", "unknown"
+	//nolint:staticcheck // Continue accepting requests from older clients.
 	if req != nil && req.Key != nil {
 		if g := req.Key.GetGroup(); g != "" {
 			group = g

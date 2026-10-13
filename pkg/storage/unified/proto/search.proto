@@ -354,15 +354,18 @@ message VectorSearchResult {
   bytes metadata = 7;
 }
 
+// New callers should use namespace and resources, including for single-resource searches.
 message HybridSearchRequest {
   message Resource {
     string group = 1;
     string resource = 2;
   }
 
-  // Resource type to search (namespace + group + resource).
-  // Set exactly one selector: key, or namespace and resources.
-  ResourceKey key = 1;
+  // Deprecated: use namespace and resources instead.
+  // For a single-resource search, provide one entry in resources.
+  // Retained for backward compatibility; must not be combined with
+  // namespace or resources.
+  ResourceKey key = 1 [deprecated = true];
 
   // Required. Feeds the lexical leg verbatim; also used for semantic search
   // and reranking unless semantic_query is set. Max 1000 bytes. Put
