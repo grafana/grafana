@@ -578,10 +578,16 @@ func datasourcePermissionToTuples(subject, relation string, resource *authzextv1
 	}
 
 	// Action Sets also grant query access.
-	return []*openfgav1.TupleKey{
+	tuples := []*openfgav1.TupleKey{
 		newResourcePermissionTuple(subject, relation, resource, ""),
 		newResourcePermissionTuple(subject, RelationCreate, resource, "query"),
 	}
+	if relation == RelationSetAdmin {
+		for _, verb := range []string{RelationGet, RelationCreate, RelationUpdate, RelationDelete} {
+			tuples = append(tuples, newResourcePermissionTuple(subject, verb, resource, "caching"))
+		}
+	}
+	return tuples
 }
 
 func isDatasourcePermission(resource *authzextv1.Resource) bool {

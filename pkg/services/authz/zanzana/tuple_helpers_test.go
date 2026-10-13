@@ -78,7 +78,17 @@ func TestResourcePermissionWriteTuples(t *testing.T) {
 				},
 			})
 			require.NoError(t, err)
-			require.Len(t, tuple, 2)
+			if tc.baseRelation == "admin" {
+				require.Len(t, tuple, 6)
+				for _, verb := range []string{"get", "create", "update", "delete"} {
+					caching := findTuple(tuple, verb, "resource:"+group+"/"+resource+"/caching/"+uid)
+					require.NotNil(t, caching)
+					require.Equal(t, tc.subject, caching.User)
+					requireGroupFilter(t, caching, group+"/"+resource+"/caching")
+				}
+			} else {
+				require.Len(t, tuple, 2)
+			}
 
 			base := findTuple(tuple, tc.baseRelation, "resource:"+group+"/"+resource+"/"+uid)
 			require.NotNil(t, base)
@@ -111,10 +121,14 @@ func TestResourcePermissionDeleteTuples(t *testing.T) {
 		Resource: target, Permission: permission,
 	})
 	require.NoError(t, err)
-	require.Len(t, deletes, 2)
+	require.Len(t, deletes, 6)
 	require.ElementsMatch(t, []string{
 		"team:team1#member|admin|resource:" + group + "/" + resource + "/ds-1",
 		"team:team1#member|create|resource:" + group + "/" + resource + "/query/ds-1",
+		"team:team1#member|get|resource:" + group + "/" + resource + "/caching/ds-1",
+		"team:team1#member|create|resource:" + group + "/" + resource + "/caching/ds-1",
+		"team:team1#member|update|resource:" + group + "/" + resource + "/caching/ds-1",
+		"team:team1#member|delete|resource:" + group + "/" + resource + "/caching/ds-1",
 	}, deleteTupleKeys(deletes))
 	for i, key := range deletes {
 		require.Equal(t, writes[i].GetUser(), key.GetUser())
