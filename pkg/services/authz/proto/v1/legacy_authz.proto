@@ -14,6 +14,7 @@ service LegacyAuthzService {
   rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse) {
     option deprecated = true;
   }
+  rpc LegacySearchUsersPermissions(LegacySearchUsersPermissionsRequest) returns (stream LegacySearchUsersPermissionsResponse);
 }
 
 message LegacyCheckRequest {
@@ -112,4 +113,18 @@ message LegacyUserPermission {
 message LegacyGetUserPermissionsResponse {
   // Preserve duplicates. Clients publish results only after successful EOF.
   repeated LegacyUserPermission permissions = 1;
+}
+
+message LegacySearchUsersPermissionsRequest {
+  string namespace = 1;
+  LegacyPermissionIdentity caller = 2;
+  string action = 3;
+  string action_prefix = 4;
+  string scope = 5;
+  int64 user_id = 6;
+}
+
+message LegacySearchUsersPermissionsResponse {
+  int64 user_id = 1;
+  repeated LegacyUserPermission permissions = 2;
 }

@@ -3,11 +3,14 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -136,6 +139,9 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 	}
 
 	tests := []testCase{
+		{desc: "Should return 403 for RPC permission denial", filters: "?namespacedId=user:2", serviceErr: status.Error(codes.PermissionDenied, "permission search denied"), expectedCode: http.StatusForbidden},
+		{desc: "Should return 403 for wrapped RPC permission denial", filters: "?actionPrefix=users:", serviceErr: fmt.Errorf("search failed: %w", status.Error(codes.PermissionDenied, "permission search denied")), expectedCode: http.StatusForbidden},
+		{desc: "Should retain 500 for RPC internal error", filters: "?actionPrefix=users:", serviceErr: status.Error(codes.Internal, "query failed"), expectedCode: http.StatusInternalServerError},
 		{
 			desc:         "Should reject if no filter is provided",
 			expectedCode: http.StatusBadRequest,
