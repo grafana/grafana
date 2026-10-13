@@ -3,14 +3,14 @@ aliases:
   - ../../../reference/dashboard/ # /docs/grafana/next/reference/dashboard/
   - ../../../dashboards/json-model/ # /docs/grafana/next/dashboards/json-model/
   - ../../../dashboards/build-dashboards/view-dashboard-json-model/ # /docs/grafana/next/dashboards/build-dashboards/view-dashboard-json-model/
-  - ../../../as-code/schema-v2/ # /docs/grafana/latest/as-code/schema-v2/
-  - ../../../as-code/schema-v2/annotations-schema/ # /docs/grafana/latest/as-code/schema-v2/annotations-schema/
-  - ../../../as-code/schema-v2/panel-schema/ # /docs/grafana/latest/as-code/schema-v2/panel-schema/
-  - ../../../as-code/schema-v2/librarypanel-schema/ # /docs/grafana/latest/as-code/schema-v2/librarypanel-schema/
-  - ../../../as-code/schema-v2/layout-schema/ # /docs/grafana/latest/as-code/schema-v2/layout-schema/
-  - ../../../as-code/schema-v2/links-schema/ # /docs/grafana/latest/as-code/schema-v2/links-schema/
-  - ../../../as-code/schema-v2/timesettings-schema/ # /docs/grafana/latest/as-code/schema-v2/timesettings-schema/
-  - ../../../as-code/schema-v2/variables-schema/ # /docs/grafana/latest/as-code/schema-v2/variables-schema/
+  - ../../../as-code/observability-as-code/schema-v2/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/
+  - ../../../as-code/observability-as-code/schema-v2/annotations-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/annotations-schema/
+  - ../../../as-code/observability-as-code/schema-v2/panel-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/panel-schema/
+  - ../../../as-code/observability-as-code/schema-v2/librarypanel-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/librarypanel-schema/
+  - ../../../as-code/observability-as-code/schema-v2/layout-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/layout-schema/
+  - ../../../as-code/observability-as-code/schema-v2/links-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/links-schema/
+  - ../../../as-code/observability-as-code/schema-v2/timesettings-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/timesettings-schema/
+  - ../../../as-code/observability-as-code/schema-v2/variables-schema/ # /docs/grafana/latest/as-code/observability-as-code/schema-v2/variables-schema/
   - ../../../observability-as-code/schema-v2/ # /docs/grafana/latest/observability-as-code/schema-v2/
   - ../../../../next/observability-as-code/schema-v2/annotations-schema/ # /docs/grafana/next/observability-as-code/schema-v2/annotations-schema/
   - ../../../../next/observability-as-code/schema-v2/panel-schema/ # /docs/grafana/next/observability-as-code/schema-v2/panel-schema/

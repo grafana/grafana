@@ -17,9 +17,10 @@ menuTitle: grafanactl CLI (deprecated)
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/ai-tools/grafana-cli/install-grafana-cli/
 aliases:
-  - ../../../as-code/grafana-cli/install-grafana-cli/
-  - ../../../as-code/grafana-cli/set-up-grafana-cli/
-  - ../../../as-code/grafana-cli/grafanactl/
+  - ../../../observability-as-code/grafana-cli/install-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/install-grafana-cli/
+  - ../../../observability-as-code/grafana-cli/set-up-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/set-up-grafana-cli/
+  - ../../observability-as-code/grafana-cli/set-up-grafana-cli/
+  - ../../observability-as-code/grafana-cli/install-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/install-grafana-cli/
 ---
 
 # Install and set up the `grafanactl` CLI

@@ -17,7 +17,6 @@ title: Instantaneous pulling and dashboard previews
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/git-sync-setup/set-up-extend/
 aliases:
-  - ../../../observability-as-code/git-sync/git-sync-setup/set-up-extend/
 ---
 
 # Set up instantaneous pulling and dashboard previews in Pull Requests

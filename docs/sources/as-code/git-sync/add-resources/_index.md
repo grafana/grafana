@@ -16,8 +16,8 @@ menuTitle: Add non-provisioned resources
 weight: 400
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/add-resources/
 aliases:
-  - ../../observability-as-code/git-sync/add-resources/export-resources/
-  - ../../observability-as-code/git-sync/add-resources/
+  - ../../as-code/observability-as-code/git-sync/add-resources/ # /docs/grafana/next/as-code/observability-as-code/git-sync/add-resources/
+  - ./export-resources/ # /docs/grafana/next/as-code/observability-as-code/git-sync/export-resources/
 ---
 
 # Add non-provisioned resources from Grafana

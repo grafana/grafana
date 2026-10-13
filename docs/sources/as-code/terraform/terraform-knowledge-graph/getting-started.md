@@ -9,8 +9,6 @@ keywords:
   - Provider Setup
   - Getting Started
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/getting-started/
-aliases:
-  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/getting-started/
 ---
 
 # Get started with Terraform for Knowledge Graph

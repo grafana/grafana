@@ -9,8 +9,6 @@ keywords:
 title: Install plugins in Grafana Cloud using Terraform
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-plugins/
-aliases:
-  - ../../infrastructure-as-code/terraform/terraform-plugins/
 ---
 
 # Install plugins in Grafana Cloud using Terraform

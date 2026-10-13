@@ -4,8 +4,7 @@ menuTitle: Across environments
 description: Use separate Grafana instances for development and production with Git-controlled promotion
 weight: 20
 aliases:
-  - ../../../observability-as-code/git-sync/provision-resources/git-sync-deployment-scenarios/dev-prod
-  - ../../../observability-as-code/git-sync/scenarios/dev-prod/
+  - ../../provision-resources/git-sync-deployment-scenarios/dev-prod
 ---
 
 # Git Sync for development and production environments

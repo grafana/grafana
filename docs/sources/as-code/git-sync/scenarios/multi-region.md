@@ -4,8 +4,7 @@ menuTitle: Regional replication
 description: Synchronize multiple regional Grafana instances from a shared Git location
 weight: 30
 aliases:
-  - ../../../observability-as-code/git-sync/provision-resources/git-sync-deployment-scenarios/multi-region
-  - ../../../observability-as-code/git-sync/scenarios/multi-region/
+  - ../../provision-resources/git-sync-deployment-scenarios/multi-region
 ---
 
 # Git Sync with regional replication

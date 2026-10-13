@@ -16,8 +16,8 @@ title: Set up Git Sync as code
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/git-sync-setup/set-up-code
 aliases:
-  - ../../../observability-as-code/git-sync/git-sync-setup/provision-resources/git-sync-setup/
-  - ../../../observability-as-code/git-sync/git-sync-setup/set-up-code/
+  - ../../../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
+  - ../provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
 ---
 
 # Set up Git Sync as code

@@ -10,8 +10,6 @@ keywords:
   - Log Correlation
   - Loki
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/log-configurations/
-aliases:
-  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/log-configurations/
 ---
 
 # Configure log correlation using Terraform

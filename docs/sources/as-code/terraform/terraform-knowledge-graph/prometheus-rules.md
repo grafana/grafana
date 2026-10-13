@@ -11,8 +11,6 @@ keywords:
   - Alerting rules
   - PromQL
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/prometheus-rules/
-aliases:
-  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/prometheus-rules/
 ---
 
 # Manage Prometheus rules using Terraform

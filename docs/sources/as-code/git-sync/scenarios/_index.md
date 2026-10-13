@@ -11,8 +11,7 @@ keywords:
   - teams
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/scenarios/
 aliases:
-  - ../../observability-as-code/git-sync/provision-resources/git-sync-deployment-scenarios/
-  - ../../observability-as-code/git-sync/scenarios/
+  - ../provision-resources/git-sync-deployment-scenarios/
 ---
 
 # Git Sync deployment scenarios

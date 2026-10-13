@@ -1,9 +1,5 @@
 ---
 aliases:
-  - ./observability-as-code/
-  - ./observability-as-code/get-started/
-  - ./infrastructure-as-code/
-  - ../observability-as-code/
 description: Deploy, configure and provision Grafana with as-code workflows.
 keywords:
   - observability

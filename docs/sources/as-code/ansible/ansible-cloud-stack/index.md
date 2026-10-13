@@ -8,8 +8,6 @@ title: Create and manage your Grafana Cloud stack using Ansible
 menuTitle: Manage stack using Ansible
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/ansible/ansible-cloud-stack/
-aliases:
-  - ../../infrastructure-as-code/ansible/ansible-cloud-stack/
 ---
 
 # Create and manage your Grafana Cloud stack using Ansible

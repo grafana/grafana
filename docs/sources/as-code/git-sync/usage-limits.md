@@ -23,7 +23,6 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/
 aliases:
-  - ../../observability-as-code/git-sync/usage-limits/
 ---
 
 # Usage and performance limitations
