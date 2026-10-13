@@ -68,6 +68,7 @@ import {
 } from '../../apiserver/types';
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
+import { dashboardDeactivations } from '../data-service/lifecycle';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -309,6 +310,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
       destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
+      dashboardDeactivations.next(this.state.key ?? '');
       clearKeyBindings();
       this._changeTracker.terminate();
       this.deactivateSidebar();
