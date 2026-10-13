@@ -14,16 +14,30 @@ function getDataSourceResourceUrl(connection: DataSourceConnection): string {
   return `apis/${connection.group}/${connection.version}/namespaces/${config.namespace}/datasources/${encodeURIComponent(connection.name)}`;
 }
 
+export interface FetchConnectionsOptions {
+  /** Shared by every page request, so a newer fetch with the same id cancels the request in flight. */
+  requestId: string;
+  /** Checked before each page. A fetch that a newer one replaced stops and resolves `undefined`. */
+  isCurrent: () => boolean;
+}
+
 /** Every connection: the API returns at most 1000 per page, so this follows `metadata.continue`. */
-export async function fetchConnections(): Promise<DataSourceConnectionList> {
+export async function fetchConnections({
+  requestId,
+  isCurrent,
+}: FetchConnectionsOptions): Promise<DataSourceConnectionList | undefined> {
   const items: DataSourceConnection[] = [];
   let next: string | undefined;
   do {
+    // A page request would cancel the newer fetch's request, because both use the same id.
+    if (!isCurrent()) {
+      return undefined;
+    }
     const params = next ? { continue: next } : undefined;
     const page = await getBackendSrv().get<DataSourceConnectionList>(
       getConnectionsUrl(),
       params,
-      undefined,
+      requestId,
       REQUEST_OPTIONS
     );
     items.push(...(page.items ?? []));

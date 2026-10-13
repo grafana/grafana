@@ -28,6 +28,7 @@ import {
   syncDataSourceInstanceSettings,
 } from '../../settings';
 
+import { MTDataSource } from './mtSource';
 import { type DataSourceConnection, type DataSourceResource } from './types';
 
 const CONNECTIONS_URL = 'apis/query.grafana.app/v0alpha1/namespaces/default/connections';
@@ -59,13 +60,15 @@ const promResource: DataSourceResource = {
 type Route = { status: number; body?: unknown };
 let routes: Record<string, Route>;
 // Rejects the way backendSrv does: with a FetchError-shaped value.
-const backendGet = jest.fn(async (url: string, params?: { continue?: string }) => {
-  const route = routes[params?.continue ? `${url}?continue=${params.continue}` : url] ?? { status: 404 };
-  if (route.status < 200 || route.status >= 300) {
-    throw Object.assign(new Error('Error'), { status: route.status, statusText: 'Error', data: {} });
+const backendGet = jest.fn(
+  async (url: string, params?: { continue?: string }, requestId?: string): Promise<unknown> => {
+    const route = routes[params?.continue ? `${url}?continue=${params.continue}` : url] ?? { status: 404 };
+    if (route.status < 200 || route.status >= 300) {
+      throw Object.assign(new Error('Error'), { status: route.status, statusText: 'Error', data: {} });
+    }
+    return route.body;
   }
-  return route.body;
-});
+);
 
 function callsTo(url: string): number {
   return backendGet.mock.calls.filter(([calledUrl]) => calledUrl === url).length;
@@ -73,6 +76,21 @@ function callsTo(url: string): number {
 
 const logWarning = jest.fn();
 const logError = jest.fn();
+const cachedPromiseLogError = jest.fn();
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+function flushPromises(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 beforeAll(() => {
   setTestFlags({
@@ -101,6 +119,14 @@ beforeEach(() => {
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
     logWarning,
+  });
+  cachedPromiseLogError.mockClear();
+  setLogger('grafana/runtime.utils.getCachedPromise', {
+    logDebug: jest.fn(),
+    logError: cachedPromiseLogError,
+    logInfo: jest.fn(),
+    logMeasurement: jest.fn(),
+    logWarning: jest.fn(),
   });
   config.namespace = 'default';
   setDatasourcePluginMetas(metas);
@@ -298,5 +324,68 @@ describe('failed fill', () => {
 
     expect(items.map((item) => item.uid)).toEqual(['uid-prom', 'grafana']);
     expect(callsTo(CONNECTIONS_URL)).toBe(2);
+  });
+});
+
+describe('overlapping list fetches', () => {
+  const lokiConnection: DataSourceConnection = { ...promConnection, name: 'uid-loki', title: 'Loki', labels: {} };
+  const lokiUrl = 'apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/uid-loki';
+  const cancelled = () => Object.assign(new Error('Request was aborted'), { cancelled: true, status: -1, data: null });
+
+  it('loads the settings of a data source that a refresh added while an older fill was in flight', async () => {
+    const olderFill = deferred<unknown>();
+    backendGet.mockImplementationOnce(() => olderFill.promise);
+    initDataSourceInstanceSettings({}, '');
+    expect(callsTo(CONNECTIONS_URL)).toBe(1);
+
+    routes[CONNECTIONS_URL] = { status: 200, body: { items: [promConnection, lokiConnection] } };
+    routes[lokiUrl] = { status: 200, body: { metadata: { name: 'uid-loki' }, spec: { title: 'Loki', jsonData: {} } } };
+    await syncDataSourceInstanceSettings({ datasources: {}, defaultDatasource: '' });
+    olderFill.resolve({ items: [promConnection] });
+    await flushPromises();
+
+    expect((await getDataSourceInstanceSettings('uid-loki'))?.name).toBe('Loki');
+  });
+
+  it('gives the callers of a replaced fetch the newer list, and does not log the cancelled request', async () => {
+    const older = deferred<unknown>();
+    backendGet.mockImplementationOnce(() => older.promise);
+    const source = new MTDataSource();
+
+    const first = source.loadList();
+    routes[CONNECTIONS_URL] = { status: 200, body: { items: [promConnection, lokiConnection] } };
+    const second = source.refreshList();
+    older.reject(cancelled());
+
+    const [firstSnapshot, secondSnapshot] = await Promise.all([first, second]);
+    expect(firstSnapshot).toBe(secondSnapshot);
+    expect(firstSnapshot.items.map((item) => item.uid)).toEqual(['uid-prom', 'uid-loki', 'grafana']);
+    const [firstRequestId, secondRequestId] = backendGet.mock.calls.map(([, , requestId]) => requestId);
+    expect(firstRequestId).toEqual(expect.any(String));
+    expect(secondRequestId).toBe(firstRequestId);
+    expect(logError).not.toHaveBeenCalled();
+    expect(cachedPromiseLogError).not.toHaveBeenCalled();
+  });
+
+  it('joins the fetch in flight for loadList', async () => {
+    const source = new MTDataSource();
+
+    const [first, second] = await Promise.all([source.loadList(), source.loadList()]);
+
+    expect(first).toBe(second);
+    expect(callsTo(CONNECTIONS_URL)).toBe(1);
+  });
+
+  it('stops a replaced fetch before its next page', async () => {
+    const olderFirstPage = deferred<unknown>();
+    backendGet.mockImplementationOnce(() => olderFirstPage.promise);
+    const source = new MTDataSource();
+
+    const first = source.loadList();
+    const second = source.refreshList();
+    olderFirstPage.resolve({ items: [promConnection], metadata: { continue: 'v1_1' } });
+    await Promise.all([first, second]);
+
+    expect(backendGet.mock.calls.map(([, params]) => params)).toEqual([undefined, undefined]);
   });
 });

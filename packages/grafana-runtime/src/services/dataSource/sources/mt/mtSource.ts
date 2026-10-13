@@ -1,5 +1,10 @@
-import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
+import {
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+} from '@grafana/data';
 
+import { getCachedPromise, invalidateCachedPromise } from '../../../../utils/getCachedPromise';
 import { isFetchError } from '../../../backendSrv';
 import { getDatasourcePluginMetas } from '../../../pluginMeta/datasources';
 import {
@@ -18,27 +23,47 @@ import { type DataSourceConnection } from './types';
 
 const MAX_LOGGED_TYPES = 20;
 
+let instanceCount = 0;
+
+// The cached list fetch resolves with its outcome instead of rejecting, so getCachedPromise does
+// not log a failure that the cache logs already.
+type ListFetchResult =
+  | { status: 'done'; snapshot: DataSourceListSnapshot }
+  | { status: 'failed'; error: unknown }
+  | { status: 'superseded' };
+
 /**
  * Fills the cache from the MT APIs: the list from `connections` joined with the plugin metas, and
  * the settings on demand, one request per uid.
  */
 export class MTDataSource implements DataSourceCacheSource {
   readonly kind = 'mt';
-  // The last list response, kept to find the API group and version of a uid.
+  // The list of the latest list fetch, kept to find the API group and version of a uid. Only the
+  // latest fetch writes it, so it always matches the list that the cache applies.
   private connectionsByUid = new Map<string, DataSourceConnection>();
   private itemsByUid = new Map<string, DataSourceInstanceListItem>();
   private loggedDirectAccess = new Set<string>();
+  // Per instance, so a list fetch of an earlier instance is never joined or cancelled.
+  private readonly listKey = `grafana-runtime:ds-cache-mt-list:${++instanceCount}`;
+  private listGeneration = 0;
+  private latestList?: Promise<ListFetchResult>;
 
   getInitialSnapshot(): undefined {
     return undefined;
   }
 
+  /** Joins the list fetch in flight, if there is one. */
   loadList(): Promise<DataSourceListSnapshot> {
-    return this.fetchAndBuild();
+    return this.getList(false);
   }
 
+  /**
+   * Always starts a new list fetch, because the list in flight can be older than the data source
+   * change that caused the refresh. The new fetch cancels the old one, and every caller of the old
+   * one gets the new result.
+   */
   refreshList(): Promise<DataSourceListSnapshot> {
-    return this.fetchAndBuild();
+    return this.getList(true);
   }
 
   async loadSettings(uid: string): Promise<DataSourceInstanceSettings | undefined> {
@@ -72,13 +97,51 @@ export class MTDataSource implements DataSourceCacheSource {
     return settings;
   }
 
-  private async fetchAndBuild(): Promise<DataSourceListSnapshot> {
-    const list = await fetchConnections();
-    return this.buildSnapshot(list.items ?? []);
+  private getList(replace: boolean): Promise<DataSourceListSnapshot> {
+    const generation = this.listGeneration;
+    const fetchList = () => this.fetchList(++this.listGeneration);
+    const pending = getCachedPromise(fetchList, { cacheKey: this.listKey, invalidate: replace });
+    if (this.listGeneration !== generation) {
+      this.latestList = pending;
+    }
+    return this.settleList(pending);
   }
 
-  private async buildSnapshot(latest: DataSourceConnection[]): Promise<DataSourceListSnapshot> {
-    const metas = await getDatasourcePluginMetas();
+  private async settleList(pending: Promise<ListFetchResult>): Promise<DataSourceListSnapshot> {
+    const result = await pending;
+    if (result.status === 'superseded' && this.latestList && this.latestList !== pending) {
+      return this.settleList(this.latestList);
+    }
+    if (result.status === 'done') {
+      return result.snapshot;
+    }
+    throw result.status === 'failed' ? result.error : new Error('DataSource: the MT list fetch was superseded');
+  }
+
+  private async fetchList(generation: number): Promise<ListFetchResult> {
+    const isCurrent = () => generation === this.listGeneration;
+    try {
+      const list = await fetchConnections({ requestId: this.listKey, isCurrent });
+      if (!list) {
+        return { status: 'superseded' };
+      }
+      const metas = await getDatasourcePluginMetas();
+      if (!isCurrent()) {
+        return { status: 'superseded' };
+      }
+      return { status: 'done', snapshot: this.buildSnapshot(list.items ?? [], metas) };
+    } catch (error) {
+      // A newer fetch cancels this one's request, so a failure of a replaced fetch is expected.
+      return isCurrent() ? { status: 'failed', error } : { status: 'superseded' };
+    } finally {
+      // Settled fetches are not reused. A replaced fetch must not drop the newer cache entry.
+      if (isCurrent()) {
+        invalidateCachedPromise(this.listKey);
+      }
+    }
+  }
+
+  private buildSnapshot(latest: DataSourceConnection[], metas: DataSourcePluginMeta[]): DataSourceListSnapshot {
     const { snapshot, droppedTypes } = toListSnapshot(latest, metas);
 
     if (droppedTypes.length > 0) {
