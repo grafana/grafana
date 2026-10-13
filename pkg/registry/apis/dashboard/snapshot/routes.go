@@ -523,6 +523,13 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 						return
 					}
 
+					if err := deleteSnapshotFromExternalHost(ctx, snap, options); err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+					if snap.Spec.External != nil && *snap.Spec.External && snap.Spec.DeleteKey != nil && options.ExternalSnapshotURL != "" {
+						capabilityCtx = context.WithValue(capabilityCtx, externalSnapshotDeletedKey{}, true)
+					}
 					_, _, err = deleter.Delete(capabilityCtx, snapshotName, nil, &metav1.DeleteOptions{})
 					if err != nil {
 						errhttp.Write(ctx, fmt.Errorf("failed to delete snapshot: %w", err), w)
