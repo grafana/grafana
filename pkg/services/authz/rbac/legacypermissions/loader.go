@@ -114,7 +114,9 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	if err != nil {
 		return nil, err
 	}
-	if l.zanzana == nil {
+	// Enterprise's unlicensed fallback has no Zanzana resolver. OSS itself
+	// still merges Zanzana grants even though enforcement is always disabled.
+	if l.zanzana == nil || (!settings.enforcementEnabled && l.license.Edition() != licensing.OpenSourceEdition) {
 		return permissions, nil
 	}
 	resolve := func() ([]ac.Permission, error) { return l.zanzana.ResolveCurrentUserPermissions(ctx, user) }
