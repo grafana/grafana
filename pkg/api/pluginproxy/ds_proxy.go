@@ -14,6 +14,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -39,6 +40,7 @@ var (
 	client = newHTTPClient()
 
 	errPluginProxyRouteAccessDenied = errors.New("plugin proxy route access denied")
+	errPluginProxyDestinationDenied = errors.New("plugin proxy destination access denied")
 )
 
 // maxForwardedUserAgentLen is the maximum byte length of the client User-Agent
@@ -55,6 +57,13 @@ type HTTPContext struct {
 
 // RouteAccessChecker checks a plugin route action for the requested datasource.
 type RouteAccessChecker func(context.Context, identity.Requester, string, string) (bool, error)
+
+type DataSourceProxyOption func(*DataSourceProxy)
+
+// WithDestinationValidator checks the resolved URL after route interpolation and before forwarding.
+func WithDestinationValidator(validate func(string) error) DataSourceProxyOption {
+	return func(p *DataSourceProxy) { p.validateDestination = validate }
+}
 
 type DataSourceProxy struct {
 	ds                *datasourcesV0.DataSource
@@ -74,7 +83,8 @@ type DataSourceProxy struct {
 	// no id token of its own. Nil disables that fallback (see proxyutil.ApplyForwardIDHeader).
 	idTokenDeriver authnlib.IDTokenDeriver
 
-	routeAccessChecker RouteAccessChecker
+	routeAccessChecker  RouteAccessChecker
+	validateDestination func(string) error
 }
 
 type httpClient interface {
@@ -87,7 +97,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles, idTokenDeriver authnlib.IDTokenDeriver,
-	routeAccessChecker RouteAccessChecker,
+	routeAccessChecker RouteAccessChecker, opts ...DataSourceProxyOption,
 ) (*DataSourceProxy, error) {
 	ds, err := dataSource.DataSource(ctx.Req.Context())
 	if err != nil {
@@ -104,7 +114,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		return nil, fmt.Errorf("failed to get requester from context: %w", err)
 	}
 
-	return &DataSourceProxy{
+	p := &DataSourceProxy{
 		ds:                 ds,
 		requester:          requester,
 		dataSource:         dataSource,
@@ -119,7 +129,11 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		features:           features,
 		idTokenDeriver:     idTokenDeriver,
 		routeAccessChecker: routeAccessChecker,
-	}, nil
+	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p, nil
 }
 
 func newHTTPClient() httpClient {
@@ -149,6 +163,16 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	if err != nil {
 		writeJSONErr(proxy.ctx.Resp, proxy.ctx.Req, 400, "Unable to load TLS certificate", err)
 		return
+	}
+
+	if proxy.validateDestination != nil {
+		next := transport
+		transport = sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			if err := proxy.validateDestination(req.URL.String()); err != nil {
+				return nil, fmt.Errorf("%w: %v", errPluginProxyDestinationDenied, err)
+			}
+			return next.RoundTrip(req)
+		})
 	}
 
 	modifyResponse := func(resp *http.Response) error {
@@ -182,6 +206,16 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		proxyutil.WithTransport(transport),
 		proxyutil.WithModifyResponse(modifyResponse),
 	)
+	if proxy.validateDestination != nil {
+		handleError := reverseProxy.ErrorHandler
+		reverseProxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
+			if errors.Is(err, errPluginProxyDestinationDenied) {
+				writeJSONErr(w, req, http.StatusForbidden, "Access denied", nil)
+				return
+			}
+			handleError(w, req, err)
+		}
+	}
 
 	proxy.logRequest()
 	ctx, span := proxy.tracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
