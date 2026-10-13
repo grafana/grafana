@@ -32,7 +32,7 @@ func (s *GuardedStore) List(ctx context.Context, options *internalversion.ListOp
 
 // Watch implements rest.Watcher.
 func (s *GuardedStore) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	if err := requireListSelector(options); err != nil {
+	if err := requireWatchSelector(options); err != nil {
 		return nil, err
 	}
 	return s.Store.Watch(ctx, options)
@@ -41,6 +41,18 @@ func (s *GuardedStore) Watch(ctx context.Context, options *internalversion.ListO
 // DeleteCollection implements rest.CollectionDeleter.
 func (s *GuardedStore) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, apierrors.NewMethodNotSupported(resourceInfo.GroupResource(), "deleteCollection")
+}
+
+func requireWatchSelector(options *internalversion.ListOptions) error {
+	if options != nil && options.FieldSelector != nil {
+		if _, ok := options.FieldSelector.RequiresExactMatch("metadata.name"); ok {
+			return nil
+		}
+	}
+	if requireListSelector(options) != nil {
+		return apierrors.NewBadRequest("watching authinfo requires a spec.userRef.name, spec.authID or metadata.name field selector")
+	}
+	return nil
 }
 
 func requireListSelector(options *internalversion.ListOptions) error {
