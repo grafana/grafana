@@ -5,7 +5,7 @@ import { sceneUtils } from '@grafana/scenes';
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 
 import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../../analytics/types';
-import { notebookResourceFor } from '../../api/notebookResource';
+import { notebookResourceFor, readNotebookResourceVersion } from '../../api/notebookResource';
 import { NOTEBOOK_EDIT_KIND } from '../../scene/NotebookEditHistory';
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { isEmptyMarkdown } from '../../scene/layout-notebook/cellEmptiness';
@@ -57,6 +57,14 @@ const applyNotebookSpecPayloadSchema = z
           'person reading whether to keep or discard their unsaved panel changes, then pass their answer ' +
           'here. Rejected with no effect on the notebook when changes are pending and this is omitted.'
       ),
+    onConflict: z
+      .enum(['overwrite'])
+      .optional()
+      .describe(
+        'Set to "overwrite" only after the error said someone else saved this notebook first and the ' +
+          'person chose to replace their version with this spec. Omit it otherwise: a conflict is then ' +
+          'reported as an error and nothing is changed.'
+      ),
   })
   .strict();
 
@@ -68,7 +76,8 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
     'Replace the notebook with a complete NotebookSpec: settings, elements (markdown, code, panel and ' +
     'library panel cells) and the ordered NotebookLayout that places them. The scene is rebuilt from ' +
     'the spec. The change is saved automatically. Fails without changing anything if the person reading ' +
-    'has unsaved panel changes you have not resolved yet (see viewOnlyChanges).',
+    'has unsaved panel changes you have not resolved yet (see viewOnlyChanges), or if someone else saved ' +
+    'the notebook since it was opened (see onConflict).',
 
   payloadSchema: applyNotebookSpecPayloadSchema,
   permission: requiresNotebookEdit,
@@ -90,6 +99,26 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
             '"keep" or "discard".',
           changes: [],
         };
+      }
+
+      // Same shape as the check above, and for the same reason: whoever asked for this write is in a
+      // conversation and chooses there, so it is refused before the scene is touched rather than
+      // raising the overwrite modal afterwards over a change that is already on screen.
+      const savedVersion = scene.autosave.state.savedResourceVersion;
+      if (scene.state.uid && savedVersion !== undefined && payload.onConflict !== 'overwrite') {
+        const serverVersion = await readNotebookResourceVersion(scene.state.uid);
+        if (serverVersion !== undefined && serverVersion !== savedVersion) {
+          return {
+            success: false,
+            error:
+              'Someone else saved this notebook after it was opened, so nothing was changed. Ask the person ' +
+              'whether to overwrite the other version with this change. If they agree, retry with onConflict ' +
+              'set to "overwrite". If not, do not retry: tell them the change was not saved.',
+            // The marker callers act on, so none of them has to recognise the wording of `error`.
+            data: { applied: false, conflict: true },
+            changes: [],
+          };
+        }
       }
 
       const warnings: string[] = [];
@@ -163,7 +192,7 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       }
 
       try {
-        await scene.autosave.saveDocumentChange();
+        await scene.autosave.saveDocumentChange({ overwrite: payload.onConflict === 'overwrite' });
       } catch (error) {
         return {
           success: false,

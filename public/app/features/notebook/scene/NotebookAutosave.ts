@@ -233,8 +233,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * assistant tells someone their notebook was written, and only the finished request knows whether it
    * was. Throws when the save failed, so the caller can say that rather than claim a write that never
    * reached the server.
+   *
+   * `overwrite` is a writer's answer to a conflict it already reported: it skips the resourceVersion
+   * precondition for this one write, as `overwriteConflict` does for the modal's answer.
    */
-  public async saveDocumentChange(): Promise<void> {
+  public async saveDocumentChange({ overwrite = false }: { overwrite?: boolean } = {}): Promise<void> {
     // These writers hand over a whole document, so everything in the scene now is the notebook's own,
     // and whatever a reader had changed went with the scene this one replaced.
     this.timeSettingsEdited = true;
@@ -247,9 +250,18 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.vizConfigsChangedWhileReading.clear();
     this.vizConfigsBeforeReadingChange.clear();
     this.editedByWriter = true;
+    // Added to, not assigned: the modal's own answer may already be waiting to be used.
+    this.overwriteNextSave ||= overwrite;
     this.schedule();
 
-    await this.awaitPendingSave();
+    try {
+      await this.awaitPendingSave();
+    } finally {
+      // A save that found nothing to write never consumes it, and it must not reach a later one.
+      if (overwrite) {
+        this.overwriteNextSave = false;
+      }
+    }
   }
 
   /**

@@ -634,6 +634,19 @@ describe('NotebookAutosave', () => {
     expect(scene.autosave.state.savedResourceVersion).toBe('1757');
   });
 
+  it('overwrites from saveDocumentChange without resending the stale resourceVersion, and does not leave the choice behind', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockResolvedValue({ generation: 3, resourceVersion: '1757' });
+
+    editFirstCell(scene, 'Hello world');
+    await scene.autosave.saveDocumentChange({ overwrite: true });
+    editFirstCell(scene, 'Hello again');
+    await scene.autosave.saveDocumentChange();
+
+    expect(jest.mocked(updateNotebook).mock.calls[0][2]).toBeUndefined();
+    expect(jest.mocked(updateNotebook).mock.calls[1][2]).toBe('1757');
+  });
+
   it('does not raise the conflict prompt once the scene has deactivated, so it cannot appear on a page the user navigated to', async () => {
     let finishSave = () => {};
     jest.mocked(updateNotebook).mockImplementationOnce(
