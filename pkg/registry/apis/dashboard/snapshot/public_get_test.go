@@ -16,6 +16,50 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
+func TestPublicSnapshotLookupPreservesSuccessfulGet(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		listHit  bool
+		otherOrg bool
+		listErr  error
+	}{
+		{name: "list omits resolved snapshot"},
+		{name: "list repeats resolved snapshot", listHit: true},
+		{name: "list only returns another namespace", listHit: true, otherOrg: true},
+		{name: "list error fails closed", listErr: apierrors.NewServiceUnavailable("storage unavailable")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resolved := newBlobTestSnapshot()
+			resolved.Namespace = "default"
+			list := &dashv0.SnapshotList{}
+			if tc.listHit {
+				listed := resolved.DeepCopy()
+				listed.Spec.Dashboard = map[string]any{"title": "listed version"}
+				if tc.otherOrg {
+					listed.Namespace = "org-2"
+				}
+				list.Items = []dashv0.Snapshot{*listed}
+			}
+			store := grafanarest.NewMockStorage(t)
+			store.On("Get", mock.Anything, resolved.Name, mock.Anything).Return(resolved, nil).Once()
+			store.On("List", mock.Anything, mock.Anything).Return(list, tc.listErr).Once()
+			ctx := k8srequest.WithNamespace(t.Context(), "default")
+			obj, err := getPublicSnapshot(ctx, store, resolved.Name, &metav1.GetOptions{})
+			switch {
+			case tc.listErr != nil:
+				require.ErrorIs(t, err, tc.listErr)
+				require.Nil(t, obj)
+			case tc.otherOrg:
+				require.True(t, apierrors.IsConflict(err))
+				require.Nil(t, obj)
+			default:
+				require.NoError(t, err)
+				require.Equal(t, resolved, obj)
+			}
+		})
+	}
+}
+
 func TestPublicSnapshotLookupRejectsAmbiguousKeys(t *testing.T) {
 	for _, defaultMatch := range []bool{false, true} {
 		t.Run(map[bool]string{false: "matches on separate pages", true: "default namespace match"}[defaultMatch], func(t *testing.T) {

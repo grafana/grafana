@@ -37,9 +37,18 @@ func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, opt
 		Limit:         100,
 	}
 	var match *dashv0.Snapshot
+	if err == nil {
+		resolved, ok := obj.(*dashv0.Snapshot)
+		if !ok {
+			return nil, fmt.Errorf("expected Snapshot, got %T", obj)
+		}
+		// LIST checks for ambiguity; it need not repeat a snapshot already resolved by GET.
+		match = resolved.DeepCopy()
+	}
 	for {
 		obj, listErr := lister.List(lookupCtx, listOptions)
 		if listErr != nil {
+			// Fail closed when global key uniqueness cannot be checked.
 			return nil, listErr
 		}
 		list, ok := obj.(*dashv0.SnapshotList)
@@ -51,6 +60,9 @@ func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, opt
 				continue
 			}
 			if match != nil {
+				if match.Namespace == list.Items[i].Namespace {
+					continue
+				}
 				return nil, apierrors.NewConflict(dashv0.SnapshotResourceInfo.GroupResource(), name, fmt.Errorf("snapshot key is ambiguous across namespaces"))
 			}
 			match = list.Items[i].DeepCopy()
