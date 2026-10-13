@@ -609,6 +609,13 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	seen := make(map[string]struct{}, len(rawBackends))
 	for _, b := range rawBackends {
 		group := b.Group().Name
+		if group == discoveryGroup {
+			// The router serves this group itself, ahead of group dispatch, so
+			// a backend for it could never be reached. The remote sources drop
+			// it at discovery; this guards loaders that don't.
+			logging.FromContext(ctx).Warn("router: skipping backend for the reserved discovery group", "source", b.Source(), "key", b.Key())
+			continue
+		}
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group. A duplicate is a config
 			// error; the last one wins rather than crashing the router.

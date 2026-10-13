@@ -338,6 +338,34 @@ func TestBuildDiscoveryOpenAPIWithoutSchemas(t *testing.T) {
 	require.Contains(t, doc.Components.Schemas, "spec", "the reference stays resolvable")
 }
 
+// TestReconcileSkipsTheReservedDiscoveryGroup checks that no source can
+// install a backend for the discovery group, which the router serves itself,
+// even one whose source did not drop it.
+func TestReconcileSkipsTheReservedDiscoveryGroup(t *testing.T) {
+	claim := &fakeBackend{key: "claim", group: testAPIGroup(discoveryGroup, "v1")}
+	other := &fakeBackend{key: "other", group: testAPIGroup(manifestTestGroup, "v1")}
+	r := NewGrafanaRouter(staticLoader{backends: []Backend{claim, other}}, nil)
+	require.NoError(t, r.reconcile(t.Context()))
+	require.NotContains(t, r.served, discoveryGroup)
+	require.Contains(t, r.served, manifestTestGroup)
+	require.False(t, r.KnownGroup(discoveryGroup))
+
+	var list metav1.APIGroupList
+	require.NoError(t, json.Unmarshal(r.apiGroupList.Load().body, &list))
+	names := make([]string, 0, len(list.Groups))
+	for _, g := range list.Groups {
+		names = append(names, g.Name)
+	}
+	require.Equal(t, []string{discoveryGroup, manifestTestGroup}, names, "listed once, as the router's own")
+	require.Contains(t, list.Groups, discoveryAPIGroup)
+
+	var index handler3.OpenAPIV3Discovery
+	require.NoError(t, json.Unmarshal(r.openapiIndex.Load().body, &index))
+	_, url := discoveryOpenAPIEntry()
+	require.Equal(t, url, index.Paths[discoveryOpenAPIPath].ServerRelativeURL)
+	require.NotContains(t, index.Paths, "apis/discovery/v1")
+}
+
 func TestRenderIndexHTML(t *testing.T) {
 	docs := buildManifestDocs(t.Context(), testManifestBackends())
 	page := string(docs.indexHTML.body)

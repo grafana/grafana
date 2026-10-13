@@ -181,8 +181,11 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     manifest format gets a new tree; don't change the shape of an existing one.
   - `Operator` and `ExtraPermissions` are dropped: they describe how the app's backend is deployed
     and authorized, not the API.
-  - `discovery` is matched before group dispatch, so no backend can take it over. It has no dot, so
-    no plugin group can claim it. Its requests have no `group` metric label.
+  - `discovery` is reserved. A target that is itself a router lists it, so `discoverGroupResources`
+    drops it for the aggregate and single-tenant sources, quietly and without counting a skip.
+    Plugin groups need a dot, so plugin sources can't report it. `reconcile` skips, with a warning,
+    any backend for it that a loader still returns, and the tree is matched before group dispatch.
+    Its requests have no `group` metric label.
   - Manifest text is plugin-controlled. `mdText` and `mdCode` keep it to one line, unable to break
     tables or code spans, and bounded in length. The HTML page renders the markdown with raw HTML
     dropped and only safe links.
