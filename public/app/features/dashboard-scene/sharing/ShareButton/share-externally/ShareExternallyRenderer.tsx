@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -49,15 +49,18 @@ export function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExte
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
 
-  const { data: publicDashboard, isLoading, error } = useGetPublicDashboardQuery(dashboard.state.uid!);
+  const { data: publicDashboard, isLoading, isFetching, error } = useGetPublicDashboardQuery(dashboard.state.uid!);
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
 
   const notifyApp = useAppNotification();
+  const wasFetching = useRef(false);
   useEffect(() => {
-    if (isFetchError(error) && config.publicDashboardsEnabled) {
+    // A failure cached before the drawer opened can be stale, so report only a request the drawer saw finish.
+    if (wasFetching.current && !isFetching && isFetchError(error) && config.publicDashboardsEnabled) {
       notifyApp.error(error.data.message);
     }
-  }, [error, notifyApp]);
+    wasFetching.current = isFetching;
+  }, [isFetching, error, notifyApp]);
 
   const onRevokeClick = () => {
     setShowRevokeAccess(true);

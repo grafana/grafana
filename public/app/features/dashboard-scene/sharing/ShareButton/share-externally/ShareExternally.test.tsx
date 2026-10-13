@@ -16,6 +16,7 @@ import {
 } from '@grafana/scenes';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 import { configureStore } from 'app/store/configureStore';
@@ -116,7 +117,44 @@ describe('Public dashboard request', () => {
       ])
     );
   });
+
+  it('shows no notification when the dashboard has no public dashboard', async () => {
+    server.use(http.get('/api/dashboards/uid/dash-1/public-dashboards', () => notFoundResponse()));
+    const store = configureStore();
+
+    await buildAndRenderScenario({ store });
+
+    await waitFor(() => expect(getLookup(store).isSuccess).toBe(true));
+    expect(Object.values(store.getState().appNotifications.byId)).toEqual([]);
+  });
+
+  it('does not show an earlier failure once its own request succeeds', async () => {
+    let requests = 0;
+    server.use(
+      http.get('/api/dashboards/uid/dash-1/public-dashboards', () => {
+        requests++;
+        return requests === 1 ? HttpResponse.json({ message: 'Server error' }, { status: 500 }) : notFoundResponse();
+      })
+    );
+    const store = configureStore();
+    // The toolbar badge's failed lookup is still in the cache when the drawer opens.
+    await store.dispatch(publicDashboardApi.endpoints.getPublicDashboard.initiate('dash-1'));
+
+    await buildAndRenderScenario({ store });
+
+    await waitFor(() => expect(getLookup(store).isSuccess).toBe(true));
+    expect(requests).toBe(2);
+    expect(Object.values(store.getState().appNotifications.byId)).toEqual([]);
+  });
 });
+
+function notFoundResponse() {
+  return HttpResponse.json({ message: 'Dashboard not found', messageId: 'publicdashboards.notFound' }, { status: 404 });
+}
+
+function getLookup(store: ReturnType<typeof configureStore>) {
+  return publicDashboardApi.endpoints.getPublicDashboard.select('dash-1')(store.getState());
+}
 
 async function buildAndRenderScenario({
   overrides,
