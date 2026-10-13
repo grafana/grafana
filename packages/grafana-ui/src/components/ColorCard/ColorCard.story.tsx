@@ -5,7 +5,7 @@ import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Button } from '../Button/Button';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { ColorCard } from './ColorCard';
+import { ColorCard, type ColorCardVariant } from './ColorCard';
 import mdx from './ColorCard.mdx';
 
 const meta: Meta = {
@@ -35,13 +35,13 @@ Basic.args = {
 };
 
 export const Examples: StoryFn<typeof ColorCard> = () => {
-  const variants = ['card', 'info'];
+  const variants: ColorCardVariant[] = ['card', 'info'];
 
   return (
     <Stack direction="column">
       <StoryExample name="With buttonContent and children">
         {variants.map((variant) => (
-          <ColorCard size="sm" key={variant} variant={variant}>
+          <ColorCard size="md" key={variant} variant={variant}>
             <ColorCard.Icon name="exclamation-circle" />
             <ColorCard.Title>My title</ColorCard.Title>
             <ColorCard.Content>Some long content</ColorCard.Content>

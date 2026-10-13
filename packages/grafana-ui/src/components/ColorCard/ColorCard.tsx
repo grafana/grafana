@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type AriaRole, type HTMLAttributes, type ReactNode, createContext, useContext } from 'react';
+import { type HTMLAttributes, type ReactNode, createContext, useContext } from 'react';
 import * as React from 'react';
 
 import { type ThemeTypographyVariantTypes, type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
@@ -41,20 +41,10 @@ function useColorCardContext() {
   return useContext(ColorCardContext);
 }
 
-const rolesByVariant: Record<ColorCardVariant, AriaRole> = {
-  error: 'alert',
-  warning: 'alert',
-  info: 'status',
-  success: 'status',
-  tertiary: 'status',
-  accent: 'status',
-};
-
 const ColorCardComponent = React.forwardRef<HTMLDivElement, Props>(
   ({ title, children, elevated, className, variant = 'error', size = 'md', ...restProps }, ref) => {
     const styles = useStyles2(getStyles, variant, size, elevated);
 
-    const role = restProps['role'] || rolesByVariant[variant];
     const ariaLabel = restProps['aria-label'] || title;
 
     // Children that are not one of the slot components are treated as card content, so that
@@ -72,7 +62,7 @@ const ColorCardComponent = React.forwardRef<HTMLDivElement, Props>(
 
     return (
       <ColorCardContext.Provider value={{ variant, size }}>
-        <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
+        <div ref={ref} className={cx(styles.wrapper, className)} aria-label={ariaLabel} {...restProps}>
           <div data-testid={selectors.components.Alert.alertV2(variant)} className={styles.box}>
             {title && <ColorCardTitle>{title}</ColorCardTitle>}
             {slots}
@@ -168,12 +158,14 @@ const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorC
           bg: theme.colors.info.subtleBackground,
           text: theme.colors.info.textEmphasis,
           border: `1px solid ${theme.colors.info.subtleBorder}`,
+          icon: theme.colors.info.text,
         };
       case 'card':
       default:
         return {
           bg: theme.colors.background.primary,
           border: `1px solid ${theme.colors.border.weak}`,
+          icon: theme.colors.accent.text,
         };
     }
   })();
@@ -214,7 +206,7 @@ const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorC
     icon: css({
       gridArea: 'Icon',
       color: colors.text,
-      backgroundColor: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
+      backgroundColor: `color-mix(in srgb, ${colors.bg} 94%, ${colors.icon} 6%)`,
       position: 'relative',
       width: theme.spacing(sizing.iconWidth),
       height: theme.spacing(sizing.iconWidth),
