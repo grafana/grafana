@@ -20,6 +20,7 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		return nil, errors.New("legacy check requester is required")
 	}
 
+	// TODO: will be implemented in the follow up PR related to the issue https://github.com/grafana/identity-access-team/issues/2436
 	// The current request contract cannot distinguish global evaluation from
 	// evaluation in the requester's namespace.
 	if user.GetOrgID() == accesscontrol.NoOrgID {
