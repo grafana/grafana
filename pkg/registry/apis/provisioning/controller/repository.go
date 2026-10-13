@@ -47,10 +47,13 @@ const (
 
 	// buildTimeout bounds a single repository build. Building constructs the
 	// provider client, which can call the remote host (resolving a project id,
-	// for instance), and an unreachable host leaves that dial to TCP retry for
-	// minutes. Health goes stale after recentUnhealthyDuration, so an attempt
-	// that outlives it is re-triggered by the very next delivery and one
-	// unreachable repository then occupies a worker continuously.
+	// for instance). The individual request is bounded -- 30s to dial -- but
+	// the provider clients retry a failed dial, so against an unreachable host
+	// the total reaches minutes and only a deadline caps it; a client-level
+	// timeout would cap each attempt, not the sequence. Health goes stale after
+	// recentUnhealthyDuration, so an attempt that outlives it is re-triggered by
+	// the very next delivery, and one unreachable repository then occupies a
+	// worker continuously.
 	buildTimeout = 30 * time.Second
 )
 
