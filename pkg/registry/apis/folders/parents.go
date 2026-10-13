@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"fmt"
 	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,6 +9,7 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	folderLegacy "github.com/grafana/grafana/pkg/services/folder"
 )
 
@@ -17,6 +17,9 @@ type parentsGetter = func(ctx context.Context, folder *folders.Folder) (*folders
 
 func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 	return func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
+		ctx, span := tracer.Start(ctx, "folders.getParents")
+		defer span.End()
+
 		info := &folders.FolderInfoList{
 			Items: []folders.FolderInfo{},
 		}
@@ -49,11 +52,12 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 			}
 
 			if found[item.Parent] {
-				return nil, folderLegacy.ErrCyclicReference.Errorf("cyclic folder references found: %s", item.Parent)
+				return nil, tracing.Error(span, folderLegacy.ErrCyclicReference.Errorf("cyclic folder references found: %s", item.Parent))
 			}
 
 			obj, e2 := getter.Get(ctx, item.Parent, &metav1.GetOptions{})
 			if e2 != nil {
+				_ = tracing.Error(span, e2)
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
 					Detached:    true,
@@ -64,14 +68,14 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 
 			parentFolder, ok := obj.(*folders.Folder)
 			if !ok {
+				err := tracing.Errorf(span, "expected folder, found: %T", obj)
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
 					Detached:    true,
-					Description: fmt.Sprintf("expected folder, found: %T", obj),
+					Description: err.Error(),
 				})
 				break
 			}
-
 			found[parentFolder.Name] = true
 			folder = parentFolder
 		}

@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Sıfırla"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Yardımcı Günlükler",
+      "description-auxiliary-logs": "Bu özelliğin etkinleştirilmesi, <2>Yardımcı Günlükler</2> için yapılandırılmış tabloları sorgulayan pano panellerinde Azure Monitor sorgu başına maliyetlerinin oluşmasına neden olur. Yardımcı günlüklerin yanıt süresi SLA'ları yoktur, yalnızca ad hoc sorgular ve veri keşfi için tasarlanmıştır ve gerçek zamanlı veri gerektiren panolar veya uyarılar için kullanılmamalıdır.",
+      "label-enable-auxiliary-logs": "Yardımcı Günlükleri Etkinleştir"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} ham sorgusu",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Döndürülen satır sayısını kısıtlayın (varsayılan 1000'dir)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "Yardımcı Günlüklere geçmek istediğinizden emin misiniz?",
       "body-basic-logs-queries": "Temel Günlüklere geçmek istediğinizden emin misiniz?",
       "confirmText-confirm": "Onayla",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "Yardımcı Günlükler sorguları, taranan veri miktarına göre maliyete neden olur. Yardımcı günlüklerin yanıt süresi SLA'ları yoktur ve gerçek zamanlı veri gerektiren panolar veya uyarılar için kullanılmamalıdır.",
       "description-basic-logs-queries": "Temel Günlük sorguları, taranan veri miktarına bağlı olarak maliyet doğurur.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "Analiz",
+      "label-auxiliary": "Yardımcı",
+      "label-basic": "Temel",
       "label-logs": "Günlük kayıtları",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Yardımcı Günlük Sorguları",
       "title-basic-logs-queries": "Temel Günlük Sorguları",
       "tooltip-logs": "Temel veya Analitik Günlükleri sorgusunun çalıştırılıp çalıştırılmayacağını belirtir.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Bir Analiz, Temel veya Yardımcı Günlükler sorgusunun çalıştırılıp çalıştırılmayacağını belirtir.",
+      "tooltip-logs-aux": "Bir Analiz veya Yardımcı Günlükler sorgusunun çalıştırılıp çalıştırılmayacağını belirtir."
     },
     "logs-query-builder": {
       "title-no-tables": "Kaynak başarıyla yüklendi ancak herhangi bir tablo yok"
     },
     "logs-query-editor": {
       "learn-more": "Daha Fazla Bilgi Edinin",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "Yardımcı Günlükleri kullanırken aynı anda yalnızca bir kaynak seçebilirsiniz.",
+      "notice-basic-single-resource": "Temel Günlükleri kullanırken aynı anda yalnızca bir kaynak seçebilirsiniz.",
+      "notice-same-resource-type": "Yalnızca aynı kaynak türündeki ögeleri seçebilirsiniz.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> bir Analiz tablosudur.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> bir Yardımcı Günlükler tablosudur. Taranan GiB başına maliyete neden olur, yanıt süresi SLA'sı yoktur ve gerçek zamanlı senaryolar veya uyarı senaryoları için uygun değildir.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> bir Temel Günlükler tablosudur. Taranan GiB başına maliyete neden olur.",
+      "tier-switch-revert": "{{fromTier}} katmanına geri dön",
+      "tier-switch-title": "Sorgu katmanı {{toTier}} olarak ayarlandı",
       "view-query": "Sorguyu Azure Portal'da görüntüleyin",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "Bu Yardımcı Günlükler sorgusu çalıştırıldığında {{dataIngested}} GiB veri işler. Yardımcı Günlüklerin yanıt süresi SLA'sı yoktur ve gerçek zamanlı senaryolar veya uyarı senaryoları için uygun değildir. ",
+      "warning-auxiliary-raw": "Bu bir Yardımcı Günlükler sorgusudur. Arama uç noktasını kullanır, taranan GiB başına maliyete neden olur, yanıt süresi SLA'sı yoktur ve gerçek zamanlı senaryolar veya uyarı senaryoları için uygun değildir. Analiz planı tabloları bu modda sorgulanamaz. Bunlar için Analiz katmanını kullanın. ",
+      "warning-basic-raw": "Bu bir Temel Günlükler sorgusudur. Arama uç noktasını kullanır ve taranan GiB başına maliyete neden olur. Analiz planı tabloları bu modda sorgulanamaz. Bunlar için Analiz katmanını kullanın. ",
+      "warning-data-ingested": "Bu sorgu çalıştırıldığında {{dataIngested}} GiB veri işler. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Bu tablo Yardımcı Günlükler planındadır. Bunu sorgulamak için veri kaynağı ayarlarında \"Yardımcı Günlükler\"i etkinleştirin.",
+      "description-auxiliary-enabled": "Bu tabloyu seçmek, sorgu modunu Yardımcı Günlüklere geçirir.",
+      "description-basic-disabled": "Bu tablo Temel Günlükler planındadır. Bunu sorgulamak için veri kaynağı ayarlarında \"Temel Günlükler\"i etkinleştirin.",
+      "description-basic-enabled": "Bu tabloyu seçmek, sorgu modunu Temel Günlüklere geçirir.",
+      "description-plan-unavailable": "Günlük planı belirlenemediği için bu tablo seçilemez.",
+      "label-all-columns": "Tüm Sütunlar"
     },
     "metric-name-field": {
       "label-metric": "Metrik"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Özel ad alanı seçin",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Boyut adını seçin",
+      "aria-label-select-metric-name": "Metrik adını seçin",
       "aria-label-select-namespace": "Ad alanı seç",
       "aria-label-select-query-type": "Sorgu türünü seçin",
       "aria-label-select-region": "Bölge seçin",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Kaynak grubu seçin",
       "aria-label-select-subscription": "Abonelik seçin",
       "label-custom-namespace": "Özel Ad Alanı",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Boyut Adı",
+      "label-metric-name": "Metrik Adı",
       "label-namespace": "Ad alanı",
       "label-query-type": "Sorgu Tipi",
       "label-region": "Bölge",

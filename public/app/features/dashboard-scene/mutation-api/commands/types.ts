@@ -7,8 +7,8 @@
 
 import type * as z from 'zod';
 
-import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
@@ -89,7 +89,7 @@ export function readOnly(_scene: DashboardScene): PermissionCheckResult {
  * Used by all layout mutation commands (row/tab CRUD, panel movement).
  */
 export function requiresNewDashboardLayouts(scene: DashboardScene): PermissionCheckResult {
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     return {
       allowed: false,
       error: 'Layout management requires the "dashboardNewLayouts" feature toggle to be enabled.',
@@ -103,7 +103,7 @@ export function requiresNewDashboardLayouts(scene: DashboardScene): PermissionCh
  * Used by GET_LAYOUT and other read-only layout commands.
  */
 export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): PermissionCheckResult {
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     return {
       allowed: false,
       error: 'Layout management requires the "dashboardNewLayouts" feature toggle to be enabled.',

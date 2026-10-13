@@ -2,9 +2,8 @@ import { distinctUntilChanged, takeUntil, takeWhile, timer } from 'rxjs';
 
 import { createAssistantContextItem, isAssistantAvailable, openAssistant } from '@grafana/assistant';
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   AdHocFiltersVariable,
   dataLayers,
@@ -48,6 +47,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     configurable: true,
     get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
   });
+
+  context.adHocTransformations = vizPanel.getRuntimeTransformations();
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
