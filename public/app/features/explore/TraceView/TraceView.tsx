@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefObject, useCallback, useEffect, useMemo, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -297,6 +297,23 @@ export function TraceView(props: Props) {
   // Database Observability), the span is visually highlighted but its ancestors are collapsed
   // and its detail panel is closed. Auto-reveal ancestors and open the detail so users can
   // immediately see and inspect the target span.
+  //
+  // Refs keep the effect stable: revealSpan is recreated whenever childrenHiddenIDs changes,
+  // so a direct dependency would cause the effect to re-run on every user expand/collapse and
+  // undo their interactions. We only want this to fire when focusedSpanId or traceProp change.
+  const revealSpanRef = useRef(revealSpan);
+  revealSpanRef.current = revealSpan;
+  const openDetailRef = useRef(openDetail);
+  openDetailRef.current = openDetail;
+  const refocusSpanForSearchRef = useRef(refocusSpanForSearch);
+  refocusSpanForSearchRef.current = refocusSpanForSearch;
+  const searchRef = useRef(search);
+  searchRef.current = search;
+  const spanFilterMatchesRef = useRef(spanFilterMatches);
+  spanFilterMatchesRef.current = spanFilterMatches;
+  const setSearchRef = useRef(setSearch);
+  setSearchRef.current = setSearch;
+
   useEffect(() => {
     if (!focusedSpanId || !traceProp?.spans?.length) {
       return;
@@ -305,10 +322,13 @@ export function TraceView(props: Props) {
     if (!span) {
       return;
     }
-    revealSpan(span);
-    openDetail(focusedSpanId);
-    refocusSpanForSearch(focusedSpanId);
-  }, [focusedSpanId, traceProp, revealSpan, openDetail, refocusSpanForSearch]);
+    revealSpanRef.current(span);
+    openDetailRef.current(focusedSpanId);
+    refocusSpanForSearchRef.current(focusedSpanId);
+    if (searchRef.current.matchesOnly && spanFilterMatchesRef.current && !spanFilterMatchesRef.current.has(focusedSpanId)) {
+      setSearchRef.current({ ...searchRef.current, matchesOnly: false });
+    }
+  }, [focusedSpanId, traceProp]);
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
   // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
