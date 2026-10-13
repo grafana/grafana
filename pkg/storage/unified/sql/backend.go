@@ -419,6 +419,7 @@ type backend struct {
 
 	garbageCollection GarbageCollectionConfig
 	gcGate            *resource.GCGate
+	blobGC            *resource.BlobGarbageCollector
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	migrationParquetBuffer bool
@@ -622,6 +623,7 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 }
 
 func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
+	defer b.collectBlobs(ctx)
 	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
 	defer span.End()
 	start := time.Now()

@@ -100,6 +100,7 @@ type kvStorageBackend struct {
 	historyPruner           Pruner
 	garbageCollection       GarbageCollectionConfig
 	gcGate                  *GCGate
+	blobGC                  *BlobGarbageCollector
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
 	metrics                 *kvBackendMetrics
@@ -779,6 +780,16 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 // runGarbageCollection identifies deleted resources that are safe
 // to be fully removed from the datastore and deletes them in batches.
 func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) {
+	defer func() {
+		if b.blobGC == nil {
+			b.blobGC = NewBlobGarbageCollector(b.kv, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
+		}
+		count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, b.garbageCollection.DryRun, b.blobReferenced)
+		if err != nil {
+			b.log.Error("blob garbage collection failed", "error", err)
+		}
+		b.log.Info("blob garbage collection finished", "blobs", count, "dryRun", b.garbageCollection.DryRun)
+	}()
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.runGarbageCollection")
 	defer span.End()
 
