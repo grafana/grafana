@@ -46,8 +46,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - Backend redirects become a 502 (`rejectBackendRedirects`).
   - Every configured URL must be absolute; `url.Parse` accepts `""` and relative paths, so check
     explicitly.
-  - On an OpenAPI cache miss, strip conditional headers and the `hash` query parameter before
-    proxying.
+  - On an OpenAPI cache miss, strip the `hash` query parameter before proxying, and strip
+    conditional headers when the router may cache the response. A caller-scoped group's backend
+    gets them, so its own cache can answer with a 304.
   - Any 304 must carry an `ETag`.
 - **The router may replace groups the embedded API server serves, core groups included.** APIs move
   to the router gradually, so in middleware mode a group the router serves takes over that group from
@@ -107,7 +108,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
-| Single-tenant (ST) fallback | `st_fallback.go` |
+| Single-tenant (ST) fallback, and its per-stack discovery cache | `st_fallback.go`, `st_discovery_cache.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
 | Dummy loader (the default when nothing is configured) | `dummy.go` |
 
@@ -115,7 +116,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 
 `ProvideRoutesLoader` picks exactly one loader:
 
-1. **The cloud loader**, when any `[cloud_router]` source or `[router.aggregate.<name>]` target is configured (see Settings).
+1. **The cloud loader**, when any `[cloud_router]` source or `[router.aggregate.<name>]` target is
+   configured (see Settings). Never in middleware mode, where the cloud sources are ignored.
 2. **Otherwise the local plugin loader**, when plugin sources are available.
 3. **Otherwise the dummy loader**, which serves two static dummy groups.
 
@@ -146,11 +148,41 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
   that group, and its requests never reach `next`.
+- **Standalone with the ST fallback:** root discovery merges in the same way, but reads from the
+  fallback instead of `next`. The fallback answers it from the requester's own stack, so `/apis` and
+  `/openapi/v3` differ by caller and are built on every request. Only a requester whose namespace is
+  not a stack (such as `*`) or whose stack doesn't exist gets the defaults: the groups polled from
+  `st_discovery_url`, served from the snapshot without a request. Group and version discovery
+  (`/apis/<g>[/<v>]`, `/openapi/v3/apis/<g>/<v>`) follow the same rule.
+- **The ST discovery cache** (`stackDiscoveryCache`) shares what the fallback fetches among every
+  caller that the same stack serves, root discovery included. It is keyed by destination, path,
+  query, `Accept` and `Accept-Encoding`, and expires entries after
+  `singleTenantDiscoveryCacheTTL`.
+  - It stores only a 200 that `cacheableOpenAPIResponse` accepts, so a refused caller never
+    replaces a good entry, and a stack's private or per-caller answer is never shared.
+  - Callers choose the keys, so it caches only requests whose query is empty or a single `hash`,
+    and its `st_discovery_cache_bytes` budget counts each entry's key, headers and a fixed
+    overhead (`stackDiscoveryEntryOverhead`) as well as its body.
+  - Concurrent misses share one fetch (`discoveryFetches`), bounded by
+    `singleTenantDiscoveryFetchTimeout`; each caller stops waiting when its own request ends. Only
+    a stored response reaches the other callers. Anything else was an answer for the caller who
+    fetched it, so each of the others fetches its own.
+  - A document larger than `maxSingleTenantCachedDiscoveryBytes` isn't stored. Its key is
+    remembered, so later callers stream it from the stack instead of waiting on a shared fetch.
+- **Caller-scoped backends** (`CallerScopedDiscovery`, such as ST groups) are only defaults: when
+  the ST fallback answers root discovery for a request, their groups are left out and its view is
+  used. An answer from `next` never replaces them. The router's own discovery and OpenAPI caches
+  never hold them; the source decides what callers may share, as the ST discovery cache does per
+  stack.
+  - Root discovery through the fallback is bounded by `discoveryFetchTimeout`.
+  - All discovery through the fallback, root or proxied, is sent with `Cache-Control: private`,
+    so a shared cache can't serve one caller's documents to another.
 - **Aggregated discovery** is built without a request per backend per call:
   - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
     keep them from their polls, which use the router's own identity, and they are part of the key.
   - Every other group comes from `discoveryCache`, keyed by backend key with a TTL
     (`discoveryCacheTTL`) and shared across callers, since discovery isn't filtered per caller.
+    Caller-scoped groups never use it.
     A miss is fetched with the caller's credentials. Concurrent callers share one fetch, misses run
     in parallel, and each fetch is bounded by `discoveryFetchTimeout`. Only complete fetches are
     stored.
@@ -198,7 +230,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   alongside it with `newCompositeService`, so both start and stop together.
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
-  `next`. The ST fallback is not used in this mode.
+  `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
 - **No `http.Server` in this package.** The caller owns the listener, TLS, and the security of the
   port.
 - **Wire:** keep `wire.go` and each edition's `wireExts*.go` in sync with the generated files, so
@@ -216,9 +248,10 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
-| `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
+| `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
+| `st_discovery_cache_bytes` | Total size of the discovery documents the ST fallback caches per stack. Default 64 MiB; `0` disables the cache. |
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.
