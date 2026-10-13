@@ -232,6 +232,7 @@ The following non-tabular formats are automatically converted to a tabular forma
 During conversion:
 
 - Label keys become column names.
+- If a label key matches a generated column name, such as `time` or `__value__`, its column is named `label_<LABEL_KEY>`, for example `label_time`. The match ignores case.
 - Label values populate the corresponding rows (null if a label is missing).
 - The `__value__` column contains the numeric metric.
 - If available, the `__display_name__` column contains a human-readable name.
