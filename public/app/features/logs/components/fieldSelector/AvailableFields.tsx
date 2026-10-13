@@ -107,7 +107,7 @@ function getCategoryStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(0.5),
       fontSize: theme.typography.h6.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
-      padding: theme.spacing(0.75, 0.75, 0.25, 1.5),
+      padding: theme.spacing(0.75, 0.75, 0.25, 0.5),
       color: theme.colors.text.primary,
     }),
     icon: css({
