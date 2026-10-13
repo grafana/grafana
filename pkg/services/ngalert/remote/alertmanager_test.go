@@ -1806,12 +1806,12 @@ func dbAlertingConfigToAPI(in v1store.AlertingConfigDB) definition.PostableApiAl
 	}
 	return definition.PostableApiAlertingConfig{
 		Config: definition.Config{
-			Global:            in.Global,
+			Global:            nil, // Grafana does not have global.
 			Route:             in.Route,
 			InhibitRules:      in.InhibitRules,
 			TimeIntervals:     timeIntervals,
 			MuteTimeIntervals: muteTimeIntervals,
-			Templates:         in.Templates,
+			Templates:         nil, // we do not use this.
 		},
 		Receivers: receivers,
 	}

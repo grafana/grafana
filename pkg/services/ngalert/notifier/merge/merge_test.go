@@ -353,10 +353,8 @@ func load(t *testing.T, yaml string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMC
 
 	cfg := v1.ToModel(&store.AMConfigDB{
 		AlertmanagerConfig: store.AlertingConfigDB{
-			Global:            orig.Global,
 			Route:             orig.Route,
 			InhibitRules:      orig.InhibitRules,
-			Templates:         orig.Templates,
 			Receivers:         receivers,
 			TimeIntervals:     timeIntervals,
 			MuteTimeIntervals: muteTimeIntervals,

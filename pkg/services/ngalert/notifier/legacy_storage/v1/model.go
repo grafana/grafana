@@ -341,10 +341,8 @@ func allReceivers(route *config.Route) (res []string) {
 }
 
 type Config struct {
-	Global       *config.GlobalConfig
 	Route        *Route
 	InhibitRules []common.InhibitRule
-	Templates    []string
 }
 
 type ObjectMatchers labels.Matchers

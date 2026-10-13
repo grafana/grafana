@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/config/common"
 	amcompat "github.com/prometheus/alertmanager/matchers/compat"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -87,17 +86,19 @@ type InhibitionRuleDB struct {
 	Provenance     definition.Provenance `json:"provenance,omitempty"`
 }
 
-// AlertingConfigDB is the persisted "alertmanager_config" object. Route/InhibitRules/Global/
-// Templates reuse the shared Alertmanager types directly. Receivers and
-// TimeIntervals/MuteTimeIntervals use DB-owned wrapper types instead, so a `uid` field can be
-// added to them later without touching the shared/upstream types.
+// AlertingConfigDB is the persisted "alertmanager_config" object. Route/InhibitRules reuse the
+// shared Alertmanager types directly. Receivers and TimeIntervals/MuteTimeIntervals use DB-owned
+// wrapper types instead, so a `uid` field can be added to them later without touching the
+// shared/upstream types.
+//
+// Global and the legacy top-level Templates (template file names, distinct from
+// TemplateFiles/ManagedTemplates) are intentionally not here: Grafana never applies either when
+// building the config actually handed to the running Alertmanager.
 type AlertingConfigDB struct {
-	Global            *config.GlobalConfig `yaml:"global,omitempty" json:"global,omitempty"`
 	Route             *definition.Route    `yaml:"route,omitempty" json:"route,omitempty"`
 	InhibitRules      []common.InhibitRule `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
 	MuteTimeIntervals []TimeIntervalDB     `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
 	TimeIntervals     []TimeIntervalDB     `yaml:"time_intervals,omitempty" json:"time_intervals,omitempty"`
-	Templates         []string             `yaml:"templates,omitempty" json:"templates,omitempty"`
 	Receivers         []*ReceiverDB        `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 

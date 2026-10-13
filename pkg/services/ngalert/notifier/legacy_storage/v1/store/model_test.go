@@ -3,9 +3,7 @@ package store
 import (
 	"encoding/json"
 	"testing"
-	"time"
 
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -179,7 +177,6 @@ func TestAMConfigDB_UnmarshalJSON_Valid(t *testing.T) {
 			"welcome": {"name": "welcome", "content": "hi", "kind": "grafana"}
 		},
 		"alertmanager_config": {
-			"global": {"resolve_timeout": "10m"},
 			"route": {
 				"receiver": "default",
 				"group_by": ["..."],
@@ -225,8 +222,7 @@ func TestAMConfigDB_UnmarshalJSON_Valid(t *testing.T) {
 			],
 			"time_intervals": [
 				{"name": "weekends", "time_intervals": [{"weekdays": ["saturday", "sunday"]}]}
-			],
-			"templates": ["legacy.tmpl"]
+			]
 		},
 		"extra_config": [
 			{
@@ -259,9 +255,6 @@ func TestAMConfigDB_UnmarshalJSON_Valid(t *testing.T) {
 	assert.Equal(t, "hi", c.ManagedTemplates["welcome"].Content)
 
 	// alertmanager_config / AlertingConfigDB.
-	require.NotNil(t, c.AlertmanagerConfig.Global)
-	assert.Equal(t, model.Duration(10*time.Minute), c.AlertmanagerConfig.Global.ResolveTimeout)
-
 	route := c.AlertmanagerConfig.Route
 	require.NotNil(t, route)
 	assert.Equal(t, "default", route.Receiver)
@@ -293,8 +286,6 @@ func TestAMConfigDB_UnmarshalJSON_Valid(t *testing.T) {
 
 	require.Len(t, c.AlertmanagerConfig.TimeIntervals, 1)
 	assert.Equal(t, "weekends", c.AlertmanagerConfig.TimeIntervals[0].Name)
-
-	assert.Equal(t, []string{"legacy.tmpl"}, c.AlertmanagerConfig.Templates)
 
 	// AMConfigDB's own fields.
 	require.Len(t, c.ExtraConfigs, 1)

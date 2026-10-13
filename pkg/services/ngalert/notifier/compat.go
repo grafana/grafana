@@ -201,10 +201,10 @@ func InhibitionRuleToAPI(in v1.InhibitionRule) (common.InhibitRule, error) {
 // config from the domain model.
 func PostableApiAlertingConfigToAPI(in v1.PostableApiAlertingConfig, timeIntervals []v1.TimeInterval) definition.Config {
 	return definition.Config{
-		Global:       in.Global,
+		Global:       nil, // Grafana does not have global.
 		Route:        RouteToAPI(in.Route),
 		InhibitRules: slices.Clone(in.InhibitRules),
-		Templates:    slices.Clone(in.Templates),
+		Templates:    nil, // we do not use this.
 		// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
 		TimeIntervals: TimeIntervalsToAPI(timeIntervals),
 	}

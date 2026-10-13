@@ -45,10 +45,8 @@ func ToModel(in *store.AMConfigDB) *AMConfigV1 {
 func PostableApiAlertingConfigToModel(in store.AlertingConfigDB) PostableApiAlertingConfig {
 	return PostableApiAlertingConfig{
 		Config: Config{
-			Global:       in.Global,
 			Route:        RouteToModel(in.Route),
 			InhibitRules: slices.Clone(in.InhibitRules),
-			Templates:    slices.Clone(in.Templates),
 		},
 	}
 }
@@ -206,10 +204,8 @@ func ToDBModel(in *AMConfigV1) (*store.AMConfigDB, error) {
 	dbModel := store.AMConfigDB{
 		ManagedTemplates: TemplatesToManagedTemplates(in.Templates),
 		AlertmanagerConfig: store.AlertingConfigDB{
-			Global:       in.AlertmanagerConfig.Global,
 			Route:        RouteToDB(in.AlertmanagerConfig.Route),
 			InhibitRules: slices.Clone(in.AlertmanagerConfig.InhibitRules),
-			Templates:    slices.Clone(in.AlertmanagerConfig.Templates),
 			// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
 			TimeIntervals: TimeIntervalsToDB(in.SortedTimeIntervals()),
 			Receivers:     ReceiversToDB(in.GetReceivers()),
