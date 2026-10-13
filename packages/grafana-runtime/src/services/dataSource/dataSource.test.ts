@@ -1,10 +1,17 @@
-import { DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import {
+  DataSourceApi,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type TestDataSourceResponse,
+} from '@grafana/data';
 
 import { TracedError } from '../../utils/TracedError';
 import { RuntimeDataSource } from '../RuntimeDataSource';
 import { setLogger } from '../logging/registry';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
+import { PLUGIN_CACHE_UID_MISMATCH_WARNING } from './constants';
 import {
   _resetForTests as resetPlugin,
   getDataSourceInstance,
@@ -57,18 +64,20 @@ function ds(overrides: Partial<DataSourceInstanceSettings> = {}): DataSourceInst
 }
 
 const logError = jest.fn();
+const logWarning = jest.fn();
 
 beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
   resetPluginCache();
   logError.mockClear();
+  logWarning.mockClear();
   setLogger('grafana/runtime.plugins.datasource', {
     logDebug: jest.fn(),
     logError,
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
-    logWarning: jest.fn(),
+    logWarning,
   });
 });
 
@@ -249,6 +258,120 @@ describe('plugin', () => {
       // preloaded singleton instance. getDataSourceInstance has no such short-circuit yet.
       // Tracked in the async-vs-legacy divergences issue.
       it.todo('resolves expression refs to the preloaded singleton without importing');
+    });
+
+    describe('instance identity parity with DatasourceSrv.get (template-variable refs)', () => {
+      // Unlike the preset-instance mocks used elsewhere in this file, this class derives its
+      // identity from the settings the loader passes to the constructor — the identity a real
+      // plugin would have. Legacy get('$var') interpolates and returns the concrete instance,
+      // so instance.uid must be the real uid, never the variable string.
+      class CapturingDataSource extends DataSourceApi {
+        query(): Promise<DataQueryResponse> {
+          return Promise.resolve({ data: [] });
+        }
+        testDatasource(): Promise<TestDataSourceResponse> {
+          return Promise.resolve({ status: 'success', message: '' });
+        }
+      }
+
+      const seedAlphaWithVariable = (DataSourceClass: unknown = CapturingDataSource) => {
+        const settings = ds();
+        initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+        setTemplateSrv({
+          getVariables: () => [],
+          replace: (v?: string) => (v === '${myds}' ? settings.uid : (v ?? '')),
+        } as unknown as TemplateSrv);
+        setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass, components: {} }));
+        return settings;
+      };
+
+      it('constructs the instance with the concrete identity on a cold cache', async () => {
+        const settings = seedAlphaWithVariable();
+
+        const result = await getDataSourceInstance('${myds}');
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
+      it('constructs the concrete default instance when the variable interpolates to "default"', async () => {
+        const settings = ds();
+        initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+        setTemplateSrv({
+          getVariables: () => [],
+          replace: (v?: string) => (v === '${myds}' ? 'default' : (v ?? '')),
+        } as unknown as TemplateSrv);
+        setDataSourcePluginImporter(
+          jest.fn().mockResolvedValue({ DataSourceClass: CapturingDataSource, components: {} })
+        );
+
+        const result = await getDataSourceInstance('${myds}');
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
+      it('constructs the concrete instance when the variable arrives inside a ref object', async () => {
+        const settings = seedAlphaWithVariable();
+
+        const result = await getDataSourceInstance({ uid: '${myds}', type: '' });
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
+      it('does not poison the concrete-uid cache entry after a variable-ref call', async () => {
+        const settings = seedAlphaWithVariable();
+
+        const viaVariable = await getDataSourceInstance('${myds}');
+        const viaUid = await getDataSourceInstance(settings.uid);
+
+        expect(viaUid.uid).toBe(settings.uid);
+        expect(viaUid.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+        expect(viaUid).toBe(viaVariable);
+      });
+
+      it('returns the concrete instance for a variable ref on a warm cache', async () => {
+        const settings = seedAlphaWithVariable();
+
+        const viaUid = await getDataSourceInstance(settings.uid);
+        const viaVariable = await getDataSourceInstance('${myds}');
+
+        expect(viaVariable).toBe(viaUid);
+        expect(viaVariable.uid).toBe(settings.uid);
+      });
+
+      it('patches legacy plugins (not extending DataSourceApi) with the concrete identity', async () => {
+        const legacyInstance: Record<string, unknown> = {};
+        const settings = seedAlphaWithVariable(jest.fn().mockReturnValue(legacyInstance));
+
+        const result = (await getDataSourceInstance('${myds}')) as unknown as Record<string, unknown>;
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect((result.getRef as () => unknown)()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
+      it('warns when a plugin instance is cached under a key that does not match its uid', async () => {
+        class MangledUidDataSource extends CapturingDataSource {
+          constructor(instanceSettings: DataSourceInstanceSettings) {
+            super(instanceSettings);
+            // uid is readonly on DataSourceApi; a badly-behaved plugin can still overwrite it at runtime.
+            (this as { uid: string }).uid = 'not-the-cache-key';
+          }
+        }
+        const settings = seedAlphaWithVariable(MangledUidDataSource);
+
+        await getDataSourceInstance(settings.uid);
+
+        expect(logWarning).toHaveBeenCalledWith(PLUGIN_CACHE_UID_MISMATCH_WARNING, {
+          cacheUid: settings.uid,
+          instanceUid: 'not-the-cache-key',
+        });
+      });
     });
 
     it('passes settings.meta to the importer', async () => {
