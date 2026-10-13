@@ -1430,6 +1430,34 @@ func TestLocalRepository_ReadTree_HiddenPaths(t *testing.T) {
 	}, entries)
 }
 
+func TestLocalRepository_ReadTree_NativePathSeparators(t *testing.T) {
+	root := t.TempDir()
+	for _, path := range []string{".config.json", ".git/config", "team/.ci/config.json", "team/.keep", "team/dashboard.json"} {
+		filePath := filepath.Join(root, path)
+		require.NoError(t, os.MkdirAll(filepath.Dir(filePath), 0700))
+		require.NoError(t, os.WriteFile(filePath, []byte("content"), 0600))
+	}
+
+	for _, tt := range []struct {
+		name string
+		root string
+	}{
+		{"without trailing separator", root},
+		{"with trailing separator", root + string(filepath.Separator)},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &localRepository{path: tt.root}
+			entries, err := repo.ReadTree(t.Context(), "")
+			require.NoError(t, err)
+			paths := make([]string, 0, len(entries))
+			for _, entry := range entries {
+				paths = append(paths, entry.Path)
+			}
+			require.ElementsMatch(t, []string{"team/", "team/.keep", "team/dashboard.json"}, paths)
+		})
+	}
+}
+
 func TestLocalRepository_Config(t *testing.T) {
 	testCases := []struct {
 		name   string
