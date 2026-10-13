@@ -9,14 +9,18 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	authnlib "github.com/grafana/authlib/authn"
+	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -32,7 +36,6 @@ type ProxyDependencies struct {
 	RequestValidator validations.DataSourceRequestValidator
 	// Resolve supplies tenant- and request-specific dependencies in MT.
 	Resolve            func(context.Context, *http.Request) (*ProxyDependencies, error)
-	RouteAccessChecker pluginproxy.RouteAccessChecker
 	ProxyCfg           *pluginproxy.DataSourceProxySettings
 	HTTPClientProvider httpclient.Provider
 	GrafanaConfig      *config.GrafanaCfg
@@ -183,11 +186,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			deps.Tracer,
 			deps.Features,
 			deps.IDTokenDeriver,
-			pluginproxy.WithRouteAccessChecker(deps.RouteAccessChecker),
-			pluginproxy.WithDestinationValidator(func(url string) error {
-				// Headers and cookies were filtered on ingress; do not strip route-added authentication.
-				return validate(url, jsonData, nil)
-			}),
+			pluginproxy.WithRouteAccessChecker(r.builder.checkProxyRouteAccess),
 		)
 		if err != nil {
 			m.SetError()
@@ -210,4 +209,22 @@ func proxyPathFromRequest(req *http.Request, name string) string {
 		return ""
 	}
 	return strings.TrimPrefix(after, "/")
+}
+
+func (b *DataSourceAPIBuilder) checkProxyRouteAccess(ctx context.Context, user identity.Requester, uid string, route *plugins.Route) (bool, error) {
+	if route.ReqAction == "" {
+		return pluginproxy.CheckLocalRouteAccess(ctx, user, uid, route)
+	}
+	ns, err := request.NamespaceInfoFrom(ctx, false)
+	if err != nil {
+		return false, err
+	}
+	result, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+		Namespace: ns.Value,
+		Group:     b.GetGroupVersion().Group,
+		Resource:  "datasources",
+		Name:      uid,
+		Verb:      route.ReqAction,
+	}, "")
+	return result.Allowed, err
 }
