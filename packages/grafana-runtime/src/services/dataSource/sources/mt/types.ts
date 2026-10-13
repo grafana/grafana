@@ -17,6 +17,8 @@ export interface DataSourceConnection {
 
 export interface DataSourceConnectionList {
   items: DataSourceConnection[];
+  /** `continue` is set when more pages follow. */
+  metadata?: { continue?: string };
 }
 
 /** `GET apis/{group}/{version}/namespaces/{ns}/datasources/{uid}`. */

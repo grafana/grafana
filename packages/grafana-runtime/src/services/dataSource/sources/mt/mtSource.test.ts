@@ -59,8 +59,8 @@ const promResource: DataSourceResource = {
 type Route = { status: number; body?: unknown };
 let routes: Record<string, Route>;
 // Rejects the way backendSrv does: with a FetchError-shaped value.
-const backendGet = jest.fn(async (url: string) => {
-  const route = routes[url] ?? { status: 404 };
+const backendGet = jest.fn(async (url: string, params?: { continue?: string }) => {
+  const route = routes[params?.continue ? `${url}?continue=${params.continue}` : url] ?? { status: 404 };
   if (route.status < 200 || route.status >= 300) {
     throw Object.assign(new Error('Error'), { status: route.status, statusText: 'Error', data: {} });
   }
@@ -128,6 +128,18 @@ describe('list', () => {
       { uid: 'grafana', name: '-- Grafana --', type: 'datasource', meta: metas.grafana },
     ]);
     expect(callsTo(CONNECTIONS_URL)).toBe(1);
+  });
+
+  it('follows the continue token until the last page', async () => {
+    const lokiConnection = { ...promConnection, name: 'uid-loki', title: 'Loki', labels: {} };
+    routes[CONNECTIONS_URL] = { status: 200, body: { items: [promConnection], metadata: { continue: 'v1_1' } } };
+    routes[`${CONNECTIONS_URL}?continue=v1_1`] = { status: 200, body: { items: [lokiConnection] } };
+    initDataSourceInstanceSettings({}, '');
+
+    const items = await getDataSourceInstanceList();
+
+    expect(items.map((item) => item.uid)).toEqual(['uid-loki', 'uid-prom', 'grafana']);
+    expect(backendGet.mock.calls.map(([, params]) => params)).toEqual([undefined, { continue: 'v1_1' }]);
   });
 
   it('logs the types of connections dropped because their plugin is not installed', async () => {
