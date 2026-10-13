@@ -110,6 +110,68 @@ describe('useSyncStarredItemsInNav', () => {
     ];
   });
 
+  it('includes Pages beside dashboards and refreshes after a plugin star mutation', async () => {
+    const id = '12345678-1234-4321-8765-123456789abc';
+    let pages = [id];
+    server.use(
+      http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () =>
+        HttpResponse.json({
+          items: [
+            {
+              spec: {
+                resource: [
+                  { group: 'dashboard.grafana.app', kind: 'Dashboard', names: [id] },
+                  { group: 'assistant.ext.grafana.app', kind: 'Page', names: pages },
+                ],
+              },
+            },
+          ],
+        })
+      ),
+      http.get('/api/plugins/grafana-assistant-app/resources/api/v1/page-catalog', () =>
+        HttpResponse.json({ data: { pages: [{ id, title: 'CPU report' }] } })
+      )
+    );
+    setupSearchMock([{ uid: id, name: 'Dashboard', url: `/d/${id}`, kind: 'dashboard' }]);
+    render(<TestHarness />);
+    expect(await screen.findByText('CPU report')).toBeInTheDocument();
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByTestId(`synced-starred/page:${id}`)).toHaveAttribute('data-icon', 'file-alt');
+    pages = [];
+    act(() => window.dispatchEvent(new Event('grafana-stars-changed')));
+    await waitFor(() => expect(screen.queryByText('CPU report')).not.toBeInTheDocument());
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+  });
+
+  it('keeps dashboard stars visible when the Pages catalog is unavailable', async () => {
+    const id = '12345678-1234-4321-8765-123456789abc';
+    server.use(
+      http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () =>
+        HttpResponse.json({
+          items: [
+            {
+              spec: {
+                resource: [
+                  { group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['dashboard'] },
+                  { group: 'assistant.ext.grafana.app', kind: 'Page', names: [id] },
+                ],
+              },
+            },
+          ],
+        })
+      ),
+      http.get(
+        '/api/plugins/grafana-assistant-app/resources/api/v1/page-catalog',
+        () => new HttpResponse(null, { status: 503 })
+      )
+    );
+    setupSearchMock([{ uid: 'dashboard', name: 'Dashboard', url: '/d/dashboard', kind: 'dashboard' }]);
+    render(<TestHarness />);
+    expect(await screen.findByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByTestId('error-state')).toHaveTextContent('true');
+    expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
+  });
+
   it('populates the starred nav section with metadata from search', async () => {
     const mockSearcher = setupSearchMock(
       starredDashboards.map((d) => ({

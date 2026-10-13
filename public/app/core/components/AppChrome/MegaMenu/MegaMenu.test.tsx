@@ -1,4 +1,4 @@
-import { HttpResponse } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
@@ -574,6 +574,25 @@ describe('MegaMenu', () => {
         );
       });
     });
+  });
+
+  it('renders a starred Page with an accessible kind and its viewer link', async () => {
+    const id = '12345678-1234-4321-8765-123456789abc';
+    server.use(
+      http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () =>
+        HttpResponse.json({
+          items: [{ spec: { resource: [{ group: 'assistant.ext.grafana.app', kind: 'Page', names: [id] }] } }],
+        })
+      ),
+      http.get('/api/plugins/grafana-assistant-app/resources/api/v1/page-catalog', () =>
+        HttpResponse.json({ data: { pages: [{ id, title: 'CPU report' }] } })
+      )
+    );
+    const { user } = renderMegaMenu();
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+    const page = await screen.findByRole('link', { name: 'CPU report' });
+    expect(page).toHaveAttribute('href', `/a/grafana-assistant-app/pages/${id}`);
+    expect(within(page).getByTitle('Page')).toBe(within(page).getByTestId('icon-file-alt'));
   });
 
   describe('when starredFolders is enabled', () => {

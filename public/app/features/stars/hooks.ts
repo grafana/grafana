@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type IconName, locationUtil } from '@grafana/data';
-import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
+import {
+  collectionsAPIv1alpha1,
+  useAddStarMutation,
+  useRemoveStarMutation,
+  useListStarsQuery,
+} from 'app/api/clients/collections/v1alpha1';
 import { setStarred, setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
@@ -12,6 +17,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { getIconForKind } from 'app/features/search/service/utils';
 import { dispatch } from 'app/store/store';
 
+import { loadStarredPages, PAGE_API_GROUP } from './pages';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 type StarItemArgs = {
@@ -122,6 +128,7 @@ export const useSyncStarredItemsInNav = () => {
     data: dashboardUids,
     isLoading: dashboardsLoading,
     isError: dashboardsError,
+    fulfilledTimeStamp,
   } = useStarredItems(DASHBOARD_API_GROUP, 'Dashboard');
   const {
     data: folderUids,
@@ -129,11 +136,25 @@ export const useSyncStarredItemsInNav = () => {
     isError: folderError,
   } = useStarredItems(FOLDER_API_GROUP, 'Folder', { skip: !foldersEnabled });
 
+  const { data: pageUids, isLoading: pagesLoading, isError: pagesError } = useStarredItems(PAGE_API_GROUP, 'Page');
+
+  useEffect(() => {
+    const refresh = () => {
+      dispatch(collectionsAPIv1alpha1.util.invalidateTags(['Stars']));
+    };
+    window.addEventListener('grafana-stars-changed', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener('grafana-stars-changed', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
+
   // A skipped useStarredItems reports isLoading:true indefinitely, so only honor
   // the folder query's loading/error when the feature is actually on.
   const folderLoading = foldersEnabled ? folderLoadingRaw : false;
-  const isLoading = dashboardsLoading || folderLoading;
-  const isError = dashboardsError || (foldersEnabled && folderError);
+  const isLoading = dashboardsLoading || folderLoading || pagesLoading;
+  const isError = dashboardsError || (foldersEnabled && folderError) || pagesError;
 
   // Initialized from the stars query so a remount with a warm RTK cache doesn't
   // flash a loading state — the nav tree is already correct from the prior sync
@@ -147,17 +168,20 @@ export const useSyncStarredItemsInNav = () => {
     [folderUids, foldersEnabled]
   );
 
+  const pageKey = useMemo(() => pageUids && [...pageUids].sort().join(','), [pageUids]);
+
   useEffect(() => {
-    if (isLoading || dashboardKey === undefined || folderKey === undefined) {
+    if (isLoading || dashboardKey === undefined || folderKey === undefined || pageKey === undefined) {
       return;
     }
 
+    const pageNames = pageKey === '' ? [] : pageKey.split(',');
     const dashboardNames = dashboardKey === '' ? [] : dashboardKey.split(',');
     const folderNames = folderKey === '' ? [] : folderKey.split(',');
     // Dedupe so a uid starred as both kinds can't occupy two cap slots or render twice
     const names = [...new Set([...dashboardNames, ...folderNames])].sort().slice(0, STARRED_NAV_CAP);
 
-    if (names.length === 0) {
+    if (names.length === 0 && pageNames.length === 0) {
       dispatch(setStarredItems({ uids: [], items: [] }));
       setHasSynced(true);
       setSearchFailed(false);
@@ -173,15 +197,25 @@ export const useSyncStarredItemsInNav = () => {
     };
     let cancelled = false;
 
-    getGrafanaSearcher()
-      .search({ name: names, kind: kinds })
-      .then((response) => {
+    Promise.allSettled([
+      names.length > 0 ? getGrafanaSearcher().search({ name: names, kind: kinds }) : Promise.resolve(undefined),
+      loadStarredPages(pageNames, STARRED_NAV_CAP - names.length),
+    ])
+      .then(([searchResult, pageResult]) => {
         if (cancelled) {
           return;
         }
+        if (searchResult.status === 'rejected') {
+          throw searchResult.reason;
+        }
+        const response = searchResult.value;
+        const pages = pageResult.status === 'fulfilled' ? pageResult.value : [];
         const items: StarredNavItem[] = [];
-        for (let i = 0; i < response.view.length; i++) {
-          const row = response.view.get(i);
+        for (let i = 0; i < (response?.view.length ?? 0); i++) {
+          const row = response?.view.get(i);
+          if (!row) {
+            continue;
+          }
           if (!starredUidsByKind[row.kind]?.has(row.uid)) {
             continue;
           }
@@ -193,11 +227,15 @@ export const useSyncStarredItemsInNav = () => {
             sortWeight: row.kind === 'folder' ? STARRED_FOLDER_SORT_WEIGHT : undefined,
           });
         }
-        dispatch(setStarredItems({ uids: names, items }));
+        // Do not preserve stale Page metadata when catalog access has been revoked.
+        dispatch(setStarredItems({ uids: [...names, ...pages.map((page) => page.id)], items: [...items, ...pages] }));
         setHasSynced(true);
-        setSearchFailed(false);
+        setSearchFailed(pageResult.status === 'rejected');
       })
       .catch((err) => {
+        if (cancelled) {
+          return;
+        }
         console.error('Failed to sync starred items to nav', err);
         // Resolve the loading state rather than showing it forever
         setHasSynced(true);
@@ -207,7 +245,7 @@ export const useSyncStarredItemsInNav = () => {
     return () => {
       cancelled = true;
     };
-  }, [dashboardKey, folderKey, isLoading, foldersEnabled]);
+  }, [dashboardKey, folderKey, pageKey, isLoading, foldersEnabled, fulfilledTimeStamp]);
 
   return { isLoading: isLoading || !hasSynced, isError: isError || searchFailed };
 };
