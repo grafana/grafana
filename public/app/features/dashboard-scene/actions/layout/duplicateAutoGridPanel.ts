@@ -2,11 +2,16 @@ import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 
 import { type AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getNextPanelId } from '../../utils/getNextPanelId';
 import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { edit } from '../utils/edit';
 
 export function duplicateAutoGridPanel(layout: AutoGridLayoutManager, panel: VizPanel) {
+  if (isRepeatCloneOrChildOf(panel)) {
+    return;
+  }
+
   const grid = layout.state.layout;
   const gridItem = grid.state.children.find((child) => child === panel.parent);
   if (!gridItem) {

@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { CustomVariable, SceneQueryRunner, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -65,6 +65,56 @@ describe('duplicateAutoGridPanel', () => {
     expect(duplicate.parent).toBe(layout);
     expect(duplicate.state.body.parent).toBe(duplicate);
     expect(sidebar.state.undoStack.map((action) => action.description)).toEqual(['Duplicate panel']);
+  });
+
+  it('ignores repeat clones without changing the layout or recording an undo action', () => {
+    const source = new AutoGridItem({
+      key: 'grid-item-2',
+      body: new VizPanel({ key: 'panel-2', pluginId: 'table' }),
+      variableName: 'Values',
+    });
+    const layout = new AutoGridLayout({
+      children: [
+        new AutoGridItem({ body: new VizPanel({ key: 'panel-1', pluginId: 'table' }) }),
+        source,
+        new AutoGridItem({ body: new VizPanel({ key: 'panel-3', pluginId: 'table' }) }),
+      ],
+    });
+    const manager = new AutoGridLayoutManager({ layout });
+    const dashboard = new DashboardScene({
+      isEditing: true,
+      body: manager,
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({
+            name: 'Values',
+            query: 'Value1,Value2',
+            options: [
+              { label: 'Value1', value: 'Value1' },
+              { label: 'Value2', value: 'Value2' },
+            ],
+            value: ['Value1', 'Value2'],
+            text: ['Value1', 'Value2'],
+            isMulti: true,
+          }),
+        ],
+      }),
+    });
+    deactivate = activateFullSceneTree(dashboard);
+    source.performRepeat();
+    const repeatClone = source.state.repeatedPanels![0];
+    expect(repeatClone.state.key).toBe('panel-2-clone-1');
+    expect(repeatClone.parent).toBe(source);
+
+    const childrenBefore = layout.state.children;
+    const repeatsBefore = source.state.repeatedPanels;
+    const undoStackBefore = dashboard.state.sidebar.state.undoStack;
+
+    duplicateAutoGridPanel(manager, repeatClone);
+
+    expect(layout.state.children === childrenBefore).toBe(true);
+    expect(source.state.repeatedPanels === repeatsBefore).toBe(true);
+    expect(dashboard.state.sidebar.state.undoStack === undoStackBefore).toBe(true);
   });
 
   it('selects the duplicated panel', () => {
