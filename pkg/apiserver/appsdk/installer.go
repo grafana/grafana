@@ -2,7 +2,6 @@ package appsdk
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -41,6 +40,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // ManagedKindResolver resolves a kind and version into a resource.Kind instance.
@@ -693,7 +693,7 @@ func (r *defaultInstaller) registerResourceRouteOperation(ws *restful.WebService
 	routeFunc := restful.RouteFunction(func(req *restful.Request, resp *restful.Response) {
 		a, err := r.App()
 		if err != nil {
-			writeCustomRouteError(resp, err)
+			_ = errhttp.Write(req.Request.Context(), err, resp)
 			return
 		}
 		identifier := resource.FullIdentifier{
@@ -712,7 +712,8 @@ func (r *defaultInstaller) registerResourceRouteOperation(ws *restful.WebService
 			Body:               req.Request.Body,
 		})
 		if err != nil {
-			writeCustomRouteError(resp, err)
+			_ = errhttp.Write(req.Request.Context(), err, resp)
+			return
 		}
 	})
 
@@ -762,37 +763,6 @@ func instrumentRouteFunc(verb, group, apiVersion, resourceName, staticScope stri
 			0,
 			time.Since(startTime),
 		)
-	})
-}
-
-func writeCustomRouteError(resp http.ResponseWriter, err error) {
-	code := int32(http.StatusInternalServerError)
-	reason := metav1.StatusReasonInternalError
-	message := err.Error()
-	var details *metav1.StatusDetails
-	var apiStatus apierrors.APIStatus
-	if errors.As(err, &apiStatus) {
-		st := apiStatus.Status()
-		details = st.Details
-		if st.Code != 0 {
-			code = st.Code
-		}
-		if st.Reason != "" {
-			reason = st.Reason
-		}
-		if st.Message != "" {
-			message = st.Message
-		}
-	}
-	resp.Header().Set("Content-Type", "application/json")
-	resp.WriteHeader(int(code))
-	_ = json.NewEncoder(resp).Encode(metav1.Status{
-		TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
-		Status:   metav1.StatusFailure,
-		Code:     code,
-		Reason:   reason,
-		Message:  message,
-		Details:  details,
 	})
 }
 

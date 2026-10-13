@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 type CustomRoute struct {
@@ -169,7 +170,7 @@ func (h *handlerWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Body:               req.Body,
 	})
 	if err != nil {
-		writeCustomRouteError(w, err)
+		_ = errhttp.Write(req.Context(), err, w)
 	}
 }
 
@@ -190,7 +191,7 @@ func GetResourceCallOptionsOpenAPIDefinition() map[string]common.OpenAPIDefiniti
 		ResourceCallOptions{}.OpenAPIModelName(): {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
-					Description: "ExternalNameFoo defines model for ExternalNameFoo.",
+					Description: "GetResourceCallOptions defines a path to custom route",
 					Type:        []string{"object"},
 					Properties: map[string]spec.Schema{
 						"kind": {
