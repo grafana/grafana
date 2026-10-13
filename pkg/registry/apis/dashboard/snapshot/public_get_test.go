@@ -16,6 +16,35 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
+func TestPublicSnapshotLookupRejectsAmbiguousKeys(t *testing.T) {
+	for _, defaultMatch := range []bool{false, true} {
+		t.Run(map[bool]string{false: "matches on separate pages", true: "default namespace match"}[defaultMatch], func(t *testing.T) {
+			first := newBlobTestSnapshot()
+			first.Namespace = "org-2"
+			second := first.DeepCopy()
+			second.Namespace = "org-3"
+			store := grafanarest.NewMockStorage(t)
+			if defaultMatch {
+				first.Namespace = "default"
+				store.On("Get", mock.Anything, first.Name, mock.Anything).Return(first, nil)
+				store.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*first, *second}}, nil).Once()
+			} else {
+				store.On("Get", mock.Anything, first.Name, mock.Anything).Return(nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), first.Name))
+				store.On("List", mock.Anything, mock.MatchedBy(func(opts *internalversion.ListOptions) bool {
+					return opts.Continue == ""
+				})).Return(&dashv0.SnapshotList{ListMeta: metav1.ListMeta{Continue: "next-page"}, Items: []dashv0.Snapshot{*first}}, nil).Once()
+				store.On("List", mock.Anything, mock.MatchedBy(func(opts *internalversion.ListOptions) bool {
+					return opts.Continue == "next-page"
+				})).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*second}}, nil).Once()
+			}
+			ctx := k8srequest.WithNamespace(t.Context(), "default")
+			obj, err := getPublicSnapshot(ctx, store, first.Name, &metav1.GetOptions{})
+			require.True(t, apierrors.IsConflict(err), "expected ambiguous key to be rejected, got object %v and error %v", obj, err)
+			require.Nil(t, obj)
+		})
+	}
+}
+
 func TestPublicSnapshotLookupErrors(t *testing.T) {
 	for _, tc := range []struct {
 		name, namespace string

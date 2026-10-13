@@ -21,12 +21,12 @@ func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, opt
 	// Public GET is already authorized; storage reads must not depend on viewer credentials.
 	lookupCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
 	obj, err := getter.Get(lookupCtx, name, options)
-	if !apierrors.IsNotFound(err) || namespace != "default" {
+	if (err != nil && !apierrors.IsNotFound(err)) || namespace != "default" {
 		return obj, err
 	}
 	lister, ok := getter.(rest.Lister)
 	if !ok {
-		return nil, err
+		return obj, err
 	}
 
 	// Default is a public placeholder, not the snapshot's owning namespace.
@@ -36,6 +36,7 @@ func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, opt
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", name),
 		Limit:         100,
 	}
+	var match *dashv0.Snapshot
 	for {
 		obj, listErr := lister.List(lookupCtx, listOptions)
 		if listErr != nil {
@@ -45,12 +46,24 @@ func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, opt
 		if !ok {
 			return nil, fmt.Errorf("expected SnapshotList, got %T", obj)
 		}
-		if len(list.Items) > 0 {
-			return &list.Items[0], nil
+		for i := range list.Items {
+			if list.Items[i].Name != name {
+				continue
+			}
+			if match != nil {
+				return nil, apierrors.NewConflict(dashv0.SnapshotResourceInfo.GroupResource(), name, fmt.Errorf("snapshot key is ambiguous across namespaces"))
+			}
+			match = list.Items[i].DeepCopy()
 		}
-		// Cross-namespace field filtering can leave empty pages with a continuation token.
+		// Check every page: namespace-local uniqueness does not make a public key unique.
 		if list.Continue == "" {
-			return nil, err
+			if match == nil {
+				if err != nil {
+					return nil, err
+				}
+				return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
+			}
+			return match, nil
 		}
 		if list.Continue == listOptions.Continue {
 			return nil, fmt.Errorf("snapshot pagination did not advance")

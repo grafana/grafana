@@ -186,6 +186,38 @@ func TestSnapshotLegacyStore_Delete_CrossOrg(t *testing.T) {
 	assert.False(t, deleted)
 }
 
+func TestSnapshotLegacyStore_List_Name(t *testing.T) {
+	for _, tc := range []struct {
+		name, namespace string
+		missing         bool
+		count           int
+	}{
+		{name: "global key lookup", count: 1},
+		{name: "same org", namespace: "org-2", count: 1},
+		{name: "other org", namespace: "default"},
+		{name: "deleted key", missing: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service := dashboardsnapshots.NewMockService(t)
+			query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: "snapshot-key"}
+			if tc.missing {
+				service.On("GetDashboardSnapshot", mock.Anything, query).Return(nil, dashboardsnapshots.ErrBaseNotFound)
+			} else {
+				service.On("GetDashboardSnapshot", mock.Anything, query).Return(&dashboardsnapshots.DashboardSnapshot{Key: "snapshot-key", OrgID: 2, Dashboard: simplejson.New()}, nil)
+			}
+			store := &SnapshotLegacyStore{Service: service, Namespacer: authlib.OrgNamespaceFormatter}
+			ctx := k8srequest.WithNamespace(t.Context(), tc.namespace)
+			obj, err := store.List(ctx, &internalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", "snapshot-key"), Limit: 1})
+			require.NoError(t, err)
+			list := obj.(*dashV0.SnapshotList)
+			require.Len(t, list.Items, tc.count)
+			if tc.count != 0 {
+				require.Equal(t, "snapshot-key", list.Items[0].Name)
+			}
+		})
+	}
+}
+
 func TestSnapshotLegacyStore_List_DeleteKey(t *testing.T) {
 	const deleteKey = "abc123"
 
