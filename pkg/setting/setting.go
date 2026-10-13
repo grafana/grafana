@@ -669,9 +669,6 @@ type Cfg struct {
 	// Set to false to let the optimizer choose the index (can be faster for selective filters).
 	DatabaseForceDashboardTitleIndex bool
 
-	// DatabaseForcePermissionRoleActionIndex (MySQL only) forces the permission query to use IDX_permission_role_id_action.
-	DatabaseForcePermissionRoleActionIndex bool
-
 	// Public dashboards
 	PublicDashboardsEnabled bool
 
@@ -1860,11 +1857,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	databaseSection := iniFile.Section("database")
-	permissionIndexSection := cfg.SectionWithEnvOverrides("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
 	cfg.DatabaseRegisterDeprecatedMetrics = databaseSection.Key("register_deprecated_metrics").MustBool(true)
 	cfg.DatabaseForceDashboardTitleIndex = databaseSection.Key("force_dashboard_title_index").MustBool(true)
-	cfg.DatabaseForcePermissionRoleActionIndex = permissionIndexSection.Key("force_permission_role_action_index").MustBool(false)
 
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")

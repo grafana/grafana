@@ -37,7 +37,6 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "admin", cfg.AdminUser)
 		require.Equal(t, "", cfg.RendererCallbackUrl)
 		require.Equal(t, "TLS1.2", cfg.MinTLSVersion)
-		require.False(t, cfg.DatabaseForcePermissionRoleActionIndex)
 	})
 
 	t.Run("default.ini should have no semi-colon commented entries", func(t *testing.T) {
@@ -71,14 +70,12 @@ func TestLoadingSettings(t *testing.T) {
 
 	t.Run("Should be able to override via environment variables", func(t *testing.T) {
 		t.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
-		t.Setenv("GF_DATABASE_FORCE_PERMISSION_ROLE_ACTION_INDEX", "true")
 
 		cfg := NewCfg()
 		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Equal(t, "superduper", cfg.AdminUser)
-		require.True(t, cfg.DatabaseForcePermissionRoleActionIndex)
 		require.Equal(t, filepath.Join(cfg.HomePath, "data"), cfg.DataPath)
 		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
 	})

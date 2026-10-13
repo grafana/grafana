@@ -139,7 +139,7 @@ func ProvideAuthZClients(
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
-				store.NewSQLPermissionStore(sql, tracer, cfg != nil && cfg.DatabaseForcePermissionRoleActionIndex),
+				store.NewSQLPermissionStore(sql, tracer, authCfg.forcePermissionRoleActionIndex),
 			),
 			userPermissionsEvaluator,
 			nil,

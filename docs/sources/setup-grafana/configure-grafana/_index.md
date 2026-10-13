@@ -503,10 +503,6 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 Set to `true` to add metrics and tracing for database queries. The default value is `false`.
 
-#### `force_permission_role_action_index`
-
-For MySQL, set to `true` to force action-filtered AuthZ permission queries to use `IDX_permission_role_id_action`. The default value is `false`. You can override this setting with `GF_DATABASE_FORCE_PERMISSION_ROLE_ACTION_INDEX`.
-
 <hr />
 
 ### `[remote_cache]`
