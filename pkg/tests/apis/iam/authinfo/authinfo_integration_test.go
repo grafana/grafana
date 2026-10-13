@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -380,14 +381,12 @@ func authInfoExistsInUnified(helper *apis.K8sTestHelper, name string) (bool, err
 		Resource:  gvrAuthInfo.Resource,
 		Name:      name,
 	}})
-	if err != nil {
-		return false, err
-	}
-	if rsp.Error != nil {
-		if rsp.Error.Code == http.StatusNotFound {
+	// Not found can come back as a transport error or in the response.
+	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		if result := resource.AsErrorResult(err); result != nil && result.Code == http.StatusNotFound {
 			return false, nil
 		}
-		return false, fmt.Errorf("unexpected unified read error: %v", rsp.Error)
+		return false, fmt.Errorf("unexpected unified read error: %w", err)
 	}
 	return true, nil
 }
