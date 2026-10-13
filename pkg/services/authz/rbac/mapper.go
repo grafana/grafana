@@ -186,6 +186,28 @@ func newDashboardTranslation() translation {
 	return dashTranslation
 }
 
+// Snapshot permissions are unscoped in Grafana RBAC; storage checks must use
+// those actions rather than falling back to K8s-native resource permissions.
+func newSnapshotTranslation() translation {
+	return translation{
+		resource: "snapshots",
+		verbMapping: map[string]string{
+			utils.VerbGet:    "snapshots:read",
+			utils.VerbList:   "snapshots:read",
+			utils.VerbWatch:  "snapshots:read",
+			utils.VerbCreate: "snapshots:create",
+			utils.VerbDelete: "snapshots:delete",
+		},
+		skipScopeOnVerb: map[string]bool{
+			utils.VerbGet:    true,
+			utils.VerbList:   true,
+			utils.VerbWatch:  true,
+			utils.VerbCreate: true,
+			utils.VerbDelete: true,
+		},
+	}
+}
+
 // newNotebookTranslation creates a translation for notebooks. Notebooks have their own
 // notebooks:* actions and a notebooks:uid: scope, but are folder-scoped like dashboards, so
 // their verbs map onto the folder action sets (folders:view/edit/admin) and folder grants
@@ -568,6 +590,7 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
+			"snapshots":     newSnapshotTranslation(),
 			"notebooks":     newNotebookTranslation(),
 			"librarypanels": newLibraryPanelTranslation(),
 			"variables":     newVariableTranslation(),

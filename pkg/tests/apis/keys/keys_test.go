@@ -19,7 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -190,6 +190,14 @@ func TestIntegrationListKeys_RefusesInvalidRequests(t *testing.T) {
 		"a field the endpoint does not read is refused": {
 			method: http.MethodPost, path: namespacedPath(namespace), body: `{"shardSelector":"shard-1"}`,
 			wantStatus: http.StatusBadRequest, wantInBody: "shardSelector",
+		},
+		"a mismatched kind is refused": {
+			method: http.MethodPost, path: namespacedPath(namespace), body: `{"kind":"ListOptions"}`,
+			wantStatus: http.StatusBadRequest, wantInBody: "kind",
+		},
+		"a mismatched apiVersion is refused": {
+			method: http.MethodPost, path: namespacedPath(namespace), body: `{"apiVersion":"meta.k8s.io/v1"}`,
+			wantStatus: http.StatusBadRequest, wantInBody: "apiVersion",
 		},
 		"an unknown field is refused": {
 			method: http.MethodPost, path: namespacedPath(namespace), body: `{"nonsense":true}`,

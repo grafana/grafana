@@ -75,6 +75,30 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []checkParityCase{
+		{
+			name:        "snapshot read with unscoped permission",
+			permissions: []accesscontrol.Permission{{Action: "snapshots:read"}},
+			req:         parityCheckReq(dashboardGroup, "snapshots", "", utils.VerbGet, "snapshot-key", ""),
+			expected:    true,
+		},
+		{
+			name:        "snapshot create with unscoped permission",
+			permissions: []accesscontrol.Permission{{Action: "snapshots:create"}},
+			req:         parityCheckReq(dashboardGroup, "snapshots", "", utils.VerbCreate, "", ""),
+			expected:    true,
+		},
+		{
+			name:        "snapshot delete with unscoped permission",
+			permissions: []accesscontrol.Permission{{Action: "snapshots:delete"}},
+			req:         parityCheckReq(dashboardGroup, "snapshots", "", utils.VerbDelete, "snapshot-key", ""),
+			expected:    true,
+		},
+		{
+			name:        "snapshot delete is not granted by read",
+			permissions: []accesscontrol.Permission{{Action: "snapshots:read"}},
+			req:         parityCheckReq(dashboardGroup, "snapshots", "", utils.VerbDelete, "snapshot-key", ""),
+			expected:    false,
+		},
 		// -- direct resource grants -----------------------------------------
 		{
 			name:        "dashboard get with matching uid grant",
@@ -395,6 +419,18 @@ func TestIntegrationRBACParityList(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []listParityCase{
+		{
+			name:        "snapshots with unscoped read permission",
+			permissions: []accesscontrol.Permission{{Action: "snapshots:read"}},
+			req:         parityListReq(dashboardGroup, "snapshots", "", utils.VerbList),
+			expected:    parityListResult{All: true},
+		},
+		{
+			name:        "snapshots without read permission",
+			permissions: []accesscontrol.Permission{{Action: "snapshots:create"}},
+			req:         parityListReq(dashboardGroup, "snapshots", "", utils.VerbList),
+			expected:    parityListResult{},
+		},
 		{
 			name: "dashboards with object and folder grants",
 			permissions: []accesscontrol.Permission{
@@ -1416,6 +1452,7 @@ func permissionToTuples(subject string, perm accesscontrol.Permission) ([]*openf
 		for _, candidate := range []string{
 			common.KindDashboards,
 			common.KindNotebooks,
+			common.KindSnapshots,
 			common.KindTeams,
 			common.KindUsers,
 			common.KindFolders,
