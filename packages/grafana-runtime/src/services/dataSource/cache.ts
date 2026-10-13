@@ -81,7 +81,7 @@ export function awaitFill(): Promise<void> {
     } catch (error) {
       // When a newer snapshot filled the cache meanwhile, this failure no longer matters.
       if (version === snapshotVersion) {
-        logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'boot', source: from.kind });
+        logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'fill', source: from.kind });
         throw new DataSourceListFetchError(error);
       }
     } finally {
