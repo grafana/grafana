@@ -9,8 +9,13 @@ import {
   getNextRefId,
   type ScopedVars,
 } from '@grafana/data';
-import { config, isExpressionReference, reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  config,
+  isExpressionReference,
+  reportInteraction,
+  getDataSourceInstance,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import {
   SceneDataTransformer,
   SceneObjectBase,
