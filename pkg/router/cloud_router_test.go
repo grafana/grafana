@@ -562,37 +562,6 @@ func TestProvideCloudRoutesLoaderFactory_PluginsWithoutTokenVerificationConfig(t
 	require.NotNil(t, loader)
 }
 
-func TestProvideCloudRoutesLoaderFactory_LegacyAggregateSettings(t *testing.T) {
-	for _, name := range []string{"baas_apiserver", "cloud_app_platform_apiserver"} {
-		for _, fromEnv := range []bool{false, true} {
-			t.Run(fmt.Sprintf("%s/env=%t", name, fromEnv), func(t *testing.T) {
-				cfg := cfgWithCloudRouterSection(t, map[string]string{
-					"cap_token":          "token",
-					"token_exchange_url": "https://exchange.invalid",
-				})
-				values := map[string]string{"url": "https://old.invalid", "audience": "legacy", "group_regex": "*.ext.grafana.app", "insecure": "true"}
-				for key, value := range values {
-					if fromEnv {
-						t.Setenv(setting.EnvKey(cloudRouterSection, name+"."+key), value)
-					} else {
-						cfg.Raw.Section(cloudRouterSection).Key(name + "." + key).SetValue(value)
-					}
-				}
-				result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-				require.NoError(t, err)
-				loader := result.(*cloudLoader)
-				require.Len(t, loader.aggregateTargets, 1)
-				target := loader.aggregateTargets[0]
-				require.Equal(t, name, target.name)
-				require.Equal(t, "https://old.invalid", target.base.String())
-				require.True(t, matchesAnyPattern("test.ext.grafana.app", target.patterns))
-				require.False(t, matchesAnyPattern("other.grafana.app", target.patterns))
-				require.True(t, target.proxyTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify)
-			})
-		}
-	}
-}
-
 func TestCloudLoaderAggregateSectionPriority(t *testing.T) {
 	newUpstream := func(version string) *httptest.Server {
 		upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

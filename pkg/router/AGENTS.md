@@ -225,16 +225,15 @@ priority order. Repeating a section name merges its keys; it does not create ano
 Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
 the corresponding section must contain at least one nonempty setting (for example `audience`)
 in the INI configuration, because Grafana's config loader drops empty sections.
-The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` settings
-remain supported during rollout, including environment overrides. New sections take priority; a
-section with the same target name replaces the entire legacy target (an empty URL disables it).
-Legacy targets keep their previous relative priority: cloud app platform before BaaS.
+The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys are no
+longer read. A deployment that still sets them gets no aggregate target, so configure
+`[router.aggregate.<name>]` sections instead.
 
 | Key | Meaning |
 | --- | --- |
 | `url` | Target base URL. Unset skips the target. |
 | `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
-| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. Not read from the legacy `[cloud_router]` keys. |
+| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
 | `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
 | `ca_file`, `insecure` | Per-target TLS settings. |
