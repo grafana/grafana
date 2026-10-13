@@ -26,8 +26,8 @@ cards:
       href: ./grafanactl
       title: grafanactl CLI (deprecated)
   title_class: pt-0 lh-1
-title: Introduction to the Grafana CLI
-menuTitle: Grafana CLI
+title: Introduction to the Grafana CLI tools
+menuTitle: gcx CLI
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/ai-tools/grafana-cli/
 aliases:
@@ -35,7 +35,7 @@ aliases:
   - ../as-code/observability-as-code/grafana-cli/
 ---
 
-# Introduction to Grafana CLI tools
+# Introduction to the Grafana CLI tools
 
 Grafana command-line tools are designed to simplify interaction with Grafana instances. You can authenticate, manage multiple environments, and perform administrative tasks through the Grafana REST API, all from the terminal. Whether you're automating workflows in CI/CD pipelines or switching between staging and production environments, the Grafana CLI tools provide a flexible and efficient way to manage your Grafana setup as code.
 

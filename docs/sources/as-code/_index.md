@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
     - cloud
-menuTitle: As code and Provisioning
+menuTitle: As code and provisioning
 title: Deploy, configure and provision Grafana with as-code workflows
 hero:
   title: Configure and provision Grafana with as-code workflows
@@ -60,7 +60,13 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/
 
 ---
 
-# Overview of Provisioning and as Code
+{{< admonition type="note" >}}
+
+Looking for `gcx`? Have a look at the new [AI tools](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools) section!
+
+{{< /admonition >}}
+
+# Overview of as code and provisioning
 
 **Provisioning and as code** let you apply code management best practices to your observability resources. By representing Grafana resources as code, you can integrate them into existing infrastructure-as-code workflows and apply standard development practices. Instead of manually configuring dashboards or settings through the Grafana UI, you can:
 
@@ -77,11 +83,7 @@ For basic configuration provisioning refer to [Provision Grafana](https://grafan
 
 ## Explore
 
-{{< admonition type="note" >}}
-
-Most of the tools defined here can be used with one another.
-
-{{< /admonition >}}
+Explore the available as code tools. Most can be used with one another.
 
 {{< card-grid key="cards" type="simple" >}}
 
