@@ -11,11 +11,13 @@ import (
 	"testing"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	krequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -237,7 +239,7 @@ func TestProxyPathFromRequest(t *testing.T) {
 	}
 }
 
-func TestSubProxyREST_RemoteRouteAuthorization(t *testing.T) {
+func TestSubProxyREST_RouteAuthorization(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		allowed bool
@@ -265,12 +267,11 @@ func TestSubProxyREST_RemoteRouteAuthorization(t *testing.T) {
 			b := newProxyTestBuilder(provider)
 			b.pluginJSON = plugins.JSONData{ID: "prometheus", Routes: []*plugins.Route{{Method: "POST", Path: "api/v1/query", ReqAction: "datasources:query"}}}
 			checks := 0
-			b.proxyDeps.RouteAccessChecker = func(ctx context.Context, who identity.Requester, uid string, route *plugins.Route) (bool, error) {
+			b.accessClient = proxyAccessClient{check: func(ctx context.Context, who authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 				checks++
-				require.Equal(t, "ds-1", uid)
-				require.Equal(t, "datasources:query", route.ReqAction)
-				return tc.allowed, tc.err
-			}
+				require.Equal(t, authlib.CheckRequest{Namespace: "stacks-11", Group: "test.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Verb: "datasources:query"}, req)
+				return authlib.CheckResponse{Allowed: tc.allowed}, tc.err
+			}}
 			resolved := 0
 			resolvedDeps := b.proxyDeps
 			b.proxyDeps = &ProxyDependencies{Resolve: func(ctx context.Context, req *http.Request) (*ProxyDependencies, error) {
@@ -281,7 +282,7 @@ func TestSubProxyREST_RemoteRouteAuthorization(t *testing.T) {
 			if !tc.allowed {
 				who.Permissions = map[int64]map[string][]string{1: {"datasources:query": {"datasources:*"}}}
 			}
-			ctx := identity.WithRequester(t.Context(), who)
+			ctx := identity.WithRequester(krequest.WithNamespace(t.Context(), "stacks-11"), who)
 			handler, err := (&subProxyREST{builder: b, transports: newProxyTransportCache(256)}).Connect(ctx, "ds-1", nil, &resourceMockResponder{})
 			require.NoError(t, err)
 			rec := httptest.NewRecorder()
