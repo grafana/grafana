@@ -104,8 +104,9 @@ func TestMapperRegistry_DatasourceEnumeration(t *testing.T) {
 	assert.Empty(t, reg.ResourceMappings("query.grafana.app"))
 	assert.Empty(t, reg.ResourceMappings("loki.datasource.grafana.app"))
 
-	var resources []string
-	for _, mapping := range reg.ResourceMappings("datasource.grafana.app") {
+	mappings := reg.ResourceMappings("datasource.grafana.app")
+	resources := make([]string, 0, len(mappings))
+	for _, mapping := range mappings {
 		resources = append(resources, mapping.APIResource)
 	}
 	assert.ElementsMatch(t, []string{"datasources", "datasources/query", "datasources/caching"}, resources)
@@ -114,7 +115,7 @@ func TestMapperRegistry_DatasourceEnumeration(t *testing.T) {
 	reg.(mapper)["loki.datasource.grafana.app"] = map[string]translation{
 		"custom": newResourceTranslation("custom", "uid", false, nil),
 	}
-	mappings := reg.ResourceMappings("loki.datasource.grafana.app")
+	mappings = reg.ResourceMappings("loki.datasource.grafana.app")
 	require.Len(t, mappings, 1)
 	assert.Equal(t, "custom", mappings[0].APIResource)
 }
