@@ -322,11 +322,13 @@ describe('getQueryFilter', () => {
       { refId: 'B', datasource: { uid: 'loki-uid' } },
       { refId: 'C', datasource: legacyStringDs('loki-uid') },
       { refId: 'D', datasource: legacyStringDs('loki') },
-      { refId: 'E', datasource: { uid: 'elastic-uid' } },
-      { refId: 'F', datasource: legacyStringDs('elastic-uid') },
+      { refId: 'E', datasource: { uid: 'loki' } },
+      { refId: 'F', datasource: { uid: 'elastic-uid' } },
+      { refId: 'G', datasource: legacyStringDs('elastic-uid') },
+      { refId: 'H', datasource: { uid: 'elastic' } },
     ];
 
-    expect(queries.filter(getQueryFilter(loki)).map((q) => q.refId)).toEqual(['A', 'B', 'C', 'D']);
+    expect(queries.filter(getQueryFilter(loki)).map((q) => q.refId)).toEqual(['A', 'B', 'C', 'D', 'E']);
   });
 
   it('keeps only queries with no datasource when there is no root datasource', () => {
