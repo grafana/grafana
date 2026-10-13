@@ -8,15 +8,27 @@ export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alert
 
 export const shouldUseRulesAPIV2 = () => config.featureToggles['alerting.rulesAPIV2'] ?? false;
 
-export const shouldUseAlertingListViewV2 = () => {
-  const previewToggleValue = getPreviewToggle('alertingListViewV2');
+/**
+ * Whether the new list view is turned on for this instance. When it's off, everyone gets the old list,
+ * whatever they picked with the "use new / previous experience" button.
+ */
+export const isAlertingListViewV2Allowed = () => config.featureToggles.alertingListViewV2 ?? false;
 
-  // If the user has set a preference via the preview toggle, it takes precedence
-  if (previewToggleValue !== undefined) {
-    return previewToggleValue;
+export const shouldShowAlertingListViewV2PreviewToggle = () =>
+  (config.featureToggles.alertingListViewV2PreviewToggle ?? false) && isAlertingListViewV2Allowed();
+
+/**
+ * Whether the rule list, and the pages that link to it, should use the new list view.
+ * The old list view is deprecated and will be removed in a future release; this goes away with it.
+ */
+export const shouldUseAlertingListViewV2 = () => {
+  if (!isAlertingListViewV2Allowed()) {
+    return false;
   }
 
-  return config.featureToggles.alertingListViewV2 ?? false;
+  // Someone who went back to the old list with the "previous experience" button stays on it,
+  // even after that button is no longer offered to them.
+  return getPreviewToggle('alertingListViewV2') ?? true;
 };
 
 export const shouldAllowRecoveringDeletedRules = () =>

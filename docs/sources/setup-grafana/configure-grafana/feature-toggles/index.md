@@ -34,6 +34,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled | Yes                |
 | `reportingHeaderSettings`                    | Enables configuration of PDF report settings                                                                                        |                    |
 | `reportingFooterSettings`                    | Enables the configurable footer settings for PDF reports                                                                            |                    |
+| `grafana.newPanelQueryErrorsUI`              | Enables a new UI for query errors and notices                                                                                       | Yes                |
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                           | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                 |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
@@ -60,10 +61,13 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `lokiLabelNamesQueryApi`                     | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                             |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                    | Yes                |
+| `otelLogsFormatting`                         | Applies OTel formatting templates to displayed logs                                                                                 | Yes                |
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
 | `panelTimeSettings`                          | Enables a new panel time settings drawer                                                                                            | Yes                |
+| `inlineLogDetailsNoScrolls`                  | Enables an inline version of Log Details that creates no new scrolls                                                                | Yes                |
+| `lokiAlignedQuerySplitting`                  | Aligns query splitting chunks with UTC midnight                                                                                     | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |

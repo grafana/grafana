@@ -1,10 +1,12 @@
 import * as z from 'zod';
 
+import { t } from '@grafana/i18n';
 import { sceneUtils } from '@grafana/scenes';
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 
 import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../../analytics/types';
 import { notebookResourceFor } from '../../api/notebookResource';
+import { NOTEBOOK_EDIT_KIND } from '../../scene/NotebookEditHistory';
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { isEmptyMarkdown } from '../../scene/layout-notebook/cellEmptiness';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
@@ -128,9 +130,28 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       // edited, which a spec that fails to rebuild must not leave behind.
       scene.enterEditModeForDocumentWrite(NOTEBOOK_EDIT_SESSION_SOURCE.ASSISTANT);
 
-      scene.setState({
+      // Closes out any cell or title edit still coalescing, so it lands as its own undo step under
+      // this one instead of being folded into (or lost under) the whole-document swap.
+      scene.state.body.commitPendingEdits();
+      scene.commitTitleEdit();
+
+      const previousState = scene.state;
+      const newState = {
         ...sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }),
         overlay: undefined,
+      };
+
+      scene.editHistory.execute({
+        label: t('notebook.mutation-api.apply-spec.undo-label', 'Assistant edit'),
+        // Known simplification: a whole-spec apply can add, remove and move several cells at once,
+        // which EDIT doesn't really mean ("a cell that was already there, changed"). Attributing it
+        // correctly needs a before/after cell diff to tell an actual add/remove/move apart from a
+        // cell that only shifted because a neighbor was added or removed — left for a follow-up
+        // rather than done here. For now this just undercounts cellsAdded/cellsRemoved/cellsMoved
+        // for an assistant-written session; editCount itself is still right.
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
+        perform: () => scene.setState({ ...newState, uid: scene.state.uid }),
+        undo: () => scene.setState({ ...previousState, uid: scene.state.uid }),
       });
 
       let appliedNotebook: NotebookSpec | undefined;
