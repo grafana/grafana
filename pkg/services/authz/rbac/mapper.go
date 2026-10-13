@@ -114,7 +114,8 @@ type MapperRegistry interface {
 	GetAPIResourceName(group, resource string) (string, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
-	// ResourceMappings returns all translations for the given group with their API resource names.
+	// ResourceMappings returns registered translations with their API resource names.
+	// Request aliases are resolved by Get, not included in this enumeration.
 	ResourceMappings(group string) []ResourceMapping
 	// GetGroups returns all registered group names
 	GetGroups() []string
@@ -739,30 +740,9 @@ func NewMapperRegistry() MapperRegistry {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, nil),
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false, nil),
 		},
-		"query.grafana.app": {
-			"query": translation{
-				resource:  "datasources",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbCreate: "datasources:query",
-				},
-				folderSupport:   false,
-				skipScopeOnVerb: nil,
-			},
-		},
 		"datasource.grafana.app": {
 			// Unified storage keeps every datasource type under this group
 			"datasources": newDatasourceQueryTranslation(),
-			// duplicate the query group here
-			"query": translation{
-				resource:  "datasources",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbCreate: "datasources:query",
-				},
-				folderSupport:   false,
-				skipScopeOnVerb: nil,
-			},
 			"datasources/query": translation{
 				resource:  "datasources",
 				attribute: "uid",
@@ -875,7 +855,7 @@ func newPermissionsDelegationTranslation(action string) Mapping {
 }
 
 func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
-	group = datasourcek8s.AuthorizationGroup(group, resource)
+	group, resource, subresource = datasourcek8s.AuthorizationResource(group, resource, subresource)
 	// Delegation checks name the RBAC action being delegated as the subresource
 	// of the permissions pseudo-resource. The actions are open-ended, so the
 	// translation is built from the request instead of the static table. Only
@@ -905,8 +885,12 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 }
 
 func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
-	baseResource, _, _ := strings.Cut(resource, "/")
-	group = datasourcek8s.AuthorizationGroup(group, baseResource)
+	baseResource, subresource, _ := strings.Cut(resource, "/")
+	group, baseResource, subresource = datasourcek8s.AuthorizationResource(group, baseResource, subresource)
+	resource = baseResource
+	if subresource != "" {
+		resource += "/" + subresource
+	}
 	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return "", false
@@ -946,8 +930,6 @@ func (m mapper) GetAll(group string) []Mapping {
 }
 
 func (m mapper) ResourceMappings(group string) []ResourceMapping {
-	originalGroup := group
-	group = datasourcek8s.AuthorizationGroup(group, "datasources")
 	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil
@@ -956,10 +938,6 @@ func (m mapper) ResourceMappings(group string) []ResourceMapping {
 	resources := m[groupKey]
 	mappings := make([]ResourceMapping, 0, len(resources))
 	for apiResource, t := range resources {
-		baseResource, _, _ := strings.Cut(apiResource, "/")
-		if datasourcek8s.AuthorizationGroup(originalGroup, baseResource) != group {
-			continue
-		}
 		mapping := t
 		mappings = append(mappings, ResourceMapping{
 			APIResource: apiResource,

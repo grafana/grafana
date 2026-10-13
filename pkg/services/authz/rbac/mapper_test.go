@@ -15,12 +15,10 @@ import (
 // Test-only wildcard pattern; not used in the real mapper.
 const testWildcardPattern = "*.test.grafana.app"
 
-// TestMapperRegistry_DatasourceWildcard verifies the real mapper's *.datasource.grafana.app entry.
-// Generic wildcard behavior (match + deny cases) is covered by TestMapperRegistry_WildcardGroup.
-func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
+func TestMapperRegistry_DatasourceAliases(t *testing.T) {
 	reg := NewMapperRegistry()
 
-	// Real config: groups matching *.datasource.grafana.app get the datasources mapping
+	// Plugin API groups resolve to the shared datasource permissions.
 	for _, group := range []string{"loki.datasource.grafana.app", "mimir.datasource.grafana.app"} {
 		mapping, ok := reg.Get(group, "datasources", "")
 		require.True(t, ok, "Get(%q, \"datasources\") should find mapping", group)
@@ -35,12 +33,11 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "datasources:query", action)
 
-		// Plugin groups expose datasources and its two subresources, not the old query API alias.
-		all := reg.GetAll(group)
-		require.Len(t, all, 3)
+		// Aliases are accepted for requests but are not registered groups.
+		assert.Empty(t, reg.GetAll(group))
 	}
 
-	// Security: wildcard-matched group must not resolve to resources from other groups
+	// Plugin groups must not resolve to resources from other groups
 	_, ok := reg.Get("loki.datasource.grafana.app", "dashboards", "")
 	assert.False(t, ok, "Get(datasource group, \"dashboards\") must not return a mapping")
 }
@@ -74,6 +71,59 @@ func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
 	action, ok := query.Action(utils.VerbCreate)
 	require.True(t, ok)
 	assert.Equal(t, "datasources:query", action)
+}
+
+func TestMapperRegistry_QueryAliases(t *testing.T) {
+	reg := NewMapperRegistry()
+	canonical, ok := reg.Get("datasource.grafana.app", "datasources", "query")
+	require.True(t, ok)
+
+	for _, group := range []string{"query.grafana.app", "datasource.grafana.app"} {
+		t.Run(group, func(t *testing.T) {
+			alias, ok := reg.Get(group, "query", "")
+			require.True(t, ok)
+			assert.Equal(t, canonical, alias)
+			assert.Equal(t, "datasources:uid:ds1", alias.Scope("ds1"))
+			for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch,
+				utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+				_, ok := alias.Action(verb)
+				assert.False(t, ok, "query must not grant verb %q", verb)
+			}
+			name, ok := reg.GetAPIResourceName(group, "query")
+			require.True(t, ok)
+			assert.Equal(t, "datasources/query", name)
+
+			_, ok = reg.Get(group, "query", "caching")
+			assert.False(t, ok, "query aliases must not accept subresources")
+		})
+	}
+	for _, group := range []string{"loki.datasource.grafana.app", "dashboard.grafana.app"} {
+		_, ok := reg.Get(group, "query", "")
+		assert.False(t, ok, "standalone query must not resolve in %q", group)
+	}
+	_, ok = reg.Get("query.grafana.app", "datasources", "query")
+	assert.False(t, ok)
+}
+
+func TestMapperRegistry_DatasourceEnumeration(t *testing.T) {
+	reg := NewMapperRegistry()
+	assert.NotContains(t, reg.GetGroups(), "query.grafana.app")
+	assert.Empty(t, reg.ResourceMappings("query.grafana.app"))
+	assert.Empty(t, reg.ResourceMappings("loki.datasource.grafana.app"))
+
+	var resources []string
+	for _, mapping := range reg.ResourceMappings("datasource.grafana.app") {
+		resources = append(resources, mapping.APIResource)
+	}
+	assert.ElementsMatch(t, []string{"datasources", "datasources/query", "datasources/caching"}, resources)
+
+	// A plugin's own registered resources must not be replaced with shared datasource mappings.
+	reg.(mapper)["loki.datasource.grafana.app"] = map[string]translation{
+		"custom": newResourceTranslation("custom", "uid", false, nil),
+	}
+	mappings := reg.ResourceMappings("loki.datasource.grafana.app")
+	require.Len(t, mappings, 1)
+	assert.Equal(t, "custom", mappings[0].APIResource)
 }
 
 // App plugin settings are stored as plugins.grafana.app/app/{pluginID}, so the
@@ -729,7 +779,7 @@ func TestGetAPIResourceName(t *testing.T) {
 			require.True(t, ok)
 			require.Equal(t, resource, name)
 		}
-		mappings := registry.ResourceMappings("loki.datasource.grafana.app")
+		mappings := registry.ResourceMappings("datasource.grafana.app")
 		require.Len(t, mappings, 3)
 		for _, mapping := range mappings {
 			_, ok := registry.GetAPIResourceName("loki.datasource.grafana.app", mapping.APIResource)
