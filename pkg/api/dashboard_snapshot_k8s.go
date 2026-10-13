@@ -172,6 +172,14 @@ func (hs *HTTPServer) deleteSnapshotFromAPI(c *contextmodel.ReqContext, key stri
 	if err != nil {
 		return snapshotAPIError(err)
 	}
+	// The compatibility response includes the SQL ID; unified snapshots have no equivalent.
+	var legacyID int64
+	if !byDeleteKey && hs.dashboardsnapshotsService != nil {
+		snap, err := hs.dashboardsnapshotsService.GetDashboardSnapshot(ctx, &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key})
+		if err == nil && snap != nil {
+			legacyID = snap.ID
+		}
+	}
 	req := snapshotRequest(client, http.MethodDelete, namespace)
 	if byDeleteKey {
 		req = req.Name("delete").SubResource(key)
@@ -183,7 +191,7 @@ func (hs *HTTPServer) deleteSnapshotFromAPI(c *contextmodel.ReqContext, key stri
 	}
 	result := util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches."}
 	if !byDeleteKey {
-		result["id"] = int64(0)
+		result["id"] = legacyID
 	}
 	return response.JSON(http.StatusOK, result)
 }

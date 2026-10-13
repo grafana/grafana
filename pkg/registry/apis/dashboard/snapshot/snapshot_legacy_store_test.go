@@ -148,24 +148,26 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		assert.Equal(t, "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey, receivedReq.URL.Path)
 	})
 
-	t.Run("wrapper already deleted from stored host", func(t *testing.T) {
-		store := makeStore(t, "https://snapshots.example.com/api/snapshots-delete/"+deleteKey)
-		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, "https://snapshots.example.com/new/delete/path")
+	t.Run("wrapper already deleted from stored endpoint", func(t *testing.T) {
+		deleteURL := "https://snapshots.example.com/api/snapshots-delete/" + deleteKey
+		store := makeStore(t, deleteURL)
+		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, deleteURL)
 		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.True(t, deleted)
 	})
 
-	t.Run("wrapper deleted from a different host", func(t *testing.T) {
+	t.Run("wrapper deleted from a different path on the same host", func(t *testing.T) {
 		setExternalSnapshotsK8SAPIPushToggle(t, false)
 		called := false
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			called = true
+			require.Equal(t, "/old/api/snapshots-delete/"+deleteKey, r.URL.Path)
 			w.WriteHeader(http.StatusOK)
 		}))
 		defer server.Close()
-		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey)
-		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, "https://new.example.com/api/snapshots-delete/"+deleteKey)
+		store := makeStore(t, server.URL+"/old/api/snapshots-delete/"+deleteKey)
+		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, server.URL+"/new/api/snapshots-delete/"+deleteKey)
 		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.True(t, deleted)
