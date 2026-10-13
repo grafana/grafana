@@ -741,11 +741,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       );
       return false;
     }
+    // Composer is entered by Assistant, so its edit session and period are Assistant's.
+    const source = trigger === 'assistant' || trigger === 'composer' ? 'assistant' : 'user';
     if (!this.state.isEditing && mode !== 'view') {
-      this.onEnterEditMode('user', 'restore');
+      this.onEnterEditMode(source, 'restore');
     }
     if (trigger !== 'restore' && mode !== 'view') {
-      this.startEditPeriod(trigger === 'assistant' ? 'assistant' : 'user');
+      this.startEditPeriod(source);
     }
     if (previous === 'edit') {
       this._sidebarBeforeViewing = {

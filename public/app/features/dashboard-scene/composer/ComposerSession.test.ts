@@ -14,6 +14,7 @@ import { canManuallyEditDashboard, getDashboardMode } from '../scene/dashboardMo
 import { isFullDashboardEditing } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { ComposerSession } from './ComposerSession';
 import { canEnterComposer } from './composerAccess';
@@ -136,6 +137,22 @@ describe('entering and leaving Composer', () => {
     scene.setState({ meta: { canEdit: false, canSave: false } });
     expect(canEnterComposer(scene)).toEqual({ ok: false, reason: 'no_permission' });
     expect(canEnterComposer(null)).toEqual({ ok: false, reason: 'not_dashboard' });
+  });
+
+  it('attributes the edit session and period it starts to Assistant', () => {
+    const scene = setup();
+    const sessionStarted = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+    const periodStarted = jest.spyOn(DashboardInteractions, 'editPeriodStarted');
+    try {
+      enter(scene);
+      expect(sessionStarted).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
+      expect(periodStarted).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
+      expect(scene.getEditSessionSource()).toBe('assistant');
+      expect(scene.getEditSessionTracking()).toMatchObject({ edit_source: 'assistant', mode: 'composer' });
+    } finally {
+      sessionStarted.mockRestore();
+      periodStarted.mockRestore();
+    }
   });
 
   it('turns dashboard keybindings off while active and back on after exit', () => {
