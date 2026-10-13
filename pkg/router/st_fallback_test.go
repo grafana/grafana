@@ -13,8 +13,11 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type fallbackRoundTripper func(*http.Request) (*http.Response, error)
@@ -478,24 +481,72 @@ func TestSingleTenantFallbackStackHostAndOrigin(t *testing.T) {
 	}
 }
 
+func requestWithNamespace(method, target, namespace string) *http.Request {
+	req := httptest.NewRequest(method, target, nil)
+	return req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+		Type: types.TypeUser, UserUID: "test-user", OrgID: 1, Namespace: namespace,
+	}))
+}
+
 func TestSingleTenantFallbackDiscovery(t *testing.T) {
-	for _, path := range []string{"/apis", "/apis/", "/apis/example", "/apis/example/v1", "/apis/example/v1/", "/openapi/v3", "/openapi/v3/apis/example/v1"} {
-		t.Run(path, func(t *testing.T) {
-			st := newTestSingleTenantFallback(t)
-			st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
-			var calls int
-			st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
-				calls++
-				require.Equal(t, "discovery.example.com", req.URL.Host)
-				require.Equal(t, path, req.URL.Path)
-				return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader("discovery"))}, nil
+	for _, tc := range []struct {
+		name      string
+		namespace string // "" sends no requester
+		root      string // where root discovery goes: a host, "" for a 404
+		group     string // where group discovery goes
+		status    int
+	}{
+		{name: "stack", namespace: "stacks-123", root: "stack.example.com", group: "stack.example.com", status: http.StatusOK},
+		{name: "wildcard", namespace: "*", group: "discovery.example.com", status: http.StatusOK},
+		{name: "not a stack", namespace: "default", group: "discovery.example.com", status: http.StatusOK},
+		{name: "unknown stack", namespace: "stacks-404", group: "discovery.example.com", status: http.StatusOK},
+		{name: "no requester", group: "discovery.example.com", status: http.StatusOK},
+		{name: "lookup failure", namespace: "stacks-500", status: http.StatusServiceUnavailable},
+	} {
+		for _, path := range []string{"/apis", "/apis/", "/apis/example", "/apis/example/v1", "/apis/example/v1/", "/openapi/v3", "/openapi/v3/apis/example/v1"} {
+			t.Run(tc.name+path, func(t *testing.T) {
+				st := newTestSingleTenantFallback(t)
+				st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
+				st.resolveHost = func(_ context.Context, stackID int64) (singleTenantStack, error) {
+					switch stackID {
+					case 123:
+						return singleTenantStack{URL: "https://stack.example.com"}, nil
+					case 500:
+						return singleTenantStack{}, errors.New("gcom unavailable")
+					}
+					return singleTenantStack{}, nil
+				}
+				var forwardedTo []string
+				st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+					forwardedTo = append(forwardedTo, req.URL.Host)
+					require.Equal(t, path, req.URL.Path)
+					return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader("discovery"))}, nil
+				})
+				req := httptest.NewRequest(http.MethodGet, path, nil)
+				if tc.namespace != "" {
+					req = requestWithNamespace(http.MethodGet, path, tc.namespace)
+				}
+				recorder := httptest.NewRecorder()
+				st.ServeHTTP(recorder, req)
+
+				want := tc.group
+				if isRootDiscoveryPath(path) {
+					want = tc.root
+				}
+				switch {
+				case tc.status != http.StatusOK:
+					require.Equal(t, tc.status, recorder.Code)
+					require.Empty(t, forwardedTo)
+				case want == "":
+					require.Equal(t, http.StatusNotFound, recorder.Code)
+					require.Empty(t, forwardedTo)
+				default:
+					require.Equal(t, http.StatusOK, recorder.Code)
+					require.Equal(t, "discovery", recorder.Body.String())
+					require.Equal(t, []string{want}, forwardedTo)
+				}
 			})
-			recorder := httptest.NewRecorder()
-			st.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
-			require.Equal(t, 1, calls)
-			require.Equal(t, http.StatusOK, recorder.Code)
-			require.Equal(t, "discovery", recorder.Body.String())
-		})
+		}
 	}
 }
 

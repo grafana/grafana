@@ -39,7 +39,7 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 	}
 
 	var fallback metav1.APIGroupList
-	if _, err := readDiscovery(req, next, apisPrefix, "application/json", &fallback); err != nil || fallback.Kind != "APIGroupList" {
+	if _, err := readDiscovery(req, r.discoverySource(next), apisPrefix, "application/json", &fallback); err != nil || fallback.Kind != "APIGroupList" {
 		serveCachedDoc(w, req, r.apiGroupList.Load())
 		return
 	}
@@ -48,7 +48,10 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 		groups[group.Name] = group
 	}
 	for name, entry := range *r.snapshot.Load() {
-		groups[name] = entry.group
+		// The source answered for this caller, so it replaces the defaults.
+		if !entry.callerScoped {
+			groups[name] = entry.group
+		}
 	}
 	fallback.Groups = make([]metav1.APIGroup, 0, len(groups))
 	for _, group := range groups {
@@ -61,7 +64,9 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	groups := map[string]apidiscoveryv2.APIGroupDiscovery{}
 	var fallback apidiscoveryv2.APIGroupDiscoveryList
-	if _, err := readDiscovery(req, next, apisPrefix, aggregatedDiscoveryJSON, &fallback); err == nil && fallback.Kind == "APIGroupDiscoveryList" {
+	answered := false
+	if _, err := readDiscovery(req, r.discoverySource(next), apisPrefix, aggregatedDiscoveryJSON, &fallback); err == nil && fallback.Kind == "APIGroupDiscoveryList" {
+		answered = true
 		for _, group := range fallback.Items {
 			groups[group.Name] = group
 		}
@@ -78,9 +83,18 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	fetches := make([]*fetch, 0, len(snapshot))
 	var wg sync.WaitGroup
 	for name, entry := range snapshot {
+		if entry.callerScoped && answered {
+			continue
+		}
 		if entry.discovery != nil {
 			groups[name] = *entry.discovery
 			r.observeDiscovery(name, discoveryProvided)
+			continue
+		}
+		if entry.callerScoped {
+			// The discovery cache is shared, so it must not hold one caller's view.
+			groups[name] = unavailableDiscovery(name, entry)
+			r.observeDiscovery(name, discoveryUnavailable)
 			continue
 		}
 		f := &fetch{name: name}
@@ -151,18 +165,21 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 
 func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	var fallback handler3.OpenAPIV3Discovery
-	if _, err := readDiscovery(req, next, openapiV3Prefix, "application/json", &fallback); err != nil || fallback.Paths == nil {
+	if _, err := readDiscovery(req, r.discoverySource(next), openapiV3Prefix, "application/json", &fallback); err != nil || fallback.Paths == nil {
 		serveCachedDoc(w, req, r.openapiIndex.Load())
 		return
 	}
 	handlers := *r.snapshot.Load()
 	for path := range fallback.Paths {
 		group, _, ok := parseOpenAPIGroupVersionPath(openapiV3Prefix + "/" + path)
-		if _, owned := handlers[group]; ok && owned {
+		if entry, owned := handlers[group]; ok && owned && !entry.callerScoped {
 			delete(fallback.Paths, path)
 		}
 	}
 	for _, entry := range handlers {
+		if entry.callerScoped {
+			continue
+		}
 		for _, gv := range entry.group.Versions {
 			path := "apis/" + gv.GroupVersion
 			fallback.Paths[path] = handler3.OpenAPIV3DiscoveryGroupVersion{

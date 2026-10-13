@@ -146,11 +146,21 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
   that group, and its requests never reach `next`.
+- **Standalone with the ST fallback:** root discovery merges in the same way, but reads from the
+  fallback instead of `next`. The fallback answers it from the requester's own stack, so `/apis` and
+  `/openapi/v3` differ by caller and are built on every request. Only a requester whose namespace is
+  not a stack (such as `*`) or whose stack doesn't exist gets the defaults: the groups polled from
+  `st_discovery_url`, served from the snapshot without a request. Group and version discovery
+  (`/apis/<g>[/<v>]`, `/openapi/v3/apis/<g>/<v>`) follow the same rule.
+- **Caller-scoped backends** (`CallerScopedDiscovery`, such as ST groups) are only defaults: when
+  the discovery source answers for a request, their groups are left out and the source's view is
+  used. Their aggregated discovery and OpenAPI documents are never cached across callers.
 - **Aggregated discovery** is built without a request per backend per call:
   - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
     keep them from their polls, which use the router's own identity, and they are part of the key.
   - Every other group comes from `discoveryCache`, keyed by backend key with a TTL
     (`discoveryCacheTTL`) and shared across callers, since discovery isn't filtered per caller.
+    Caller-scoped groups never use it.
     A miss is fetched with the caller's credentials. Concurrent callers share one fetch, misses run
     in parallel, and each fetch is bounded by `discoveryFetchTimeout`. Only complete fetches are
     stored.
@@ -216,7 +226,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
-| `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
+| `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
 

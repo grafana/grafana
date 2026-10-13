@@ -21,6 +21,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // LoaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
@@ -285,20 +286,50 @@ func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Reque
 		st.forward(host, parts[1], w, req)
 		return
 	}
-	// The discovery host supplies metadata, never tenant resources or mutations.
-	if st.discoveryHost != nil && (req.Method == http.MethodGet || req.Method == http.MethodHead) && isSingleTenantDiscoveryPath(req.URL.Path) {
-		// Namespaced requests require a nonempty group, so discovery cannot collide with them.
-		st.forward(&singleTenantTarget{url: st.discoveryHost}, "", w, req)
+	// Namespaced requests require a nonempty group, so discovery cannot collide with them.
+	if (req.Method == http.MethodGet || req.Method == http.MethodHead) && isSingleTenantDiscoveryPath(req.URL.Path) {
+		st.serveDiscovery(w, req)
 		return
 	}
 	http.NotFound(w, req)
 }
 
-func isSingleTenantDiscoveryPath(path string) bool {
+// serveDiscovery answers discovery from the requester's own stack. Only a
+// requester whose namespace is not a stack, such as "*", or whose stack does
+// not exist, gets the discovery host's. For those, root discovery is a 404, so
+// the router serves the defaults it already holds from the discovery poll.
+func (st *singleTenantFallback) serveDiscovery(w http.ResponseWriter, req *http.Request) {
+	var host *singleTenantTarget
+	var err error
+	if requester, _ := identity.GetRequester(req.Context()); requester != nil {
+		host, err = st.hostForNamespace(req.Context(), requester.GetNamespace())
+	}
+	switch {
+	case errors.Is(err, errStackLookupThrottled):
+		w.Header().Set("Retry-After", "1")
+		http.Error(w, "stack lookup throttled", http.StatusServiceUnavailable)
+	case err != nil:
+		http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
+	case host != nil:
+		st.forward(host, "", w, req)
+	case st.discoveryHost == nil || isRootDiscoveryPath(req.URL.Path):
+		http.NotFound(w, req)
+	default:
+		// The discovery host supplies metadata, never tenant resources or mutations.
+		st.forward(&singleTenantTarget{url: st.discoveryHost}, "", w, req)
+	}
+}
+
+func isRootDiscoveryPath(path string) bool {
 	path = strings.TrimSuffix(path, "/")
-	if path == apisPrefix || path == openapiV3Prefix {
+	return path == apisPrefix || path == openapiV3Prefix
+}
+
+func isSingleTenantDiscoveryPath(path string) bool {
+	if isRootDiscoveryPath(path) {
 		return true
 	}
+	path = strings.TrimSuffix(path, "/")
 	if rest, ok := strings.CutPrefix(path, apisPrefix+"/"); ok {
 		parts := strings.Split(rest, "/")
 		return (len(parts) == 1 && parts[0] != "") || (len(parts) == 2 && parts[0] != "" && parts[1] != "")
@@ -474,8 +505,9 @@ func backendKeys(backends []Backend) map[string]struct{} {
 }
 
 var (
-	_ RoutesLoader = (*singleTenantFallback)(nil)
-	_ Backend      = (*fallbackBackend)(nil)
+	_ RoutesLoader          = (*singleTenantFallback)(nil)
+	_ Backend               = (*fallbackBackend)(nil)
+	_ CallerScopedDiscovery = (*fallbackBackend)(nil)
 )
 
 type fallbackBackend struct {
@@ -510,6 +542,10 @@ func (f *fallbackBackend) Key() string {
 func (f *fallbackBackend) Load(context.Context) (http.Handler, error) {
 	return f.st, nil
 }
+
+// CallerScopedDiscovery implements [CallerScopedDiscovery]: the discovery
+// host's view of the group is only the default for callers without a stack.
+func (f *fallbackBackend) CallerScopedDiscovery() {}
 
 // maxStackResponseBytes bounds a grafana.com instance response.
 const maxStackResponseBytes = 1 << 20 // 1MB

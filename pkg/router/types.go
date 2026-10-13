@@ -31,6 +31,16 @@ type DiscoveryProvider interface {
 	Discovery() (apidiscoveryv2.APIGroupDiscovery, bool)
 }
 
+// CallerScopedDiscovery is an optional Backend interface for a backend whose
+// discovery depends on the caller. What the router advertises for it is only
+// a default: when the source of unserved groups (the unregistered-group
+// handler, or next) answers root discovery for a request, that answer
+// replaces the default. Its discovery and OpenAPI documents are never cached
+// across callers.
+type CallerScopedDiscovery interface {
+	CallerScopedDiscovery()
+}
+
 type RoutesLoader interface {
 	// Load all known routes
 	// NOTE: this implies that the set of ALL routes is always reasonable to hold in memory
