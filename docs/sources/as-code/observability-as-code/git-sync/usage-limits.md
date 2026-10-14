@@ -130,7 +130,7 @@ Self-managed Grafana instances support multiple organizations. If you're using G
 
 This feature is available starting in Grafana 13.0.4, but not supported until Grafana 13.1.1.
 
-### Configure multiple orgs
+### Configure multiple organizations
 
 If you're setting up Git Sync as code or with Terraform and want to configure multiple organizations, use an aliased provider block per organization.
 
