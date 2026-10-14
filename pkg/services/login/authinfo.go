@@ -20,6 +20,7 @@ type Store interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
 	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
 	GetUserAuthModules(ctx context.Context, userID int64) ([]string, error)
+	GetUsersAuthModules(ctx context.Context, userIDs []int64) (map[int64][]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error

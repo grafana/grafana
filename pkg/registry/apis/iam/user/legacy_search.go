@@ -15,6 +15,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -27,14 +28,16 @@ var _ SearchBackend = (*legacySearchClient)(nil)
 var wildcardsMatcher = regexp.MustCompile(`[\*\?\\]`)
 
 type legacySearchClient struct {
+	authStore  login.Store
 	orgService org.Service
 	tracer     trace.Tracer
 	cfg        *setting.Cfg
 }
 
-func NewUserLegacySearchClient(orgService org.Service, tracer trace.Tracer, cfg *setting.Cfg) *legacySearchClient {
+func NewUserLegacySearchClient(orgService org.Service, authStore login.Store, tracer trace.Tracer, cfg *setting.Cfg) *legacySearchClient {
 	return &legacySearchClient{
 		orgService: orgService,
+		authStore:  authStore,
 		tracer:     tracer,
 		cfg:        cfg,
 	}
@@ -87,6 +90,20 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 		return nil, err
 	}
 
+	userIDs := make([]int64, 0, len(res.OrgUsers))
+	for _, u := range res.OrgUsers {
+		if !c.isHiddenUser(u.Login, signedInUser) {
+			userIDs = append(userIDs, u.UserID)
+		}
+	}
+	var modules map[int64][]string
+	if len(userIDs) > 0 {
+		modules, err = c.authStore.GetUsersAuthModules(ctx, userIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	result := iamv0.NewGetSearchUsersResponse()
 	result.TotalHits = res.TotalCount
 	result.Hits = make([]iamv0.GetSearchUsersUserHit, 0, len(res.OrgUsers))
@@ -95,16 +112,19 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 			continue
 		}
 		result.Hits = append(result.Hits, iamv0.GetSearchUsersUserHit{
-			Name:          u.UID,
-			Title:         u.Name,
-			Email:         u.Email,
-			Login:         u.Login,
-			Role:          u.Role,
-			LastSeenAt:    u.LastSeenAt.Unix(),
-			LastSeenAtAge: util.GetAgeString(u.LastSeenAt),
-			Disabled:      u.IsDisabled,
-			InternalId:    u.UserID,
-			Created:       u.Created.UnixMilli(),
+			Name:                u.UID,
+			Title:               u.Name,
+			Email:               u.Email,
+			Login:               u.Login,
+			Role:                u.Role,
+			LastSeenAt:          u.LastSeenAt.Unix(),
+			LastSeenAtAge:       util.GetAgeString(u.LastSeenAt),
+			Disabled:            u.IsDisabled,
+			Provisioned:         u.IsProvisioned,
+			GrafanaAdmin:        u.IsGrafanaAdmin,
+			ExternalAuthModules: modules[u.UserID],
+			InternalId:          u.UserID,
+			Created:             u.Created.UnixMilli(),
 		})
 	}
 	return result, nil

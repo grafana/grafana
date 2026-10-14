@@ -84,6 +84,12 @@ func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0
 		hit.InternalId = id
 	}
 
+	if b := cell(fieldGrafanaAdmin); len(b) > 0 {
+		hit.GrafanaAdmin = b[0] == 1
+	}
+	if b := cell(fieldProvisioned); len(b) > 0 {
+		hit.Provisioned = b[0] == 1
+	}
 	if b := cell(builders.USER_DISABLED); len(b) > 0 {
 		hit.Disabled = b[0] == 1
 	}
@@ -117,6 +123,8 @@ func parseFieldValueResults(result *resourcepb.ResourceSearchResponse) (*iamv0.G
 		hit.Email, _ = values[builders.USER_EMAIL].(string)
 		hit.Login, _ = values[builders.USER_LOGIN].(string)
 		hit.Role, _ = values[builders.USER_ROLE].(string)
+		hit.GrafanaAdmin, _ = values[fieldGrafanaAdmin].(bool)
+		hit.Provisioned, _ = values[fieldProvisioned].(bool)
 		hit.Disabled, _ = values[builders.USER_DISABLED].(bool)
 		hit.ExternalAuthModules, _ = values[builders.USER_EXTERNAL_AUTH_MODULES].([]string)
 		hit.Created, _ = values[resource.SEARCH_FIELD_CREATED].(int64)
@@ -147,4 +155,23 @@ var bleveEscapeRegex = regexp.MustCompile(`([\\*?])`)
 
 func escapeBleveQuery(query string) string {
 	return bleveEscapeRegex.ReplaceAllString(query, `\$1`)
+}
+
+func searchHasUserFlags(result *resourcepb.ResourceSearchResponse, row int) bool {
+	if result.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		values, err := resource.DecodeSearchValues(result.Fields, result.Rows[row])
+		if err != nil {
+			return false
+		}
+		_, admin := values[fieldGrafanaAdmin].(bool)
+		_, provisioned := values[fieldProvisioned].(bool)
+		return admin && provisioned
+	}
+	found := 0
+	for i, col := range result.Results.Columns {
+		if (col.Name == fieldGrafanaAdmin || col.Name == fieldProvisioned) && len(result.Results.Rows[row].Cells[i]) > 0 {
+			found++
+		}
+	}
+	return found == 2
 }

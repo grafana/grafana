@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http/httptest"
 	"testing"
@@ -63,7 +64,7 @@ func TestSearchFallback(t *testing.T) {
 			dual := dualwrite.ProvideServiceForTests(cfg)
 
 			searchClient := dualwrite.NewSelector[SearchBackend](dual, iamv0.UserResourceInfo.GroupResource(),
-				NewUserLegacySearchClient(legacyService, tracing.NewNoopTracerService(), cfg),
+				NewUserLegacySearchClient(legacyService, emptyAuthStore(t), tracing.NewNoopTracerService(), cfg),
 				NewUnifiedSearchClient(mockClient, cfg))
 			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil)
 
@@ -90,6 +91,8 @@ func TestSearchFallback(t *testing.T) {
 				builders.USER_LAST_SEEN_AT,
 				builders.USER_ROLE,
 				builders.USER_DISABLED,
+				fieldGrafanaAdmin,
+				fieldProvisioned,
 				builders.USER_EXTERNAL_AUTH_MODULES,
 				resource.SEARCH_FIELD_CREATED,
 				resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
@@ -147,6 +150,8 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 				builders.USER_LAST_SEEN_AT:          lastSeenAt,
 				builders.USER_ROLE:                  "Admin",
 				builders.USER_DISABLED:              true,
+				fieldGrafanaAdmin:                   true,
+				fieldProvisioned:                    true,
 				builders.USER_EXTERNAL_AUTH_MODULES: []string{"oauth", "saml"},
 			},
 		},
@@ -159,6 +164,8 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 		builders.USER_LAST_SEEN_AT,
 		builders.USER_ROLE,
 		builders.USER_DISABLED,
+		fieldGrafanaAdmin,
+		fieldProvisioned,
 		builders.USER_EXTERNAL_AUTH_MODULES,
 		resource.SEARCH_FIELD_CREATED,
 		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
@@ -193,6 +200,8 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 			require.Equal(t, lastSeenAt, hit.LastSeenAt)
 			require.Equal(t, "Admin", hit.Role)
 			require.True(t, hit.Disabled)
+			require.True(t, hit.GrafanaAdmin)
+			require.True(t, hit.Provisioned)
 			require.Equal(t, []string{"oauth", "saml"}, hit.ExternalAuthModules)
 			require.Equal(t, createdAt, hit.Created)
 			require.Equal(t, int64(42), hit.InternalId)
@@ -259,7 +268,7 @@ func (m *MockClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, o
 	return nil, nil
 }
 func (m *MockClient) Read(ctx context.Context, in *resourcepb.ReadRequest, opts ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
-	return nil, nil
+	return &resourcepb.ReadResponse{Value: []byte(`{"spec":{}}`)}, nil
 }
 func (m *MockClient) GetBlob(ctx context.Context, in *resourcepb.GetBlobRequest, opts ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
 	return nil, nil
@@ -814,4 +823,76 @@ func TestParseResults(t *testing.T) {
 		assert.Zero(t, sr.Hits[0].LastSeenAt)
 		assert.Empty(t, sr.Hits[0].LastSeenAtAge)
 	})
+}
+
+type flagsSearchClient struct {
+	*MockClient
+	readResponse    *resourcepb.ReadResponse
+	readError       error
+	reads           int
+	lastReadRequest *resourcepb.ReadRequest
+	rejectFields    bool
+}
+
+func (c *flagsSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if c.rejectFields {
+		c.rejectFields = false
+		return &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{Code: 400, Message: `unknown response field "grafanaAdmin"`}}, nil
+	}
+	return c.MockClient.Search(ctx, req, opts...)
+}
+
+func (c *flagsSearchClient) Read(_ context.Context, req *resourcepb.ReadRequest, _ ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	c.reads++
+	c.lastReadRequest = req
+	return c.readResponse, c.readError
+}
+
+func TestUnifiedSearchFlagsCompatibility(t *testing.T) {
+	for _, tt := range []struct {
+		name      string
+		flags     []byte
+		reject    bool
+		response  *resourcepb.ReadResponse
+		err       error
+		wantError bool
+		wantReads int
+		wantFlag  bool
+	}{
+		{name: "indexed true", flags: []byte{1}, wantFlag: true},
+		{name: "indexed false", flags: []byte{0}},
+		{name: "old index", response: &resourcepb.ReadResponse{Value: []byte(`{"spec":{"grafanaAdmin":true,"provisioned":true}}`)}, wantReads: 1, wantFlag: true},
+		{name: "old server", reject: true, response: &resourcepb.ReadResponse{Value: []byte(`{"spec":{"grafanaAdmin":true,"provisioned":true}}`)}, wantReads: 1, wantFlag: true},
+		{name: "transport error", err: errors.New("read failed"), wantError: true, wantReads: 1},
+		{name: "embedded error", response: &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: 503, Message: "read failed"}}, wantError: true, wantReads: 1},
+		{name: "invalid resource", response: &resourcepb.ReadResponse{Value: []byte(`invalid`)}, wantError: true, wantReads: 1},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			response := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: fieldGrafanaAdmin}, {Name: fieldProvisioned}},
+				Rows:    []*resourcepb.ResourceTableRow{{Key: &resourcepb.ResourceKey{Name: "user-1"}, Cells: [][]byte{tt.flags, tt.flags}}},
+			}}
+			client := &flagsSearchClient{MockClient: &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{response}}, readResponse: tt.response, readError: tt.err, rejectFields: tt.reject}
+			backend := NewUnifiedSearchClient(client, &setting.Cfg{})
+			ctx := identity.WithRequester(t.Context(), &legacyuser.SignedInUser{OrgID: 1})
+			result, err := backend.Search(ctx, SearchQuery{Namespace: "stacks-1"})
+			if tt.wantError {
+				require.Error(t, err)
+				require.Nil(t, result)
+			} else {
+				require.NoError(t, err)
+				require.Len(t, result.Hits, 1)
+				require.Equal(t, tt.wantFlag, result.Hits[0].GrafanaAdmin)
+				require.Equal(t, tt.wantFlag, result.Hits[0].Provisioned)
+			}
+			require.Equal(t, tt.wantReads, client.reads)
+			if tt.wantReads > 0 {
+				require.Equal(t, &resourcepb.ResourceKey{Namespace: "stacks-1", Name: "user-1", Group: "iam.grafana.app", Resource: "users"}, client.lastReadRequest.Key)
+			}
+			if tt.reject {
+				require.NotContains(t, client.LastSearchRequest.Fields, fieldGrafanaAdmin)
+				require.NotContains(t, client.LastSearchRequest.Fields, fieldProvisioned)
+			}
+		})
+	}
 }

@@ -10,6 +10,7 @@ SELECT
   u.created,
   u.updated,
   u.is_disabled,
+  u.is_admin,
   u.is_provisioned
 FROM "test_schema"."org_user" AS org_user
 INNER JOIN "test_schema"."user" AS u ON org_user.user_id = u.id

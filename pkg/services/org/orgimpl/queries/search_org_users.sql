@@ -10,6 +10,7 @@ SELECT
   u.created,
   u.updated,
   u.is_disabled,
+  u.is_admin,
   u.is_provisioned
 FROM {{ .Ident .OrgUserTable }} AS org_user
 INNER JOIN {{ .Ident .UserTable }} AS u ON org_user.user_id = u.id

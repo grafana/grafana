@@ -11,6 +11,8 @@ import (
 var iamProvider = resource.NewManifestBackedProvider(iam.LocalManifest().ManifestData)
 
 const (
+	USER_GRAFANA_ADMIN         = "grafanaAdmin"
+	USER_PROVISIONED           = "provisioned"
 	USER_EMAIL                 = "email"
 	USER_LOGIN                 = "login"
 	USER_LAST_SEEN_AT          = "lastSeenAt"

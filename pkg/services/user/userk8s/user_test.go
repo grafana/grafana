@@ -2916,6 +2916,7 @@ func TestUserK8sService_Search_MapsExtendedFields(t *testing.T) {
 					LastSeenAt:    lastSeen.Unix(),
 					LastSeenAtAge: "5 days",
 					Provisioned:   true,
+					GrafanaAdmin:  true,
 					Disabled:      true,
 					InternalId:    42,
 					Created:       created.UnixMilli(),
@@ -2937,6 +2938,7 @@ func TestUserK8sService_Search_MapsExtendedFields(t *testing.T) {
 	assert.Equal(t, map[string]bool{"org.users:write": true}, got.AccessControl)
 	assert.True(t, got.IsDisabled)
 	assert.True(t, got.IsProvisioned)
+	assert.True(t, got.IsAdmin)
 	assert.Equal(t, created.UTC(), got.Created.UTC())
 	assert.Equal(t, lastSeen.UTC(), got.LastSeenAt.UTC())
 }

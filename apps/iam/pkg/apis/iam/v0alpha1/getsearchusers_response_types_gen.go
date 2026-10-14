@@ -12,6 +12,7 @@ type GetSearchUsersUserHit struct {
 	LastSeenAt    int64  `json:"lastSeenAt"`
 	LastSeenAtAge string `json:"lastSeenAtAge"`
 	Provisioned   bool   `json:"provisioned"`
+	GrafanaAdmin  bool   `json:"grafanaAdmin"`
 	Disabled      bool   `json:"disabled"`
 	// Deprecated internal (legacy SQL) id of the user.
 	InternalId int64 `json:"internalId"`

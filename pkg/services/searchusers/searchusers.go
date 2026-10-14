@@ -107,6 +107,8 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 	}
 
 	for _, user := range res.Users {
+		// Org roles belong to org-user responses; the global list has no org role.
+		user.Role = ""
 		user.AvatarURL = dtos.GetGravatarUrl(s.cfg, user.Email)
 		user.AuthLabels = make([]string, 0, len(user.AuthModule))
 		for _, authModule := range user.AuthModule {

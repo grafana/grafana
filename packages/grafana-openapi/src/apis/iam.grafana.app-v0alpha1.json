@@ -3664,6 +3664,7 @@
           "lastSeenAt",
           "lastSeenAtAge",
           "provisioned",
+          "grafanaAdmin",
           "disabled",
           "internalId",
           "created",
@@ -3696,6 +3697,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "grafanaAdmin": {
+            "type": "boolean",
+            "default": false
           },
           "internalId": {
             "description": "Deprecated internal (legacy SQL) id of the user.",

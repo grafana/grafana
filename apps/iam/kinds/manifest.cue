@@ -117,6 +117,7 @@ v0alpha1: {
 	lastSeenAt:    int64
 	lastSeenAtAge: string
 	provisioned:   bool
+	grafanaAdmin:  bool
 	disabled:      bool
 	// Deprecated internal (legacy SQL) id of the user.
 	internalId: int64

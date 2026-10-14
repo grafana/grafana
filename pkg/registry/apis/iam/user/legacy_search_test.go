@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -35,7 +36,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			service := orgtest.NewMockService(t)
-			client := NewUserLegacySearchClient(service, tracing.InitializeTracerForTest(), &setting.Cfg{})
+			client := NewUserLegacySearchClient(service, emptyAuthStore(t), tracing.InitializeTracerForTest(), &setting.Cfg{})
 			requester := &user.SignedInUser{OrgID: 1, UserID: 1}
 			ctx := identity.WithRequester(t.Context(), requester)
 			tt.query.Limit = 10
@@ -86,7 +87,7 @@ func TestUserLegacySearchClient_Pagination(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			service := orgtest.NewMockService(t)
-			client := NewUserLegacySearchClient(service, tracing.InitializeTracerForTest(), &setting.Cfg{})
+			client := NewUserLegacySearchClient(service, emptyAuthStore(t), tracing.InitializeTracerForTest(), &setting.Cfg{})
 			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{OrgID: 1})
 			if tt.err == "" {
 				service.On("SearchOrgUsers", mock.Anything, mock.MatchedBy(func(q *org.SearchOrgUsersQuery) bool {
@@ -120,7 +121,7 @@ func TestUserLegacySearchClient_HiddenUsers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			service := orgtest.NewMockService(t)
 			cfg := &setting.Cfg{HiddenUsers: map[string]struct{}{"hidden": {}}}
-			client := NewUserLegacySearchClient(service, tracing.InitializeTracerForTest(), cfg)
+			client := NewUserLegacySearchClient(service, emptyAuthStore(t), tracing.InitializeTracerForTest(), cfg)
 			ctx := identity.WithRequester(t.Context(), tt.requester)
 			service.On("SearchOrgUsers", mock.Anything, mock.Anything).Return(&org.SearchOrgUsersQueryResult{
 				TotalCount: 2,
@@ -145,7 +146,7 @@ func TestUserLegacySearchClient_HiddenUsers(t *testing.T) {
 
 func TestUserLegacySearchClient_Error(t *testing.T) {
 	service := orgtest.NewMockService(t)
-	client := NewUserLegacySearchClient(service, tracing.InitializeTracerForTest(), &setting.Cfg{})
+	client := NewUserLegacySearchClient(service, emptyAuthStore(t), tracing.InitializeTracerForTest(), &setting.Cfg{})
 	wantErr := errors.New("org search failed")
 	service.On("SearchOrgUsers", mock.Anything, mock.Anything).Return(nil, wantErr).Once()
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{OrgID: 1})
@@ -175,6 +176,43 @@ func TestLegacyUserSortOptions(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, legacyUserSortOptions(tt.sort))
+		})
+	}
+}
+
+func emptyAuthStore(t *testing.T) *authinfotest.MockAuthInfoStore {
+	t.Helper()
+	store := authinfotest.NewMockAuthInfoStore(t)
+	store.On("GetUsersAuthModules", mock.Anything, mock.Anything).Return(map[int64][]string(nil), nil).Maybe()
+	return store
+}
+
+func TestUserLegacySearchClient_ListFields(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		err  error
+	}{
+		{name: "populates list fields"},
+		{name: "auth store error", err: errors.New("auth store unavailable")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			service := orgtest.NewMockService(t)
+			service.On("SearchOrgUsers", mock.Anything, mock.Anything).Return(&org.SearchOrgUsersQueryResult{TotalCount: 2, OrgUsers: []*org.OrgUserDTO{{UserID: 42, UID: "uid", IsGrafanaAdmin: true, IsProvisioned: true}, {UserID: 43, UID: "second"}}}, nil)
+			auth := authinfotest.NewMockAuthInfoStore(t)
+			auth.On("GetUsersAuthModules", mock.Anything, []int64{42, 43}).Return(map[int64][]string{42: {"ldap", "oauth_generic_oauth"}}, tt.err).Once()
+			client := NewUserLegacySearchClient(service, auth, tracing.InitializeTracerForTest(), &setting.Cfg{})
+			result, err := client.Search(identity.WithRequester(t.Context(), &user.SignedInUser{OrgID: 1}), SearchQuery{})
+			if tt.err != nil {
+				require.ErrorIs(t, err, tt.err)
+				require.Nil(t, result)
+				return
+			}
+			require.NoError(t, err)
+			require.Len(t, result.Hits, 2)
+			require.Empty(t, result.Hits[1].ExternalAuthModules)
+			require.True(t, result.Hits[0].GrafanaAdmin)
+			require.True(t, result.Hits[0].Provisioned)
+			require.Equal(t, []string{"ldap", "oauth_generic_oauth"}, result.Hits[0].ExternalAuthModules)
 		})
 	}
 }

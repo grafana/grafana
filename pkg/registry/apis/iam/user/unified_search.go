@@ -2,9 +2,12 @@ package user
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
+	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/selection"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -16,6 +19,8 @@ import (
 )
 
 const (
+	fieldGrafanaAdmin        = builders.USER_GRAFANA_ADMIN
+	fieldProvisioned         = builders.USER_PROVISIONED
 	fieldLogin               = builders.USER_LOGIN
 	fieldEmail               = builders.USER_EMAIL
 	fieldLastSeenAt          = builders.USER_LAST_SEEN_AT
@@ -27,12 +32,17 @@ const (
 
 var _ SearchBackend = (*unifiedSearchClient)(nil)
 
+type userSearchResourceClient interface {
+	resourcepb.ResourceIndexClient
+	Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error)
+}
+
 type unifiedSearchClient struct {
-	client resourcepb.ResourceIndexClient
+	client userSearchResourceClient
 	cfg    *setting.Cfg
 }
 
-func NewUnifiedSearchClient(client resourcepb.ResourceIndexClient, cfg *setting.Cfg) SearchBackend {
+func NewUnifiedSearchClient(client userSearchResourceClient, cfg *setting.Cfg) SearchBackend {
 	return &unifiedSearchClient{client: client, cfg: cfg}
 }
 
@@ -46,7 +56,7 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 				Namespace: query.Namespace,
 			},
 		},
-		Fields:       []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldExternalAuthModules, resource.SEARCH_FIELD_CREATED, legacyIDField},
+		Fields:       []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldGrafanaAdmin, fieldProvisioned, fieldExternalAuthModules, resource.SEARCH_FIELD_CREATED, legacyIDField},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Limit:        query.Limit,
 		Page:         query.Page,
@@ -100,8 +110,38 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 	}
 
 	resp, err := c.client.Search(ctx, req)
+	searchErr := resource.StatusErrorFromResponse(resp.GetError(), err)
+	if searchErr != nil && (strings.Contains(searchErr.Error(), fmt.Sprintf("unknown response field %q", fieldGrafanaAdmin)) || strings.Contains(searchErr.Error(), fmt.Sprintf("unknown response field %q", fieldProvisioned))) {
+		// Older servers reject fields introduced after their deployment.
+		req.Fields = slices.DeleteFunc(req.Fields, func(field string) bool { return field == fieldGrafanaAdmin || field == fieldProvisioned })
+		resp, err = c.client.Search(ctx, req)
+	}
 	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		return nil, err
 	}
-	return parseResults(resp)
+	result, err := parseResults(resp)
+	if err != nil || lookup {
+		return result, err
+	}
+	for i := range result.Hits {
+		hit := &result.Hits[i]
+		if searchHasUserFlags(resp, i) {
+			continue
+		}
+		// Older search servers and indexes do not return these fields. Read the
+		// resource so missing values cannot silently turn admins into non-admins.
+		stored, err := c.client.Read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+			Namespace: query.Namespace, Group: gr.Group, Resource: gr.Resource, Name: hit.Name,
+		}})
+		if err := resource.StatusErrorFromResponse(stored.GetError(), err); err != nil {
+			return nil, err
+		}
+		var obj iamv0.User
+		if err := json.Unmarshal(stored.GetValue(), &obj); err != nil {
+			return nil, fmt.Errorf("decode user %q: %w", hit.Name, err)
+		}
+		hit.GrafanaAdmin = obj.Spec.GrafanaAdmin
+		hit.Provisioned = obj.Spec.Provisioned
+	}
+	return result, nil
 }

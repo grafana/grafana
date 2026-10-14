@@ -141,6 +141,7 @@ type UpdateOrgUserCommand struct {
 }
 
 type OrgUserDTO struct {
+	IsGrafanaAdmin     bool            `json:"-" xorm:"is_admin"`
 	OrgID              int64           `json:"orgId" xorm:"org_id"`
 	UserID             int64           `json:"userId" xorm:"user_id"`
 	UID                string          `json:"uid" xorm:"uid"`

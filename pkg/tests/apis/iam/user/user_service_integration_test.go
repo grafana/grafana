@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"testing"
@@ -10,12 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -376,13 +381,16 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 	}
 
 	type searchUserHit struct {
-		ID         int64     `json:"id"`
-		UID        string    `json:"uid"`
-		Name       string    `json:"name"`
-		Login      string    `json:"login"`
-		Email      string    `json:"email"`
-		Created    time.Time `json:"created"`
-		AuthLabels []string  `json:"authLabels"`
+		Role          string    `json:"role"`
+		IsAdmin       bool      `json:"isAdmin"`
+		IsProvisioned bool      `json:"isProvisioned"`
+		ID            int64     `json:"id"`
+		UID           string    `json:"uid"`
+		Name          string    `json:"name"`
+		Login         string    `json:"login"`
+		Email         string    `json:"email"`
+		Created       time.Time `json:"created"`
+		AuthLabels    []string  `json:"authLabels"`
 	}
 
 	type searchUsersResponse struct {
@@ -441,12 +449,42 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			alphaObj, err := userClient.Resource.Get(ctx, alphaUser.Result.UID, metav1.GetOptions{})
 			require.NoError(t, err)
 			alphaSpec := alphaObj.Object["spec"].(map[string]interface{})
+			alphaSpec["grafanaAdmin"] = true
 			alphaSpec["externalAuthInfo"] = []interface{}{
 				map[string]interface{}{"module": "ldap", "authID": "alpha-ldap"},
 			}
 			alphaObj.Object["spec"] = alphaSpec
 			_, err = userClient.Resource.Update(ctx, alphaObj, metav1.UpdateOptions{})
 			require.NoError(t, err)
+
+			if mode < rest.Mode4 {
+				err := helper.GetEnv().SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+					_, err := sess.Table("user").Where("id = ?", alphaUser.Result.ID).Update(map[string]interface{}{"is_admin": true, "is_provisioned": true})
+					if err != nil {
+						return err
+					}
+					_, err = sess.Insert(&login.UserAuth{UserId: alphaUser.Result.ID, AuthModule: login.LDAPAuthModule, AuthId: "alpha-ldap", Created: time.Now()})
+					return err
+				})
+				require.NoError(t, err)
+			}
+
+			if mode >= rest.Mode4 {
+				// Seed the provisioning flag directly; ordinary users cannot set it.
+				svcCtx := identity.WithServiceIdentityContext(ctx, helper.Org1.Admin.Identity.GetOrgID())
+				key := &resourcepb.ResourceKey{Namespace: userClient.Args.Namespace, Group: gvrUsers.Group, Resource: gvrUsers.Resource, Name: alphaUser.Result.UID}
+				stored, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: key})
+				require.NoError(t, err)
+				require.Nil(t, stored.GetError())
+				var obj map[string]interface{}
+				require.NoError(t, json.Unmarshal(stored.GetValue(), &obj))
+				obj["spec"].(map[string]interface{})["provisioned"] = true
+				value, err := json.Marshal(obj)
+				require.NoError(t, err)
+				updated, err := helper.GetEnv().ResourceClient.Update(svcCtx, &resourcepb.UpdateRequest{Key: key, ResourceVersion: stored.GetResourceVersion(), Value: value})
+				require.NoError(t, err)
+				require.Nil(t, updated.GetError())
+			}
 
 			// Wait for the search index to be populated.
 			time.Sleep(2 * time.Second)
@@ -486,10 +524,35 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 				require.Equal(t, "alpha@example.com", hit.Email)
 				require.Equal(t, alphaUser.Result.ID, hit.ID)
 				require.False(t, hit.Created.IsZero(), "created timestamp should be populated")
-				if mode >= rest.Mode4 {
-					require.Equal(t, []string{"LDAP"}, hit.AuthLabels, "external auth module should map to an auth label")
-				} else {
-					require.Empty(t, hit.AuthLabels, "legacy SQL search does not surface external auth modules")
+				require.Equal(t, []string{"LDAP"}, hit.AuthLabels, "external auth module should map to an auth label")
+				require.Empty(t, hit.Role, "the global list must not report an org role")
+				require.True(t, hit.IsAdmin)
+				require.True(t, hit.IsProvisioned)
+			})
+
+			t.Run("org users preserve role and externally synced status", func(t *testing.T) {
+				cfg := helper.GetEnv().Cfg
+				ldapAuthEnabled := cfg.LDAPAuthEnabled
+				cfg.LDAPAuthEnabled = true
+				t.Cleanup(func() { cfg.LDAPAuthEnabled = ldapAuthEnabled })
+				for _, path := range []string{"/api/org/users?query=alpha", "/api/org/users/search?query=alpha"} {
+					rsp := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: "GET", Path: path}, &json.RawMessage{})
+					require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", rsp.Body)
+					var hits []org.OrgUserDTO
+					if path == "/api/org/users?query=alpha" {
+						require.NoError(t, json.Unmarshal(rsp.Body, &hits))
+					} else {
+						var body struct {
+							OrgUsers []org.OrgUserDTO `json:"orgUsers"`
+						}
+						require.NoError(t, json.Unmarshal(rsp.Body, &body))
+						hits = body.OrgUsers
+					}
+					require.Len(t, hits, 1)
+					require.Equal(t, "Viewer", hits[0].Role)
+					require.True(t, hits[0].IsProvisioned)
+					require.True(t, hits[0].IsExternallySynced)
+					require.Equal(t, []string{"LDAP"}, hits[0].AuthLabels)
 				}
 			})
 

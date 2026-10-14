@@ -722,6 +722,7 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 			Created:       time.UnixMilli(hit.Created),
 			IsDisabled:    hit.Disabled,
 			IsProvisioned: hit.Provisioned,
+			IsAdmin:       hit.GrafanaAdmin,
 			AuthModule:    user.AuthModuleConversion(hit.ExternalAuthModules),
 		})
 	}

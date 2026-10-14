@@ -57,6 +57,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
@@ -102,6 +103,7 @@ func RegisterAPIService(
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
 	legacyAuthInfoStore *authinfoimpl.Store,
+	authInfoStore login.Store,
 	remoteCache remotecache.CacheStorage,
 	legacyWatch *legacywatch.Publisher,
 ) (*IdentityAccessManagementAPIBuilder, error) {
@@ -183,7 +185,7 @@ func RegisterAPIService(
 		dual:                              dual,
 		unified:                           unified,
 		userSearchClient: dualwrite.NewSelector[user.SearchBackend](dual, iamv0.UserResourceInfo.GroupResource(),
-			user.NewUserLegacySearchClient(orgService, tracing, cfg), user.NewUnifiedSearchClient(unified, cfg)),
+			user.NewUserLegacySearchClient(orgService, authInfoStore, tracing, cfg), user.NewUnifiedSearchClient(unified, cfg)),
 		teamSearchClient: dualwrite.NewSelector[team.SearchBackend](dual, iamv0.TeamResourceInfo.GroupResource(),
 			team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), team.NewUnifiedSearchClient(unified)),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
