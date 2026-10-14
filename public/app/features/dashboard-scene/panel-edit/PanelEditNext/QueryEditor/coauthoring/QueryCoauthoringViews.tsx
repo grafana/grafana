@@ -331,21 +331,25 @@ export function QueryCoauthoringExplain({
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <>
-      <QueryCoauthoringHeader onClose={onClose}>
-        <Text variant="body" color="secondary">
-          <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
-        </Text>
-      </QueryCoauthoringHeader>
-      <div className={styles.body}>
-        <Text variant="body">{answer.explanation}</Text>
-        <div className={styles.quickActions}>
-          {answer.followUps.map((question, index) => (
-            <Button key={index} size="sm" variant="secondary" onClick={() => onFollowUp(question)}>
-              {question}
-            </Button>
-          ))}
+      <QueryCoauthoringHeader className={styles.explanationHeader} onClose={onClose}>
+        <div className={styles.headerCopy}>
+          <Text variant="body" color="secondary">
+            <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
+          </Text>
+          <Text variant="body">{answer.explanation}</Text>
         </div>
-      </div>
+      </QueryCoauthoringHeader>
+      {answer.followUps.length > 0 && (
+        <div className={styles.body}>
+          <div className={styles.quickActions}>
+            {answer.followUps.map((question, index) => (
+              <Button key={index} size="sm" variant="secondary" onClick={() => onFollowUp(question)}>
+                {question}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
       <QueryCoauthoringPromptInput
         value={intent}
         placeholder={t('query-editor-coauthoring.follow-up-placeholder', 'Ask a follow up…')}
@@ -359,10 +363,11 @@ export function QueryCoauthoringExplain({
         cursorPosition={cursorPosition}
         onCaretChange={onCaretChange}
       />
-      <div className={styles.footer}>
-        <Button size="sm" variant="secondary" fill="text" onClick={onModify}>
+      <div className={styles.menuActions}>
+        <button type="button" className={styles.menuAction} onClick={onModify}>
+          <Icon name="pen" size="sm" />
           <Trans i18nKey="query-editor-coauthoring.modify-query">Modify this query</Trans>
-        </Button>
+        </button>
       </div>
     </>
   );
