@@ -769,9 +769,6 @@
     }
   },
   "public/app/core/components/OptionsUI/fieldColor.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    },
     "@grafana/require-no-margin": {
       "count": 1
     }
@@ -3230,11 +3227,6 @@
   },
   "public/app/plugins/panel/text/v1/textPanelMigrationHandler.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/timeseries/LineStyleEditor.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },

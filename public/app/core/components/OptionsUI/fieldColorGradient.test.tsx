@@ -1,19 +1,16 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act } from '@testing-library/react';
 import { type JSX } from 'react';
+import { render, screen } from 'test/test-utils';
 
 import { FieldColorModeId } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { FieldColorEditor } from './fieldColor';
 
 // ---------------------------------------------------------------------------
 // Stubs
 // ---------------------------------------------------------------------------
-
-// Enable the feature flag so the Gradient option is not filtered out by the flag guard.
-jest.mock('@grafana/runtime', () => ({
-  config: { featureToggles: { pieChartGradientColorScheme: true } },
-}));
 
 // Replace ColorValueEditor with a lightweight stub so we can assert on the
 // number of color pickers rendered and the value each one receives.
@@ -56,10 +53,7 @@ jest.mock('@grafana/data', () => {
 // ---------------------------------------------------------------------------
 
 function setup(jsx: JSX.Element) {
-  return {
-    user: userEvent.setup(),
-    ...render(jsx),
-  };
+  return render(jsx);
 }
 
 // gradientSupport must be true so the Gradient option is not filtered out of the picker.
@@ -71,6 +65,14 @@ const noopItem = { settings: { gradientSupport: true } } as Parameters<typeof Fi
 // ---------------------------------------------------------------------------
 
 describe('FieldColorEditor — gradient mode', () => {
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.PieChartGradientColorScheme]: true });
+  });
+
+  afterEach(() => {
+    act(() => setTestFlags({}));
+  });
+
   describe('rendering', () => {
     it('renders two color pickers when mode is gradient', () => {
       render(

@@ -1,9 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render, screen } from 'test/test-utils';
 
 import { type StandardEditorContext, type StandardEditorsRegistryItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { type LineStyle } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { LineStyleEditor } from './LineStyleEditor';
 
@@ -18,6 +20,9 @@ const mockItem: StandardEditorsRegistryItem<LineStyle> = {
 };
 
 describe('LineStyleEditor', () => {
+  afterEach(() => {
+    act(() => setTestFlags({}));
+  });
   describe('Fill style selection', () => {
     it('should render with Solid selected when value is undefined', () => {
       const onChange = jest.fn();
@@ -61,20 +66,23 @@ describe('LineStyleEditor', () => {
     });
 
     describe('Accessible fill', () => {
-      let originalEnableColorblindSafePanelOptions: boolean | undefined;
+      it('updates Accessible fill availability when the OpenFeature flag changes', async () => {
+        setTestFlags({ [FlagKeys.EnableColorblindSafePanelOptions]: false });
+        const onChange = jest.fn();
+        render(<LineStyleEditor value={{ fill: 'solid' }} onChange={onChange} context={mockContext} item={mockItem} />);
+        expect(screen.getByRole('radio', { name: 'Solid' })).toBeChecked();
+        expect(screen.queryByRole('radio', { name: 'Accessible' })).not.toBeInTheDocument();
 
-      beforeEach(() => {
-        originalEnableColorblindSafePanelOptions = config.featureToggles.enableColorblindSafePanelOptions;
-      });
+        act(() => setTestFlags({ [FlagKeys.EnableColorblindSafePanelOptions]: true }));
+        await userEvent.click(await screen.findByRole('radio', { name: 'Accessible' }));
 
-      afterEach(() => {
-        config.featureToggles.enableColorblindSafePanelOptions = originalEnableColorblindSafePanelOptions;
+        expect(onChange).toHaveBeenCalledWith({ fill: 'accessible', dash: undefined });
       });
 
       it.each([false, undefined])(
         'does not show the Accessible line fill option when enableColorblindSafePanelOptions is %s',
         (flagValue) => {
-          config.featureToggles.enableColorblindSafePanelOptions = flagValue;
+          setTestFlags(flagValue === undefined ? {} : { [FlagKeys.EnableColorblindSafePanelOptions]: flagValue });
 
           render(
             <LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />
@@ -86,7 +94,7 @@ describe('LineStyleEditor', () => {
       );
 
       it('shows the Accessible line fill option when enableColorblindSafePanelOptions is true', () => {
-        config.featureToggles.enableColorblindSafePanelOptions = true;
+        setTestFlags({ [FlagKeys.EnableColorblindSafePanelOptions]: true });
 
         render(
           <LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />
