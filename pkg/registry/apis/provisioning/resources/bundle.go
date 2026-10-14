@@ -22,27 +22,28 @@ const (
 	BundleMaxFiles = 128
 )
 
-// bundleFilesField is where a Bundle declares its file set. Bundle is a provisioning
-// kind, so this is an ordinary spec field.
-var bundleFilesField = []string{"spec", "files"}
+// bundlePathsField is where a Bundle declares its paths. Bundle is a provisioning kind,
+// so this is an ordinary spec field. The entries are paths rather than files because one
+// of them may be a folder; what they resolve to is reported in status.files.
+var bundlePathsField = []string{"spec", "paths"}
 
 var (
-	// ErrBundleFilesType reports a spec.files value that is not a list of strings.
-	ErrBundleFilesType = errors.New("spec.files must be a list of paths")
+	// ErrBundlePathsType reports a spec.paths value that is not a list of strings.
+	ErrBundlePathsType = errors.New("spec.paths must be a list of paths")
 	// ErrBundleTooManyEntries reports a bundle declaring more than BundleMaxEntries paths.
 	ErrBundleTooManyEntries = fmt.Errorf("a bundle may declare at most %d paths", BundleMaxEntries)
 	// ErrBundleTooManyFiles reports a resolution exceeding BundleMaxFiles.
 	ErrBundleTooManyFiles = fmt.Errorf("a bundle may resolve to at most %d files", BundleMaxFiles)
-	// ErrBundleEntryEmpty reports an empty entry in spec.files.
+	// ErrBundleEntryEmpty reports an empty entry in spec.paths.
 	ErrBundleEntryEmpty = errors.New("a bundle path must not be empty")
 	// ErrBundleEntryDuplicate reports the same path listed twice by one bundle.
 	ErrBundleEntryDuplicate = errors.New("duplicate bundle path")
 )
 
-// BundleEntryError reports an invalid entry in a bundle's spec.files, naming the offending
+// BundleEntryError reports an invalid entry in a bundle's spec.paths, naming the offending
 // path so the caller can surface which entry failed without re-deriving it.
 type BundleEntryError struct {
-	// Path is the declared entry, exactly as it appeared in spec.files.
+	// Path is the declared entry, exactly as it appeared in spec.paths.
 	Path string
 	Err  error
 }
@@ -73,7 +74,7 @@ func (e BundleEntry) matches(path string) bool {
 	return strings.HasPrefix(path, e.Path)
 }
 
-// ParseBundleEntries reads and validates the paths a bundle declares in spec.files.
+// ParseBundleEntries reads and validates the paths a bundle declares in spec.paths.
 //
 // Paths are repository-root-relative, matching every other path in provisioning, so a
 // bundle may claim files that do not sit beside its own manifest. They are validated
@@ -85,15 +86,15 @@ func (e BundleEntry) matches(path string) bool {
 // patterns: a repository path is already the addressing scheme provisioning uses
 // everywhere else, and a declared path is both readable in a diff and cheap to check.
 //
-// A bundle with no spec.files is valid and returns no entries.
+// A bundle with no spec.paths is valid and returns no entries.
 func ParseBundleEntries(obj *unstructured.Unstructured) ([]BundleEntry, error) {
 	if obj == nil {
 		return nil, nil
 	}
 
-	raw, found, err := unstructured.NestedFieldNoCopy(obj.Object, bundleFilesField...)
+	raw, found, err := unstructured.NestedFieldNoCopy(obj.Object, bundlePathsField...)
 	if err != nil {
-		return nil, ErrBundleFilesType
+		return nil, ErrBundlePathsType
 	}
 	if !found || raw == nil {
 		return nil, nil
@@ -101,7 +102,7 @@ func ParseBundleEntries(obj *unstructured.Unstructured) ([]BundleEntry, error) {
 
 	values, ok := raw.([]any)
 	if !ok {
-		return nil, ErrBundleFilesType
+		return nil, ErrBundlePathsType
 	}
 	if len(values) > BundleMaxEntries {
 		return nil, ErrBundleTooManyEntries
@@ -112,7 +113,7 @@ func ParseBundleEntries(obj *unstructured.Unstructured) ([]BundleEntry, error) {
 	for _, value := range values {
 		raw, ok := value.(string)
 		if !ok {
-			return nil, ErrBundleFilesType
+			return nil, ErrBundlePathsType
 		}
 
 		path := strings.TrimSpace(raw)
@@ -325,8 +326,18 @@ const BundleKind = "Bundle"
 // far less than carrying a whole file set in its schema.
 var bundleRefField = []string{"spec", "bundle"}
 
-// ErrBundleRefType reports a spec.bundle value that is not a string.
-var ErrBundleRefType = errors.New("spec.bundle must be a bundle name")
+var (
+	// ErrBundleRefType reports a spec.bundle value that is not a string.
+	ErrBundleRefType = errors.New("spec.bundle must be a bundle name")
+	// ErrBundleRefTooLong reports a bundle name that cannot be carried as a label value.
+	ErrBundleRefTooLong = fmt.Errorf("a bundle name must be at most %d characters", bundleRefMaxLen)
+)
+
+// bundleRefMaxLen bounds a referenced bundle's name. A resource that uses a bundle is
+// labelled with its name so that "what uses this bundle" is a selector rather than a scan
+// of every linkable kind, and a label value may not exceed 63 characters. Resource names
+// may be longer, so the limit has to be stated rather than assumed.
+const bundleRefMaxLen = 63
 
 // ParseBundleRef reads the name of the Bundle a resource references. An empty result
 // means the resource uses no bundle, which is always valid.
@@ -343,9 +354,14 @@ func ParseBundleRef(obj *unstructured.Unstructured) (string, error) {
 		return "", nil
 	}
 
-	name, ok := raw.(string)
+	value, ok := raw.(string)
 	if !ok {
 		return "", ErrBundleRefType
 	}
-	return strings.TrimSpace(name), nil
+
+	name := strings.TrimSpace(value)
+	if len(name) > bundleRefMaxLen {
+		return "", ErrBundleRefTooLong
+	}
+	return name, nil
 }

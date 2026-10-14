@@ -22,6 +22,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		Bundle{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_Bundle(ref),
 		BundleFile{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_BundleFile(ref),
 		BundleFileList{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_BundleFileList(ref),
+		BundleFileRef{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_BundleFileRef(ref),
 		BundleFileSpec{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_BundleFileSpec(ref),
 		BundleList{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_BundleList(ref),
 		BundleSpec{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_BundleSpec(ref),
@@ -368,6 +369,50 @@ func schema_pkg_apis_provisioning_v0alpha1_BundleFileList(ref common.ReferenceCa
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_BundleFileRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "BundleFileRef points at one file a bundle resolved to.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path in the repository, relative to its root.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the BundleFile resource holding this file's content.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Hash of the decoded content. A consumer compares it against the stored file to know it has the version this bundle published.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"size": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Size of the decoded content in bytes.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"path", "name"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_BundleFileSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -479,14 +524,14 @@ func schema_pkg_apis_provisioning_v0alpha1_BundleSpec(ref common.ReferenceCallba
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"files": {
+					"paths": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Files are the repository paths belonging to this bundle, relative to the repository root -- the same form every other provisioning path takes.\n\nA path with a trailing \"/\" is a folder, and everything beneath it belongs to the bundle; anything else is a single file. Selection is by path only: a repository path is already the addressing scheme provisioning uses everywhere, and a declared path is readable in a diff.",
+							Description: "Paths belonging to this bundle, relative to the repository root -- the same form every other provisioning path takes.\n\nA path with a trailing \"/\" is a folder, and everything beneath it belongs to the bundle; anything else is a single file. Selection is by path only: a repository path is already the addressing scheme provisioning uses everywhere, and a declared path is readable in a diff.\n\nThese are what the author declared; what they resolved to is status.files.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -524,13 +569,12 @@ func schema_pkg_apis_provisioning_v0alpha1_BundleStatus(ref common.ReferenceCall
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Files are the paths the bundle resolved to at Ref, after expanding folders.",
+							Description: "Files the bundle resolved to at Ref, after expanding folders. Unlike spec.paths these are always files.\n\nEach entry names the BundleFile holding it, so this is the index a consumer reads to fetch content: one GET of the bundle yields every name, hash and size, and the files are then fetched directly by name. Without the name a client would have to either list bundle files by label -- which returns all of their content -- or recompute the name from the path, duplicating a hash the server owns.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Ref: ref(BundleFileRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -543,7 +587,7 @@ func schema_pkg_apis_provisioning_v0alpha1_BundleStatus(ref common.ReferenceCall
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Unresolved are declared paths that matched nothing at Ref. Reported rather than hidden, so a folder renamed away surfaces instead of quietly emptying the bundle.",
+							Description: "Unresolved are spec.paths entries that matched nothing at Ref. Reported rather than hidden, so a folder renamed away surfaces instead of quietly emptying the bundle.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -577,7 +621,7 @@ func schema_pkg_apis_provisioning_v0alpha1_BundleStatus(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			BundleFileRef{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 

@@ -27,12 +27,12 @@ func bundleClient(t *testing.T, helper *common.ProvisioningTestHelper) *apis.K8s
 
 // bundleJSON builds a Bundle manifest as it would be committed to a repository. A path
 // ending in "/" is a folder and everything under it belongs to the bundle.
-func bundleJSON(t *testing.T, name string, files []string) []byte {
+func bundleJSON(t *testing.T, name string, paths []string) []byte {
 	t.Helper()
 
 	spec := map[string]any{}
-	if files != nil {
-		spec["files"] = files
+	if paths != nil {
+		spec["paths"] = paths
 	}
 
 	data, err := json.Marshal(map[string]any{
@@ -79,25 +79,25 @@ func TestIntegrationProvisioning_Bundle_Accepted(t *testing.T) {
 	newBundleRepo(t, helper, repo)
 
 	const name = "bundle-ok"
-	files := []string{
+	paths := []string{
 		"bundles/sample/README.md",
 		"bundles/sample/docs/",
 		"shared/query.sql",
 	}
 
-	require.NoError(t, writeManifest(t, helper, repo, "bundle-ok.json", bundleJSON(t, name, files)))
+	require.NoError(t, writeManifest(t, helper, repo, "bundle-ok.json", bundleJSON(t, name, paths)))
 
 	created, err := bundleClient(t, helper).Resource.Get(t.Context(), name, metav1.GetOptions{})
 	require.NoError(t, err, "the Bundle resource should be created")
 
-	stored, _, err := unstructured.NestedStringSlice(created.Object, "spec", "files")
+	stored, _, err := unstructured.NestedStringSlice(created.Object, "spec", "paths")
 	require.NoError(t, err)
-	assert.Equal(t, files, stored, "the declared paths survive the round trip")
+	assert.Equal(t, paths, stored, "the declared paths survive the round trip")
 }
 
-// TestIntegrationProvisioning_Bundle_NoFiles covers that a Bundle need not declare any
+// TestIntegrationProvisioning_Bundle_NoPaths covers that a Bundle need not declare any
 // paths; an empty file set is valid.
-func TestIntegrationProvisioning_Bundle_NoFiles(t *testing.T) {
+func TestIntegrationProvisioning_Bundle_NoPaths(t *testing.T) {
 	helper := sharedHelper(t)
 	const repo = "bundle-no-files"
 	newBundleRepo(t, helper, repo)
@@ -120,44 +120,44 @@ func TestIntegrationProvisioning_Bundle_Rejected(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		files []string
+		paths []string
 		// wantMessage is a fragment of the validation error, to show the right rule
 		// rejected the manifest rather than something incidental.
 		wantMessage string
 	}{
 		{
 			name:        "traversal",
-			files:       []string{"../../etc/passwd"},
+			paths:       []string{"../../etc/passwd"},
 			wantMessage: "traversal",
 		},
 		{
 			name:        "traversal in a folder entry",
-			files:       []string{"bundles/sample/../../etc/"},
+			paths:       []string{"bundles/sample/../../etc/"},
 			wantMessage: "traversal",
 		},
 		{
 			name:        "absolute path",
-			files:       []string{"/etc/passwd"},
+			paths:       []string{"/etc/passwd"},
 			wantMessage: "relative",
 		},
 		{
 			name:        "hidden path",
-			files:       []string{"bundles/.secret/notes.md"},
+			paths:       []string{"bundles/.secret/notes.md"},
 			wantMessage: "hidden",
 		},
 		{
 			name:        "duplicate path",
-			files:       []string{"bundles/sample/a.md", "bundles/sample/a.md"},
+			paths:       []string{"bundles/sample/a.md", "bundles/sample/a.md"},
 			wantMessage: "duplicate",
 		},
 		{
 			name:        "empty path",
-			files:       []string{"   "},
+			paths:       []string{"   "},
 			wantMessage: "must not be empty",
 		},
 		{
 			name:        "root",
-			files:       []string{"/"},
+			paths:       []string{"/"},
 			wantMessage: "must not be empty",
 		},
 	}
@@ -166,7 +166,7 @@ func TestIntegrationProvisioning_Bundle_Rejected(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			name := fmt.Sprintf("bundle-rejected-%d", i)
 
-			err := writeManifest(t, helper, repo, "bundle-rejected.json", bundleJSON(t, name, tt.files))
+			err := writeManifest(t, helper, repo, "bundle-rejected.json", bundleJSON(t, name, tt.paths))
 			require.Error(t, err, "an unusable path must be rejected")
 			assert.Contains(t, err.Error(), tt.wantMessage)
 
@@ -184,12 +184,12 @@ func TestIntegrationProvisioning_Bundle_TooManyPaths(t *testing.T) {
 	const repo = "bundle-too-many"
 	newBundleRepo(t, helper, repo)
 
-	files := make([]string, 65) // BundleMaxEntries is 64
-	for i := range files {
-		files[i] = fmt.Sprintf("bundles/sample/f%d.md", i)
+	paths := make([]string, 65) // BundleMaxEntries is 64
+	for i := range paths {
+		paths[i] = fmt.Sprintf("bundles/sample/f%d.md", i)
 	}
 
-	err := writeManifest(t, helper, repo, "bundle-too-many.json", bundleJSON(t, "bundle-too-many", files))
+	err := writeManifest(t, helper, repo, "bundle-too-many.json", bundleJSON(t, "bundle-too-many", paths))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "at most")
 }

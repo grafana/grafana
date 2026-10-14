@@ -65,7 +65,7 @@ func NewBundleFile(opts BundleFileOptions) *provisioning.BundleFile {
 			Namespace: opts.Namespace,
 			Labels: map[string]string{
 				provisioning.BundleFileRepositoryLabel: opts.Repository,
-				provisioning.BundleFileBundleLabel:     opts.Bundle,
+				provisioning.BundleLabel:               opts.Bundle,
 			},
 		},
 		Spec: provisioning.BundleFileSpec{
@@ -216,8 +216,30 @@ func DiffBundleFiles(existing, desired []*provisioning.BundleFile) BundleFileCha
 	return changes
 }
 
+// BundleFileRefs projects the files a bundle holds into the index it publishes in status.
+//
+// Taking the built BundleFiles rather than bare paths is what lets the index carry each
+// file's name, hash and size: a consumer then fetches content directly by name, with no
+// listing and no reimplementation of the name derivation.
+func BundleFileRefs(files []*provisioning.BundleFile) []provisioning.BundleFileRef {
+	refs := make([]provisioning.BundleFileRef, 0, len(files))
+	for _, file := range files {
+		if file == nil {
+			continue
+		}
+		refs = append(refs, provisioning.BundleFileRef{
+			Path: file.Spec.Path,
+			Name: file.Name,
+			Hash: file.Spec.Hash,
+			Size: file.Spec.Size,
+		})
+	}
+	sort.Slice(refs, func(i, j int) bool { return refs[i].Path < refs[j].Path })
+	return refs
+}
+
 // BundleFilesPublishable reports whether every file a bundle resolved is stored with the
-// hash the bundle resolved for it. Expected maps a repository path to its content hash.
+// hash the bundle resolved for it.
 //
 // This is the barrier a bundle publishes behind: its status ref is advanced only once all
 // of its files are stored at the content it resolved, so a consumer reading the published
@@ -226,17 +248,17 @@ func DiffBundleFiles(existing, desired []*provisioning.BundleFile) BundleFileCha
 //
 // Comparing hashes rather than a ref is what lets a file carry no ref of its own: the
 // stored content either is what the bundle resolved or it is not.
-func BundleFilesPublishable(stored []*provisioning.BundleFile, expected map[string]string) bool {
-	byPath := make(map[string]string, len(stored))
+func BundleFilesPublishable(stored []*provisioning.BundleFile, expected []provisioning.BundleFileRef) bool {
+	byName := make(map[string]string, len(stored))
 	for _, file := range stored {
 		if file == nil {
 			continue
 		}
-		byPath[file.Spec.Path] = file.Spec.Hash
+		byName[file.Name] = file.Spec.Hash
 	}
 
-	for path, hash := range expected {
-		if byPath[path] != hash {
+	for _, want := range expected {
+		if byName[want.Name] != want.Hash {
 			return false
 		}
 	}

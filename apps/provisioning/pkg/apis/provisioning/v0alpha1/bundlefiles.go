@@ -7,9 +7,14 @@ import (
 const (
 	// BundleFileRepositoryLabel names the repository a bundle file was read from.
 	BundleFileRepositoryLabel = GROUP + "/repository"
-	// BundleFileBundleLabel names the bundle a file belongs to. Listing by it is how
-	// reconciliation and cleanup find one bundle's files.
-	BundleFileBundleLabel = GROUP + "/bundle"
+	// BundleLabel names the bundle an object relates to.
+	//
+	// On a BundleFile it is the bundle the file belongs to, which is how reconciliation
+	// and cleanup find one bundle's files. On a resource that references a bundle it is
+	// the bundle it uses, which is the only way to answer "what uses this bundle"
+	// without reading the spec of every resource of every linkable kind -- needed both
+	// for a "used by" view and to decide whether a bundle may be deleted.
+	BundleLabel = GROUP + "/bundle"
 )
 
 // BundleFile is a copy of one supporting file of a bundle, as it was at a particular

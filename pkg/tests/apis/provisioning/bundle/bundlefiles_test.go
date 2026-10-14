@@ -42,7 +42,7 @@ func newBundleFile(t *testing.T, namespace, name, repo, bundle, path string, dat
 			"namespace": namespace,
 			"labels": map[string]any{
 				provisioning.BundleFileRepositoryLabel: repo,
-				provisioning.BundleFileBundleLabel:     bundle,
+				provisioning.BundleLabel:               bundle,
 			},
 		},
 		"spec": map[string]any{
@@ -163,7 +163,7 @@ func TestIntegrationProvisioning_BundleFiles_ListByBundle(t *testing.T) {
 	})
 
 	list, err := client.Resource.List(ctx, metav1.ListOptions{
-		LabelSelector: provisioning.BundleFileBundleLabel + "=sample",
+		LabelSelector: provisioning.BundleLabel + "=sample",
 	})
 	require.NoError(t, err)
 	require.Len(t, list.Items, 2, "expected only the files of the sample bundle")

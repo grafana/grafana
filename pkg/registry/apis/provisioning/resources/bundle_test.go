@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,10 +15,10 @@ import (
 
 const testManifest = "bundles/sample/bundle.yaml"
 
-func bundleObj(files any) *unstructured.Unstructured {
+func bundleObj(paths any) *unstructured.Unstructured {
 	spec := map[string]any{}
-	if files != nil {
-		spec["files"] = files
+	if paths != nil {
+		spec["paths"] = paths
 	}
 	return &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "provisioning.grafana.app/v0alpha1",
@@ -35,7 +36,7 @@ func TestParseBundleEntries(t *testing.T) {
 		wantErr error
 	}{
 		{name: "nil object", obj: nil},
-		{name: "no files", obj: bundleObj(nil)},
+		{name: "no paths", obj: bundleObj(nil)},
 		{name: "empty list", obj: bundleObj([]any{}), want: []string{}},
 		{
 			name: "files and folders",
@@ -65,8 +66,8 @@ func TestParseBundleEntries(t *testing.T) {
 			obj:  bundleObj([]any{"  bundles/sample/notes.md  "}),
 			want: []string{"bundles/sample/notes.md"},
 		},
-		{name: "files is not a list", obj: bundleObj("a.md"), wantErr: ErrBundleFilesType},
-		{name: "entry is not a string", obj: bundleObj([]any{"a.md", 42}), wantErr: ErrBundleFilesType},
+		{name: "paths is not a list", obj: bundleObj("a.md"), wantErr: ErrBundlePathsType},
+		{name: "entry is not a string", obj: bundleObj([]any{"a.md", 42}), wantErr: ErrBundlePathsType},
 		{name: "empty entry", obj: bundleObj([]any{"   "}), wantErr: ErrBundleEntryEmpty},
 		{name: "root entry", obj: bundleObj([]any{"/"}), wantErr: ErrBundleEntryEmpty},
 		{
@@ -117,6 +118,21 @@ func TestParseBundleEntries(t *testing.T) {
 			assert.Equal(t, tt.want, paths)
 		})
 	}
+}
+
+func TestParseBundleRef_TooLong(t *testing.T) {
+	// A referencing resource is labelled with the bundle name, and a label value may not
+	// exceed 63 characters.
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"spec": map[string]any{"bundle": strings.Repeat("b", 64)},
+	}}
+
+	_, err := ParseBundleRef(obj)
+	require.ErrorIs(t, err, ErrBundleRefTooLong)
+
+	obj.Object["spec"] = map[string]any{"bundle": strings.Repeat("b", 63)}
+	_, err = ParseBundleRef(obj)
+	require.NoError(t, err)
 }
 
 func TestParseBundleEntries_TooManyEntries(t *testing.T) {

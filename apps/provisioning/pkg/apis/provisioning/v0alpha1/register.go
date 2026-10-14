@@ -140,7 +140,7 @@ var BundleResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			return []interface{}{
 				m.Name,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
-				len(m.Spec.Files),
+				len(m.Spec.Paths),
 				len(m.Status.Files),
 				m.Status.Ref,
 			}, nil

@@ -28,7 +28,7 @@ func TestNewBundleFile(t *testing.T) {
 	assert.Equal(t, "stacks-1", file.Namespace)
 	assert.Equal(t, BundleFileName("sample", "bundles/sample/docs/a.md"), file.Name)
 	assert.Equal(t, "acme-repo", file.Labels[provisioning.BundleFileRepositoryLabel])
-	assert.Equal(t, "sample", file.Labels[provisioning.BundleFileBundleLabel])
+	assert.Equal(t, "sample", file.Labels[provisioning.BundleLabel])
 	assert.Equal(t, "sample", file.Spec.Bundle)
 
 	assert.Equal(t, "bundles/sample/docs/a.md", file.Spec.Path)
@@ -191,30 +191,48 @@ func TestDiffBundleFiles(t *testing.T) {
 	})
 }
 
+func TestBundleFileRefs(t *testing.T) {
+	files := []*provisioning.BundleFile{
+		testBundleFile("z.md", []byte("z")),
+		testBundleFile("a.md", []byte("a")),
+		nil,
+	}
+
+	refs := BundleFileRefs(files)
+
+	require.Len(t, refs, 2, "nil entries are skipped")
+	assert.Equal(t, "a.md", refs[0].Path, "refs are ordered by path")
+	assert.Equal(t, "z.md", refs[1].Path)
+
+	// Each ref names the BundleFile holding it, so a consumer fetches content directly
+	// rather than listing or recomputing the name.
+	assert.Equal(t, BundleFileName("sample", "a.md"), refs[0].Name)
+	assert.Equal(t, files[1].Spec.Hash, refs[0].Hash)
+	assert.Equal(t, files[1].Spec.Size, refs[0].Size)
+}
+
 func TestBundleFilesPublishable(t *testing.T) {
 	a := testBundleFile("a.md", []byte("a"))
 	b := testBundleFile("b.md", []byte("b"))
+	expected := BundleFileRefs([]*provisioning.BundleFile{a, b})
 
 	t.Run("true once every expected file is stored at its hash", func(t *testing.T) {
-		expected := map[string]string{"a.md": a.Spec.Hash, "b.md": b.Spec.Hash}
 		assert.True(t, BundleFilesPublishable([]*provisioning.BundleFile{a, b}, expected))
 	})
 
 	t.Run("false while a file is missing", func(t *testing.T) {
-		expected := map[string]string{"a.md": a.Spec.Hash, "b.md": b.Spec.Hash}
 		assert.False(t, BundleFilesPublishable([]*provisioning.BundleFile{a}, expected))
 	})
 
 	t.Run("false while a file holds different content", func(t *testing.T) {
 		stale := testBundleFile("a.md", []byte("older"))
-		expected := map[string]string{"a.md": a.Spec.Hash}
-		assert.False(t, BundleFilesPublishable([]*provisioning.BundleFile{stale}, expected))
+		assert.False(t, BundleFilesPublishable([]*provisioning.BundleFile{stale, b}, expected))
 	})
 
 	t.Run("extra stored files do not block publishing", func(t *testing.T) {
 		// Only what the bundle resolved has to match.
-		expected := map[string]string{"a.md": a.Spec.Hash}
-		assert.True(t, BundleFilesPublishable([]*provisioning.BundleFile{a, b}, expected))
+		only := BundleFileRefs([]*provisioning.BundleFile{a})
+		assert.True(t, BundleFilesPublishable([]*provisioning.BundleFile{a, b}, only))
 	})
 
 	t.Run("a bundle expecting nothing is publishable", func(t *testing.T) {

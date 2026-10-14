@@ -29,16 +29,18 @@ func (Bundle) OpenAPIModelName() string {
 }
 
 type BundleSpec struct {
-	// Files are the repository paths belonging to this bundle, relative to the
-	// repository root -- the same form every other provisioning path takes.
+	// Paths belonging to this bundle, relative to the repository root -- the same form
+	// every other provisioning path takes.
 	//
 	// A path with a trailing "/" is a folder, and everything beneath it belongs to the
 	// bundle; anything else is a single file. Selection is by path only: a repository
 	// path is already the addressing scheme provisioning uses everywhere, and a declared
 	// path is readable in a diff.
 	//
+	// These are what the author declared; what they resolved to is status.files.
+	//
 	// +listType=atomic
-	Files []string `json:"files,omitempty"`
+	Paths []string `json:"paths,omitempty"`
 }
 
 func (BundleSpec) OpenAPIModelName() string {
@@ -51,11 +53,19 @@ type BundleStatus struct {
 	// determined from it.
 	Ref string `json:"ref,omitempty"`
 
-	// Files are the paths the bundle resolved to at Ref, after expanding folders.
+	// Files the bundle resolved to at Ref, after expanding folders. Unlike spec.paths
+	// these are always files.
+	//
+	// Each entry names the BundleFile holding it, so this is the index a consumer reads
+	// to fetch content: one GET of the bundle yields every name, hash and size, and the
+	// files are then fetched directly by name. Without the name a client would have to
+	// either list bundle files by label -- which returns all of their content -- or
+	// recompute the name from the path, duplicating a hash the server owns.
+	//
 	// +listType=atomic
-	Files []string `json:"files,omitempty"`
+	Files []BundleFileRef `json:"files,omitempty"`
 
-	// Unresolved are declared paths that matched nothing at Ref. Reported rather than
+	// Unresolved are spec.paths entries that matched nothing at Ref. Reported rather than
 	// hidden, so a folder renamed away surfaces instead of quietly emptying the bundle.
 	// +listType=atomic
 	Unresolved []string `json:"unresolved,omitempty"`
@@ -67,6 +77,26 @@ type BundleStatus struct {
 
 func (BundleStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "BundleStatus"
+}
+
+// BundleFileRef points at one file a bundle resolved to.
+type BundleFileRef struct {
+	// Path in the repository, relative to its root.
+	Path string `json:"path"`
+
+	// Name of the BundleFile resource holding this file's content.
+	Name string `json:"name"`
+
+	// Hash of the decoded content. A consumer compares it against the stored file to
+	// know it has the version this bundle published.
+	Hash string `json:"hash,omitempty"`
+
+	// Size of the decoded content in bytes.
+	Size int64 `json:"size,omitempty"`
+}
+
+func (BundleFileRef) OpenAPIModelName() string {
+	return OpenAPIPrefix + "BundleFileRef"
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

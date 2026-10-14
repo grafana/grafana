@@ -1225,7 +1225,7 @@ kind: Bundle
 metadata:
   name: sample
 spec:
-  files:
+  paths:
     - bundles/sample/README.md
     - bundles/sample/docs/
     - shared/query.sql
@@ -1249,7 +1249,7 @@ kind: Bundle
 metadata:
   name: sample
 spec:
-  files:
+  paths:
     - ../../etc/passwd
 `),
 		})
@@ -1274,6 +1274,10 @@ spec:
 		require.False(t, parsed.IsBundle)
 		require.Empty(t, parsed.BundleEntries)
 		require.Equal(t, "sample", parsed.BundleRef)
+
+		// The resource is labelled with the bundle it uses, so "what uses this bundle"
+		// is a selector rather than a read of every linkable resource.
+		require.Equal(t, "sample", parsed.Obj.GetLabels()[provisioning.BundleLabel])
 	})
 
 	t.Run("a kind without the capability ignores a bundle reference", func(t *testing.T) {
@@ -1293,5 +1297,6 @@ spec:
 		require.False(t, parsed.IsBundle)
 		require.Empty(t, parsed.BundleRef)
 		require.Empty(t, parsed.BundleEntries)
+		require.NotContains(t, parsed.Obj.GetLabels(), provisioning.BundleLabel)
 	})
 }

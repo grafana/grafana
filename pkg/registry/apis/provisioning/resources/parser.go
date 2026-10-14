@@ -292,7 +292,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	supported := r.clients.SupportedResources()
 	parsed.FolderScoped = supportsFolderAnnotation(supported, parsed.GVK)
 
-	// A bundle's file set is part of its definition, so an unusable spec.files makes the
+	// A bundle's paths are part of its definition, so an unusable spec.paths makes the
 	// manifest itself invalid rather than yielding a bundle whose files the pipeline
 	// would silently ignore.
 	if parsed.GVK.Group == provisioning.GROUP && parsed.GVK.Kind == BundleKind {
@@ -305,6 +305,17 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		parsed.BundleRef, err = ParseBundleRef(parsed.Obj)
 		if err != nil {
 			return nil, NewResourceValidationError(err)
+		}
+		if parsed.BundleRef != "" {
+			// Label the resource with the bundle it uses, so that "what uses this
+			// bundle" is a selector rather than a read of every resource of every
+			// linkable kind.
+			labels := parsed.Obj.GetLabels()
+			if labels == nil {
+				labels = make(map[string]string, 1)
+			}
+			labels[provisioning.BundleLabel] = parsed.BundleRef
+			parsed.Obj.SetLabels(labels)
 		}
 	}
 	if info.Path != "" && parsed.FolderScoped {
