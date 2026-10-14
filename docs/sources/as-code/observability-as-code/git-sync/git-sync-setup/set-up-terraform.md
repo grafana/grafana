@@ -80,5 +80,5 @@ To better understand the required resources, refer to [Git Sync key concepts](ht
 
 You need two resources to configure and manage Git Sync:
 
-- The repository resource configures the Git repository to sync Grafana resources with. You can configure dashboards, alerts, or orgs. For examples, refer to [Repository resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_repository_v0alpha1) in the Terraform registry. 
-- The connection resource configures your Git provider credentials. For examples, refer to [Connection resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_connection_v0alpha1) in the Terraform registry. 
+- The repository resource configures the Git repository to sync Grafana resources with. You can configure dashboards, alerts, or orgs. For examples, refer to [Repository resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_repository_v0alpha1) in the Terraform registry.
+- The connection resource configures your Git provider credentials. For examples, refer to [Connection resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_connection_v0alpha1) in the Terraform registry.
