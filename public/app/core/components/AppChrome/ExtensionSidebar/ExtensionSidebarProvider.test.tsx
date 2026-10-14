@@ -9,7 +9,11 @@ import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unst
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
-import { resetExtensionSidebarPresentationForTests, setExtensionSidebarPresentation } from './extensionSidebarLayout';
+import {
+  claimFloatingExtensionSidebar,
+  resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarPresentation,
+} from './extensionSidebarLayout';
 import {
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentIdFromComponentMeta,
@@ -536,6 +540,19 @@ describe('ExtensionSidebarProvider', () => {
 
       act(() => setExtensionSidebarPresentation('floating'));
 
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('floats while a claim holds, with the flag off', () => {
+      renderPresentation();
+
+      let release = () => {};
+      act(() => {
+        release = claimFloatingExtensionSidebar();
+      });
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+
+      act(() => release());
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
     });
 

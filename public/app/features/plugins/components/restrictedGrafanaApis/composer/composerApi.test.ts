@@ -1,13 +1,16 @@
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { appEvents } from 'app/core/app_events';
+import {
+  getExtensionSidebarPresentation,
+  resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarPresentation,
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import {
   clearPendingComposerEnterRequest,
   requestComposerEnter,
 } from 'app/features/dashboard-scene/composer/composerEntryRequests';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
-import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
 import { setDashboardMutationClientForTests } from '../dashboardMutation/dashboardMutationApi';
 
@@ -105,47 +108,91 @@ it('does not support notebooks yet', async () => {
 });
 
 describe('presentation', () => {
-  const presentations: string[] = [];
-  let unsubscribe = () => {};
+  const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
+  const COMPOSER_FLAGS = {
+    dashboardNewLayouts: true,
+    'grafana.dashboardPreviewMode': true,
+    'grafana.dashboardComposer': true,
+  };
 
-  beforeEach(() => {
-    presentations.length = 0;
-    const subscription = appEvents.subscribe(SetExtensionSidebarPresentationEvent, ({ payload }) =>
-      presentations.push(payload.presentation)
-    );
-    unsubscribe = () => subscription.unsubscribe();
+  afterEach(() => {
+    clearPendingComposerEnterRequest();
+    resetExtensionSidebarPresentationForTests();
   });
 
-  afterEach(() => unsubscribe());
-
-  it('floats the extension sidebar for the session by default and docks it when the session ends', async () => {
+  it('floats a docked sidebar for the session, with the floating flag off, and docks it again on exit', async () => {
     mountDashboard();
     const session = await composerApi.enter(DASHBOARD);
-    expect(presentations).toEqual(['floating']);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+
     session.exit();
-    expect(presentations).toEqual(['floating', 'docked']);
+
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it('leaves a sidebar the user floated floating after the session', async () => {
+    setTestFlags({ ...COMPOSER_FLAGS, [FLOATING_FLAG]: true });
+    setExtensionSidebarPresentation('floating');
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+
+    session.exit();
+
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+  });
+
+  it('keeps the floating layout the user picks during the session', async () => {
+    setTestFlags({ ...COMPOSER_FLAGS, [FLOATING_FLAG]: true });
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+    setExtensionSidebarPresentation('floating');
+
+    session.exit();
+
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+  });
+
+  it('ends the session when the user docks the sidebar', async () => {
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+
+    setExtensionSidebarPresentation('docked');
+
+    expect(session.signal.aborted).toBe(true);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
   it('docks a sidebar the picker floated when entering fails', async () => {
-    requestComposerEnter(DASHBOARD, { floated: true });
+    requestComposerEnter(DASHBOARD, { float: true });
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+
     await expect(composerApi.enter(DASHBOARD)).rejects.toThrow('no_document');
-    expect(presentations).toEqual(['docked']);
+
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
-  it('keeps a sidebar the picker floated once the session starts', async () => {
+  it("hands the picker's floating sidebar over to the session", async () => {
     mountDashboard();
-    requestComposerEnter(DASHBOARD, { floated: true });
+    requestComposerEnter(DASHBOARD, { float: true });
     const session = await composerApi.enter(DASHBOARD);
+    // The request is over; the session holds the sidebar now.
     clearPendingComposerEnterRequest();
-    expect(presentations).toEqual(['floating']);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+
     session.exit();
+
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
   it("never touches the extension sidebar with presentation 'none'", async () => {
     mountDashboard();
     const session = await composerApi.enter(DASHBOARD, { presentation: 'none' });
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+
+    setExtensionSidebarPresentation('docked');
+    expect(session.signal.aborted).toBe(false);
     session.exit();
-    expect(presentations).toEqual([]);
   });
 });
 

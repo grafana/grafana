@@ -18,8 +18,9 @@ export interface ComposerTarget {
 
 export interface ComposerEnterOptions {
   /**
-   * 'floating' (the default) floats the extension sidebar over the document for the session and docks it
-   * again when the session ends; 'none' leaves the sidebar alone.
+   * 'floating' (the default) floats the extension sidebar over the document for the session, even with
+   * `grafana.extensionSidebarFloating` off, and brings back the user's own layout when the session ends.
+   * Docking the sidebar during the session ends it. 'none' leaves the sidebar alone.
    */
   presentation?: 'floating' | 'none';
 }

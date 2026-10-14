@@ -2,6 +2,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   canFloatExtensionSidebar,
+  claimFloatingExtensionSidebar,
+  getExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
@@ -49,5 +51,53 @@ describe('extensionSidebarLayout', () => {
     unsubscribe();
     setExtensionSidebarPresentation('docked');
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  describe('floating claims', () => {
+    it('float the sidebar with the flag off until the last one is released', () => {
+      const releaseFirst = claimFloatingExtensionSidebar();
+      const releaseSecond = claimFloatingExtensionSidebar();
+      expect(getExtensionSidebarPresentation()).toBe('floating');
+
+      releaseFirst();
+      releaseFirst();
+      expect(getExtensionSidebarPresentation()).toBe('floating');
+
+      releaseSecond();
+      expect(getExtensionSidebarPresentation()).toBe('docked');
+    });
+
+    it("bring back the user's floating layout when released", () => {
+      setTestFlags({ [FLOATING_FLAG]: true });
+      setExtensionSidebarPresentation('floating');
+      const release = claimFloatingExtensionSidebar();
+
+      release();
+
+      expect(getExtensionSidebarPresentation()).toBe('floating');
+    });
+
+    it('end when the user docks the sidebar, after it has docked', () => {
+      const seen: string[] = [];
+      const onDocked = jest.fn(() => seen.push(getExtensionSidebarPresentation()));
+      claimFloatingExtensionSidebar({ onDocked });
+
+      setExtensionSidebarPresentation('docked');
+
+      expect(onDocked).toHaveBeenCalledTimes(1);
+      expect(seen).toEqual(['docked']);
+      setExtensionSidebarPresentation('docked');
+      expect(onDocked).toHaveBeenCalledTimes(1);
+    });
+
+    it('are not ended by a floating request the flag ignores', () => {
+      const onDocked = jest.fn();
+      claimFloatingExtensionSidebar({ onDocked });
+
+      setExtensionSidebarPresentation('floating');
+
+      expect(onDocked).not.toHaveBeenCalled();
+      expect(getExtensionSidebarPresentation()).toBe('floating');
+    });
   });
 });

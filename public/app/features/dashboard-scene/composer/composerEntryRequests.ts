@@ -8,8 +8,7 @@
  * plugin registration per page, and the API object it backs is a module singleton too.
  */
 
-import { appEvents } from 'app/core/app_events';
-import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
+import { claimFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 
 import { type ComposerTarget } from './types';
 
@@ -20,11 +19,11 @@ export const PENDING_REQUEST_TTL_MS = 10_000;
 const listeners = new Set<EnterRequestListener>();
 let pending: { target: ComposerTarget; at: number; timer: ReturnType<typeof setTimeout> } | undefined;
 /**
- * A request that opened the Assistant sidebar straight into the floating presentation, so it never paints
- * docked first. Until a session starts for it, a failure, expiry or teardown docks the sidebar again so
- * the user is never left with an empty floating box.
+ * A request that floats the extension sidebar until Composer takes over, so a sidebar the picker opens never
+ * paints docked first. The session takes its own claim when it starts; a failure, expiry or teardown
+ * releases this one, so the user is never left with an empty floating box.
  */
-let floated: { target: ComposerTarget; timer: ReturnType<typeof setTimeout> } | undefined;
+let floated: { target: ComposerTarget; release: () => void; timer: ReturnType<typeof setTimeout> } | undefined;
 
 /**
  * Registers a listener for Composer entry requests and hands it a request still waiting for one.
@@ -42,57 +41,71 @@ export function addComposerEnterRequestListener(listener: EnterRequestListener):
 }
 
 /**
- * Asks Assistant to enter Composer on `target`: now if it is listening, else once it starts to. Pass
- * `floated` when the caller opened the sidebar in the floating presentation for this request.
+ * Asks Assistant to enter Composer on `target`: now if it is listening, else once it starts to. With
+ * `float`, the extension sidebar floats from now until the session takes over or the request ends.
  */
-export function requestComposerEnter(target: ComposerTarget, { floated: didFloat = false } = {}): void {
+export function requestComposerEnter(target: ComposerTarget, { float = false } = {}): void {
   clearPendingComposerEnterRequest();
-  if (didFloat) {
-    floated = { target, timer: setTimeout(dockFloatedSidebar, PENDING_REQUEST_TTL_MS) };
+  if (float) {
+    const release = claimFloatingExtensionSidebar({
+      // Docking while waiting withdraws the request; the claim is already gone.
+      onDocked: () => {
+        forgetFloated();
+        dropPendingRequest();
+      },
+    });
+    floated = { target, release, timer: setTimeout(releaseFloatedSidebar, PENDING_REQUEST_TTL_MS) };
   }
   const [listener] = listeners;
   if (listener) {
     listener(target);
     return;
   }
-  pending = { target, at: Date.now(), timer: setTimeout(clearPendingComposerEnterRequest, PENDING_REQUEST_TTL_MS) };
-}
-
-/** Drops a request still waiting for a listener, so it never fires late (navigation, scene teardown). */
-export function clearPendingComposerEnterRequest(): void {
-  if (pending) {
-    clearTimeout(pending.timer);
-    pending = undefined;
-  }
-  dockFloatedSidebar();
+  pending = { target, at: Date.now(), timer: setTimeout(dropPendingRequest, PENDING_REQUEST_TTL_MS) };
 }
 
 /**
- * Reports how an entry attempt on `uid` ended. A session that started keeps the floating sidebar it was
- * requested with; a failed one docks it again.
+ * Drops a request still waiting for a listener, so it never fires late, and releases its floating claim
+ * (navigation, scene teardown, a newer request).
  */
-export function settleComposerEnterRequest(uid: string, outcome: 'entered' | 'failed'): void {
-  if (!floated || floated.target.uid !== uid) {
-    return;
-  }
-  if (outcome === 'failed') {
-    dockFloatedSidebar();
-    return;
-  }
-  clearTimeout(floated.timer);
-  floated = undefined;
+export function clearPendingComposerEnterRequest(): void {
+  dropPendingRequest();
+  releaseFloatedSidebar();
 }
 
-function dockFloatedSidebar(): void {
+/**
+ * Ends the request on `uid` once an entry attempt on it is over, releasing its floating claim. A session that
+ * started holds its own claim by then, so the sidebar keeps floating; after a failure it goes back to the
+ * user's layout.
+ */
+export function settleComposerEnterRequest(uid: string): void {
+  if (floated?.target.uid === uid) {
+    releaseFloatedSidebar();
+  }
+}
+
+function releaseFloatedSidebar(): void {
+  floated?.release();
+  forgetFloated();
+}
+
+function forgetFloated(): void {
   if (floated) {
     clearTimeout(floated.timer);
     floated = undefined;
-    appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'docked' }));
+  }
+}
+
+function dropPendingRequest(): void {
+  if (pending) {
+    clearTimeout(pending.timer);
+    pending = undefined;
   }
 }
 
 function takePendingRequest(): ComposerTarget | undefined {
   const waiting = pending;
-  clearPendingComposerEnterRequest();
+  // The listener now owns the request; a floating claim stays until the entry attempt settles.
+  dropPendingRequest();
   return waiting && Date.now() - waiting.at <= PENDING_REQUEST_TTL_MS ? waiting.target : undefined;
 }

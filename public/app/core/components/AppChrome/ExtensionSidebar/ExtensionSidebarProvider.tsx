@@ -21,6 +21,7 @@ import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTEN
 import {
   type ExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
+  isExtensionSidebarFloatingClaimed,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
@@ -95,10 +96,14 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     subscribeToExtensionSidebarPresentation,
     getRequestedExtensionSidebarPresentation
   );
-  // Turning the flag off docks a floating sidebar.
+  const floatingClaimed = useSyncExternalStore(
+    subscribeToExtensionSidebarPresentation,
+    isExtensionSidebarFloatingClaimed
+  );
+  // Turning the flag off docks a sidebar the user floated; a claim (Composer) floats it regardless.
   const canFloat = useFlagGrafanaExtensionSidebarFloating();
   const presentation: ExtensionSidebarPresentation =
-    canFloat && requestedPresentation === 'floating' ? 'floating' : 'docked';
+    floatingClaimed || (canFloat && requestedPresentation === 'floating') ? 'floating' : 'docked';
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
     EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,

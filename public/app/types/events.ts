@@ -153,18 +153,6 @@ export class ToggleExtensionSidebarEvent extends BusEventWithPayload<ToggleExten
   static type = 'toggle-extension-sidebar';
 }
 
-/**
- * `floating` restyles the extension sidebar as a bar over the page instead of a docked column. The
- * same container and component instance render in both, so switching never remounts the extension.
- */
-export type ExtensionSidebarPresentation = 'docked' | 'floating';
-
-export class SetExtensionSidebarPresentationEvent extends BusEventWithPayload<{
-  presentation: ExtensionSidebarPresentation;
-}> {
-  static type = 'set-extension-sidebar-presentation';
-}
-
 export class DashboardSavedEvent extends BusEventBase {
   static type = 'dashboard-saved';
 }

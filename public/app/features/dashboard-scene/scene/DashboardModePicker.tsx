@@ -8,7 +8,7 @@ import { appEvents } from 'app/core/app_events';
 import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
 import { AssistantSparkleGradient } from 'app/core/components/AppChrome/FullscreenWorkspace/AssistantToolbarButtons';
-import { OpenExtensionSidebarEvent, SetExtensionSidebarPresentationEvent } from 'app/types/events';
+import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import { canEnterComposer } from '../composer/composerAccess';
 import { requestComposerEnter } from '../composer/composerEntryRequests';
@@ -197,10 +197,9 @@ function useComposerOption(dashboard: DashboardScene) {
       requestComposerEnter(target);
       return;
     }
-    // Open the closed sidebar already floating, so its first paint is never the docked column.
-    appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' }));
+    // The request floats the closed sidebar before it opens, so its first paint is never the docked column.
+    requestComposerEnter(target, { float: true });
     appEvents.publish(new OpenExtensionSidebarEvent({ pluginId: ASSISTANT_PLUGIN_ID, componentTitle }));
-    requestComposerEnter(target, { floated: true });
   };
   return { disabledReason, request };
 }
