@@ -4,13 +4,7 @@ import { act, render, screen } from 'test/test-utils';
 import { ErrorBoundary } from '@grafana/ui';
 
 import { STPodReadinessCheck } from './STPodReadinessCheck';
-import {
-  invalidateStPodReadiness,
-  isStPodTimeoutError,
-  markStPodReady,
-  markStPodTimeout,
-  markStPodWaiting,
-} from './stPodReadiness';
+import { invalidateStPodReadiness, markStPodReady, markStPodTimeout, markStPodWaiting } from './stPodReadiness';
 
 // The gate suspends during its first render, and React requires the surrounding act() to be
 // awaited when that happens — RTL's own render() only wraps a synchronous one.
@@ -33,7 +27,7 @@ async function renderGateWithBoundary() {
       <ErrorBoundary>
         {({ error }) =>
           error ? (
-            <div>{isStPodTimeoutError(error) ? 'pod timed out' : 'generic crash'}</div>
+            <div>caught: {error.message}</div>
           ) : (
             <Suspense fallback={<div>waiting for pod</div>}>
               <STPodReadinessCheck isUrlAllowed={false} />
@@ -85,13 +79,13 @@ describe('STPodReadinessCheck', () => {
     expect(await screen.findByText('the page')).toBeInTheDocument();
   });
 
-  it('throws an identifiable timeout error once the wait has been abandoned', async () => {
+  it('throws once the wait has been abandoned so the surrounding boundary can react', async () => {
     // React logs every boundary-caught error, and jest-fail-on-console would fail the test.
     jest.spyOn(console, 'error').mockImplementation();
     markStPodTimeout();
 
     await renderGateWithBoundary();
 
-    expect(await screen.findByText('pod timed out')).toBeInTheDocument();
+    expect(await screen.findByText(/^caught:/)).toBeInTheDocument();
   });
 });
