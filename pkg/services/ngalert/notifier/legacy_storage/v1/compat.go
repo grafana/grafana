@@ -90,10 +90,20 @@ func ReceiversToModel(in []*store.ReceiverDB) map[ResourceUID]PostableApiReceive
 		if receiver == nil {
 			continue
 		}
-		m := NewReceiver(receiver.Name, PostableGrafanaReceiverDBsToModel(receiver.GrafanaManagedReceivers), models.ProvenanceNone)
+		m := NewReceiver(receiverUIDOrFallback(*receiver), receiver.Name, PostableGrafanaReceiverDBsToModel(receiver.GrafanaManagedReceivers), models.ProvenanceNone)
 		out[m.UID] = m
 	}
 	return out
+}
+
+// receiverUIDOrFallback is the one place a receiver's UID is derived from its name: a legacy row
+// saved before UID persistence existed has none, so it falls back to the deterministic identity
+// it has always resolved to. Mirrors timeIntervalUIDOrFallback.
+func receiverUIDOrFallback(receiver store.ReceiverDB) ResourceUID {
+	if receiver.UID != "" {
+		return ResourceUID(receiver.UID)
+	}
+	return ReceiverUID(receiver.Name)
 }
 
 func PostableGrafanaReceiverDBsToModel(in []*store.PostableGrafanaReceiverDB) []*PostableGrafanaReceiver {
@@ -344,6 +354,7 @@ func PostableApiReceiverToDB(in *PostableApiReceiver) *store.ReceiverDB {
 		return nil
 	}
 	return &store.ReceiverDB{
+		UID:                     string(in.UID),
 		Name:                    in.Name,
 		GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
 	}
@@ -559,7 +570,7 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*Postabl
 		}
 		integrations = append(integrations, integration)
 	}
-	return new(NewReceiver(r.Name, integrations, models.ProvenanceNone)), nil
+	return new(NewReceiver(ReceiverUID(r.Name), r.Name, integrations, models.ProvenanceNone)), nil
 }
 
 // MimirIntegrationConfigToPostableGrafanaReceiver converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.

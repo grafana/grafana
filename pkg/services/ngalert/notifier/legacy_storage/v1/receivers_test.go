@@ -77,9 +77,9 @@ func TestReceiverFingerprint(t *testing.T) {
 }
 
 func TestNewReceiver(t *testing.T) {
-	r := NewReceiver("my-receiver", nil, models.ProvenanceAPI)
+	r := NewReceiver("custom-uid", "my-receiver", nil, models.ProvenanceAPI)
 
-	assert.Equal(t, ReceiverUID("my-receiver"), r.UID)
+	assert.Equal(t, ResourceUID("custom-uid"), r.UID)
 	assert.Equal(t, ReceiverFingerprint(r), r.Version)
 	assert.Equal(t, models.ProvenanceAPI, r.Provenance)
 }

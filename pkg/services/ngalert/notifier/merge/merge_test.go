@@ -19,7 +19,7 @@ import (
 
 func TestReceivers(t *testing.T) {
 	r := func(name string) *v1.PostableApiReceiver {
-		return new(v1.NewReceiver(name, nil, models.ProvenanceNone))
+		return new(v1.NewReceiver(v1.ReceiverUID(name), name, nil, models.ProvenanceNone))
 	}
 
 	identifier := "dupe"
@@ -460,7 +460,7 @@ func TestMergeExtraConfig(t *testing.T) {
 			if cfg.Receivers == nil {
 				cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 			}
-			r := v1.NewReceiver(name, nil, models.ProvenanceNone)
+			r := v1.NewReceiver(v1.ReceiverUID(name), name, nil, models.ProvenanceNone)
 			cfg.Receivers[r.UID] = r
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)

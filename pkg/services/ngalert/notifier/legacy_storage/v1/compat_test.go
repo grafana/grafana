@@ -122,6 +122,7 @@ inhibit_rules:
 					]
 				},
 				{
+					"uid": "warning-receiver-uid",
 					"name": "warning-receiver",
 					"grafana_managed_receiver_configs": [
 						{
@@ -306,6 +307,13 @@ inhibit_rules:
 	slices.SortFunc(originalDB.AlertmanagerConfig.Receivers, func(a, b *store.ReceiverDB) int {
 		return strings.Compare(a.Name, b.Name)
 	})
+	// Some of the input receivers have no persisted UID, so loading/saving assigns and persists the
+	// name-derived UID as a side effect, same as "weekends" above.
+	for _, r := range originalDB.AlertmanagerConfig.Receivers {
+		if r.UID == "" {
+			r.UID = string(ReceiverUID(r.Name))
+		}
+	}
 
 	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(store.AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {
@@ -349,7 +357,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 			),
 		},
 		Receivers: map[ResourceUID]PostableApiReceiver{
-			ReceiverUID("email-receiver"): NewReceiver("email-receiver", []*PostableGrafanaReceiver{
+			ReceiverUID("email-receiver"): NewReceiver(ReceiverUID("email-receiver"), "email-receiver", []*PostableGrafanaReceiver{
 				{UID: "int-1", Name: "email-receiver", Type: "email"},
 			}, models.ProvenanceNone),
 		},
@@ -380,6 +388,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 			"route": {"receiver": "email-receiver", "group_by": ["alertname"]},
 			"receivers": [
 				{
+					"uid": "ZW1haWwtcmVjZWl2ZXI",
 					"name": "email-receiver",
 					"grafana_managed_receiver_configs": [
 						{"uid": "int-1", "name": "email-receiver", "type": "email", "disableResolveMessage": false}

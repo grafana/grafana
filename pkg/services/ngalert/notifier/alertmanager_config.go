@@ -139,11 +139,11 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, 
 			if err != nil {
 				return err
 			}
-			newReceiverNames, err := extractReceiverNames(defaultedConfig.AlertmanagerConfiguration)
+			newReceivers, err := extractReceivers(defaultedConfig.AlertmanagerConfiguration)
 			if err != nil {
 				return err
 			}
-			return moa.cleanPermissions(ctx, orgId, previousConfig, newReceiverNames)
+			return moa.cleanPermissions(ctx, orgId, previousConfig, newReceivers)
 		}()
 	}
 	if cleanPermissionsErr != nil {
@@ -221,11 +221,11 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 	// Failure should not prevent the default config from being applied.
 	if cleanPermissionsErr == nil {
 		cleanPermissionsErr = func() error {
-			newReceiverNames, err := extractReceiverNames(config.AlertmanagerConfiguration)
+			newReceivers, err := extractReceivers(config.AlertmanagerConfiguration)
 			if err != nil {
 				return err
 			}
-			return moa.cleanPermissions(ctx, orgId, previousConfig, newReceiverNames)
+			return moa.cleanPermissions(ctx, orgId, previousConfig, newReceivers)
 		}()
 	}
 	if cleanPermissionsErr != nil {
@@ -599,36 +599,41 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 }
 
 // cleanPermissions will remove permissions for receivers that are no longer defined in the new configuration and
-// set default permissions for new receivers.
-func (moa *MultiOrgAlertmanager) cleanPermissions(ctx context.Context, orgID int64, previousConfig *models.AlertConfiguration, newReceiverNames sets.Set[string]) error {
-	previousReceiverNames, err := extractReceiverNames(previousConfig.AlertmanagerConfiguration)
+// set default permissions for new receivers. newReceivers maps receiver name to its resolved UID.
+func (moa *MultiOrgAlertmanager) cleanPermissions(ctx context.Context, orgID int64, previousConfig *models.AlertConfiguration, newReceivers map[string]string) error {
+	previousReceivers, err := extractReceivers(previousConfig.AlertmanagerConfiguration)
 	if err != nil {
-		return fmt.Errorf("failed to extract receiver names from previous configuration: %w", err)
+		return fmt.Errorf("failed to extract receivers from previous configuration: %w", err)
 	}
 
+	previousNames, newNames := sets.KeySet(previousReceivers), sets.KeySet(newReceivers)
+
 	var errs []error
-	for receiverName := range previousReceiverNames.Difference(newReceiverNames) { // Deleted receivers.
-		if err := moa.receiverResourcePermissions.DeleteResourcePermissions(ctx, orgID, string(v1.ReceiverUID(receiverName))); err != nil { // TODO: This won't work with static UIDs.
+	for receiverName := range previousNames.Difference(newNames) { // Deleted receivers.
+		if err := moa.receiverResourcePermissions.DeleteResourcePermissions(ctx, orgID, previousReceivers[receiverName]); err != nil {
 			errs = append(errs, fmt.Errorf("failed to delete permissions for receiver %s: %w", receiverName, err))
 		}
 	}
 
-	for receiverName := range newReceiverNames.Difference(previousReceiverNames) { // Added receivers.
-		moa.receiverResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, string(v1.ReceiverUID(receiverName))) // TODO: This won't work with static UIDs.
+	for receiverName := range newNames.Difference(previousNames) { // Added receivers.
+		moa.receiverResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, newReceivers[receiverName])
 	}
 
 	return errors.Join(errs...)
 }
 
-// extractReceiverNames extracts receiver names from the raw Alertmanager configuration. Unmarshalling ignores fields
-// unrelated to receiver names, making it more resilient to invalid configurations.
-func extractReceiverNames(rawConfig string) (sets.Set[string], error) {
-	// Slimmed down version of the Alertmanager configuration to extract receiver names. This is more resilient to
-	// invalid configurations when all we are interested in is the receiver names.
+// extractReceivers extracts receiver names and their resolved UID from the raw Alertmanager
+// configuration. Unmarshalling ignores fields unrelated to receivers, making it more resilient to
+// invalid configurations. A receiver with no persisted uid (a legacy row never resaved since UID
+// persistence was introduced) falls back to its name-derived UID, mirroring receiverUIDOrFallback.
+func extractReceivers(rawConfig string) (map[string]string, error) {
+	// Slimmed down version of the Alertmanager configuration to extract receivers. This is more resilient to
+	// invalid configurations when all we are interested in is name/uid.
 	type receiverUserConfig struct {
 		AlertmanagerConfig struct {
 			Receivers []struct {
 				Name string `yaml:"name" json:"name"`
+				UID  string `yaml:"uid" json:"uid"`
 			} `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 		} `yaml:"alertmanager_config" json:"alertmanager_config"`
 	}
@@ -638,12 +643,16 @@ func extractReceiverNames(rawConfig string) (sets.Set[string], error) {
 		return nil, fmt.Errorf("unable to parse Alertmanager configuration: %w", err)
 	}
 
-	receiverNames := make(sets.Set[string], len(cfg.AlertmanagerConfig.Receivers))
+	receivers := make(map[string]string, len(cfg.AlertmanagerConfig.Receivers))
 	for _, r := range cfg.AlertmanagerConfig.Receivers {
-		receiverNames[r.Name] = struct{}{}
+		uid := r.UID
+		if uid == "" {
+			uid = string(v1.ReceiverUID(r.Name))
+		}
+		receivers[r.Name] = uid
 	}
 
-	return receiverNames, nil
+	return receivers, nil
 }
 
 // applyConfig is a helper method for preparing the db onfiguration and then applying it to the given alertmanager.

@@ -241,9 +241,8 @@ type InhibitionRuleDB struct {
 
 // AlertingConfigDB is the persisted "alertmanager_config" object. Route/InhibitRules reuse the
 // shared Alertmanager types directly. Receivers and TimeIntervals/MuteTimeIntervals use DB-owned
-// wrapper types instead: TimeIntervals already persists its own `uid` (TimeIntervalDB.UID);
-// Receivers doesn't yet, but the wrapper type means one can be added later without touching the
-// shared/upstream types.
+// wrapper types instead, so each can persist its own `uid` (TimeIntervalDB.UID, ReceiverDB.UID)
+// independently of the shared/upstream types.
 //
 // Global and the legacy top-level Templates (template file names, distinct from
 // TemplateFiles/ManagedTemplates) are intentionally not here: Grafana never applies either when
@@ -388,8 +387,10 @@ func validateInhibitRuleLabelNames(sourceMatch, targetMatch map[string]string, e
 	return nil
 }
 
-// ReceiverDB is the persisted representation of a receiver/contact point.
+// ReceiverDB is the persisted representation of a receiver/contact point. UID is omitempty for
+// rows written before UID persistence existed; callers fall back to a name-derived UID for those.
 type ReceiverDB struct {
+	UID                     string                                `yaml:"uid,omitempty" json:"uid,omitempty"`
 	Name                    string                       `json:"name" yaml:"name"`
 	GrafanaManagedReceivers []*PostableGrafanaReceiverDB `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }

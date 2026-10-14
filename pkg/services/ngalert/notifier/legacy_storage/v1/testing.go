@@ -6,7 +6,7 @@ package v1
 func ReceiversFromSlice(in []*PostableApiReceiver) map[ResourceUID]PostableApiReceiver {
 	out := make(map[ResourceUID]PostableApiReceiver, len(in))
 	for _, r := range in {
-		m := NewReceiver(r.Name, r.GrafanaManagedReceivers, r.Provenance) // TODO: This probably shouldn't mess with the metadata
+		m := NewReceiver(ReceiverUID(r.Name), r.Name, r.GrafanaManagedReceivers, r.Provenance) // TODO: This probably shouldn't mess with the metadata
 		out[m.UID] = m
 	}
 	return out
