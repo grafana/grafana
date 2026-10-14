@@ -347,7 +347,7 @@ func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.Directe
 		case TypeDatasourceNode:
 			node, err = s.buildDSNode(dp, rn, req)
 		case TypeCMDNode:
-			node, err = buildCMDNode(ctx, rn, s.features, s.cfg)
+			node, err = buildCMDNode(ctx, rn, s.cfg)
 		case TypeMLNode:
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {

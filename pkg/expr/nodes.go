@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -127,17 +126,10 @@ func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars
 	return gn.Command.Execute(ctx, now, vars, s.tracer, s.metrics)
 }
 
-func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.Cfg) (*CMDNode, error) {
+func buildCMDNode(ctx context.Context, rn *rawNode, cfg *setting.Cfg) (*CMDNode, error) {
 	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
-	}
-
-	if commandType == TypeSQL {
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !toggles.IsEnabledGlobally(featuremgmt.FlagSqlExpressions) {
-			return nil, fmt.Errorf("sql expressions are disabled")
-		}
 	}
 
 	node := &CMDNode{
