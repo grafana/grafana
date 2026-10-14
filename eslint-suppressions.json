@@ -1493,11 +1493,6 @@
       "count": 3
     }
   },
-  "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/correlations/CorrelationsPageWrapper.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
