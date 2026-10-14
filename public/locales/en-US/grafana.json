@@ -15597,6 +15597,7 @@
     "preview-no-signal": "Every value is 0. That can be correct (for example, no errors), so check it matches what you expect.",
     "preview-no-signal-title": "No signal",
     "preview-option": "Preview option {{rank}}",
+    "preview-original": "Preview original query",
     "preview-result": "Preview result",
     "previewing-query": "Previewing query",
     "previous-option": "Previous option",
