@@ -108,6 +108,24 @@ preinstall_sync = grafana-postgresql-datasource
 ; preinstall_sync = grafana-postgresql-datasource@<version>
 ```
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to explore and query your PostgreSQL data source, use the `gcx datasources postgres` commands:
+
+```sh
+# List tables and views, or filter to a single schema
+gcx datasources postgres list-tables -d <DATASOURCE_UID>
+gcx datasources postgres list-tables -d <DATASOURCE_UID> --schema public
+
+# Show the columns of a table
+gcx datasources postgres describe-table orders -d <DATASOURCE_UID>
+
+# Run a SQL query (server-side macros like $__timeFilter are supported)
+gcx datasources postgres query -d <DATASOURCE_UID> 'SELECT * FROM events WHERE $__timeFilter(created_at)' --since 1h
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your PostgreSQL data source. You can omit the `-d` flag when `datasources.postgres` is configured in your `gcx` context. The `query` command supports Grafana server-side macros such as `$__timeFilter` and `$__timeGroup`, and `list-tables` and `describe-table` help you explore the schema. Schema and table names match exactly and are case-sensitive.
+
 ## Related data sources
 
 The following databases use the PostgreSQL wire protocol and may work with this data source:

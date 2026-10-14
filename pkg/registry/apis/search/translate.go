@@ -165,11 +165,21 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 	return &fieldSet{byName: m}
 }
 
-// globalFieldSet is the field set of the global index.
+// globalFieldSet is the field set of the global index, plus folderTree.
+//
+// folderTree is not stored in the index: the index works it out from its folder
+// tree when searching, so it is declared here rather than with the index's
+// fields, and only the global search offers it.
 func globalFieldSet() *fieldSet {
 	m := map[string]resource.SearchFieldDefinition{}
 	for _, d := range resource.GlobalSearchFieldDefinitions() {
 		m[d.Name] = d
+	}
+	m[resource.SEARCH_FIELD_FOLDER_TREE] = resource.SearchFieldDefinition{
+		Name:         resource.SEARCH_FIELD_FOLDER_TREE,
+		Type:         resource.SearchFieldTypeString,
+		Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+		Description:  "Kubernetes name of the folder containing the resource, or of any folder above it. Filter only, with In.",
 	}
 	return &fieldSet{byName: m}
 }
@@ -362,13 +372,15 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 				// A field holding one value cannot hold two, so this would always come
 				// back empty and the caller would have no way to tell that apart from
 				// nothing matching.
-				if f.Operator == "All" && len(f.Values) > 1 && !def.Array {
+				if f.Operator == "All" && len(f.Values) > 1 && !def.Array && f.Field != resource.SEARCH_FIELD_FOLDER_TREE {
 					errs = append(errs, field.Invalid(fp.Child("operator"), f.Operator,
 						fmt.Sprintf("All with several values requires a field holding a list of values; %q holds a single value", f.Field)))
 				}
 			}
 		}
-		if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
+		if f.Field == resource.SEARCH_FIELD_FOLDER_TREE {
+			errs = append(errs, validateFolderTreeFilter(f, fp)...)
+		} else if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
 			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn", "All"}))
 		}
 		if len(f.Values) == 0 {
@@ -407,6 +419,10 @@ func validateRegexLeaf(r *searchv0.RegexPredicate, fs *fieldSet, p *field.Path) 
 			// their native form, so a pattern would never reach them.
 			if def := fs.byName[r.Field]; def.Type != resource.SearchFieldTypeString {
 				errs = append(errs, field.Invalid(p.Child("field"), r.Field, "regex supports string fields only"))
+			}
+			// Not stored, so there are no terms to match a pattern against.
+			if r.Field == resource.SEARCH_FIELD_FOLDER_TREE {
+				errs = append(errs, field.Invalid(p.Child("field"), r.Field, "regex is not supported; filter it with In"))
 			}
 		}
 	}
@@ -601,6 +617,22 @@ func validateLabelSelector(sel *metav1.LabelSelector, p *field.Path) field.Error
 		if r.Operator != metav1.LabelSelectorOpIn && r.Operator != metav1.LabelSelectorOpNotIn {
 			ep := p.Child("matchExpressions").Index(i)
 			errs = append(errs, field.NotSupported(ep.Child("operator"), string(r.Operator), []string{"In", "NotIn"}))
+		}
+	}
+	return errs
+}
+
+// validateFolderTreeFilter allows only In, the one operator the index works out
+// a folder tree for, and requires the root folder to be named "general" rather
+// than left empty.
+func validateFolderTreeFilter(f *searchv0.FilterPredicate, p *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if f.Operator != "In" {
+		errs = append(errs, field.NotSupported(p.Child("operator"), f.Operator, []string{"In"}))
+	}
+	for i, v := range f.Values {
+		if v == "" {
+			errs = append(errs, field.Invalid(p.Child("values").Index(i), v, `must not be empty; the root folder is "general"`))
 		}
 	}
 	return errs

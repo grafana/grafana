@@ -1,8 +1,8 @@
 /**
  * RENDER_PLAN command
  *
- * Renders a whole dashboard plan in one call: rows or tabs, each with query-less placeholder
- * panels, plus any stand-in variables. A plan preview renders once and is never edited, so
+ * Renders a whole dashboard plan in one call: rows or tabs (optionally with rows nested inside a
+ * tab), each with query-less placeholder panels, plus any stand-in variables. A plan preview renders once and is never edited, so
  * there is nothing to build up incrementally the way ADD_ROW/ADD_TAB/ADD_PANEL do.
  *
  * Never calls enterEditModeIfNeeded: the preview is a static, view-mode surface that must never
@@ -83,17 +83,21 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
 
     try {
       let nextPanelId = 1;
-      const buildSection = (section: RenderPlanPayload['sections'][number]) =>
+      const buildSection = (section: Pick<RenderPlanPayload['sections'][number], 'panels'>) =>
         DefaultGridLayoutManager.fromVizPanels(
           section.panels.map((panel) => buildPlanPanel(panel.title, panel.vizType, nextPanelId++))
         );
+      const buildTab = (section: RenderPlanPayload['sections'][number]) =>
+        section.sections?.length
+          ? new RowsLayoutManager({
+              rows: section.sections.map((row) => new RowItem({ title: row.title, layout: buildSection(row) })),
+            })
+          : buildSection(section);
 
       const body =
         payload.layout === 'tabs'
           ? new TabsLayoutManager({
-              tabs: payload.sections.map(
-                (section) => new TabItem({ title: section.title, layout: buildSection(section) })
-              ),
+              tabs: payload.sections.map((section) => new TabItem({ title: section.title, layout: buildTab(section) })),
             })
           : new RowsLayoutManager({
               rows: payload.sections.map(

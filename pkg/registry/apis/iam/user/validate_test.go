@@ -247,6 +247,31 @@ func TestValidateOnCreate(t *testing.T) {
 			expectError:   true,
 			errorContains: "login 'existinguser' is already taken",
 		},
+		{
+			name: "service identity creating a user scopes the uniqueness search to the object's namespace, not the requester's wildcard",
+			user: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "userx",
+					Namespace: "default",
+				},
+				Spec: iamv0alpha1.UserSpec{
+					Login: "testuser",
+					Role:  "Viewer",
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeAccessPolicy,
+				Namespace:      "*",
+				IsGrafanaAdmin: true,
+			},
+			searchClient: &fakeSearchBackend{
+				SearchFunc: func(_ context.Context, query SearchQuery) (*iamv0alpha1.GetSearchUsersResponse, error) {
+					require.Equal(t, "default", query.Namespace)
+					return iamv0alpha1.NewGetSearchUsersResponse(), nil
+				},
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {

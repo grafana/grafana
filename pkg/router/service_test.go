@@ -50,7 +50,9 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/apis", nil))
 	require.Equal(t, http.StatusOK, recorder.Code)
-	require.JSONEq(t, `{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`, recorder.Body.String())
+	require.JSONEq(t, `{"kind":"APIGroupList","apiVersion":"v1","groups":[
+		{"name":"discovery","versions":[{"groupVersion":"discovery/v1alpha2","version":"v1alpha2"}],"preferredVersion":{"groupVersion":"discovery/v1alpha2","version":"v1alpha2"}}
+	]}`, recorder.Body.String())
 
 	recorder = httptest.NewRecorder()
 	httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/not-owned", nil))

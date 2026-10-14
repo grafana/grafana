@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { store } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { EMPTY_TABLE_RESPONSE, type ListMeta, type TableResponse } from 'app/features/apiserver/types';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -37,9 +39,12 @@ function mockCache(table: TableResponse) {
 const atLimitAlert = { name: /showing at most 1000 deleted dashboards/i };
 
 describe('DeletedDashboardsLimitBanner', () => {
+  // The banner counts what the cache holds, which only the listing path fills; with the
+  // trash endpoint the cache reports truncation itself.
   beforeEach(() => {
     store.delete(DISMISS_STORAGE_KEY);
     mockGetAsTable.mockReset();
+    setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: false });
   });
 
   describe('does not render', () => {

@@ -662,11 +662,11 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 		return
 	}
 	if result.GetError() != nil {
-		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
+		errhttp.Write(ctx, resource.StatusError(result.GetError()), w)
 		return
 	}
 
@@ -740,7 +740,7 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := &resourcepb.HybridSearchRequest{
-		Key:           key,
+		Key:           key, //nolint:staticcheck // Older search servers require key.
 		Query:         queryParams.Get("query"),
 		SemanticQuery: queryParams.Get("semanticQuery"),
 		Limit:         int64(limit),
@@ -764,7 +764,7 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errHybridSearchNotConfigured.Errorf("hybrid search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 		return
 	}
 

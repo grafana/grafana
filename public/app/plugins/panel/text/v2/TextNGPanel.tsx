@@ -61,7 +61,8 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { eventBus, options, onOptionsChange, data, renderCounter, fitContent, transparent, height, width } = props;
+  const { eventBus, options, onOptionsChange, data, renderCounter, fitContent, transparent, height, width, title } =
+    props;
   const styles = useStyles2(getStyles);
   const replaceVariables = useThemedReplaceVariables(props.replaceVariables);
   const isEditing = app === CoreApp.PanelEditor;
@@ -75,6 +76,7 @@ export function TextNGPanel(props: Props) {
   const renderMode = newFeatures ? options.renderMode : RenderMode.Once;
 
   const frames = data.series;
+  const hasData = frames.length > 0;
   // Withheld with the selector: a saved index would otherwise pick a frame the reader
   // has no UI to change, and the macros read every frame again, as they did before it.
   const currentFrameIndex = newFeatures ? getCurrentFrameIndex(frames, options) : 0;
@@ -117,7 +119,7 @@ export function TextNGPanel(props: Props) {
   const [processed, setProcessed] = useState<ProcessedContent>(() =>
     // The editor renders its own preview, so skip the render pass on entry.
     isEditing
-      ? { mode: options.mode, content: EMPTY_CONTENT }
+      ? { mode: options.mode, content: EMPTY_CONTENT, hasData }
       : renderPanelContent(options, renderMode, series, replaceVariables, rowWindow)
   );
 
@@ -132,7 +134,8 @@ export function TextNGPanel(props: Props) {
     wasEditing !== isEditing ||
     prevWindow?.start !== rowWindow?.start ||
     prevWindow?.count !== rowWindow?.count ||
-    prevTemplate !== template
+    prevTemplate !== template ||
+    (!isEditing && processed.hasData !== hasData)
   ) {
     setWasEditing(isEditing);
     setPrevWindow(rowWindow);
@@ -151,7 +154,12 @@ export function TextNGPanel(props: Props) {
         return;
       }
       const next = renderPanelContent(options, renderMode, series, replaceVariables, rowWindow);
-      if (next.content !== processed.content || next.mode !== processed.mode || next.error !== processed.error) {
+      if (
+        next.content !== processed.content ||
+        next.mode !== processed.mode ||
+        next.error !== processed.error ||
+        next.hasData !== processed.hasData
+      ) {
         setProcessed(next);
       }
     },
@@ -237,6 +245,7 @@ export function TextNGPanel(props: Props) {
         view={view}
         onViewChange={setView}
         transparent={transparent}
+        hasTitle={Boolean(title)}
       />
     </Suspense>
   ) : (
@@ -282,6 +291,7 @@ function templateOf(options: Options, renderMode?: RenderMode): string {
 
 interface ProcessedContent extends RenderedContent {
   mode: TextMode;
+  hasData: boolean;
 }
 
 interface TextNGViewProps extends ProcessedContent {
@@ -291,7 +301,7 @@ interface TextNGViewProps extends ProcessedContent {
   transparent?: boolean;
 }
 
-function TextNGView({ mode, content, error, code, fitContent, contentRef, transparent }: TextNGViewProps) {
+function TextNGView({ mode, content, error, code, fitContent, contentRef, transparent, hasData }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
 
   if (error) {
@@ -322,6 +332,7 @@ function TextNGView({ mode, content, error, code, fitContent, contentRef, transp
   const rendered = (
     <TextNGHtmlView
       html={content}
+      hasData={hasData}
       className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
       testId="TextNGPanel-converted-content"
     />
@@ -415,6 +426,7 @@ function renderPanelContent(
 ): ProcessedContent {
   return {
     mode: options.mode,
+    hasData: series.length > 0,
     ...catchTemplateError(() =>
       renderContent(
         {

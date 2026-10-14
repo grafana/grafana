@@ -285,9 +285,7 @@ describe('RuleListActions', () => {
   });
 
   describe('Import Alert Rules', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationUI'] });
-
-    it('should show "Import alert rules" option when user has required permissions and feature toggle is enabled', async () => {
+    it('should show "Import alert rules" option when user has required permissions', async () => {
       grantUserPermissions([
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleCreate,
@@ -446,7 +444,7 @@ describe('RuleListActions', () => {
 
   describe('Auto-sync Mimir Alertmanager — disables Alertmanager import menu items', () => {
     testWithFeatureToggles({
-      enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI', 'alertingMigrationWizardUI'],
+      enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationWizardUI'],
     });
 
     // Drive auto-sync state via the Config resource: for an API-configured org useIsAutoSyncActive
