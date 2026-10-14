@@ -99,24 +99,15 @@ export const flows = {
     },
   },
   variables: {
-    async addNewGenericVariable(
-      page: Page,
-      sidebar: Sidebar,
-      controls: Controls,
-      variable: Variable,
-      skipEnterEditMode = false
-    ) {
+    async addNewGenericVariable(sidebar: Sidebar, controls: Controls, variable: Variable, skipEnterEditMode = false) {
       if (!skipEnterEditMode) {
         await controls.enterEditMode();
       }
 
       await sidebar.toolbar.clickButton('Add');
       await sidebar.addOptions.addVariable();
-
       await sidebar.variableOptions.selectVariableType(variable.type);
 
-      // We wait for the name input to autofocus because it can happen late: we used to sleep 250ms, and under load the
-      // focus then landed mid-test, wiping the label or closing the type dropdown, so tests failed at random.
       await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
 
       await sidebar.variableOptions.setName(variable.name);
@@ -124,13 +115,28 @@ export const flows = {
         await sidebar.variableOptions.setLabel(variable.label);
       }
     },
-    async addNewTextBoxVariable(page: Page, sidebar: Sidebar, controls: Controls, variable: Variable) {
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+    async addNewTextBoxVariable(sidebar: Sidebar, controls: Controls, variable: Variable) {
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       await sidebar.variableOptions.textbox.setValue(variable.value);
       if (variable.display) {
         await sidebar.variableOptions.selectDisplay(variable.display);
       }
+    },
+    async addNewFilterVariable(
+      controls: Controls,
+      sidebar: Sidebar,
+      variable: { name: string; label: string; dataSource: string }
+    ): Promise<void> {
+      await test.step('Create a Filter variable using unified controls', async () => {
+        await controls.enterEditMode();
+        await sidebar.toolbar.clickButton('Add');
+        await sidebar.addOptions.addFilter();
+
+        await sidebar.variableOptions.setName(variable.name);
+        await sidebar.variableOptions.setLabel(variable.label);
+        await sidebar.variableOptions.adhoc.selectDatasource(variable.dataSource);
+      });
     },
     async fillVariableValue(page: Page, controls: Controls, varName: string, text: string) {
       await controls.variables.setValue(varName, text);

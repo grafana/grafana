@@ -156,6 +156,7 @@ export interface ColumnBuildConfig {
   disableKeyboardEvents?: boolean;
   hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
+  hasColumnSidebar?: boolean;
   filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
@@ -174,6 +175,9 @@ export interface ColumnBuildConfig {
   maxRowHeight?: number;
   numFrozenColsFullyInView: number;
   onCellFilterAdded?: TableFilterActionCallback;
+  onHideColumn?: (displayName: string) => void;
+  canHideColumn?: boolean;
+  onOpenColumnPanel?: () => void;
   onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
@@ -267,6 +271,9 @@ function buildColumnsFromFields(
     gridRef,
     getCellActions,
     onCellFilterAdded,
+    onHideColumn,
+    canHideColumn = false,
+    onOpenColumnPanel,
     onFieldAddToAssistant,
     onCellAddToAssistant,
     frozenColumns,
@@ -275,6 +282,7 @@ function buildColumnsFromFields(
     disableKeyboardEvents,
     hoverOverflow = true,
     disableSanitizeHtml,
+    hasColumnSidebar,
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
@@ -619,6 +627,10 @@ function buildColumnsFromFields(
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
+          hasColumnSidebar={hasColumnSidebar}
+          onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
+          canHideColumn={canHideColumn}
+          onOpenColumnPanel={onOpenColumnPanel}
           onAddToAssistant={onFieldAddToAssistant ? () => onFieldAddToAssistant(frame, field) : undefined}
           selectFirstCell={() => {
             gridRef.current?.setActivePosition({ rowIdx: 0, idx: 0 });

@@ -236,6 +236,7 @@ func NewAPIService(
 	teamLBACAuthorizer := newTeamLBACRuleAuthorizer(teamLBACApiInstaller.GetAuthorizer())
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	userAuthorizer := newUserAuthorizer(accessClient)
+	whoamiAuthorizer := newWhoamiAuthorizer()
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -278,6 +279,10 @@ func NewAPIService(
 				user, ok := types.AuthInfoFrom(ctx)
 				if !ok {
 					return authorizer.DecisionDeny, "no identity found", apierrors.NewUnauthorized("no identity found in context")
+				}
+
+				if a.GetResource() == "whoami" {
+					return whoamiAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "globalroles" {
@@ -996,6 +1001,8 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 				},
 			}},
 	}
+
+	oas.Components.Schemas[compBase+"CurrentUserInfo"].Properties["identity"] = oas.Components.Schemas[compBase+"Display"].Properties["identity"]
 
 	// Patch /tokens endpoints: wire request/response schemas, rename {path} to {tokenName}.
 	serviceaccounttoken.PostProcessOpenAPI(oas)
