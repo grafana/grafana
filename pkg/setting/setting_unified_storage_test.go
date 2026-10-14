@@ -170,7 +170,6 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Add unified_storage section for index settings
 		setSectionKey("unified_storage", "index_min_count", "5")
-		cfg.Raw.Section("unified_storage").Key("search_backed_list_resources").SetValue("dashboard.grafana.app/dashboards, folder.grafana.app/folders")
 
 		cfg.setUnifiedStorageConfig()
 
@@ -192,7 +191,6 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Test that index settings are correctly parsed
 		assert.Equal(t, 5, cfg.IndexMinCount)
-		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.SearchBackedListResources)
 	})
 
 	t.Run("authorize_before_fetch_enabled", func(t *testing.T) {

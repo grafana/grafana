@@ -26,7 +26,6 @@ import (
 func TestShouldUseSearchForList(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
-		allowlist       []string
 		noRegistry      bool
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
@@ -61,53 +60,43 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		"true when no selectors and resource is allowlisted": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
+		"false when no selectors for a known resource": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
-			expectedAllowed: true,
+			expectedAllowed: false,
 		},
 		"false when resource version is set": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
 			req: &resourcepb.ListRequest{
 				Source:          resourcepb.ListRequest_STORE,
 				ResourceVersion: 42,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Labels: []*resourcepb.Requirement{{Key: "test", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
 			expectedAllowed: false,
 		},
 		"false when list has a name": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "named"},
-				},
-			},
-			expectedAllowed: false,
-		},
-		"false when no selectors and resource is not allowlisted": {
-			req: &resourcepb.ListRequest{
-				Source: resourcepb.ListRequest_STORE,
-				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Labels: []*resourcepb.Requirement{{Key: "test", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "named"},
 				},
 			},
 			expectedAllowed: false,
 		},
 		"false when keys only": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
 			req: &resourcepb.ListRequest{
 				Source:   resourcepb.ListRequest_STORE,
 				KeysOnly: true,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Labels: []*resourcepb.Requirement{{Key: "test", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
 			expectedAllowed: false,
@@ -195,15 +184,14 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: true,
 		},
-		"true when no selectors and an allowlisted resource has no manifest": {
-			allowlist: []string{"mobile.ext.grafana.app/mobileusersettings"},
+		"false when no selectors and a resource has no manifest": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
 				},
 			},
-			expectedAllowed: true,
+			expectedAllowed: false,
 		},
 		"false when continuing a list that started on the store scan": {
 			req: &resourcepb.ListRequest{
@@ -292,11 +280,6 @@ func TestShouldUseSearchForList(t *testing.T) {
 			if !tc.disableSearch {
 				s.searchClient = &stubSearchClient{}
 			}
-			allowed := make(map[string]bool, len(tc.allowlist))
-			for _, resource := range tc.allowlist {
-				allowed[resource] = true
-			}
-			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 			if !tc.noRegistry {
 				// Stands in for what a manifest watcher would load, including a kind this
 				// binary was not compiled with.
@@ -309,21 +292,6 @@ func TestShouldUseSearchForList(t *testing.T) {
 			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
 		})
 	}
-}
-
-func TestSearchBackedListConfigAllowed(t *testing.T) {
-	config := SearchBackedListConfig{AllowedResources: map[string]bool{
-		"dashboard.grafana.app/dashboards": true,
-		"*.ext.grafana.app":                true,
-		"disabled.ext.grafana.app":         false,
-		"[invalid":                         true,
-	}}
-
-	require.True(t, config.Allowed("dashboard.grafana.app", "dashboards"))
-	require.False(t, config.Allowed("dashboard.grafana.app", "folders"))
-	require.True(t, config.Allowed("exampletodoapp.ext.grafana.app", "todos"))
-	require.False(t, config.Allowed("disabled.ext.grafana.app", "todos"))
-	require.False(t, config.Allowed("exampletodoapp.grafana.app", "todos"))
 }
 
 func TestFilterSelectors(t *testing.T) {
@@ -1090,30 +1058,6 @@ func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
 	require.Len(t, resp.Items, 1)
 	require.Equal(t, 1, backend.batchCalls)
 	require.Zero(t, backend.readCalls)
-}
-
-func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
-	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{ResourceVersion: 100}}
-	s := createTestServer(searchClient, 1024)
-	s.searchBackedListResources = SearchBackedListConfig{AllowedResources: map[string]bool{
-		"advisor.grafana.app/advisors": true,
-	}}
-
-	resp, err := s.List(ctx, &resourcepb.ListRequest{
-		Source: resourcepb.ListRequest_STORE,
-		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-			Namespace: "nsx",
-			Group:     "advisor.grafana.app",
-			Resource:  "advisors",
-		}},
-	})
-
-	require.NoError(t, err)
-	require.Empty(t, resp.Items)
-	require.NotNil(t, searchClient.last)
-	require.Empty(t, searchClient.last.Options.Fields)
-	require.Empty(t, searchClient.last.Options.Labels)
 }
 
 func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
