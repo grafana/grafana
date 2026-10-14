@@ -1135,7 +1135,7 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 	}
 	mwApp := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
-			ID: "grafana-maintenancewindows-app", Name: "Maintenance Windows", Type: plugins.TypeApp,
+			ID: "grafana-maintenancewindows-app", Name: "Maintenance windows", Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{Name: "Maintenance windows", Path: "/a/grafana-maintenancewindows-app/maintenance-windows", Type: "page", AddToNav: true, DefaultNav: true},
 			},
@@ -1174,10 +1174,10 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 		require.NotNil(t, sloNode)
 		mwChild := navtree.FindByURL(sloNode.Children, "/a/grafana-maintenancewindows-app/maintenance-windows")
 		require.NotNil(t, mwChild)
-		require.Equal(t, "Maintenance Windows", mwChild.Text)
+		require.Equal(t, mwApp.Name, mwChild.Text)
 		require.Equal(t, "grafana-maintenancewindows-app", mwChild.PluginID)
 		require.Equal(t, "standalone-plugin-page-grafana-maintenancewindows-app", mwChild.Id)
-		require.True(t, mwChild.IsNew)
+		require.False(t, mwChild.IsNew)
 
 		require.Nil(t, treeRoot.FindById(navtree.NavIDApps))
 	})
@@ -1189,7 +1189,10 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Nil(t, treeRoot.FindById("plugin-page-grafana-slo-app"))
-		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
+		mwNode := treeRoot.FindById("plugin-page-grafana-maintenancewindows-app")
+		require.NotNil(t, mwNode)
+		require.Equal(t, mwApp.Name, mwNode.Text)
+		require.False(t, mwNode.IsNew)
 	})
 }
 
