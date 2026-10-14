@@ -131,7 +131,7 @@ func TestQueueLagTracker(t *testing.T) {
 	})
 }
 
-func TestQueueLagTrackerRetry(t *testing.T) {
+func TestQueueLagTrackerFailure(t *testing.T) {
 	t.Run("repeated retries start a fresh wait and survive deferred cleanup", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
@@ -143,7 +143,8 @@ func TestQueueLagTrackerRetry(t *testing.T) {
 				assert.Equal(t, 10*time.Second, time.Since(enqueuedAt))
 				time.Sleep(20 * time.Second)
 				assert.Equal(t, 30*time.Second, q.lag())
-				q.retry("a")
+				q.failed("a")
+				q.add("a")
 				q.done("a")
 				q.done("a")
 				assert.Zero(t, q.lag())
@@ -155,7 +156,7 @@ func TestQueueLagTrackerRetry(t *testing.T) {
 		})
 	})
 
-	t.Run("retry resets a waiting entry inherited from an in-flight update", func(t *testing.T) {
+	t.Run("failure resets a waiting entry inherited from an in-flight update", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
 			q.add("a")
@@ -164,8 +165,9 @@ func TestQueueLagTrackerRetry(t *testing.T) {
 			time.Sleep(time.Minute)
 			q.add("a")
 			time.Sleep(10 * time.Second)
-			q.retry("a")
+			q.failed("a")
 			time.Sleep(10 * time.Second)
+			q.failed("a")
 			q.add("a")
 			q.done("a")
 			assert.Equal(t, 10*time.Second, q.lag())
@@ -177,7 +179,7 @@ func TestQueueLagTrackerRetry(t *testing.T) {
 		})
 	})
 
-	t.Run("retry preserves older waiting and in-flight keys", func(t *testing.T) {
+	t.Run("failure preserves older waiting and in-flight keys", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
 			q.add("retry")
@@ -190,7 +192,8 @@ func TestQueueLagTrackerRetry(t *testing.T) {
 			_, ok = q.get("inflight")
 			require.True(t, ok)
 			time.Sleep(10 * time.Second)
-			q.retry("retry")
+			q.failed("retry")
+			q.add("retry")
 			q.done("retry")
 			assert.Equal(t, 20*time.Second, q.lag())
 			_, ok = q.get("waiting")
@@ -208,18 +211,31 @@ func TestQueueLagTrackerRetry(t *testing.T) {
 		})
 	})
 
-	t.Run("retry tracks a previously untracked key", func(t *testing.T) {
+	t.Run("failure without redelivery removes the key", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
-			q.retry("a")
-			q.done("a")
-			time.Sleep(5 * time.Second)
-			assert.Equal(t, 5*time.Second, q.lag())
-			enqueuedAt, ok := q.get("a")
+			q.add("a")
+			_, ok := q.get("a")
 			require.True(t, ok)
-			assert.Equal(t, 5*time.Second, time.Since(enqueuedAt))
+			time.Sleep(time.Minute)
+			q.failed("a")
 			q.done("a")
+			assert.Empty(t, q.waiting)
+			assert.Empty(t, q.inflight)
 			assert.Zero(t, q.lag())
+		})
+	})
+
+	t.Run("failure without an in-flight attempt leaves waiting keys alone", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			q.failed("untracked")
+			assert.Empty(t, q.waiting)
+			assert.Zero(t, q.lag())
+			q.add("waiting")
+			time.Sleep(time.Minute)
+			q.failed("waiting")
+			assert.Equal(t, time.Minute, q.lag())
 		})
 	})
 }

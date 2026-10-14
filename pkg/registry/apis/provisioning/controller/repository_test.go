@@ -2166,8 +2166,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process("default/test-repo")
-	require.NoError(t, err, "a user-caused delete failure must not surface as a controller error")
+	assertRepositoryStatusFailureResetsQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
@@ -2236,8 +2235,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process("default/test-repo")
-	require.NoError(t, err, "a non-retryable delete failure must be surfaced on status, not returned and re-logged every resync")
+	assertRepositoryStatusFailureResetsQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
@@ -2424,8 +2422,7 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process("default/test-repo")
-	require.NoError(t, err, "a user-caused build failure must not surface as a controller error")
+	assertRepositoryStatusFailureResetsQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the failure must still be surfaced on /status/health")
@@ -3107,8 +3104,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 		tracer:            tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process(namespace + "/" + repoName)
-	require.NoError(t, err, "a lost-access token failure must not be returned to the workqueue")
+	assertRepositoryStatusFailureResetsQueueLag(t, rc, namespace+"/"+repoName)
 
 	assert.Equal(t, 1.0,
 		counterValueWithLabel(t, reg, "grafana_provisioning_repository_token_generation_errors_total", "cause", reconcileCauseUser),
@@ -3876,8 +3872,7 @@ func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	_, err := rc.process(namespace + "/" + repoName)
-	require.NoError(t, err, "an unauthorized hook failure must not surface as a controller error")
+	assertRepositoryStatusFailureResetsQueueLag(t, rc, namespace+"/"+repoName)
 
 	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
 

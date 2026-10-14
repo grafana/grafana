@@ -9,7 +9,7 @@ import (
 // queueLagTracker tracks each key's first-enqueue time through two sets —
 // waiting (enqueued, not yet picked up) and inflight (being processed) — so the
 // controller can report queue lag: how long the oldest unfinished key has been
-// queued. Enqueue is first-wins, except that error-triggered retries reset age.
+// queued. Enqueue is first-wins, except that failed attempts reset age.
 //
 // The active keys are also chained in first-enqueue order (oldest at the front)
 // so lag is an O(1) front read rather than a scan. This matters because lag is
@@ -72,20 +72,21 @@ func (q *queueLagTracker) add(key string) {
 	q.track(key, now)
 }
 
-// retry starts a fresh wait after a failed attempt. Reset any waiting entry too:
-// an informer update during processing may have inherited the failed attempt's
-// timestamp. Clearing inflight also lets deferred done preserve the new wait.
-func (q *queueLagTracker) retry(key string) {
+// failed retires a failed attempt without scheduling another. A pending informer
+// update may have inherited its timestamp, so start that wait afresh too.
+func (q *queueLagTracker) failed(key string) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
+	if _, ok := q.inflight[key]; !ok {
+		return
+	}
 	delete(q.inflight, key)
 	q.untrack(key)
-	if q.waiting == nil {
-		q.waiting = make(map[string]time.Time)
+	if _, ok := q.waiting[key]; ok {
+		now := time.Now()
+		q.waiting[key] = now
+		q.track(key, now)
 	}
-	now := time.Now()
-	q.waiting[key] = now
-	q.track(key, now)
 }
 
 // get moves key from waiting to inflight, returning its enqueue
@@ -118,7 +119,7 @@ func (q *queueLagTracker) done(key string) {
 }
 
 // lag returns how long the oldest unfinished key (waiting or inflight) has been
-// queued, from first enqueue or the latest error-triggered retry; 0 when idle.
+// queued, from first enqueue or the latest failed attempt; 0 when idle.
 func (q *queueLagTracker) lag() time.Duration {
 	q.mu.Lock()
 	defer q.mu.Unlock()

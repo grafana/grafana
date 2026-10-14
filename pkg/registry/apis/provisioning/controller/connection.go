@@ -124,7 +124,7 @@ func NewConnectionController(
 	registry.MustRegister(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Name: "grafana_provisioning_connection_worker_queue_lag_seconds",
-			Help: "Age in seconds of the oldest unfinished connection key (waiting or in flight) in this replica's queue, measured from first enqueue and reset on error-triggered retry.",
+			Help: "Age in seconds of the oldest unfinished connection key (waiting or in flight) in this replica's queue, measured from first enqueue and reset after a failed attempt.",
 		},
 		func() float64 { return cc.queueLag.lag().Seconds() },
 	))
@@ -293,6 +293,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 
 	logger = logger.With("queue_lag", cc.queueLag.lag(), "error", err, "attempts", attempts)
 	logger.Error("ConnectionController failed to process key")
+	cc.queueLag.failed(key)
 
 	if attempts >= connectionMaxAttempts {
 		logger.Error("ConnectionController failed too many times")
@@ -312,7 +313,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	if ok {
 		cc.setTrigger(key, trigger)
 	}
-	cc.queueLag.retry(key)
+	cc.queueLag.add(key)
 	cc.queue.AddRateLimited(key)
 	logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
 

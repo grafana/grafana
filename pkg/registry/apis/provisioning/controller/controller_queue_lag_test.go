@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 	"errors"
+	"net"
+	"net/url"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -24,6 +26,7 @@ const queueLagTestKey = "ns/key"
 type queueLagControllerTest struct {
 	tracker     *queueLagTracker
 	queue       workqueue.TypedRateLimitingInterface[string]
+	limiter     workqueue.TypedRateLimiter[string]
 	clock       *testingclock.FakeClock
 	enqueue     func()
 	processNext func() bool
@@ -34,14 +37,16 @@ func newQueueLagControllerTest(t *testing.T, component string, process func() er
 	t.Helper()
 	reg := prometheus.NewPedanticRegistry()
 	clock := testingclock.NewFakeClock(time.Now())
+	limiter := workqueue.DefaultTypedControllerRateLimiter[string]()
 	queue := workqueue.NewTypedRateLimitingQueueWithConfig(
-		workqueue.DefaultTypedControllerRateLimiter[string](),
+		limiter,
 		workqueue.TypedRateLimitingQueueConfig[string]{Clock: clock},
 	)
 	t.Cleanup(queue.ShutDown)
 	c := &queueLagControllerTest{
-		queue: queue,
-		clock: clock,
+		queue:   queue,
+		limiter: limiter,
+		clock:   clock,
 		gauge: func() float64 {
 			return gaugeValueByName(t, reg, "grafana_provisioning_"+component+"_worker_queue_lag_seconds")
 		},
@@ -171,4 +176,76 @@ func TestControllerQueueLagSuccessfulRedeliveryPreservesAge(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestControllerQueueLagFailedRedelivery(t *testing.T) {
+	dialTimeout := &url.Error{Op: "Get", URL: "https://gitlab.example/api/v4/projects/test", Err: &net.OpError{
+		Op: "dial", Net: "tcp", Err: context.DeadlineExceeded,
+	}}
+	for _, component := range []string{"repository", "connection"} {
+		attemptLimit := maxAttempts
+		if component == "connection" {
+			attemptLimit = connectionMaxAttempts
+		}
+		for _, tt := range []struct {
+			name     string
+			err      error
+			attempts int
+		}{
+			{name: "terminal failure", err: errors.New("invalid configuration")},
+			{name: "dial timeout", err: dialTimeout},
+			{name: "exhausted retries", err: apierrors.NewServiceUnavailable("unavailable"), attempts: attemptLimit - 1},
+		} {
+			t.Run(component+"/"+tt.name, func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					var c *queueLagControllerTest
+					c = newQueueLagControllerTest(t, component, func() error {
+						time.Sleep(time.Minute)
+						go c.enqueue()
+						synctest.Wait()
+						time.Sleep(5 * time.Second)
+						assert.Equal(t, 75.0, c.gauge(), "active attempt still contributes its age")
+						return tt.err
+					})
+					for range 3 {
+						c.enqueue()
+						// Seed the retry count without scheduling extra deliveries.
+						for range tt.attempts {
+							c.limiter.When(queueLagTestKey)
+						}
+						time.Sleep(10 * time.Second)
+						require.True(t, c.processNext())
+						assert.Zero(t, c.gauge(), "failed attempt must not age the pending update")
+						assert.Empty(t, c.tracker.inflight)
+						require.Contains(t, c.tracker.waiting, queueLagTestKey)
+						assert.Equal(t, 1, c.queue.Len(), "only the informer delivery remains")
+						assert.Zero(t, c.queue.NumRequeues(queueLagTestKey), "failure must not add another retry")
+					}
+				})
+			})
+		}
+	}
+}
+
+func assertRepositoryStatusFailureResetsQueueLag(t *testing.T, rc *RepositoryController, key string) {
+	t.Helper()
+	rc.queue = workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())
+	t.Cleanup(rc.queue.ShutDown)
+	var startedAt time.Time
+	rc.processFn = func(key string) (string, error) {
+		rc.queueLag.add(key)
+		rc.queue.Add(key)
+		startedAt = time.Now()
+		repoType, err := rc.process(key)
+		require.NoError(t, err, "status-reported failure must not become a controller retry")
+		return repoType, err
+	}
+	rc.queueLag.add(key)
+	rc.queue.Add(key)
+	require.True(t, rc.processNextWorkItem(t.Context()))
+	assert.Empty(t, rc.queueLag.inflight)
+	require.Contains(t, rc.queueLag.waiting, key)
+	assert.False(t, rc.queueLag.waiting[key].Before(startedAt), "pending update must not inherit failed attempt's age")
+	assert.Equal(t, 1, rc.queue.Len(), "only the pending update should remain")
+	assert.Zero(t, rc.queue.NumRequeues(key))
 }
