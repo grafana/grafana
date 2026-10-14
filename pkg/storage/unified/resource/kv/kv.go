@@ -425,6 +425,7 @@ const blobGCObservedSection = "unified/blob-gc-observed"
 var _ interface {
 	FirstUnused(context.Context, string, time.Time) (time.Time, error)
 	ClearUnused(context.Context, string) error
+	CollectUnused(context.Context, string, time.Time) (bool, error)
 } = (*badgerKV)(nil)
 
 func (k *badgerKV) FirstUnused(ctx context.Context, key string, now time.Time) (time.Time, error) {
@@ -456,6 +457,52 @@ func (k *badgerKV) FirstUnused(ctx context.Context, key string, now time.Time) (
 
 func (k *badgerKV) ClearUnused(ctx context.Context, key string) error {
 	return k.Delete(ctx, blobGCObservedSection, key)
+}
+
+func (k *badgerKV) CollectUnused(ctx context.Context, key string, firstUnused time.Time) (bool, error) {
+	if k.db.IsClosed() {
+		return false, fmt.Errorf("database is closed")
+	}
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+
+	txn := k.db.NewTransaction(true)
+	defer txn.Discard()
+
+	observedKey := []byte(blobGCObservedSection + "/" + key)
+	item, err := txn.Get(observedKey)
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	var observed time.Time
+	if err := item.Value(func(v []byte) error {
+		parsed, perr := time.Parse(time.RFC3339Nano, string(v))
+		observed = parsed
+		return perr
+	}); err != nil {
+		return false, err
+	}
+	if !observed.Equal(firstUnused) {
+		return false, nil
+	}
+
+	if err := txn.Delete([]byte(BlobDataSection + "/" + key)); err != nil {
+		return false, err
+	}
+	if err := txn.Delete(observedKey); err != nil {
+		return false, err
+	}
+	if err := txn.Commit(); err != nil {
+		if errors.Is(err, badger.ErrConflict) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func (k *badgerKV) UnixTimestamp(ctx context.Context) (int64, error) {

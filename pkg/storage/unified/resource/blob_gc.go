@@ -31,6 +31,10 @@ type blobGCAgeStore interface {
 	ClearUnused(context.Context, string) error
 }
 
+type blobGCCollector interface {
+	CollectUnused(context.Context, string, time.Time) (bool, error)
+}
+
 var (
 	_ blobGCAgeStore = (*CDKBlobGCStore)(nil)
 	_ blobGCAgeStore = (*kv.SqlKV)(nil)
@@ -111,14 +115,27 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 		if first.IsZero() || now.Sub(first) < grace {
 			continue
 		}
-		if !dryRun {
-			if err := g.store.Delete(ctx, kv.BlobDataSection, key); err != nil {
+		if dryRun {
+			count++
+			continue
+		}
+		if collector, ok := g.store.(blobGCCollector); ok {
+			deleted, err := collector.CollectUnused(ctx, key, first)
+			if err != nil {
 				errs = append(errs, err)
 				continue
 			}
-			if err := ages.ClearUnused(ctx, key); err != nil {
-				errs = append(errs, err)
+			if deleted {
+				count++
 			}
+			continue
+		}
+		if err := g.store.Delete(ctx, kv.BlobDataSection, key); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if err := ages.ClearUnused(ctx, key); err != nil {
+			errs = append(errs, err)
 		}
 		count++
 	}
