@@ -1,7 +1,19 @@
 import { cx } from '@emotion/css';
-import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
+import {
+  autoUpdate,
+  flip,
+  offset,
+  shift,
+  useDismiss,
+  useFloating,
+  useFocus,
+  useHover,
+  useInteractions,
+} from '@floating-ui/react';
 import {
   type ChangeEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type KeyboardEvent,
   type MutableRefObject,
   type ReactNode,
@@ -10,6 +22,7 @@ import {
   useId,
   useLayoutEffect,
   useRef,
+  useState,
 } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -460,6 +473,89 @@ export function QueryCoauthoringFallback({ reason, onClose, onFeedback, onContin
   );
 }
 
+// Grafana's Tooltip makes its trigger tabbable, which would break the roving tabindex of the option tabs.
+function QueryCoauthoringOptionChip({
+  title,
+  peeking,
+  optionIndex,
+  selected,
+  className,
+  hidden,
+  onPointerDown,
+  onLostPointerCapture,
+  onClick,
+  children,
+}: {
+  title: string;
+  peeking: boolean;
+  optionIndex: number;
+  selected: boolean;
+  className: string;
+  hidden: boolean;
+  onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onLostPointerCapture: () => void;
+  onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
+  children: ReactNode;
+}) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  const [open, setOpen] = useState(false);
+  const isOpen = open && !peeking;
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setOpen,
+    placement: 'top',
+    strategy: 'fixed',
+    middleware: [offset(8), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+  const hover = useHover(context, { delay: { open: 100 }, move: false });
+  const focus = useFocus(context, { visibleOnly: true });
+  const dismiss = useDismiss(context, { referencePress: true });
+  const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus, dismiss]);
+  const tooltipId = useId();
+  return (
+    <>
+      <Button
+        ref={refs.setReference}
+        {...getReferenceProps({ onPointerDown, onClick })}
+        className={className}
+        style={hidden ? { display: 'none' } : undefined}
+        size="sm"
+        variant="secondary"
+        role="tab"
+        data-option-index={optionIndex}
+        aria-selected={selected}
+        aria-describedby={isOpen ? tooltipId : undefined}
+        tabIndex={selected ? 0 : -1}
+        onLostPointerCapture={onLostPointerCapture}
+      >
+        {children}
+      </Button>
+      {isOpen && (
+        <Portal>
+          <div
+            ref={refs.setFloating}
+            id={tooltipId}
+            role="tooltip"
+            className={styles.optionTooltip}
+            style={floatingStyles}
+            {...getFloatingProps()}
+          >
+            <Text variant="bodySmall" weight="medium">
+              {title}
+            </Text>
+            {selected && (
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="query-editor-coauthoring.hold-to-peek">Hold to peek</Trans>
+              </Text>
+            )}
+          </div>
+        </Portal>
+      )}
+    </>
+  );
+}
+
 interface ProposalProps {
   width?: number;
   why: string[];
@@ -467,6 +563,8 @@ interface ProposalProps {
   diff: QueryCoauthoringDiffHunk[];
   unconfirmedValues?: string[];
   optionCount: number;
+  optionTitles: Array<string | undefined>;
+  peeking: boolean;
   selectedIndex: number;
   onSelect: (index: number, source?: 'keyboard') => void;
   onPeek?: (index: number) => void;
@@ -486,6 +584,8 @@ export function QueryCoauthoringProposal({
   diff,
   unconfirmedValues,
   optionCount,
+  optionTitles,
+  peeking,
   selectedIndex,
   onSelect,
   onPeek,
@@ -570,17 +670,24 @@ export function QueryCoauthoringProposal({
             onClick={() => onSelect(selectedIndex === -1 ? optionCount - 1 : selectedIndex - 1)}
           />
           {Array.from({ length: optionCount + 1 }, (_, rank) => (
-            <Button
+            <QueryCoauthoringOptionChip
               key={rank}
+              title={
+                rank === 0
+                  ? t('query-editor-coauthoring.original-query', 'Original query')
+                  : (optionTitles[rank - 1] ??
+                    t('query-editor-coauthoring.preview-option', 'Preview option {{rank}}', { rank }))
+              }
+              peeking={peeking}
+              optionIndex={rank - 1}
+              selected={selectedIndex === rank - 1}
               className={styles.compactOptionPill}
-              style={tiny && selectedIndex !== rank - 1 ? { display: 'none' } : undefined}
-              size="sm"
-              variant="secondary"
-              role="tab"
-              data-option-index={rank - 1}
-              aria-selected={selectedIndex === rank - 1}
-              tabIndex={selectedIndex === rank - 1 ? 0 : -1}
-              onPointerDown={(event) => chipPeek.start(event, rank - 1)}
+              hidden={tiny && selectedIndex !== rank - 1}
+              onPointerDown={(event) => {
+                if (selectedIndex === rank - 1) {
+                  chipPeek.start(event, rank - 1);
+                }
+              }}
               onLostPointerCapture={chipPeek.stop}
               onClick={(event) => {
                 if (!chipPeek.consumeClick(event)) {
@@ -591,7 +698,7 @@ export function QueryCoauthoringProposal({
               {rank === 0
                 ? t('query-editor-coauthoring.original', 'Original')
                 : t('query-editor-coauthoring.option', 'Option {{rank}}', { rank })}
-            </Button>
+            </QueryCoauthoringOptionChip>
           ))}
           <Button
             className={tiny ? styles.compactOptionPill : undefined}

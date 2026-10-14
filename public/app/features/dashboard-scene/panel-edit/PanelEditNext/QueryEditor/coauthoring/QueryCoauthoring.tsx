@@ -116,7 +116,6 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
         styles.container,
         state.kind === 'proposal' && styles.proposalGroup,
         session.groupLayout && styles.frozenGroup,
-        session.groupGesture?.kind === 'drag' && styles.dimmed,
         session.state.kind === 'proposal' && session.state.peekIndex !== undefined && styles.dimmed
       )}
       role="dialog"
@@ -334,6 +333,8 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
           diff={state.proposal.options[state.proposal.selectedIndex]?.diff ?? []}
           unconfirmedValues={state.proposal.options[state.proposal.selectedIndex]?.unconfirmedValues}
           optionCount={state.proposal.options.length}
+          optionTitles={state.proposal.options.map((option) => option.title)}
+          peeking={state.peekIndex !== undefined}
           selectedIndex={state.proposal.selectedIndex}
           onSelect={state.selectOption}
           onPeek={state.peek}

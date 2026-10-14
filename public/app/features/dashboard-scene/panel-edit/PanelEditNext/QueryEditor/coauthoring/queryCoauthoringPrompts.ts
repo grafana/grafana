@@ -4,6 +4,7 @@ import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContr
 
 export interface QueryProposal {
   proposedQuery: string;
+  title?: string;
   why: string[];
   unconfirmedValues?: string[];
 }
@@ -42,6 +43,8 @@ const MAX_INLINE_CLARIFICATION_LENGTH = 240;
 // Allow a modest model overrun before treating free text as an implicit handoff.
 export const MAX_INLINE_CLARIFICATION_RESPONSE_LENGTH = 320;
 
+const MAX_OPTION_TITLE_LENGTH = 40;
+
 function validateOption(input: Record<string, unknown>): QueryProposal {
   if (
     typeof input.proposedQuery !== 'string' ||
@@ -71,7 +74,18 @@ function validateOption(input: Record<string, unknown>): QueryProposal {
   const unconfirmedValues = Array.isArray(input.unconfirmedValues)
     ? input.unconfirmedValues.filter((value): value is string => typeof value === 'string')
     : undefined;
-  return { proposedQuery: input.proposedQuery, why, ...(unconfirmedValues ? { unconfirmedValues } : {}) };
+  const title =
+    typeof input.title === 'string' &&
+    input.title.trim().length > 0 &&
+    input.title.trim().length <= MAX_OPTION_TITLE_LENGTH
+      ? input.title.trim()
+      : undefined;
+  return {
+    proposedQuery: input.proposedQuery,
+    why,
+    ...(title ? { title } : {}),
+    ...(unconfirmedValues ? { unconfirmedValues } : {}),
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -167,6 +181,7 @@ export function buildCoauthoringSystemPrompt(
     'Do not reformat query text outside the requested change.',
     'Submit one to three complete replacement queries, ranked best first. Prefer ranked alternatives over a clarification when the missing preference does not materially affect the result.',
     'For each option, provide short why bullets. Flag unconfirmed filter values in unconfirmedValues; never claim that an unconfirmed value exists.',
+    'For each option, provide a title of 2 to 4 words that names the change, such as "Scope to namespace" or "Average instead of sum".',
     'Datasource-provided context is advisory. Do not invent context that is not provided.',
     'Follow the datasource-provided editing guidance. Ask one concise clarification question only when a user preference can resolve the missing information.',
     `Keep clarifications to one plain-text question, at most two sentences and ${MAX_INLINE_CLARIFICATION_LENGTH} characters. Do not use Markdown, lists, headings, or examples.`,

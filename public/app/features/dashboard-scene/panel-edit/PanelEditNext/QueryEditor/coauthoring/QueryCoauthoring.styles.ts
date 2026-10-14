@@ -328,6 +328,17 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
         color: theme.colors.info.text,
       },
     }),
+    optionTooltip: css({
+      display: 'flex',
+      flexDirection: 'column',
+      maxWidth: theme.spacing(30),
+      padding: theme.spacing(0.5, 1),
+      color: theme.components.tooltip.text,
+      background: theme.components.tooltip.background,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z2,
+      zIndex: theme.zIndex.tooltip,
+    }),
     compactPreviewResult: css({
       display: 'flex',
       alignItems: 'center',
