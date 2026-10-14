@@ -4,6 +4,7 @@ import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { type CompletionItem } from '../../types/completion';
+import { MarkdownHTML } from '../Markdown/MarkdownHTML';
 
 const getStyles = (theme: GrafanaTheme2, height: number, visible: boolean) => {
   return {
@@ -43,7 +44,7 @@ export const TypeaheadInfo = ({ item, height }: Props) => {
     <div className={cx([styles.typeaheadItem])}>
       <b>{label}</b>
       <hr />
-      <div dangerouslySetInnerHTML={{ __html: documentation }} />
+      <MarkdownHTML html={documentation} />
     </div>
   );
 };

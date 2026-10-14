@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, TextLink } from '@grafana/ui';
+import { Alert, MarkdownHTML, TextLink } from '@grafana/ui';
 
 import { type CatalogPlugin } from '../types';
 
@@ -37,12 +37,7 @@ export function PluginDetailsDeprecatedWarning(props: Props): React.ReactElement
 
       {/* Additional contextual deprecation message supporting markdown */}
       {plugin.details?.statusContext && (
-        <div
-          className="markdown-html"
-          dangerouslySetInnerHTML={{
-            __html: renderMarkdown(plugin.details.statusContext),
-          }}
-        />
+        <MarkdownHTML className="markdown-html" html={renderMarkdown(plugin.details.statusContext)} />
       )}
     </Alert>
   ) : null;
