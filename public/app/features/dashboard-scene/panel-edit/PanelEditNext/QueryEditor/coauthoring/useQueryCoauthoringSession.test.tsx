@@ -449,7 +449,7 @@ describe('useQueryCoauthoringSession', () => {
     initial.readInvocation.mockReturnValueOnce(invocation.promise);
 
     render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Query coauthor' }), { key: 'Escape' });
 
     await act(async () => {
       invocation.resolve({ baseline: initial.baseline, context: initial.context });

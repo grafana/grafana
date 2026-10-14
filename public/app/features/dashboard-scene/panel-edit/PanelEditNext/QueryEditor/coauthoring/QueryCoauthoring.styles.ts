@@ -1,6 +1,7 @@
 import { css, keyframes } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 const surfaceEnter = keyframes({
   from: { opacity: 0, transform: 'translateY(-2px) scale(0.98)' },
@@ -204,6 +205,26 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       flex: '0 0 auto',
       justifyContent: 'flex-end',
       paddingInline: theme.spacing(1),
+    }),
+    menuActions: css({
+      display: 'flex',
+      flex: '0 0 auto',
+      flexDirection: 'column',
+    }),
+    menuAction: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(0.75, 1),
+      color: theme.colors.text.primary,
+      background: 'transparent',
+      border: 0,
+      borderRadius: theme.shape.radius.default,
+      textAlign: 'left',
+      cursor: 'pointer',
+      '&:hover:not(:disabled)': { background: theme.colors.action.hover },
+      '&:focus-visible': getFocusStyles(theme),
+      '&:disabled': { color: theme.colors.text.disabled, cursor: 'not-allowed' },
     }),
     quickActions: css({
       display: 'flex',

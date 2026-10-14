@@ -1412,20 +1412,23 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByRole('button', { name: 'Coauthor' })).toBeEnabled();
   });
 
-  it('shows the focused query summary using the highlighted query treatment', async () => {
+  it('opens with only the prompt and the Explain action', async () => {
     const { baseline, onBaseline } = await setup();
 
-    expect(await screen.findByText('Highlighted query')).toBeInTheDocument();
-    expect(screen.getByText('http_requests_total is a counter metric.')).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: 'Describe a query change' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Explain this query' })).toBeEnabled();
+    expect(screen.queryByText('Highlighted query')).not.toBeInTheDocument();
+    expect(screen.queryByText('http_requests_total is a counter metric.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Close coauthoring' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explore similar metrics and labels' })).not.toBeInTheDocument();
     expect(onBaseline).toHaveBeenCalledWith(baseline);
     expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_opened_popover', {
       datasource_type: 'prometheus',
     });
   });
 
-  it('loads the deterministic summary without an Assistant request before submission', async () => {
+  it('loads the context without an Assistant request before submission', async () => {
     const { user } = await setup();
-    expect(screen.getByText('http_requests_total is a counter metric.')).toBeInTheDocument();
     await user.type(screen.getByRole('textbox'), 'An unfinished request');
     expect(mockGenerate).not.toHaveBeenCalled();
   });
@@ -1565,24 +1568,6 @@ describe('QueryCoauthoring', () => {
     expect(screen.queryByRole('button', { name: 'Only one question?' })).not.toBeInTheDocument();
   });
 
-  it('explores only existing metadata and hides the quick action when metadata is empty', async () => {
-    const { user, context, readInvocation, unmount } = await setup();
-    await user.click(screen.getByRole('button', { name: 'Explore similar metrics and labels' }));
-    const request = mockGenerate.mock.calls[0][0];
-    expect(request.systemPrompt).toContain(JSON.stringify(context.metadata));
-    expect(request.systemPrompt).toContain(
-      'Do not invent metric or label names that are not in the provided metadata.'
-    );
-    act(() => request.onComplete('The context contains the HTTP requests counter.'));
-    expect(screen.getByText('The context contains the HTTP requests counter.')).toBeInTheDocument();
-    expect(readInvocation).toHaveBeenCalledTimes(1);
-    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_explore_similar_used', {});
-    unmount();
-    await setup(0, true, { ...context, metadata: [] });
-    expect(screen.getByRole('button', { name: 'Explain this query' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Explore similar metrics and labels' })).not.toBeInTheDocument();
-  });
-
   it('moves from Explain to Modify in the same engaged invocation and does not count Explain toward the nudge', async () => {
     const { user, readInvocation, stagePreview, dismissInvocation } = await setup();
     await user.click(screen.getByRole('button', { name: 'Explain this query' }));
@@ -1605,6 +1590,7 @@ describe('QueryCoauthoring', () => {
     act(() => screen.getByRole('dialog', { name: 'Query coauthor' }).focus());
     await user.keyboard('{Escape}');
     expect(dismissInvocation).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
     await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Group the requests');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     act(() => mockGenerate.mock.calls[4][0].onComplete('Which label should I group by?'));
@@ -1640,62 +1626,6 @@ describe('QueryCoauthoring', () => {
     }
   );
 
-  it('associates each concurrent session prompt with its own query summary', async () => {
-    const firstTarget = document.createElement('div');
-    const secondTarget = document.createElement('div');
-    document.body.append(firstTarget, secondTarget);
-    const makeSession = (invocationId: string, portalTarget: HTMLElement) => {
-      const context: QueryEditorCoauthoringContextV1 = {
-        revision: invocationId,
-        query: 'rate(http_requests_total[5m])',
-        focusRanges: [{ from: 0, to: 4 }],
-        language: { id: 'promql', displayName: 'PromQL' },
-        metadata: [],
-      };
-      const baseline = { refId: invocationId, expr: context.query } as DataQuery;
-      const adapter: QueryEditorCoauthoringAdapterV1 = {
-        getSnapshot: () => ({ mode: 'invoked', invocationId, portalTarget }),
-        subscribe: () => () => undefined,
-        invoke: jest.fn(),
-        readInvocation: jest.fn().mockResolvedValue({ baseline, context }),
-        prepareProposal: jest.fn(),
-        dismiss: jest.fn(),
-      };
-      return (
-        <QueryCoauthoring
-          key={invocationId}
-          adapter={adapter}
-          invocationId={invocationId}
-          portalTarget={portalTarget}
-          datasourceType="prometheus"
-          onBaseline={() => true}
-          onAccept={() => true}
-          onPreview={() => true}
-          onRevertPreview={jest.fn()}
-        />
-      );
-    };
-
-    render(
-      <>
-        {makeSession('1', firstTarget)}
-        {makeSession('2', secondTarget)}
-      </>
-    );
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    const firstPrompt = await within(firstTarget).findByRole('textbox', { name: 'Describe a query change' });
-    const secondPrompt = await within(secondTarget).findByRole('textbox', { name: 'Describe a query change' });
-    const firstSummary = within(firstTarget).getByText('The selection is part of this PromQL query.');
-    const secondSummary = within(secondTarget).getByText('The selection is part of this PromQL query.');
-
-    expect(firstSummary.id).not.toBe(secondSummary.id);
-    expect(firstPrompt).toHaveAttribute('aria-describedby', firstSummary.id);
-    expect(secondPrompt).toHaveAttribute('aria-describedby', secondSummary.id);
-  });
-
   it('requests a privacy-bounded explanation only after selecting Explain', async () => {
     const { user, queryText, dismissInvocation } = await setup();
     await user.click(screen.getByRole('button', { name: 'Explain this query' }));
@@ -1717,10 +1647,9 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByText('Highlighted query')).toBeInTheDocument();
   });
 
-  it('does not request an explanation when focus moves between the prompt and deterministic summary', async () => {
+  it('does not request an explanation when the prompt takes focus', async () => {
     const { user } = await setup();
     await user.click(screen.getByRole('textbox', { name: 'Describe a query change' }));
-    await user.click(screen.getByText('http_requests_total is a counter metric.'));
     expect(screen.getByRole('button', { name: 'Explain this query' })).toBeInTheDocument();
     expect(mockGenerate).not.toHaveBeenCalled();
   });
@@ -1728,7 +1657,7 @@ describe('QueryCoauthoring', () => {
   it('does not request an explanation when the host time range changes after context loads', async () => {
     const { queryCoauthoringProps, rerender } = await setup();
     rerender(<QueryCoauthoring {...queryCoauthoringProps} timeRange={{ from: 3_000, to: 4_000 }} />);
-    expect(screen.getByText('http_requests_total is a counter metric.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Explain this query' })).toBeEnabled();
     expect(mockGenerate).not.toHaveBeenCalled();
   });
 
@@ -2024,7 +1953,7 @@ describe('QueryCoauthoring', () => {
     render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
     expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
     await initial.user.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByText('http_requests_total is a counter metric.')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Explain this query' })).toBeEnabled();
     expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('');
     expect(initial.readInvocation).toHaveBeenNthCalledWith(2, '1');
     expect(initial.capability.invoke).not.toHaveBeenCalled();
@@ -2155,7 +2084,7 @@ describe('QueryCoauthoring', () => {
     resizeObserverSpy.mockRestore();
   });
 
-  it('does not resize a loaded explanation when its own scroll body is scrolled', async () => {
+  it('does not resize a loaded popover when its own content is scrolled', async () => {
     const { anchorElement } = await setup(500);
     const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
     expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 500 - VIEWPORT_TEST_MARGIN}px` });
@@ -2171,7 +2100,7 @@ describe('QueryCoauthoring', () => {
       y: 440,
       toJSON: () => undefined,
     });
-    fireEvent.scroll(screen.getByTestId(selectors.components.QueryEditorCoauthoring.container));
+    fireEvent.scroll(screen.getByRole('textbox', { name: 'Describe a query change' }));
 
     expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 500 - VIEWPORT_TEST_MARGIN}px` });
   });
@@ -2276,7 +2205,7 @@ describe('QueryCoauthoring', () => {
     await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
     const cancelCalls = mockCancel.mock.calls.length;
     const resetCalls = mockReset.mock.calls.length;
-    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    await user.keyboard('{Escape}');
 
     expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
     expect(mockReset).toHaveBeenCalledTimes(resetCalls + 1);
@@ -2387,11 +2316,9 @@ describe('QueryCoauthoring', () => {
     try {
       const { queryCoauthoringProps, rerender, user } = await setup();
       const initialPrompt = screen.getByRole('textbox', { name: 'Describe a query change' });
-      const initialMessage = screen.getByText('http_requests_total is a counter metric.');
       drainAnimationFrames();
       expect(initialPrompt).toHaveFocus();
-      expect(initialMessage).toHaveAttribute('id');
-      expect(initialPrompt).toHaveAttribute('aria-describedby', initialMessage.id);
+      expect(initialPrompt).not.toHaveAttribute('aria-describedby');
 
       await user.type(initialPrompt, 'Break this down by route/handler');
       await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -2406,7 +2333,7 @@ describe('QueryCoauthoring', () => {
 
       const clarificationMessage = screen.getByText('Should I group by handler, route, or both?');
       const clarificationPrompt = screen.getByRole('textbox', { name: 'Add extra detail' });
-      expect(clarificationMessage).toHaveAttribute('id', initialMessage.id);
+      expect(clarificationMessage).toHaveAttribute('id');
       expect(clarificationPrompt).toHaveAttribute('aria-describedby', clarificationMessage.id);
 
       drainAnimationFrames();
