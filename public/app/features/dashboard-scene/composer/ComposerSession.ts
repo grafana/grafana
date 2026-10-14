@@ -4,8 +4,6 @@ import { generateUUID } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { sceneGraph, SceneObjectStateChangedEvent, VizPanel, type SceneObject } from '@grafana/scenes';
-import { appEvents } from 'app/core/app_events';
-import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import type { DashboardScene } from '../scene/DashboardScene';
@@ -156,8 +154,6 @@ export class ComposerSession implements ComposerSessionAPI {
     };
     client.addHandler(ClientProviderEvents.ConfigurationChanged, onFlagsChanged);
     this.cleanups.push(() => client.removeHandler(ClientProviderEvents.ConfigurationChanged, onFlagsChanged));
-
-    appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' }));
   }
 
   public pickElement(signal: AbortSignal): Promise<ElementPick | RegionPick | null> {
@@ -475,7 +471,6 @@ export class ComposerSession implements ComposerSessionAPI {
     this.annotationHoverListeners.clear();
     this.overlayState = INITIAL_OVERLAY_STATE;
     this.notify();
-    appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'docked' }));
   }
 
   public get isClosed(): boolean {

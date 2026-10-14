@@ -32,7 +32,10 @@ export interface ComposerAPI {
     resource: 'dashboard' | 'notebook';
     uid: string;
   }): { ok: true } | { ok: false; reason: 'no_document' | 'no_permission' | 'unsupported' };
-  enter(target?: { resource: 'dashboard' | 'notebook'; uid: string }): Promise<unknown>;
+  enter(
+    target?: { resource: 'dashboard' | 'notebook'; uid: string },
+    options?: { presentation?: 'floating' | 'none' }
+  ): Promise<unknown>;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {

@@ -105,7 +105,7 @@ async function retitled(session: ComposerSession, title: string) {
 const live = () => new AbortController().signal;
 
 describe('entering and leaving Composer', () => {
-  it('hides manual editing over the underlying edit session and floats the sidebar', () => {
+  it('hides manual editing over the underlying edit session', () => {
     const scene = setup();
     expect(canEnterComposer(scene)).toEqual({ ok: true });
 
@@ -119,7 +119,8 @@ describe('entering and leaving Composer', () => {
     expect(scene.getComposerSession()).toBe(session);
     expect(session.target).toEqual({ resource: 'dashboard', uid: 'composer-test' });
     expect(session).not.toHaveProperty('dashboardUid');
-    expect(presentations).toEqual(['floating']);
+    // The session leaves the extension sidebar to whoever entered it.
+    expect(presentations).toEqual([]);
     expect(canEnterComposer(scene)).toEqual({ ok: false, reason: 'unsupported' });
   });
 
@@ -193,7 +194,7 @@ describe('entering and leaving Composer', () => {
     expect(scene.state.isDirty).toBe(true);
     expect(scene.state.title).toBe('Composer title');
     expect(scene.getComposerSession()).toBeUndefined();
-    expect(presentations).toEqual(['floating', 'docked']);
+    expect(presentations).toEqual([]);
   });
 
   it('returns to clean Viewing when an edit is restored to the saved spec before exit', async () => {

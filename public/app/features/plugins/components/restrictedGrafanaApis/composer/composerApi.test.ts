@@ -1,7 +1,9 @@
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
+import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
 import { setDashboardMutationClientForTests } from '../dashboardMutation/dashboardMutationApi';
 
@@ -96,4 +98,34 @@ it('does not support notebooks yet', async () => {
   const notebook = { resource: 'notebook', uid: 'composer-api-test' } as const;
   expect(composerApi.canEnter(notebook)).toEqual({ ok: false, reason: 'unsupported' });
   await expect(composerApi.enter(notebook)).rejects.toThrow('unsupported');
+});
+
+describe('presentation', () => {
+  const presentations: string[] = [];
+  let unsubscribe = () => {};
+
+  beforeEach(() => {
+    presentations.length = 0;
+    const subscription = appEvents.subscribe(SetExtensionSidebarPresentationEvent, ({ payload }) =>
+      presentations.push(payload.presentation)
+    );
+    unsubscribe = () => subscription.unsubscribe();
+  });
+
+  afterEach(() => unsubscribe());
+
+  it('floats the extension sidebar for the session by default and docks it when the session ends', async () => {
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+    expect(presentations).toEqual(['floating']);
+    session.exit();
+    expect(presentations).toEqual(['floating', 'docked']);
+  });
+
+  it("never touches the extension sidebar with presentation 'none'", async () => {
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD, { presentation: 'none' });
+    session.exit();
+    expect(presentations).toEqual([]);
+  });
 });

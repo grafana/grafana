@@ -6,6 +6,7 @@
  * is a notebook, there is no dashboard to enter.
  */
 
+import { appEvents } from 'app/core/app_events';
 import { canEnterComposer } from 'app/features/dashboard-scene/composer/composerAccess';
 import {
   type ComposerAPI,
@@ -13,6 +14,7 @@ import {
   type ComposerTarget,
 } from 'app/features/dashboard-scene/composer/types';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
 import { getMountedDashboardScene } from '../dashboardMutation/dashboardMutationApi';
 
@@ -34,7 +36,7 @@ export const composerApi: ComposerAPI = {
     const resolved = resolveTarget(target);
     return 'refusal' in resolved ? resolved.refusal : canEnterComposer(resolved.scene);
   },
-  enter: async (target) => {
+  enter: async (target, { presentation = 'floating' } = {}) => {
     const resolved = resolveTarget(target);
     if ('refusal' in resolved) {
       throw new Error(`Composer is not available: ${resolved.refusal.ok ? 'no_document' : resolved.refusal.reason}`);
@@ -43,6 +45,16 @@ export const composerApi: ComposerAPI = {
     const { ComposerSession } = await import(
       /* webpackChunkName: "dashboard-composer-session" */ 'app/features/dashboard-scene/composer/ComposerSession'
     );
-    return ComposerSession.enter(resolved.scene);
+    const session = ComposerSession.enter(resolved.scene);
+    // The sidebar is the host's concern, not the session's: float it for this session, then dock it again.
+    if (presentation === 'floating') {
+      appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' }));
+      session.signal.addEventListener(
+        'abort',
+        () => appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'docked' })),
+        { once: true }
+      );
+    }
+    return session;
   },
 };

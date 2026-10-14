@@ -16,6 +16,14 @@ export interface ComposerTarget {
   uid: string;
 }
 
+export interface ComposerEnterOptions {
+  /**
+   * 'floating' (the default) floats the extension sidebar over the document for the session and docks it
+   * again when the session ends; 'none' leaves the sidebar alone.
+   */
+  presentation?: 'floating' | 'none';
+}
+
 export type ComposerEnterCheck = { ok: true } | { ok: false; reason: 'no_document' | 'no_permission' | 'unsupported' };
 
 export interface ComposerAPI {
@@ -26,7 +34,7 @@ export interface ComposerAPI {
    */
   canEnter(target?: ComposerTarget): ComposerEnterCheck;
   /** Rejects when `canEnter(target)` would not return ok, or another session is open. */
-  enter(target?: ComposerTarget): Promise<ComposerSessionAPI>;
+  enter(target?: ComposerTarget, options?: ComposerEnterOptions): Promise<ComposerSessionAPI>;
 }
 
 /**
