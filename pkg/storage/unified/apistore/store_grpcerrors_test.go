@@ -192,21 +192,54 @@ func TestCreateConflictRetryHonorsCancellation(t *testing.T) {
 	require.Equal(t, 1, client.attempts)
 }
 
-// notFoundReadClient reports NotFound the way the newer server does: as a gRPC error with no
-// ReadResponse at all.
+// Unified storage can report failure without a response or through a legacy response error.
 type notFoundReadClient struct {
 	resourceclient.ResourceClient
-	readErr error
-	created int
+	readErr      error
+	readResponse *resourcepb.ReadResponse
+	created      int
 }
 
 func (c *notFoundReadClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
-	return nil, c.readErr
+	return c.readResponse, c.readErr
 }
 
 func (c *notFoundReadClient) Create(context.Context, *resourcepb.CreateRequest, ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
 	c.created++
 	return &resourcepb.CreateResponse{ResourceVersion: 1}, nil
+}
+
+func TestGetSanitizesTransportErrors(t *testing.T) {
+	publicError := &resourcepb.ErrorResult{
+		Code:    http.StatusServiceUnavailable,
+		Reason:  string(metav1.StatusReasonServiceUnavailable),
+		Message: "storage temporarily unavailable",
+		Details: &resourcepb.ErrorDetails{RetryAfterSeconds: 7},
+	}
+	for _, tc := range []struct {
+		name     string
+		response *resourcepb.ReadResponse
+		err      error
+		message  string
+		details  *metav1.StatusDetails
+		reason   metav1.StatusReason
+	}{
+		{"raw transport", nil, grpcstatus.Error(grpccodes.Unavailable, "private database details"), "Service Unavailable", nil, ""},
+		{"structured transport", nil, grpcErrorWithResult(grpccodes.Unavailable, publicError), publicError.Message, &metav1.StatusDetails{RetryAfterSeconds: 7}, metav1.StatusReasonServiceUnavailable},
+		{"legacy response", &resourcepb.ReadResponse{Error: publicError}, nil, publicError.Message, &metav1.StatusDetails{RetryAfterSeconds: 7}, metav1.StatusReasonServiceUnavailable},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &notFoundReadClient{readErr: tc.err, readResponse: tc.response}
+			err := testStorage(t, client).Get(testContext(t), "example/test", storage.GetOptions{}, &unstructured.Unstructured{})
+			var apiStatus *apierrors.StatusError
+			require.ErrorAs(t, err, &apiStatus)
+			require.Equal(t, int32(http.StatusServiceUnavailable), apiStatus.ErrStatus.Code)
+			require.Equal(t, tc.message, apiStatus.ErrStatus.Message)
+			require.Equal(t, tc.details, apiStatus.ErrStatus.Details)
+			require.Equal(t, tc.reason, apiStatus.ErrStatus.Reason)
+			require.NotContains(t, apiStatus.ErrStatus.Message, "private database details")
+		})
+	}
 }
 
 func TestGuaranteedUpdateNotFoundAsGRPCError(t *testing.T) {
