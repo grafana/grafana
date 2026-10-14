@@ -132,6 +132,9 @@ export const TableCellTooltip = memo(
         return;
       }
       const onOutsideClick = (event: MouseEvent) => {
+        if (!pinned && !tooltipContentRef.current?.contains(document.activeElement)) {
+          return;
+        }
         if (
           event.target instanceof Node &&
           (tooltipCaretRef.current?.contains(event.target) || tooltipContentRef.current?.contains(event.target))
@@ -142,7 +145,7 @@ export const TableCellTooltip = memo(
       };
       document.addEventListener('click', onOutsideClick, true);
       return () => document.removeEventListener('click', onOutsideClick, true);
-    }, [show, dismiss]);
+    }, [show, pinned, dismiss]);
 
     useEffect(() => {
       if (pinned) {

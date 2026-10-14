@@ -139,6 +139,34 @@ describe('TableCellTooltip', () => {
     }
   );
 
+  it.each(['hover', 'focus'])(
+    'preserves an unpinned %s preview when the source cell receives a click',
+    async (mode) => {
+      const user = userEvent.setup();
+      renderInRdgCell();
+      const trigger = screen.getByRole('button', { name: CARET_LABEL });
+      if (mode === 'hover') {
+        await user.hover(trigger);
+      } else {
+        await user.tab();
+        expect(trigger).toHaveFocus();
+      }
+      expect(screen.getByRole('dialog', { name: 'Cell preview' })).toHaveTextContent('hello');
+
+      // Isolate the click from pointer movement and blur, which have their own dismissal behavior.
+      fireEvent.click(screen.getByText('cell content'));
+      expect(screen.getByRole('dialog', { name: 'Cell preview' })).toHaveTextContent('hello');
+      expect(trigger).toHaveAttribute('aria-pressed', 'false');
+
+      if (mode === 'hover') {
+        await user.unhover(trigger);
+      } else {
+        await user.tab();
+      }
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Cell preview' })).not.toBeInTheDocument());
+    }
+  );
+
   it('allows Tab to leave a pinned field preview', async () => {
     const user = userEvent.setup();
     renderInRdgCell();
