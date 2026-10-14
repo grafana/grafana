@@ -9,6 +9,7 @@ import { type ExtensionSidebarPresentation } from 'app/types/events';
 
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
+import { FLOATING_DRAG_HANDLE_ATTRIBUTE, useFloatingDrag } from './useFloatingDrag';
 
 /**
  * Space the floating sidebar covers at the bottom of the page, set on the document root while it floats.
@@ -32,7 +33,9 @@ export function ExtensionSidebar() {
   const { dockedComponentId, presentation, props = {} } = useExtensionSidebarContext();
   const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
   const floating = presentation === 'floating';
-  useFloatingInset(floating ? wrapper : null, theme.spacing.gridSize * 3);
+  const { moved } = useFloatingDrag(floating ? wrapper : null);
+  // A moved sidebar is not at the bottom of the page, so the page needs no room for it.
+  useFloatingInset(floating ? wrapper : null, theme.spacing.gridSize * 3, moved);
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
@@ -108,6 +111,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     ),
     // The extension draws the floating surface itself; core adds no background, border or shadow.
     sidebarWrapperFloating: css({
+      // The container around it ignores the pointer, so only the sidebar itself takes clicks where it is.
+      pointerEvents: 'auto',
+      [`& [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grab', touchAction: 'none' },
+      [`&[data-dragging], &[data-dragging] [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grabbing' },
       backgroundColor: 'transparent',
       border: 'none',
       borderRadius: 'unset',
@@ -132,7 +139,7 @@ const getStyles = (theme: GrafanaTheme2) => {
  * Publishes the floating sidebar's height as the page inset. Only the sidebar is observed: it is fixed, so
  * the page padding the inset produces never changes its size, and an unchanged size writes nothing.
  */
-function useFloatingInset(element: HTMLElement | null, bottomGap: number) {
+function useFloatingInset(element: HTMLElement | null, bottomGap: number, moved: boolean) {
   useLayoutEffect(() => {
     if (!element) {
       return;
@@ -141,7 +148,7 @@ function useFloatingInset(element: HTMLElement | null, bottomGap: number) {
     let published = '';
     const update = () => {
       const height = Math.round(element.getBoundingClientRect().height + bottomGap);
-      const inset = `${Math.min(height, MAX_EXTENSION_FLOATING_INSET)}px`;
+      const inset = moved ? '0px' : `${Math.min(height, MAX_EXTENSION_FLOATING_INSET)}px`;
       if (inset !== published) {
         published = inset;
         root.style.setProperty(EXTENSION_FLOATING_INSET_VAR, inset);
@@ -154,5 +161,5 @@ function useFloatingInset(element: HTMLElement | null, bottomGap: number) {
       observer?.disconnect();
       root.style.removeProperty(EXTENSION_FLOATING_INSET_VAR);
     };
-  }, [element, bottomGap]);
+  }, [element, bottomGap, moved]);
 }

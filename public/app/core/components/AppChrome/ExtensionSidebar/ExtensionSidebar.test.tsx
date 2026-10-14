@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { type ExtensionInfo, PluginExtensionTypes } from '@grafana/data';
 import { config, usePluginComponents } from '@grafana/runtime';
@@ -8,6 +8,7 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 import { EXTENSION_FLOATING_INSET_VAR, ExtensionSidebar, MAX_EXTENSION_FLOATING_INSET } from './ExtensionSidebar';
 import { type ExtensionSidebarContextType, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { getComponentIdFromComponentMeta } from './extensionSidebarUtils';
+import { FLOATING_DRAG_HANDLE_ATTRIBUTE } from './useFloatingDrag';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -147,11 +148,13 @@ describe('ExtensionSidebar', () => {
   });
 
   it('writes the floating inset, capped, only when it changes', () => {
-    let notify = () => {};
+    // Every observer on the page (the inset and the drag clamp) is notified, as a browser would.
+    const callbacks: Array<() => void> = [];
+    const notify = () => callbacks.forEach((callback) => callback());
     const original = window.ResizeObserver;
     class ManualResizeObserver {
       constructor(callback: ResizeObserverCallback) {
-        notify = () => callback([], this);
+        callbacks.push(() => callback([], this));
       }
       observe() {}
       unobserve() {}
@@ -198,6 +201,39 @@ describe('ExtensionSidebar', () => {
     } finally {
       window.ResizeObserver = original;
       setProperty.mockRestore();
+      rect.mockRestore();
+    }
+  });
+
+  it('drops the floating inset while the sidebar is moved away from the bottom corner', () => {
+    const rect = jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement
+    ) {
+      const match = /translate\((-?\d+)px, (-?\d+)px\)/.exec(this.style.transform);
+      const [x, y] = match ? [Number(match[1]), Number(match[2])] : [0, 0];
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured box without toJSON
+      return { left: 600 + x, top: 500 + y, width: 400, height: 244, right: 1000 + x, bottom: 744 + y } as DOMRect;
+    });
+    const HandleComponent = () => (
+      <button type="button" {...{ [FLOATING_DRAG_HANDLE_ATTRIBUTE]: '' }}>
+        Move
+      </button>
+    );
+    try {
+      mockUsePluginComponents.mockReturnValue({
+        components: [
+          createComponentWithMeta({ ...addedComponentRegistryItemMock, component: HandleComponent }, extensionPointId),
+        ],
+        isLoading: false,
+      });
+      mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'floating' });
+      render(<ExtensionSidebar />);
+      expect(document.documentElement.style.getPropertyValue(EXTENSION_FLOATING_INSET_VAR)).not.toBe('0px');
+
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Move' }), { key: 'ArrowUp', shiftKey: true });
+
+      expect(document.documentElement.style.getPropertyValue(EXTENSION_FLOATING_INSET_VAR)).toBe('0px');
+    } finally {
       rect.mockRestore();
     }
   });

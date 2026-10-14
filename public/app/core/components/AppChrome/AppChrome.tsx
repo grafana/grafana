@@ -408,6 +408,8 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       right: theme.spacing(3),
       bottom: theme.spacing(3),
       background: 'transparent',
+      // The sidebar inside can be moved off this box; the box itself must not block the page.
+      pointerEvents: 'none',
     }),
     // Lets the last row of the page scroll above the floating bar.
     pageContainerFloatingInset: css({
