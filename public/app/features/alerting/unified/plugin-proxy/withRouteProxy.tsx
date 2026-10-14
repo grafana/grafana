@@ -5,8 +5,7 @@
  * Also answers, for the rest of alerting, whether data source managed pages are being handed to the
  * plugin — so the pages that stop offering those things and the redirects agree with each other.
  */
-import { use } from 'react';
-import { useAsync } from 'react-use';
+import { use, useEffect, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -71,17 +70,45 @@ async function isPluginAvailable(): Promise<boolean> {
 /**
  * Is the route proxy sending data source managed pages to the plugin? That's the case when the
  * proxy is switched on and the plugin is installed and enabled — the exact check `proxied()` makes.
- *
- * With the proxy switched off this answers straight away, without fetching the availability chunk.
+ * Reads as false until the check comes back.
  */
-async function isRouteProxyActive(): Promise<boolean> {
-  return isRouteProxyEnabled() && isPluginAvailable();
+export function useRouteProxyActive(): boolean {
+  return useRouteProxyStatus().active;
 }
 
-/** `isRouteProxyActive` for components. Reads as false until the check comes back. */
-export function useRouteProxyActive(): boolean {
-  const { value } = useAsync(isRouteProxyActive, []);
-  return value ?? false;
+/**
+ * Like `useRouteProxyActive`, but also says whether the check is still out, for callers that must
+ * not treat "don't know yet" as "no".
+ *
+ * With the proxy switched off this answers on the first render and never fetches the availability
+ * chunk or updates state, so pages without the proxy don't re-render because of it.
+ */
+export function useRouteProxyStatus(): { active: boolean; loading: boolean } {
+  const enabled = isRouteProxyEnabled();
+  const [pluginAvailable, setPluginAvailable] = useState<boolean>();
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    let unmounted = false;
+    isPluginAvailable().then((available) => {
+      if (!unmounted) {
+        setPluginAvailable(available);
+      }
+    });
+
+    return () => {
+      unmounted = true;
+    };
+  }, [enabled]);
+
+  if (!enabled) {
+    return { active: false, loading: false };
+  }
+
+  return { active: pluginAvailable ?? false, loading: pluginAvailable === undefined };
 }
 
 async function loadProxiedRoute(route: RouteDescriptor): Promise<GrafanaRouteComponent> {

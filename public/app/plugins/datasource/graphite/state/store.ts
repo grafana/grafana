@@ -1,5 +1,5 @@
 import { type AnyAction } from '@reduxjs/toolkit';
-import { type Action, type Dispatch } from 'redux';
+import { type Action } from 'redux';
 
 import { type DataQuery, type TimeRange } from '@grafana/data';
 import { type TemplateSrv } from '@grafana/runtime';
@@ -187,7 +187,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   return { ...state };
 };
 
-export const createStore = (onChange: (state: GraphiteQueryEditorState) => void): Dispatch<AnyAction> => {
+export const createStore = (onChange: (state: GraphiteQueryEditorState) => void) => {
   let state = {} as GraphiteQueryEditorState;
 
   const dispatch = async (action: AnyAction) => {
@@ -195,5 +195,5 @@ export const createStore = (onChange: (state: GraphiteQueryEditorState) => void)
     onChange(state);
   };
 
-  return dispatch as Dispatch<AnyAction>;
+  return dispatch;
 };

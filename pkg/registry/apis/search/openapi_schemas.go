@@ -14,11 +14,13 @@ import (
 
 // Go names, because that is how the generated definitions are keyed.
 const (
-	envelopePkg         = "github.com/grafana/grafana/pkg/apis/search/v0alpha1."
-	searchQueryGoName   = envelopePkg + searchv0.KindSearchQuery
-	searchResultsGoName = envelopePkg + searchv0.KindSearchResults
-	trashQueryGoName    = envelopePkg + searchv0.KindTrashQuery
-	trashResultsGoName  = envelopePkg + searchv0.KindTrashResults
+	envelopePkg               = "github.com/grafana/grafana/pkg/apis/search/v0alpha1."
+	searchQueryGoName         = envelopePkg + searchv0.KindSearchQuery
+	searchResultsGoName       = envelopePkg + searchv0.KindSearchResults
+	trashQueryGoName          = envelopePkg + searchv0.KindTrashQuery
+	trashResultsGoName        = envelopePkg + searchv0.KindTrashResults
+	hybridSearchQueryGoName   = envelopePkg + searchv0.KindHybridSearchQuery
+	hybridSearchResultsGoName = envelopePkg + searchv0.KindHybridSearchResults
 )
 
 // componentPrefix is where an OpenAPI v3 document keeps its schemas.

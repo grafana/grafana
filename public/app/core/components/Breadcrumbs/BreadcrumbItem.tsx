@@ -3,11 +3,13 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type Breadcrumb } from './types';
+import { useBreadcrumbTruncation } from './useBreadcrumbTruncation';
 
 type Props = Breadcrumb & {
+  // Means the breadcrumb represents the current page
   isCurrent: boolean;
   index: number;
   flexGrow: number;
@@ -15,37 +17,51 @@ type Props = Breadcrumb & {
 
 export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props) {
   const styles = useStyles2(getStyles);
+  const { breadcrumbRef, isTruncated } = useBreadcrumbTruncation(text, isCurrent);
 
   const onBreadcrumbClick = () => {
     reportInteraction('grafana_breadcrumb_clicked', { url: href });
   };
 
+  // Current page breadcrumb is not clickable
+  const breadcrumb = isCurrent ? (
+    <span
+      ref={(element) => {
+        breadcrumbRef.current = element;
+      }}
+      data-testid={Components.Breadcrumbs.breadcrumb(text)}
+      className={styles.breadcrumb}
+      aria-current="page"
+    >
+      {text}
+    </span>
+  ) : (
+    <a
+      ref={(element) => {
+        breadcrumbRef.current = element;
+      }}
+      onClick={onBreadcrumbClick}
+      data-testid={Components.Breadcrumbs.breadcrumb(text)}
+      className={cx(styles.breadcrumb, styles.breadcrumbLink)}
+      href={href}
+    >
+      {text}
+    </a>
+  );
+
   return (
     <li className={styles.breadcrumbWrapper} style={{ flexGrow }}>
-      {isCurrent ? (
-        <span
-          data-testid={Components.Breadcrumbs.breadcrumb(text)}
-          className={styles.breadcrumb}
-          aria-current="page"
-          title={text}
-        >
-          {text}
-        </span>
+      {isTruncated ? (
+        <Tooltip ref={breadcrumbRef} content={text} placement="bottom">
+          {breadcrumb}
+        </Tooltip>
       ) : (
-        <>
-          <a
-            onClick={onBreadcrumbClick}
-            data-testid={Components.Breadcrumbs.breadcrumb(text)}
-            className={cx(styles.breadcrumb, styles.breadcrumbLink)}
-            title={text}
-            href={href}
-          >
-            {text}
-          </a>
-          <div className={styles.separator} aria-hidden={true}>
-            <Icon name="angle-right" />
-          </div>
-        </>
+        breadcrumb
+      )}
+      {!isCurrent && (
+        <div className={styles.separator} aria-hidden={true}>
+          <Icon name="angle-right" />
+        </div>
       )}
     </li>
   );

@@ -181,7 +181,7 @@ func (r *recordingConditionValidator) Validate(_ eval.EvaluationContext, conditi
 	return nil
 }
 
-var _ ConditionValidator = &recordingConditionValidator{}
+var _ ConditionValidator = (*recordingConditionValidator)(nil)
 
 // TestAlertingProxy_withReq_propagatesRequestContext verifies that withReq carries
 // the original request context (including identity) into the new request it creates

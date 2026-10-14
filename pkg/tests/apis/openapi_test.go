@@ -26,6 +26,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:      false, // required for experimental APIs
 		RBACSingleOrganization: true,  // required for the Users API
+		EnableGlobalSearch:     true,  // the search that spans resource types
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService,                         // Query Library
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
@@ -35,7 +36,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			// featuremgmt.FlagDatasourcesQueryTypes,
 			featuremgmt.FlagDatasourcesLoadOpenAPI,
 			featuremgmt.FlagKubernetesCorrelations,
-			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
 			featuremgmt.FlagKubernetesTeamsApi,
 			featuremgmt.FlagKubernetesUsersApi,
@@ -158,6 +158,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "plugins.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "search.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {

@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -9,6 +10,8 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -28,6 +31,112 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 )
+
+type folderStorageFailure struct {
+	name   string
+	result *resourcepb.ErrorResult
+	err    error
+	want   error
+}
+
+func (f folderStorageFailure) searchResponse() *resourcepb.ResourceSearchResponse {
+	if f.result == nil {
+		return nil
+	}
+	return &resourcepb.ResourceSearchResponse{Error: f.result}
+}
+
+func folderStorageFailures(t *testing.T) []folderStorageFailure {
+	t.Helper()
+	result := &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "storage unavailable"}
+	grpcStatus, err := status.New(codes.Unavailable, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	grpcErr := grpcStatus.Err()
+	return []folderStorageFailure{
+		{name: "embedded", result: result, want: resource.StatusError(result)},
+		{name: "grpc nil response", err: grpcErr, want: grpcErr},
+	}
+}
+
+func requireFolderStorageError(t *testing.T, want, got error) {
+	t.Helper()
+	require.Equal(t, want, got)
+	var statusErr *apierrors.StatusError
+	if errors.As(want, &statusErr) {
+		require.IsType(t, &apierrors.StatusError{}, got)
+	} else {
+		require.Same(t, want, got)
+	}
+}
+
+func TestFolderChildrenSearchErrors(t *testing.T) {
+	for _, tc := range folderStorageFailures(t) {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.searchResponse(), tc.err).Once()
+			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+
+			hits, err := store.GetChildren(t.Context(), folder.GetChildrenQuery{OrgID: 1})
+
+			require.Empty(t, hits)
+			requireFolderStorageError(t, tc.want, err)
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
+func TestFolderSearchLaterPageErrors(t *testing.T) {
+	for _, tc := range folderStorageFailures(t) {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+				return req.Offset == 0
+			})).Return(buildFolderSearchResponse(folderResult{uid: "first"}), nil).Once()
+			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+				return req.Offset == 1
+			})).Return(tc.searchResponse(), tc.err).Once()
+			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+
+			hits, err := store.searchAllFolders(t.Context(), 1)
+
+			require.Empty(t, hits)
+			requireFolderStorageError(t, tc.want, err)
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
+func TestFolderCountInOrgErrorCompatibility(t *testing.T) {
+	for _, tc := range folderStorageFailures(t) {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			var resp *resourcepb.ResourceStatsResponse
+			if tc.result != nil {
+				resp = &resourcepb.ResourceStatsResponse{Error: tc.result}
+			}
+			cli.On("GetStats", mock.Anything, int64(1)).Return(resp, tc.err).Once()
+			store := &FolderUnifiedStoreImpl{k8sclient: cli}
+			got, err := store.CountInOrg(t.Context(), 1)
+			require.Zero(t, got)
+			requireFolderStorageError(t, tc.want, err)
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
+func TestFolderCountInOrgSuccess(t *testing.T) {
+	cli := new(client.MockK8sHandler)
+	cli.On("GetStats", mock.Anything, int64(1)).Return(&resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 42}},
+	}, nil).Once()
+	store := &FolderUnifiedStoreImpl{k8sclient: cli}
+
+	got, err := store.CountInOrg(t.Context(), 1)
+
+	require.NoError(t, err)
+	require.Equal(t, int64(42), got)
+	cli.AssertExpectations(t)
+}
 
 func TestComputeFullPath(t *testing.T) {
 	testCases := []struct {

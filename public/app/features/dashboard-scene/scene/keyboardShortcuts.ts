@@ -14,6 +14,7 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
@@ -132,7 +133,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
       const url = await tryGetExploreUrlForPanel(vizPanel);
       if (url) {
-        locationService.push(url);
+        locationService.push(locationUtil.stripBaseFromUrl(url));
       }
     }),
   });
@@ -246,9 +247,11 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         if (sceneRoot instanceof DashboardScene) {
           if (scene.state.editPanel) {
             locationService.push(
-              locationUtil.getUrlForPartial(locationService.getLocation(), {
-                editPanel: undefined,
-              })
+              locationUtil.stripBaseFromUrl(
+                locationUtil.getUrlForPartial(locationService.getLocation(), {
+                  editPanel: undefined,
+                })
+              )
             );
           } else {
             const url = locationUtil.stripBaseFromUrl(getEditPanelUrl(panelId));
@@ -290,7 +293,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
         DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(vizPanel), 'keyboard');
         if (scene.state.isEditing) {
-          scene.duplicatePanel(vizPanel);
+          duplicatePanel(vizPanel);
         }
       }),
     });

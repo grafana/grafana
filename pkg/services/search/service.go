@@ -22,13 +22,13 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
 
-func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starClient starapi.K8sClients, dashboardService dashboards.DashboardService, folderService folder.Service, features featuremgmt.FeatureToggles, sortService grafanasort.Service) *SearchService {
+// Keep the unused feature toggle argument so the Enterprise Wire output remains compatible.
+func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starClient starapi.K8sClients, dashboardService dashboards.DashboardService, folderService folder.Service, _ featuremgmt.FeatureToggles, sortService grafanasort.Service) *SearchService {
 	s := &SearchService{
 		Cfg:              cfg,
 		sqlstore:         sqlstore,
 		starClient:       starClient,
 		folderService:    folderService,
-		features:         features,
 		dashboardService: dashboardService,
 		sortService:      sortService,
 	}
@@ -66,7 +66,6 @@ type SearchService struct {
 	starClient       starapi.K8sClients
 	dashboardService dashboards.DashboardService
 	folderService    folder.Service
-	features         featuremgmt.FeatureToggles
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.HitList, error) {
@@ -108,8 +107,6 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		Permission:    query.Permission,
 		IsDeleted:     query.IsDeleted,
 	}
-	dashboardQuery.UseFieldValueResults = s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagDashboardApiSearchFieldValueResults) // nolint:staticcheck
-
 	if sortOpt, exists := s.sortService.GetSortOption(query.Sort); exists {
 		dashboardQuery.Sort = sortOpt
 	}
