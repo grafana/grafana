@@ -16,10 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-// CurrentUserName is the name token that denotes the calling identity in the "who am I" endpoint.
+// CurrentUserName is the name token that denotes the calling identity in the legacy users/~ endpoint.
 const CurrentUserName = "~"
 
-// currentUserPath is the route path for the "who am I" endpoint.
 const currentUserPath = "users/" + CurrentUserName
 
 // selfRouteSpec describes the current-user endpoint for OpenAPI discovery.
@@ -90,8 +89,8 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		AuthenticatedBy: authInfo.GetAuthenticatedBy(),
 	}
 
-	if req, ok := authInfo.(identity.Requester); ok {
-		rsp.Role = string(req.GetOrgRole())
+	if requester, ok := authInfo.(identity.Requester); ok {
+		rsp.Role = string(requester.GetOrgRole())
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -104,7 +103,7 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 
 	// Anonymous access is established by authentication; it has no user row to resolve.
 	if anonymous {
-		rsp.Display = parseKeys([]string{string(authlib.TypeAnonymous) + ":"}).disp[0]
+		rsp.Display = anonymousDisplay()
 		_ = json.NewEncoder(w).Encode(rsp)
 		return
 	}
@@ -117,7 +116,7 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		for _, p := range r.resolvers {
 			partial, err := p.GetDisplayList(ctx, ns, []string{key})
 			if err != nil {
-				errhttp.Write(ctx, fmt.Errorf("error calling GetDisplayList %w", err), w) // 500
+				errhttp.Write(ctx, fmt.Errorf("error calling GetDisplayList %w", err), w)
 				return
 			}
 			for _, item := range partial.Items {
@@ -135,7 +134,7 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	// Did not find a user
+	// Preserve identity details for namespace discovery even when display resolution fails.
 	w.WriteHeader(http.StatusUnauthorized)
 	_ = json.NewEncoder(w).Encode(rsp)
 }

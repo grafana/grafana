@@ -225,14 +225,15 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		}
 		for _, tc := range []struct {
 			name    string
+			status  int
 			results [][]iam.Display
 			want    iam.Display
 		}{
-			{name: "ignores unrelated results", results: [][]iam.Display{unrelated}, want: iam.Display{
+			{name: "ignores unrelated results", status: http.StatusUnauthorized, results: [][]iam.Display{unrelated}, want: iam.Display{
 				Identity: matching.Identity, DisplayName: caller.GetName(),
 			}},
-			{name: "finds matching result in a batch", results: [][]iam.Display{append(unrelated, matching)}, want: matching},
-			{name: "tries the next resolver", results: [][]iam.Display{unrelated, {matching}}, want: matching},
+			{name: "finds matching result in a batch", status: http.StatusOK, results: [][]iam.Display{append(unrelated, matching)}, want: matching},
+			{name: "tries the next resolver", status: http.StatusOK, results: [][]iam.Display{unrelated, {matching}}, want: matching},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				resolvers := make([]Resolver, 0, len(tc.results))
@@ -242,11 +243,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 				h := NewDisplayHandler(resolvers...)
 				rec := httptest.NewRecorder()
 				h.handleSelf(rec, selfRequest(t, caller))
-				if tc.name == "ignores unrelated results" {
-					require.Equal(t, http.StatusUnauthorized, rec.Code)
-					return
-				}
-				require.Equal(t, http.StatusOK, rec.Code)
+				require.Equal(t, tc.status, rec.Code)
 				var got iam.CurrentUserInfo
 				require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 				require.Equal(t, tc.want, got.Display)
@@ -279,7 +276,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		})
 	}
 
-	t.Run("unresolved caller returns 401", func(t *testing.T) {
+	t.Run("unresolved caller returns identity details with 401", func(t *testing.T) {
 		resolver := &fakeResolver{result: &iam.DisplayList{}}
 		h := NewDisplayHandler(resolver)
 		rec := httptest.NewRecorder()
@@ -287,6 +284,12 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		h.handleSelf(rec, selfRequest(t, caller))
 
 		require.Equal(t, http.StatusUnauthorized, rec.Code)
+		var got iam.CurrentUserInfo
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+		require.Equal(t, iam.CurrentUserInfo{
+			Display:   iam.Display{Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"}, DisplayName: "alice@example.com"},
+			Namespace: "default", Role: "Editor", Email: "alice@example.com", AuthenticatedBy: "oauth_github",
+		}, got)
 	})
 
 	for _, identifier := range []string{"", "0"} {

@@ -517,13 +517,9 @@ func TestPostProcessOpenAPI_PermissionItems(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotContains(t, oas.Components.Schemas[legacyiamv0.OpenAPIPrefix+"CurrentUserInfo"].Properties, "permissions")
-	for _, name := range []string{"UserPermissions"} {
-		t.Run(name, func(t *testing.T) {
-			permissions := oas.Components.Schemas[legacyiamv0.OpenAPIPrefix+name].Properties["permissions"]
-			require.Equal(t, spec.StringOrArray{"array"}, permissions.Type)
-			require.NotNil(t, permissions.Items)
-			require.NotNil(t, permissions.Items.Schema)
-			require.Equal(t, "#/components/schemas/"+legacyiamv0.OpenAPIPrefix+"UserPermission", permissions.Items.Schema.Ref.String())
-		})
-	}
+	permissions := oas.Components.Schemas[legacyiamv0.OpenAPIPrefix+"UserPermissions"].Properties["permissions"]
+	require.Equal(t, spec.StringOrArray{"array"}, permissions.Type)
+	require.NotNil(t, permissions.Items)
+	require.NotNil(t, permissions.Items.Schema)
+	require.Equal(t, "#/components/schemas/"+legacyiamv0.OpenAPIPrefix+"UserPermission", permissions.Items.Schema.Ref.String())
 }
