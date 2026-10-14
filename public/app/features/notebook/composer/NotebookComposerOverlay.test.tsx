@@ -360,7 +360,18 @@ describe('notebook Composer with the floating Assistant', () => {
     expect(settled).toBe(false);
   });
 
-  it('stops a drag that runs on over the Assistant at its edge', async () => {
+  it('lets a drag run on under the Assistant, and captures the notebook there without it', async () => {
+    jest
+      .mocked(renderNode)
+      .mockReset()
+      .mockResolvedValue(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the size is read
+        { width: 2048, height: 1536 } as HTMLCanvasElement
+      );
+    jest
+      .mocked(cropToBlob)
+      .mockReset()
+      .mockResolvedValue(new Blob(['webp'], { type: 'image/webp' }));
     const { session, overlay } = setup();
     let pick: Promise<unknown> = Promise.resolve();
     act(() => {
@@ -372,12 +383,24 @@ describe('notebook Composer with the floating Assistant', () => {
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
     const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
+    // The full rectangle, reaching under the Assistant at (600, 500).
     expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toEqual({
       left: 150,
       top: 250,
-      width: 450,
+      width: 650,
       height: 450,
     });
+
+    let result: unknown;
+    await act(async () => {
+      result = await session.captureRegion(ref.regionId, live());
+    });
+    expect(result).toMatchObject({ status: 'ready' });
+    const [root, { filter }] = jest.mocked(renderNode).mock.calls[0];
+    // The region runs past the cell, so the notebook's container is rendered, without the Assistant.
+    expect(root).toBe(overlay.parentElement!.parentElement);
+    expect(filter(sidebar)).toBe(false);
+    expect(filter(screen.getByTestId('cell-content'))).toBe(true);
   });
 
   it("captures a region over the page's background, not transparent", async () => {
