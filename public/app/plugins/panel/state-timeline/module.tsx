@@ -6,6 +6,7 @@ import {
   PanelPlugin,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
@@ -143,6 +144,19 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           step: 0.01,
         },
         defaultValue: defaultOptions.rowHeight,
+      })
+      .addRadio({
+        path: 'namePosition',
+        name: t('state-timeline.name-series-name-position', 'Series name position'),
+        category,
+        settings: {
+          options: [
+            { value: 'left', label: t('state-timeline.name-position-options.label-left', 'Left') },
+            { value: 'top', label: t('state-timeline.name-position-options.label-above-bars', 'Above bars') },
+          ],
+        },
+        defaultValue: defaultOptions.namePosition,
+        showIf: () => getFeatureFlagClient().getBooleanValue('stateTimeline.nameAboveBars', false),
       })
       .addNumberInput({
         path: 'perPage',
