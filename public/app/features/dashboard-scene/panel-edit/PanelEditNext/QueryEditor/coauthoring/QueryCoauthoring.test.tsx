@@ -610,7 +610,11 @@ describe('QueryCoauthoring', () => {
     await act(async () => {
       await request.tools[0].invoke({
         options: [
-          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts selected requests.'] },
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            title: 'Count increases',
+            why: ['Counts selected requests.'],
+          },
           { proposedQuery: 'irate(http_requests_total[5m])', why: ['Uses the latest two samples.'] },
         ],
       });
@@ -833,14 +837,14 @@ describe('QueryCoauthoring', () => {
     expect(screen.getAllByRole('tab')).toHaveLength(3);
   });
 
-  it('drags card backgrounds as a group, dims during drag, ignores controls, and reports adjustment once', async () => {
+  it('drags card backgrounds as a group without dimming, ignores controls, and reports adjustment once', async () => {
     const { user } = await setupPeek();
     const dialog = screen.getByRole('dialog');
     mockProposalGeometry(dialog);
     fireEvent.animationEnd(dialog);
     const details = screen.getByRole('region', { name: 'Query proposal details' });
     await user.pointer({ keys: '[MouseLeft>]', target: details, coords: { x: 250, y: 350 } });
-    expect(dialog).toHaveStyle({ opacity: 0.04 });
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
     await user.pointer({ target: document.body, coords: { x: 280, y: 370 } });
     expect(dialog.getBoundingClientRect().left).toBe(230);
     expect(dialog.getBoundingClientRect().top).toBe(326);
@@ -948,47 +952,78 @@ describe('QueryCoauthoring', () => {
     expect(dialog).not.toHaveStyle({ opacity: 0.04 });
   });
 
-  it('press-and-hold peeks without changing the editor or selection, and release restores the selected panel', async () => {
-    const { user, previewRequests, panelResult, queryRunner, baselineData, selected } = await setupPeek();
+  it('shows option titles on hover and the hold hint only on the active chip', async () => {
+    const { user } = await setupPeek();
+    const first = screen.getByRole('tab', { name: 'Option 1' });
+    await user.hover(first);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Count increases');
+    expect(tooltip).toHaveTextContent('Hold to peek');
+    expect(first).toHaveAttribute('aria-describedby', tooltip.id);
+    expect(first).toHaveAttribute('tabindex', '0');
+    await user.unhover(first);
+    await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+
+    const second = screen.getByRole('tab', { name: 'Option 2' });
+    await user.hover(second);
+    const fallback = await screen.findByRole('tooltip');
+    expect(fallback).toHaveTextContent('Preview option 2');
+    expect(fallback).not.toHaveTextContent('Hold to peek');
+    expect(second).toHaveAttribute('tabindex', '-1');
+    await user.unhover(second);
+    await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+
+    await user.hover(screen.getByRole('tab', { name: 'Original' }));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(/^Original query$/);
+  });
+
+  it('hides the tooltip while the active chip is held', async () => {
+    const { user } = await setupPeek();
+    const first = screen.getByRole('tab', { name: 'Option 1' });
+    await user.hover(first);
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    await user.pointer({ keys: '[MouseLeft>]', target: first });
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 }));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    await user.pointer({ keys: '[/MouseLeft]', target: first });
+  });
+
+  it('peeks only while the active chip is held, and holding another chip selects it on release', async () => {
+    const { user, previewRequests, panelResult, queryRunner, selected } = await setupPeek();
+    const first = screen.getByRole('tab', { name: 'Option 1' });
+    await user.pointer({ keys: '[MouseLeft>]', target: first });
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 }));
+    expect(queryRunner.state.data).toEqual(selected);
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    expect(first).toHaveAttribute('aria-selected', 'true');
+    await user.pointer({ keys: '[/MouseLeft]', target: first });
+    expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+    expect(first).toHaveAttribute('aria-selected', 'true');
+    expect(queryRunner.state.data).toEqual(selected);
+
     const second = screen.getByRole('tab', { name: 'Option 2' });
     await user.pointer({ keys: '[MouseLeft>]', target: second });
-    await waitFor(() => expect(previewRequests).toHaveLength(2));
-    const peeked = panelResult(12);
-    act(() => previewRequests[1].setState({ data: peeked }));
-    expect(queryRunner.state.data).toEqual(peeked);
-    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
-    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText('Counts selected requests.')).toBeVisible();
-    expect(screen.queryByText('Uses the latest two samples.')).not.toBeInTheDocument();
-    expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 });
-    await user.pointer({ keys: '[/MouseLeft]', target: second });
-    expect(queryRunner.state.data).toEqual(selected);
-    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    await new Promise((resolve) => setTimeout(resolve, 250));
     expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
-    const original = screen.getByRole('tab', { name: 'Original' });
-    await user.pointer({ keys: '[MouseLeft>]', target: original });
-    await waitFor(() => expect(queryRunner.state.data).toEqual(baselineData));
-    await user.pointer({ keys: '[/MouseLeft]', target: original });
-    expect(queryRunner.state.data).toEqual(selected);
-    await user.click(second);
-    expect(queryRunner.state.data).toEqual(peeked);
-    expect(previewRequests).toHaveLength(2);
-    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('irate(http_requests_total[5m])');
+    await user.pointer({ keys: '[/MouseLeft]', target: second });
+    expect(second).toHaveAttribute('aria-selected', 'true');
+    await waitFor(() => expect(previewRequests).toHaveLength(2));
+    const secondData = panelResult(12);
+    act(() => previewRequests[1].setState({ data: secondData }));
+    expect(queryRunner.state.data).toEqual(secondData);
     const peeks = mockReportInteraction.mock.calls.filter(
       ([name]) => name === 'grafana_query_coauthoring_option_peeked'
     );
-    expect(peeks.map(([, properties]) => properties)).toEqual([{ rank: 2 }, { rank: 0 }]);
+    expect(peeks.map(([, properties]) => properties)).toEqual([{ rank: 1 }]);
   });
 
   it.each(['accept', 'pointercancel', 'blur', 'lostpointercapture', 'outside-release', 'unmount', 'close'])(
     'restores a press-and-hold peek on %s and Accept always commits the selected option',
     async (ending) => {
-      const { user, previewRequests, panelResult, queryRunner, onAccept, selected, baselineData, unmount } =
-        await setupPeek();
-      const chip = screen.getByRole('tab', { name: 'Option 2' });
+      const { user, queryRunner, onAccept, selected, baselineData, unmount } = await setupPeek();
+      const chip = screen.getByRole('tab', { name: 'Option 1' });
       await user.pointer({ keys: '[MouseLeft>]', target: chip });
-      await waitFor(() => expect(previewRequests).toHaveLength(2));
-      act(() => previewRequests[1].setState({ data: panelResult(12) }));
+      await waitFor(() => expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 }));
       if (ending === 'accept') {
         fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
         expect(onAccept).toHaveBeenLastCalledWith(
