@@ -806,10 +806,6 @@ func TestUpdateMuteTimings(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
 		prov.EXPECT().GetProvenance(mock.Anything, mock.MatchedBy(func(*v1.Route) bool { return true }), mock.Anything).Return(expectedProvenance, nil).Maybe()
-		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, provisionable models.Provisionable, i int64) error {
-			assertInTransaction(t, ctx)
-			return nil
-		})
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
 			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
 				assertInTransaction(t, ctx)
@@ -839,9 +835,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.EqualValues(t, interval.TimeIntervals, result.TimeIntervals)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
 		require.EqualValues(t, v1.TimeIntervalFingerprint(interval), result.Version)
-		// The UID is derived from the title, so a rename moves the interval to a new UID.
-		require.Equal(t, v1.TimeIntervalUID(interval.Title), result.UID)
-		require.NotEqual(t, expectedUID, result.UID)
+		// The UID is persisted independently of the title, so a rename keeps the same UID.
+		require.Equal(t, expectedUID, result.UID)
+		require.NotEqual(t, v1.TimeIntervalUID(interval.Title), result.UID)
 
 		require.Len(t, ruleStore.Calls, 1)
 		assert.Equal(t, "RenameTimeIntervalInNotificationSettings", ruleStore.Calls[0].Method)
@@ -854,9 +850,6 @@ func TestUpdateMuteTimings(t *testing.T) {
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool {
 			return m.Title == interval.Title
 		}), orgID, expectedProvenance)
-		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool {
-			return m.Title == original.Title
-		}), orgID)
 
 		require.Len(t, store.Calls, 2)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -866,13 +859,14 @@ func TestUpdateMuteTimings(t *testing.T) {
 		assert.Equal(t, orgID, store.Calls[1].Args[2])
 
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
-		// The renamed interval is stored under its new UID with the new title.
-		renamed, hasNew := revision.Config.TimeIntervals[v1.TimeIntervalUID(interval.Title)]
-		require.Truef(t, hasNew, "renamed time interval should be present under its new UID")
+		// The renamed interval stays under its original UID, now with the new title.
+		renamed, hasEntry := revision.Config.TimeIntervals[expectedUID]
+		require.Truef(t, hasEntry, "renamed time interval should still be present under its original UID")
 		assert.Equal(t, interval.Title, renamed.Title)
-		// The interval previously stored under the original name is no longer referenced by its old title.
-		_, stillOld := revision.Config.TimeIntervals[expectedUID]
-		assert.False(t, stillOld || hasTimeIntervalWithTitle(revision.Config.TimeIntervals, original.Title), "old time interval should no longer be present under its original title")
+		// Renaming must not create a second entry under a fresh name-derived UID.
+		_, hasNewDerivedUID := revision.Config.TimeIntervals[v1.TimeIntervalUID(interval.Title)]
+		assert.False(t, hasNewDerivedUID, "renaming should not create a new UID-keyed entry")
+		assert.False(t, hasTimeIntervalWithTitle(revision.Config.TimeIntervals, original.Title), "old time interval should no longer be present under its original title")
 		assert.Falsef(t, revision.TimeIntervalUsedByRoutes(expected.Title), "There are still references to the old time interval")
 		assert.Truef(t, revision.TimeIntervalUsedByRoutes(interval.Title), "There are no references to the new time interval")
 	})
