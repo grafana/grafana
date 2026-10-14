@@ -118,6 +118,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "name",
+										In:          "query",
+										Description: "only include resources with these names (UIDs)",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "facet",
 										In:          "query",
 										Description: "count distinct terms for selected fields",
