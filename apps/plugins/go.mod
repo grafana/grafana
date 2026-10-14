@@ -10,6 +10,8 @@ replace github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 
 replace github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/features
 
+replace github.com/grafana/grafana/pkg/infra/log => ../../pkg/infra/log
+
 replace github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
 
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
@@ -134,6 +136,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.296.5 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/infra/log v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.6.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect
 	github.com/grafana/sqlds/v5 v5.3.1 // indirect
