@@ -15,9 +15,9 @@ export interface FolderPermissionsExposedComponentProps {
  * names by uid. access comes from the folder itself, as on the folder page.
  */
 export function FolderPermissionsExposedComponent({ folderUid }: FolderPermissionsExposedComponentProps) {
-  const { data: folder, isLoading } = useGetFolderQueryFacade(folderUid);
+  const { data: folder, isLoading, isError } = useGetFolderQueryFacade(folderUid);
 
-  if (isLoading) {
+  if (isLoading || (!folder && !isError)) {
     return <LoadingPlaceholder text={t('browse-dashboards.folder-permissions-exposed.loading', 'Loading...')} />;
   }
 

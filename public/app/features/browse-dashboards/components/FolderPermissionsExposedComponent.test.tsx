@@ -1,12 +1,15 @@
+import { QueryStatus } from '@reduxjs/toolkit/query';
 import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import * as permissions from '../permissions';
 
+import { FolderPermissionsExposedComponent } from './FolderPermissionsExposedComponent';
 import { FolderPermissionsExposedComponentLazy } from './FolderPermissionsExposedComponentLazy';
 
 setBackendSrv(backendSrv);
@@ -62,6 +65,24 @@ describe('grafana/folder-permissions/v1', () => {
       await screen.findByText('You do not have permission to view the permissions of this folder.')
     ).toBeInTheDocument();
     expect(screen.queryByText(/Permissions for/)).not.toBeInTheDocument();
+  });
+
+  it('keeps loading while the folder facade has no data and no error between requests', () => {
+    jest.spyOn(folderHooks, 'useGetFolderQueryFacade').mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      isSuccess: false,
+      isError: false,
+      isUninitialized: true,
+      status: QueryStatus.uninitialized,
+      refetch: jest.fn(),
+    });
+
+    render(<FolderPermissionsExposedComponent folderUid={folderUid} />);
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.queryByText('Unable to load this folder.')).not.toBeInTheDocument();
   });
 
   it('reports a folder that cannot be loaded', async () => {
