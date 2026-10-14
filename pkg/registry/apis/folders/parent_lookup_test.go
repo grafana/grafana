@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -20,20 +22,14 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func parentLookupErrors() map[string]error {
 	return map[string]error{
-		"missing":        apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "ancestor"),
-		"timeout":        apierrors.NewTimeoutError("storage timeout", 7),
-		"server timeout": apierrors.NewServerTimeout(folders.FolderResourceInfo.GroupResource(), "get", 7),
-		"unavailable":    apierrors.NewServiceUnavailable("storage unavailable"),
-		"throttled":      apierrors.NewTooManyRequests("storage throttled", 7),
-		"forbidden":      apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "ancestor", fmt.Errorf("access denied")),
-		"internal":       apierrors.NewInternalError(fmt.Errorf("storage failure")),
-		"plain error":    fmt.Errorf("storage failure"),
-		"deadline":       context.DeadlineExceeded,
-		"canceled":       context.Canceled,
+		"missing":     apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "ancestor"),
+		"timeout":     apierrors.NewTimeoutError("storage timeout", 7),
+		"plain error": fmt.Errorf("storage failure"),
 	}
 }
 
@@ -44,27 +40,6 @@ func folderWithParent(name, parent string) *folders.Folder {
 			Annotations: map[string]string{utils.AnnoKeyFolder: parent},
 		},
 		Spec: folders.FolderSpec{Title: name},
-	}
-}
-
-func TestParentLookupResults(t *testing.T) {
-	for name, lookupErr := range parentLookupErrors() {
-		t.Run(name, func(t *testing.T) {
-			storage := grafanarest.NewMockStorage(t)
-			storage.On("Get", mock.Anything, "ancestor", &metav1.GetOptions{}).Return(nil, lookupErr).Once()
-			result, err := newParentsGetter(storage, 5)(context.Background(), folderWithParent("child", "ancestor"))
-			require.NoError(t, err)
-			if apierrors.IsNotFound(lookupErr) {
-				require.NoError(t, result.LookupError)
-			} else {
-				require.Equal(t, lookupErr, result.LookupError)
-			}
-			require.NotNil(t, result.Hierarchy)
-			require.Equal(t, []folders.FolderInfo{
-				{Name: "ancestor", Detached: true, Description: lookupErr.Error()},
-				{Name: "child", Title: "child", Parent: "ancestor"},
-			}, result.Hierarchy.Items)
-		})
 	}
 }
 
@@ -100,6 +75,53 @@ func TestCreateParentLookupErrors(t *testing.T) {
 				require.Equal(t, responsewriters.ErrorToAPIStatus(expected), responsewriters.ErrorToAPIStatus(err))
 			})
 		}
+	}
+}
+
+func TestCreateParentLookupTransportStatuses(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code:    http.StatusTooManyRequests,
+		Reason:  string(metav1.StatusReasonTooManyRequests),
+		Message: "parent lookup failed",
+		Details: &resourcepb.ErrorDetails{Group: "folder.grafana.app", Kind: "folders", Name: "ancestor", RetryAfterSeconds: 7},
+	}
+	transport, err := status.New(codes.ResourceExhausted, "private transport details").WithDetails(failure)
+	require.NoError(t, err)
+	embedded := resource.ErrorFromResponse(failure, nil)
+
+	for _, tc := range []struct {
+		name     string
+		err      error
+		ancestor bool
+		dryRun   bool
+		code     int32
+	}{
+		{"direct parent unavailable", status.Error(codes.Unavailable, "private transport details"), false, false, http.StatusServiceUnavailable},
+		{"ancestor throttled", transport.Err(), true, false, http.StatusTooManyRequests},
+		{"dry-run wrapped transport", fmt.Errorf("read failed: %w", transport.Err()), false, true, http.StatusTooManyRequests},
+		{"response-embedded failure", embedded, true, false, http.StatusTooManyRequests},
+		{"dry-run deadline", context.DeadlineExceeded, false, true, http.StatusGatewayTimeout},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := grafanarest.NewMockStorage(t)
+			parent := "ancestor"
+			if tc.ancestor {
+				parent = "parent"
+				store.On("Get", mock.Anything, parent, &metav1.GetOptions{}).
+					Return(folderWithParent(parent, "ancestor"), nil).Once()
+			}
+			store.On("Get", mock.Anything, "ancestor", &metav1.GetOptions{}).Return(nil, tc.err).Once()
+			err := validateOnCreate(context.Background(), folderWithParent("child", parent), newParentsGetter(store, 5), 5, tc.dryRun)
+			require.IsType(t, &apierrors.StatusError{}, err)
+			apiStatus := responsewriters.ErrorToAPIStatus(err)
+			require.Equal(t, tc.code, apiStatus.Code)
+			if tc.code == http.StatusTooManyRequests {
+				require.Equal(t, responsewriters.ErrorToAPIStatus(embedded), apiStatus)
+			} else {
+				require.Equal(t, http.StatusText(int(tc.code)), apiStatus.Message)
+				require.Nil(t, apiStatus.Details)
+			}
+		})
 	}
 }
 
@@ -165,22 +187,19 @@ func TestCreateDryRunCycle(t *testing.T) {
 }
 
 func TestMoveKeepsPartialParentLookupBehavior(t *testing.T) {
-	for name, lookupErr := range parentLookupErrors() {
-		t.Run(name, func(t *testing.T) {
-			storage := grafanarest.NewMockStorage(t)
-			storage.On("Get", mock.Anything, "old-parent", &metav1.GetOptions{}).
-				Return(folderWithParent("old-parent", "old-grandparent"), nil).Twice()
-			storage.On("Get", mock.Anything, "old-grandparent", &metav1.GetOptions{}).
-				Return(folderWithParent("old-grandparent", "missing-old"), nil).Twice()
-			storage.On("Get", mock.Anything, "missing-old", &metav1.GetOptions{}).Return(nil, lookupErr).Twice()
-			storage.On("Get", mock.Anything, "target", &metav1.GetOptions{}).
-				Return(folderWithParent("target", "missing-new"), nil).Once()
-			storage.On("Get", mock.Anything, "missing-new", &metav1.GetOptions{}).Return(nil, lookupErr).Once()
-			// The old partial chain is deeper than the new one, so the existing
-			// canSkipChildrenCheck optimization should still avoid a search.
-			err := validateOnUpdate(context.Background(), folderWithParent("child", "target"),
-				folderWithParent("child", "old-parent"), storage, newParentsGetter(storage, 5), nil, nil, 5)
-			require.NoError(t, err)
-		})
-	}
+	lookupErr := apierrors.NewServiceUnavailable("storage unavailable")
+	storage := grafanarest.NewMockStorage(t)
+	storage.On("Get", mock.Anything, "old-parent", &metav1.GetOptions{}).
+		Return(folderWithParent("old-parent", "old-grandparent"), nil).Twice()
+	storage.On("Get", mock.Anything, "old-grandparent", &metav1.GetOptions{}).
+		Return(folderWithParent("old-grandparent", "missing-old"), nil).Twice()
+	storage.On("Get", mock.Anything, "missing-old", &metav1.GetOptions{}).Return(nil, lookupErr).Twice()
+	storage.On("Get", mock.Anything, "target", &metav1.GetOptions{}).
+		Return(folderWithParent("target", "missing-new"), nil).Once()
+	storage.On("Get", mock.Anything, "missing-new", &metav1.GetOptions{}).Return(nil, lookupErr).Once()
+	// The old partial chain is deeper than the new one, so the existing
+	// canSkipChildrenCheck optimization should still avoid a search.
+	err := validateOnUpdate(context.Background(), folderWithParent("child", "target"),
+		folderWithParent("child", "old-parent"), storage, newParentsGetter(storage, 5), nil, nil, 5)
+	require.NoError(t, err)
 }

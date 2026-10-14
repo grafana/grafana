@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
@@ -67,9 +68,11 @@ func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 }
 
 func TestFolderStorageCreatePreservesParentLookupStatus(t *testing.T) {
-	lookupErr := apierrors.NewTimeoutError("storage timeout", 7)
+	expected := apierrors.NewTimeoutError("storage timeout", 7)
+	transport, err := status.New(codes.DeadlineExceeded, "private transport details").WithDetails(resource.AsErrorResult(expected))
+	require.NoError(t, err)
 	store := grafanarest.NewMockStorage(t)
-	store.On("Get", mock.Anything, "ancestor", &metav1.GetOptions{}).Return(nil, lookupErr).Once()
+	store.On("Get", mock.Anything, "ancestor", &metav1.GetOptions{}).Return(nil, transport.Err()).Once()
 	store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(func(ctx context.Context, obj runtime.Object, validation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
 			return nil, fmt.Errorf("create failed: %w", validation(ctx, obj))
@@ -79,9 +82,9 @@ func TestFolderStorageCreatePreservesParentLookupStatus(t *testing.T) {
 		return validateOnCreate(ctx, obj.(*folders.Folder), newParentsGetter(store, 5), 5, false)
 	}, &metav1.CreateOptions{})
 	require.Nil(t, out)
-	require.Equal(t, lookupErr, err)
-	require.Equal(t, responsewriters.ErrorToAPIStatus(lookupErr), responsewriters.ErrorToAPIStatus(err))
-	require.Equal(t, int(lookupErr.ErrStatus.Code), legacyapierrors.ToFolderErrorResponse(err).Status())
+	require.Equal(t, expected, err)
+	require.Equal(t, responsewriters.ErrorToAPIStatus(expected), responsewriters.ErrorToAPIStatus(err))
+	require.Equal(t, int(expected.ErrStatus.Code), legacyapierrors.ToFolderErrorResponse(err).Status())
 }
 
 func TestFolderStorageCreateNormalizesLegacyErrors(t *testing.T) {

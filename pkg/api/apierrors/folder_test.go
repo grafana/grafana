@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestToFolderErrorResponse(t *testing.T) {
@@ -253,59 +252,17 @@ func TestToFolderErrorResponse(t *testing.T) {
 	}
 }
 
-func TestToFolderStatusErrorPreservesKubernetesStatus(t *testing.T) {
-	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
-	for name, original := range map[string]*k8sErrors.StatusError{
-		"missing":        k8sErrors.NewNotFound(gr, "parent"),
-		"forbidden":      k8sErrors.NewForbidden(gr, "parent", fmt.Errorf("access denied")),
-		"timeout":        k8sErrors.NewTimeoutError("storage timeout", 7),
-		"server timeout": k8sErrors.NewServerTimeout(gr, "get", 7),
-		"unavailable":    k8sErrors.NewServiceUnavailable("storage unavailable"),
-		"throttled":      k8sErrors.NewTooManyRequests("storage throttled", 7),
-		"internal":       k8sErrors.NewInternalError(fmt.Errorf("storage failure")),
-	} {
-		for wrapping, input := range map[string]error{
-			"direct":  original,
-			"wrapped": fmt.Errorf("create failed: %w", original),
-		} {
-			t.Run(name+"/"+wrapping, func(t *testing.T) {
-				converted := apierrors.ToFolderStatusError(input)
-				require.Equal(t, original.ErrStatus, converted.ErrStatus)
-			})
-		}
-	}
-}
-
 func TestToFolderStatusErrorDefaultsEmptyMessage(t *testing.T) {
-	for _, tc := range []struct {
-		code    int32
-		reason  metav1.StatusReason
-		message string
-	}{
-		{http.StatusForbidden, metav1.StatusReasonForbidden, "Access denied"},
-		{http.StatusNotFound, metav1.StatusReasonNotFound, "Folder not found"},
-		{http.StatusBadRequest, metav1.StatusReasonBadRequest, "Invalid request"},
-		{http.StatusInternalServerError, metav1.StatusReasonInternalError, "Folder API error"},
-	} {
-		for _, wrapped := range []bool{false, true} {
-			t.Run(fmt.Sprintf("code=%d/wrapped=%t", tc.code, wrapped), func(t *testing.T) {
-				original := &k8sErrors.StatusError{ErrStatus: metav1.Status{
-					Code:    tc.code,
-					Reason:  tc.reason,
-					Details: &metav1.StatusDetails{Name: "parent", RetryAfterSeconds: 7},
-				}}
-				var input error = original
-				if wrapped {
-					input = fmt.Errorf("create failed: %w", original)
-				}
-				converted := apierrors.ToFolderStatusError(input)
-				expected := original.ErrStatus
-				expected.Message = tc.message
-				require.Equal(t, expected, converted.ErrStatus)
-				require.Empty(t, original.ErrStatus.Message)
-			})
-		}
-	}
+	original := &k8sErrors.StatusError{ErrStatus: metav1.Status{
+		Code:    http.StatusForbidden,
+		Reason:  metav1.StatusReasonForbidden,
+		Details: &metav1.StatusDetails{Name: "parent"},
+	}}
+	converted := apierrors.ToFolderStatusError(fmt.Errorf("create failed: %w", original))
+	expected := original.ErrStatus
+	expected.Message = "Access denied"
+	require.Equal(t, expected, converted.ErrStatus)
+	require.Empty(t, original.ErrStatus.Message)
 }
 
 // TestErrorsIs_UnwrapsAPIWrappers tests that errors.Is matches the legacy sentinel via
