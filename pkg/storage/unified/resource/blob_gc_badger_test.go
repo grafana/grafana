@@ -2,10 +2,12 @@ package resource
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 func TestBlobGCReferenceResetsObservation(t *testing.T) {
