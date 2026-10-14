@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1038,6 +1039,78 @@ func TestGetOrgUsersForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 		assert.Equal(t, int64(42), got[0].UserID)
 		assert.Equal(t, "other", got[1].Login)
 	})
+}
+
+type lookupUserService struct {
+	usertest.FakeUserService
+	search func(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
+}
+
+func (s *lookupUserService) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return s.search(ctx, query)
+}
+
+func TestGetOrgUsersForCurrentOrgLookup_KubernetesUsersRedirect(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		enforce    bool
+		admin      bool
+		login      string
+		wantLogins []string
+	}{
+		{name: "unlicensed lookup uses service identity and hides other hidden users", login: "caller", wantLogins: []string{"visible"}},
+		{name: "licensed lookup keeps caller identity", enforce: true, login: "caller", wantLogins: []string{"visible"}},
+		{name: "hidden callers can see themselves", login: "hidden-self", wantLogins: []string{"hidden-self", "visible"}},
+		{name: "server admins can see hidden users", admin: true, login: "caller", wantLogins: []string{"hidden-self", "hidden-other", "visible"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+			cfg := setting.NewCfg()
+			cfg.RBAC.SingleOrganization = true
+			cfg.HiddenUsers = map[string]struct{}{"hidden-self": {}, "hidden-other": {}}
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(tt.enforce).Once()
+			t.Cleanup(func() { license.AssertExpectations(t) })
+			caller := &user.SignedInUser{OrgID: 1, UserID: 42, Login: tt.login, IsGrafanaAdmin: tt.admin, Namespace: "org-1"}
+			called := false
+			svc := &lookupUserService{search: func(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+				called = true
+				require.Equal(t, !tt.enforce, identity.IsServiceIdentity(ctx))
+				requester, err := identity.GetRequester(ctx)
+				require.NoError(t, err)
+				require.Equal(t, caller.OrgID, requester.GetOrgID())
+				require.Equal(t, caller.Namespace, requester.GetNamespace())
+				if tt.enforce {
+					require.Same(t, caller, requester)
+				}
+				require.Same(t, caller, query.SignedInUser)
+				require.Equal(t, caller.OrgID, query.OrgID)
+				require.Equal(t, "lookup", query.Query)
+				require.Equal(t, 10, query.Limit)
+				return &user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{
+					{ID: 42, UID: "self", Login: "hidden-self"},
+					{ID: 43, UID: "other", Login: "hidden-other"},
+					{ID: 44, UID: "visible", Login: "visible"},
+				}}, nil
+			}}
+			hs := &HTTPServer{Cfg: cfg, License: license, userService: svc}
+			req := httptest.NewRequest(http.MethodGet, "/api/org/users/lookup?query=lookup&limit=10", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), caller))
+			ctx := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: caller}
+			resp := hs.GetOrgUsersForCurrentOrgLookup(ctx)
+			require.True(t, called)
+			normalResp, ok := resp.(*response.NormalResponse)
+			require.True(t, ok)
+			require.Equal(t, http.StatusOK, normalResp.Status())
+			var got []dtos.UserLookupDTO
+			require.NoError(t, json.Unmarshal(normalResp.Body(), &got))
+			logins := make([]string, 0, len(got))
+			for _, u := range got {
+				logins = append(logins, u.Login)
+			}
+			require.ElementsMatch(t, tt.wantLogins, logins)
+		})
+	}
 }
 
 func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {

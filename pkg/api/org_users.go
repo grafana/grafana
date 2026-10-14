@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -160,6 +161,14 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 	// Single-org with users in unified storage: the legacy org_user/user join is
 	// empty, so read the shared users via the k8s-redirected user search instead.
 	if hs.Cfg.RBAC.SingleOrganization && ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		// When fine-grained permissions are disabled, allow anyone authorized
+		// to use this endpoint to search the organization's users.
+		if !hs.License.FeatureEnabled("accesscontrol.enforcement") {
+			ctx = identity.WithServiceIdentityContext(ctx, c.GetOrgID(), func(service *identity.StaticRequester) {
+				// User search derives its namespace from the requester.
+				service.Namespace = c.GetNamespace()
+			})
+		}
 		searchResult, err := hs.userService.Search(ctx, &user.SearchUsersQuery{
 			SignedInUser: c.SignedInUser,
 			OrgID:        c.GetOrgID(),
@@ -172,6 +181,11 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 
 		result := make([]*dtos.UserLookupDTO, 0, len(searchResult.Users))
 		for _, u := range searchResult.Users {
+			// The service identity used for unlicensed lookup can see hidden users;
+			// directory visibility must still follow the original caller.
+			if _, hidden := hs.Cfg.HiddenUsers[u.Login]; hidden && !c.IsGrafanaAdmin && u.Login != c.Login {
+				continue
+			}
 			avatarURL := u.AvatarURL
 			if avatarURL == "" {
 				avatarURL = dtos.GetGravatarUrl(hs.Cfg, u.Email)
