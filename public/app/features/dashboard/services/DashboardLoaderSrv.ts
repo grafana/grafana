@@ -256,12 +256,13 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       throw new Error('Dashboard uid or slug required');
     }
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+    // Chain the impression side effect onto the returned promise. A detached
+    // `.then()` rejects on its own when the load fails, which surfaces as an
+    // unhandled rejection before the caller can render the error state.
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
       impressionSrv.addDashboardImpression(result.metadata.name);
       return result;
     });
-
-    return promise;
   }
 
   loadSnapshot(slug: string): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
@@ -269,13 +270,11 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       .getSnapshot(slug)
       .then((r) => ResponseTransformers.ensureV2Response(r));
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
       impressionSrv.addDashboardImpression(result.metadata.name);
 
       return result;
     });
-
-    return promise;
   }
 }
 
