@@ -16,6 +16,15 @@ function rowMoreButton(page: Page, title: string) {
   return page.getByRole('link', { name: title }).locator('xpath=following::button[@aria-label="More"][1]');
 }
 
+// A paused rule's status icon is named "Paused"; scoped to the row because the Alert page's sidebar
+// also has a control with that name.
+function pausedIcon(page: Page, title: string) {
+  return page
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('link', { name: title }) })
+    .getByLabel('Paused', { exact: true });
+}
+
 test.describe('Alert rule mutations', () => {
   test.slow();
 
@@ -26,7 +35,7 @@ test.describe('Alert rule mutations', () => {
 
     await gotoFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
-    await expect(page.getByText(/· Paused$/)).toBeVisible();
+    await expect(pausedIcon(page, title)).toBeVisible();
 
     await rowMoreButton(page, title).click();
     await page.getByRole('menuitem', { name: 'Resume' }).click();
@@ -34,7 +43,7 @@ test.describe('Alert rule mutations', () => {
 
     await gotoFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
-    await expect(page.getByText(/· Paused$/)).not.toBeVisible();
+    await expect(pausedIcon(page, title)).not.toBeVisible();
 
     await rowMoreButton(page, title).click();
     await page.getByRole('menuitem', { name: 'Pause' }).click();
@@ -42,7 +51,7 @@ test.describe('Alert rule mutations', () => {
 
     await gotoFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
-    await expect(page.getByText(/· Paused$/)).toBeVisible();
+    await expect(pausedIcon(page, title)).toBeVisible();
   });
 
   test('ALERT-8: Delete removes the rule from the active list after a reload', async ({ page, folder, alertRules }) => {

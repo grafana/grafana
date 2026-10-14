@@ -1,4 +1,6 @@
-import { type Page, test, expect } from '@grafana/plugin-e2e';
+import { type Page } from '@playwright/test';
+
+import { test, expect } from '@grafana/plugin-e2e';
 
 import { gotoResilient } from './waitForAppLoad';
 
@@ -11,32 +13,37 @@ test.describe('Search mode switch (SEARCH-7)', () => {
     await gotoResilient(page, path);
     await expect(page.getByRole('radio', { name: 'Folders' })).toBeChecked({ timeout: 20_000 });
 
-    const search = page.getByRole('textbox', { name: /search/i });
+    const search = page.getByRole('textbox', { name: /^search/i });
     await search.fill('cpu');
     await search.press('Enter');
 
     await expect(page.getByRole('radio', { name: 'List' })).toBeChecked({ timeout: 20_000 });
+    await expect(page).toHaveURL(/view=list/);
 
-    // Folders is unavailable while a non-folder criterion is active — clicking it is a no-op,
-    // not a hard-disabled control, so assert the mode doesn't actually change.
-    await page.getByRole('radio', { name: 'Folders' }).click();
-    await expect(page.getByRole('radio', { name: 'List' })).toBeChecked();
+    // Folders is unavailable while a non-folder criterion is applied, and says how to get it back.
+    await expect(page.getByRole('radio', { name: 'Folders' })).toBeDisabled();
+    await page
+      .getByRole('radiogroup')
+      .filter({ has: page.getByRole('radio', { name: 'Folders' }) })
+      .hover();
+    await expect(page.getByText('Clear filters to browse by folder')).toBeVisible();
 
+    // Clearing the last non-folder filter returns to Folders.
     await page.getByRole('button', { name: 'Clear filters' }).click();
-    // Removing the filter does not switch back automatically — List stays selected until the
-    // user chooses Folders again.
-    await expect(page.getByRole('radio', { name: 'List' })).toBeChecked({ timeout: 20_000 });
     await expect(search).toHaveValue('');
-
-    await page.getByRole('radio', { name: 'Folders' }).click();
     await expect(page.getByRole('radio', { name: 'Folders' })).toBeChecked({ timeout: 20_000 });
+    await expect(page.getByRole('radio', { name: 'Folders' })).toBeEnabled();
   }
 
-  test('SEARCH-7 (Alert rules): a filter switches to List; clearing it does not switch back on its own', async ({ page }) => {
+  test('SEARCH-7 (Alert rules): a filter switches to List with Folders disabled; clearing it returns to Folders', async ({
+    page,
+  }) => {
     await assertModeSwitchBehavior(page, '/alerting/rules/alert');
   });
 
-  test('SEARCH-7 (Recording rules): a filter switches to List; clearing it does not switch back on its own', async ({ page }) => {
+  test('SEARCH-7 (Recording rules): a filter switches to List with Folders disabled; clearing it returns to Folders', async ({
+    page,
+  }) => {
     await assertModeSwitchBehavior(page, '/alerting/rules/recording');
   });
 });

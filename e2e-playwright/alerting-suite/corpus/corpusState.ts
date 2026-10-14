@@ -37,6 +37,18 @@ export function readCorpusManifest(): CorpusManifest | undefined {
   return JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 }
 
+/** For specs that read the corpus: a missing manifest means the setup project did not run, which
+ * must fail the run rather than silently skip the specs that depend on it. */
+export function requireCorpusManifest(): CorpusManifest {
+  const manifest = readCorpusManifest();
+  if (!manifest) {
+    throw new Error(
+      'Corpus manifest not found. Run this spec with the alerting-corpus-setup project as a dependency (alerting-corpus-tests).'
+    );
+  }
+  return manifest;
+}
+
 export function clearCorpusManifest(): void {
   if (fs.existsSync(MANIFEST_PATH)) {
     fs.unlinkSync(MANIFEST_PATH);

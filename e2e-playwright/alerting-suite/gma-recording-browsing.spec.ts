@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { readCorpusManifest } from './corpus/corpusState';
+import { requireCorpusManifest } from './corpus/corpusState';
 import { gotoResilient } from './waitForAppLoad';
 
 // Same shared corpus as gma-alert-browsing.spec.ts — the dense folder holds 80 Recording
@@ -12,11 +12,7 @@ test.describe('Recording rules: Folders and List browsing', () => {
   test('REC-1/2: the dense folder shows its direct Recording count, Load more reveals the rest, and searches are Recording-only', async ({
     page,
   }) => {
-    const manifest = readCorpusManifest();
-    test.skip(!manifest, 'corpus manifest not found — run this project with alerting-corpus-setup as a dependency');
-    if (!manifest) {
-      return;
-    }
+    const manifest = requireCorpusManifest();
 
     const dense = manifest.folders.find((f) => f.uid === manifest.denseFolderUid)!;
 
@@ -44,11 +40,7 @@ test.describe('Recording rules: Folders and List browsing', () => {
   });
 
   test('REC-2: List mode loads three 40-rule batches for a corpus-scoped filter', async ({ page }) => {
-    const manifest = readCorpusManifest();
-    test.skip(!manifest, 'corpus manifest not found — run this project with alerting-corpus-setup as a dependency');
-    if (!manifest) {
-      return;
-    }
+    const manifest = requireCorpusManifest();
 
     await gotoResilient(page, '/alerting/rules/recording');
     await page.getByRole('radio', { name: 'List' }).click();

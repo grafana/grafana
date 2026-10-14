@@ -1,33 +1,26 @@
-import { type APIRequestContext, type APIResponse } from '@playwright/test';
+import { type APIRequestContext } from '@playwright/test';
 
 import { test as base, expect } from '@grafana/plugin-e2e';
 
-// "empty" is the default contact point Grafana provisions on a fresh dev install.
-export const contactPoint = 'empty';
-export const dataSource = 'gdev-testdata';
+import {
+  type AlertRuleSeed,
+  type RecordingRuleSeed,
+  type RuleKind,
+  createAlertRule,
+  createContactPoint,
+  createDashboard,
+  createFolderAndWait,
+  createRecordingRule,
+  createRoutingTree,
+  deleteFolder,
+  postWithRetry,
+  rulesApiBase,
+} from './ruleSeeding';
 
-// POST that retries a transient failure with Playwright's built-in expect(...).toPass. At the worker
-// startup burst the write (or its folders:read authz check) can lose the SQLITE_BUSY race against the
-// e2e server's small SQLite connection pool and return a transient 403/500. Default timeout is bounded
-// so a genuine failure still surfaces quickly with its status/body; the folder-create call below passes
-// a longer one since a single attempt can itself take as long as the server's `busy_timeout` (7.5s).
-export async function postWithRetry(
-  request: APIRequestContext,
-  url: string,
-  data: unknown,
-  timeout = 5000
-): Promise<APIResponse> {
-  let response: APIResponse | undefined;
-  await expect(async () => {
-    response = await request.post(url, { data });
-    expect(response.ok(), `POST ${url} -> ${response.status()} ${await response.text()}`).toBeTruthy();
-  }).toPass({ intervals: [200, 500, 1000, 2000], timeout });
-  // toPass only resolves once the callback passed, so response is set; the guard narrows the type.
-  if (!response) {
-    throw new Error(`POST ${url} produced no response`);
-  }
-  return response;
-}
+export { contactPoint, postWithRetry, recordingTargetDataSource } from './ruleSeeding';
+export type { Page } from '@playwright/test';
+
+export const dataSource = 'gdev-testdata';
 
 type WorkerApi = {
   request: APIRequestContext;
@@ -39,8 +32,6 @@ type Folder = {
   title: string;
 };
 
-type RuleSearchKind = 'alertrules' | 'recordingrules';
-
 // A write is durable as soon as the POST resolves, but the rule search may read an index that
 // updates asynchronously — the same visibility gap `workerFolder` already works around for the
 // folders list. Poll the per-kind searchRules endpoint the UI reads, filtered to one folder, until
@@ -48,25 +39,22 @@ type RuleSearchKind = 'alertrules' | 'recordingrules';
 export async function waitForRuleSearchVisible(
   request: APIRequestContext,
   namespace: string,
-  kind: RuleSearchKind,
+  kind: RuleKind,
   folderUid: string,
   expectedCount: number,
   timeout = 20_000
 ): Promise<void> {
   await expect(async () => {
-    const res = await request.post(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${kind}/searchRules`,
-      {
-        data: {
-          apiVersion: 'search.grafana.app/v0alpha1',
-          kind: 'SearchQuery',
-          where: { filter: { field: 'folder', operator: 'In', values: [folderUid] } },
-          sort: [{ field: 'title', direction: 'asc' }],
-          fields: ['title'],
-          limit: 1,
-        },
-      }
-    );
+    const res = await request.post(`${rulesApiBase(namespace)}/${kind}/searchRules`, {
+      data: {
+        apiVersion: 'search.grafana.app/v0alpha1',
+        kind: 'SearchQuery',
+        where: { filter: { field: 'folder', operator: 'In', values: [folderUid] } },
+        sort: [{ field: 'title', direction: 'asc' }],
+        fields: ['title'],
+        limit: 1,
+      },
+    });
     expect(res.ok(), `POST ${kind}/searchRules -> ${res.status()} ${await res.text()}`).toBeTruthy();
     const body = await res.json();
     expect(
@@ -76,15 +64,54 @@ export async function waitForRuleSearchVisible(
   }).toPass({ intervals: [200, 500, 1000, 2000], timeout });
 }
 
-// Disposable rule fixture: every group/rule a test creates is tracked and deleted (LIFO) at test end.
-class AlertRulesFixture {
-  private readonly disposers: Array<() => Promise<void>> = [];
+// Everything a test creates is tracked and deleted (LIFO) at test end, so a resource that others
+// depend on (a folder, a contact point) goes away after the rules that use it.
+class DisposableFixture {
+  protected readonly disposers: Array<() => Promise<void>> = [];
 
   constructor(
-    private readonly request: APIRequestContext,
-    private readonly api: WorkerApi,
-    private readonly folder: Folder
+    protected readonly request: APIRequestContext,
+    protected readonly api: WorkerApi,
+    protected readonly folder: Folder
   ) {}
+
+  // A second folder for tests that need a rule outside the worker's folder, e.g. to prove a folder
+  // filter excludes it.
+  async createFolder(title: string): Promise<Folder> {
+    const uid = `e2e-alerting-extra-${crypto.randomUUID().slice(0, 8)}`;
+    await createFolderAndWait(this.request, this.api.namespace, uid, title);
+    this.disposers.push(() => deleteFolder(this.request, uid));
+    return { uid, title };
+  }
+
+  // Register a rule for deletion on teardown. Used by seedRule and by tests for UI-created rules.
+  trackRule(uid: string): void {
+    this.disposers.push(async () => {
+      await this.request.delete(`${rulesApiBase(this.api.namespace)}/${this.ruleKind}/${encodeURIComponent(uid)}`);
+    });
+  }
+
+  // LIFO, best-effort: a resource may already be gone, and the worker folder delete is the backstop.
+  async dispose(): Promise<void> {
+    for (const disposer of this.disposers.reverse()) {
+      try {
+        await disposer();
+      } catch {
+        // best-effort cleanup
+      }
+    }
+  }
+
+  protected get ruleKind(): RuleKind {
+    throw new Error('ruleKind must be provided by the concrete fixture');
+  }
+}
+
+// Disposable rule fixture: every group/rule a test creates is tracked and deleted (LIFO) at test end.
+class AlertRulesFixture extends DisposableFixture {
+  protected get ruleKind(): RuleKind {
+    return 'alertrules';
+  }
 
   // Seed a named evaluation group via the ruler API (the only API with named groups). A group needs
   // at least one rule; we use a paused constant `math` expression so seeding does no datasource or
@@ -128,125 +155,53 @@ class AlertRulesFixture {
   }
 
   // Seed a single Grafana-managed rule via the k8s alertrule API (independent of the UI form).
-  // Returns the rule UID. Paused constant math expression — see seedGroup.
-  async seedRule({ title, interval }: { title: string; interval: string }): Promise<string> {
-    const response = await postWithRetry(
-      this.request,
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${this.api.namespace}/alertrules`,
-      {
-        apiVersion: 'rules.alerting.grafana.app/v0alpha1',
-        kind: 'AlertRule',
-        metadata: { annotations: { 'grafana.app/folder': this.folder.uid } },
-        spec: {
-          title,
-          trigger: { interval },
-          noDataState: 'NoData',
-          execErrState: 'Error',
-          paused: true,
-          notificationSettings: { type: 'SimplifiedRouting', receiver: contactPoint },
-          expressions: {
-            A: {
-              model: { refId: 'A', type: 'math', expression: '1 == 1' },
-              datasourceUID: '__expr__',
-              queryType: '',
-              source: true,
-            },
-          },
-        },
-      }
-    );
-    const uid = (await response.json()).metadata.name;
+  // Returns the rule UID. Paused constant math expression unless the seed says otherwise — see seedGroup.
+  async seedRule(seed: AlertRuleSeed): Promise<string> {
+    const uid = await createAlertRule(this.request, this.api.namespace, this.folder.uid, seed);
     this.trackRule(uid);
     return uid;
   }
 
-  // Register a rule for deletion on teardown. Used by seedRule and by tests for UI-created rules.
-  trackRule(uid: string): void {
+  async createContactPoint(name: string): Promise<void> {
+    const uid = await createContactPoint(this.request, name);
+    this.disposers.push(async () => {
+      await this.request.delete(`/api/v1/provisioning/contact-points/${encodeURIComponent(uid)}`);
+    });
+  }
+
+  async createRoutingTree(name: string): Promise<void> {
+    await createRoutingTree(this.request, this.api.namespace, name);
     this.disposers.push(async () => {
       await this.request.delete(
-        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${this.api.namespace}/alertrules/${encodeURIComponent(uid)}`
+        `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/${this.api.namespace}/routingtrees/${encodeURIComponent(name)}`
       );
     });
   }
 
-  // LIFO, best-effort: a resource may already be gone, and the worker folder delete is the backstop.
-  async dispose(): Promise<void> {
-    for (const disposer of this.disposers.reverse()) {
-      try {
-        await disposer();
-      } catch {
-        // best-effort cleanup
-      }
-    }
+  async createDashboard(title: string, panelIds: number[]): Promise<string> {
+    const uid = `e2e-dash-${crypto.randomUUID().slice(0, 8)}`;
+    await createDashboard(this.request, uid, title, panelIds);
+    this.disposers.push(async () => {
+      await this.request.delete(`/api/dashboards/uid/${encodeURIComponent(uid)}`);
+    });
+    return uid;
   }
 }
 
-// The datasource this dev instance provisions the recorded metric's write target against.
-// Recording rules require a real datasource UID here even though the paused math expression
-// below never actually queries or writes anything.
-export const recordingTargetDataSource = 'prometheus';
-
 // Disposable Recording rule fixture, mirroring AlertRulesFixture — no Ruler/group API exists
 // for Recording rules, so every rule is created and torn down directly through the k8s API.
-class RecordingRulesFixture {
-  private readonly disposers: Array<() => Promise<void>> = [];
-
-  constructor(
-    private readonly request: APIRequestContext,
-    private readonly api: WorkerApi,
-    private readonly folder: Folder
-  ) {}
+class RecordingRulesFixture extends DisposableFixture {
+  protected get ruleKind(): RuleKind {
+    return 'recordingrules';
+  }
 
   // Seed a single Recording rule via the k8s recordingrule API. Paused constant math
-  // expression, same reasoning as AlertRulesFixture.seedRule: no datasource/scheduler work.
-  async seedRule({ title, interval, metric }: { title: string; interval: string; metric: string }): Promise<string> {
-    const response = await postWithRetry(
-      this.request,
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${this.api.namespace}/recordingrules`,
-      {
-        apiVersion: 'rules.alerting.grafana.app/v0alpha1',
-        kind: 'RecordingRule',
-        metadata: { annotations: { 'grafana.app/folder': this.folder.uid } },
-        spec: {
-          title,
-          trigger: { interval },
-          paused: true,
-          metric,
-          targetDatasourceUID: recordingTargetDataSource,
-          expressions: {
-            A: {
-              model: { refId: 'A', type: 'math', expression: '1 == 1' },
-              datasourceUID: '__expr__',
-              queryType: '',
-              source: true,
-            },
-          },
-        },
-      }
-    );
-    const uid = (await response.json()).metadata.name;
+  // expression unless the seed says otherwise, same reasoning as AlertRulesFixture.seedRule:
+  // no datasource/scheduler work.
+  async seedRule(seed: RecordingRuleSeed): Promise<string> {
+    const uid = await createRecordingRule(this.request, this.api.namespace, this.folder.uid, seed);
     this.trackRule(uid);
     return uid;
-  }
-
-  // Register a rule for deletion on teardown. Used by seedRule and by tests for UI-created rules.
-  trackRule(uid: string): void {
-    this.disposers.push(async () => {
-      await this.request.delete(
-        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${this.api.namespace}/recordingrules/${encodeURIComponent(uid)}`
-      );
-    });
-  }
-
-  // LIFO, best-effort: a resource may already be gone, and the worker folder delete is the backstop.
-  async dispose(): Promise<void> {
-    for (const disposer of this.disposers.reverse()) {
-      try {
-        await disposer();
-      } catch {
-        // best-effort cleanup
-      }
-    }
   }
 }
 
@@ -271,53 +226,20 @@ export const test = base.extend<
   // One folder per worker, reused across its tests. A per-invocation unique name avoids cross-worker
   // collisions and orphan accumulation. Reusing it (vs. one per test) keeps folder writes — the main
   // SQLITE_BUSY contention source — to one per worker. Created via the App Platform (k8s) folders API.
-  //
-  // All workers create their folder at the same instant, so this single request can itself stall for
-  // as long as the server's SQLite `busy_timeout` (7.5s, scripts/grafana-server/custom.ini) before it
-  // resolves. A 15s retry budget (default is 5s) gives it room to survive that instead of giving up
-  // before the server has even finished stalling on the first attempt. `timeout: 20_000` on the fixture
-  // itself raises Playwright's own fixture-setup ceiling (normally the 10s test timeout) to match.
+  // `timeout: 35_000` on the fixture itself raises Playwright's own fixture-setup ceiling (normally
+  // the 10s test timeout) to cover the 15s retry budget and the visibility poll in createFolderAndWait.
   workerFolder: [
     async ({ workerApi }, use, workerInfo) => {
       const suffix = crypto.randomUUID().slice(0, 8);
       const uid = `e2e-alerting-w${workerInfo.workerIndex}-${suffix}`;
       const title = `Infrastructure alerts w${workerInfo.workerIndex} ${suffix}`;
-      await postWithRetry(
-        workerApi.request,
-        `/apis/folder.grafana.app/v1/namespaces/${workerApi.namespace}/folders`,
-        {
-          apiVersion: 'folder.grafana.app/v1',
-          kind: 'Folder',
-          metadata: { name: uid },
-          spec: { title },
-        },
-        15_000
-      );
-
-      // The create above only guarantees the folder is durably written, not that it's visible yet:
-      // every read (including the ruler API's namespace lookup that seedGroup/seedRule depend on)
-      // is served off a search index that's updated asynchronously from the write. A folder that
-      // exists but isn't indexed yet reads back as zero results, which callers can't distinguish
-      // from "doesn't exist" — surfacing as a transient 403 on the very next request. List (not a
-      // per-uid Get, which reads the primary store directly and would race past this) is what
-      // actually exercises that index, so poll it until the new folder shows up.
-      await expect(async () => {
-        const res = await workerApi.request.get(
-          `/apis/folder.grafana.app/v1/namespaces/${workerApi.namespace}/folders?fieldSelector=metadata.name%3D${uid}`
-        );
-        expect(res.ok(), `GET folders?fieldSelector=metadata.name=${uid} -> ${res.status()}`).toBeTruthy();
-        const body = await res.json();
-        expect(body.items?.length > 0, `folder ${uid} not yet visible in list`).toBeTruthy();
-      }).toPass({ intervals: [50, 100, 200, 400], timeout: 15_000 });
+      await createFolderAndWait(workerApi.request, workerApi.namespace, uid, title);
 
       await use({ uid, title });
 
       // Per-test disposers already removed the rules/groups, so a plain delete normally suffices;
       // fall back to the cascade only if a test left something behind.
-      const deleted = await workerApi.request.delete(`/api/folders/${uid}`);
-      if (!deleted.ok()) {
-        await workerApi.request.delete(`/api/folders/${uid}?forceDeleteRules=true`);
-      }
+      await deleteFolder(workerApi.request, uid);
     },
     { scope: 'worker', timeout: 35_000 },
   ],

@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { readCorpusManifest } from './corpus/corpusState';
+import { requireCorpusManifest } from './corpus/corpusState';
 import { gotoResilient } from './waitForAppLoad';
 
 // Depends on the shared corpus (see playwright.config.ts `alerting-corpus-setup`/`-teardown`):
@@ -14,14 +14,12 @@ test.describe('Alert rules: Folders and List browsing', () => {
   test('ALERT-1/2: the dense folder shows its direct Alert count, Load more reveals the rest, and a still-collapsed folder is never fetched', async ({
     page,
   }) => {
-    const manifest = readCorpusManifest();
-    test.skip(!manifest, 'corpus manifest not found — run this project with alerting-corpus-setup as a dependency');
-    if (!manifest) {
-      return;
-    }
+    const manifest = requireCorpusManifest();
 
     const dense = manifest.folders.find((f) => f.uid === manifest.denseFolderUid)!;
-    const untouched = manifest.folders.find((f) => f.uid !== manifest.denseFolderUid && f.uid !== manifest.emptyFolderUid)!;
+    const untouched = manifest.folders.find(
+      (f) => f.uid !== manifest.denseFolderUid && f.uid !== manifest.emptyFolderUid
+    )!;
 
     const searchRequestBodies: string[] = [];
     page.on('request', (request) => {
@@ -51,11 +49,7 @@ test.describe('Alert rules: Folders and List browsing', () => {
   });
 
   test('ALERT-1: Folder Previous/Next moves the dense folder off and back onto the visible page', async ({ page }) => {
-    const manifest = readCorpusManifest();
-    test.skip(!manifest, 'corpus manifest not found — run this project with alerting-corpus-setup as a dependency');
-    if (!manifest) {
-      return;
-    }
+    const manifest = requireCorpusManifest();
     const dense = manifest.folders.find((f) => f.uid === manifest.denseFolderUid)!;
 
     await gotoResilient(page, '/alerting/rules/alert');
@@ -77,11 +71,7 @@ test.describe('Alert rules: Folders and List browsing', () => {
   test('ALERT-3: List mode loads three 40-rule batches for a corpus-scoped filter, and a copied URL restores the filter after reload', async ({
     page,
   }) => {
-    const manifest = readCorpusManifest();
-    test.skip(!manifest, 'corpus manifest not found — run this project with alerting-corpus-setup as a dependency');
-    if (!manifest) {
-      return;
-    }
+    const manifest = requireCorpusManifest();
 
     await gotoResilient(page, '/alerting/rules/alert');
     await page.getByRole('radio', { name: 'List' }).click();

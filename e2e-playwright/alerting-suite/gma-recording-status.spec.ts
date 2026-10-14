@@ -1,0 +1,160 @@
+import { type APIRequestContext } from '@playwright/test';
+
+import { test, expect } from './fixtures';
+import { RuleListPage, filterLeaf } from './pages/RuleListPage';
+import {
+  RUN_LABEL,
+  type RecordingRuleHealth,
+  type RecordingRuleSeed,
+  type RuleStatusSeed,
+  newRunMarker,
+  runScope,
+  waitForRuleStatusVisible,
+} from './ruleSeeding';
+
+// The E2E server never evaluates rules, so rule health is seeded through the status subresource
+// (see setRuleStatus). Every journey also seeds a rule with no status and expects the health filter
+// to leave it out, since `In` never matches a rule that has no stored status.
+interface StatusRule {
+  name: string;
+  health?: RecordingRuleHealth;
+}
+
+function titleOf(run: string, name: string): string {
+  return `${name} ${run}`;
+}
+
+async function seedStatusRules(
+  seedRule: (seed: RecordingRuleSeed) => Promise<string>,
+  request: APIRequestContext,
+  namespace: string,
+  run: string,
+  rules: StatusRule[]
+): Promise<void> {
+  const expected: Record<string, RuleStatusSeed> = {};
+  for (const { name, health } of rules) {
+    const status = health ? { health } : undefined;
+    const uid = await seedRule({
+      title: titleOf(run, name),
+      metric: `${name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${run}`,
+      paused: false,
+      labels: { [RUN_LABEL]: run },
+      status,
+    });
+    if (status) {
+      expected[uid] = status;
+    }
+  }
+  await waitForRuleStatusVisible(request, namespace, 'recordingrules', run, expected);
+}
+
+const NO_STATUS_RULE: StatusRule = { name: 'Rule without status' };
+
+// `health:ok` is `Recording` for a Recording rule, where an Alert rule reports `OK`.
+const healthCases: Array<{
+  token: string;
+  apiValues: string[];
+  matching: RecordingRuleHealth;
+  other: RecordingRuleHealth;
+}> = [
+  { token: 'health:ok', apiValues: ['Recording'], matching: 'Recording', other: 'Error' },
+  { token: 'health:nodata', apiValues: ['NoData'], matching: 'NoData', other: 'Recording' },
+  { token: 'health:error', apiValues: ['Error'], matching: 'Error', other: 'Recording' },
+  { token: 'health:err', apiValues: ['Error'], matching: 'Error', other: 'Recording' },
+  { token: 'health:unknown', apiValues: ['Unknown'], matching: 'Unknown', other: 'Recording' },
+];
+
+test.describe('Recording rules: health filter', () => {
+  test.slow();
+
+  for (const { token, apiValues, matching, other } of healthCases) {
+    test(`SEARCH-5: ${token} shows rules with ${apiValues.join(' or ')} health and leaves out other health and rules without status`, async ({
+      page,
+      request,
+      workerApi,
+      recordingRules,
+    }) => {
+      const run = newRunMarker();
+      const matchingRule: StatusRule = { name: `Rule with ${matching} health`, health: matching };
+      const otherRule: StatusRule = { name: `Rule with ${other} health`, health: other };
+      await seedStatusRules(recordingRules.seedRule.bind(recordingRules), request, workerApi.namespace, run, [
+        matchingRule,
+        otherRule,
+        NO_STATUS_RULE,
+      ]);
+
+      const list = new RuleListPage(page, 'recording');
+      await list.goto(runScope(run));
+      list.forgetRequests();
+      await list.search(`${runScope(run)} ${token}`);
+
+      await list.expectRequestLeaf(filterLeaf('health', 'In', apiValues));
+      await list.expectRules({
+        shown: [titleOf(run, matchingRule.name)],
+        hidden: [titleOf(run, otherRule.name), titleOf(run, NO_STATUS_RULE.name)],
+      });
+    });
+  }
+
+  test('SEARCH-5: the Health select filters by the chosen health', async ({
+    page,
+    request,
+    workerApi,
+    recordingRules,
+  }) => {
+    const run = newRunMarker();
+    const failing: StatusRule = { name: 'Rule with Error health', health: 'Error' };
+    const recording: StatusRule = { name: 'Rule with Recording health', health: 'Recording' };
+    await seedStatusRules(recordingRules.seedRule.bind(recordingRules), request, workerApi.namespace, run, [
+      failing,
+      recording,
+      NO_STATUS_RULE,
+    ]);
+
+    const list = new RuleListPage(page, 'recording');
+    await list.goto(runScope(run));
+    list.forgetRequests();
+    await list.chooseOption('Health', 'Error');
+    await list.expectRequestLeaf(filterLeaf('health', 'In', ['Error']));
+    await list.expectSearchParam('health:error');
+    await list.expectRules({
+      shown: [titleOf(run, failing.name)],
+      hidden: [titleOf(run, recording.name), titleOf(run, NO_STATUS_RULE.name)],
+    });
+
+    list.forgetRequests();
+    await list.chooseOption('Health', 'OK');
+    await list.expectRequestLeaf(filterLeaf('health', 'In', ['Recording']));
+    await list.expectRules({
+      shown: [titleOf(run, recording.name)],
+      hidden: [titleOf(run, failing.name), titleOf(run, NO_STATUS_RULE.name)],
+    });
+  });
+});
+
+test.describe('Recording rules: status icon', () => {
+  test.slow();
+
+  test('REC-3: each row shows the icon for its seeded health, and Status unavailable when it has none', async ({
+    page,
+    request,
+    workerApi,
+    recordingRules,
+  }) => {
+    const run = newRunMarker();
+    const rules: Array<StatusRule & { icon: string }> = [
+      { name: 'Rule with Recording health', health: 'Recording', icon: 'Recording' },
+      { name: 'Rule with Error health', health: 'Error', icon: 'Failed to evaluate rule' },
+      { name: 'Rule with NoData health', health: 'NoData', icon: 'Insufficient data' },
+      { ...NO_STATUS_RULE, icon: 'Status unavailable' },
+    ];
+    await seedStatusRules(recordingRules.seedRule.bind(recordingRules), request, workerApi.namespace, run, rules);
+
+    const list = new RuleListPage(page, 'recording');
+    await list.goto(runScope(run));
+
+    for (const { name, icon } of rules) {
+      await expect(list.statusIcon(titleOf(run, name), icon), `${name} shows ${icon}`).toBeVisible({ timeout: 20_000 });
+    }
+  });
+});
