@@ -1,8 +1,12 @@
+import { appEvents } from 'app/core/app_events';
+import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
+
 import {
   addComposerEnterRequestListener,
   clearPendingComposerEnterRequest,
   PENDING_REQUEST_TTL_MS,
   requestComposerEnter,
+  settleComposerEnterRequest,
 } from './composerEntryRequests';
 
 const TARGET = { resource: 'dashboard', uid: 'abc' } as const;
@@ -66,4 +70,54 @@ it('stops delivering to a listener once it unsubscribes', () => {
   addComposerEnterRequestListener(listener)();
   requestComposerEnter(TARGET);
   expect(listener).not.toHaveBeenCalled();
+});
+
+describe('a request that floated the sidebar', () => {
+  const presentations: string[] = [];
+  let unsubscribe = () => {};
+
+  beforeEach(() => {
+    presentations.length = 0;
+    const subscription = appEvents.subscribe(SetExtensionSidebarPresentationEvent, ({ payload }) =>
+      presentations.push(payload.presentation)
+    );
+    unsubscribe = () => subscription.unsubscribe();
+  });
+
+  afterEach(() => unsubscribe());
+
+  it('docks the sidebar again when no session starts within 10 seconds', () => {
+    jest.useFakeTimers();
+    requestComposerEnter(TARGET, { floated: true });
+    jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS);
+    expect(presentations).toEqual(['docked']);
+  });
+
+  it('docks the sidebar again when entering fails', () => {
+    requestComposerEnter(TARGET, { floated: true });
+    settleComposerEnterRequest(TARGET.uid, 'failed');
+    expect(presentations).toEqual(['docked']);
+  });
+
+  it('docks the sidebar again when the dashboard goes away first', () => {
+    requestComposerEnter(TARGET, { floated: true });
+    clearPendingComposerEnterRequest();
+    expect(presentations).toEqual(['docked']);
+  });
+
+  it('keeps the floating sidebar once a session starts', () => {
+    jest.useFakeTimers();
+    requestComposerEnter(TARGET, { floated: true });
+    settleComposerEnterRequest(TARGET.uid, 'entered');
+    jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS);
+    clearPendingComposerEnterRequest();
+    expect(presentations).toEqual([]);
+  });
+
+  it('leaves the presentation alone for a request that did not float it', () => {
+    requestComposerEnter(TARGET);
+    settleComposerEnterRequest(TARGET.uid, 'failed');
+    clearPendingComposerEnterRequest();
+    expect(presentations).toEqual([]);
+  });
 });

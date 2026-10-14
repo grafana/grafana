@@ -10,7 +10,7 @@ import {
   useExtensionSidebarContext,
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
-import { OpenExtensionSidebarEvent } from 'app/types/events';
+import { OpenExtensionSidebarEvent, SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
 import { canEnterComposer } from '../composer/composerAccess';
 import { addComposerEnterRequestListener, clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
@@ -148,14 +148,22 @@ it.each([
   expect(within(composerItem()!).getByTestId('icon-ai-sparkle')).toBeInTheDocument();
 });
 
-it('opens a closed Assistant sidebar and hands the request to Assistant once it listens', async () => {
+it('opens a closed Assistant sidebar already floating and hands the request to Assistant once it listens', async () => {
   const publish = jest.spyOn(appEvents, 'publish');
   const { user } = await openPicker();
 
   await user.click(composerItem()!);
 
-  const opened = publish.mock.calls.map(([event]) => event).find((event) => event instanceof OpenExtensionSidebarEvent);
-  expect(opened?.payload).toEqual({ pluginId: ASSISTANT, componentTitle: TITLE });
+  const events = publish.mock.calls
+    .map(([event]) => event)
+    .filter(
+      (event) => event instanceof SetExtensionSidebarPresentationEvent || event instanceof OpenExtensionSidebarEvent
+    );
+  // The presentation is floating before the sidebar opens, and never docked on the way.
+  expect(events.map((event) => [event.type, event.payload])).toEqual([
+    [SetExtensionSidebarPresentationEvent.type, { presentation: 'floating' }],
+    [OpenExtensionSidebarEvent.type, { pluginId: ASSISTANT, componentTitle: TITLE }],
+  ]);
   const listener = jest.fn();
   const unsubscribe = addComposerEnterRequestListener(listener);
   expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
@@ -173,7 +181,11 @@ it('asks a listening Assistant straight away without reopening its docked sideba
 
   expect(listener).toHaveBeenCalledTimes(1);
   expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
-  expect(publish.mock.calls.some(([event]) => event instanceof OpenExtensionSidebarEvent)).toBe(false);
+  expect(
+    publish.mock.calls.some(
+      ([event]) => event instanceof OpenExtensionSidebarEvent || event instanceof SetExtensionSidebarPresentationEvent
+    )
+  ).toBe(false);
   // Choosing Composer does not change the mode itself: Assistant enters through the API.
   expect(scene.state.mode).not.toBe('composer');
   unsubscribe();

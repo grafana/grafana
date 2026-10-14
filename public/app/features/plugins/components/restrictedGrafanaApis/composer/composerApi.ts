@@ -8,7 +8,10 @@
 
 import { appEvents } from 'app/core/app_events';
 import { canEnterComposer } from 'app/features/dashboard-scene/composer/composerAccess';
-import { addComposerEnterRequestListener } from 'app/features/dashboard-scene/composer/composerEntryRequests';
+import {
+  addComposerEnterRequestListener,
+  settleComposerEnterRequest,
+} from 'app/features/dashboard-scene/composer/composerEntryRequests';
 import {
   type ComposerAPI,
   type ComposerEnterCheck,
@@ -40,14 +43,23 @@ export const composerApi: ComposerAPI = {
   },
   enter: async (target, { presentation = 'floating' } = {}) => {
     const resolved = resolveTarget(target);
+    const uid = target?.uid ?? getMountedDashboardScene()?.state.uid ?? '';
     if ('refusal' in resolved) {
+      settleComposerEnterRequest(uid, 'failed');
       throw new Error(`Composer is not available: ${resolved.refusal.ok ? 'no_document' : resolved.refusal.reason}`);
     }
-    // The session pulls in the scene serializers, so it loads on first use rather than with every plugin.
-    const { ComposerSession } = await import(
-      /* webpackChunkName: "dashboard-composer-session" */ 'app/features/dashboard-scene/composer/ComposerSession'
-    );
-    const session = ComposerSession.enter(resolved.scene);
+    let session;
+    try {
+      // The session pulls in the scene serializers, so it loads on first use rather than with every plugin.
+      const { ComposerSession } = await import(
+        /* webpackChunkName: "dashboard-composer-session" */ 'app/features/dashboard-scene/composer/ComposerSession'
+      );
+      session = ComposerSession.enter(resolved.scene);
+    } catch (error) {
+      settleComposerEnterRequest(uid, 'failed');
+      throw error;
+    }
+    settleComposerEnterRequest(uid, 'entered');
     // The sidebar is the host's concern, not the session's: float it for this session, then dock it again.
     if (presentation === 'floating') {
       appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' }));

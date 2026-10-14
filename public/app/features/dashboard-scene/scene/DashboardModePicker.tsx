@@ -8,7 +8,7 @@ import { appEvents } from 'app/core/app_events';
 import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
 import { AssistantSparkleGradient } from 'app/core/components/AppChrome/FullscreenWorkspace/AssistantToolbarButtons';
-import { OpenExtensionSidebarEvent } from 'app/types/events';
+import { OpenExtensionSidebarEvent, SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
 import { canEnterComposer } from '../composer/composerAccess';
 import { requestComposerEnter } from '../composer/composerEntryRequests';
@@ -179,10 +179,15 @@ function useComposerOption(dashboard: DashboardScene) {
       : t('dashboard.modes.composer-unsupported', 'Composer is not available for this dashboard right now.');
   }
   const request = () => {
-    if (dockedComponentId !== getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, componentTitle)) {
-      appEvents.publish(new OpenExtensionSidebarEvent({ pluginId: ASSISTANT_PLUGIN_ID, componentTitle }));
+    const target = { resource: 'dashboard' as const, uid: dashboard.state.uid ?? '' };
+    if (dockedComponentId === getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, componentTitle)) {
+      requestComposerEnter(target);
+      return;
     }
-    requestComposerEnter({ resource: 'dashboard', uid: dashboard.state.uid ?? '' });
+    // Open the closed sidebar already floating, so its first paint is never the docked column.
+    appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' }));
+    appEvents.publish(new OpenExtensionSidebarEvent({ pluginId: ASSISTANT_PLUGIN_ID, componentTitle }));
+    requestComposerEnter(target, { floated: true });
   };
   return { disabledReason, request };
 }

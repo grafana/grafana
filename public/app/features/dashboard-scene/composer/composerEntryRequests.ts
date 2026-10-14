@@ -8,6 +8,9 @@
  * plugin registration per page, and the API object it backs is a module singleton too.
  */
 
+import { appEvents } from 'app/core/app_events';
+import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
+
 import { type ComposerTarget } from './types';
 
 type EnterRequestListener = (target: ComposerTarget) => void;
@@ -16,6 +19,12 @@ export const PENDING_REQUEST_TTL_MS = 10_000;
 
 const listeners = new Set<EnterRequestListener>();
 let pending: { target: ComposerTarget; at: number; timer: ReturnType<typeof setTimeout> } | undefined;
+/**
+ * A request that opened the Assistant sidebar straight into the floating presentation, so it never paints
+ * docked first. Until a session starts for it, a failure, expiry or teardown docks the sidebar again so
+ * the user is never left with an empty floating box.
+ */
+let floated: { target: ComposerTarget; timer: ReturnType<typeof setTimeout> } | undefined;
 
 /**
  * Registers a listener for Composer entry requests and hands it a request still waiting for one.
@@ -32,9 +41,15 @@ export function addComposerEnterRequestListener(listener: EnterRequestListener):
   };
 }
 
-/** Asks Assistant to enter Composer on `target`: now if it is listening, else once it starts to. */
-export function requestComposerEnter(target: ComposerTarget): void {
+/**
+ * Asks Assistant to enter Composer on `target`: now if it is listening, else once it starts to. Pass
+ * `floated` when the caller opened the sidebar in the floating presentation for this request.
+ */
+export function requestComposerEnter(target: ComposerTarget, { floated: didFloat = false } = {}): void {
   clearPendingComposerEnterRequest();
+  if (didFloat) {
+    floated = { target, timer: setTimeout(dockFloatedSidebar, PENDING_REQUEST_TTL_MS) };
+  }
   const [listener] = listeners;
   if (listener) {
     listener(target);
@@ -48,6 +63,31 @@ export function clearPendingComposerEnterRequest(): void {
   if (pending) {
     clearTimeout(pending.timer);
     pending = undefined;
+  }
+  dockFloatedSidebar();
+}
+
+/**
+ * Reports how an entry attempt on `uid` ended. A session that started keeps the floating sidebar it was
+ * requested with; a failed one docks it again.
+ */
+export function settleComposerEnterRequest(uid: string, outcome: 'entered' | 'failed'): void {
+  if (!floated || floated.target.uid !== uid) {
+    return;
+  }
+  if (outcome === 'failed') {
+    dockFloatedSidebar();
+    return;
+  }
+  clearTimeout(floated.timer);
+  floated = undefined;
+}
+
+function dockFloatedSidebar(): void {
+  if (floated) {
+    clearTimeout(floated.timer);
+    floated = undefined;
+    appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'docked' }));
   }
 }
 

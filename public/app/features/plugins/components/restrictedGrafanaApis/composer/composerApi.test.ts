@@ -1,7 +1,10 @@
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
-import { requestComposerEnter } from 'app/features/dashboard-scene/composer/composerEntryRequests';
+import {
+  clearPendingComposerEnterRequest,
+  requestComposerEnter,
+} from 'app/features/dashboard-scene/composer/composerEntryRequests';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
@@ -121,6 +124,21 @@ describe('presentation', () => {
     expect(presentations).toEqual(['floating']);
     session.exit();
     expect(presentations).toEqual(['floating', 'docked']);
+  });
+
+  it('docks a sidebar the picker floated when entering fails', async () => {
+    requestComposerEnter(DASHBOARD, { floated: true });
+    await expect(composerApi.enter(DASHBOARD)).rejects.toThrow('no_document');
+    expect(presentations).toEqual(['docked']);
+  });
+
+  it('keeps a sidebar the picker floated once the session starts', async () => {
+    mountDashboard();
+    requestComposerEnter(DASHBOARD, { floated: true });
+    const session = await composerApi.enter(DASHBOARD);
+    clearPendingComposerEnterRequest();
+    expect(presentations).toEqual(['floating']);
+    session.exit();
   });
 
   it("never touches the extension sidebar with presentation 'none'", async () => {
