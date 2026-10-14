@@ -41,6 +41,7 @@ import { changedCellTimeRange, changesTimeSettings, NotebookAutosave } from './N
 import { NOTEBOOK_EDIT_KIND, NotebookEditHistory, type NotebookEditAction } from './NotebookEditHistory';
 import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
+import { registerActiveNotebookScene } from './activeNotebookScenes';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
 export interface NotebookSceneState extends SceneObjectState {
@@ -215,6 +216,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       });
 
       const destroyMutationClient = createMutationClient(this, 'notebook');
+      const unregisterActiveScene = registerActiveNotebookScene(this);
       // Read once, at activation: a document does not become a draft, or stop being one, while it is
       // mounted. Its host decides that before handing it over.
       const stopAutosave = this.state.isDraft ? undefined : this.autosave.start();
@@ -233,6 +235,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         this.commitTitleEdit();
         stopAutosave?.();
         destroyMutationClient();
+        unregisterActiveScene();
         timeRangeSub.unsubscribe();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();

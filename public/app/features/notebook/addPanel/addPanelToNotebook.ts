@@ -1,9 +1,16 @@
 import { t } from '@grafana/i18n';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_ADD_FAILED_REASON, type NotebookAddFailedReason, type NotebookEntryPoint } from '../analytics/types';
+import {
+  NOTEBOOK_ADD_FAILED_REASON,
+  NOTEBOOK_EDIT_SESSION_SOURCE,
+  type NotebookAddFailedReason,
+  type NotebookEntryPoint,
+} from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebookSpec } from '../api/notebookResource';
-import { defaultSpec as defaultNotebookSpec, type PanelElement } from '../types';
+import { type NotebookScene } from '../scene/NotebookScene';
+import { findActiveNotebookScene } from '../scene/activeNotebookScenes';
+import { defaultSpec as defaultNotebookSpec, type PanelElement, type Spec as NotebookSpec } from '../types';
 
 import {
   appendElementsToNotebook,
@@ -22,25 +29,81 @@ interface CreateNotebookFields {
   title: string;
 }
 
+/** The open notebook moved on under its own scene, so retrying from here would conflict again. */
+export class OpenNotebookConflictError extends NotebookConflictError {}
+
+interface Appended {
+  spec: NotebookSpec;
+  firstPosition: number;
+}
+
 /**
- * The two ways a panel gets into a notebook. Both are document-level: the caller is on a dashboard or
- * in Explore, so there is no NotebookScene to edit — the spec is fetched, appended to, and written
- * back whole.
- *
- * The writes themselves belong to api/notebookResource, which owns every write to the resource and is
- * the one file that changes when the spec moves off v2beta1. Nothing here touches the API client.
+ * A notebook that is open somewhere gets the cells through its scene, so the view updates and its
+ * autosave keeps the right version. Otherwise it is a read-modify-write through api/notebookResource.
  */
+async function appendToExistingNotebook(
+  uid: string,
+  cells: AppendedElement[],
+  source: AppendedCellSource
+): Promise<Appended> {
+  const scene = findActiveNotebookScene(uid);
+  if (scene) {
+    return appendThroughScene(scene, cells, source);
+  }
+
+  let firstPosition = 0;
+  const spec = await updateNotebookSpec(uid, (current) => {
+    firstPosition = current.layout.spec.cells.length;
+    return appendElementsToNotebook(current, cells, source);
+  });
+  return { spec, firstPosition };
+}
+
+async function appendThroughScene(
+  scene: NotebookScene,
+  cells: AppendedElement[],
+  source: AppendedCellSource
+): Promise<Appended> {
+  // Lazy so a dashboard or Explore caller with no notebook open never loads the scene write path.
+  const [{ guardNotebookSceneWrite, writeNotebookSpecToScene }, { transformNotebookSceneToSaveModel }] =
+    await Promise.all([
+      import('../mutation-api/commands/applyNotebookSpec'),
+      import('../serialization/transformNotebookSceneToSaveModel'),
+    ]);
+
+  const refused = await guardNotebookSceneWrite(scene, { viewOnlyChanges: 'keep' });
+  if (refused) {
+    throw isConflict(refused.data) ? new OpenNotebookConflictError() : new Error(refused.error);
+  }
+
+  const current = transformNotebookSceneToSaveModel(scene);
+  const spec = appendElementsToNotebook(current, cells, source);
+  const result = await writeNotebookSpecToScene(scene, spec, {
+    viewOnlyChanges: 'keep',
+    undoLabel: t('notebooks.add-panel.undo-label', 'Add to notebook'),
+    editSessionSource: NOTEBOOK_EDIT_SESSION_SOURCE.ADD_TO_NOTEBOOK,
+  });
+  if (!result.success) {
+    throw new Error(result.error);
+  }
+
+  return { spec, firstPosition: current.layout.spec.cells.length };
+}
+
+function isConflict(data: unknown): boolean {
+  return typeof data === 'object' && data !== null && 'conflict' in data && data.conflict === true;
+}
+
 export async function addPanelToExistingNotebook(
   uid: string,
   panel: PanelElement,
   entryPoint: NotebookEntryPoint,
   isLibraryPanel: boolean
 ): Promise<AddedToNotebook> {
-  const spec = await updateNotebookSpec(uid, (current) => appendPanelToNotebook(current, panel));
+  const { spec, firstPosition } = await appendToExistingNotebook(uid, [{ kind: 'panel', panel }], 'user');
 
-  // Reported here, not in the layout manager. The notebook is not open, so no scene holds this cell.
-  // `appendPanelToNotebook` puts the panel last, so the index is the last one.
-  NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, spec.layout.spec.cells.length - 1, {
+  // Reported here, not in the layout manager, which only reports cells added from inside the notebook.
+  NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, firstPosition, {
     panel,
     isLibraryPanel,
   });
@@ -69,11 +132,7 @@ export async function addCellsToExistingNotebook(
   entryPoint: NotebookEntryPoint,
   source: AppendedCellSource
 ): Promise<AddedToNotebook> {
-  let firstPosition = 0;
-  const spec = await updateNotebookSpec(uid, (current) => {
-    firstPosition = current.layout.spec.cells.length;
-    return appendElementsToNotebook(current, cells, source);
-  });
+  const { spec, firstPosition } = await appendToExistingNotebook(uid, cells, source);
 
   cells.forEach((cell, index) => {
     if (cell.kind === 'panel') {
@@ -125,6 +184,13 @@ export function addPanelFailureReason(error: unknown, panelWasBuilt: boolean): N
  * module has already extracted — a caller that sees only "something went wrong" retries the same spec.
  */
 export function addPanelErrorMessage(error: unknown): string {
+  if (error instanceof OpenNotebookConflictError) {
+    return t(
+      'notebooks.add-panel.error-open-conflict',
+      'This notebook changed since it was opened. Reload it and try again.'
+    );
+  }
+
   if (error instanceof NotebookConflictError) {
     return t(
       'notebooks.add-panel.error-conflict',
