@@ -29,7 +29,7 @@ interface RecordingRuleRowProps {
 
 /**
  * GMA-only Recording rule row for both Folders and List mode. Presentation-only, same
- * enrichment-cache contract as AlertRuleRow. No alert state, instances, notification routing,
+ * lookups as AlertRuleRow. No alert state, instances, notification routing,
  * summary, Silence, or Declare-incident information - Recording rules have none of those.
  */
 export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRuleRowProps) {

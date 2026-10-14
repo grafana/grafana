@@ -58,8 +58,8 @@ function RoutingMeta({ hit }: { hit: AlertRuleSearchHit }) {
 
 /**
  * GMA-only Alert rule row for both Folders and List mode. Presentation-only: everything shown
- * comes from the search hit plus enrichment caches the page already populates - this never
- * issues its own request. Missing runtime state/health renders a neutral "status unavailable"
+ * comes from the search hit plus the folder-path and full-rule lookups, which are deduplicated
+ * queries rather than anything the row manages. Missing runtime state/health renders a neutral "status unavailable"
  * icon, never a healthy default (alerting.ruleStatusSync may not have populated them yet).
  */
 export function AlertRuleRow({ hit, showFolderPath, actions }: AlertRuleRowProps) {

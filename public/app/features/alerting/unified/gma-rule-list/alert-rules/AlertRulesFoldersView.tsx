@@ -1,19 +1,16 @@
 import { useState } from 'react';
 
-import {
-  type ResultItem as FolderResultItem,
-  useListFolderSearchV1Beta1Mutation,
-} from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 
 import { FolderListRow } from '../folder-browsing/FolderListRow';
 import { useFolderAlertRuleCount } from '../folder-browsing/folderLookups';
-import { buildFolderListSearchQuery } from '../folder-browsing/folderSearchQuery';
 import { useFolderPages } from '../folder-browsing/useFolderPages';
 import { RuleRowList } from '../rule-row/RuleRowList';
 import { createEmptyCriteria } from '../rule-search/criteria';
-import { type ContinuationPage, useContinuationSearch } from '../shared/useContinuationSearch';
+import { InlineRequestError } from '../shared/InlineRequestError';
+import { LoadMoreFooter } from '../shared/LoadMoreFooter';
+import { PagedFailureAlert } from '../shared/PagedFailureAlert';
 
 import { AlertRuleActions } from './AlertRuleActions';
 import { AlertRuleRow } from './AlertRuleRow';
@@ -23,31 +20,12 @@ interface FoldersViewProps {
   /** Folder UIDs from the active criterion - the only filter Folders mode supports. Scopes
    * the folder listing itself, not just what's shown once expanded. */
   folderUids: string[];
-  /** Changes whenever a refresh/mutation should restart every open chain, including every
-   * expanded folder's - folded into each chain's resetKey. */
-  resetKey: unknown;
 }
 
-export function FoldersView({ folderUids, resetKey }: FoldersViewProps) {
-  const [triggerFolderSearch] = useListFolderSearchV1Beta1Mutation();
+export function FoldersView({ folderUids }: FoldersViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-
-  const fetchPage = async (
-    continueToken: string | undefined
-  ): Promise<ContinuationPage<{ uid: string; title: string }>> => {
-    const result = await triggerFolderSearch({
-      searchQuery: buildFolderListSearchQuery(continueToken, folderUids),
-    }).unwrap();
-    return {
-      items: result.items.map((item: FolderResultItem) => ({
-        uid: item.resource.name,
-        title: typeof item.fields?.title === 'string' ? item.fields.title : item.resource.name,
-      })),
-      continueToken: result.metadata.continue,
-    };
-  };
-
-  const { items, isLoading, error, hasNext, hasPrevious, next, previous } = useFolderPages(fetchPage, resetKey);
+  const { folders, isLoading, error, failure, isLoadingPage, hasNext, hasPrevious, next, previous, retry } =
+    useFolderPages(folderUids);
 
   const toggle = (uid: string) => {
     setExpanded((prev) => {
@@ -65,33 +43,39 @@ export function FoldersView({ folderUids, resetKey }: FoldersViewProps) {
     return <LoadingPlaceholder text={t('alerting.gma-rule-list.alert-rules.loading-folders', 'Loading folders...')} />;
   }
 
-  if (error) {
-    return <div role="alert">{t('alerting.gma-rule-list.alert-rules.folders-error', 'Failed to load folders')}</div>;
+  if (error !== undefined) {
+    return (
+      <InlineRequestError
+        title={t('alerting.gma-rule-list.alert-rules.folders-error', 'Failed to load folders')}
+        error={error}
+        onRetry={retry}
+      />
+    );
   }
 
-  if (items.length === 0) {
+  if (folders.length === 0 && !failure) {
     return <div>{t('alerting.gma-rule-list.alert-rules.no-folders', 'No folders found')}</div>;
   }
 
   return (
     <Stack direction="column" gap={2}>
       <RuleRowList>
-        {items.map((folder) => (
+        {folders.map((folder) => (
           <ExpandableFolderRow
             key={folder.uid}
             folderUid={folder.uid}
             title={folder.title}
             expanded={expanded.has(folder.uid)}
             onToggle={() => toggle(folder.uid)}
-            resetKey={resetKey}
           />
         ))}
       </RuleRowList>
+      {failure && <PagedFailureAlert failure={failure} onRetry={retry} />}
       <Stack direction="row" gap={1} justifyContent="flex-end">
         <Button variant="secondary" disabled={!hasPrevious} onClick={previous}>
           {t('alerting.gma-rule-list.alert-rules.previous', 'Previous')}
         </Button>
-        <Button variant="secondary" disabled={!hasNext} onClick={next}>
+        <Button variant="secondary" disabled={!hasNext || isLoadingPage} onClick={next}>
           {t('alerting.gma-rule-list.alert-rules.next', 'Next')}
         </Button>
       </Stack>
@@ -104,10 +88,9 @@ interface ExpandableFolderRowProps {
   title: string;
   expanded: boolean;
   onToggle: () => void;
-  resetKey: unknown;
 }
 
-function ExpandableFolderRow({ folderUid, title, expanded, onToggle, resetKey }: ExpandableFolderRowProps) {
+function ExpandableFolderRow({ folderUid, title, expanded, onToggle }: ExpandableFolderRowProps) {
   const count = useFolderAlertRuleCount(folderUid);
 
   return (
@@ -119,23 +102,16 @@ function ExpandableFolderRow({ folderUid, title, expanded, onToggle, resetKey }:
       expanded={expanded}
       onToggle={onToggle}
     >
-      {expanded && <ExpandedFolderRules folderUid={folderUid} resetKey={resetKey} />}
+      {expanded && <ExpandedFolderRules folderUid={folderUid} />}
     </FolderListRow>
   );
 }
 
-function ExpandedFolderRules({ folderUid, resetKey }: { folderUid: string; resetKey: unknown }) {
-  const searchRules = useAlertRuleSearch();
-
-  const fetchPage = async (continueToken: string | undefined) => {
-    const page = await searchRules({ ...createEmptyCriteria(), namespaces: [folderUid] }, { continueToken });
-    return { items: page.hits, continueToken: page.continueToken };
-  };
-
-  const { rows, isLoading, error, loadMoreError, hasMore, loadMore, retry } = useContinuationSearch(
-    fetchPage,
-    `${folderUid}:${String(resetKey)}`
-  );
+function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
+  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useAlertRuleSearch({
+    ...createEmptyCriteria(),
+    namespaces: [folderUid],
+  });
 
   if (isLoading) {
     return (
@@ -145,15 +121,19 @@ function ExpandedFolderRules({ folderUid, resetKey }: { folderUid: string; reset
     );
   }
 
-  if (error) {
+  if (error !== undefined) {
     return (
       <li>
-        <div role="alert">{t('alerting.gma-rule-list.alert-rules.rules-error', 'Failed to load rules')}</div>
+        <InlineRequestError
+          title={t('alerting.gma-rule-list.alert-rules.rules-error', 'Failed to load rules')}
+          error={error}
+          onRetry={retry}
+        />
       </li>
     );
   }
 
-  if (rows.length === 0) {
+  if (items.length === 0 && !failure) {
     return (
       <li>
         <div>{t('alerting.gma-rule-list.alert-rules.no-rules-in-folder', 'No Alert rules in this folder')}</div>
@@ -163,26 +143,18 @@ function ExpandedFolderRules({ folderUid, resetKey }: { folderUid: string; reset
 
   return (
     <>
-      {rows.map((hit) => (
+      {items.map((hit) => (
         <AlertRuleRow key={hit.uid} hit={hit} showFolderPath={false} actions={<AlertRuleActions ruleUid={hit.uid} />} />
       ))}
-      {Boolean(loadMoreError) && (
+      {(hasMore || failure) && (
         <li>
-          <Stack direction="row" gap={1} alignItems="center">
-            <div role="alert">
-              {t('alerting.gma-rule-list.alert-rules.load-more-error', 'Failed to load more rules')}
-            </div>
-            <Button size="sm" variant="secondary" onClick={retry}>
-              {t('alerting.gma-rule-list.alert-rules.retry', 'Retry')}
-            </Button>
-          </Stack>
-        </li>
-      )}
-      {hasMore && !loadMoreError && (
-        <li>
-          <Button size="sm" variant="secondary" onClick={loadMore}>
-            {t('alerting.gma-rule-list.alert-rules.load-more', 'Load more')}
-          </Button>
+          <LoadMoreFooter
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            failure={failure}
+            onLoadMore={loadMore}
+            onRetry={retry}
+          />
         </li>
       )}
     </>

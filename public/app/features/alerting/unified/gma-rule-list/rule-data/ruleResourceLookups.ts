@@ -1,56 +1,35 @@
 import {
   type AlertRule,
   type RecordingRule,
-  generatedAPI as rulesAPI,
+  useGetAlertRuleQuery,
+  useGetRecordingRuleQuery,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { dispatch } from 'app/store/store';
-
-import { folderCountsCache, folderPathCache } from '../folder-browsing/folderLookups';
-import { EnrichmentCache, useEnrichmentEntry, useEnrichmentState } from '../shared/enrichmentCache';
 
 import { type RuleResourceState } from './ruleResourceState';
 
-/** Full `AlertRule` resource, loaded only for provenance and action capabilities the search
- * response can't provide yet - rows stay presentation-only and never fetch this themselves. */
-export const fullAlertRuleCache = new EnrichmentCache<string, AlertRule>((uid) =>
-  dispatch(rulesAPI.endpoints.getAlertRule.initiate({ name: uid })).unwrap()
-);
+// Create, Duplicate and Edit save in the rule editor, outside these queries, so a lookup that was
+// cached before the user left for the editor is fetched again when the list mounts.
+const REFETCH_ON_MOUNT = { refetchOnMountOrArgChange: true } as const;
 
-/** Same as fullAlertRuleCache, for Recording rules. */
-export const fullRecordingRuleCache = new EnrichmentCache<string, RecordingRule>((uid) =>
-  dispatch(rulesAPI.endpoints.getRecordingRule.initiate({ name: uid })).unwrap()
-);
-
-export function useFullAlertRule(uid: string | undefined): AlertRule | undefined {
-  return useEnrichmentEntry(fullAlertRuleCache, uid);
-}
-
-/** Full-resource fetch state for the Alert rule action menu/provisioning badge - distinguishes
- * still-loading from failed, which a bare value can't. */
+/**
+ * Full `AlertRule` resource, loaded only for provenance and action capabilities the search
+ * response can't provide yet - rows stay presentation-only and never fetch this themselves.
+ * Distinguishes still-loading from failed, which a bare value can't.
+ */
 export function useFullAlertRuleState(uid: string): RuleResourceState<AlertRule> {
-  const state = useEnrichmentState(fullAlertRuleCache, uid);
-  return state.status === 'loaded' ? { status: 'loaded', rule: state.value } : { status: state.status };
+  const { data, isError } = useGetAlertRuleQuery({ name: uid }, REFETCH_ON_MOUNT);
+  return toResourceState(data, isError);
 }
 
 export function useFullRecordingRuleState(uid: string): RuleResourceState<RecordingRule> {
-  const state = useEnrichmentState(fullRecordingRuleCache, uid);
-  return state.status === 'loaded' ? { status: 'loaded', rule: state.value } : { status: state.status };
+  const { data, isError } = useGetRecordingRuleQuery({ name: uid }, REFETCH_ON_MOUNT);
+  return toResourceState(data, isError);
 }
 
-/** Called from a rule row's onMutated callback so a stale full-resource fetch (paused state,
- * provenance, etc.) doesn't outlive the mutation that changed it. */
-export function invalidateFullAlertRule(uid: string): void {
-  fullAlertRuleCache.invalidate(uid);
-}
-
-export function invalidateFullRecordingRule(uid: string): void {
-  fullRecordingRuleCache.invalidate(uid);
-}
-
-/** Test-only: clears every module-level cache so tests don't see entries from a previous test. */
-export function clearAllEnrichmentCaches(): void {
-  folderPathCache.clear();
-  folderCountsCache.clear();
-  fullAlertRuleCache.clear();
-  fullRecordingRuleCache.clear();
+function toResourceState<T extends AlertRule | RecordingRule>(data: T | undefined, isError: boolean) {
+  // A failed refetch keeps the last loaded rule, so only a lookup that never succeeded reads as failed.
+  if (data) {
+    return { status: 'loaded', rule: data } as const;
+  }
+  return { status: isError ? 'error' : 'loading' } as const;
 }

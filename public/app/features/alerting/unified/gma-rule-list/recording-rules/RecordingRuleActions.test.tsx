@@ -2,7 +2,6 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from '../../mockApi';
-import { clearAllEnrichmentCaches } from '../rule-data/ruleResourceLookups';
 
 import { RecordingRuleActions } from './RecordingRuleActions';
 
@@ -24,10 +23,6 @@ function mockRule(annotations: Record<string, string>) {
 }
 
 describe('RecordingRuleActions', () => {
-  beforeEach(() => {
-    clearAllEnrichmentCaches();
-  });
-
   it('shows Edit linking to the editor next to the More menu when the user can write', async () => {
     mockRule({ 'grafana.com/access/canWrite': 'true' });
     render(<RecordingRuleActions ruleUid="rule-1" />);

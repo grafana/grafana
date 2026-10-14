@@ -9,8 +9,9 @@ import { t } from '@grafana/i18n';
 import { appEvents } from 'app/core/app_events';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
+import { useInvalidateFolderData } from '../folder-browsing/folderLookups';
+
 import { trackRulePauseResume } from './analytics';
-import { type OnMutated } from './ruleActionTypes';
 
 /**
  * Shared pause/resume logic between the Alert and Recording menus - only the generated mutation
@@ -20,7 +21,7 @@ async function performPauseResume(
   kind: 'alert' | 'recording',
   triggerPatch: (paused: boolean) => Promise<unknown>,
   paused: boolean,
-  onMutated: OnMutated
+  invalidateFolderData: () => void
 ): Promise<boolean> {
   try {
     await triggerPatch(paused);
@@ -30,7 +31,7 @@ async function performPauseResume(
         ? t('alerting.gma-rule-list.actions.rule-paused', 'Rule paused')
         : t('alerting.gma-rule-list.actions.rule-resumed', 'Rule resumed'),
     ]);
-    onMutated(paused ? 'paused' : 'resumed');
+    invalidateFolderData();
     return true;
   } catch (error) {
     trackRulePauseResume(kind, 'error', paused);
@@ -46,16 +47,17 @@ async function performPauseResume(
 
 export function useAlertRulePauseResume(uid: string) {
   const [updateAlertRule, { isLoading }] = useUpdateAlertRuleMutation();
+  const invalidateFolderData = useInvalidateFolderData();
 
   const setPaused = useCallback(
-    (paused: boolean, onMutated: OnMutated) =>
+    (paused: boolean) =>
       performPauseResume(
         'alert',
         (nextPaused) => updateAlertRule({ name: uid, patch: { spec: { paused: nextPaused } } }).unwrap(),
         paused,
-        onMutated
+        invalidateFolderData
       ),
-    [updateAlertRule, uid]
+    [updateAlertRule, invalidateFolderData, uid]
   );
 
   return { setPaused, isPending: isLoading };
@@ -63,16 +65,17 @@ export function useAlertRulePauseResume(uid: string) {
 
 export function useRecordingRulePauseResume(uid: string) {
   const [updateRecordingRule, { isLoading }] = useUpdateRecordingRuleMutation();
+  const invalidateFolderData = useInvalidateFolderData();
 
   const setPaused = useCallback(
-    (paused: boolean, onMutated: OnMutated) =>
+    (paused: boolean) =>
       performPauseResume(
         'recording',
         (nextPaused) => updateRecordingRule({ name: uid, patch: { spec: { paused: nextPaused } } }).unwrap(),
         paused,
-        onMutated
+        invalidateFolderData
       ),
-    [updateRecordingRule, uid]
+    [updateRecordingRule, invalidateFolderData, uid]
   );
 
   return { setPaused, isPending: isLoading };

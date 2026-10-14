@@ -3,11 +3,18 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { getAPIBaseURL } from '@grafana/api-clients';
 import { type AlertRule, type AlertRuleList } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { setBackendSrv } from '@grafana/runtime';
+import { reportInteraction, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { AlertRulesRecentlyDeleted } from './AlertRulesRecentlyDeleted';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+const reportInteractionMock = jest.mocked(reportInteraction);
 
 const ALERT_RULES_URL = `${getAPIBaseURL('rules.alerting.grafana.app', 'v0alpha1')}/alertrules`;
 const FOLDER_PARENTS_URL = `${getAPIBaseURL('folder.grafana.app', 'v1beta1')}/folders/:name/parents`;
@@ -68,6 +75,7 @@ setupMockServer();
 
 describe('AlertRulesRecentlyDeleted', () => {
   beforeEach(() => {
+    reportInteractionMock.mockClear();
     mockFolderAndUserLookups();
   });
 
@@ -185,5 +193,201 @@ describe('AlertRulesRecentlyDeleted', () => {
     const row = (await screen.findByText('High CPU usage')).closest('tr');
     await waitFor(() => expect(within(row!).getByText('folder-uid-1')).toBeInTheDocument());
     expect(within(row!).getByRole('button', { name: /review/i })).toBeEnabled();
+  });
+
+  it('ADEL-2: shows rows in the order the API returned them, without sorting by deletion time', async () => {
+    mockAlertRulesResponse({
+      items: [
+        buildAlertRule(
+          { metadata: { name: 'oldest', deletionTimestamp: '2024-01-01T00:00:00Z' } },
+          { title: 'Deleted first' }
+        ),
+        buildAlertRule(
+          { metadata: { name: 'newest', deletionTimestamp: '2024-06-01T00:00:00Z' } },
+          { title: 'Deleted last' }
+        ),
+        buildAlertRule(
+          { metadata: { name: 'middle', deletionTimestamp: '2024-03-01T00:00:00Z' } },
+          { title: 'Deleted between' }
+        ),
+      ],
+      metadata: {},
+    });
+
+    render(<AlertRulesRecentlyDeleted />);
+
+    await screen.findByText('Deleted first');
+    const titles = screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => within(row).getAllByRole('cell')[0].textContent);
+    expect(titles).toEqual(['Deleted first', 'Deleted last', 'Deleted between']);
+  });
+
+  it('ADEL-2: reports the number of items the API returned, not the rows revealed', async () => {
+    const rules = Array.from({ length: 65 }, (_, i) =>
+      buildAlertRule({ metadata: { name: `rule-${i}` } }, { title: `Rule ${i}` })
+    );
+    mockAlertRulesResponse({ items: rules, metadata: {} });
+
+    render(<AlertRulesRecentlyDeleted />);
+
+    await screen.findByText('Rule 0');
+    expect(reportInteractionMock).toHaveBeenCalledWith(
+      'grafana_alerting_deleted_rules_load_result',
+      expect.objectContaining({ kind: 'alert', outcome: 'success', rowCount: 65 })
+    );
+  });
+
+  it('ADEL-2: Refresh starts again from the first chunk and the first page', async () => {
+    const tokens: Array<string | null> = [];
+    const page = (prefix: string) =>
+      Array.from({ length: 40 }, (_, i) =>
+        buildAlertRule({ metadata: { name: `${prefix}-${i}` } }, { title: `${prefix} ${i}` })
+      );
+    server.use(
+      http.get(ALERT_RULES_URL, ({ request }) => {
+        const token = new URL(request.url).searchParams.get('continue');
+        tokens.push(token);
+        return token
+          ? HttpResponse.json({ items: page('second'), metadata: {} })
+          : HttpResponse.json({ items: page('first'), metadata: { continue: 'next-page-token' } });
+      })
+    );
+
+    const { user } = render(<AlertRulesRecentlyDeleted />);
+    await screen.findByText('first 0');
+    await user.click(screen.getByRole('button', { name: /load more/i }));
+    await screen.findByText('second 0');
+
+    await user.click(screen.getByRole('button', { name: /refresh/i }));
+
+    await waitFor(() => expect(screen.queryByText('second 0')).not.toBeInTheDocument());
+    expect(screen.getByText('first 0')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /load more/i })).toBeInTheDocument();
+    expect(tokens).toEqual([null, 'next-page-token', null]);
+  });
+
+  it('STATE-4: loads the continuation page once when Load more is double clicked', async () => {
+    const tokens: Array<string | null> = [];
+    let releasePage: () => void = () => {};
+    const pageGate = new Promise<void>((resolve) => {
+      releasePage = resolve;
+    });
+    const rules = Array.from({ length: 40 }, (_, i) =>
+      buildAlertRule({ metadata: { name: `rule-${i}` } }, { title: `Rule ${i}` })
+    );
+    server.use(
+      http.get(ALERT_RULES_URL, async ({ request }) => {
+        const token = new URL(request.url).searchParams.get('continue');
+        tokens.push(token);
+        if (!token) {
+          return HttpResponse.json({ items: rules, metadata: { continue: 'next-page-token' } });
+        }
+        await pageGate;
+        return HttpResponse.json({
+          items: [buildAlertRule({ metadata: { name: 'rule-last' } }, { title: 'Last rule' })],
+          metadata: {},
+        });
+      })
+    );
+
+    const { user } = render(<AlertRulesRecentlyDeleted />);
+    await screen.findByText('Rule 0');
+    await user.dblClick(screen.getByRole('button', { name: /load more/i }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /load more/i })).toBeDisabled());
+    releasePage();
+
+    expect(await screen.findByText('Last rule')).toBeInTheDocument();
+    expect(tokens).toEqual([null, 'next-page-token']);
+  });
+
+  it('STATE-1: a failed first load shows an error with Retry, and Retry loads the rules', async () => {
+    let call = 0;
+    server.use(
+      http.get(ALERT_RULES_URL, () => {
+        call += 1;
+        return call === 1
+          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
+          : HttpResponse.json({ items: [buildAlertRule()], metadata: {} });
+      })
+    );
+
+    const { user } = render(<AlertRulesRecentlyDeleted />);
+
+    expect(await screen.findByText(/unable to load recently deleted rules/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('High CPU usage')).toBeInTheDocument();
+    expect(reportInteractionMock).toHaveBeenCalledWith(
+      'grafana_alerting_deleted_rules_load_result',
+      expect.objectContaining({ kind: 'alert', outcome: 'error', rowCount: 0 })
+    );
+  });
+
+  it('STATE-1: a failed Load more keeps the loaded rows, and Retry repeats the same continuation request', async () => {
+    const tokens: Array<string | null> = [];
+    let failNext = true;
+    const rules = Array.from({ length: 40 }, (_, i) =>
+      buildAlertRule({ metadata: { name: `rule-${i}` } }, { title: `Rule ${i}` })
+    );
+    server.use(
+      http.get(ALERT_RULES_URL, ({ request }) => {
+        const token = new URL(request.url).searchParams.get('continue');
+        tokens.push(token);
+        if (!token) {
+          return HttpResponse.json({ items: rules, metadata: { continue: 'next-page-token' } });
+        }
+        if (failNext) {
+          failNext = false;
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({
+          items: [buildAlertRule({ metadata: { name: 'rule-last' } }, { title: 'Last rule' })],
+          metadata: {},
+        });
+      })
+    );
+
+    const { user } = render(<AlertRulesRecentlyDeleted />);
+    await screen.findByText('Rule 0');
+    await user.click(screen.getByRole('button', { name: /load more/i }));
+
+    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+    expect(screen.getByText('Rule 39')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Last rule')).toBeInTheDocument();
+    expect(screen.getByText('Rule 0')).toBeInTheDocument();
+    expect(tokens).toEqual([null, 'next-page-token', 'next-page-token']);
+  });
+
+  it('STATE-1: a failed refresh keeps the loaded rows, and Retry refreshes them', async () => {
+    let call = 0;
+    server.use(
+      http.get(ALERT_RULES_URL, () => {
+        call += 1;
+        if (call === 2) {
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({
+          items: [buildAlertRule({ metadata: { name: `rule-${call}` } }, { title: `Rule from request ${call}` })],
+          metadata: {},
+        });
+      })
+    );
+
+    const { user } = render(<AlertRulesRecentlyDeleted />);
+    await screen.findByText('Rule from request 1');
+    await user.click(screen.getByRole('button', { name: /refresh/i }));
+
+    expect(await screen.findByText('Failed to refresh results')).toBeInTheDocument();
+    expect(screen.getByText('Rule from request 1')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Rule from request 3')).toBeInTheDocument();
   });
 });

@@ -1,14 +1,15 @@
-import { useListRecordingRuleSearchRulesV0Alpha1Mutation } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import {
+  type ListRecordingRuleSearchRulesV0Alpha1ApiResponse,
+  generatedAPI,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
+import { useDispatch } from 'app/types/store';
 
 import { type Criteria } from '../rule-search/criteria';
+import { type PagedResult, keepFirstPage, usePagedResult } from '../shared/pagedQuery';
 
 import { type RecordingRuleSearchHit, toRecordingRuleSearchHit } from './recordingRuleSearchHit';
 import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
-
-export interface RecordingRuleSearchOptions {
-  continueToken?: string;
-  limit?: number;
-}
 
 export interface RecordingRuleSearchPage {
   hits: RecordingRuleSearchHit[];
@@ -16,23 +17,46 @@ export interface RecordingRuleSearchPage {
 }
 
 /**
- * The single place that chooses which API endpoint serves Recording rule search; every view goes
- * through the function this returns instead of naming a generated hook.
+ * The single place that chooses which API endpoint serves Recording rule search. The generated
+ * operation is a mutation (it is a POST), so it provides no tags and has no page state; this
+ * injects the same request as an infinite query keyed by the criteria, with continuation tokens as
+ * the page parameters. It provides the `RecordingRule` tag, so every rule mutation refetches it.
  */
-export function useRecordingRuleSearch() {
-  const [triggerSearch] = useListRecordingRuleSearchRulesV0Alpha1Mutation();
-
-  return async (criteria: Criteria, options: RecordingRuleSearchOptions = {}): Promise<RecordingRuleSearchPage> => {
-    const result = await triggerSearch({
-      listRecordingRuleSearchRulesV0Alpha1RequestBody: buildRecordingRuleSearchQuery(criteria, {
-        continue: options.continueToken,
-        limit: options.limit,
+const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
+  endpoints: (build) => ({
+    searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, Criteria, string | undefined>({
+      infiniteQueryOptions: {
+        initialPageParam: undefined,
+        getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
+      },
+      // Results are a view of the current page only; leaving it drops them.
+      keepUnusedDataFor: 0,
+      query: ({ queryArg, pageParam }) => ({
+        url: '/recordingrules/searchRules',
+        method: 'POST',
+        body: buildRecordingRuleSearchQuery(queryArg, { continue: pageParam, limit: DEFAULT_PER_PAGE_PAGINATION }),
       }),
-    }).unwrap();
+      transformResponse: (response: ListRecordingRuleSearchRulesV0Alpha1ApiResponse): RecordingRuleSearchPage => ({
+        hits: response.items.map(toRecordingRuleSearchHit),
+        continueToken: response.metadata.continue,
+      }),
+      providesTags: ['RecordingRule'],
+    }),
+  }),
+});
 
-    return {
-      hits: result.items.map(toRecordingRuleSearchHit),
-      continueToken: result.metadata.continue,
-    };
-  };
+const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
+
+/** Recording rules matching the criteria, one page at a time, in the order the API returns them. */
+export function useRecordingRuleSearch(criteria: Criteria): PagedResult<RecordingRuleSearchHit> {
+  const dispatch = useDispatch();
+  const query = useSearchRecordingRulesInfiniteQuery(criteria, { refetchOnMountOrArgChange: true });
+
+  return usePagedResult(query, getHits, () => {
+    dispatch(recordingRuleSearchAPI.util.updateQueryData('searchRecordingRules', criteria, keepFirstPage));
+  });
+}
+
+function getHits(page: RecordingRuleSearchPage) {
+  return page.hits;
 }

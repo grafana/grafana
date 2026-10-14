@@ -18,7 +18,6 @@ import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { useDuplicateRuleAction } from '../rule-actions/DuplicateRuleAction';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
-import { type OnMutated } from '../rule-actions/ruleActionTypes';
 import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteAlertRule } from '../rule-actions/useDeleteRule';
 import { useAlertRulePauseResume } from '../rule-actions/usePauseResumeRule';
@@ -29,7 +28,6 @@ import { MoreButton } from '../shared/MoreButton';
 interface AlertRuleActionsMenuProps {
   ruleUid: string;
   resourceState: RuleResourceState<AlertRule>;
-  onMutated: OnMutated;
   buttonSize?: ComponentSize;
 }
 
@@ -37,7 +35,7 @@ interface AlertRuleActionsMenuProps {
  * Action menu for a single Grafana-managed Alert rule row in the GMA-only list. Takes only the
  * rule UID and its full-resource fetch state - never a legacy rule/group identifier.
  */
-export function AlertRuleActionsMenu({ ruleUid, resourceState, onMutated, buttonSize }: AlertRuleActionsMenuProps) {
+export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: AlertRuleActionsMenuProps) {
   const abilities = useRuleActionAbilities(resourceState);
   const { setPaused, isPending: pausePending } = useAlertRulePauseResume(ruleUid);
   const { deleteRule, isPending: deletePending } = useDeleteAlertRule(ruleUid);
@@ -79,7 +77,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, onMutated, button
           }
           icon={isPaused ? 'play' : 'pause'}
           disabled={pausePending}
-          onClick={() => setPaused(!isPaused, onMutated)}
+          onClick={() => setPaused(!isPaused)}
         />
       )}
       {canSilence && (
@@ -139,7 +137,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, onMutated, button
         isOpen={showDeleteModal}
         ruleTitle={ruleTitle}
         isDeleting={deletePending}
-        onConfirm={() => deleteRule(onMutated)}
+        onConfirm={() => deleteRule()}
         onDismiss={() => setShowDeleteModal(false)}
       />
     </>

@@ -2,7 +2,6 @@ import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
 import { setupMswServer } from '../../mockApi';
-import { clearAllEnrichmentCaches } from '../rule-data/ruleResourceLookups';
 
 import { FolderListRow } from './FolderListRow';
 
@@ -19,10 +18,6 @@ function mockParents(titles: string[]) {
 }
 
 describe('FolderListRow', () => {
-  beforeEach(() => {
-    clearAllEnrichmentCaches();
-  });
-
   it('shows the own title as a link, the parent path for a nested folder, and the pluralized count', async () => {
     mockParents(['Platform', 'Infra', 'Kubernetes']);
     render(

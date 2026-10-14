@@ -6,8 +6,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { _resetRuleListRefreshForTests } from '../rule-data/refreshRuleLists';
-import { clearAllEnrichmentCaches } from '../rule-data/ruleResourceLookups';
 
 import RecordingRulesPage from './RecordingRulesPage';
 
@@ -83,8 +81,6 @@ describe('RecordingRulesPage', () => {
   const previousPermissions = contextSrv.user.permissions;
 
   beforeEach(() => {
-    clearAllEnrichmentCaches();
-    _resetRuleListRefreshForTests();
     reportInteractionMock.mockClear();
     contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
     mockFolderParents({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
@@ -187,6 +183,121 @@ describe('RecordingRulesPage', () => {
     await screen.findByText('Team Alerts');
     await screen.findByText('Infra');
     expect(countRequests).toBe(0);
+  });
+
+  // STATE-1
+  it('retries a failed first List page and then shows its rules', async () => {
+    let call = 0;
+    server.use(
+      http.post(RECORDING_SEARCH_URL, () => {
+        call += 1;
+        return call === 1
+          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
+          : HttpResponse.json({ items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')], metadata: {} });
+      })
+    );
+
+    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
+    expect(screen.queryByText('No Recording rules found')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('cpu_usage:avg')).toBeInTheDocument();
+  });
+
+  // STATE-1 and STATE-4
+  it('keeps loaded rows when Load more fails, and repeats the same continuation on Retry', async () => {
+    const continuations: Array<string | null> = [];
+    let failNext = true;
+    server.use(
+      http.post(RECORDING_SEARCH_URL, async ({ request }) => {
+        const { continue: token = null } = (await request.json()) as { continue?: string };
+        continuations.push(token);
+        if (!token) {
+          return HttpResponse.json({
+            items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')],
+            metadata: { continue: 'tok' },
+          });
+        }
+        if (failNext) {
+          failNext = false;
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({ items: [ruleItem('rule-2', 'mem_usage:avg', 'folder-2')], metadata: {} });
+      })
+    );
+
+    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+
+    await screen.findByText('cpu_usage:avg');
+    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+
+    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+    expect(screen.getByText('cpu_usage:avg')).toBeInTheDocument();
+    expect(continuations).toEqual([null, 'tok']);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('mem_usage:avg')).toBeInTheDocument();
+    expect(continuations).toEqual([null, 'tok', 'tok']);
+  });
+
+  it('shows a retryable error inside an expanded folder whose rule search failed', async () => {
+    mockFolderSearch(() => ({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} }));
+    let call = 0;
+    server.use(
+      http.post(RECORDING_SEARCH_URL, () => {
+        call += 1;
+        return call === 1
+          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
+          : HttpResponse.json({ items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')], metadata: {} });
+      })
+    );
+
+    render(<RecordingRulesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand Team Alerts', expanded: false }));
+
+    expect(await screen.findByText('Failed to load rules')).toBeInTheDocument();
+    expect(screen.queryByText('No Recording rules in this folder')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('cpu_usage:avg')).toBeInTheDocument();
+  });
+
+  it('pages through folders with Next and Previous, and keeps the page when the next one fails', async () => {
+    let failNext = true;
+    server.use(
+      http.post(FOLDER_SEARCH_URL, async ({ request }) => {
+        const { continue: token } = (await request.json()) as { continue?: string };
+        if (!token) {
+          return HttpResponse.json({
+            items: [folderItem('folder-1', 'Team Alerts')],
+            metadata: { continue: 'page-2' },
+          });
+        }
+        if (failNext) {
+          failNext = false;
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({ items: [folderItem('folder-2', 'Infra')], metadata: {} });
+      })
+    );
+
+    render(<RecordingRulesPage />);
+    await screen.findByText('Team Alerts');
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+    expect(screen.getByText('Team Alerts')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('Infra')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Previous' }));
+    expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
   });
 
   // M1: one page-view event per mount, with kind and mode, no filter values.

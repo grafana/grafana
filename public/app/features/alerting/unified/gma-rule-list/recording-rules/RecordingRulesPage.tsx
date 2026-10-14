@@ -6,7 +6,6 @@ import { Box, Divider, RadioButtonGroup, Stack } from '@grafana/ui';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { legacyRuleListNameResolvers } from '../legacy-migration/nameResolvers';
 import { RulesPageShell } from '../page-shell/RulesPageShell';
-import { useRuleListRefreshVersion } from '../rule-data/refreshRuleLists';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 import { getCriteriaIssues } from '../rule-search/criteriaIssues';
@@ -29,12 +28,10 @@ function RecordingRulesBody({
   canSearch,
   mode,
   criteria,
-  resetKey,
 }: {
   canSearch: boolean;
   mode: RuleListMode;
   criteria: Criteria;
-  resetKey: unknown;
 }) {
   if (!canSearch) {
     return (
@@ -44,15 +41,14 @@ function RecordingRulesBody({
     );
   }
   if (mode === 'folders') {
-    return <FoldersView folderUids={criteria.namespaces} resetKey={resetKey} />;
+    return <FoldersView folderUids={criteria.namespaces} />;
   }
-  return <ListView criteria={criteria} resetKey={resetKey} />;
+  return <ListView criteria={criteria} />;
 }
 
 function RecordingRulesPage() {
   const { criteria, mode, setCriteria, setMode, reset } = useRuleListSearchState('recording');
   const issues = getCriteriaIssues(criteria, 'recording');
-  const refreshVersion = useRuleListRefreshVersion('recording');
   const savedSearchesReady = useLegacySavedSearchesCopied(legacyRuleListNameResolvers);
 
   const trackedView = useRef(false);
@@ -77,7 +73,6 @@ function RecordingRulesPage() {
   };
 
   const canSearch = issues.length === 0;
-  const resetKey = JSON.stringify([criteria, refreshVersion]);
 
   return (
     <RulesPageShell
@@ -141,7 +136,7 @@ function RecordingRulesPage() {
               <Divider direction="vertical" spacing={2} />
             </Box>
             <Box grow={1} minWidth={0}>
-              <RecordingRulesBody canSearch={canSearch} mode={mode} criteria={criteria} resetKey={resetKey} />
+              <RecordingRulesBody canSearch={canSearch} mode={mode} criteria={criteria} />
             </Box>
           </Stack>
         </Stack>

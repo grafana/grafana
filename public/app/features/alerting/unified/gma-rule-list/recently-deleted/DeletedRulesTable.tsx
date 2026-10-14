@@ -3,22 +3,20 @@ import { type ReactNode, useState } from 'react';
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, type Column, EmptyState, InteractiveTable, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { Button, type Column, EmptyState, InteractiveTable, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
 
+import { useFolderPath } from '../folder-browsing/folderLookups';
+import { InlineRequestError } from '../shared/InlineRequestError';
+import { LoadMoreFooter } from '../shared/LoadMoreFooter';
+
 import { useDeletedByDisplayNames } from './useDeletedByDisplayNames';
-import { useFolderPath } from './useFolderPath';
+import { type UseDeletedRulesResult } from './useDeletedRules';
 
 type DeletedRule = AlertRule | RecordingRule;
 
 interface DeletedRulesTableProps<T extends DeletedRule> {
-  rows: T[];
-  status: 'idle' | 'loading' | 'loaded' | 'error';
-  error?: unknown;
-  hasMore: boolean;
-  isLoadingMore: boolean;
-  loadMoreError?: unknown;
-  onLoadMore: () => void;
+  deleted: UseDeletedRulesResult<T>;
   /** Kind-specific columns (Recorded metric, Target data source) inserted between Title and Folder. */
   extraColumns?: Array<Column<T>>;
   /** Each page renders the Review drawer for its own rule kind. */
@@ -26,11 +24,12 @@ interface DeletedRulesTableProps<T extends DeletedRule> {
 }
 
 function FolderPathCell({ folderUid }: { folderUid: string | undefined }) {
-  const { path } = useFolderPath(folderUid);
+  const path = useFolderPath(folderUid);
   if (!folderUid) {
     return <>{t('alerting.deleted-rules.unknown', 'Unknown')}</>;
   }
-  return <>{path ?? folderUid}</>;
+  // A folder that cannot be resolved keeps its UID rather than disabling the row.
+  return <>{path?.join(' / ') || folderUid}</>;
 }
 
 function DeletedByCell({
@@ -47,36 +46,30 @@ function DeletedByCell({
 }
 
 export function DeletedRulesTable<T extends DeletedRule>({
-  rows,
-  status,
-  error,
-  hasMore,
-  isLoadingMore,
-  loadMoreError,
-  onLoadMore,
+  deleted,
   extraColumns = [],
   renderReview,
 }: DeletedRulesTableProps<T>) {
+  const { rows, isLoading, error, failure, hasMore, isLoadingMore, loadMore, refresh, retry } = deleted;
   const [ruleToReview, setRuleToReview] = useState<T | undefined>(undefined);
   const updatedByKeys = rows.map((rule) => rule.metadata.annotations?.[AnnoKeyUpdatedBy]);
   const { resolve: resolveDeletedBy } = useDeletedByDisplayNames(updatedByKeys);
 
-  if (status === 'loading') {
+  if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.deleted-rules.loading', 'Loading recently deleted rules...')} />;
   }
 
-  if (status === 'error') {
+  if (error !== undefined) {
     return (
-      <Alert
+      <InlineRequestError
         title={t('alerting.deleted-rules.load-error-title', 'Unable to load recently deleted rules')}
-        severity="error"
-      >
-        {stringifyError(error)}
-      </Alert>
+        error={error}
+        onRetry={retry}
+      />
     );
   }
 
-  if (rows.length === 0) {
+  if (rows.length === 0 && !failure) {
     return (
       <EmptyState
         variant="not-found"
@@ -129,43 +122,25 @@ export function DeletedRulesTable<T extends DeletedRule>({
 
   return (
     <Stack direction="column" gap={2}>
+      <Stack justifyContent="flex-end">
+        <Button variant="secondary" icon="sync" onClick={refresh}>
+          <Trans i18nKey="alerting.deleted-rules.refresh">Refresh</Trans>
+        </Button>
+      </Stack>
       <InteractiveTable
         columns={columns}
         data={rows}
         getRowId={(row) => row.metadata.name ?? ''}
         pageSize={rows.length || 1}
       />
-      {loadMoreError !== undefined && (
-        <Alert
-          title={t('alerting.deleted-rules.load-more-error-title', 'Unable to load more recently deleted rules')}
-          severity="warning"
-        >
-          {stringifyError(loadMoreError)}
-        </Alert>
-      )}
-      {hasMore && (
-        <Stack justifyContent="flex-start">
-          <Button
-            variant="secondary"
-            disabled={isLoadingMore}
-            icon={isLoadingMore ? 'spinner' : undefined}
-            onClick={onLoadMore}
-          >
-            <Trans i18nKey="alerting.deleted-rules.load-more">Load more</Trans>
-          </Button>
-        </Stack>
-      )}
+      <LoadMoreFooter
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        failure={failure}
+        onLoadMore={loadMore}
+        onRetry={retry}
+      />
       {ruleToReview && renderReview(ruleToReview, () => setRuleToReview(undefined))}
     </Stack>
   );
-}
-
-function stringifyError(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
-    return error.message;
-  }
-  return t('alerting.deleted-rules.unknown-error', 'Something went wrong. Please try again.');
 }

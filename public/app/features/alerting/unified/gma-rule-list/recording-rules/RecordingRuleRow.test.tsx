@@ -4,7 +4,6 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { setupMswServer } from '../../mockApi';
 import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
-import { clearAllEnrichmentCaches } from '../rule-data/ruleResourceLookups';
 
 import { RecordingRuleRow } from './RecordingRuleRow';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
@@ -42,7 +41,6 @@ function mockFullRule(spec: Record<string, unknown> = {}, annotations: Record<st
 // Recording rules have no state, instances, routing, or summary, so none of that renders.
 describe('RecordingRuleRow', () => {
   beforeEach(() => {
-    clearAllEnrichmentCaches();
     mockFullRule();
     server.use(
       http.get(FOLDER_PARENTS_URL, () =>

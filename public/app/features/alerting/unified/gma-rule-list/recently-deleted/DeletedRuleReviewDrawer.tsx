@@ -7,10 +7,11 @@ import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { CollapsableSection, Drawer, JSONFormatter, Stack, Text } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
 
+import { useFolderPath } from '../folder-browsing/folderLookups';
+
 import { trackDeletedRuleAdvancedJsonOpened, trackDeletedRuleReviewOpened } from './analytics';
 import { sanitizeDeletedRule } from './sanitizeDeletedRule';
 import { useDeletedByDisplayNames } from './useDeletedByDisplayNames';
-import { useFolderPath } from './useFolderPath';
 
 export type DeletedRuleReviewDrawerProps =
   | { kind: 'alert'; rule: AlertRule; onClose: () => void }
@@ -42,7 +43,7 @@ export function DeletedRuleReviewDrawer(props: DeletedRuleReviewDrawerProps) {
   const folderUid = rule.metadata.annotations?.[AnnoKeyFolder];
   const updatedBy = rule.metadata.annotations?.[AnnoKeyUpdatedBy];
 
-  const { path: folderPath } = useFolderPath(folderUid);
+  const folderPath = useFolderPath(folderUid)?.join(' / ');
   const { resolve: resolveDeletedBy } = useDeletedByDisplayNames([updatedBy]);
   const { settings: targetDataSourceSettings } = useDataSourceInstanceSettings(
     kind === 'recording' ? props.rule.spec.targetDatasourceUID : undefined

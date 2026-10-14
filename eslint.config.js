@@ -101,6 +101,14 @@ function withBaseRestrictedImportsConfig(config = {}) {
   return finalConfig;
 }
 
+// React 19 related TransitionGroup rules to prevent usage of findDomNode. Remove once React 19 is the default
+const transitionNodeRefRestriction = {
+  selector:
+    "JSXElement[openingElement.name.name=/^(CSSTransition|Transition)$/]:not(:has(JSXAttribute[name.name='nodeRef']))",
+  message:
+    'CSSTransition components must have a nodeRef attribute to avoid findDOMNode usage which breaks in React 19. See https://reactcommunity.org/react-transition-group/transition#Transition-prop-nodeRef for more details.',
+};
+
 const gmaRuleListRoot = 'public/app/features/alerting/unified/gma-rule-list';
 
 const gmaRuleListBasePatterns = [
@@ -142,16 +150,34 @@ const gmaRuleListBasePatterns = [
     message:
       'The per-kind /search operations are reserved for a later phase; search through alertRuleSearch.ts or recordingRuleSearch.ts.',
   },
+  {
+    group: ['@grafana/api-clients/rtkq/rules.alerting*'],
+    importNamePattern: '^use(?:Lazy)?List(?:Alert|Recording)RuleSearchRules',
+    message:
+      'The generated searchRules operation is a mutation that caches nothing and provides no tags; search through useAlertRuleSearch or useRecordingRuleSearch.',
+  },
+  {
+    group: ['@grafana/api-clients/rtkq/folder*', '**/api/clients/folder*'],
+    importNamePattern: '^use(?:Lazy)?ListFolderSearch',
+    message:
+      'The generated folder search operation is a mutation that caches nothing and provides no tags; use useFolderPages from folder-browsing.',
+  },
 ];
 
-// Only the per-kind transport modules may name the per-kind /searchRules operations, so the endpoint
-// is chosen in one place per kind. Every block except the transport overrides below carries this.
-const gmaRuleSearchTransportPattern = {
-  group: ['@grafana/api-clients/rtkq/rules.alerting*'],
-  importNamePattern: '^use(?:Lazy)?List(?:Alert|Recording)RuleSearchRules',
-  message:
-    'Search rules through useAlertRuleSearch or useRecordingRuleSearch instead of naming the generated search operation.',
-};
+// Each search endpoint is named in one place: the per-kind seams for rule search and
+// folder-browsing/folderSearch.ts for folder search. Everywhere else must not name an endpoint,
+// by URL or through the generated API's endpoint map.
+const gmaSearchSeamMessage =
+  'Search endpoints belong in the search seam modules (alertRuleSearch.ts, recordingRuleSearch.ts, folderSearch.ts).';
+const gmaSearchEndpointRestrictions = [
+  transitionNodeRefRestriction,
+  { selector: 'Literal[value=/(searchRules|(rules|folders).search)$/]', message: gmaSearchSeamMessage },
+  { selector: 'TemplateElement[value.raw=/(searchRules|(rules|folders).search)$/]', message: gmaSearchSeamMessage },
+  {
+    selector: 'MemberExpression[property.name=/^(createSearchRules|list(Alert|Recording)RuleSearch)/]',
+    message: gmaSearchSeamMessage,
+  },
+];
 
 const gmaKindFolders = ['alert-rules', 'recording-rules'];
 const gmaCapabilityFolders = [
@@ -176,23 +202,8 @@ function gmaRuleListBlock(name, folders, extraPatterns) {
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
-          patterns: [...gmaRuleListBasePatterns, gmaRuleSearchTransportPattern, ...extraPatterns],
+          patterns: [...gmaRuleListBasePatterns, ...extraPatterns],
         }),
-      ],
-    },
-  };
-}
-
-// The transport modules keep the base and sibling-kind boundaries but may import the per-kind
-// /searchRules operations.
-function gmaRuleSearchTransportBlock(folder, file, extraPatterns) {
-  return {
-    name: `grafana/gma-rule-list-overrides-search-transport-${folder}`,
-    files: [`${gmaRuleListRoot}/${folder}/${file}`],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        withBaseRestrictedImportsConfig({ patterns: [...gmaRuleListBasePatterns, ...extraPatterns] }),
       ],
     },
   };
@@ -219,18 +230,29 @@ function gmaRuleListOverrides() {
       name: 'grafana/gma-rule-list-overrides',
       files: [`${gmaRuleListRoot}/**/*.{ts,tsx,js,jsx}`],
       rules: {
-        'no-restricted-imports': [
-          'error',
-          withBaseRestrictedImportsConfig({ patterns: [...gmaRuleListBasePatterns, gmaRuleSearchTransportPattern] }),
-        ],
+        'no-restricted-imports': ['error', withBaseRestrictedImportsConfig({ patterns: gmaRuleListBasePatterns })],
+        'no-restricted-syntax': ['error', ...gmaSearchEndpointRestrictions],
       },
+    },
+    {
+      name: 'grafana/gma-rule-list-overrides-search-seams',
+      files: [
+        `${gmaRuleListRoot}/alert-rules/alertRuleSearch.ts`,
+        `${gmaRuleListRoot}/recording-rules/recordingRuleSearch.ts`,
+        `${gmaRuleListRoot}/folder-browsing/folderSearch.ts`,
+      ],
+      rules: { 'no-restricted-syntax': ['error', transitionNodeRefRestriction] },
+    },
+    // Tests stand in for the server, so they name the endpoint URLs.
+    {
+      name: 'grafana/gma-rule-list-overrides-tests',
+      files: [`${gmaRuleListRoot}/**/*.test.{ts,tsx}`],
+      rules: { 'no-restricted-syntax': ['error', transitionNodeRefRestriction] },
     },
     gmaRuleListBlock('alert-rules', ['alert-rules'], [siblingKindMessage('recording-rules')]),
     gmaRuleListBlock('recording-rules', ['recording-rules'], [siblingKindMessage('alert-rules')]),
     gmaRuleListBlock('capabilities', gmaCapabilityFolders, [kindFoldersPattern]),
     gmaRuleListBlock('shared', ['shared'], [sharedPattern]),
-    gmaRuleSearchTransportBlock('alert-rules', 'alertRuleSearch.ts', [siblingKindMessage('recording-rules')]),
-    gmaRuleSearchTransportBlock('recording-rules', 'recordingRuleSearch.ts', [siblingKindMessage('alert-rules')]),
   ];
 }
 
@@ -348,16 +370,7 @@ module.exports = [
       ],
       'no-restricted-imports': ['error', baseImportConfig],
       'no-restricted-globals': ['error'].concat(restrictedGlobals),
-      // React 19 related TransitionGroup rules to prevent usage of findDomNode. Remove once React 19 is the default
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector:
-            "JSXElement[openingElement.name.name=/^(CSSTransition|Transition)$/]:not(:has(JSXAttribute[name.name='nodeRef']))",
-          message:
-            'CSSTransition components must have a nodeRef attribute to avoid findDOMNode usage which breaks in React 19. See https://reactcommunity.org/react-transition-group/transition#Transition-prop-nodeRef for more details.',
-        },
-      ],
+      'no-restricted-syntax': ['error', transitionNodeRefRestriction],
 
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',

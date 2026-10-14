@@ -4,7 +4,6 @@ import { render, screen } from 'test/test-utils';
 import { setupMswServer } from '../../mockApi';
 import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
-import { clearAllEnrichmentCaches } from '../rule-data/ruleResourceLookups';
 
 import { AlertRuleRow } from './AlertRuleRow';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
@@ -42,7 +41,6 @@ function mockFullRule(spec: Record<string, unknown> = {}) {
 // path. Missing runtime state/health reads Unavailable, never a healthy default.
 describe('AlertRuleRow', () => {
   beforeEach(() => {
-    clearAllEnrichmentCaches();
     mockFullRule();
     server.use(
       http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ items: [{ name: 'folder-1', title: 'Team Alerts' }] }))

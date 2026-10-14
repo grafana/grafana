@@ -1,13 +1,11 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type DataSourceSrv, reportInteraction, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { _resetRuleListRefreshForTests } from '../rule-data/refreshRuleLists';
-import { clearAllEnrichmentCaches } from '../rule-data/ruleResourceLookups';
 
 import AlertRulesPage from './AlertRulesPage';
 
@@ -90,8 +88,6 @@ describe('AlertRulesPage', () => {
   const previousPermissions = contextSrv.user.permissions;
 
   beforeEach(() => {
-    clearAllEnrichmentCaches();
-    _resetRuleListRefreshForTests();
     reportInteractionMock.mockClear();
     contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
     mockFolderParents({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
@@ -250,19 +246,48 @@ describe('AlertRulesPage', () => {
     });
   });
 
-  // STATE-3: a Load-more failure keeps the already-loaded rows visible and offers retry.
-  it('keeps loaded rows visible and offers retry when Load more fails', async () => {
+  // STATE-1: a failed first page shows an error with Retry instead of the empty state.
+  it('retries a failed first List page and then shows its rules', async () => {
     let call = 0;
     server.use(
       http.post(ALERT_SEARCH_URL, () => {
         call += 1;
-        if (call === 1) {
+        return call === 1
+          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
+          : HttpResponse.json({ items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} });
+      })
+    );
+
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
+    expect(screen.queryByText('No Alert rules found')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(call).toBe(2);
+  });
+
+  // STATE-1: a Load more failure keeps the already-loaded rows visible; Retry repeats that request.
+  it('keeps loaded rows visible when Load more fails and repeats the same continuation request on Retry', async () => {
+    const continuations: Array<string | null> = [];
+    let failNext = true;
+    server.use(
+      http.post(ALERT_SEARCH_URL, async ({ request }) => {
+        const { continue: token = null } = (await request.json()) as { continue?: string };
+        continuations.push(token);
+        if (!token) {
           return HttpResponse.json({
             items: [ruleItem('rule-1', 'CPU high', 'folder-1')],
             metadata: { continue: 'tok' },
           });
         }
-        return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        if (failNext) {
+          failNext = false;
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({ items: [ruleItem('rule-2', 'Disk full', 'folder-2')], metadata: {} });
       })
     );
 
@@ -271,8 +296,262 @@ describe('AlertRulesPage', () => {
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
 
-    expect(await screen.findByText('Failed to load more rules')).toBeInTheDocument();
+    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
     expect(screen.getByText('CPU high')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Disk full')).toBeInTheDocument();
+    expect(screen.getByText('CPU high')).toBeInTheDocument();
+    expect(continuations).toEqual([null, 'tok', 'tok']);
+  });
+
+  // STATE-1: a rejected continuation token can never succeed, so Retry starts the chain again.
+  it('restarts from the first page when Retry follows a rejected continuation token', async () => {
+    const continuations: Array<string | null> = [];
+    server.use(
+      http.post(ALERT_SEARCH_URL, async ({ request }) => {
+        const { continue: token = null } = (await request.json()) as { continue?: string };
+        continuations.push(token);
+        if (token === 'stale-token') {
+          return HttpResponse.json({ message: 'token expired' }, { status: 410 });
+        }
+        return HttpResponse.json({
+          items: [ruleItem('rule-1', 'CPU high', 'folder-1')],
+          metadata: { continue: 'stale-token' },
+        });
+      })
+    );
+
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+
+    await screen.findByText('CPU high');
+    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+    await screen.findByText('Failed to load more results');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByRole('button', { name: 'Load more' })).toBeInTheDocument();
+    expect(continuations).toEqual([null, 'stale-token', null]);
+    expect(screen.getAllByText('CPU high')).toHaveLength(1);
+  });
+
+  // STATE-4
+  it('loads one page once when Load more is double clicked', async () => {
+    const continuations: Array<string | null> = [];
+    let releasePage: () => void = () => {};
+    const pageGate = new Promise<void>((resolve) => {
+      releasePage = resolve;
+    });
+    server.use(
+      http.post(ALERT_SEARCH_URL, async ({ request }) => {
+        const { continue: token = null } = (await request.json()) as { continue?: string };
+        continuations.push(token);
+        if (!token) {
+          return HttpResponse.json({
+            items: [ruleItem('rule-1', 'CPU high', 'folder-1')],
+            metadata: { continue: 'tok' },
+          });
+        }
+        await pageGate;
+        return HttpResponse.json({ items: [ruleItem('rule-2', 'Disk full', 'folder-2')], metadata: {} });
+      })
+    );
+
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+
+    await screen.findByText('CPU high');
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Load more' }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Load more' })).toBeDisabled());
+    releasePage();
+
+    expect(await screen.findByText('Disk full')).toBeInTheDocument();
+    expect(continuations).toEqual([null, 'tok']);
+  });
+
+  // STATE-1: a failed expanded folder shows its own error and keeps the folder row.
+  it('shows a retryable error inside an expanded folder whose rule search failed', async () => {
+    mockFolderSearch(() => ({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} }));
+    let call = 0;
+    server.use(
+      http.post(ALERT_SEARCH_URL, () => {
+        call += 1;
+        return call === 1
+          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
+          : HttpResponse.json({ items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} });
+      })
+    );
+
+    render(<AlertRulesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand Team Alerts', expanded: false }));
+
+    expect(await screen.findByText('Failed to load rules')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+    expect(screen.queryByText('No Alert rules in this folder')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+  });
+
+  it('loads more rules inside an expanded folder without touching other folders', async () => {
+    mockFolderSearch(() => ({
+      items: [folderItem('folder-1', 'Team Alerts'), folderItem('folder-2', 'Infra')],
+      metadata: {},
+    }));
+    const requested: Array<{ folders?: string[]; token: string | null }> = [];
+    server.use(
+      http.post(ALERT_SEARCH_URL, async ({ request }) => {
+        const body = (await request.json()) as { where?: { filter?: { values: string[] } }; continue?: string };
+        requested.push({ folders: body.where?.filter?.values, token: body.continue ?? null });
+        return body.continue
+          ? HttpResponse.json({ items: [ruleItem('rule-2', 'Disk full', 'folder-1')], metadata: {} })
+          : HttpResponse.json({
+              items: [ruleItem('rule-1', 'CPU high', 'folder-1')],
+              metadata: { continue: 'tok' },
+            });
+      })
+    );
+
+    render(<AlertRulesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand Team Alerts', expanded: false }));
+    await screen.findByText('CPU high');
+    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+
+    expect(await screen.findByText('Disk full')).toBeInTheDocument();
+    expect(requested).toEqual([
+      { folders: ['folder-1'], token: null },
+      { folders: ['folder-1'], token: 'tok' },
+    ]);
+  });
+
+  // STATE-1: Folders mode paging.
+  it('pages through folders with Next and Previous, requesting each page once', async () => {
+    const tokens: Array<string | null> = [];
+    server.use(
+      http.post(FOLDER_SEARCH_URL, async ({ request }) => {
+        const { continue: token = null } = (await request.json()) as { continue?: string };
+        tokens.push(token);
+        return token
+          ? HttpResponse.json({ items: [folderItem('folder-2', 'Infra')], metadata: {} })
+          : HttpResponse.json({ items: [folderItem('folder-1', 'Team Alerts')], metadata: { continue: 'page-2' } });
+      })
+    );
+
+    render(<AlertRulesPage />);
+
+    expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Infra')).toBeInTheDocument();
+    expect(screen.queryByText('Team Alerts')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Previous' }));
+    expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
+    expect(screen.queryByText('Infra')).not.toBeInTheDocument();
+    expect(tokens).toEqual([null, 'page-2']);
+  });
+
+  it('keeps the current folder page and offers Retry when the next folder page fails', async () => {
+    let failNext = true;
+    server.use(
+      http.post(FOLDER_SEARCH_URL, async ({ request }) => {
+        const { continue: token } = (await request.json()) as { continue?: string };
+        if (!token) {
+          return HttpResponse.json({
+            items: [folderItem('folder-1', 'Team Alerts')],
+            metadata: { continue: 'page-2' },
+          });
+        }
+        if (failNext) {
+          failNext = false;
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({ items: [folderItem('folder-2', 'Infra')], metadata: {} });
+      })
+    );
+
+    render(<AlertRulesPage />);
+    await screen.findByText('Team Alerts');
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+    expect(screen.getByText('Team Alerts')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Infra')).toBeInTheDocument();
+  });
+
+  it('shows a retryable error instead of the empty state when the first folder page fails', async () => {
+    let call = 0;
+    server.use(
+      http.post(FOLDER_SEARCH_URL, () => {
+        call += 1;
+        return call === 1
+          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
+          : HttpResponse.json({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} });
+      })
+    );
+
+    render(<AlertRulesPage />);
+
+    expect(await screen.findByText('Failed to load folders')).toBeInTheDocument();
+    expect(screen.queryByText('No folders found')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
+  });
+
+  // STATE-3: one mutation refreshes the search, the full rule and the folder counts through tags.
+  it('refreshes the folder count, the rule search and the rule itself after a rule is paused', async () => {
+    mockFolderSearch(() => ({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} }));
+    let paused = false;
+    let countRequests = 0;
+    let searchRequests = 0;
+    server.use(
+      http.get(FOLDER_COUNTS_URL, () => {
+        countRequests += 1;
+        return HttpResponse.json({
+          counts: [{ resource: 'alertrules', group: 'rules.alerting.grafana.app', count: paused ? 2 : 3 }],
+        });
+      }),
+      http.post(ALERT_SEARCH_URL, () => {
+        searchRequests += 1;
+        return HttpResponse.json({ items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} });
+      }),
+      http.get(ALERT_RULE_GET_URL, ({ params }) =>
+        HttpResponse.json({
+          apiVersion: 'v0alpha1',
+          kind: 'AlertRule',
+          metadata: { name: params.name, annotations: { 'grafana.com/access/canWrite': 'true' } },
+          spec: { title: 'CPU high', paused },
+        })
+      ),
+      http.patch(ALERT_RULE_GET_URL, () => {
+        paused = true;
+        return HttpResponse.json({});
+      })
+    );
+
+    render(<AlertRulesPage />);
+    expect(await screen.findByText('3 alert rules')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Expand Team Alerts', expanded: false }));
+    await screen.findByText('CPU high');
+
+    const ruleRow = await screen.findByRole('listitem', { name: 'CPU high' });
+    await userEvent.click(await within(ruleRow).findByRole('button', { name: /more/i }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Pause' }));
+
+    expect(await screen.findByText('2 alert rules')).toBeInTheDocument();
+    await waitFor(() => expect(searchRequests).toBe(2));
+    expect(countRequests).toBe(2);
+    await userEvent.click(await within(ruleRow).findByRole('button', { name: /more/i }));
+    expect(await screen.findByRole('menuitem', { name: 'Resume' })).toBeInTheDocument();
   });
 
   // M1: one page-view event per mount, with kind and mode, no filter values.

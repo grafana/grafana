@@ -17,6 +17,8 @@ import { captureRequests } from 'app/features/alerting/unified/mocks/server/even
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { useFolderAlertRuleCount } from '../folder-browsing/folderLookups';
+
 import { AlertRuleActionsMenu } from './AlertRuleActionsMenu';
 
 jest.mock('@grafana/assistant', () => ({
@@ -30,6 +32,26 @@ jest.mocked(useAssistant).mockReturnValue({
 } as unknown as ReturnType<typeof useAssistant>);
 
 const ALERT_RULES_URL = `${getAPIBaseURL('rules.alerting.grafana.app', 'v0alpha1')}/alertrules`;
+const FOLDER_COUNTS_URL = `${getAPIBaseURL('folder.grafana.app', 'v1beta1')}/folders/:name/counts`;
+
+/** Stands in for a Folders-mode row, so a mutation's effect on folder counts is observable. */
+function FolderCountProbe() {
+  const count = useFolderAlertRuleCount('folder-uid-1');
+  return <div>{`Folder holds ${count ?? 'unknown'} rules`}</div>;
+}
+
+function mockFolderCounts() {
+  const state = { requests: 0, count: 3 };
+  server.use(
+    http.get(FOLDER_COUNTS_URL, () => {
+      state.requests += 1;
+      return HttpResponse.json({
+        counts: [{ resource: 'alertrules', group: 'rules.alerting.grafana.app', count: state.count }],
+      });
+    })
+  );
+  return state;
+}
 
 function buildRule(overrides: Partial<AlertRule['metadata']> = {}): AlertRule {
   return {
@@ -73,13 +95,7 @@ describe('AlertRuleActionsMenu', () => {
   it('ALERT-7: Pause patches only spec.paused to true', async () => {
     const requests = captureRequests((request) => request.method === 'PATCH' && request.url.includes(ALERT_RULES_URL));
 
-    render(
-      <AlertRuleActionsMenu
-        ruleUid="rule-uid-1"
-        resourceState={{ status: 'loaded', rule: buildRule() }}
-        onMutated={jest.fn()}
-      />
-    );
+    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /pause/i }));
 
@@ -88,35 +104,38 @@ describe('AlertRuleActionsMenu', () => {
     expect(await request.clone().json()).toEqual({ spec: { paused: true } });
   });
 
-  it('ALERT-7: Resume patches spec.paused to false and calls onMutated on success', async () => {
-    const onMutated = jest.fn();
+  it('STATE-3: a successful Pause refetches the folder counts', async () => {
+    const counts = mockFolderCounts();
 
     render(
-      <AlertRuleActionsMenu
-        ruleUid="rule-uid-1"
-        resourceState={{ status: 'loaded', rule: buildRule() }}
-        onMutated={onMutated}
-      />
+      <>
+        <FolderCountProbe />
+        <AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
+      </>
     );
+    expect(await screen.findByText('Folder holds 3 rules')).toBeInTheDocument();
+    counts.count = 4;
+
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /pause/i }));
 
-    await waitFor(() => expect(onMutated).toHaveBeenCalledWith('paused'));
+    expect(await screen.findByText('Folder holds 4 rules')).toBeInTheDocument();
+    expect(counts.requests).toBe(2);
   });
 
-  it('ALERT-8: Delete confirms the rule title, and a failure keeps the row (no onMutated call)', async () => {
+  it('ALERT-8: Delete confirms the rule title, and a failure keeps the data as it was', async () => {
     server.use(
       http.delete(`${ALERT_RULES_URL}/rule-uid-1`, () => HttpResponse.json({ message: 'boom' }, { status: 500 }))
     );
-    const onMutated = jest.fn();
+    const counts = mockFolderCounts();
 
     render(
-      <AlertRuleActionsMenu
-        ruleUid="rule-uid-1"
-        resourceState={{ status: 'loaded', rule: buildRule() }}
-        onMutated={onMutated}
-      />
+      <>
+        <FolderCountProbe />
+        <AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
+      </>
     );
+    await screen.findByText('Folder holds 3 rules');
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /delete/i }));
 
@@ -124,7 +143,7 @@ describe('AlertRuleActionsMenu', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(await screen.findByText(/unable to delete rule/i)).toBeInTheDocument();
-    expect(onMutated).not.toHaveBeenCalled();
+    expect(counts.requests).toBe(1);
   });
 
   it('ALERT-8: explains the sequence restriction instead of the raw API message', async () => {
@@ -137,13 +156,7 @@ describe('AlertRuleActionsMenu', () => {
       )
     );
 
-    render(
-      <AlertRuleActionsMenu
-        ruleUid="rule-uid-1"
-        resourceState={{ status: 'loaded', rule: buildRule() }}
-        onMutated={jest.fn()}
-      />
-    );
+    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /delete/i }));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
@@ -152,35 +165,30 @@ describe('AlertRuleActionsMenu', () => {
     expect(screen.queryByText(/because it belongs to rule sequence/i)).not.toBeInTheDocument();
   });
 
-  it('ALERT-8: Delete succeeds and calls onMutated', async () => {
+  it('ALERT-8: a successful Delete refetches the folder counts', async () => {
     server.use(http.delete(`${ALERT_RULES_URL}/rule-uid-1`, () => HttpResponse.json({})));
-    const onMutated = jest.fn();
+    const counts = mockFolderCounts();
 
     render(
-      <AlertRuleActionsMenu
-        ruleUid="rule-uid-1"
-        resourceState={{ status: 'loaded', rule: buildRule() }}
-        onMutated={onMutated}
-      />
+      <>
+        <FolderCountProbe />
+        <AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
+      </>
     );
+    await screen.findByText('Folder holds 3 rules');
+    counts.count = 2;
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /delete/i }));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
-    await waitFor(() => expect(onMutated).toHaveBeenCalledWith('deleted'));
+    expect(await screen.findByText('Folder holds 2 rules')).toBeInTheDocument();
   });
 
   it('reports Copy link failure when the clipboard write rejects', async () => {
     jest.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
     const emitSpy = jest.spyOn(appEvents, 'emit');
 
-    render(
-      <AlertRuleActionsMenu
-        ruleUid="rule-uid-1"
-        resourceState={{ status: 'loaded', rule: buildRule() }}
-        onMutated={jest.fn()}
-      />
-    );
+    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /copy link/i }));
 
@@ -190,7 +198,7 @@ describe('AlertRuleActionsMenu', () => {
   it('makes Pause and Delete unavailable when the resource is still loading, without any rule request', async () => {
     const requests = captureRequests((request) => request.url.includes(ALERT_RULES_URL));
 
-    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loading' }} onMutated={jest.fn()} />);
+    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loading' }} />);
     await openMenu();
 
     expect(screen.queryByRole('menuitem', { name: /pause/i })).not.toBeInTheDocument();
@@ -203,13 +211,7 @@ describe('AlertRuleActionsMenu', () => {
       (request) => request.url.includes('searchRules') || request.url.includes('/search')
     );
 
-    render(
-      <AlertRuleActionsMenu
-        ruleUid="rule-uid-1"
-        resourceState={{ status: 'loaded', rule: buildRule() }}
-        onMutated={jest.fn()}
-      />
-    );
+    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
     await openMenu();
 
     expect((await requests).length).toBe(0);
@@ -219,13 +221,7 @@ describe('AlertRuleActionsMenu', () => {
     it('shows Silence when Grafana AM is supported and the user has org-wide alert.instances:create, and opens the drawer for this rule', async () => {
       grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingInstanceCreate]);
 
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule() }}
-          onMutated={jest.fn()}
-        />
-      );
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       const user = await openMenu();
       const silenceItem = await screen.findByRole('menuitem', { name: /silence notifications/i });
       await user.click(silenceItem);
@@ -242,13 +238,7 @@ describe('AlertRuleActionsMenu', () => {
         mockFolder({ uid: 'folder-uid-1', accessControl: { [AccessControlAction.AlertingSilenceCreate]: true } })
       );
 
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule() }}
-          onMutated={jest.fn()}
-        />
-      );
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       await openMenu();
 
       expect(await screen.findByRole('menuitem', { name: /silence notifications/i })).toBeInTheDocument();
@@ -257,13 +247,7 @@ describe('AlertRuleActionsMenu', () => {
     it('hides Silence when the user has neither org-wide nor folder-scoped silence permission', async () => {
       const folderRequests = await captureRequests((request) => request.url.includes('/api/folders/folder-uid-1'));
 
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule() }}
-          onMutated={jest.fn()}
-        />
-      );
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       await openMenu();
 
       // Wait for the folder-permission lookup to actually resolve before asserting absence -
@@ -281,13 +265,7 @@ describe('AlertRuleActionsMenu', () => {
         )
       );
 
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule() }}
-          onMutated={jest.fn()}
-        />
-      );
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       await openMenu();
 
       await waitFor(() => expect(amConfigRequests.length).toBeGreaterThan(0));
@@ -315,13 +293,7 @@ describe('AlertRuleActionsMenu', () => {
       config.featureToggles.alertingEnrichmentPerRule = true;
       contextSrv.user.orgRole = OrgRole.Admin;
 
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule() }}
-          onMutated={jest.fn()}
-        />
-      );
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       const user = await openMenu();
       const enrichmentItem = await screen.findByRole('menuitem', { name: /manage enrichments/i });
       await user.click(enrichmentItem);
@@ -335,13 +307,7 @@ describe('AlertRuleActionsMenu', () => {
       contextSrv.user.orgRole = OrgRole.Editor;
       grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingEnrichmentsRead]);
 
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule() }}
-          onMutated={jest.fn()}
-        />
-      );
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       await openMenu();
 
       expect(screen.getByRole('menuitem', { name: /manage enrichments/i })).toBeInTheDocument();
@@ -352,13 +318,7 @@ describe('AlertRuleActionsMenu', () => {
       config.featureToggles.alertingEnrichmentPerRule = true;
       contextSrv.user.orgRole = OrgRole.Admin;
 
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule() }}
-          onMutated={jest.fn()}
-        />
-      );
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       await openMenu();
 
       expect(screen.queryByRole('menuitem', { name: /manage enrichments/i })).not.toBeInTheDocument();
@@ -369,13 +329,7 @@ describe('AlertRuleActionsMenu', () => {
       config.featureToggles.alertingEnrichmentPerRule = false;
       contextSrv.user.orgRole = OrgRole.Admin;
 
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule() }}
-          onMutated={jest.fn()}
-        />
-      );
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       await openMenu();
 
       expect(screen.queryByRole('menuitem', { name: /manage enrichments/i })).not.toBeInTheDocument();
@@ -386,13 +340,7 @@ describe('AlertRuleActionsMenu', () => {
       config.featureToggles.alertingEnrichmentPerRule = true;
       contextSrv.user.orgRole = OrgRole.Editor;
 
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule() }}
-          onMutated={jest.fn()}
-        />
-      );
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       await openMenu();
 
       expect(screen.queryByRole('menuitem', { name: /manage enrichments/i })).not.toBeInTheDocument();

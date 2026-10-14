@@ -1,97 +1,69 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
-import { type ContinuationPage, type FetchContinuationPage } from '../shared/useContinuationSearch';
+import { useDispatch } from 'app/types/store';
 
-export interface UseFolderPagesResult<T> {
-  items: T[];
+import { type PagedFailure, keepFirstPage, retryPagedQuery, toPagedFailure } from '../shared/pagedQuery';
+
+import { type FolderHit, folderSearchAPI, useSearchRuleFoldersInfiniteQuery } from './folderSearch';
+
+export interface UseFolderPagesResult {
+  /** The folders of the page being shown. */
+  folders: FolderHit[];
+  /** The first page is still loading and nothing has loaded yet. */
   isLoading: boolean;
-  error: unknown;
+  /** The first request failed, so there is nothing to show. */
+  error?: unknown;
+  /** A request failed while a page is already shown; that page stays visible. */
+  failure?: PagedFailure;
+  isLoadingPage: boolean;
   hasNext: boolean;
   hasPrevious: boolean;
   next: () => void;
   previous: () => void;
-  /** Total fetches issued - for tests/measurement. */
-  requestCount: number;
-}
-
-interface PagesState<T> {
-  status: 'loading' | 'loaded' | 'error';
-  items: T[];
-  error?: unknown;
-  nextToken?: string;
+  retry: () => void;
 }
 
 /**
- * Folders mode's Previous/Next pagination: the folder search API has no page numbers, so
- * visited page-start continuation tokens are kept in an in-memory stack (index = page number)
- * rather than re-derived. Restarts at page one whenever `resetKey` changes.
+ * Folders mode's Previous/Next pagination over the folder search. The API has no page numbers, so
+ * the query keeps every page visited so far (their start tokens live in the query, in memory only)
+ * and this hook only tracks which of them is shown. Going back is therefore free, and a refetch
+ * after a rule change refreshes the pages already visited without moving the user.
  */
-export function useFolderPages<T>(fetchPage: FetchContinuationPage<T>, resetKey: unknown): UseFolderPagesResult<T> {
-  const [pageIndex, setPageIndex] = useState(0);
-  const [state, setState] = useState<PagesState<T>>({ status: 'loading', items: [] });
-  const tokenStackRef = useRef<Array<string | undefined>>([undefined]);
-  const generationRef = useRef(0);
-  const requestCountRef = useRef(0);
-  const [requestCount, setRequestCount] = useState(0);
-  const fetchPageRef = useRef(fetchPage);
-  fetchPageRef.current = fetchPage;
+export function useFolderPages(folderUids: string[]): UseFolderPagesResult {
+  const dispatch = useDispatch();
+  const filterKey = JSON.stringify(folderUids);
+  const [position, setPosition] = useState({ filterKey, pageIndex: 0 });
+  if (position.filterKey !== filterKey) {
+    setPosition({ filterKey, pageIndex: 0 });
+  }
 
-  const loadPage = useCallback((index: number) => {
-    const generation = ++generationRef.current;
-    setState((prev) => ({ ...prev, status: 'loading' }));
-    requestCountRef.current += 1;
-    setRequestCount(requestCountRef.current);
+  const query = useSearchRuleFoldersInfiniteQuery({ folderUids }, { refetchOnMountOrArgChange: true });
+  const pages = query.currentData?.pages;
+  const hasLoaded = pages !== undefined;
+  // The wanted page can be ahead of the loaded ones while the next page is fetching or has failed;
+  // the last loaded page stays on screen until it arrives.
+  const shownIndex = pages ? Math.min(position.pageIndex, pages.length - 1) : 0;
 
-    fetchPageRef.current(tokenStackRef.current[index]).then(
-      (page: ContinuationPage<T>) => {
-        if (generation !== generationRef.current) {
-          return;
-        }
-        setState({ status: 'loaded', items: page.items, nextToken: page.continueToken });
-      },
-      (error: unknown) => {
-        if (generation !== generationRef.current) {
-          return;
-        }
-        setState((prev) => ({ ...prev, status: 'error', error }));
-      }
-    );
-  }, []);
-
-  useEffect(() => {
-    tokenStackRef.current = [undefined];
-    setPageIndex(0);
-    loadPage(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetKey]);
-
-  const next = useCallback(() => {
-    if (!state.nextToken) {
-      return;
-    }
-    const nextIndex = pageIndex + 1;
-    tokenStackRef.current[nextIndex] = state.nextToken;
-    setPageIndex(nextIndex);
-    loadPage(nextIndex);
-  }, [state.nextToken, pageIndex, loadPage]);
-
-  const previous = useCallback(() => {
-    if (pageIndex === 0) {
-      return;
-    }
-    const prevIndex = pageIndex - 1;
-    setPageIndex(prevIndex);
-    loadPage(prevIndex);
-  }, [pageIndex, loadPage]);
+  const restartFromFirstPage = () => {
+    dispatch(folderSearchAPI.util.updateQueryData('searchRuleFolders', { folderUids }, keepFirstPage));
+    setPosition({ filterKey, pageIndex: 0 });
+  };
 
   return {
-    items: state.items,
-    isLoading: state.status === 'loading',
-    error: state.status === 'error' ? state.error : undefined,
-    hasNext: Boolean(state.nextToken),
-    hasPrevious: pageIndex > 0,
-    next,
-    previous,
-    requestCount,
+    folders: pages?.[shownIndex]?.folders ?? [],
+    isLoading: !hasLoaded && !query.isError,
+    error: !hasLoaded && query.isError ? query.error : undefined,
+    failure: hasLoaded ? toPagedFailure(query) : undefined,
+    isLoadingPage: query.isFetchingNextPage,
+    hasNext: hasLoaded && (shownIndex < pages.length - 1 || query.hasNextPage),
+    hasPrevious: shownIndex > 0,
+    next: () => {
+      setPosition({ filterKey, pageIndex: shownIndex + 1 });
+      if (pages && shownIndex === pages.length - 1) {
+        void query.fetchNextPage();
+      }
+    },
+    previous: () => setPosition({ filterKey, pageIndex: Math.max(shownIndex - 1, 0) }),
+    retry: () => retryPagedQuery(query, restartFromFirstPage),
   };
 }

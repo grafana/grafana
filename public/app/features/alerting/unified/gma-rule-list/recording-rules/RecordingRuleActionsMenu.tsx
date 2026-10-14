@@ -9,7 +9,6 @@ import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { useDuplicateRuleAction } from '../rule-actions/DuplicateRuleAction';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
-import { type OnMutated } from '../rule-actions/ruleActionTypes';
 import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteRecordingRule } from '../rule-actions/useDeleteRule';
 import { useRecordingRulePauseResume } from '../rule-actions/usePauseResumeRule';
@@ -20,7 +19,6 @@ import { MoreButton } from '../shared/MoreButton';
 interface RecordingRuleActionsMenuProps {
   ruleUid: string;
   resourceState: RuleResourceState<RecordingRule>;
-  onMutated: OnMutated;
   buttonSize?: ComponentSize;
 }
 
@@ -29,12 +27,7 @@ interface RecordingRuleActionsMenuProps {
  * Declare incident, or enrichment items - Recording rules have no alert state, instances, or
  * notification routing to attach any of those to.
  */
-export function RecordingRuleActionsMenu({
-  ruleUid,
-  resourceState,
-  onMutated,
-  buttonSize,
-}: RecordingRuleActionsMenuProps) {
+export function RecordingRuleActionsMenu({ ruleUid, resourceState, buttonSize }: RecordingRuleActionsMenuProps) {
   const abilities = useRuleActionAbilities(resourceState);
   const { setPaused, isPending: pausePending } = useRecordingRulePauseResume(ruleUid);
   const { deleteRule, isPending: deletePending } = useDeleteRecordingRule(ruleUid);
@@ -62,7 +55,7 @@ export function RecordingRuleActionsMenu({
           }
           icon={isPaused ? 'play' : 'pause'}
           disabled={pausePending}
-          onClick={() => setPaused(!isPaused, onMutated)}
+          onClick={() => setPaused(!isPaused)}
         />
       )}
       {rule && <AnalyzeK8sRuleButton kind="recording" rule={rule} />}
@@ -97,7 +90,7 @@ export function RecordingRuleActionsMenu({
         isOpen={showDeleteModal}
         ruleTitle={ruleTitle}
         isDeleting={deletePending}
-        onConfirm={() => deleteRule(onMutated)}
+        onConfirm={() => deleteRule()}
         onDismiss={() => setShowDeleteModal(false)}
       />
     </>

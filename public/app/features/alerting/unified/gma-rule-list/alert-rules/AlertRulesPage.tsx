@@ -6,7 +6,6 @@ import { Box, Divider, RadioButtonGroup, Stack } from '@grafana/ui';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { legacyRuleListNameResolvers } from '../legacy-migration/nameResolvers';
 import { RulesPageShell } from '../page-shell/RulesPageShell';
-import { useRuleListRefreshVersion } from '../rule-data/refreshRuleLists';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { alertTokens } from '../rule-search/alertTokens';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
@@ -25,17 +24,7 @@ import { AlertRulesHeaderActions } from './AlertRulesHeaderActions';
 import { ListView } from './AlertRulesListView';
 import { useAlertRulesSavedSearches } from './alertRulesSavedSearches';
 
-function AlertRulesBody({
-  canSearch,
-  mode,
-  criteria,
-  resetKey,
-}: {
-  canSearch: boolean;
-  mode: RuleListMode;
-  criteria: Criteria;
-  resetKey: unknown;
-}) {
+function AlertRulesBody({ canSearch, mode, criteria }: { canSearch: boolean; mode: RuleListMode; criteria: Criteria }) {
   if (!canSearch) {
     return (
       <div role="alert">
@@ -44,9 +33,9 @@ function AlertRulesBody({
     );
   }
   if (mode === 'folders') {
-    return <FoldersView folderUids={criteria.namespaces} resetKey={resetKey} />;
+    return <FoldersView folderUids={criteria.namespaces} />;
   }
-  return <ListView criteria={criteria} resetKey={resetKey} />;
+  return <ListView criteria={criteria} />;
 }
 
 function AlertRulesPage() {
@@ -54,7 +43,6 @@ function AlertRulesPage() {
   // getCriteriaIssues is cheap and pure; recomputed here rather than trusting a slot in the
   // hook's own return so this page never has to know its internal caching.
   const issues = getCriteriaIssues(criteria, 'alert');
-  const refreshVersion = useRuleListRefreshVersion('alert');
   const savedSearchesReady = useLegacySavedSearchesCopied(legacyRuleListNameResolvers);
 
   const trackedView = useRef(false);
@@ -82,7 +70,6 @@ function AlertRulesPage() {
   // show the invalid-filter state when getCriteriaIssues() reports an unresolved token or a
   // panel ID with no dashboard, rather than sending a narrower/wider request than intended.
   const canSearch = issues.length === 0;
-  const resetKey = JSON.stringify([criteria, refreshVersion]);
 
   return (
     <RulesPageShell
@@ -142,7 +129,7 @@ function AlertRulesPage() {
               <Divider direction="vertical" spacing={0} />
             </Box>
             <Box grow={1} minWidth={0}>
-              <AlertRulesBody canSearch={canSearch} mode={mode} criteria={criteria} resetKey={resetKey} />
+              <AlertRulesBody canSearch={canSearch} mode={mode} criteria={criteria} />
             </Box>
           </Stack>
         </Stack>

@@ -2,7 +2,6 @@ import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
 import { setupMswServer } from '../../mockApi';
-import { clearAllEnrichmentCaches } from '../rule-data/ruleResourceLookups';
 
 import { AlertRuleActions } from './AlertRuleActions';
 
@@ -24,10 +23,6 @@ function mockFullRule(annotations: Record<string, string>) {
 }
 
 describe('AlertRuleActions', () => {
-  beforeEach(() => {
-    clearAllEnrichmentCaches();
-  });
-
   it('shows an Edit link to the editor when the rule is writable', async () => {
     mockFullRule({ 'grafana.com/access/canWrite': 'true' });
     render(<AlertRuleActions ruleUid="rule-1" />);

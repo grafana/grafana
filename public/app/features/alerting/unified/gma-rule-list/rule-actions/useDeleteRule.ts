@@ -7,8 +7,9 @@ import {
 import { t } from '@grafana/i18n';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
+import { useInvalidateFolderData } from '../folder-browsing/folderLookups';
+
 import { trackRuleDelete } from './analytics';
-import { type OnMutated } from './ruleActionTypes';
 
 /** Matches the validator's rejection message so the UI can explain it instead of showing raw API text. */
 const SEQUENCE_RESTRICTION_PATTERN = /belongs to rule sequence/;
@@ -24,12 +25,12 @@ export interface DeleteRuleResult {
 async function performDelete(
   kind: 'alert' | 'recording',
   triggerDelete: () => Promise<unknown>,
-  onMutated: OnMutated
+  invalidateFolderData: () => void
 ): Promise<DeleteRuleResult> {
   try {
     await triggerDelete();
     trackRuleDelete(kind, 'success');
-    onMutated('deleted');
+    invalidateFolderData();
     return { success: true, sequenceRestricted: false };
   } catch (error) {
     trackRuleDelete(kind, 'error');
@@ -50,10 +51,11 @@ async function performDelete(
 
 export function useDeleteAlertRule(uid: string) {
   const [deleteAlertRule, { isLoading }] = useDeleteAlertRuleMutation();
+  const invalidateFolderData = useInvalidateFolderData();
 
   const deleteRule = useCallback(
-    (onMutated: OnMutated) => performDelete('alert', () => deleteAlertRule({ name: uid }).unwrap(), onMutated),
-    [deleteAlertRule, uid]
+    () => performDelete('alert', () => deleteAlertRule({ name: uid }).unwrap(), invalidateFolderData),
+    [deleteAlertRule, invalidateFolderData, uid]
   );
 
   return { deleteRule, isPending: isLoading };
@@ -61,10 +63,11 @@ export function useDeleteAlertRule(uid: string) {
 
 export function useDeleteRecordingRule(uid: string) {
   const [deleteRecordingRule, { isLoading }] = useDeleteRecordingRuleMutation();
+  const invalidateFolderData = useInvalidateFolderData();
 
   const deleteRule = useCallback(
-    (onMutated: OnMutated) => performDelete('recording', () => deleteRecordingRule({ name: uid }).unwrap(), onMutated),
-    [deleteRecordingRule, uid]
+    () => performDelete('recording', () => deleteRecordingRule({ name: uid }).unwrap(), invalidateFolderData),
+    [deleteRecordingRule, invalidateFolderData, uid]
   );
 
   return { deleteRule, isPending: isLoading };
