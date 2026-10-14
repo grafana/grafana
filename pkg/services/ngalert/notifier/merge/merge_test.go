@@ -146,7 +146,7 @@ func TestReceivers(t *testing.T) {
 
 func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
-		return v1.NewTimeInterval(name, nil, models.ProvenanceNone)
+		return v1.NewTimeInterval(v1.TimeIntervalUID(name), name, nil, models.ProvenanceNone)
 	}
 	toMap := func(intervals ...v1.TimeInterval) map[v1.ResourceUID]v1.TimeInterval {
 		m := make(map[v1.ResourceUID]v1.TimeInterval, len(intervals))
@@ -319,6 +319,37 @@ func TestTimeIntervals(t *testing.T) {
 			assert.Equal(t, incomingNames, names)
 		})
 	}
+}
+
+func TestTimeIntervals_UIDCollisionWithOrphanedExisting(t *testing.T) {
+	// An existing interval renamed away from "payments" keeps its old, name-derived UID (UID no
+	// longer moves with a rename). An incoming interval still named "payments" has no name
+	// collision to dedup against, so without the occupancy check it would compute the same UID
+	// and silently overwrite the existing entry.
+	orphanedUID := v1.TimeIntervalUID("payments")
+	existing := map[v1.ResourceUID]v1.TimeInterval{
+		orphanedUID: v1.NewTimeInterval(orphanedUID, "payments-platform", nil, models.ProvenanceNone),
+	}
+	incoming := []v1.TimeInterval{
+		v1.NewTimeInterval(v1.TimeIntervalUID("payments"), "payments", nil, models.ProvenanceNone),
+	}
+
+	result, renames, added := TimeIntervals(existing, incoming, "dupe")
+
+	assert.Empty(t, renames, "the name itself didn't collide, so it should not have been renamed")
+	require.Len(t, result, 2)
+
+	// The orphaned existing entry must survive untouched.
+	stillThere, ok := result[orphanedUID]
+	require.True(t, ok)
+	assert.Equal(t, "payments-platform", stillThere.Title)
+
+	// The incoming interval must have been given a different UID instead of colliding.
+	require.Len(t, added, 1)
+	assert.NotEqual(t, orphanedUID, added[0])
+	addedInterval, ok := result[added[0]]
+	require.True(t, ok)
+	assert.Equal(t, "payments", addedInterval.Title)
 }
 
 //go:embed testdata/mimir_no_intervals.yaml

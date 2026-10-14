@@ -24,9 +24,9 @@ func TestGetMuteTimings(t *testing.T) {
 	revision := &legacy_storage.ConfigRevision{
 		Config: &v1.AMConfigV1{
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval("Test1", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval("Test2", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test3"): v1.NewTimeInterval("Test3", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval(v1.TimeIntervalUID("Test1"), "Test1", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval(v1.TimeIntervalUID("Test2"), "Test2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test3"): v1.NewTimeInterval(v1.TimeIntervalUID("Test3"), "Test3", nil, models.ProvenanceNone),
 			},
 		},
 	}
@@ -201,8 +201,8 @@ func TestGetMuteTimingByName(t *testing.T) {
 	revision := &legacy_storage.ConfigRevision{
 		Config: &v1.AMConfigV1{
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval("Test1", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval("Test2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval(v1.TimeIntervalUID("Test1"), "Test1", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval(v1.TimeIntervalUID("Test2"), "Test2", nil, models.ProvenanceNone),
 			},
 		},
 	}
@@ -275,8 +275,8 @@ func TestGetMuteTimingByUID(t *testing.T) {
 	revision := &legacy_storage.ConfigRevision{
 		Config: &v1.AMConfigV1{
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval("Test1", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval("Test2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval(v1.TimeIntervalUID("Test1"), "Test1", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval(v1.TimeIntervalUID("Test2"), "Test2", nil, models.ProvenanceNone),
 			},
 		},
 	}
@@ -430,7 +430,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		require.EqualValues(t, expected.Title, result.Title)
 		require.EqualValues(t, expected.TimeIntervals, result.TimeIntervals)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
-		require.Equal(t, v1.TimeIntervalUID(expected.Title), result.UID)
+		require.NotEmpty(t, result.UID)
 		require.NotEmpty(t, result.Version)
 
 		require.Len(t, store.Calls, 2)
@@ -441,7 +441,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		require.Equal(t, orgID, store.Calls[1].Args[2])
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 
-		stored, ok := revision.Config.TimeIntervals[v1.TimeIntervalUID(expected.Title)]
+		stored, ok := revision.Config.TimeIntervals[result.UID]
 		require.True(t, ok, "created interval should be stored")
 		require.Equal(t, expected.Title, stored.Title)
 		require.EqualValues(t, expected.TimeIntervals, stored.TimeIntervals)
@@ -520,8 +520,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 		return &v1.AMConfigV1{
 			Templates: nil,
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID("Test"):  v1.NewTimeInterval("Test", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval("Test2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test"):  v1.NewTimeInterval(v1.TimeIntervalUID("Test"), "Test", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval(v1.TimeIntervalUID("Test2"), "Test2", nil, models.ProvenanceNone),
 			},
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
@@ -1050,12 +1050,12 @@ func TestDeleteMuteTimings(t *testing.T) {
 		return &v1.AMConfigV1{
 			Templates: nil,
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID(usedMuteTiming):           v1.NewTimeInterval(usedMuteTiming, nil, models.ProvenanceNone),
-				v1.TimeIntervalUID(timingToDelete.Title):     v1.NewTimeInterval(timingToDelete.Title, nil, models.ProvenanceNone),
-				v1.TimeIntervalUID(usedActiveTiming):         v1.NewTimeInterval(usedActiveTiming, nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("timing-to-delete2"):      v1.NewTimeInterval("timing-to-delete2", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID(managedRouteMuteTiming):   v1.NewTimeInterval(managedRouteMuteTiming, nil, models.ProvenanceNone),
-				v1.TimeIntervalUID(managedRouteActiveTiming): v1.NewTimeInterval(managedRouteActiveTiming, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(usedMuteTiming):           v1.NewTimeInterval(v1.TimeIntervalUID(usedMuteTiming), usedMuteTiming, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(timingToDelete.Title):     v1.NewTimeInterval(v1.TimeIntervalUID(timingToDelete.Title), timingToDelete.Title, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(usedActiveTiming):         v1.NewTimeInterval(v1.TimeIntervalUID(usedActiveTiming), usedActiveTiming, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("timing-to-delete2"):      v1.NewTimeInterval(v1.TimeIntervalUID("timing-to-delete2"), "timing-to-delete2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(managedRouteMuteTiming):   v1.NewTimeInterval(v1.TimeIntervalUID(managedRouteMuteTiming), managedRouteMuteTiming, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(managedRouteActiveTiming): v1.NewTimeInterval(v1.TimeIntervalUID(managedRouteActiveTiming), managedRouteActiveTiming, nil, models.ProvenanceNone),
 			},
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
