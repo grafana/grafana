@@ -17,16 +17,21 @@ type EnterRequestListener = (target: ComposerTarget) => void;
 export const PENDING_REQUEST_TTL_MS = 10_000;
 
 const listeners = new Set<EnterRequestListener>();
-let pending: { target: ComposerTarget; at: number; timer: ReturnType<typeof setTimeout> } | undefined;
+const changeListeners = new Set<() => void>();
+/**
+ * The request Composer has not settled yet: from the moment it is made until an entry attempt on it ends,
+ * it is cleared, or `PENDING_REQUEST_TTL_MS` passes. What the UI that made it shows as pending.
+ */
+let outstanding: { target: ComposerTarget; timer: ReturnType<typeof setTimeout> } | undefined;
+/** A request waiting for its first listener. */
+let pending: { target: ComposerTarget; at: number } | undefined;
 /**
  * A request that floats the extension sidebar until Composer takes over, so a sidebar the picker opens never
  * paints docked first. The session takes its own claim when it starts; a failure, expiry or teardown
  * releases this one, so the user is never left with an empty floating box. `docked` records that the user
  * docked the sidebar while it waited: the entry still goes ahead, docked.
  */
-let floated:
-  | { target: ComposerTarget; release: () => void; timer: ReturnType<typeof setTimeout>; docked: boolean }
-  | undefined;
+let floated: { target: ComposerTarget; release: () => void; docked: boolean } | undefined;
 
 /**
  * Registers a listener for Composer entry requests and hands it a request still waiting for one.
@@ -49,6 +54,7 @@ export function addComposerEnterRequestListener(listener: EnterRequestListener):
  */
 export function requestComposerEnter(target: ComposerTarget, { float = false } = {}): void {
   clearPendingComposerEnterRequest();
+  outstanding = { target, timer: setTimeout(clearPendingComposerEnterRequest, PENDING_REQUEST_TTL_MS) };
   if (float) {
     const request = {
       target,
@@ -58,31 +64,44 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
           request.docked = true;
         },
       }),
-      timer: setTimeout(releaseFloatedSidebar, PENDING_REQUEST_TTL_MS),
       docked: false,
     };
     floated = request;
   }
+  notifyChange();
   const [listener] = listeners;
   if (listener) {
     listener(target);
     return;
   }
-  pending = { target, at: Date.now(), timer: setTimeout(dropPendingRequest, PENDING_REQUEST_TTL_MS) };
+  pending = { target, at: Date.now() };
 }
 
 /**
- * Drops a request still waiting for a listener, so it never fires late, and releases its floating claim
- * (navigation, scene teardown, a newer request).
+ * Ends the request still outstanding, so it never fires late, and releases its floating claim (navigation,
+ * scene teardown, a newer request, expiry).
  */
 export function clearPendingComposerEnterRequest(): void {
-  dropPendingRequest();
+  const hadRequest = outstanding !== undefined;
+  pending = undefined;
   releaseFloatedSidebar();
+  dropOutstanding();
+  if (hadRequest) {
+    notifyChange();
+  }
 }
 
-/** What a request still waiting (for a listener, or for its session to start) is for. */
+/** What the outstanding request is for: one waiting for a listener, or for its entry attempt to end. */
 export function getPendingComposerEnterTarget(): ComposerTarget | undefined {
-  return pending?.target ?? floated?.target;
+  return outstanding?.target;
+}
+
+/** Calls `listener` when a request starts or ends. Returns an unsubscribe. For `useSyncExternalStore`. */
+export function subscribeToComposerEnterRequests(listener: () => void): () => void {
+  changeListeners.add(listener);
+  return () => {
+    changeListeners.delete(listener);
+  };
 }
 
 /**
@@ -94,6 +113,10 @@ export function settleComposerEnterRequest(uid: string): void {
   if (floated?.target.uid === uid) {
     releaseFloatedSidebar();
   }
+  if (outstanding?.target.uid === uid) {
+    dropOutstanding();
+    notifyChange();
+  }
 }
 
 /** Whether the user docked the sidebar while the request on `uid` waited, so its session should not float. */
@@ -103,26 +126,23 @@ export function wasComposerEnterRequestDocked(uid: string): boolean {
 
 function releaseFloatedSidebar(): void {
   floated?.release();
-  forgetFloated();
+  floated = undefined;
 }
 
-function forgetFloated(): void {
-  if (floated) {
-    clearTimeout(floated.timer);
-    floated = undefined;
+function dropOutstanding(): void {
+  if (outstanding) {
+    clearTimeout(outstanding.timer);
+    outstanding = undefined;
   }
 }
 
-function dropPendingRequest(): void {
-  if (pending) {
-    clearTimeout(pending.timer);
-    pending = undefined;
-  }
+function notifyChange(): void {
+  [...changeListeners].forEach((listener) => listener());
 }
 
 function takePendingRequest(): ComposerTarget | undefined {
   const waiting = pending;
-  // The listener now owns the request; a floating claim stays until the entry attempt settles.
-  dropPendingRequest();
+  // The listener now owns the request; it stays outstanding, and floating, until the entry attempt settles.
+  pending = undefined;
   return waiting && Date.now() - waiting.at <= PENDING_REQUEST_TTL_MS ? waiting.target : undefined;
 }

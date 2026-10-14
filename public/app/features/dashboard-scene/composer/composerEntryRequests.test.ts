@@ -7,9 +7,11 @@ import {
 import {
   addComposerEnterRequestListener,
   clearPendingComposerEnterRequest,
+  getPendingComposerEnterTarget,
   PENDING_REQUEST_TTL_MS,
   requestComposerEnter,
   settleComposerEnterRequest,
+  subscribeToComposerEnterRequests,
   wasComposerEnterRequestDocked,
 } from './composerEntryRequests';
 
@@ -141,5 +143,36 @@ describe('a request that floats the sidebar', () => {
     settleComposerEnterRequest(TARGET.uid);
     clearPendingComposerEnterRequest();
     expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+});
+
+describe('the outstanding request', () => {
+  it('stays outstanding after a listener takes it, until its entry attempt settles', () => {
+    const changed = jest.fn();
+    const unsubscribeChanges = subscribeToComposerEnterRequests(changed);
+    requestComposerEnter(TARGET);
+    expect(changed).toHaveBeenCalledTimes(1);
+    const unsubscribe = addComposerEnterRequestListener(jest.fn());
+    expect(getPendingComposerEnterTarget()).toEqual(TARGET);
+
+    settleComposerEnterRequest('another-dashboard');
+    expect(getPendingComposerEnterTarget()).toEqual(TARGET);
+    settleComposerEnterRequest(TARGET.uid);
+
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
+    expect(changed).toHaveBeenCalledTimes(2);
+    unsubscribe();
+    unsubscribeChanges();
+  });
+
+  it('ends after 10 seconds, or when cleared', () => {
+    jest.useFakeTimers();
+    requestComposerEnter(TARGET);
+    jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS);
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
+
+    requestComposerEnter(TARGET);
+    clearPendingComposerEnterRequest();
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
   });
 });
