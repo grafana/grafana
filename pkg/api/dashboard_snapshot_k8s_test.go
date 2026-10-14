@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -46,11 +47,38 @@ func snapshotAPIContext(t *testing.T, path string) (*HTTPServer, *contextmodel.R
 	return &HTTPServer{Cfg: cfg, Features: featuremgmt.WithFeatures()}, ctx
 }
 
+func TestOSSPublicSnapshotReadStore(t *testing.T) {
+	for _, mode := range []grafanarest.DualWriterMode{0, 1, 2, 3, 4, 5} {
+		for _, migration := range []bool{false, true} {
+			t.Run(fmt.Sprintf("mode=%d/migration=%t", mode, migration), func(t *testing.T) {
+				hs, c := snapshotAPIContext(t, "/api/snapshots/snapshot-key")
+				c.IsSignedIn = false
+				c.SignedInUser = &user.SignedInUser{IsAnonymous: true}
+				hs.Cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+					setting.SnapshotResource: {DualWriterMode: mode, EnableMigration: migration},
+				}
+				hs.clientConfigProvider = &mockDirectRestConfigProvider{host: "http://localhost", transport: snapshotAPIRoundTripper(func(r *http.Request) (*http.Response, error) {
+					t.Fatal("OSS public reads must not reach Kubernetes storage")
+					return nil, nil
+				})}
+				service := dashboardsnapshots.NewMockService(t)
+				hs.dashboardsnapshotsService = service
+				status := http.StatusServiceUnavailable
+				if mode <= grafanarest.Mode2 && !migration {
+					status = http.StatusOK
+					service.On("GetDashboardSnapshot", c.Req.Context(), &dashboardsnapshots.GetDashboardSnapshotQuery{Key: "snapshot-key"}).
+						Return(&dashboardsnapshots.DashboardSnapshot{Dashboard: simplejson.New(), Expires: time.Now().Add(time.Hour)}, nil).Once()
+				}
+				require.Equal(t, status, hs.GetDashboardSnapshot(c).Status())
+			})
+		}
+	}
+}
+
 func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 	for _, tc := range []struct {
 		name                string
 		orgID               int64
-		stack               string
 		anonymous, noExpiry bool
 		status              int
 	}{
@@ -58,7 +86,6 @@ func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 		{name: "anonymous", anonymous: true, status: 200},
 		{name: "viewer in another org", orgID: 2, status: 200},
 		{name: "anonymous in another org", orgID: 2, anonymous: true, status: 200},
-		{name: "cloud stack", stack: "123", status: 200},
 		{name: "never expires", noExpiry: true, status: 200},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -70,11 +97,8 @@ func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 			if tc.orgID != 0 {
 				c.OrgID = tc.orgID
 			}
-			hs.Cfg.StackID = tc.stack
-			namespace := "default"
-			if tc.stack != "" {
-				namespace = "stacks-" + tc.stack
-			}
+			hs.Cfg.StackID = "123"
+			namespace := "stacks-123"
 			expires := time.Now().Add(time.Hour).UnixMilli()
 			if tc.noExpiry {
 				expires = 0
@@ -122,6 +146,7 @@ func TestSnapshotAPIErrorPropagation(t *testing.T) {
 	for _, status := range []int{403, 404, 500} {
 		t.Run(fmt.Sprint(status), func(t *testing.T) {
 			hs, c := snapshotAPIContext(t, "/api/snapshots/snapshot-key")
+			hs.Cfg.StackID = "123"
 			hs.clientConfigProvider = &mockDirectRestConfigProvider{host: "http://localhost", transport: snapshotAPIRoundTripper(func(r *http.Request) (*http.Response, error) {
 				return snapshotAPIResponse(r, status, fmt.Sprintf(`{"kind":"Status","apiVersion":"v1","status":"Failure","message":"storage failure","code":%d}`, status)), nil
 			})}
