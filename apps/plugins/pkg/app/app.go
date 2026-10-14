@@ -162,7 +162,11 @@ func (p *PluginAppInstaller) InstallAPIs(
 		replace: replacedStorage,
 		wrap:    wrappedStorage,
 	}
-	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
+	if err := p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter); err != nil {
+		return err
+	}
+	meta.AddCallerRequestMetrics(wrappedServer.RegisteredWebServices())
+	return nil
 }
 
 func (p *PluginAppInstaller) GetAuthorizer() authorizer.Authorizer {
