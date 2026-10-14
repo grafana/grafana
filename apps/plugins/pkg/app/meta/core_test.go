@@ -162,6 +162,27 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		assert.True(t, found, "plugin from staticRootPath must be loaded; hardcoded paths would miss it")
 	})
 
+	t.Run("skips plugins loaded as external", func(t *testing.T) {
+		staticRootPath := filepath.Join(t.TempDir(), "public")
+		for _, id := range []string{"kept-panel", "external-panel"} {
+			pluginDir := filepath.Join(staticRootPath, "app", "plugins", "panel", id)
+			require.NoError(t, os.MkdirAll(pluginDir, 0750))
+			pluginJSON := `{"id":"` + id + `","name":"` + id + `","type":"panel","info":{"version":"1.0.0"}}`
+			require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(pluginJSON), 0644))
+		}
+
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			StaticRootPath: func() (string, error) { return staticRootPath, nil },
+			SkipPluginIDs:  []string{"external-panel"},
+		})
+		require.NoError(t, err)
+
+		_, err = provider.GetMeta(ctx, PluginRef{ID: "kept-panel", Version: "1.0.0"})
+		require.NoError(t, err)
+		_, err = provider.GetMeta(ctx, PluginRef{ID: "external-panel", Version: "1.0.0"})
+		require.ErrorIs(t, err, ErrMetaNotFound)
+	})
+
 	t.Run("returns no error when plugins directory does not exist", func(t *testing.T) {
 		// Path validation happens upstream (in CoreProviderOpts.StaticRootPath); loadPlugins
 		// itself logs a warning and returns no plugins when the directory is missing.

@@ -37,6 +37,7 @@ type CoreProvider struct {
 	ttl            time.Duration
 	loader         pluginsLoader.Service
 	staticRootPath string
+	skipIDs        map[string]struct{}
 	logger         logging.Logger
 }
 
@@ -48,6 +49,9 @@ type CoreProviderOpts struct {
 	// so that the frontend can prepend a CDN domain. Set to true when running in
 	// standalone (MT apiserver) mode.
 	CDNAssets bool
+	// SkipPluginIDs lists core plugins that are loaded as external plugins instead (plugin.<id>.as_external).
+	// Skipping them lets the request fall through to a provider that returns the external plugin's meta.
+	SkipPluginIDs []string
 }
 
 // NewCoreProvider creates a new CoreProvider for core plugins.
@@ -58,13 +62,18 @@ func NewCoreProvider(logger logging.Logger, opts CoreProviderOpts) (*CoreProvide
 		return nil, err
 	}
 
-	return NewCoreProviderWithTTL(logger, staticRootPath, opts.CDNAssets, defaultCoreTTL), nil
+	p := NewCoreProviderWithTTL(logger, staticRootPath, opts.CDNAssets, defaultCoreTTL)
+	for _, id := range opts.SkipPluginIDs {
+		p.skipIDs[id] = struct{}{}
+	}
+	return p, nil
 }
 
 // NewCoreProviderWithTTL creates a new CoreProvider with a custom TTL.
 func NewCoreProviderWithTTL(logger logging.Logger, staticRootPath string, cdnAssets bool, ttl time.Duration) *CoreProvider {
 	return &CoreProvider{
 		loadedPlugins:  make(map[string]pluginsv0alpha1.MetaSpec),
+		skipIDs:        make(map[string]struct{}),
 		ttl:            ttl,
 		loader:         createLoader(cdnAssets, staticRootPath),
 		staticRootPath: staticRootPath,
@@ -144,6 +153,9 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 	}
 
 	for _, plugin := range loadedPlugins {
+		if _, skip := p.skipIDs[plugin.ID]; skip {
+			continue
+		}
 		metaSpec := pluginToMetaSpec(plugin)
 		p.loadedPlugins[plugin.ID] = metaSpec
 	}

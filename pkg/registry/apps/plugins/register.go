@@ -61,6 +61,7 @@ func ProvideAppInstaller(
 		StaticRootPath: func() (string, error) {
 			return getStaticRootPath(cfgProvider, logger)
 		},
+		SkipPluginIDs: getAsExternalPluginIDs(cfgProvider),
 	})
 	if err != nil {
 		return nil, err
@@ -85,6 +86,20 @@ func ProvideAppInstaller(
 		restConfigProvider: restConfigProvider,
 		PluginAppInstaller: i,
 	}, nil
+}
+
+func getAsExternalPluginIDs(cfgProvider configprovider.ConfigProvider) []string {
+	cfg, err := cfgProvider.Get(context.Background())
+	if err != nil {
+		return nil
+	}
+	var ids []string
+	for id, pluginCfg := range cfg.PluginSettings {
+		if pluginCfg["as_external"] == "true" {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 func getStaticRootPath(cfgProvider configprovider.ConfigProvider, logger logging.Logger) (string, error) {
