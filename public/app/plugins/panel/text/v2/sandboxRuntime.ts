@@ -1,3 +1,4 @@
+import type { RenderAdmonitions } from './sandboxAdmonitions';
 import type { RenderDiagrams } from './sandboxMermaid';
 import { RESOURCE_DIRECTIVES, resourceOrigin, type BlockedResource } from './sandboxPolicy';
 import {
@@ -7,6 +8,7 @@ import {
   type FrameNotification,
   type RenderCommand,
   type MermaidCommand,
+  type AdmonitionsCommand,
 } from './sandboxProtocol';
 
 const bootstrap = document.currentScript;
@@ -25,7 +27,7 @@ bootstrap.remove();
 window.trustedTypes?.createPolicy('default', {
   createHTML: (html) => html.replace(/<script/gi, '&lt;script'),
 });
-// Only the fixed Mermaid bundle received through the authenticated parent channel uses this policy.
+// Only application bundles received through the authenticated parent channel use this policy.
 const scriptPolicy = window.trustedTypes?.createPolicy('grafana-text-panel-runtime', {
   createScript: (source) => source,
 });
@@ -39,6 +41,8 @@ let readyTimer = 0;
 let observer: ResizeObserver | undefined;
 let content: HTMLDivElement | undefined;
 let receiveMermaid: ((source: string) => void) | undefined;
+let receiveAdmonitions: ((source: string) => void) | undefined;
+let disposeAdmonitions: (() => void) | undefined;
 const resources: BlockedResource[] = [];
 const check = document.createElement('img');
 
@@ -138,6 +142,29 @@ async function render(command: RenderCommand) {
   observer = new ResizeObserver(measure);
   observer.observe(content);
   await document.fonts.ready;
+  if (command.admonitions && content.querySelector('.grafana-markdown-alert-body')) {
+    const source = await new Promise<string>((resolve) => {
+      receiveAdmonitions = resolve;
+      send({ type: 'admonitions-needed' });
+    });
+    if (disposed) {
+      return;
+    }
+    let render: RenderAdmonitions | undefined;
+    const script = Object.assign(document.createElement('script'), {
+      nonce,
+      textContent: scriptPolicy?.createScript(source) ?? source,
+      registerAdmonitions: (renderer: RenderAdmonitions) => {
+        render = renderer;
+      },
+    });
+    document.head.append(script);
+    script.remove();
+    if (!render) {
+      throw new Error('Text admonition runtime did not initialize');
+    }
+    disposeAdmonitions = render(command, content);
+  }
   await renderDiagrams(command, content);
   if (disposed) {
     return;
@@ -151,7 +178,7 @@ async function render(command: RenderCommand) {
   }, 0);
 }
 
-function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
+function onMessage(event: MessageEvent<RenderCommand | MermaidCommand | AdmonitionsCommand>) {
   const command = event.data;
   if (
     event.source !== window.parent ||
@@ -167,6 +194,11 @@ function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
   if (command.type === 'mermaid-source' && typeof command.source === 'string') {
     receiveMermaid?.(command.source);
     receiveMermaid = undefined;
+    return;
+  }
+  if (command.type === 'admonitions-source' && typeof command.source === 'string') {
+    receiveAdmonitions?.(command.source);
+    receiveAdmonitions = undefined;
     return;
   }
   if (
@@ -185,6 +217,9 @@ function dispose() {
   disposed = true;
   receiveMermaid?.('');
   receiveMermaid = undefined;
+  receiveAdmonitions?.('');
+  receiveAdmonitions = undefined;
+  disposeAdmonitions?.();
   observer?.disconnect();
   clearTimeout(violationTimer);
   clearTimeout(readyTimer);

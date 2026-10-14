@@ -1,5 +1,7 @@
 import type { MermaidConfig } from 'mermaid';
 
+import type { getMarkdownAlertTitles } from '@grafana/ui/internal';
+
 import type { BlockedResource } from './sandboxPolicy';
 
 export const TEXT_FRAME_PROTOCOL = 'grafana-text-frame-v1';
@@ -19,6 +21,10 @@ export interface RenderCommand {
   globalCss: string;
   mermaid?: MermaidConfig;
   diagramError: string;
+  admonitions?: {
+    theme: string;
+    titles: ReturnType<typeof getMarkdownAlertTitles>;
+  };
 }
 
 export interface MermaidCommand {
@@ -28,9 +34,16 @@ export interface MermaidCommand {
   source: string;
 }
 
+export interface AdmonitionsCommand {
+  protocol: typeof TEXT_FRAME_PROTOCOL;
+  channel: string;
+  type: 'admonitions-source';
+  source: string;
+}
+
 export type FrameNotification =
   | { type: 'ready'; document: string }
-  | { type: 'rendered' | 'error' | 'mermaid-needed' }
+  | { type: 'rendered' | 'error' | 'mermaid-needed' | 'admonitions-needed' }
   | { type: 'resize'; height: number; contentHeight: number }
   | { type: 'blocked'; resources: BlockedResource[] };
 
@@ -54,6 +67,7 @@ export function isFrameNotification(
     case 'rendered':
     case 'error':
     case 'mermaid-needed':
+    case 'admonitions-needed':
       return true;
     case 'resize':
       return (
