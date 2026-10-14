@@ -109,11 +109,15 @@ export interface ComposerSessionAPI {
   readonly signal: AbortSignal;
 
   /**
-   * Resolves with the clicked element, or with a region when the user Shift-drags while it is pending.
+   * Resolves with the clicked element, or with a region when the user drags at least 8x8 CSS px while it
+   * is pending (a smaller drag stays a click; a press on a tab header switches tabs).
    * Null when cancelled (Escape, `signal`, pause or session end). Cancelling a drag keeps the pick pending.
    */
   pickElement(signal: AbortSignal): Promise<ElementPick | RegionPick | null>;
-  /** The Region tool: resolves with the rectangle the user drags. A plain click does nothing. */
+  /**
+   * Draws a region only: a plain click does nothing. Kept for compatibility; `pickElement` draws regions
+   * on drag too.
+   */
   pickRegion(signal: AbortSignal): Promise<RegionPick | null>;
   /**
    * Renders a region as an image, WebP where the browser encodes it, longest edge at most 1568px. One

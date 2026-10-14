@@ -39,8 +39,11 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
   const frameRef = useRef(0);
   const [hovered, setHovered] = useState<{ key: string; box: Box } | null>(null);
   const [layout, setLayout] = useState<Layout>(EMPTY_LAYOUT);
-  /** Where a region drag started, in viewport coordinates; null when not dragging. */
-  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  /**
+   * Where a press started, in viewport coordinates, and whether it has since moved far enough to be a drag;
+   * null when no press is in progress.
+   */
+  const dragStartRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   /** A finished or ignored drag swallows the click that follows its pointer-up. */
   const swallowClickRef = useRef(false);
   const [draft, setDraft] = useState<Box | null>(null);
@@ -177,15 +180,15 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
   const onPointerDown = (event: React.PointerEvent) => {
     stop(event);
     swallowClickRef.current = false;
-    // Shift is read at pointer-down only; the Region tool drags without it.
-    if (event.button !== 0 || !picking || paused || capturing || (pickMode !== 'region' && !event.shiftKey)) {
+    // Any primary-button press may become a region: a click picks an element, a drag draws a region.
+    if (event.button !== 0 || !picking || paused || capturing) {
       return;
     }
     // A press on a tab header is a tab switch, never the start of a region: its click passes through.
     if (elementAt(event.clientX, event.clientY, TAB_SELECTOR)) {
       return;
     }
-    dragStartRef.current = { x: event.clientX, y: event.clientY };
+    dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false };
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
@@ -195,9 +198,16 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       return;
     }
     dragStartRef.current = null;
-    swallowClickRef.current = true;
     setDraft(null);
     const rect = toDraft(start, event.clientX, event.clientY);
+    if (!start.moved && rect.width < MIN_REGION_SIZE && rect.height < MIN_REGION_SIZE) {
+      // Never moved far enough to be a drag: with Select it is a click on the element; the Region tool
+      // ignores it.
+      swallowClickRef.current = pickMode === 'region';
+      return;
+    }
+    // A drag never turns back into a click; one too thin for a region is dropped and the pick stays pending.
+    swallowClickRef.current = true;
     if (rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE) {
       return;
     }
@@ -212,9 +222,15 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     if (start) {
       const rootRect = rootRef.current?.getBoundingClientRect();
       const rect = toDraft(start, event.clientX, event.clientY);
-      setDraft(rootRect ? { ...rect, left: rect.left - rootRect.left, top: rect.top - rootRect.top } : null);
-      setHovered(null);
-      return;
+      // A jitter during a click is not a drag yet: keep showing the element under the pointer.
+      if (rect.width >= MIN_REGION_SIZE || rect.height >= MIN_REGION_SIZE) {
+        start.moved = true;
+      }
+      if (start.moved) {
+        setDraft(rootRect ? { ...rect, left: rect.left - rootRect.left, top: rect.top - rootRect.top } : null);
+        setHovered(null);
+        return;
+      }
     }
     if (pickMode !== 'element') {
       return;

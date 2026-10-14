@@ -504,17 +504,90 @@ describe('regions', () => {
     expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
   });
 
-  it('ignores a drag under 8 by 8 pixels and swallows its click, keeping the pick pending', async () => {
+  it('resolves a plain drag during an element pick as a region', async () => {
     const { startPick } = setup();
     const pick = startPick();
+
+    drag({ x: 150, y: 250 }, { x: 350, y: 450 });
+
+    await expect(pick).resolves.toMatchObject({
+      ref: { kind: 'region' },
+      rect: { x: 150 / 1024, y: 250 / 768, width: 200 / 1024, height: 200 / 768 },
+    });
+  });
+
+  it('keeps a press with a small jitter an element click', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 203, clientY: 352 });
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    fireEvent.pointerUp(overlay, { clientX: 203, clientY: 352 });
+    fireEvent.click(overlay, { clientX: 203, clientY: 352 });
+
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'panel', panelId: 3 } });
+  });
+
+  it('drops a drag too thin for a region without picking the element under it', async () => {
+    const { session, startPick } = setup();
+    const settled = track(startPick());
+
+    drag({ x: 200, y: 300 }, { x: 205, y: 340 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+    expect(session.getOverlayState().pickMode).toBe('element');
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+  });
+
+  it('keeps a drag a drag even when it returns near where it started', async () => {
+    const { session, startPick } = setup();
+    const settled = track(startPick());
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 300, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 260, clientY: 300 });
+    fireEvent.pointerUp(overlay, { clientX: 202, clientY: 301 });
+    fireEvent.click(overlay, { clientX: 202, clientY: 301 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+    expect(session.getOverlayState().pickMode).toBe('element');
+  });
+
+  it('ignores a small drag with the Region tool and swallows its click', async () => {
+    const { session } = setup();
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickRegion(new AbortController().signal);
+    });
     const settled = track(pick);
 
-    drag({ x: 200, y: 300 }, { x: 205, y: 340 }, true);
+    drag({ x: 200, y: 300 }, { x: 205, y: 340 });
     await act(async () => {});
-    expect(settled).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByTestId('dashboard-composer-overlay'), { clientX: 200, clientY: 350 });
-    await expect(pick).resolves.toMatchObject({ ref: { kind: 'panel', panelId: 3 } });
+    expect(settled).not.toHaveBeenCalled();
+    expect(session.getOverlayState().pickMode).toBe('region');
+  });
+
+  it('switches tabs on a press during an element pick instead of starting a drag', async () => {
+    const { startPick } = setup();
+    const settled = track(startPick());
+    const tab = document.createElement('button');
+    tab.setAttribute('role', 'tab');
+    const onTabClick = jest.fn();
+    tab.addEventListener('click', onTabClick);
+    document.body.appendChild(tab);
+    document.elementsFromPoint = () => [screen.getByTestId('dashboard-composer-overlay'), tab];
+
+    drag({ x: 10, y: 10 }, { x: 60, y: 60 });
+    await act(async () => {});
+
+    expect(onTabClick).toHaveBeenCalledTimes(1);
+    expect(settled).not.toHaveBeenCalled();
+    tab.remove();
   });
 
   it('does nothing on a plain click with the Region tool', async () => {
