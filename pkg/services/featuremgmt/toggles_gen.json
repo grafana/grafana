@@ -4871,7 +4871,8 @@
       "metadata": {
         "name": "queryServiceFromUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-04-19T09:26:21Z"
+        "creationTimestamp": "2024-04-19T09:26:21Z",
+        "deletionTimestamp": "2026-10-12T12:55:02Z"
       },
       "spec": {
         "description": "Routes requests to the new query service",

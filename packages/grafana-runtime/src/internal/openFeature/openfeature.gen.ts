@@ -304,8 +304,6 @@ export const FlagKeys = {
   QueryLibrary: "queryLibrary",
   /** Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query */
   QueryService: "queryService",
-  /** Routes requests to the new query service */
-  QueryServiceFromUI: "queryServiceFromUI",
   /** Adds datasource connections to the query service */
   QueryServiceWithConnections: "queryServiceWithConnections",
   /** Enables the Query with Assistant button in the query editor */
@@ -1971,17 +1969,6 @@ export const useFlagQueryLibrary = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagQueryService = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryService", false, options).value;
-};
-
-/**
- * Routes requests to the new query service
- *
- * **Details:**
- * - flag key: `queryServiceFromUI`
- * - default value: `false`
- */
-export const useFlagQueryServiceFromUI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryServiceFromUI", false, options).value;
 };
 
 /**
