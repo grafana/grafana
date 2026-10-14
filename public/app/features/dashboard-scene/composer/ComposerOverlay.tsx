@@ -6,17 +6,13 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
-import { type ComposerSession } from './ComposerSession';
+import { type Box, type ComposerSession } from './ComposerSession';
 import { type ElementPoint } from './types';
 
 const PANEL_ROOT_SELECTOR = '[data-viz-panel-key]';
-
-interface Box {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
+const TAB_SELECTOR = '[role="tab"]';
+/** A drawn rectangle smaller than this, in CSS pixels on either side, is ignored. */
+const MIN_REGION_SIZE = 8;
 
 interface Layout {
   highlight: Box | null;
@@ -37,12 +33,17 @@ const EMPTY_LAYOUT: Layout = { highlight: null, items: {} };
 export function ComposerOverlay({ session }: { session: ComposerSession }) {
   const styles = useStyles2(getStyles);
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
-  const { picking, paused, annotations } = overlayState;
+  const { picking, pickMode, paused, annotations } = overlayState;
   const rootRef = useRef<HTMLDivElement>(null);
   const anchorHostRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
   const [hovered, setHovered] = useState<{ key: string; box: Box } | null>(null);
   const [layout, setLayout] = useState<Layout>(EMPTY_LAYOUT);
+  /** Where a region drag started, in viewport coordinates; null when not dragging. */
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  /** A finished or ignored drag swallows the click that follows its pointer-up. */
+  const swallowClickRef = useRef(false);
+  const [draft, setDraft] = useState<Box | null>(null);
 
   const boxFor = useCallback((element: Element): Box | null => {
     const root = rootRef.current?.getBoundingClientRect();
@@ -58,16 +59,15 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     if (!root) {
       return;
     }
-    const resolve = (element: HTMLElement | null) => (element ? boxFor(element) : null);
+    const rootRect = root.getBoundingClientRect();
     const { highlight, annotations: items } = session.getOverlayState();
-    const next: Layout = { highlight: highlight ? resolve(session.findElementRoot(highlight)) : null, items: {} };
+    const next: Layout = { highlight: highlight ? session.resolveBox(highlight, rootRect) : null, items: {} };
     for (const item of items) {
-      const box = resolve(session.findElementRoot(item.ref));
+      const box = session.resolveBox(item.ref, rootRect);
       if (box) {
         next.items[item.id] = box;
       }
     }
-    const rootRect = root.getBoundingClientRect();
     session.getAnchors().forEach((anchor, id) => {
       const item = items.find((candidate) => candidate.id === id);
       const position = item && next.items[id] ? anchorPosition(next.items[id], item.point, rootRect) : null;
@@ -78,7 +78,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       Object.assign(anchor.style, { display: '', left: `${position.left}px`, top: `${position.top}px` });
     });
     setLayout(next);
-  }, [boxFor, session]);
+  }, [session]);
 
   const scheduleMeasure = useCallback(() => {
     cancelAnimationFrame(frameRef.current);
@@ -112,43 +112,109 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     };
   }, [scheduleMeasure]);
 
-  const panelRootAt = (x: number, y: number): HTMLElement | null => {
+  /** The closest element matching `selector` under the point, ignoring Composer's own layer. */
+  const elementAt = (x: number, y: number, selector: string): HTMLElement | null => {
     for (const element of document.elementsFromPoint(x, y)) {
       if (rootRef.current?.contains(element)) {
         continue;
       }
-      const root = element.closest<HTMLElement>(PANEL_ROOT_SELECTOR);
-      if (root) {
-        return root;
+      const match = element.closest<HTMLElement>(selector);
+      if (match) {
+        return match;
       }
     }
     return null;
   };
 
+  // A cancelled drag leaves the pending pick pending.
+  const cancelDrag = useCallback(() => {
+    if (dragStartRef.current) {
+      dragStartRef.current = null;
+      swallowClickRef.current = true;
+      setDraft(null);
+    }
+  }, []);
+
   useEffect(() => {
     if (!picking) {
       setHovered(null);
+      cancelDrag();
       return;
     }
-    // Escape cancels the pick before any other Escape handler (exit edit, close view panel) sees it,
-    // except inside an annotation anchor: that Escape belongs to the plugin's editor.
+    // Escape cancels a drag, else the pick, before any other Escape handler (exit edit, close view panel)
+    // sees it, except inside an annotation anchor: that Escape belongs to the plugin's editor.
     const onKeyDown = (event: KeyboardEvent) => {
       const fromAnchor = event.target instanceof Node && anchorHostRef.current?.contains(event.target);
-      if (event.key === 'Escape' && !fromAnchor) {
-        event.preventDefault();
-        event.stopPropagation();
+      if (event.key !== 'Escape' || fromAnchor) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      if (dragStartRef.current) {
+        cancelDrag();
+      } else {
         session.completePick(null);
       }
     };
     window.addEventListener('keydown', onKeyDown, true);
-    return () => window.removeEventListener('keydown', onKeyDown, true);
-  }, [picking, session]);
+    window.addEventListener('blur', cancelDrag);
+    window.addEventListener('scroll', cancelDrag, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true);
+      window.removeEventListener('blur', cancelDrag);
+      window.removeEventListener('scroll', cancelDrag, { capture: true });
+    };
+  }, [picking, session, cancelDrag]);
 
-  const onPointerMove = (event: React.PointerEvent) => {
-    if (!picking) {
+  const toDraft = (start: { x: number; y: number }, x: number, y: number): Box => ({
+    left: Math.min(start.x, x),
+    top: Math.min(start.y, y),
+    width: Math.abs(x - start.x),
+    height: Math.abs(y - start.y),
+  });
+
+  const onPointerDown = (event: React.PointerEvent) => {
+    stop(event);
+    swallowClickRef.current = false;
+    // Shift is read at pointer-down only; the Region tool drags without it.
+    if (event.button !== 0 || !picking || paused || (pickMode !== 'region' && !event.shiftKey)) {
       return;
     }
-    const root = panelRootAt(event.clientX, event.clientY);
+    dragStartRef.current = { x: event.clientX, y: event.clientY };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const onPointerUp = (event: React.PointerEvent) => {
+    const start = dragStartRef.current;
+    if (!start) {
+      return;
+    }
+    dragStartRef.current = null;
+    swallowClickRef.current = true;
+    setDraft(null);
+    const rect = toDraft(start, event.clientX, event.clientY);
+    if (rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE) {
+      return;
+    }
+    const pick = session.createRegionPick(rect);
+    if (pick) {
+      session.completePick(pick);
+    }
+  };
+
+  const onPointerMove = (event: React.PointerEvent) => {
+    const start = dragStartRef.current;
+    if (start) {
+      const rootRect = rootRef.current?.getBoundingClientRect();
+      const rect = toDraft(start, event.clientX, event.clientY);
+      setDraft(rootRect ? { ...rect, left: rect.left - rootRect.left, top: rect.top - rootRect.top } : null);
+      setHovered(null);
+      return;
+    }
+    if (pickMode !== 'element') {
+      return;
+    }
+    const root = elementAt(event.clientX, event.clientY, PANEL_ROOT_SELECTOR);
     const key = root?.getAttribute('data-viz-panel-key');
     const box = root ? boxFor(root) : null;
     setHovered(key && box ? { key, box } : null);
@@ -157,10 +223,20 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
   const onClick = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    if (!picking) {
+    if (swallowClickRef.current) {
+      swallowClickRef.current = false;
       return;
     }
-    const root = panelRootAt(event.clientX, event.clientY);
+    // Tab headers stay usable: switching tabs is how regions on other tabs get drawn.
+    const tab = elementAt(event.clientX, event.clientY, TAB_SELECTOR);
+    if (tab) {
+      tab.click();
+      return;
+    }
+    if (pickMode !== 'element') {
+      return;
+    }
+    const root = elementAt(event.clientX, event.clientY, PANEL_ROOT_SELECTOR);
     const key = root?.getAttribute('data-viz-panel-key');
     if (!root || !key) {
       return;
@@ -191,7 +267,9 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
         aria-hidden
         onPointerMove={onPointerMove}
         onPointerLeave={() => setHovered(null)}
-        onPointerDown={stop}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={cancelDrag}
         onMouseDown={stop}
         onClick={onClick}
         onDoubleClick={stop}
@@ -199,18 +277,26 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
         onDragStart={stop}
       >
         {layout.highlight && <div className={cx(styles.box, styles.highlight)} style={layout.highlight} />}
-        {annotations.map(({ id, state }) => {
+        {annotations.map(({ id, ref, state }) => {
           const box = layout.items[id];
-          return state === 'active' && box ? (
+          // Panels are outlined only while active; regions always, faint while staged.
+          if (!box || (ref.kind !== 'region' && state !== 'active')) {
+            return null;
+          }
+          const outline =
+            ref.kind === 'region' ? (state === 'active' ? styles.regionActive : styles.regionStaged) : styles.active;
+          return (
             <div
               key={id}
-              className={cx(styles.box, styles.active)}
+              className={cx(styles.box, outline)}
               style={box}
               data-testid={`composer-annotation-outline-${id}`}
+              data-state={state}
             />
-          ) : null;
+          );
         })}
         {picking && hovered && <div className={cx(styles.box, styles.hover)} style={hovered.box} />}
+        {draft && <div className={cx(styles.box, styles.draft)} style={draft} data-testid="composer-region-draft" />}
       </div>
       {annotations.map(({ id, label, point }) => {
         const box = layout.items[id];
@@ -301,6 +387,17 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     active: css({
       outline: `2px solid ${theme.colors.primary.border}`,
+    }),
+    draft: css({
+      border: `2px dashed ${theme.colors.primary.main}`,
+      background: theme.colors.primary.transparent,
+    }),
+    regionActive: css({
+      border: `2px solid ${theme.colors.primary.border}`,
+    }),
+    regionStaged: css({
+      border: `1px dashed ${theme.colors.primary.border}`,
+      opacity: 0.6,
     }),
     pin: css({
       position: 'absolute',

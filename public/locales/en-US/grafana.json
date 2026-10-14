@@ -5594,6 +5594,7 @@
     "composer": {
       "annotation-pin": "Comment {{label}}",
       "apply-undo-title": "Assistant Composer edit",
+      "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
       "wait-for-assistant": "Wait for Assistant to finish editing"
     },

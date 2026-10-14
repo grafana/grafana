@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { type DashboardScene } from '../scene/DashboardScene';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
 import { ComposerOverlay } from './ComposerOverlay';
@@ -18,6 +21,19 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('../saving/createDetectChangesWorker', () => ({
   createWorker: () => ({ postMessage: jest.fn(), terminate: jest.fn(), onmessage: null }),
 }));
+
+// jsdom has no PointerEvent, so fireEvent would drop clientX, button and shiftKey from pointer events.
+if (typeof window.PointerEvent === 'undefined') {
+  class PointerEventPolyfill extends MouseEvent {
+    public readonly pointerId: number;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 1;
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- enough of PointerEvent for these tests
+  window.PointerEvent = PointerEventPolyfill as unknown as typeof PointerEvent;
+}
 
 let deactivate = () => {};
 let panelRoot: HTMLElement | undefined;
@@ -47,7 +63,7 @@ afterEach(() => {
   setTestFlags({});
 });
 
-function setup() {
+function setup(configure?: (scene: DashboardScene) => void) {
   const scene = transformSaveModelToScene({
     dashboard: {
       title: 'Overlay',
@@ -71,6 +87,7 @@ function setup() {
     },
     meta: { canEdit: true, canSave: true },
   });
+  configure?.(scene);
   deactivate = scene.activate();
   const session = ComposerSession.enter(scene);
 
@@ -424,5 +441,184 @@ describe('annotations', () => {
     expect(anchor.isConnected).toBe(false);
     expect(session.getAnnotationAnchor('a')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Comment 1' })).not.toBeInTheDocument();
+  });
+});
+
+describe('regions', () => {
+  const drag = (from: { x: number; y: number }, to: { x: number; y: number }, shiftKey = false) => {
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: from.x, clientY: from.y, button: 0, shiftKey });
+    fireEvent.pointerMove(overlay, { clientX: to.x, clientY: to.y });
+    fireEvent.pointerUp(overlay, { clientX: to.x, clientY: to.y });
+    fireEvent.click(overlay, { clientX: to.x, clientY: to.y });
+  };
+
+  const track = <T,>(promise: Promise<T>) => {
+    const settled = jest.fn();
+    promise.then(settled);
+    return settled;
+  };
+
+  it('resolves a Shift-drag during an element pick as a region', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+
+    drag({ x: 150, y: 250 }, { x: 350, y: 450 }, true);
+
+    await expect(pick).resolves.toMatchObject({
+      ref: { kind: 'region', regionId: expect.stringMatching(/^region-/) },
+      label: 'Region',
+      point: { x: 1, y: 0 },
+      tabPath: [],
+      rect: { x: 150 / 1024, y: 250 / 768, width: 200 / 1024, height: 200 / 768 },
+      intersects: [{ ref: { kind: 'panel', panelId: 3 }, label: 'Latency' }],
+      timeRange: { from: 'now-6h', to: 'now' },
+    });
+  });
+
+  it('draws a dashed draft while dragging with the Region tool', async () => {
+    const { session } = setup();
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickRegion(new AbortController().signal);
+    });
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: 300, clientY: 150, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 100, clientY: 30 });
+    expect(screen.getByTestId('composer-region-draft')).toHaveStyle({
+      left: '100px',
+      top: '30px',
+      width: '200px',
+      height: '120px',
+    });
+    fireEvent.pointerUp(overlay, { clientX: 100, clientY: 30 });
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'region' }, intersects: [] });
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+  });
+
+  it('ignores a drag under 8 by 8 pixels and swallows its click, keeping the pick pending', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const settled = track(pick);
+
+    drag({ x: 200, y: 300 }, { x: 205, y: 340 }, true);
+    await act(async () => {});
+    expect(settled).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('dashboard-composer-overlay'), { clientX: 200, clientY: 350 });
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'panel', panelId: 3 } });
+  });
+
+  it('does nothing on a plain click with the Region tool', async () => {
+    const { session } = setup();
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickRegion(new AbortController().signal);
+    });
+    const settled = track(pick);
+
+    fireEvent.click(screen.getByTestId('dashboard-composer-overlay'), { clientX: 200, clientY: 350 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+    expect(session.getOverlayState().pickMode).toBe('region');
+  });
+
+  it.each([
+    ['Escape', () => fireEvent.keyDown(window, { key: 'Escape' })],
+    ['pointer cancel', () => fireEvent.pointerCancel(screen.getByTestId('dashboard-composer-overlay'))],
+    ['window blur', () => fireEvent.blur(window)],
+    ['scroll', () => fireEvent.scroll(window)],
+  ])('cancels the drag on %s and keeps the pick pending', async (_, cancel) => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const settled = track(pick);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0, shiftKey: true });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+    expect(screen.getByTestId('composer-region-draft')).toBeInTheDocument();
+    cancel();
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    await act(async () => {});
+
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    expect(settled).not.toHaveBeenCalled();
+
+    drag({ x: 150, y: 250 }, { x: 350, y: 450 }, true);
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'region' } });
+  });
+
+  async function drawRegion(startPick: () => Promise<unknown>) {
+    const pick = startPick();
+    drag({ x: 150, y: 250 }, { x: 350, y: 450 }, true);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    return (await pick) as { ref: { kind: 'region'; regionId: string } };
+  }
+
+  it('pins a region on its top-right corner, with a faint outline when staged and a solid one when active', async () => {
+    const { startPick, annotate } = setup();
+    const { ref } = await drawRegion(startPick);
+
+    annotate([item({ id: 'r', ref, point: { x: 1, y: 0 }, state: 'staged' })]);
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '350px', top: '250px' });
+    const outline = screen.getByTestId('composer-annotation-outline-r');
+    expect(outline).toHaveAttribute('data-state', 'staged');
+    expect(outline).toHaveStyle({ left: '150px', top: '250px', width: '200px', height: '200px' });
+
+    annotate([item({ id: 'r', ref, point: { x: 1, y: 0 }, state: 'active' })]);
+    expect(screen.getByTestId('composer-annotation-outline-r')).toHaveAttribute('data-state', 'active');
+  });
+
+  it('names the tab it was drawn on and hides while another tab is selected', async () => {
+    const overview = new TabItem({ title: 'Overview' });
+    const errors = new TabItem({ title: 'Errors' });
+    const tabs = new TabsLayoutManager({ tabs: [overview, errors] });
+    const { startPick, annotate } = setup((scene) => scene.setState({ body: tabs }));
+    const pick = startPick();
+    drag({ x: 150, y: 250 }, { x: 350, y: 450 }, true);
+    const region = await pick;
+    expect(region).toMatchObject({ label: 'Region', tabPath: ['Overview'] });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- resolved as a region above
+    const { ref } = region as { ref: { kind: 'region'; regionId: string } };
+    annotate([item({ id: 'r', ref, point: { x: 1, y: 0 } })]);
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toBeInTheDocument();
+
+    act(() => tabs.switchToTab(errors));
+    await nextFrame();
+    expect(screen.queryByRole('button', { name: 'Comment 1' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('composer-annotation-outline-r')).not.toBeInTheDocument();
+
+    act(() => tabs.switchToTab(overview));
+    await nextFrame();
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toBeInTheDocument();
+  });
+
+  it('passes clicks on tab headers through, so other tabs can be annotated', () => {
+    setup();
+    const tab = document.createElement('button');
+    tab.setAttribute('role', 'tab');
+    const onTabClick = jest.fn();
+    tab.addEventListener('click', onTabClick);
+    document.body.appendChild(tab);
+    document.elementsFromPoint = () => [screen.getByTestId('dashboard-composer-overlay'), tab];
+
+    fireEvent.click(screen.getByTestId('dashboard-composer-overlay'), { clientX: 10, clientY: 10 });
+
+    expect(onTabClick).toHaveBeenCalledTimes(1);
+    tab.remove();
+  });
+
+  it('forgets a region once no annotation references it', async () => {
+    const { session, startPick, annotate } = setup();
+    const { ref } = await drawRegion(startPick);
+    annotate([item({ id: 'r', ref })]);
+    expect(session.getAnnotationAnchor('r')).not.toBeNull();
+
+    annotate([]);
+    annotate([item({ id: 'r', ref })]);
+
+    expect(screen.queryByRole('button', { name: 'Comment 1' })).not.toBeInTheDocument();
+    expect(session.getAnnotationAnchor('r')).toBeNull();
   });
 });

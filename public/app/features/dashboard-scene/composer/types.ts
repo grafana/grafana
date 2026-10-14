@@ -21,8 +21,14 @@ export interface DashboardComposerAPI {
   enter(): Promise<ComposerSessionAPI>;
 }
 
-/** Rows and tabs are selectable from M3; M1 resolves panels only. */
-export type ElementRef = { kind: 'panel'; panelId: number } | { kind: 'row' | 'tab'; name: string };
+/**
+ * Rows and tabs are selectable from M3. Region ids are issued by core with a region pick and live until no
+ * annotation references them or the session ends.
+ */
+export type ElementRef =
+  | { kind: 'panel'; panelId: number }
+  | { kind: 'row' | 'tab'; name: string }
+  | { kind: 'region'; regionId: string };
 
 /** A position inside an element, each axis normalised to 0..1 of its bounds. */
 export interface ElementPoint {
@@ -31,7 +37,7 @@ export interface ElementPoint {
 }
 
 export interface ElementPick {
-  ref: ElementRef;
+  ref: Exclude<ElementRef, { kind: 'region' }>;
   label: string;
   /** Titles of the tabs containing the element, outermost first. */
   tabPath: string[];
@@ -54,13 +60,17 @@ export interface ComposerAnnotation {
 }
 
 export interface RegionPick {
+  ref: { kind: 'region'; regionId: string };
+  /** The localised noun "Region"; the tab context is in `tabPath`. */
+  label: string;
+  /** 0..1 of the visible dashboard area at release. */
   rect: { x: number; y: number; width: number; height: number };
+  /** The pin sits on the region's top-right corner. */
+  point: { x: 1; y: 0 };
   tabPath: string[];
+  /** Panels the region overlaps with a positive area, at most 20. */
   intersects: Array<{ ref: ElementRef; label: string }>;
   timeRange: { from: string; to: string; timezone: string };
-  capture:
-    | { status: 'ready'; image: Blob; width: number; height: number; capturedAt: string }
-    | { status: 'failed'; reason: 'unsupported' | 'too_large' | 'timeout' | 'failed' };
 }
 
 export interface ComposerElement {
@@ -78,10 +88,13 @@ export interface ComposerSessionAPI {
   /** Aborted on exit, navigation away, scene deactivation or flag-off. */
   readonly signal: AbortSignal;
 
-  /** Resolves null when cancelled (Escape, `signal`, pause or session end). */
-  pickElement(signal: AbortSignal): Promise<ElementPick | null>;
-  /** Not supported in M1: resolves null. */
-  pickRegion(signal: AbortSignal, start?: PointerEvent): Promise<RegionPick | null>;
+  /**
+   * Resolves with the clicked element, or with a region when the user Shift-drags while it is pending.
+   * Null when cancelled (Escape, `signal`, pause or session end). Cancelling a drag keeps the pick pending.
+   */
+  pickElement(signal: AbortSignal): Promise<ElementPick | RegionPick | null>;
+  /** The Region tool: resolves with the rectangle the user drags. A plain click does nothing. */
+  pickRegion(signal: AbortSignal): Promise<RegionPick | null>;
   /** Not supported in M1: returns []. */
   listElements(): ComposerElement[];
   highlight(target: ElementRef | null): void;

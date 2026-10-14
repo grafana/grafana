@@ -1,8 +1,9 @@
 import { ClientProviderEvents } from '@openfeature/web-sdk';
 
+import { generateUUID } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { sceneGraph, VizPanel, type SceneObject } from '@grafana/scenes';
+import { sceneGraph, SceneObjectStateChangedEvent, VizPanel, type SceneObject } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
@@ -10,6 +11,7 @@ import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import type { DashboardScene } from '../scene/DashboardScene';
 import { dashboardComposerEnabled } from '../scene/dashboardModes';
 import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardStateChangedEvent } from '../sidebar/events';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -29,9 +31,28 @@ import {
   type RegionPick,
 } from './types';
 
+/** A rectangle in CSS pixels; relative to the overlay unless said otherwise. */
+export interface Box {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+/** A drawn region, kept in overlay (dashboard content) coordinates so it scrolls with the content. */
+interface StoredRegion {
+  box: Box;
+  /** The tabs that were selected when it was drawn; it is shown only while all of them still are. */
+  tabKeys: string[];
+}
+
+type PickResult = ElementPick | RegionPick | null;
+
 /** What the overlay renders. A new object on every change, for `useSyncExternalStore`. */
 export interface ComposerOverlayState {
   picking: boolean;
+  /** Which tool the pending pick uses; null when none is pending. */
+  pickMode: 'element' | 'region' | null;
   paused: boolean;
   highlight: ElementRef | null;
   annotations: ComposerAnnotation[];
@@ -41,6 +62,7 @@ export interface ComposerOverlayState {
 
 const INITIAL_OVERLAY_STATE: ComposerOverlayState = {
   picking: false,
+  pickMode: null,
   paused: false,
   highlight: null,
   annotations: [],
@@ -48,6 +70,7 @@ const INITIAL_OVERLAY_STATE: ComposerOverlayState = {
 };
 
 const ORIGIN: ElementPoint = { x: 0, y: 0 };
+const MAX_INTERSECTS = 20;
 
 /**
  * One Composer session, bound to the dashboard it was entered on. Writes go to that scene only,
@@ -64,7 +87,8 @@ export class ComposerSession implements ComposerSessionAPI {
   private revision = 0;
   private applying = false;
   private closed = false;
-  private pendingPick?: (pick: ElementPick | null) => void;
+  private pendingPick?: (pick: PickResult) => void;
+  private readonly regions = new Map<string, StoredRegion>();
   private overlayState: ComposerOverlayState = INITIAL_OVERLAY_STATE;
   private readonly listeners = new Set<() => void>();
   private readonly annotationListeners = new Set<(id: string) => void>();
@@ -106,6 +130,14 @@ export class ComposerSession implements ComposerSessionAPI {
     });
     this.cleanups.push(() => stateChanged.unsubscribe());
 
+    // Switching tabs mounts other panels and shows other regions without a definition change.
+    const tabChanged = this.scene.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
+      if (payload.changedObject instanceof TabsLayoutManager && 'currentTabSlug' in payload.partialUpdate) {
+        this.setOverlayState({ layoutTick: this.overlayState.layoutTick + 1 });
+      }
+    });
+    this.cleanups.push(() => tabChanged.unsubscribe());
+
     // Turning the flag off ends the session; unsaved edits stay.
     const client = getFeatureFlagClient();
     const onFlagsChanged = () => {
@@ -119,7 +151,15 @@ export class ComposerSession implements ComposerSessionAPI {
     appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' }));
   }
 
-  public pickElement(signal: AbortSignal): Promise<ElementPick | null> {
+  public pickElement(signal: AbortSignal): Promise<ElementPick | RegionPick | null> {
+    return this.startPick('element', signal);
+  }
+
+  public pickRegion(signal: AbortSignal): Promise<RegionPick | null> {
+    return this.startPick('region', signal).then((pick) => (pick && 'rect' in pick ? pick : null));
+  }
+
+  private startPick(mode: 'element' | 'region', signal: AbortSignal): Promise<PickResult> {
     this.cancelPick();
     if (this.closed || this.overlayState.paused || signal.aborted) {
       return Promise.resolve(null);
@@ -131,12 +171,8 @@ export class ComposerSession implements ComposerSessionAPI {
         signal.removeEventListener('abort', onAbort);
         resolve(pick);
       };
-      this.setOverlayState({ picking: true });
+      this.setOverlayState({ picking: true, pickMode: mode });
     });
-  }
-
-  public pickRegion(_signal: AbortSignal, _start?: PointerEvent): Promise<RegionPick | null> {
-    return Promise.resolve(null);
   }
 
   public listElements(): ComposerElement[] {
@@ -177,6 +213,13 @@ export class ComposerSession implements ComposerSessionAPI {
         this.anchors.delete(id);
       }
     }
+    // A region lives only while an annotation points at it.
+    const regionIds = new Set(annotations.flatMap(({ ref }) => (ref.kind === 'region' ? [ref.regionId] : [])));
+    for (const regionId of this.regions.keys()) {
+      if (!regionIds.has(regionId)) {
+        this.regions.delete(regionId);
+      }
+    }
     this.setOverlayState({ annotations });
   }
 
@@ -192,7 +235,7 @@ export class ComposerSession implements ComposerSessionAPI {
 
   public getAnnotationAnchor(id: string): HTMLElement | null {
     const item = this.findAnnotation(id);
-    if (this.closed || !item || !this.findElementRoot(item.ref)) {
+    if (this.closed || !item || !this.resolves(item.ref)) {
       return null;
     }
     let anchor = this.anchors.get(id);
@@ -210,14 +253,21 @@ export class ComposerSession implements ComposerSessionAPI {
 
   public revealAnnotation(id: string): void {
     const item = this.findAnnotation(id);
-    const panel = item?.ref.kind === 'panel' ? this.findPanel(item.ref.panelId) : undefined;
-    const element = item ? this.findElementRoot(item.ref) : null;
-    if (this.closed || !item || !panel || !element || isInHiddenTab(panel)) {
+    if (this.closed || !item) {
       return;
     }
     const behavior: ScrollBehavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
       ? 'auto'
       : 'smooth';
+    if (item.ref.kind === 'region') {
+      this.revealRegion(item.ref.regionId, item.point, behavior);
+      return;
+    }
+    const panel = item.ref.kind === 'panel' ? this.findPanel(item.ref.panelId) : undefined;
+    const element = this.findElementRoot(item.ref);
+    if (!panel || !element || isInHiddenTab(panel)) {
+      return;
+    }
     const container = getScrollContainer(element);
     const visible = getVisibleBounds(container);
     const rect = element.getBoundingClientRect();
@@ -229,6 +279,27 @@ export class ComposerSession implements ComposerSessionAPI {
     // Taller than the visible area: centre the pin's point instead.
     const pointY = rect.top + item.point.y * rect.height;
     container.scrollBy({ top: pointY - (visible.top + visible.bottom) / 2, behavior });
+  }
+
+  private revealRegion(regionId: string, point: ElementPoint, behavior: ScrollBehavior) {
+    const root = this.getOverlayRoot();
+    const rect = this.getRegionViewportRect(regionId);
+    if (!root || !rect) {
+      return;
+    }
+    const container = getScrollContainer(root);
+    const visible = getVisibleBounds(container);
+    let delta = 0;
+    if (rect.height > visible.bottom - visible.top) {
+      delta = rect.top + point.y * rect.height - (visible.top + visible.bottom) / 2;
+    } else if (rect.top < visible.top) {
+      delta = rect.top - visible.top;
+    } else if (rect.top + rect.height > visible.bottom) {
+      delta = rect.top + rect.height - visible.bottom;
+    }
+    if (delta !== 0) {
+      container.scrollBy({ top: delta, behavior });
+    }
   }
 
   public async readSpec(): Promise<{ spec: ComposerDashboardSpec; revision: number }> {
@@ -337,6 +408,7 @@ export class ComposerSession implements ComposerSessionAPI {
     this.cleanups.splice(0).forEach((cleanup) => cleanup());
     this.anchors.forEach((anchor) => anchor.remove());
     this.anchors.clear();
+    this.regions.clear();
     this.requestMeasure = undefined;
     this.annotationListeners.clear();
     this.annotationHoverListeners.clear();
@@ -359,16 +431,73 @@ export class ComposerSession implements ComposerSessionAPI {
   public getOverlayState = (): ComposerOverlayState => this.overlayState;
 
   /** @internal The overlay resolves the active pick, or cancels it with null. */
-  public completePick(pick: ElementPick | null): void {
+  public completePick(pick: PickResult): void {
     const resolve = this.pendingPick;
     if (!resolve) {
       return;
     }
     this.pendingPick = undefined;
     if (!this.closed) {
-      this.setOverlayState({ picking: false });
+      this.setOverlayState({ picking: false, pickMode: null });
     }
     resolve(pick);
+  }
+
+  /**
+   * @internal Registers the rectangle the user drew (viewport coordinates) as a region and describes it.
+   * Null when the overlay is not mounted.
+   */
+  public createRegionPick(rect: Box): RegionPick | null {
+    const root = this.getOverlayRoot();
+    if (this.closed || !root) {
+      return null;
+    }
+    const rootRect = root.getBoundingClientRect();
+    const tabs = getSelectedTabChain(this.scene);
+    const regionId = `region-${generateUUID()}`;
+    this.regions.set(regionId, {
+      box: { left: rect.left - rootRect.left, top: rect.top - rootRect.top, width: rect.width, height: rect.height },
+      tabKeys: tabs.map((tab) => tab.state.key ?? ''),
+    });
+
+    // Normalised to the visible part of the dashboard.
+    const visibleLeft = Math.max(rootRect.left, 0);
+    const visibleTop = Math.max(rootRect.top, 0);
+    const visibleWidth = Math.max(Math.min(rootRect.left + rootRect.width, window.innerWidth) - visibleLeft, 1);
+    const visibleHeight = Math.max(Math.min(rootRect.top + rootRect.height, window.innerHeight) - visibleTop, 1);
+    const tabPath = tabs.map((tab) => tab.state.title ?? '');
+    const timeRange = sceneGraph.getTimeRange(this.scene);
+
+    return {
+      ref: { kind: 'region', regionId },
+      label: t('dashboard.composer.region', 'Region'),
+      rect: {
+        x: clamp01((rect.left - visibleLeft) / visibleWidth),
+        y: clamp01((rect.top - visibleTop) / visibleHeight),
+        width: clamp01(rect.width / visibleWidth),
+        height: clamp01(rect.height / visibleHeight),
+      },
+      point: { x: 1, y: 0 },
+      tabPath,
+      intersects: this.findIntersectingPanels(rect),
+      timeRange: {
+        from: String(timeRange.state.from),
+        to: String(timeRange.state.to),
+        timezone: timeRange.getTimeZone(),
+      },
+    };
+  }
+
+  /** @internal Where a ref sits relative to the overlay, or null when it is not on screen to draw. */
+  public resolveBox(ref: ElementRef, rootRect: DOMRect): Box | null {
+    if (ref.kind === 'region') {
+      const region = this.regions.get(ref.regionId);
+      return region && this.isRegionShown(region) ? region.box : null;
+    }
+    const rect = this.findElementRoot(ref)?.getBoundingClientRect();
+    return rect
+      ? { top: rect.top - rootRect.top, left: rect.left - rootRect.left, width: rect.width, height: rect.height }
+      : null;
   }
 
   /** @internal A pin was clicked or activated from the keyboard. Ignored while paused. */
@@ -432,6 +561,63 @@ export class ComposerSession implements ComposerSessionAPI {
     return ref.kind === 'panel' ? this.findPanel(ref.panelId)?.state.key : undefined;
   }
 
+  private resolves(ref: ElementRef): boolean {
+    if (ref.kind === 'region') {
+      const region = this.regions.get(ref.regionId);
+      return Boolean(region && this.isRegionShown(region));
+    }
+    return Boolean(this.findElementRoot(ref));
+  }
+
+  private isRegionShown({ tabKeys }: StoredRegion): boolean {
+    return tabKeys.every((key) => {
+      const tab = sceneGraph.findObject(this.scene, (obj) => obj.state.key === key);
+      return tab instanceof TabItem && isSelectedTab(tab);
+    });
+  }
+
+  /** The region in viewport coordinates, or null when it is unknown or its tab is not selected. */
+  private getRegionViewportRect(regionId: string): Box | null {
+    const root = this.getOverlayRoot();
+    const region = this.regions.get(regionId);
+    if (!root || !region || !this.isRegionShown(region)) {
+      return null;
+    }
+    const rootRect = root.getBoundingClientRect();
+    return { ...region.box, left: rootRect.left + region.box.left, top: rootRect.top + region.box.top };
+  }
+
+  private findIntersectingPanels(rect: Box): Array<{ ref: ElementRef; label: string }> {
+    const found = new Map<number, string>();
+    for (const panel of this.scene.state.body.getVizPanels()) {
+      if (found.size >= MAX_INTERSECTS) {
+        break;
+      }
+      const key = panel.state.key;
+      const element = key ? document.querySelector(`[data-viz-panel-key="${CSS.escape(key)}"]`) : null;
+      const panelId = getPanelIdForVizPanel(panel);
+      if (!element || !Number.isFinite(panelId) || found.has(panelId)) {
+        continue;
+      }
+      const bounds = element.getBoundingClientRect();
+      const overlapWidth = Math.min(rect.left + rect.width, bounds.right) - Math.max(rect.left, bounds.left);
+      const overlapHeight = Math.min(rect.top + rect.height, bounds.bottom) - Math.max(rect.top, bounds.top);
+      if (overlapWidth > 0 && overlapHeight > 0) {
+        const source = this.findPanel(panelId) ?? panel;
+        found.set(
+          panelId,
+          source.state.title || t('dashboard.composer.untitled-panel', 'Panel {{panelId}}', { panelId })
+        );
+      }
+    }
+    return [...found].map(([panelId, label]) => ({ ref: { kind: 'panel', panelId }, label }));
+  }
+
+  /** The overlay root: the parent of the anchor host the overlay registers. */
+  private getOverlayRoot(): HTMLElement | null {
+    return this.anchorHost?.parentElement ?? null;
+  }
+
   private findAnnotation(id: string): ComposerAnnotation | undefined {
     return this.overlayState.annotations.find((item) => item.id === id);
   }
@@ -456,9 +642,29 @@ export class ComposerSession implements ComposerSessionAPI {
   }
 }
 
+/** The selected tab at each level of nested tabs under the dashboard body, outermost first. */
+function getSelectedTabChain(scene: DashboardScene): TabItem[] {
+  const chain: TabItem[] = [];
+  let layout: unknown = scene.state.body;
+  while (layout instanceof TabsLayoutManager) {
+    const tab = layout.getCurrentTab();
+    if (!tab) {
+      break;
+    }
+    chain.push(tab);
+    layout = tab.getLayout();
+  }
+  return chain;
+}
+
+/** Like `TabItem.isCurrentTab`, but also true for the first tab shown before any slug is set. */
+function isSelectedTab(tab: TabItem): boolean {
+  return tab.parent instanceof TabsLayoutManager && tab.parent.getCurrentTab() === tab;
+}
+
 function isInHiddenTab(obj: SceneObject): boolean {
   for (let parent = obj.parent; parent; parent = parent.parent) {
-    if (parent instanceof TabItem && !parent.isCurrentTab()) {
+    if (parent instanceof TabItem && !isSelectedTab(parent)) {
       return true;
     }
   }
