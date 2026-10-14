@@ -61,20 +61,24 @@ func TimeIntervalsToModel(muteIntervals []store.TimeIntervalDB, timeIntervals []
 	// definition can silently overwrite another here.
 	out := make(map[ResourceUID]TimeInterval, len(muteIntervals)+len(timeIntervals))
 	for _, interval := range muteIntervals {
-		ti := NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone)
-		if interval.UID != "" {
-			ti.UID = ResourceUID(interval.UID)
-		}
+		ti := NewTimeInterval(timeIntervalUIDOrFallback(interval), interval.Name, interval.TimeIntervals, models.ProvenanceNone)
 		out[ti.UID] = ti
 	}
 	for _, interval := range timeIntervals {
-		ti := NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone)
-		if interval.UID != "" {
-			ti.UID = ResourceUID(interval.UID)
-		}
+		ti := NewTimeInterval(timeIntervalUIDOrFallback(interval), interval.Name, interval.TimeIntervals, models.ProvenanceNone)
 		out[ti.UID] = ti
 	}
 	return out
+}
+
+// timeIntervalUIDOrFallback is the one place a time interval's UID is derived from its name: a
+// legacy row saved before UID persistence existed has none, so it falls back to the deterministic
+// identity it has always resolved to.
+func timeIntervalUIDOrFallback(interval store.TimeIntervalDB) ResourceUID {
+	if interval.UID != "" {
+		return ResourceUID(interval.UID)
+	}
+	return TimeIntervalUID(interval.Name)
 }
 
 func ReceiversToModel(in []*store.ReceiverDB) map[ResourceUID]PostableApiReceiver {

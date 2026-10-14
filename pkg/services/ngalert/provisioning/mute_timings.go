@@ -12,6 +12,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // muteTimingRuleStore is the rule-store surface the mute timing service needs: it looks up which
@@ -157,8 +158,13 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 		return v1.TimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
 
-	// A brand new interval gets a fresh, name-derived UID; it has no existing identity to preserve.
-	mt.UID = v1.TimeIntervalUID(mt.Title)
+	// A brand new interval gets its own independent UID; it has no existing identity to preserve.
+	// The occupancy check is just defensive: a generated UID colliding with an existing one is
+	// not expected in practice.
+	mt.UID = v1.ResourceUID(util.GenerateShortUID())
+	if _, ok := revision.Config.TimeIntervals[mt.UID]; ok {
+		return v1.TimeInterval{}, ErrTimeIntervalExists.Errorf("")
+	}
 	created := revision.SetTimeInterval(mt)
 
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {

@@ -143,14 +143,16 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaRoute() *Route {
 	return AMRouteToModel(c.Route)
 }
 
-// ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type.
+// ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type. Imported
+// intervals have no Grafana-persisted identity, so their UID is derived from name - same as a
+// legacy Grafana-owned row with none persisted yet.
 func (c *ExtraAlertmanagerConfig) ToGrafanaTimeIntervals() []TimeInterval {
 	out := make([]TimeInterval, 0, len(c.MuteTimeIntervals)+len(c.TimeIntervals))
 	for _, interval := range c.MuteTimeIntervals {
-		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+		out = append(out, NewTimeInterval(TimeIntervalUID(interval.Name), interval.Name, interval.TimeIntervals, models.ProvenanceNone))
 	}
 	for _, interval := range c.TimeIntervals {
-		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+		out = append(out, NewTimeInterval(TimeIntervalUID(interval.Name), interval.Name, interval.TimeIntervals, models.ProvenanceNone))
 	}
 	return out
 }

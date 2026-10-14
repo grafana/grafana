@@ -59,10 +59,14 @@ func (c *AMConfigV1) SortedTimeIntervals() []TimeInterval {
 	})
 }
 
-func NewTimeInterval(name string, intervals []timeinterval.TimeInterval, provenance models.Provenance) TimeInterval {
+// NewTimeInterval builds a TimeInterval with the given UID. It never derives one from name
+// itself - callers that need a name-derived UID (loading a legacy row with none persisted yet,
+// or converting an imported config with no Grafana identity at all) compute it explicitly via
+// TimeIntervalUID and pass it in.
+func NewTimeInterval(uid ResourceUID, name string, intervals []timeinterval.TimeInterval, provenance models.Provenance) TimeInterval {
 	ti := TimeInterval{
 		ResourceMetadata: ResourceMetadata{
-			UID:        TimeIntervalUID(name),
+			UID:        uid,
 			Provenance: provenance,
 		},
 		Title:         name,

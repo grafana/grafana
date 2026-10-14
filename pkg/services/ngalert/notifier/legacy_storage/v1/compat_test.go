@@ -342,6 +342,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 		},
 		TimeIntervals: map[ResourceUID]TimeInterval{
 			TimeIntervalUID("business-hours"): NewTimeInterval(
+				TimeIntervalUID("business-hours"),
 				"business-hours",
 				[]timeinterval.TimeInterval{{Weekdays: []timeinterval.WeekdayRange{{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 5}}}}},
 				models.ProvenanceNone,
