@@ -16,11 +16,8 @@ import (
 	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
-
-type AMConfigDB = definitions.PostableUserConfig // TODO: Define type explicitly and move elsewhere.
 
 // AMConfigV1 is an exact structural copy of PostableUserConfig without json tags.
 type AMConfigV1 struct {

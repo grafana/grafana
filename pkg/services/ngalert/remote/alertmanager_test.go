@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -293,7 +294,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	})
 
 	// Encrypt receivers to save secrets in the database.
-	var c v1.AMConfigDB
+	var c v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	var err error
@@ -471,16 +472,16 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		DefaultConfig: defaultGrafanaConfig,
 	}
 
-	cloneConfig := func(c v1.AMConfigDB) v1.AMConfigDB {
+	cloneConfig := func(c v1store.AMConfigDB) v1store.AMConfigDB {
 		clone, err := json.Marshal(c)
 		require.NoError(t, err)
-		var cloneCfg v1.AMConfigDB
+		var cloneCfg v1store.AMConfigDB
 		require.NoError(t, json.Unmarshal(clone, &cloneCfg))
 		return cloneCfg
 	}
 
 	// Create a config with correctly encrypted and encoded secrets.
-	var inputCfg v1.AMConfigDB
+	var inputCfg v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
 	var err error
 	inputCfg.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
@@ -504,14 +505,14 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		config         v1.AMConfigDB
+		config         v1store.AMConfigDB
 		autogenConfig  map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
 		expCfg         *client.UserGrafanaConfig
 		expErrContains []string
 	}{
 		{
 			name:           "invalid config",
-			config:         v1.AMConfigDB{},
+			config:         v1store.AMConfigDB{},
 			expErrContains: []string{"no routes provided"},
 		},
 		{
@@ -748,7 +749,7 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		config v1.AMConfigDB
+		config v1store.AMConfigDB
 		expErr string
 	}{
 		{
@@ -757,7 +758,7 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 		},
 		{
 			name: "fails when extra config identifier conflicts with an existing managed route",
-			config: func() v1.AMConfigDB {
+			config: func() v1store.AMConfigDB {
 				c, err := loadDBModel(cfgWithExtraUnmergedBytes)
 				require.NoError(t, err)
 				c.ManagedRoutes = map[string]*apimodels.Route{
@@ -817,7 +818,7 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 }
 
 func Test_isDefaultConfiguration(t *testing.T) {
-	mustLoad := func(raw string) *v1.AMConfigDB {
+	mustLoad := func(raw string) *v1store.AMConfigDB {
 		parsed, err := loadDBModel([]byte(raw))
 		require.NoError(t, err)
 		return parsed
@@ -825,7 +826,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		config               *v1.AMConfigDB
+		config               *v1store.AMConfigDB
 		notificationSettings map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
 		features             featuremgmt.FeatureToggles
 		expected             bool
@@ -852,7 +853,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 		},
 		{
 			name: "default config with ManagedRoutes",
-			config: func() *v1.AMConfigDB {
+			config: func() *v1store.AMConfigDB {
 				c := mustLoad(defaultGrafanaConfig)
 				c.ManagedRoutes = map[string]*definition.Route{
 					"imported": {Receiver: "empty"},
@@ -863,7 +864,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 		},
 		{
 			name: "default config with ExtraConfig",
-			config: func() *v1.AMConfigDB {
+			config: func() *v1store.AMConfigDB {
 				cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
 				require.NoError(t, err)
 				cfgWithExtraUnmerged, err := loadDBModel(cfgWithExtraUnmergedBytes)
@@ -874,7 +875,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 		},
 		{
 			name: "default config with TemplateFiles",
-			config: func() *v1.AMConfigDB {
+			config: func() *v1store.AMConfigDB {
 				c := mustLoad(defaultGrafanaConfig)
 				c.TemplateFiles = map[string]string{"test": "test"}
 				return c
@@ -883,7 +884,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 		},
 		{
 			name: "default config with MuteTimeInterval",
-			config: func() *v1.AMConfigDB {
+			config: func() *v1store.AMConfigDB {
 				c := mustLoad(defaultGrafanaConfig)
 				c.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{{Name: "test"}}
 				return c
@@ -892,7 +893,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 		},
 		{
 			name: "default config with TimeIntervals",
-			config: func() *v1.AMConfigDB {
+			config: func() *v1store.AMConfigDB {
 				c := mustLoad(defaultGrafanaConfig)
 				c.AlertmanagerConfig.TimeIntervals = []config.TimeInterval{{Name: "test"}}
 				return c
@@ -901,7 +902,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 		},
 		{
 			name: "default config with InhibitRules",
-			config: func() *v1.AMConfigDB {
+			config: func() *v1store.AMConfigDB {
 				c := mustLoad(defaultGrafanaConfig)
 				c.AlertmanagerConfig.InhibitRules = []common.InhibitRule{{}}
 				return c
@@ -910,7 +911,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 		},
 		{
 			name: "default config with ManagedInhibitionRules",
-			config: func() *v1.AMConfigDB {
+			config: func() *v1store.AMConfigDB {
 				c := mustLoad(defaultGrafanaConfig)
 				c.ManagedInhibitionRules = map[string]*apimodels.InhibitionRule{
 					"imported": {Name: "imported"},
@@ -1000,7 +1001,7 @@ func TestApplyConfigWithExtraConfigs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	var cfg v1.AMConfigDB
+	var cfg v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfig), &cfg))
 
 	cfg.ExtraConfigs = []apimodels.ExtraConfiguration{
@@ -1737,8 +1738,8 @@ func removeAutogenConfigIfExists(route *apimodels.Route) {
 	})
 }
 
-func loadDBModel(rawConfig []byte) (*v1.AMConfigDB, error) {
-	cfg := &v1.AMConfigDB{}
+func loadDBModel(rawConfig []byte) (*v1store.AMConfigDB, error) {
+	cfg := &v1store.AMConfigDB{}
 
 	if err := json.Unmarshal(rawConfig, cfg); err != nil {
 		return nil, fmt.Errorf("unable to parse Alertmanager configuration: %w", err)
@@ -1816,7 +1817,7 @@ func dbAlertingConfigToAPI(in definition.PostableApiAlertingConfig) definition.P
 	}
 }
 
-func mustToAMConfigDB(t *testing.T, in *v1.AMConfigV1) v1.AMConfigDB {
+func mustToAMConfigDB(t *testing.T, in *v1.AMConfigV1) v1store.AMConfigDB {
 	dbModel, err := v1.ToDBModel(in)
 	require.NoError(t, err)
 	return *dbModel

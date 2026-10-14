@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 func TestRoundTripConversion(t *testing.T) {
@@ -231,7 +232,7 @@ inhibit_rules:
 		]
 	}`, extraConfig)
 
-	originalDB := &AMConfigDB{}
+	originalDB := &store.AMConfigDB{}
 	err := json.Unmarshal([]byte(configJSON), originalDB)
 	require.NoError(t, err, "failed to unmarshal test config")
 
@@ -298,7 +299,7 @@ inhibit_rules:
 		return strings.Compare(a.Name, b.Name)
 	})
 
-	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(AMConfigDB{}, definition.Route{}, labels.Matcher{}))
+	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(store.AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {
 		t.Errorf("Unexpected change in converted DB: %v", diff)
 	}
@@ -402,7 +403,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 func TestMigrationFromTemplateFiles(t *testing.T) {
 	// Old configs stored templates in template_files. Verify they load correctly
 	// and are converted to managed_templates on save.
-	input := &AMConfigDB{}
+	input := &store.AMConfigDB{}
 	require.NoError(t, json.Unmarshal([]byte(`{
 		"template_files": {
 			"tmpl.tmpl": "{{ define \"alert\" }}hello{{ end }}"
@@ -435,7 +436,7 @@ func TestToModel_TemplateConflicts(t *testing.T) {
 	t.Run("managed_templates_wins_on_uid_conflict", func(t *testing.T) {
 		// A template present in both fields with the same UID: ManagedTemplates must win.
 		conflictUID := string(TemplateUID(TemplateKindGrafana, "tmpl.tmpl"))
-		input := &AMConfigDB{}
+		input := &store.AMConfigDB{}
 		require.NoError(t, json.Unmarshal([]byte(`{
 			"template_files": {"tmpl.tmpl": "{{ define \"alert\" }}old{{ end }}"},
 			"managed_templates": {"`+conflictUID+`": {"name":"tmpl.tmpl","content":"{{ define \"alert\" }}new{{ end }}","kind":"grafana"}},
@@ -449,7 +450,7 @@ func TestToModel_TemplateConflicts(t *testing.T) {
 
 	t.Run("no_conflict_both_templates_present", func(t *testing.T) {
 		// Different UIDs: both templates should be in the merged result.
-		input := &AMConfigDB{}
+		input := &store.AMConfigDB{}
 		require.NoError(t, json.Unmarshal([]byte(`{
 			"template_files": {"a.tmpl": "{{ define \"a\" }}A{{ end }}"},
 			"managed_templates": {"`+string(TemplateUID(TemplateKindGrafana, "b.tmpl"))+`": {"name":"b.tmpl","content":"{{ define \"b\" }}B{{ end }}","kind":"grafana"}},

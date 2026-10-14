@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
@@ -199,11 +200,11 @@ func ExtraConfigToModel(in definitions.ExtraConfiguration) ExtraConfiguration {
 
 // -----------------
 
-func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
+func ToDBModel(in *AMConfigV1) (*store.AMConfigDB, error) {
 	if in == nil {
 		return nil, nil
 	}
-	dbModel := AMConfigDB{
+	dbModel := store.AMConfigDB{
 		ManagedTemplates: TemplatesToManagedTemplates(in.Templates),
 		AlertmanagerConfig: definition.PostableApiAlertingConfig{
 			Config:    PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
