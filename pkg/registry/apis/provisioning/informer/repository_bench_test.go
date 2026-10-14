@@ -185,6 +185,11 @@ func (b *benchServer) clients(t testing.TB) (versioned.Interface, rest.Interface
 
 // seedStore fills a snapshot with every repository, then drifts the first
 // driftCount of them so the next re-list has to read exactly those back.
+//
+// It seeds projections, because that is what the snapshot holds: seeding whole
+// repositories leaves indexProjections unable to recognise the previous snapshot,
+// so every case would take the full list and the benchmark would measure the
+// fallback rather than the policy.
 func seedStore(ctx context.Context, repos []*provisioningapis.Repository, driftCount int) usinformer.Store {
 	store := usinformer.NewStore()
 	for i, repo := range repos {
@@ -192,9 +197,7 @@ func seedStore(ctx context.Context, repos []*provisioningapis.Repository, driftC
 		if i < driftCount {
 			rv = "1" // stale, so the key reads as changed
 		}
-		store.Update(ctx, &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{
-			Namespace: repo.Namespace, Name: repo.Name, ResourceVersion: rv,
-		}})
+		store.Update(ctx, projectIdentity(repo.Namespace, repo.Name, rv))
 	}
 	return store
 }

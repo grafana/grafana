@@ -1,6 +1,8 @@
 package informer
 
 import (
+	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -140,4 +142,86 @@ func TestRepositorySnapshot_PrunesEmptyNamespaces(t *testing.T) {
 	snapshot.mu.RLock()
 	defer snapshot.mu.RUnlock()
 	assert.Empty(t, snapshot.counts, "an emptied namespace must not be retained")
+}
+
+// The store drops an Update whose resource version predates a delete it has
+// tombstoned, which is what a reconcile read that finished after a live deletion
+// looks like. Tallying it anyway would leave a deleted repository holding quota.
+func TestRepositorySnapshot_IgnoresWritesTheStoreDrops(t *testing.T) {
+	snapshot := NewRepositorySnapshot(usinformer.NewStore())
+	snapshot.Replace(objs(repoAt("ns", "going", "10")), 5)
+	require.Equal(t, 1, snapshot.CountActive("ns"))
+
+	// Live delete at 20, then a reconcile read that was issued before it lands.
+	snapshot.DeleteAt(t.Context(), "ns", "going", 20)
+	snapshot.Update(t.Context(), repoAt("ns", "going", "10"))
+
+	assert.Zero(t, snapshot.CountActive("ns"), "the store kept it evicted, so it must not be counted")
+	requireAgrees(t, snapshot, "ns")
+}
+
+// A write at or past the delete is a re-creation, which the store does accept.
+func TestRepositorySnapshot_CountsWritesPastTheDelete(t *testing.T) {
+	snapshot := NewRepositorySnapshot(usinformer.NewStore())
+	snapshot.Replace(objs(repoAt("ns", "going", "10")), 5)
+	snapshot.DeleteAt(t.Context(), "ns", "going", 20)
+	require.Zero(t, snapshot.CountActive("ns"))
+
+	snapshot.Update(t.Context(), repoAt("ns", "going", "30"))
+
+	assert.Equal(t, 1, snapshot.CountActive("ns"), "a re-creation the store took must be counted")
+	requireAgrees(t, snapshot, "ns")
+}
+
+// A re-list whose snapshot postdates the delete spends the tombstone, so a write
+// after it is an ordinary one again rather than a stale one.
+func TestRepositorySnapshot_ReplaceSpendsTheTombstone(t *testing.T) {
+	snapshot := NewRepositorySnapshot(usinformer.NewStore())
+	snapshot.DeleteAt(t.Context(), "ns", "going", 20)
+	snapshot.Replace(nil, 25) // snapshot read after the delete: the store drops the tombstone
+
+	snapshot.Update(t.Context(), repoAt("ns", "going", "10"))
+
+	assert.Equal(t, 1, snapshot.CountActive("ns"), "no tombstone left to supersede the write")
+	requireAgrees(t, snapshot, "ns")
+}
+
+// A mutation landing while a re-list is in flight must not have its tally change
+// overwritten by the rebuild: both run under the same lock, so the rebuild either
+// precedes the mutation or observes it.
+func TestRepositorySnapshot_ConcurrentMutationsAgreeWithTheStore(t *testing.T) {
+	snapshot := NewRepositorySnapshot(usinformer.NewStore())
+
+	const repos = 40
+	seed := make([]*provisioningapis.Repository, 0, repos)
+	for i := range repos {
+		seed = append(seed, repoAt("ns", "r"+strconv.Itoa(i), "10"))
+	}
+	snapshot.Replace(objs(seed...), 10)
+
+	var wg sync.WaitGroup
+	for i := range repos {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			name := "r" + strconv.Itoa(i)
+			switch i % 3 {
+			case 0:
+				snapshot.DeleteAt(t.Context(), "ns", name, 30)
+			case 1:
+				snapshot.Update(t.Context(), terminating(repoAt("ns", name, "30")))
+			default:
+				snapshot.Update(t.Context(), repoAt("ns", name, "30"))
+			}
+		}()
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		snapshot.Replace(objs(seed...), 20)
+	}()
+	wg.Wait()
+
+	// Whatever order they landed in, the tally has to describe the snapshot.
+	requireAgrees(t, snapshot, "ns")
 }
