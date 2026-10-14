@@ -48,10 +48,6 @@ describe('api', () => {
       setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
     });
 
-    afterAll(() => {
-      setTestFlags({});
-    });
-
     describe('installPlugin', () => {
       it('should call both legacy api and new api', async () => {
         await installPlugin('myorg-test-panel', '1.5.0');
@@ -150,10 +146,6 @@ describe('api', () => {
   describe('when plugins.useMTPlugins flag is disabled', () => {
     beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     describe('installPlugin', () => {

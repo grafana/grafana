@@ -47,10 +47,6 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
   });
 
-  afterAll(() => {
-    setTestFlags({});
-  });
-
   describe('and cache is not initialized', () => {
     it('initPluginMetas should call loadPluginMetas and return correct result if response is ok', async () => {
       global.fetch = jest.fn().mockResolvedValue({
@@ -384,10 +380,6 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   describe('and cache is not initialized', () => {

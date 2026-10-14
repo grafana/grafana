@@ -1,5 +1,4 @@
 import { http, HttpResponse } from 'msw';
-import { act } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
 
@@ -74,13 +73,8 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     jest.restoreAllMocks();
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('displays the folder title', async () => {

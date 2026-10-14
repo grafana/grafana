@@ -1,4 +1,3 @@
-import { act } from '@testing-library/react';
 import { useAsync } from 'react-use';
 import { getWrapper, render, screen, fireEvent } from 'test/test-utils';
 
@@ -64,7 +63,7 @@ function renderButtons() {
 describe('AssistantToolbarButtons', () => {
   const useAsyncMock = jest.mocked(useAsync);
 
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
     mockMatchMedia(true); // large screen by default
     useAsyncMock.mockReturnValue({ loading: false, value: new Map([[mockPluginMeta.pluginId, mockPluginMeta]]) });
@@ -76,23 +75,11 @@ describe('AssistantToolbarButtons', () => {
     (store.set as jest.Mock).mockClear();
     (store.delete as jest.Mock).mockClear();
     setAppEvents(new EventBusSrv());
-    // setTestFlags fires OpenFeature events that update React state; wrap in act() since the
-    // component may still be mounted when this runs (RTL cleanup is a separate afterEach).
-    await act(async () => {
-      setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
-    });
-  });
-
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
+    setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
   });
 
   it('renders nothing when the fullscreen workspace flag is off', async () => {
-    await act(async () => {
-      setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: false });
-    });
+    setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: false });
 
     renderButtons();
 

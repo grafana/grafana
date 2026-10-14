@@ -2,7 +2,7 @@ import { InMemoryProvider, type JsonValue, OpenFeature } from '@openfeature/reac
 
 let ofProvider: InMemoryProvider;
 
-// If changing this, you MUST also update the same constant in packages/grafana-runtime/src/internal/openFeature/constants.ts
+// If changing this, you MUST also update the same constant in packages/grafana-runtime/src/internal/openFeature/index.ts
 const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 
 function initTestOpenFeatureClient(): void {

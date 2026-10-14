@@ -57,10 +57,6 @@ describe('invalidatePluginSettingsCache', () => {
       setTestFlags({ 'plugins.useMTPluginSettings': true });
     });
 
-    afterAll(() => {
-      setTestFlags({});
-    });
-
     beforeEach(() => {
       getPluginMetaFromCacheMock.mockResolvedValue(myOrgTestAppMeta);
       backendSrv.get = jest.fn().mockResolvedValue(myOrgTestAppSettings);
@@ -100,10 +96,6 @@ describe('invalidatePluginSettingsCache', () => {
   describe('when plugins.useMTPluginSettings flag is disabled', () => {
     beforeEach(() => {
       setTestFlags({ 'plugins.useMTPluginSettings': false });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     beforeEach(() => {

@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -26,9 +26,6 @@ describe('QueryEditorSidebar', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
     jest.restoreAllMocks();
   });
 

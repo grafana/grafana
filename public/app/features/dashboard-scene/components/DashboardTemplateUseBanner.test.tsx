@@ -1,4 +1,4 @@
-import { act, render, screen } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -48,12 +48,6 @@ describe('DashboardTemplateUseBanner', () => {
     jest.clearAllMocks();
     mockLoadTemplate('Loaded Template Name');
     setTestFlags({ 'grafana.customDashboardTemplates': true });
-  });
-
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('renders on the template route when useTemplateBanner=true and dashboardTemplateUid is set', async () => {

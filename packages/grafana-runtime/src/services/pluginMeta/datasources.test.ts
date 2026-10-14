@@ -40,6 +40,9 @@ const datasourceIdsFromApi = datasourceItemsFromApi.map((i) => i.spec.pluginJson
 describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
+  });
+
+  beforeAll(() => {
     setLogger('grafana/runtime.plugins.settings', {
       logDebug: jest.fn(),
       logError: jest.fn(),
@@ -47,10 +50,6 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       logMeasurement: jest.fn(),
       logWarning: jest.fn(),
     });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   describe('and datasources is not initialized', () => {
@@ -304,10 +303,6 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   describe('and datasources is not initialized', () => {

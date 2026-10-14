@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
@@ -90,9 +90,6 @@ describe('NestedFolderPicker', () => {
 
   afterEach(async () => {
     config.provisioningEnabled = originalProvisioningEnabled;
-    await act(async () => {
-      setTestFlags({});
-    });
     jest.resetAllMocks();
   });
 
@@ -557,12 +554,6 @@ describe('NestedFolderPicker', () => {
       setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
     });
 
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
     it('shows the starred folders virtual root with its selectable children', async () => {
       const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
@@ -605,12 +596,6 @@ describe('NestedFolderPicker', () => {
   describe('when starredFolders is enabled but foldersAppPlatformAPI is disabled', () => {
     beforeEach(() => {
       setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: false });
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
     });
 
     it('does not render starred folders (hard gate on the app-platform folder API)', async () => {

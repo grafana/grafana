@@ -55,10 +55,6 @@ describe('useNavModel', () => {
     setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
   });
 
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   afterAll(() => {
     config.unifiedAlertingEnabled = originalUnifiedAlerting;
   });

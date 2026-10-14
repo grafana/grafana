@@ -24,10 +24,6 @@ function dashboardScene(): DashboardScene {
 }
 
 describe('DashboardMutationClient', () => {
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   it('exposes every dashboard command', () => {
     const available = new Set(new DashboardMutationClient(dashboardScene()).getAvailableCommands());
 

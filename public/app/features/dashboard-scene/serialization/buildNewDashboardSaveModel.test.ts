@@ -104,10 +104,6 @@ describe('buildNewDashboardSaveModelV2', () => {
     setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
   });
 
-  afterAll(() => {
-    setTestFlags({});
-  });
-
   it('should not have template variables defined by default', async () => {
     const result = await buildNewDashboardSaveModelV2();
     expect(result.spec.variables).toEqual([]);

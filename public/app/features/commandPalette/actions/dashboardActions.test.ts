@@ -345,13 +345,6 @@ describe('dashboardActions', () => {
 
     // Initialize the test flag provider before the first render so the provider's
     // ready event doesn't fire as a state update mid-test
-    beforeAll(() => {
-      setTestFlags({});
-    });
-
-    afterAll(() => {
-      setTestFlags({});
-    });
 
     it('returns an empty array if the search query is empty', async () => {
       const { result } = renderHook(

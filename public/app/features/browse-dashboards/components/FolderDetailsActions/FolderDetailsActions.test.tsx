@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
@@ -37,12 +37,6 @@ describe('FolderDetailsActions', () => {
   // starredFoldersEnabled() gates the star button on both of these flags
   beforeEach(() => {
     setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-  });
-
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('refetches the starred folders list when a folder is starred', async () => {

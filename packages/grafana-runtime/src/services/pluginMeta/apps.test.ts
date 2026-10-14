@@ -25,10 +25,6 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
   });
 
-  afterAll(() => {
-    setTestFlags({});
-  });
-
   describe('and apps is not initialized', () => {
     beforeEach(() => {
       setAppPluginMetas({});
@@ -225,10 +221,6 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   describe('and apps is not initialized', () => {

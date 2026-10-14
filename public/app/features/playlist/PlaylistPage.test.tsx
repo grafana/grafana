@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -40,14 +40,6 @@ describe('PlaylistPage', () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = false;
     setTestFlags({ playlistsRBAC: false });
-  });
-
-  afterEach(async () => {
-    // Wrap in act() — setTestFlags fires OpenFeature events that trigger state updates
-    // while the previous test's component is still mounted (RTL cleanup runs afterward).
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   describe('when mounted without a playlist', () => {

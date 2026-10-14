@@ -73,9 +73,6 @@ describe('VariablesEditView', () => {
   beforeEach(() => {
     setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
   });
-  afterAll(() => {
-    setTestFlags({});
-  });
   describe('Dashboard Variables state', () => {
     let dashboard: DashboardScene;
     let variableView: VariablesEditView;

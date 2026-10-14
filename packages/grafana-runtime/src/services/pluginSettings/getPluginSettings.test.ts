@@ -64,10 +64,6 @@ describe('settings', () => {
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: true });
     });
 
-    afterAll(() => {
-      setTestFlags({});
-    });
-
     beforeEach(() => {
       getPluginMetaFromCacheMock.mockResolvedValue(myOrgTestAppMeta);
       refetchPluginMetaMock.mockResolvedValue(myOrgTestAppMeta);
@@ -177,10 +173,6 @@ describe('settings', () => {
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: false });
     });
 
-    afterAll(() => {
-      setTestFlags({});
-    });
-
     beforeEach(() => {
       backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
     });
@@ -237,10 +229,6 @@ describe('settings', () => {
     beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: true });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     beforeEach(() => {

@@ -66,10 +66,6 @@ describe('settings', () => {
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: true });
     });
 
-    afterAll(() => {
-      setTestFlags({});
-    });
-
     beforeEach(() => {
       getPluginMetaFromCacheMock.mockResolvedValue(myOrgTestAppMeta);
       refetchPluginMetaMock.mockResolvedValue(myOrgTestAppMeta);
@@ -253,10 +249,6 @@ describe('settings', () => {
   describe('when plugins.useMTPluginSettings flag is disabled', () => {
     beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: false });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     beforeEach(() => {

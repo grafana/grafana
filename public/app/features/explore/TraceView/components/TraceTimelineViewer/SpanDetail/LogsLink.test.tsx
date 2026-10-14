@@ -113,7 +113,7 @@ function mockLokiDatasourceList(uids: string[], isLoading = false) {
 }
 
 describe('LogsLinkButton', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
     store.delete(queryMatchKey('logs-ds-uid'));
     store.delete(queryMatchKey('loki-fallback-uid'));
@@ -122,19 +122,13 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
     usePluginLinksMock.mockReturnValue({ links: [], isLoading: false });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
-    await act(async () => {
-      setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: true });
-    });
+    setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: true });
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     store.delete(queryMatchKey('logs-ds-uid'));
     store.delete(queryMatchKey('loki-fallback-uid'));
     store.delete(datasourceMatchKey());
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('renders the link button with its CTA copy', () => {
@@ -151,9 +145,7 @@ describe('LogsLinkButton', () => {
   });
 
   it('does not check for logs when the dynamicTraceToLogs flag is disabled', async () => {
-    await act(async () => {
-      setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: false });
-    });
+    setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: false });
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -759,7 +751,7 @@ describe('LogsLinkButton', () => {
 });
 
 describe('LogsLinkMenuItem', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
     store.delete(queryMatchKey('logs-ds-uid'));
     store.delete(datasourceMatchKey());
@@ -767,18 +759,12 @@ describe('LogsLinkMenuItem', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
     usePluginLinksMock.mockReturnValue({ links: [], isLoading: false });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
-    await act(async () => {
-      setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: true });
-    });
+    setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: true });
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     store.delete(queryMatchKey('logs-ds-uid'));
     store.delete(datasourceMatchKey());
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('renders the menu item with its CTA copy', () => {
@@ -795,9 +781,7 @@ describe('LogsLinkMenuItem', () => {
   });
 
   it('does not check for logs when the dynamicTraceToLogs flag is disabled', async () => {
-    await act(async () => {
-      setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: false });
-    });
+    setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: false });
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -921,10 +905,6 @@ describe('LogsLinkMenuItem', () => {
 });
 
 describe('getLogsButtonCTA', () => {
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   it.each([
     {
       name: 'shows "Related logs" when the datasource has no settings',
@@ -973,10 +953,6 @@ describe('getLogsButtonCTA', () => {
 });
 
 describe('getLogsButtonTooltip', () => {
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   it('returns the generic tooltip when there are no settings, regardless of presence', () => {
     expect(getLogsButtonTooltip(undefined, 'present')).toBe(
       'View related logs using the trace data source configuration.'
@@ -1120,10 +1096,6 @@ describe('addNoSpanIdFallback', () => {
 
   beforeEach(() => {
     setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
-  });
-
-  afterEach(() => {
-    setTestFlags({});
   });
 
   it('returns the original query when there is no expr', () => {
