@@ -95,7 +95,7 @@ export const setCreateGrafanaRuleResolver = (
 ) => {
   server.use(
     http.post<{ namespace: string }, DefaultBodyType, undefined>(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}`,
+      `/apis/rules.alerting.grafana.app/v1beta1/namespaces/:namespace/${endpoint}`,
       resolver
     )
   );
@@ -107,7 +107,7 @@ export const setReplaceGrafanaRuleResolver = (
 ) => {
   server.use(
     http.put<{ namespace: string; name: string }, DefaultBodyType, undefined>(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}/:name`,
+      `/apis/rules.alerting.grafana.app/v1beta1/namespaces/:namespace/${endpoint}/:name`,
       resolver
     )
   );
