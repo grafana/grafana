@@ -452,74 +452,76 @@ describe('dashboardActions', () => {
       }
     });
 
-    it('returns hybrid dashboard actions when both the cmdkHybridSearch and vectorSearch flags are on', async () => {
-      mockContextSrv.user.isSignedIn = true;
-      setTestFlags({ 'grafana.cmdkHybridSearch': true, 'dashboard.vectorSearch': true });
-      server.use(
-        getHybridSearchHandler([
-          {
-            name: 'hybrid-dashboard-1',
-            title: 'Hybrid dashboard 1',
-            score: 0.9,
-            managedBy: { kind: ManagerKind.Repo },
+    it.each([true, false])(
+      'returns hybrid dashboard actions with cmdkHybridSearch on and vectorSearch=%s',
+      async (vectorSearch) => {
+        mockContextSrv.user.isSignedIn = true;
+        setTestFlags({ 'grafana.cmdkHybridSearch': true, 'dashboard.vectorSearch': vectorSearch });
+        server.use(
+          getHybridSearchHandler([
+            {
+              name: 'hybrid-dashboard-1',
+              title: 'Hybrid dashboard 1',
+              score: 0.9,
+              managedBy: { kind: ManagerKind.Repo },
+            },
+          ])
+        );
+
+        const { result } = renderHook(
+          () => {
+            return useSearchResults({ searchQuery: 'mySearchQuery', show: true });
           },
-        ])
-      );
+          { wrapper }
+        );
+        await waitFor(() => {
+          expect(result.current.searchResults).toEqual([
+            {
+              id: 'go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1',
+              name: 'Hybrid dashboard 1',
+              priority: 1,
+              section: 'Dashboards',
+              sectionId: 'dashboards',
+              subtitle: 'Dashboards',
+              url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+              managedBy: ManagerKind.Repo,
+            },
+          ]);
+        });
+      }
+    );
 
-      const { result } = renderHook(
-        () => {
-          return useSearchResults({ searchQuery: 'mySearchQuery', show: true });
-        },
-        { wrapper }
-      );
-      await waitFor(() => {
-        expect(result.current.searchResults).toEqual([
-          {
-            id: 'go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1',
-            name: 'Hybrid dashboard 1',
-            priority: 1,
-            section: 'Dashboards',
-            sectionId: 'dashboards',
-            subtitle: 'Dashboards',
-            url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
-            managedBy: ManagerKind.Repo,
+    it.each([true, false])(
+      'uses classic search with cmdkHybridSearch off and vectorSearch=%s',
+      async (vectorSearch) => {
+        mockContextSrv.user.isSignedIn = true;
+        setTestFlags({ 'grafana.cmdkHybridSearch': false, 'dashboard.vectorSearch': vectorSearch });
+        // Spy on the hybrid endpoint so we can assert it's never requested, rather than
+        // relying only on the shape of the returned actions
+        const hybridSearchSpy = jest.fn();
+        server.use(
+          http.post(hybridSearchRoute, () => {
+            hybridSearchSpy();
+            return HttpResponse.json({ items: [] });
+          })
+        );
+
+        const { result } = renderHook(
+          () => {
+            return useSearchResults({ searchQuery: 'mySearchQuery', show: true });
           },
-        ]);
-      });
-    });
-
-    it.each([
-      ['the vectorSearch flag is off', { 'grafana.cmdkHybridSearch': true, 'dashboard.vectorSearch': false }],
-      ['the cmdkHybridSearch flag is off', { 'grafana.cmdkHybridSearch': false, 'dashboard.vectorSearch': true }],
-      ['both flags are off', { 'grafana.cmdkHybridSearch': false, 'dashboard.vectorSearch': false }],
-    ])('does not use hybrid search when %s', async (_name, flags) => {
-      mockContextSrv.user.isSignedIn = true;
-      setTestFlags(flags);
-      // Spy on the hybrid endpoint so we can assert it's never requested, rather than
-      // relying only on the shape of the returned actions
-      const hybridSearchSpy = jest.fn();
-      server.use(
-        http.post(hybridSearchRoute, () => {
-          hybridSearchSpy();
-          return HttpResponse.json({ items: [] });
-        })
-      );
-
-      const { result } = renderHook(
-        () => {
-          return useSearchResults({ searchQuery: 'mySearchQuery', show: true });
-        },
-        { wrapper }
-      );
-      await waitFor(() => {
-        expect(result.current.searchResults).toEqual([
-          expect.objectContaining({
-            name: 'My dashboard 1',
-            sectionId: 'dashboards',
-          }),
-        ]);
-      });
-      expect(hybridSearchSpy).not.toHaveBeenCalled();
-    });
+          { wrapper }
+        );
+        await waitFor(() => {
+          expect(result.current.searchResults).toEqual([
+            expect.objectContaining({
+              name: 'My dashboard 1',
+              sectionId: 'dashboards',
+            }),
+          ]);
+        });
+        expect(hybridSearchSpy).not.toHaveBeenCalled();
+      }
+    );
   });
 });
