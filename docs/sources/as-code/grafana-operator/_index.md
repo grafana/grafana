@@ -11,6 +11,7 @@ weight: 600
 canonical: https://grafana.com/docs/grafana/latest/as-code/grafana-operator/
 aliases:
   - ../infrastructure-as-code/grafana-operator/
+  - ./infrastructure-as-code/grafana-operator/
 ---
 
 # Grafana Operator

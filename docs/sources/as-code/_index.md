@@ -6,6 +6,8 @@ aliases:
   - ../infrastructure-as-code/grizzly/dashboards-folders-datasources
   - ./infrastructure-as-code/grizzly/
   - ../infrastructure-as-code/grizzly/
+  - ./as-code/infrastructure-as-code/grizzly/
+  - ./as-code/infrastructure-as-code/grizzly/dashboards-folders-datasources/
 description: Deploy, configure and provision Grafana with as code workflows.
 keywords:
   - observability
