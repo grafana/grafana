@@ -256,9 +256,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             : undefined;
 
           let sparkline: FieldSparkline | undefined = undefined;
-          if (options.sparkline) {
+
+          if (options.sparkline && field.values.length > 1) {
             sparkline = {
-              y: dataFrame.fields[i],
+              y: field,
               x: timeField,
             };
             if (isReducerID(calc)) {

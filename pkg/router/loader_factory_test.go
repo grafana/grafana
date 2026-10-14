@@ -68,3 +68,20 @@ func TestProvideCloudRoutesLoader_Decrypter(t *testing.T) {
 		require.ErrorContains(t, err, "grpc_server_address is required")
 	})
 }
+
+func TestProvideRoutesLoader_MiddlewareSkipsCloudSources(t *testing.T) {
+	middleware := PluginLoaderDependencies{PluginDependencies: PluginDependencies{
+		Features: featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), //nolint:staticcheck
+	}}
+	for key, value := range map[string]string{
+		"st_discovery_url": "https://discovery.example.com",
+		"plugins_url":      "https://plugins.invalid/plugins",
+		"core_url":         "https://core.invalid/plugins",
+	} {
+		t.Run(key, func(t *testing.T) {
+			loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), middleware)
+			require.NoError(t, err)
+			require.IsType(t, dummyRoutesLoader{}, loader)
+		})
+	}
+}

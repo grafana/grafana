@@ -83,7 +83,7 @@ describe('sandbox runtime', () => {
 
   test('legacy content renders without policy verification and keeps measuring', async () => {
     initialize();
-    expectNotification('ready');
+    expectNotification('ready', { document: expect.any(String) });
     violation('https://external.test/image');
     message();
     await flush();
@@ -109,7 +109,7 @@ describe('sandbox runtime', () => {
     violation(CSP_CHECK_URL);
     violation(new URL(CSP_CHECK_URL).origin);
     await flush();
-    expectNotification('ready');
+    expectNotification('ready', { document: expect.any(String) });
     expect(document.querySelector('img')).toBeNull();
     message();
     await flush();
@@ -269,5 +269,33 @@ describe('sandbox runtime', () => {
     await flush();
     expect(disconnect).toHaveBeenCalledTimes(1);
     expect(postMessage).not.toHaveBeenCalled();
+  });
+
+  test('creates frame-local HTML and script policies without granting script URL trust', async () => {
+    const original = Object.getOwnPropertyDescriptor(window, 'trustedTypes');
+    const createScript = jest.fn((source: string) => source);
+    const createPolicy = jest.fn((name: string, options: TrustedTypePolicyOptions) =>
+      name === 'default' ? options : { createScript: (source: string) => createScript(options.createScript!(source)) }
+    );
+    Object.defineProperty(window, 'trustedTypes', { configurable: true, value: { createPolicy } });
+    try {
+      initialize();
+      const htmlOptions = createPolicy.mock.calls[0][1];
+      expect(createPolicy.mock.calls.map(([name]) => name)).toEqual(['default', 'grafana-text-panel-runtime']);
+      expect(htmlOptions.createHTML!('<SCRIPT>untrusted</SCRIPT>')).toBe('&lt;script>untrusted</SCRIPT>');
+      expect(htmlOptions.createScript).toBeUndefined();
+      expect(createPolicy.mock.calls[1][1].createScriptURL).toBeUndefined();
+      message({ ...command, html: '<pre class="mermaid">graph LR; A-->B</pre>', mermaid: {} });
+      await flush();
+      message({ ...command, type: 'mermaid-source', source: '/* trusted Mermaid */' });
+      await flush();
+      expect(createScript).toHaveBeenCalledWith('/* trusted Mermaid */');
+    } finally {
+      if (original) {
+        Object.defineProperty(window, 'trustedTypes', original);
+      } else {
+        Reflect.deleteProperty(window, 'trustedTypes');
+      }
+    }
   });
 });

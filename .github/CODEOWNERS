@@ -149,6 +149,7 @@
 /pkg/infra/localcache/ @grafana/grafana-backend-services-squad
 /pkg/infra/log/ @grafana/grafana-backend-services-squad
 /pkg/infra/metrics/ @grafana/grafana-backend-services-squad
+/pkg/infra/metricsservice/ @grafana/grafana-backend-services-squad
 /pkg/infra/nats/ @grafana/grafana-search-and-storage
 /pkg/infra/network/ @grafana/identity-squad
 /pkg/infra/process/ @grafana/grafana-backend-services-squad

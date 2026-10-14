@@ -139,6 +139,10 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 	}
 	keepalivePolicy := keepalive.EnforcementPolicy{
 		MinTime: s.cfg.KeepaliveMinTime,
+		// Clients such as dskit's also ping connections without active calls.
+		// Without this, each of those pings counts as a violation, and the
+		// connection is closed after a few with GOAWAY(too_many_pings).
+		PermitWithoutStream: true,
 	}
 
 	// Only add keepalive options if any values are configured

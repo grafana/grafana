@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
+import { useFlagDashboardNotebooks, usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { Alert, Box, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -112,9 +112,9 @@ export function NotebookView(props: NotebookViewProps) {
 }
 
 function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
-  // Per instance, not the module singleton: the singleton holds one scene for the whole app, so an
-  // embedded notebook would evict whatever the notebooks route had open and be evicted by it in
-  // turn. The cost is that this instance's scene is not shared with the route's.
+  // Per instance, not the module singleton, so this view has its own loading and error state. The
+  // scenes themselves are still shared, through the module-level cache in NotebookPageStateManager:
+  // one notebook on screen twice has to be one scene, and therefore one autosave.
   const stateManager = useMemo(() => new NotebookPageStateManager({ isLoading: false }), []);
   const { scene, isLoading, loadError } = stateManager.useState();
 
@@ -133,7 +133,29 @@ function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
   return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
 }
 
-function DraftNotebookView({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
+/**
+ * Split from the build below so that build stays a one-shot: the inner component mounts once, with
+ * the panel metas its synchronous transform needs already in hand.
+ */
+function DraftNotebookView(props: DraftNotebookViewProps) {
+  const { value: panelMetas, error } = usePanelPluginMetasMap();
+
+  if (error) {
+    return <NotebookViewError error={{ message: error.message }} />;
+  }
+
+  if (!panelMetas) {
+    return (
+      <Centered>
+        <PageLoader />
+      </Centered>
+    );
+  }
+
+  return <DraftNotebookDocument {...props} />;
+}
+
+function DraftNotebookDocument({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
   /**
    * Built once, from the first spec. The prop is the document's starting point, not a live mirror of
    * it: rebuilding whenever the host echoed an edited spec back would throw away the caret, the undo

@@ -13,8 +13,10 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	folderapierrors "github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1035,6 +1037,64 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		require.Equal(t, "bad-folder/", validationErr.Path)
 		require.NotEmpty(t, client.updateCalls)
 	})
+}
+
+func TestEnsureFolderExists_DuplicateErrorCompatibility(t *testing.T) {
+	const repoName = "repo-a"
+	const folderID = "folder-id"
+
+	legacyErr := folderapierrors.ToFolderStatusError(foldermodel.ErrVersionMismatch)
+	alreadyExistsErr := folderapierrors.ToFolderStatusError(apierrors.NewAlreadyExists(FolderResource.GroupResource(), folderID))
+	for encoding, createErr := range map[string]error{
+		"legacy version mismatch":   &legacyErr,
+		"structured already exists": &alreadyExistsErr,
+	} {
+		t.Run(encoding, func(t *testing.T) {
+			for _, owner := range []struct {
+				name    string
+				manager string
+				wantErr error
+			}{
+				{name: "same repository", manager: repoName},
+				{name: "different repository", manager: "repo-b", wantErr: NewFolderManagedByOtherError(folderID, "repo-b")},
+				{name: "unmanaged", wantErr: NewResourceUnmanagedConflictError(folderID, utils.ManagerProperties{
+					Kind: utils.ManagerKindRepo, Identity: repoName,
+				})},
+			} {
+				t.Run(owner.name, func(t *testing.T) {
+					repo := repository.NewMockReaderWriter(t)
+					repo.On("Config").Return(&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: "default"},
+					})
+					existing := &unstructured.Unstructured{}
+					existing.SetName(folderID)
+					if owner.manager != "" {
+						existing.SetAnnotations(map[string]string{utils.AnnoKeyManagerIdentity: owner.manager})
+					}
+					var getCount int
+					client := &fakeDynamicResourceClient{
+						getFn: func(name string) (*unstructured.Unstructured, error) {
+							getCount++
+							if getCount == 1 {
+								return nil, apierrors.NewNotFound(FolderResource.GroupResource(), name)
+							}
+							return existing, nil
+						},
+						createFn: func(*unstructured.Unstructured) (*unstructured.Unstructured, error) {
+							return nil, createErr
+						},
+					}
+					fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
+					err := fm.EnsureFolderExists(context.Background(), Folder{ID: folderID, Title: "Folder"}, "")
+
+					require.Equal(t, owner.wantErr, err)
+					require.Equal(t, []string{folderID, folderID}, client.getCalls)
+					require.Equal(t, []string{folderID}, client.createCalls)
+					require.Empty(t, client.updateCalls)
+				})
+			}
+		})
+	}
 }
 
 // TestEnsureFolderExists_TakeoverAllowlist covers the migration takeover path:

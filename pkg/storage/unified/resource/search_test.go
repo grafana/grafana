@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -185,17 +186,25 @@ func (m *MockResourceIndex) ForgetType(gr schema.GroupResource) error {
 
 // documentRefs is what ListDocumentRefs answers with, by resource type.
 func (m *MockResourceIndex) ListDocumentRefs(_ context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error] {
+	// One ref at a time, as the real index pages, so a document written while a
+	// caller is part way through is seen once the caller gets to it.
 	return func(yield func(DocumentRef, error) bool) {
 		m.updateIndexMu.Lock()
-		refs := slices.Clone(m.documentRefs[gr])
 		err := m.documentRefsErr
 		m.updateIndexMu.Unlock()
-
 		if err != nil {
 			yield(DocumentRef{}, err)
 			return
 		}
-		for _, ref := range refs {
+		for i := 0; ; i++ {
+			m.updateIndexMu.Lock()
+			refs := m.documentRefs[gr]
+			if i >= len(refs) {
+				m.updateIndexMu.Unlock()
+				return
+			}
+			ref := refs[i]
+			m.updateIndexMu.Unlock()
 			if !yield(ref, nil) {
 				return
 			}
@@ -2553,11 +2562,10 @@ func TestBuildDeletedDocumentKeepsTags(t *testing.T) {
 	// An object with no usable tags is indexed without the field rather than with an
 	// empty list, so trash documents are shaped like live ones.
 	for name, body := range map[string]string{
-		"no tags":            `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone"}}`,
-		"empty list":         `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":[]}}`,
-		"tags not a list":    `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":"prod"}}`,
-		"no spec at all":     `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"}}`,
-		"spec not an object": `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":"just a string"}`,
+		"no tags":         `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone"}}`,
+		"empty list":      `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":[]}}`,
+		"tags not a list": `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":"prod"}}`,
+		"no spec at all":  `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"}}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			doc, err := buildDeletedDocument(key, 10, []byte(body))
@@ -2783,4 +2791,46 @@ func TestBuildResolvesDocumentBuilderOnFirstUse(t *testing.T) {
 
 		require.Equal(t, int32(1), supplier.resolved.Load(), "the builder resolved for the build should be reused by every update")
 	})
+}
+
+// decodeForTrash skips most of an object, so for any object the trash document has
+// to come out as from a full decode, failures included. If the document starts
+// reading a field decodeForTrash drops, the first case below fails.
+func TestBuildDeletedDocumentMatchesAFullDecode(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "group", Resource: "resource", Name: "gone"}
+	const head = `"apiVersion":"group/v1","kind":"Thing"`
+
+	for name, body := range map[string]string{
+		// Fields the document does not read hold values, so reading one shows up.
+		"every kind of field": `{` + head + `,
+			"metadata":{"name":"gone","labels":{"team":"a"},"deletionTimestamp":"2026-10-01T10:00:00Z",
+				"annotations":{"grafana.app/folder":"f1","grafana.app/updatedBy":"user:alice","grafana.app/managedBy":"repo"}},
+			"spec":{"title":"Gone","name":"n","tags":["a",1,"b"],"description":"d","panels":[{"id":1,"targets":[{"expr":"up"}]}],"ratio":0.5,"enabled":true,"empty":null},
+			"status":{"phase":"ready"}}`,
+		"title falls back to name":    `{` + head + `,"spec":{"title":"","name":"Named"}}`,
+		"title not a string":          `{` + head + `,"spec":{"title":{"x":1},"name":5}}`,
+		"spec null":                   `{` + head + `,"spec":null}`,
+		"no metadata":                 `{` + head + `,"spec":{"title":"Gone"}}`,
+		"null annotation value":       `{` + head + `,"metadata":{"annotations":{"grafana.app/folder":null,"grafana.app/updatedBy":"user:bob"}}}`,
+		"non-string annotation value": `{` + head + `,"metadata":{"annotations":{"grafana.app/updatedBy":7},"deletionTimestamp":"2026-10-01T10:00:00Z"}}`,
+		"deletion time unparseable":   `{` + head + `,"metadata":{"deletionTimestamp":"yesterday"}}`,
+		"not an object":               `["gone"]`,
+		"invalid json":                `{"kind":"Thing",`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			var whole unstructured.Unstructured
+			var want *IndexableDocument
+			wantErr := whole.UnmarshalJSON([]byte(body))
+			if wantErr == nil {
+				want, wantErr = deletedDocumentFrom(key, 42, &whole)
+			}
+			got, err := buildDeletedDocument(key, 42, []byte(body))
+			if wantErr != nil {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, want, got)
+		})
+	}
 }
