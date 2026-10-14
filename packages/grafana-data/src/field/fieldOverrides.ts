@@ -60,6 +60,10 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
 
         for (let i = 0; i < vals.length; i++) {
           let v = vals[i];
+          // Transformations can leave strings such as "200" or "" in a number field
+          if (typeof v === 'string') {
+            v = anyToNumberOrUndefined(v);
+          }
 
           if (v === null) {
             if (nullAsZero) {
@@ -70,7 +74,7 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
                 max = 0;
               }
             }
-          } else if (!Number.isNaN(v)) {
+          } else if (typeof v === 'number' && !Number.isNaN(v)) {
             if (min! > v) {
               min = v;
             }

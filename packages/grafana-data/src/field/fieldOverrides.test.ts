@@ -150,6 +150,26 @@ describe('Global MinMax', () => {
     });
   });
 
+  describe('when a number field holds strings or booleans', () => {
+    it.each([
+      { desc: 'a numeric string', values: [5, '200', 10], min: 5, max: 200 },
+      { desc: 'an empty string', values: [5, '', 10], min: 5, max: 10 },
+      { desc: 'only numeric strings', values: ['5', '10'], min: 5, max: 10 },
+      { desc: 'a boolean', values: [5, true, 10], min: 5, max: 10 },
+    ])('should use number values for $desc', ({ values, min, max }) => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: values.map((_, i) => i) },
+          { name: 'Value', type: FieldType.number, values },
+        ],
+      });
+      const range = findNumericFieldMinMax([frame]);
+
+      expect(range.min).toBe(min);
+      expect(range.max).toBe(max);
+    });
+  });
+
   describe('when values are zero', () => {
     it('then global min max should be correct', () => {
       const frame = toDataFrame({
