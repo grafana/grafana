@@ -2211,6 +2211,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should resolve legacy datasource names for v1 dashboards only', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const dashboard = { uid: 'fake-dash', editable: true };
       setupLoadDashboardMock({ dashboard, meta: {} });
 
