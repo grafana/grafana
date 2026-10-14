@@ -8,81 +8,128 @@ import {
   addComposerEnterRequestListener,
   clearPendingComposerEnterRequest,
   getPendingComposerEnterTarget,
+  getSupportedComposerResources,
   PENDING_REQUEST_TTL_MS,
   requestComposerEnter,
   settleComposerEnterRequest,
   subscribeToComposerEnterRequests,
   wasComposerEnterRequestDocked,
 } from './composerEntryRequests';
+import { type ComposerEnterRequestOptions } from './types';
 
 const TARGET = { resource: 'dashboard', uid: 'abc' } as const;
+const NOTEBOOK = { resource: 'notebook', uid: 'nb' } as const;
+const cleanups: Array<() => void> = [];
+
+/** Registers a listener for the rest of the test. */
+function listen(options?: ComposerEnterRequestOptions) {
+  const listener = jest.fn();
+  const unsubscribe = addComposerEnterRequestListener(listener, options);
+  cleanups.push(unsubscribe);
+  return { listener, unsubscribe };
+}
 
 afterEach(() => {
+  cleanups.splice(0).forEach((cleanup) => cleanup());
   clearPendingComposerEnterRequest();
   resetExtensionSidebarPresentationForTests();
   jest.useRealTimers();
 });
 
-it('delivers to a listener that is already registered, immediately and once', () => {
-  const first = jest.fn();
-  const second = jest.fn();
-  const unsubscribeFirst = addComposerEnterRequestListener(first);
-  const unsubscribeSecond = addComposerEnterRequestListener(second);
+describe('supported document types', () => {
+  it('are dashboards only for a listener registered without options', () => {
+    listen();
+    expect(getSupportedComposerResources()).toEqual(['dashboard']);
+  });
 
-  requestComposerEnter(TARGET);
+  it('are the union across live listeners', () => {
+    listen();
+    listen({ resources: ['notebook'] });
+    expect(getSupportedComposerResources()).toEqual(['dashboard', 'notebook']);
+  });
 
-  expect(first).toHaveBeenCalledWith(TARGET);
-  expect(second).not.toHaveBeenCalled();
-  unsubscribeFirst();
-  unsubscribeSecond();
+  it('narrow when a listener registers again with fewer, and empty once all unsubscribe', () => {
+    const changed = jest.fn();
+    cleanups.push(subscribeToComposerEnterRequests(changed));
+    const first = listen({ resources: ['dashboard', 'notebook'] });
+    expect(getSupportedComposerResources()).toEqual(['dashboard', 'notebook']);
+    first.unsubscribe();
+    const second = listen({ resources: ['dashboard'] });
+    expect(getSupportedComposerResources()).toEqual(['dashboard']);
+
+    second.unsubscribe();
+
+    expect(getSupportedComposerResources()).toEqual([]);
+    // dashboard+notebook, nothing, dashboard, nothing.
+    expect(changed).toHaveBeenCalledTimes(4);
+  });
+
+  it('ignore what is not a document type', () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a plugin calling from untyped code
+    listen({ resources: ['notebook', 'canvas'] as unknown as ComposerEnterRequestOptions['resources'] });
+    expect(getSupportedComposerResources()).toEqual(['notebook']);
+  });
+
+  it('keep one array between changes', () => {
+    listen();
+    expect(getSupportedComposerResources()).toBe(getSupportedComposerResources());
+  });
 });
 
-it('queues a request until the first listener subscribes, then delivers it once', () => {
-  requestComposerEnter(TARGET);
-  const listener = jest.fn();
-  const unsubscribe = addComposerEnterRequestListener(listener);
-  expect(listener).toHaveBeenCalledWith(TARGET);
+it('delivers to the first listener that supports the resource, immediately and once', () => {
+  const first = listen();
+  const second = listen();
 
-  const later = jest.fn();
-  const unsubscribeLater = addComposerEnterRequestListener(later);
-  expect(later).not.toHaveBeenCalled();
-  expect(listener).toHaveBeenCalledTimes(1);
-  unsubscribe();
-  unsubscribeLater();
+  expect(requestComposerEnter(TARGET)).toBe(true);
+
+  expect(first.listener).toHaveBeenCalledWith(TARGET);
+  expect(second.listener).not.toHaveBeenCalled();
 });
 
-it('drops a queued request after 10 seconds', () => {
-  jest.useFakeTimers();
-  requestComposerEnter(TARGET);
-  jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS + 1);
+it('passes a notebook request over a listener that only knows dashboards', () => {
+  const dashboards = listen();
+  const notebooks = listen({ resources: ['dashboard', 'notebook'] });
 
-  const listener = jest.fn();
-  const unsubscribe = addComposerEnterRequestListener(listener);
+  requestComposerEnter(NOTEBOOK);
+
+  expect(dashboards.listener).not.toHaveBeenCalled();
+  expect(notebooks.listener).toHaveBeenCalledWith(NOTEBOOK);
+});
+
+it('never makes a request no listener supports', () => {
+  listen();
+
+  expect(requestComposerEnter(NOTEBOOK, { float: true })).toBe(false);
+
+  expect(getPendingComposerEnterTarget()).toBeUndefined();
+  expect(getExtensionSidebarPresentation()).toBe('docked');
+});
+
+it('makes no request while nothing listens, and none fires later', () => {
+  expect(requestComposerEnter(TARGET)).toBe(false);
+
+  const { listener } = listen();
   expect(listener).not.toHaveBeenCalled();
-  unsubscribe();
-});
-
-it('drops a queued request when cleared, as on navigation', () => {
-  requestComposerEnter(TARGET);
-  clearPendingComposerEnterRequest();
-
-  const listener = jest.fn();
-  const unsubscribe = addComposerEnterRequestListener(listener);
-  expect(listener).not.toHaveBeenCalled();
-  unsubscribe();
 });
 
 it('stops delivering to a listener once it unsubscribes', () => {
-  const listener = jest.fn();
-  addComposerEnterRequestListener(listener)();
+  const { listener, unsubscribe } = listen();
+  unsubscribe();
   requestComposerEnter(TARGET);
   expect(listener).not.toHaveBeenCalled();
 });
 
 // grafana.extensionSidebarFloating is off here: a request floats the sidebar without it.
 describe('a request that floats the sidebar', () => {
-  it('floats the sidebar while it waits', () => {
+  let assistant: jest.Mock;
+
+  beforeEach(() => {
+    assistant = listen().listener;
+  });
+
+  it('floats the sidebar while it waits for the entry attempt', () => {
     requestComposerEnter(TARGET, { float: true });
+    expect(assistant).toHaveBeenCalledWith(TARGET);
     expect(getExtensionSidebarPresentation()).toBe('floating');
   });
 
@@ -105,15 +152,6 @@ describe('a request that floats the sidebar', () => {
     expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
-  it('keeps floating while the listener that took it enters Composer', () => {
-    requestComposerEnter(TARGET, { float: true });
-    const listener = jest.fn();
-    const unsubscribe = addComposerEnterRequestListener(listener);
-    expect(listener).toHaveBeenCalledWith(TARGET);
-    expect(getExtensionSidebarPresentation()).toBe('floating');
-    unsubscribe();
-  });
-
   it('ignores the settling of another dashboard', () => {
     requestComposerEnter(TARGET, { float: true });
     settleComposerEnterRequest('another-dashboard');
@@ -127,11 +165,7 @@ describe('a request that floats the sidebar', () => {
     expect(getExtensionSidebarPresentation()).toBe('docked');
     expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(true);
     expect(wasComposerEnterRequestDocked('another-dashboard')).toBe(false);
-
-    const listener = jest.fn();
-    const unsubscribe = addComposerEnterRequestListener(listener);
-    expect(listener).toHaveBeenCalledWith(TARGET);
-    unsubscribe();
+    expect(getPendingComposerEnterTarget()).toEqual(TARGET);
 
     settleComposerEnterRequest(TARGET.uid);
     expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(false);
@@ -147,12 +181,15 @@ describe('a request that floats the sidebar', () => {
 });
 
 describe('the outstanding request', () => {
-  it('stays outstanding after a listener takes it, until its entry attempt settles', () => {
+  beforeEach(() => {
+    listen();
+  });
+
+  it('stays outstanding after the listener takes it, until its entry attempt settles', () => {
     const changed = jest.fn();
-    const unsubscribeChanges = subscribeToComposerEnterRequests(changed);
+    cleanups.push(subscribeToComposerEnterRequests(changed));
     requestComposerEnter(TARGET);
     expect(changed).toHaveBeenCalledTimes(1);
-    const unsubscribe = addComposerEnterRequestListener(jest.fn());
     expect(getPendingComposerEnterTarget()).toEqual(TARGET);
 
     settleComposerEnterRequest('another-dashboard');
@@ -161,8 +198,6 @@ describe('the outstanding request', () => {
 
     expect(getPendingComposerEnterTarget()).toBeUndefined();
     expect(changed).toHaveBeenCalledTimes(2);
-    unsubscribe();
-    unsubscribeChanges();
   });
 
   it('ends after 10 seconds, or when cleared', () => {

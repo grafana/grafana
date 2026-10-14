@@ -30,7 +30,7 @@ const COMPOSER_ICON_GRADIENT_ID = 'grafana-assistant-notebook-composer-icon-grad
  * scene; this only flips them.
  *
  * Composer is offered as the dashboard mode picker offers it: on the notebook's own route, while its flag is
- * on, Assistant has registered and Composer can start. Choosing it asks Assistant to enter, and shows
+ * on, Assistant has registered and listens for notebook entry requests, and Composer can start. Choosing it asks Assistant to enter, and shows
  * Composer until the request settles: a session that starts keeps it, one that fails or expires falls back
  * to the mode the notebook is still in. View or Edit from Composer ends the session first.
  */
@@ -40,7 +40,7 @@ export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
   // Read for its re-render: canEnterNotebookComposer reads the flag itself.
   useFlagGrafanaNotebookComposer();
   const embedded = useIsNotebookEmbedded();
-  const entry = useAssistantComposerEntry();
+  const entry = useAssistantComposerEntry('notebook');
   const pendingTarget = useSyncExternalStore(subscribeToComposerEnterRequests, getPendingComposerEnterTarget);
   const requested = pendingTarget?.resource === 'notebook' && pendingTarget.uid === uid;
 

@@ -36,7 +36,11 @@ export interface ComposerAPI {
     target?: { resource: 'dashboard' | 'notebook'; uid: string },
     options?: { presentation?: 'floating' | 'none' }
   ): Promise<unknown>;
-  onEnterRequested(listener: (target: { resource: 'dashboard' | 'notebook'; uid: string }) => void): () => void;
+  /** Without `options`, the listener enters Composer on dashboards only. */
+  onEnterRequested(
+    listener: (target: { resource: 'dashboard' | 'notebook'; uid: string }) => void,
+    options?: { resources?: Array<'dashboard' | 'notebook'> }
+  ): () => void;
 }
 
 /**

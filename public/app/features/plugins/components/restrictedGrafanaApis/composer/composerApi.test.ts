@@ -116,7 +116,14 @@ describe('presentation', () => {
     'grafana.dashboardComposer': true,
   };
 
+  // Assistant listening for the picker's requests, as it does while its sidebar is mounted.
+  let stopListening = () => {};
+  beforeEach(() => {
+    stopListening = composerApi.onEnterRequested(() => {});
+  });
+
   afterEach(() => {
+    stopListening();
     clearPendingComposerEnterRequest();
     resetExtensionSidebarPresentationForTests();
   });
@@ -265,4 +272,20 @@ it('passes entry requests from Grafana to the registered listeners until they un
   unsubscribe();
   requestComposerEnter(DASHBOARD);
   expect(listener).toHaveBeenCalledTimes(1);
+});
+
+it('passes notebook requests only to listeners that ask for them', () => {
+  const dashboards = jest.fn();
+  const both = jest.fn();
+  const stopDashboards = composerApi.onEnterRequested(dashboards);
+  const stopBoth = composerApi.onEnterRequested(both, { resources: ['dashboard', 'notebook'] });
+  const notebook = { resource: 'notebook', uid: 'nb-1' } as const;
+
+  requestComposerEnter(notebook);
+
+  expect(dashboards).not.toHaveBeenCalled();
+  expect(both).toHaveBeenCalledWith(notebook);
+  stopDashboards();
+  stopBoth();
+  clearPendingComposerEnterRequest();
 });

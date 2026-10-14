@@ -162,11 +162,12 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
 }
 
 /**
- * Composer in the picker: offered while its flag is on and Assistant's sidebar can be shown. Choosing it
+ * Composer in the picker: offered while its flag is on, Assistant's sidebar can be shown and Assistant listens
+ * for dashboard entry requests. Choosing it
  * opens that sidebar if needed and asks Assistant to enter Composer; core never enters it itself.
  */
 function useComposerOption(dashboard: DashboardScene) {
-  const entry = useAssistantComposerEntry();
+  const entry = useAssistantComposerEntry('dashboard');
   if (getDashboardMode(dashboard.state) === 'composer') {
     return { disabledReason: undefined, request: () => {} };
   }

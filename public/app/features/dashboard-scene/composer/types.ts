@@ -19,8 +19,19 @@ export type ComposerNotebookSpec = NotebookSpec;
  * route, `/notebooks/:uid`.
  */
 export interface ComposerTarget {
-  resource: 'dashboard' | 'notebook';
+  resource: ComposerResource;
   uid: string;
+}
+
+/** The document types Composer edits. */
+export type ComposerResource = 'dashboard' | 'notebook';
+
+export interface ComposerEnterRequestOptions {
+  /**
+   * The document types this listener enters Composer on. Grafana offers Composer only for types some live
+   * listener supports. Omitted, the listener supports dashboards only.
+   */
+  resources?: ComposerResource[];
 }
 
 export interface ComposerEnterOptions {
@@ -50,12 +61,13 @@ export interface ComposerAPI {
   ): Promise<ComposerSessionAPI | ComposerSessionAPI<ComposerNotebookSpec>>;
   /**
    * Called with the target when the user asks for Composer from Grafana's own UI (the dashboard mode
-   * picker, the notebook toolbar). A request made while no listener is registered (the Assistant sidebar
-   * was closed and is being opened) goes to the first listener that subscribes within 10 seconds; each
-   * request is delivered once.
+   * picker, the notebook mode switch). Grafana offers Composer only on the document types in
+   * `options.resources` of some live listener (dashboards only when `options` is omitted), and delivers each
+   * request once, to the first listener that supports its type. To change the types, unsubscribe and
+   * register again.
    * Core does not enter Composer itself: the listener calls `enter` as usual. Returns an unsubscribe.
    */
-  onEnterRequested(listener: (target: ComposerTarget) => void): () => void;
+  onEnterRequested(listener: (target: ComposerTarget) => void, options?: ComposerEnterRequestOptions): () => void;
 }
 
 /**

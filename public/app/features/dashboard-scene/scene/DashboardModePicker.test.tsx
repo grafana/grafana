@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -18,7 +18,11 @@ import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import { ComposerSession } from '../composer/ComposerSession';
 import { canEnterComposer } from '../composer/composerAccess';
-import { addComposerEnterRequestListener, clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
+import {
+  addComposerEnterRequestListener,
+  clearPendingComposerEnterRequest,
+  getPendingComposerEnterTarget,
+} from '../composer/composerEntryRequests';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
 import { DashboardModePicker } from './DashboardModePicker';
@@ -65,8 +69,13 @@ function sidebarContext(assistant: 'available' | 'missing', docked = false): Ext
 }
 
 let deactivate = () => {};
+/** Assistant listening for entry requests, on dashboards only (registered without options). */
+let assistant: jest.Mock;
+let stopAssistant = () => {};
 
 beforeEach(() => {
+  assistant = jest.fn();
+  stopAssistant = addComposerEnterRequestListener(assistant);
   setTestFlags(FLAGS);
   locationService.replace('/d/picker-test');
   jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available'));
@@ -74,6 +83,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  stopAssistant();
   deactivate();
   deactivate = () => {};
   clearPendingComposerEnterRequest();
@@ -126,6 +136,25 @@ it('offers Composer when its flag is on and Assistant can be shown', async () =>
   expect(composerItem()).toHaveTextContent('Point at panels and regions and ask Assistant to change them.');
 });
 
+it('offers Composer while Assistant listens for dashboards, and drops it once nothing does', async () => {
+  stopAssistant();
+  const notebooksOnly = addComposerEnterRequestListener(jest.fn(), { resources: ['notebook'] });
+  await openPicker();
+  expect(composerItem()).not.toBeInTheDocument();
+
+  let both = () => {};
+  act(() => {
+    both = addComposerEnterRequestListener(jest.fn(), { resources: ['dashboard', 'notebook'] });
+  });
+  expect(composerItem()).toBeEnabled();
+
+  act(() => {
+    both();
+    notebooksOnly();
+  });
+  expect(composerItem()).not.toBeInTheDocument();
+});
+
 it('keeps the main button the first child of its button group', async () => {
   await openPicker();
   const main = screen.getByRole('button', { name: 'Dashboard mode: Viewing', hidden: true });
@@ -165,7 +194,7 @@ it.each([
   expect(within(composerItem()!).getByTestId('icon-ai-sparkle')).toBeInTheDocument();
 });
 
-it('opens a closed Assistant sidebar already floating and hands the request to Assistant once it listens', async () => {
+it('opens a closed Assistant sidebar already floating and hands the request to Assistant', async () => {
   const originalPublish = appEvents.publish.bind(appEvents);
   const layoutWhenOpened: string[] = [];
   const publish = jest.spyOn(appEvents, 'publish').mockImplementation((event) => {
@@ -184,33 +213,27 @@ it('opens a closed Assistant sidebar already floating and hands the request to A
   expect(opened.map((event) => event.payload)).toEqual([{ pluginId: ASSISTANT, componentTitle: TITLE }]);
   // The request floats the sidebar before it opens (the floating flag is off here), so it never paints docked.
   expect(layoutWhenOpened).toEqual(['floating']);
-  const listener = jest.fn();
-  const unsubscribe = addComposerEnterRequestListener(listener);
-  expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
+  expect(assistant).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
   expect(getExtensionSidebarPresentation()).toBe('floating');
-  unsubscribe();
 });
 
 it('asks a listening Assistant straight away without reopening its docked sidebar', async () => {
   jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available', true));
   const publish = jest.spyOn(appEvents, 'publish');
-  const listener = jest.fn();
-  const unsubscribe = addComposerEnterRequestListener(listener);
   const { user, scene } = await openPicker();
 
   await user.click(composerItem()!);
 
-  expect(listener).toHaveBeenCalledTimes(1);
-  expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
+  expect(assistant).toHaveBeenCalledTimes(1);
+  expect(assistant).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
   expect(publish.mock.calls.some(([event]) => event instanceof OpenExtensionSidebarEvent)).toBe(false);
   // The session, once Assistant enters it, floats the sidebar; the request itself does not.
   expect(getExtensionSidebarPresentation()).toBe('docked');
   // Choosing Composer does not change the mode itself: Assistant enters through the API.
   expect(scene.state.mode).not.toBe('composer');
-  unsubscribe();
 });
 
-it('drops a request Assistant has not taken when the dashboard goes away', async () => {
+it('ends a request Assistant has not acted on when the dashboard goes away', async () => {
   const { user } = await openPicker();
   await user.click(composerItem()!);
   expect(getExtensionSidebarPresentation()).toBe('floating');
@@ -220,10 +243,7 @@ it('drops a request Assistant has not taken when the dashboard goes away', async
 
   // The floated sidebar goes back to the user's layout.
   expect(getExtensionSidebarPresentation()).toBe('docked');
-  const listener = jest.fn();
-  const unsubscribe = addComposerEnterRequestListener(listener);
-  expect(listener).not.toHaveBeenCalled();
-  unsubscribe();
+  expect(getPendingComposerEnterTarget()).toBeUndefined();
 });
 
 describe('while Composer is active', () => {
@@ -247,16 +267,13 @@ describe('while Composer is active', () => {
   });
 
   it('does nothing when Composer is chosen again', async () => {
-    const listener = jest.fn();
-    const unsubscribe = addComposerEnterRequestListener(listener);
     const { user, scene } = await openPicker(enterComposer(false));
 
     await user.click(composerItem()!);
 
     expect(getDashboardMode(scene.state)).toBe('composer');
     expect(session.signal.aborted).toBe(false);
-    expect(listener).not.toHaveBeenCalled();
-    unsubscribe();
+    expect(assistant).not.toHaveBeenCalled();
   });
 
   it('ends the session and switches to Viewing, keeping unsaved changes', async () => {

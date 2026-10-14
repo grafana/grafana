@@ -1,30 +1,35 @@
 /**
- * Requests to enter Composer from Grafana's own UI (the dashboard mode picker).
+ * Requests to enter Composer from Grafana's own UI (the dashboard mode picker, the notebook mode switch).
  *
- * Core cannot start a session itself: the Assistant plugin owns the chat and the presentation, and it only
- * holds the restricted `composer` API while its sidebar is mounted. So a request goes to the first
- * registered listener straight away, or waits (once, for at most `PENDING_REQUEST_TTL_MS`) for the first
- * listener to subscribe after the sidebar opens. Process-wide on purpose: there is one picker and one
- * plugin registration per page, and the API object it backs is a module singleton too.
+ * Core cannot start a session itself: the Assistant plugin owns the chat and the presentation. Its listeners
+ * say which document types they enter Composer on, and Grafana offers Composer only for those: a request
+ * goes straight to the first listener that supports its resource, and a request nobody supports is never
+ * made. Process-wide on purpose: there is one picker and one plugin registration per page, and the API
+ * object it backs is a module singleton too.
  */
 
 import { claimFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 
-import { type ComposerTarget } from './types';
+import { type ComposerEnterRequestOptions, type ComposerResource, type ComposerTarget } from './types';
 
 type EnterRequestListener = (target: ComposerTarget) => void;
 
+const COMPOSER_RESOURCES: readonly ComposerResource[] = ['dashboard', 'notebook'];
+/** What a listener registered without options supports: the plugin then only knows dashboards. */
+const DEFAULT_RESOURCES: readonly ComposerResource[] = ['dashboard'];
+
 export const PENDING_REQUEST_TTL_MS = 10_000;
 
-const listeners = new Set<EnterRequestListener>();
+/** Each live listener with the document types it enters Composer on, in registration order. */
+const listeners = new Map<EnterRequestListener, ReadonlySet<ComposerResource>>();
 const changeListeners = new Set<() => void>();
+/** The union of the listeners' resources, kept as one array between changes for `useSyncExternalStore`. */
+let supported: readonly ComposerResource[] = [];
 /**
  * The request Composer has not settled yet: from the moment it is made until an entry attempt on it ends,
  * it is cleared, or `PENDING_REQUEST_TTL_MS` passes. What the UI that made it shows as pending.
  */
 let outstanding: { target: ComposerTarget; timer: ReturnType<typeof setTimeout> } | undefined;
-/** A request waiting for its first listener. */
-let pending: { target: ComposerTarget; at: number } | undefined;
 /**
  * A request that floats the extension sidebar until Composer takes over, so a sidebar the picker opens never
  * paints docked first. The session takes its own claim when it starts; a failure, expiry or teardown
@@ -34,25 +39,43 @@ let pending: { target: ComposerTarget; at: number } | undefined;
 let floated: { target: ComposerTarget; release: () => void; docked: boolean } | undefined;
 
 /**
- * Registers a listener for Composer entry requests and hands it a request still waiting for one.
- * Returns an unsubscribe.
+ * Registers a listener for Composer entry requests on the document types in `options.resources`, or on
+ * dashboards when `options` is omitted. Returns an unsubscribe. To change the types, unsubscribe and register
+ * again.
  */
-export function addComposerEnterRequestListener(listener: EnterRequestListener): () => void {
-  listeners.add(listener);
-  const waiting = takePendingRequest();
-  if (waiting) {
-    listener(waiting);
-  }
+export function addComposerEnterRequestListener(
+  listener: EnterRequestListener,
+  options?: ComposerEnterRequestOptions
+): () => void {
+  // Plugins call this from untyped code too: anything that is not a document type is ignored.
+  const resources = options?.resources ?? DEFAULT_RESOURCES;
+  const valid = Array.isArray(resources)
+    ? resources.filter((resource): resource is ComposerResource => COMPOSER_RESOURCES.includes(resource))
+    : [];
+  listeners.delete(listener);
+  listeners.set(listener, new Set(valid));
+  updateSupported();
   return () => {
-    listeners.delete(listener);
+    if (listeners.delete(listener)) {
+      updateSupported();
+    }
   };
 }
 
+/** The document types some listener enters Composer on. Stable between changes. */
+export function getSupportedComposerResources(): readonly ComposerResource[] {
+  return supported;
+}
+
 /**
- * Asks Assistant to enter Composer on `target`: now if it is listening, else once it starts to. With
- * `float`, the extension sidebar floats from now until the session takes over or the request ends.
+ * Asks Assistant to enter Composer on `target`, if a listener supports its resource; returns whether it did.
+ * With `float`, the extension sidebar floats from now until the session takes over or the request ends.
  */
-export function requestComposerEnter(target: ComposerTarget, { float = false } = {}): void {
+export function requestComposerEnter(target: ComposerTarget, { float = false } = {}): boolean {
+  const listener = [...listeners].find(([, resources]) => resources.has(target.resource))?.[0];
+  if (!listener) {
+    return false;
+  }
   clearPendingComposerEnterRequest();
   outstanding = { target, timer: setTimeout(clearPendingComposerEnterRequest, PENDING_REQUEST_TTL_MS) };
   if (float) {
@@ -69,12 +92,8 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
     floated = request;
   }
   notifyChange();
-  const [listener] = listeners;
-  if (listener) {
-    listener(target);
-    return;
-  }
-  pending = { target, at: Date.now() };
+  listener(target);
+  return true;
 }
 
 /**
@@ -83,7 +102,6 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
  */
 export function clearPendingComposerEnterRequest(): void {
   const hadRequest = outstanding !== undefined;
-  pending = undefined;
   releaseFloatedSidebar();
   dropOutstanding();
   if (hadRequest) {
@@ -91,12 +109,15 @@ export function clearPendingComposerEnterRequest(): void {
   }
 }
 
-/** What the outstanding request is for: one waiting for a listener, or for its entry attempt to end. */
+/** What the outstanding request is for: one waiting for its entry attempt to end. */
 export function getPendingComposerEnterTarget(): ComposerTarget | undefined {
   return outstanding?.target;
 }
 
-/** Calls `listener` when a request starts or ends. Returns an unsubscribe. For `useSyncExternalStore`. */
+/**
+ * Calls `listener` when a request starts or ends, or the supported document types change. Returns an
+ * unsubscribe. For `useSyncExternalStore`.
+ */
 export function subscribeToComposerEnterRequests(listener: () => void): () => void {
   changeListeners.add(listener);
   return () => {
@@ -140,9 +161,12 @@ function notifyChange(): void {
   [...changeListeners].forEach((listener) => listener());
 }
 
-function takePendingRequest(): ComposerTarget | undefined {
-  const waiting = pending;
-  // The listener now owns the request; it stays outstanding, and floating, until the entry attempt settles.
-  pending = undefined;
-  return waiting && Date.now() - waiting.at <= PENDING_REQUEST_TTL_MS ? waiting.target : undefined;
+function updateSupported(): void {
+  const union = COMPOSER_RESOURCES.filter((resource) =>
+    [...listeners.values()].some((resources) => resources.has(resource))
+  );
+  if (union.length !== supported.length || union.some((resource, index) => resource !== supported[index])) {
+    supported = union;
+    notifyChange();
+  }
 }

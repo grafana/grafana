@@ -19,6 +19,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import {
   addComposerEnterRequestListener,
   clearPendingComposerEnterRequest,
+  getPendingComposerEnterTarget,
   PENDING_REQUEST_TTL_MS,
   settleComposerEnterRequest,
   wasComposerEnterRequestDocked,
@@ -66,7 +67,12 @@ function sidebarContext(assistant: 'available' | 'missing', docked = false): Ext
   };
 }
 
+/** Assistant listening for entry requests on dashboards and notebooks. */
+let assistant: jest.Mock;
+
 beforeEach(() => {
+  assistant = jest.fn();
+  cleanups.push(addComposerEnterRequestListener(assistant, { resources: ['dashboard', 'notebook'] }));
   setTestFlags({ [NOTEBOOKS_FLAG]: true, 'grafana.notebookComposer': true });
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available'));
@@ -136,6 +142,38 @@ describe('Composer in the notebook mode switch', () => {
     expect(composerOption()).not.toBeInTheDocument();
   });
 
+  it('follows the document types Assistant listens for', () => {
+    // Assistant registered without options: dashboards only.
+    cleanups.splice(0).forEach((cleanup) => cleanup());
+    let stop = addComposerEnterRequestListener(jest.fn());
+    render(<NotebookEditToggle notebook={notebook()} />);
+    expect(composerOption()).not.toBeInTheDocument();
+
+    act(() => {
+      stop();
+      stop = addComposerEnterRequestListener(jest.fn(), { resources: ['dashboard', 'notebook'] });
+    });
+    expect(composerOption()).toBeInTheDocument();
+
+    // Registered again with a narrower list: the notebook option goes.
+    act(() => {
+      stop();
+      stop = addComposerEnterRequestListener(jest.fn(), { resources: ['dashboard'] });
+    });
+    expect(composerOption()).not.toBeInTheDocument();
+
+    act(() => {
+      stop();
+      stop = addComposerEnterRequestListener(jest.fn(), { resources: ['notebook'] });
+    });
+    expect(composerOption()).toBeInTheDocument();
+
+    // Nothing listens.
+    act(() => stop());
+    expect(composerOption()).not.toBeInTheDocument();
+    expect(radio('View')).toBeInTheDocument();
+  });
+
   it('is left out while Composer cannot start on the notebook, such as a draft', () => {
     render(<NotebookEditToggle notebook={notebook({ isDraft: true })} />);
     expect(composerOption()).not.toBeInTheDocument();
@@ -151,7 +189,7 @@ describe('Composer in the notebook mode switch', () => {
     expect(composerOption()).not.toBeInTheDocument();
   });
 
-  it('opens a closed Assistant sidebar already floating and hands the request to Assistant once it listens', async () => {
+  it('opens a closed Assistant sidebar already floating and hands the request to Assistant', async () => {
     const originalPublish = appEvents.publish.bind(appEvents);
     const layoutWhenOpened: string[] = [];
     const publish = jest.spyOn(appEvents, 'publish').mockImplementation((event) => {
@@ -170,11 +208,8 @@ describe('Composer in the notebook mode switch', () => {
     expect(opened.map((event) => event.payload)).toEqual([{ pluginId: ASSISTANT, componentTitle: TITLE }]);
     // The request floats the sidebar before it opens (the floating flag is off here).
     expect(layoutWhenOpened).toEqual(['floating']);
-    const listener = jest.fn();
-    const unsubscribe = addComposerEnterRequestListener(listener);
-    expect(listener).toHaveBeenCalledWith(TARGET);
+    expect(assistant).toHaveBeenCalledWith(TARGET);
     expect(getExtensionSidebarPresentation()).toBe('floating');
-    unsubscribe();
   });
 
   it('shows Composer selected while the request waits, and keeps it once the session starts', async () => {
@@ -216,9 +251,7 @@ describe('Composer in the notebook mode switch', () => {
     act(() => jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS + 1));
 
     expect(radio('View')).toBeChecked();
-    const listener = jest.fn();
-    cleanups.push(addComposerEnterRequestListener(listener));
-    expect(listener).not.toHaveBeenCalled();
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
     expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
@@ -229,9 +262,7 @@ describe('Composer in the notebook mode switch', () => {
     await user.click(radio('View')!);
 
     expect(radio('View')).toBeChecked();
-    const listener = jest.fn();
-    cleanups.push(addComposerEnterRequestListener(listener));
-    expect(listener).not.toHaveBeenCalled();
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
   });
 
   it('still hands the request over, docked, when the user docks the sidebar while it waits', async () => {
@@ -242,25 +273,22 @@ describe('Composer in the notebook mode switch', () => {
 
     expect(getExtensionSidebarPresentation()).toBe('docked');
     expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(true);
-    const listener = jest.fn();
-    cleanups.push(addComposerEnterRequestListener(listener));
-    expect(listener).toHaveBeenCalledWith(TARGET);
+    expect(assistant).toHaveBeenCalledWith(TARGET);
+    expect(getPendingComposerEnterTarget()).toEqual(TARGET);
   });
 
   it('asks a listening Assistant straight away, without entering Composer itself', async () => {
     jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available', true));
-    const listener = jest.fn();
-    cleanups.push(addComposerEnterRequestListener(listener));
     const scene = notebook();
     const { user } = render(<NotebookEditToggle notebook={scene} />);
     await user.click(composerOption()!);
 
-    expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener).toHaveBeenCalledWith(TARGET);
+    expect(assistant).toHaveBeenCalledTimes(1);
+    expect(assistant).toHaveBeenCalledWith(TARGET);
     expect(scene.state.isComposing).toBeFalsy();
   });
 
-  it('drops a request Assistant has not taken when the notebook goes away', async () => {
+  it('ends a request Assistant has not acted on when the notebook goes away', async () => {
     const scene = new NotebookScene({
       title: 'Leaving',
       uid: 'nb-toggle',
@@ -277,9 +305,7 @@ describe('Composer in the notebook mode switch', () => {
 
     act(() => deactivate());
 
-    const listener = jest.fn();
-    cleanups.push(addComposerEnterRequestListener(listener));
-    expect(listener).not.toHaveBeenCalled();
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
     expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
