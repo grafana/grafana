@@ -134,8 +134,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const buttonRef = useRef<HTMLElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
-  const isNarrow = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
-  const placement = 'bottom-end';
+  const isNarrow = useMedia(theme.breakpoints.down('sm').replace('@media ', ''));
+  const placement = 'bottom-start';
   const { refs, floatingStyles } = useFloating({
     open: isOpen,
     placement,
@@ -221,7 +221,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         </ToolbarButton>
       </Tooltip>
       {isOpen && (
-        <Portal>
+        <Portal zIndex={theme.zIndex.modal}>
           <div data-testid={selectors.components.TimePicker.overlayContent}>
             <div
               ref={backdropRef}

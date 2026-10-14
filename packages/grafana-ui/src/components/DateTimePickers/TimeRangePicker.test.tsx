@@ -121,6 +121,8 @@ describe('TimePicker', () => {
     expect(dialog).toHaveStyle({ position: 'fixed' });
     // A transform would misplace the fixed time zone Select menu inside.
     expect(dialog?.style.transform).toBe('');
+    // Toasts portal at zIndex.portal (1061) and must stay above the panel.
+    expect(overlay.parentElement).toHaveStyle({ zIndex: '1060' });
   });
 
   it('closes when the backdrop is clicked', async () => {
