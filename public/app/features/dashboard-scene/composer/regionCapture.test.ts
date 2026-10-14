@@ -1,4 +1,11 @@
-import { MAX_IMAGE_EDGE, MAX_RASTER_PIXELS, planCrop, planPixelRatio } from './regionCapture';
+import { cropToBlob, releaseCanvas, renderNode } from './raster';
+import { MAX_IMAGE_EDGE, MAX_RASTER_PIXELS, planCrop, planPixelRatio, renderRegionImage } from './regionCapture';
+
+jest.mock('./raster', () => ({
+  renderNode: jest.fn(),
+  cropToBlob: jest.fn(),
+  releaseCanvas: jest.fn(),
+}));
 
 describe('planPixelRatio', () => {
   it('renders at the device pixel ratio when the raster fits', () => {
@@ -57,5 +64,42 @@ describe('planCrop', () => {
     const plan = planCrop(node, { left: 1100, top: 2500, width: 400, height: 400 }, { width: 1200, height: 3000 });
     expect(plan.sx + plan.sw).toBeLessThanOrEqual(1200);
     expect(plan.sy + plan.sh).toBeLessThanOrEqual(3000);
+  });
+});
+
+describe('renderRegionImage', () => {
+  it('renders the root it is given, with the exclusion filter, and crops relative to it', async () => {
+    const root = document.createElement('section');
+    const excluded = document.createElement('aside');
+    const kept = document.createElement('div');
+    jest.spyOn(root, 'getBoundingClientRect').mockReturnValue(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the box is read
+      { left: 40, top: 60, width: 500, height: 400 } as DOMRect
+    );
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the size is read
+    const raster = { width: 1000, height: 800 } as HTMLCanvasElement;
+    const image = new Blob(['webp'], { type: 'image/webp' });
+    jest.mocked(renderNode).mockResolvedValue(raster);
+    jest.mocked(cropToBlob).mockResolvedValue(image);
+
+    const result = await renderRegionImage({
+      root,
+      region: { left: 140, top: 110, width: 100, height: 50 },
+      exclude: (node) => node === excluded,
+      isCancelled: () => false,
+    });
+
+    expect(result.status === 'ready' && [result.image, result.width, result.height]).toEqual([image, 200, 100]);
+    const [rendered, { filter }] = jest.mocked(renderNode).mock.calls[0];
+    expect(rendered).toBe(root);
+    expect(filter(excluded)).toBe(false);
+    expect(filter(kept)).toBe(true);
+    expect(cropToBlob).toHaveBeenCalledWith(
+      raster,
+      { sx: 200, sy: 100, sw: 200, sh: 100, width: 200, height: 100 },
+      'image/webp',
+      0.85
+    );
+    expect(releaseCanvas).toHaveBeenCalledWith(raster);
   });
 });

@@ -182,16 +182,17 @@ export class ComposerSession implements ComposerSessionAPI {
 
   public async captureRegion(regionId: string, signal: AbortSignal): Promise<RegionCapture> {
     const region = this.regions.get(regionId);
-    const root = this.getOverlayRoot();
-    const node = root?.parentElement;
-    if (this.closed || signal.aborted || !region || !root || !node) {
+    const overlay = this.getOverlayRoot();
+    // The dashboard's own container (controls and body), which the overlay covers exactly.
+    const container = overlay?.parentElement;
+    if (this.closed || signal.aborted || !region || !overlay || !container) {
       return failed('failed');
     }
     if (this.overlayState.capturing) {
       return failed('busy');
     }
     const rect = this.getRegionViewportRect(regionId);
-    if (!rect || !isFullyVisible(rect, getVisibleBounds(getScrollContainer(root)))) {
+    if (!rect || !isFullyVisible(rect, getVisibleBounds(getScrollContainer(overlay)))) {
       return failed('not_visible');
     }
 
@@ -218,7 +219,7 @@ export class ComposerSession implements ComposerSessionAPI {
         () => window.removeEventListener('scroll', onScroll, { capture: true })
       );
       renderRegionImage({
-        node,
+        root: container,
         region: rect,
         exclude: (candidate) => candidate instanceof Element && candidate.matches(CAPTURE_EXCLUDE_SELECTOR),
         // A settled capture is dropped: its buffers are freed and its result never returned.

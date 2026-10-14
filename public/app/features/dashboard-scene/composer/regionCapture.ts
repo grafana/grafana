@@ -1,6 +1,6 @@
 /**
- * Region capture: render the dashboard with html-to-image, crop the region out of the raster and encode it
- * small enough for the model. The crop uses the raster's real scale (raster pixels per CSS pixel), which is
+ * Region capture: render a document root with html-to-image, crop the region out of the raster and encode
+ * it small enough for the model. The caller decides what the root is and what to leave out of it. The crop uses the raster's real scale (raster pixels per CSS pixel), which is
  * not always the device pixel ratio: html-to-image may round, and a large dashboard renders below it.
  */
 
@@ -8,7 +8,7 @@ import { type Box } from './ComposerSession';
 import { cropToBlob, releaseCanvas, renderNode } from './raster';
 import { type RegionCapture } from './types';
 
-/** Largest raster rendered, in pixels: the dashboard is rendered whole before cropping. */
+/** Largest raster rendered, in pixels: the root is rendered whole before cropping. */
 export const MAX_RASTER_PIXELS = 16_000_000;
 /** Longest edge of the encoded image: what the model sees after its own resizing. */
 export const MAX_IMAGE_EDGE = 1568;
@@ -29,7 +29,7 @@ export interface CropPlan {
 type Failure = Extract<RegionCapture, { status: 'failed' }>;
 
 /**
- * The pixel ratio to render a `width` x `height` CSS px node at: the device pixel ratio when the raster
+ * The pixel ratio to render a `width` x `height` CSS px root at: the device pixel ratio when the raster
  * fits the budget, otherwise the largest ratio that does. Null when even 1 raster pixel per CSS pixel
  * (or the device ratio, if lower) would exceed it.
  */
@@ -42,12 +42,12 @@ export function planPixelRatio(width: number, height: number, devicePixelRatio: 
   return fit >= Math.min(1, devicePixelRatio) ? fit : null;
 }
 
-/** Plans the crop of `region` (viewport coordinates) from a raster of `node` (viewport coordinates). */
-export function planCrop(node: Box, region: Box, raster: { width: number; height: number }): CropPlan {
-  const scaleX = raster.width / node.width;
-  const scaleY = raster.height / node.height;
-  const sx = clamp(Math.round((region.left - node.left) * scaleX), 0, raster.width - 1);
-  const sy = clamp(Math.round((region.top - node.top) * scaleY), 0, raster.height - 1);
+/** Plans the crop of `region` (viewport coordinates) from a raster of `root` (viewport coordinates). */
+export function planCrop(root: Box, region: Box, raster: { width: number; height: number }): CropPlan {
+  const scaleX = raster.width / root.width;
+  const scaleY = raster.height / root.height;
+  const sx = clamp(Math.round((region.left - root.left) * scaleX), 0, raster.width - 1);
+  const sy = clamp(Math.round((region.top - root.top) * scaleY), 0, raster.height - 1);
   const sw = clamp(Math.round(region.width * scaleX), 1, raster.width - sx);
   const sh = clamp(Math.round(region.height * scaleY), 1, raster.height - sy);
   const downscale = Math.min(1, MAX_IMAGE_EDGE / Math.max(sw, sh));
@@ -61,30 +61,33 @@ export function planCrop(node: Box, region: Box, raster: { width: number; height
   };
 }
 
-/**
- * Renders `node` without the nodes `exclude` matches and returns the `region` crop. `isCancelled` is checked
- * after each await: a cancelled capture frees its buffers and its result is never used.
- */
+export interface RenderRegionImageOptions {
+  /** The element rendered; `region` must lie inside it. */
+  root: HTMLElement;
+  /** The region to crop, in viewport coordinates. */
+  region: Box;
+  /** Returns true for nodes (and their subtrees) to leave out of the render. */
+  exclude: (node: Node) => boolean;
+  /** Checked after each await: a cancelled capture frees its buffers and its result is never used. */
+  isCancelled: () => boolean;
+}
+
+/** Renders `root` without the nodes `exclude` matches and returns the `region` crop. */
 export async function renderRegionImage({
-  node,
+  root,
   region,
   exclude,
   isCancelled,
-}: {
-  node: HTMLElement;
-  region: Box;
-  exclude: (node: Node) => boolean;
-  isCancelled: () => boolean;
-}): Promise<RegionCapture> {
-  const nodeRect = node.getBoundingClientRect();
-  const pixelRatio = planPixelRatio(nodeRect.width, nodeRect.height, window.devicePixelRatio || 1);
+}: RenderRegionImageOptions): Promise<RegionCapture> {
+  const rootRect = root.getBoundingClientRect();
+  const pixelRatio = planPixelRatio(rootRect.width, rootRect.height, window.devicePixelRatio || 1);
   if (pixelRatio === null) {
     return failed('too_large');
   }
 
   let raster: HTMLCanvasElement;
   try {
-    raster = await renderNode(node, { pixelRatio, filter: (candidate) => !exclude(candidate) });
+    raster = await renderNode(root, { pixelRatio, filter: (candidate) => !exclude(candidate) });
   } catch (error) {
     return failed(isSecurityError(error) ? 'unsupported' : 'failed');
   }
@@ -93,7 +96,7 @@ export async function renderRegionImage({
       return failed('failed');
     }
     const plan = planCrop(
-      { left: nodeRect.left, top: nodeRect.top, width: nodeRect.width, height: nodeRect.height },
+      { left: rootRect.left, top: rootRect.top, width: rootRect.width, height: rootRect.height },
       region,
       raster
     );
