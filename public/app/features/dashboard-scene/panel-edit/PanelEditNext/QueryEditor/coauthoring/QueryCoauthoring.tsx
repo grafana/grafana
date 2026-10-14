@@ -14,12 +14,10 @@ import {
   QueryCoauthoringFallback,
   QueryCoauthoringHeader,
   QueryCoauthoringIterationNudge,
-  QueryCoauthoringLiveStatus,
   QueryCoauthoringPromptInput,
   QueryCoauthoringProposal,
   QueryCoauthoringWorking,
 } from './QueryCoauthoringViews';
-import { selectionSummary } from './queryCoauthoringPrompts';
 import { useQueryCoauthoringGroup } from './useQueryCoauthoringGroup';
 import { useQueryCoauthoringSession, type QueryCoauthoringSessionOptions } from './useQueryCoauthoringSession';
 import { useQueryCoauthoringViewport } from './useQueryCoauthoringViewport';
@@ -191,41 +189,26 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       )}
       {state.kind === 'prompt' && (
         <>
-          <QueryCoauthoringHeader onClose={session.dismiss} pulse={!state.context}>
-            {!state.context ? (
-              <QueryCoauthoringLiveStatus>
-                <Icon name="ai-sparkle" size="sm" />
-                <Text variant="bodySmall" color="secondary">
-                  <Trans i18nKey="query-editor-coauthoring.reading-highlighted-query">
-                    Reading highlighted query...
-                  </Trans>
+          {/* Escape and outside clicks keep an engaged session open, so it needs a visible close action. */}
+          {!state.clarification && session.engaged && <QueryCoauthoringHeader onClose={session.dismiss} />}
+          {state.clarification && (
+            <>
+              <QueryCoauthoringHeader onClose={session.dismiss}>
+                <Text variant="body" color="secondary">
+                  <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
                 </Text>
-              </QueryCoauthoringLiveStatus>
-            ) : state.clarification ? (
-              <Text variant="body" color="secondary">
-                <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
-              </Text>
-            ) : (
-              <Text variant="body" color="secondary">
-                <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
-              </Text>
-            )}
-          </QueryCoauthoringHeader>
-          {state.context && (
-            <div
-              className={styles.body}
-              data-testid={selectors.components.QueryEditorCoauthoring.container}
-              role="region"
-              aria-label={
-                state.clarification
-                  ? t('query-editor-coauthoring.clarification-message', 'Clarification message')
-                  : t('query-editor-coauthoring.highlighted-query-summary', 'Highlighted query summary')
-              }
-            >
-              <Text id={promptMessageId} variant="body">
-                {state.clarification?.message ?? selectionSummary(state.context)}
-              </Text>
-            </div>
+              </QueryCoauthoringHeader>
+              <div
+                className={styles.body}
+                data-testid={selectors.components.QueryEditorCoauthoring.container}
+                role="region"
+                aria-label={t('query-editor-coauthoring.clarification-message', 'Clarification message')}
+              >
+                <Text id={promptMessageId} variant="body">
+                  {state.clarification.message}
+                </Text>
+              </div>
+            </>
           )}
           <QueryCoauthoringPromptInput
             key={state.clarification ? `clarification-${state.submittedModifyCount}` : 'initial'}
@@ -244,7 +227,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
                 ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
                 : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
             }
-            ariaDescribedBy={state.context ? promptMessageId : undefined}
+            ariaDescribedBy={state.clarification ? promptMessageId : undefined}
             actionLabel={
               state.clarification
                 ? t('query-editor-coauthoring.continue', 'Continue')
@@ -259,15 +242,11 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
             onCaretChange={session.setCaret}
           />
           {!state.clarification && (
-            <div className={styles.quickActions}>
-              <Button size="sm" fill="text" variant="secondary" disabled={!state.context} onClick={state.explain}>
+            <div className={styles.menuActions}>
+              <button type="button" className={styles.menuAction} disabled={!state.context} onClick={state.explain}>
+                <Icon name="question-circle" size="sm" />
                 <Trans i18nKey="query-editor-coauthoring.explain-query">Explain this query</Trans>
-              </Button>
-              {!!state.context?.metadata?.length && (
-                <Button size="sm" fill="text" variant="secondary" onClick={state.exploreSimilar}>
-                  <Trans i18nKey="query-editor-coauthoring.explore-similar">Explore similar metrics and labels</Trans>
-                </Button>
-              )}
+              </button>
             </div>
           )}
           {state.clarification && <QueryCoauthoringClarificationAction onContinue={state.continueInAssistant} />}
