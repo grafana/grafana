@@ -2831,6 +2831,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.navigationInfoArchRefresh",
+        "resourceVersion": "1791988590221",
+        "creationTimestamp": "2026-10-14T14:36:30Z"
+      },
+      "spec": {
+        "description": "Enables the refreshed information architecture for Grafana's navigation",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1791798499805",
         "creationTimestamp": "2026-06-19T08:30:47Z",
