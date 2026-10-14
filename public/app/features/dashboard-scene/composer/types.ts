@@ -10,15 +10,23 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 /** What GET_SPEC / APPLY_SPEC use. */
 export type ComposerDashboardSpec = DashboardV2Spec;
 
-export type ComposerEnterCheck =
-  | { ok: true }
-  | { ok: false; reason: 'not_dashboard' | 'no_permission' | 'unsupported' };
+/** The document a session edits. Only dashboards are supported so far. */
+export interface ComposerTarget {
+  resource: 'dashboard' | 'notebook';
+  uid: string;
+}
+
+export type ComposerEnterCheck = { ok: true } | { ok: false; reason: 'no_document' | 'no_permission' | 'unsupported' };
 
 export interface ComposerAPI {
   readonly version: 1;
-  canEnter(): ComposerEnterCheck;
-  /** Rejects when `canEnter()` would not return ok, or another session is open. */
-  enter(): Promise<ComposerSessionAPI>;
+  /**
+   * Whether Composer can start on `target`, or on the mounted dashboard when it is omitted. 'no_document'
+   * when that document is not the one mounted; 'unsupported' for a notebook.
+   */
+  canEnter(target?: ComposerTarget): ComposerEnterCheck;
+  /** Rejects when `canEnter(target)` would not return ok, or another session is open. */
+  enter(target?: ComposerTarget): Promise<ComposerSessionAPI>;
 }
 
 /**
@@ -88,7 +96,7 @@ export type ApplyOutcome =
   | { status: 'aborted' | 'stale' | 'denied' | 'closed' | 'invalid'; message: string };
 
 export interface ComposerSessionAPI {
-  readonly dashboardUid: string;
+  readonly target: ComposerTarget;
   /** Aborted on exit, navigation away, scene deactivation or flag-off. */
   readonly signal: AbortSignal;
 

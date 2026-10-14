@@ -28,8 +28,11 @@ export interface DashboardMutationAPI {
  */
 export interface ComposerAPI {
   readonly version: 1;
-  canEnter(): { ok: true } | { ok: false; reason: 'not_dashboard' | 'no_permission' | 'unsupported' };
-  enter(): Promise<unknown>;
+  canEnter(target?: {
+    resource: 'dashboard' | 'notebook';
+    uid: string;
+  }): { ok: true } | { ok: false; reason: 'no_document' | 'no_permission' | 'unsupported' };
+  enter(target?: { resource: 'dashboard' | 'notebook'; uid: string }): Promise<unknown>;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {

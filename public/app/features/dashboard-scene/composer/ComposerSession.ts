@@ -26,6 +26,7 @@ import {
   type ComposerDashboardSpec,
   type ComposerElement,
   type ComposerSessionAPI,
+  type ComposerTarget,
   type ElementPick,
   type ElementPoint,
   type ElementRef,
@@ -89,7 +90,7 @@ const MAX_INTERSECTS = 20;
  * refused, so Assistant never overwrites a change it has not read.
  */
 export class ComposerSession implements ComposerSessionAPI {
-  public readonly dashboardUid: string;
+  public readonly target: ComposerTarget;
 
   private readonly controller = new AbortController();
   private revision = 0;
@@ -111,7 +112,7 @@ export class ComposerSession implements ComposerSessionAPI {
   public static enter(scene: DashboardScene | null): ComposerSession {
     const check = canEnterComposer(scene);
     if (!check.ok || !scene) {
-      throw new Error(`Composer is not available: ${check.ok ? 'not_dashboard' : check.reason}`);
+      throw new Error(`Composer is not available: ${check.ok ? 'no_document' : check.reason}`);
     }
     const session = new ComposerSession(scene);
     if (!scene.enterComposerMode(session)) {
@@ -122,7 +123,7 @@ export class ComposerSession implements ComposerSessionAPI {
   }
 
   private constructor(private readonly scene: DashboardScene) {
-    this.dashboardUid = scene.state.uid ?? '';
+    this.target = { resource: 'dashboard', uid: scene.state.uid ?? '' };
   }
 
   public get signal(): AbortSignal {

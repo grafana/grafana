@@ -30,10 +30,7 @@ afterEach(() => {
   setTestFlags({});
 });
 
-it('enters Composer on the mounted dashboard only', async () => {
-  expect(composerApi.version).toBe(1);
-  expect(composerApi.canEnter()).toEqual({ ok: false, reason: 'not_dashboard' });
-
+function mountDashboard() {
   const scene = transformSaveModelToScene({
     dashboard: {
       title: 'API',
@@ -59,11 +56,44 @@ it('enters Composer on the mounted dashboard only', async () => {
   });
   deactivate = scene.activate();
   setDashboardMutationClientForTests(new DashboardMutationClient(scene));
+  return scene;
+}
+
+const DASHBOARD = { resource: 'dashboard', uid: 'composer-api-test' } as const;
+
+it('refuses when no document is mounted', async () => {
+  expect(composerApi.version).toBe(1);
+  expect(composerApi.canEnter()).toEqual({ ok: false, reason: 'no_document' });
+  expect(composerApi.canEnter(DASHBOARD)).toEqual({ ok: false, reason: 'no_document' });
+  await expect(composerApi.enter(DASHBOARD)).rejects.toThrow('no_document');
+});
+
+it('enters the mounted dashboard, by target or by default, once', async () => {
+  const scene = mountDashboard();
 
   expect(composerApi.canEnter()).toEqual({ ok: true });
-  const session = await composerApi.enter();
-  expect(session.dashboardUid).toBe('composer-api-test');
+  expect(composerApi.canEnter(DASHBOARD)).toEqual({ ok: true });
+  const session = await composerApi.enter(DASHBOARD);
+  expect(session.target).toEqual(DASHBOARD);
   expect(scene.getComposerSession()).toBe(session);
   await expect(composerApi.enter()).rejects.toThrow('unsupported');
   session.exit();
+
+  const byDefault = await composerApi.enter();
+  expect(byDefault.target).toEqual(DASHBOARD);
+  byDefault.exit();
+});
+
+it('refuses a dashboard that is not the mounted one', async () => {
+  mountDashboard();
+  const other = { resource: 'dashboard', uid: 'another-dashboard' } as const;
+  expect(composerApi.canEnter(other)).toEqual({ ok: false, reason: 'no_document' });
+  await expect(composerApi.enter(other)).rejects.toThrow('no_document');
+});
+
+it('does not support notebooks yet', async () => {
+  mountDashboard();
+  const notebook = { resource: 'notebook', uid: 'composer-api-test' } as const;
+  expect(composerApi.canEnter(notebook)).toEqual({ ok: false, reason: 'unsupported' });
+  await expect(composerApi.enter(notebook)).rejects.toThrow('unsupported');
 });

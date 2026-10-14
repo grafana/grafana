@@ -11,7 +11,7 @@ import { type ComposerEnterCheck } from './types';
  */
 export function canEnterComposer(scene: DashboardScene | null): ComposerEnterCheck {
   if (!scene?.isActive) {
-    return { ok: false, reason: 'not_dashboard' };
+    return { ok: false, reason: 'no_document' };
   }
   const { uid, meta, planning, editPanel, editview, viewPanel, editable } = scene.state;
   // v1 covers saved dashboards in the plain dashboard view only.

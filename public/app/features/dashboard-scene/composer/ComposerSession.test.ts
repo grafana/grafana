@@ -117,7 +117,8 @@ describe('entering and leaving Composer', () => {
     expect(canManuallyEditDashboard(scene.state)).toBe(false);
     expect(scene.prepareEditAction()).toBe(false);
     expect(scene.getComposerSession()).toBe(session);
-    expect(session.dashboardUid).toBe('composer-test');
+    expect(session.target).toEqual({ resource: 'dashboard', uid: 'composer-test' });
+    expect(session).not.toHaveProperty('dashboardUid');
     expect(presentations).toEqual(['floating']);
     expect(canEnterComposer(scene)).toEqual({ ok: false, reason: 'unsupported' });
   });
@@ -137,7 +138,7 @@ describe('entering and leaving Composer', () => {
     const scene = setup();
     scene.setState({ meta: { canEdit: false, canSave: false } });
     expect(canEnterComposer(scene)).toEqual({ ok: false, reason: 'no_permission' });
-    expect(canEnterComposer(null)).toEqual({ ok: false, reason: 'not_dashboard' });
+    expect(canEnterComposer(null)).toEqual({ ok: false, reason: 'no_document' });
   });
 
   it('attributes the edit session and period it starts to Assistant', () => {

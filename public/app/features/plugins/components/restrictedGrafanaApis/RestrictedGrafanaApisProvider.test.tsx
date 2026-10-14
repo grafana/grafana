@@ -36,7 +36,7 @@ describe('RestrictedGrafanaApisProvider composer', () => {
     setTestFlags({ [COMPOSER_FLAG]: true });
     const { result } = renderRestrictedApis('grafana-assistant-app');
     expect(result.current.composer?.version).toBe(1);
-    expect(result.current.composer?.canEnter()).toEqual({ ok: false, reason: 'not_dashboard' });
+    expect(result.current.composer?.canEnter()).toEqual({ ok: false, reason: 'no_document' });
     expect(result.current.dashboardMutationAPI).toBeDefined();
     // Only the `composer` key: the earlier `dashboardComposer` name is gone.
     expect(result.current).not.toHaveProperty('dashboardComposer');
