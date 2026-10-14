@@ -130,6 +130,8 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	cfg.DashboardVersionsToKeep = 7
 	cfg.EnableGarbageCollection = true
 	cfg.GarbageCollectionDryRun = true
+	cfg.BlobGarbageCollectionEnabled = true
+	cfg.BlobGarbageCollectionDryRun = true
 	cfg.GarbageCollectionInterval = 6 * time.Minute
 	cfg.GarbageCollectionBatchSize = 8
 	cfg.GarbageCollectionBatchWait = 7 * time.Minute
@@ -150,6 +152,8 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	require.Equal(t, GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           true,
+		BlobEnabled:      true,
+		BlobDryRun:       true,
 		Interval:         6 * time.Minute,
 		BatchSize:        8,
 		BatchWait:        7 * time.Minute,

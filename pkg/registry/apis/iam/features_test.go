@@ -26,6 +26,11 @@ func TestParseAPIs(t *testing.T) {
 			want:   []API{APIRoles, APITeams},
 		},
 		{
+			name:   "parses read-only users API",
+			values: []string{"users-readonly"},
+			want:   []API{APIUsersReadOnly},
+		},
+		{
 			name:   "none disables every API",
 			values: []string{"none"},
 		},
@@ -69,6 +74,24 @@ func TestFeaturesSetAPIsReplacesAPISurface(t *testing.T) {
 
 	require.Equal(t, []API{APITeams, APIUsers}, features.EnabledAPIs())
 	require.True(t, features.ZanzanaSync)
+}
+
+func TestFeaturesSetAPIsUsersReadOnly(t *testing.T) {
+	t.Run("read-only users API", func(t *testing.T) {
+		var features Features
+		features.SetAPIs([]API{APIUsersReadOnly})
+
+		require.Equal(t, Features{UsersAPI: true, UsersAPIReadOnly: true}, features)
+		require.Equal(t, []API{APIUsersReadOnly}, features.EnabledAPIs())
+	})
+
+	t.Run("full users API takes precedence over read-only", func(t *testing.T) {
+		var features Features
+		features.SetAPIs([]API{APIUsersReadOnly, APIUsers})
+
+		require.Equal(t, Features{UsersAPI: true}, features)
+		require.Equal(t, []API{APIUsers}, features.EnabledAPIs())
+	})
 }
 
 func TestFeaturesValidate(t *testing.T) {
@@ -212,6 +235,7 @@ func TestFeaturesFromFlags(t *testing.T) {
 		{name: "team LBAC rules", flag: featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, want: Features{TeamLBACRulesAPI: true}},
 		{name: "teams", flag: featuremgmt.FlagKubernetesTeamsApi, want: Features{TeamsAPI: true}},
 		{name: "users", flag: featuremgmt.FlagKubernetesUsersApi, want: Features{UsersAPI: true}},
+		{name: "users read-only", flag: featuremgmt.FlagKubernetesUsersReadApi, want: Features{UsersAPI: true, UsersAPIReadOnly: true}},
 		{name: "service accounts", flag: featuremgmt.FlagKubernetesServiceAccountsApi, want: Features{ServiceAccountsAPI: true}},
 		{name: "service account tokens", flag: featuremgmt.FlagKubernetesServiceAccountTokensApi, want: Features{ServiceAccountTokensAPI: true}},
 		{name: "SSO settings", flag: featuremgmt.FlagKubernetesSsoSettingsApi, want: Features{SSOSettingsAPI: true}},
@@ -233,6 +257,17 @@ func TestFeaturesFromFlags(t *testing.T) {
 			require.Equal(t, tt.want, FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient()))
 		})
 	}
+}
+
+func TestFeaturesFromFlagsFullUsersAPITakesPrecedenceOverReadOnly(t *testing.T) {
+	flags := map[string]memprovider.InMemoryFlag{}
+	for _, flag := range []string{featuremgmt.FlagKubernetesUsersApi, featuremgmt.FlagKubernetesUsersReadApi} {
+		flags[flag] = memprovider.InMemoryFlag{Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}}
+	}
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(flags)))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+	require.Equal(t, Features{UsersAPI: true}, FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient()))
 }
 
 func TestFeaturesFromFlagsResolvesOnce(t *testing.T) {

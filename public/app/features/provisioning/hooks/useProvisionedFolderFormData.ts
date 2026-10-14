@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { type Folder } from 'app/api/clients/folder/v1beta1';
@@ -8,7 +7,6 @@ import {
   getCanPushToConfiguredBranch,
   getDefaultRef,
   getDefaultWorkflow,
-  shouldEnforceBranchTemplate,
 } from 'app/features/provisioning/components/defaults';
 import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
 import { type RepositoryViewData } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
@@ -42,7 +40,6 @@ export function useProvisionedFolderFormData({
   branchPrefix = 'folder',
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
   const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = view;
-  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
@@ -51,20 +48,15 @@ export function useProvisionedFolderFormData({
     if (!repository || isLoading) {
       return undefined;
     }
-    // When the branch name template is enforced, folder pushes must use the branch workflow so the
-    // templated branch is created and sent as `ref`. getDefaultWorkflow stays a pure default; the
-    // enforced case is decided here at the point of use.
     return {
       title: title || '',
       comment: '',
       ref: getDefaultRef(repository, branchPrefix),
       repo: repository.name || '',
       path: ensureFolderPathTrailingSlash(folder?.metadata?.annotations?.[AnnoKeySourcePath] || ''),
-      workflow: shouldEnforceBranchTemplate(repository, gitConventionsEnabled)
-        ? ('branch' as const)
-        : getDefaultWorkflow(repository),
+      workflow: getDefaultWorkflow(repository),
     };
-  }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix, gitConventionsEnabled]);
+  }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix]);
 
   return {
     repository,

@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 import {
   type Control,
@@ -50,8 +49,7 @@ interface Props<T extends FieldValues> {
 /**
  * Advanced commit options (RepositorySpec.commit / CommitOptions). Collapsed by
  * default since the built-in defaults are sensible and most users won't change
- * them. The enforce-template option is gated behind the provisioning.gitConventions
- * flag; the message template itself is always available.
+ * them.
  */
 export function CommitOptionsSection<T extends FieldValues>({
   register,
@@ -70,7 +68,6 @@ export function CommitOptionsSection<T extends FieldValues>({
   signerIsAuthorName,
   defaultSigningKeyConfigured,
 }: Props<T>) {
-  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   const [signingKeyConfigured, setSigningKeyConfigured] = useState(Boolean(defaultSigningKeyConfigured));
   const signingMethod = useWatch({ control, name: signingMethodName });
   const signingEnabled = Boolean(signingMethod);
@@ -127,18 +124,16 @@ export function CommitOptionsSection<T extends FieldValues>({
           />
         </Field>
 
-        {gitConventionsEnabled && (
-          <Field noMargin>
-            <Checkbox
-              {...register(enforceTemplateName)}
-              label={t('provisioning.commit-options.label-enforce-template', 'Enforce commit message template')}
-              description={t(
-                'provisioning.commit-options.description-enforce-template',
-                'Pre-fill the commit message in save dialogs from the template above and make it read-only.'
-              )}
-            />
-          </Field>
-        )}
+        <Field noMargin>
+          <Checkbox
+            {...register(enforceTemplateName)}
+            label={t('provisioning.commit-options.label-enforce-template', 'Enforce commit message template')}
+            description={t(
+              'provisioning.commit-options.description-enforce-template',
+              'Pre-fill the commit message in save dialogs from the template above and make it read-only.'
+            )}
+          />
+        </Field>
 
         {!signingEnabled && gitFields?.commitAuthorNameConfig && (
           <Field

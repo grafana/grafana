@@ -10,6 +10,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBlobGarbageCollectionDefaultsAndOverrides(t *testing.T) {
+	cfg := NewCfg()
+	cfg.setUnifiedStorageConfig()
+	require.False(t, cfg.BlobGarbageCollectionEnabled)
+	require.True(t, cfg.BlobGarbageCollectionDryRun)
+
+	cfg.Raw.Section("unified_storage").Key("blob_garbage_collection_enabled").SetValue("true")
+	cfg.Raw.Section("unified_storage").Key("blob_garbage_collection_dry_run").SetValue("false")
+	cfg.setUnifiedStorageConfig()
+	require.True(t, cfg.BlobGarbageCollectionEnabled)
+	require.False(t, cfg.BlobGarbageCollectionDryRun)
+}
+
 func TestResourceVersionMaxWait(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
@@ -95,6 +108,33 @@ func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
 	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
 }
 
+func TestSearchClientForwardAuthEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value string
+		env   bool
+		want  bool
+	}{
+		{name: "default"},
+		{name: "enabled", value: "true", want: true},
+		{name: "disabled", value: "false"},
+		{name: "environment override", value: "false", env: true, want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
+			if tc.value != "" {
+				cfg.Raw.Section("unified_storage").Key("search_client_forward_auth_enabled").SetValue(tc.value)
+			}
+			if tc.env {
+				t.Setenv("GF_UNIFIED_STORAGE_SEARCH_CLIENT_FORWARD_AUTH_ENABLED", "true")
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SearchClientForwardAuthEnabled)
+		})
+	}
+}
+
 func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 	t.Run("read unified_storage configs", func(t *testing.T) {
 		cfg := NewCfg()
@@ -143,7 +183,6 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Add unified_storage section for index settings
 		setSectionKey("unified_storage", "index_min_count", "5")
-		cfg.Raw.Section("unified_storage").Key("search_backed_list_resources").SetValue("dashboard.grafana.app/dashboards, folder.grafana.app/folders")
 
 		cfg.setUnifiedStorageConfig()
 
@@ -165,7 +204,6 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Test that index settings are correctly parsed
 		assert.Equal(t, 5, cfg.IndexMinCount)
-		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.SearchBackedListResources)
 	})
 
 	t.Run("authorize_before_fetch_enabled", func(t *testing.T) {

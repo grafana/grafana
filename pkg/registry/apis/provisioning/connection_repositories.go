@@ -76,20 +76,22 @@ func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name stri
 			return
 		}
 
-		repos, err := conn.ListRepositories(ctx)
+		lister, ok := conn.(connection.RepositoryLister)
+		if !ok {
+			logger.Debug("list repositories not implemented for connection type")
+			responder.Error(&apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Status:  metav1.StatusFailure,
+					Code:    http.StatusNotImplemented,
+					Reason:  "NotImplemented",
+					Message: "list repositories not implemented for given connection type",
+				},
+			})
+			return
+		}
+
+		repos, err := lister.ListRepositories(ctx)
 		if err != nil {
-			if errors.Is(err, connection.ErrNotImplemented) {
-				logger.Debug("list repositories not implemented for connection type")
-				responder.Error(&apierrors.StatusError{
-					ErrStatus: metav1.Status{
-						Status:  metav1.StatusFailure,
-						Code:    http.StatusNotImplemented,
-						Reason:  "NotImplemented",
-						Message: "list repositories not implemented for given connection type",
-					},
-				})
-				return
-			}
 			if errors.Is(err, connection.ErrAuthentication) {
 				c.invalidateHealth(ctx, name)
 			}

@@ -9,6 +9,7 @@ import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
+import { SandboxFrame } from './SandboxFrame';
 import { FOOTER_TEST_ID } from './TextNGFooter';
 import { type Props, TextNGPanel } from './TextNGPanel';
 import { TRUNCATION_NOTICE_TEST_ID } from './TextNGTruncationNotice';
@@ -17,6 +18,7 @@ import { MAX_RENDERED_CHARS } from './renderContent';
 import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
+jest.mock('./SandboxFrame');
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -53,19 +55,6 @@ jest.mock('@grafana/ui/unstable', () => ({
   ),
 }));
 
-const mermaidRender = jest
-  .fn()
-  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
-
-jest.mock('mermaid', () => ({
-  __esModule: true,
-  default: {
-    initialize: jest.fn(),
-    parse: jest.fn().mockResolvedValue(true),
-    render: (...args: unknown[]) => mermaidRender(...args),
-  },
-}));
-
 const replaceVariablesMock = jest.fn();
 const defaultProps = createProps(replaceVariablesMock);
 
@@ -83,7 +72,9 @@ describe('TextNGPanel', () => {
 
     setup();
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
+    expect(
+      screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML.trim()
+    ).toBe('');
   });
 
   it('renders empty content when interpolating variables results in an empty string', () => {
@@ -95,7 +86,9 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
+    expect(
+      screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML.trim()
+    ).toBe('');
   });
 
   // Markdown renders these to '', which DangerouslySetHtmlContent throws on.
@@ -109,7 +102,9 @@ describe('TextNGPanel', () => {
 
       setup(props);
 
-      expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
+      expect(
+        screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML.trim()
+      ).toBe('');
     }
   );
 
@@ -122,7 +117,7 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toEqual(
+    expect(screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML).toEqual(
       '&lt;form&gt;<p>Form tags are sanitized.</p>&lt;/form&gt;\n&lt;script&gt;Script tags are sanitized.&lt;/script&gt;'
     );
   });
@@ -137,7 +132,7 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toEqual(
+    expect(screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML).toEqual(
       '&lt;form&gt;<p>Form tags are sanitized.</p>&lt;/form&gt;\n&lt;script&gt;Script tags are sanitized.&lt;/script&gt;'
     );
   });
@@ -153,7 +148,9 @@ describe('TextNGPanel', () => {
     setup(props);
 
     const rendered = await screen.findByTestId('TextNGPanel-converted-content');
-    expect(rendered.innerHTML).toEqual('<p>We begin by a simple sentence.\n<code>code block</code></p>\n');
+    expect(rendered.querySelector('[data-text-blocks]')!.innerHTML).toEqual(
+      '<p>We begin by a simple sentence.\n<code>code block</code></p>\n'
+    );
   });
 
   it('interpolates variables before content is converted to markdown', async () => {
@@ -169,7 +166,7 @@ describe('TextNGPanel', () => {
     setup(props);
 
     const rendered = await screen.findByTestId('TextNGPanel-converted-content');
-    expect(rendered.innerHTML).toEqual('<p><em>hello</em></p>\n');
+    expect(rendered.querySelector('[data-text-blocks]')!.innerHTML).toEqual('<p><em>hello</em></p>\n');
   });
 
   it('interpolates variables correctly so they can be used in markdown urls', async () => {
@@ -185,7 +182,7 @@ describe('TextNGPanel', () => {
     setup(props);
 
     const rendered = await screen.findByTestId('TextNGPanel-converted-content');
-    expect(rendered.innerHTML).toEqual(
+    expect(rendered.querySelector('[data-text-blocks]')!.innerHTML).toEqual(
       '<p><a href="https://example.com/?from=now-6h&amp;to=now">Example: from=now-6h&amp;to=now</a></p>\n'
     );
   });
@@ -199,7 +196,7 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toEqual(
+    expect(screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML).toEqual(
       'We begin by a simple sentence.\n```This is a code block\n```'
     );
   });
@@ -891,7 +888,7 @@ describe('TextNGPanel', () => {
       setTestFlags({ [FlagKeys.TextNewFeatures]: true });
     });
 
-    it('renders a mermaid fence as a diagram', async () => {
+    it('sends a Mermaid fence and its rendering configuration to the iframe', async () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       setup(
         Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
@@ -899,9 +896,11 @@ describe('TextNGPanel', () => {
       );
 
       const content = screen.getByTestId('TextNGPanel-converted-content');
-      await screen.findByText('A');
-      expect(content.querySelector('.mermaid-diagram svg')).not.toBeNull();
-      expect(content.querySelector('code.language-mermaid')).toBeNull();
+      expect(content.querySelector('code.language-mermaid')).toHaveTextContent('graph TD; A-->B;');
+      expect(jest.mocked(SandboxFrame).mock.calls.at(-1)![0].mermaid).toMatchObject({
+        securityLevel: 'strict',
+        htmlLabels: false,
+      });
     });
 
     it('leaves the fence as code when the text.newFeatures flag is off', async () => {
@@ -909,7 +908,6 @@ describe('TextNGPanel', () => {
         setTestFlags({ [FlagKeys.TextNewFeatures]: false });
       });
       replaceVariablesMock.mockImplementation((str: string) => str);
-      mermaidRender.mockClear();
       setup(
         Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
         CoreApp.Dashboard
@@ -919,7 +917,7 @@ describe('TextNGPanel', () => {
       // Let any pending lazy import settle before asserting nothing rendered.
       await act(async () => {});
       expect(content.querySelector('code.language-mermaid')).not.toBeNull();
-      expect(mermaidRender).not.toHaveBeenCalled();
+      expect(jest.mocked(SandboxFrame).mock.calls.at(-1)![0].mermaid).toBeUndefined();
     });
   });
 
