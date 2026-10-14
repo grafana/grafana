@@ -214,11 +214,6 @@ export interface FeatureToggles {
   */
   queryServiceRewrite?: boolean;
   /**
-  * Routes requests to the new query service
-  * @default false
-  */
-  queryServiceFromUI?: boolean;
-  /**
   * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false
   */
