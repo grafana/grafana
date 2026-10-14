@@ -313,7 +313,8 @@ func TestFolderParentsGetterTracing(t *testing.T) {
 			case "sharedwithme":
 				f.Name = folder.SharedWithMeFolderUID
 			}
-			info, err := newParentsGetter(getter, 5)(ctx, f)
+			result, err := newParentsGetter(getter, 5)(ctx, f)
+			info := result.Hierarchy
 			traversal := folderSpan(t, recorder, "folders.getParents")
 			require.Len(t, recorder.Ended(), 1)
 			require.Equal(t, parent.SpanContext().SpanID(), traversal.Parent().SpanID())

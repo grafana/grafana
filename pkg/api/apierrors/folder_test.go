@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestToFolderErrorResponse(t *testing.T) {
@@ -249,6 +250,29 @@ func TestToFolderErrorResponse(t *testing.T) {
 			resp := apierrors.ToFolderErrorResponse(tt.input)
 			require.Equal(t, tt.want, resp)
 		})
+	}
+}
+
+func TestToFolderStatusErrorPreservesKubernetesStatus(t *testing.T) {
+	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	for name, original := range map[string]*k8sErrors.StatusError{
+		"missing":        k8sErrors.NewNotFound(gr, "parent"),
+		"forbidden":      k8sErrors.NewForbidden(gr, "parent", fmt.Errorf("access denied")),
+		"timeout":        k8sErrors.NewTimeoutError("storage timeout", 7),
+		"server timeout": k8sErrors.NewServerTimeout(gr, "get", 7),
+		"unavailable":    k8sErrors.NewServiceUnavailable("storage unavailable"),
+		"throttled":      k8sErrors.NewTooManyRequests("storage throttled", 7),
+		"internal":       k8sErrors.NewInternalError(fmt.Errorf("storage failure")),
+	} {
+		for wrapping, input := range map[string]error{
+			"direct":  original,
+			"wrapped": fmt.Errorf("create failed: %w", original),
+		} {
+			t.Run(name+"/"+wrapping, func(t *testing.T) {
+				converted := apierrors.ToFolderStatusError(input)
+				require.Equal(t, original.ErrStatus, converted.ErrStatus)
+			})
+		}
 	}
 }
 

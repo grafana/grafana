@@ -1078,8 +1078,8 @@ func TestValidateUpdate(t *testing.T) {
 			}
 
 			err := validateOnUpdate(context.Background(), tt.folder, tt.old, m,
-				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
-					return tt.parents, tt.parentsError
+				func(ctx context.Context, folder *folders.Folder) (parentsResult, error) {
+					return parentsResult{Hierarchy: tt.parents}, tt.parentsError
 				},
 				&mockSearchClient{folders: tt.allFolders},
 				nil,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -13,10 +14,19 @@ import (
 	folderLegacy "github.com/grafana/grafana/pkg/services/folder"
 )
 
-type parentsGetter = func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error)
+type parentsResult struct {
+	Hierarchy *folders.FolderInfoList
+	// LookupError records non-NotFound failures that leave a partial hierarchy.
+	// Missing ancestors are represented only by Detached entries in Hierarchy.
+	LookupError error
+}
+
+// parentsGetter returns an error only when no usable hierarchy exists, such as
+// for cycles. Otherwise Hierarchy is non-nil, even when LookupError is set.
+type parentsGetter = func(ctx context.Context, folder *folders.Folder) (parentsResult, error)
 
 func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
-	return func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
+	return func(ctx context.Context, folder *folders.Folder) (parentsResult, error) {
 		ctx, span := tracer.Start(ctx, "folders.getParents")
 		defer span.End()
 
@@ -29,12 +39,12 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				Name:  folder.Name,
 				Title: folder.Spec.Title,
 			}}
-			return info, nil
+			return parentsResult{Hierarchy: info}, nil
 		}
 
 		found := make(map[string]bool)
 		found[folder.Name] = true
-		var err error
+		var lookupErr error
 
 		for folder != nil {
 			meta, _ := utils.MetaAccessor(folder)
@@ -52,27 +62,30 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 			}
 
 			if found[item.Parent] {
-				return nil, tracing.Error(span, folderLegacy.ErrCyclicReference.Errorf("cyclic folder references found: %s", item.Parent))
+				return parentsResult{}, tracing.Error(span, folderLegacy.ErrCyclicReference.Errorf("cyclic folder references found: %s", item.Parent))
 			}
 
-			obj, e2 := getter.Get(ctx, item.Parent, &metav1.GetOptions{})
-			if e2 != nil {
-				_ = tracing.Error(span, e2)
+			obj, err := getter.Get(ctx, item.Parent, &metav1.GetOptions{})
+			if err != nil {
+				_ = tracing.Error(span, err)
+				if !apierrors.IsNotFound(err) {
+					lookupErr = err
+				}
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
 					Detached:    true,
-					Description: e2.Error(),
+					Description: err.Error(),
 				})
 				break
 			}
 
 			parentFolder, ok := obj.(*folders.Folder)
 			if !ok {
-				err := tracing.Errorf(span, "expected folder, found: %T", obj)
+				lookupErr = tracing.Errorf(span, "expected folder, found: %T", obj)
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
 					Detached:    true,
-					Description: err.Error(),
+					Description: lookupErr.Error(),
 				})
 				break
 			}
@@ -82,6 +95,6 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 
 		// Start from the root
 		slices.Reverse(info.Items)
-		return info, err
+		return parentsResult{Hierarchy: info, LookupError: lookupErr}, nil
 	}
 }

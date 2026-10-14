@@ -108,6 +108,12 @@ func isFolderAlreadyExists(err error, statusErr *k8sErrors.StatusError) bool {
 }
 
 func ToFolderStatusError(err error) k8sErrors.StatusError {
+	// Native Kubernetes errors already contain status details and retry hints.
+	// Conflicts still need the legacy duplicate/contention normalization below.
+	if statusErr, ok := errors.AsType[*k8sErrors.StatusError](err); ok && statusErr.ErrStatus.Code != http.StatusConflict {
+		return *statusErr
+	}
+
 	resp := ToFolderErrorResponse(err)
 	defaultErr := k8sErrors.StatusError{
 		ErrStatus: metav1.Status{

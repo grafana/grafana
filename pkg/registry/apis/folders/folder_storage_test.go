@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"testing"
@@ -17,14 +18,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	legacyapierrors "github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -59,6 +64,39 @@ func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 			require.Equal(t, original.Error(), record["error"])
 		})
 	}
+}
+
+func TestFolderStorageCreatePreservesParentLookupStatus(t *testing.T) {
+	lookupErr := apierrors.NewTimeoutError("storage timeout", 7)
+	store := grafanarest.NewMockStorage(t)
+	store.On("Get", mock.Anything, "ancestor", &metav1.GetOptions{}).Return(nil, lookupErr).Once()
+	store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, obj runtime.Object, validation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+			return nil, fmt.Errorf("create failed: %w", validation(ctx, obj))
+		}).Once()
+	fs := folderStorage{store: store}
+	out, err := fs.Create(context.Background(), folderWithParent("child", "ancestor"), func(ctx context.Context, obj runtime.Object) error {
+		return validateOnCreate(ctx, obj.(*folders.Folder), newParentsGetter(store, 5), 5, false)
+	}, &metav1.CreateOptions{})
+	require.Nil(t, out)
+	require.Equal(t, lookupErr, err)
+	require.Equal(t, responsewriters.ErrorToAPIStatus(lookupErr), responsewriters.ErrorToAPIStatus(err))
+	require.Equal(t, int(lookupErr.ErrStatus.Code), legacyapierrors.ToFolderErrorResponse(err).Status())
+}
+
+func TestFolderStorageCreateNormalizesLegacyErrors(t *testing.T) {
+	store := grafanarest.NewMockStorage(t)
+	store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, folder.ErrAPITitleEmpty).Once()
+	fs := folderStorage{store: store}
+	out, err := fs.Create(context.Background(), &folders.Folder{}, nil, &metav1.CreateOptions{})
+	require.Nil(t, out)
+	require.Error(t, err)
+	apiStatus := responsewriters.ErrorToAPIStatus(err)
+	require.Equal(t, int32(http.StatusBadRequest), apiStatus.Code)
+	require.Equal(t, folder.ErrTitleEmpty.Error(), apiStatus.Message)
+	require.NotNil(t, apiStatus.Details)
+	require.Equal(t, "folder.title-empty", string(apiStatus.Details.UID))
 }
 
 func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
