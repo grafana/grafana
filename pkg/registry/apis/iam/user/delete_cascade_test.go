@@ -233,7 +233,7 @@ func cascadeTeam(name string, members ...string) *iamv0.Team {
 }
 
 func memberNames(t *iamv0.Team) []string {
-	var out []string
+	out := make([]string, 0, len(t.Spec.Members))
 	for _, m := range t.Spec.Members {
 		out = append(out, m.Name)
 	}
