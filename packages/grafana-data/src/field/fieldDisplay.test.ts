@@ -114,7 +114,7 @@ describe('FieldDisplay', () => {
     expect(display[0].display.numeric).toEqual(0);
   });
 
-  it('Should return numeric min/max when there is no data and the panel min/max are strings', () => {
+  it('Should return numeric min/max defaults when there is no data and the saved min/max defaults are strings', () => {
     const options = createEmptyDisplayOptions({
       fieldConfig: {
         defaults: { min: '0', max: '200' },
