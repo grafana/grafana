@@ -1844,6 +1844,18 @@ func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsa
 	return nil, nil
 }
 
+func setCreateToggle(t *testing.T, enabled bool) {
+	t.Helper()
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagFolderPickerCreatePermission: {
+			Key:            featuremgmt.FlagFolderPickerCreatePermission,
+			DefaultVariant: "v",
+			Variants:       map[string]any{"v": enabled},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+}
+
 func TestSearchHandlerCreatePermissionToggle(t *testing.T) {
 	for name, tc := range map[string]struct {
 		enabled  bool
@@ -1853,19 +1865,7 @@ func TestSearchHandlerCreatePermissionToggle(t *testing.T) {
 		"disabled falls back to edit": {enabled: false, expected: dashboardaccess.PERMISSION_EDIT},
 	} {
 		t.Run(name, func(t *testing.T) {
-			variant := "disabled"
-			if tc.enabled {
-				variant = "enabled"
-			}
-			require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-				featuremgmt.FlagFolderPickerCreatePermission: {
-					Key:            featuremgmt.FlagFolderPickerCreatePermission,
-					DefaultVariant: variant,
-					Variants:       map[string]any{"enabled": true, "disabled": false},
-				},
-			})))
-			t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
-
+			setCreateToggle(t, tc.enabled)
 			mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{{Results: &resourcepb.ResourceTable{}}}}
 			handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 			req := httptest.NewRequest("GET", "/search?type=folder&permission=create", nil)
@@ -1879,27 +1879,29 @@ func TestSearchHandlerCreatePermissionToggle(t *testing.T) {
 	}
 }
 
-func TestSearchHandlerCreatePermissionToggleSharedWithMe(t *testing.T) {
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagFolderPickerCreatePermission: {
-			Key:            featuremgmt.FlagFolderPickerCreatePermission,
-			DefaultVariant: "disabled",
-			Variants:       map[string]any{"enabled": true, "disabled": false},
-		},
-	})))
-	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+func TestSearchHandlerCreatePermissionSharedWithMe(t *testing.T) {
+	for name, tc := range map[string]struct {
+		enabled  bool
+		perms    map[string][]string
+		expected dashboardaccess.PermissionType
+	}{
+		"toggle off uses edit":              {false, map[string][]string{folder.ActionFoldersWrite: {"folders:uid:privatefolder"}}, dashboardaccess.PERMISSION_EDIT},
+		"toggle on finds create-only grant": {true, map[string][]string{dashboards.ActionDashboardsCreate: {"folders:uid:privatefolder"}}, dashboardaccess.PERMISSION_CREATE},
+	} {
+		t.Run(name, func(t *testing.T) {
+			setCreateToggle(t, tc.enabled)
+			empty := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
+			mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{empty, empty, empty}}
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
+			req := httptest.NewRequest("GET", "/search?type=folder&folder=sharedwithme&permission=create", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: map[int64]map[string][]string{1: tc.perms}}))
 
-	empty := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
-	mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{empty, empty, empty}}
-	handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
-	req := httptest.NewRequest("GET", "/search?type=folder&folder=sharedwithme&permission=create", nil)
-	perms := map[string][]string{folder.ActionFoldersWrite: {"folders:uid:privatefolder"}}
-	req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: map[int64]map[string][]string{1: perms}}))
+			handler.DoSearch(httptest.NewRecorder(), req)
 
-	handler.DoSearch(httptest.NewRecorder(), req)
-
-	require.NotEmpty(t, mockClient.MockCalls)
-	for _, call := range mockClient.MockCalls {
-		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), call.Permission)
+			require.NotEmpty(t, mockClient.MockCalls)
+			for _, call := range mockClient.MockCalls {
+				assert.Equal(t, int64(tc.expected), call.Permission)
+			}
+		})
 	}
 }

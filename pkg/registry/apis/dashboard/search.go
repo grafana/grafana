@@ -542,6 +542,9 @@ func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction stri
 		return dashboards.ActionDashboardsWrite, foldermodel.ActionFoldersWrite
 	case dashboardaccess.PERMISSION_ADMIN:
 		return dashboards.ActionDashboardsPermissionsWrite, foldermodel.ActionFoldersPermissionsWrite
+	case dashboardaccess.PERMISSION_CREATE:
+		// dashboards:create is granted on folder scopes, so it is read as the folder action.
+		return dashboards.ActionDashboardsCreate, dashboards.ActionDashboardsCreate
 	case dashboardaccess.PERMISSION_VIEW:
 		fallthrough
 	default:
