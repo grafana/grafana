@@ -1,5 +1,8 @@
 import { type NavModelItem } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/internal';
+import { config } from '@grafana/runtime';
 import { getAppPluginMetas, invalidateCachedPromisesCache, setAppPluginMetas } from '@grafana/runtime/internal';
+import * as runtimeInternal from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {
   mockPluginMeta,
@@ -7,11 +10,11 @@ import {
   type MockPluginMeta,
   type MockPluginMetaInclude,
 } from '@grafana/test-utils/unstable';
-import { contextSrv } from 'app/core/services/context_srv';
 
 import { buildStaticSections } from './buildNavTree';
 import { applyPluginNav, withPluginNav } from './buildPluginNav';
 import { NavID, NavWeight } from './constants';
+import { setAppAccessScopes } from './pluginAccess';
 import { navIds as ids, setupNavTestState, type NavTestState } from './test-utils';
 import { findNavById as findById, sortNavTree } from './utils';
 
@@ -66,6 +69,10 @@ describe('applyPluginNav', () => {
     setup();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('withPluginNav', () => {
     const staticTree = (): NavModelItem[] => [{ id: NavID.home, text: 'Home', url: '/' }];
 
@@ -95,18 +102,18 @@ describe('applyPluginNav', () => {
     });
 
     // Nothing upstream catches for us, and this builds the tree the redux store
-    // is created from, so an escaping throw is a blank page, not a missing section
-    it('keeps the tree when the pass throws', () => {
+    // is created from, so an escaping throw is a blank page, not a missing
+    // section. The per-app catch covers everything inside the loop, so this
+    // reaches for the one step outside it: reading the metas cache, which is
+    // exactly what throws in a development build before app.ts has filled it.
+    it('keeps the tree when reading the metas cache throws', () => {
       const error = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const permission = jest.spyOn(contextSrv, 'hasPermission').mockImplementation(() => {
-        throw new Error('boom');
+      jest.spyOn(runtimeInternal, 'getAppPluginMetasSync').mockImplementation(() => {
+        throw new Error('getAppPluginMetasSync() was called before app plugins cache was initialized!');
       });
 
       expect(ids(withPluginNav(staticTree()))).toEqual([NavID.home]);
       expect(error).toHaveBeenCalledWith('[navtree] failed to apply plugin nav', expect.any(Error));
-
-      permission.mockRestore();
-      error.mockRestore();
     });
   });
 
@@ -219,6 +226,293 @@ describe('applyPluginNav', () => {
     });
   });
 
+  describe('configured sections', () => {
+    it('creates the Alerts & IRM section and nests core alerting inside it', async () => {
+      setup({ permissions: ['alert.rules:read'] });
+
+      const merged = await mergeFromMetas([
+        appMeta('grafana-irm-app', 'Grafana IRM', [page('IRM', '/a/grafana-irm-app/home')]),
+      ]);
+
+      const section = findById(merged, NavID.alertsAndIncidents);
+      expect(ids(section?.children ?? [])).toEqual([NavID.alerting, 'plugin-page-grafana-irm-app']);
+      expect(findById(section?.children ?? [], NavID.alerting)?.sortWeight).toBe(2);
+      expect(merged.find((node) => node.id === NavID.alerting)).toBeUndefined();
+      // IRM keeps its section-map text override
+      expect(findById(merged, 'plugin-page-grafana-irm-app')?.text).toBe('IRM');
+    });
+
+    // The absorb only happens on the creation path, so a section that already
+    // exists leaves core Alerting where it is
+    it('leaves core alerting alone when the section already exists', async () => {
+      setup({ permissions: ['alert.rules:read'] });
+      const existing: NavModelItem[] = [
+        { id: NavID.alerting, text: 'Alerting', url: '/alerting' },
+        { id: NavID.alertsAndIncidents, text: 'Alerts & IRM', url: '/alerts-and-incidents', children: [] },
+      ];
+
+      const merged = applyPluginNav(
+        existing,
+        await fetchApps([appMeta('grafana-irm-app', 'Grafana IRM', [page('IRM', '/a/grafana-irm-app/home')])])
+      );
+
+      expect(ids(findById(merged, NavID.alertsAndIncidents)?.children ?? [])).toEqual(['plugin-page-grafana-irm-app']);
+      expect(merged.find((node) => node.id === NavID.alerting)).toBeDefined();
+    });
+
+    it('places section-mapped apps and sorts them by their configured weight', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-k8s-app', 'Kubernetes App', [page('Clusters', '/a/grafana-k8s-app/clusters')]),
+        appMeta('grafana-sigil-app', 'Sigil', [page('AI', '/a/grafana-sigil-app/home')]),
+      ]);
+
+      const observability = findById(merged, NavID.observability);
+      expect(ids(observability?.children ?? [])).toEqual([
+        'plugin-page-grafana-sigil-app',
+        'plugin-page-grafana-k8s-app',
+      ]);
+      expect(findById(merged, 'plugin-page-grafana-k8s-app')?.text).toBe('Kubernetes');
+    });
+
+    it('takes the Adaptive Telemetry section image from the first member app to attach', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-adaptive-metrics-app', 'Adaptive Metrics', [
+          page('Recommendations', '/a/grafana-adaptive-metrics-app/recommendations'),
+        ]),
+      ]);
+
+      expect(findById(merged, NavID.adaptiveTelemetry)?.img).toBe('/plugins/grafana-adaptive-metrics-app/large.svg');
+    });
+
+    // applyAppSubUrl rewrites url but not img, so the section image is prefixed
+    // by hand — which means it must not be prefixed twice
+    it('prefixes the section image with the app sub url exactly once', async () => {
+      setup({ config: { appSubUrl: '/grafana' } });
+
+      const merged = await mergeFromMetas([
+        appMeta('grafana-adaptive-metrics-app', 'Adaptive Metrics', [
+          page('Recommendations', '/a/grafana-adaptive-metrics-app/recommendations'),
+        ]),
+      ]);
+
+      expect(findById(merged, NavID.adaptiveTelemetry)?.img).toBe(
+        '/grafana/plugins/grafana-adaptive-metrics-app/large.svg'
+      );
+    });
+
+    it('places an app whose only page is its default nav into its configured section', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-auth-app', 'Cloud access policies', [page('Access policies', '/a/grafana-auth-app')]),
+      ]);
+
+      const access = findById(merged, NavID.cfgAccess);
+      expect(ids(access?.children ?? [])).toEqual(['plugin-page-grafana-auth-app']);
+
+      const authApp = findById(merged, 'plugin-page-grafana-auth-app');
+      expect(authApp?.text).toBe('Access policies');
+      expect(authApp?.children ?? []).toHaveLength(0);
+    });
+
+    it('drops that app when its page fails the include access check', async () => {
+      setup({ orgRole: 'Viewer' });
+      const merged = await mergeFromMetas([
+        appMeta('grafana-auth-app', 'Cloud access policies', [
+          page('Access policies', '/a/grafana-auth-app', { role: 'Admin' }),
+        ]),
+      ]);
+
+      expect(findById(merged, 'plugin-page-grafana-auth-app')).toBeUndefined();
+    });
+
+    it('places the advisor app under Administration', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-advisor-app', 'Advisor', [page('Advisor', '/a/grafana-advisor-app/home')]),
+      ]);
+
+      const cfg = findById(merged, NavID.cfg);
+      expect(findById(cfg?.children ?? [], 'plugin-page-grafana-advisor-app')?.text).toBe('Advisor');
+    });
+  });
+
+  describe('assistant deployment-mode filtering', () => {
+    let buildInfo: typeof config.buildInfo;
+    let namespace: typeof config.namespace;
+
+    beforeEach(() => {
+      buildInfo = config.buildInfo;
+      namespace = config.namespace;
+    });
+
+    afterEach(() => {
+      config.buildInfo = buildInfo;
+      config.namespace = namespace;
+    });
+
+    it('limits assistant pages to the core set on OSS deployments', async () => {
+      config.buildInfo = { ...config.buildInfo, edition: GrafanaEdition.OpenSource };
+      config.namespace = 'default';
+      const merged = await mergeFromMetas([
+        appMeta('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Workspace', '/a/grafana-assistant-app/workspace'),
+          page('Settings', '/a/grafana-assistant-app/settings'),
+          page('Investigations', '/a/grafana-assistant-app/investigations'),
+        ]),
+      ]);
+
+      const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect((assistant?.children ?? []).map((child) => child.text)).toEqual(['Workspace', 'Settings']);
+    });
+
+    it('shows every assistant page on cloud stacks', async () => {
+      config.buildInfo = { ...config.buildInfo, edition: GrafanaEdition.OpenSource };
+      config.namespace = 'stacks-123';
+      const merged = await mergeFromMetas([
+        appMeta('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Investigations', '/a/grafana-assistant-app/investigations'),
+        ]),
+      ]);
+
+      const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect((assistant?.children ?? []).map((child) => child.text)).toEqual(['Investigations']);
+    });
+  });
+
+  describe('cross-plugin overrides', () => {
+    it('hoists asserts pages into the Observability section as standalone pages', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-asserts-app', 'Asserts', [
+          page('Service overview', '/a/grafana-asserts-app/services'),
+          page('Entities', '/a/grafana-asserts-app/entities'),
+        ]),
+      ]);
+
+      const observability = findById(merged, NavID.observability);
+      expect(findById(merged, 'plugin-page-grafana-asserts-app')).toBeUndefined();
+      const childIds = ids(observability?.children ?? []);
+      expect(childIds).toContain('standalone-plugin-page-service-overview');
+      expect(childIds).toContain('standalone-plugin-page-entities');
+      // The services page takes the App Observability slot
+      expect(findById(merged, 'standalone-plugin-page-service-overview')?.sortWeight).toBe(4);
+    });
+
+    it('removes the asserts Application page when App Observability is present', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-asserts-app', 'Asserts', [page('Service overview', '/a/grafana-asserts-app/services')]),
+        appMeta('grafana-app-observability-app', 'Application Observability', [
+          page('Services', '/a/grafana-app-observability-app/services'),
+        ]),
+      ]);
+
+      const observability = findById(merged, NavID.observability);
+      expect((observability?.children ?? []).map((child) => child.url)).not.toContain(
+        '/a/grafana-asserts-app/services'
+      );
+    });
+
+    it('nests maintenance windows under the SLO app', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-slo-app', 'SLO', [page('SLOs', '/a/grafana-slo-app/home')]),
+        appMeta('grafana-maintenancewindows-app', 'Maintenance windows', [
+          page('Windows', '/a/grafana-maintenancewindows-app/home'),
+        ]),
+        appMeta('grafana-servicecenter-app', 'Service center', [page('Home', '/a/grafana-servicecenter-app/home')]),
+      ]);
+
+      const slo = findById(merged, 'plugin-page-grafana-slo-app');
+      const nested = findById(slo?.children ?? [], 'standalone-plugin-page-grafana-maintenancewindows-app');
+      expect(nested).toBeDefined();
+      expect(nested?.isNew).toBe(true);
+      expect(findById(merged, 'plugin-page-grafana-maintenancewindows-app')).toBeUndefined();
+      expect(findById(merged, NavID.apps)).toBeUndefined();
+    });
+
+    it('synthesizes a Service center link when SLO is installed without the servicecenter app', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-slo-app', 'SLO', [page('SLOs', '/a/grafana-slo-app/home')]),
+      ]);
+
+      expect(findById(merged, 'standalone-plugin-page-slo-services')?.url).toBe('/a/grafana-slo-app/services');
+    });
+
+    it('does not synthesize Service center when the servicecenter app is installed', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-slo-app', 'SLO', [page('SLOs', '/a/grafana-slo-app/home')]),
+        appMeta('grafana-servicecenter-app', 'Service center', [page('Home', '/a/grafana-servicecenter-app/home')]),
+      ]);
+
+      expect(findById(merged, 'standalone-plugin-page-slo-services')).toBeUndefined();
+    });
+
+    it('points the Adaptive Telemetry section at the umbrella plugin when installed', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-adaptive-metrics-app', 'Adaptive Metrics', [
+          page('Metrics', '/a/grafana-adaptive-metrics-app/home'),
+        ]),
+        appMeta('grafana-adaptivetelemetry-app', 'Adaptive Telemetry', [
+          page('Home', '/a/grafana-adaptivetelemetry-app/home'),
+        ]),
+      ]);
+
+      const section = findById(merged, NavID.adaptiveTelemetry);
+      expect(section?.url).toBe('/a/grafana-adaptivetelemetry-app');
+      expect(section?.pluginId).toBe('grafana-adaptivetelemetry-app');
+    });
+
+    it('marks Help to open interactive learning when the pathfinder plugin is installed', async () => {
+      const merged = await mergeFromMetas([appMeta('grafana-pathfinder-app', 'Pathfinder', [])]);
+
+      expect(findById(merged, NavID.help)?.hideFromTabs).toBe(true);
+    });
+
+    it('adds an Assistant stub when only the onboarding app is installed', async () => {
+      const merged = await mergeFromMetas([appMeta('grafana-assistant-onboarding-app', 'Assistant onboarding', [])]);
+
+      const stub = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect(stub?.text).toBe('Assistant');
+      expect(stub?.url).toBe('/a/grafana-assistant-app');
+    });
+
+    it('does not add the Assistant stub when the real app is installed', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('grafana-assistant-onboarding-app', 'Assistant onboarding', []),
+        appMeta('grafana-assistant-app', 'Assistant', [page('Workspace', '/a/grafana-assistant-app/workspace')]),
+      ]);
+
+      const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect(assistant?.children?.length).toBe(1);
+    });
+  });
+
+  describe('scoped app access', () => {
+    afterEach(() => {
+      setAppAccessScopes(null);
+    });
+
+    it('keeps only the apps the user holds a scope for', async () => {
+      setAppAccessScopes(new Set(['plugins:id:kept-app']));
+
+      const merged = await mergeFromMetas([
+        appMeta('kept-app', 'Kept app', [page('Page', '/a/kept-app/page')]),
+        appMeta('denied-app', 'Denied app', [page('Page', '/a/denied-app/page')]),
+      ]);
+
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-kept-app']);
+    });
+
+    // Without scopes the unscoped permission stands in, which is the behaviour
+    // before this feature: every app the user can reach at all
+    it('keeps every app while the scopes are unavailable', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('kept-app', 'Kept app', [page('Page', '/a/kept-app/page')]),
+        appMeta('denied-app', 'Denied app', [page('Page', '/a/denied-app/page')]),
+      ]);
+
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-denied-app', 'plugin-page-kept-app']);
+    });
+  });
+
   describe('ordering', () => {
     it('orders the apps by title', async () => {
       const merged = await mergeFromMetas([
@@ -230,17 +524,18 @@ describe('applyPluginNav', () => {
       expect((moreApps(merged)?.children ?? []).map((child) => child.text)).toEqual(['Alpha', 'Bravo', 'Charlie']);
     });
 
-    // These two ids are translated by nav id, and the translated order is the
-    // reverse of the raw one — so the sort has to key on the translated title
+    // Both ids are translated by nav id — to "Detect" and "Grafana Quaderno" —
+    // and the translated order is the reverse of the raw one, so the sort has to
+    // key on the title. Neither has a nav config, so both land in More apps.
     it('orders on the translated title, not the name in plugin.json', async () => {
       const merged = await mergeFromMetas([
-        appMeta('grafana-k8s-app', 'zzz raw name', [page('Page', '/a/grafana-k8s-app/page')]),
-        appMeta('grafana-slo-app', 'aaa raw name', [page('Page', '/a/grafana-slo-app/page')]),
+        appMeta('grafana-detect-app', 'zzz raw name', [page('Page', '/a/grafana-detect-app/page')]),
+        appMeta('grafana-quaderno-app', 'aaa raw name', [page('Page', '/a/grafana-quaderno-app/page')]),
       ]);
 
       expect(ids(moreApps(merged)?.children ?? [])).toEqual([
-        'plugin-page-grafana-k8s-app',
-        'plugin-page-grafana-slo-app',
+        'plugin-page-grafana-detect-app',
+        'plugin-page-grafana-quaderno-app',
       ]);
     });
   });

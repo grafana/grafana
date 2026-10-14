@@ -1,4 +1,4 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
 import { mockTeamsMap } from '../../../../fixtures/teams';
 import { getErrorResponse } from '../../../helpers';
@@ -69,4 +69,35 @@ const listTeamsHandler = () =>
     });
   });
 
-export default [getDisplayMapping(), getTeamHandler(), listTeamsHandler(), searchTeamsHandler()];
+const USER_PERMISSIONS_URL = '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/~/permissions';
+
+// The signed-in user's effective permissions as the AuthZ endpoint serves
+// them: a flat list of action/scope pairs. Defaults to wildcard app plugin
+// access, matching test setups that grant the flattened plugins.app:access.
+const DEFAULT_MOCK_USER_PERMISSIONS = [{ action: 'plugins.app:access', scope: 'plugins:id:*' }];
+let mockUserPermissions = DEFAULT_MOCK_USER_PERMISSIONS;
+
+/** Sets the response of the user permissions endpoint (action/scope pairs) for a test */
+export const setMockUserPermissions = (permissions: Array<{ action: string; scope: string }>) => {
+  mockUserPermissions = permissions;
+};
+
+/** Restores the default user permissions response */
+export const resetMockUserPermissions = () => {
+  mockUserPermissions = DEFAULT_MOCK_USER_PERMISSIONS;
+};
+
+/** Override the user permissions endpoint for a test, e.g. to return an error status */
+export const customGetUserPermissionsHandler = (resolver: HttpResponseResolver) =>
+  http.get(USER_PERMISSIONS_URL, resolver);
+
+const getUserPermissionsHandler = () =>
+  customGetUserPermissionsHandler(() => HttpResponse.json({ permissions: mockUserPermissions }));
+
+export default [
+  getDisplayMapping(),
+  getTeamHandler(),
+  listTeamsHandler(),
+  searchTeamsHandler(),
+  getUserPermissionsHandler(),
+];
