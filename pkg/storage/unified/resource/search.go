@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -29,7 +30,6 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utiljson "k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/grafana/authlib/types"
 
@@ -2888,8 +2888,8 @@ func deletedDocumentFrom(key *resourcepb.ResourceKey, rv int64, u *unstructured.
 		DeletedRV: new(strconv.FormatInt(rv, 10)),
 	}
 	// Tags come from the marker's spec, which is the whole object as it was, so this
-	// costs no extra read. A spec that is missing or not an object leaves them unset,
-	// exactly as it leaves the title falling back to the name.
+	// costs no extra read. A spec that is missing leaves them unset, exactly as it
+	// leaves the title falling back to the name.
 	if spec, err := obj.GetSpec(); err == nil {
 		if specValue, ok := spec.(map[string]any); ok {
 			doc.Tags = specTags(specValue["tags"])
@@ -2911,12 +2911,10 @@ func deletedDocumentFrom(key *resourcepb.ResourceKey, rv int64, u *unstructured.
 	return doc, nil
 }
 
-// decodeForTrash decodes only what a trash document reads: kind, metadata and the
-// spec's title, name and tags, skipping the rest of the spec. Anything else falls
-// back to a full decode.
+// decodeForTrash decodes only what a trash document reads: the metadata and the
+// spec's title, name and tags, skipping the rest of the spec.
 func decodeForTrash(value []byte) (*unstructured.Unstructured, error) {
 	var partial struct {
-		Kind     string         `json:"kind"`
 		Metadata map[string]any `json:"metadata"`
 		Spec     *struct {
 			Title any `json:"title"`
@@ -2924,12 +2922,11 @@ func decodeForTrash(value []byte) (*unstructured.Unstructured, error) {
 			Tags  any `json:"tags"`
 		} `json:"spec"`
 	}
-	if err := utiljson.Unmarshal(value, &partial); err != nil || partial.Kind == "" {
-		u := &unstructured.Unstructured{}
-		return u, u.UnmarshalJSON(value)
+	if err := json.Unmarshal(value, &partial); err != nil {
+		return nil, err
 	}
 
-	object := map[string]any{"kind": partial.Kind}
+	object := map[string]any{}
 	if partial.Metadata != nil {
 		object["metadata"] = partial.Metadata
 	}

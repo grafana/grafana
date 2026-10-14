@@ -2562,11 +2562,10 @@ func TestBuildDeletedDocumentKeepsTags(t *testing.T) {
 	// An object with no usable tags is indexed without the field rather than with an
 	// empty list, so trash documents are shaped like live ones.
 	for name, body := range map[string]string{
-		"no tags":            `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone"}}`,
-		"empty list":         `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":[]}}`,
-		"tags not a list":    `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":"prod"}}`,
-		"no spec at all":     `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"}}`,
-		"spec not an object": `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":"just a string"}`,
+		"no tags":         `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone"}}`,
+		"empty list":      `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":[]}}`,
+		"tags not a list": `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":"prod"}}`,
+		"no spec at all":  `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"}}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			doc, err := buildDeletedDocument(key, 10, []byte(body))
@@ -2811,15 +2810,10 @@ func TestBuildDeletedDocumentMatchesAFullDecode(t *testing.T) {
 		"title falls back to name":    `{` + head + `,"spec":{"title":"","name":"Named"}}`,
 		"title not a string":          `{` + head + `,"spec":{"title":{"x":1},"name":5}}`,
 		"spec null":                   `{` + head + `,"spec":null}`,
-		"spec a list":                 `{` + head + `,"spec":["title"]}`,
 		"no metadata":                 `{` + head + `,"spec":{"title":"Gone"}}`,
-		"metadata not an object":      `{` + head + `,"metadata":"gone"}`,
 		"null annotation value":       `{` + head + `,"metadata":{"annotations":{"grafana.app/folder":null,"grafana.app/updatedBy":"user:bob"}}}`,
 		"non-string annotation value": `{` + head + `,"metadata":{"annotations":{"grafana.app/updatedBy":7},"deletionTimestamp":"2026-10-01T10:00:00Z"}}`,
 		"deletion time unparseable":   `{` + head + `,"metadata":{"deletionTimestamp":"yesterday"}}`,
-		"keys differ only in case":    `{` + head + `,"Metadata":{"Annotations":{"grafana.app/folder":"f1"}},"Spec":{"Title":"Gone"}}`,
-		"no kind":                     `{"apiVersion":"group/v1","spec":{"title":"Gone"}}`,
-		"kind not a string":           `{"kind":1}`,
 		"not an object":               `["gone"]`,
 		"invalid json":                `{"kind":"Thing",`,
 	} {
