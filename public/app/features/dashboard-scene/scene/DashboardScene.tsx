@@ -819,6 +819,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
     const modeBefore = this._composer?.modeBefore ?? 'edit';
+    // An Assistant edit and its undo leave the dashboard dirty though it matches the saved version.
+    this.clearDirtyIfUnchanged();
     // Viewing with unsaved Assistant changes is what `agent` presents.
     const mode = modeBefore === 'view' && this.state.isDirty ? 'agent' : modeBefore;
     this.setState({ mode });
@@ -827,6 +829,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.restoreSidebarAfterViewing();
     }
     this.reportModeChange('composer', 'composer');
+  }
+
+  /** Drops the dirty flag when the dashboard has no changes to save, by the comparison Save uses. */
+  public clearDirtyIfUnchanged() {
+    if (this.state.isDirty && !hasActualSaveChanges(this)) {
+      this.setState({ isDirty: false });
+    }
   }
 
   public getComposerSession(): ComposerSession | undefined {

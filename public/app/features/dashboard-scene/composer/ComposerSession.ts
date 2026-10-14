@@ -286,6 +286,8 @@ export class ComposerSession implements ComposerSessionAPI {
     }
     this.revision++;
     this.setOverlayState({ layoutTick: this.overlayState.layoutTick + 1 });
+    // Restoring the saved spec (Assistant Undo) leaves nothing to save.
+    this.scene.clearDirtyIfUnchanged();
     this.scene.recordEditMutation('assistant');
     this.scene.forceRender();
     return { status: 'applied', appliedSpec: transformSceneToSaveModelSchemaV2(this.scene), revision: this.revision };

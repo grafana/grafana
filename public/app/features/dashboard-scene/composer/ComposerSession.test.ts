@@ -13,6 +13,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { canManuallyEditDashboard, getDashboardMode } from '../scene/dashboardModes';
 import { isFullDashboardEditing } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
 import { DashboardInteractions } from '../utils/interactions';
 
@@ -192,6 +193,43 @@ describe('entering and leaving Composer', () => {
     expect(scene.state.title).toBe('Composer title');
     expect(scene.getComposerSession()).toBeUndefined();
     expect(presentations).toEqual(['floating', 'docked']);
+  });
+
+  it('returns to clean Viewing when an edit is restored to the saved spec before exit', async () => {
+    const scene = setup();
+    // A loaded dashboard's saved version is fully populated; the sparse fixture JSON is not, and v1 only
+    // writes `preload` once it is set.
+    scene.setState({ preload: false });
+    scene.setInitialSaveModel(transformSceneToSaveModel(scene));
+    const session = enter(scene);
+    const { spec: saved, revision } = await session.readSpec();
+    const edited = await session.applySpec({ ...saved, title: 'Edited' }, { signal: live(), baseRevision: revision });
+    expect(edited.status).toBe('applied');
+    expect(scene.state.isDirty).toBe(true);
+
+    const restored = await session.applySpec(saved, {
+      signal: live(),
+      baseRevision: edited.status === 'applied' ? edited.revision : -1,
+    });
+    expect(restored.status).toBe('applied');
+    expect(scene.state.title).toBe('Original title');
+    expect(scene.state.isDirty).toBe(false);
+
+    session.exit();
+    expect(getDashboardMode(scene.state)).toBe('view');
+    expect(scene.state.isDirty).toBe(false);
+  });
+
+  it('keeps Agent editing and the dirty flag when a real change remains', async () => {
+    const scene = setup();
+    const session = enter(scene);
+    const { spec, revision } = await retitled(session, 'Still changed');
+    await session.applySpec(spec, { signal: live(), baseRevision: revision });
+
+    session.exit();
+
+    expect(getDashboardMode(scene.state)).toBe('agent');
+    expect(scene.state.isDirty).toBe(true);
   });
 
   it('returns to Editing when entered from Editing', () => {
