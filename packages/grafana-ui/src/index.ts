@@ -545,3 +545,4 @@ export {
   type VizTooltipOptions,
   type OptionsWithTooltip,
 } from '@grafana/schema';
+export { MarkdownHTML, type MarkdownHTMLProps } from './components/Markdown/MarkdownHTML';
