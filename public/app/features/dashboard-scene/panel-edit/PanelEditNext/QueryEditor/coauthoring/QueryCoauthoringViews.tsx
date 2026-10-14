@@ -737,9 +737,9 @@ export function QueryCoauthoringProposal({
                 </div>
               </div>
               <div className={cx(styles.collapsible, narrow && styles.collapsed)}>
-                <div className={styles.collapsibleContent}>
+                <div className={cx(styles.collapsibleContent, styles.whyList)}>
                   {why.map((reason, index) => (
-                    <Text variant="body" key={index}>
+                    <Text element="p" variant="body" key={index}>
                       {reason}
                     </Text>
                   ))}
