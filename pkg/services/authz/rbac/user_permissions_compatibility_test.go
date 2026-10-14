@@ -64,7 +64,7 @@ func permissionRPC(t *testing.T, sql db.DB, evaluator ac.UserPermissionsEvaluato
 	tracer := tracing.InitializeTracerForTest()
 	provider := legacysql.NewDatabaseProvider(sql)
 	service := rbac.NewService(provider, nil, legacy.NewLegacySQLStores(provider),
-		store.NewSQLPermissionStore(provider, tracer), evaluator, nil, nil,
+		store.NewSQLPermissionStore(provider, tracer, false), evaluator, nil, nil,
 		log.New("permission-contract"), tracer, prometheus.NewRegistry(),
 		cache.NewLocalCache(cache.Config{Expiry: time.Minute, CleanupInterval: time.Minute}),
 		rbac.Settings{AnonOrgRole: "Viewer", CacheTTL: time.Minute})

@@ -50,6 +50,10 @@ func defaultRouterCoreURL(cfg *setting.Cfg, logger log.Logger) {
 	if !slices.Contains(cfg.Target, modules.CloudCoreAppsServer) {
 		return
 	}
+	// cloud-core-apps-server can serve only its operator, which leaves nothing at the path.
+	if !cfg.SectionWithEnvOverrides("cloud_core_apps_server").Key("manifests").MustBool(true) {
+		return
+	}
 	// The router's manifests client doesn't trust the instrumentation server's
 	// certificate.
 	if cfg.Protocol == setting.HTTPSScheme {
