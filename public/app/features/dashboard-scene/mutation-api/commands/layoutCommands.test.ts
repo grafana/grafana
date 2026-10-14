@@ -227,10 +227,6 @@ function buildSceneWithLayoutParent(
 }
 
 describe('Layout mutation commands', () => {
-  beforeEach(() => {
-    setTestFlags({ dashboardNewLayouts: true });
-  });
-
   afterEach(() => {
     setTestFlags({});
   });
