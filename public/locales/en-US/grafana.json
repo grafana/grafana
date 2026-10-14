@@ -4591,6 +4591,11 @@
     "folder-owners": {
       "owned-by": "Owned by:"
     },
+    "folder-permissions-exposed": {
+      "loading": "Loading...",
+      "no-access": "You do not have permission to view the permissions of this folder.",
+      "not-found": "Unable to load this folder."
+    },
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",

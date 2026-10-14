@@ -267,6 +267,7 @@ export enum PluginExtensionExposedComponents {
   CreateAlertFromPanelV1 = 'grafana/alerting/create-alert-from-panel/v1',
   OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
   NotebookViewV1 = 'grafana/notebook-view/v1',
+  FolderPermissionsV1 = 'grafana/folder-permissions/v1',
 }
 
 export type PluginExtensionPanelContext = {
