@@ -14,7 +14,7 @@ import {
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Badge, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
@@ -568,7 +568,7 @@ export function QueryCoauthoringProposal({
           {Array.from({ length: optionCount + 1 }, (_, rank) => (
             <Button
               key={rank}
-              className={narrow ? styles.compactOptionPill : undefined}
+              className={styles.compactOptionPill}
               style={tiny && selectedIndex !== rank - 1 ? { display: 'none' } : undefined}
               size="sm"
               variant="secondary"
@@ -599,24 +599,13 @@ export function QueryCoauthoringProposal({
             onClick={() => onSelect(selectedIndex === optionCount - 1 ? -1 : selectedIndex + 1)}
           />
         </div>
-        <QueryCoauthoringHeader
-          className={narrow ? styles.hidden : undefined}
-          onClose={onClose}
-          pulse={isPreviewRunning}
-        >
+        <div className="sr-only">
           <QueryCoauthoringLiveStatus>
-            {isPreviewRunning ? (
-              <>
-                <Icon name="ai-sparkle" size="sm" />
-                <Text variant="bodySmall" color="secondary">
-                  <Trans i18nKey="query-editor-coauthoring.running-updated-query">Running updated query...</Trans>
-                </Text>
-              </>
-            ) : (
-              <Badge color="blue" text={t('query-editor-coauthoring.previewing-query', 'Previewing query')} />
-            )}
+            {isPreviewRunning
+              ? t('query-editor-coauthoring.running-updated-query', 'Running updated query...')
+              : t('query-editor-coauthoring.previewing-query', 'Previewing query')}
           </QueryCoauthoringLiveStatus>
-        </QueryCoauthoringHeader>
+        </div>
         <div
           className={styles.scrollBody}
           style={narrow && !hasPreviewCallout && !unconfirmedValues?.length ? { display: 'none' } : undefined}
@@ -625,11 +614,6 @@ export function QueryCoauthoringProposal({
           aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
         >
           <div className={cx(styles.proposalBody, narrow && styles.compactProposalBody)}>
-            <Text variant="body" color="secondary" hidden={narrow}>
-              {selectedIndex < 0
-                ? t('query-editor-coauthoring.original-query', 'Original query')
-                : t('query-editor-coauthoring.suggestion-updated', 'Suggestion updated')}
-            </Text>
             <div style={narrow ? { display: 'none' } : undefined}>
               {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
             </div>
@@ -677,6 +661,7 @@ export function QueryCoauthoringProposal({
             className={cx(styles.compactButton, tiny && styles.tinyIconAction)}
             size="sm"
             fill="text"
+            variant="secondary"
             icon="ai-sparkle"
             onClick={onContinue}
             aria-label={t('query-editor-coauthoring.open-in-chat', 'Open in Chat')}
