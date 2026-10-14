@@ -244,27 +244,25 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		})
 
 		t.Run(transport.name+" enforces plugin route RBAC", func(t *testing.T) {
-			status, body := doProxy(routeViewer, http.MethodGet, transport.path(uid, "query"), nil)
-			require.Equal(t, http.StatusOK, status, "body: %s", body)
-			require.NotNil(t, upstreamGot())
-
-			status, _ = doProxy(routeViewer, http.MethodDelete, transport.path(uid, "rules"), nil)
+			status, _ := doProxy(routeViewer, http.MethodDelete, transport.path(uid, "rules"), nil)
 			require.Equal(t, http.StatusForbidden, status)
 			require.Nil(t, upstreamGot(), "RBAC-denied request must not reach the upstream")
 
-			// Alerting route actions remain supported by the legacy proxy only.
+			// Explicit route actions remain supported by the legacy proxy only.
 			for _, request := range []struct {
 				user   apis.User
 				method string
+				path   string
 			}{
-				{routeViewer, http.MethodGet},
-				{helper.Org1.Admin, http.MethodGet},
-				{helper.Org1.Admin, http.MethodDelete},
+				{routeViewer, http.MethodGet, "query"},
+				{routeViewer, http.MethodGet, "rules"},
+				{helper.Org1.Admin, http.MethodGet, "rules"},
+				{helper.Org1.Admin, http.MethodDelete, "rules"},
 			} {
-				status, body := doProxy(request.user, request.method, transport.path(uid, "rules"), nil)
+				status, body := doProxy(request.user, request.method, transport.path(uid, request.path), nil)
 				if transport.name == "apiserver" {
 					require.Equal(t, http.StatusForbidden, status, "body: %s", body)
-					require.Nil(t, upstreamGot(), "unsupported alerting route must not reach the upstream")
+					require.Nil(t, upstreamGot(), "unsupported route action must not reach the upstream")
 				} else {
 					require.Equal(t, http.StatusOK, status, "body: %s", body)
 					require.NotNil(t, upstreamGot())

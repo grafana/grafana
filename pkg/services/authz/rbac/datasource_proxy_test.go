@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestDatasourceProxyPermissions(t *testing.T) {
+func TestDatasourceProxyQueryPermissions(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
 		permissions []accesscontrol.Permission
@@ -29,7 +29,7 @@ func TestDatasourceProxyPermissions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			service := NewTestService("user-1", tc.permissions, nil)
 			ctx := types.WithAuthInfo(t.Context(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{Namespace: "default"}}))
-			res, err := service.Check(ctx, &authzv1.CheckRequest{Namespace: "default", Subject: "user:user-1", Group: "prometheus.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Verb: datasources.ActionQuery})
+			res, err := service.Check(ctx, &authzv1.CheckRequest{Namespace: "default", Subject: "user:user-1", Group: "prometheus.datasource.grafana.app", Resource: "datasources", Subresource: "query", Name: "ds-1", Verb: "create"})
 			require.NoError(t, err)
 			require.Equal(t, tc.query, res.Allowed)
 		})
@@ -39,6 +39,7 @@ func TestDatasourceProxyPermissions(t *testing.T) {
 func TestDatasourceProxyUnmappedAction(t *testing.T) {
 	for _, action := range []string{
 		"custom:action",
+		datasources.ActionQuery,
 		accesscontrol.ActionAlertingRuleExternalRead,
 		accesscontrol.ActionAlertingRuleExternalWrite,
 		accesscontrol.ActionAlertingInstancesExternalRead,
