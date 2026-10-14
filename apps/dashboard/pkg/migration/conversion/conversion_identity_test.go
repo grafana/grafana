@@ -107,18 +107,7 @@ func newDatasourceByNameV0Dashboard(namespace string) *dashv0.Dashboard {
 func TestMigrate_WithoutIdentityWritesNilDatasourceType(t *testing.T) {
 	initIdentityRequiredMigrator(t)
 
-	dash := map[string]interface{}{
-		"title":         "Datasource by name",
-		"schemaVersion": 32,
-		"panels": []interface{}{
-			map[string]interface{}{
-				"id":         1,
-				"type":       "timeseries",
-				"datasource": "Non Default Test Datasource Name",
-				"targets":    []interface{}{map[string]interface{}{"refId": "A"}},
-			},
-		},
-	}
+	dash := newDatasourceByNameV0Dashboard("org-2").Spec.Object
 
 	ctx := request.WithNamespace(context.Background(), "org-2")
 	require.NoError(t, migration.Migrate(ctx, dash, schemaversion.LATEST_VERSION))
@@ -153,15 +142,24 @@ func TestConvertDashboard_V0_to_V1_ResolvesDatasourceNamesWithServiceIdentity(t 
 
 func TestConvertDashboard_V0_to_V1_DatasourceProviderGetsDashboardNamespaceAndServiceIdentity(t *testing.T) {
 	tests := []struct {
-		namespace string
-		expected  requestContext
+		description string
+		namespace   string
+		expected    requestContext
 	}{
-		{namespace: "stacks-123", expected: requestContext{requestNamespace: "stacks-123", identityNamespace: "stacks-123", orgID: 1, service: true}},
-		{namespace: "org-2", expected: requestContext{requestNamespace: "org-2", identityNamespace: "org-2", orgID: 2, service: true}},
+		{
+			description: "stack namespace looks up the correct namespace and service identity",
+			namespace:   "stacks-123",
+			expected:    requestContext{requestNamespace: "stacks-123", identityNamespace: "stacks-123", orgID: 1, service: true},
+		},
+		{
+			description: "org namespace looks up the correct namespace and service identity",
+			namespace:   "org-2",
+			expected:    requestContext{requestNamespace: "org-2", identityNamespace: "org-2", orgID: 2, service: true},
+		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.namespace, func(t *testing.T) {
+		t.Run(tt.description, func(t *testing.T) {
 			dsProvider := &identityRecordingDataSourceProvider{
 				DataSourceIndexProvider: migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig),
 			}
