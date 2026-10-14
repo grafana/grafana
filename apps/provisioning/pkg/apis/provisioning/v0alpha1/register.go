@@ -119,6 +119,35 @@ var HistoricJobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		},
 	})
 
+var BundleResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"bundles", "bundle", "Bundle",
+	func() runtime.Object { return &Bundle{} },     // newObj
+	func() runtime.Object { return &BundleList{} }, // newList
+	utils.TableColumns{ // Returned by `kubectl get`. Doesn't affect disk storage.
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+			{Name: "Paths", Type: "integer"},
+			{Name: "Files", Type: "integer"},
+			{Name: "Ref", Type: "string"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*Bundle)
+			if !ok {
+				return nil, errors.New("expected Bundle")
+			}
+
+			return []interface{}{
+				m.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+				len(m.Spec.Files),
+				len(m.Status.Files),
+				m.Status.Ref,
+			}, nil
+		},
+	},
+)
+
 var BundleFileResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"bundlefiles", "bundlefile", "BundleFile",
 	func() runtime.Object { return &BundleFile{} },     // newObj
@@ -127,7 +156,7 @@ var BundleFileResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Created At", Type: "date"},
-			{Name: "Repository", Type: "string"},
+			{Name: "Bundle", Type: "string"},
 			{Name: "Path", Type: "string"},
 			{Name: "Size", Type: "integer"},
 		},
@@ -140,7 +169,7 @@ var BundleFileResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			return []interface{}{
 				m.Name,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
-				m.Spec.Repository,
+				m.Spec.Bundle,
 				m.Spec.Path,
 				m.Spec.Size,
 			}, nil
@@ -237,6 +266,8 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&Connection{},
 		&ConnectionList{},
 		&ExternalRepositoryList{},
+		&Bundle{},
+		&BundleList{},
 		&BundleFile{},
 		&BundleFileList{},
 	)

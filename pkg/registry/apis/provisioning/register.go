@@ -514,6 +514,9 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 // Historic Jobs:
 //   - Read-only: historicjobs:read
 //
+// Bundles:
+//   - CRUD: bundles:create/read/write/delete
+//
 // Bundle Files:
 //   - CRUD: bundlefiles:create/read/write/delete (written by the provisioning pipeline)
 //
@@ -533,6 +536,14 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.JobResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+	case provisioning.BundleResourceInfo.GetName():
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.BundleResourceInfo.GetName(),
 			Name:      a.GetName(),
 			Namespace: a.GetNamespace(),
 		}, ""))
@@ -774,6 +785,7 @@ func (b *APIBuilder) GetResourceInfos(schema.GroupVersion) []apiutils.ResourceIn
 		provisioning.RepositoryResourceInfo,
 		provisioning.ConnectionResourceInfo,
 		provisioning.JobResourceInfo,
+		provisioning.BundleResourceInfo,
 		provisioning.BundleFileResourceInfo,
 	}
 	if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
@@ -921,6 +933,12 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create connection storage: %w", err)
 	}
 
+	bundlesStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.BundleResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return fmt.Errorf("failed to create bundle storage: %w", err)
+	}
+	bundleStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, bundlesStore)
+
 	bundleFilesStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.BundleFileResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create bundle file storage: %w", err)
@@ -934,6 +952,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.RepositoryResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
 		storage[provisioning.ConnectionResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
 		storage[provisioning.JobResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(jobStore, b.gv)
+		storage[provisioning.BundleResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(bundlesStore, b.gv)
 		storage[provisioning.BundleFileResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(bundleFilesStore, b.gv)
 		b.repoStore = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
 		b.connectionStore = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
@@ -941,11 +960,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 		storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 		storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
+		storage[provisioning.BundleResourceInfo.StoragePath()] = bundlesStore
 		storage[provisioning.BundleFileResourceInfo.StoragePath()] = bundleFilesStore
 		b.repoStore = repositoryStorage
 		b.connectionStore = connectionsStore
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
+	storage[provisioning.BundleResourceInfo.StoragePath("status")] = bundleStatusStorage
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = WithTimeout(NewConnectionRepositoriesConnector(b), 30*time.Second)

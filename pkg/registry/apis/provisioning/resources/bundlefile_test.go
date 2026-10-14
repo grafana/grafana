@@ -15,6 +15,7 @@ func testBundleFile(path string, data []byte) *provisioning.BundleFile {
 	return NewBundleFile(BundleFileOptions{
 		Namespace:  "stacks-1",
 		Repository: "acme-repo",
+		Bundle:     "sample",
 		Path:       path,
 		Data:       data,
 	})
@@ -25,8 +26,10 @@ func TestNewBundleFile(t *testing.T) {
 	file := testBundleFile("bundles/sample/docs/a.md", data)
 
 	assert.Equal(t, "stacks-1", file.Namespace)
-	assert.Equal(t, BundleFileName("acme-repo", "bundles/sample/docs/a.md"), file.Name)
+	assert.Equal(t, BundleFileName("sample", "bundles/sample/docs/a.md"), file.Name)
 	assert.Equal(t, "acme-repo", file.Labels[provisioning.BundleFileRepositoryLabel])
+	assert.Equal(t, "sample", file.Labels[provisioning.BundleFileBundleLabel])
+	assert.Equal(t, "sample", file.Spec.Bundle)
 
 	assert.Equal(t, "bundles/sample/docs/a.md", file.Spec.Path)
 	assert.Equal(t, int64(len(data)), file.Spec.Size)
@@ -74,24 +77,17 @@ func TestDecodeBundleFile_Invalid(t *testing.T) {
 
 func TestBundleFileName(t *testing.T) {
 	t.Run("is stable and path-specific", func(t *testing.T) {
-		a := BundleFileName("acme-repo", "bundles/sample/a.md")
-		b := BundleFileName("acme-repo", "bundles/sample/b.md")
+		a := BundleFileName("sample", "bundles/sample/a.md")
+		b := BundleFileName("sample", "bundles/sample/b.md")
 
-		assert.Equal(t, a, BundleFileName("acme-repo", "bundles/sample/a.md"))
+		assert.Equal(t, a, BundleFileName("sample", "bundles/sample/a.md"))
 		assert.NotEqual(t, a, b)
-		assert.True(t, strings.HasPrefix(a, "acme-repo-"))
+		assert.True(t, strings.HasPrefix(a, "sample-"))
 	})
 
-	t.Run("is shared by every bundle claiming the same path", func(t *testing.T) {
-		// The name covers (repository, path) and not the bundle, which is what makes a
-		// shared asset one stored file rather than one per claimant.
-		assert.Equal(t,
-			BundleFileName("acme-repo", "shared/query.sql"),
-			BundleFileName("acme-repo", "shared/query.sql"),
-		)
-	})
-
-	t.Run("does not collide across repositories", func(t *testing.T) {
+	t.Run("gives each bundle its own copy of a shared path", func(t *testing.T) {
+		// Files are not shared: two bundles declaring the same repository path each
+		// store their own, so deletion stays per bundle.
 		assert.NotEqual(t,
 			BundleFileName("one", "shared/query.sql"),
 			BundleFileName("two", "shared/query.sql"),
@@ -99,13 +95,13 @@ func TestBundleFileName(t *testing.T) {
 	})
 
 	t.Run("stays within the resource name limit", func(t *testing.T) {
-		name := BundleFileName(strings.Repeat("r", 253), "bundles/sample/a.md")
+		name := BundleFileName(strings.Repeat("b", 253), "bundles/sample/a.md")
 		assert.LessOrEqual(t, len(name), 253)
 	})
 }
 
 func TestDiffBundleFiles(t *testing.T) {
-	t.Run("creates files the repository does not store", func(t *testing.T) {
+	t.Run("creates files the bundle does not store", func(t *testing.T) {
 		desired := []*provisioning.BundleFile{
 			testBundleFile("bundles/sample/a.md", []byte("a")),
 			testBundleFile("bundles/sample/b.md", []byte("b")),
@@ -141,7 +137,7 @@ func TestDiffBundleFiles(t *testing.T) {
 		assert.True(t, got.IsEmpty())
 	})
 
-	t.Run("deletes files nothing references any more", func(t *testing.T) {
+	t.Run("deletes files the bundle no longer holds", func(t *testing.T) {
 		existing := []*provisioning.BundleFile{
 			testBundleFile("kept.md", []byte("kept")),
 			testBundleFile("dropped.md", []byte("dropped")),
@@ -157,16 +153,6 @@ func TestDiffBundleFiles(t *testing.T) {
 		assert.Equal(t, BundleFileActionUnchanged, got.Changes[1].Action)
 	})
 
-	t.Run("keeps a file that one bundle dropped and another still claims", func(t *testing.T) {
-		// Desired is the union across bundles, so a shared file simply stays in it.
-		existing := []*provisioning.BundleFile{testBundleFile("shared/query.sql", []byte("q"))}
-		desired := []*provisioning.BundleFile{testBundleFile("shared/query.sql", []byte("q"))}
-
-		got := DiffBundleFiles(existing, desired)
-
-		assert.Zero(t, got.Count(BundleFileActionDelete))
-	})
-
 	t.Run("never delete-then-creates a file that persists", func(t *testing.T) {
 		existing := []*provisioning.BundleFile{testBundleFile("a.md", []byte("before"))}
 		desired := []*provisioning.BundleFile{testBundleFile("a.md", []byte("after"))}
@@ -178,7 +164,7 @@ func TestDiffBundleFiles(t *testing.T) {
 		assert.Equal(t, 1, got.Count(BundleFileActionUpdate))
 	})
 
-	t.Run("an emptied repository deletes everything", func(t *testing.T) {
+	t.Run("an emptied bundle deletes everything", func(t *testing.T) {
 		existing := []*provisioning.BundleFile{
 			testBundleFile("a.md", []byte("a")),
 			testBundleFile("b.md", []byte("b")),
@@ -226,8 +212,7 @@ func TestBundleFilesPublishable(t *testing.T) {
 	})
 
 	t.Run("extra stored files do not block publishing", func(t *testing.T) {
-		// Another bundle's files live in the same repository; only what this bundle
-		// resolved has to match.
+		// Only what the bundle resolved has to match.
 		expected := map[string]string{"a.md": a.Spec.Hash}
 		assert.True(t, BundleFilesPublishable([]*provisioning.BundleFile{a, b}, expected))
 	})

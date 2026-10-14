@@ -8,34 +8,46 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// bundleManifest builds a manifest for the kind declared with the bundle capability. The
-// `files` block is a sibling of spec, not part of it: which files belong to a resource is
-// a provisioning concern and must not collide with the kind's own schema.
-func bundleManifest(t *testing.T, name string, files map[string]any) []byte {
+func bundleClient(t *testing.T, helper *common.ProvisioningTestHelper) *apis.K8sResourceClient {
 	t.Helper()
 
-	obj := map[string]any{
-		"apiVersion": "dashboard.grafana.app/v0alpha1",
-		"kind":       "Dashboard",
-		"metadata":   map[string]any{"name": name},
-		"spec":       map[string]any{"title": "Bundle " + name},
-	}
+	return helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: helper.Namespace,
+		GVR:       provisioning.BundleResourceInfo.GroupVersionResource(),
+	})
+}
+
+// bundleJSON builds a Bundle manifest as it would be committed to a repository. A path
+// ending in "/" is a folder and everything under it belongs to the bundle.
+func bundleJSON(t *testing.T, name string, files []string) []byte {
+	t.Helper()
+
+	spec := map[string]any{}
 	if files != nil {
-		obj["files"] = files
+		spec["files"] = files
 	}
 
-	data, err := json.Marshal(obj)
+	data, err := json.Marshal(map[string]any{
+		"apiVersion": provisioning.APIVERSION,
+		"kind":       "Bundle",
+		"metadata":   map[string]any{"name": name},
+		"spec":       spec,
+	})
 	require.NoError(t, err)
 	return data
 }
 
-// writeBundleManifest POSTs a manifest to the repository's files endpoint and returns the
-// error, if any. The parser runs on this path, so a bad `files` block is rejected here.
-func writeBundleManifest(t *testing.T, helper *common.ProvisioningTestHelper, repo, path string, body []byte) error {
+// writeManifest POSTs a manifest to the repository's files endpoint and returns the
+// error, if any. The parser runs on this path, so an unusable manifest is rejected here.
+func writeManifest(t *testing.T, helper *common.ProvisioningTestHelper, repo, path string, body []byte) error {
 	t.Helper()
 
 	return helper.AdminREST.Post().
@@ -59,124 +71,125 @@ func newBundleRepo(t *testing.T, helper *common.ProvisioningTestHelper, name str
 	})
 }
 
-// TestIntegrationProvisioning_Bundle_KindMustDeclareFilesField pins down a constraint the
-// capability imposes on a bundle kind: the `files` block is a sibling of spec, so the
-// kind's own schema has to declare it, exactly as Repository declares `secure`.
-//
-// Dashboard does not, so a manifest carrying a file set is rejected while decoding, before
-// provisioning sees it -- the strict-validation exemption in resources/parser.go applies to
-// the apiserver write, not to decoding the request body. A purpose-built bundle kind must
-// therefore carry the field; declaring the capability alone is not enough.
-func TestIntegrationProvisioning_Bundle_KindMustDeclareFilesField(t *testing.T) {
+// TestIntegrationProvisioning_Bundle_Accepted covers the happy path: a Bundle manifest in
+// a repository becomes a Bundle resource holding the paths it declares.
+func TestIntegrationProvisioning_Bundle_Accepted(t *testing.T) {
 	helper := sharedHelper(t)
-	const repo = "bundle-undeclared-field"
+	const repo = "bundle-accepted"
 	newBundleRepo(t, helper, repo)
 
-	body := bundleManifest(t, "bundle-ok", map[string]any{
-		"docs": map[string]any{
-			"include": "bundles/sample/docs/**",
-			"exclude": []any{"**/*.tmp"},
-		},
-		"query": map[string]any{"path": "shared/query.sql"},
-	})
+	const name = "bundle-ok"
+	files := []string{
+		"bundles/sample/README.md",
+		"bundles/sample/docs/",
+		"shared/query.sql",
+	}
 
-	err := writeBundleManifest(t, helper, repo, "bundle-ok.json", body)
-	require.Error(t, err, "a kind that does not declare `files` cannot carry a file set")
-	assert.Contains(t, err.Error(), `unknown field "files"`)
+	require.NoError(t, writeManifest(t, helper, repo, "bundle-ok.json", bundleJSON(t, name, files)))
+
+	created, err := bundleClient(t, helper).Resource.Get(t.Context(), name, metav1.GetOptions{})
+	require.NoError(t, err, "the Bundle resource should be created")
+
+	stored, _, err := unstructured.NestedStringSlice(created.Object, "spec", "files")
+	require.NoError(t, err)
+	assert.Equal(t, files, stored, "the declared paths survive the round trip")
 }
 
-// TestIntegrationProvisioning_Bundle_Rejected covers that an unusable `files` block makes
-// the manifest invalid, rather than yielding a bundle whose file set the pipeline would
+// TestIntegrationProvisioning_Bundle_NoFiles covers that a Bundle need not declare any
+// paths; an empty file set is valid.
+func TestIntegrationProvisioning_Bundle_NoFiles(t *testing.T) {
+	helper := sharedHelper(t)
+	const repo = "bundle-no-files"
+	newBundleRepo(t, helper, repo)
+
+	const name = "bundle-bare"
+	require.NoError(t, writeManifest(t, helper, repo, "bundle-bare.json", bundleJSON(t, name, nil)))
+
+	created, err := bundleClient(t, helper).Resource.Get(t.Context(), name, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, name, created.GetName())
+}
+
+// TestIntegrationProvisioning_Bundle_Rejected covers that an unusable path makes the
+// Bundle invalid, rather than yielding a bundle whose file set the pipeline would
 // silently ignore. Each case fails in the parser, before any write.
 func TestIntegrationProvisioning_Bundle_Rejected(t *testing.T) {
 	helper := sharedHelper(t)
 	const repo = "bundle-rejected"
 	newBundleRepo(t, helper, repo)
 
-	const manifestPath = "bundle-rejected.json"
-
 	tests := []struct {
 		name  string
-		files map[string]any
+		files []string
 		// wantMessage is a fragment of the validation error, to show the right rule
 		// rejected the manifest rather than something incidental.
 		wantMessage string
 	}{
 		{
-			name: "unrooted pattern",
-			files: map[string]any{
-				"everything": map[string]any{"include": "**/*.md"},
-			},
-			wantMessage: "literal path segment",
-		},
-		{
-			name: "pattern rooted at a traversal",
-			files: map[string]any{
-				"escape": map[string]any{"include": "../../etc/**"},
-			},
+			name:        "traversal",
+			files:       []string{"../../etc/passwd"},
 			wantMessage: "traversal",
 		},
 		{
-			name: "part name with invalid characters",
-			files: map[string]any{
-				"Docs": map[string]any{"path": "bundles/rejected/a.md"},
-			},
-			wantMessage: "lowercase",
+			name:        "traversal in a folder entry",
+			files:       []string{"bundles/sample/../../etc/"},
+			wantMessage: "traversal",
 		},
 		{
-			name: "part declaring neither path nor include",
-			files: map[string]any{
-				"docs": map[string]any{"exclude": []any{"**/*.tmp"}},
-			},
-			wantMessage: "either path or include",
+			name:        "absolute path",
+			files:       []string{"/etc/passwd"},
+			wantMessage: "relative",
 		},
 		{
-			name: "part declaring both path and include",
-			files: map[string]any{
-				"docs": map[string]any{
-					"path":    "bundles/rejected/a.md",
-					"include": "bundles/rejected/**",
-				},
-			},
-			wantMessage: "not both",
+			name:        "hidden path",
+			files:       []string{"bundles/.secret/notes.md"},
+			wantMessage: "hidden",
 		},
 		{
-			name: "manifest claiming itself",
-			files: map[string]any{
-				"self": map[string]any{"path": manifestPath},
-			},
-			wantMessage: "own manifest",
+			name:        "duplicate path",
+			files:       []string{"bundles/sample/a.md", "bundles/sample/a.md"},
+			wantMessage: "duplicate",
+		},
+		{
+			name:        "empty path",
+			files:       []string{"   "},
+			wantMessage: "must not be empty",
+		},
+		{
+			name:        "root",
+			files:       []string{"/"},
+			wantMessage: "must not be empty",
 		},
 	}
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			name := fmt.Sprintf("bundle-rejected-%d", i)
-			body := bundleManifest(t, name, tt.files)
 
-			err := writeBundleManifest(t, helper, repo, manifestPath, body)
-			require.Error(t, err, "an unusable files block must be rejected")
+			err := writeManifest(t, helper, repo, "bundle-rejected.json", bundleJSON(t, name, tt.files))
+			require.Error(t, err, "an unusable path must be rejected")
 			assert.Contains(t, err.Error(), tt.wantMessage)
 
 			// The manifest was rejected before any write, so no resource exists.
-			_, getErr := helper.DashboardsV0.Resource.Get(t.Context(), name, metav1.GetOptions{})
+			_, getErr := bundleClient(t, helper).Resource.Get(t.Context(), name, metav1.GetOptions{})
 			require.Error(t, getErr, "a rejected manifest must not create a resource")
 		})
 	}
 }
 
-// TestIntegrationProvisioning_Bundle_NoFilesBlock covers that the capability does not
-// require a file set: a bundle kind with no `files` block is an ordinary resource.
-func TestIntegrationProvisioning_Bundle_NoFilesBlock(t *testing.T) {
+// TestIntegrationProvisioning_Bundle_TooManyPaths covers the declared-path cap, which
+// bounds how much one bundle can pull in before any folder is expanded.
+func TestIntegrationProvisioning_Bundle_TooManyPaths(t *testing.T) {
 	helper := sharedHelper(t)
-	const repo = "bundle-no-files"
+	const repo = "bundle-too-many"
 	newBundleRepo(t, helper, repo)
 
-	const name = "bundle-bare"
-	require.NoError(t, writeBundleManifest(t, helper, repo,
-		"bundle-bare.json", bundleManifest(t, name, nil)))
+	files := make([]string, 65) // BundleMaxEntries is 64
+	for i := range files {
+		files[i] = fmt.Sprintf("bundles/sample/f%d.md", i)
+	}
 
-	created, err := helper.DashboardsV0.Resource.Get(t.Context(), name, metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.Equal(t, name, created.GetName())
+	err := writeManifest(t, helper, repo, "bundle-too-many.json", bundleJSON(t, "bundle-too-many", files))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "at most")
 }

@@ -147,16 +147,19 @@ type ParsedResource struct {
 	// and must never have a folder annotation stamped onto them.
 	FolderScoped bool
 
-	// IsBundle reports whether this resource's kind declares the bundle capability, in
-	// which case Info.Path is a bundle manifest and BundleSelectors are the named parts
-	// of the file set it declares.
+	// IsBundle reports whether this file is a Bundle, in which case BundleEntries are the
+	// paths it declares.
 	IsBundle bool
 
-	// BundleSelectors are the statically validated parts of this bundle's file set, in
-	// sorted-name order. What each part matches needs a listing of the repository at a
-	// ref, which a single-file parse does not have; see ResolveBundleFiles. Always empty
-	// for a non-bundle kind.
-	BundleSelectors []BundleSelector
+	// BundleEntries are the validated paths this bundle declares. What a folder entry
+	// expands to needs a listing of the repository at a ref, which a single-file parse
+	// does not have; see ResolveBundleFiles. Always empty unless IsBundle.
+	BundleEntries []BundleEntry
+
+	// BundleRef is the name of the Bundle this resource references, read from
+	// spec.bundle. Only populated for a kind declared with the bundle capability, so a
+	// stray field on another kind is ignored rather than silently claiming files.
+	BundleRef string
 
 	// The Existing object (same name)
 	// ?? do we need/want the whole thing??
@@ -289,12 +292,17 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	supported := r.clients.SupportedResources()
 	parsed.FolderScoped = supportsFolderAnnotation(supported, parsed.GVK)
 
-	// A bundle's file set is part of its definition, so an unusable files block makes
-	// the manifest itself invalid rather than yielding a bundle whose files the pipeline
+	// A bundle's file set is part of its definition, so an unusable spec.files makes the
+	// manifest itself invalid rather than yielding a bundle whose files the pipeline
 	// would silently ignore.
-	if isBundleKind(supported, parsed.GVK) {
+	if parsed.GVK.Group == provisioning.GROUP && parsed.GVK.Kind == BundleKind {
 		parsed.IsBundle = true
-		parsed.BundleSelectors, err = ParseBundleSelectors(parsed.Obj, info.Path)
+		parsed.BundleEntries, err = ParseBundleEntries(parsed.Obj)
+		if err != nil {
+			return nil, NewResourceValidationError(err)
+		}
+	} else if isBundleLinkable(supported, parsed.GVK) {
+		parsed.BundleRef, err = ParseBundleRef(parsed.Obj)
 		if err != nil {
 			return nil, NewResourceValidationError(err)
 		}

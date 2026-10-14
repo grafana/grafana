@@ -13,35 +13,36 @@ import (
 )
 
 // bundleFileNameHashLen is how much of the path hash goes into a bundle file's name.
-// 12 hex characters is 48 bits, which is ample for a repository's file set while keeping
-// the name readable.
+// 12 hex characters is 48 bits, which is ample for the at-most-128 files one bundle may
+// hold while keeping the name readable.
 const bundleFileNameHashLen = 12
 
-// bundleFileNamePrefixMax bounds the repository portion of a generated name so that the
+// bundleFileNamePrefixMax bounds the bundle portion of a generated name so that the
 // result stays inside the 253-character limit for a resource name.
 const bundleFileNamePrefixMax = 200
 
-// BundleFileName derives the stable name of the BundleFile holding path in a repository.
+// BundleFileName derives the stable name of the BundleFile holding path for a bundle.
 //
-// The name covers (repository, path): a file belongs to a repository rather than to one
-// bundle, so any number of bundles claiming the same path share a single stored file. It
-// deliberately covers neither the bundle nor a ref -- a name cannot be updated, and both
-// of those change while the file stays the same file.
-func BundleFileName(repository, path string) string {
+// The name covers (bundle, path): a file belongs to one bundle and two bundles declaring
+// the same repository path each store their own copy. It deliberately does not cover a
+// ref -- a name cannot be updated, and the content is versioned by its hash.
+func BundleFileName(bundle, path string) string {
 	sum := sha256.Sum256([]byte(path))
 	suffix := hex.EncodeToString(sum[:])[:bundleFileNameHashLen]
 
-	prefix := repository
+	prefix := bundle
 	if len(prefix) > bundleFileNamePrefixMax {
 		prefix = prefix[:bundleFileNamePrefixMax]
 	}
 	return prefix + "-" + suffix
 }
 
-// BundleFileOptions describes one file to be stored for a repository.
+// BundleFileOptions describes one file to be stored for a bundle.
 type BundleFileOptions struct {
 	Namespace  string
 	Repository string
+	// Bundle is the name of the Bundle this file belongs to.
+	Bundle string
 	// Path is repository-root-relative.
 	Path string
 	// Data is the raw file content; it is base64-encoded into the object.
@@ -60,14 +61,16 @@ func NewBundleFile(opts BundleFileOptions) *provisioning.BundleFile {
 
 	return &provisioning.BundleFile{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      BundleFileName(opts.Repository, opts.Path),
+			Name:      BundleFileName(opts.Bundle, opts.Path),
 			Namespace: opts.Namespace,
 			Labels: map[string]string{
 				provisioning.BundleFileRepositoryLabel: opts.Repository,
+				provisioning.BundleFileBundleLabel:     opts.Bundle,
 			},
 		},
 		Spec: provisioning.BundleFileSpec{
 			Repository: opts.Repository,
+			Bundle:     opts.Bundle,
 			Path:       opts.Path,
 			Hash:       "sha256:" + hex.EncodeToString(sum[:]),
 			Size:       int64(len(opts.Data)),
@@ -84,7 +87,7 @@ const (
 	BundleFileActionCreate BundleFileAction = "create"
 	// BundleFileActionUpdate replaces a file whose content changed.
 	BundleFileActionUpdate BundleFileAction = "update"
-	// BundleFileActionDelete removes a file no bundle references any more.
+	// BundleFileActionDelete removes a file the bundle no longer holds.
 	BundleFileActionDelete BundleFileAction = "delete"
 	// BundleFileActionUnchanged is a stored file whose content already matches. It is
 	// reported so a caller can account for the whole set, and carries no write.
@@ -102,7 +105,7 @@ type BundleFileChange struct {
 	File *provisioning.BundleFile
 }
 
-// BundleFileChanges is the full reconcile for a repository's stored bundle files.
+// BundleFileChanges is the full reconcile for one bundle's stored files.
 type BundleFileChanges struct {
 	// Changes in path order.
 	Changes []BundleFileChange
@@ -135,12 +138,11 @@ func (c BundleFileChanges) Count(action BundleFileAction) int {
 // IsEmpty reports whether the reconcile has nothing to write.
 func (c BundleFileChanges) IsEmpty() bool { return len(c.Writes()) == 0 }
 
-// DiffBundleFiles works out what has to change for a repository to hold exactly desired,
+// DiffBundleFiles works out what has to change for a bundle to hold exactly desired,
 // given the files it currently stores.
 //
-// Desired is the union of every path claimed by any bundle in the repository, because a
-// file may be shared: it is kept while any bundle still references it and deleted only
-// once none does. Callers build that union with BundleIndex.
+// A file belongs to one bundle, so this is a per-bundle reconcile: a path the bundle no
+// longer resolves to is deleted, whatever other bundles do with the same repository path.
 //
 // Nothing is delete-then-created: a file that persists is updated in place, because
 // deleting it first would be a visible gap for anything reading concurrently. A stored
@@ -217,14 +219,13 @@ func DiffBundleFiles(existing, desired []*provisioning.BundleFile) BundleFileCha
 // BundleFilesPublishable reports whether every file a bundle resolved is stored with the
 // hash the bundle resolved for it. Expected maps a repository path to its content hash.
 //
-// This is the barrier a bundle publishes behind: its ref is advanced only once all of its
-// supporting files are stored at the content it resolved, so a consumer reading the
-// published ref is guaranteed the whole set. A partial failure leaves the bundle on its
-// previous ref with its previous, consistent set.
+// This is the barrier a bundle publishes behind: its status ref is advanced only once all
+// of its files are stored at the content it resolved, so a consumer reading the published
+// ref is guaranteed the whole set. A partial failure leaves the bundle on its previous
+// ref with its previous, consistent set.
 //
-// The hash is what makes this work without a ref on the file: a shared file advanced by
-// another bundle is still the content this one expects, or it is not, and the hash says
-// which.
+// Comparing hashes rather than a ref is what lets a file carry no ref of its own: the
+// stored content either is what the bundle resolved or it is not.
 func BundleFilesPublishable(stored []*provisioning.BundleFile, expected map[string]string) bool {
 	byPath := make(map[string]string, len(stored))
 	for _, file := range stored {

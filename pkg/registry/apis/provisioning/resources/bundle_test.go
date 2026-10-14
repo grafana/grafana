@@ -15,171 +15,189 @@ import (
 const testManifest = "bundles/sample/bundle.yaml"
 
 func bundleObj(files any) *unstructured.Unstructured {
-	obj := map[string]any{
-		"apiVersion": "example.grafana.app/v0alpha1",
-		"kind":       "SampleBundle",
-		"metadata":   map[string]any{"name": "sample"},
-		"spec":       map[string]any{"title": "a bundle"},
-	}
+	spec := map[string]any{}
 	if files != nil {
-		obj["files"] = files
+		spec["files"] = files
 	}
-	return &unstructured.Unstructured{Object: obj}
+	return &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Bundle",
+		"metadata":   map[string]any{"name": "sample"},
+		"spec":       spec,
+	}}
 }
 
-func TestParseBundleSelectors(t *testing.T) {
+func TestParseBundleEntries(t *testing.T) {
 	tests := []struct {
 		name    string
 		obj     *unstructured.Unstructured
-		want    []BundleSelector
+		want    []string
 		wantErr error
 	}{
+		{name: "nil object", obj: nil},
+		{name: "no files", obj: bundleObj(nil)},
+		{name: "empty list", obj: bundleObj([]any{}), want: []string{}},
 		{
-			name: "nil object",
-			obj:  nil,
-		},
-		{
-			name: "no files block",
-			obj:  bundleObj(nil),
-		},
-		{
-			name: "empty files block",
-			obj:  bundleObj(map[string]any{}),
-			want: []BundleSelector{},
-		},
-		{
-			name: "exact path",
-			obj: bundleObj(map[string]any{
-				"query": map[string]any{"path": "shared/query.sql"},
+			name: "files and folders",
+			obj: bundleObj([]any{
+				"bundles/sample/README.md",
+				"bundles/sample/docs/",
+				"shared/query.sql",
 			}),
-			want: []BundleSelector{{Name: "query", Path: "shared/query.sql"}},
-		},
-		{
-			name: "parts are returned in sorted name order",
-			obj: bundleObj(map[string]any{
-				"zeta":  map[string]any{"path": "bundles/sample/z.md"},
-				"alpha": map[string]any{"path": "bundles/sample/a.md"},
-			}),
-			want: []BundleSelector{
-				{Name: "alpha", Path: "bundles/sample/a.md"},
-				{Name: "zeta", Path: "bundles/sample/z.md"},
+			want: []string{
+				"bundles/sample/README.md",
+				"bundles/sample/docs/",
+				"shared/query.sql",
 			},
 		},
 		{
-			name: "unknown name characters are rejected",
-			obj: bundleObj(map[string]any{
-				"Docs": map[string]any{"path": "bundles/sample/a.md"},
-			}),
-			wantErr: ErrBundleSelectorName,
+			name: "declaration order is preserved",
+			obj:  bundleObj([]any{"bundles/sample/z.md", "bundles/sample/a.md"}),
+			want: []string{"bundles/sample/z.md", "bundles/sample/a.md"},
 		},
 		{
-			name: "neither path nor include",
-			obj: bundleObj(map[string]any{
-				"docs": map[string]any{"exclude": []any{"**/*.tmp"}},
-			}),
-			wantErr: ErrBundleSelectorEmpty,
+			name: "extensions the resource pipeline cannot parse are allowed",
+			obj:  bundleObj([]any{"bundles/sample/run.sh", "bundles/sample/data.csv"}),
+			want: []string{"bundles/sample/run.sh", "bundles/sample/data.csv"},
 		},
 		{
-			name: "both path and include",
-			obj: bundleObj(map[string]any{
-				"docs": map[string]any{"path": "a.md", "include": "b/**"},
-			}),
-			wantErr: ErrBundleSelectorAmbiguous,
+			name: "surrounding whitespace is trimmed",
+			obj:  bundleObj([]any{"  bundles/sample/notes.md  "}),
+			want: []string{"bundles/sample/notes.md"},
+		},
+		{name: "files is not a list", obj: bundleObj("a.md"), wantErr: ErrBundleFilesType},
+		{name: "entry is not a string", obj: bundleObj([]any{"a.md", 42}), wantErr: ErrBundleFilesType},
+		{name: "empty entry", obj: bundleObj([]any{"   "}), wantErr: ErrBundleEntryEmpty},
+		{name: "root entry", obj: bundleObj([]any{"/"}), wantErr: ErrBundleEntryEmpty},
+		{
+			name:    "duplicate entry",
+			obj:     bundleObj([]any{"a.md", " a.md"}),
+			wantErr: ErrBundleEntryDuplicate,
 		},
 		{
-			name: "unrooted pattern is rejected",
-			obj: bundleObj(map[string]any{
-				"everything": map[string]any{"include": "**/*.md"},
-			}),
-			wantErr: ErrBundleSelectorUnrooted,
-		},
-		{
-			name: "pattern rooted at a traversal is rejected",
-			obj: bundleObj(map[string]any{
-				"escape": map[string]any{"include": "../../etc/**"},
-			}),
+			name:    "traversal is rejected",
+			obj:     bundleObj([]any{"bundles/sample/../../etc/passwd"}),
 			wantErr: safepath.ErrPathTraversalAttempt,
 		},
 		{
-			name: "manifest cannot claim itself",
-			obj: bundleObj(map[string]any{
-				"self": map[string]any{"path": testManifest},
-			}),
-			wantErr: ErrBundleFileIsManifest,
+			name:    "traversal in a folder entry is rejected",
+			obj:     bundleObj([]any{"bundles/sample/../../etc/"}),
+			wantErr: safepath.ErrPathTraversalAttempt,
+		},
+		{name: "absolute path is rejected", obj: bundleObj([]any{"/etc/passwd"}), wantErr: ErrNotRelative},
+		{
+			name:    "hidden path is rejected",
+			obj:     bundleObj([]any{"bundles/.secret/notes.md"}),
+			wantErr: safepath.ErrHiddenPath,
 		},
 		{
-			name:    "files block is not a map",
-			obj:     bundleObj([]any{"a.md"}),
-			wantErr: ErrBundleFilesType,
-		},
-		{
-			name: "selector is not a map",
-			obj: bundleObj(map[string]any{
-				"docs": "bundles/sample/a.md",
-			}),
-			wantErr: ErrBundleFilesType,
-		},
-		{
-			name: "exclude must be strings",
-			obj: bundleObj(map[string]any{
-				"docs": map[string]any{"include": "bundles/sample/**", "exclude": []any{42}},
-			}),
-			wantErr: ErrBundleFilesType,
+			name:    "path that is too deep is rejected",
+			obj:     bundleObj([]any{"a/b/c/d/e/f/g/h/i/too-deep.md"}),
+			wantErr: ErrPathTooDeep,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseBundleSelectors(tt.obj, testManifest)
+			got, err := ParseBundleEntries(tt.obj)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 			require.NoError(t, err)
-			require.Len(t, got, len(tt.want))
-			for i := range tt.want {
-				assert.Equal(t, tt.want[i].Name, got[i].Name)
-				assert.Equal(t, tt.want[i].Path, got[i].Path)
-				assert.Equal(t, tt.want[i].Include, got[i].Include)
+
+			paths := make([]string, 0, len(got))
+			for _, entry := range got {
+				paths = append(paths, entry.Path)
 			}
+			if tt.want == nil {
+				assert.Empty(t, paths)
+				return
+			}
+			assert.Equal(t, tt.want, paths)
 		})
 	}
 }
 
-func TestParseBundleSelectors_TooManySelectors(t *testing.T) {
-	files := map[string]any{}
-	for i := range BundleMaxSelectors + 1 {
-		files[fmt.Sprintf("part-%d", i)] = map[string]any{"path": fmt.Sprintf("bundles/sample/f%d.md", i)}
+func TestParseBundleEntries_TooManyEntries(t *testing.T) {
+	values := make([]any, BundleMaxEntries+1)
+	for i := range values {
+		values[i] = fmt.Sprintf("bundles/sample/f%d.md", i)
 	}
 
-	_, err := ParseBundleSelectors(bundleObj(files), testManifest)
-	require.ErrorIs(t, err, ErrBundleTooManySelectors)
+	_, err := ParseBundleEntries(bundleObj(values))
+	require.ErrorIs(t, err, ErrBundleTooManyEntries)
+
+	_, err = ParseBundleEntries(bundleObj(values[:BundleMaxEntries]))
+	require.NoError(t, err)
 }
 
-func TestPatternRoot(t *testing.T) {
-	tests := map[string]string{
-		"bundles/sample/**":        "bundles/sample",
-		"bundles/sample/docs/*.md": "bundles/sample/docs",
-		"bundles/sample/a.md":      "bundles/sample/a.md",
-		"**/*.md":                  "",
-		"*":                        "",
-		"bundles/*/docs/**":        "bundles",
-	}
+func TestParseBundleEntries_ErrorNamesOffendingPath(t *testing.T) {
+	_, err := ParseBundleEntries(bundleObj([]any{"ok.md", "/etc/passwd"}))
 
-	for pattern, want := range tests {
-		t.Run(pattern, func(t *testing.T) {
-			assert.Equal(t, want, patternRoot(pattern))
-		})
-	}
+	var entryErr *BundleEntryError
+	require.ErrorAs(t, err, &entryErr)
+	assert.Equal(t, "/etc/passwd", entryErr.Path)
 }
 
-func resolveFixture(t *testing.T, files map[string]any, candidates []string, reserved ...string) BundleResolution {
+func TestBundleEntryIsFolder(t *testing.T) {
+	// The trailing separator is the folder marker, the same convention the rest of
+	// provisioning uses.
+	assert.True(t, BundleEntry{Path: "bundles/sample/docs/"}.IsFolder())
+	assert.False(t, BundleEntry{Path: "bundles/sample/docs"}.IsFolder())
+	assert.False(t, BundleEntry{Path: "bundles/sample/a.md"}.IsFolder())
+}
+
+func TestParseBundleRef(t *testing.T) {
+	ref := func(value any) *unstructured.Unstructured {
+		spec := map[string]any{"title": "a resource"}
+		if value != nil {
+			spec["bundle"] = value
+		}
+		return &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "example.grafana.app/v0alpha1",
+			"kind":       "SampleResource",
+			"spec":       spec,
+		}}
+	}
+
+	t.Run("reads the bundle name", func(t *testing.T) {
+		got, err := ParseBundleRef(ref("sample"))
+		require.NoError(t, err)
+		assert.Equal(t, "sample", got)
+	})
+
+	t.Run("trims whitespace", func(t *testing.T) {
+		got, err := ParseBundleRef(ref("  sample  "))
+		require.NoError(t, err)
+		assert.Equal(t, "sample", got)
+	})
+
+	t.Run("no bundle is valid", func(t *testing.T) {
+		got, err := ParseBundleRef(ref(nil))
+		require.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	t.Run("nil object is valid", func(t *testing.T) {
+		got, err := ParseBundleRef(nil)
+		require.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	t.Run("a non-string is rejected", func(t *testing.T) {
+		_, err := ParseBundleRef(ref(42))
+		require.ErrorIs(t, err, ErrBundleRefType)
+	})
+}
+
+func resolveFixture(t *testing.T, files []any, candidates []string, reserved ...string) BundleResolution {
 	t.Helper()
 
-	selectors, err := ParseBundleSelectors(bundleObj(files), testManifest)
+	entries, err := ParseBundleEntries(bundleObj(files))
 	require.NoError(t, err)
 
-	resolution, err := ResolveBundleFiles(selectors, candidates, ResolveOptions{
+	resolution, err := ResolveBundleFiles(entries, candidates, ResolveOptions{
 		Ref:          "abc123",
 		ManifestPath: testManifest,
 		Reserved:     sets.New(reserved...),
@@ -194,21 +212,16 @@ func TestResolveBundleFiles(t *testing.T) {
 		"bundles/sample/README.md",
 		"bundles/sample/docs/a.md",
 		"bundles/sample/docs/nested/b.md",
-		"bundles/sample/docs/draft.tmp",
 		"bundles/sample/scripts/run.sh",
 		"bundles/other/bundle.yaml",
 		"bundles/other/notes.md",
 		"shared/query.sql",
 	}
 
-	t.Run("matches patterns and records the ref", func(t *testing.T) {
-		got := resolveFixture(t, map[string]any{
-			"docs": map[string]any{
-				"include": "bundles/sample/docs/**",
-				"exclude": []any{"**/*.tmp"},
-			},
-			"scripts": map[string]any{"include": "bundles/sample/scripts/**"},
-			"query":   map[string]any{"path": "shared/query.sql"},
+	t.Run("expands folders and records the ref", func(t *testing.T) {
+		got := resolveFixture(t, []any{
+			"bundles/sample/docs/",
+			"shared/query.sql",
 		}, candidates)
 
 		assert.Equal(t, "abc123", got.Ref)
@@ -216,82 +229,63 @@ func TestResolveBundleFiles(t *testing.T) {
 		assert.Equal(t, []string{
 			"bundles/sample/docs/a.md",
 			"bundles/sample/docs/nested/b.md",
-			"bundles/sample/scripts/run.sh",
 			"shared/query.sql",
 		}, got.Files)
-
-		// Parts are in sorted-name order: docs, query, scripts.
-		require.Len(t, got.Parts, 3)
-		assert.Equal(t, "docs", got.Parts[0].Name)
-		assert.Equal(t, []string{"bundles/sample/docs/a.md", "bundles/sample/docs/nested/b.md"}, got.Parts[0].Matched)
-		assert.Equal(t, "query", got.Parts[1].Name)
-		assert.Equal(t, []string{"shared/query.sql"}, got.Parts[1].Matched)
-		assert.Equal(t, "scripts", got.Parts[2].Name)
 	})
 
-	t.Run("never matches the manifest", func(t *testing.T) {
-		got := resolveFixture(t, map[string]any{
-			"all": map[string]any{"include": "bundles/sample/**"},
-		}, candidates)
+	t.Run("a folder entry reaches any depth", func(t *testing.T) {
+		got := resolveFixture(t, []any{"bundles/sample/"}, candidates)
+
+		assert.Contains(t, got.Files, "bundles/sample/docs/nested/b.md")
+		assert.Contains(t, got.Files, "bundles/sample/scripts/run.sh")
+	})
+
+	t.Run("never claims the manifest", func(t *testing.T) {
+		got := resolveFixture(t, []any{"bundles/sample/"}, candidates)
 
 		assert.NotContains(t, got.Files, testManifest)
 		assert.Contains(t, got.Files, "bundles/sample/README.md")
 	})
 
-	t.Run("never matches a reserved path", func(t *testing.T) {
-		got := resolveFixture(t, map[string]any{
-			"wide": map[string]any{"include": "bundles/**"},
-		}, candidates, "bundles/other/bundle.yaml")
+	t.Run("never claims a reserved path", func(t *testing.T) {
+		got := resolveFixture(t, []any{"bundles/"}, candidates, "bundles/other/bundle.yaml")
 
 		assert.NotContains(t, got.Files, "bundles/other/bundle.yaml")
 		assert.Contains(t, got.Files, "bundles/other/notes.md")
 	})
 
-	t.Run("a single star does not cross a separator", func(t *testing.T) {
-		got := resolveFixture(t, map[string]any{
-			"docs": map[string]any{"include": "bundles/sample/docs/*.md"},
+	t.Run("an overlapping path is counted once", func(t *testing.T) {
+		got := resolveFixture(t, []any{
+			"bundles/sample/docs/a.md",
+			"bundles/sample/docs/",
 		}, candidates)
 
-		assert.Equal(t, []string{"bundles/sample/docs/a.md"}, got.Files)
-	})
-
-	t.Run("an overlapping path is attributed to the first part by name", func(t *testing.T) {
-		got := resolveFixture(t, map[string]any{
-			"aaa": map[string]any{"include": "bundles/sample/docs/*.md"},
-			"bbb": map[string]any{"include": "bundles/sample/docs/**"},
-		}, candidates)
-
-		assert.Equal(t, []string{"bundles/sample/docs/a.md"}, got.Parts[0].Matched)
-		assert.NotContains(t, got.Parts[1].Matched, "bundles/sample/docs/a.md")
-		// The path is still counted once overall.
 		assert.Equal(t, []string{
 			"bundles/sample/docs/a.md",
-			"bundles/sample/docs/draft.tmp",
 			"bundles/sample/docs/nested/b.md",
 		}, got.Files)
 	})
 
-	t.Run("a part matching nothing is reported, not hidden", func(t *testing.T) {
-		got := resolveFixture(t, map[string]any{
-			"renamed": map[string]any{"include": "bundles/sample/moved-away/**"},
-			"docs":    map[string]any{"include": "bundles/sample/docs/*.md"},
+	t.Run("a path that resolves to nothing is reported, not hidden", func(t *testing.T) {
+		got := resolveFixture(t, []any{
+			"bundles/sample/moved-away/",
+			"bundles/sample/README.md",
 		}, candidates)
 
 		assert.False(t, got.IsComplete())
-		assert.Equal(t, []string{"renamed"}, got.Unresolved)
-		assert.Empty(t, got.Parts[1].Matched)
+		assert.Equal(t, []string{"bundles/sample/moved-away/"}, got.Unresolved)
+		assert.Equal(t, []string{"bundles/sample/README.md"}, got.Files)
 	})
 
 	t.Run("unsafe candidates are skipped rather than failing the bundle", func(t *testing.T) {
-		got := resolveFixture(t, map[string]any{
-			"all": map[string]any{"include": "bundles/sample/**"},
-		}, append([]string{"bundles/sample/.hidden/secret.md", "bundles/sample/ok.md"}, candidates...))
+		got := resolveFixture(t, []any{"bundles/sample/"},
+			append([]string{"bundles/sample/.hidden/secret.md", "bundles/sample/ok.md"}, candidates...))
 
 		assert.Contains(t, got.Files, "bundles/sample/ok.md")
 		assert.NotContains(t, got.Files, "bundles/sample/.hidden/secret.md")
 	})
 
-	t.Run("no selectors resolves to nothing", func(t *testing.T) {
+	t.Run("no entries resolves to nothing", func(t *testing.T) {
 		got := resolveFixture(t, nil, candidates)
 
 		assert.Empty(t, got.Files)
@@ -305,15 +299,13 @@ func TestResolveBundleFiles_TooManyFiles(t *testing.T) {
 		candidates[i] = fmt.Sprintf("bundles/sample/f%03d.md", i)
 	}
 
-	selectors, err := ParseBundleSelectors(bundleObj(map[string]any{
-		"all": map[string]any{"include": "bundles/sample/**"},
-	}), testManifest)
+	entries, err := ParseBundleEntries(bundleObj([]any{"bundles/sample/"}))
 	require.NoError(t, err)
 
-	_, err = ResolveBundleFiles(selectors, candidates, ResolveOptions{ManifestPath: testManifest})
+	_, err = ResolveBundleFiles(entries, candidates, ResolveOptions{ManifestPath: testManifest})
 	require.ErrorIs(t, err, ErrBundleTooManyFiles)
 
-	_, err = ResolveBundleFiles(selectors, candidates[:BundleMaxFiles], ResolveOptions{ManifestPath: testManifest})
+	_, err = ResolveBundleFiles(entries, candidates[:BundleMaxFiles], ResolveOptions{ManifestPath: testManifest})
 	require.NoError(t, err)
 }
 
@@ -322,7 +314,7 @@ func TestBundleIndex(t *testing.T) {
 		idx := NewBundleIndex()
 		idx.Add("a/bundle.yaml", []string{"a/one.md", "shared/two.md"})
 
-		assert.Equal(t, []string{"a/bundle.yaml"}, idx.Owners("shared/two.md"))
+		assert.Equal(t, []string{"a/bundle.yaml"}, idx.Claimants("shared/two.md"))
 		assert.True(t, idx.IsClaimed("a/one.md"))
 		assert.False(t, idx.IsClaimed("a/unclaimed.md"))
 		assert.Equal(t, []string{"a/one.md", "shared/two.md"}, idx.Paths())
@@ -332,27 +324,17 @@ func TestBundleIndex(t *testing.T) {
 		assert.Empty(t, idx.Bundles())
 	})
 
-	t.Run("a file may be shared by several bundles", func(t *testing.T) {
-		idx := NewBundleIndex()
-		idx.Add("a/bundle.yaml", []string{"shared/two.md", "a/one.md"})
-		idx.Add("b/bundle.yaml", []string{"shared/two.md"})
-
-		assert.Equal(t, 2, idx.References("shared/two.md"))
-		assert.Equal(t, []string{"a/bundle.yaml", "b/bundle.yaml"}, idx.Owners("shared/two.md"))
-	})
-
-	t.Run("a shared file survives until the last bundle lets go", func(t *testing.T) {
+	t.Run("two bundles may declare the same path", func(t *testing.T) {
+		// Not a conflict: each bundle stores its own copy, so there is nothing to
+		// reference-count and deletion stays per bundle.
 		idx := NewBundleIndex()
 		idx.Add("a/bundle.yaml", []string{"shared/two.md"})
 		idx.Add("b/bundle.yaml", []string{"shared/two.md"})
 
-		idx.Remove("a/bundle.yaml")
-		assert.True(t, idx.IsClaimed("shared/two.md"), "still referenced by b")
-		assert.Empty(t, idx.Unreferenced([]string{"shared/two.md"}))
+		assert.Equal(t, []string{"a/bundle.yaml", "b/bundle.yaml"}, idx.Claimants("shared/two.md"))
 
-		idx.Remove("b/bundle.yaml")
-		assert.False(t, idx.IsClaimed("shared/two.md"))
-		assert.Equal(t, []string{"shared/two.md"}, idx.Unreferenced([]string{"shared/two.md"}))
+		idx.Remove("a/bundle.yaml")
+		assert.True(t, idx.IsClaimed("shared/two.md"), "b still declares it")
 	})
 
 	t.Run("re-adding the same bundle replaces its claims", func(t *testing.T) {
@@ -363,26 +345,6 @@ func TestBundleIndex(t *testing.T) {
 		assert.False(t, idx.IsClaimed("a/one.md"))
 		assert.True(t, idx.IsClaimed("a/three.md"))
 		assert.Equal(t, []string{"a/two.md", "a/three.md"}, idx.Files("a/bundle.yaml"))
-	})
-
-	t.Run("re-adding does not drop a path another bundle still claims", func(t *testing.T) {
-		idx := NewBundleIndex()
-		idx.Add("a/bundle.yaml", []string{"shared/two.md"})
-		idx.Add("b/bundle.yaml", []string{"shared/two.md"})
-
-		// b stops claiming it; a still does.
-		idx.Add("b/bundle.yaml", []string{"b/other.md"})
-
-		assert.True(t, idx.IsClaimed("shared/two.md"))
-		assert.Equal(t, []string{"a/bundle.yaml"}, idx.Owners("shared/two.md"))
-	})
-
-	t.Run("unreferenced reports only what no bundle claims", func(t *testing.T) {
-		idx := NewBundleIndex()
-		idx.Add("a/bundle.yaml", []string{"a/kept.md"})
-
-		stored := []string{"a/kept.md", "a/orphan.md", "shared/orphan.md"}
-		assert.Equal(t, []string{"a/orphan.md", "shared/orphan.md"}, idx.Unreferenced(stored))
 	})
 
 	t.Run("indexes a resolution", func(t *testing.T) {
