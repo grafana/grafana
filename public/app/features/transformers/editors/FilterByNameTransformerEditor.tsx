@@ -168,11 +168,12 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
       nextIsRegexValid = false;
     }
 
+    // A valid pattern replaces the names, so the pills must follow it. The options come back as the
+    // ones this editor sent, which does not reset the selection.
     if (nextIsRegexValid) {
-      sendOptions({
-        ...options,
-        include: { pattern: regex },
-      });
+      const nextOptions = { ...options, include: { pattern: regex } };
+      setSelected(getSelectedNames(fieldNames, nextOptions));
+      sendOptions(nextOptions);
     } else {
       sendOptions({
         ...options,
@@ -184,10 +185,9 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
   };
 
   const onVariableChange = (nextSelected: SelectableValue) => {
-    sendOptions({
-      ...options,
-      include: { variable: nextSelected.value },
-    });
+    const nextOptions = { ...options, include: { variable: nextSelected.value } };
+    setSelected(getSelectedNames(fieldNames, nextOptions));
+    sendOptions(nextOptions);
 
     setVariable(nextSelected.value);
   };

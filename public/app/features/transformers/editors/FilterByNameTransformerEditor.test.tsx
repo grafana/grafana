@@ -81,6 +81,25 @@ describe('FilterByNameTransformerEditor', () => {
     expect(onChange).toHaveBeenLastCalledWith({ include: { names: ['y', 'x'], pattern: 'y' } });
   });
 
+  it('shows the fields a committed regex matches, so the next pill click keeps the rest out', async () => {
+    const onChange = jest.fn();
+    const editor = (options: FilterFieldsByNameTransformerOptions) => (
+      <FilterByNameTransformerEditor input={frameWithFields('A', 'B', 'C')} options={options} onChange={onChange} />
+    );
+    const { rerender } = render(editor({ include: { names: ['A', 'B'] } }));
+
+    await userEvent.type(screen.getByRole('textbox'), 'C');
+    await userEvent.tab();
+    const saved: FilterFieldsByNameTransformerOptions = onChange.mock.lastCall[0];
+    expect(saved).toEqual({ include: { pattern: 'C' } });
+    rerender(editor(saved));
+
+    expect(pillStates()).toEqual(['A:false', 'B:false', 'C:true']);
+
+    await userEvent.click(getPill('A'));
+    expect(onChange).toHaveBeenLastCalledWith({ include: { names: ['C', 'A'], pattern: 'C' } });
+  });
+
   it.each([
     { button: 'Select all', pressed: 'true' },
     { button: 'Deselect all', pressed: 'false' },
