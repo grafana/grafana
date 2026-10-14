@@ -80,7 +80,7 @@ func (b *manifestBuilder) GetAuthorizer() authorizer.Authorizer {
 			}
 
 			// Only service account types should use the status endpoint
-			if !attr.IsReadOnly() && attr.GetSubresource() == "status") {
+			if !attr.IsReadOnly() && attr.GetSubresource() == "status" {
 				if authlib.IsIdentityType(user.GetIdentityType(), authlib.TypeUser, authlib.TypeAnonymous, authlib.TypeEmpty) {
 					return authorizer.DecisionDeny, "Users may not directly modify status", nil
 				}
