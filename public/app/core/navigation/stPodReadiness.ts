@@ -36,7 +36,7 @@ export const getStPodReadyPromise = (): Promise<void> => {
 };
 
 export const markStPodWaiting = (): void => {
-  if (status === StPodStatus.Ready) {
+  if (status === StPodStatus.Ready || status === StPodStatus.GaveUp) {
     pending = null;
   }
   status = StPodStatus.Waiting;

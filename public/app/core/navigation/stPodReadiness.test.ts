@@ -91,4 +91,20 @@ describe('stPodReadiness', () => {
     expect(getStPodReadyPromise()).not.toBe(resolved);
     await expect(Promise.race([getStPodReadyPromise(), Promise.resolve(stillPending)])).resolves.toBe(stillPending);
   });
+
+  it('hands out a fresh pending promise after markStPodWaiting recovers from gaveUp', async () => {
+    const before = getStPodReadyPromise();
+    markStPodGaveUp();
+
+    markStPodWaiting();
+
+    // A fresh waiting state must produce a fresh pending promise, otherwise a
+    // consumer that already saw the resolved gaveUp promise would never suspend
+    // again on the new attempt.
+    const after = getStPodReadyPromise();
+    expect(after).not.toBe(before);
+
+    const stillPending = Symbol('still-pending');
+    await expect(Promise.race([after, Promise.resolve(stillPending)])).resolves.toBe(stillPending);
+  });
 });
