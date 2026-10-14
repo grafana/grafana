@@ -1,10 +1,11 @@
-// Package search serves the rule kinds' search endpoints,
-// POST .../namespaces/{ns}/alertrules/search and .../recordingrules/search.
+// Package search serves the per-kind rule search routes,
+// POST .../namespaces/{ns}/searchAlertRules and .../searchRecordingRules.
 //
-// The routes and their search.grafana.app/v0alpha1 SearchQuery / SearchResults
-// contract are the generic per-resource search API's. Only the handler is
-// replaced, because rules still come from the legacy ngalert store for
-// dual-writer modes 0-3, which the generic handler cannot read.
+// The contract is search.grafana.app/v0alpha1 SearchQuery / SearchResults: the
+// same request and response bodies as the generic per-resource search API. It
+// is served on a distinct path because rules still come from the legacy ngalert
+// store for dual-writer modes 0-3, and the compatibility route must coexist
+// with generic search during migration.
 package search
 
 import (

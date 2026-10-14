@@ -15,6 +15,7 @@ manifest: {
 				ruleSequencev0alpha1,
 				configv0alpha1,
 			]
+			routes: searchRoutes
 		}
 	}
 	roles: {}

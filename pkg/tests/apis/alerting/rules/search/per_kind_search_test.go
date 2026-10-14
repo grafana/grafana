@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -39,6 +40,14 @@ const (
 )
 
 const perKindOpIn = "In"
+
+// searchRoute is the search route for a rule resource.
+func searchRoute(resourceName string) string {
+	if resourceName == recordingRules {
+		return rulesApp.SearchRecordingRulesResource
+	}
+	return rulesApp.SearchAlertRulesResource
+}
 
 func TestIntegrationPerKindRuleSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -138,7 +147,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		require.NoError(t, err)
 
 		raw, err := rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, searchv0.SearchPathSegment).
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(resourceName)).
 			Body(payload).
 			DoRaw(ctx)
 		require.NoError(t, err)
@@ -158,7 +167,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 
 		for _, resourceName := range []string{alertRules, recordingRules} {
 			raw, err := viewerRC.Post().
-				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, searchv0.SearchPathSegment).
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(resourceName)).
 				Body(payload).
 				DoRaw(ctx)
 			require.NoError(t, err, resourceName)
@@ -167,6 +176,20 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 			require.NoError(t, json.Unmarshal(raw, &resp), resourceName)
 			require.Equal(t, searchv0.APIVERSION, resp.APIVersion, resourceName)
 			require.Equal(t, searchv0.KindSearchResults, resp.Kind, resourceName)
+		}
+	})
+
+	t.Run("a user who cannot list rules may not search them", func(t *testing.T) {
+		payload, err := json.Marshal(newPerKindQuery().body)
+		require.NoError(t, err)
+		noneRC := helper.Org1.None.RESTClient(t, &v0alpha1.GroupVersion)
+
+		for _, resourceName := range []string{alertRules, recordingRules} {
+			_, err := noneRC.Post().
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(resourceName)).
+				Body(payload).
+				DoRaw(ctx)
+			require.Truef(t, apierrors.IsForbidden(err), "%s: expected forbidden, got %v", resourceName, err)
 		}
 	})
 
@@ -344,7 +367,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 			payload, err := json.Marshal(newPerKindQuery().regex("labels", "team=a.*?", false).body)
 			require.NoError(t, err)
 			raw, err := rc.Post().
-				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, searchv0.SearchPathSegment).
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(alertRules)).
 				Body(payload).
 				DoRaw(ctx)
 			var statusErr *apierrors.StatusError
@@ -446,7 +469,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		payload, err := json.Marshal(newPerKindQuery().fields("metric").body)
 		require.NoError(t, err)
 		raw, err := rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, searchv0.SearchPathSegment).
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(alertRules)).
 			Body(payload).
 			DoRaw(ctx)
 		var statusErr *apierrors.StatusError

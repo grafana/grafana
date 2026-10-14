@@ -67,7 +67,8 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: managedKinds,
+		ManagedKinds:          managedKinds,
+		VersionedCustomRoutes: buildSearchRoutes(runtimeCfg),
 	}
 
 	a, err := simple.NewApp(c)
@@ -81,6 +82,35 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
+}
+
+// The rule search routes. The apiserver parses each as a request on a resource
+// with this name, which the rules authorizer relies on to require list on the
+// rule kind it searches.
+const (
+	SearchAlertRulesResource     = "searchAlertRules"
+	SearchRecordingRulesResource = "searchRecordingRules"
+)
+
+// buildSearchRoutes wires the per-kind rule search handlers
+// (provided by the registry) to their namespaced routes. A route
+// is skipped when its handler is unset, so manifest validation without a
+// backing instance does not register a nil handler.
+func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
+	handlers := simple.AppVersionRouteHandlers{}
+	for path, handler := range map[string]simple.AppCustomRouteHandler{
+		"/" + SearchAlertRulesResource:     cfg.SearchAlertRulesHandler,
+		"/" + SearchRecordingRulesResource: cfg.SearchRecordingRulesHandler,
+	} {
+		if handler == nil {
+			continue
+		}
+		handlers[simple.AppVersionRoute{Namespaced: true, Path: path, Method: simple.AppCustomRouteMethodPost}] = handler
+	}
+	if len(handlers) == 0 {
+		return nil
+	}
+	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
 }
 
 func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.ManifestData) (*simple.Validator, error) {
