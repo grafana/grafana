@@ -3,8 +3,6 @@ package userimpl
 import (
 	"context"
 	"errors"
-	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -847,100 +845,4 @@ func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
 
 func (f *FakeUserStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
 	return f.ExpectedCountUserAccountsWithEmptyRoles, nil
-}
-
-func TestService_GetSignedInUserCache(t *testing.T) {
-	enableK8sUsersRedirect(t)
-	calls := 0
-	lookupErr := error(nil)
-	s := newWrapperServiceForTest(&usertest.FakeUserService{
-		GetSignedInUserFn: func(_ context.Context, q *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-			calls++
-			return &user.SignedInUser{UserID: q.UserID, OrgID: q.OrgID, Login: "k8s"}, lookupErr
-		},
-	}, &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{Login: "legacy"}})
-	s.cacheService = localcache.New(time.Minute, 0)
-	ctx := context.Background()
-	query := &user.GetSignedInUserQuery{UserID: 5, OrgID: 1}
-	s.cacheService.Set(newSignedInUserCacheKey(1, 5), user.SignedInUser{Login: "legacy cache"}, time.Minute)
-
-	got, err := s.GetSignedInUser(ctx, query)
-	require.NoError(t, err)
-	require.Equal(t, "k8s", got.Login)
-	got.Login = "modified"
-	got.OrgID = 0
-	got, err = s.GetSignedInUser(ctx, query)
-	require.NoError(t, err)
-	require.Equal(t, "k8s", got.Login)
-	require.Equal(t, int64(1), got.OrgID)
-	require.Equal(t, 1, calls)
-	_, expiration, found := s.cacheService.GetWithExpiration("k8s-" + newSignedInUserCacheKey(1, 5))
-	require.True(t, found)
-	require.WithinDuration(t, time.Now().Add(5*time.Second), expiration, time.Second)
-
-	// An omitted org must use the caller's resolved org, including in the cache key.
-	orgCtx := identity.WithRequester(ctx, &identity.StaticRequester{Type: claims.TypeUser, UserID: 5, OrgID: 1})
-	_, err = s.GetSignedInUser(orgCtx, &user.GetSignedInUserQuery{UserID: 5})
-	require.NoError(t, err)
-	require.Equal(t, 1, calls)
-	for _, q := range []*user.GetSignedInUserQuery{
-		{UserID: 5, OrgID: 2}, {UserID: 6, OrgID: 1},
-		{UserID: 5, OrgID: 1, SkipTeamLookup: true},
-		{Login: "k8s", OrgID: 1}, {Login: "k8s", OrgID: 1},
-	} {
-		_, err = s.GetSignedInUser(ctx, q)
-		require.NoError(t, err)
-	}
-	require.Equal(t, 6, calls)
-
-	s.cacheService.Set("k8s-"+newSignedInUserCacheKey(1, 5), user.SignedInUser{}, time.Nanosecond)
-	require.Eventually(t, func() bool {
-		_, found := s.cacheService.Get("k8s-" + newSignedInUserCacheKey(1, 5))
-		return !found
-	}, time.Second, time.Millisecond)
-	_, err = s.GetSignedInUser(ctx, query)
-	require.NoError(t, err)
-	require.Equal(t, 7, calls)
-
-	for _, failure := range []error{errors.New("unavailable"), user.ErrUserNotFound} {
-		s.cacheService.Flush()
-		lookupErr = failure
-		for range 2 {
-			got, err = s.GetSignedInUser(ctx, query)
-			if errors.Is(failure, user.ErrUserNotFound) {
-				require.NoError(t, err)
-				require.Equal(t, "legacy", got.Login)
-			} else {
-				require.ErrorIs(t, err, failure)
-			}
-		}
-	}
-	require.Equal(t, 11, calls, "errors and legacy fallback results must not populate the k8s cache")
-}
-
-func TestService_GetSignedInUserCacheConcurrentRequests(t *testing.T) {
-	enableK8sUsersRedirect(t)
-	var calls atomic.Int32
-	s := newWrapperServiceForTest(&usertest.FakeUserService{
-		GetSignedInUserFn: func(_ context.Context, q *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-			calls.Add(1)
-			return &user.SignedInUser{UserID: q.UserID, OrgID: q.OrgID, Login: "k8s"}, nil
-		},
-	}, &usertest.FakeUserService{})
-	s.cacheService = localcache.New(time.Minute, 0)
-	var wg sync.WaitGroup
-	start := make(chan struct{})
-	for range 20 {
-		wg.Go(func() {
-			<-start
-			got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
-			if assert.NoError(t, err) {
-				assert.Equal(t, "k8s", got.Login)
-				got.Login = "request-local change"
-			}
-		})
-	}
-	close(start)
-	wg.Wait()
-	require.Equal(t, int32(1), calls.Load())
 }

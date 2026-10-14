@@ -3,7 +3,6 @@ package userimpl
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
@@ -30,7 +29,6 @@ import (
 )
 
 type Service struct {
-	cacheService      *localcache.CacheService
 	legacyService     user.Service
 	k8sService        user.Service
 	openFeatureClient *openfeature.Client
@@ -70,7 +68,6 @@ func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider,
 
 	return &Service{
 		legacyService:     legacyService,
-		cacheService:      cacheService,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
 		logger:            log.New("user"),
@@ -195,7 +192,7 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 		// GetSignedInUser resolves a user's identity for the system (sign-in sync,
 		// internal validation such as permission assignment), not a user-facing
 		// RBAC-gated read, so run the lookup as the service identity.
-		result, err := s.getCachedSignedInK8sUser(identity.WithServiceIdentityContext(ctx, orgID), &k8sCmd)
+		result, err := s.k8sService.GetSignedInUser(identity.WithServiceIdentityContext(ctx, orgID), &k8sCmd)
 		if err == nil {
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
 			return result, nil
@@ -210,28 +207,6 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 
 	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetSignedInUser(ctx, cmd)
-}
-
-func (s *Service) getCachedSignedInK8sUser(ctx context.Context, cmd *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	if s.cacheService == nil || cmd.UserID <= 0 || cmd.OrgID <= 0 || cmd.SkipTeamLookup {
-		return s.k8sService.GetSignedInUser(ctx, cmd)
-	}
-
-	// Keep redirected identities separate from legacy results during flag changes.
-	cacheKey := "k8s-" + newSignedInUserCacheKey(cmd.OrgID, cmd.UserID)
-	cached, err := s.cacheService.GetOrExclusiveSet(cacheKey, func() (any, error) {
-		result, err := s.k8sService.GetSignedInUser(ctx, cmd)
-		if err != nil {
-			return nil, err
-		}
-		return *result, nil
-	}, 5*time.Second)
-	if err != nil {
-		return nil, err
-	}
-	// Authn hooks modify the returned identity, so do not share the cached pointer.
-	result := cached.(user.SignedInUser)
-	return &result, nil
 }
 
 func (s *Service) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
