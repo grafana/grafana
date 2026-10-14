@@ -129,6 +129,11 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
           group.freeze();
         }
       }}
+      onTransitionEnd={(event) => {
+        if (event.target === event.currentTarget && event.propertyName === 'width') {
+          group.freeze();
+        }
+      }}
       style={
         session.groupLayout
           ? {
@@ -138,9 +143,10 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
               width: session.groupLayout.width,
               maxHeight: Math.max(window.innerHeight - session.groupLayout.top - 8, 0),
             }
-          : availableHeight === undefined
-            ? undefined
-            : { maxHeight: availableHeight }
+          : {
+              width: state.kind === 'proposal' ? group.restWidth : undefined,
+              maxHeight: availableHeight,
+            }
       }
     >
       {state.kind === 'proposal' && (
@@ -322,7 +328,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       )}
       {state.kind === 'proposal' && (
         <QueryCoauthoringProposal
-          width={session.groupLayout?.width}
+          width={session.groupLayout?.width ?? group.restWidth}
           why={state.proposal.options[state.proposal.selectedIndex]?.why ?? []}
           baseline={state.proposal.context.query}
           diff={state.proposal.options[state.proposal.selectedIndex]?.diff ?? []}
