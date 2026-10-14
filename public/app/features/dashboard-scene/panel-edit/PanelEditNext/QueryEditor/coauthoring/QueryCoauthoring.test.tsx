@@ -908,6 +908,17 @@ describe('QueryCoauthoring', () => {
     expect(within(screen.getByRole('button', { name: 'Open in Chat' })).getByText('Open in Chat')).not.toBeVisible();
     expect(screen.getByRole('button', { name: 'Accept' })).toBe(accept);
     expect(accept).toHaveTextContent('Accept');
+    for (const [name, tooltip] of [
+      ['Previous option', 'Preview original query'],
+      ['Next option', 'Preview option 2'],
+      ['Cancel', 'Cancel'],
+      ['Open in Chat', 'Open in Chat'],
+    ]) {
+      await user.hover(screen.getByRole('button', { name }));
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(tooltip);
+      await user.unhover(screen.getByRole('button', { name }));
+      await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+    }
     await user.click(screen.getByRole('button', { name: 'Previous option' }));
     expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
