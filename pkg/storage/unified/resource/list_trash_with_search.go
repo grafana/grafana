@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"path"
 	"slices"
-	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -151,26 +149,7 @@ var trashSearchAllowlist = map[string]bool{
 // TrashSearchAllowed reports whether a kind's authorization model has been
 // approved for search-backed trash.
 func TrashSearchAllowed(group, resource string) bool {
-	return resourceAllowed(trashSearchAllowlist, group, resource)
-}
-
-func resourceAllowed(allowed map[string]bool, group, resource string) bool {
-	if enabled, ok := allowed[group+"/"+resource]; ok {
-		return enabled
-	}
-	if enabled, ok := allowed[group]; ok {
-		return enabled
-	}
-	for pattern, enabled := range allowed {
-		if !enabled || strings.Contains(pattern, "/") {
-			continue
-		}
-		matched, err := path.Match(pattern, group)
-		if err == nil && matched {
-			return true
-		}
-	}
-	return false
+	return trashSearchAllowlist[group+"/"+resource]
 }
 
 // shouldUseSearchForTrash selects Search for supported trash resources: a store trash
