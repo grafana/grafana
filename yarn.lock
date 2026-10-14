@@ -2678,6 +2678,7 @@ __metadata:
     "@emotion/css": "npm:^11.13.5"
     "@grafana/data": "npm:13.3.0-pre"
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
+    "@grafana/plugin-compat": "npm:^0.5.0"
     "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/runtime": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
@@ -2713,7 +2714,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-compat@workspace:packages/grafana-plugin-compat":
+"@grafana/plugin-compat@npm:^0.5.0, @grafana/plugin-compat@workspace:packages/grafana-plugin-compat":
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-compat@workspace:packages/grafana-plugin-compat"
   dependencies:
