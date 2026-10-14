@@ -10,7 +10,7 @@ import {
   type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -844,13 +844,7 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     describe('predefined variables', () => {
-      beforeEach(() => {
-        setTestFlags({ 'grafana.dashboardGlobalVariables': true });
-      });
-
-      afterEach(() => {
-        setTestFlags({});
-      });
+      testWithFlags({ 'grafana.dashboardGlobalVariables': true });
 
       const predefinedVariable = {
         kind: 'CustomVariable' as const,
@@ -2805,9 +2799,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(manager.state.dashboard?.state.title).toBe('New dashboard');
     });
 
-    it('should use v2 manager for new dashboards when dashboardNewLayouts feature toggle is enabled', async () => {
-      setTestFlags({ dashboardNewLayouts: true });
-
+    it('should use v2 manager for new dashboards by default', async () => {
       const manager = new UnifiedDashboardScenePageStateManager({});
       manager.setActiveManager('v1');
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
@@ -2861,8 +2853,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       locationService.getLocation = originalGetLocation;
     });
 
-    it('should always use v1 manager for Grafana dashboard templates even when dashboardNewLayouts is enabled', async () => {
-      setTestFlags({ dashboardNewLayouts: true });
+    it('should always use v1 manager for Grafana dashboard templates', async () => {
       config.featureToggles.suggestedDashboards = true;
 
       // Mock location service with gnetId and mappings parameters
