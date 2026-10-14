@@ -135,14 +135,20 @@ it('renders panel with an always visible menu icon if prop showMenuAlways is tru
 });
 
 describe('when the header controls are provided from outside the panel', () => {
-  const renderWithHeaderControls = (controls: PanelChromeHeaderControls, propOverrides: Partial<PanelChromeProps>) =>
-    render(
+  const renderWithHeaderControls = (controls: PanelChromeHeaderControls, propOverrides: Partial<PanelChromeProps>) => {
+    const props: PanelChromeProps = {
+      width: 100,
+      height: 100,
+      children: () => <div>Panel&apos;s Content</div>,
+    };
+    Object.assign(props, propOverrides);
+
+    return render(
       <PanelChromeHeaderControlsContext.Provider value={controls}>
-        <PanelChrome width={100} height={100} {...propOverrides}>
-          {() => <div>Panel&apos;s Content</div>}
-        </PanelChrome>
+        <PanelChrome {...props} />
       </PanelChromeHeaderControlsContext.Provider>
     );
+  };
 
   it('does not render the menu button in the panel header', () => {
     renderWithHeaderControls({ external: true, hoverSlot: null }, { title: 'Titled', menu: <div>Menu</div> });
