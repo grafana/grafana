@@ -33,11 +33,12 @@ export interface SparklineProps extends Themeable2 {
 }
 
 export const Sparkline: React.FC<SparklineProps> = memo((props) => {
-  return props.showTooltip || props.onHover ? <InteractiveSparkline {...props} /> : <SparklineChart {...props} />;
+  const { showTooltip, onHover, ...chartProps } = props;
+  return showTooltip || onHover ? <InteractiveSparkline {...props} /> : <SparklineChart {...chartProps} />;
 });
 
 const InteractiveSparkline = (props: SparklineProps) => {
-  const { showTooltip, onHover } = props;
+  const { showTooltip, onHover, ...chartProps } = props;
   const [tooltip, setTooltip] = useState<SparklineHoverInfo | null>(null);
   const emitHover = useStableCallback((hover: SparklineHoverInfo | null) => {
     onHover?.(hover ? { index: hover.index, value: hover.value, display: hover.display } : null);
@@ -54,7 +55,7 @@ const InteractiveSparkline = (props: SparklineProps) => {
 
   return (
     <>
-      <SparklineChart {...props} emitHover={emitHover} />
+      <SparklineChart {...chartProps} emitHover={emitHover} />
       {showTooltip && tooltip && (
         <Portal>
           <VizTooltipContainer position={{ x: tooltip.left, y: tooltip.top }} offset={{ x: 10, y: 10 }}>
@@ -66,7 +67,11 @@ const InteractiveSparkline = (props: SparklineProps) => {
   );
 };
 
-const SparklineChart = memo((props: SparklineProps & { emitHover?: (hover: SparklineHoverInfo | null) => void }) => {
+interface SparklineChartProps extends Omit<SparklineProps, 'onHover' | 'showTooltip'> {
+  emitHover?: (hover: SparklineHoverInfo | null) => void;
+}
+
+const SparklineChart = memo((props: SparklineChartProps) => {
   const { sparkline, config: fieldConfig, theme, width, height, showHighlights, emitHover } = props;
 
   const { configBuilder, data, warning } = useMemo(() => {
