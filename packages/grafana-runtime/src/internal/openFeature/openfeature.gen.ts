@@ -116,8 +116,6 @@ export const FlagKeys = {
   DashboardsPublicDashboardBadgeFromApi: "dashboards.publicDashboardBadgeFromApi",
   /** Shows defined connections for a data source in the plugins detail page */
   DatasourceConnectionsTab: "datasourceConnectionsTab",
-  /** Use the new datasource API groups for datasource resource requests, frontend flag */
-  DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
@@ -128,8 +126,6 @@ export const FlagKeys = {
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
   DatasourcesQueryGateway: "datasources.queryGateway",
-  /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
-  DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** Enables tabular numerals for visualization legend values */
@@ -220,6 +216,8 @@ export const FlagKeys = {
   GrafanaScopesDashboardsMegaMenu: "grafana.scopesDashboardsMegaMenu",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
+  /** Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service */
+  GrafanaSmtpSettingsPage: "grafana.smtpSettingsPage",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
@@ -306,6 +304,8 @@ export const FlagKeys = {
   QueryService: "queryService",
   /** Routes requests to the new query service */
   QueryServiceFromUI: "queryServiceFromUI",
+  /** Adds datasource connections to the query service */
+  QueryServiceWithConnections: "queryServiceWithConnections",
   /** Enables the Query with Assistant button in the query editor */
   QueryWithAssistant: "queryWithAssistant",
   /** Enables AI-assisted coauthoring in code query editors */
@@ -364,8 +364,6 @@ export const FlagKeys = {
   TextNewFeatures: "text.newFeatures",
   /** Enables time comparison option in supported panels */
   TimeComparison: "timeComparison",
-  /** Enables time pickers sync */
-  TimeRangeProvider: "timeRangeProvider",
   /** Show transformation quick-start cards in empty transformations state */
   TransformationsEmptyPlaceholder: "transformationsEmptyPlaceholder",
   /** Enables unified navbars */
@@ -940,17 +938,6 @@ export const useFlagDatasourceConnectionsTab = (options?: ReactFlagEvaluationOpt
 };
 
 /**
- * Use the new datasource API groups for datasource resource requests, frontend flag
- *
- * **Details:**
- * - flag key: `datasources.apiserver.useNewAPIsForDatasourceResources`
- * - default value: `false`
- */
-export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasources.apiserver.useNewAPIsForDatasourceResources", false, options).value;
-};
-
-/**
  * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
  *
  * **Details:**
@@ -1003,17 +990,6 @@ export const useFlagDatasourcesQuerierNewName = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDatasourcesQueryGateway = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.queryGateway", false, options).value;
-};
-
-/**
- * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
- *
- * **Details:**
- * - flag key: `datasourcesApiServerEnableHealthEndpointFrontend`
- * - default value: `false`
- */
-export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasourcesApiServerEnableHealthEndpointFrontend", false, options).value;
 };
 
 /**
@@ -1384,10 +1360,10 @@ export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEval
  *
  * **Details:**
  * - flag key: `grafana.newPanelQueryErrorsUI`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPanelQueryErrorsUI", false, options).value;
+  return useFlag("grafana.newPanelQueryErrorsUI", true, options).value;
 };
 
 /**
@@ -1509,6 +1485,17 @@ export const useFlagGrafanaScopesDashboardsMegaMenu = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.secretsReferenceValueUI", false, options).value;
+};
+
+/**
+ * Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service
+ *
+ * **Details:**
+ * - flag key: `grafana.smtpSettingsPage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSmtpSettingsPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.smtpSettingsPage", false, options).value;
 };
 
 /**
@@ -1985,6 +1972,17 @@ export const useFlagQueryServiceFromUI = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Adds datasource connections to the query service
+ *
+ * **Details:**
+ * - flag key: `queryServiceWithConnections`
+ * - default value: `false`
+ */
+export const useFlagQueryServiceWithConnections = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryServiceWithConnections", false, options).value;
+};
+
+/**
  * Enables the Query with Assistant button in the query editor
  *
  * **Details:**
@@ -2301,17 +2299,6 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagTimeComparison = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("timeComparison", true, options).value;
-};
-
-/**
- * Enables time pickers sync
- *
- * **Details:**
- * - flag key: `timeRangeProvider`
- * - default value: `false`
- */
-export const useFlagTimeRangeProvider = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("timeRangeProvider", false, options).value;
 };
 
 /**
