@@ -395,6 +395,7 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
     collapsed: css({ gridTemplateRows: '0fr', opacity: 0, visibility: 'hidden' }),
     collapsibleBody: css({ flex: '1 1 auto', minHeight: 0 }),
     collapsibleContent: css({ minHeight: 0, overflow: 'hidden' }),
+    whyList: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(0.5) }),
     compactProposalBody: css({ padding: 0, paddingTop: theme.spacing(1.5) }),
     footer: css({
       display: 'flex',
