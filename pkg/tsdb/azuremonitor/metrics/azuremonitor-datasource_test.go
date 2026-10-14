@@ -1265,12 +1265,36 @@ func TestExecuteTimeSeriesQueryResourcesDecodeErrorIsDownstream(t *testing.T) {
 		JSON: []byte(`{"azureMonitor":{"aggregation":"Average","metricNamespace":"Microsoft.Compute/virtualMachines","metricName":"Percentage CPU","timeGrain":"PT1M","resources":{"subscription":"s","resourceGroup":"rg","resourceName":"vm"}}}`),
 	}
 
-	res, err := (&AzureMonitorDatasource{}).ExecuteTimeSeriesQuery(context.Background(), []backend.DataQuery{q}, types.DatasourceInfo{
-		Settings: types.AzureMonitorSettings{SubscriptionId: "default-subscription"},
-	}, nil, "", false)
+	tests := []struct {
+		name string
+		run  func(t *testing.T) (*backend.QueryDataResponse, error)
+	}{
+		{
+			name: "ARM path",
+			run: func(t *testing.T) (*backend.QueryDataResponse, error) {
+				return (&AzureMonitorDatasource{}).ExecuteTimeSeriesQuery(context.Background(), []backend.DataQuery{q}, types.DatasourceInfo{
+					Settings: types.AzureMonitorSettings{SubscriptionId: "default-subscription"},
+				}, nil, "", false)
+			},
+		},
+		{
+			name: "batch path",
+			run: func(t *testing.T) (*backend.QueryDataResponse, error) {
+				ctx := stubBatchFlag(t, true)
+				srv := httptest.NewServer(http.NotFoundHandler())
+				t.Cleanup(srv.Close)
+				return (&AzureMonitorDatasource{Logger: backend.Logger}).ExecuteTimeSeriesQuery(ctx, []backend.DataQuery{q}, makeBatchDsInfo(srv), srv.Client(), srv.URL, false)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := tt.run(t)
 
-	require.NoError(t, err)
-	require.Error(t, res.Responses["A"].Error)
-	assert.Contains(t, res.Responses["A"].Error.Error(), "failed to decode the Azure Monitor query object from JSON")
-	assert.Equal(t, backend.ErrorSourceDownstream, res.Responses["A"].ErrorSource)
+			require.NoError(t, err)
+			require.Error(t, res.Responses["A"].Error)
+			assert.Contains(t, res.Responses["A"].Error.Error(), "cannot unmarshal object into Go struct field")
+			assert.Equal(t, backend.ErrorSourceDownstream, res.Responses["A"].ErrorSource)
+		})
+	}
 }
