@@ -13897,7 +13897,7 @@
       "page-not-found": "Page not found."
     },
     "plugin-details-canvas-externalization-notice": {
-      "body": "Starting with Grafana 14.0, the canvas visualization will no longer be a core plugin. It will ship as a standalone plugin that updates separately from Grafana. Existing dashboards will keep working. <2>Learn more</2>",
+      "body": "Starting with Grafana 13.3, the canvas visualization loads as a standalone plugin by default. This instance uses the core plugin because <1>as_external = false</1> is set in the <3>[plugin.canvas]</3> section of the configuration file. Grafana 14.0 removes the core plugin. To switch now, remove the setting and restart Grafana. Existing dashboards keep working. <6>Learn more</6>",
       "title": "Canvas is moving out of core"
     },
     "plugin-details-deprecated-warning": {

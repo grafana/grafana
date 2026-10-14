@@ -27,8 +27,10 @@ export function PluginDetailsCanvasExternalizationNotice({ className, plugin }: 
       className={className}
     >
       <Trans i18nKey="plugins.plugin-details-canvas-externalization-notice.body">
-        Starting with Grafana 14.0, the canvas visualization will no longer be a core plugin. It will ship as a
-        standalone plugin that updates separately from Grafana. Existing dashboards will keep working.{' '}
+        Starting with Grafana 13.3, the canvas visualization loads as a standalone plugin by default. This instance uses
+        the core plugin because <code>as_external = false</code> is set in the <code>[plugin.canvas]</code> section of
+        the configuration file. Grafana 14.0 removes the core plugin. To switch now, remove the setting and restart
+        Grafana. Existing dashboards keep working.{' '}
         <TextLink href={CANVAS_PLUGIN_UPDATES_DOCS_URL} external>
           Learn more
         </TextLink>
