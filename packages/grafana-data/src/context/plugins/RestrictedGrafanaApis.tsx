@@ -36,9 +36,12 @@ export interface ComposerAPI {
     target?: { resource: 'dashboard' | 'notebook'; uid: string },
     options?: { presentation?: 'floating' | 'none' }
   ): Promise<unknown>;
-  /** Without `options`, the listener enters Composer on dashboards only. */
+  /**
+   * Without `options`, the listener enters Composer on dashboards only. Return `false` from the listener to
+   * decline a request; it then ends at once.
+   */
   onEnterRequested(
-    listener: (target: { resource: 'dashboard' | 'notebook'; uid: string }) => void,
+    listener: (target: { resource: 'dashboard' | 'notebook'; uid: string }) => boolean | void,
     options?: { resources?: Array<'dashboard' | 'notebook'> }
   ): () => void;
 }

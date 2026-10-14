@@ -23,7 +23,8 @@ import { dashboardComposerEnabled } from '../scene/dashboardModes';
 
 import { type ComposerEnterRequestOptions, type ComposerResource, type ComposerTarget } from './types';
 
-type EnterRequestListener = (target: ComposerTarget) => void;
+/** Returns `false` to decline the request: it then ends at once, and goes to no other listener. */
+type EnterRequestListener = (target: ComposerTarget) => boolean | void;
 
 const COMPOSER_RESOURCES: readonly ComposerResource[] = ['dashboard', 'notebook'];
 /** What a listener registered without options supports: the plugin then only knows dashboards. */
@@ -99,8 +100,9 @@ export function getSupportedComposerResources(): readonly ComposerResource[] {
 }
 
 /**
- * Asks Assistant to enter Composer on `target`, if a listener supports its resource; returns whether it did.
- * With `float`, the extension sidebar floats from now until the session takes over or the request ends.
+ * Asks Assistant to enter Composer on `target`, if a listener supports its resource; returns whether the
+ * request stands (false when nobody supports it, or the listener declined it at once). With `float`, the
+ * extension sidebar floats from now until the session takes over or the request ends.
  */
 export function requestComposerEnter(target: ComposerTarget, { float = false } = {}): boolean {
   const listener = [...listeners].find(([, resources]) => resources.has(target.resource))?.[0];
@@ -124,12 +126,11 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
     floated = request;
   }
   notifyChange();
-  if (listener) {
-    listener(target);
-  } else {
+  if (!listener) {
     held = { target, at: Date.now() };
+    return true;
   }
-  return true;
+  return offer(listener, target);
 }
 
 /**
@@ -225,7 +226,23 @@ function deliverHeldRequest(listener: EnterRequestListener, resources: ReadonlyS
     clearPendingComposerEnterRequest();
     return;
   }
-  listener(request.target);
+  offer(listener, request.target);
+}
+
+/**
+ * Hands `target` to `listener`. A listener that returns `false` declines it: the request ends at once (its
+ * floating claim goes, and the picker or switch stops showing it pending) and is offered to nobody else.
+ * Anything else leaves it outstanding until an entry attempt settles it or it expires. Returns whether the
+ * request stands.
+ */
+function offer(listener: EnterRequestListener, target: ComposerTarget): boolean {
+  if (listener(target) !== false) {
+    return true;
+  }
+  if (outstanding?.target === target) {
+    clearPendingComposerEnterRequest();
+  }
+  return false;
 }
 
 /**

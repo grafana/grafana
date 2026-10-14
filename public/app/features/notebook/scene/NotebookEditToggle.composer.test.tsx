@@ -286,6 +286,20 @@ describe('Composer in the notebook mode switch', () => {
     expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
+  it('falls back at once, and docks the sidebar again, when Assistant declines the request', async () => {
+    stopAssistant();
+    const decline = jest.fn(() => false);
+    stopAssistant = addComposerEnterRequestListener(decline, { resources: ['notebook'] });
+    const { user } = render(<NotebookEditToggle notebook={notebook()} />);
+
+    await user.click(composerOption()!);
+
+    expect(decline).toHaveBeenCalledWith(TARGET);
+    expect(radio('View')).toBeChecked();
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
   it('withdraws a waiting request when the user picks another mode', async () => {
     const { user } = render(<NotebookEditToggle notebook={notebook()} />);
     await user.click(composerOption()!);

@@ -25,8 +25,7 @@ const NOTEBOOK = { resource: 'notebook', uid: 'nb' } as const;
 const cleanups: Array<() => void> = [];
 
 /** Registers a listener for the rest of the test. */
-function listen(options?: ComposerEnterRequestOptions) {
-  const listener = jest.fn();
+function listen(options?: ComposerEnterRequestOptions, listener: jest.Mock = jest.fn()) {
   const unsubscribe = addComposerEnterRequestListener(listener, options);
   cleanups.push(unsubscribe);
   return { listener, unsubscribe };
@@ -215,6 +214,57 @@ describe('the outstanding request', () => {
   });
 });
 
+describe('a listener that declines', () => {
+  it('ends the request at once, releasing its floating claim', () => {
+    const decline = listen(
+      undefined,
+      jest.fn(() => false)
+    ).listener;
+
+    expect(requestComposerEnter(TARGET, { float: true })).toBe(false);
+
+    expect(decline).toHaveBeenCalledWith(TARGET);
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it('does not pass the request on to another listener', () => {
+    listen(
+      undefined,
+      jest.fn(() => false)
+    );
+    const second = listen().listener;
+
+    requestComposerEnter(TARGET, { float: true });
+
+    expect(second).not.toHaveBeenCalled();
+  });
+
+  it('tells subscribers the request ended', () => {
+    listen(
+      undefined,
+      jest.fn(() => false)
+    );
+    const changed = jest.fn();
+    cleanups.push(subscribeToComposerEnterRequests(changed));
+
+    requestComposerEnter(TARGET);
+
+    // Started, then ended.
+    expect(changed).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the request outstanding when the listener returns anything but false', () => {
+    listen(
+      undefined,
+      jest.fn(() => undefined)
+    );
+    expect(requestComposerEnter(TARGET, { float: true })).toBe(true);
+    expect(getPendingComposerEnterTarget()).toEqual(TARGET);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+  });
+});
+
 // A fresh load with the Assistant sidebar closed: Assistant registers only once one of its roots mounts.
 describe('before Assistant first registers', () => {
   const COMPOSER_FLAGS = {
@@ -294,6 +344,22 @@ describe('before Assistant first registers', () => {
     expect(getExtensionSidebarPresentation()).toBe('docked');
     const { listener } = listen();
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('settles a held request the first listener declines as it registers', () => {
+    requestComposerEnter(TARGET, { float: true });
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+
+    const decline = listen(
+      undefined,
+      jest.fn(() => false)
+    ).listener;
+    const second = listen().listener;
+
+    expect(decline).toHaveBeenCalledWith(TARGET);
+    expect(second).not.toHaveBeenCalled();
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
   it('releases a held request the first listener does not support', () => {

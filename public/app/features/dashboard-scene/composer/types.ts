@@ -65,9 +65,15 @@ export interface ComposerAPI {
    * `options.resources` of some live listener (dashboards only when `options` is omitted), and delivers each
    * request once, to the first listener that supports its type. To change the types, unsubscribe and
    * register again.
-   * Core does not enter Composer itself: the listener calls `enter` as usual. Returns an unsubscribe.
+   * Core does not enter Composer itself: the listener calls `enter` as usual. A listener that will not take
+   * a request returns `false`: the request then ends at once (the sidebar goes back to its layout, the
+   * picker or switch stops showing it pending) and goes to no other listener. Any other return leaves it
+   * outstanding until `enter` settles it or 10 seconds pass. Returns an unsubscribe.
    */
-  onEnterRequested(listener: (target: ComposerTarget) => void, options?: ComposerEnterRequestOptions): () => void;
+  onEnterRequested(
+    listener: (target: ComposerTarget) => boolean | void,
+    options?: ComposerEnterRequestOptions
+  ): () => void;
 }
 
 /**
