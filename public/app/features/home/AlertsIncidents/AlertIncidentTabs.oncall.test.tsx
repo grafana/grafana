@@ -161,7 +161,7 @@ describe('AlertIncidentTabs On call tab', () => {
     expect(listCalls.filter((call) => call.filter === 'mine')).toHaveLength(2);
   });
 
-  it('polls both sources every 15 minutes while the tab is open, and stops once it closes', async () => {
+  it('polls both sources every 10 minutes while the tab is open, and only your shifts once it closes', async () => {
     jest.useFakeTimers({ doNotFake: ['Date'] });
     try {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
@@ -173,15 +173,15 @@ describe('AlertIncidentTabs On call tab', () => {
       const eventsSoFar = eventCalls.length;
       const listsSoFar = listCalls.length;
 
-      act(() => jest.advanceTimersByTime(15 * 60_000));
+      act(() => jest.advanceTimersByTime(10 * 60_000));
       await waitFor(() => expect(eventCalls).toHaveLength(eventsSoFar + 1));
       // mine, team
       await waitFor(() => expect(listCalls).toHaveLength(listsSoFar + 2));
 
+      // The badge keeps following overrides and swaps; the costlier lists stop.
       await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
-      act(() => jest.advanceTimersByTime(15 * 60_000));
-      await act(async () => {});
-      expect(eventCalls).toHaveLength(eventsSoFar + 1);
+      act(() => jest.advanceTimersByTime(10 * 60_000));
+      await waitFor(() => expect(eventCalls).toHaveLength(eventsSoFar + 2));
       expect(listCalls).toHaveLength(listsSoFar + 2);
     } finally {
       jest.useRealTimers();
@@ -315,6 +315,26 @@ describe('AlertIncidentTabs On call tab', () => {
 
       expect(await screen.findByText('Primary')).toBeInTheDocument();
       expect(rowTitles()).toEqual(['Primary', 'Secondary']);
+    });
+
+    it('shows your shift on a schedule the list withholds, without a roster or a link', async () => {
+      mockIrmPlugin();
+      mockCurrentUserEvents(MY_EVENTS);
+      // S1 belongs to a team the user isn't in: the shifts endpoint reports it, the list leaves it out.
+      mockSchedules({ mine: [S2, S3].map((schedule) => ({ ...schedule, team: null })) });
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      await user.click(await screen.findByRole('tab', { name: /on-call/i }));
+
+      expect(await screen.findByText('Primary')).toBeInTheDocument();
+      expect(rowTitles()).toEqual(['Primary', 'Secondary', 'Old']);
+      const [primary, secondary] = panelRows();
+      expect(within(primary).getByText("You're on call until 17:00")).toBeInTheDocument();
+      expect(within(primary).queryByText('Nobody on call')).not.toBeInTheDocument();
+      expect(within(primary).queryByLabelText(/icon$/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /^Primary/ })).not.toBeInTheDocument();
+      expect(within(secondary).getByRole('link', { name: /^Secondary/ })).toBeInTheDocument();
+      expect(screen.getByText('On call now')).toBeInTheDocument();
     });
 
     it('shows the empty message when no schedule has a shift of yours or anyone on call', async () => {

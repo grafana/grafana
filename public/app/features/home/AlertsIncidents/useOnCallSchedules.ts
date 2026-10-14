@@ -22,13 +22,22 @@ const PLUGIN_ID = SupportedPlugin.Irm;
 // The clock moves labels and badge across shift boundaries without a fetch; the poll picks up overrides,
 // swaps and roster changes. Each list page makes the engine resolve who is on call for 100 schedules.
 const CLOCK_TICK_MS = 60_000;
-const POLL_INTERVAL_MS = 15 * 60_000;
+const POLL_INTERVAL_MS = 10 * 60_000;
+// Every subscription refetches on mount so a revisit shows fresh data; polling pauses in a background window.
+const QUERY_OPTIONS = {
+  refetchOnMountOrArgChange: true,
+  pollingInterval: POLL_INTERVAL_MS,
+  skipPollingIfUnfocused: true,
+};
 
 interface OnCallScheduleRow {
   id: string;
   name: string;
-  /** Who is on call right now; the signed-in user first when present. */
-  onCallNow: OnCallShortUser[];
+  /**
+   * Who is on call right now; the signed-in user first when present. Undefined when IRM withholds the schedule
+   * from this user (another team's, not shared): the roster is unknown and its page would 403.
+   */
+  onCallNow?: OnCallShortUser[];
   /** Set when the user has a shift on this schedule in the window: the running one, else the next. */
   shift?: ShiftWindow;
 }
@@ -75,19 +84,18 @@ function resolveUserTimeZone(now: number): string {
   return getTimeZoneInfo(getTimeZone(), now)?.ianaName || getTimeZoneInfo('browser', now)?.ianaName || 'UTC';
 }
 
-/** Every subscription refetches on mount so a revisit shows fresh data; polling, where asked for, pauses unfocused. */
-function subscription(pollingInterval = 0) {
-  return { refetchOnMountOrArgChange: true, pollingInterval, skipPollingIfUnfocused: true };
-}
-
 /** The running or next shift per schedule id; undefined where every shift in the window has ended. */
 function toShifts(schedules: OnCallUserScheduleEvents[] | undefined, now: number) {
   return new Map((schedules ?? []).map((schedule) => [schedule.id, nextShift(schedule.events, now)]));
 }
 
-/** Schedules with a shift of the user's ahead or someone on call now; the user's shifts lead, then by name. */
+/**
+ * Listed schedules with a shift of the user's ahead or someone on call now, plus the user's shifts on schedules
+ * the list withheld; the user's shifts lead, then by name.
+ */
 function toRows(
-  schedules: OnCallScheduleDTO[],
+  listed: OnCallScheduleDTO[],
+  mine: OnCallUserScheduleEvents[],
   shifts: Map<string, ShiftWindow | undefined>,
   login: string
 ): OnCallScheduleRow[] {
@@ -95,14 +103,22 @@ function toRows(
     [...users].sort((a, b) => Number(b.username === login) - Number(a.username === login));
   const collator = new Intl.Collator();
   const rank = (row: OnCallScheduleRow) => (row.shift?.isCurrent ? 0 : row.shift ? 1 : 2);
-  return schedules
-    .flatMap((schedule) => {
+  const listedIds = new Set(listed.map((schedule) => schedule.id));
+  const rows: OnCallScheduleRow[] = [
+    ...listed.flatMap((schedule) => {
       const shift = shifts.get(schedule.id);
       // A schedule whose shift of mine already ended today still matters while someone else is on call.
       return shift || schedule.on_call_now.length > 0
         ? [{ id: schedule.id, name: schedule.name, onCallNow: meFirst(schedule.on_call_now), shift }]
         : [];
-    })
+    }),
+    // The shifts endpoint skips team visibility, so a shift of mine can sit on a schedule the list left out.
+    ...mine.flatMap((schedule) => {
+      const shift = shifts.get(schedule.id);
+      return shift && !listedIds.has(schedule.id) ? [{ id: schedule.id, name: schedule.name, shift }] : [];
+    }),
+  ];
+  return rows
     .sort(
       (a, b) => rank(a) - rank(b) || (a.shift?.start ?? 0) - (b.shift?.start ?? 0) || collator.compare(a.name, b.name)
     )
@@ -117,11 +133,11 @@ const isPending = (query: { isFetching: boolean; currentData?: unknown }) =>
  * through here, so they share one cache entry and a refetch by either refreshes the other. The window starts
  * on the user's current day, so the clock crossing local midnight loads the next one.
  */
-function useShifts(now: number, pollingInterval?: number) {
+function useShifts(now: number) {
   const plugin = useIrmPlugin();
   const events = onCallApi.useGetCurrentUserEventsQuery(
     plugin.ready ? { pluginId: PLUGIN_ID, date: dayKey(now), userTz: resolveUserTimeZone(now) } : skipToken,
-    subscription(pollingInterval)
+    QUERY_OPTIONS
   );
   const shifts = useMemo(() => toShifts(events.currentData, now), [events.currentData, now]);
   return { plugin, events, shifts };
@@ -129,8 +145,8 @@ function useShifts(now: number, pollingInterval?: number) {
 
 /**
  * The header's view: whether one of the user's shifts is running right now, on a clock that ticks once a minute
- * so the badge follows shift boundaries without a fetch. Loads with the homepage and never polls on its own;
- * the list's subscription refreshes the shared cache entry while the tab is open.
+ * so the badge follows shift boundaries without a fetch. Loads with the homepage and polls while the window is
+ * focused, so an override or swap that takes the user off a shift clears the badge within the poll interval.
  */
 export function useMyShifts(): MyShiftsData {
   const [now, setNow] = useState(() => Date.now());
@@ -149,18 +165,18 @@ export function useMyShifts(): MyShiftsData {
 /**
  * Everything the "On call" list shows: the user's shifts and the schedules of the teams those belong to, with who
  * is on call right now. Run it where the list renders: mounting refetches both sources, and while mounted in a
- * focused window they poll every 15 minutes. Unmounting stops the polling. Anything cached stays on screen
- * meanwhile.
+ * focused window they poll together, so a roster never contradicts a fresher shift. Unmounting stops the list's
+ * polling. Anything cached stays on screen meanwhile.
  */
 export function useOnCallSchedules(now: number): OnCallSchedulesData {
-  const { plugin, events, shifts } = useShifts(now, POLL_INTERVAL_MS);
+  const { plugin, events, shifts } = useShifts(now);
   const schedules = onCallApi.useGetRelatedSchedulesQuery(
     plugin.ready ? { pluginId: PLUGIN_ID } : skipToken,
-    subscription(POLL_INTERVAL_MS)
+    QUERY_OPTIONS
   );
   const rows = useMemo(
-    () => toRows(schedules.currentData ?? [], shifts, contextSrv.user.login),
-    [schedules.currentData, shifts]
+    () => toRows(schedules.currentData ?? [], events.currentData ?? [], shifts, contextSrv.user.login),
+    [schedules.currentData, events.currentData, shifts]
   );
 
   const error = events.error ?? schedules.error;

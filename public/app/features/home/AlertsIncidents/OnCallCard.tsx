@@ -44,8 +44,8 @@ export function OnCallCard({ now }: { now: number }) {
               <Text color={row.shift.isCurrent ? 'success' : undefined}>{formatShiftTiming(row.shift, now)}</Text>
             )
           }
-          trailing={<OnCallNowChip users={row.onCallNow} />}
-          href={canAccess ? createBridgeURL(pluginId, `/schedules/${row.id}`) : undefined}
+          trailing={row.onCallNow && <OnCallNowChip users={row.onCallNow} />}
+          href={canAccess && row.onCallNow ? createBridgeURL(pluginId, `/schedules/${row.id}`) : undefined}
           onClick={() =>
             ctaClicked({
               surface: 'oncall_card',
