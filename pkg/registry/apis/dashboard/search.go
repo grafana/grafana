@@ -564,8 +564,13 @@ func permissionFromQueryParams(queryParams url.Values) dashboardaccess.Permissio
 	}
 }
 
-func createPermissionEnabled(ctx context.Context) bool {
-	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagFolderPickerCreatePermission, false, openfeature.TransactionContext(ctx))
+// effectivePermission treats create as edit while folderPickerCreatePermission is off.
+func effectivePermission(ctx context.Context, p dashboardaccess.PermissionType) dashboardaccess.PermissionType {
+	if p == dashboardaccess.PERMISSION_CREATE &&
+		!openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagFolderPickerCreatePermission, false, openfeature.TransactionContext(ctx)) {
+		return dashboardaccess.PERMISSION_EDIT
+	}
+	return p
 }
 
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
@@ -585,10 +590,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
-		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
+		return s.getDashboardsUIDsSharedWithUser(ctx, user, effectivePermission(ctx, requestedPermission))
 	})
-	if err == nil && searchRequest.Permission == int64(dashboardaccess.PERMISSION_CREATE) && !createPermissionEnabled(ctx) {
-		searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
+	if err == nil {
+		searchRequest.Permission = int64(effectivePermission(ctx, dashboardaccess.PermissionType(searchRequest.Permission)))
 	}
 	if err != nil {
 		if errors.Is(err, errEmptyResults) {

@@ -1878,3 +1878,28 @@ func TestSearchHandlerCreatePermissionToggle(t *testing.T) {
 		})
 	}
 }
+
+func TestSearchHandlerCreatePermissionToggleSharedWithMe(t *testing.T) {
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagFolderPickerCreatePermission: {
+			Key:            featuremgmt.FlagFolderPickerCreatePermission,
+			DefaultVariant: "disabled",
+			Variants:       map[string]any{"enabled": true, "disabled": false},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+
+	empty := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
+	mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{empty, empty, empty}}
+	handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
+	req := httptest.NewRequest("GET", "/search?type=folder&folder=sharedwithme&permission=create", nil)
+	perms := map[string][]string{folder.ActionFoldersWrite: {"folders:uid:privatefolder"}}
+	req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: map[int64]map[string][]string{1: perms}}))
+
+	handler.DoSearch(httptest.NewRecorder(), req)
+
+	require.NotEmpty(t, mockClient.MockCalls)
+	for _, call := range mockClient.MockCalls {
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), call.Permission)
+	}
+}
