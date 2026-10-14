@@ -3409,6 +3409,15 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true},
 		},
+		{
+			Name:         "datasources.queryGatewayAuditPolicy",
+			Description:  "Enable support for the query gateway audit policies",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
+		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

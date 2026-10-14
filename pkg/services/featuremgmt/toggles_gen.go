@@ -1061,4 +1061,8 @@ const (
 	// FlagDatasourcesApiServerConnectToHostedGrafanaDatabases
 	// Connect to hosted grafana databases from datasource API servers
 	FlagDatasourcesApiServerConnectToHostedGrafanaDatabases = "datasources.apiServerConnectToHostedGrafanaDatabases"
+
+	// FlagDatasourcesQueryGatewayAuditPolicy
+	// Enable support for the query gateway audit policies
+	FlagDatasourcesQueryGatewayAuditPolicy = "datasources.queryGatewayAuditPolicy"
 )

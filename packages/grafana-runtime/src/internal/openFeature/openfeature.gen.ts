@@ -126,6 +126,8 @@ export const FlagKeys = {
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
   DatasourcesQueryGateway: "datasources.queryGateway",
+  /** Enable support for the query gateway audit policies */
+  DatasourcesQueryGatewayAuditPolicy: "datasources.queryGatewayAuditPolicy",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** Enables tabular numerals for visualization legend values */
@@ -990,6 +992,17 @@ export const useFlagDatasourcesQuerierNewName = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDatasourcesQueryGateway = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.queryGateway", false, options).value;
+};
+
+/**
+ * Enable support for the query gateway audit policies
+ *
+ * **Details:**
+ * - flag key: `datasources.queryGatewayAuditPolicy`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesQueryGatewayAuditPolicy = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.queryGatewayAuditPolicy", false, options).value;
 };
 
 /**
