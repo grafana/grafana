@@ -186,6 +186,19 @@ describe('GMA-only rule list routes', () => {
     expect(deletedRoute?.component).not.toBe(LegacyRecentlyDeletedRedirect);
   });
 
+  it('NAV-1: keeps admitting data source-managed readers to the legacy list while the flag is off', () => {
+    setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: false });
+    const previousPermissions = contextSrv.user.permissions;
+    contextSrv.user.permissions = { [AccessControlAction.AlertingRuleExternalRead]: true };
+
+    try {
+      const listRoute = getAlertingRoutes().find((route) => route.path === '/alerting/list');
+      expect(listRoute?.roles?.()).toEqual([]);
+    } finally {
+      contextSrv.user.permissions = previousPermissions;
+    }
+  });
+
   it('registers the new routes and redirects the legacy pages once the flag is on', () => {
     setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
 
@@ -243,6 +256,22 @@ describe('GMA-only rule list routes', () => {
         expect(getRouteRolesGuard(path)()).toEqual([]);
       }
     );
+
+    it('NAV-1: denies a user with only data source-managed read on the legacy list redirect', () => {
+      contextSrv.user.permissions = {
+        [AccessControlAction.AlertingRuleExternalRead]: true,
+      };
+
+      expect(getRouteRolesGuard('/alerting/list')()).toEqual(['Reject']);
+    });
+
+    it('NAV-1: allows a reader with Grafana-managed read on the legacy list redirect', () => {
+      contextSrv.user.permissions = {
+        [AccessControlAction.AlertingRuleRead]: true,
+      };
+
+      expect(getRouteRolesGuard('/alerting/list')()).toEqual([]);
+    });
 
     it.each(['/alerting/rules/alert/deleted', '/alerting/rules/recording/deleted'])(
       'requires the organization Admin role for %s',

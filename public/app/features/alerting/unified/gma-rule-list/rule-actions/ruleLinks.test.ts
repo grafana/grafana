@@ -1,15 +1,8 @@
 import { config } from '@grafana/runtime';
 
-import { ruleDuplicateUrl, ruleEditUrl, ruleShareUrl, ruleViewUrl } from './ruleLinks';
+import { ruleDuplicateUrl, ruleEditUrl, ruleShareUrl } from './ruleLinks';
 
 describe('ruleLinks', () => {
-  it('ALERT-6: builds the canonical view URL from only the rule UID, preserving returnTo', () => {
-    const url = ruleViewUrl('rule-uid-1');
-
-    expect(url).toContain('/alerting/grafana/rule-uid-1/view');
-    expect(url).toContain('returnTo=');
-  });
-
   it('ALERT-6: builds an absolute, subpath-aware share URL containing only the rule UID and no returnTo', () => {
     config.appUrl = 'http://localhost:3000/';
     config.appSubUrl = '/grafana';

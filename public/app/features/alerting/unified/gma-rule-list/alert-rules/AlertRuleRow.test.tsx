@@ -20,6 +20,7 @@ function baseHit(overrides: Partial<AlertRuleSearchHit> = {}): AlertRuleSearchHi
     folderUid: 'folder-1',
     labels: {},
     dataSourceUids: [],
+    totals: {},
     ...overrides,
   };
 }
@@ -151,10 +152,102 @@ describe('AlertRuleRow', () => {
     expect(screen.queryByText('|')).not.toBeInTheDocument();
   });
 
-  it('hides routing for a paused rule', () => {
-    render(<AlertRuleRow hit={baseHit({ paused: true })} showFolderPath={false} />);
+  it('keeps routing visible on a paused rule, because routing is part of the rule definition', () => {
+    render(
+      <AlertRuleRow
+        hit={baseHit({ paused: true, notificationType: 'NamedRoutingTree', routingTree: 'escalation-policy' })}
+        showFolderPath={false}
+      />
+    );
 
-    expect(screen.queryByText('Default policy')).not.toBeInTheDocument();
+    expect(screen.getByText('Policy: escalation-policy')).toBeInTheDocument();
+  });
+
+  describe('ALERT-10: instance totals', () => {
+    it('shows every returned count labelled with its state, including a returned zero, in a fixed order', () => {
+      render(
+        <AlertRuleRow
+          hit={baseHit({ totals: { healthy: 5, firing: 0, pending: 2, recovering: 1, noData: 0, error: 3 } })}
+          showFolderPath={false}
+        />
+      );
+
+      expect(screen.getByText('5 healthy, 0 firing, 2 pending, 1 recovering, 0 no data, 3 error')).toBeInTheDocument();
+    });
+
+    it('omits a total the API did not return instead of showing it as zero', () => {
+      render(<AlertRuleRow hit={baseHit({ totals: { firing: 2, error: 1 } })} showFolderPath={false} />);
+
+      expect(screen.getByText('2 firing, 1 error')).toBeInTheDocument();
+      expect(screen.queryByText(/healthy|pending|recovering|no data/)).not.toBeInTheDocument();
+    });
+
+    it('shows no instance count and no stray separator for a rule without stored status', async () => {
+      render(<AlertRuleRow hit={baseHit()} showFolderPath={false} />);
+
+      expect(await screen.findByText('Default policy')).toBeInTheDocument();
+      expect(screen.queryByText(/healthy|firing|pending|recovering|no data|error/)).not.toBeInTheDocument();
+      expect(screen.queryByText('|')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('plugin and provisioning badges', () => {
+    beforeEach(() => {
+      server.use(
+        http.get('/api/plugins/my-app/settings', () =>
+          HttpResponse.json({ id: 'my-app', name: 'My App', info: { logos: { small: '/my-app.svg' } } })
+        )
+      );
+    });
+
+    it('ACT-5: shows the plugin badge, resolved by plugin id, for an origin label starting with plugin/', async () => {
+      render(<AlertRuleRow hit={baseHit({ labels: { __grafana_origin: 'plugin/my-app' } })} showFolderPath={false} />);
+
+      expect(await screen.findByRole('img', { name: 'My App' })).toBeInTheDocument();
+    });
+
+    it('ACT-5: shows neither badge for an origin label that does not start with plugin/', async () => {
+      render(<AlertRuleRow hit={baseHit({ labels: { __grafana_origin: 'my-app' } })} showFolderPath={false} />);
+
+      expect(await screen.findByRole('link', { name: 'CPU high' })).toBeInTheDocument();
+      expect(screen.queryByRole('img', { name: 'My App' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+    });
+
+    it('ACT-7: shows the provisioning badge for a managed rule that carries no provenance', async () => {
+      server.use(
+        http.get(ALERT_RULE_GET_URL, ({ params }) =>
+          HttpResponse.json({
+            apiVersion: 'v0alpha1',
+            kind: 'AlertRule',
+            metadata: { name: params.name, annotations: { 'grafana.app/managedBy': 'terraform' } },
+            spec: { title: 'CPU high', paused: false },
+          })
+        )
+      );
+
+      render(<AlertRuleRow hit={baseHit()} showFolderPath={false} />);
+
+      expect(await screen.findByText('Provisioned')).toBeInTheDocument();
+    });
+
+    it('shows the plugin badge instead of the provisioning badge for a provisioned plugin rule', async () => {
+      server.use(
+        http.get(ALERT_RULE_GET_URL, ({ params }) =>
+          HttpResponse.json({
+            apiVersion: 'v0alpha1',
+            kind: 'AlertRule',
+            metadata: { name: params.name, annotations: { 'grafana.com/provenance': 'api' } },
+            spec: { title: 'CPU high', paused: false },
+          })
+        )
+      );
+
+      render(<AlertRuleRow hit={baseHit({ labels: { __grafana_origin: 'plugin/my-app' } })} showFolderPath={false} />);
+
+      expect(await screen.findByRole('img', { name: 'My App' })).toBeInTheDocument();
+      expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+    });
   });
 
   it('shows Default policy when no notification type is set', () => {

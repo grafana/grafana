@@ -4,8 +4,9 @@ import { t } from '@grafana/i18n';
 import { Stack, Text, TextLink, Tooltip } from '@grafana/ui';
 
 import { getDataSourceByUid } from '../../utils/datasource';
-import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
+import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { useFolderPath } from '../folder-browsing/folderLookups';
+import { getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
 import { useFullRecordingRuleState } from '../rule-data/ruleResourceLookups';
 import { DataSourcesMeta } from '../rule-row/DataSourcesMeta';
 import { FolderPath } from '../rule-row/FolderPath';
@@ -17,8 +18,6 @@ import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
-
-const GRAFANA_ORIGIN_LABEL = '__grafana_origin';
 
 interface RecordingRuleRowProps {
   hit: RecordingRuleSearchHit;
@@ -36,8 +35,9 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
   const fullRule = useFullRecordingRuleState(hit.uid);
   const folderPath = useFolderPath(showFolderPath ? hit.folderUid : undefined);
 
-  const pluginId = hit.labels[GRAFANA_ORIGIN_LABEL];
-  const isProvisioned = fullRule.status === 'loaded' && isK8sEntityProvisioned(fullRule.rule);
+  const pluginId = getPluginId(hit.labels);
+  // Managed rules get the provisioning badge too: they are owned by something outside the UI.
+  const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
   const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
   const hasDisplayLabels = Object.keys(hit.labels).some((key) => key !== GRAFANA_ORIGIN_LABEL);
   const titleId = `recording-rule-title-${hit.uid}`;
@@ -61,7 +61,11 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
           >
             {hit.title}
           </TextLink>
-          {pluginId ? <PluginOriginBadge pluginId={pluginId} size="sm" /> : isProvisioned && <ProvisioningBadge />}
+          {pluginId === undefined ? (
+            isOwnedElsewhere && <ProvisioningBadge />
+          ) : (
+            <PluginOriginBadge pluginId={pluginId} size="sm" />
+          )}
         </Stack>
       }
       description={

@@ -1,7 +1,6 @@
-import { t } from '@grafana/i18n';
-import { LinkButton, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 
-import { ruleEditUrl } from '../rule-actions/ruleLinks';
+import { EditRuleButton } from '../rule-actions/EditRuleButton';
 import { useRuleActionAbilities } from '../rule-actions/useRuleActionAbilities';
 import { useFullRecordingRuleState } from '../rule-data/ruleResourceLookups';
 
@@ -17,11 +16,7 @@ export function RecordingRuleActions({ ruleUid }: RecordingRuleActionsProps) {
 
   return (
     <Stack direction="row" gap={0} wrap="nowrap">
-      {abilities.edit.available && (
-        <LinkButton size="sm" variant="secondary" fill="text" href={ruleEditUrl(ruleUid)}>
-          {t('alerting.gma-rule-list.recording-rules.edit', 'Edit')}
-        </LinkButton>
-      )}
+      <EditRuleButton uid={ruleUid} availability={abilities.edit} />
       <RecordingRuleActionsMenu ruleUid={ruleUid} resourceState={resourceState} buttonSize="sm" />
     </Stack>
   );

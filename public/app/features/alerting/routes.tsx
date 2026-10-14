@@ -37,7 +37,13 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/list',
-      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      // Once the GMA-only lists are on, the redirect admits exactly who the new pages and menu
+      // entries admit: Grafana-managed read, not data source-managed read.
+      roles: evaluateAccess(
+        shouldUseGmaOnlyListView()
+          ? [AccessControlAction.AlertingRuleRead]
+          : [AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]
+      ),
       component: shouldUseGmaOnlyListView()
         ? LegacyRuleListRedirect
         : importAlertingComponent(

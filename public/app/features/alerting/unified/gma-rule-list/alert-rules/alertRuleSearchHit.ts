@@ -1,3 +1,4 @@
+import { type InstanceTotals } from '../rule-row/InstanceTotalsMeta';
 import { type RuleSearchResultItem } from '../rule-search/searchQueryLeaves';
 
 /**
@@ -15,6 +16,8 @@ export interface AlertRuleSearchHit {
   state?: string;
   health?: string;
   lastError?: string;
+  /** Per-state instance counts; like state and health, absent without stored status. */
+  totals: InstanceTotals;
   /** Falls back to this when there's no lastError. */
   summary?: string;
   labels: Record<string, string>;
@@ -35,6 +38,10 @@ function asRecord(value: unknown): Record<string, string> {
     }
   }
   return result;
+}
+
+function asCount(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 function asStringArray(value: unknown): string[] {
@@ -74,6 +81,14 @@ export function toAlertRuleSearchHit(item: RuleSearchResultItem): AlertRuleSearc
     state: typeof fields.state === 'string' ? fields.state : undefined,
     health: typeof fields.health === 'string' ? fields.health : undefined,
     lastError: typeof fields.lastError === 'string' ? fields.lastError : undefined,
+    totals: {
+      healthy: asCount(fields.totalsHealthy),
+      firing: asCount(fields.totalsFiring),
+      pending: asCount(fields.totalsPending),
+      recovering: asCount(fields.totalsRecovering),
+      noData: asCount(fields.totalsNoData),
+      error: asCount(fields.totalsError),
+    },
     summary: annotations.summary,
     labels: asLabels(fields.labels),
     dataSourceUids: asStringArray(fields.datasourceUIDs),

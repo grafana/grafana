@@ -166,6 +166,37 @@ describe('RecordingRuleRow', () => {
     expect(await screen.findByText('Provisioned')).toBeInTheDocument();
   });
 
+  it('ACT-7: shows the provisioning badge for a managed rule that carries no provenance', async () => {
+    mockFullRule({}, { 'grafana.app/managedBy': 'terraform' });
+    render(<RecordingRuleRow hit={baseHit()} showFolderPath={false} />);
+    expect(await screen.findByText('Provisioned')).toBeInTheDocument();
+  });
+
+  describe('plugin badge', () => {
+    beforeEach(() => {
+      server.use(
+        http.get('/api/plugins/my-app/settings', () =>
+          HttpResponse.json({ id: 'my-app', name: 'My App', info: { logos: { small: '/my-app.svg' } } })
+        )
+      );
+    });
+
+    it('ACT-5: shows the badge, resolved by plugin id, for an origin label starting with plugin/', async () => {
+      render(
+        <RecordingRuleRow hit={baseHit({ labels: { __grafana_origin: 'plugin/my-app' } })} showFolderPath={false} />
+      );
+
+      expect(await screen.findByRole('img', { name: 'My App' })).toBeInTheDocument();
+    });
+
+    it('ACT-5: shows no badge for an origin label that does not start with plugin/', async () => {
+      render(<RecordingRuleRow hit={baseHit({ labels: { __grafana_origin: 'my-app' } })} showFolderPath={false} />);
+
+      expect(screen.getByRole('link', { name: 'cpu_usage:avg' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('img', { name: 'My App' })).not.toBeInTheDocument());
+    });
+  });
+
   it('shows no provisioning badge for a rule without provenance', async () => {
     render(<RecordingRuleRow hit={baseHit({ metric: 'm' })} showFolderPath={false} />);
     expect(screen.getByRole('link', { name: 'cpu_usage:avg' })).toBeInTheDocument();

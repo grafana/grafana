@@ -4,12 +4,14 @@ import { t } from '@grafana/i18n';
 import { Stack, TextLink } from '@grafana/ui';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../../utils/datasource';
-import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
+import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { useFolderPath } from '../folder-browsing/folderLookups';
+import { getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
 import { useFullAlertRuleState } from '../rule-data/ruleResourceLookups';
 import { DataSourcesMeta } from '../rule-row/DataSourcesMeta';
 import { FolderPath } from '../rule-row/FolderPath';
+import { InstanceTotalsMeta } from '../rule-row/InstanceTotalsMeta';
 import { LabelsMeta } from '../rule-row/LabelsMeta';
 import { PluginOriginBadge } from '../rule-row/PluginOriginBadge';
 import { ProvisioningBadge } from '../rule-row/ProvisioningBadge';
@@ -18,8 +20,6 @@ import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 import { MetaItem } from '../shared/MetaItem';
 
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
-
-const GRAFANA_ORIGIN_LABEL = '__grafana_origin';
 
 interface AlertRuleRowProps {
   hit: AlertRuleSearchHit;
@@ -67,13 +67,14 @@ export function AlertRuleRow({ hit, showFolderPath, actions }: AlertRuleRowProps
   const fullRule = useFullAlertRuleState(hit.uid);
   const folderPath = useFolderPath(showFolderPath ? hit.folderUid : undefined);
 
-  const pluginId = hit.labels[GRAFANA_ORIGIN_LABEL];
-  const isProvisioned = fullRule.status === 'loaded' && isK8sEntityProvisioned(fullRule.rule);
+  const pluginId = getPluginId(hit.labels);
+  // Managed rules get the provisioning badge too: they are owned by something outside the UI.
+  const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
   // Each meta entry is gated on its data here because the separator is added per truthy entry,
   // so a component that renders null would still leave a stray `|`.
   const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
+  const hasTotals = Object.values(hit.totals).some((total) => total !== undefined);
   const hasDisplayLabels = Object.keys(hit.labels).some((key) => key !== GRAFANA_ORIGIN_LABEL);
-  const isPaused = Boolean(hit.paused) || hit.health?.toLowerCase() === 'paused';
 
   return (
     <RuleListItem
@@ -89,19 +90,20 @@ export function AlertRuleRow({ hit, showFolderPath, actions }: AlertRuleRowProps
           >
             {hit.title}
           </TextLink>
-          {pluginId && <PluginOriginBadge pluginId={pluginId} size="sm" />}
-          {!pluginId && isProvisioned && <ProvisioningBadge />}
+          {pluginId === undefined ? (
+            isOwnedElsewhere && <ProvisioningBadge />
+          ) : (
+            <PluginOriginBadge pluginId={pluginId} size="sm" />
+          )}
         </Stack>
       }
       description={<RuleListItemDescription error={hit.lastError} summary={hit.summary} />}
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
         hasQueriedDataSources && <DataSourcesMeta key="datasources" uids={hit.dataSourceUids} />,
-        // Instance totals are skipped: the search backend does not accept the totals fields yet,
-        // and requesting them would fail the whole search.
+        hasTotals && <InstanceTotalsMeta key="totals" totals={hit.totals} />,
         hasDisplayLabels && <LabelsMeta key="labels" labels={hit.labels} />,
-        // Paused rules do not notify, so routing would be misleading.
-        !isPaused && <RoutingMeta key="routing" hit={hit} />,
+        <RoutingMeta key="routing" hit={hit} />,
       ]}
       // The effective interval depends on rule-sequence membership, which has no API yet;
       // showing the stored per-rule interval would be wrong for sequence members.

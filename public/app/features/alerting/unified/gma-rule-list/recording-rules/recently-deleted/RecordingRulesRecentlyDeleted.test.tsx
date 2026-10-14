@@ -76,7 +76,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
     );
   });
 
-  it('RDEL-1: requests only the RecordingRule trash selector, with no title/folder/user filter controls', async () => {
+  it('RDEL-1: requests only the RecordingRule trash selector, with no title/folder/user filter or Refresh controls', async () => {
     let requestedSelector: string | null = null;
     mockRecordingRulesResponse({ items: [buildRecordingRule()], metadata: {} }, (url) => {
       requestedSelector = url.searchParams.get('labelSelector');
@@ -88,6 +88,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
 
     expect(requestedSelector).toBe('grafana.app/get-trash=true');
     expect(screen.queryByPlaceholderText(/search/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /refresh/i })).not.toBeInTheDocument();
   });
 
   it('RDEL-3: shows title, recorded metric, target data source, and resolved folder path', async () => {
@@ -265,37 +266,5 @@ describe('RecordingRulesRecentlyDeleted', () => {
     await user.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(await screen.findByText('CPU usage average')).toBeInTheDocument();
-  });
-
-  it('RDEL-4: a failed refresh keeps the loaded rows, and Retry refreshes them', async () => {
-    let call = 0;
-    server.use(
-      http.get(RECORDING_RULES_URL, () => {
-        call += 1;
-        if (call === 2) {
-          return HttpResponse.json({ message: 'boom' }, { status: 500 });
-        }
-        return HttpResponse.json({
-          items: [
-            buildRecordingRule({
-              metadata: { name: `rule-${call}` },
-              spec: { ...buildRecordingRule().spec, title: `Rule from request ${call}` },
-            }),
-          ],
-          metadata: {},
-        });
-      })
-    );
-
-    const { user } = render(<RecordingRulesRecentlyDeleted />);
-    await screen.findByText('Rule from request 1');
-    await user.click(screen.getByRole('button', { name: /refresh/i }));
-
-    expect(await screen.findByText('Failed to refresh results')).toBeInTheDocument();
-    expect(screen.getByText('Rule from request 1')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
-
-    expect(await screen.findByText('Rule from request 3')).toBeInTheDocument();
   });
 });

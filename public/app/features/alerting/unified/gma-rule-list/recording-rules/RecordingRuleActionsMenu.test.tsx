@@ -47,19 +47,22 @@ function mockFolderCounts() {
   return state;
 }
 
-function buildRule(): RecordingRule {
+const WRITABLE_ANNOTATIONS = {
+  'grafana.app/folder': 'folder-uid-1',
+  'grafana.com/access/canWrite': 'true',
+  'grafana.com/access/canDelete': 'true',
+};
+
+function buildRule({
+  annotations = WRITABLE_ANNOTATIONS,
+  labels,
+}: { annotations?: Record<string, string>; labels?: Record<string, string> } = {}): RecordingRule {
   return {
     apiVersion: 'v0alpha1',
     kind: 'RecordingRule',
-    metadata: {
-      name: 'rule-uid-1',
-      annotations: {
-        'grafana.app/folder': 'folder-uid-1',
-        'grafana.com/access/canWrite': 'true',
-        'grafana.com/access/canDelete': 'true',
-      },
-    },
+    metadata: { name: 'rule-uid-1', annotations },
     spec: {
+      labels,
       title: 'CPU usage average',
       metric: 'cpu_usage:avg',
       targetDatasourceUID: 'prometheus-uid',
@@ -147,6 +150,110 @@ describe('RecordingRuleActionsMenu', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(await screen.findByText('Folder holds 2 rules')).toBeInTheDocument();
+  });
+
+  describe('unavailable actions show their reason', () => {
+    function isDisabled(element: HTMLElement) {
+      return element.getAttribute('aria-disabled') === 'true' || element.hasAttribute('disabled');
+    }
+
+    it.each([
+      {
+        name: 'the full rule is loading',
+        state: { status: 'loading' } as const,
+        reason: 'Checking permissions...',
+        duplicateDisabled: true,
+      },
+      {
+        name: 'the full rule failed to load',
+        state: { status: 'error' } as const,
+        reason: 'Permission unknown',
+        duplicateDisabled: true,
+      },
+      {
+        name: 'the capability annotations are missing',
+        state: { status: 'loaded', rule: buildRule({ annotations: {} }) } as const,
+        reason: 'Permission unknown',
+        duplicateDisabled: false,
+      },
+      {
+        name: 'the capabilities are false',
+        state: {
+          status: 'loaded',
+          rule: buildRule({
+            annotations: {
+              ...WRITABLE_ANNOTATIONS,
+              'grafana.com/access/canWrite': 'false',
+              'grafana.com/access/canDelete': 'false',
+            },
+          }),
+        } as const,
+        reason: 'You do not have permission to do this',
+        duplicateDisabled: false,
+      },
+      {
+        name: 'the rule is provisioned',
+        state: {
+          status: 'loaded',
+          rule: buildRule({ annotations: { ...WRITABLE_ANNOTATIONS, 'grafana.com/provenance': 'api' } }),
+        } as const,
+        reason: 'This rule is provisioned and cannot be edited through the UI',
+        duplicateDisabled: false,
+      },
+      {
+        name: 'the rule is both provisioned and managed by Terraform',
+        state: {
+          status: 'loaded',
+          rule: buildRule({
+            annotations: {
+              ...WRITABLE_ANNOTATIONS,
+              'grafana.com/provenance': 'api',
+              'grafana.app/managedBy': 'terraform',
+            },
+          }),
+        } as const,
+        reason: 'Managed by Terraform',
+        duplicateDisabled: false,
+      },
+      {
+        name: 'the origin label starts with plugin/',
+        state: { status: 'loaded', rule: buildRule({ labels: { __grafana_origin: 'plugin/my-app' } }) } as const,
+        reason: 'This rule is managed by a plugin and cannot be edited through the UI',
+        duplicateDisabled: true,
+      },
+    ])('ACT: disables Pause and Delete with their reason when $name', async ({ state, reason, duplicateDisabled }) => {
+      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={state} />);
+      const user = await openMenu();
+
+      for (const name of ['Pause', 'Delete']) {
+        const item = screen.getByRole('menuitem', { name });
+        expect(isDisabled(item)).toBe(true);
+        await user.hover(item);
+        expect(await screen.findByText(reason)).toBeInTheDocument();
+        await user.unhover(item);
+      }
+      expect(isDisabled(screen.getByRole('menuitem', { name: 'Duplicate' }))).toBe(duplicateDisabled);
+    });
+
+    it('does not restrict a rule whose origin label is not a plugin', async () => {
+      const rule = buildRule({ labels: { __grafana_origin: 'my-script' } });
+      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      await openMenu();
+
+      for (const name of ['Pause', 'Delete', 'Duplicate']) {
+        expect(isDisabled(screen.getByRole('menuitem', { name }))).toBe(false);
+      }
+    });
+  });
+
+  it('REC-5: Duplicate is a plain link to the recording copy route with no returnTo', async () => {
+    render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    await openMenu();
+
+    expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toHaveAttribute(
+      'href',
+      '/alerting/new/grafana-recording?copyFrom=rule-uid-1'
+    );
   });
 
   it('does not show Silence or Manage enrichments, which are Alert-only', async () => {

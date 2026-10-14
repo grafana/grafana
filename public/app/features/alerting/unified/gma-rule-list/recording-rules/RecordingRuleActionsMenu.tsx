@@ -5,9 +5,9 @@ import { t } from '@grafana/i18n';
 import { type ComponentSize, Dropdown, Menu } from '@grafana/ui';
 
 import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleButton';
-import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
-import { useDuplicateRuleAction } from '../rule-actions/DuplicateRuleAction';
+import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
+import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
 import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteRecordingRule } from '../rule-actions/useDeleteRule';
@@ -36,47 +36,36 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, buttonSize }:
   const rule = resourceState.status === 'loaded' ? resourceState.rule : undefined;
   const ruleTitle = rule?.spec.title ?? ruleUid;
   const isPaused = Boolean(rule?.spec.paused);
-  const isProvisioned = rule ? isK8sEntityProvisioned(rule) : false;
-
-  const { menuItem: duplicateMenuItem, confirmModal: duplicateConfirmModal } = useDuplicateRuleAction({
-    kind: 'recording',
-    uid: ruleUid,
-    isProvisioned,
-  });
 
   const menuItems = (
     <>
-      {abilities.pause.available && rule && (
-        <Menu.Item
-          label={
-            isPaused
-              ? t('alerting.gma-rule-list.actions.resume', 'Resume')
-              : t('alerting.gma-rule-list.actions.pause', 'Pause')
-          }
-          icon={isPaused ? 'play' : 'pause'}
-          disabled={pausePending}
-          onClick={() => setPaused(!isPaused)}
-        />
-      )}
+      <RuleActionMenuItem
+        availability={abilities.pause}
+        label={
+          isPaused
+            ? t('alerting.gma-rule-list.actions.resume', 'Resume')
+            : t('alerting.gma-rule-list.actions.pause', 'Pause')
+        }
+        icon={isPaused ? 'play' : 'pause'}
+        disabled={pausePending}
+        onClick={() => setPaused(!isPaused)}
+      />
       {rule && <AnalyzeK8sRuleButton kind="recording" rule={rule} />}
-      {abilities.duplicate.available && duplicateMenuItem}
+      <DuplicateRuleMenuItem kind="recording" uid={ruleUid} availability={abilities.duplicate} />
       <Menu.Divider />
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
         icon="share-alt"
         onClick={() => copyRuleLink('recording', ruleShareUrl(ruleUid))}
       />
-      {abilities.delete.available && (
-        <>
-          <Menu.Divider />
-          <Menu.Item
-            label={t('alerting.common.delete', 'Delete')}
-            icon="trash-alt"
-            destructive
-            onClick={() => setShowDeleteModal(true)}
-          />
-        </>
-      )}
+      <Menu.Divider />
+      <RuleActionMenuItem
+        availability={abilities.delete}
+        label={t('alerting.common.delete', 'Delete')}
+        icon="trash-alt"
+        destructive
+        onClick={() => setShowDeleteModal(true)}
+      />
     </>
   );
 
@@ -85,7 +74,6 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, buttonSize }:
       <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom-end">
         <MoreButton fill="text" size={buttonSize} />
       </Dropdown>
-      {duplicateConfirmModal}
       <DeleteRuleConfirmModal
         isOpen={showDeleteModal}
         ruleTitle={ruleTitle}

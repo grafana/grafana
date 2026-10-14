@@ -123,6 +123,50 @@ describe('useRuleActionAbilities', () => {
     expect(result.current.duplicate.available).toBe(false);
   });
 
+  it('ACT-7: names the manager, in place of the provisioned reason, when a rule is both provisioned and managed', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+    const { result } = renderHook(() =>
+      useRuleActionAbilities(
+        loaded(
+          buildRule({
+            'grafana.com/access/canWrite': 'true',
+            'grafana.com/access/canDelete': 'true',
+            'grafana.com/provenance': 'api',
+            'grafana.app/managedBy': 'terraform',
+          })
+        )
+      )
+    );
+
+    expect(result.current.edit).toEqual({ available: false, reason: 'Managed by Terraform' });
+    expect(result.current.pause).toEqual({ available: false, reason: 'Managed by Terraform' });
+    expect(result.current.delete).toEqual({ available: false, reason: 'Managed by Terraform' });
+    expect(result.current.duplicate).toEqual({ available: true });
+  });
+
+  it('ACT-7: does not treat the Grafana UI as a manager', () => {
+    const { result } = renderHook(() =>
+      useRuleActionAbilities(
+        loaded(buildRule({ 'grafana.com/access/canWrite': 'true', 'grafana.app/managedBy': 'grafana' }))
+      )
+    );
+
+    expect(result.current.edit).toEqual({ available: true });
+  });
+
+  it('ACT-5: restricts a rule only when its origin label starts with plugin/', () => {
+    const annotations = { 'grafana.com/access/canWrite': 'true' };
+    const { result: plugin } = renderHook(() =>
+      useRuleActionAbilities(loaded(buildRule(annotations, { __grafana_origin: 'plugin/my-plugin' })))
+    );
+    const { result: other } = renderHook(() =>
+      useRuleActionAbilities(loaded(buildRule(annotations, { __grafana_origin: 'my-plugin' })))
+    );
+
+    expect(plugin.current.edit.available).toBe(false);
+    expect(other.current.edit).toEqual({ available: true });
+  });
+
   it('denies duplicate without the create permission, independent of canWrite/canDelete', () => {
     const { result } = renderHook(() =>
       useRuleActionAbilities(

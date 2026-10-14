@@ -1,7 +1,6 @@
-import { t } from '@grafana/i18n';
-import { LinkButton, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 
-import { ruleEditUrl } from '../rule-actions/ruleLinks';
+import { EditRuleButton } from '../rule-actions/EditRuleButton';
 import { useRuleActionAbilities } from '../rule-actions/useRuleActionAbilities';
 import { useFullAlertRuleState } from '../rule-data/ruleResourceLookups';
 
@@ -21,11 +20,7 @@ export function AlertRuleActions({ ruleUid }: AlertRuleActionsProps) {
 
   return (
     <Stack direction="row" gap={0} wrap="nowrap">
-      {abilities.edit.available && (
-        <LinkButton href={ruleEditUrl(ruleUid)} size="sm" variant="secondary" fill="text">
-          {t('alerting.gma-rule-list.alert-rules.edit', 'Edit')}
-        </LinkButton>
-      )}
+      <EditRuleButton uid={ruleUid} availability={abilities.edit} />
       <AlertRuleActionsMenu ruleUid={ruleUid} resourceState={resourceState} buttonSize="sm" />
     </Stack>
   );

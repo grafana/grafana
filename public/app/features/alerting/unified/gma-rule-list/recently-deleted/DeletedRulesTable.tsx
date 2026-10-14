@@ -50,7 +50,7 @@ export function DeletedRulesTable<T extends DeletedRule>({
   extraColumns = [],
   renderReview,
 }: DeletedRulesTableProps<T>) {
-  const { rows, isLoading, error, failure, hasMore, isLoadingMore, loadMore, refresh, retry } = deleted;
+  const { rows, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = deleted;
   const [ruleToReview, setRuleToReview] = useState<T | undefined>(undefined);
   const updatedByKeys = rows.map((rule) => rule.metadata.annotations?.[AnnoKeyUpdatedBy]);
   const { resolve: resolveDeletedBy } = useDeletedByDisplayNames(updatedByKeys);
@@ -122,11 +122,6 @@ export function DeletedRulesTable<T extends DeletedRule>({
 
   return (
     <Stack direction="column" gap={2}>
-      <Stack justifyContent="flex-end">
-        <Button variant="secondary" icon="sync" onClick={refresh}>
-          <Trans i18nKey="alerting.deleted-rules.refresh">Refresh</Trans>
-        </Button>
-      </Stack>
       <InteractiveTable
         columns={columns}
         data={rows}

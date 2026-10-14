@@ -82,6 +82,12 @@ const RETURNABLE_FIELDS = {
     'lastEvaluationTime',
     'evaluationDuration',
     'lastError',
+    'totalsHealthy',
+    'totalsFiring',
+    'totalsPending',
+    'totalsRecovering',
+    'totalsNoData',
+    'totalsError',
   ]),
   recording: new Set([
     'title',

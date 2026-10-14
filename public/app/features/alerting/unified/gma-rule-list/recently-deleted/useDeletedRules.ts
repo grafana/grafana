@@ -17,8 +17,6 @@ export interface UseDeletedRulesResult<T> {
   /** How many rules the API returned for the first request, which can exceed the rows revealed. */
   returnedCount?: number;
   loadMore: () => void;
-  /** Starts again from the first chunk. */
-  refresh: () => void;
   retry: () => void;
 }
 
@@ -58,10 +56,6 @@ export function useDeletedRules<T>(
       if (loaded.length <= revealed) {
         void query.fetchNextPage();
       }
-    },
-    refresh: () => {
-      restart();
-      void query.refetch();
     },
     retry: () => retryPagedQuery(query, restart),
   };

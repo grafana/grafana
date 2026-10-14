@@ -22,6 +22,12 @@ const alertFields = [
   'lastEvaluationTime',
   'evaluationDuration',
   'lastError',
+  'totalsHealthy',
+  'totalsFiring',
+  'totalsPending',
+  'totalsRecovering',
+  'totalsNoData',
+  'totalsError',
 ];
 
 describe('buildAlertRuleSearchQuery', () => {
@@ -34,6 +40,19 @@ describe('buildAlertRuleSearchQuery', () => {
       fields: alertFields,
       limit: 40,
     });
+  });
+
+  it('ALERT-10: asks for all six instance total fields', () => {
+    expect(buildAlertRuleSearchQuery(createEmptyCriteria()).fields).toEqual(
+      expect.arrayContaining([
+        'totalsHealthy',
+        'totalsFiring',
+        'totalsPending',
+        'totalsRecovering',
+        'totalsNoData',
+        'totalsError',
+      ])
+    );
   });
 
   it('SEARCH-3.2: free text and rule: merge into a single text leaf', () => {

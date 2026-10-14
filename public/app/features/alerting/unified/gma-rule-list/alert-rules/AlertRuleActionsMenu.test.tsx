@@ -53,21 +53,24 @@ function mockFolderCounts() {
   return state;
 }
 
-function buildRule(overrides: Partial<AlertRule['metadata']> = {}): AlertRule {
+const WRITABLE_ANNOTATIONS = {
+  'grafana.app/folder': 'folder-uid-1',
+  'grafana.com/access/canWrite': 'true',
+  'grafana.com/access/canDelete': 'true',
+};
+const PROVISIONED_ANNOTATIONS = { ...WRITABLE_ANNOTATIONS, 'grafana.com/provenance': 'api' };
+
+function buildRule({
+  annotations = WRITABLE_ANNOTATIONS,
+  labels,
+}: { annotations?: Record<string, string>; labels?: Record<string, string> } = {}): AlertRule {
   return {
     apiVersion: 'v0alpha1',
     kind: 'AlertRule',
-    metadata: {
-      name: 'rule-uid-1',
-      annotations: {
-        'grafana.app/folder': 'folder-uid-1',
-        'grafana.com/access/canWrite': 'true',
-        'grafana.com/access/canDelete': 'true',
-      },
-      ...overrides,
-    },
+    metadata: { name: 'rule-uid-1', annotations },
     spec: {
       title: 'High CPU usage',
+      labels,
       execErrState: 'Alerting',
       noDataState: 'NoData',
       trigger: { interval: '1m' },
@@ -195,15 +198,172 @@ describe('AlertRuleActionsMenu', () => {
     await waitFor(() => expect(emitSpy).toHaveBeenCalledWith('alert-error', ['Could not copy URL to clipboard']));
   });
 
-  it('makes Pause and Delete unavailable when the resource is still loading, without any rule request', async () => {
-    const requests = captureRequests((request) => request.url.includes(ALERT_RULES_URL));
+  describe('unavailable actions show their reason', () => {
+    const MUTATING_ACTIONS = ['Pause', 'Delete'];
 
-    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loading' }} />);
+    async function expectDisabledWithReason(user: Awaited<ReturnType<typeof openMenu>>, name: string, reason: string) {
+      const item = screen.getByRole('menuitem', { name });
+      expect(isDisabled(item)).toBe(true);
+      await user.hover(item);
+      expect(await screen.findByText(reason)).toBeInTheDocument();
+      await user.unhover(item);
+    }
+
+    function isDisabled(element: HTMLElement) {
+      return element.getAttribute('aria-disabled') === 'true' || element.hasAttribute('disabled');
+    }
+
+    it('ACT-1: shows every action disabled as checking while the full rule is loading, without any rule request', async () => {
+      const requests = captureRequests((request) => request.url.includes(ALERT_RULES_URL));
+
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loading' }} />);
+      const user = await openMenu();
+
+      for (const name of [...MUTATING_ACTIONS, 'Duplicate', 'Silence notifications']) {
+        await expectDisabledWithReason(user, name, 'Checking permissions...');
+      }
+      expect(screen.getByRole('menuitem', { name: 'Copy link' })).toBeEnabled();
+      expect((await requests).length).toBe(0);
+    });
+
+    it('ACT-2: shows every action disabled as unknown when the full rule failed to load', async () => {
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'error' }} />);
+      const user = await openMenu();
+
+      for (const name of [...MUTATING_ACTIONS, 'Duplicate']) {
+        await expectDisabledWithReason(user, name, 'Permission unknown');
+      }
+    });
+
+    it('ACT-2: treats a missing capability annotation as unknown, not as permission', async () => {
+      render(
+        <AlertRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{ status: 'loaded', rule: buildRule({ annotations: {} }) }}
+        />
+      );
+      const user = await openMenu();
+
+      for (const name of MUTATING_ACTIONS) {
+        await expectDisabledWithReason(user, name, 'Permission unknown');
+      }
+    });
+
+    it('ACT-3: disables Pause and Delete as denied when the capabilities are false, and Duplicate without create permission', async () => {
+      grantUserPermissions([]);
+      render(
+        <AlertRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{
+            status: 'loaded',
+            rule: buildRule({
+              annotations: {
+                ...WRITABLE_ANNOTATIONS,
+                'grafana.com/access/canWrite': 'false',
+                'grafana.com/access/canDelete': 'false',
+              },
+            }),
+          }}
+        />
+      );
+      const user = await openMenu();
+
+      for (const name of [...MUTATING_ACTIONS, 'Duplicate']) {
+        await expectDisabledWithReason(user, name, 'You do not have permission to do this');
+      }
+    });
+
+    it('ACT-4: disables Pause and Delete for a provisioned rule and keeps Duplicate enabled', async () => {
+      render(
+        <AlertRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{ status: 'loaded', rule: buildRule({ annotations: PROVISIONED_ANNOTATIONS }) }}
+        />
+      );
+      const user = await openMenu();
+
+      for (const name of MUTATING_ACTIONS) {
+        await expectDisabledWithReason(user, name, 'This rule is provisioned and cannot be edited through the UI');
+      }
+      expect(isDisabled(screen.getByRole('menuitem', { name: 'Duplicate' }))).toBe(false);
+    });
+
+    it('ACT-5: disables Pause, Delete and Duplicate for a rule whose origin label starts with plugin/', async () => {
+      render(
+        <AlertRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{ status: 'loaded', rule: buildRule({ labels: { __grafana_origin: 'plugin/my-app' } }) }}
+        />
+      );
+      const user = await openMenu();
+
+      for (const name of [...MUTATING_ACTIONS, 'Duplicate']) {
+        await expectDisabledWithReason(
+          user,
+          name,
+          'This rule is managed by a plugin and cannot be edited through the UI'
+        );
+      }
+    });
+
+    it('ACT-5: applies no plugin restriction to any other __grafana_origin value', async () => {
+      render(
+        <AlertRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{ status: 'loaded', rule: buildRule({ labels: { __grafana_origin: 'my-script' } }) }}
+        />
+      );
+      await openMenu();
+
+      for (const name of [...MUTATING_ACTIONS, 'Duplicate']) {
+        expect(isDisabled(screen.getByRole('menuitem', { name }))).toBe(false);
+      }
+    });
+
+    it('ACT-7: names the manager in the reason for a managed rule and keeps Duplicate enabled', async () => {
+      render(
+        <AlertRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{
+            status: 'loaded',
+            rule: buildRule({ annotations: { ...PROVISIONED_ANNOTATIONS, 'grafana.app/managedBy': 'terraform' } }),
+          }}
+        />
+      );
+      const user = await openMenu();
+
+      for (const name of MUTATING_ACTIONS) {
+        await expectDisabledWithReason(user, name, 'Managed by Terraform');
+      }
+      expect(isDisabled(screen.getByRole('menuitem', { name: 'Duplicate' }))).toBe(false);
+    });
+
+    it('ACT-7: treats the Grafana UI as no manager', async () => {
+      render(
+        <AlertRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{
+            status: 'loaded',
+            rule: buildRule({
+              annotations: { ...WRITABLE_ANNOTATIONS, 'grafana.app/managedBy': 'grafana' },
+            }),
+          }}
+        />
+      );
+      await openMenu();
+
+      for (const name of MUTATING_ACTIONS) {
+        expect(isDisabled(screen.getByRole('menuitem', { name }))).toBe(false);
+      }
+    });
+  });
+
+  it('ALERT-6: Duplicate is a plain link to the editor copy route with no returnTo', async () => {
+    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
     await openMenu();
 
-    expect(screen.queryByRole('menuitem', { name: /pause/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: /delete/i })).not.toBeInTheDocument();
-    expect((await requests).length).toBe(0);
+    const href = screen.getByRole('menuitem', { name: 'Duplicate' }).getAttribute('href');
+    expect(href).toBe('/alerting/new?copyFrom=rule-uid-1');
   });
 
   it('never issues a rule search request', async () => {
@@ -224,6 +384,7 @@ describe('AlertRuleActionsMenu', () => {
       render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       const user = await openMenu();
       const silenceItem = await screen.findByRole('menuitem', { name: /silence notifications/i });
+      await waitFor(() => expect(silenceItem).toBeEnabled());
       await user.click(silenceItem);
 
       // The drawer that opened is the Silence drawer, populated from the rule this exact
@@ -241,24 +402,20 @@ describe('AlertRuleActionsMenu', () => {
       render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       await openMenu();
 
-      expect(await screen.findByRole('menuitem', { name: /silence notifications/i })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('menuitem', { name: /silence notifications/i })).toBeEnabled());
     });
 
-    it('hides Silence when the user has neither org-wide nor folder-scoped silence permission', async () => {
-      const folderRequests = await captureRequests((request) => request.url.includes('/api/folders/folder-uid-1'));
-
+    it('ACT-3: disables Silence as denied when the user has neither org-wide nor folder-scoped silence permission', async () => {
       render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
-      await openMenu();
+      const user = await openMenu();
 
-      // Wait for the folder-permission lookup to actually resolve before asserting absence -
-      // otherwise this would trivially pass before the async check ever ran.
-      await waitFor(() => expect(folderRequests.length).toBeGreaterThan(0));
-      expect(screen.queryByRole('menuitem', { name: /silence notifications/i })).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Silence notifications' })).toBeDisabled());
+      await user.hover(screen.getByRole('menuitem', { name: 'Silence notifications' }));
+      expect(await screen.findByText('You do not have permission to do this')).toBeInTheDocument();
     });
 
-    it('hides Silence when Grafana sends only to external Alertmanagers, even with org permission', async () => {
+    it('disables Silence with a reason when Grafana sends only to external Alertmanagers, even with org permission', async () => {
       grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingInstanceCreate]);
-      const amConfigRequests = await captureRequests((request) => request.url.includes('/api/v1/ngalert'));
       server.use(
         http.get('/api/v1/ngalert', () =>
           HttpResponse.json({ alertmanagersChoice: AlertmanagerChoice.External, numExternalAlertmanagers: 1 })
@@ -266,10 +423,43 @@ describe('AlertRuleActionsMenu', () => {
       );
 
       render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
-      await openMenu();
+      const user = await openMenu();
 
-      await waitFor(() => expect(amConfigRequests.length).toBeGreaterThan(0));
-      expect(screen.queryByRole('menuitem', { name: /silence notifications/i })).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Silence notifications' })).toBeDisabled());
+      await user.hover(screen.getByRole('menuitem', { name: 'Silence notifications' }));
+      expect(await screen.findByText(/only to external Alertmanagers/)).toBeInTheDocument();
+    });
+
+    it.each([
+      { pending: 'folder', url: '/api/folders/folder-uid-1', body: () => mockFolder({ uid: 'folder-uid-1' }) },
+      {
+        pending: 'Alertmanager configuration',
+        url: '/api/v1/ngalert',
+        body: () => ({ alertmanagersChoice: AlertmanagerChoice.Internal, numExternalAlertmanagers: 0 }),
+      },
+    ])('ACT-6: keeps Silence disabled as checking until the $pending has loaded', async ({ url, body }) => {
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingInstanceCreate]);
+      let release: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      server.use(
+        http.get(url, async () => {
+          await gate;
+          return HttpResponse.json(body());
+        })
+      );
+
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      const user = await openMenu();
+      const silence = screen.getByRole('menuitem', { name: 'Silence notifications' });
+
+      expect(silence).toBeDisabled();
+      await user.hover(silence);
+      expect(await screen.findByText('Checking permissions...')).toBeInTheDocument();
+
+      release();
+      await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Silence notifications' })).toBeEnabled());
     });
   });
 

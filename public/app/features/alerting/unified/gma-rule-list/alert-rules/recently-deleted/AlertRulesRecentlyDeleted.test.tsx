@@ -79,7 +79,7 @@ describe('AlertRulesRecentlyDeleted', () => {
     mockFolderAndUserLookups();
   });
 
-  it('ADEL-1: requests only the AlertRule trash selector, with no title/folder/user filter controls', async () => {
+  it('ADEL-1: requests only the AlertRule trash selector, with no title/folder/user filter or Refresh controls', async () => {
     let requestedSelector: string | null = null;
     mockAlertRulesResponse({ items: [buildAlertRule()], metadata: {} }, (url) => {
       requestedSelector = url.searchParams.get('labelSelector');
@@ -92,6 +92,7 @@ describe('AlertRulesRecentlyDeleted', () => {
     expect(requestedSelector).toBe('grafana.app/get-trash=true');
     expect(screen.queryByPlaceholderText(/search/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /filter/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /refresh/i })).not.toBeInTheDocument();
   });
 
   it('ADEL-2: reveals more than 40 rows from an oversized response in a 40-row chunk via Load more, without duplicate requests', async () => {
@@ -239,35 +240,6 @@ describe('AlertRulesRecentlyDeleted', () => {
     );
   });
 
-  it('ADEL-2: Refresh starts again from the first chunk and the first page', async () => {
-    const tokens: Array<string | null> = [];
-    const page = (prefix: string) =>
-      Array.from({ length: 40 }, (_, i) =>
-        buildAlertRule({ metadata: { name: `${prefix}-${i}` } }, { title: `${prefix} ${i}` })
-      );
-    server.use(
-      http.get(ALERT_RULES_URL, ({ request }) => {
-        const token = new URL(request.url).searchParams.get('continue');
-        tokens.push(token);
-        return token
-          ? HttpResponse.json({ items: page('second'), metadata: {} })
-          : HttpResponse.json({ items: page('first'), metadata: { continue: 'next-page-token' } });
-      })
-    );
-
-    const { user } = render(<AlertRulesRecentlyDeleted />);
-    await screen.findByText('first 0');
-    await user.click(screen.getByRole('button', { name: /load more/i }));
-    await screen.findByText('second 0');
-
-    await user.click(screen.getByRole('button', { name: /refresh/i }));
-
-    await waitFor(() => expect(screen.queryByText('second 0')).not.toBeInTheDocument());
-    expect(screen.getByText('first 0')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /load more/i })).toBeInTheDocument();
-    expect(tokens).toEqual([null, 'next-page-token', null]);
-  });
-
   it('STATE-4: loads the continuation page once when Load more is double clicked', async () => {
     const tokens: Array<string | null> = [];
     let releasePage: () => void = () => {};
@@ -362,32 +334,5 @@ describe('AlertRulesRecentlyDeleted', () => {
     expect(await screen.findByText('Last rule')).toBeInTheDocument();
     expect(screen.getByText('Rule 0')).toBeInTheDocument();
     expect(tokens).toEqual([null, 'next-page-token', 'next-page-token']);
-  });
-
-  it('STATE-1: a failed refresh keeps the loaded rows, and Retry refreshes them', async () => {
-    let call = 0;
-    server.use(
-      http.get(ALERT_RULES_URL, () => {
-        call += 1;
-        if (call === 2) {
-          return HttpResponse.json({ message: 'boom' }, { status: 500 });
-        }
-        return HttpResponse.json({
-          items: [buildAlertRule({ metadata: { name: `rule-${call}` } }, { title: `Rule from request ${call}` })],
-          metadata: {},
-        });
-      })
-    );
-
-    const { user } = render(<AlertRulesRecentlyDeleted />);
-    await screen.findByText('Rule from request 1');
-    await user.click(screen.getByRole('button', { name: /refresh/i }));
-
-    expect(await screen.findByText('Failed to refresh results')).toBeInTheDocument();
-    expect(screen.getByText('Rule from request 1')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
-
-    expect(await screen.findByText('Rule from request 3')).toBeInTheDocument();
   });
 });

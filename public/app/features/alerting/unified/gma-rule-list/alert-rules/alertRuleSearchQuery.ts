@@ -30,6 +30,12 @@ const ALERT_RULE_FIELDS = [
   'lastEvaluationTime',
   'evaluationDuration',
   'lastError',
+  'totalsHealthy',
+  'totalsFiring',
+  'totalsPending',
+  'totalsRecovering',
+  'totalsNoData',
+  'totalsError',
 ];
 
 /** `normal` and `inactive` both meant "no firing, pending or recovering instance": `Healthy` is an

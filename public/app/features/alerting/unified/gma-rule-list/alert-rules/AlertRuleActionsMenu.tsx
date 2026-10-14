@@ -11,17 +11,17 @@ import { EnrichmentDrawerExtension } from '../../components/rule-list/extensions
 import SilenceGrafanaRuleDrawer from '../../components/silences/SilenceGrafanaRuleDrawer';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
-import { useCanSilenceInFolder, useGrafanaRulesSilenceSupport } from '../../hooks/abilities/rules/ruleAbilities.utils';
 import { EnrichmentAction } from '../../hooks/abilities/types';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
-import { useDuplicateRuleAction } from '../rule-actions/DuplicateRuleAction';
+import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
+import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
 import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteAlertRule } from '../rule-actions/useDeleteRule';
 import { useAlertRulePauseResume } from '../rule-actions/usePauseResumeRule';
 import { useRuleActionAbilities } from '../rule-actions/useRuleActionAbilities';
+import { useSilenceAvailability } from '../rule-actions/useSilenceAvailability';
 import { type RuleResourceState } from '../rule-data/ruleResourceState';
 import { MoreButton } from '../shared/MoreButton';
 
@@ -48,11 +48,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: Ale
   const ruleTitle = rule?.spec.title ?? ruleUid;
   const folderUid = rule?.metadata.annotations?.[AnnoKeyFolder];
   const isPaused = Boolean(rule?.spec.paused);
-  const isProvisioned = rule ? isK8sEntityProvisioned(rule) : false;
-
-  const { silenceSupported } = useGrafanaRulesSilenceSupport();
-  const canSilenceInFolder = useCanSilenceInFolder(folderUid);
-  const canSilence = silenceSupported && canSilenceInFolder;
+  const silence = useSilenceAvailability(resourceState);
 
   const canReadEnrichments = isGranted(useEnrichmentAbility(EnrichmentAction.Read));
   // alertingEnrichmentPerRule has no OpenFeature migration yet; this mirrors the same gate
@@ -60,35 +56,27 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: Ale
   // eslint-disable-next-line @grafana/no-config-feature-toggles
   const canManageEnrichments = Boolean(config.featureToggles.alertingEnrichmentPerRule) && canReadEnrichments;
 
-  const { menuItem: duplicateMenuItem, confirmModal: duplicateConfirmModal } = useDuplicateRuleAction({
-    kind: 'alert',
-    uid: ruleUid,
-    isProvisioned,
-  });
-
   const menuItems = (
     <>
-      {abilities.pause.available && rule && (
-        <Menu.Item
-          label={
-            isPaused
-              ? t('alerting.gma-rule-list.actions.resume', 'Resume')
-              : t('alerting.gma-rule-list.actions.pause', 'Pause')
-          }
-          icon={isPaused ? 'play' : 'pause'}
-          disabled={pausePending}
-          onClick={() => setPaused(!isPaused)}
-        />
-      )}
-      {canSilence && (
-        <Menu.Item
-          label={t('alerting.gma-rule-list.actions.silence-notifications', 'Silence notifications')}
-          icon="bell-slash"
-          onClick={() => setShowSilenceDrawer(true)}
-        />
-      )}
+      <RuleActionMenuItem
+        availability={abilities.pause}
+        label={
+          isPaused
+            ? t('alerting.gma-rule-list.actions.resume', 'Resume')
+            : t('alerting.gma-rule-list.actions.pause', 'Pause')
+        }
+        icon={isPaused ? 'play' : 'pause'}
+        disabled={pausePending}
+        onClick={() => setPaused(!isPaused)}
+      />
+      <RuleActionMenuItem
+        availability={silence}
+        label={t('alerting.gma-rule-list.actions.silence-notifications', 'Silence notifications')}
+        icon="bell-slash"
+        onClick={() => setShowSilenceDrawer(true)}
+      />
       {rule && <AnalyzeK8sRuleButton kind="alert" rule={rule} />}
-      {abilities.duplicate.available && duplicateMenuItem}
+      <DuplicateRuleMenuItem kind="alert" uid={ruleUid} availability={abilities.duplicate} />
       <Menu.Divider />
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
@@ -102,17 +90,14 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: Ale
           onClick={() => setShowEnrichmentDrawer(true)}
         />
       )}
-      {abilities.delete.available && (
-        <>
-          <Menu.Divider />
-          <Menu.Item
-            label={t('alerting.common.delete', 'Delete')}
-            icon="trash-alt"
-            destructive
-            onClick={() => setShowDeleteModal(true)}
-          />
-        </>
-      )}
+      <Menu.Divider />
+      <RuleActionMenuItem
+        availability={abilities.delete}
+        label={t('alerting.common.delete', 'Delete')}
+        icon="trash-alt"
+        destructive
+        onClick={() => setShowDeleteModal(true)}
+      />
     </>
   );
 
@@ -132,7 +117,6 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: Ale
       {showEnrichmentDrawer && (
         <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />
       )}
-      {duplicateConfirmModal}
       <DeleteRuleConfirmModal
         isOpen={showDeleteModal}
         ruleTitle={ruleTitle}
