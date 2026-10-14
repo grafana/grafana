@@ -5,6 +5,7 @@ import {
   markStPodGaveUp,
   markStPodReady,
   markStPodWaiting,
+  StPodStatus,
 } from './stPodReadiness';
 
 describe('stPodReadiness', () => {
@@ -13,7 +14,7 @@ describe('stPodReadiness', () => {
   });
 
   it('starts in the unknown status', () => {
-    expect(getStPodStatus()).toBe('unknown');
+    expect(getStPodStatus()).toBe(StPodStatus.Unknown);
   });
 
   it('returns the same promise instance on repeated calls while not ready', () => {
@@ -32,7 +33,7 @@ describe('stPodReadiness', () => {
 
     markStPodWaiting();
 
-    expect(getStPodStatus()).toBe('waiting');
+    expect(getStPodStatus()).toBe(StPodStatus.Waiting);
     expect(getStPodReadyPromise()).toBe(before);
   });
 
@@ -41,7 +42,7 @@ describe('stPodReadiness', () => {
 
     markStPodReady();
 
-    expect(getStPodStatus()).toBe('ready');
+    expect(getStPodStatus()).toBe(StPodStatus.Ready);
     await expect(pending).resolves.toBeUndefined();
   });
 
@@ -50,7 +51,7 @@ describe('stPodReadiness', () => {
 
     markStPodGaveUp();
 
-    expect(getStPodStatus()).toBe('gaveUp');
+    expect(getStPodStatus()).toBe(StPodStatus.GaveUp);
     // Must resolve even though this is the failure path: a promise left pending keeps the
     // consumer suspended forever, so it never re-renders to reach its error branch.
     await expect(pending).resolves.toBeUndefined();
@@ -67,7 +68,7 @@ describe('stPodReadiness', () => {
 
     invalidateStPodReadiness();
 
-    expect(getStPodStatus()).toBe('unknown');
+    expect(getStPodStatus()).toBe(StPodStatus.Unknown);
     expect(getStPodReadyPromise()).not.toBe(before);
   });
 
@@ -77,7 +78,7 @@ describe('stPodReadiness', () => {
     invalidateStPodReadiness();
     markStPodWaiting();
 
-    expect(getStPodStatus()).toBe('waiting');
+    expect(getStPodStatus()).toBe(StPodStatus.Waiting);
   });
 
   it('restores a pending promise when a ready pod goes back to waiting', async () => {
