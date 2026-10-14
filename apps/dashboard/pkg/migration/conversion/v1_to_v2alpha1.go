@@ -115,6 +115,10 @@ func ConvertDashboard_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Das
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
 
+	if dsIndexProvider == nil {
+		return fmt.Errorf("datasource index provider not initialized")
+	}
+
 	// merge context with tracing
 	ctx := context.Background()
 	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
