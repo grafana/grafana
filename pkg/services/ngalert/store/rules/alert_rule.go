@@ -1512,12 +1512,11 @@ func (st RuleStore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.L
 
 	// The record column is nullable. We write '' for alert rules, but rows that existed before
 	// the column was added hold NULL, and those are alert rules too.
-	// `record != ''` already evaluates to false for NULL, so recording rules need no extra check.
 	switch query.RuleType {
 	case ngmodels.RuleTypeFilterAlerting:
 		q = q.Where("(record IS NULL OR record = '')")
 	case ngmodels.RuleTypeFilterRecording:
-		q = q.Where("record != ''")
+		q = q.Where("(record IS NOT NULL AND record != '')")
 	case ngmodels.RuleTypeFilterAll:
 		// no additional filter
 	default:
