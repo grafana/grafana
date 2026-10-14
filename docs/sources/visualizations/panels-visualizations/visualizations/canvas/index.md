@@ -45,7 +45,7 @@ Starting with Grafana 13.3, the canvas visualization loads as a standalone plugi
 
 Grafana bundles the standalone plugin, so you don't need to install it. If you use a slim Docker image, install the plugin from **Administration > Plugins and data > Plugins** first.
 
-In Grafana 13.3 and later 13.x releases, you can go back to the core plugin. Add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) and restart Grafana:
+In Grafana 13.3 and later 13.x releases, you can go back to the core plugin. To do so, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) and restart Grafana:
 
 ```ini
 [plugin.canvas]
