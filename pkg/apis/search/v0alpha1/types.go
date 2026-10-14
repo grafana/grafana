@@ -138,15 +138,18 @@ type SortField struct {
 	Direction string `json:"direction,omitempty"`
 }
 
-// SearchQuery is the request body for POST .../{resource}/search.
+// SearchQuery is the request body for POST .../{resource}/search, which searches
+// one kind, and for POST .../namespaces/{namespace}/global/search, which
+// searches several resource types at once.
 //
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SearchQuery struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Where is the search predicate tree. Omitting it matches all resources of
-	// the kind (subject to labelSelector and per-item authz).
+	// Where is the search predicate tree. Omitting it matches everything the
+	// endpoint searches: all resources of the kind, or of every type the global
+	// search covers (subject to labelSelector and per-item authz).
 	Where *WhereNode `json:"where,omitempty"`
 
 	// LabelSelector filters on metadata.labels, ANDed with Where.
@@ -188,7 +191,9 @@ type TrashQuery struct {
 	Continue string `json:"continue,omitempty"`
 }
 
-// SearchResults is the response body for POST .../{resource}/search.
+// SearchResults is the response body for POST .../{resource}/search and POST
+// .../namespaces/{namespace}/global/search. On the global search, each item
+// names its own resource type.
 //
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

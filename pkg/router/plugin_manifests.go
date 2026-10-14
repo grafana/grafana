@@ -175,6 +175,8 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			}
 
 			backend.info = entry.Definition.JSONData.Info
+			// Without a host, the deployment has no backend to call.
+			backend.hasBackend = entry.Host != ""
 
 			// The host is outside PluginDefinition, but changing it must reload the backend.
 			key, keyErr := pluginDeploymentKey(t.keyPrefix, entry, manifest)
@@ -320,3 +322,21 @@ type pluginDeploymentBackend struct {
 
 func (b *pluginDeploymentBackend) Key() string    { return b.key }
 func (b *pluginDeploymentBackend) Source() string { return b.source }
+
+// PluginStatus implements [PluginStatusProvider]; the embedded Backend
+// interface does not promote it.
+func (b *pluginDeploymentBackend) PluginStatus() (PluginStatus, bool) {
+	if p, ok := b.Backend.(PluginStatusProvider); ok {
+		return p.PluginStatus()
+	}
+	return PluginStatus{}, false
+}
+
+// Manifest implements [ManifestProvider]; the embedded Backend interface does
+// not promote it.
+func (b *pluginDeploymentBackend) Manifest() (*app.ManifestData, bool) {
+	if p, ok := b.Backend.(ManifestProvider); ok {
+		return p.Manifest()
+	}
+	return nil, false
+}

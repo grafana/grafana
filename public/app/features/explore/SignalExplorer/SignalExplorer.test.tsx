@@ -279,7 +279,7 @@ describe('<SignalExplorer />', () => {
     expect(screen.getByPlaceholderText('Search metrics')).toHaveValue('node_cpu');
   });
 
-  it('scrolls to the query row when a card is clicked', async () => {
+  it('scrolls to the query row when the jump button is clicked', async () => {
     const { user } = await setup([lokiQuery('A')]);
 
     await user.click(screen.getByRole('button', { name: /^Jump to query A/ }));
@@ -337,21 +337,19 @@ describe('<SignalExplorer />', () => {
     expect(scrollerMock.scroll).not.toHaveBeenCalled();
   });
 
-  it('scrolls to the query row when a Prometheus card is expanded, but not when it collapses', async () => {
+  it('scrolls to the query row from an open Prometheus card only through its jump button', async () => {
     const { user } = await setup([lokiQuery('A'), promQuery('B')]);
 
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
 
     expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+    expect(scrollerMock.scroll).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Jump to query B (gdev-prometheus)' }));
+
     expect(scrollerMock.scroll).toHaveBeenCalledTimes(1);
     expect(scrollerMock.scroll).toHaveBeenCalledWith({ top: -10, behavior: 'smooth' });
-
-    await user.click(
-      screen.getByRole('button', { name: 'Collapse datasource explorer for query B (gdev-prometheus)' })
-    );
-
-    expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
-    expect(scrollerMock.scroll).toHaveBeenCalledTimes(1);
+    expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
   });
 
   describe('default expansion', () => {

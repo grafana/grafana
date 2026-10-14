@@ -15,6 +15,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 	"uuid"
 
@@ -70,6 +71,8 @@ func IsResourceNameMixedCase(req *resourcepb.ReadRequest, res *BackendReadRespon
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	DryRun           bool
+	BlobEnabled      bool
+	BlobDryRun       bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
 	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
@@ -100,6 +103,9 @@ type kvStorageBackend struct {
 	historyPruner           Pruner
 	garbageCollection       GarbageCollectionConfig
 	gcGate                  *GCGate
+	blobGC                  *BlobGarbageCollector
+	blobGCMu                sync.Mutex
+	blobGCMetrics           *BlobGCMetrics
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
 	metrics                 *kvBackendMetrics
@@ -401,6 +407,8 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 		GarbageCollection: GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
 			DryRun:           cfg.GarbageCollectionDryRun,
+			BlobEnabled:      cfg.BlobGarbageCollectionEnabled,
+			BlobDryRun:       cfg.BlobGarbageCollectionDryRun,
 			Interval:         cfg.GarbageCollectionInterval,
 			BatchSize:        cfg.GarbageCollectionBatchSize,
 			BatchWait:        cfg.GarbageCollectionBatchWait,
@@ -498,6 +506,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportStore:         newLastImportStore(kv),
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       garbageCollection,
+		blobGCMetrics:           NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
 		gcGate:                  opts.GCGate,
 		searchLookback:          opts.SearchLookback,
 		disableStorageServices:  opts.DisableStorageServices,
@@ -776,11 +785,29 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	return nil
 }
 
+func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
+	b.blobGCMu.Lock()
+	defer b.blobGCMu.Unlock()
+	if b.blobGC == nil {
+		b.blobGC = NewBlobGarbageCollector(b.kv, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
+	}
+	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
+	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
+	b.blobGCMetrics.Record(count, dryRun, err)
+	if err != nil {
+		b.log.Error("blob garbage collection failed", "error", err)
+	}
+	b.log.Info("blob garbage collection finished", "blobs", count, "dryRun", dryRun)
+}
+
 // runGarbageCollection identifies deleted resources that are safe
 // to be fully removed from the datastore and deletes them in batches.
 func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.runGarbageCollection")
 	defer span.End()
+	if b.garbageCollection.BlobEnabled {
+		defer b.collectBlobs(ctx)
+	}
 
 	start := time.Now()
 	var batches int
