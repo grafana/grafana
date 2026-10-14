@@ -39,6 +39,7 @@ type QOSEnqueueDequeuer interface {
 type ServerOptions struct {
 	WatchExpiry      resource.WatchExpiry
 	Backend          resource.StorageBackend
+	BlobBackend      resource.BlobSupport
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
 	Reranker         *rerank.Reranker
@@ -90,6 +91,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
+		withSeededWatches,
 		withNatsWatchMaxAge,
 	)
 	if err != nil {
@@ -188,6 +190,9 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	resourceOpts.Blob = resource.BlobConfig{
 		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
+	if resourceOpts.Blob.URL == "" {
+		resourceOpts.Blob.Backend = opts.BlobBackend
+	}
 	// Support local file blob
 	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
 		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
@@ -215,6 +220,11 @@ func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.Resour
 func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
+	return nil
+}
+
+func withSeededWatches(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.SeededWatchesEnabled = opts.Cfg.SeededWatchesEnabled
 	return nil
 }
 

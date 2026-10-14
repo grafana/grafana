@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 
 import { nodeR } from './Node';
+import { MAX_MISSING_ENDPOINT_EXAMPLES } from './consts';
 import { type Options as NodeGraphOptions } from './panelcfg.gen';
 import { type EdgeDatum, type GraphFrame, type NodeDatum, type NodeDatumFromEdge } from './types';
 
@@ -104,6 +105,47 @@ export type EdgeFields = {
   strokeDasharray?: Field;
 };
 
+interface MissingFieldError {
+  kind: 'missing-field';
+  frame: 'nodes' | 'edges';
+  field: 'id' | 'source' | 'target';
+}
+
+interface MissingEndpoint {
+  side: 'source' | 'target';
+  id: string;
+}
+
+interface MissingEndpointExample {
+  rowIndex: number;
+  edgeId: string;
+  missing: MissingEndpoint[];
+}
+
+interface MissingEndpointError {
+  kind: 'missing-endpoints';
+  affectedEdges: number;
+  examples: MissingEndpointExample[];
+}
+
+export type GraphDataError = MissingFieldError | MissingEndpointError;
+
+interface GraphLegendItem {
+  color: string;
+  name: string;
+}
+
+export interface PreparedGraph {
+  nodes: NodeDatum[];
+  edges: EdgeDatum[];
+  hasFixedPositions?: boolean;
+  legend?: GraphLegendItem[];
+}
+
+export interface ProcessNodesResult extends PreparedGraph {
+  error?: GraphDataError;
+}
+
 export function getEdgeFields(edges: DataFrame): EdgeFields {
   const normalizedFrames = {
     ...edges,
@@ -134,18 +176,7 @@ function findFieldsByPrefix(frame: DataFrame, prefix: string): Field[] {
 /**
  * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
  */
-export function processNodes(
-  nodes: DataFrame | undefined,
-  edges: DataFrame | undefined
-): {
-  nodes: NodeDatum[];
-  edges: EdgeDatum[];
-  hasFixedPositions?: boolean;
-  legend?: Array<{
-    color: string;
-    name: string;
-  }>;
-} {
+export function processNodes(nodes: DataFrame | undefined, edges: DataFrame | undefined): ProcessNodesResult {
   if (!(edges || nodes)) {
     return { nodes: [], edges: [] };
   }
@@ -153,7 +184,7 @@ export function processNodes(
   if (nodes) {
     const nodeFields = getNodeFields(nodes);
     if (!nodeFields.id) {
-      throw new Error('id field is required for nodes data frame.');
+      return { nodes: [], edges: [], error: { kind: 'missing-field', frame: 'nodes', field: 'id' } };
     }
 
     const hasFixedPositions =
@@ -182,7 +213,14 @@ export function processNodes(
     }
 
     // We may not have edges in case of single node
-    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges), nodesMap) : [];
+    let edgeDatums: EdgeDatum[] = [];
+    if (edges) {
+      const edgeResult = processEdges(getEdgeFields(edges), nodesMap);
+      if (edgeResult.error) {
+        return { nodes: [], edges: [], error: edgeResult.error };
+      }
+      edgeDatums = edgeResult.edges;
+    }
 
     for (const e of edgeDatums) {
       // We are adding incoming edges count, so we can later on find out which nodes are the roots
@@ -209,6 +247,10 @@ export function processNodes(
     const nodesMap: { [id: string]: NodeDatumFromEdge } = {};
 
     const edgeFields = getEdgeFields(edges);
+    const missingField = (['id', 'source', 'target'] as const).find((field) => !edgeFields[field]);
+    if (missingField) {
+      return { nodes: [], edges: [], error: { kind: 'missing-field', frame: 'edges', field: missingField } };
+    }
 
     // Turn edges into reasonable filled in nodes
     for (let i = 0; i < edges.length; i++) {
@@ -233,14 +275,17 @@ export function processNodes(
       nodesMap[target.id].incoming++;
     }
 
-    let edgeDatums = processEdges(edges, edgeFields, nodesMap);
+    const edgeResult = processEdges(edgeFields, nodesMap);
+    if (edgeResult.error) {
+      return { nodes: [], edges: [], error: edgeResult.error };
+    }
 
     // It is expected for stats to be Field, so we have to create them.
     const nodes = normalizeStatsForNodes(nodesMap, edgeFields);
 
     return {
       nodes,
-      edges: edgeDatums,
+      edges: edgeResult.edges,
       // Edge-only datasets never have fixedX/fixedY
       hasFixedPositions: false,
     };
@@ -249,22 +294,44 @@ export function processNodes(
 
 /**
  * Turn data frame data into EdgeDatum that node graph understands
- * @param edges
  * @param edgeFields
  */
-function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id: string]: NodeDatum }): EdgeDatum[] {
-  if (!edgeFields.id) {
-    throw new Error('id field is required for edges data frame.');
+function processEdges(
+  edgeFields: EdgeFields,
+  nodesMap: { [id: string]: NodeDatum }
+): { edges: EdgeDatum[]; error?: GraphDataError } {
+  if (!edgeFields.id || !edgeFields.source || !edgeFields.target) {
+    const missingField = !edgeFields.id ? 'id' : !edgeFields.source ? 'source' : 'target';
+    return { edges: [], error: { kind: 'missing-field', frame: 'edges', field: missingField } };
   }
 
-  return edgeFields.id.values.map((id, index) => {
+  const edges: EdgeDatum[] = [];
+  const examples: MissingEndpointExample[] = [];
+  let affectedEdges = 0;
+
+  for (let index = 0; index < edgeFields.id.values.length; index++) {
+    const id = edgeFields.id.values[index];
     const target = edgeFields.target?.values[index];
     const source = edgeFields.source?.values[index];
-
     const sourceNode = nodesMap[source];
     const targetNode = nodesMap[target];
 
-    return {
+    if (!sourceNode || !targetNode) {
+      affectedEdges++;
+      if (examples.length < MAX_MISSING_ENDPOINT_EXAMPLES) {
+        examples.push({
+          rowIndex: index,
+          edgeId: id,
+          missing: [
+            ...(!sourceNode ? [{ side: 'source' as const, id: source }] : []),
+            ...(!targetNode ? [{ side: 'target' as const, id: target }] : []),
+          ],
+        });
+      }
+      continue;
+    }
+
+    edges.push({
       id,
       dataFrameRowIndex: index,
       source,
@@ -280,8 +347,14 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
       thickness: edgeFields.thickness?.values[index] || 1,
       color: edgeFields.color?.values[index],
       strokeDasharray: edgeFields.strokeDasharray?.values[index],
-    };
-  });
+    });
+  }
+
+  if (affectedEdges > 0) {
+    return { edges: [], error: { kind: 'missing-endpoints', affectedEdges, examples } };
+  }
+
+  return { edges };
 }
 
 function computableField(field?: Field) {

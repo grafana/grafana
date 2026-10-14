@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -125,6 +125,8 @@ import (
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
@@ -183,6 +185,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	legacydualwrite "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
 	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
@@ -279,6 +282,8 @@ var wireBasicSet = wire.NewSet(
 	jwt.ProvideService,
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
+	ngprovenance.ProvideProvenanceStore,
+	ngrules.ProvideRuleStore,
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
@@ -379,9 +384,9 @@ var wireBasicSet = wire.NewSet(
 	annotationsapi.ProvideTokenExchanger,
 	annotationsapi.ProvideMigrationProxy,
 	starApi.ProvideK8sClients,
-	userimpl.ProvideService,
+	userimpl.ProvideServiceWithWatch,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
-	orgimpl.ProvideService,
+	orgimpl.ProvideServiceWithWatch,
 	orgimpl.ProvideDeletionService,
 	orgimpl.ProvideDeleteRegistrar,
 	wire.Bind(new(org.DeletionService), new(*orgimpl.DeletionService)),
@@ -389,7 +394,7 @@ var wireBasicSet = wire.NewSet(
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
-	teamimpl.ProvideService,
+	teamimpl.ProvideServiceWithWatch,
 	wire.Bind(new(team.Service), new(*teamimpl.Service)),
 	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,
@@ -486,7 +491,9 @@ var wireBasicSet = wire.NewSet(
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
-	metrics.WireSet,
+	legacywatch.ProvidePublisher,
+	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
+	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -496,7 +503,7 @@ var wireSet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
-	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrules.RuleStore)),
 	// Server only — builds the kvlease-backed Elector for the embedded zanzana
 	// reconciler. CLI/test sets bind Elector to NewDefaultElector instead, so
 	// the unified-storage KV is never opened from grafana-cli.
@@ -506,7 +513,8 @@ var wireSet = wire.NewSet(
 var wireCLISet = wire.NewSet(
 	NewRunner,
 	wireBasicSet,
-	metrics.WireSet,
+	legacywatch.ProvideDisabledPublisher, // No need for real legacywatch support
+	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -524,8 +532,10 @@ var wireCLISet = wire.NewSet(
 
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
+	legacywatch.ProvidePublisher,
+	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
 	ProvideTestEnv,
-	metrics.WireSetForTest,
+	metricsservice.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideService,
 	notifications.MockNotificationService,
@@ -537,7 +547,7 @@ var wireTestSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
-	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrules.RuleStore)),
 	// Tests get a default elector — none of the integration tests today need to
 	// exercise real leader election.
 	leaderelection.NewDefaultElector,

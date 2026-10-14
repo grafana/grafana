@@ -15,7 +15,7 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
 func conn(namespace, name string) *provisioningapis.Connection {

@@ -5,6 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ScrollContainer, useStyles2, Box } from '@grafana/ui';
 
+import { OptionsPaneReadOnlyProvider } from '../../dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
+
 import { DashboardSidebar } from './DashboardSidebar';
 import { type ElementEditPane } from './ElementEditPane';
 import { ElementEditPaneHeader } from './ElementEditPaneHeader';
@@ -27,19 +29,21 @@ export function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEd
   }
 
   return (
-    <div className={styles.wrapper}>
-      <ElementEditPaneHeader element={element} sidebar={sidebar} />
-      <ScrollContainer showScrollIndicators={true}>
-        <div className={styles.categories}>
-          {element.renderTopButton && (
-            <Box display="flex" alignItems={'center'} paddingTop={2} paddingLeft={2} paddingRight={2}>
-              {element.renderTopButton()}
-            </Box>
-          )}
-          {categories.map((cat) => cat.renderElement())}
-        </div>
-      </ScrollContainer>
-    </div>
+    <OptionsPaneReadOnlyProvider value={element.isReadOnly === true}>
+      <div className={styles.wrapper}>
+        <ElementEditPaneHeader element={element} sidebar={sidebar} />
+        <ScrollContainer showScrollIndicators={true}>
+          <div className={styles.categories}>
+            {element.renderTopButton && (
+              <Box display="flex" alignItems={'center'} paddingTop={2} paddingLeft={2} paddingRight={2}>
+                {element.renderTopButton()}
+              </Box>
+            )}
+            {categories.map((cat) => cat.renderElement())}
+          </div>
+        </ScrollContainer>
+      </div>
+    </OptionsPaneReadOnlyProvider>
   );
 }
 

@@ -45,6 +45,14 @@ type Display struct {
 	// (Admin/Editor/Viewer/None). Only populated for the current-user
 	// ("users/~") endpoint.
 	Role string `json:"role,omitempty"`
+
+	// AuthenticatedBy is the authentication provider used for the current identity.
+	// Only populated for the current-user ("users/~") endpoint.
+	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
+
+	// Email is the email address for the current identity.
+	// Only populated for the current-user ("users/~") endpoint.
+	Email string `json:"email,omitempty"`
 }
 
 func (Display) OpenAPIModelName() string {
