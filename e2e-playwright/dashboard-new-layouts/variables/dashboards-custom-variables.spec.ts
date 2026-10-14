@@ -1,9 +1,8 @@
-import { type Locator } from '@playwright/test';
-
 import { test, expect } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
-import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+import { expectPreviewOfValuesToBe } from './helpers/assertions';
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
   featureToggles: {
@@ -26,14 +25,6 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    const checkPreview = async (previewOptions: Locator, labels: string[]) => {
-      await test.step('Checking preview of values', async () => {
-        for (let i = 0; i < labels.length; i++) {
-          await expect(previewOptions.nth(i)).toHaveText(labels[i]);
-        }
-      });
-    };
-
     test('can add a new custom variable', async ({ page, selectors, controls, sidebar, panels }) => {
       const viewUrl = await importVariableTestDashboard(page, selectors, panels);
       const variable: Variable & { label: string } = {
@@ -50,7 +41,7 @@ test.describe(
       await sidebar.variableOptions.custom.selectFormat('CSV');
       await sidebar.variableOptions.custom.setValues(values);
 
-      await checkPreview(sidebar.variableOptions.custom.getPreviewOfValues(), [
+      await expectPreviewOfValuesToBe(sidebar.variableOptions.custom.getPreviewOfValues(), [
         'first value',
         'second label',
         'fourth value',
@@ -145,7 +136,7 @@ test.describe(
         'first value updated, second label updated : second value, fourth value'
       );
 
-      await checkPreview(sidebar.variableOptions.custom.getPreviewOfValues(), [
+      await expectPreviewOfValuesToBe(sidebar.variableOptions.custom.getPreviewOfValues(), [
         'first value updated',
         'second label updated',
         'fourth value',

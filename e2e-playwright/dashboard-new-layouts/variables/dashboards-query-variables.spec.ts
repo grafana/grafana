@@ -1,7 +1,8 @@
 import { test, expect } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
-import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+import { expectPreviewOfValuesToBe } from './helpers/assertions';
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
   featureToggles: {
@@ -188,6 +189,130 @@ test.describe(
       await expect(panelBody).toBeVisible();
       const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText('VariableUnderTest: A');
+    });
+
+    test('filters and sorts the queried options, and adds static options to them', async ({
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+    }) => {
+      const viewUrl = await importVariableTestDashboard(page, selectors, panels);
+      const variable: Variable & { label: string } = {
+        type: 'query',
+        name: 'VariableUnderTest',
+        label: 'VariableUnderTestLabel',
+        value: '',
+      };
+
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
+
+      await sidebar.variableOptions.query.openEditor();
+      // TestData returns A to H in ascending order for "*"
+      await sidebar.variableOptions.query.selectTargetDatasource('gdev-testdata');
+      await sidebar.variableOptions.query.setTestDataQuery('*');
+      // We exclude A because it would be the default value, so a missing filter cannot go unnoticed.
+      await sidebar.variableOptions.query.setRegex('/^[B-D]$/');
+      await sidebar.variableOptions.query.selectSort('Alphabetical (desc)');
+      await sidebar.variableOptions.query.openStaticOptionsTab();
+      await sidebar.variableOptions.query.addStaticOption('static-value', 'Static value');
+      await sidebar.variableOptions.query.runQuery();
+
+      // We expect the static option to bypass the regex and sort, as it is prepended to the queried options.
+      const expectedOptions = ['Static value', 'D', 'C', 'B'];
+      await expectPreviewOfValuesToBe(sidebar.variableOptions.query.getPreviewOfValues(), expectedOptions);
+
+      await sidebar.variableOptions.query.applyChanges();
+
+      await controls.variables.openDropdown(variable.label);
+      await expect(controls.variables.getOptions()).toHaveText(expectedOptions);
+      await page.keyboard.press('Escape');
+
+      // We select a queried option first because initialization falls back to the static one, so only this proves it is selectable.
+      const markdownContent = panels.getBody('Variable output').locator('.markdown-html');
+      await controls.variables.selectOption(variable.label, 'C');
+      await expect(markdownContent).toContainText('VariableUnderTest: C');
+
+      await controls.variables.selectOption(variable.label, 'Static value');
+      const dropdownTrigger = controls.variables.getDropdownTrigger(variable.label);
+      await expect(dropdownTrigger).toContainText('Static value');
+      await expect(markdownContent).toContainText('VariableUnderTest: static-value');
+
+      await saveAndGotoDashboardUrl(page, controls, viewUrl);
+
+      await expect(dropdownTrigger).toContainText('Static value');
+      await expect(markdownContent).toContainText('VariableUnderTest: static-value');
+
+      // We check the options again because they are recomputed on load, so this proves the regex, sort and static options were saved.
+      await controls.variables.openDropdown(variable.label);
+      await expect(controls.variables.getOptions()).toHaveText(expectedOptions);
+    });
+
+    test('refetches the options on time range change only when set to refresh on time range change', async ({
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+    }) => {
+      await importVariableTestDashboard(page, selectors, panels);
+      const variable: Variable & { label: string } = {
+        type: 'query',
+        name: 'VariableUnderTest',
+        label: 'VariableUnderTestLabel',
+        value: '',
+      };
+
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
+
+      await sidebar.variableOptions.query.openEditor();
+      await sidebar.variableOptions.query.selectTargetDatasource('gdev-testdata');
+      // TestData returns a query starting with "value" as its single option, so the option tracks the time range it was fetched for.
+      await sidebar.variableOptions.query.setTestDataQuery('value-${__from:date:iso}');
+      await sidebar.variableOptions.query.runQuery();
+
+      // The fixture's time range starts on 2026-09-01 (UTC)
+      await expectPreviewOfValuesToBe(sidebar.variableOptions.query.getPreviewOfValues(), [
+        'value-2026-09-01T00:00:00.000Z',
+      ]);
+
+      await sidebar.variableOptions.query.applyChanges();
+
+      const dropdownTrigger = controls.variables.getDropdownTrigger(variable.label);
+      const markdownContent = panels.getBody('Variable output').locator('.markdown-html');
+      await expect(dropdownTrigger).toContainText('value-2026-09-01T00:00:00.000Z');
+
+      await sidebar.variableOptions.query.selectRefresh('On time range change');
+      await controls.timeRange.set('2026-09-03 00:00:00', '2026-09-04 00:00:00');
+
+      await expect(dropdownTrigger).toContainText('value-2026-09-03T00:00:00.000Z');
+      await expect(markdownContent).toContainText('VariableUnderTest: value-2026-09-03T00:00:00.000Z');
+
+      // We select the variable again because using the time picker deselects it, which replaces its sidebar pane with the dashboard's.
+      await sidebar.toolbar.clickButton('Outline');
+      await sidebar.contentOutline.toggleNode('Variables');
+      await sidebar.contentOutline.clickItem(variable.label);
+      await sidebar.variableOptions.query.selectRefresh('On dashboard load');
+      await controls.timeRange.set('2026-09-05 00:00:00', '2026-09-06 00:00:00');
+
+      // We wait for the new time range to apply first, otherwise the unchanged option would prove nothing.
+      await expect(controls.timeRange.getPickerButton()).toContainText('2026-09-05 00:00:00 to 2026-09-06 00:00:00');
+      await expect(dropdownTrigger).toContainText('value-2026-09-03T00:00:00.000Z');
+      await expect(markdownContent).toContainText('VariableUnderTest: value-2026-09-03T00:00:00.000Z');
+
+      // We reload with the new time range kept in the URL, so only the dashboard load can refetch the option.
+      await flows.dashboards.saveDashboard(page, controls);
+
+      await expect(dropdownTrigger).toContainText('value-2026-09-05T00:00:00.000Z');
+      await expect(markdownContent).toContainText('VariableUnderTest: value-2026-09-05T00:00:00.000Z');
+
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Outline');
+      await sidebar.contentOutline.toggleNode('Variables');
+      await sidebar.contentOutline.clickItem(variable.label);
+
+      await expect(sidebar.variableOptions.query.getRefreshInput()).toHaveValue('On dashboard load');
     });
   }
 );

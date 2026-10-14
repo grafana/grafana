@@ -77,10 +77,12 @@ export class Controls extends PageObject {
   }
 
   readonly timeRange = {
+    /** Returns the timepicker button; its text is the current time range (e.g. "2026-09-01 00:00:00 to 2026-09-02 00:00:00") */
+    getPickerButton: (): Locator => this.getByGrafanaSelector(this.selectors.components.TimePicker.openButton),
     /** Sets an absolute time range through the timepicker's from/to fields */
     set: async (from: string, to: string) => {
       await test.step(`Set time range from "${from}" to "${to}"`, async () => {
-        await this.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
+        await this.timeRange.getPickerButton().click();
         const fromField = this.getByGrafanaSelector(this.selectors.components.TimePicker.fromField);
         await fromField.click();
         await fromField.fill(from);
@@ -128,6 +130,11 @@ export class Controls extends PageObject {
         await this.page.getByRole('listbox').getByRole('option', { name: key, exact: true }).click();
       });
     },
+    /** Returns every option of the open dropdown, in display order */
+    getOptions: (): Locator =>
+      // like getOption(), we match the ARIA role: the control's virtualized Select menu renders no listbox to anchor to, and a
+      // Select-specific testid would break once the control moves to Combobox, which also renders role="option" items
+      this.page.getByRole('option'),
     /** Returns the dropdown option with the given label (the dropdown must be open) */
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
     /** Opens the variable's dropdown by clicking its input */
