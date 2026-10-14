@@ -55,6 +55,8 @@ if (typeof window.PointerEvent === 'undefined') {
 
 const CELL_RECT = { left: 100, top: 200, width: 600, height: 300 };
 const CONTENT_RECT = { left: 0, top: 0, width: 1024, height: 768 };
+/** The floating Assistant in the bottom-right corner, where a test places one. */
+const FLOATING_RECT = { left: 600, top: 500, width: 400, height: 244 };
 const originalElementsFromPoint = document.elementsFromPoint;
 const cleanups: Array<() => void> = [];
 
@@ -62,7 +64,11 @@ beforeEach(() => {
   setTestFlags({ [NOTEBOOKS_FLAG]: true, 'grafana.notebookComposer': true });
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-    const { left, top, width, height } = this.hasAttribute('data-notebook-cell-key') ? CELL_RECT : CONTENT_RECT;
+    const { left, top, width, height } = this.hasAttribute('data-notebook-cell-key')
+      ? CELL_RECT
+      : this.hasAttribute('data-extension-sidebar')
+        ? FLOATING_RECT
+        : CONTENT_RECT;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured rect without toJSON
     return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top } as DOMRect;
   });
@@ -303,5 +309,108 @@ describe('notebook Composer with the extension sidebar docked', () => {
     await act(async () => {
       session.exit();
     });
+  });
+});
+
+/** The declarations of the class rules on `element` (jsdom does not compute stacking). */
+function stylesFor(element: Element) {
+  const selectors = new Set(Array.from(element.classList, (className) => `.${className}`));
+  return Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .filter((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule && selectors.has(rule.selectorText))
+    .map((rule) => rule.style.cssText)
+    .join('\n');
+}
+
+describe('notebook Composer with the floating Assistant', () => {
+  let sidebar: HTMLElement;
+
+  beforeEach(() => {
+    sidebar = document.createElement('div');
+    sidebar.setAttribute('data-extension-sidebar', '');
+    document.body.appendChild(sidebar);
+  });
+
+  afterEach(() => sidebar.remove());
+
+  it('stacks the overlay inside the notebook, so the Assistant above it stays above its pins and outlines', () => {
+    const scene = buildNotebook();
+    enterNotebookComposer(scene);
+
+    render(<scene.Component model={scene} />);
+
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    expect(stylesFor(container)).toContain('isolation: isolate');
+  });
+
+  it('never starts a pick or a region from a press inside the Assistant', async () => {
+    const { session, overlay } = setup();
+    let settled = false;
+    act(() => {
+      void session.pickElement(live()).then(() => (settled = true));
+    });
+
+    fireEvent.pointerDown(overlay, { clientX: 700, clientY: 600, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 200, clientY: 250 });
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    fireEvent.pointerUp(overlay, { clientX: 200, clientY: 250 });
+    fireEvent.click(overlay, { clientX: 700, clientY: 600 });
+    await act(() => Promise.resolve());
+
+    expect(settled).toBe(false);
+  });
+
+  it('stops a drag that runs on over the Assistant at its edge', async () => {
+    const { session, overlay } = setup();
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickRegion(live());
+    });
+
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 800, clientY: 700 });
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
+    expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toEqual({
+      left: 150,
+      top: 250,
+      width: 450,
+      height: 450,
+    });
+  });
+
+  it("captures a region over the page's background, not transparent", async () => {
+    jest
+      .mocked(renderNode)
+      .mockReset()
+      .mockResolvedValue(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the size is read
+        { width: 1200, height: 600 } as HTMLCanvasElement
+      );
+    jest
+      .mocked(cropToBlob)
+      .mockReset()
+      .mockResolvedValue(new Blob(['webp'], { type: 'image/webp' }));
+    // The page paints the background; the notebook and its cells paint none.
+    document.body.style.backgroundColor = 'rgb(9, 11, 15)';
+    cleanups.push(() => document.body.style.removeProperty('background-color'));
+    const { session, overlay } = setup();
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickRegion(live());
+    });
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const region = (await pick) as { ref: { regionId: string } };
+
+    let result: unknown;
+    await act(async () => {
+      result = await session.captureRegion(region.ref.regionId, live());
+    });
+
+    expect(result).toMatchObject({ status: 'ready' });
+    expect(jest.mocked(renderNode).mock.calls[0][1].backgroundColor).toBe('rgb(9, 11, 15)');
   });
 });

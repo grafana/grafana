@@ -635,5 +635,8 @@ const getStyles = () => ({
   // The Composer overlay covers this container exactly.
   composing: css({
     position: 'relative',
+    // A stacking context, as the dashboard's container has: the Composer overlay's z-index then ranks it
+    // within the notebook only, so the extension sidebar and app chrome stay above its pins and outlines.
+    isolation: 'isolate',
   }),
 });

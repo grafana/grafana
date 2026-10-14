@@ -1,5 +1,12 @@
 import { cropToBlob, releaseCanvas, renderNode } from './raster';
-import { MAX_IMAGE_EDGE, MAX_RASTER_PIXELS, planCrop, planPixelRatio, renderRegionImage } from './regionCapture';
+import {
+  getEffectiveBackground,
+  MAX_IMAGE_EDGE,
+  MAX_RASTER_PIXELS,
+  planCrop,
+  planPixelRatio,
+  renderRegionImage,
+} from './regionCapture';
 
 jest.mock('./raster', () => ({
   renderNode: jest.fn(),
@@ -101,5 +108,53 @@ describe('renderRegionImage', () => {
       0.85
     );
     expect(releaseCanvas).toHaveBeenCalledWith(raster);
+  });
+
+  it("paints the page's background under a root that paints none of its own", async () => {
+    const page = document.createElement('main');
+    page.style.backgroundColor = 'rgb(9, 11, 15)';
+    const root = document.createElement('section');
+    page.appendChild(root);
+    document.body.appendChild(page);
+    jest.spyOn(root, 'getBoundingClientRect').mockReturnValue(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the box is read
+      { left: 0, top: 0, width: 100, height: 100 } as DOMRect
+    );
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the size is read
+    jest.mocked(renderNode).mockResolvedValue({ width: 100, height: 100 } as HTMLCanvasElement);
+    jest.mocked(cropToBlob).mockResolvedValue(new Blob(['webp'], { type: 'image/webp' }));
+    try {
+      await renderRegionImage({
+        root,
+        region: { left: 10, top: 10, width: 50, height: 50 },
+        exclude: () => false,
+        isCancelled: () => false,
+      });
+
+      expect(jest.mocked(renderNode).mock.calls.at(-1)?.[1].backgroundColor).toBe('rgb(9, 11, 15)');
+    } finally {
+      page.remove();
+    }
+  });
+});
+
+describe('getEffectiveBackground', () => {
+  it('takes the first background an element or its ancestors paint', () => {
+    const outer = document.createElement('div');
+    outer.style.backgroundColor = 'rgb(0, 0, 0)';
+    const middle = document.createElement('div');
+    middle.style.backgroundColor = 'rgba(255, 255, 255, 0)';
+    const inner = document.createElement('span');
+    outer.appendChild(middle);
+    middle.appendChild(inner);
+
+    // Black is a colour, not transparency.
+    expect(getEffectiveBackground(inner)).toBe('rgb(0, 0, 0)');
+    middle.style.backgroundColor = 'rgb(9, 11, 15)';
+    expect(getEffectiveBackground(inner)).toBe('rgb(9, 11, 15)');
+  });
+
+  it('is undefined when nothing paints one', () => {
+    expect(getEffectiveBackground(document.createElement('div'))).toBeUndefined();
   });
 });

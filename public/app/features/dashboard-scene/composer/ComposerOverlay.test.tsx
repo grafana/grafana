@@ -51,22 +51,27 @@ const originalElementsFromPoint = document.elementsFromPoint;
 let panelRect = { left: 100, top: 200, width: 400, height: 300 };
 /** Where the dashboard content (the overlay and its container) sits. */
 let contentRect = { left: 0, top: 0, width: 1024, height: 768 };
+/** Where an extension sidebar element sits: none unless a test places one. */
+let sidebarRect = { left: 0, top: 0, width: 0, height: 0 };
 
 beforeEach(() => {
   setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true, 'grafana.dashboardComposer': true });
   locationService.replace('/d/overlay-test');
   panelRect = { left: 100, top: 200, width: 400, height: 300 };
   contentRect = { left: 0, top: 0, width: 1024, height: 768 };
+  sidebarRect = { left: 0, top: 0, width: 0, height: 0 };
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
     const { left, top, width, height } = this.hasAttribute('data-viz-panel-key')
       ? panelRect
-      : this.getAttribute('role') === 'tooltip'
-        ? { left: 0, top: 0, width: 200, height: 24 }
-        : this.getAttribute('data-testid') === 'data-testid dashboard controls'
-          ? { left: 0, top: 0, width: 1024, height: 64 }
-          : this.getAttribute('data-dashboard-element-type') === 'variable'
-            ? { left: 20, top: 10, width: 200, height: 40 }
-            : contentRect;
+      : this.hasAttribute('data-extension-sidebar')
+        ? sidebarRect
+        : this.getAttribute('role') === 'tooltip'
+          ? { left: 0, top: 0, width: 200, height: 24 }
+          : this.getAttribute('data-testid') === 'data-testid dashboard controls'
+            ? { left: 0, top: 0, width: 1024, height: 64 }
+            : this.getAttribute('data-dashboard-element-type') === 'variable'
+              ? { left: 20, top: 10, width: 200, height: 40 }
+              : contentRect;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured rect without toJSON
     return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top } as DOMRect;
   });
@@ -1112,6 +1117,7 @@ describe('with the extension sidebar docked', () => {
     sidebar.setAttribute('data-extension-sidebar', '');
     document.body.appendChild(sidebar);
     contentRect = { ...contentRect, width: 700 };
+    sidebarRect = { left: 700, top: 0, width: 324, height: 768 };
   });
 
   afterEach(() => sidebar?.remove());
@@ -1161,6 +1167,24 @@ describe('with the extension sidebar docked', () => {
     await expect(region).resolves.toMatchObject({ ref: { kind: 'region' } });
   });
 
+  it('stops a drag at the docked column when the content runs on under it', async () => {
+    // Content wider than the page: the overlay reaches under the docked column.
+    contentRect = { ...contentRect, width: 1024 };
+    const { session, startPick } = setup();
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 500, clientY: 100, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 900, clientY: 300 });
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
+    expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toMatchObject({
+      left: 500,
+      width: 200,
+    });
+  });
+
   it('captures a region without the docked sidebar, at the narrower page scale', async () => {
     const { session } = setup();
     let region: Promise<unknown> = Promise.resolve();
@@ -1188,6 +1212,98 @@ describe('with the extension sidebar docked', () => {
       'image/webp',
       0.85
     );
+  });
+});
+
+// The floating Assistant sits above the overlay; it is never part of the document Composer annotates.
+describe('with the extension sidebar floating', () => {
+  let sidebar: HTMLElement;
+
+  beforeEach(() => {
+    sidebar = document.createElement('div');
+    sidebar.setAttribute('data-extension-sidebar', '');
+    document.body.appendChild(sidebar);
+    // The floating panel in the bottom-right corner of a 1024x768 page.
+    sidebarRect = { left: 600, top: 500, width: 400, height: 244 };
+  });
+
+  afterEach(() => sidebar.remove());
+
+  function settledFlag(pick: Promise<unknown>) {
+    const state = { settled: false };
+    void pick.then(() => (state.settled = true));
+    return state;
+  }
+
+  it('never starts a pick or a region from a press inside it', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const state = settledFlag(pick);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 700, clientY: 600, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 200, clientY: 300 });
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    fireEvent.pointerUp(overlay, { clientX: 200, clientY: 300 });
+    fireEvent.click(overlay, { clientX: 700, clientY: 600 });
+    await act(() => Promise.resolve());
+
+    expect(state.settled).toBe(false);
+  });
+
+  it('shows no hint or hover while the pointer is over it', async () => {
+    const { startPick } = setup();
+    startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerMove(overlay, { clientX: 700, clientY: 600 });
+    await nextFrame();
+
+    expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
+  });
+
+  it('stops a drag that runs on over it at its edge, keeping the larger rectangle', async () => {
+    const { session, startPick } = setup();
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 800, clientY: 700 });
+    // Stopping at its left edge (x 600) keeps 450x450; at its top edge (y 500) only 650x250.
+    expect(screen.getByTestId('composer-region-draft')).toHaveStyle({
+      left: '150px',
+      top: '250px',
+      width: '450px',
+      height: '450px',
+    });
+    fireEvent.pointerUp(overlay, { clientX: 800, clientY: 700 });
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
+    expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toEqual({
+      left: 150,
+      top: 250,
+      width: 450,
+      height: 450,
+    });
+  });
+
+  it('keeps a drag beside it whole', async () => {
+    const { session, startPick } = setup();
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 100, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 900, clientY: 400 });
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
+    expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toEqual({
+      left: 150,
+      top: 100,
+      width: 750,
+      height: 300,
+    });
   });
 });
 
