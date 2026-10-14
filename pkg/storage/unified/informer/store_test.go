@@ -154,9 +154,8 @@ func TestStore_ListEmpty(t *testing.T) {
 	assert.Empty(t, NewStore().List(context.Background()))
 }
 
-// Update reports whether the store took the write. A caller that tracks the
-// store's contents cannot tell a refused write from an accepted one by looking
-// at the contents, because a refused write leaves them exactly as they were.
+// Update reports whether the store took the write; a refused write leaves the
+// contents unchanged, so callers cannot tell from them.
 func TestStore_UpdateReportsWhetherItTookTheWrite(t *testing.T) {
 	ctx := context.Background()
 

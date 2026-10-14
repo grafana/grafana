@@ -214,12 +214,10 @@ func objectRV(obj any) int64 {
 	return rv
 }
 
-// RelistProjectionMetrics reports how the periodic re-list was served. It owns
-// its own collectors rather than living on informerMetrics, whose delivery
-// metrics are registered by whichever delta source owns them, and it is built
-// once per process and handed to each delta source: the collectors are shared
-// across resources and told apart by labels, so registering them per delta
-// source would be a duplicate registration.
+// RelistProjectionMetrics reports how the periodic re-list was served. Build it
+// once per process and hand it to each delta source: the collectors are shared
+// across resources and told apart by labels, so registering them per delta source
+// would be a duplicate registration.
 type RelistProjectionMetrics struct {
 	projections *prometheus.CounterVec
 	hydrations  *prometheus.CounterVec
@@ -240,11 +238,9 @@ func NewRelistProjectionMetrics(reg prometheus.Registerer) *RelistProjectionMetr
 	}
 }
 
-// Recorder binds the metrics to one kind. A delta source reports one group and
-// resource for its whole life, so the label values are resolved once here and
-// the re-list is left incrementing plain counters. Resolving them also brings
-// the series into existence at zero, so a dashboard sees the fallback counter
-// before anything has fallen back.
+// Recorder binds the metrics to one kind, resolving the label values once. It
+// also creates the series at zero, so the fallback counter is visible before
+// anything falls back.
 func (m *RelistProjectionMetrics) Recorder(gvr schema.GroupVersionResource) RelistRecorder {
 	if m == nil {
 		return RelistRecorder{}
@@ -256,8 +252,7 @@ func (m *RelistProjectionMetrics) Recorder(gvr schema.GroupVersionResource) Reli
 	}
 }
 
-// RelistRecorder records one kind's re-list outcomes. Its zero value discards,
-// so a caller running without metrics needs no nil checks.
+// RelistRecorder records one kind's re-list outcomes. Its zero value discards.
 type RelistRecorder struct {
 	keys       prometheus.Counter
 	objects    prometheus.Counter

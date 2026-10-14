@@ -13,9 +13,8 @@ import (
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
-// scanActive is the count the quota check used to compute for itself, by walking
-// the whole cluster-wide snapshot on every reconcile. The tallies have to agree
-// with it after any sequence of mutations, or the cheaper count is a wrong one.
+// scanActive is the count the quota check used to compute: a walk of the whole
+// snapshot. The tallies must agree with it after any sequence of mutations.
 func scanActive(t *testing.T, store usinformer.Store, namespace string) int {
 	t.Helper()
 	count := 0
@@ -60,8 +59,8 @@ func TestRepositorySnapshot_CountsPerNamespace(t *testing.T) {
 	requireAgrees(t, snapshot, "ns-a", "ns-b", "ns-none")
 }
 
-// A reconcile reads the repository fresh and writes it back, which is how a soft
-// delete reaches the count before the next re-list.
+// A reconcile write-back is how a soft delete reaches the count before the next
+// re-list.
 func TestRepositorySnapshot_WriteThroughMovesTheCount(t *testing.T) {
 	snapshot := NewRepositorySnapshot(usinformer.NewStore())
 	snapshot.Replace(objs(repoAt("ns", "going", "1"), repoAt("ns", "staying", "1")), 10)
@@ -105,8 +104,8 @@ func TestRepositorySnapshot_DeletesLeaveTheCount(t *testing.T) {
 	}
 }
 
-// Replace is authoritative, so it has to rebuild rather than accumulate: a
-// re-list that drops a repository must drop it from the count too.
+// Replace rebuilds rather than accumulates: a re-list that drops a repository
+// drops it from the count.
 func TestRepositorySnapshot_ReplaceRebuilds(t *testing.T) {
 	snapshot := NewRepositorySnapshot(usinformer.NewStore())
 	snapshot.Replace(objs(repoAt("ns", "a", "1"), repoAt("ns", "b", "1"), repoAt("other", "c", "1")), 10)
@@ -118,12 +117,12 @@ func TestRepositorySnapshot_ReplaceRebuilds(t *testing.T) {
 	requireAgrees(t, snapshot, "ns", "other")
 }
 
-// Replace carries forward a live write newer than the snapshot it is given, so
-// the tallies must come from what the store installed and not from the argument.
+// The tallies come from what the store installed, which carries forward live
+// writes newer than the snapshot.
 func TestRepositorySnapshot_ReplaceCountsWhatTheStoreKept(t *testing.T) {
 	snapshot := NewRepositorySnapshot(usinformer.NewStore())
-	// A live add at rv 30, then a re-list whose snapshot was read at rv 20: the
-	// store keeps the newer object, so the count must include it.
+	// A live add at rv 30, then a re-list read at rv 20: the store keeps the newer
+	// object.
 	snapshot.Update(t.Context(), repoAt("ns", "live", "30"))
 	snapshot.Replace(objs(repoAt("ns", "listed", "15")), 20)
 
@@ -131,8 +130,7 @@ func TestRepositorySnapshot_ReplaceCountsWhatTheStoreKept(t *testing.T) {
 	requireAgrees(t, snapshot, "ns")
 }
 
-// The snapshot is cluster-wide, so a namespace that empties must not leave an
-// entry behind: one per namespace that ever held a repository is a leak.
+// A namespace that empties leaves no entry behind.
 func TestRepositorySnapshot_PrunesEmptyNamespaces(t *testing.T) {
 	snapshot := NewRepositorySnapshot(usinformer.NewStore())
 	snapshot.Replace(objs(repoAt("ns", "only", "1")), 10)
@@ -144,9 +142,8 @@ func TestRepositorySnapshot_PrunesEmptyNamespaces(t *testing.T) {
 	assert.Empty(t, snapshot.counts, "an emptied namespace must not be retained")
 }
 
-// The store drops an Update whose resource version predates a delete it has
-// tombstoned, which is what a reconcile read that finished after a live deletion
-// looks like. Tallying it anyway would leave a deleted repository holding quota.
+// A write the store drops (older than a tombstoned delete) must not be tallied,
+// or a deleted repository holds quota.
 func TestRepositorySnapshot_IgnoresWritesTheStoreDrops(t *testing.T) {
 	snapshot := NewRepositorySnapshot(usinformer.NewStore())
 	snapshot.Replace(objs(repoAt("ns", "going", "10")), 5)
@@ -173,8 +170,8 @@ func TestRepositorySnapshot_CountsWritesPastTheDelete(t *testing.T) {
 	requireAgrees(t, snapshot, "ns")
 }
 
-// A re-list whose snapshot postdates the delete spends the tombstone, so a write
-// after it is an ordinary one again rather than a stale one.
+// A re-list past the delete spends the tombstone, so later writes are ordinary
+// again.
 func TestRepositorySnapshot_ReplaceSpendsTheTombstone(t *testing.T) {
 	snapshot := NewRepositorySnapshot(usinformer.NewStore())
 	snapshot.DeleteAt(t.Context(), "ns", "going", 20)
@@ -186,9 +183,8 @@ func TestRepositorySnapshot_ReplaceSpendsTheTombstone(t *testing.T) {
 	requireAgrees(t, snapshot, "ns")
 }
 
-// A mutation landing while a re-list is in flight must not have its tally change
-// overwritten by the rebuild: both run under the same lock, so the rebuild either
-// precedes the mutation or observes it.
+// A mutation landing mid re-list must not have its tally overwritten by the
+// rebuild.
 func TestRepositorySnapshot_ConcurrentMutationsAgreeWithTheStore(t *testing.T) {
 	snapshot := NewRepositorySnapshot(usinformer.NewStore())
 
@@ -226,11 +222,8 @@ func TestRepositorySnapshot_ConcurrentMutationsAgreeWithTheStore(t *testing.T) {
 	requireAgrees(t, snapshot, "ns")
 }
 
-// listAllPages returns 0 when it cannot read the snapshot's resource version,
-// and the store responds by dropping every tombstone: an undated snapshot makes
-// no claim about when it was read, so it cannot be used to arbitrate a delete.
-// The mirror has to drop them too, or it rejects writes the store now accepts
-// and leaks an entry per delete for as long as lists stay undated.
+// An undated snapshot (listRV 0) drops every tombstone in the store, so the
+// tallies must follow and accept the writes the store now accepts.
 func TestRepositorySnapshot_UndatedReplaceClearsTheTombstones(t *testing.T) {
 	snapshot := NewRepositorySnapshot(usinformer.NewStore())
 	snapshot.DeleteAt(t.Context(), "ns", "going", 20)

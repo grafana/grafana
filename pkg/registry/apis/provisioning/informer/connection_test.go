@@ -144,9 +144,8 @@ func TestRelistProjectionMetrics_ReportsTheProjection(t *testing.T) {
 // unified-storage feature that any group can report here, so a query that reads
 // only the resource name would silently sum two of them together.
 //
-// Binding the recorder also brings both projections into existence, so the
-// fallback series can be graphed before anything has fallen back -- an absent
-// series and a zero one read very differently on a dashboard.
+// Binding the recorder also creates both projections at zero, so the fallback
+// series exists before anything falls back.
 func TestRelistProjectionMetrics_LabelsTheGroup(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	NewRelistProjectionMetrics(reg).Recorder(connGVR).Projection(true)
@@ -160,9 +159,8 @@ func TestRelistProjectionMetrics_LabelsTheGroup(t *testing.T) {
 	assert.Zero(t, projectionCount(t, reg, connGVR, "objects"), "present, and zero until it fires")
 }
 
-// The collectors are shared by every delta source and told apart by labels, so
-// one registry has to serve them all. Registering per delta source would panic
-// on the second, which is how a process would lose its informers.
+// The collectors are shared by every delta source, so one registry has to serve
+// them all; registering per source would panic on the second.
 func TestRelistProjectionMetrics_SharedAcrossResources(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	metrics := NewRelistProjectionMetrics(reg)
@@ -178,8 +176,7 @@ func TestRelistProjectionMetrics_SharedAcrossResources(t *testing.T) {
 	assert.Zero(t, hydrationCount(t, reg, connGVR))
 }
 
-// A delta source built without metrics records nothing rather than panicking, so
-// a caller that has no registry needs no nil checks.
+// A delta source built without metrics records nothing rather than panicking.
 func TestRelistRecorder_ZeroValueDiscards(t *testing.T) {
 	var recorder RelistRecorder
 	recorder.Projection(true)

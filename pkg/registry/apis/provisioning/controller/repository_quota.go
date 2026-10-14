@@ -50,8 +50,7 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 		}, nil
 	}
 
-	// Count the namespace's active repositories through the read seam. The count
-	// tolerates staleness.
+	// The count tolerates staleness.
 	activeCount, err := c.repos.CountActiveRepositories(ctx, namespace)
 	if err != nil {
 		return metav1.Condition{}, err

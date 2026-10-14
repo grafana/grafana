@@ -18,10 +18,9 @@ const (
 	repoHydrationsSample = `grafana_provisioning_informer_relist_hydrations_total{group="provisioning.grafana.app",resource="repositories"}`
 )
 
-// Nothing publishes watch notifications here, so a created Repository can only
-// reach the controller through the periodic re-list, and with the setting on that
-// re-list carries keys rather than bodies. Reaching healthy therefore proves the
-// controller reconciles from identities alone, reading back what it needs.
+// Nothing publishes watch notifications here, so a created Repository reaches the
+// controller only through the keys-only re-list; reaching healthy proves it
+// reconciles from identities.
 func TestIntegrationProvisioningKeysReList_RepositoryReconciledFromKeys(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -34,17 +33,12 @@ func TestIntegrationProvisioningKeysReList_RepositoryReconciledFromKeys(t *testi
 }
 
 // Reconciling proves the pipeline works; this proves it kept working on keys.
+// This server is below the read-back break-even, so settled ticks run on keys,
+// nothing is read back, and a full list is the correct answer whenever a
+// repository moves.
 //
-// This server holds a handful of repositories, which is below the read-back
-// break-even, so the shipped policy here is: take the cheap keys list every
-// tick, and when something has actually changed take the full list rather than
-// read it back. So the assertion is that settled ticks run on keys and that
-// nothing is ever read back at this size -- not that the full list never runs,
-// which at this snapshot size is the correct answer whenever a repository moves.
-//
-// The counters are cumulative and the server is shared with the other tests
-// here, so everything is measured as a delta from the moment this repository
-// settled.
+// The counters are cumulative and the server is shared, so everything is a delta
+// from when this repository settled.
 func TestIntegrationProvisioningKeysReList_UsesTheKeysProjectionForRepositories(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -69,10 +63,8 @@ func TestIntegrationProvisioningKeysReList_UsesTheKeysProjectionForRepositories(
 		"below the break-even nothing is read back: a changed repository takes the list instead")
 }
 
-// The quota count reads the snapshot the keys-only re-list writes, so it is the
-// one consumer that needs more than identities. A removed repository has to leave
-// the count: if the projection re-added it, or the snapshot never dropped it, the
-// surviving repository would stay over quota forever.
+// The quota count is the one consumer that needs more than identities: a removed
+// repository has to leave it, or the survivor stays over quota forever.
 func TestIntegrationProvisioningKeysReList_DeletedRepositoryLeavesTheQuotaCount(t *testing.T) {
 	helper := sharedHelper(t)
 

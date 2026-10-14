@@ -218,15 +218,14 @@ func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetaile
 	}
 }
 
-// repoKeyFunc keys a delivered object without asking what it is: the apiserver
-// informer delivers a whole Repository and the NATS informer a projection of
-// one, and only the key and resource version are ever read.
+// repoKeyFunc keys a delivered object of any type: the NATS informer delivers a
+// projection of a Repository, not the whole object.
 func repoKeyFunc(obj any) (string, error) {
 	return cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 }
 
 // objectResourceVersion returns the resource version of a delivered object, or ""
-// for a delete tombstone, which carries no metadata to read.
+// for a delete tombstone.
 func objectResourceVersion(obj any) string {
 	acc, err := meta.Accessor(obj)
 	if err != nil {

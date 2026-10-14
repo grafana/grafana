@@ -234,8 +234,7 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 }
 
 // The collectors register on first call, so a second call that rebuilt them
-// would panic on the duplicate and take the operator down at startup. One call
-// per process is all there is today; this holds the accessor to that regardless.
+// would panic on the duplicate.
 func TestRelistProjectionMetricsIsMemoized(t *testing.T) {
 	cfg := &ControllerConfig{}
 
@@ -244,8 +243,7 @@ func TestRelistProjectionMetricsIsMemoized(t *testing.T) {
 	require.Same(t, first, cfg.RelistProjectionMetrics())
 }
 
-// nil keeps the full-object re-list, so the flag is the whole gate: an operator
-// that reads it wrong either never uses the projection or uses it unasked.
+// nil keeps the full-object re-list, so the flag is the whole gate.
 func TestProvisioningKeysListerFollowsTheSetting(t *testing.T) {
 	gvr := apisprovisioning.RepositoryResourceInfo.GroupVersionResource()
 
@@ -263,8 +261,8 @@ func TestProvisioningKeysListerFollowsTheSetting(t *testing.T) {
 		require.NoError(t, err)
 		cfg := &ControllerConfig{Settings: &setting.Cfg{Raw: raw}}
 
-		// No provisioning client is configured, so building the REST client fails
-		// rather than silently handing back a nil lister that reads as "off".
+		// Building the REST client fails rather than returning a nil lister that
+		// reads as "off".
 		_, err = cfg.ProvisioningKeysLister(logging.DefaultLogger, gvr)
 		require.Error(t, err)
 	})

@@ -5496,12 +5496,9 @@ func TestRepositoryController_recordReconcileError(t *testing.T) {
 	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseUser))
 }
 
-// The controller is fed by two informers that deliver different types: the
-// apiserver one hands it a whole Repository, the NATS one a metadata projection
-// of one. It reads only the key and the resource version, so both must work.
-// A type assertion here would make repoKeyFunc fail for the projection, and a
-// key that cannot be computed is a repository that never gets enqueued -- the
-// controller would go quiet rather than error.
+// The apiserver informer delivers a whole Repository and the NATS one a metadata
+// projection, so keying must accept both: a key that cannot be computed is a
+// repository that never gets enqueued, with no error.
 func TestRepoKeyFuncAcceptsBothFeeds(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -5529,8 +5526,7 @@ func TestRepoKeyFuncAcceptsBothFeeds(t *testing.T) {
 	}
 }
 
-// A delete tombstone carries no metadata to read, and the re-list dispatches one
-// for every repository that left the snapshot.
+// A delete tombstone carries no metadata to read.
 func TestRepoKeyFuncHandlesTombstones(t *testing.T) {
 	tombstone := cache.DeletedFinalStateUnknown{
 		Key: "ns/repo",

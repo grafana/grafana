@@ -1190,13 +1190,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			// One instance per process: the collectors are shared by every delta
-			// source below and told apart by labels, so registering them per
-			// source would be a duplicate registration.
+			// One per process; see RelistProjectionMetrics.
 			relistProjectionMetrics := informer.NewRelistProjectionMetrics(b.registry)
 
-			// The repository delta source and the getter it backs. nil keys keeps
-			// the full-object re-list; see NewRepositoryDeltaSource.
+			// The repository delta source and the getter it backs.
 			var repoKeys keysapi.Lister
 			if b.keysOnlyReList {
 				repoKeys = keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())

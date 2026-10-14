@@ -34,8 +34,7 @@ func repoAt(namespace, name, rv string) *provisioningapis.Repository {
 	return r
 }
 
-// terminating marks a repository as deleted but not yet gone, the state the
-// quota count has to keep seeing across a re-list.
+// terminating marks a repository as deleted but not yet gone.
 func terminating(r *provisioningapis.Repository) *provisioningapis.Repository {
 	now := metav1.Now()
 	r.DeletionTimestamp = &now
@@ -49,9 +48,8 @@ type fakeStore struct {
 	deleted []string
 }
 
-// newSeededSnapshot fills a snapshot the way the informer does, through Replace,
-// so the tallies reflect it. Seeding the wrapped store directly would leave them
-// empty -- the snapshot only knows the mutations that pass through it.
+// newSeededSnapshot fills a snapshot through Replace so the tallies reflect it;
+// seeding the wrapped store directly would leave them empty.
 func newSeededSnapshot(objs ...*provisioningapis.Repository) *RepositorySnapshot {
 	snapshot := NewRepositorySnapshot(newFakeStore())
 	projected := make([]runtime.Object, 0, len(objs))
@@ -62,9 +60,7 @@ func newSeededSnapshot(objs ...*provisioningapis.Repository) *RepositorySnapshot
 	return snapshot
 }
 
-// newFakeStore seeds a snapshot. It projects what it is handed, because that is
-// what the snapshot holds: seeding whole repositories would leave the re-list
-// unable to recognise its own previous snapshot.
+// newFakeStore seeds a snapshot with projections, which is what it holds.
 func newFakeStore(objs ...*provisioningapis.Repository) *fakeStore {
 	s := &fakeStore{objs: map[string]runtime.Object{}}
 	for _, o := range objs {
@@ -171,8 +167,7 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 	assert.Equal(t, 2, count, "the count must be scoped to the namespace")
 }
 
-// The quota count is the reason the snapshot carries a deletionTimestamp at all:
-// a repository awaiting its finalizers is still stored, and must not be counted.
+// A repository awaiting its finalizers is still stored, and must not be counted.
 func TestCachedRepositoryGetter_CountExcludesTerminating(t *testing.T) {
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 	require.NoError(t, indexer.Add(repo(testNamespace, "active")))
@@ -201,8 +196,7 @@ func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 	assert.Equal(t, 1, count, "the fresh Get must be reflected in the store")
 }
 
-// The write-through is trimmed like the re-list, so a warm snapshot costs the
-// same as a re-listed one and the store holds one shape either way.
+// The write-through is projected like the re-list.
 func TestClientRepositoryGetter_GetWritesThroughProjected(t *testing.T) {
 	full := repoAt("ns", "fresh", "7")
 	full.Spec.Title = "a title nobody reading the snapshot needs"
@@ -215,8 +209,7 @@ func TestClientRepositoryGetter_GetWritesThroughProjected(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "a title nobody reading the snapshot needs", got.Spec.Title, "the reconcile still gets the whole object")
 
-	// A projection has nowhere to put a body, which is the point: the snapshot
-	// cannot retain one even by accident.
+	// A projection has nowhere to put a body.
 	stored, ok := store.objs["ns/fresh"].(*repositoryProjection)
 	require.True(t, ok, "expected a projection, got %T", store.objs["ns/fresh"])
 	assert.Empty(t, stored.Finalizers, "nothing beyond the identity is carried")
@@ -273,11 +266,9 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 	})
 }
 
-// The whole point of the projection: a repository whose resource version has not
-// moved is carried forward from the previous snapshot, keeping the
-// deletionTimestamp the projection cannot carry. The API copy here has no
-// deletionTimestamp, so a read-back would silently resurrect it into the quota
-// count.
+// A repository whose resource version has not moved is carried forward, keeping
+// the deletionTimestamp the projection cannot carry; the API copy here has none,
+// so a read-back would resurrect it into the quota count.
 func TestRepositoryList_CarriesUnchangedForward(t *testing.T) {
 	store := newFakeStore(terminating(repoAt("ns", "going", "10")))
 	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{{Namespace: "ns", Name: "going", ResourceVersion: "10"}}}
@@ -296,12 +287,8 @@ func TestRepositoryList_CarriesUnchangedForward(t *testing.T) {
 	assert.Zero(t, hydrationCount(t, reg, repoGVR), "an unchanged key must not be read back")
 }
 
-// padSnapshot returns filler repositories and their matching keys, enough that a
-// snapshot of that size plus readBacks drifted keys is allowed to read all of
-// them back. Read-backs are bounded against the full list they avoid, so a
-// handful of repositories is below the break-even and would take the list
-// instead -- a test of the read-back path has to be padded past it. The filler
-// never drifts, so it costs nothing and the named cases carry the behaviour.
+// padSnapshot returns filler repositories and keys so that readBacks drifted
+// keys stay within the read-back limit. The filler never drifts.
 func padSnapshot(t *testing.T, readBacks int) (repos []*provisioningapis.Repository, keys []keysapi.Key) {
 	t.Helper()
 	for i := 0; maxHydrations(i+readBacks) < readBacks; i++ {
@@ -315,8 +302,7 @@ func padSnapshot(t *testing.T, readBacks int) (repos []*provisioningapis.Reposit
 }
 
 // A key whose resource version moved is read back, which is how a soft delete
-// reaches the snapshot: the live MODIFIED event is deliberately not written
-// through, so the re-list is what notices.
+// reaches the snapshot: live MODIFIED events are not written through.
 func TestRepositoryList_ReadsBackDrifted(t *testing.T) {
 	seed, keyList := padSnapshot(t, 1)
 	seed = append(seed, repoAt("ns", "going", "10"), repoAt("ns", "steady", "10"))
@@ -346,8 +332,7 @@ func TestRepositoryList_ReadsBackDrifted(t *testing.T) {
 	assert.Equal(t, float64(1), hydrationCount(t, reg, repoGVR), "only the drifted key is read back")
 }
 
-// An empty snapshot has nothing to carry forward, so every key would be a
-// read-back: one list is cheaper. This is the initial list.
+// Nothing to carry forward: one list is cheaper than a read per key.
 func TestRepositoryList_EmptyStoreListsFullObjects(t *testing.T) {
 	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{{Namespace: "ns", Name: "a", ResourceVersion: "10"}}}
 	client := fake.NewClientset(repoAt("ns", "from-full-list", "10"))
@@ -362,17 +347,13 @@ func TestRepositoryList_EmptyStoreListsFullObjects(t *testing.T) {
 	assert.Zero(t, hydrationCount(t, reg, repoGVR))
 }
 
-// Past the limit, reading each one back costs more than listing everything. The
-// limit tracks the snapshot, so the same drift can be worth reading back in a
-// large one and not in a small one; BenchmarkRelistStrategies is where those
-// numbers come from.
+// Past the limit one list is cheaper, and the limit tracks the snapshot size.
 func TestMaxHydrations(t *testing.T) {
 	for _, tc := range []struct {
 		snapshot int
 		want     int
 	}{
-		// Below the break-even one list beats any read-back: the keys path costs
-		// an extra request that a small list does not earn back.
+		// Below the break-even one list beats any read-back.
 		{snapshot: 0, want: 0},
 		{snapshot: 10, want: 0},
 		{snapshot: 100, want: 0},
@@ -384,8 +365,7 @@ func TestMaxHydrations(t *testing.T) {
 }
 
 func TestRepositoryList_TooManyDriftedListsFullObjects(t *testing.T) {
-	// Big enough that the share rather than the floor decides, so the test
-	// breaks if the limit stops tracking the snapshot.
+	// Big enough that the share, not the break-even, decides.
 	const total = 1000
 	limit := maxHydrations(total)
 	require.Positive(t, limit, "past the break-even, so read-backs are allowed at all")
@@ -413,8 +393,8 @@ func TestRepositoryList_TooManyDriftedListsFullObjects(t *testing.T) {
 	assert.Zero(t, hydrationCount(t, reg, repoGVR), "the limit is checked before any read-back")
 }
 
-// Hard-deleted between the keys list and the read-back. Leaving it out is right:
-// the Store's diff reports the removal from the snapshot's silence.
+// Deleted between the keys list and the read-back; the Store's diff reports the
+// removal.
 func TestRepositoryList_ReadBackNotFoundDropsTheKey(t *testing.T) {
 	seed, keyList := padSnapshot(t, 1)
 	seed = append(seed, repoAt("ns", "kept", "10"), repoAt("ns", "gone", "10"))
@@ -436,12 +416,10 @@ func TestRepositoryList_ReadBackNotFoundDropsTheKey(t *testing.T) {
 	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "keys"))
 }
 
-// A failed read-back must not drop the key: the Store cannot tell a missing key
-// from a delete, so it would dispatch a spurious OnDelete. Take the
-// authoritative list instead.
+// A failed read-back must not drop the key: the Store would dispatch a spurious
+// OnDelete. Take the full list instead.
 func TestRepositoryList_ReadBackErrorListsFullObjects(t *testing.T) {
-	// Padded so the read-back is attempted at all: below the break-even the
-	// limit would take the list first and the failure would never be reached.
+	// Padded so the read-back is reached; below the break-even the list wins first.
 	seed, keyList := padSnapshot(t, 1)
 	seed = append(seed, repoAt("ns", "a", "10"))
 	keyList = append(keyList, keysapi.Key{Namespace: "ns", Name: "a", ResourceVersion: "11"})
@@ -461,8 +439,8 @@ func TestRepositoryList_ReadBackErrorListsFullObjects(t *testing.T) {
 	assert.Equal(t, float64(1), hydrationCount(t, reg, repoGVR), "the read-back was attempted, not skipped by the limit")
 }
 
-// Storage older than keys_only must degrade to the full list rather than stop
-// reconciling, since the re-list is the repository controller's only feed.
+// Storage older than keys_only degrades to the full list rather than stop
+// reconciling.
 func TestRepositoryList_FallsBackWhenKeysOnlyUnsupported(t *testing.T) {
 	keys := &stubKeysLister{err: keysapi.ErrUnsupported}
 	client := fake.NewClientset(repoAt("ns", "from-full-list", "10"))
@@ -476,8 +454,7 @@ func TestRepositoryList_FallsBackWhenKeysOnlyUnsupported(t *testing.T) {
 	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
 }
 
-// Any other keys failure is real and has to surface: swallowing it would hide an
-// outage behind a silently more expensive list.
+// Any other keys failure surfaces rather than hiding behind a costlier list.
 func TestRepositoryList_SurfacesOtherKeysErrors(t *testing.T) {
 	boom := errors.New("storage unavailable")
 	keys := &stubKeysLister{err: boom}
@@ -488,9 +465,8 @@ func TestRepositoryList_SurfacesOtherKeysErrors(t *testing.T) {
 	assert.Nil(t, objs, "a failed tick must not deliver a partial set, which the Store would read as deletions")
 }
 
-// The setting off arrives here as a nil lister, and its snapshot must hold the
-// same shape as a keys-only one: the flag changes the transport, not what the
-// readers of the snapshot can see.
+// With the setting off (a nil lister) the snapshot holds the same shape as a
+// keys-only one.
 func TestRepositoryList_NilListerListsFullObjectsTrimmed(t *testing.T) {
 	full := repoAt("ns", "a", "10")
 	full.Spec.Title = "a title nobody reading the snapshot needs"

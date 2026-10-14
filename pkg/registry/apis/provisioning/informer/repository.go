@@ -23,12 +23,9 @@ import (
 )
 
 // RepositoryGetter is the read seam the repository controller reconciles
-// against. It exposes exactly what the controller needs — the single repository
-// under reconciliation, and the active count for the quota check — so the source
-// can be swapped without touching the controller.
-//
-// Get must return a current object (the reconcile acts on its spec);
-// CountActiveRepositories backs the quota count, which tolerates staleness.
+// against: the single repository under reconciliation, and the active count for
+// the quota check. Get must return a current object; the count tolerates
+// staleness.
 type RepositoryGetter interface {
 	Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error)
 	CountActiveRepositories(ctx context.Context, namespace string) (int, error)
@@ -40,8 +37,7 @@ type RepositoryGetter interface {
 // read); otherwise the getter reads the informer's cache lister.
 //
 // A non-nil keys makes the NATS re-list keys-only; nil keeps the full-object
-// list. Both callers follow [provisioning] keys_only_relist, in process over
-// storage and in the operator over HTTP.
+// list.
 func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics) (DeltaSource, RepositoryGetter) {
 	if nats.Enabled(subscriber) {
 		store := NewRepositorySnapshot(usinformer.NewStore())
@@ -72,13 +68,11 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, repositoryList(c, namespace, keys, store, recorder))
 }
 
-// repositoryList builds the informer's re-list. With a keys lister it asks
-// storage for identities only, carries unchanged repositories forward from the
-// previous snapshot and reads back just the ones whose resource version moved.
-// The read-back is needed because the projection cannot carry a
-// deletionTimestamp, which the quota count reads.
-// Without a keys lister, or against storage too old to honour the projection, it
-// lists full objects. Both paths store projections; see repositoryProjection.
+// repositoryList builds the informer's re-list. With a keys lister it carries
+// unchanged repositories forward and reads back only those whose resource
+// version moved, because the projection cannot carry the deletionTimestamp the
+// quota count reads. Without one, or against storage too old for keys_only, it
+// lists full objects.
 func repositoryList(c typedclient.ProvisioningV0alpha1Interface, namespace string, keys keysapi.Lister, store usinformer.Cache, recorder RelistRecorder) func(context.Context) ([]runtime.Object, int64, error) {
 	full := func(ctx context.Context) ([]runtime.Object, int64, error) {
 		objs, listRV, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
@@ -96,9 +90,8 @@ func repositoryList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 			return full(ctx)
 		}
 
-		// An empty snapshot has nothing to carry forward, so every key would be
-		// an object read and one list is cheaper. This is the initial list, and
-		// the recovery if the snapshot is ever emptied.
+		// Nothing to carry forward (startup, or recovery from an emptied
+		// snapshot): one list is cheaper than a read per key.
 		prev := indexProjections(store.List(ctx))
 		if len(prev) == 0 {
 			return full(ctx)
@@ -110,8 +103,7 @@ func repositoryList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 			recorder.Projection(true)
 			return objs, listRV, nil
 		case errors.Is(err, keysapi.ErrUnsupported):
-			// Storage predates keys_only. The full list is still correct, and
-			// failing the tick would stop reconciling altogether.
+			// Storage predates keys_only; failing the tick would stop reconciling.
 			logging.FromContext(ctx).Warn("storage did not honour keys_only, re-listing full objects")
 		case errors.Is(err, errRelistFullObjects):
 			logging.FromContext(ctx).Info("keys-only re-list fell back to full objects", "reason", err)
@@ -122,27 +114,14 @@ func repositoryList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 	}
 }
 
-// Read-backs are bounded against the full list they are avoiding, which also
-// grows with the snapshot, so the bound is not a flat count.
-// BenchmarkRelistStrategies measures both strategies directly. Two things come
-// out of it. A read-back costs roughly twenty times what one object costs inside
-// a list, so the number worth doing grows with the snapshot. And the keys path
-// needs at least two requests where the list needs one, so below roughly a
-// hundred repositories the list wins even for a single change: at a hundred
-// repositories and a 1ms server hop one list takes ~5ms against ~8ms for the
-// keys list plus one read-back.
+// A read-back costs about twenty times an object inside a list, and the keys path
+// needs two requests where the list needs one (BenchmarkRelistStrategies). So up
+// to hydrationBreakEven repositories any drift is cheaper as one list, and above
+// it one key in hydrationShare may be read back.
 //
-// Hence a break-even and a share rather than a floor and a share. Below the
-// break-even the re-list still takes the cheap keys list and only pays for the
-// list when something actually changed; above it, one key in hydrationShare may
-// be read back. At a thousand repositories that allows 28, against a measured
-// crossover of about 30.
-//
-// This holds only because the operator's clients disable client-side throttling
-// (flowcontrol.NewFakeAlwaysRateLimiter in pkg/operators/provisioning), so
-// read-backs are bounded by the server rather than by a token bucket. Under the
-// client-go defaults of 5 QPS and burst 10, every read-back past the tenth would
-// serialize at 200ms and these numbers would not hold.
+// Assumes client-side throttling is off (flowcontrol.NewFakeAlwaysRateLimiter in
+// pkg/operators/provisioning); under client-go's default 5 QPS these numbers do
+// not hold.
 const (
 	hydrationBreakEven = 100
 	hydrationShare     = 32
@@ -158,19 +137,17 @@ func maxHydrations(snapshot int) int {
 	return (snapshot - hydrationBreakEven) / hydrationShare
 }
 
-// errRelistFullObjects means the keys-only re-list gave up and the caller should
-// list full objects instead. Not a failure: the full list is authoritative, just
-// more expensive.
+// errRelistFullObjects tells the caller to list full objects instead. Not a
+// failure.
 var errRelistFullObjects = errors.New("keys-only re-list needs the full objects")
 
-// listRepositoryKeys collects a keys-only re-list into the minimal objects the
-// informer's Store keys on, reading back only what prev cannot answer for.
+// listRepositoryKeys collects a keys-only re-list, reading back only what prev
+// cannot answer for.
 func listRepositoryKeys(ctx context.Context, c typedclient.ProvisioningV0alpha1Interface, keys keysapi.Lister, prev map[string]*repositoryProjection, recorder RelistRecorder) ([]runtime.Object, int64, error) {
 	listRV, seq := keys.ListKeys(ctx)
 
-	// The Store diffs the whole set, so the stream is drained before any object
-	// read: how far the snapshot drifted is what decides whether reading the
-	// difference back is still cheaper than listing everything.
+	// Drained before any read: the drift decides whether reading it back beats
+	// a full list.
 	var (
 		objs    []runtime.Object
 		drifted []keysapi.Key
@@ -195,13 +172,11 @@ func listRepositoryKeys(ctx context.Context, c typedclient.ProvisioningV0alpha1I
 		recorder.Hydration()
 		repo, err := c.Repositories(k.Namespace).Get(ctx, k.Name, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
-			// Deleted between the keys list and the read. Leaving it out of the
-			// snapshot is the right answer: Replace reports the removal.
+			// Deleted since the keys list; Replace reports the removal.
 			continue
 		}
 		if err != nil {
-			// Dropping the key instead would be indistinguishable from a delete,
-			// so take the authoritative list rather than guess.
+			// Dropping the key would look like a delete, so take the full list.
 			return nil, 0, fmt.Errorf("%w: reading back %s/%s: %w", errRelistFullObjects, k.Namespace, k.Name, err)
 		}
 		objs = append(objs, projectRepository(repo))
@@ -237,13 +212,10 @@ func (g cachedRepositoryGetter) CountActiveRepositories(_ context.Context, names
 	return count, nil
 }
 
-// NewClientRepositoryGetter backs Get with the API client — fresh, for the
-// reconcile — and the count with the NATS informer's snapshot. The quota count is
-// the only reader and tolerates the snapshot's staleness (as stale as the resync
-// interval), so reading it avoids an API LIST on every quota check. Each
-// reconcile Get is written back into the snapshot (or removed on NotFound),
-// keeping the count warm between re-lists rather than only as fresh as the last
-// resync.
+// NewClientRepositoryGetter backs Get with the API client, fresh for the
+// reconcile, and the count with the NATS informer's snapshot, which avoids an API
+// LIST on every quota check. Each reconcile Get is written back into the snapshot
+// (or removed on NotFound), keeping the count warm between re-lists.
 func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, snapshot *RepositorySnapshot) RepositoryGetter {
 	return clientRepositoryGetter{client: c, snapshot: snapshot}
 }
@@ -262,7 +234,6 @@ func (g clientRepositoryGetter) Get(ctx context.Context, namespace, name string)
 	if err != nil {
 		return nil, err
 	}
-	// Projected, so a warm snapshot costs the same as a re-listed one.
 	g.snapshot.Update(ctx, projectRepository(repo))
 	return repo, nil
 }
@@ -271,16 +242,12 @@ func (g clientRepositoryGetter) CountActiveRepositories(_ context.Context, names
 	return g.snapshot.CountActive(namespace), nil
 }
 
-// The snapshot holds projections, never whole repositories. These four functions
-// are the only places one is built, so they are the whole answer to what it
-// carries: the identity the Store's diff keys off, and the deletionTimestamp the
-// active count reads.
-
-// repositoryProjection is the shape the snapshot holds.
+// repositoryProjection is what the snapshot holds instead of a whole repository:
+// the identity the Store's diff keys off, and the deletionTimestamp the active
+// count reads.
 type repositoryProjection = metav1.PartialObjectMetadata
 
-// projectIdentity builds a projection from an identity alone, for a keys-only
-// re-list and for a live event.
+// projectIdentity builds a projection from an identity alone.
 func projectIdentity(namespace, name, resourceVersion string) *repositoryProjection {
 	return &repositoryProjection{ObjectMeta: metav1.ObjectMeta{
 		Namespace:       namespace,
@@ -289,8 +256,7 @@ func projectIdentity(namespace, name, resourceVersion string) *repositoryProject
 	}}
 }
 
-// projectRepository builds a projection from a whole repository, for a full list
-// and the reconcile's write-back.
+// projectRepository builds a projection from a whole repository.
 func projectRepository(repo *provisioningapis.Repository) *repositoryProjection {
 	projected := projectIdentity(repo.Namespace, repo.Name, repo.ResourceVersion)
 	if ts := repo.DeletionTimestamp; ts != nil {
@@ -299,8 +265,7 @@ func projectRepository(repo *provisioningapis.Repository) *repositoryProjection 
 	return projected
 }
 
-// projectRepositories projects a full list in place, so the snapshot holds one
-// shape whichever re-list produced it.
+// projectRepositories projects a full list in place.
 func projectRepositories(objs []runtime.Object) []runtime.Object {
 	for i, obj := range objs {
 		if repo, ok := obj.(*provisioningapis.Repository); ok {
@@ -310,8 +275,7 @@ func projectRepositories(objs []runtime.Object) []runtime.Object {
 	return objs
 }
 
-// indexProjections keys a snapshot for lookup by the identities a keys-only
-// re-list returns.
+// indexProjections keys a snapshot by namespace/name.
 func indexProjections(objs []runtime.Object) map[string]*repositoryProjection {
 	out := make(map[string]*repositoryProjection, len(objs))
 	for _, obj := range objs {

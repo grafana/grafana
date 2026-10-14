@@ -12,25 +12,16 @@ import (
 
 // RepositorySnapshot is the informer's snapshot with a running count of the
 // active (not terminating) repositories per namespace, so the quota check reads
-// a number instead of walking a cluster-wide snapshot on every reconcile.
+// a number instead of walking the snapshot on every reconcile.
 //
-// Correctness rests on two things. Every mutation holds mu across both the
-// store write and the tally update, so a live event landing mid-re-list cannot
-// have its tally change overwritten by a rebuild that predates it. And the
-// tallies only move for writes the store reports it took: a write a newer delete
-// supersedes is dropped, and counting it would leave a deleted repository
-// holding quota.
-//
-// A live MODIFIED never reaches the store at all (it carries namespace and name
-// only, so it would blank a real deletionTimestamp) and so never reaches these
-// either.
+// Every mutation holds mu across the store write and the tally update, so a live
+// event landing mid-re-list is not overwritten by a rebuild that predates it. The
+// tallies only move for writes the store reports it took.
 type RepositorySnapshot struct {
 	store usinformer.Store
 
-	// mu serializes store mutations with tally maintenance. It is not only
-	// guarding the maps: the store has its own lock, but two callers
-	// interleaving between a store write and the matching tally update would
-	// still leave the two disagreeing.
+	// mu also serializes store mutations with the tally update; the store's own
+	// lock cannot cover both.
 	mu     sync.RWMutex
 	active map[string]bool // key -> not terminating
 	counts map[string]int  // namespace -> active repositories
@@ -45,8 +36,7 @@ func NewRepositorySnapshot(store usinformer.Store) *RepositorySnapshot {
 	}
 }
 
-// CountActive reports the namespace's active repositories, as stale as the
-// snapshot itself.
+// CountActive reports the namespace's active repositories.
 func (s *RepositorySnapshot) CountActive(namespace string) int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -58,10 +48,8 @@ func (s *RepositorySnapshot) List(ctx context.Context) []runtime.Object {
 	return s.store.List(ctx)
 }
 
-// Update writes through and tallies only what the store took. A write a newer
-// delete supersedes is dropped -- which is what a reconcile read that finished
-// after a live deletion looks like -- and counting it would resurrect a deleted
-// repository into the quota.
+// Update writes through and tallies only what the store took; counting a write a
+// newer delete supersedes would resurrect a deleted repository into the quota.
 func (s *RepositorySnapshot) Update(ctx context.Context, obj runtime.Object) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -94,9 +82,8 @@ func (s *RepositorySnapshot) DeleteAt(ctx context.Context, namespace, name strin
 	s.drop(repositoryKey(namespace, name), namespace)
 }
 
-// Replace rebuilds the tallies from what the store installed, not from objs: it
-// carries forward a live write the snapshot predates and suppresses a
-// resurrection, so objs is not what ends up stored.
+// Replace rebuilds the tallies from what the store installed, not from objs,
+// which the store may adjust for live writes that raced the list.
 func (s *RepositorySnapshot) Replace(objs []runtime.Object, listRV int64) (added, updated, removed []runtime.Object) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -143,8 +130,7 @@ func (s *RepositorySnapshot) drop(key, namespace string) {
 	}
 }
 
-// decrement prunes empty namespaces, so a cluster-wide snapshot does not retain
-// an entry per namespace that ever held a repository. Callers hold the lock.
+// decrement prunes empty namespaces. Callers hold the lock.
 func (s *RepositorySnapshot) decrement(namespace string) {
 	if s.counts[namespace] <= 1 {
 		delete(s.counts, namespace)
@@ -153,8 +139,8 @@ func (s *RepositorySnapshot) decrement(namespace string) {
 	s.counts[namespace]--
 }
 
-// repositoryState reads what the tallies need, through meta.Accessor rather than
-// a type assertion so the snapshot can hold any projection of a repository.
+// repositoryState reads what the tallies need through meta.Accessor, so any
+// projection of a repository works.
 func repositoryState(obj runtime.Object) (namespace, name string, terminating, ok bool) {
 	acc, err := meta.Accessor(obj)
 	if err != nil {

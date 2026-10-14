@@ -24,10 +24,8 @@ import (
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
-// benchRepo is a realistic repository: a GitHub-backed one that has synced, with
-// the status, stats and conditions the controller writes. Payload size is what
-// decides whether reading objects back beats listing them, so a stub object
-// would make the keys projection look better than it is.
+// benchRepo is a realistic synced GitHub-backed repository; payload size decides
+// whether read-backs beat a list, so a stub would flatter the projection.
 func benchRepo(i int) *provisioningapis.Repository {
 	now := metav1.Now()
 	return &provisioningapis.Repository{
@@ -72,9 +70,7 @@ func benchRepo(i int) *provisioningapis.Repository {
 }
 
 // benchServer serves the three endpoints a re-list uses, counting requests and
-// bytes so the benchmark reports wire cost alongside time. rtt is added to every
-// response: on loopback a round trip is nearly free, which flatters per-key
-// reads, so the in-cluster case has to be modelled explicitly.
+// bytes. rtt is added to every response, since loopback flatters per-key reads.
 type benchServer struct {
 	srv      *httptest.Server
 	requests atomic.Int64
@@ -162,11 +158,9 @@ func (b *benchServer) report(tb *testing.B) {
 
 func (b *benchServer) clients(t testing.TB) (versioned.Interface, rest.Interface) {
 	t.Helper()
-	// The operator's clients disable client-side throttling
-	// (flowcontrol.NewFakeAlwaysRateLimiter in ControllerConfig), so the
-	// benchmark must too. Left at the client-go defaults of 5 QPS and burst 10,
-	// every read-back past the tenth serializes at 200ms and the measurement
-	// says nothing about the transport.
+	// Match the operator's clients, which disable client-side throttling; at
+	// client-go's default 5 QPS every read-back past the tenth would serialize at
+	// 200ms.
 	cs, err := versioned.NewForConfig(&rest.Config{
 		Host: b.srv.URL, RateLimiter: flowcontrol.NewFakeAlwaysRateLimiter(),
 	})
@@ -183,13 +177,8 @@ func (b *benchServer) clients(t testing.TB) (versioned.Interface, rest.Interface
 	return cs, rc
 }
 
-// seedStore fills a snapshot with every repository, then drifts the first
-// driftCount of them so the next re-list has to read exactly those back.
-//
-// It seeds projections, because that is what the snapshot holds: seeding whole
-// repositories leaves indexProjections unable to recognise the previous snapshot,
-// so every case would take the full list and the benchmark would measure the
-// fallback rather than the policy.
+// seedStore fills a snapshot with projections, then drifts the first driftCount
+// so the next re-list reads exactly those back.
 func seedStore(ctx context.Context, repos []*provisioningapis.Repository, driftCount int) usinformer.Store {
 	store := usinformer.NewStore()
 	for i, repo := range repos {
@@ -202,21 +191,16 @@ func seedStore(ctx context.Context, repos []*provisioningapis.Repository, driftC
 	return store
 }
 
-// BenchmarkRelistStrategies measures the two strategies directly, without the
-// read-back limit in the way. This is where the limit's numbers come from, so it
-// has to stay independent of the limit: running the shipped re-list instead
-// would make the expensive cases fall back to a list and quietly stop measuring
-// the thing being compared.
+// BenchmarkRelistStrategies measures the two strategies without the read-back
+// limit, which is where the limit's numbers come from.
 //
-// full-list is one paged LIST of the whole snapshot. keys+readback is one keys
-// list plus drift sequential object reads, which is what the re-list does for a
-// snapshot that has drifted by that much.
+// full-list is one paged LIST; keys+readback is one keys list plus drift
+// sequential reads.
 func BenchmarkRelistStrategies(b *testing.B) {
 	ctx := context.Background()
 
 	for _, rtt := range []time.Duration{0, time.Millisecond} {
-		// Small snapshots decide the floor, large ones decide the share, so both
-		// ends are measured at the change rates that bracket the crossover.
+		// Small snapshots decide the break-even, large ones the share.
 		for _, c := range []struct {
 			total  int
 			drifts []int
@@ -279,10 +263,9 @@ func BenchmarkRelistStrategies(b *testing.B) {
 	}
 }
 
-// BenchmarkRepositoryRelistPolicy exercises the shipped re-list, limit included.
-// It does not establish the crossover -- BenchmarkRelistStrategies does -- it
-// shows what the limit decides: reqs/op stays at a keys list plus the drift until
-// the limit trips, then drops to the LIST pages.
+// BenchmarkRepositoryRelistPolicy exercises the shipped re-list, limit included:
+// reqs/op stays at a keys list plus the drift until the limit trips, then drops to
+// the LIST pages.
 func BenchmarkRepositoryRelistPolicy(b *testing.B) {
 	for _, total := range []int{100, 1000} {
 		repos := make([]*provisioningapis.Repository, total)

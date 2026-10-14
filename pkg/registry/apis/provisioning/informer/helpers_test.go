@@ -100,16 +100,13 @@ func (r *typeRecorder) last() interface{} {
 var _ cache.ResourceEventHandler = (*typeRecorder)(nil)
 
 // newTestRecorder returns a recorder bound to resourceName and the registry it
-// writes to. Tests assert on the real counters rather than a captured callback,
-// because the metric names and labels are what the keys_only_relist rollout is
-// read by.
+// writes to, so tests assert on the real counters.
 func newTestRecorder(gvr schema.GroupVersionResource) (RelistRecorder, *prometheus.Registry) {
 	reg := prometheus.NewRegistry()
 	return NewRelistProjectionMetrics(reg).Recorder(gvr), reg
 }
 
-// counterValue reads one fully labelled counter out of reg, 0 when the series
-// has not been touched.
+// counterValue reads one fully labelled counter out of reg, 0 when untouched.
 func counterValue(t *testing.T, reg *prometheus.Registry, name string, labels map[string]string) float64 {
 	t.Helper()
 	families, err := reg.Gather()

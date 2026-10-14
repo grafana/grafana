@@ -448,10 +448,8 @@ func (c *ControllerConfig) Registry() prometheus.Registerer {
 }
 
 // RelistProjectionMetrics returns the process's re-list projection metrics.
-// Memoized like Registry and Tracer above: the collectors register on first
-// call, so a second call that built them again would panic on the duplicate.
-// A process runs one operator today, so nothing calls this twice -- the
-// memoizing keeps it that way by construction rather than by that assumption.
+// Memoized because the collectors register on first call; building them twice
+// would panic on the duplicate.
 func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionMetrics {
 	if c.relistProjection == nil {
 		c.relistProjection = informer.NewRelistProjectionMetrics(c.Registry())
@@ -461,13 +459,8 @@ func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionM
 }
 
 // ProvisioningKeysLister returns a keys lister for one kind when [provisioning]
-// keys_only_relist is set, and nil otherwise. A nil lister keeps the full-object
-// re-list, so every operator reads the setting through here rather than
-// spelling it out again.
-//
-// Which projection a re-list actually got is reported by
-// grafana_provisioning_informer_relist_projection_total; the log line here says
-// only that it was asked for.
+// keys_only_relist is set, and nil otherwise, which keeps the full-object
+// re-list.
 func (c *ControllerConfig) ProvisioningKeysLister(logger logging.Logger, gvr schema.GroupVersionResource) (keysapi.Lister, error) {
 	if !c.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
 		return nil, nil
