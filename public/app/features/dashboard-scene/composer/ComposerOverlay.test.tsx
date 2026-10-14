@@ -617,6 +617,34 @@ describe('regions', () => {
     tab.remove();
   });
 
+  it('switches tabs with the Region tool active instead of starting a drag', async () => {
+    const { session } = setup();
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickRegion(new AbortController().signal);
+    });
+    const settled = track(pick);
+    const tab = document.createElement('button');
+    tab.setAttribute('role', 'tab');
+    const onTabClick = jest.fn();
+    tab.addEventListener('click', onTabClick);
+    document.body.appendChild(tab);
+    document.elementsFromPoint = () => [screen.getByTestId('dashboard-composer-overlay'), tab];
+
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: 10, clientY: 10, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 12, clientY: 11 });
+    fireEvent.pointerUp(overlay, { clientX: 12, clientY: 11 });
+    fireEvent.click(overlay, { clientX: 12, clientY: 11 });
+    await act(async () => {});
+
+    expect(onTabClick).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    expect(settled).not.toHaveBeenCalled();
+    expect(session.getOverlayState().pickMode).toBe('region');
+    tab.remove();
+  });
+
   it('forgets a region once no annotation references it', async () => {
     const { session, startPick, annotate } = setup();
     const { ref } = await drawRegion(startPick);

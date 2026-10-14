@@ -180,6 +180,10 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     if (event.button !== 0 || !picking || paused || capturing || (pickMode !== 'region' && !event.shiftKey)) {
       return;
     }
+    // A press on a tab header is a tab switch, never the start of a region: its click passes through.
+    if (elementAt(event.clientX, event.clientY, TAB_SELECTOR)) {
+      return;
+    }
     dragStartRef.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
