@@ -29,7 +29,7 @@ The [Grafana Ansible collection](https://docs.ansible.com/ansible/latest/collect
 - Notification policies
 - API keys
 
-If your resources aren't currently available in the Grafana Ansible collection, you can manage them on Grafana Cloud programmatically by writing Ansible playbooks that use the [Ansible's built-in URI module](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html) to call the [HTTP APIs](https://grafana.com/docs/latest/developer-resources/api-reference/http-api/) to manage resources for the Grafana Cloud portal, as well as those within a stack.
+If your resources aren't currently available in the Grafana Ansible collection, you can manage them on Grafana Cloud programmatically by writing Ansible playbooks that use the [Ansible built-in URI module](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html) to call the [HTTP APIs](https://grafana.com/docs/latest/developer-resources/api-reference/http-api/) to manage resources for the Grafana Cloud portal, as well as those within a stack.
 
 ## Learn more
 
@@ -39,9 +39,9 @@ To learn more about managing Grafana with Infrastructure as code:
 
 - [Grafana Ansible collection documentation](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/)
 - [Ansible playbook best practices](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
-- [Grafana API documentation](/docs/grafana/latest/developer-resources/api-reference/http-api/)
+- [Grafana API documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/)
 - [Grafana Cloud API documentation](https://grafana.com/docs/grafana-cloud/developer-resources/api-reference/)
-- [Infrastructure as Code with Terraform](/docs/grafana/latest/as-code/terraform/)
+- [Infrastructure as Code with Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/)
 
 ## Grafana Agent (deprecated)
 
