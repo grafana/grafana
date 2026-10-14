@@ -8,8 +8,7 @@ import { useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
 import { type ComposerSession } from './ComposerSession';
-import { VARIABLE_CONTROL_SELECTOR } from './DashboardComposerDocument';
-import { type Box } from './composerGeometry';
+import { type Box, VARIABLE_CONTROL_SELECTOR } from './composerGeometry';
 import { type ComposerAnnotation } from './types';
 
 const TAB_SELECTOR = '[role="tab"]';
@@ -39,7 +38,17 @@ const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, width: 0, height: 0 }
  * under the pointer. Above it sit the annotation pins and the anchors the plugin portals its editor into.
  * All positions are relative to this layer and re-measured on scroll, resize and layout changes.
  */
-export function ComposerOverlay({ session }: { session: ComposerSession<unknown> }) {
+export function ComposerOverlay({
+  session,
+  belowStickyControls = false,
+}: {
+  session: ComposerSession<unknown>;
+  /**
+   * For a document whose sticky controls sit outside the overlay (a notebook's): the layer stays under
+   * them, so content scrolled beneath them never blocks the controls.
+   */
+  belowStickyControls?: boolean;
+}) {
   const styles = useStyles2(getStyles);
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
   const { picking, pickMode, paused, capturing, annotations } = overlayState;
@@ -542,7 +551,11 @@ export function ComposerOverlay({ session }: { session: ComposerSession<unknown>
   };
 
   return (
-    <div ref={rootRef} className={styles.root} data-composer-capture-exclude>
+    <div
+      ref={rootRef}
+      className={cx(styles.root, belowStickyControls && styles.rootBelowControls)}
+      data-composer-capture-exclude
+    >
       <div
         ref={blockerRef}
         className={cx(styles.blocker, picking && !paused && !capturing && styles.picking)}
@@ -724,6 +737,9 @@ function getStyles(theme: GrafanaTheme2) {
       // controls sit at `sidemenu` in the same context; anything lower lets them cover pins and outlines.
       zIndex: theme.zIndex.sidemenu + 1,
       pointerEvents: 'none',
+    }),
+    rootBelowControls: css({
+      zIndex: theme.zIndex.sidemenu - 1,
     }),
     blocker: css({
       position: 'absolute',

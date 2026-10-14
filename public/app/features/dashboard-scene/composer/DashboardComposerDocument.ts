@@ -15,7 +15,7 @@ import { dashboardV2SpecSchema } from '../v2schema/dashboardV2Schema';
 import { type ComposerDocument, type ComposerDocumentEvents } from './ComposerDocument';
 import type { ComposerSession } from './ComposerSession';
 import { canStillEdit } from './composerAccess';
-import { type Box, clamp01, findCaptureRoot, PANEL_ROOT_SELECTOR } from './composerGeometry';
+import { type Box, clamp01, findCaptureRoot, PANEL_ROOT_SELECTOR, VARIABLE_CONTROL_SELECTOR } from './composerGeometry';
 import {
   type ApplyOutcome,
   type ComposerApplyOptions,
@@ -28,8 +28,6 @@ import {
   type RegionPick,
 } from './types';
 
-/** The DOM root of a variable's control in the dashboard controls. */
-export const VARIABLE_CONTROL_SELECTOR = '[data-dashboard-element-type="variable"]';
 const MAX_INTERSECTS = 20;
 const ORIGIN: ElementPoint = { x: 0, y: 0 };
 

@@ -4,14 +4,10 @@ import { useEffect, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, useStyles2, type IconName } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
-import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
 import { AssistantSparkleGradient } from 'app/core/components/AppChrome/FullscreenWorkspace/AssistantToolbarButtons';
-import { OpenExtensionSidebarEvent, SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
 import { canEnterComposer } from '../composer/composerAccess';
-import { requestComposerEnter } from '../composer/composerEntryRequests';
+import { useAssistantComposerEntry } from '../composer/useAssistantComposerEntry';
 import { isNewDashboard } from '../saving/shared';
 
 import { type DashboardScene } from './DashboardScene';
@@ -22,7 +18,6 @@ import {
   type DashboardMode,
 } from './dashboardModes';
 
-const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 const COMPOSER_ICON_GRADIENT_ID = 'grafana-assistant-composer-mode-icon-gradient';
 
 export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }) {
@@ -171,12 +166,11 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
  * opens that sidebar if needed and asks Assistant to enter Composer; core never enters it itself.
  */
 function useComposerOption(dashboard: DashboardScene) {
-  const { availableComponents, dockedComponentId } = useExtensionSidebarContext();
-  const componentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
+  const entry = useAssistantComposerEntry();
   if (getDashboardMode(dashboard.state) === 'composer') {
     return { disabledReason: undefined, request: () => {} };
   }
-  if (!dashboardComposerEnabled() || !componentTitle) {
+  if (!dashboardComposerEnabled() || !entry) {
     return undefined;
   }
   const check = canEnterComposer(dashboard);
@@ -191,17 +185,7 @@ function useComposerOption(dashboard: DashboardScene) {
       ? t('dashboard.modes.composer-save-first', 'Save the dashboard before using Composer.')
       : t('dashboard.modes.composer-unsupported', 'Composer is not available for this dashboard right now.');
   }
-  const request = () => {
-    const target = { resource: 'dashboard' as const, uid: dashboard.state.uid ?? '' };
-    if (dockedComponentId === getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, componentTitle)) {
-      requestComposerEnter(target);
-      return;
-    }
-    // Open the closed sidebar already floating, so its first paint is never the docked column.
-    appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' }));
-    appEvents.publish(new OpenExtensionSidebarEvent({ pluginId: ASSISTANT_PLUGIN_ID, componentTitle }));
-    requestComposerEnter(target, { floated: true });
-  };
+  const request = () => entry.request({ resource: 'dashboard', uid: dashboard.state.uid ?? '' });
   return { disabledReason, request };
 }
 

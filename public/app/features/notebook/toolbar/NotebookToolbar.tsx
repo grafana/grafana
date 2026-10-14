@@ -13,6 +13,7 @@ import {
   NOTEBOOK_INCIDENT_ACTION,
   NOTEBOOK_LINK_COPY_SOURCE,
 } from '../analytics/types';
+import { NotebookComposerToggle } from '../composer/NotebookComposerToggle';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
@@ -127,6 +128,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
           onClick={onCopyLink}
         />
       )}
+      {!isEmbedded && <NotebookComposerToggle scene={scene} />}
       <NotebookEditToggle notebook={scene} />
       {!isEmbedded && (
         <Dropdown overlay={moreMenu} placement="bottom-end">

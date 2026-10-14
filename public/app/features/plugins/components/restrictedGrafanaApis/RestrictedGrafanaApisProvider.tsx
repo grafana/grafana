@@ -2,7 +2,7 @@ import { useMemo, type PropsWithChildren, type ReactElement } from 'react';
 
 import { RestrictedGrafanaApisContextProvider, type RestrictedGrafanaApisContextType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useFlagGrafanaDashboardComposer } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardComposer, useFlagGrafanaNotebookComposer } from '@grafana/runtime/internal';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
 import { composerApi } from './composer/composerApi';
@@ -28,8 +28,11 @@ export function RestrictedGrafanaApisProvider({
     () => (restrictedApisEnabled ? createDashboardMutationApi(pluginId) : undefined),
     [pluginId]
   );
-  // Composer exists only while its flag is on; flipping it off removes the API (and ends open sessions).
-  const composerEnabled = useFlagGrafanaDashboardComposer();
+  // Composer exists only while one of its flags is on; flipping it off removes the API (and ends open
+  // sessions). Each resource still checks its own flag.
+  const dashboardComposerEnabled = useFlagGrafanaDashboardComposer();
+  const notebookComposerEnabled = useFlagGrafanaNotebookComposer();
+  const composerEnabled = dashboardComposerEnabled || notebookComposerEnabled;
   const apis = useMemo(
     () => ({
       ...restrictedGrafanaApis,

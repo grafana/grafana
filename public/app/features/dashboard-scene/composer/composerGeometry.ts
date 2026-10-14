@@ -1,4 +1,7 @@
-/** Layout helpers shared by the Composer session and its documents. Free of scene imports. */
+/**
+ * Layout helpers and DOM hooks shared by the Composer session, its overlay and its documents. Free of scene
+ * imports, so a document's renderer can mount the overlay without loading the dashboard document.
+ */
 
 /** A rectangle in CSS pixels; relative to the overlay unless said otherwise. */
 export interface Box {
@@ -10,6 +13,9 @@ export interface Box {
 
 /** The DOM roots a dashboard capture is narrowed to. */
 export const PANEL_ROOT_SELECTOR = '[data-viz-panel-key]';
+
+/** The DOM root of a variable's control in the dashboard controls. */
+export const VARIABLE_CONTROL_SELECTOR = '[data-dashboard-element-type="variable"]';
 
 /**
  * The smallest element under `container` that holds the whole `rect` (viewport coordinates): the nearest

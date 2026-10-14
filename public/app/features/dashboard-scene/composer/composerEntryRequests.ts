@@ -83,6 +83,11 @@ export function settleComposerEnterRequest(uid: string, outcome: 'entered' | 'fa
   floated = undefined;
 }
 
+/** What a request still waiting (for a listener, or for its session to start) is for. */
+export function getPendingComposerEnterTarget(): ComposerTarget | undefined {
+  return pending?.target ?? floated?.target;
+}
+
 function dockFloatedSidebar(): void {
   if (floated) {
     clearTimeout(floated.timer);

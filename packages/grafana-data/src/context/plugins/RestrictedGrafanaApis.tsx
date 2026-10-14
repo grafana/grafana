@@ -21,8 +21,8 @@ export interface DashboardMutationAPI {
 }
 
 /**
- * Composer for dashboards. Only the entry point is typed here; consumers declare the session contract
- * themselves and check it at runtime until the shape settles.
+ * Composer for dashboards and, on their own route, notebooks. Only the entry point is typed here; consumers
+ * declare the session contract themselves and check it at runtime until the shape settles.
  *
  * @alpha
  */

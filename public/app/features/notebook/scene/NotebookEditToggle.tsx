@@ -13,7 +13,7 @@ import { type NotebookScene } from './NotebookScene';
  * scene — this only flips it.
  */
 export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
-  const { isEditing } = notebook.useState();
+  const { isEditing, isComposing } = notebook.useState();
 
   // Offered only to users who can act on it. The scene refuses to enter edit mode without the same
   // permission, so hiding the control is presentation, not enforcement.
@@ -31,8 +31,17 @@ export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
       id="notebook-edit-mode"
       data-testid={selectors.pages.Notebooks.Item.editModeToggle}
       options={options}
-      value={Boolean(isEditing)}
-      onChange={(value) => (value ? notebook.onEnterEditMode() : notebook.onExitEditMode())}
+      // Neither while Composer is open: it is a mode of its own, which either choice leaves.
+      value={isComposing ? undefined : Boolean(isEditing)}
+      onChange={(value) => {
+        if (value) {
+          notebook.onEnterEditMode();
+        } else if (isComposing) {
+          notebook.getComposerSession()?.exit();
+        } else {
+          notebook.onExitEditMode();
+        }
+      }}
     />
   );
 }
