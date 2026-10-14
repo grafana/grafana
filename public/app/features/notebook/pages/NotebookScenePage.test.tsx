@@ -1,5 +1,7 @@
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { createTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setPluginComponentHook } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -25,6 +27,20 @@ jest.mock('../analytics/main', () => {
 
 // The route is registered unconditionally, so the page itself enforces this OpenFeature flag.
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
+
+/** The declarations of the class rules on `element`, media queries included (jsdom computes no stacking). */
+function stylesFor(element: Element): string {
+  const selectors = new Set(Array.from(element.classList, (className) => `.${className}`));
+  const rules = (list: CSSRuleList): CSSStyleRule[] =>
+    Array.from(list).flatMap((rule) =>
+      rule instanceof CSSStyleRule ? [rule] : rule instanceof CSSMediaRule ? rules(rule.cssRules) : []
+    );
+  return Array.from(document.styleSheets)
+    .flatMap((sheet) => rules(sheet.cssRules))
+    .filter((rule) => selectors.has(rule.selectorText))
+    .map((rule) => rule.style.cssText)
+    .join('\n');
+}
 
 describe('NotebookScenePage', () => {
   beforeEach(() => {
@@ -84,6 +100,38 @@ describe('NotebookScenePage', () => {
     });
 
     expect(await screen.findByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+  });
+
+  // The floating Assistant (AppChrome's sidebar container, z-index navbarFixed + 1) is a sibling of the
+  // page in the root stacking context. Unless the page makes its own, the sticky controls row
+  // (z-index sidemenu) and the Composer overlay rank against it, and win.
+  it('wraps the notebook in a stacking context the extension sidebar outranks', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    await act(async () => {
+      getNotebookPageStateManager().setState({
+        isLoading: false,
+        scene: new NotebookScene({
+          title: 'Stacking',
+          uid: 'nb-1',
+          body: new NotebookLayoutManager({ cells: [] }),
+          $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+          timePicker: new SceneTimePicker({}),
+          refreshPicker: new SceneRefreshPicker({}),
+        }),
+      });
+      render(<NotebookScenePage />);
+    });
+
+    const controls = await screen.findByTestId(selectors.pages.Notebooks.Item.controls);
+    const theme = createTheme();
+    // The controls row sits directly in the page wrapper, so its z-index ranks within it.
+    const wrapper = controls.parentElement!;
+    const wrapperStyles = stylesFor(wrapper);
+    expect(wrapperStyles).toContain('position: relative');
+    expect(wrapperStyles).toContain('z-index: 3');
+    expect(stylesFor(controls)).toContain(`z-index: ${theme.zIndex.sidemenu}`);
+    // The whole notebook, toolbar included, paints under the extension sidebar.
+    expect(3).toBeLessThan(theme.zIndex.navbarFixed + 1);
   });
 
   // Nothing is mocked here: building a blank notebook needs no request, which is the point of it.

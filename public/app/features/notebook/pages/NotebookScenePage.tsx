@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
 
@@ -5,7 +6,7 @@ import { PageLayoutType } from '@grafana/data';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box } from '@grafana/ui';
+import { Box, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -87,6 +88,7 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const { title, uid } = scene.useState();
   // Varies with the mega menu, and this page is what knows there is an app header at all.
   const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles);
 
   useEffect(() => scene.activate(), [scene]);
   // Composer starts only on the notebook its route draws: see canEnterNotebookComposer.
@@ -106,7 +108,7 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const pageNav = { text: title };
 
   return (
-    <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom} className={styles.page}>
       {/* Composed here rather than by the scene: whether a surface shows the controls row is a
           property of the surface. Page's own wrapper is already a flex column, so this and the
           document below sit in it as siblings. The toolbar rides inside the row. */}
@@ -118,3 +120,14 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
 }
 
 export default NotebookScenePage;
+
+const getStyles = () => ({
+  // A stacking context, as the dashboard's container makes one (DashboardSidebarSplitter): above the mega
+  // menu (z-index 2), so the time picker's inline popover opens over it, and below app chrome. The sticky
+  // controls row (z-index sidemenu) and the Composer overlay then rank within the notebook only, under the
+  // app header and the extension sidebar (navbarFixed + 1), docked or floating.
+  page: css({
+    position: 'relative',
+    zIndex: 3,
+  }),
+});
