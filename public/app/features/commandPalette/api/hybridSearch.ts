@@ -4,7 +4,6 @@ import { dispatch } from 'app/types/store';
 
 export interface HybridSearchOptions {
   limit?: number;
-  abortSignal?: AbortSignal;
 }
 
 /**
@@ -14,7 +13,7 @@ export interface HybridSearchOptions {
  */
 export async function searchDashboardsHybrid(
   query: string,
-  { limit, abortSignal }: HybridSearchOptions = {}
+  { limit }: HybridSearchOptions = {}
 ): Promise<HybridSearchResultItem[]> {
   const request = dispatch(
     dashboardAPIv0alpha1.endpoints.listDashboardHybridSearchV0Alpha1.initiate(
@@ -31,16 +30,6 @@ export async function searchDashboardsHybrid(
     )
   );
 
-  const abort = () => request.abort();
-  abortSignal?.addEventListener('abort', abort, { once: true });
-  if (abortSignal?.aborted) {
-    abort();
-  }
-
-  try {
-    const response = await request.unwrap();
-    return response.items ?? [];
-  } finally {
-    abortSignal?.removeEventListener('abort', abort);
-  }
+  const response = await request.unwrap();
+  return response.items ?? [];
 }

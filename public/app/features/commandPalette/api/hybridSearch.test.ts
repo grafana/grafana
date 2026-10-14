@@ -1,4 +1,3 @@
-import { waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 
 import { setBackendSrv } from '@grafana/runtime';
@@ -86,27 +85,5 @@ describe('searchDashboardsHybrid', () => {
     expect(await searchDashboardsHybrid('latency')).toEqual([]);
     items = [hit];
     expect(await searchDashboardsHybrid('latency')).toEqual([hit]);
-  });
-
-  it('forwards cancellation to the HTTP request', async () => {
-    const fetchSpy = jest.spyOn(backendSrv, 'fetch');
-    const controller = new AbortController();
-    let respond: (response: Response) => void = () => {};
-    const response = new Promise<Response>((resolve) => {
-      respond = resolve;
-    });
-    server.use(http.post(hybridSearchRoute, () => response));
-
-    try {
-      const search = searchDashboardsHybrid('latency', { abortSignal: controller.signal });
-      await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
-      controller.abort();
-
-      await expect(search).rejects.toMatchObject({ name: 'AbortError' });
-      expect(fetchSpy.mock.calls[0][0].abortSignal?.aborted).toBe(true);
-    } finally {
-      respond(HttpResponse.json({ items: [] }));
-      fetchSpy.mockRestore();
-    }
   });
 });
