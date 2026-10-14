@@ -2681,6 +2681,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.extensionSidebarFloating",
+        "resourceVersion": "1791987109868",
+        "creationTimestamp": "2026-10-14T14:11:49Z"
+      },
+      "spec": {
+        "description": "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.filterablePanels",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-21T15:31:42Z"
@@ -2863,15 +2877,18 @@
     {
       "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-19T08:30:47Z"
+        "resourceVersion": "1791798499805",
+        "creationTimestamp": "2026-06-19T08:30:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-12 09:48:19.805299 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables a new UI for query errors and notices",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2974,6 +2991,24 @@
     },
     {
       "metadata": {
+        "name": "grafana.publishLegacySQLEvents",
+        "resourceVersion": "1791422331913",
+        "creationTimestamp": "2026-10-07T14:35:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-08 01:18:51.913916 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Publish watch events when values are saved to legacy SQL tables",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-13T12:52:09Z"
@@ -3066,6 +3101,19 @@
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.smtpSettingsPage",
+        "resourceVersion": "1791896266088",
+        "creationTimestamp": "2026-10-13T12:57:46Z"
+      },
+      "spec": {
+        "description": "Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/grafana-backend-services-squad",
         "expression": "false"
       }
     },
@@ -3457,7 +3505,7 @@
         "name": "kubernetesAlertingHistorian",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-11-27T16:14:16Z",
-        "deletionTimestamp": "2026-10-08T11:13:16Z"
+        "deletionTimestamp": "2026-10-08T14:06:18Z"
       },
       "spec": {
         "description": "Adds support for Kubernetes alerting historian APIs",
@@ -4839,7 +4887,8 @@
       "metadata": {
         "name": "queryServiceFromUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-04-19T09:26:21Z"
+        "creationTimestamp": "2024-04-19T09:26:21Z",
+        "deletionTimestamp": "2026-10-12T12:55:02Z"
       },
       "spec": {
         "description": "Routes requests to the new query service",
@@ -5702,7 +5751,8 @@
       "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-10-22T10:52:33Z"
+        "creationTimestamp": "2024-10-22T10:52:33Z",
+        "deletionTimestamp": "2026-10-07T23:03:15Z"
       },
       "spec": {
         "description": "Enables time pickers sync",

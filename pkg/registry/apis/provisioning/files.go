@@ -88,10 +88,8 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 // handleRequest processes the HTTP request for files operations.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
-	if userAttributionEnabled(ctx) {
-		if sig, ok := auth.GetUserSignature(ctx); ok {
-			ctx = repository.WithAuthorSignature(ctx, sig)
-		}
+	if sig, ok := auth.GetUserSignature(ctx); ok {
+		ctx = repository.WithAuthorSignature(ctx, sig)
 	}
 	repo, err := c.getRepo(ctx, r.Method, name)
 	if err != nil {

@@ -70,10 +70,20 @@ const openSidebarContext: ExtensionSidebarContextType = {
   dockedComponentId: 'p/c/v',
 };
 
+/** The declarations of the class rules on `element` (jsdom does not resolve `var()` in computed styles). */
+const stylesFor = (element: Element) => {
+  const selectors = new Set(Array.from(element.classList, (className) => `.${className}`));
+  return Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .filter((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule && selectors.has(rule.selectorText))
+    .map((rule) => rule.style.cssText)
+    .join('\n');
+};
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const setup = (children: ReactNode) => {
+const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
   config.bootData.navTree = [
     {
       id: HOME_NAV_ID,
@@ -96,7 +106,11 @@ const setup = (children: ReactNode) => {
   ];
 
   const context = getGrafanaContextMock();
-  const wrapper = getWrapper({ grafanaContext: context, renderWithRouter: true });
+  const wrapper = getWrapper({
+    grafanaContext: context,
+    renderWithRouter: true,
+    historyOptions: path ? { initialEntries: [path] } : undefined,
+  });
 
   const tree = (
     <KBarProvider>
@@ -229,6 +243,18 @@ describe('AppChrome', () => {
       rerender();
       expect(screen.getByTestId('ext-sidebar-stub')).toBe(stub);
       expect(mockSidebarLifecycle).toEqual({ mounts: 1, unmounts: 0 });
+    });
+
+    it.each(['/explore', '/'])('floats over the page on a non-dashboard route (%s)', async (path) => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      setup(<Page navId="child1">Children</Page>, { path });
+
+      await screen.findByTestId('ext-sidebar-stub');
+      const mainContent = document.getElementById('pageContent')!;
+      // The page keeps its full width and pads its bottom by the inset the floating sidebar publishes.
+      expect(stylesFor(mainContent)).toContain('padding-bottom: var(--extension-floating-inset, 0px)');
+      expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
     });
 
     it('renders the sidebar docked, not floating, on larger screens', async () => {

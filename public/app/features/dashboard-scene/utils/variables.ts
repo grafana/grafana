@@ -1,6 +1,5 @@
 import { type AdHocVariableFilter, type TypedVariableModel } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,

@@ -410,10 +410,10 @@ var (
 		{
 			Name:            "grafana.newPanelQueryErrorsUI",
 			Description:     "Enables a new UI for query errors and notices",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
-			Expression:      "false",
+			Expression:      "true",
 			Generate:        Generate{React: true},
 		},
 
@@ -504,7 +504,7 @@ var (
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // Adds a route at startup
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:            "useNewAPIsForDatasourceCRUD",
@@ -523,14 +523,6 @@ var (
 			RequiresRestart: true, // changes the API routing
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "queryServiceFromUI",
-			Description: "Routes requests to the new query service",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // and can change at startup
-			Expression:  "false",
 		},
 		{
 			Name:            "datasourcesRerouteLegacyCRUDAPIs",
@@ -1087,6 +1079,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.smtpSettingsPage",
+			Description: "Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaBackendServicesSquad,
+			Generate:    Generate{Go: true, React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardTemplatesAssistantButton",
 			Description: "Enables the Assistant button in the dashboard templates card",
 			Stage:       FeatureStageExperimental,
@@ -1334,14 +1334,6 @@ var (
 			Owner:       grafanaCatalogSquad,
 			Expression:  "false", // disabled by default
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "timeRangeProvider",
-			Description: "Enables time pickers sync",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
@@ -2212,6 +2204,16 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
+		},
+		{
+			Name:            "grafana.publishLegacySQLEvents",
+			Description:     "Publish watch events when values are saved to legacy SQL tables",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true},
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		{
 			Name:         "plugins.useMTPlugins",
@@ -3414,6 +3416,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "grafana.extensionSidebarFloating",
+			Description: "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

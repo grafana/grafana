@@ -1,21 +1,26 @@
-import { render, screen, act } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { render as rtlRender, screen, act } from '@testing-library/react';
+import { type ReactElement, type ReactNode } from 'react';
 import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
-import {
-  OpenExtensionSidebarEvent,
-  CloseExtensionSidebarEvent,
-  SetExtensionSidebarPresentationEvent,
-  ToggleExtensionSidebarEvent,
-} from 'app/types/events';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { resetExtensionSidebarPresentationForTests, setExtensionSidebarPresentation } from './extensionSidebarLayout';
 import {
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentIdFromComponentMeta,
   getComponentMetaFromComponentId,
 } from './extensionSidebarUtils';
+
+// The provider reads its feature flag through OpenFeature, which the app provides above it.
+const FlagsWrapper = ({ children }: { children: ReactNode }) => (
+  <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>
+);
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: FlagsWrapper });
 
 const mockComponent = {
   title: 'Test Component',
@@ -472,7 +477,7 @@ describe('ExtensionSidebarProvider', () => {
   });
 
   it('should unsubscribe from all event subscriptions on unmount', () => {
-    const unsubscribeMocks = [jest.fn(), jest.fn(), jest.fn(), jest.fn()];
+    const unsubscribeMocks = [jest.fn(), jest.fn(), jest.fn()];
     let callIndex = 0;
 
     subscribeSpy.mockImplementation(() => ({
@@ -491,25 +496,63 @@ describe('ExtensionSidebarProvider', () => {
     expect(unsubscribeMocks[0]).toHaveBeenCalled();
     expect(unsubscribeMocks[1]).toHaveBeenCalled();
     expect(unsubscribeMocks[2]).toHaveBeenCalled();
-    expect(unsubscribeMocks[3]).toHaveBeenCalled();
   });
 
-  it('switches presentation on SetExtensionSidebarPresentationEvent', () => {
+  describe('presentation', () => {
+    const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
     const PresentationComponent = () => (
       <div data-testid="presentation">{useExtensionSidebarContext().presentation}</div>
     );
-    render(
-      <ExtensionSidebarContextProvider>
-        <PresentationComponent />
-      </ExtensionSidebarContextProvider>
-    );
-    expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    const renderPresentation = () =>
+      render(
+        <ExtensionSidebarContextProvider>
+          <PresentationComponent />
+        </ExtensionSidebarContextProvider>
+      );
 
-    act(() => getAppEvents().publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' })));
-    expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+    afterEach(async () => {
+      resetExtensionSidebarPresentationForTests();
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
 
-    act(() => getAppEvents().publish(new SetExtensionSidebarPresentationEvent({ presentation: 'docked' })));
-    expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    it('starts docked and follows setExtensionSidebarPresentation while floating is allowed', async () => {
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true });
+      });
+      renderPresentation();
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+
+      act(() => setExtensionSidebarPresentation('floating'));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+
+      act(() => setExtensionSidebarPresentation('docked'));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('stays docked when floating is requested with the flag off', () => {
+      renderPresentation();
+
+      act(() => setExtensionSidebarPresentation('floating'));
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('docks a floating sidebar when the flag is turned off', async () => {
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true });
+      });
+      renderPresentation();
+      act(() => setExtensionSidebarPresentation('floating'));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: false });
+      });
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
   });
 
   it('should subscribe to location service observable', () => {
