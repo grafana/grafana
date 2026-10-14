@@ -15,7 +15,9 @@ import (
 // Store.
 type Cache interface {
 	List(ctx context.Context) []runtime.Object
-	Update(ctx context.Context, obj runtime.Object)
+	// Update writes obj into the store and reports whether the store took it; see
+	// the implementation for when a write is refused.
+	Update(ctx context.Context, obj runtime.Object) bool
 	Delete(ctx context.Context, namespace, name string)
 }
 
@@ -101,10 +103,15 @@ func (s *store) List(_ context.Context) []runtime.Object {
 // resource version — the write-through used to keep the store warm between
 // re-lists. A write at or past a tombstoned delete supersedes it: the object was
 // re-created, so drop the tombstone.
-func (s *store) Update(_ context.Context, obj runtime.Object) {
+//
+// It reports whether the write was taken. A refused write is not an error: an
+// object with no key cannot be stored, and a write a newer delete supersedes is
+// meant to be dropped. Callers that track the store's contents need to tell the
+// two outcomes apart, which they cannot do from the contents alone.
+func (s *store) Update(_ context.Context, obj runtime.Object) bool {
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err != nil {
-		return
+		return false
 	}
 	rv := objectResourceVersion(obj)
 	s.mu.Lock()
@@ -112,11 +119,12 @@ func (s *store) Update(_ context.Context, obj runtime.Object) {
 	if trv, ok := s.tombstones[key]; ok {
 		if rv < trv {
 			// A newer delete supersedes this write; keep the object evicted.
-			return
+			return false
 		}
 		delete(s.tombstones, key) // this write is at or past the delete: re-created
 	}
 	s.items[key] = entry{obj: obj, rv: rv}
+	return true
 }
 
 // Delete removes an object from the store, the write-through counterpart to

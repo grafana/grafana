@@ -81,12 +81,13 @@ func (s *fakeStore) List(_ context.Context) []runtime.Object {
 	return out
 }
 
-func (s *fakeStore) Update(_ context.Context, obj runtime.Object) {
+func (s *fakeStore) Update(_ context.Context, obj runtime.Object) bool {
 	namespace, name, _, ok := repositoryState(obj)
 	if !ok {
-		return
+		return false
 	}
 	s.objs[repositoryKey(namespace, name)] = obj
+	return true
 }
 
 func (s *fakeStore) Replace(objs []runtime.Object, _ int64) (added, updated, removed []runtime.Object) {

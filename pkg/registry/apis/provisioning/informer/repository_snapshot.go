@@ -17,9 +17,9 @@ import (
 // Correctness rests on two things. Every mutation holds mu across both the
 // store write and the tally update, so a live event landing mid-re-list cannot
 // have its tally change overwritten by a rebuild that predates it. And the
-// tallies only move for writes the store accepted: Update is silently dropped
-// when a newer delete has tombstoned the key, and counting a dropped write would
-// leave a deleted repository holding quota.
+// tallies only move for writes the store reports it took: a write a newer delete
+// supersedes is dropped, and counting it would leave a deleted repository
+// holding quota.
 //
 // A live MODIFIED never reaches the store at all (it carries namespace and name
 // only, so it would blank a real deletionTimestamp) and so never reaches these
@@ -32,9 +32,8 @@ type RepositorySnapshot struct {
 	// interleaving between a store write and the matching tally update would
 	// still leave the two disagreeing.
 	mu     sync.RWMutex
-	active map[string]bool  // key -> not terminating
-	counts map[string]int   // namespace -> active repositories
-	tombs  map[string]int64 // key -> resource version of a delete the store still honours
+	active map[string]bool // key -> not terminating
+	counts map[string]int  // namespace -> active repositories
 }
 
 // NewRepositorySnapshot wraps store to tally active repositories per namespace.
@@ -43,7 +42,6 @@ func NewRepositorySnapshot(store usinformer.Store) *RepositorySnapshot {
 		store:  store,
 		active: map[string]bool{},
 		counts: map[string]int{},
-		tombs:  map[string]int64{},
 	}
 }
 
@@ -60,31 +58,24 @@ func (s *RepositorySnapshot) List(ctx context.Context) []runtime.Object {
 	return s.store.List(ctx)
 }
 
-// Update writes through and tallies the result, skipping the tally when the
-// store will drop the write. The store drops an Update whose resource version
-// predates a delete it has tombstoned, which is what a reconcile read that
-// finished after a live deletion looks like: counting it would resurrect a
-// deleted repository into the quota.
-func (s *RepositorySnapshot) Update(ctx context.Context, obj runtime.Object) {
-	namespace, name, terminating, ok := repositoryState(obj)
-	if !ok {
-		s.store.Update(ctx, obj)
-		return
-	}
-
+// Update writes through and tallies only what the store took. A write a newer
+// delete supersedes is dropped -- which is what a reconcile read that finished
+// after a live deletion looks like -- and counting it would resurrect a deleted
+// repository into the quota.
+func (s *RepositorySnapshot) Update(ctx context.Context, obj runtime.Object) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.store.Update(ctx, obj)
-
-	key := repositoryKey(namespace, name)
-	if trv, tombstoned := s.tombs[key]; tombstoned {
-		if objectRV(obj) < trv {
-			return // superseded by a newer delete; the store kept the object evicted
-		}
-		delete(s.tombs, key) // at or past the delete: re-created, and the store took it
+	if !s.store.Update(ctx, obj) {
+		return false
 	}
-	s.set(key, namespace, !terminating)
+
+	namespace, name, terminating, ok := repositoryState(obj)
+	if !ok {
+		return true
+	}
+	s.set(repositoryKey(namespace, name), namespace, !terminating)
+	return true
 }
 
 func (s *RepositorySnapshot) Delete(ctx context.Context, namespace, name string) {
@@ -100,15 +91,7 @@ func (s *RepositorySnapshot) DeleteAt(ctx context.Context, namespace, name strin
 	defer s.mu.Unlock()
 
 	s.store.DeleteAt(ctx, namespace, name, rv)
-
-	key := repositoryKey(namespace, name)
-	s.drop(key, namespace)
-	if rv > 0 {
-		// Mirrors the tombstone the store just recorded, so a stale Update that
-		// the store will drop is not tallied. Replace prunes these the way the
-		// store prunes its own.
-		s.tombs[key] = rv
-	}
+	s.drop(repositoryKey(namespace, name), namespace)
 }
 
 // Replace rebuilds the tallies from what the store installed, not from objs: it
@@ -134,26 +117,6 @@ func (s *RepositorySnapshot) Replace(objs []runtime.Object, listRV int64) (added
 		}
 	}
 	s.active, s.counts = active, counts
-
-	// Prune the mirrored tombstones on the store's rule: a delete the snapshot
-	// now reflects is spent, and anything the snapshot re-added is a re-creation
-	// the store already accepted. A snapshot the caller could not date makes no
-	// claim about when it was read, so the store drops every tombstone and the
-	// mirror must too -- keeping them would reject writes the store now accepts,
-	// and would leak an entry per delete for as long as lists stay undated.
-	if listRV <= 0 {
-		clear(s.tombs)
-		return added, updated, removed
-	}
-	for key, trv := range s.tombs {
-		if trv <= listRV {
-			delete(s.tombs, key)
-			continue
-		}
-		if _, present := active[key]; present {
-			delete(s.tombs, key)
-		}
-	}
 
 	return added, updated, removed
 }

@@ -240,22 +240,4 @@ func TestRepositorySnapshot_UndatedReplaceClearsTheTombstones(t *testing.T) {
 
 	assert.Equal(t, 1, snapshot.CountActive("ns"), "the store took the write, so it must be counted")
 	requireAgrees(t, snapshot, "ns")
-
-	snapshot.mu.RLock()
-	defer snapshot.mu.RUnlock()
-	assert.Empty(t, snapshot.tombs, "an undated snapshot must leave no mirrored tombstones")
-}
-
-// Deletes arriving while lists stay undated must not pile up in the mirror.
-func TestRepositorySnapshot_UndatedReplacesDoNotAccumulateTombstones(t *testing.T) {
-	snapshot := NewRepositorySnapshot(usinformer.NewStore())
-
-	for i := range 50 {
-		snapshot.DeleteAt(t.Context(), "ns", "r"+strconv.Itoa(i), int64(20+i))
-		snapshot.Replace(nil, 0)
-	}
-
-	snapshot.mu.RLock()
-	defer snapshot.mu.RUnlock()
-	assert.Empty(t, snapshot.tombs, "the mirror must not grow while snapshots stay undated")
 }
