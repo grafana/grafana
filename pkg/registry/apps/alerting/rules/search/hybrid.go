@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
