@@ -168,13 +168,19 @@ func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
 
 				tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
 				require.NoError(t, err)
-				require.ElementsMatch(t,
-					tupleKeyStrings([]*openfgav1.TupleKey{
-						common.NewResourceTuple(subject.user, level.relation, group, resource, "", name),
-						common.NewResourceTuple(subject.user, common.RelationCreate, group, resource, "query", name),
-					}),
-					tupleKeyStrings(tuples),
-				)
+				expected := []*openfgav1.TupleKey{
+					common.NewResourceTuple(subject.user, level.relation, group, resource, "", name),
+					common.NewResourceTuple(subject.user, common.RelationCreate, group, resource, "query", name),
+				}
+				if level.verb == "Admin" {
+					expected = append(expected,
+						common.NewResourceTuple(subject.user, common.RelationGet, group, resource, "caching", name),
+						common.NewResourceTuple(subject.user, common.RelationCreate, group, resource, "caching", name),
+						common.NewResourceTuple(subject.user, common.RelationUpdate, group, resource, "caching", name),
+						common.NewResourceTuple(subject.user, common.RelationDelete, group, resource, "caching", name),
+					)
+				}
+				require.ElementsMatch(t, tupleKeyStrings(expected), tupleKeyStrings(tuples))
 			})
 		}
 	}
@@ -940,7 +946,11 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 
 					tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
 					require.NoError(t, err)
-					require.Len(t, tuples, 2)
+					if verb == "Admin" {
+						require.Len(t, tuples, 6)
+					} else {
+						require.Len(t, tuples, 2)
+					}
 					for _, tuple := range tuples {
 						validateTupleAgainstSchema(t, ts, tuple)
 					}
