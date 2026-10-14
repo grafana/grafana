@@ -44,12 +44,16 @@ func TestConvertK8sResourceToCreateCommand_Expires(t *testing.T) {
 	})
 
 	t.Run("round-trip create cmd -> k8s -> create cmd preserves ~1 week", func(t *testing.T) {
-		original := &dashboardsnapshots.CreateDashboardSnapshotCommand{}
+		original := &dashboardsnapshots.CreateDashboardSnapshotCommand{
+			ExternalDeleteURL: "https://example.com/api/snapshots-delete/secret",
+		}
 		original.Expires = oneWeekSeconds
+		original.External = true
 
 		snap := convertCreateCmdToK8sSnapshot(original, "default")
 		got := convertK8sResourceToCreateCommand(snap, orgID, userID)
 
 		assert.InDelta(t, original.Expires, got.Expires, 5)
+		assert.Equal(t, original.ExternalDeleteURL, got.ExternalDeleteURL)
 	})
 }

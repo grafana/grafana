@@ -1054,10 +1054,12 @@ func TestStripSensitiveFields(t *testing.T) {
 				Dashboard: dashboard,
 			},
 		}
+		snap.SetExternalDeleteURL("https://example.com/api/snapshots-delete/" + deleteKey)
 		stripped, err := stripSensitiveFields(snap)
 		require.NoError(t, err)
 		assert.Nil(t, stripped.Spec.DeleteKey)
 		assert.Nil(t, stripped.Spec.Dashboard)
+		assert.Empty(t, stripped.GetExternalDeleteURL())
 	})
 
 	t.Run("does not modify original snapshot", func(t *testing.T) {
@@ -1080,11 +1082,15 @@ func TestStripSensitiveFields(t *testing.T) {
 				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}},
 			},
 		}
+		for i := range list.Items {
+			list.Items[i].SetExternalDeleteURL("https://example.com/api/snapshots-delete/" + deleteKey)
+		}
 		stripped, err := stripSensitiveFieldsFromList(list)
 		require.NoError(t, err)
 		for _, item := range stripped.Items {
 			assert.Nil(t, item.Spec.DeleteKey)
 			assert.Nil(t, item.Spec.Dashboard)
+			assert.Empty(t, item.GetExternalDeleteURL())
 		}
 	})
 

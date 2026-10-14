@@ -205,17 +205,34 @@ func externalSnapshotDeleteEndpoint(externalURL, deleteKey string, kubernetes bo
 }
 
 func deleteSnapshotFromExternalHost(ctx context.Context, snap *dashv0.Snapshot, options dashv0.SnapshotSharingOptions) (string, error) {
-	if snap.Spec.External == nil || !*snap.Spec.External || snap.Spec.DeleteKey == nil || options.ExternalSnapshotURL == "" {
+	if snap.Spec.External == nil || !*snap.Spec.External {
 		return "", nil
 	}
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
-		prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
-		deleteURL := strings.TrimRight(options.ExternalSnapshotURL, "/") +
-			"/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
-			prefix + "/delete/" + *snap.Spec.DeleteKey
+	if snap.Spec.DeleteKey == nil || *snap.Spec.DeleteKey == "" {
+		return "", dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("external snapshot delete key is unavailable")
+	}
+	kubernetesPush := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx))
+	deleteURL := snap.GetExternalDeleteURL()
+	var err error
+	if deleteURL != "" {
+		deleteURL, err = externalSnapshotDeleteEndpoint(deleteURL, *snap.Spec.DeleteKey, kubernetesPush)
+	} else if options.ExternalSnapshotURL != "" {
+		deleteURL = strings.TrimRight(options.ExternalSnapshotURL, "/")
+		if kubernetesPush {
+			deleteURL += "/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
+				dashv0.SnapshotResourceInfo.GroupResource().Resource + "/delete/" + *snap.Spec.DeleteKey
+		} else {
+			deleteURL += "/api/snapshots-delete/" + *snap.Spec.DeleteKey
+		}
+	} else {
+		return "", dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("external snapshot delete URL is unavailable")
+	}
+	if err != nil {
+		return "", err
+	}
+	if kubernetesPush {
 		return deleteURL, deleteExternalSnapshot(deleteURL, options.ExternalSnapshotToken)
 	}
-	deleteURL := strings.TrimRight(options.ExternalSnapshotURL, "/") + "/api/snapshots-delete/" + *snap.Spec.DeleteKey
 	return deleteURL, deleteExternalSnapshotLegacy(deleteURL)
 }
 
@@ -230,6 +247,7 @@ func stripSensitiveFields(obj runtime.Object) (*dashv0.Snapshot, error) {
 	out := snap.DeepCopy()
 	out.Spec.DeleteKey = nil
 	out.Spec.Dashboard = nil
+	out.SetExternalDeleteURL("")
 	return out, nil
 }
 
@@ -246,6 +264,7 @@ func stripSensitiveFieldsFromList(obj runtime.Object) (*dashv0.SnapshotList, err
 	for i := range out.Items {
 		out.Items[i].Spec.DeleteKey = nil
 		out.Items[i].Spec.Dashboard = nil
+		out.Items[i].SetExternalDeleteURL("")
 	}
 	return out, nil
 }
