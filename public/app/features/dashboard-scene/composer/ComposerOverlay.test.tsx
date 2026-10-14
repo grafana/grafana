@@ -733,6 +733,49 @@ describe('region capture', () => {
     expect(mockReleaseCanvas).toHaveBeenCalledWith(raster);
   });
 
+  it('renders only the smallest element that holds the region', async () => {
+    const { session } = setup();
+    const regionId = await drawRegion(session);
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    const grid = document.createElement('div');
+    container.appendChild(grid);
+    grid.appendChild(panelRoot!);
+
+    await capture(session, regionId);
+
+    // The region (150..350 x 250..450) lies inside the panel (100..500 x 200..500).
+    expect(mockRenderNode.mock.calls[0][0]).toBe(panelRoot);
+    // Crop relative to the panel: a 400px wide panel rendered 2048px wide is 5.12 raster px per CSS px.
+    expect(mockCropToBlob).toHaveBeenCalledWith(
+      raster,
+      { sx: 256, sy: 256, sw: 1024, sh: 1024, width: 1024, height: 1024 },
+      'image/webp',
+      0.85
+    );
+  });
+
+  it('widens the render root until it holds a region that runs past its panels', async () => {
+    const { session } = setup();
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    const grid = document.createElement('div');
+    container.appendChild(grid);
+    grid.appendChild(panelRoot!);
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickRegion(live());
+    });
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    // Starts left of the panel (which begins at x=100).
+    fireEvent.pointerDown(overlay, { clientX: 50, clientY: 250, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { regionId } = ((await pick) as { ref: { regionId: string } }).ref;
+
+    await capture(session, regionId);
+
+    expect(mockRenderNode.mock.calls[0][0]).toBe(grid);
+  });
+
   it('runs one capture at a time and locks picking and tabs until it settles', async () => {
     const { session } = setup();
     const regionId = await drawRegion(session);

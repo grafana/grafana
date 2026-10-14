@@ -219,7 +219,8 @@ export class ComposerSession implements ComposerSessionAPI {
         () => window.removeEventListener('scroll', onScroll, { capture: true })
       );
       renderRegionImage({
-        root: container,
+        // Rendering only what the region needs keeps tall dashboards fast; the crop is relative to it.
+        root: findCaptureRoot(rect, container),
         region: rect,
         exclude: (candidate) => candidate instanceof Element && candidate.matches(CAPTURE_EXCLUDE_SELECTOR),
         // A settled capture is dropped: its buffers are freed and its result never returned.
@@ -717,6 +718,42 @@ function getSelectedTabChain(scene: DashboardScene): TabItem[] {
 /** Like `TabItem.isCurrentTab`, but also true for the first tab shown before any slug is set. */
 function isSelectedTab(tab: TabItem): boolean {
   return tab.parent instanceof TabsLayoutManager && tab.parent.getCurrentTab() === tab;
+}
+
+/**
+ * The smallest element under `container` that holds the whole `rect` (viewport coordinates): the nearest
+ * common ancestor of the panels it overlaps, widened until it covers the rect, else the container.
+ */
+export function findCaptureRoot(rect: Box, container: HTMLElement): HTMLElement {
+  const overlapping = [...container.querySelectorAll<HTMLElement>('[data-viz-panel-key]')].filter((element) =>
+    overlaps(element.getBoundingClientRect(), rect)
+  );
+  const holdsAll = (candidate: HTMLElement) => overlapping.every((element) => candidate.contains(element));
+  let root: HTMLElement | null = overlapping[0] ?? null;
+  while (root && root !== container && !holdsAll(root)) {
+    root = root.parentElement;
+  }
+  while (root && root !== container && !covers(root.getBoundingClientRect(), rect)) {
+    root = root.parentElement;
+  }
+  return root && container.contains(root) ? root : container;
+}
+
+function overlaps(bounds: DOMRect, rect: Box): boolean {
+  return (
+    Math.min(rect.left + rect.width, bounds.right) > Math.max(rect.left, bounds.left) &&
+    Math.min(rect.top + rect.height, bounds.bottom) > Math.max(rect.top, bounds.top)
+  );
+}
+
+/** Half a pixel of slack for sub-pixel layout. */
+function covers(bounds: DOMRect, rect: Box): boolean {
+  return (
+    bounds.left <= rect.left + 0.5 &&
+    bounds.top <= rect.top + 0.5 &&
+    bounds.right >= rect.left + rect.width - 0.5 &&
+    bounds.bottom >= rect.top + rect.height - 0.5
+  );
 }
 
 function isFullyVisible(rect: Box, visible: { top: number; bottom: number }): boolean {
