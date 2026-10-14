@@ -245,18 +245,16 @@ class DataSourceWithBackend<
     let url = '/api/ds/query?ds_type=' + this.type;
 
     // Use the new query service
-    if (config.featureToggles.queryServiceFromUI) {
-      // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
-      const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
-        types: [],
-      });
-      if (isQueryServiceCompatible(datasources, allowedTypes)) {
-        let apiGroup = 'query.grafana.app';
-        if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesQuerierNewName, false)) {
-          apiGroup = 'datasource.grafana.app';
-        }
-        url = `/apis/${apiGroup}/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+    // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
+      types: [],
+    });
+    if (isQueryServiceCompatible(datasources, allowedTypes)) {
+      let apiGroup = 'query.grafana.app';
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesQuerierNewName, false)) {
+        apiGroup = 'datasource.grafana.app';
       }
+      url = `/apis/${apiGroup}/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
     }
 
     if (hasExpr) {

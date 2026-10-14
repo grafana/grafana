@@ -30,7 +30,7 @@ test.describe(
       };
       const dataSource = 'gdev-e2etestdatasource';
 
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
       await sidebar.variableOptions.groupby.selectDatasource(dataSource);
 
       const variableLabel = controls.variables.getLabel(variable.label);
