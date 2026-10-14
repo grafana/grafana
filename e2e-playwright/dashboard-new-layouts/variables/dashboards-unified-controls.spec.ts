@@ -68,7 +68,10 @@ test.describe('Dashboard edit - Unified controls', { tag: ['@dashboards'] }, () 
     await expect(sidebar.getPaneTitle()).toHaveText('Filter');
     await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
     await expect(sidebar.variableOptions.getLabelInput()).toHaveValue(variable.label);
-    await expect(sidebar.variableOptions.adhoc.getDatasourceInput()).toHaveAttribute('placeholder', variable.dataSource);
+    await expect(sidebar.variableOptions.adhoc.getDatasourceInput()).toHaveAttribute(
+      'placeholder',
+      variable.dataSource
+    );
     await expect(sidebar.variableOptions.adhoc.getEnableGroupByCheckbox()).not.toBeChecked();
   });
 

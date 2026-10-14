@@ -106,7 +106,6 @@ export const flows = {
 
       await sidebar.toolbar.clickButton('Add');
       await sidebar.addOptions.addVariable();
-
       await sidebar.variableOptions.selectVariableType(variable.type);
 
       await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
@@ -133,6 +132,9 @@ export const flows = {
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Add');
         await sidebar.addOptions.addFilter();
+
+        await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
+
         await sidebar.variableOptions.setName(variable.name);
         await sidebar.variableOptions.setLabel(variable.label);
         await sidebar.variableOptions.adhoc.selectDatasource(variable.dataSource);
