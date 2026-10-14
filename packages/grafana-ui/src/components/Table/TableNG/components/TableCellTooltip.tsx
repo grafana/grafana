@@ -93,6 +93,7 @@ export const TableCellTooltip = memo(
       clearTimeout(hoverTimeout.current);
       setPinned(false);
       setHovered(false);
+      setFocused(false);
       setDismissed(true);
     }, []);
 
@@ -127,22 +128,25 @@ export const TableCellTooltip = memo(
     }, [show, dismiss]);
 
     useEffect(() => {
+      if (!show) {
+        return;
+      }
+      const onOutsideClick = (event: MouseEvent) => {
+        if (
+          event.target instanceof Node &&
+          (tooltipCaretRef.current?.contains(event.target) || tooltipContentRef.current?.contains(event.target))
+        ) {
+          return;
+        }
+        dismiss();
+      };
+      document.addEventListener('click', onOutsideClick, true);
+      return () => document.removeEventListener('click', onOutsideClick, true);
+    }, [show, dismiss]);
+
+    useEffect(() => {
       if (pinned) {
         const gridRoot = gridRef.current?.element;
-
-        const windowListener = (ev: Event) => {
-          if (
-            ev.target instanceof Node &&
-            (tooltipCaretRef.current?.contains(ev.target) || tooltipContentRef.current?.contains(ev.target))
-          ) {
-            return;
-          }
-
-          dismiss();
-          document.removeEventListener('click', windowListener, true);
-        };
-
-        document.addEventListener('click', windowListener, true);
 
         // right now, we kill the pinned tooltip on any form of scrolling to avoid awkward rendering
         // where the tooltip bumps up against the edge of the scrollable container. we could try to
@@ -156,7 +160,6 @@ export const TableCellTooltip = memo(
         gridRoot?.addEventListener('scroll', scrollListener, { once: true });
 
         return () => {
-          document.removeEventListener('click', windowListener, true);
           gridRoot?.removeEventListener('scroll', scrollListener);
         };
       }

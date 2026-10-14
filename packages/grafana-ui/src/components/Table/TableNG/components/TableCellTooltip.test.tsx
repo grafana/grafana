@@ -115,6 +115,30 @@ describe('TableCellTooltip', () => {
     expect(screen.queryByRole('dialog', { name: 'Cell preview' })).not.toBeInTheDocument();
   });
 
+  it.each(['padding', 'content'])(
+    'dismisses an unpinned preview after a %s click when an outside click preserves focus',
+    async (target) => {
+      const user = userEvent.setup();
+      renderInRdgCell();
+      render(<button onMouseDown={(event) => event.preventDefault()}>Outside</button>);
+      const trigger = screen.getByRole('button', { name: CARET_LABEL });
+
+      await user.hover(trigger);
+      const dialog = screen.getByRole('dialog', { name: 'Cell preview' });
+      await user.click(target === 'padding' ? dialog : within(dialog).getByText('hello'));
+      expect(dialog).toHaveFocus();
+      expect(trigger).toHaveAttribute('aria-pressed', 'false');
+
+      await user.click(screen.getByRole('button', { name: 'Outside' }));
+      expect(screen.queryByRole('dialog', { name: 'Cell preview' })).not.toBeInTheDocument();
+
+      await user.hover(trigger);
+      expect(screen.getByRole('dialog', { name: 'Cell preview' })).toHaveTextContent('hello');
+      await user.unhover(trigger);
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Cell preview' })).not.toBeInTheDocument());
+    }
+  );
+
   it('allows Tab to leave a pinned field preview', async () => {
     const user = userEvent.setup();
     renderInRdgCell();
