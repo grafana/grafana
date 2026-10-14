@@ -14,7 +14,7 @@ type permissionStore struct{ sql db.DB }
 
 func (s permissionStore) permissions(ctx context.Context, query ac.GetUserPermissionsQuery) ([]ac.Permission, error) {
 	if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
-		return nil, nil
+		return []ac.Permission{}, nil
 	}
 	filter, params := ac.UserRolesFilter(query.OrgID, query.UserID, query.TeamIDs, query.Roles, s.sql.GetDialect())
 	q := `SELECT permission.action, permission.scope FROM permission
