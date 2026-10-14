@@ -19,10 +19,12 @@ import { dashboardV2SpecSchema } from '../v2schema/dashboardV2Schema';
 import { canEnterComposer, canStillEdit } from './composerAccess';
 import {
   type ApplyOutcome,
+  type ComposerAnnotation,
   type ComposerDashboardSpec,
   type ComposerElement,
   type ComposerSessionAPI,
   type ElementPick,
+  type ElementPoint,
   type ElementRef,
   type RegionPick,
 } from './types';
@@ -32,7 +34,20 @@ export interface ComposerOverlayState {
   picking: boolean;
   paused: boolean;
   highlight: ElementRef | null;
+  annotations: ComposerAnnotation[];
+  /** Bumps when the dashboard definition changes, so the overlay re-measures. */
+  layoutTick: number;
 }
+
+const INITIAL_OVERLAY_STATE: ComposerOverlayState = {
+  picking: false,
+  paused: false,
+  highlight: null,
+  annotations: [],
+  layoutTick: 0,
+};
+
+const ORIGIN: ElementPoint = { x: 0, y: 0 };
 
 /**
  * One Composer session, bound to the dashboard it was entered on. Writes go to that scene only,
@@ -50,8 +65,13 @@ export class ComposerSession implements ComposerSessionAPI {
   private applying = false;
   private closed = false;
   private pendingPick?: (pick: ElementPick | null) => void;
-  private overlayState: ComposerOverlayState = { picking: false, paused: false, highlight: null };
+  private overlayState: ComposerOverlayState = INITIAL_OVERLAY_STATE;
   private readonly listeners = new Set<() => void>();
+  private readonly annotationListeners = new Set<(id: string) => void>();
+  /** Containers the plugin portals into, kept across re-renders and moved with the overlay. */
+  private readonly anchors = new Map<string, HTMLDivElement>();
+  private anchorHost: HTMLElement | null = null;
+  private requestMeasure?: () => void;
   private readonly cleanups: Array<() => void> = [];
 
   /** Enters Composer on `scene`. Throws when it cannot, with the reason `canEnterComposer` gives. */
@@ -80,6 +100,7 @@ export class ComposerSession implements ComposerSessionAPI {
     const stateChanged = this.scene.subscribeToEvent(DashboardStateChangedEvent, () => {
       if (!this.applying) {
         this.revision++;
+        this.setOverlayState({ layoutTick: this.overlayState.layoutTick + 1 });
       }
     });
     this.cleanups.push(() => stateChanged.unsubscribe());
@@ -137,6 +158,50 @@ export class ComposerSession implements ComposerSessionAPI {
     this.setOverlayState({ paused });
   }
 
+  public setAnnotations(items: ComposerAnnotation[]): void {
+    if (this.closed) {
+      return;
+    }
+    const annotations = items.map(({ id, ref, point, label, state }) => ({
+      id,
+      ref: { ...ref },
+      point: { x: clamp01(point.x), y: clamp01(point.y) },
+      label: label.slice(0, 3),
+      state,
+    }));
+    const ids = new Set(annotations.map(({ id }) => id));
+    for (const [id, anchor] of this.anchors) {
+      if (!ids.has(id)) {
+        anchor.remove();
+        this.anchors.delete(id);
+      }
+    }
+    this.setOverlayState({ annotations });
+  }
+
+  public onAnnotationClick(listener: (id: string) => void): () => void {
+    this.annotationListeners.add(listener);
+    return () => this.annotationListeners.delete(listener);
+  }
+
+  public getAnnotationAnchor(id: string): HTMLElement | null {
+    const item = this.findAnnotation(id);
+    if (this.closed || !item || !this.findElementRoot(item.ref)) {
+      return null;
+    }
+    let anchor = this.anchors.get(id);
+    if (!anchor) {
+      anchor = document.createElement('div');
+      anchor.dataset.composerAnnotationAnchor = id;
+      // Zero-sized so the plugin's content lays itself out from this point; the overlay sets left/top.
+      Object.assign(anchor.style, { position: 'absolute', width: '0', height: '0', pointerEvents: 'auto' });
+      this.anchors.set(id, anchor);
+      this.anchorHost?.appendChild(anchor);
+      this.requestMeasure?.();
+    }
+    return anchor;
+  }
+
   public async readSpec(): Promise<{ spec: ComposerDashboardSpec; revision: number }> {
     if (this.closed) {
       throw new Error('The Composer session has ended.');
@@ -191,6 +256,7 @@ export class ComposerSession implements ComposerSessionAPI {
       return { status: 'denied', message: 'The dashboard did not accept the edit.' };
     }
     this.revision++;
+    this.setOverlayState({ layoutTick: this.overlayState.layoutTick + 1 });
     this.scene.recordEditMutation('assistant');
     this.scene.forceRender();
     return { status: 'applied', appliedSpec: transformSceneToSaveModelSchemaV2(this.scene), revision: this.revision };
@@ -238,7 +304,11 @@ export class ComposerSession implements ComposerSessionAPI {
     this.cancelPick();
     this.controller.abort();
     this.cleanups.splice(0).forEach((cleanup) => cleanup());
-    this.overlayState = { picking: false, paused: false, highlight: null };
+    this.anchors.forEach((anchor) => anchor.remove());
+    this.anchors.clear();
+    this.requestMeasure = undefined;
+    this.annotationListeners.clear();
+    this.overlayState = INITIAL_OVERLAY_STATE;
     this.notify();
     appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'docked' }));
   }
@@ -269,8 +339,36 @@ export class ComposerSession implements ComposerSessionAPI {
     resolve(pick);
   }
 
+  /** @internal A pin was clicked or activated from the keyboard. Ignored while paused. */
+  public activateAnnotation(id: string): void {
+    if (this.closed || this.overlayState.paused || !this.findAnnotation(id)) {
+      return;
+    }
+    this.annotationListeners.forEach((listener) => listener(id));
+  }
+
+  /** @internal The overlay hosts and positions the anchor containers; a new host takes the existing ones over. */
+  public setAnchorHost(host: HTMLElement | null, requestMeasure?: () => void): void {
+    this.anchorHost = host;
+    this.requestMeasure = host ? requestMeasure : undefined;
+    if (host) {
+      this.anchors.forEach((anchor) => host.appendChild(anchor));
+    }
+  }
+
+  /** @internal */
+  public getAnchors(): ReadonlyMap<string, HTMLDivElement> {
+    return this.anchors;
+  }
+
+  /** @internal The rendered DOM root of the element a ref points at. */
+  public findElementRoot(ref: ElementRef): HTMLElement | null {
+    const key = this.getPanelKey(ref);
+    return key ? document.querySelector<HTMLElement>(`[data-viz-panel-key="${CSS.escape(key)}"]`) : null;
+  }
+
   /** @internal Resolves the panel rendered under a `data-viz-panel-key` DOM root. */
-  public resolvePanelPick(key: string): ElementPick | null {
+  public resolvePanelPick(key: string, point: ElementPoint = ORIGIN): ElementPick | null {
     const found = sceneGraph.findObject(this.scene, (obj) => obj.state.key === key);
     if (!(found instanceof VizPanel)) {
       return null;
@@ -285,12 +383,17 @@ export class ComposerSession implements ComposerSessionAPI {
       ref: { kind: 'panel', panelId },
       label: source.state.title || t('dashboard.composer.untitled-panel', 'Panel {{panelId}}', { panelId }),
       tabPath: getTabPath(source),
+      point: { x: clamp01(point.x), y: clamp01(point.y) },
     };
   }
 
   /** @internal The DOM key of the panel a ref points at, for highlighting. */
   public getPanelKey(ref: ElementRef): string | undefined {
     return ref.kind === 'panel' ? this.findPanel(ref.panelId)?.state.key : undefined;
+  }
+
+  private findAnnotation(id: string): ComposerAnnotation | undefined {
+    return this.overlayState.annotations.find((item) => item.id === id);
   }
 
   private findPanel(panelId: number): VizPanel | undefined {
@@ -311,6 +414,10 @@ export class ComposerSession implements ComposerSessionAPI {
   private notify() {
     this.listeners.forEach((listener) => listener());
   }
+}
+
+function clamp01(value: number): number {
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
 }
 
 function getTabPath(obj: SceneObject): string[] {

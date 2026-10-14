@@ -24,11 +24,33 @@ export interface DashboardComposerAPI {
 /** Rows and tabs are selectable from M3; M1 resolves panels only. */
 export type ElementRef = { kind: 'panel'; panelId: number } | { kind: 'row' | 'tab'; name: string };
 
+/** A position inside an element, each axis normalised to 0..1 of its bounds. */
+export interface ElementPoint {
+  x: number;
+  y: number;
+}
+
 export interface ElementPick {
   ref: ElementRef;
   label: string;
   /** Titles of the tabs containing the element, outermost first. */
   tabPath: string[];
+  /** Where the element was clicked; `{ x: 0, y: 0 }` for picks without a pointer. */
+  point: ElementPoint;
+}
+
+/**
+ * A comment marker core draws over the dashboard. It carries no comment text: the plugin renders the
+ * editor itself, into the container `getAnnotationAnchor` returns.
+ */
+export interface ComposerAnnotation {
+  id: string;
+  ref: ElementRef;
+  point: ElementPoint;
+  /** Pin text, for example "1". At most 3 characters are shown. */
+  label: string;
+  /** An active item also outlines its element; a staged one shows only its pin. */
+  state: 'active' | 'staged';
 }
 
 export interface RegionPick {
@@ -64,6 +86,16 @@ export interface ComposerSessionAPI {
   listElements(): ComposerElement[];
   highlight(target: ElementRef | null): void;
   setPaused(paused: boolean): void;
+
+  /** Replaces the drawn annotations. Pins are disabled while paused. */
+  setAnnotations(items: ComposerAnnotation[]): void;
+  /** Fires with the item id when its pin is clicked or activated with Enter or Space. Returns an unsubscribe. */
+  onAnnotationClick(listener: (id: string) => void): () => void;
+  /**
+   * A stable container, positioned at the item's element, for the plugin to portal its editor into.
+   * Core never reads, styles or clears its content. Null when the item is not set or does not resolve.
+   */
+  getAnnotationAnchor(id: string): HTMLElement | null;
 
   readSpec(): Promise<{ spec: ComposerDashboardSpec; revision: number }>;
   applySpec(spec: ComposerDashboardSpec, opts: { signal: AbortSignal; baseRevision: number }): Promise<ApplyOutcome>;

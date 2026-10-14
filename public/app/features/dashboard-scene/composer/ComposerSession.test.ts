@@ -385,7 +385,12 @@ describe('picking', () => {
 
     session.completePick(session.resolvePanelPick('panel-1'));
 
-    await expect(pick).resolves.toEqual({ ref: { kind: 'panel', panelId: 1 }, label: 'Notes', tabPath: [] });
+    await expect(pick).resolves.toEqual({
+      ref: { kind: 'panel', panelId: 1 },
+      label: 'Notes',
+      tabPath: [],
+      point: { x: 0, y: 0 },
+    });
     expect(session.getOverlayState().picking).toBe(false);
     expect(session.getPanelKey({ kind: 'panel', panelId: 1 })).toBe('panel-1');
   });

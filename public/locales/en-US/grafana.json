@@ -5592,6 +5592,7 @@
       "ungroup-tabs": "Ungroup tabs"
     },
     "composer": {
+      "annotation-pin": "Comment {{label}}",
       "apply-undo-title": "Assistant Composer edit",
       "untitled-panel": "Panel {{panelId}}",
       "wait-for-assistant": "Wait for Assistant to finish editing"
