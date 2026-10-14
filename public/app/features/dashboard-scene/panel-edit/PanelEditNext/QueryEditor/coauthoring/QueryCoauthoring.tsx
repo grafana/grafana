@@ -193,21 +193,22 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
           {!state.clarification && session.engaged && <QueryCoauthoringHeader onClose={session.dismiss} />}
           {state.clarification && (
             <>
-              <QueryCoauthoringHeader onClose={session.dismiss}>
-                <Text variant="body" color="secondary">
-                  <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
-                </Text>
+              <QueryCoauthoringHeader className={styles.explanationHeader} onClose={session.dismiss}>
+                <div className={styles.headerCopy}>
+                  <Text variant="body" color="secondary">
+                    <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
+                  </Text>
+                  <div
+                    data-testid={selectors.components.QueryEditorCoauthoring.container}
+                    role="region"
+                    aria-label={t('query-editor-coauthoring.clarification-message', 'Clarification message')}
+                  >
+                    <Text id={promptMessageId} variant="body">
+                      {state.clarification.message}
+                    </Text>
+                  </div>
+                </div>
               </QueryCoauthoringHeader>
-              <div
-                className={styles.body}
-                data-testid={selectors.components.QueryEditorCoauthoring.container}
-                role="region"
-                aria-label={t('query-editor-coauthoring.clarification-message', 'Clarification message')}
-              >
-                <Text id={promptMessageId} variant="body">
-                  {state.clarification.message}
-                </Text>
-              </div>
             </>
           )}
           <QueryCoauthoringPromptInput

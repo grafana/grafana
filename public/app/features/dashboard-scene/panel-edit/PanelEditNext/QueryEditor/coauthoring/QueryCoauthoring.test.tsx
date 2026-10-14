@@ -1911,7 +1911,7 @@ describe('QueryCoauthoring', () => {
     act(() => mockGenerate.mock.calls[0][0].onComplete('Which label should I group by?'));
     const input = screen.getByRole('textbox', { name: 'Add extra detail' });
     expect(input).toHaveAttribute('placeholder', 'Add extra detail…');
-    expect(screen.getByRole('button', { name: 'Continue in Assistant chat' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeInTheDocument();
     await user.type(input, 'Use handler');
     await user.click(screen.getByRole('button', { name: 'Continue' }));
     const request = mockGenerate.mock.calls[1][0];
