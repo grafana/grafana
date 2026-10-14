@@ -8,7 +8,7 @@ import {
   type Spec as NotebookSpec,
 } from '../types';
 
-import { appendPanelToNotebook } from './appendPanelToNotebook';
+import { appendElementsToNotebook, appendPanelToNotebook } from './appendPanelToNotebook';
 
 function panel(title: string, id = 1): PanelKind {
   const base = defaultPanelKind();
@@ -115,5 +115,43 @@ describe('appendPanelToNotebook', () => {
     const spec = appendPanelToNotebook(notebook(), panel('First', 99));
 
     expect(spec.elements['first']).toMatchObject({ spec: { id: 1 } });
+  });
+});
+
+describe('appendElementsToNotebook', () => {
+  it('appends mixed cells in order with names and ids unique across the batch', () => {
+    const spec = appendElementsToNotebook(
+      notebook({ intro: panel('Intro', 4) }),
+      [
+        { kind: 'markdown', text: 'Latency rose after the deploy.' },
+        { kind: 'panel', panel: panel('p95 latency') },
+        { kind: 'panel', panel: panel('p95 latency') },
+        { kind: 'markdown', text: 'It recovered.' },
+      ],
+      'assistant'
+    );
+
+    expect(elementNames(spec)).toEqual(['intro', 'markdown', 'p95-latency', 'p95-latency-2', 'markdown-2']);
+    const ids = ['p95-latency', 'p95-latency-2'].map((name) => {
+      const element = spec.elements[name];
+      return element.kind === 'Panel' ? element.spec.id : undefined;
+    });
+    expect(ids).toEqual([5, 6]);
+    expect(spec.elements.markdown).toEqual({
+      kind: 'Cell',
+      spec: { content: { kind: 'Markdown', spec: { text: 'Latency rose after the deploy.' } } },
+    });
+    expect(spec.layout.spec.cells.slice(1).map((cell) => cell.spec.source)).toEqual([
+      'assistant',
+      'assistant',
+      'assistant',
+      'assistant',
+    ]);
+  });
+
+  it('attributes cells to the user by default', () => {
+    const spec = appendElementsToNotebook(notebook(), [{ kind: 'markdown', text: 'Note' }]);
+
+    expect(spec.layout.spec.cells.map((cell) => cell.spec.source)).toEqual(['user']);
   });
 });

@@ -6,7 +6,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { addPanelToExistingNotebook } from '../addPanel/addPanelToNotebook';
+import { addCellsToExistingNotebook, addPanelToExistingNotebook } from '../addPanel/addPanelToNotebook';
 import { useNotebookPicker } from '../addPanel/useNotebookPicker';
 import { type NotebookRow } from '../list/useNotebooksList';
 
@@ -21,6 +21,7 @@ jest.mock('../addPanel/addPanelToNotebook', () => ({
   ...jest.requireActual('../addPanel/addPanelToNotebook'),
   addPanelToExistingNotebook: jest.fn(),
   createNotebookWithPanel: jest.fn(),
+  addCellsToExistingNotebook: jest.fn(),
 }));
 
 // The create fields offer the library's existing tags, which reads a facet off this module. It
@@ -33,6 +34,7 @@ jest.mock('../list/notebookSearchApi', () => ({
 
 const mockUseNotebookPicker = jest.mocked(useNotebookPicker);
 const addToExisting = jest.mocked(addPanelToExistingNotebook);
+const addCellsToExisting = jest.mocked(addCellsToExistingNotebook);
 
 const panel: Panel = {
   title: 'Checkout latency',
@@ -91,6 +93,8 @@ describe('AddToNotebookFormExposedComponent', () => {
     } as unknown as ReturnType<typeof useNotebookPicker>);
     addToExisting.mockReset();
     addToExisting.mockResolvedValue({ uid: 'nb2', title: 'Checkout error spike' });
+    addCellsToExisting.mockReset();
+    addCellsToExisting.mockResolvedValue({ uid: 'nb2', title: 'Checkout error spike' });
     onClose.mockClear();
   });
 
@@ -177,5 +181,47 @@ describe('AddToNotebookFormExposedComponent', () => {
       timeFrom: '2026-10-05T08:00:00.000Z',
       timeTo: '2026-10-05T09:30:00.000Z',
     });
+  });
+
+  it('adds ordered cells, attributed to the source given, and reports the notebook', async () => {
+    const onAdded = jest.fn();
+    const { user } = render(
+      <AddToNotebookFormExposedComponent
+        onClose={onClose}
+        source="assistant"
+        onAdded={onAdded}
+        cells={[
+          { kind: 'markdown', text: 'Errors spiked after the deploy.' },
+          { kind: 'panel', panel, capturedTimeRange: { from: 'now-6h', to: 'now', timeZone: 'utc' } },
+        ]}
+      />
+    );
+
+    await addToCheckoutErrorSpike(user);
+
+    await waitFor(() => expect(addCellsToExisting).toHaveBeenCalledTimes(1));
+    const [uid, cells, entryPoint, source] = addCellsToExisting.mock.calls[0];
+    expect([uid, entryPoint, source]).toEqual(['nb2', 'plugin', 'assistant']);
+    expect(cells[0]).toEqual({ kind: 'markdown', text: 'Errors spiked after the deploy.' });
+    expect(cells[1].kind === 'panel' && cells[1].panel.spec.title).toBe('Checkout latency');
+    expect(onAdded).toHaveBeenCalledWith({ uid: 'nb2', title: 'Checkout error spike', url: '/notebooks/nb2' });
+  });
+
+  it.each([
+    ['neither content prop', {}],
+    [
+      'both content props',
+      {
+        buildPanel: () => panel,
+        capturedTimeRange: { from: 'now-6h', to: 'now', timeZone: 'utc' },
+        cells: [{ kind: 'markdown' as const, text: 'x' }],
+      },
+    ],
+  ])('renders nothing when given %s', (_label, contentProps) => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = render(<AddToNotebookFormExposedComponent onClose={onClose} {...contentProps} />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('exactly one of'));
   });
 });

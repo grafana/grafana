@@ -23,6 +23,11 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * store and "capturedTimeRange" for the window it was showing. The form offers
  * to lock the panel to that window.
  *
+ * For ordered content, pass "cells" (markdown and panels, each panel with its own
+ * captured window) instead of "buildPanel". Optional: "defaultTitle" prefills a new
+ * notebook's title, "onAdded" receives { uid, title, url } after the write, and
+ * "source" attributes the cells ("user" by default, "assistant" for generated content).
+ *
  * Requires the `dashboard.notebooks` feature flag and `notebooks:create` or `notebooks:write`.
  *
  * Usage from a plugin:
@@ -64,9 +69,11 @@ export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
     return null;
   }
 
-  if (!props.onClose || !props.buildPanel || !props.capturedTimeRange) {
+  const { onClose, buildPanel, capturedTimeRange, cells } = props;
+  const singlePanel = Boolean(buildPanel && capturedTimeRange);
+  if (!onClose || singlePanel === Boolean(cells)) {
     console.error(
-      `[AddToNotebookFormExposedComponent] Missing required props: onClose, buildPanel, capturedTimeRange.`
+      `[AddToNotebookFormExposedComponent] Pass onClose and exactly one of: buildPanel with capturedTimeRange, or cells.`
     );
     return null;
   }
@@ -74,9 +81,13 @@ export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
   return (
     <Suspense fallback={null}>
       <AddToNotebookFormLazy
-        onClose={props.onClose}
-        buildPanel={props.buildPanel}
-        capturedTimeRange={props.capturedTimeRange}
+        onClose={onClose}
+        buildPanel={buildPanel}
+        capturedTimeRange={capturedTimeRange}
+        cells={cells}
+        defaultTitle={props.defaultTitle}
+        onAdded={props.onAdded}
+        source={props.source}
       />
     </Suspense>
   );

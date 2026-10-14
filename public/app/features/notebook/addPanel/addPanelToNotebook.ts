@@ -5,7 +5,12 @@ import { NOTEBOOK_ADD_FAILED_REASON, type NotebookAddFailedReason, type Notebook
 import { createNotebook, NotebookConflictError, updateNotebookSpec } from '../api/notebookResource';
 import { defaultSpec as defaultNotebookSpec, type PanelElement } from '../types';
 
-import { appendPanelToNotebook } from './appendPanelToNotebook';
+import {
+  appendElementsToNotebook,
+  appendPanelToNotebook,
+  type AppendedCellSource,
+  type AppendedElement,
+} from './appendPanelToNotebook';
 
 /** Enough to build the success toast and its link. */
 export interface AddedToNotebook {
@@ -53,6 +58,45 @@ export async function createNotebookWithPanel(
 
   const created = await createNotebook(spec);
   NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length, { panel, isLibraryPanel });
+
+  return { uid: created.uid, title: spec.title };
+}
+
+/** Several cells in one write, e.g. a chat answer with its panels. */
+export async function addCellsToExistingNotebook(
+  uid: string,
+  cells: AppendedElement[],
+  entryPoint: NotebookEntryPoint,
+  source: AppendedCellSource
+): Promise<AddedToNotebook> {
+  let firstPosition = 0;
+  const spec = await updateNotebookSpec(uid, (current) => {
+    firstPosition = current.layout.spec.cells.length;
+    return appendElementsToNotebook(current, cells, source);
+  });
+
+  cells.forEach((cell, index) => {
+    if (cell.kind === 'panel') {
+      NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, firstPosition + index, {
+        panel: cell.panel,
+        isLibraryPanel: false,
+      });
+    }
+  });
+
+  return { uid, title: spec.title };
+}
+
+export async function createNotebookWithCells(
+  fields: CreateNotebookFields,
+  cells: AppendedElement[],
+  entryPoint: NotebookEntryPoint,
+  source: AppendedCellSource
+): Promise<AddedToNotebook> {
+  const spec = appendElementsToNotebook({ ...defaultNotebookSpec(), title: fields.title }, cells, source);
+
+  const created = await createNotebook(spec);
+  NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length);
 
   return { uid: created.uid, title: spec.title };
 }

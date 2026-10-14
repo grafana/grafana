@@ -1,7 +1,20 @@
-import { type NotebookElement, type PanelElement, type Spec as NotebookSpec } from '../types';
+import {
+  type CellKind,
+  type NotebookElement,
+  type NotebookLayoutItemKind,
+  type PanelElement,
+  type Spec as NotebookSpec,
+} from '../types';
 
 /** Used when a panel has no title, or a title that slugifies to nothing (e.g. all non-latin). */
 const FALLBACK_ELEMENT_NAME = 'panel';
+const MARKDOWN_ELEMENT_NAME = 'markdown';
+
+/** One cell to append, in document order. */
+export type AppendedElement = { kind: 'panel'; panel: PanelElement } | { kind: 'markdown'; text: string };
+
+/** Who authored an appended cell: the person adding it, or an assistant whose content they added. */
+export type AppendedCellSource = NotebookLayoutItemKind['spec']['source'];
 
 /** Long enough to stay recognisable in a spec, short enough that the suffix stays readable. */
 const MAX_SLUG_LENGTH = 50;
@@ -16,28 +29,33 @@ const MAX_SLUG_LENGTH = 50;
  * generator (see the note in serialization/transformNotebookSceneToSaveModel.ts).
  */
 export function appendPanelToNotebook(spec: NotebookSpec, panel: PanelElement): NotebookSpec {
-  const elementName = uniqueElementName(panel.spec.title, spec.elements);
+  return appendElementsToNotebook(spec, [{ kind: 'panel', panel }]);
+}
 
-  return {
-    ...spec,
-    elements: {
-      ...spec.elements,
-      [elementName]: withPanelId(panel, nextPanelId(spec.elements)),
-    },
-    layout: {
-      ...spec.layout,
-      spec: {
-        ...spec.layout.spec,
-        cells: [
-          ...spec.layout.spec.cells,
-          {
-            kind: 'NotebookLayoutItem',
-            spec: { element: { kind: 'ElementReference', name: elementName }, source: 'user' },
-          },
-        ],
-      },
-    },
-  };
+/** Appends cells in order. Names and panel ids stay unique across the batch as well as the notebook. */
+export function appendElementsToNotebook(
+  spec: NotebookSpec,
+  appended: AppendedElement[],
+  source: AppendedCellSource = 'user'
+): NotebookSpec {
+  const elements = { ...spec.elements };
+  const cells = [...spec.layout.spec.cells];
+  let panelId = nextPanelId(elements);
+
+  for (const item of appended) {
+    const name =
+      item.kind === 'panel'
+        ? uniqueElementName(item.panel.spec.title, elements, FALLBACK_ELEMENT_NAME)
+        : uniqueElementName(undefined, elements, MARKDOWN_ELEMENT_NAME);
+    elements[name] = item.kind === 'panel' ? withPanelId(item.panel, panelId++) : markdownCell(item.text);
+    cells.push({ kind: 'NotebookLayoutItem', spec: { element: { kind: 'ElementReference', name }, source } });
+  }
+
+  return { ...spec, elements, layout: { ...spec.layout, spec: { ...spec.layout.spec, cells } } };
+}
+
+function markdownCell(text: string): CellKind {
+  return { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text } } } };
 }
 
 /**
@@ -72,8 +90,12 @@ function withPanelId(panel: PanelElement, id: number): PanelElement {
  * Own keys only. `in` would report true for `constructor`, `toString` and the rest of
  * Object.prototype, so a panel titled "Constructor" would be treated as colliding forever.
  */
-function uniqueElementName(title: string | undefined, elements: Record<string, NotebookElement>): string {
-  const base = slugify(title ?? '') || FALLBACK_ELEMENT_NAME;
+function uniqueElementName(
+  title: string | undefined,
+  elements: Record<string, NotebookElement>,
+  fallback: string
+): string {
+  const base = slugify(title ?? '') || fallback;
 
   let candidate = base;
   let suffix = 1;

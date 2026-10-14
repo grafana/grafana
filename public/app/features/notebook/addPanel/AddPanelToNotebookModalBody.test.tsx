@@ -11,8 +11,13 @@ import { NotebookConflictError } from '../api/notebookResource';
 import { type NotebookRow } from '../list/useNotebooksList';
 import { defaultPanelKind, type PanelKind } from '../types';
 
-import { AddPanelToNotebookModalBody } from './AddPanelToNotebookModalBody';
-import { addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
+import { type AddNotebookCell, AddPanelToNotebookModalBody } from './AddPanelToNotebookModalBody';
+import {
+  addCellsToExistingNotebook,
+  addPanelToExistingNotebook,
+  createNotebookWithCells,
+  createNotebookWithPanel,
+} from './addPanelToNotebook';
 import { type CapturedTimeRange } from './capturedTimeRange';
 import { useNotebookPicker } from './useNotebookPicker';
 
@@ -25,6 +30,8 @@ jest.mock('./addPanelToNotebook', () => ({
   ...jest.requireActual('./addPanelToNotebook'),
   addPanelToExistingNotebook: jest.fn(),
   createNotebookWithPanel: jest.fn(),
+  addCellsToExistingNotebook: jest.fn(),
+  createNotebookWithCells: jest.fn(),
 }));
 
 jest.mock('app/core/services/context_srv');
@@ -45,6 +52,8 @@ jest.mock('app/core/copy/appNotification', () => ({
 const mockUseNotebookPicker = jest.mocked(useNotebookPicker);
 const addToExisting = jest.mocked(addPanelToExistingNotebook);
 const createWithPanel = jest.mocked(createNotebookWithPanel);
+const addCellsToExisting = jest.mocked(addCellsToExistingNotebook);
+const createWithCells = jest.mocked(createNotebookWithCells);
 const mockContextSrv = jest.mocked(contextSrv);
 const mockCreateSuccessNotification = jest.mocked(createSuccessNotification);
 
@@ -800,6 +809,119 @@ describe('AddPanelToNotebookModalBody', () => {
         ])
       );
       expect(createWithPanel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('with ordered cells', () => {
+    function titledPanel(title: string): PanelKind {
+      const base = defaultPanelKind();
+      return { ...base, spec: { ...base.spec, id: 1, title } };
+    }
+
+    function panelCell(title: string, capturedTimeRange: CapturedTimeRange): AddNotebookCell {
+      return { kind: 'panel', buildPanel: async () => titledPanel(title), capturedTimeRange };
+    }
+
+    function renderCells(cells: AddNotebookCell[], extra: { defaultTitle?: string; onAdded?: jest.Mock } = {}) {
+      const onDismiss = jest.fn();
+      const result = render(
+        <AddPanelToNotebookModalBody
+          cells={cells}
+          cellSource="assistant"
+          onDismiss={onDismiss}
+          entryPoint="plugin"
+          {...extra}
+        />
+      );
+      return { ...result, onDismiss };
+    }
+
+    beforeEach(() => {
+      createWithCells.mockResolvedValue({ uid: 'nb9', title: 'Checkout latency' });
+      addCellsToExisting.mockResolvedValue({ uid: 'nb2', title: 'Checkout error spike' });
+    });
+
+    it('creates a notebook with the cells in order under the prefilled title', async () => {
+      const { user, onDismiss } = renderCells(
+        [
+          { kind: 'markdown', text: 'Latency rose.' },
+          panelCell('p95', RELATIVE_CAPTURE),
+          { kind: 'markdown', text: 'Done.' },
+        ],
+        { defaultTitle: 'Checkout latency' }
+      );
+
+      expect(screen.getByRole('textbox', { name: /Notebook name/ })).toHaveValue('Checkout latency');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() =>
+        expect(createWithCells).toHaveBeenCalledWith(
+          { title: 'Checkout latency' },
+          [
+            { kind: 'markdown', text: 'Latency rose.' },
+            { kind: 'panel', panel: titledPanel('p95') },
+            { kind: 'markdown', text: 'Done.' },
+          ],
+          'plugin',
+          'assistant'
+        )
+      );
+      expect(mockCreateSuccessNotification).toHaveBeenCalledWith(
+        'Added to Checkout latency',
+        '',
+        undefined,
+        expect.anything()
+      );
+      expect(onDismiss).toHaveBeenCalled();
+    });
+
+    it('locks each panel to its own window when several were captured', async () => {
+      const other: CapturedTimeRange = {
+        from: '2026-10-06T10:00:00.000Z',
+        to: '2026-10-06T11:00:00.000Z',
+        timeZone: 'utc',
+      };
+      const { user } = renderCells([panelCell('first', ABSOLUTE_CAPTURE), panelCell('second', other)]);
+
+      const lock = screen.getByRole('checkbox', { name: /^Lock panels to the time ranges they showed/ });
+      expect(lock).toBeChecked();
+      await chooseExisting(user);
+      await user.click(selectNotebook('Checkout error spike'));
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(addCellsToExisting).toHaveBeenCalled());
+      const [, cells] = addCellsToExisting.mock.calls[0];
+      const ranges = cells.map((cell) =>
+        cell.kind === 'panel' && cell.panel.kind === 'Panel' ? cell.panel.spec.data.spec.queryOptions : undefined
+      );
+      expect(ranges).toEqual([
+        expect.objectContaining({ timeFrom: ABSOLUTE_CAPTURE.from, timeTo: ABSOLUTE_CAPTURE.to }),
+        expect.objectContaining({ timeFrom: other.from, timeTo: other.to }),
+      ]);
+    });
+
+    it('offers no lock for text-only content', () => {
+      renderCells([{ kind: 'markdown', text: 'Only prose.' }]);
+
+      expect(screen.queryByRole('checkbox', { name: /^Lock/ })).not.toBeInTheDocument();
+    });
+
+    it('reports the written notebook to onAdded, and only on success', async () => {
+      const onAdded = jest.fn();
+      const { user } = renderCells([{ kind: 'markdown', text: 'Note.' }], {
+        defaultTitle: 'Checkout latency',
+        onAdded,
+      });
+
+      createWithCells.mockRejectedValueOnce(new Error('denied'));
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+      await waitFor(() => expect(createWithCells).toHaveBeenCalledTimes(1));
+      expect(onAdded).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+      await waitFor(() =>
+        expect(onAdded).toHaveBeenCalledWith({ uid: 'nb9', title: 'Checkout latency', url: '/notebooks/nb9' })
+      );
     });
   });
 });
