@@ -27,7 +27,7 @@ test.describe(
       };
       // We keep only the provisioned instances because other suites create Prometheus data sources, so the options stay deterministic.
       const nameFilter = '/^gdev-/';
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       await sidebar.variableOptions.datasource.selectType('Prometheus');
       await sidebar.variableOptions.datasource.setNameFilter(nameFilter);

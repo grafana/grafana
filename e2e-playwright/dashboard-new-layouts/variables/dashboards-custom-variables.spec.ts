@@ -44,7 +44,7 @@ test.describe(
       };
       const values = 'first value, second label : second value, fourth value';
 
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
@@ -102,7 +102,7 @@ test.describe(
         value: '',
       };
 
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.setValues('first value, second value');
@@ -125,7 +125,7 @@ test.describe(
         value: '',
       };
 
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
@@ -180,7 +180,7 @@ test.describe(
         value: '',
       };
 
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       const options = [
         { value: 'dev', text: 'Development', aws: 'us-east-1' },
