@@ -275,6 +275,9 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				link.SortWeight = pathConfig.SortWeight
 				link.IsNew = pathConfig.IsNew
 				link.SubTitle = pathConfig.SubTitle
+				if pathConfig.Icon != "" {
+					link.Icon = pathConfig.Icon
+				}
 
 				if pathConfig.SectionID == navtree.NavIDRoot {
 					treeRoot.AddSection(link)
@@ -651,6 +654,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"/a/grafana-assistant-app/pages": {
 			SectionID:  navtree.NavIDRoot,
 			SortWeight: navtree.WeightDashboard + 1,
+			Icon:       "pages",
 			IsNew:      true,
 		},
 		"/a/grafana-auth-app": {
