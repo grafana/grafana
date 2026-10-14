@@ -42,8 +42,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     state.editPanel ||
     state.editview ||
     state.viewPanel ||
-    state.planning ||
-    mode === 'composer';
+    state.planning;
   useEffect(() => {
     if (!hidden && !disabled) {
       dashboard.trackModePickerShown();
@@ -74,11 +73,15 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const current =
     mode === 'agent'
       ? { label: t('dashboard.modes.agent-edit', 'Agent editing'), icon: 'pen' as const }
-      : options.find((option) => option.value === mode)!;
+      : mode === 'composer'
+        ? { label: t('dashboard.modes.composer', 'Composer'), icon: 'ai-sparkle' as const }
+        : options.find((option) => option.value === mode)!;
+  // From Composer, Viewing and Editing first end the session, as its own exit does.
+  const choose = (value: 'view' | 'edit') =>
+    mode === 'composer' ? dashboard.switchFromComposer(value) : dashboard.setDashboardMode(value, 'picker');
 
   const menu = (
     <div className={styles.menu}>
-      {composer && <AssistantSparkleGradient id={COMPOSER_ICON_GRADIENT_ID} />}
       <Menu ariaLabel={t('dashboard.modes.label', 'Dashboard mode')}>
         {options.map((option) => (
           <Menu.Item
@@ -91,7 +94,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             disabled={(viewingDisabled && option.value === 'view') || (!state.editable && option.value !== 'view')}
             className={styles.item}
             component={mode === option.value ? SelectedMode : undefined}
-            onClick={() => dashboard.setDashboardMode(option.value, 'picker')}
+            onClick={() => choose(option.value === 'view' ? 'view' : 'edit')}
           />
         ))}
         {composer && (
@@ -104,10 +107,12 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             // The Assistant sparkle in the Chat button's colours; disabled, it greys out like the others.
             icon="ai-sparkle"
             role="menuitemradio"
-            ariaChecked={false}
+            ariaChecked={mode === 'composer'}
             disabled={composer.disabledReason !== undefined}
             className={cx(styles.item, composer.disabledReason === undefined && styles.assistantIcon)}
-            onClick={composer.request}
+            component={mode === 'composer' ? SelectedMode : undefined}
+            // Already in Composer: nothing to do.
+            onClick={mode === 'composer' ? undefined : composer.request}
           />
         )}
       </Menu>
@@ -115,44 +120,49 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   );
 
   return (
-    <ButtonGroup ref={setButtonGroup}>
-      <ToolbarButton
-        variant="canvas"
-        icon={current.icon}
-        aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
-        tooltip={
-          viewingDisabled && nextMode === 'view'
-            ? saveBeforeViewing
-            : nextMode === 'view'
-              ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
-              : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
-        }
-        disabled={disabled || (viewingDisabled && nextMode === 'view') || (!state.editable && nextMode === 'edit')}
-        onClick={() => dashboard.setDashboardMode(nextMode, 'picker')}
-      >
-        {current.label}
-      </ToolbarButton>
-      <Dropdown
-        positioningReference={buttonGroup}
-        placement="bottom-end"
-        onVisibleChange={(visible) => {
-          setIsCaretMenuOpen(visible);
-          if (visible) {
-            dashboard.trackModePickerOpened();
-          }
-        }}
-        overlay={menu}
-      >
+    <>
+      {/* Outside the group: a child there would end the main button's :first-child rounding. */}
+      {(composer || mode === 'composer') && <AssistantSparkleGradient id={COMPOSER_ICON_GRADIENT_ID} />}
+      <ButtonGroup ref={setButtonGroup}>
         <ToolbarButton
           variant="canvas"
-          icon={isCaretMenuOpen ? 'angle-up' : 'angle-down'}
-          aria-label={t('dashboard.modes.change-mode', 'Change dashboard mode')}
-          aria-haspopup="menu"
-          disabled={disabled || viewingDisabled}
-          tooltip={viewingDisabled ? saveBeforeViewing : undefined}
-        />
-      </Dropdown>
-    </ButtonGroup>
+          icon={current.icon}
+          className={cx(mode === 'composer' && styles.assistantIcon)}
+          aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
+          tooltip={
+            viewingDisabled && nextMode === 'view'
+              ? saveBeforeViewing
+              : nextMode === 'view'
+                ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
+                : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
+          }
+          disabled={disabled || (viewingDisabled && nextMode === 'view') || (!state.editable && nextMode === 'edit')}
+          onClick={() => choose(nextMode)}
+        >
+          {current.label}
+        </ToolbarButton>
+        <Dropdown
+          positioningReference={buttonGroup}
+          placement="bottom-end"
+          onVisibleChange={(visible) => {
+            setIsCaretMenuOpen(visible);
+            if (visible) {
+              dashboard.trackModePickerOpened();
+            }
+          }}
+          overlay={menu}
+        >
+          <ToolbarButton
+            variant="canvas"
+            icon={isCaretMenuOpen ? 'angle-up' : 'angle-down'}
+            aria-label={t('dashboard.modes.change-mode', 'Change dashboard mode')}
+            aria-haspopup="menu"
+            disabled={disabled || viewingDisabled}
+            tooltip={viewingDisabled ? saveBeforeViewing : undefined}
+          />
+        </Dropdown>
+      </ButtonGroup>
+    </>
   );
 }
 
@@ -163,6 +173,9 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
 function useComposerOption(dashboard: DashboardScene) {
   const { availableComponents, dockedComponentId } = useExtensionSidebarContext();
   const componentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
+  if (getDashboardMode(dashboard.state) === 'composer') {
+    return { disabledReason: undefined, request: () => {} };
+  }
   if (!dashboardComposerEnabled() || !componentTitle) {
     return undefined;
   }

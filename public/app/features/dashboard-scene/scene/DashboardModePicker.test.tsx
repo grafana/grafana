@@ -12,11 +12,14 @@ import {
 import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
 import { OpenExtensionSidebarEvent, SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
+import { ComposerSession } from '../composer/ComposerSession';
 import { canEnterComposer } from '../composer/composerAccess';
 import { addComposerEnterRequestListener, clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
 import { DashboardModePicker } from './DashboardModePicker';
+import { type DashboardScene } from './DashboardScene';
+import { getDashboardMode } from './dashboardModes';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -74,7 +77,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-async function openPicker() {
+async function openPicker(configure?: (scene: DashboardScene) => void) {
   const scene = transformSaveModelToScene({
     dashboard: {
       title: 'Picker',
@@ -99,6 +102,7 @@ async function openPicker() {
     meta: { canEdit: true, canSave: true },
   });
   deactivate = scene.activate();
+  configure?.(scene);
   render(
     <TestProvider>
       <DashboardModePicker dashboard={scene} />
@@ -115,6 +119,14 @@ it('offers Composer when its flag is on and Assistant can be shown', async () =>
   await openPicker();
   expect(composerItem()).toBeEnabled();
   expect(composerItem()).toHaveTextContent('Point at panels and regions and ask Assistant to change them.');
+});
+
+it('keeps the main button the first child of its button group', async () => {
+  await openPicker();
+  const main = screen.getByRole('button', { name: 'Dashboard mode: Viewing', hidden: true });
+  const group = main.parentElement!;
+  expect(group.firstElementChild).toBe(main);
+  expect([...group.children].every((child) => child.tagName === 'BUTTON')).toBe(true);
 });
 
 it("shows Composer with the Assistant sparkle in the Chat button's gradient", async () => {
@@ -202,4 +214,61 @@ it('drops a request Assistant has not taken when the dashboard goes away', async
   const unsubscribe = addComposerEnterRequestListener(listener);
   expect(listener).not.toHaveBeenCalled();
   unsubscribe();
+});
+
+describe('while Composer is active', () => {
+  let session: ComposerSession;
+  const enterComposer = (dirty: boolean) => (scene: DashboardScene) => {
+    session = ComposerSession.enter(scene);
+    if (dirty) {
+      scene.setState({ isDirty: true, title: 'Unsaved title' });
+    }
+  };
+
+  it('stays visible, showing Composer with the Assistant sparkle and checked', async () => {
+    await openPicker(enterComposer(false));
+    const button = screen.getByRole('button', { name: 'Dashboard mode: Composer', hidden: true });
+    expect(within(button).getByTestId('icon-ai-sparkle')).toBeInTheDocument();
+    expect(button.parentElement!.firstElementChild).toBe(button);
+    expect([...button.parentElement!.children].every((child) => child.tagName === 'BUTTON')).toBe(true);
+    expect(document.getElementById('grafana-assistant-composer-mode-icon-gradient')).not.toBeNull();
+    expect(composerItem()).toBeChecked();
+    expect(screen.getByRole('menuitemradio', { name: /Viewing/ })).not.toBeChecked();
+  });
+
+  it('does nothing when Composer is chosen again', async () => {
+    const listener = jest.fn();
+    const unsubscribe = addComposerEnterRequestListener(listener);
+    const { user, scene } = await openPicker(enterComposer(false));
+
+    await user.click(composerItem()!);
+
+    expect(getDashboardMode(scene.state)).toBe('composer');
+    expect(session.signal.aborted).toBe(false);
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it('ends the session and switches to Viewing, keeping unsaved changes', async () => {
+    const { user, scene } = await openPicker(enterComposer(true));
+
+    await user.click(screen.getByRole('menuitemradio', { name: /Viewing/ }));
+
+    expect(session.signal.aborted).toBe(true);
+    // Viewing with unsaved changes, as leaving Composer presents it.
+    expect(getDashboardMode(scene.state)).toBe('agent');
+    expect(scene.state.title).toBe('Unsaved title');
+    expect(scene.state.isDirty).toBe(true);
+  });
+
+  it('ends the session and switches to Editing, keeping unsaved changes', async () => {
+    const { user, scene } = await openPicker(enterComposer(true));
+
+    await user.click(screen.getByRole('menuitemradio', { name: /Editing/ }));
+
+    expect(session.signal.aborted).toBe(true);
+    expect(getDashboardMode(scene.state)).toBe('edit');
+    expect(scene.state.title).toBe('Unsaved title');
+    expect(scene.state.isDirty).toBe(true);
+  });
 });

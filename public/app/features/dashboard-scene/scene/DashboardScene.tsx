@@ -841,6 +841,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
+  /**
+   * Leaves Composer for Viewing or Editing (the mode picker). The session ends as on its own exit, which
+   * also stops a running turn. Editing takes the path manual-edit entry points use; Viewing keeps unsaved
+   * changes the way leaving Composer does.
+   */
+  public switchFromComposer(mode: 'view' | 'edit') {
+    if (mode === 'edit') {
+      this.openFullEditor();
+      return;
+    }
+    this.exitComposerMode();
+    if (getDashboardMode(this.state) === 'edit') {
+      this.setDashboardMode(this.state.isDirty ? 'agent' : 'view', 'composer');
+    }
+  }
+
   public getComposerSession(): ComposerSession | undefined {
     return isComposerMode(this.state) ? this._composer?.session : undefined;
   }
