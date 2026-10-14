@@ -80,7 +80,7 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		s.metrics.instrument(s.router, w, req, next)
 	})
-	for _, path := range []string{"/apis", "/openapi/v3"} {
+	for _, path := range []string{apisPrefix, openapiV3Prefix} {
 		httpRouter.Handle(path, handler)
 		httpRouter.PathPrefix(path + "/").Handler(handler)
 	}
