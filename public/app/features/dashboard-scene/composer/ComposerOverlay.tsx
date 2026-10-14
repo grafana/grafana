@@ -218,9 +218,10 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     const bounds = rootRef.current?.getBoundingClientRect();
     const clampX = (value: number) => (bounds ? clamp(value, bounds.left, bounds.left + bounds.width) : value);
     const clampY = (value: number) => (bounds ? clamp(value, bounds.top, bounds.top + bounds.height) : value);
+    // It may run on under the extension sidebar: the content there is the document's, the draft paints below
+    // the sidebar, and the capture leaves the sidebar out.
     const from = { x: clampX(start.x), y: clampY(start.y) };
-    // Nor under the extension sidebar: the pointer may run on over it while the drag holds the capture.
-    const to = keepClearOf(from, { x: clampX(x), y: clampY(y) }, getExtensionSidebarBoxes());
+    const to = { x: clampX(x), y: clampY(y) };
     return {
       left: Math.min(from.x, to.x),
       top: Math.min(from.y, to.y),
@@ -754,36 +755,6 @@ function isOverExtensionSidebar(x: number, y: number): boolean {
 
 function containsPoint(box: Box, x: number, y: number): boolean {
   return x >= box.left && x <= box.left + box.width && y >= box.top && y <= box.top + box.height;
-}
-
-/**
- * Moves the drag's end so the rectangle from `start` stays clear of every box. For each box it would cover,
- * the end stops at whichever of the box's edges facing `start` keeps the larger rectangle. A box holding
- * `start` itself is left alone: a drag never starts inside the sidebar.
- */
-function keepClearOf(start: { x: number; y: number }, end: { x: number; y: number }, boxes: Box[]) {
-  let to = end;
-  for (const box of boxes) {
-    const right = box.left + box.width;
-    const bottom = box.top + box.height;
-    const covers =
-      Math.min(start.x, to.x) < right &&
-      Math.max(start.x, to.x) > box.left &&
-      Math.min(start.y, to.y) < bottom &&
-      Math.max(start.y, to.y) > box.top;
-    if (!covers || containsPoint(box, start.x, start.y)) {
-      continue;
-    }
-    const candidates = [
-      start.x <= box.left && { x: Math.min(to.x, box.left), y: to.y },
-      start.x >= right && { x: Math.max(to.x, right), y: to.y },
-      start.y <= box.top && { x: to.x, y: Math.min(to.y, box.top) },
-      start.y >= bottom && { x: to.x, y: Math.max(to.y, bottom) },
-    ].filter((candidate) => candidate !== false);
-    const area = ({ x, y }: { x: number; y: number }) => Math.abs(x - start.x) * Math.abs(y - start.y);
-    to = candidates.reduce((best, candidate) => (area(candidate) > area(best) ? candidate : best), candidates[0]);
-  }
-  return to;
 }
 
 function clamp(value: number, min: number, max: number) {

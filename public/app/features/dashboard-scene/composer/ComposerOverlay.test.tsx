@@ -1159,7 +1159,7 @@ describe('with the extension sidebar docked', () => {
     await expect(region).resolves.toMatchObject({ ref: { kind: 'region' } });
   });
 
-  it('stops a drag at the docked column when the content runs on under it', async () => {
+  it('lets a drag run on under the docked column when the content overflows under it', async () => {
     // Content wider than the page: the overlay reaches under the docked column.
     contentRect = { ...contentRect, width: 1024 };
     const { session, startPick } = setup();
@@ -1173,7 +1173,7 @@ describe('with the extension sidebar docked', () => {
     const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
     expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toMatchObject({
       left: 500,
-      width: 200,
+      width: 400,
     });
   });
 
@@ -1254,18 +1254,29 @@ describe('with the extension sidebar floating', () => {
     expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
   });
 
-  it('stops a drag that runs on over it at its edge, keeping the larger rectangle', async () => {
+  it('lets a drag run on under it to the full rectangle, and captures the document there without it', async () => {
+    jest
+      .mocked(renderNode)
+      .mockReset()
+      .mockResolvedValue(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the size is read
+        { width: 2048, height: 1536 } as HTMLCanvasElement
+      );
+    jest
+      .mocked(cropToBlob)
+      .mockReset()
+      .mockResolvedValue(new Blob(['webp'], { type: 'image/webp' }));
     const { session, startPick } = setup();
     const pick = startPick();
     const overlay = screen.getByTestId('dashboard-composer-overlay');
 
     fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
     fireEvent.pointerMove(overlay, { clientX: 800, clientY: 700 });
-    // Stopping at its left edge (x 600) keeps 450x450; at its top edge (y 500) only 650x250.
+    // The draft reaches under the panel at (600, 500); the panel paints above the overlay.
     expect(screen.getByTestId('composer-region-draft')).toHaveStyle({
       left: '150px',
       top: '250px',
-      width: '450px',
+      width: '650px',
       height: '450px',
     });
     fireEvent.pointerUp(overlay, { clientX: 800, clientY: 700 });
@@ -1275,27 +1286,25 @@ describe('with the extension sidebar floating', () => {
     expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toEqual({
       left: 150,
       top: 250,
-      width: 450,
+      width: 650,
       height: 450,
     });
-  });
 
-  it('keeps a drag beside it whole', async () => {
-    const { session, startPick } = setup();
-    const pick = startPick();
-    const overlay = screen.getByTestId('dashboard-composer-overlay');
-
-    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 100, button: 0 });
-    fireEvent.pointerUp(overlay, { clientX: 900, clientY: 400 });
-
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
-    const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
-    expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toEqual({
-      left: 150,
-      top: 100,
-      width: 750,
-      height: 300,
+    let result: unknown;
+    await act(async () => {
+      result = await session.captureRegion(ref.regionId, new AbortController().signal);
     });
+    expect(result).toMatchObject({ status: 'ready' });
+    const [, { filter }] = jest.mocked(renderNode).mock.calls[0];
+    // The document under the Assistant is rendered; the Assistant is not.
+    expect(filter(sidebar)).toBe(false);
+    expect(filter(panelRoot!)).toBe(true);
+    expect(jest.mocked(cropToBlob)).toHaveBeenCalledWith(
+      expect.anything(),
+      { sx: 300, sy: 500, sw: 1300, sh: 900, width: 1300, height: 900 },
+      'image/webp',
+      0.85
+    );
   });
 });
 
