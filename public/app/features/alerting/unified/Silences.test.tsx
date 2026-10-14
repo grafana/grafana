@@ -227,6 +227,29 @@ describe('Silences', () => {
     TEST_TIMEOUT
   );
 
+  it(
+    'does not request alert instances for users with only silence read access',
+    async () => {
+      // The Grafana Alertmanager alerts endpoint is gated on alert.instances:read only,
+      // so requesting it with folder-scoped alert.silences:read surfaces a permission error.
+      grantUserPermissions([AccessControlAction.AlertingSilenceRead]);
+
+      let alertsRequested = false;
+      server.use(
+        http.get('/api/alertmanager/grafana/api/v2/alerts', () => {
+          alertsRequested = true;
+          return HttpResponse.json({ message: 'Permissions needed: alert.instances:read' }, { status: 403 });
+        })
+      );
+
+      renderSilences();
+
+      expect(await ui.notExpiredTable.find()).toBeInTheDocument();
+      expect(alertsRequested).toBe(false);
+    },
+    TEST_TIMEOUT
+  );
+
   it('shows creating a silence button for users with access', async () => {
     renderSilences();
 
