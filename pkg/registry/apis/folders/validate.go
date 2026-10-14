@@ -153,9 +153,9 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
 	if result.LookupError != nil {
-		// Return lookup errors directly so the API server preserves APIStatus,
-		// including retryable status codes and retry hints.
-		return result.LookupError
+		// Normalize transport errors and return APIStatus directly so the API
+		// server preserves retryable status codes and retry hints.
+		return resource.StatusErrorFromResponse(nil, result.LookupError)
 	}
 	parents := result.Hierarchy
 

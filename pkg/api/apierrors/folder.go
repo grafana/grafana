@@ -111,7 +111,11 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 	// Native Kubernetes errors already contain status details and retry hints.
 	// Conflicts still need the legacy duplicate/contention normalization below.
 	if statusErr, ok := errors.AsType[*k8sErrors.StatusError](err); ok && statusErr.ErrStatus.Code != http.StatusConflict {
-		return *statusErr
+		result := *statusErr
+		if result.ErrStatus.Message == "" {
+			result.ErrStatus.Message = getDefaultMessageForStatus(int(result.ErrStatus.Code))
+		}
+		return result
 	}
 
 	resp := ToFolderErrorResponse(err)

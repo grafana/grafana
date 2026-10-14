@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func parentLookupErrors() map[string]error {
@@ -32,6 +33,7 @@ func parentLookupErrors() map[string]error {
 		"internal":       apierrors.NewInternalError(fmt.Errorf("storage failure")),
 		"plain error":    fmt.Errorf("storage failure"),
 		"deadline":       context.DeadlineExceeded,
+		"canceled":       context.Canceled,
 	}
 }
 
@@ -93,7 +95,9 @@ func TestCreateParentLookupErrors(t *testing.T) {
 					}
 					return
 				}
-				require.Equal(t, lookupErr, err)
+				require.Error(t, err)
+				expected := resource.StatusErrorFromResponse(nil, lookupErr)
+				require.Equal(t, responsewriters.ErrorToAPIStatus(expected), responsewriters.ErrorToAPIStatus(err))
 			})
 		}
 	}

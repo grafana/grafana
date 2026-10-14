@@ -276,6 +276,38 @@ func TestToFolderStatusErrorPreservesKubernetesStatus(t *testing.T) {
 	}
 }
 
+func TestToFolderStatusErrorDefaultsEmptyMessage(t *testing.T) {
+	for _, tc := range []struct {
+		code    int32
+		reason  metav1.StatusReason
+		message string
+	}{
+		{http.StatusForbidden, metav1.StatusReasonForbidden, "Access denied"},
+		{http.StatusNotFound, metav1.StatusReasonNotFound, "Folder not found"},
+		{http.StatusBadRequest, metav1.StatusReasonBadRequest, "Invalid request"},
+		{http.StatusInternalServerError, metav1.StatusReasonInternalError, "Folder API error"},
+	} {
+		for _, wrapped := range []bool{false, true} {
+			t.Run(fmt.Sprintf("code=%d/wrapped=%t", tc.code, wrapped), func(t *testing.T) {
+				original := &k8sErrors.StatusError{ErrStatus: metav1.Status{
+					Code:    tc.code,
+					Reason:  tc.reason,
+					Details: &metav1.StatusDetails{Name: "parent", RetryAfterSeconds: 7},
+				}}
+				var input error = original
+				if wrapped {
+					input = fmt.Errorf("create failed: %w", original)
+				}
+				converted := apierrors.ToFolderStatusError(input)
+				expected := original.ErrStatus
+				expected.Message = tc.message
+				require.Equal(t, expected, converted.ErrStatus)
+				require.Empty(t, original.ErrStatus.Message)
+			})
+		}
+	}
+}
+
 // TestErrorsIs_UnwrapsAPIWrappers tests that errors.Is matches the legacy sentinel via
 // the Unwrap chain.
 func TestErrorsIs_UnwrapsAPIWrappers(t *testing.T) {
