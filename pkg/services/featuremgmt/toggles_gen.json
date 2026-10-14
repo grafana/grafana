@@ -2831,6 +2831,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.navigationInfoArchRefresh",
+        "resourceVersion": "1791988590221",
+        "creationTimestamp": "2026-10-14T14:36:30Z"
+      },
+      "spec": {
+        "description": "Enables the refreshed information architecture for Grafana's navigation",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1791798499805",
         "creationTimestamp": "2026-06-19T08:30:47Z",
@@ -4842,7 +4855,8 @@
       "metadata": {
         "name": "queryServiceFromUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-04-19T09:26:21Z"
+        "creationTimestamp": "2024-04-19T09:26:21Z",
+        "deletionTimestamp": "2026-10-12T12:55:02Z"
       },
       "spec": {
         "description": "Routes requests to the new query service",
