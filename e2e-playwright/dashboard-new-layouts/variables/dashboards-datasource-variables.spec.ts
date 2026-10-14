@@ -57,9 +57,7 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: gdev-slow-prometheus-uid');
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Data source variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);

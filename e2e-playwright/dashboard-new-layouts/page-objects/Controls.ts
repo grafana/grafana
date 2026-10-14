@@ -77,12 +77,10 @@ export class Controls extends PageObject {
   }
 
   readonly timeRange = {
-    /** Returns the timepicker button; its text is the current time range (e.g. "2026-09-01 00:00:00 to 2026-09-02 00:00:00") */
-    getPickerButton: (): Locator => this.getByGrafanaSelector(this.selectors.components.TimePicker.openButton),
     /** Sets an absolute time range through the timepicker's from/to fields */
     set: async (from: string, to: string) => {
       await test.step(`Set time range from "${from}" to "${to}"`, async () => {
-        await this.timeRange.getPickerButton().click();
+        await this.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
         const fromField = this.getByGrafanaSelector(this.selectors.components.TimePicker.fromField);
         await fromField.click();
         await fromField.fill(from);

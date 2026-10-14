@@ -41,9 +41,7 @@ test.describe(
       await expect(markdownContent).toContainText(`VariableUnderTest: ${variable.value}`);
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Constant variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
@@ -77,9 +75,7 @@ test.describe(
       await expect(markdownContent).toContainText(`VariableUnderTest: bar`);
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Textbox variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
@@ -120,9 +116,7 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: 6h');
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Interval variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);

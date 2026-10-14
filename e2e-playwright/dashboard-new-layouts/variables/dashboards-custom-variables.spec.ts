@@ -70,9 +70,7 @@ test.describe(
       await expect(markdownContent).toContainText(`${variable.name}: second value`);
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Custom variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
@@ -127,9 +125,7 @@ test.describe(
       // if not, the item is selected and does not receive click events
       await sidebar.closePane();
 
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
       await sidebar.variableOptions.custom.openEditor();
 
       await sidebar.variableOptions.custom.setValues(
