@@ -1,5 +1,5 @@
 import { type DataSourceRef, getDataSourceRef } from '@grafana/data';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 
 interface DatasourceHolder {
   datasource?: DataSourceRef | string | null;
@@ -23,7 +23,11 @@ interface LegacyDashboard {
  * Panels and targets below schemaVersion 33, and annotations below 36, are skipped because DashboardMigrator
  * converts those itself.
  */
-export async function resolveLegacyDatasourceNames(dashboard: LegacyDashboard): Promise<void> {
+export async function resolveLegacyDatasourceNames(dashboard: LegacyDashboard | undefined): Promise<void> {
+  if (!dashboard) {
+    return;
+  }
+
   const schemaVersion = dashboard.schemaVersion ?? 0;
   const holders: DatasourceHolder[] = [...(dashboard.templating?.list ?? [])];
 
@@ -44,7 +48,9 @@ export async function resolveLegacyDatasourceNames(dashboard: LegacyDashboard): 
   await Promise.all(
     holders.map(async (holder) => {
       const name = holder.datasource;
-      if (typeof name !== 'string' || name.startsWith('$')) {
+      // Any `$` may be a variable of this dashboard, which is not registered yet, so a lookup would
+      // interpolate it against whatever variables are currently loaded.
+      if (typeof name !== 'string' || name.includes('$')) {
         return;
       }
 

@@ -1,8 +1,7 @@
 import { type AdHocVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceInstance } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type VariableModel, defaultDashboard } from '@grafana/schema';
 import {
   type AdhocVariableKind,

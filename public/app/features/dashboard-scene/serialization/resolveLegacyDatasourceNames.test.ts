@@ -1,10 +1,10 @@
 import { type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 
 import { resolveLegacyDatasourceNames } from './resolveLegacyDatasourceNames';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(),
 }));
 
@@ -54,6 +54,7 @@ describe('resolveLegacyDatasourceNames', () => {
         { datasource: existingRef as Datasource },
         { datasource: '$ds' as Datasource },
         { datasource: '${ds}' as Datasource },
+        { datasource: 'logs-${stage}-loki' as Datasource },
         { datasource: 'unknown' as Datasource },
         { datasource: null as Datasource },
       ],
@@ -61,7 +62,14 @@ describe('resolveLegacyDatasourceNames', () => {
 
     await resolveLegacyDatasourceNames(dashboard);
 
-    expect(dashboard.panels.map((p) => p.datasource)).toEqual([existingRef, '$ds', '${ds}', 'unknown', null]);
+    expect(dashboard.panels.map((p) => p.datasource)).toEqual([
+      existingRef,
+      '$ds',
+      '${ds}',
+      'logs-${stage}-loki',
+      'unknown',
+      null,
+    ]);
     expect(getDataSourceInstanceSettings).toHaveBeenCalledTimes(1);
     expect(getDataSourceInstanceSettings).toHaveBeenCalledWith('unknown');
   });
@@ -80,5 +88,10 @@ describe('resolveLegacyDatasourceNames', () => {
     expect(dashboard.panels[0].targets[0].datasource).toBe('Prometheus');
     expect(dashboard.annotations.list[0].datasource).toBe('Prometheus');
     expect(dashboard.templating.list[0].datasource).toEqual(promRef);
+  });
+
+  it('ignores a missing dashboard', async () => {
+    await expect(resolveLegacyDatasourceNames(undefined)).resolves.toBeUndefined();
+    expect(getDataSourceInstanceSettings).not.toHaveBeenCalled();
   });
 });

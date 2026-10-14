@@ -53,10 +53,6 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: (): Promise<DataSourceApi> => Promise.resolve(fakeDsMock),
 }));
 
