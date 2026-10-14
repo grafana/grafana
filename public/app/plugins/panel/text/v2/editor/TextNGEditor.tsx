@@ -11,6 +11,7 @@ import config from 'app/core/config';
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
+import { type TextSandboxProps } from '../TextSandbox';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
@@ -49,6 +50,7 @@ export interface TextNGEditorProps {
   onViewChange: (view: ViewMode) => void;
   /** Mirrors the panel's transparent background option. */
   transparent?: boolean;
+  consent?: TextSandboxProps['consent'];
 }
 
 const getLanguageLabels = (): Record<CodeLanguage, string> => ({
@@ -85,6 +87,7 @@ export function TextNGEditor({
   view,
   onViewChange,
   transparent,
+  consent,
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -252,6 +255,7 @@ export function TextNGEditor({
       <TextNGHtmlView
         html={previewHtml}
         hasData={Boolean(series?.length)}
+        consent={consent}
         className={cx('markdown-html', styles.fullHeight)}
         testId={testId}
       />

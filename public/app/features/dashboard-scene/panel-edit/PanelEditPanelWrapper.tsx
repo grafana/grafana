@@ -1,8 +1,12 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
+import { useStyles2 } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { TextSandboxConsentBanner } from '../scene/text-sandbox-consent/TextSandboxConsentBanner';
 import { SoloPanelContextProvider, SoloPanelContextForPanelEdit } from '../solo/SoloPanelContext';
 
 interface PanelEditPanelWrapperProps {
@@ -12,15 +16,44 @@ interface PanelEditPanelWrapperProps {
 }
 
 export function PanelEditPanelWrapper({ panel, tableView, dashboard }: PanelEditPanelWrapperProps) {
+  const styles = useStyles2(getStyles);
   const soloPanelContext = useMemo(() => new SoloPanelContextForPanelEdit(panel), [panel]);
 
-  if (tableView) {
-    return <tableView.Component model={tableView} />;
-  }
-
   return (
-    <SoloPanelContextProvider value={soloPanelContext} singleMatch={true} dashboard={dashboard}>
-      <dashboard.state.body.Component model={dashboard.state.body} />
-    </SoloPanelContextProvider>
+    <div className={styles.container}>
+      <TextSandboxConsentBanner
+        dashboardUid={dashboard.state.uid}
+        panelId={panel.getLegacyPanelId()}
+        className={styles.banner}
+      />
+      <div className={styles.panel}>
+        {tableView ? (
+          <tableView.Component model={tableView} />
+        ) : (
+          <SoloPanelContextProvider value={soloPanelContext} singleMatch={true} dashboard={dashboard}>
+            <dashboard.state.body.Component model={dashboard.state.body} />
+          </SoloPanelContextProvider>
+        )}
+      </div>
+    </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    height: '100%',
+  }),
+  // The banner's default margin is for the dashboard page; here it lines up with the panel.
+  banner: css({
+    margin: 0,
+  }),
+  panel: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 0',
+    minHeight: 0,
+  }),
+});

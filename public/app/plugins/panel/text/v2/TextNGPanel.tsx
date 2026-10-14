@@ -39,6 +39,7 @@ import {
 import { TextNGCodeView } from './TextNGCodeView';
 import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
+import { type TextSandboxProps } from './TextSandbox';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
@@ -71,9 +72,12 @@ export function TextNGPanel(props: Props) {
     transparent,
     height,
     width,
+    title,
+    id,
   } = props;
   const styles = useStyles2(getStyles);
   const isEditing = app === CoreApp.PanelEditor;
+  const consent = { panelId: id, panelTitle: title, dashboardUid: data.request?.dashboardUID };
   // Fit-content only applies to the rendered view: the inline editor keeps its
   // bounded, scrollable layout since active editing needs stable interactive space.
   const fitContentOn = fitContent && !isEditing;
@@ -253,10 +257,17 @@ export function TextNGPanel(props: Props) {
         view={view}
         onViewChange={setView}
         transparent={transparent}
+        consent={consent}
       />
     </Suspense>
   ) : (
-    <TextNGView {...processed} code={options.code} fitContent={fitContentOn} contentRef={contentRef} />
+    <TextNGView
+      {...processed}
+      code={options.code}
+      fitContent={fitContentOn}
+      contentRef={contentRef}
+      consent={consent}
+    />
   );
 
   // While editing, the footer belongs to the editor, below its panes.
@@ -306,9 +317,20 @@ interface TextNGViewProps extends ProcessedContent {
   fitContent?: boolean;
   contentRef?: Ref<HTMLDivElement>;
   transparent?: boolean;
+  consent?: TextSandboxProps['consent'];
 }
 
-function TextNGView({ mode, content, error, code, fitContent, contentRef, transparent, hasData }: TextNGViewProps) {
+function TextNGView({
+  mode,
+  content,
+  error,
+  code,
+  fitContent,
+  contentRef,
+  transparent,
+  hasData,
+  consent,
+}: TextNGViewProps) {
   const styles = useStyles2(getStyles);
 
   if (error) {
@@ -340,6 +362,7 @@ function TextNGView({ mode, content, error, code, fitContent, contentRef, transp
     <TextNGHtmlView
       html={content}
       hasData={hasData}
+      consent={consent}
       className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
       testId="TextNGPanel-converted-content"
     />

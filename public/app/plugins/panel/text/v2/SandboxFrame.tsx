@@ -4,7 +4,14 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { textUtil } from '@grafana/data';
 
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
-import { resourceOrigin, type TextSandboxState } from './sandboxPolicy';
+import {
+  MAX_BLOCKED_URL_CHARS,
+  resourceOrigin,
+  urlChars,
+  type BlockedResource,
+  type BlockedUrl,
+  type TextSandboxState,
+} from './sandboxPolicy';
 import { isFrameNotification, TEXT_FRAME_PROTOCOL, type RenderCommand, type MermaidCommand } from './sandboxProtocol';
 
 export interface SandboxFrameProps {
@@ -174,21 +181,8 @@ function FrameDocument({
             break;
           }
           setState((current) => {
-            const resources = [...current.resources];
-            for (const resource of message.resources) {
-              const normalized = {
-                directive: resource.directive,
-                origin: resource.origin ? resourceOrigin(resource.origin) : undefined,
-              };
-              if (
-                !resources.some(
-                  (entry) => entry.directive === normalized.directive && entry.origin === normalized.origin
-                )
-              ) {
-                resources.push(normalized);
-              }
-            }
-            return resources.length === current.resources.length ? current : { ...current, resources };
+            const resources = mergeResources(current.resources, message.resources);
+            return resources === current.resources ? current : { ...current, resources };
           });
           break;
         case 'error':
@@ -237,4 +231,57 @@ function FrameDocument({
       srcDoc={shell}
     />
   );
+}
+
+/** Returns `current` when nothing changed, so a repeated report doesn't re-render. */
+function mergeResources(current: BlockedResource[], reported: BlockedResource[]): BlockedResource[] {
+  let changed = false;
+  const resources = [...current];
+  for (const resource of reported) {
+    const origin = resource.origin ? resourceOrigin(resource.origin) : undefined;
+    // The frame is untrusted, so drop URLs that don't match the origin they're reported under.
+    const urls = origin ? resource.urls?.filter(({ url }) => resourceOrigin(url) === origin) : undefined;
+    let index = resources.findIndex((entry) => entry.directive === resource.directive && entry.origin === origin);
+    if (index === -1) {
+      index = resources.push({ directive: resource.directive, origin }) - 1;
+      changed = true;
+    }
+    if (!urls) {
+      continue;
+    }
+    const entry = resources[index];
+    const merged = mergeUrls(entry.urls ?? [], urls);
+    const truncated = Boolean(entry.truncated || resource.truncated || merged.dropped);
+    if (merged.urls !== entry.urls || truncated !== Boolean(entry.truncated)) {
+      resources[index] = { ...entry, urls: merged.urls, ...(truncated && { truncated }) };
+      changed = true;
+    }
+  }
+  return changed ? resources : current;
+}
+
+/** `dropped` is true when the budget left out a URL. */
+function mergeUrls(current: BlockedUrl[], reported: BlockedUrl[]): { urls: BlockedUrl[]; dropped: boolean } {
+  let changed = false;
+  let dropped = false;
+  let chars = urlChars(current);
+  const urls = [...current];
+  const indexes = new Map(urls.map(({ url }, index) => [url, index]));
+  for (const entry of reported) {
+    const index = indexes.get(entry.url);
+    if (index === undefined) {
+      if (chars + entry.url.length > MAX_BLOCKED_URL_CHARS) {
+        dropped = true;
+        continue;
+      }
+      indexes.set(entry.url, urls.length);
+      urls.push({ url: entry.url, count: entry.count });
+      chars += entry.url.length;
+      changed = true;
+    } else if (entry.count > urls[index].count) {
+      urls[index] = { url: entry.url, count: entry.count };
+      changed = true;
+    }
+  }
+  return { urls: changed ? urls : current, dropped };
 }
