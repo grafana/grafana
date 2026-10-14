@@ -2,6 +2,7 @@ import { type NavModelItem } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { getAppPluginMetas, invalidateCachedPromisesCache, setAppPluginMetas } from '@grafana/runtime/internal';
+import * as runtimeInternal from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {
   mockPluginMeta,
@@ -9,11 +10,11 @@ import {
   type MockPluginMeta,
   type MockPluginMetaInclude,
 } from '@grafana/test-utils/unstable';
-import { contextSrv } from 'app/core/services/context_srv';
 
 import { buildStaticSections } from './buildNavTree';
 import { applyPluginNav, withPluginNav } from './buildPluginNav';
 import { NavID, NavWeight } from './constants';
+import { setAppAccessScopes } from './pluginAccess';
 import { navIds as ids, setupNavTestState, type NavTestState } from './test-utils';
 import { findNavById as findById, sortNavTree } from './utils';
 
@@ -68,6 +69,10 @@ describe('applyPluginNav', () => {
     setup();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('withPluginNav', () => {
     const staticTree = (): NavModelItem[] => [{ id: NavID.home, text: 'Home', url: '/' }];
 
@@ -97,18 +102,18 @@ describe('applyPluginNav', () => {
     });
 
     // Nothing upstream catches for us, and this builds the tree the redux store
-    // is created from, so an escaping throw is a blank page, not a missing section
-    it('keeps the tree when the pass throws', () => {
+    // is created from, so an escaping throw is a blank page, not a missing
+    // section. The per-app catch covers everything inside the loop, so this
+    // reaches for the one step outside it: reading the metas cache, which is
+    // exactly what throws in a development build before app.ts has filled it.
+    it('keeps the tree when reading the metas cache throws', () => {
       const error = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const permission = jest.spyOn(contextSrv, 'hasPermission').mockImplementation(() => {
-        throw new Error('boom');
+      jest.spyOn(runtimeInternal, 'getAppPluginMetasSync').mockImplementation(() => {
+        throw new Error('getAppPluginMetasSync() was called before app plugins cache was initialized!');
       });
 
       expect(ids(withPluginNav(staticTree()))).toEqual([NavID.home]);
       expect(error).toHaveBeenCalledWith('[navtree] failed to apply plugin nav', expect.any(Error));
-
-      permission.mockRestore();
-      error.mockRestore();
     });
   });
 
@@ -477,6 +482,34 @@ describe('applyPluginNav', () => {
 
       const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
       expect(assistant?.children?.length).toBe(1);
+    });
+  });
+
+  describe('scoped app access', () => {
+    afterEach(() => {
+      setAppAccessScopes(null);
+    });
+
+    it('keeps only the apps the user holds a scope for', async () => {
+      setAppAccessScopes(new Set(['plugins:id:kept-app']));
+
+      const merged = await mergeFromMetas([
+        appMeta('kept-app', 'Kept app', [page('Page', '/a/kept-app/page')]),
+        appMeta('denied-app', 'Denied app', [page('Page', '/a/denied-app/page')]),
+      ]);
+
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-kept-app']);
+    });
+
+    // Without scopes the unscoped permission stands in, which is the behaviour
+    // before this feature: every app the user can reach at all
+    it('keeps every app while the scopes are unavailable', async () => {
+      const merged = await mergeFromMetas([
+        appMeta('kept-app', 'Kept app', [page('Page', '/a/kept-app/page')]),
+        appMeta('denied-app', 'Denied app', [page('Page', '/a/denied-app/page')]),
+      ]);
+
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-denied-app', 'plugin-page-kept-app']);
     });
   });
 

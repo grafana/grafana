@@ -11,10 +11,10 @@ import { config } from '@grafana/runtime';
 import { getAppPluginMetasSync } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { appNavConfigFor, type AppNavConfig } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
+import { hasAppAccess } from './pluginAccess';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import { appendIntoSection, arePluginNavItemsEnabled, pluginPageId, standalonePluginPageIdFromText } from './utils';
 
@@ -56,15 +56,17 @@ const collator = new Intl.Collator();
  * have no URL to link to.
  */
 export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): NavModelItem[] {
-  if (!contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
-    return tree;
-  }
-
   const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
   let next = tree;
 
   for (const app of byTitle(apps)) {
     try {
+      // Per app, because the server scopes plugins.app:access to plugins:id:<id>.
+      // Where no scopes were recorded this is the unscoped check, which answers
+      // the same for every app, so a user with no app access gets none of them.
+      if (!hasAppAccess(app.id)) {
+        continue;
+      }
       const { appLink, navChildren } = buildAppLink(app);
       // An app with no accessible nav children is not part of the tree. That is
       // decided on navChildren, before the default nav is folded out: an app
