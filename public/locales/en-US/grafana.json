@@ -10752,6 +10752,7 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
+      "cell-preview": "Cell preview",
       "cell-warnings": "Cell warnings",
       "column-menu-filter": "Filter values",
       "column-menu-label": "Column options for {{name}}",

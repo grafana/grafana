@@ -6,6 +6,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { prepDataForStorybook } from '../../../utils/storybook/data';
+import { Button } from '../../Button/Button';
 
 import { TableNG } from './TableNG';
 import { TableWarnings } from './components/TableWarnings';
@@ -160,9 +161,9 @@ export const FieldPreviews: StoryFn = () => {
 
   return (
     <>
-      <button type="button">Before table</button>
+      <Button type="button">Before table</Button>
       <TableNG data={data} width={600} height={180} hoverOverflow tableRefreshEnabled />
-      <button type="button">After table</button>
+      <Button type="button">After table</Button>
     </>
   );
 };
