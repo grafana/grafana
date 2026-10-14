@@ -435,24 +435,25 @@ export function QueryCoauthoringFallback({ reason, onClose, onFeedback, onContin
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <>
-      <QueryCoauthoringHeader onClose={onClose} />
-      <div className={styles.handoff}>
-        <Text variant="body">
-          <Trans i18nKey="query-editor-coauthoring.handoff-guidance">
-            Your changes may need to span another datasource or additional queries outside the one we are focused on.
-            Continue in Assistant chat to make larger changes.
-          </Trans>
-        </Text>
-        <Text variant="body" color="secondary" italic>
-          <Trans i18nKey="query-editor-coauthoring.unsaved-safe">Any unsaved panel edits will not be lost.</Trans>
-        </Text>
-      </div>
-      <div className={styles.footer}>
+      <QueryCoauthoringHeader className={styles.explanationHeader} onClose={onClose}>
+        <div className={styles.headerCopy}>
+          <Text variant="body">
+            <Trans i18nKey="query-editor-coauthoring.handoff-guidance">
+              Your changes may need to span another datasource or additional queries outside the one we are focused on.
+              Open in Chat to make larger changes.
+            </Trans>
+          </Text>
+          <Text variant="body" color="secondary" italic>
+            <Trans i18nKey="query-editor-coauthoring.unsaved-safe">Any unsaved panel edits will not be lost.</Trans>
+          </Text>
+        </div>
+      </QueryCoauthoringHeader>
+      <div className={styles.handoffActions}>
         <div className={styles.footerActions}>
           <FeedbackButtons outcome="handoff" onFeedback={onFeedback} />
         </div>
-        <Button size="sm" fill="text" icon="ai-sparkle" onClick={() => onContinue(reason)}>
-          <Trans i18nKey="query-editor-coauthoring.continue-in-assistant-chat">Continue in Assistant chat</Trans>
+        <Button size="sm" fill="text" variant="secondary" icon="ai-sparkle" onClick={() => onContinue(reason)}>
+          <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in Chat</Trans>
         </Button>
       </div>
     </>

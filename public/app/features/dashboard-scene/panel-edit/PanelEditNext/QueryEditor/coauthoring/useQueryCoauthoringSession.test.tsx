@@ -1185,10 +1185,10 @@ describe('useQueryCoauthoringSession', () => {
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     act(() => mockGenerate.mock.calls[0][0].onComplete(unavailableDataResponse));
 
-    expect(screen.getByText(/Continue in Assistant chat to make larger changes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Open in Chat to make larger changes/i)).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: 'Add extra detail' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
     expect(mockOpenAssistant).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: 'Help me continue this PromQL query edit. Goal: Group by the highest-cardinality label.',
@@ -1211,7 +1211,7 @@ describe('useQueryCoauthoringSession', () => {
     expect(screen.getByText(/may need to span another datasource or additional queries/i)).toBeInTheDocument();
     expect(screen.getByText(/unsaved panel edits will not be lost/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
     expect(mockOpenAssistant).toHaveBeenCalledWith(
       expect.objectContaining({
         origin: 'grafana/panel-edit-next/query-coauthoring',

@@ -389,11 +389,13 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       paddingTop: theme.spacing(1),
     }),
     iterationCopy: css({ padding: theme.spacing(1, 1.5) }),
-    handoff: css({
+    handoffActions: css({
       display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(2),
-      padding: theme.spacing(1, 1.5, 0),
+      flex: '0 0 auto',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+      paddingInline: theme.spacing(1),
     }),
   };
 }

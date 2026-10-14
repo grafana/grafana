@@ -2539,7 +2539,7 @@ describe('QueryCoauthoring', () => {
 
     expect(screen.getByText(clarification)).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
-    expect(screen.queryByText(/Continue in Assistant chat to make larger changes/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Open in Chat to make larger changes/i)).not.toBeInTheDocument();
   });
 
   it('keeps clarification response controls outside the scrollable message region', async () => {
