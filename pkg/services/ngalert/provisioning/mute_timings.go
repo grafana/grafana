@@ -159,11 +159,17 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 	}
 
 	// A brand new interval gets its own independent UID; it has no existing identity to preserve.
-	// The occupancy check is just defensive: a generated UID colliding with an existing one is
-	// not expected in practice.
-	mt.UID = v1.ResourceUID(util.GenerateShortUID())
+	// A caller may supply its own (validated below); otherwise one is generated. Either way, the
+	// occupancy check guards against reusing a UID that's already taken.
+	if mt.UID != "" {
+		if err := v1.ValidateTimeIntervalUID(string(mt.UID)); err != nil {
+			return v1.TimeInterval{}, MakeErrTimeIntervalInvalid(err)
+		}
+	} else {
+		mt.UID = v1.ResourceUID(util.GenerateShortUID())
+	}
 	if _, ok := revision.Config.TimeIntervals[mt.UID]; ok {
-		return v1.TimeInterval{}, ErrTimeIntervalExists.Errorf("")
+		return v1.TimeInterval{}, MakeErrTimeIntervalUidExists(string(mt.UID))
 	}
 	created := revision.SetTimeInterval(mt)
 

@@ -369,7 +369,9 @@ func TestCreateMuteTimings(t *testing.T) {
 	}
 	expectedProvenance := models.ProvenanceAPI
 	timing := v1.TimeInterval{
-		ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID("Test"), Provenance: expectedProvenance},
+		// No UID: a create request normally doesn't supply one (neither API surface sends one
+		// today), so the service generates it.
+		ResourceMetadata: v1.ResourceMetadata{Provenance: expectedProvenance},
 		Title:            expected.Title,
 		TimeIntervals:    expected.TimeIntervals,
 	}
@@ -451,6 +453,61 @@ func TestCreateMuteTimings(t *testing.T) {
 		require.Len(t, revision.Config.TimeIntervals, 3)
 
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, &result, orgID, expectedProvenance)
+	})
+
+	t.Run("honors a client-supplied UID", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
+			return nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		withUID := timing
+		withUID.UID = "my-custom-uid"
+
+		result, err := sut.CreateMuteTiming(context.Background(), withUID, orgID)
+		require.NoError(t, err)
+
+		assert.EqualValues(t, "my-custom-uid", result.UID)
+		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
+		stored, ok := revision.Config.TimeIntervals["my-custom-uid"]
+		require.True(t, ok)
+		assert.Equal(t, expected.Title, stored.Title)
+	})
+
+	t.Run("rejects a client-supplied UID that is not a valid DNS subdomain", func(t *testing.T) {
+		sut, store, _ := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+
+		withUID := timing
+		withUID.UID = "Not_A_Valid-UID!"
+
+		_, err := sut.CreateMuteTiming(context.Background(), withUID, orgID)
+
+		require.Truef(t, ErrTimeIntervalInvalid.Base.Is(err), "expected ErrTimeIntervalInvalid but got %s", err)
+	})
+
+	t.Run("rejects a client-supplied UID that is already taken", func(t *testing.T) {
+		sut, store, _ := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: &v1.AMConfigV1{
+				TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+					"existing-uid": {ResourceMetadata: v1.ResourceMetadata{UID: "existing-uid"}, Title: "some-other-title"},
+				},
+			}}, nil
+		}
+
+		withUID := timing
+		withUID.UID = "existing-uid"
+
+		_, err := sut.CreateMuteTiming(context.Background(), withUID, orgID)
+
+		require.Truef(t, ErrTimeIntervalUidExists.Base.Is(err), "expected ErrTimeIntervalUidExists but got %s", err)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
