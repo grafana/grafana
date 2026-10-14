@@ -177,24 +177,39 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
     this.setState({ isLoading: true, loadError: undefined });
 
-    // The first visualization block inserted into the blank notebook is built synchronously.
-    await getPanelPluginMetasMap();
+    try {
+      // The first visualization block inserted into the blank notebook is built synchronously.
+      await getPanelPluginMetasMap();
 
-    if (this.isSuperseded(seq)) {
-      return;
+      if (this.isSuperseded(seq)) {
+        return;
+      }
+
+      const spec: NotebookSpec = {
+        ...defaultNotebookSpec(),
+        title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
+          date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
+        }),
+      };
+
+      // Held so the page can keep this exact scene once its first save gives it a uid.
+      this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
+
+      this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
+    } catch (error) {
+      if (this.isSuperseded(seq)) {
+        return;
+      }
+
+      this.setState({
+        isLoading: false,
+        loadError: {
+          status: getStatusFromError(error),
+          message: getMessageFromError(error),
+          messageId: getMessageIdFromError(error),
+        },
+      });
     }
-
-    const spec: NotebookSpec = {
-      ...defaultNotebookSpec(),
-      title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
-        date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
-      }),
-    };
-
-    // Held so the page can keep this exact scene once its first save gives it a uid.
-    this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
-
-    this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
   }
 
   /**
