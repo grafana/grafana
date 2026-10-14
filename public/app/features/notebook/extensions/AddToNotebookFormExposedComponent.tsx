@@ -2,6 +2,8 @@ import { lazy, Suspense } from 'react';
 
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 
+import { canAddPanelToNotebook } from '../permissions';
+
 import { type Props } from './AddToNotebookForm';
 
 const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNotebookForm" */ './AddToNotebookForm'));
@@ -21,7 +23,7 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * store and "capturedTimeRange" for the window it was showing. The form offers
  * to lock the panel to that window.
  *
- * Requires the `dashboard.notebooks` feature flag.
+ * Requires the `dashboard.notebooks` feature flag and `notebooks:create` or `notebooks:write`.
  *
  * Usage from a plugin:
  * ```tsx
@@ -50,6 +52,15 @@ export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
   const enabled = useFlagDashboardNotebooks();
   if (!enabled) {
     console.error(`[AddToNotebookFormExposedComponent] The required feature flag dashboard.notebooks is not enabled.`);
+    return null;
+  }
+
+  // Explore and the panel menu use this same check. Without create or write, Add submits a
+  // write the apiserver rejects.
+  if (!canAddPanelToNotebook()) {
+    console.error(
+      `[AddToNotebookFormExposedComponent] The user needs notebooks:create or notebooks:write to add a panel to a notebook.`
+    );
     return null;
   }
 

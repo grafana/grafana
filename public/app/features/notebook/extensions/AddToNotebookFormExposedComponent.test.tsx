@@ -134,6 +134,26 @@ describe('AddToNotebookFormExposedComponent', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('does not open the form for a reader who can neither create nor write', () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action === AccessControlAction.NotebooksRead);
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(
+      <AddToNotebookFormExposedComponent
+        onClose={onClose}
+        buildPanel={() => panel}
+        capturedTimeRange={{ from: 'now-6h', to: 'now', timeZone: 'utc' }}
+      />
+    );
+
+    expect(consoleError).toHaveBeenCalledWith(
+      '[AddToNotebookFormExposedComponent] The user needs notebooks:create or notebooks:write to add a panel to a notebook.'
+    );
+    expect(screen.queryByRole('button', { name: 'Add to notebook' })).not.toBeInTheDocument();
+  });
+
   it('locks the panel to the window the plugin captured', async () => {
     const { user } = render(
       <AddToNotebookFormExposedComponent
