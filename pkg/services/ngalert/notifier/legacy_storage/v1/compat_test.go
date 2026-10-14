@@ -424,7 +424,7 @@ func TestMigrationFromTemplateFiles(t *testing.T) {
 	mt, ok := output.ManagedTemplates[expectedUID]
 	require.True(t, ok)
 	assert.Equal(t, "tmpl.tmpl", mt.Name)
-	assert.Equal(t, definition.GrafanaTemplateKind, mt.Kind)
+	assert.Equal(t, string(definition.GrafanaTemplateKind), mt.Kind)
 }
 
 func TestToModel_TemplateConflicts(t *testing.T) {

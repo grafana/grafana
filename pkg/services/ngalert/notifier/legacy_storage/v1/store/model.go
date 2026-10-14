@@ -17,12 +17,19 @@ import (
 
 // AMConfigDB is the persisted representation of the legacy Alertmanager configuration blob.
 type AMConfigDB struct {
-	TemplateFiles          map[string]string                         `yaml:"template_files,omitempty" json:"template_files,omitempty"`
-	ManagedTemplates       map[string]definition.PostableApiTemplate `yaml:"managed_templates,omitempty" json:"managed_templates,omitempty"`
-	AlertmanagerConfig     AlertingConfigDB                          `yaml:"alertmanager_config" json:"alertmanager_config"`
-	ExtraConfigs           []definitions.ExtraConfiguration          `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-	ManagedRoutes          ManagedRoutesDB                           `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`
-	ManagedInhibitionRules ManagedInhibitionRulesDB                  `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"`
+	TemplateFiles          map[string]string                `yaml:"template_files,omitempty" json:"template_files,omitempty"`
+	ManagedTemplates       map[string]PostableApiTemplateDB `yaml:"managed_templates,omitempty" json:"managed_templates,omitempty"`
+	AlertmanagerConfig     AlertingConfigDB                 `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs           []definitions.ExtraConfiguration `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	ManagedRoutes          ManagedRoutesDB                  `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`
+	ManagedInhibitionRules ManagedInhibitionRulesDB         `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"`
+}
+
+// PostableApiTemplateDB is the persisted representation of a managed template.
+type PostableApiTemplateDB struct {
+	Name    string `yaml:"name" json:"name"`
+	Content string `yaml:"content" json:"content"`
+	Kind    string `yaml:"kind" json:"kind"`
 }
 
 // UnmarshalJSON validates the route, the extra-config count, and every managed inhibition
