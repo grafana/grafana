@@ -28,34 +28,38 @@ func proxyRouteAccessChecker(client authlib.AccessClient) pluginproxy.RouteAcces
 }
 
 func TestProxyRouteAccessChecker(t *testing.T) {
-	for _, action := range []string{
-		"datasources:query",
-		"alert.rules.external:read",
-		"alert.rules.external:write",
-		"alert.instances.external:read",
-		"alert.instances.external:write",
-		"alert.notifications.external:read",
-		"alert.notifications.external:write",
-		"custom:action",
+	for _, tc := range []struct {
+		action      string
+		subresource string
+		verb        string
+	}{
+		{"datasources:query", "query", "create"},
+		{"alert.rules.external:read", "alertrules", "get"},
+		{"alert.rules.external:write", "alertrules", "update"},
+		{"alert.instances.external:read", "alertinstances", "get"},
+		{"alert.instances.external:write", "alertinstances", "update"},
+		{"alert.notifications.external:read", "alertnotifications", "get"},
+		{"alert.notifications.external:write", "alertnotifications", "update"},
+		{"custom:action", "", "custom:action"},
 	} {
-		t.Run(action, func(t *testing.T) {
+		t.Run(tc.action, func(t *testing.T) {
 			user := &user.SignedInUser{UserUID: "user-1", OrgID: 1}
 			calls := 0
 			client := proxyAccessClient{check: func(ctx context.Context, gotUser authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 				calls++
 				require.Same(t, user, gotUser)
-				require.Equal(t, authlib.CheckRequest{Namespace: "stacks-11", Group: "test.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Verb: action}, req)
+				require.Equal(t, authlib.CheckRequest{Namespace: "stacks-11", Group: "test.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Subresource: tc.subresource, Verb: tc.verb}, req)
 				require.Empty(t, folder)
 				return authlib.CheckResponse{Allowed: true}, nil
 			}}
 			check := proxyRouteAccessChecker(client)
 			ctx := krequest.WithNamespace(t.Context(), "stacks-11")
-			allowed, err := check(ctx, user, "ds-1", action)
+			allowed, err := check(ctx, user, "ds-1", tc.action)
 			require.NoError(t, err)
 			require.True(t, allowed)
 			require.Equal(t, 1, calls)
 			// Repeated checks use the authenticated request context.
-			allowed, err = check(ctx, user, "ds-1", action)
+			allowed, err = check(ctx, user, "ds-1", tc.action)
 			require.NoError(t, err)
 			require.True(t, allowed)
 			require.Equal(t, 2, calls)
@@ -72,14 +76,13 @@ func TestProxyRouteAccessChecker(t *testing.T) {
 }
 
 func TestProxyRouteDelegatedActions(t *testing.T) {
-	actions := []string{"datasources:query", "alert.rules.external:read", "alert.rules.external:write", "alert.instances.external:read", "alert.instances.external:write", "alert.notifications.external:read", "alert.notifications.external:write"}
-	for _, granted := range actions {
-		t.Run(granted, func(t *testing.T) {
+	for _, grantedVerb := range []string{"create", "get", "update"} {
+		t.Run(grantedVerb, func(t *testing.T) {
 			caller := authn.NewIDTokenAuthInfo(
 				authn.Claims[authn.AccessTokenClaims]{
 					Claims: jwt.Claims{Subject: "service"},
 					Rest: authn.AccessTokenClaims{Namespace: "stacks-11", DelegatedPermissions: []string{
-						"*.datasource.grafana.app/datasources:" + granted,
+						"*.datasource.grafana.app/datasources:" + grantedVerb,
 					}},
 				},
 				&authn.Claims[authn.IDTokenClaims]{
@@ -87,10 +90,28 @@ func TestProxyRouteDelegatedActions(t *testing.T) {
 					Rest:   authn.IDTokenClaims{Namespace: "stacks-11"},
 				},
 			)
-			for _, action := range actions {
-				result := authz.CheckServicePermissions(caller, "prometheus.datasource.grafana.app", "datasources", action)
+			check := proxyRouteAccessChecker(proxyAccessClient{check: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+				// Authlib checks service delegation at the resource/verb level; user checks
+				// must still distinguish the alerting subresources and datasource UID.
+				result := authz.CheckServicePermissions(caller, req.Group, req.Resource, req.Verb)
 				require.False(t, result.ServiceCall, "user permissions must still be checked")
-				require.Equal(t, action == granted, result.Allowed, action)
+				return authlib.CheckResponse{Allowed: result.Allowed}, nil
+			}})
+			for _, tc := range []struct {
+				action string
+				verb   string
+			}{
+				{"datasources:query", "create"},
+				{"alert.rules.external:read", "get"},
+				{"alert.rules.external:write", "update"},
+				{"alert.instances.external:read", "get"},
+				{"alert.instances.external:write", "update"},
+				{"alert.notifications.external:read", "get"},
+				{"alert.notifications.external:write", "update"},
+			} {
+				allowed, err := check(krequest.WithNamespace(t.Context(), "stacks-11"), &user.SignedInUser{}, "ds-1", tc.action)
+				require.NoError(t, err)
+				require.Equal(t, tc.verb == grantedVerb, allowed, tc.action)
 			}
 		})
 	}

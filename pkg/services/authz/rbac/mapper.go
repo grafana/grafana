@@ -771,6 +771,30 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
+			"datasources/alertrules": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:    accesscontrol.ActionAlertingRuleExternalRead,
+					utils.VerbUpdate: accesscontrol.ActionAlertingRuleExternalWrite,
+				},
+			},
+			"datasources/alertinstances": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:    accesscontrol.ActionAlertingInstancesExternalRead,
+					utils.VerbUpdate: accesscontrol.ActionAlertingInstancesExternalWrite,
+				},
+			},
+			"datasources/alertnotifications": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:    accesscontrol.ActionAlertingNotificationsExternalRead,
+					utils.VerbUpdate: accesscontrol.ActionAlertingNotificationsExternalWrite,
+				},
+			},
 			// Only datasources:admin carries the caching actions.
 			"datasources/caching": translation{
 				resource:  "datasources",
@@ -822,9 +846,12 @@ func NewMapperRegistry() MapperRegistry {
 	})
 
 	mapper["*.datasource.grafana.app"] = map[string]translation{
-		"datasources":         mapper["datasource.grafana.app"]["datasources"],
-		"datasources/query":   mapper["datasource.grafana.app"]["datasources/query"],
-		"datasources/caching": mapper["datasource.grafana.app"]["datasources/caching"],
+		"datasources":                    mapper["datasource.grafana.app"]["datasources"],
+		"datasources/query":              mapper["datasource.grafana.app"]["datasources/query"],
+		"datasources/caching":            mapper["datasource.grafana.app"]["datasources/caching"],
+		"datasources/alertrules":         mapper["datasource.grafana.app"]["datasources/alertrules"],
+		"datasources/alertinstances":     mapper["datasource.grafana.app"]["datasources/alertinstances"],
+		"datasources/alertnotifications": mapper["datasource.grafana.app"]["datasources/alertnotifications"],
 	}
 
 	return mapper
