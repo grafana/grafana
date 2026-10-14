@@ -57,7 +57,11 @@ beforeEach(() => {
   panelRect = { left: 100, top: 200, width: 400, height: 300 };
   contentRect = { left: 0, top: 0, width: 1024, height: 768 };
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-    const { left, top, width, height } = this.hasAttribute('data-viz-panel-key') ? panelRect : contentRect;
+    const { left, top, width, height } = this.hasAttribute('data-viz-panel-key')
+      ? panelRect
+      : this.getAttribute('role') === 'tooltip'
+        ? { left: 0, top: 0, width: 200, height: 24 }
+        : contentRect;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured rect without toJSON
     return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top } as DOMRect;
   });
@@ -1039,5 +1043,114 @@ describe('region capture', () => {
     });
     act(() => session.exit());
     await expect(session.captureRegion(regionId, live())).resolves.toEqual({ status: 'failed', reason: 'failed' });
+  });
+});
+
+describe('pick hint', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const PANEL_HINT = 'Click to comment on a panel, or drag to draw a region';
+  const EMPTY_HINT = 'Drag to draw a region';
+  const hint = () => screen.queryByRole('tooltip', { hidden: true });
+  const frame = () =>
+    act(() => {
+      jest.advanceTimersByTime(16);
+    });
+  const move = (x: number, y: number) =>
+    fireEvent.pointerMove(screen.getByTestId('dashboard-composer-overlay'), { clientX: x, clientY: y });
+
+  it('follows the pointer, one position write per animation frame', () => {
+    const { startPick } = setup();
+    startPick();
+
+    move(200, 350);
+    move(210, 360);
+    expect(hint()).not.toBeInTheDocument();
+    frame();
+    expect(hint()).toHaveTextContent(PANEL_HINT);
+    // Only the last move of the frame is applied: 12px down-right of (210, 360).
+    expect(hint()!.style.transform).toBe('translate(222px, 372px)');
+
+    move(300, 400);
+    expect(hint()!.style.transform).toBe('translate(222px, 372px)');
+    frame();
+    expect(hint()!.style.transform).toBe('translate(312px, 412px)');
+  });
+
+  it('says only how to draw over empty space', () => {
+    const { startPick } = setup();
+    startPick();
+    document.elementsFromPoint = () => [screen.getByTestId('dashboard-composer-overlay')];
+
+    move(900, 300);
+    frame();
+
+    expect(hint()).toHaveTextContent(EMPTY_HINT);
+  });
+
+  it('flips left and up near the right and bottom edges of the viewport', () => {
+    const { startPick } = setup();
+    startPick();
+    document.elementsFromPoint = () => [screen.getByTestId('dashboard-composer-overlay')];
+
+    move(950, 750);
+    frame();
+
+    // A 200x24 hint left of and above the pointer: 950 - 12 - 200 and 750 - 12 - 24.
+    expect(hint()!.style.transform).toBe('translate(738px, 714px)');
+  });
+
+  it('hides while dragging and when the pointer leaves the overlay for a pin, then comes back', () => {
+    const { startPick } = setup();
+    startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    move(200, 350);
+    frame();
+    expect(hint()).toBeInTheDocument();
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    move(260, 420);
+    frame();
+    expect(hint()).not.toBeInTheDocument();
+    fireEvent.pointerCancel(overlay);
+
+    move(205, 355);
+    frame();
+    expect(hint()).toBeInTheDocument();
+
+    fireEvent.pointerLeave(overlay);
+    expect(hint()).not.toBeInTheDocument();
+    move(210, 360);
+    frame();
+    expect(hint()).toBeInTheDocument();
+  });
+
+  it('does not show without a pending pick or during a capture', () => {
+    const { session, startPick } = setup();
+    move(200, 350);
+    frame();
+    expect(hint()).not.toBeInTheDocument();
+
+    startPick();
+    jest.spyOn(session, 'getOverlayState').mockReturnValue({ ...session.getOverlayState(), capturing: true });
+    act(() => session.highlight(null));
+    move(200, 350);
+    frame();
+    expect(hint()).not.toBeInTheDocument();
+  });
+
+  it('keeps showing for later picks', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    fireEvent.click(screen.getByTestId('dashboard-composer-overlay'), { clientX: 200, clientY: 350 });
+    await act(async () => {
+      await pick;
+    });
+
+    startPick();
+    move(200, 350);
+    frame();
+    expect(hint()).toHaveTextContent(PANEL_HINT);
   });
 });

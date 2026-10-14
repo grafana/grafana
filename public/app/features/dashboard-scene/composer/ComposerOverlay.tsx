@@ -13,6 +13,8 @@ const PANEL_ROOT_SELECTOR = '[data-viz-panel-key]';
 const TAB_SELECTOR = '[role="tab"]';
 /** A drawn rectangle smaller than this, in CSS pixels on either side, is ignored. */
 const MIN_REGION_SIZE = 8;
+/** How far from the pointer the pick hint sits. */
+const HINT_OFFSET = 12;
 
 interface Layout {
   highlight: Box | null;
@@ -50,6 +52,14 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
   /** A finished or ignored drag swallows the click that follows its pointer-up. */
   const swallowClickRef = useRef(false);
   const [draft, setDraft] = useState<Box | null>(null);
+  /**
+   * The pick hint that follows the pointer. React state holds only which copy shows (or none); its position
+   * is written to the element once per animation frame, so moving the pointer renders nothing.
+   */
+  const [hintCopy, setHintCopy] = useState<'panel' | 'region' | null>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
+  const hintPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const hintFrameRef = useRef(0);
 
   const boxFor = useCallback((element: Element): Box | null => {
     const root = rootRef.current?.getBoundingClientRect();
@@ -191,8 +201,62 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     return { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) };
   };
 
+  const hintAllowed = pickMode === 'element' && !paused && !capturing;
+
+  const hideHint = useCallback(() => {
+    cancelAnimationFrame(hintFrameRef.current);
+    hintPointerRef.current = null;
+    setHintCopy(null);
+  }, []);
+
+  // 12px down-right of the pointer, flipped left or up near the viewport's right or bottom edge.
+  const positionHint = useCallback(() => {
+    const element = hintRef.current;
+    const pointer = hintPointerRef.current;
+    const root = rootRef.current;
+    if (!element || !pointer || !root) {
+      return;
+    }
+    const rootRect = root.getBoundingClientRect();
+    const { width, height } = element.getBoundingClientRect();
+    let x = pointer.x + HINT_OFFSET;
+    let y = pointer.y + HINT_OFFSET;
+    if (x + width > window.innerWidth) {
+      x = pointer.x - HINT_OFFSET - width;
+    }
+    if (y + height > window.innerHeight) {
+      y = pointer.y - HINT_OFFSET - height;
+    }
+    element.style.transform = `translate(${Math.round(x - rootRect.left)}px, ${Math.round(y - rootRect.top)}px)`;
+  }, []);
+
+  const followHint = (x: number, y: number) => {
+    if (!hintAllowed || dragStartRef.current?.moved) {
+      hideHint();
+      return;
+    }
+    hintPointerRef.current = { x, y };
+    cancelAnimationFrame(hintFrameRef.current);
+    hintFrameRef.current = requestAnimationFrame(() => {
+      setHintCopy(elementAt(x, y, PANEL_ROOT_SELECTOR) ? 'panel' : 'region');
+      positionHint();
+    });
+  };
+
+  // Position a hint that just appeared before it paints.
+  useLayoutEffect(() => positionHint(), [hintCopy, positionHint]);
+
+  useEffect(() => {
+    if (!hintAllowed) {
+      hideHint();
+    }
+  }, [hintAllowed, hideHint]);
+
+  useEffect(() => () => cancelAnimationFrame(hintFrameRef.current), []);
+
   const onPointerDown = (event: React.PointerEvent) => {
     stop(event);
+    hideHint();
     swallowClickRef.current = false;
     // Any primary-button press may become a region: a click picks an element, a drag draws a region.
     if (event.button !== 0 || !picking || paused || capturing) {
@@ -243,9 +307,11 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       if (start.moved) {
         setDraft(rootRect ? { ...rect, left: rect.left - rootRect.left, top: rect.top - rootRect.top } : null);
         setHovered(null);
+        hideHint();
         return;
       }
     }
+    followHint(event.clientX, event.clientY);
     if (pickMode !== 'element') {
       return;
     }
@@ -305,7 +371,10 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
         role="presentation"
         aria-hidden
         onPointerMove={onPointerMove}
-        onPointerLeave={() => setHovered(null)}
+        onPointerLeave={() => {
+          setHovered(null);
+          hideHint();
+        }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={cancelDrag}
@@ -365,6 +434,14 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
           </button>
         );
       })}
+      {hintCopy && (
+        // The same guidance is in Assistant's placeholder and the Select button's tooltip.
+        <div ref={hintRef} className={styles.hint} role="tooltip" aria-hidden>
+          {hintCopy === 'panel'
+            ? t('dashboard.composer.overlay.hint-panel', 'Click to comment on a panel, or drag to draw a region')
+            : t('dashboard.composer.overlay.hint-region', 'Drag to draw a region')}
+        </div>
+      )}
       <div ref={anchorHostRef} className={styles.anchorHost} />
     </div>
   );
@@ -505,6 +582,23 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     pinDisabled: css({
       cursor: 'not-allowed',
+    }),
+    // The Grafana tooltip's look, without its fade.
+    hint: css({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      zIndex: 1,
+      pointerEvents: 'none',
+      maxWidth: 400,
+      padding: theme.spacing(0.5, 1),
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.components.tooltip.borderColor}`,
+      background: theme.components.tooltip.background,
+      color: theme.components.tooltip.text,
+      boxShadow: theme.shadows.z2,
+      fontSize: theme.typography.bodySmall.fontSize,
+      whiteSpace: 'nowrap',
     }),
     anchorHost: css({
       position: 'absolute',
