@@ -116,7 +116,10 @@ export class EnrichmentCache<K extends string, V> {
 
 /** Reads (and requests, if missing) a cache entry. Re-renders when that key's entry changes;
  * unaffected by other keys resolving. `key === undefined` skips the request entirely. */
-export function useEnrichmentEntry<K extends string, V>(cache: EnrichmentCache<K, V>, key: K | undefined): V | undefined {
+export function useEnrichmentEntry<K extends string, V>(
+  cache: EnrichmentCache<K, V>,
+  key: K | undefined
+): V | undefined {
   const [, setVersion] = useState(0);
 
   useEffect(() => {

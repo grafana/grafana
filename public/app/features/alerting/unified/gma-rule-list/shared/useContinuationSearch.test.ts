@@ -79,7 +79,10 @@ describe('useContinuationSearch', () => {
   // SEARCH-2: a late response for a superseded chain must never append to current rows.
   it('drops a stale first-page response that resolves after a reset', async () => {
     const first = deferred<{ items: string[]; continueToken?: string }>();
-    const fetchPage = jest.fn().mockReturnValueOnce(first.promise).mockResolvedValueOnce({ items: ['fresh'] });
+    const fetchPage = jest
+      .fn()
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValueOnce({ items: ['fresh'] });
 
     const { result, rerender } = renderHook(({ resetKey }) => useContinuationSearch(fetchPage, resetKey), {
       initialProps: { resetKey: 'key-1' },

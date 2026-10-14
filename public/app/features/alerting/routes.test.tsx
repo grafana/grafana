@@ -5,7 +5,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getAlertingRoutes } from './routes';
-import { LegacyRecentlyDeletedRedirect, LegacyRuleListRedirect } from './unified/gma-rule-list/shared/legacyRedirects';
+import {
+  LegacyRecentlyDeletedRedirect,
+  LegacyRuleListRedirect,
+} from './unified/gma-rule-list/legacy-migration/legacyRedirects';
 
 describe('alerting route guards', () => {
   const previousPermissions = contextSrv.user.permissions;

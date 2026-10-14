@@ -8,7 +8,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
 import { shouldAllowRecoveringDeletedRules, shouldUseGmaOnlyListView } from './unified/featureToggles';
-import { LegacyRecentlyDeletedRedirect, LegacyRuleListRedirect } from './unified/gma-rule-list/shared/legacyRedirects';
+import {
+  LegacyRecentlyDeletedRedirect,
+  LegacyRuleListRedirect,
+} from './unified/gma-rule-list/legacy-migration/legacyRedirects';
 import { proxied } from './unified/plugin-proxy/withRouteProxy';
 import {
   PERMISSIONS_CONTACT_POINTS,
@@ -445,7 +448,9 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
         component: importAlertingComponent(
           () =>
-            import(/* webpackChunkName: "GmaAlertRulesPage" */ 'app/features/alerting/unified/gma-rule-list/alert/AlertRulesPage')
+            import(
+              /* webpackChunkName: "GmaAlertRulesPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesPage'
+            )
         ),
       },
       {
@@ -454,7 +459,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         component: importAlertingComponent(
           () =>
             import(
-              /* webpackChunkName: "GmaAlertRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/alert/AlertRulesDeletedPage'
+              /* webpackChunkName: "GmaAlertRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/recently-deleted/AlertRulesDeletedPage'
             )
         ),
       },
@@ -464,7 +469,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         component: importAlertingComponent(
           () =>
             import(
-              /* webpackChunkName: "GmaRecordingRulesPage" */ 'app/features/alerting/unified/gma-rule-list/recording/RecordingRulesPage'
+              /* webpackChunkName: "GmaRecordingRulesPage" */ 'app/features/alerting/unified/gma-rule-list/recording-rules/RecordingRulesPage'
             )
         ),
       },
@@ -474,7 +479,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         component: importAlertingComponent(
           () =>
             import(
-              /* webpackChunkName: "GmaRecordingRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/recording/RecordingRulesDeletedPage'
+              /* webpackChunkName: "GmaRecordingRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/recording-rules/recently-deleted/RecordingRulesDeletedPage'
             )
         ),
       }

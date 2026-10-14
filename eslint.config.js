@@ -101,6 +101,102 @@ function withBaseRestrictedImportsConfig(config = {}) {
   return finalConfig;
 }
 
+const gmaRuleListRoot = 'public/app/features/alerting/unified/gma-rule-list';
+
+const gmaRuleListBasePatterns = [
+  {
+    group: ['**/unified/rule-list/**', '**/unified/components/rules/**'],
+    message:
+      'The GMA-only rule list is a greenfield implementation; the legacy combined rule list is a behavioral reference only, not a source of reusable code.',
+  },
+  {
+    group: [
+      '**/components/MetaText',
+      '**/components/MoreButton',
+      '**/components/Provisioning',
+      '**/plugins/PluginOriginBadge',
+    ],
+    message:
+      'The GMA-only rule list must not reuse the legacy list presentational components; use the equivalents in gma-rule-list/rule-row and gma-rule-list/shared instead.',
+  },
+  {
+    group: ['**/utils/misc'],
+    importNames: ['makeFolderAlertsLink'],
+    message:
+      'makeFolderAlertsLink belongs to the legacy list; use makeFolderRulesLink from gma-rule-list/folder-browsing instead.',
+  },
+  {
+    group: ['**/api/alertRuleApi', '**/api/prometheusApi'],
+    message:
+      'The GMA-only rule list must not depend on legacy rule APIs; use the generated rules.alerting client instead.',
+  },
+  {
+    group: ['@grafana/api-clients/rtkq/rules.alerting*'],
+    importNamePattern: '.*SearchRules.*',
+    message:
+      '/searchRules is deprecated; use the generated /alertrules/search and /recordingrules/search operations instead.',
+  },
+];
+
+const gmaKindFolders = ['alert-rules', 'recording-rules'];
+const gmaCapabilityFolders = [
+  'rule-row',
+  'folder-browsing',
+  'rule-data',
+  'rule-search',
+  'rule-actions',
+  'recently-deleted',
+  'saved-searches',
+  'legacy-migration',
+  'page-shell',
+];
+
+// A later config block's no-restricted-imports replaces an earlier one for the same files, so each
+// block carries the base patterns plus only its own folder boundary.
+function gmaRuleListBlock(name, folders, extraPatterns) {
+  return {
+    name: `grafana/gma-rule-list-overrides-${name}`,
+    files: folders.map((folder) => `${gmaRuleListRoot}/${folder}/**/*.{ts,tsx,js,jsx}`),
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({ patterns: [...gmaRuleListBasePatterns, ...extraPatterns] }),
+      ],
+    },
+  };
+}
+
+function gmaRuleListOverrides() {
+  const siblingKindMessage = (other) => ({
+    group: [`**/${other}`, `**/${other}/**`],
+    message: `Kind folders must not depend on each other; move shared code into a capability folder or gma-rule-list/shared instead of importing ${other}.`,
+  });
+  const kindFoldersPattern = {
+    group: gmaKindFolders.flatMap((folder) => [`**/${folder}`, `**/${folder}/**`]),
+    message:
+      'Capability folders are shared by both rule kinds and must not import from alert-rules or recording-rules.',
+  };
+  const allFolders = [...gmaKindFolders, ...gmaCapabilityFolders];
+  const sharedPattern = {
+    group: allFolders.flatMap((folder) => [`**/${folder}`, `**/${folder}/**`]),
+    message: 'gma-rule-list/shared holds generic pieces and must not import from any other gma-rule-list folder.',
+  };
+
+  return [
+    {
+      name: 'grafana/gma-rule-list-overrides',
+      files: [`${gmaRuleListRoot}/**/*.{ts,tsx,js,jsx}`],
+      rules: {
+        'no-restricted-imports': ['error', withBaseRestrictedImportsConfig({ patterns: gmaRuleListBasePatterns })],
+      },
+    },
+    gmaRuleListBlock('alert-rules', ['alert-rules'], [siblingKindMessage('recording-rules')]),
+    gmaRuleListBlock('recording-rules', ['recording-rules'], [siblingKindMessage('alert-rules')]),
+    gmaRuleListBlock('capabilities', gmaCapabilityFolders, [kindFoldersPattern]),
+    gmaRuleListBlock('shared', ['shared'], [sharedPattern]),
+  ];
+}
+
 const datavizDefaultImportsRestrictions = [
   {
     group: ['@emotion/css'],
@@ -425,51 +521,7 @@ module.exports = [
       'no-nested-ternary': 'error',
     },
   },
-  {
-    name: 'grafana/gma-rule-list-overrides',
-    files: ['public/app/features/alerting/unified/gma-rule-list/**/*.{ts,tsx,js,jsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        withBaseRestrictedImportsConfig({
-          patterns: [
-            {
-              group: ['**/unified/rule-list/**', '**/unified/components/rules/**'],
-              message:
-                'The GMA-only rule list is a greenfield implementation; the legacy combined rule list is a behavioral reference only, not a source of reusable code.',
-            },
-            {
-              group: [
-                '**/components/MetaText',
-                '**/components/MoreButton',
-                '**/components/Provisioning',
-                '**/plugins/PluginOriginBadge',
-              ],
-              message:
-                'The GMA-only rule list must not reuse the legacy list presentational components; use the equivalents in gma-rule-list/shared instead.',
-            },
-            {
-              group: ['**/utils/misc'],
-              importNames: ['makeFolderAlertsLink'],
-              message:
-                'makeFolderAlertsLink belongs to the legacy list; use makeFolderRulesLink from gma-rule-list/shared instead.',
-            },
-            {
-              group: ['**/api/alertRuleApi', '**/api/prometheusApi'],
-              message:
-                'The GMA-only rule list must not depend on legacy rule APIs; use the generated rules.alerting client instead.',
-            },
-            {
-              group: ['@grafana/api-clients/rtkq/rules.alerting*'],
-              importNamePattern: '.*SearchRules.*',
-              message:
-                '/searchRules is deprecated; use the generated /alertrules/search and /recordingrules/search operations instead.',
-            },
-          ],
-        }),
-      ],
-    },
-  },
+  ...gmaRuleListOverrides(),
   {
     name: 'grafana/css-in-js-validation-unified',
     plugins: {
