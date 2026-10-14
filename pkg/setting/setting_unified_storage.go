@@ -257,11 +257,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.TenantWatcherUsePolling = section.Key("tenant_watcher_use_polling").MustBool(false)
 	cfg.TenantWatcherPollInterval = section.Key("tenant_watcher_poll_interval").MustDuration(1 * time.Hour)
 
-	// search manifest watcher
-	cfg.ManifestApiServerAddress = section.Key("manifest_api_server_address").String()
-	cfg.ManifestWatcherAllowInsecureTLS = section.Key("manifest_watcher_allow_insecure_tls").MustBool(false)
-	cfg.ManifestWatcherCAFile = section.Key("manifest_watcher_ca_file").String()
-	cfg.ManifestWatcherPollInterval = section.Key("manifest_watcher_poll_interval").MustDuration(1 * time.Hour)
+	// search manifest resolver: the Grafana router serving app manifests
+	cfg.ManifestRouterAddress = section.Key("manifest_router_address").String()
+	cfg.ManifestRouterAudience = section.Key("manifest_router_audience").String()
+	cfg.ManifestRouterAllowInsecureTLS = section.Key("manifest_router_allow_insecure_tls").MustBool(false)
+	cfg.ManifestRouterCAFile = section.Key("manifest_router_ca_file").String()
 
 	// tenant deleter
 	cfg.EnableTenantDeleter = section.Key("tenant_deleter_enabled").MustBool(false)

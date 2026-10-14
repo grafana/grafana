@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -574,16 +575,23 @@ func (p *mapProvider) IndexAffectingHash(group, resource string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+// ManifestKindResolver loads the manifest declaring a kind the registry may not
+// have seen yet, publishing it into the registry before Ensure returns.
+type ManifestKindResolver interface {
+	Ensure(ctx context.Context, key LowerGroupResource)
+}
+
 // SearchFieldsRegistry holds the per-kind search-field wiring shared by the
 // index backend (which builds the bleve mapping) and the search server (which
 // decides when an index must be rebuilt). A mutex guards all three maps so a
-// future live-manifest source can replace them together, keeping the mapping
-// the backend builds and the hash the server compares consistent.
+// live-manifest source can replace them together, keeping the mapping the
+// backend builds and the hash the server compares consistent.
 type SearchFieldsRegistry struct {
 	mu                   sync.RWMutex
 	selectableFields     map[LowerGroupResource][]string
 	searchFieldsHashes   map[LowerGroupResource]string
 	searchFieldsProvider map[LowerGroupResource]SearchFieldsProvider
+	resolver             ManifestKindResolver
 }
 
 // NewSearchFieldsRegistry returns a registry seeded with the given per-kind
@@ -606,6 +614,30 @@ func (r *SearchFieldsRegistry) For(key LowerGroupResource) (selectableFields []s
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.selectableFields[key], r.searchFieldsHashes[key], r.searchFieldsProvider[key]
+}
+
+// SetResolver installs the source Resolve consults for kinds the registry may
+// not know yet.
+func (r *SearchFieldsRegistry) SetResolver(resolver ManifestKindResolver) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.resolver = resolver
+}
+
+// Resolve lets the resolver, if any, load key's manifest before its fields are
+// read. It may wait on the apiserver, so call it where a kind's fields are first
+// needed (building an index, choosing a list path), never per document.
+func (r *SearchFieldsRegistry) Resolve(ctx context.Context, key LowerGroupResource) {
+	if r == nil {
+		return
+	}
+	r.mu.RLock()
+	resolver := r.resolver
+	r.mu.RUnlock()
+	// Called without the lock: the resolver publishes through Replace.
+	if resolver != nil {
+		resolver.Ensure(ctx, key)
+	}
 }
 
 // ForKey is For for a whole index key. A namespace-wide index declares its own

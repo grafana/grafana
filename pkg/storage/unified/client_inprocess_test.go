@@ -80,5 +80,6 @@ func newInProcessTestClient(t *testing.T, kvBackend, snapshotsEnabled bool) (res
 		nil, // eventSubscriber
 		nil, // experimentalKV
 		nil, // watchExpiry
+		nil, // localManifests
 	)
 }

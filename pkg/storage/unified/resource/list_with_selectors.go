@@ -552,7 +552,7 @@ func resourceAllowed(allowed map[string]bool, group, resource string) bool {
 	return false
 }
 
-func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
+func (s *server) shouldUseSearchForList(ctx context.Context, req *resourcepb.ListRequest) bool {
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE {
 		return false
 	}
@@ -593,7 +593,7 @@ func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 		return true
 	}
 
-	return s.selectableFieldsDeclared(req.Options.Key.Group, req.Options.Key.Resource, req.Options.Fields)
+	return s.selectableFieldsDeclared(ctx, req.Options.Key.Group, req.Options.Key.Resource, req.Options.Fields)
 }
 
 // selectableFieldsDeclared reports whether the kind declares every field the
@@ -601,15 +601,17 @@ func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 // filter on anything else would find nothing there.
 //
 // The declarations come from the same registry the index mapping is built from,
-// which a manifest watcher keeps up to date, so a kind this binary was not
-// compiled with still gets its selectors pushed down. The index can still be
-// behind the registry, which the search side refuses rather than answers
-// (see IsSelectableFieldNotIndexed).
-func (s *server) selectableFieldsDeclared(group, resource string, fields []*resourcepb.Requirement) bool {
+// and the kind is resolved through the same manifest resolver first, so a kind
+// this binary was not compiled with still gets its selectors pushed down. The
+// index can still be behind the registry, which the search side refuses rather
+// than answers (see IsSelectableFieldNotIndexed).
+func (s *server) selectableFieldsDeclared(ctx context.Context, group, resource string, fields []*resourcepb.Requirement) bool {
 	if s.manifestSearchFields == nil {
 		return false
 	}
-	declared, _, _ := s.manifestSearchFields.For(NewLowerGroupResource(group, resource))
+	key := NewLowerGroupResource(group, resource)
+	s.manifestSearchFields.Resolve(ctx, key)
+	declared, _, _ := s.manifestSearchFields.For(key)
 	for _, f := range fields {
 		if !slices.Contains(declared, f.Key) {
 			return false

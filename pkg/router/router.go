@@ -19,6 +19,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -393,6 +394,18 @@ func GroupFromPath(path string) string {
 		return ""
 	}
 	return groupFromPath(path)
+}
+
+// GroupManifest returns the app manifest group is published with under
+// /apis/discovery, and its backend key, which changes whenever the manifest
+// does. reconciled is false until the first reconcile, when nothing has been
+// loaded yet and the absence of a group means nothing.
+func (r *GrafanaRouter) GroupManifest(group string) (manifest *app.ManifestData, key string, found, reconciled bool) {
+	if r.reconciles.Load() == 0 {
+		return nil, "", false, false
+	}
+	m, ok := r.manifestDocs.Load().groupManifest(group)
+	return m.manifest, m.key, ok, true
 }
 
 // KnownGroup reports whether group has a live backend in the current

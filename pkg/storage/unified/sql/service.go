@@ -146,8 +146,6 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 		}
 	}
 
-	// registerServer may add the manifest watcher to subservices, so it must run
-	// before the manager is built.
 	if err := s.registerServer(provider); err != nil {
 		return nil, err
 	}
@@ -210,8 +208,6 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	// registerServer may add the manifest watcher to subservices, so it must run
-	// before the manager is built.
 	if err := s.registerServer(provider); err != nil {
 		return nil, err
 	}
@@ -418,23 +414,19 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		return err
 	}
 
-	// When configured, run the manifest watcher as a subservice. It reloads into
-	// the registries that NewSearchOptions just created; registerServer runs
-	// before initializeSubservicesManager, so the watcher joins the manager and
-	// its initial poll completes before the index is built.
-	if searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil {
-		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
-			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, func(live []*appsdk.ManifestData) {
-				if err := searchOptions.ReloadManifests(resource.AppManifests(), live); err != nil {
-					s.log.Error("manifest reload failed, keeping current search fields", "error", err)
-					return
-				}
-				s.log.Info("manifest reload applied", "live_manifests", len(live))
+	// When configured, a group's manifest is loaded from the router the first
+	// time search needs one of its kinds. Everything it loads goes through
+	// ReloadManifests, so search fields and embedding config stay on the same set.
+	if searchOptions.SearchFields != nil {
+		if rCfg := resource.NewManifestResolverConfig(s.cfg); rCfg != nil {
+			builtin := resource.AppManifests()
+			resolver, err := resource.NewManifestResolver(*rCfg, s.reg, builtin, func(live []*appsdk.ManifestData) error {
+				return searchOptions.ReloadManifests(builtin, live)
 			})
 			if err != nil {
 				return err
 			}
-			s.subservices = append(s.subservices, watcher)
+			searchOptions.SearchFields.SetResolver(resolver)
 		}
 	}
 

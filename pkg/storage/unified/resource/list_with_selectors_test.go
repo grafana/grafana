@@ -298,7 +298,7 @@ func TestShouldUseSearchForList(t *testing.T) {
 			}
 			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 			if !tc.noRegistry {
-				// Stands in for what a manifest watcher would load, including a kind this
+				// Stands in for what the manifest resolver would load, including a kind this
 				// binary was not compiled with.
 				s.manifestSearchFields = NewSearchFieldsRegistry(map[LowerGroupResource][]string{
 					NewLowerGroupResource("advisor.grafana.app", "advisors"):                    {"spec.foo"},
@@ -306,7 +306,7 @@ func TestShouldUseSearchForList(t *testing.T) {
 				}, nil, nil)
 			}
 
-			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
+			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(t.Context(), tc.req))
 		})
 	}
 }

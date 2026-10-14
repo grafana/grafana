@@ -427,8 +427,8 @@ type SearchOptions struct {
 	// stored in an index's IndexBuildInfo. May be nil.
 	SearchFields *SearchFieldsRegistry
 
-	// EmbeddingConfig is shared with the manifest watcher; consumers must read
-	// it after the initial poll and retain the registry to observe later reloads.
+	// EmbeddingConfig is shared with the manifest resolver; consumers must keep
+	// the registry, not a copy, to observe later reloads.
 	EmbeddingConfig *EmbeddingConfigRegistry
 
 	// EmbeddingBuilders is evaluated after the initial manifest load and again
@@ -839,7 +839,7 @@ type server struct {
 	overridesService          *OverridesService
 	quotasConfig              QuotasConfig
 	searchBackedListResources SearchBackedListConfig
-	// Kind declarations from the manifests, refreshed by the manifest watcher. List
+	// Kind declarations from the manifests, loaded by the manifest resolver. List
 	// reads the selectable fields from it before asking an index about a selector.
 	// May be nil.
 	manifestSearchFields *SearchFieldsRegistry
@@ -1833,7 +1833,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 
 	req = filterSelectors(req)
 
-	if s.shouldUseSearchForList(req) {
+	if s.shouldUseSearchForList(ctx, req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
 		rsp, err = s.listWithSelectors(ctx, req)
