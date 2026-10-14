@@ -448,6 +448,23 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		require.Empty(t, second.Metadata.Continue)
 	})
 
+	t.Run("alert rules: sort by name when name and title order differ", func(t *testing.T) {
+		names := map[string]string{"sort-by-name-a": "sort by name zulu", "sort-by-name-b": "sort by name alpha"}
+		for name, title := range names {
+			rule := newPerKindAlertRule(title, false, nil, "ds-prom", 5000)
+			rule.Name = name
+			_, err := alertClient.Create(ctx, rule, v1.CreateOptions{})
+			require.NoError(t, err)
+		}
+		inPair := func() *perKindQuery {
+			return newPerKindQuery().filter("name", perKindOpIn, "sort-by-name-a", "sort-by-name-b")
+		}
+
+		require.Equal(t, []string{"sort by name alpha", "sort by name zulu"}, perKindTitles(searchAlerts(t, inPair())))
+		require.Equal(t, []string{"sort by name zulu", "sort by name alpha"}, perKindTitles(searchAlerts(t, inPair().sort("name", "asc"))))
+		require.Equal(t, []string{"sort by name alpha", "sort by name zulu"}, perKindTitles(searchAlerts(t, inPair().sort("name", "desc"))))
+	})
+
 	t.Run("kind-specific fields", func(t *testing.T) {
 		t.Run("alert rules carry their own", func(t *testing.T) {
 			h := perKindHitFor(t, searchAlerts(t, newPerKindQuery().fields("title", "type", "dashboardUID", "panelID")), "cpu usage high")
@@ -647,6 +664,12 @@ func perKindHitFor(t *testing.T, resp searchv0.SearchResults, want string) searc
 
 func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList], perKindTitle string, paused bool, labels map[string]string, dsUID string, panelID int64) *v0alpha1.AlertRule {
 	t.Helper()
+	created, err := client.Create(ctx, newPerKindAlertRule(perKindTitle, paused, labels, dsUID, panelID), v1.CreateOptions{})
+	require.NoError(t, err)
+	return created
+}
+
+func newPerKindAlertRule(perKindTitle string, paused bool, labels map[string]string, dsUID string, panelID int64) *v0alpha1.AlertRule {
 	base := ngmodels.RuleGen.With(
 		ngmodels.RuleMuts.WithUniqueUID(),
 		ngmodels.RuleMuts.WithNamespaceUID(perKindSearchFolder),
@@ -673,9 +696,7 @@ func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.Type
 			},
 		},
 	}
-	created, err := client.Create(ctx, rule, v1.CreateOptions{})
-	require.NoError(t, err)
-	return created
+	return rule
 }
 
 func createPerKindRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList], perKindTitle, dsUID, metric string) *v0alpha1.RecordingRule {
