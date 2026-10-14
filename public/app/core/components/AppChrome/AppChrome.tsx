@@ -18,7 +18,7 @@ import { useVisualRefreshNudge } from 'app/features/visual-refresh/useVisualRefr
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
-import { EXTENSION_FLOATING_INSET_VAR, ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
+import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar/constants';
 import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl';
@@ -198,7 +198,6 @@ export function AppChrome({ children }: Props) {
               // Floating takes no width from the page, so the docked width is 0.
               [contentSizeStyles.contentWidth]:
                 !state.chromeless && isExtensionSidebarOpen && !isSmallScreen && !isExtensionSidebarFloating,
-              [styles.pageContainerFloatingInset]: !state.chromeless && isExtensionSidebarFloating,
             })}
             id="pageContent"
             tabIndex={-1}
@@ -412,10 +411,6 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       background: 'transparent',
       // The sidebar inside can be moved off this box; the box itself must not block the page.
       pointerEvents: 'none',
-    }),
-    // Lets the last row of the page scroll above the floating bar.
-    pageContainerFloatingInset: css({
-      paddingBottom: `var(${EXTENSION_FLOATING_INSET_VAR}, 0px)`,
     }),
     sidebarContainerFloating: css({
       position: 'fixed',

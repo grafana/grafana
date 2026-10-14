@@ -25,7 +25,7 @@ const ORIGIN: Offset = { x: 0, y: 0 };
  * Moves the floating extension sidebar away from its bottom-right corner, for the current floating session
  * only: it always starts in the corner. The offset is a translation of `element` from that corner, kept
  * fully inside the page content (with a gutter), and re-clamped when the window or the element resizes.
- * Returns whether it is moved, so the page inset can be dropped while the sidebar is not at the bottom.
+ * Returns whether it is moved away from its default place.
  */
 export function useFloatingDrag(element: HTMLElement | null): { moved: boolean } {
   const offsetRef = useRef<Offset>(ORIGIN);
