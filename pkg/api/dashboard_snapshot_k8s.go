@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -128,6 +129,8 @@ func (hs *HTTPServer) searchSnapshotsFromAPI(c *contextmodel.ReqContext, query s
 	result := make(dashboardsnapshots.DashboardSnapshotsList, 0)
 	continuation := ""
 	pageLimit := limit
+	prefixLimit := limit
+	prefixFull := false
 	for {
 		value, err := snapshotRequest(client, http.MethodGet, namespace).Param("limit", fmt.Sprint(pageLimit)).Param("continue", continuation).Do(ctx).Raw()
 		if err != nil {
@@ -147,17 +150,26 @@ func (hs *HTTPServer) searchSnapshotsFromAPI(c *contextmodel.ReqContext, query s
 			}
 		}
 		if list.Continue == "" {
-			// Legacy LIST truncates without a continuation token and cannot filter by title.
-			// Grow the fetched prefix until filtering fills the limit or exhausts the rows.
-			if query != "" && continuation == "" && len(list.Items) >= pageLimit {
-				if pageLimit > math.MaxInt/2 {
+			// Legacy LIST cannot filter by title or continue past its limit. A dual-writer
+			// token may come only from unified storage; its next legacy page is empty.
+			decoded, err := base64.StdEncoding.DecodeString(continuation)
+			unifiedOnly := err == nil && strings.HasPrefix(string(decoded), ",")
+			if query != "" && ((continuation == "" && len(list.Items) >= pageLimit) ||
+				(unifiedOnly && prefixFull && len(list.Items) == 0)) {
+				if prefixLimit > math.MaxInt/2 {
 					return nil, fmt.Errorf("snapshot search limit is too large")
 				}
-				pageLimit *= 2
+				prefixLimit *= 2
+				pageLimit = prefixLimit
+				continuation = ""
+				prefixFull = false
 				result = result[:0]
 				continue
 			}
 			return result, nil
+		}
+		if continuation == "" {
+			prefixFull = len(list.Items) >= pageLimit
 		}
 		if list.Continue == continuation {
 			return nil, fmt.Errorf("snapshot pagination did not advance")

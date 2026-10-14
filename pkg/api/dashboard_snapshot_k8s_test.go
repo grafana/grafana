@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -189,6 +190,36 @@ func TestSearchSnapshotsFromAPIFiltersBeforeLegacyLimit(t *testing.T) {
 	require.NoError(t, json.Unmarshal(result.Body(), &list))
 	require.Len(t, list, 1)
 	require.Equal(t, "matching-key", list[0].Key)
+}
+
+func TestSearchSnapshotsFromAPIRetriesUnifiedOnlyContinuation(t *testing.T) {
+	hs, c := snapshotAPIContext(t, "/api/dashboard/snapshots?query=matching%25&limit=1")
+	unifiedOnlyToken := base64.StdEncoding.EncodeToString([]byte(",unified-page-2"))
+	items := []map[string]any{
+		{"metadata": map[string]any{"name": "unrelated"}, "spec": map[string]any{"title": "other"}},
+		{"metadata": map[string]any{"name": "matching-key"}, "spec": map[string]any{"title": "matching dashboard"}},
+	}
+	var limits []string
+	hs.clientConfigProvider = &mockDirectRestConfigProvider{host: "http://localhost", transport: snapshotAPIRoundTripper(func(r *http.Request) (*http.Response, error) {
+		limitText := r.URL.Query().Get("limit")
+		limits = append(limits, limitText)
+		if r.URL.Query().Get("continue") == unifiedOnlyToken {
+			return snapshotAPIResponse(r, 200, `{"items":[]}`), nil
+		}
+		require.Empty(t, r.URL.Query().Get("continue"))
+		limit, err := strconv.Atoi(limitText)
+		require.NoError(t, err)
+		body, err := json.Marshal(map[string]any{"metadata": map[string]any{"continue": unifiedOnlyToken}, "items": items[:min(limit, len(items))]})
+		require.NoError(t, err)
+		return snapshotAPIResponse(r, 200, string(body)), nil
+	})}
+	result := hs.SearchDashboardSnapshots(c)
+	require.Equal(t, http.StatusOK, result.Status(), string(result.Body()))
+	var list []dashboardsnapshots.DashboardSnapshotDTO
+	require.NoError(t, json.Unmarshal(result.Body(), &list))
+	require.Len(t, list, 1)
+	require.Equal(t, "matching-key", list[0].Key)
+	require.Equal(t, []string{"1", "1", "2"}, limits)
 }
 
 func TestSearchSnapshotsFromAPIPaginatesFilteredResults(t *testing.T) {
