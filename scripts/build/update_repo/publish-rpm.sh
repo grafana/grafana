@@ -26,8 +26,8 @@ set -e
 BUCKET="gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/$REPO"
 
 # Update the repo and db on gcp
-gsutil -m cp /rpm-repo/*.rpm "$BUCKET" # sync binaries first to avoid cache misses
-gsutil -m rsync -r -d /rpm-repo "$BUCKET"
+gcloud storage cp /rpm-repo/*.rpm "$BUCKET" # sync binaries first to avoid cache misses
+gcloud storage rsync -r --delete-unmatched-destination-objects /rpm-repo "$BUCKET"
 
 # usage:
 # [grafana]

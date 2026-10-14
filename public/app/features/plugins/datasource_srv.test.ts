@@ -10,17 +10,21 @@ import {
   DataSourcePlugin,
   type ScopedVars,
 } from '@grafana/data';
-import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import {
+  type GetDataSourceListFilters,
+  RuntimeDataSource,
+  setTemplateSrv,
+  type TemplateSrv,
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
+  getDefaultDataSourceInstanceListItem,
+} from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
   setDataSourceInstanceSettings,
   setExpressionDataSourceInstance,
 } from '@grafana/runtime/internal';
-import {
-  type GetDataSourceInstanceListFilters,
-  getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
@@ -804,12 +808,11 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
   const clone = () => JSON.parse(JSON.stringify(paritySources));
 
   // Stable, comparable projection. Keeps array order so sort / built-in ordering drift is caught.
-  const project = (list: DataSourceInstanceSettings[]) =>
-    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault ?? false }));
+  const project = (list: DataSourceInstanceSettings[]) => list.map((d) => ({ name: d.name, uid: d.uid, type: d.type }));
 
   // The async list returns slim items; project to the same shape as the legacy projection.
   const projectListItems = (list: DataSourceInstanceListItem[]) =>
-    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault }));
+    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type }));
 
   // Adapt GetDataSourceInstanceListFilters for the legacy getList() call: the slim filter
   // callback receives a DataSourceInstanceListItem, so wrap it to construct one from the full
@@ -829,7 +832,6 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
           apiVersion: ds.apiVersion,
           name: ds.name,
           meta: ds.meta,
-          isDefault: ds.isDefault ?? false,
         }),
     };
   };
@@ -868,9 +870,13 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
   ];
 
   it.each(cases)('matches getList for $label', async ({ filters }) => {
-    const legacy = project(legacySrv.getList(toLegacyFilters(filters)));
-    const asyncList = projectListItems(await getDataSourceInstanceList(filters));
-    expect(asyncList).toEqual(legacy);
+    const legacyList = legacySrv.getList(toLegacyFilters(filters));
+    const asyncList = await getDataSourceInstanceList(filters);
+
+    expect(projectListItems(asyncList)).toEqual(project(legacyList));
+    expect((await getDefaultDataSourceInstanceListItem(asyncList))?.uid).toBe(
+      legacyList.find((ds) => ds.isDefault)?.uid
+    );
   });
 });
 

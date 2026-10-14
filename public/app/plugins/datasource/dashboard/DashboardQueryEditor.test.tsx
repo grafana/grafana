@@ -8,8 +8,8 @@ import {
   LoadingState,
   type PanelPluginMeta,
 } from '@grafana/data';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
@@ -29,8 +29,8 @@ jest.mock('@grafana/runtime/internal', () => ({
   usePanelPluginMetasMap: jest.fn(),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(async () => ({
     name: 'Default DS',
     uid: 'default-ds',

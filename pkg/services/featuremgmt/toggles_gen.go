@@ -91,10 +91,6 @@ const (
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
 
-	// FlagProvisioningGitConventions
-	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
-	FlagProvisioningGitConventions = "provisioning.gitConventions"
-
 	// FlagProvisioningUserAttribution
 	// Author Git Sync commits as the acting Grafana user
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
@@ -371,6 +367,10 @@ const (
 	// Enables custom dashboard templates for enterprise
 	FlagGrafanaCustomDashboardTemplates = "grafana.customDashboardTemplates"
 
+	// FlagGrafanaSmtpSettingsPage
+	// Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service
+	FlagGrafanaSmtpSettingsPage = "grafana.smtpSettingsPage"
+
 	// FlagAlertingNavigationV2
 	// Enables the new Alerting navigation structure with improved menu grouping
 	FlagAlertingNavigationV2 = "alertingNavigationV2"
@@ -398,6 +398,10 @@ const (
 	// FlagAuthzUserPermissions
 	// Route user permission snapshots through the AuthZ service.
 	FlagAuthzUserPermissions = "authz.userPermissions"
+
+	// FlagAuthzUseLegacyCheck
+	// Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.
+	FlagAuthzUseLegacyCheck = "authz.useLegacyCheck"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -447,10 +451,6 @@ const (
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
 
-	// FlagTimeRangeProvider
-	// Enables time pickers sync
-	FlagTimeRangeProvider = "timeRangeProvider"
-
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
@@ -494,6 +494,10 @@ const (
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
+
+	// FlagAlertingRuleReviews
+	// Enable assistant reviews on the alert quality page.
+	FlagAlertingRuleReviews = "alerting.ruleReviews"
 
 	// FlagAlertingRuleQuality
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
@@ -730,9 +734,9 @@ const (
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 
-	// FlagKubernetesAlertingHistorian
-	// Adds support for Kubernetes alerting historian APIs
-	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
+	// FlagGrafanaPublishLegacySQLEvents
+	// Publish watch events when values are saved to legacy SQL tables
+	FlagGrafanaPublishLegacySQLEvents = "grafana.publishLegacySQLEvents"
 
 	// FlagPluginsUseMTPlugins
 	// Enables plugins decoupling from bootdata
@@ -769,6 +773,10 @@ const (
 	// FlagKubernetesUsersApi
 	// Enables user APIs in the app platform
 	FlagKubernetesUsersApi = "kubernetesUsersApi"
+
+	// FlagKubernetesUsersReadApi
+	// Enables read-only user APIs in the app platform
+	FlagKubernetesUsersReadApi = "kubernetesUsersReadApi"
 
 	// FlagKubernetesServiceAccountsApi
 	// Enables service account APIs in the app platform
@@ -837,22 +845,6 @@ const (
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without 'pending' stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
-
-	// FlagAlertingNotificationHistoryRuleViewer
-	// Enables the notification history tab in the rule viewer
-	FlagAlertingNotificationHistoryRuleViewer = "alertingNotificationHistoryRuleViewer"
-
-	// FlagAlertingNotificationHistoryGlobal
-	// Enables the notification history global menu item viewer
-	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
-
-	// FlagAlertingNotificationHistoryTriage
-	// Enables the notification history timeline in the triage instance details drawer
-	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
-
-	// FlagAlertingNotificationHistoryDetail
-	// Enables the notification history detail page
-	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
 	// FlagDeletedFolderResourceCleanup
 	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair
@@ -978,6 +970,10 @@ const (
 	// Redirect legacy report service to use the Kubernetes client wrapper
 	FlagReportingLegacyServiceUsesK8SClient = "reporting.legacyServiceUsesK8SClient"
 
+	// FlagReportingLegacySettingServiceUsesK8SClient
+	// Redirect legacy report setting service to use the Kubernetes client wrapper
+	FlagReportingLegacySettingServiceUsesK8SClient = "reporting.legacySettingServiceUsesK8SClient"
+
 	// FlagReportingRedirectReportsToK8SApi
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
 	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
@@ -1009,6 +1005,10 @@ const (
 	// FlagGrafanaMultiTenantNavTree
 	// Builds the navigation tree client-side instead of reading it from /bootdata
 	FlagGrafanaMultiTenantNavTree = "grafana.multiTenantNavTree"
+
+	// FlagGrafanaNavigationInfoArchRefresh
+	// Enables the refreshed information architecture for Grafana's navigation
+	FlagGrafanaNavigationInfoArchRefresh = "grafana.navigationInfoArchRefresh"
 
 	// FlagAuthzListFoldersViaSearch
 	// Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.
@@ -1061,4 +1061,8 @@ const (
 	// FlagUnifiedStorageClientOnBehalfOf
 	// Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service
 	FlagUnifiedStorageClientOnBehalfOf = "unifiedStorageClient.onBehalfOf"
+
+	// FlagDatasourcesApiServerConnectToHostedGrafanaDatabases
+	// Connect to hosted grafana databases from datasource API servers
+	FlagDatasourcesApiServerConnectToHostedGrafanaDatabases = "datasources.apiServerConnectToHostedGrafanaDatabases"
 )
