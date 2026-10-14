@@ -3186,7 +3186,7 @@
         }
       },
       "SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -3234,13 +3234,13 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/WhereNode"
           }
         }
       },
       "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search.",
+        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {

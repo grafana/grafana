@@ -233,8 +233,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * assistant tells someone their notebook was written, and only the finished request knows whether it
    * was. Throws when the save failed, so the caller can say that rather than claim a write that never
    * reached the server.
+   *
+   * `overwrite` is a writer's answer to a conflict it already reported: it skips the resourceVersion
+   * precondition for this one write, as `overwriteConflict` does for the modal's answer.
    */
-  public async saveDocumentChange(): Promise<void> {
+  public async saveDocumentChange({ overwrite = false }: { overwrite?: boolean } = {}): Promise<void> {
     // These writers hand over a whole document, so everything in the scene now is the notebook's own,
     // and whatever a reader had changed went with the scene this one replaced.
     this.timeSettingsEdited = true;
@@ -247,9 +250,18 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.vizConfigsChangedWhileReading.clear();
     this.vizConfigsBeforeReadingChange.clear();
     this.editedByWriter = true;
+    // Added to, not assigned: the modal's own answer may already be waiting to be used.
+    this.overwriteNextSave ||= overwrite;
     this.schedule();
 
-    await this.awaitPendingSave();
+    try {
+      await this.awaitPendingSave();
+    } finally {
+      // A save that found nothing to write never consumes it, and it must not reach a later one.
+      if (overwrite) {
+        this.overwriteNextSave = false;
+      }
+    }
   }
 
   /**
@@ -492,6 +504,20 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       if (panel && panel === savedPanels.get(elementName) && vizConfig && panel.getPlugin()) {
         yield { elementName, panel, vizConfig };
       }
+    }
+  }
+
+  /**
+   * Waits for the save already running, if there is one. Unlike `awaitPendingSave` it never brings a
+   * waiting edit forward, and it does not throw when a save failed.
+   *
+   * For a caller that needs `savedResourceVersion` to be settled and has no business saving someone's
+   * edit: starting that save here could conflict and raise the overwrite modal over a request that is
+   * about to put the same question to the person somewhere else.
+   */
+  public async awaitInFlightSave(): Promise<void> {
+    while (this.inFlightSave) {
+      await this.inFlightSave;
     }
   }
 
@@ -884,7 +910,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         // Not once stopped: the scene has deactivated (navigated away, tab closed), and this is the
         // teardown's own flush resolving after the fact. Publishing now would show this on whatever
         // page the user is on instead, with no route change left to come along and clear it.
-        if (isConflict && !this.stopped) {
+        // Not when an overwrite is already chosen and queued behind this save: asking again would put a
+        // question to the person after they answered it.
+        if (isConflict && !this.stopped && !this.overwriteNextSave) {
           const notebookUid = this.scene.state.uid ?? '';
           appEvents.publish(
             new ShowConfirmModalEvent({
@@ -921,7 +949,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           // savedResourceVersion, so it can only conflict again and raise a second overwrite prompt.
           // The edits that set this flag are not lost — they're already merged into the pending
           // change above, and the next real edit (or the prompt's own "Save and overwrite") saves them.
-          if (!hitConflict) {
+          // Unless an overwrite was already chosen for it: that retry skips the precondition, and
+          // dropping it would leave a confirmed write unsent.
+          if (!hitConflict || this.overwriteNextSave) {
             this.saveNow();
           }
         }
