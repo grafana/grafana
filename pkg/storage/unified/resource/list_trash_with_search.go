@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"slices"
+	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -152,7 +154,26 @@ func TrashSearchAllowed(group, resource string) bool {
 	return resourceAllowed(trashSearchAllowlist, group, resource)
 }
 
-// shouldUseSearchForTrash ignores search_backed_list_resources: a store trash
+func resourceAllowed(allowed map[string]bool, group, resource string) bool {
+	if enabled, ok := allowed[group+"/"+resource]; ok {
+		return enabled
+	}
+	if enabled, ok := allowed[group]; ok {
+		return enabled
+	}
+	for pattern, enabled := range allowed {
+		if !enabled || strings.Contains(pattern, "/") {
+			continue
+		}
+		matched, err := path.Match(pattern, group)
+		if err == nil && matched {
+			return true
+		}
+	}
+	return false
+}
+
+// shouldUseSearchForTrash selects Search for supported trash resources: a store trash
 // list scans the whole history, so search is the default for approved kinds.
 func (s *server) shouldUseSearchForTrash(req *resourcepb.ListRequest) bool {
 	if req.Source != resourcepb.ListRequest_TRASH ||

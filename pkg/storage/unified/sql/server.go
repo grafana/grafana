@@ -88,7 +88,6 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withVectorIndexers,
 		withSearchClient,
 		withQuotaConfig,
-		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
 		withSeededWatches,
@@ -374,17 +373,6 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
 		EnforcedResources: enforced,
 		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
-	}
-	return nil
-}
-
-func withSearchBackedListConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	allowed := make(map[string]bool, len(opts.Cfg.SearchBackedListResources))
-	for _, r := range opts.Cfg.SearchBackedListResources {
-		allowed[r] = true
-	}
-	resourceOpts.SearchBackedListConfig = resource.SearchBackedListConfig{
-		AllowedResources: allowed,
 	}
 	return nil
 }
