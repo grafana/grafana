@@ -15,7 +15,6 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
@@ -389,20 +388,16 @@ describe('APPLY_SPEC with a user-set transformation refId', () => {
 });
 
 describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
-  beforeEach(() => {
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   // Regression: the rebuild swaps in a freshly-deserialized layout manager whose grid is not
   // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
   // (via entering edit mode), so panels stayed frozen in the new tree until the command also
-  // called it on the swapped-in body.
+  // called it on the swapped-in body. That correction lands inside a 10ms timeout.
   function isDraggable(scene: DashboardScene) {
     return (scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable;
+  }
+
+  async function waitForDragCorrection() {
+    await new Promise((resolve) => setTimeout(resolve, 20));
   }
 
   it('when the scene enters edit mode as part of applying the spec', async () => {
@@ -410,6 +405,7 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     expect(scene.state.isEditing).toBeFalsy();
 
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
+    await waitForDragCorrection();
 
     expect(isDraggable(scene)).toBe(true);
   });
@@ -419,6 +415,7 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     scene.onEnterEditMode();
 
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
+    await waitForDragCorrection();
 
     expect(isDraggable(scene)).toBe(true);
   });
