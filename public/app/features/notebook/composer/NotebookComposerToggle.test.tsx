@@ -9,6 +9,10 @@ import {
   type ExtensionSidebarContextType,
   useExtensionSidebarContext,
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import {
+  getExtensionSidebarPresentation,
+  resetExtensionSidebarPresentationForTests,
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
@@ -16,7 +20,7 @@ import {
   clearPendingComposerEnterRequest,
   PENDING_REQUEST_TTL_MS,
 } from 'app/features/dashboard-scene/composer/composerEntryRequests';
-import { OpenExtensionSidebarEvent, SetExtensionSidebarPresentationEvent } from 'app/types/events';
+import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import { NOTEBOOKS_FLAG } from '../mutation-api/test-utils';
 import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
@@ -67,6 +71,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanups.splice(0).forEach((cleanup) => cleanup());
   clearPendingComposerEnterRequest();
+  resetExtensionSidebarPresentationForTests();
   jest.useRealTimers();
   jest.restoreAllMocks();
   setTestFlags({});
@@ -98,23 +103,28 @@ const composerButton = () => screen.queryByRole('button', { name: 'Composer' });
 
 describe('the notebook toolbar Composer toggle', () => {
   it('opens a closed Assistant sidebar already floating and hands the request to Assistant once it listens', async () => {
-    const publish = jest.spyOn(appEvents, 'publish');
+    const originalPublish = appEvents.publish.bind(appEvents);
+    const layoutWhenOpened: string[] = [];
+    const publish = jest.spyOn(appEvents, 'publish').mockImplementation((event) => {
+      if (event instanceof OpenExtensionSidebarEvent) {
+        layoutWhenOpened.push(getExtensionSidebarPresentation());
+      }
+      originalPublish(event);
+    });
     const { user } = render(<NotebookComposerToggle scene={notebook()} />);
 
     await user.click(composerButton()!);
 
-    const events = publish.mock.calls
+    const opened = publish.mock.calls
       .map(([event]) => event)
-      .filter(
-        (event) => event instanceof SetExtensionSidebarPresentationEvent || event instanceof OpenExtensionSidebarEvent
-      );
-    expect(events.map((event) => [event.type, event.payload])).toEqual([
-      [SetExtensionSidebarPresentationEvent.type, { presentation: 'floating' }],
-      [OpenExtensionSidebarEvent.type, { pluginId: ASSISTANT, componentTitle: TITLE }],
-    ]);
+      .filter((event) => event instanceof OpenExtensionSidebarEvent);
+    expect(opened.map((event) => event.payload)).toEqual([{ pluginId: ASSISTANT, componentTitle: TITLE }]);
+    // The request floats the sidebar before it opens (the floating flag is off here).
+    expect(layoutWhenOpened).toEqual(['floating']);
     const listener = jest.fn();
     const unsubscribe = addComposerEnterRequestListener(listener);
     expect(listener).toHaveBeenCalledWith(TARGET);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
     unsubscribe();
   });
 
@@ -133,16 +143,16 @@ describe('the notebook toolbar Composer toggle', () => {
 
   it('drops a request nobody takes within the pending-request expiry, docking the sidebar again', async () => {
     jest.useFakeTimers();
-    const publish = jest.spyOn(appEvents, 'publish');
     render(<NotebookComposerToggle scene={notebook()} />);
 
     fireEvent.click(composerButton()!);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
     act(() => jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS + 1));
 
     const listener = jest.fn();
     cleanups.push(addComposerEnterRequestListener(listener));
     expect(listener).not.toHaveBeenCalled();
-    expect(publish).toHaveBeenLastCalledWith(expect.objectContaining({ payload: { presentation: 'docked' } }));
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
   it('drops a request Assistant has not taken when the notebook goes away', async () => {
@@ -158,12 +168,14 @@ describe('the notebook toolbar Composer toggle', () => {
     cleanups.push(setRouteNotebook(scene));
     const { user } = render(<NotebookComposerToggle scene={scene} />);
     await user.click(composerButton()!);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
 
     deactivate();
 
     const listener = jest.fn();
     cleanups.push(addComposerEnterRequestListener(listener));
     expect(listener).not.toHaveBeenCalled();
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
   it.each([

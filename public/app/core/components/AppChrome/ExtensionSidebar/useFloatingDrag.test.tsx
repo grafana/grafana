@@ -146,15 +146,6 @@ it('does not remember the position: floating again starts in the corner', () => 
   expect(setItem).not.toHaveBeenCalled();
 });
 
-it('moves for the session even when storage is unavailable', () => {
-  jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
-    throw new Error('blocked');
-  });
-  render(<Floating />);
-  drag({ x: 700, y: 520 }, { x: 600, y: 420 });
-  expect(floating().style.transform).toBe('translate(-100px, -100px)');
-});
-
 it('re-clamps when the box grows upward or the window resizes', () => {
   render(<Floating />);
   drag({ x: 700, y: 520 }, { x: 700, y: 44 });

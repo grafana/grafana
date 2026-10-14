@@ -8,7 +8,7 @@
  * elsewhere (the Assistant canvas) is unsupported.
  */
 
-import { appEvents } from 'app/core/app_events';
+import { claimFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { canEnterComposer } from 'app/features/dashboard-scene/composer/composerAccess';
 import {
   addComposerEnterRequestListener,
@@ -24,7 +24,6 @@ import {
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { canEnterNotebookComposer, getRouteNotebook } from 'app/features/notebook/composer/notebookComposerAccess';
 import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
-import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
 import { getMountedDashboardScene, getMountedNotebookScenes } from '../dashboardMutation/dashboardMutationApi';
 
@@ -64,7 +63,7 @@ export const composerApi: ComposerAPI = {
     const resolved = target?.resource === 'notebook' ? resolveNotebook(target.uid) : resolveTarget(target);
     const uid = target?.uid ?? getMountedDashboardScene()?.state.uid ?? '';
     if ('refusal' in resolved) {
-      settleComposerEnterRequest(uid, 'failed');
+      settleComposerEnterRequest(uid);
       throw new Error(`Composer is not available: ${resolved.refusal.ok ? 'no_document' : resolved.refusal.reason}`);
     }
     let session: ComposerSessionAPI | ComposerSessionAPI<ComposerNotebookSpec>;
@@ -83,19 +82,18 @@ export const composerApi: ComposerAPI = {
         session = ComposerSession.enter(resolved.scene);
       }
     } catch (error) {
-      settleComposerEnterRequest(uid, 'failed');
+      settleComposerEnterRequest(uid);
       throw error;
     }
-    settleComposerEnterRequest(uid, 'entered');
-    // The sidebar is the host's concern, not the session's: float it for this session, then dock it again.
+    // The sidebar is the host's concern, not the session's: float it for this session. Ending the session
+    // brings back the user's own layout, and docking the sidebar ends the session.
     if (presentation === 'floating') {
-      appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' }));
-      session.signal.addEventListener(
-        'abort',
-        () => appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'docked' })),
-        { once: true }
-      );
+      const enteredSession = session;
+      const release = claimFloatingExtensionSidebar({ onDocked: () => enteredSession.exit() });
+      session.signal.addEventListener('abort', release, { once: true });
     }
+    // After the session's claim, so a sidebar the picker floated never docks in between.
+    settleComposerEnterRequest(uid);
     return session;
   },
 };

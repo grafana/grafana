@@ -9,8 +9,12 @@ import {
   type ExtensionSidebarContextType,
   useExtensionSidebarContext,
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import {
+  getExtensionSidebarPresentation,
+  resetExtensionSidebarPresentationForTests,
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
-import { OpenExtensionSidebarEvent, SetExtensionSidebarPresentationEvent } from 'app/types/events';
+import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import { ComposerSession } from '../composer/ComposerSession';
 import { canEnterComposer } from '../composer/composerAccess';
@@ -73,6 +77,7 @@ afterEach(() => {
   deactivate();
   deactivate = () => {};
   clearPendingComposerEnterRequest();
+  resetExtensionSidebarPresentationForTests();
   setTestFlags({});
   jest.restoreAllMocks();
 });
@@ -161,24 +166,28 @@ it.each([
 });
 
 it('opens a closed Assistant sidebar already floating and hands the request to Assistant once it listens', async () => {
-  const publish = jest.spyOn(appEvents, 'publish');
+  const originalPublish = appEvents.publish.bind(appEvents);
+  const layoutWhenOpened: string[] = [];
+  const publish = jest.spyOn(appEvents, 'publish').mockImplementation((event) => {
+    if (event instanceof OpenExtensionSidebarEvent) {
+      layoutWhenOpened.push(getExtensionSidebarPresentation());
+    }
+    originalPublish(event);
+  });
   const { user } = await openPicker();
 
   await user.click(composerItem()!);
 
-  const events = publish.mock.calls
+  const opened = publish.mock.calls
     .map(([event]) => event)
-    .filter(
-      (event) => event instanceof SetExtensionSidebarPresentationEvent || event instanceof OpenExtensionSidebarEvent
-    );
-  // The presentation is floating before the sidebar opens, and never docked on the way.
-  expect(events.map((event) => [event.type, event.payload])).toEqual([
-    [SetExtensionSidebarPresentationEvent.type, { presentation: 'floating' }],
-    [OpenExtensionSidebarEvent.type, { pluginId: ASSISTANT, componentTitle: TITLE }],
-  ]);
+    .filter((event) => event instanceof OpenExtensionSidebarEvent);
+  expect(opened.map((event) => event.payload)).toEqual([{ pluginId: ASSISTANT, componentTitle: TITLE }]);
+  // The request floats the sidebar before it opens (the floating flag is off here), so it never paints docked.
+  expect(layoutWhenOpened).toEqual(['floating']);
   const listener = jest.fn();
   const unsubscribe = addComposerEnterRequestListener(listener);
   expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
+  expect(getExtensionSidebarPresentation()).toBe('floating');
   unsubscribe();
 });
 
@@ -193,11 +202,9 @@ it('asks a listening Assistant straight away without reopening its docked sideba
 
   expect(listener).toHaveBeenCalledTimes(1);
   expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
-  expect(
-    publish.mock.calls.some(
-      ([event]) => event instanceof OpenExtensionSidebarEvent || event instanceof SetExtensionSidebarPresentationEvent
-    )
-  ).toBe(false);
+  expect(publish.mock.calls.some(([event]) => event instanceof OpenExtensionSidebarEvent)).toBe(false);
+  // The session, once Assistant enters it, floats the sidebar; the request itself does not.
+  expect(getExtensionSidebarPresentation()).toBe('docked');
   // Choosing Composer does not change the mode itself: Assistant enters through the API.
   expect(scene.state.mode).not.toBe('composer');
   unsubscribe();
@@ -206,10 +213,13 @@ it('asks a listening Assistant straight away without reopening its docked sideba
 it('drops a request Assistant has not taken when the dashboard goes away', async () => {
   const { user } = await openPicker();
   await user.click(composerItem()!);
+  expect(getExtensionSidebarPresentation()).toBe('floating');
 
   deactivate();
   deactivate = () => {};
 
+  // The floated sidebar goes back to the user's layout.
+  expect(getExtensionSidebarPresentation()).toBe('docked');
   const listener = jest.fn();
   const unsubscribe = addComposerEnterRequestListener(listener);
   expect(listener).not.toHaveBeenCalled();

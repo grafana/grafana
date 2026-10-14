@@ -35,7 +35,7 @@ declare module "@openfeature/core" {
     | "useKubernetesShortURLsAPI"
     | "kubernetesCorrelations"
     | "queryService"
-    | "queryServiceFromUI"
+    | "queryServiceWithConnections"
     | "alertingUIUseBackendFilters"
     | "alertingUIUseFullyCompatBackendFilters"
     | "createAlertRuleFromPanel"
@@ -72,6 +72,7 @@ declare module "@openfeature/core" {
     | "dashboardValidatorApp"
     | "dashboardTemplates"
     | "grafana.customDashboardTemplates"
+    | "grafana.smtpSettingsPage"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "alertingListViewV2"
@@ -84,7 +85,6 @@ declare module "@openfeature/core" {
     | "vizActionsAuth"
     | "alertingPrometheusRulesPrimary"
     | "rolePickerDrawer"
-    | "timeRangeProvider"
     | "enableExtensionsAdminPage"
     | "crashDetection"
     | "azureMonitorEnableUserAuth"
@@ -190,7 +190,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.logDetailsDisplayedFieldControls"
-    | "grafana.globalHomePreference";
+    | "grafana.globalHomePreference"
+    | "grafana.extensionSidebarFloating";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

@@ -2,7 +2,7 @@ import { groupBy } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 
 import { type DataSourceApi, hasLogsLabelTypesSupport, type Labels } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 import { getLabelTypeFromRow } from '../../utils';
 

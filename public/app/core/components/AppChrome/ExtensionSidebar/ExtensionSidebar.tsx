@@ -5,9 +5,9 @@ import { useLayoutEffect, useState } from 'react';
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { type ExtensionSidebarPresentation } from 'app/types/events';
 
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { type ExtensionSidebarPresentation } from './extensionSidebarLayout';
 import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
 import { FLOATING_DRAG_HANDLE_ATTRIBUTE, useFloatingDrag } from './useFloatingDrag';
 

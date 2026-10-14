@@ -5,15 +5,14 @@ import {
   dateMath,
   FieldType,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
 
 import { type CloudWatchQuery } from '../types';
 
 import { addDataLinksToLogsResponse } from './datalinks';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(),
 }));
 

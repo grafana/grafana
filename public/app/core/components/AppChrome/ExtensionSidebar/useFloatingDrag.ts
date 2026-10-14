@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-import { store } from '@grafana/data';
-
 /**
  * Put this attribute on an element inside the floating extension sidebar to make it the handle that moves
  * the floating container (pointer drag, arrow keys, Home or double-click to reset).
@@ -51,7 +49,6 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
     if (!element) {
       return;
     }
-    dropLegacyOffset();
     apply(ORIGIN);
     return () => {
       offsetRef.current = ORIGIN;
@@ -212,23 +209,4 @@ function measureWithHandles(element: HTMLElement): { left: number; top: number; 
 
 function isOrigin({ x, y }: Offset): boolean {
   return x === 0 && y === 0;
-}
-
-/**
- * Earlier builds remembered the position under this key. The sidebar now always opens in its corner, so
- * a stored value is dropped once per page load and never read.
- */
-const LEGACY_OFFSET_STORAGE_KEY = 'grafana.navigation.extensionSidebarFloatingOffset';
-let legacyOffsetDropped = false;
-
-function dropLegacyOffset(): void {
-  if (legacyOffsetDropped) {
-    return;
-  }
-  legacyOffsetDropped = true;
-  try {
-    store.delete(LEGACY_OFFSET_STORAGE_KEY);
-  } catch {
-    // Unavailable storage holds nothing to drop.
-  }
 }

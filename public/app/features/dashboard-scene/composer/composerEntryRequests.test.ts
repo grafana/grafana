@@ -1,5 +1,8 @@
-import { appEvents } from 'app/core/app_events';
-import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
+import {
+  getExtensionSidebarPresentation,
+  resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarPresentation,
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 
 import {
   addComposerEnterRequestListener,
@@ -13,6 +16,7 @@ const TARGET = { resource: 'dashboard', uid: 'abc' } as const;
 
 afterEach(() => {
   clearPendingComposerEnterRequest();
+  resetExtensionSidebarPresentationForTests();
   jest.useRealTimers();
 });
 
@@ -72,52 +76,63 @@ it('stops delivering to a listener once it unsubscribes', () => {
   expect(listener).not.toHaveBeenCalled();
 });
 
-describe('a request that floated the sidebar', () => {
-  const presentations: string[] = [];
-  let unsubscribe = () => {};
-
-  beforeEach(() => {
-    presentations.length = 0;
-    const subscription = appEvents.subscribe(SetExtensionSidebarPresentationEvent, ({ payload }) =>
-      presentations.push(payload.presentation)
-    );
-    unsubscribe = () => subscription.unsubscribe();
+// grafana.extensionSidebarFloating is off here: a request floats the sidebar without it.
+describe('a request that floats the sidebar', () => {
+  it('floats the sidebar while it waits', () => {
+    requestComposerEnter(TARGET, { float: true });
+    expect(getExtensionSidebarPresentation()).toBe('floating');
   });
-
-  afterEach(() => unsubscribe());
 
   it('docks the sidebar again when no session starts within 10 seconds', () => {
     jest.useFakeTimers();
-    requestComposerEnter(TARGET, { floated: true });
+    requestComposerEnter(TARGET, { float: true });
     jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS);
-    expect(presentations).toEqual(['docked']);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
-  it('docks the sidebar again when entering fails', () => {
-    requestComposerEnter(TARGET, { floated: true });
-    settleComposerEnterRequest(TARGET.uid, 'failed');
-    expect(presentations).toEqual(['docked']);
+  it('docks the sidebar again when the entry attempt settles without a session', () => {
+    requestComposerEnter(TARGET, { float: true });
+    settleComposerEnterRequest(TARGET.uid);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
   it('docks the sidebar again when the dashboard goes away first', () => {
-    requestComposerEnter(TARGET, { floated: true });
+    requestComposerEnter(TARGET, { float: true });
     clearPendingComposerEnterRequest();
-    expect(presentations).toEqual(['docked']);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
-  it('keeps the floating sidebar once a session starts', () => {
-    jest.useFakeTimers();
-    requestComposerEnter(TARGET, { floated: true });
-    settleComposerEnterRequest(TARGET.uid, 'entered');
-    jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS);
-    clearPendingComposerEnterRequest();
-    expect(presentations).toEqual([]);
+  it('keeps floating while the listener that took it enters Composer', () => {
+    requestComposerEnter(TARGET, { float: true });
+    const listener = jest.fn();
+    const unsubscribe = addComposerEnterRequestListener(listener);
+    expect(listener).toHaveBeenCalledWith(TARGET);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+    unsubscribe();
   });
 
-  it('leaves the presentation alone for a request that did not float it', () => {
+  it('ignores the settling of another dashboard', () => {
+    requestComposerEnter(TARGET, { float: true });
+    settleComposerEnterRequest('another-dashboard');
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+  });
+
+  it('is withdrawn when the user docks the sidebar while it waits', () => {
+    requestComposerEnter(TARGET, { float: true });
+    setExtensionSidebarPresentation('docked');
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+
+    const listener = jest.fn();
+    const unsubscribe = addComposerEnterRequestListener(listener);
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it('leaves the layout alone for a request that does not float it', () => {
     requestComposerEnter(TARGET);
-    settleComposerEnterRequest(TARGET.uid, 'failed');
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+    settleComposerEnterRequest(TARGET.uid);
     clearPendingComposerEnterRequest();
-    expect(presentations).toEqual([]);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 });

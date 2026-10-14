@@ -2,6 +2,11 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
+import {
+  getExtensionSidebarPresentation,
+  resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarPresentation,
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { contextSrv } from 'app/core/services/context_srv';
 import { composerApi } from 'app/features/plugins/components/restrictedGrafanaApis/composer/composerApi';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -45,6 +50,7 @@ afterEach(() => {
   cleanups.splice(0).forEach((cleanup) => cleanup());
   jest.useRealTimers();
   jest.restoreAllMocks();
+  resetExtensionSidebarPresentationForTests();
   setTestFlags({});
 });
 
@@ -137,6 +143,39 @@ describe('entering Composer on a notebook', () => {
     expect(scene.state.isEditing).toBe(false);
     expect(scene.state.body.state.isEditing).toBe(false);
     expect(scene.getComposerSession()).toBe(session);
+  });
+});
+
+// grafana.extensionSidebarFloating is off here: the session floats the sidebar without it.
+describe('the extension sidebar', () => {
+  it('floats for a notebook session and goes back to docked when it ends', async () => {
+    const scene = onRoute();
+    const session = await composerApi.enter(NOTEBOOK);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+
+    session.exit();
+
+    expect(scene.state.isComposing).toBe(false);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it('ends the notebook session when the user docks it', async () => {
+    const scene = onRoute();
+    const session = await composerApi.enter(NOTEBOOK);
+
+    setExtensionSidebarPresentation('docked');
+
+    expect(session.signal.aborted).toBe(true);
+    expect(scene.state.isComposing).toBe(false);
+  });
+
+  it('goes back to docked when the notebook page goes away mid-session', async () => {
+    const scene = onRoute();
+    await composerApi.enter(NOTEBOOK);
+
+    leave(scene);
+
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 });
 

@@ -1,19 +1,29 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState, useMemo } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { PluginExtensionPoints, store } from '@grafana/data';
 import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
+import { useFlagGrafanaExtensionSidebarFloating } from '@grafana/runtime/internal';
 import { type ExtensionPointPluginMeta } from 'app/features/plugins/extensions/appUtils';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import {
-  CloseExtensionSidebarEvent,
-  type ExtensionSidebarPresentation,
-  OpenExtensionSidebarEvent,
-  SetExtensionSidebarPresentationEvent,
-  ToggleExtensionSidebarEvent,
-} from 'app/types/events';
+import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './constants';
+import {
+  type ExtensionSidebarPresentation,
+  getRequestedExtensionSidebarPresentation,
+  isExtensionSidebarFloatingClaimed,
+  subscribeToExtensionSidebarPresentation,
+} from './extensionSidebarLayout';
 import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
 
 const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
@@ -82,7 +92,18 @@ interface ExtensionSidebarContextProps {
 
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
   const [props, setProps] = useState<Record<string, unknown> | undefined>(undefined);
-  const [presentation, setPresentation] = useState<ExtensionSidebarPresentation>('docked');
+  const requestedPresentation = useSyncExternalStore(
+    subscribeToExtensionSidebarPresentation,
+    getRequestedExtensionSidebarPresentation
+  );
+  const floatingClaimed = useSyncExternalStore(
+    subscribeToExtensionSidebarPresentation,
+    isExtensionSidebarFloatingClaimed
+  );
+  // Turning the flag off docks a sidebar the user floated; a claim (Composer) floats it regardless.
+  const canFloat = useFlagGrafanaExtensionSidebarFloating();
+  const presentation: ExtensionSidebarPresentation =
+    floatingClaimed || (canFloat && requestedPresentation === 'floating') ? 'floating' : 'docked';
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
     EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
@@ -220,13 +241,6 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       toggleSubscription.unsubscribe();
     };
   }, [setDockedComponentWithProps, availableComponents, dockedComponentId]);
-
-  useEffect(() => {
-    const subscription = getAppEvents().subscribe(SetExtensionSidebarPresentationEvent, (event) =>
-      setPresentation(event.payload.presentation)
-    );
-    return () => subscription.unsubscribe();
-  }, []);
 
   // update the stored docked component id when it changes
   useEffect(() => {

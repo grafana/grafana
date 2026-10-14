@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	claims "github.com/grafana/authlib/types"
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -78,6 +78,14 @@ func (b *manifestBuilder) GetAuthorizer() authorizer.Authorizer {
 			if err != nil {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
+
+			// Only service account types should use the status endpoint
+			if !attr.IsReadOnly() && attr.GetSubresource() == "status" {
+				if authlib.IsIdentityType(user.GetIdentityType(), authlib.TypeUser, authlib.TypeAnonymous, authlib.TypeEmpty) {
+					return authorizer.DecisionDeny, "Users may not directly modify status", nil
+				}
+			}
+
 			decision, reason, err := b.accessChecker(ctx, user, b.pluginID)
 			if decision != authorizer.DecisionAllow {
 				return decision, reason, err
@@ -108,8 +116,8 @@ func (b *manifestBuilder) authorizeKind(ctx context.Context, attr authorizer.Att
 
 	// Service identities operate cluster-scoped kinds; their access was already
 	// decided by the plugin's app access above.
-	if authInfo, ok := claims.AuthInfoFrom(ctx); ok &&
-		claims.IsIdentityType(authInfo.GetIdentityType(), claims.TypeAccessPolicy) {
+	if authInfo, ok := authlib.AuthInfoFrom(ctx); ok &&
+		authlib.IsIdentityType(authInfo.GetIdentityType(), authlib.TypeAccessPolicy) {
 		return authorizer.DecisionAllow, "", nil
 	}
 

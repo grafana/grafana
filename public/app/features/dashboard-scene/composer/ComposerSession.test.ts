@@ -2,10 +2,12 @@ import { act } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { appEvents } from 'app/core/app_events';
+import {
+  getExtensionSidebarPresentation,
+  resetExtensionSidebarPresentationForTests,
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { setDashboardMutationClientForTests } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
-import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
 
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
@@ -36,21 +38,14 @@ const COMPOSER_FLAGS = {
 };
 
 let deactivate = () => {};
-let unsubscribePresentations = () => {};
-const presentations: string[] = [];
 
 beforeEach(() => {
   setTestFlags(COMPOSER_FLAGS);
   locationService.replace('/d/composer-test');
-  presentations.length = 0;
-  const subscription = appEvents.subscribe(SetExtensionSidebarPresentationEvent, ({ payload }) =>
-    presentations.push(payload.presentation)
-  );
-  unsubscribePresentations = () => subscription.unsubscribe();
 });
 
 afterEach(() => {
-  unsubscribePresentations();
+  resetExtensionSidebarPresentationForTests();
   deactivate();
   deactivate = () => {};
   setTestFlags({});
@@ -120,7 +115,7 @@ describe('entering and leaving Composer', () => {
     expect(session.target).toEqual({ resource: 'dashboard', uid: 'composer-test' });
     expect(session).not.toHaveProperty('dashboardUid');
     // The session leaves the extension sidebar to whoever entered it.
-    expect(presentations).toEqual([]);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
     expect(canEnterComposer(scene)).toEqual({ ok: false, reason: 'unsupported' });
   });
 
@@ -194,7 +189,7 @@ describe('entering and leaving Composer', () => {
     expect(scene.state.isDirty).toBe(true);
     expect(scene.state.title).toBe('Composer title');
     expect(scene.getComposerSession()).toBeUndefined();
-    expect(presentations).toEqual([]);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
   it('returns to clean Viewing when an edit is restored to the saved spec before exit', async () => {

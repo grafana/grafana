@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { sceneUtils } from '@grafana/scenes';
 
 import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
@@ -93,6 +94,9 @@ export async function applyNotebookSpec<Refusal = never>(
   const { transformNotebookToScene } = await import(
     /* webpackChunkName: "notebook-serialization" */ '../serialization/transformNotebookToScene'
   );
+
+  // Panel cells in the incoming spec are built synchronously by the transform below.
+  await getPanelPluginMetasMap();
 
   const rebuilt = transformNotebookToScene(notebookResourceFor(scene.state.uid, notebookSpec));
 
