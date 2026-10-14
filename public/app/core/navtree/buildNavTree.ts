@@ -4,7 +4,7 @@ import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
-import { appsNavEntry } from './buildPluginNav';
+import { withPluginNav } from './buildPluginNav';
 import { getRegisteredNavEntries } from './registry';
 import { adminNavEntry } from './sections/admin.navEntry';
 import { connectionsNavEntry } from './sections/connections.navEntry';
@@ -51,10 +51,10 @@ export function getInitialNavTree(): NavModelItem[] {
 }
 
 /**
- * Every section of the nav tree: each entry declares the gate that makes it
- * visible and how to build it. Home is not listed — it is unconditional and
- * seeds the tree. The entries live in ./sections, except the app plugin section
- * in ./buildPluginNav; this module only composes them.
+ * The static sections of the nav tree: each entry declares the gate that makes
+ * it visible and how to build it. Home is not listed — it is unconditional and
+ * seeds the tree. The entries are defined in ./sections; this module only
+ * composes them. App plugin sections are folded in afterwards, by withPluginNav.
  */
 const NAV_ENTRIES: NavEntryBuilder[] = [
   starredNavEntry,
@@ -65,22 +65,31 @@ const NAV_ENTRIES: NavEntryBuilder[] = [
   profileNavEntry,
   alertingNavEntry,
   connectionsNavEntry,
-  appsNavEntry,
   adminNavEntry,
   helpNavEntry,
   bookmarksNavEntry,
 ];
 
 /**
+ * The static sections, with nav items registered via addNavEntries (e.g. by the
+ * enterprise bundle) appended into their target sections. Unsorted, and empty
+ * attachment shells are left in place — the caller sorts and getInitialNavTree
+ * prunes. Exported so tests can build the tree the plugin pass receives.
+ */
+export function buildStaticSections(): NavModelItem[] {
+  return applyRegisteredNavEntries([getHomeNode(), ...buildEntries(NAV_ENTRIES)]);
+}
+
+/**
  * Builds the nav tree, sorted, with urls app-sub-url relative: callers apply
- * the prefix once via applyAppSubUrl at the end of their pipeline. Nav items
- * registered via addNavEntries (e.g. by the enterprise bundle) are appended
- * into their target sections before the sort. Attachment shells that ended up
- * empty are left in place for getInitialNavTree to prune.
+ * the prefix once via applyAppSubUrl at the end of their pipeline.
+ *
+ * The plugin pass runs between the two: after the static sections, because apps
+ * are placed into sections those entries own, and before the sort, because the
+ * weights it sets only take effect there.
  */
 export function buildNavTree(): NavModelItem[] {
-  const tree = [getHomeNode(), ...buildEntries(NAV_ENTRIES)];
-  return sortNavTree(applyRegisteredNavEntries(tree));
+  return sortNavTree(withPluginNav(buildStaticSections()));
 }
 
 /** Appends registered extension items into their parent sections. Returns a new tree. */

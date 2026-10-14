@@ -83,10 +83,9 @@ const PRUNABLE_ADMIN_SECTIONS: NavId[] = [NavID.cfgGeneral, NavID.cfgPlugins, Na
 // nothing attached. Mirrors the server's RemoveEmptyConnectionsSection and
 // RemoveEmptyDrilldownSection, plus Administration once its subsections go.
 //
-// "More apps" has no RemoveEmpty* to mirror: the server builds that section only
-// once it has an app to put in it. The client builds it every time and prunes it
-// here instead, which reaches the same end state.
-const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown, NavID.apps];
+// "More apps" is not here: like the server, the client creates that section only
+// once it has an app to put in it, so it is never empty.
+const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown];
 
 /** Depth-first search of a nav tree by item id */
 export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | undefined {

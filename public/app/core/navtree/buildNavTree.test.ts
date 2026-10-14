@@ -660,8 +660,8 @@ describe('getInitialNavTree', () => {
       expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
     });
 
-    // buildEntries swallows a throw from build(), so without the flag gate in
-    // when() an uninitialised cache would make the section vanish silently
+    // withPluginNav catches, so without its flag gate first an uninitialised
+    // cache would cost the section and log instead of failing loudly
     it('does not read the app metas cache when the plugin nav is disabled', () => {
       const error = jest.spyOn(console, 'error').mockImplementation(() => {});
       setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: clientBuildOnly });
