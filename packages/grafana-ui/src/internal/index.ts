@@ -116,3 +116,5 @@ export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeW
 
 export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';
+export { IconSourceContext } from '../components/Icon/Icon';
+export { MarkdownAdmonitions, getMarkdownAlertTitles } from '../components/Markdown/MarkdownHTML';
