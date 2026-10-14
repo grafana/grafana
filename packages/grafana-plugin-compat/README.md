@@ -20,7 +20,8 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
   `getDefaultDataSourceInstanceListItem` and its
   `useDefaultDataSourceInstanceListItem` hook, and
   `registerRuntimeDataSourceInstance`. Replacements for `getDataSourceSrv()`
-  methods.
+  methods. Also exports the `DataSourceInstanceListItem` and
+  `GetDataSourceInstanceListFilters` types, which older hosts lack.
 - `@grafana/plugin-compat/apps` — `getPluginSettings`,
   `updateAppPluginSettings`. Replacements for the `getBackendSrv()`
   plugin-settings endpoints.

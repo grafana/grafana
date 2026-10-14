@@ -1,8 +1,8 @@
-import { type DataSourceInstanceListItem } from '@grafana/data';
 import { useDefaultDataSourceInstanceListItem as stableUseDefaultDataSourceInstanceListItem } from '@grafana/runtime';
 import { useDefaultDataSourceInstanceListItem as unstableUseDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 
 import { backwardsCompatibleGetDefaultDataSourceInstanceListItem } from './getDefaultDataSourceInstanceListItem';
+import { type DataSourceInstanceListItem } from './types';
 
 /** Declared here because `@grafana/runtime` lacks it on older supported hosts. */
 export interface UseDefaultDataSourceInstanceListItemResult {

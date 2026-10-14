@@ -1,14 +1,13 @@
 /* eslint-disable @grafana/no-get-data-source-srv */
-import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import {
   type GetDataSourceListFilters,
   getDataSourceSrv,
   getDataSourceInstanceList as stableGetDataSourceInstanceList,
 } from '@grafana/runtime';
-import {
-  type GetDataSourceInstanceListFilters,
-  getDataSourceInstanceList as unstableGetDataSourceInstanceList,
-} from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList as unstableGetDataSourceInstanceList } from '@grafana/runtime/unstable';
+
+import { type DataSourceInstanceListItem, type GetDataSourceInstanceListFilters } from './types';
 
 export async function getDataSourceInstanceList(
   filters?: GetDataSourceInstanceListFilters

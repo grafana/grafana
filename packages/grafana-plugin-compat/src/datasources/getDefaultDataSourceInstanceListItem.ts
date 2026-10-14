@@ -1,10 +1,11 @@
 /* eslint-disable @grafana/no-get-data-source-srv */
-import { type DataSourceInstanceListItem } from '@grafana/data';
 import {
   getDataSourceSrv,
   getDefaultDataSourceInstanceListItem as stableGetDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
 import { getDefaultDataSourceInstanceListItem as unstableGetDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
+
+import { type DataSourceInstanceListItem } from './types';
 
 /**
  * Resolve the item whose data source is the org default, or `undefined` when the list holds none.

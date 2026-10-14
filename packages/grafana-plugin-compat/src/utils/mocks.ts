@@ -1,5 +1,7 @@
-import { type DataSourceInstanceListItem, type DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourcePluginMeta } from '@grafana/data';
 import { type BackendSrv, type DataSourceSrv } from '@grafana/runtime';
+
+import { type DataSourceInstanceListItem } from '../datasources/types';
 
 export function getMockedDatasourceSrv() {
   return {

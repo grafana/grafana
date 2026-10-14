@@ -1,3 +1,9 @@
+# 0.6.0 (2026-10-14)
+
+Export `DataSourceInstanceListItem` and `GetDataSourceInstanceListFilters` types from `@grafana/plugin-compat/datasources`, so the published type declarations no longer reference types that `@grafana/data` and `@grafana/runtime` only have from 13.2.
+
+**Breaking (types only):** the item type no longer has `readOnly` or `isDefault`, which Grafana has since removed. Use `getDataSourceInstanceSettings` or `getDefaultDataSourceInstanceListItem` instead.
+
 # 0.5.0 (2026-10-12)
 
 `getPluginSettings` and `updateAppPluginSettings` now use the host's stable `@grafana/runtime` exports when available, then `@grafana/runtime/unstable`, then the legacy `getBackendSrv()` plugin-settings endpoints, so they keep working once the host removes them from `unstable`.
