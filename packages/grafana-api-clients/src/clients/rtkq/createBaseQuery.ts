@@ -1,4 +1,4 @@
-import { type BaseQueryFn } from '@reduxjs/toolkit/query';
+import { type BaseQueryApi, type BaseQueryFn } from '@reduxjs/toolkit/query';
 import { lastValueFrom } from 'rxjs';
 
 import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
@@ -16,7 +16,7 @@ export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<Re
   // Get the correct resolver once for all API calls
   const resolveBaseURL = 'getBaseURL' in options ? options.getBaseURL : () => Promise.resolve(options.baseURL);
 
-  async function backendSrvBaseQuery(requestOptions: RequestOptions) {
+  async function backendSrvBaseQuery(requestOptions: RequestOptions, { signal }: BaseQueryApi) {
     try {
       const baseURL = await resolveBaseURL();
       const headers: Record<string, string> = {
@@ -42,6 +42,7 @@ export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<Re
           // Default to GET so backend_srv correctly skips success alerts for queries
           method: requestOptions.method ?? 'GET',
           showErrorAlert: requestOptions.showErrorAlert ?? false,
+          abortSignal: requestOptions.abortSignal ?? signal,
           data: requestOptions.body,
           headers,
         })

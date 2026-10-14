@@ -13,6 +13,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { searchNotebookTitles } from 'app/features/notebook/list/notebookSearchApi';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getRecentDashboardActions, getSearchResultActions, useSearchResults } from './dashboardActions';
@@ -29,6 +30,7 @@ describe('dashboardActions', () => {
   const mockRecentDashboardUids = ['my-dashboard-1'];
 
   beforeEach(() => {
+    configureStore();
     mockSearchNotebookTitles.mockResolvedValue([]);
     server.use(
       getCustomSearchHandler([

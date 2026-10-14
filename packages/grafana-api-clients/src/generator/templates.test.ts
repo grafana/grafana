@@ -29,7 +29,12 @@ describe('formatEndpoints', () => {
 describe('renderConfigEntry', () => {
   it('renders a config line with endpoints', () => {
     const result = renderConfigEntry({ groupName: 'dashboard', version: 'v0alpha1', endpoints: 'getFoo, getBar' });
-    expect(result).toBe(`  ...createAPIConfig('dashboard', 'v0alpha1', ['getFoo', 'getBar']),`);
+    expect(result).toBe(`  ...Object.fromEntries(
+    Object.entries(createAPIConfig('dashboard', 'v0alpha1')).map(([filePath, apiConfig]) => [
+      filePath,
+      { ...apiConfig, filterEndpoints: ['getFoo', 'getBar'] },
+    ])
+  ),`);
   });
 
   it('renders a config line without endpoints when empty string is given', () => {

@@ -54,8 +54,16 @@ export const generatedAPI = rawAPI.enhanceEndpoints({});
 }
 
 export function renderConfigEntry(input: Pick<TemplateInput, 'groupName' | 'version' | 'endpoints'>): string {
-  const endpointsSuffix = input.endpoints ? `, [${formatEndpoints(input.endpoints)}]` : '';
-  return `  ...createAPIConfig('${input.groupName}', '${input.version}'${endpointsSuffix}),`;
+  const config = `createAPIConfig('${input.groupName}', '${input.version}')`;
+  if (!input.endpoints) {
+    return `  ...${config},`;
+  }
+  return `  ...Object.fromEntries(
+    Object.entries(${config}).map(([filePath, apiConfig]) => [
+      filePath,
+      { ...apiConfig, filterEndpoints: [${formatEndpoints(input.endpoints)}] },
+    ])
+  ),`;
 }
 export function getRTKClientEntries({
   groupName,

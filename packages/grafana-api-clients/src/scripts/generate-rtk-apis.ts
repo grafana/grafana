@@ -15,7 +15,6 @@ export type OperationDefinition = {
   pathItem: OpenAPIV3.PathItemObject;
   operation: OpenAPIV3.OperationObject;
 };
-export type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
 
 const defaultHooksOptions = {
   queries: true,
@@ -23,32 +22,36 @@ const defaultHooksOptions = {
   mutations: true,
 };
 
-// Namespaced kinds can serve /search, /trash and /search/hybrid, and no frontend calls them yet, so
-// generating a hook per kind would add clients nobody imports. The dashboard searches at
-// `/search` and `/search/hybrid` are different, older endpoints and stay.
+// Generic search routes are generated only when a frontend consumer opts in.
+// The older group-root dashboard search routes remain included.
 const perResourceSearch = /^\/[^/]+\/(search(?:\/hybrid)?|trash)$/;
 
-export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
-  if (Array.isArray(filterEndpoints)) {
-    return filterEndpoints;
-  }
-  return (name, operation) =>
-    !perResourceSearch.test(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
-};
-
-/**
- * Helper to return consistent base API generation config
- */
-const createAPIConfig = (app: string, version: string, filterEndpoints?: EndpointMatcher, additional = {}) => {
+export const createAPIConfigWithSearch = (app: string, version: string) => {
   const filePath = `../clients/rtkq/${app}/${version}/endpoints.gen.ts`;
   return {
     [filePath]: {
       schemaFile: path.join(basePath, `packages/grafana-openapi/src/apis/${app}.grafana.app-${version}.json`),
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
-      filterEndpoints: withoutPerResourceSearch(filterEndpoints),
       tag: true,
       hooks: defaultHooksOptions,
-      ...additional,
+      // Generic search and trash POSTs read resources, so generate queries.
+      endpointOverrides: [
+        {
+          pattern: (_name: string, operation: OperationDefinition) =>
+            operation.verb === 'post' && perResourceSearch.test(operation.path),
+          type: 'query' as const,
+        },
+      ],
+    },
+  };
+};
+
+export const createAPIConfig = (app: string, version: string) => {
+  const filePath = `../clients/rtkq/${app}/${version}/endpoints.gen.ts`;
+  return {
+    [filePath]: {
+      ...createAPIConfigWithSearch(app, version)[filePath],
+      filterEndpoints: (_name: string, operation: OperationDefinition) => !perResourceSearch.test(operation.path),
     },
   };
 };
@@ -119,7 +122,7 @@ const config: ConfigFile = {
     },
     ...createAPIConfig('advisor', 'v0alpha1'),
     ...createAPIConfig('correlations', 'v0alpha1'),
-    ...createAPIConfig('dashboard', 'v0alpha1'),
+    ...createAPIConfigWithSearch('dashboard', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v1beta1'),
     ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('dashboard', 'v2'),

@@ -1,30 +1,6 @@
-import { BASE_URL as v0alphaBaseURL } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { getBackendSrv } from '@grafana/runtime';
-
-const DASHBOARD_HYBRID_SEARCH_URL = `${v0alphaBaseURL}/dashboards/search/hybrid`;
-
-// These types mirror pkg/apis/search/v0alpha1/hybrid.go because generic
-// hybrid routes are excluded from generated API clients.
-export interface HybridSearchResult {
-  resource: {
-    group: string;
-    resource: string;
-    kind: string;
-    name: string;
-  };
-  score: number;
-  title: string;
-  folder: string;
-  folderTitle?: string;
-  managedBy?: { kind: string; id: string };
-  chunks: Array<{ subresource: string; content: string }>;
-}
-
-interface HybridSearchResponse {
-  apiVersion: 'search.grafana.app/v0alpha1';
-  kind: 'HybridSearchResults';
-  items: HybridSearchResult[];
-}
+import { type HybridSearchResultItem } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
+import { dispatch } from 'app/types/store';
 
 export interface HybridSearchOptions {
   limit?: number;
@@ -39,18 +15,32 @@ export interface HybridSearchOptions {
 export async function searchDashboardsHybrid(
   query: string,
   { limit, abortSignal }: HybridSearchOptions = {}
-): Promise<HybridSearchResult[]> {
-  const response = await getBackendSrv().post<HybridSearchResponse>(
-    DASHBOARD_HYBRID_SEARCH_URL,
-    {
-      apiVersion: 'search.grafana.app/v0alpha1',
-      kind: 'HybridSearchQuery',
-      query,
-      ...(limit !== undefined && { limit }),
-    },
-    // Background searches fall back to classic search on failure, so they
-    // should not show error toasts on palette keystrokes.
-    { showErrorAlert: false, abortSignal }
+): Promise<HybridSearchResultItem[]> {
+  const request = dispatch(
+    dashboardAPIv0alpha1.endpoints.listDashboardHybridSearchV0Alpha1.initiate(
+      {
+        hybridSearchQuery: {
+          apiVersion: 'search.grafana.app/v0alpha1',
+          kind: 'HybridSearchQuery',
+          query,
+          ...(limit !== undefined && { limit }),
+        },
+      },
+      // Refresh repeat searches so recently saved dashboards can appear immediately.
+      { subscribe: false, forceRefetch: true }
+    )
   );
-  return response.items ?? [];
+
+  const abort = () => request.abort();
+  abortSignal?.addEventListener('abort', abort, { once: true });
+  if (abortSignal?.aborted) {
+    abort();
+  }
+
+  try {
+    const response = await request.unwrap();
+    return response.items ?? [];
+  } finally {
+    abortSignal?.removeEventListener('abort', abort);
+  }
 }
