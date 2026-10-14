@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
+	"slices"
 	"strings"
 	"time"
 )
@@ -184,54 +186,56 @@ func (k *SqlKV) deleteBlob(ctx context.Context, key string) error {
 	return nil
 }
 
-func (k *SqlKV) blobKeys(ctx context.Context, opt ListOptions, yield func(string, error) bool) {
-	parts := []string{k.dialect.QuoteIdent("group"), k.dialect.QuoteIdent("resource"), k.dialect.QuoteIdent("namespace"), k.dialect.QuoteIdent("name"), k.dialect.QuoteIdent("uuid")}
-	var keyExpr string
-	switch k.dialect.Name() {
-	case "mysql":
-		keyExpr = "CAST(CONCAT(" + strings.Join(parts, ", '/', ") + ") AS BINARY)"
-	case "postgres":
-		keyExpr = "(" + strings.Join(parts, " || '/' || ") + `) COLLATE "C"`
-	default:
-		keyExpr = "(" + strings.Join(parts, " || '/' || ") + ") COLLATE BINARY"
+// BlobGCKeys pages by the indexed UUID rather than resource-key order. Each page
+// is closed before yielding so reference checks and deletes can use the connection.
+func (k *SqlKV) BlobGCKeys(ctx context.Context, batchSize int) iter.Seq2[string, error] {
+	return func(yield func(string, error) bool) {
+		if batchSize <= 0 {
+			yield("", fmt.Errorf("blob GC batch size must be positive"))
+			return
+		}
+		cursor := ""
+		for {
+			page, err := k.blobGCPage(ctx, cursor, batchSize)
+			if err != nil {
+				yield("", err)
+				return
+			}
+			for _, key := range page {
+				if !yield(key.String(), nil) {
+					return
+				}
+			}
+			if len(page) < batchSize {
+				return
+			}
+			cursor = page[len(page)-1].UID
+		}
 	}
-	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s >= %s",
-		keyExpr, k.dialect.QuoteIdent(resourceBlobTable), keyExpr, k.dialect.Placeholder(1))
-	args := []any{opt.StartKey}
-	if opt.EndKey != "" {
-		query += " AND " + keyExpr + " < " + k.dialect.Placeholder(2)
-		args = append(args, opt.EndKey)
-	}
-	order := "ASC"
-	if opt.Sort == SortOrderDesc {
-		order = "DESC"
-	}
-	query += " ORDER BY " + keyExpr + " " + order
-	if opt.Limit > 0 {
-		query += " LIMIT " + k.dialect.Placeholder(len(args)+1)
-		args = append(args, opt.Limit)
-	}
-	rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
-	if err != nil {
-		yield("", err)
-		return
-	}
-	shouldYield := true
-	defer func() { closeRows(rows, yield, shouldYield) }()
+}
 
+func (k *SqlKV) blobGCPage(ctx context.Context, cursor string, batchSize int) ([]BlobKey, error) {
+	query := fmt.Sprintf("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s > %s ORDER BY %s ASC LIMIT %s",
+		k.dialect.QuoteIdent("group"), k.dialect.QuoteIdent("resource"), k.dialect.QuoteIdent("namespace"),
+		k.dialect.QuoteIdent("name"), k.dialect.QuoteIdent("uuid"), k.dialect.QuoteIdent(resourceBlobTable),
+		k.dialect.QuoteIdent("uuid"), k.dialect.Placeholder(1), k.dialect.QuoteIdent("uuid"), k.dialect.Placeholder(2))
+	rows, err := k.conn(ctx).QueryContext(ctx, query, cursor, batchSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	page := make([]BlobKey, 0, batchSize)
 	for rows.Next() {
-		var key string
-		if err := rows.Scan(&key); err != nil {
-			shouldYield = yield("", fmt.Errorf("error reading row: %w", err))
-			return
+		var key BlobKey
+		if err := rows.Scan(&key.Group, &key.Resource, &key.Namespace, &key.Name, &key.UID); err != nil {
+			return nil, err
 		}
-		if shouldYield = yield(key, nil); !shouldYield {
-			return
-		}
+		page = append(page, key)
 	}
 	if err := rows.Err(); err != nil {
-		yield("", fmt.Errorf("failed to read rows: %w", err))
+		return nil, err
 	}
+	return page, rows.Close()
 }
 
 func (k *SqlKV) FirstUnused(ctx context.Context, key string, _ time.Time) (time.Time, error) {
@@ -246,3 +250,52 @@ func (k *SqlKV) FirstUnused(ctx context.Context, key string, _ time.Time) (time.
 }
 
 func (k *SqlKV) ClearUnused(context.Context, string) error { return nil }
+
+func (k *SqlKV) blobKeys(ctx context.Context, opt ListOptions, yield func(string, error) bool) {
+	query := fmt.Sprintf("SELECT %s, %s, %s, %s, %s FROM %s",
+		k.dialect.QuoteIdent("group"), k.dialect.QuoteIdent("resource"), k.dialect.QuoteIdent("namespace"),
+		k.dialect.QuoteIdent("name"), k.dialect.QuoteIdent("uuid"),
+		k.dialect.QuoteIdent(resourceBlobTable))
+	cols, args := blobKeyFilter(opt)
+	if len(cols) > 0 {
+		query += " WHERE " + k.blobWhere(cols)
+	}
+	rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
+	if err != nil {
+		yield("", err)
+		return
+	}
+	shouldYield := true
+	defer func() { closeRows(rows, yield, shouldYield) }()
+
+	keys := make([]string, 0)
+	for rows.Next() {
+		var bk BlobKey
+		if err := rows.Scan(&bk.Group, &bk.Resource, &bk.Namespace, &bk.Name, &bk.UID); err != nil {
+			shouldYield = yield("", fmt.Errorf("error reading row: %w", err))
+			return
+		}
+		key := bk.String()
+		if key < opt.StartKey || (opt.EndKey != "" && key >= opt.EndKey) {
+			continue
+		}
+		keys = append(keys, key)
+	}
+	if err := rows.Err(); err != nil {
+		shouldYield = yield("", fmt.Errorf("failed to read rows: %w", err))
+		return
+	}
+
+	slices.Sort(keys)
+	if opt.Sort == SortOrderDesc {
+		slices.Reverse(keys)
+	}
+	if opt.Limit > 0 && int64(len(keys)) > opt.Limit {
+		keys = keys[:opt.Limit]
+	}
+	for _, key := range keys {
+		if shouldYield = yield(key, nil); !shouldYield {
+			return
+		}
+	}
+}

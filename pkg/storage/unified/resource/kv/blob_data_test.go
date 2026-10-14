@@ -1,6 +1,8 @@
 package kv
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -97,10 +99,17 @@ func TestSQLBlobKeysArePagedAndUseUploadTime(t *testing.T) {
 		t.Run(dialect, func(t *testing.T) {
 			store, _, mock := setupSQLKVMock(t, dialect)
 			key := testBlobKey("default")
-			mock.ExpectQuery("SELECT .* FROM .*resource_blob.* WHERE .* ORDER BY .* LIMIT").
-				WithArgs("", int64(1)).WillReturnRows(sqlmock.NewRows([]string{"key"}).AddRow(key.String()))
+			query := fmt.Sprintf("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s > %s ORDER BY %s ASC LIMIT %s",
+				store.dialect.QuoteIdent("group"), store.dialect.QuoteIdent("resource"), store.dialect.QuoteIdent("namespace"),
+				store.dialect.QuoteIdent("name"), store.dialect.QuoteIdent("uuid"), store.dialect.QuoteIdent(resourceBlobTable),
+				store.dialect.QuoteIdent("uuid"), store.dialect.Placeholder(1), store.dialect.QuoteIdent("uuid"), store.dialect.Placeholder(2))
+			columns := []string{"group", "resource", "namespace", "name", "uuid"}
+			mock.ExpectQuery(regexp.QuoteMeta(query)).
+				WithArgs("", 1).WillReturnRows(sqlmock.NewRows(columns).AddRow(key.Group, key.Resource, key.Namespace, key.Name, key.UID)).RowsWillBeClosed()
+			mock.ExpectQuery(regexp.QuoteMeta(query)).
+				WithArgs(key.UID, 1).WillReturnRows(sqlmock.NewRows(columns)).RowsWillBeClosed()
 			var keys []string
-			for got, err := range store.Keys(t.Context(), BlobDataSection, ListOptions{Limit: 1}) {
+			for got, err := range store.BlobGCKeys(t.Context(), 1) {
 				require.NoError(t, err)
 				keys = append(keys, got)
 			}

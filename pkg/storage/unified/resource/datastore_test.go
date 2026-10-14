@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"iter"
 	"slices"
 	"strings"
 	"testing"
@@ -1077,51 +1076,6 @@ func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) 
 		require.False(t, remainingUUIDs[versions[1].rv]) // deleted
 		require.True(t, remainingUUIDs[versions[2].rv])
 	})
-}
-
-type noNULCursorKV struct{ kv.KV }
-
-func (s noNULCursorKV) Keys(ctx context.Context, section string, opt kv.ListOptions) iter.Seq2[string, error] {
-	if strings.ContainsRune(opt.StartKey, 0) || strings.ContainsRune(opt.EndKey, 0) {
-		return func(yield func(string, error) bool) {
-			yield("", fmt.Errorf("invalid byte sequence for encoding UTF8: 0x00"))
-		}
-	}
-	return s.KV.Keys(ctx, section, opt)
-}
-
-func TestPagedKeysNoNULCursor(t *testing.T) {
-	store := noNULCursorKV{setupBadgerKV(t)}
-	for _, key := range []string{"a", "a-long", "b"} {
-		w, err := store.Save(t.Context(), kv.EventsSection, key)
-		require.NoError(t, err)
-		_, err = w.Write([]byte("value"))
-		require.NoError(t, err)
-		require.NoError(t, w.Close())
-	}
-	var got []string
-	for key, err := range pagedKeys(t.Context(), store, kv.EventsSection, kv.ListOptions{}, 1) {
-		require.NoError(t, err)
-		got = append(got, key)
-	}
-	require.Equal(t, []string{"a", "a-long", "b"}, got)
-
-	got = nil
-	for key, err := range pagedKeys(t.Context(), store, kv.EventsSection, kv.ListOptions{StartKey: "a-long"}, 1) {
-		require.NoError(t, err)
-		got = append(got, key)
-	}
-	require.Equal(t, []string{"a-long", "b"}, got)
-
-	got = nil
-	for key, err := range pagedKeys(t.Context(), store, kv.EventsSection, kv.ListOptions{}, 1) {
-		require.NoError(t, err)
-		got = append(got, key)
-		if key == "a" {
-			require.NoError(t, store.Delete(t.Context(), kv.EventsSection, key))
-		}
-	}
-	require.Equal(t, []string{"a", "a-long", "b"}, got)
 }
 
 func TestIntegrationDataStore_Keys(t *testing.T) {

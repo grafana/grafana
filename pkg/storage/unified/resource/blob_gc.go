@@ -49,14 +49,16 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 	if grace <= 0 {
 		return 0, fmt.Errorf("blob GC grace period must be positive")
 	}
-	// SQL and bucket stores use upload time; Badger persists the first unused observation.
+	// SQL and bucket stores use upload time.
 	ages, ok := g.store.(blobGCAgeStore)
 	if !ok {
 		return 0, fmt.Errorf("blob GC store does not support durable age tracking")
 	}
 	keys := g.store.Keys(ctx, kv.BlobDataSection, kv.ListOptions{})
-	if store, ok := g.store.(kv.KV); ok {
-		keys = pagedKeys(ctx, store, kv.BlobDataSection, kv.ListOptions{}, g.batchSize)
+	if store, ok := g.store.(interface {
+		BlobGCKeys(context.Context, int) iter.Seq2[string, error]
+	}); ok {
+		keys = store.BlobGCKeys(ctx, g.batchSize)
 	}
 	count := 0
 	processed := 0

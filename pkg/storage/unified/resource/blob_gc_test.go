@@ -38,11 +38,11 @@ func TestResourceReferencesBlob(t *testing.T) {
 func TestBlobGarbageCollector(t *testing.T) {
 	for _, scenario := range []string{"orphan", "referenced", "dry run", "read error", "reference appears", "restart"} {
 		t.Run(scenario, func(t *testing.T) {
-			store := setupBadgerKV(t)
+			store := setupSqlKV(t)
 			key := kv.BlobKey{Group: "dashboard.grafana.app", Resource: "snapshots", Namespace: "default", Name: "snap", UID: "blob"}
 			writer, err := store.Save(t.Context(), kv.BlobDataSection, key.String())
 			require.NoError(t, err)
-			_, err = writer.Write([]byte("payload"))
+			_, err = writer.Write(append(kv.EncodeBlobValueHeader("text/plain"), []byte("payload")...))
 			require.NoError(t, err)
 			require.NoError(t, writer.Close())
 			gc := NewBlobGarbageCollector(store, 100, 0)
@@ -82,15 +82,18 @@ func TestBlobGarbageCollector(t *testing.T) {
 	}
 }
 
-func TestBlobGCPagedKeysAndReferenceReset(t *testing.T) {
-	store := setupBadgerKV(t)
+func TestBlobGCPagedKeys(t *testing.T) {
+	store := setupSqlKV(t)
 	base := kv.BlobKey{Group: "group", Resource: "resource", Name: "name", UID: "a"}
 	for _, uid := range []string{"a", "a-long", "b"} {
 		key := base
 		key.UID = uid
+		if uid == "a" {
+			key.Name = "z-last-resource-first-uuid"
+		}
 		writer, err := store.Save(t.Context(), kv.BlobDataSection, key.String())
 		require.NoError(t, err)
-		_, err = writer.Write([]byte("payload"))
+		_, err = writer.Write(append(kv.EncodeBlobValueHeader("text/plain"), []byte("payload")...))
 		require.NoError(t, err)
 		require.NoError(t, writer.Close())
 	}
@@ -101,6 +104,9 @@ func TestBlobGCPagedKeysAndReferenceReset(t *testing.T) {
 	require.NoError(t, err)
 	require.Zero(t, count)
 	gc = NewBlobGarbageCollector(store, 1, 0)
+	count, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, true, live)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
 	count, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, false, live)
 	require.NoError(t, err)
 	require.Equal(t, 2, count)
@@ -111,57 +117,24 @@ func TestBlobGCPagedKeysAndReferenceReset(t *testing.T) {
 	require.NoError(t, reader.Close())
 }
 
-func TestBlobGCReferenceResetsObservation(t *testing.T) {
-	store := setupBadgerKV(t)
-	key := kv.BlobKey{Group: "group", Resource: "resource", Name: "name", UID: "uid"}.String()
-	writer, err := store.Save(t.Context(), kv.BlobDataSection, key)
-	require.NoError(t, err)
-	_, err = writer.Write([]byte("payload"))
-	require.NoError(t, err)
-	require.NoError(t, writer.Close())
-	gc := NewBlobGarbageCollector(store, 1, 0)
-	now := time.Now()
-	live := false
-	referenced := func(context.Context, kv.BlobKey) (bool, error) { return live, nil }
-	_, err = gc.Collect(t.Context(), now, time.Hour, false, referenced)
-	require.NoError(t, err)
-	live = true
-	_, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, false, referenced)
-	require.NoError(t, err)
-	live = false
-	count, err := gc.Collect(t.Context(), now.Add(3*time.Hour), time.Hour, false, referenced)
-	require.NoError(t, err)
-	require.Zero(t, count)
-}
-
-func TestBlobGCReuploadResetsObservation(t *testing.T) {
-	store := setupBadgerKV(t)
-	key := kv.BlobKey{Group: "group", Resource: "resource", Name: "name", UID: "uid"}.String()
-	write := func() {
-		writer, err := store.Save(t.Context(), kv.BlobDataSection, key)
-		require.NoError(t, err)
-		_, err = writer.Write([]byte("payload"))
-		require.NoError(t, err)
-		require.NoError(t, writer.Close())
-	}
-	write()
-	gc := NewBlobGarbageCollector(store, 1, 0)
-	now := time.Now()
-	referenced := func(context.Context, kv.BlobKey) (bool, error) { return false, nil }
-	_, err := gc.Collect(t.Context(), now, time.Hour, false, referenced)
-	require.NoError(t, err)
-	write()
-	count, err := gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, false, referenced)
-	require.NoError(t, err)
+func TestBlobGCRejectsBadgerWithoutAgeTracking(t *testing.T) {
+	gc := NewBlobGarbageCollector(setupBadgerKV(t), 1, 0)
+	count, err := gc.Collect(t.Context(), time.Now(), time.Hour, false, func(context.Context, kv.BlobKey) (bool, error) {
+		t.Fatal("must not scan unsupported backends")
+		return false, nil
+	})
+	require.ErrorContains(t, err, "durable age tracking")
 	require.Zero(t, count)
 }
 
 func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 	b := setupTestStorageBackend(t)
+	b.kv = setupSqlKV(t)
+	b.dataStore = newDataStore(b.kv, nil)
 	key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "default", Name: "snap", UID: "unreferenced"}
 	writer, err := b.kv.Save(t.Context(), kv.BlobDataSection, key.String())
 	require.NoError(t, err)
-	_, err = writer.Write([]byte("image"))
+	_, err = writer.Write(append(kv.EncodeBlobValueHeader("image/png"), []byte("image")...))
 	require.NoError(t, err)
 	require.NoError(t, writer.Close())
 
@@ -184,11 +157,11 @@ func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 }
 
 func TestBlobGCPreservesProvisioningPreviewURL(t *testing.T) {
-	store := setupBadgerKV(t)
+	store := setupSqlKV(t)
 	key := kv.BlobKey{Group: "provisioning.grafana.app", Resource: "repositories", Namespace: "default", Name: "repo", UID: "preview"}
 	writer, err := store.Save(t.Context(), kv.BlobDataSection, key.String())
 	require.NoError(t, err)
-	_, err = writer.Write([]byte("image"))
+	_, err = writer.Write(append(kv.EncodeBlobValueHeader("image/png"), []byte("image")...))
 	require.NoError(t, err)
 	require.NoError(t, writer.Close())
 	gc := NewBlobGarbageCollector(store, 100, 0)
