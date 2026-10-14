@@ -61,7 +61,7 @@ func ProvideAppInstaller(
 		StaticRootPath: func() (string, error) {
 			return getStaticRootPath(cfgProvider, logger)
 		},
-		SkipPluginIDs: getAsExternalPluginIDs(cfgProvider),
+		SkipPluginIDs: getAsExternalPluginIDs(cfgProvider, logger),
 	})
 	if err != nil {
 		return nil, err
@@ -88,9 +88,10 @@ func ProvideAppInstaller(
 	}, nil
 }
 
-func getAsExternalPluginIDs(cfgProvider configprovider.ConfigProvider) []string {
+func getAsExternalPluginIDs(cfgProvider configprovider.ConfigProvider, logger logging.Logger) []string {
 	cfg, err := cfgProvider.Get(context.Background())
 	if err != nil {
+		logger.Warn("Could not read config, core plugins set as_external will not be skipped", "error", err)
 		return nil
 	}
 	var ids []string
