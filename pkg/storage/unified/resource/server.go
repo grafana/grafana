@@ -701,6 +701,14 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		return nil, err
 	}
 
+	if b, ok := opts.Backend.(*kvStorageBackend); ok {
+		if external, ok := blobstore.(*cdkBlobSupport); ok {
+			b.blobGCMu.Lock()
+			b.blobGC = NewBlobGarbageCollector(NewCDKBlobGCStore(external.bucket, external.root), b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
+			b.blobGCMu.Unlock()
+		}
+	}
+
 	logger := log.New("resource-server")
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())

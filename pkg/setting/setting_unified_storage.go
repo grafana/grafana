@@ -270,6 +270,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(true)
 	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(false)
+	cfg.BlobGarbageCollectionEnabled = section.Key("blob_garbage_collection_enabled").MustBool(false)
+	cfg.BlobGarbageCollectionDryRun = section.Key("blob_garbage_collection_dry_run").MustBool(true)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
 	cfg.GarbageCollectionBatchWait = section.Key("garbage_collection_batch_wait").MustDuration(1 * time.Second)
