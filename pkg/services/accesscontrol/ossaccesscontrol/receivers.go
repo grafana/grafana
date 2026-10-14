@@ -86,7 +86,7 @@ func ProvideReceiverPermissionsService(
 	return &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}, nil
 }
 
-var _ accesscontrol.ReceiverPermissionsService = new(ReceiverPermissionsService)
+var _ accesscontrol.ReceiverPermissionsService = (*ReceiverPermissionsService)(nil)
 
 type ReceiverPermissionsService struct {
 	*resourcepermissions.Service

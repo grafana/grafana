@@ -31,11 +31,11 @@ const (
 func newMetrics(reg prometheus.Registerer) *metrics {
 	return &metrics{
 		droppedEvents: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "unified_storage_stats_dropped_events_total",
+			Name: "grafana_unified_storage_stats_dropped_events_total",
 			Help: "Total number of usage stats events dropped without being recorded.",
 		}, []string{"reason"}),
 		flushDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Name: "unified_storage_stats_flush_duration_seconds",
+			Name: "grafana_unified_storage_stats_flush_duration_seconds",
 			Help: "Duration of a usage stats flush cycle.",
 			// Native histogram only (no classic Buckets): flush duration spans a
 			// wide, hard-to-predict range, and this avoids per-bucket series.
@@ -44,7 +44,7 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		aggregateWriteFailures: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: "unified_storage_stats_aggregate_write_failures_total",
+			Name: "grafana_unified_storage_stats_aggregate_write_failures_total",
 			Help: "Total number of best-effort usage stats aggregate writes that failed during a flush.",
 		}),
 	}

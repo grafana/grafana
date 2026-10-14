@@ -21,7 +21,7 @@ type Evaluator interface {
 	fmt.GoStringer
 }
 
-var _ Evaluator = new(permissionEvaluator)
+var _ Evaluator = (*permissionEvaluator)(nil)
 
 // EvalPermission returns an evaluator that will require at least one of passed scopes to match
 func EvalPermission(action string, scopes ...string) Evaluator {
@@ -118,7 +118,7 @@ func (p permissionEvaluator) GoString() string {
 	return fmt.Sprintf("action:%s scopes:%s", p.Action, strings.Join(p.Scopes, ", "))
 }
 
-var _ Evaluator = new(allEvaluator)
+var _ Evaluator = (*allEvaluator)(nil)
 
 // EvalAll returns evaluator that requires all passed evaluators to evaluate to true
 func EvalAll(allOf ...Evaluator) Evaluator {
@@ -181,7 +181,7 @@ func (a allEvaluator) GoString() string {
 	return fmt.Sprintf("all(%s)", strings.Join(permissions, " "))
 }
 
-var _ Evaluator = new(anyEvaluator)
+var _ Evaluator = (*anyEvaluator)(nil)
 
 // EvalAny returns evaluator that requires at least one of passed evaluators to evaluate to true
 func EvalAny(anyOf ...Evaluator) Evaluator {

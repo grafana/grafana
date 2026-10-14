@@ -1,8 +1,7 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getBackendSrv, isFetchError, locationService, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, getPanelPluginMetasMap, UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -29,6 +28,7 @@ import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/Dashboar
 import { ensureV2Response } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
+  isDashboardNewLayoutsEnabled,
   isDashboardResource,
   isDashboardV1Resource,
   isDashboardV2Resource,
@@ -282,6 +282,8 @@ abstract class DashboardScenePageStateManagerBase<T>
 
   public async loadSnapshot(slug: string) {
     try {
+      // Snapshot panels are built synchronously below.
+      await getPanelPluginMetasMap();
       const dashboard = await this.loadSnapshotScene(slug);
 
       this.setState({ dashboard: dashboard, isLoading: false });
@@ -506,6 +508,8 @@ abstract class DashboardScenePageStateManagerBase<T>
       const messageId = getMessageIdFromError(err);
 
       this.setState({
+        // do not leave the previous dashboard mounted if fetch fails
+        dashboard: undefined,
         isLoading: false,
         loadError: {
           status,
@@ -529,8 +533,8 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
 
-    // Resolve API versions before synchronous getV1()/getV2() calls downstream.
-    await dashboardAPIVersionResolver.resolve();
+    // Scene building downstream is synchronous: it needs the resolved API version and the panel metas map.
+    await Promise.all([dashboardAPIVersionResolver.resolve(), getPanelPluginMetasMap()]);
 
     // Home dashboard is not handled through legacy API and is not versioned.
     // Handling home dashboard flow separately from regular dashboard flow.
@@ -966,6 +970,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     try {
       this.setState({ isLoading: true });
 
+      // A reload rebuilds the scene outside loadScene, so the metas map has to be in place here too.
+      await getPanelPluginMetasMap();
+
       const fetchStart = performance.now();
       const rsp = await dashboardLoaderSrv.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
       recordDashboardFetchTiming(uid, performance.now() - fetchStart);
@@ -1339,6 +1346,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     try {
       this.setState({ isLoading: true });
 
+      // A reload rebuilds the scene outside loadScene, so the metas map has to be in place here too.
+      await getPanelPluginMetasMap();
+
       const fetchStart = performance.now();
       const rsp = await this.dashboardLoader.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
       recordDashboardFetchTiming(uid, performance.now() - fetchStart);
@@ -1397,7 +1407,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 }
 
 function shouldForceV2API(): boolean {
-  return Boolean(config.featureToggles.dashboardNewLayouts);
+  return isDashboardNewLayoutsEnabled();
 }
 
 export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<

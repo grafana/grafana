@@ -41,7 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ pluginaccesscontrol.RoleRegistry = &Service{}
+var _ pluginaccesscontrol.RoleRegistry = (*Service)(nil)
 
 type IAMFeatures interface {
 	UserPermissionsAPIEnabled() bool

@@ -1,18 +1,11 @@
 package search
 
 import (
-	"context"
-	"crypto/rand"
-	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/oklog/ulid/v2"
-	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -38,9 +31,8 @@ const (
 )
 
 // NewSearchOptions builds the SearchOptions used by the resource server.
-// snapshotStore is optional: when non-nil it replaces the RemoteIndexStore
-// that would otherwise be built from cfg.IndexSnapshotBucketURL. Used by
-// the SQL wiring layer to inject a KV-backed store.
+// snapshotStore is optional: index snapshots are only uploaded and
+// downloaded when it is non-nil and cfg.IndexSnapshotEnabled is set.
 func NewSearchOptions(
 	cfg *setting.Cfg,
 	docs resource.DocumentBuilderSupplier,
@@ -101,10 +93,7 @@ func NewSearchOptions(
 			}
 		}
 
-		snapshot, err := buildSnapshotOptions(cfg, minVersion, snapshotStore)
-		if err != nil {
-			return resource.SearchOptions{}, err
-		}
+		snapshot := buildSnapshotOptions(cfg, minVersion, snapshotStore)
 
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                           root,
@@ -158,7 +147,6 @@ func NewSearchOptions(
 			GlobalIndexEnabled:        cfg.GlobalSearchIndexEnabled,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
-			IndexSnapshotBucketURL:          cfg.IndexSnapshotBucketURL,
 			IndexSnapshotThreshold:          cfg.IndexSnapshotThreshold,
 			IndexSnapshotMaxAge:             cfg.IndexSnapshotMaxAge,
 			IndexSnapshotMinDocChanges:      DefaultSnapshotMinDocChanges,
@@ -180,41 +168,12 @@ func NewSearchOptions(
 	}, nil
 }
 
-func snapshotLockHeartbeat(ttl time.Duration) time.Duration {
-	hb := ttl / 3
-	if hb <= 0 || hb*2 > ttl {
-		hb = ttl / 2
-	}
-	if hb <= 0 {
-		hb = time.Second
-	}
-	return hb
-}
-
-// buildSnapshotOptions builds a SnapshotOptions from cfg.
-//
-// All non-Store fields (MinDocCount, MaxIndexAge, UploadInterval, etc.)
-// are taken from cfg regardless. injectedStore overrides only the Store
-// field: if non-nil it is used directly; otherwise the function opens
-// the object-storage bucket configured in cfg.IndexSnapshotBucketURL
-// and wraps it as a BucketRemoteIndexStore. Returns a zero
-// SnapshotOptions (Store==nil) when snapshots are disabled, so the
-// backend short-circuits all new paths.
-func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version, injectedStore RemoteIndexStore) (SnapshotOptions, error) {
-	if !cfg.IndexSnapshotEnabled {
-		return SnapshotOptions{}, nil
-	}
-
-	store := injectedStore
-	if store == nil {
-		if cfg.IndexSnapshotBucketURL == "" {
-			return SnapshotOptions{}, nil
-		}
-		var err error
-		store, err = buildBucketSnapshotStore(cfg)
-		if err != nil {
-			return SnapshotOptions{}, err
-		}
+// buildSnapshotOptions builds a SnapshotOptions from cfg. Returns a zero
+// SnapshotOptions (Store==nil) when snapshots are disabled or no store is
+// given, so the backend skips all snapshot work.
+func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version, store RemoteIndexStore) SnapshotOptions {
+	if !cfg.IndexSnapshotEnabled || store == nil {
+		return SnapshotOptions{}
 	}
 
 	return SnapshotOptions{
@@ -226,81 +185,7 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version, inj
 		MinDocChanges:      DefaultSnapshotMinDocChanges,
 		CleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
 		CleanupInterval:    DefaultSnapshotCleanupInterval,
-	}, nil
-}
-
-// buildBucketSnapshotStore opens the configured object-storage bucket
-// and wraps it as a BucketRemoteIndexStore.
-func buildBucketSnapshotStore(cfg *setting.Cfg) (RemoteIndexStore, error) {
-	bucket, err := blob.OpenBucket(context.Background(), cfg.IndexSnapshotBucketURL)
-	if err != nil {
-		return nil, fmt.Errorf("opening snapshot bucket %q: %w", cfg.IndexSnapshotBucketURL, err)
 	}
-
-	lockBackend, err := snapshotLockBackendForBucket(bucket, cfg.IndexSnapshotBucketURL)
-	if err != nil {
-		return nil, fmt.Errorf("snapshot lock backend options: %w", err)
-	}
-
-	ownerBase := cfg.InstanceID
-	if ownerBase == "" {
-		ownerBase = cfg.InstanceName
-	}
-	if ownerBase == "" {
-		ownerBase = "unknown-instance"
-	}
-	lockOwnerSuffix, err := ulid.New(ulid.Now(), rand.Reader)
-	if err != nil {
-		return nil, fmt.Errorf("creating lock owner suffix: %w", err)
-	}
-	// Include a per-process ULID suffix to avoid owner collisions across instances
-	// that share the same configured instance_id/instance_name.
-	owner := fmt.Sprintf("%s/%s", ownerBase, lockOwnerSuffix.String())
-
-	lockTTL := DefaultSnapshotLockTTL
-	lockOpts := LockOptions{
-		TTL:               lockTTL,
-		HeartbeatInterval: snapshotLockHeartbeat(lockTTL),
-	}
-
-	return NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
-		Bucket:      bucket,
-		LockBackend: lockBackend,
-		LockOwner:   owner,
-		BuildLock:   lockOpts,
-		CleanupLock: lockOpts,
-	}), nil
-}
-
-func snapshotLockBackendForBucket(bucket *blob.Bucket, bucketURL string) (lockBackend, error) {
-	ok, err := isFileBucketURL(bucketURL)
-	if err != nil {
-		return nil, err
-	}
-	if ok {
-		return newLocalLockBackend(), nil
-	}
-
-	lockOpts, err := cdkLockOptionsFromBucket(bucket, bucketURL)
-	if err != nil {
-		return nil, err
-	}
-	return newCDKLockBackend(bucket, lockOpts), nil
-}
-
-func isFileBucketURL(bucketURL string) (bool, error) {
-	u, err := url.Parse(bucketURL)
-	if err != nil {
-		return false, fmt.Errorf("parse bucket URL: %w", err)
-	}
-	if !strings.EqualFold(u.Scheme, "file") {
-		return false, nil
-	}
-	if err := validatePrefix(u.Query().Get("prefix")); err != nil {
-		return false, err
-	}
-
-	return true, nil
 }
 
 // cleanupGracePeriodOrDefault returns d if positive, otherwise the default.

@@ -3,7 +3,6 @@ package resource
 import (
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -131,45 +130,6 @@ func TestGlobalSearchFieldsHash(t *testing.T) {
 
 	_, perResource, _ := registry.ForKey(NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"})
 	assert.NotEqual(t, hash, perResource)
-}
-
-// An import replaces a type without writing through the usual path, so a
-// namespace-wide index is as old as the latest import into any type it covers.
-// Its own key is never imported, so asking about it would always say never.
-func TestLastImportTimeOfGlobalIndex(t *testing.T) {
-	older := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	newer := older.Add(time.Hour)
-	dashboards := NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	folders := NamespacedResource{Namespace: "ns", Group: "folder.grafana.app", Resource: "folders"}
-
-	storage := &mockStorageBackend{lastImportTimes: []ResourceLastImportTime{
-		{NamespacedResource: dashboards, LastImportTime: older},
-		{NamespacedResource: folders, LastImportTime: newer},
-		// Another namespace, which must not count.
-		{NamespacedResource: NamespacedResource{Namespace: "other", Group: "folder.grafana.app", Resource: "folders"}, LastImportTime: newer.Add(time.Hour)},
-	}}
-	s := &searchServer{storage: storage}
-
-	got, err := s.lastImportTime(t.Context(), GlobalSearchKey("ns"))
-	require.NoError(t, err)
-	assert.Equal(t, newer, got)
-
-	// A per-resource index still answers with its own import time.
-	got, err = s.lastImportTime(t.Context(), dashboards)
-	require.NoError(t, err)
-	assert.Equal(t, older, got)
-
-	times, err := s.getLastImportTimes(t.Context(), []NamespacedResource{GlobalSearchKey("ns"), dashboards})
-	require.NoError(t, err)
-	assert.Equal(t, map[NamespacedResource]time.Time{GlobalSearchKey("ns"): newer, dashboards: older}, times)
-}
-
-func TestLastImportTimeOfGlobalIndexNeverImported(t *testing.T) {
-	s := &searchServer{storage: &mockStorageBackend{}}
-
-	got, err := s.lastImportTime(t.Context(), GlobalSearchKey("ns"))
-	require.NoError(t, err)
-	assert.True(t, got.IsZero())
 }
 
 func TestKeepStandardFieldsOnly(t *testing.T) {

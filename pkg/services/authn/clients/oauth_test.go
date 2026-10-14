@@ -669,7 +669,7 @@ func (m mockConnector) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) 
 	return ""
 }
 
-var _ social.SocialConnector = new(fakeConnector)
+var _ social.SocialConnector = (*fakeConnector)(nil)
 
 type fakeConnector struct {
 	ExpectedUserInfo        *social.BasicUserInfo

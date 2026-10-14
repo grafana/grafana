@@ -1,3 +1,5 @@
+import { type KeyboardEvent, useRef } from 'react';
+
 import { t } from '@grafana/i18n';
 import { Menu, type IconName } from '@grafana/ui';
 
@@ -25,8 +27,64 @@ interface Props {
 }
 
 export function NotebookBlockTypeMenu({ onPick }: Props) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  // Focus has to move through Menu's own callback: focusing an item directly would leave Menu's
+  // internal index behind, and the next ArrowUp/Down would step from the wrong item.
+  const focusOnItemRef = useRef<((index: number) => void) | undefined>(undefined);
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const hasOtherModifier = event.altKey || event.metaKey;
+    // Lowercased so Caps Lock (or Shift) doesn't slip Ctrl+P past us to the browser's print shortcut.
+    const key = event.key.toLocaleLowerCase();
+    const isCtrlStep = event.ctrlKey && !hasOtherModifier && (key === 'n' || key === 'p');
+    const isTypeAhead = event.key.length === 1 && !event.ctrlKey && !hasOtherModifier;
+    if (!isCtrlStep && !isTypeAhead) {
+      return;
+    }
+
+    const root = menuRef.current;
+    const target = event.target;
+    // A submenu renders nested inside this menu's DOM and handles its own keys.
+    if (
+      !root ||
+      !focusOnItemRef.current ||
+      !(target instanceof HTMLElement) ||
+      target.closest('[role="menu"]') !== root
+    ) {
+      return;
+    }
+
+    // Same selector Menu uses, so indices line up with what focusOnItem expects.
+    const items = Array.from(root.querySelectorAll<HTMLElement>('[data-role="menuitem"]:not([data-disabled])'));
+    const current = items.indexOf(target);
+    const step = (from: number, delta: number) => (from + delta + items.length) % items.length;
+
+    if (isCtrlStep) {
+      // On Windows/Linux, Ctrl+P is the browser's print shortcut.
+      event.preventDefault();
+      focusOnItemRef.current(step(current, key === 'n' ? 1 : -1));
+      return;
+    }
+
+    for (let offset = 1; offset <= items.length; offset++) {
+      const index = step(current, offset);
+      const item = items[index];
+      if (item.closest('[role="menu"]') === root && item.textContent?.trim().toLocaleLowerCase().startsWith(key)) {
+        event.preventDefault();
+        focusOnItemRef.current(index);
+        return;
+      }
+    }
+  };
+
   return (
-    <Menu>
+    <Menu
+      ref={menuRef}
+      onOpen={(focusOnItem) => {
+        focusOnItemRef.current = focusOnItem;
+      }}
+      onKeyDown={handleKeyDown}
+    >
       {getNotebookBlockTypeOptions().map((option) => (
         <Menu.Item key={option.type} icon={option.icon} label={option.label} onClick={() => onPick?.(option.type)} />
       ))}

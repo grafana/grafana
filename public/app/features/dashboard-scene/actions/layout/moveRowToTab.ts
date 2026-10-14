@@ -52,6 +52,7 @@ export function moveRowToTab({
   const previousSlug = tabs.state.currentTabSlug;
 
   moveElement({
+    meta: { actionId: 'row.move' },
     source: dashboard,
     movedObject: row,
     selectOnMove: false,

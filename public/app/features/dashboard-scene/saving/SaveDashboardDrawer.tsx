@@ -5,9 +5,10 @@ import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types'
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
-import { type SaveTarget, SaveTargetSwitch } from 'app/features/provisioning/components/Dashboards/SaveTargetSwitch';
+import { SaveTargetSwitch } from 'app/features/provisioning/components/Shared/SaveTargetSwitch';
 import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getSaveTarget, type SaveTarget } from 'app/features/provisioning/hooks/useSaveRepositoryView';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -109,11 +110,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
   const view = useDashboardRepositoryView(dashboard, saveAsCopy);
   const { isNewSave } = view;
-  // The root of a folderless repository is the one place a new save can go either way. Every input is
-  // read off the settled view, so a folder pick still in flight cannot split the decision
-  const canChooseTarget = isNewSave && !view.folderUid && view.repository?.target === 'folderless';
-  const target: SaveTarget =
-    canChooseTarget && saveTarget ? saveTarget : view.isProvisioned ? 'repository' : 'database';
+  const target = getSaveTarget(view, saveTarget);
 
   const tabs = (
     <TabsBar>
@@ -198,8 +195,12 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
         <Stack direction="column" gap={2}>
           {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
           {renderForm()}
-          {canChooseTarget && (
-            <SaveTargetSwitch target={target} onChange={(saveTarget) => model.setState({ saveTarget })} />
+          {view.canChooseTarget && (
+            <SaveTargetSwitch
+              resource="dashboard"
+              target={target}
+              onChange={(saveTarget) => model.setState({ saveTarget })}
+            />
           )}
         </Stack>
       </div>

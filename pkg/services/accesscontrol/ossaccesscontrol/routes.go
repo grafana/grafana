@@ -104,7 +104,7 @@ func ProvideRoutePermissionsService(
 	return &RoutePermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions." + accesscontrol.AlertingRoutesResource)}, nil
 }
 
-var _ accesscontrol.RoutePermissionsService = new(RoutePermissionsService)
+var _ accesscontrol.RoutePermissionsService = (*RoutePermissionsService)(nil)
 
 type RoutePermissionsService struct {
 	*resourcepermissions.Service

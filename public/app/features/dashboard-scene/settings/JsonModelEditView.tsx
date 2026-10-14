@@ -104,7 +104,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       const api = await getDashboardAPI('v2');
       const dto = await api.getDashboardDTO(result.uid);
       newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-      const { isOverlayLoading, ...newState } = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
+      const { loadingView, ...newState } = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
         key: dashboard.state.key,
       });
 
@@ -121,7 +121,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         meta: dashboard.state.meta,
       });
 
-      const { isOverlayLoading, ...newState } = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
+      const { loadingView, ...newState } = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
         key: dashboard.state.key,
       });
 

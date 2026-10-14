@@ -7,7 +7,12 @@ import { Button, copyTextToClipboard, Dropdown, IconButton, Menu, ToolbarButton 
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
+import {
+  NOTEBOOK_DELETE_SOURCE,
+  NOTEBOOK_EXPORT_SOURCE,
+  NOTEBOOK_INCIDENT_ACTION,
+  NOTEBOOK_LINK_COPY_SOURCE,
+} from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
@@ -85,9 +90,19 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
       <NotebookExportMenu
         uid={uid}
         getSpec={async () => transformNotebookSceneToSaveModel(scene)}
+        flushPendingChanges={() => scene.autosave.awaitPendingSave()}
         source={NOTEBOOK_EXPORT_SOURCE.NOTEBOOK_TOOLBAR}
       />
-      <IrmMenuItem onDeclare={() => setIsDeclaring(true)} onAttach={() => setIsAttaching(true)} />
+      <IrmMenuItem
+        onDeclare={() => {
+          NotebookAnalytics.incidentActionClicked(uid, NOTEBOOK_INCIDENT_ACTION.DECLARE);
+          setIsDeclaring(true);
+        }}
+        onAttach={() => {
+          NotebookAnalytics.incidentActionClicked(uid, NOTEBOOK_INCIDENT_ACTION.ATTACH);
+          setIsAttaching(true);
+        }}
+      />
       {canDeleteNotebooks() && (
         <>
           <Menu.Divider />

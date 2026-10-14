@@ -25,8 +25,6 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-var metricsPrefix = resource.RingName + "_"
-
 func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
 	if !ms.cfg.EnableSharding {
 		return nil, nil
@@ -34,11 +32,13 @@ func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
 
 	tracer := otel.Tracer(resource.RingKey)
 	logger := log.New(resource.RingKey)
-	reg := prometheus.WrapRegistererWithPrefix(metricsPrefix, ms.registerer)
 
 	grpcclientcfg := &grpcclient.Config{}
 	flagext.DefaultValues(grpcclientcfg)
-	pool := newClientPool(*grpcclientcfg, logger, reg, ms.cfg, ms.features, tracer)
+	pool := newClientPool(*grpcclientcfg, logger, ms.registerer, ms.cfg, ms.features, tracer)
+
+	// Only for dskit ring and KV metrics, whose names we don't choose. The pool metrics have full names.
+	reg := prometheus.WrapRegistererWithPrefix("grafana_search_server_ring_", ms.registerer)
 
 	ringStore, err := kv.NewClient(
 		ms.MemberlistKVConfig,
@@ -109,11 +109,11 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 		HealthCheckTimeout: 10 * time.Second,
 	}
 	clientsCount := promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-		Name: "resource_server_clients",
+		Name: "grafana_search_server_ring_resource_server_clients",
 		Help: "The current number of resource server clients in the pool.",
 	})
 	factoryRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "resource_server_client_request_duration_seconds",
+		Name:    "grafana_search_server_ring_resource_server_client_request_duration_seconds",
 		Help:    "Time spent executing requests to resource server.",
 		Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 	}, []string{"operation", "status_code"})

@@ -57,7 +57,7 @@ import {
   AnnoKeyEmbedded,
   AnnoReloadOnParamsChange,
 } from 'app/features/apiserver/types';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithLoadInfo } from 'app/features/dashboard/api/types';
 import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
@@ -110,7 +110,7 @@ export type TypedVariableModelV2 =
   | SwitchVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(
-  dto: DashboardWithAccessInfo<DashboardV2Spec>,
+  dto: DashboardWithLoadInfo<DashboardV2Spec>,
   options?: LoadDashboardOptions
 ): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
@@ -176,6 +176,7 @@ export function transformSaveModelSchemaV2ToScene(
     isSnapshot,
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
+    libraryPanelRepeatUnresolved: dto.libraryPanelRepeatUnresolved,
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),

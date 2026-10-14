@@ -105,9 +105,13 @@ spec:
                       type: string
                     type: array
                   groupInterval:
+                    not:
+                      pattern: hmuµn
                     pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
                   groupWait:
+                    not:
+                      pattern: hmuµn
                     pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
                   muteTimeIntervals:
@@ -117,6 +121,8 @@ spec:
                   receiver:
                     type: string
                   repeatInterval:
+                    not:
+                      pattern: hmuµn
                     pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
                   routingTree:
@@ -149,6 +155,8 @@ spec:
               trigger:
                 properties:
                   interval:
+                    not:
+                      pattern: hmuµn
                     pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
                 required:
@@ -228,6 +236,24 @@ spec:
                 - Evaluated
                 - KeepLast
                 type: string
+              totals:
+                description: |-
+                  Count of alert instances per state. error also counts instances whose evaluation
+                  errored but were mapped to another state via execErrState, so it can overlap.
+                properties:
+                  error:
+                    type: integer
+                  firing:
+                    type: integer
+                  healthy:
+                    type: integer
+                  nodata:
+                    type: integer
+                  pending:
+                    type: integer
+                  recovering:
+                    type: integer
+                type: object
             type: object
         required:
         - spec

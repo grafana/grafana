@@ -184,11 +184,18 @@ func decodeFieldValueResults(fields []*resourcepb.ResourceSearchField, rows []*r
 }
 
 func resultItem(kind kindRef, key *resourcepb.ResourceKey) searchv0.ResultItem {
+	group, resourceName, kindName := kind.group, kind.resource, kind.kind
+	if kind.spansResourceTypes() {
+		group, resourceName = key.GetGroup(), key.GetResource()
+		// An unknown pair leaves the kind empty rather than borrowing another
+		// result's: the group and resource still identify the object.
+		kindName = kind.kinds[schema.GroupResource{Group: group, Resource: resourceName}]
+	}
 	return searchv0.ResultItem{
 		Resource: searchv0.ResourceRef{
-			Group:    kind.group,
-			Resource: kind.resource,
-			Kind:     kind.kind,
+			Group:    group,
+			Resource: resourceName,
+			Kind:     kindName,
 			Name:     key.GetName(),
 		},
 	}

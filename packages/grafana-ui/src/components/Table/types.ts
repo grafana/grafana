@@ -28,7 +28,7 @@ export {
   type TableJsonViewCellOptions,
 } from '@grafana/schema';
 
-export type InspectCell = { value: any; mode: TableCellInspectorMode };
+export type InspectCell = { value: unknown; mode: TableCellInspectorMode };
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';

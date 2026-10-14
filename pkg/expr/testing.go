@@ -21,7 +21,7 @@ type fakePluginContextProvider struct {
 	errorResult error
 }
 
-var _ pluginContextProvider = &fakePluginContextProvider{}
+var _ pluginContextProvider = (*fakePluginContextProvider)(nil)
 
 func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error) {
 	f.recordings = append(f.recordings, struct {
@@ -79,7 +79,7 @@ type recordingCallResourceHandler struct {
 	response   *backend.CallResourceResponse
 }
 
-var _ backend.CallResourceHandler = &recordingCallResourceHandler{}
+var _ backend.CallResourceHandler = (*recordingCallResourceHandler)(nil)
 
 func (f *recordingCallResourceHandler) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	f.recordings = append(f.recordings, req)

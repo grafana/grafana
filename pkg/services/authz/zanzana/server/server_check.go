@@ -171,7 +171,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 		folderIdent         = resource.FolderIdent()
 		resourceCtx         = resource.Context()
 		folderRelation      = common.SubresourceRelation(relation)
-		folderCheckRelation = common.FolderPermissionRelation(relation)
+		folderCheckRelation = common.FolderContentPermissionRelation(relation)
 	)
 
 	if folderIdent != "" && isFolderPermissionBasedResource(resource.GroupResource()) {

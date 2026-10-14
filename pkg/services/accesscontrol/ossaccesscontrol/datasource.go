@@ -28,7 +28,7 @@ func ProvideDatasourcePermissionsService(cfg *setting.Cfg, features featuremgmt.
 	}
 }
 
-var _ accesscontrol.DatasourcePermissionsService = new(DatasourcePermissionsService)
+var _ accesscontrol.DatasourcePermissionsService = (*DatasourcePermissionsService)(nil)
 
 type DatasourcePermissionsService struct {
 	store resourcepermissions.Store

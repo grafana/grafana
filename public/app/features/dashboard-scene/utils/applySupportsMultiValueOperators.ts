@@ -1,4 +1,4 @@
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type AdHocFiltersVariable } from '@grafana/scenes';
 
 // Keep dashboard-load construction synchronous while the instance-settings lookup is async.

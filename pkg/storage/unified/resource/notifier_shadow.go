@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/dskit/instrument"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // natsShadowMetrics record what the NATS notifier delivers, for dashboard
@@ -25,15 +25,15 @@ type natsShadowMetrics struct {
 func newNatsShadowMetrics(reg prometheus.Registerer) *natsShadowMetrics {
 	return &natsShadowMetrics{
 		eventsReceived: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_nats_notifier_shadow_events_received_total",
+			Name: "grafana_storage_server_nats_notifier_shadow_events_received_total",
 			Help: "Change notifications received via the shadow NATS notifier, by group, resource, and action.",
 		}, []string{"group", "resource", "action"}),
 		dropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_nats_notifier_shadow_dropped_events_total",
+			Name: "grafana_storage_server_nats_notifier_shadow_dropped_events_total",
 			Help: "Notifications dropped by the shadow NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
 		}, []string{"reason"}),
 		latency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_nats_notifier_shadow_latency_seconds",
+			Name:                            "grafana_storage_server_nats_notifier_shadow_latency_seconds",
 			Help:                            "Time between a resource version being issued and its notification arriving via the shadow NATS notifier.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -52,10 +52,10 @@ type natsShadow struct {
 	notifier  *natsNotifier
 	watchOpts WatchOptions
 	metrics   *natsShadowMetrics
-	log       log.Logger
+	log       logging.Logger
 }
 
-func newNatsShadow(subscriber EventSubscriber, watchOpts WatchOptions, reg prometheus.Registerer, logger log.Logger) *natsShadow {
+func newNatsShadow(subscriber EventSubscriber, watchOpts WatchOptions, reg prometheus.Registerer, logger logging.Logger) *natsShadow {
 	metrics := newNatsShadowMetrics(reg)
 	return &natsShadow{
 		notifier:  newNatsNotifier(subscriber, nil, metrics.dropped, logger),
