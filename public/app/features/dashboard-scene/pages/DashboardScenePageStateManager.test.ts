@@ -1514,6 +1514,33 @@ describe('DashboardScenePageStateManager v2', () => {
         expect(loader.state.dashboard!.state.version).toBe(2);
       });
 
+      it('should not take scene from cache after a metadata-only change, such as publishing a draft', async () => {
+        const dashboard = (resourceVersion: string): DashboardWithAccessInfo<DashboardV2Spec> => ({
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            generation: 1,
+            resourceVersion,
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        });
+        setupDashboardAPI(dashboard('1'), jest.fn());
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        const draft = loader.state.dashboard;
+        loader.clearState();
+        loader.clearDashboardCache();
+
+        setupDashboardAPI(dashboard('2'), jest.fn());
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        expect(loader.state.dashboard === draft).toBe(false);
+        expect(loader.state.dashboard?.state.meta.k8s?.resourceVersion).toBe('2');
+      });
+
       it('should cache the dashboard DTO', async () => {
         const getDashSpy = jest.fn();
         setupDashboardAPI(

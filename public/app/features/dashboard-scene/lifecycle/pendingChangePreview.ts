@@ -28,7 +28,7 @@ export interface DashboardPendingChanges {
   baseGeneration: number;
   /** The full proposed v2 dashboard spec. */
   proposed: DashboardV2Spec;
-  /** Where the changes were made, shown in the banner, for example "from the chat “Latency”". */
+  /** Who made the changes, shown in the banner, for example "made by Assistant". */
   source?: string;
   /**
    * Saves the changes to the dashboard as the requester, then forgets them. Without force,

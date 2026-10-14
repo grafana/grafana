@@ -1127,7 +1127,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
 
-      if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+      // The resource version too: a metadata-only write, such as publishing a draft, keeps the generation.
+      if (
+        fromCache &&
+        fromCache.state.version === rsp?.metadata.generation &&
+        fromCache.state.meta.k8s?.resourceVersion === rsp?.metadata.resourceVersion
+      ) {
         // Scene cache has no TTL. Re-apply predefined variables fetched by enrichLoadOptions
         // so revisits pick up changes after the 30s predefined-variables cache expires.
         if (options.defaultVariables !== undefined) {
