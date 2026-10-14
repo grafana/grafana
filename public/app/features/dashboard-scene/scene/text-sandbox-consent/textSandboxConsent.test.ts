@@ -1,9 +1,18 @@
-import type * as StoreModule from './textSandboxConsent';
+import { act, renderHook } from '@testing-library/react';
 
-type Store = typeof StoreModule;
+import * as sharedStore from './textSandboxConsent';
+
+type Store = typeof sharedStore;
 
 const mockUser = { id: 1, orgId: 1 };
-jest.mock('app/core/services/context_srv', () => ({ contextSrv: { user: mockUser } }));
+// A getter, since the statically imported store loads this mock before `mockUser` is initialized.
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    get user() {
+      return mockUser;
+    },
+  },
+}));
 
 const storageKey = () => `grafana.dashboard.textSandbox.allowedOrigins.${mockUser.orgId}.${mockUser.id}`;
 
@@ -89,6 +98,27 @@ describe('allowed origins', () => {
     store.allowOrigins(grant(avatars, 1), 'dashboard', 'dash-a');
     expect(store.getAllowedOrigins('dash-a', 1)).toEqual([avatars, users]);
     expect(loadStore().getAllowedOrigins('dash-a', 1)).toEqual([]);
+  });
+});
+
+describe('useAllowedOrigins', () => {
+  it('keeps the same list while panels report, so panels only re-render when consent changes', () => {
+    // Hooks need the store loaded with the test's React, not an isolated copy.
+    const store = sharedStore;
+    const { result } = renderHook(() => store.useAllowedOrigins('dash-stable', 1));
+    const before = result.current;
+    act(() =>
+      store.reportBlocked('panel-2', {
+        dashboardUid: 'dash-stable',
+        panelId: 2,
+        panelTitle: 'Other',
+        origins: [{ origin: avatars, urls: [{ url: `${avatars}/a.png`, count: 1 }] }],
+      })
+    );
+    expect(result.current).toBe(before);
+    act(() => store.allowOrigins(grant(users, 1), 'dashboard', 'dash-stable'));
+    expect(result.current).toEqual([users]);
+    store.clearBlocked('panel-2');
   });
 });
 

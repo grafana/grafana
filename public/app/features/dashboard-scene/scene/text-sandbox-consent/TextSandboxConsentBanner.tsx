@@ -21,7 +21,8 @@ export function TextSandboxConsentBanner({ dashboardUid, panelId, className }: P
   // Kept as opened, so a panel reporting while the modal is open can't join a source the viewer already checked.
   const [reviewing, setReviewing] = useState<BlockedOriginSummary[]>();
 
-  if (sources.length === 0) {
+  // A reloading frame clears its report before sending a new one, which mustn't close an open review.
+  if (sources.length === 0 && !reviewing) {
     return null;
   }
 
@@ -43,23 +44,25 @@ export function TextSandboxConsentBanner({ dashboardUid, panelId, className }: P
 
   return (
     <>
-      <Alert
-        severity="warning"
-        title={title}
-        className={cx(styles.banner, className)}
-        topSpacing={0}
-        bottomSpacing={0}
-        action={
-          <Button variant="secondary" fill="outline" size="sm" onClick={() => setReviewing(sources)}>
-            {t('dashboard-scene.text-sandbox-consent.review', 'Review')}
-          </Button>
-        }
-      >
-        {t(
-          'dashboard-scene.text-sandbox-consent.banner-description',
-          'To see these images, please review and allow their sources'
-        )}
-      </Alert>
+      {sources.length > 0 && (
+        <Alert
+          severity="warning"
+          title={title}
+          className={cx(styles.banner, className)}
+          topSpacing={0}
+          bottomSpacing={0}
+          action={
+            <Button variant="secondary" fill="outline" size="sm" onClick={() => setReviewing(sources)}>
+              {t('dashboard-scene.text-sandbox-consent.review', 'Review')}
+            </Button>
+          }
+        >
+          {t(
+            'dashboard-scene.text-sandbox-consent.banner-description',
+            'To see these images, please review and allow their sources'
+          )}
+        </Alert>
+      )}
       {reviewing && (
         <TextSandboxConsentModal
           dashboardUid={dashboardUid}

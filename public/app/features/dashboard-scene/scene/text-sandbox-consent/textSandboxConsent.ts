@@ -73,7 +73,7 @@ function allowedForUser(): AllowedOrigins {
   // Picks up "Always allow" from other tabs.
   store.subscribe(key, () => {
     allowed.always = readAlways(key);
-    emit();
+    emit(true);
   });
   return allowed;
 }
@@ -99,8 +99,11 @@ function panelKey(dashboardUid: string, panelId?: number) {
   return `${dashboardUid}/${panelId ?? ''}`;
 }
 
-function emit() {
-  allowedSnapshots.clear();
+// Reports don't change what is allowed, so they keep the allowed snapshots and don't re-render every panel.
+function emit(allowedChanged = false) {
+  if (allowedChanged) {
+    allowedSnapshots.clear();
+  }
   summarySnapshots.clear();
   listeners.forEach((listener) => listener());
 }
@@ -135,7 +138,7 @@ export function allowOrigins(grants: ConsentGrant[], scope: ConsentScope, dashbo
     const stored = Object.fromEntries(Array.from(byPanel, ([panel, set]) => [panel, [...set]]));
     tryStorage(() => window.sessionStorage.setItem(key, JSON.stringify(stored)), undefined);
   }
-  emit();
+  emit(true);
 }
 
 export function reportBlocked(key: string, report: PanelBlockedReport) {

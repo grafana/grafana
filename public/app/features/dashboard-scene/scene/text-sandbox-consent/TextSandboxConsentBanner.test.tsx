@@ -162,6 +162,20 @@ it('only allows the panels that were listed when the review opened', async () =>
   expect(getAllowedOrigins(dashboardUid, 3)).toEqual([]);
 });
 
+it('keeps the review and its selection while a panel reloads and reports again', async () => {
+  render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
+  reportMockupPanels();
+  const dialog = await openReview();
+  await userEvent.click(within(dialog).getByRole('checkbox', { name: 'api.dicebear.com' }));
+  act(() => {
+    clearBlocked('text-sample');
+    clearBlocked('mixed');
+  });
+  expect(screen.getByRole('dialog')).toBe(dialog);
+  reportMockupPanels();
+  expect(within(dialog).getByRole('checkbox', { name: 'api.dicebear.com' })).toBeChecked();
+});
+
 it('"Always allow" unblocks the selected sources on every dashboard and hides the banner when none are left', async () => {
   const emit = jest.spyOn(appEvents, 'emit');
   render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);

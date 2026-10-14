@@ -116,11 +116,23 @@ function record(resource: (typeof resources)[number], url: string) {
 function countReferences() {
   const counts = new Map<string, number>();
   for (const element of content?.querySelectorAll('img, source, video, audio, iframe, embed') ?? []) {
-    if ('src' in element && typeof element.src === 'string') {
-      counts.set(element.src, (counts.get(element.src) ?? 0) + 1);
+    const urls = new Set<string>();
+    for (const url of [Reflect.get(element, 'src'), Reflect.get(element, 'poster')]) {
+      if (typeof url === 'string' && url) {
+        urls.add(withoutFragment(url));
+      }
+    }
+    for (const url of urls) {
+      counts.set(url, (counts.get(url) ?? 0) + 1);
     }
   }
   return counts;
+}
+
+// CSP reports leave out the fragment, so references must too to match them.
+function withoutFragment(url: string) {
+  const hash = url.indexOf('#');
+  return hash === -1 ? url : url.slice(0, hash);
 }
 
 function report(

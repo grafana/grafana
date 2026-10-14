@@ -167,6 +167,20 @@ describe('sandbox runtime', () => {
     });
   });
 
+  test('counts references with a fragment and video posters, which CSP reports without the fragment', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    const url = 'https://external.test/avatar.png';
+    message({ ...command, html: `<img src="${url}#a"><img src="${url}#b"><video poster="${url}"></video>` });
+    await flush();
+    violation(url);
+    await flush();
+    expectNotification('blocked', {
+      resources: [{ directive: 'img-src', origin: 'https://external.test', urls: [{ url, count: 3 }] }],
+    });
+  });
+
   test('reports a long URL in full', async () => {
     initialize(policy);
     violation(CSP_CHECK_URL);
