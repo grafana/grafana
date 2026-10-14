@@ -19,7 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// AMConfigV1 is an exact structural copy of PostableUserConfig without json tags.
+// AMConfigV1 is the domain model derived from AMConfigDB (see ToModel/ToDBModel), restructuring
+// templates, receivers, inhibition rules, and time intervals into UID-keyed maps.
 type AMConfigV1 struct {
 	Templates       map[ResourceUID]TemplateGroup
 	InhibitionRules map[ResourceUID]InhibitionRule

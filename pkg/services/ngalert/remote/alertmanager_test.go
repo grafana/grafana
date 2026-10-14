@@ -637,7 +637,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 						apiCfg.Route = legacy_storage.WithManagedRoutes(c)
 						return definition.PostableApiAlertingConfig{
 							Config:    apiCfg,
-							Receivers: v1.ReceiversToDB(c.GetReceivers()),
+							Receivers: notifier.ReceiversToAPI(c.GetReceivers()),
 						}
 					}(),
 				},
@@ -886,7 +886,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			name: "default config with MuteTimeInterval",
 			config: func() *v1store.AMConfigDB {
 				c := mustLoad(defaultGrafanaConfig)
-				c.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{{Name: "test"}}
+				c.AlertmanagerConfig.MuteTimeIntervals = []v1store.TimeIntervalDB{{Name: "test"}}
 				return c
 			}(),
 			expected: false,
@@ -895,7 +895,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			name: "default config with TimeIntervals",
 			config: func() *v1store.AMConfigDB {
 				c := mustLoad(defaultGrafanaConfig)
-				c.AlertmanagerConfig.TimeIntervals = []config.TimeInterval{{Name: "test"}}
+				c.AlertmanagerConfig.TimeIntervals = []v1store.TimeIntervalDB{{Name: "test"}}
 				return c
 			}(),
 			expected: false,
@@ -913,7 +913,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			name: "default config with ManagedInhibitionRules",
 			config: func() *v1store.AMConfigDB {
 				c := mustLoad(defaultGrafanaConfig)
-				c.ManagedInhibitionRules = map[string]*apimodels.InhibitionRule{
+				c.ManagedInhibitionRules = map[string]*v1store.InhibitionRuleDB{
 					"imported": {Name: "imported"},
 				}
 				return c
@@ -1750,7 +1750,7 @@ func loadDBModel(rawConfig []byte) (*v1store.AMConfigDB, error) {
 
 // receiverDBToAPI converts the persisted ReceiverDB shape into the shared upstream
 // definition.PostableApiReceiver.
-func receiverDBToAPI(r *definition.PostableApiReceiver) *definition.PostableApiReceiver {
+func receiverDBToAPI(r *v1store.ReceiverDB) *definition.PostableApiReceiver {
 	return &definition.PostableApiReceiver{
 		Name:                    r.Name,
 		GrafanaManagedReceivers: r.GrafanaManagedReceivers,
@@ -1759,16 +1759,16 @@ func receiverDBToAPI(r *definition.PostableApiReceiver) *definition.PostableApiR
 
 // receiverAPIToDB converts the shared upstream definition.PostableApiReceiver into the
 // persisted ReceiverDB shape.
-func receiverAPIToDB(r *definition.PostableApiReceiver) *definition.PostableApiReceiver {
-	return &definition.PostableApiReceiver{
+func receiverAPIToDB(r *definition.PostableApiReceiver) *v1store.ReceiverDB {
+	return &v1store.ReceiverDB{
 		Name:                    r.Name,
 		GrafanaManagedReceivers: r.GrafanaManagedReceivers,
 	}
 }
 
 // encryptedGrafanaReceivers encrypts each receiver's secure settings.
-func encryptedGrafanaReceivers(receivers []*definition.PostableApiReceiver, encryptFn ngmodels.EncryptFn) ([]*definition.PostableApiReceiver, error) {
-	encrypted := make([]*definition.PostableApiReceiver, len(receivers))
+func encryptedGrafanaReceivers(receivers []*v1store.ReceiverDB, encryptFn ngmodels.EncryptFn) ([]*v1store.ReceiverDB, error) {
+	encrypted := make([]*v1store.ReceiverDB, len(receivers))
 	for i, r := range receivers {
 		// We don't care about the provenance here, so we pass ProvenanceNone.
 		rcv, err := PostableApiReceiverToReceiver(receiverDBToAPI(r), ngmodels.ProvenanceNone, ngmodels.ResourceOriginGrafana)
@@ -1791,7 +1791,7 @@ func encryptedGrafanaReceivers(receivers []*definition.PostableApiReceiver, encr
 
 // dbAlertingConfigToAPI converts the persisted DB shape of the alerting config into the
 // public/API-compatible representation used by client.GrafanaAlertmanagerConfig in these tests.
-func dbAlertingConfigToAPI(in definition.PostableApiAlertingConfig) definition.PostableApiAlertingConfig {
+func dbAlertingConfigToAPI(in v1store.AlertingConfigDB) definition.PostableApiAlertingConfig {
 	receivers := make([]*definition.PostableApiReceiver, 0, len(in.Receivers))
 	for _, r := range in.Receivers {
 		receivers = append(receivers, receiverDBToAPI(r))

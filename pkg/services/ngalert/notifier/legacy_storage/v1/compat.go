@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
@@ -19,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
-func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
+func ToModel(in *store.AMConfigDB) *AMConfigV1 {
 	if in == nil {
 		return nil
 	}
@@ -43,7 +42,7 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 	}
 }
 
-func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) PostableApiAlertingConfig {
+func PostableApiAlertingConfigToModel(in store.AlertingConfigDB) PostableApiAlertingConfig {
 	return PostableApiAlertingConfig{
 		Config: Config{
 			Global:       in.Global,
@@ -54,7 +53,7 @@ func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) P
 	}
 }
 
-func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals []config.TimeInterval) map[ResourceUID]TimeInterval {
+func TimeIntervalsToModel(muteIntervals []store.TimeIntervalDB, timeIntervals []store.TimeIntervalDB) map[ResourceUID]TimeInterval {
 	if muteIntervals == nil && timeIntervals == nil {
 		return nil
 	}
@@ -73,7 +72,7 @@ func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals
 	return out
 }
 
-func ReceiversToModel(in []*definition.PostableApiReceiver) map[ResourceUID]PostableApiReceiver {
+func ReceiversToModel(in []*store.ReceiverDB) map[ResourceUID]PostableApiReceiver {
 	if in == nil {
 		return nil
 	}
@@ -149,7 +148,7 @@ func ObjectMatchersToModel(in definitions.ObjectMatchers) ObjectMatchers {
 	return ObjectMatchers(slices.Clone(in))
 }
 
-func InhibitionRulesToModel(in definitions.ManagedInhibitionRules) map[ResourceUID]InhibitionRule {
+func InhibitionRulesToModel(in store.ManagedInhibitionRulesDB) map[ResourceUID]InhibitionRule {
 	if in == nil {
 		return nil
 	}
@@ -164,7 +163,7 @@ func InhibitionRulesToModel(in definitions.ManagedInhibitionRules) map[ResourceU
 	return out
 }
 
-func InhibitionRuleToModel(in definitions.InhibitionRule) InhibitionRule {
+func InhibitionRuleToModel(in store.InhibitionRuleDB) InhibitionRule {
 	return NewInhibitionRule(in.Name, MatchersToModel(in.SourceMatchers), MatchersToModel(in.TargetMatchers), in.Equal, models.Provenance(in.Provenance))
 }
 
@@ -206,9 +205,14 @@ func ToDBModel(in *AMConfigV1) (*store.AMConfigDB, error) {
 	}
 	dbModel := store.AMConfigDB{
 		ManagedTemplates: TemplatesToManagedTemplates(in.Templates),
-		AlertmanagerConfig: definition.PostableApiAlertingConfig{
-			Config:    PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
-			Receivers: ReceiversToDB(in.GetReceivers()),
+		AlertmanagerConfig: store.AlertingConfigDB{
+			Global:       in.AlertmanagerConfig.Global,
+			Route:        RouteToDB(in.AlertmanagerConfig.Route),
+			InhibitRules: slices.Clone(in.AlertmanagerConfig.InhibitRules),
+			Templates:    slices.Clone(in.AlertmanagerConfig.Templates),
+			// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
+			TimeIntervals: TimeIntervalsToDB(in.SortedTimeIntervals()),
+			Receivers:     ReceiversToDB(in.GetReceivers()),
 		},
 		ExtraConfigs:  ExtraConfigsToDB(in.ExtraConfigs),
 		ManagedRoutes: ManagedRoutesToDB(in.ManagedRoutes),
@@ -224,25 +228,14 @@ func ToDBModel(in *AMConfigV1) (*store.AMConfigDB, error) {
 	return &dbModel, errors.Join(errs...)
 }
 
-func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig, timeIntervals []TimeInterval) definition.Config {
-	return definition.Config{
-		Global:       in.Global,
-		Route:        RouteToDB(in.Route),
-		InhibitRules: slices.Clone(in.InhibitRules),
-		Templates:    slices.Clone(in.Templates),
-		// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
-		TimeIntervals: TimeIntervalsToDB(timeIntervals),
-	}
-}
-
-func TimeIntervalsToDB(in []TimeInterval) []config.TimeInterval {
-	// Keep the DB model free of an empty time_intervals array when there are none.
+// TimeIntervalsToDB converts the domain time intervals into the persisted DB shape.
+func TimeIntervalsToDB(in []TimeInterval) []store.TimeIntervalDB {
 	if len(in) == 0 {
 		return nil
 	}
-	out := make([]config.TimeInterval, 0, len(in))
+	out := make([]store.TimeIntervalDB, 0, len(in))
 	for _, interval := range in {
-		out = append(out, config.TimeInterval{
+		out = append(out, store.TimeIntervalDB{
 			Name:          interval.Title,
 			TimeIntervals: interval.TimeIntervals,
 		})
@@ -250,26 +243,25 @@ func TimeIntervalsToDB(in []TimeInterval) []config.TimeInterval {
 	return out
 }
 
-func ReceiversToDB(in []*PostableApiReceiver) []*definition.PostableApiReceiver {
+// ReceiversToDB converts the domain receivers into the persisted DB shape.
+func ReceiversToDB(in []*PostableApiReceiver) []*store.ReceiverDB {
 	if in == nil {
 		return nil
 	}
-	out := make([]*definition.PostableApiReceiver, 0, len(in))
+	out := make([]*store.ReceiverDB, 0, len(in))
 	for _, receiver := range in {
 		out = append(out, PostableApiReceiverToDB(receiver))
 	}
 	return out
 }
 
-func PostableApiReceiverToDB(in *PostableApiReceiver) *definition.PostableApiReceiver {
+func PostableApiReceiverToDB(in *PostableApiReceiver) *store.ReceiverDB {
 	if in == nil {
 		return nil
 	}
-	return &definition.PostableApiReceiver{
-		Name: in.Name,
-		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
-		},
+	return &store.ReceiverDB{
+		Name:                    in.Name,
+		GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
 	}
 }
 
@@ -284,11 +276,11 @@ func PostableGrafanaReceiversToDB(in []*PostableGrafanaReceiver) []*definition.P
 	return out
 }
 
-func ManagedRoutesToDB(in map[string]*Route) definitions.ManagedRoutes {
+func ManagedRoutesToDB(in map[string]*Route) store.ManagedRoutesDB {
 	if in == nil {
 		return nil
 	}
-	routes := make(definitions.ManagedRoutes, len(in))
+	routes := make(store.ManagedRoutesDB, len(in))
 	for name, route := range in {
 		routes[name] = RouteToDB(route)
 	}
@@ -334,12 +326,12 @@ func ObjectMatchersToDB(in ObjectMatchers) definitions.ObjectMatchers {
 	return definitions.ObjectMatchers(slices.Clone(in))
 }
 
-func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (definitions.ManagedInhibitionRules, error) {
+func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (store.ManagedInhibitionRulesDB, error) {
 	if in == nil {
 		return nil, nil
 	}
 	var errs []error
-	out := make(definitions.ManagedInhibitionRules, len(in))
+	out := make(store.ManagedInhibitionRulesDB, len(in))
 	for _, ir := range in {
 		m, err := InhibitionRuleToDB(ir)
 		if err != nil {
@@ -350,7 +342,7 @@ func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (definitions.Managed
 	return out, errors.Join(errs...)
 }
 
-func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) {
+func InhibitionRuleToDB(in InhibitionRule) (*store.InhibitionRuleDB, error) {
 	var errs []error
 
 	sourceMatchers, err := MatchersToDB(in.SourceMatchers)
@@ -361,14 +353,12 @@ func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) 
 	if err != nil {
 		errs = append(errs, fmt.Errorf("invalid target matchers: %w", err))
 	}
-	return &definitions.InhibitionRule{
-		Name: string(in.UID),
-		InhibitRule: definitions.InhibitRule{
-			SourceMatchers: sourceMatchers,
-			TargetMatchers: targetMatchers,
-			Equal:          slices.Clone(in.Equal),
-		},
-		Provenance: definition.Provenance(in.Provenance),
+	return &store.InhibitionRuleDB{
+		Name:           string(in.UID),
+		SourceMatchers: sourceMatchers,
+		TargetMatchers: targetMatchers,
+		Equal:          slices.Clone(in.Equal),
+		Provenance:     definition.Provenance(in.Provenance),
 	}, errors.Join(errs...)
 }
 

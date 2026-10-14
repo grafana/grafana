@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/teams"
 	webhookV0 "github.com/grafana/alerting/receivers/webhook/v0mimir1"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/assert"
@@ -286,16 +285,14 @@ inhibit_rules:
 
 	// The round-trip is lossless except that deprecated mute_time_intervals are folded into
 	// time_intervals (sorted by name) by design, so build the expectation from the same fold.
-	for _, mt := range originalDB.AlertmanagerConfig.MuteTimeIntervals {
-		originalDB.AlertmanagerConfig.TimeIntervals = append(originalDB.AlertmanagerConfig.TimeIntervals, config.TimeInterval(mt))
-	}
+	originalDB.AlertmanagerConfig.TimeIntervals = append(originalDB.AlertmanagerConfig.TimeIntervals, originalDB.AlertmanagerConfig.MuteTimeIntervals...)
 	originalDB.AlertmanagerConfig.MuteTimeIntervals = nil
-	slices.SortFunc(originalDB.AlertmanagerConfig.TimeIntervals, func(a, b config.TimeInterval) int {
+	slices.SortFunc(originalDB.AlertmanagerConfig.TimeIntervals, func(a, b store.TimeIntervalDB) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 
 	// Receivers are now a top-level map keyed by name, so they serialize sorted by name too.
-	slices.SortFunc(originalDB.AlertmanagerConfig.Receivers, func(a, b *definition.PostableApiReceiver) int {
+	slices.SortFunc(originalDB.AlertmanagerConfig.Receivers, func(a, b *store.ReceiverDB) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 

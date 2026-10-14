@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -160,17 +161,91 @@ func ModelToInhibitionRules(inhibitionRules map[v1.ResourceUID]v1.InhibitionRule
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, apiDef.InhibitRule)
+		res = append(res, apiDef)
 	}
 
 	return res, nil
 }
 
-// TODO: Temporary until DB model and API model separate. Doing it this way makes caller intent clearer.
+// Route, ExtraConfig, Matchers and PostableGrafanaReceivers don't have a persisted shape
+// distinct from their API shape (their names already serve as their identity, or they're plain
+// value types with no persistence-specific concerns), so their DB-side conversions double as the
+// API-side ones. Doing it this way makes caller intent clearer than reusing the "ToDB" names
+// directly.
 var RouteToAPI = v1.RouteToDB
-var PostableApiAlertingConfigToAPI = v1.PostableApiAlertingConfigToDB
 var ExtraConfigsToAPI = v1.ExtraConfigsToDB
-var InhibitionRuleToAPI = v1.InhibitionRuleToDB
+var MatchersToAPI = v1.MatchersToDB
+var PostableGrafanaReceiversToAPI = v1.PostableGrafanaReceiversToDB
+
+// InhibitionRuleToAPI converts a managed inhibition rule into the shape used by
+// definition.Config.InhibitRules, for the real notification routing tree and API responses.
+func InhibitionRuleToAPI(in v1.InhibitionRule) (common.InhibitRule, error) {
+	var errs []error
+
+	sourceMatchers, err := MatchersToAPI(in.SourceMatchers)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("invalid source matchers: %w", err))
+	}
+	targetMatchers, err := MatchersToAPI(in.TargetMatchers)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("invalid target matchers: %w", err))
+	}
+	return common.InhibitRule{
+		SourceMatchers: sourceMatchers,
+		TargetMatchers: targetMatchers,
+		Equal:          slices.Clone(in.Equal),
+	}, errors.Join(errs...)
+}
+
+// PostableApiAlertingConfigToAPI builds the public/API-compatible representation of the alerting
+// config from the domain model.
+func PostableApiAlertingConfigToAPI(in v1.PostableApiAlertingConfig, timeIntervals []v1.TimeInterval) definition.Config {
+	return definition.Config{
+		Global:       in.Global,
+		Route:        RouteToAPI(in.Route),
+		InhibitRules: slices.Clone(in.InhibitRules),
+		Templates:    slices.Clone(in.Templates),
+		// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
+		TimeIntervals: TimeIntervalsToAPI(timeIntervals),
+	}
+}
+
+func TimeIntervalsToAPI(in []v1.TimeInterval) []config.TimeInterval {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]config.TimeInterval, 0, len(in))
+	for _, interval := range in {
+		out = append(out, config.TimeInterval{
+			Name:          interval.Title,
+			TimeIntervals: interval.TimeIntervals,
+		})
+	}
+	return out
+}
+
+func ReceiversToAPI(in []*v1.PostableApiReceiver) []*definition.PostableApiReceiver {
+	if in == nil {
+		return nil
+	}
+	out := make([]*definition.PostableApiReceiver, 0, len(in))
+	for _, receiver := range in {
+		out = append(out, PostableApiReceiverToAPI(receiver))
+	}
+	return out
+}
+
+func PostableApiReceiverToAPI(in *v1.PostableApiReceiver) *definition.PostableApiReceiver {
+	if in == nil {
+		return nil
+	}
+	return &definition.PostableApiReceiver{
+		Name: in.Name,
+		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: PostableGrafanaReceiversToAPI(in.GrafanaManagedReceivers),
+		},
+	}
+}
 
 func NotificationsConfigurationToPostableAPIConfig(config alertingNotify.NotificationsConfiguration) apimodels.PostableApiAlertingConfig {
 	return apimodels.PostableApiAlertingConfig{

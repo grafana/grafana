@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 func TestReceivers(t *testing.T) {
@@ -337,8 +337,30 @@ func load(t *testing.T, yaml string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMC
 	t.Helper()
 	orig, err := definition.LoadCompat([]byte(yaml))
 	require.NoError(t, err)
-	cfg := v1.ToModel(&definitions.PostableUserConfig{
-		AlertmanagerConfig: *orig,
+
+	receivers := make([]*store.ReceiverDB, 0, len(orig.Receivers))
+	for _, r := range orig.Receivers {
+		receivers = append(receivers, &store.ReceiverDB{Name: r.Name, GrafanaManagedReceivers: r.GrafanaManagedReceivers})
+	}
+	timeIntervals := make([]store.TimeIntervalDB, 0, len(orig.TimeIntervals))
+	for _, ti := range orig.TimeIntervals {
+		timeIntervals = append(timeIntervals, store.TimeIntervalDB{Name: ti.Name, TimeIntervals: ti.TimeIntervals})
+	}
+	muteTimeIntervals := make([]store.TimeIntervalDB, 0, len(orig.MuteTimeIntervals))
+	for _, mti := range orig.MuteTimeIntervals {
+		muteTimeIntervals = append(muteTimeIntervals, store.TimeIntervalDB{Name: mti.Name, TimeIntervals: mti.TimeIntervals})
+	}
+
+	cfg := v1.ToModel(&store.AMConfigDB{
+		AlertmanagerConfig: store.AlertingConfigDB{
+			Global:            orig.Global,
+			Route:             orig.Route,
+			InhibitRules:      orig.InhibitRules,
+			Templates:         orig.Templates,
+			Receivers:         receivers,
+			TimeIntervals:     timeIntervals,
+			MuteTimeIntervals: muteTimeIntervals,
+		},
 	})
 	for _, m := range mutate {
 		m(cfg)
@@ -367,7 +389,7 @@ var mergedSuffixedReceiverConfig string
 //go:embed testdata/merged_renamed_intervals.json
 var mergedRenamedIntervalsConfig string
 
-// assertMergedConfig serializes the merged config to its DB (PostableUserConfig) form and compares it against a
+// assertMergedConfig serializes the merged config to its DB (AMConfigDB) form and compares it against a
 // snapshot of the expected merge result.
 func assertMergedConfig(t *testing.T, config v1.AMConfigV1, expected string) {
 	t.Helper()
@@ -381,7 +403,7 @@ func assertMergedConfig(t *testing.T, config v1.AMConfigV1, expected string) {
 func TestMergeExtraConfig(t *testing.T) {
 	identifier := "mimir-12345"
 
-	// withExtra wraps grafana and a raw mimir YAML string into a PostableUserConfig with ExtraConfigs.
+	// withExtra wraps grafana and a raw mimir YAML string into an AMConfigV1 with ExtraConfigs.
 	// Optional mutateFn can adjust the ExtraConfiguration before it's used.
 	withExtra := func(t *testing.T, grafana *v1.AMConfigV1, mimirYAML string, mutateFn ...func(*v1.ExtraConfiguration)) v1.AMConfigV1 {
 		t.Helper()
