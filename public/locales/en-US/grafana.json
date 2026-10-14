@@ -6042,6 +6042,11 @@
     "modes": {
       "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
+      "composer": "Composer",
+      "composer-description": "Point at panels and regions and ask Assistant to change them.",
+      "composer-no-permission": "You need permission to edit this dashboard.",
+      "composer-save-first": "Save the dashboard before using Composer.",
+      "composer-unsupported": "Composer is not available for this dashboard right now.",
       "current": "Dashboard mode: {{mode}}",
       "discard": "Discard changes",
       "discard-body": "This restores the last saved dashboard.",

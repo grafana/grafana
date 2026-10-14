@@ -1,14 +1,29 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, useStyles2, type IconName } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
+import { AssistantSparkleGradient } from 'app/core/components/AppChrome/FullscreenWorkspace/AssistantToolbarButtons';
+import { OpenExtensionSidebarEvent } from 'app/types/events';
 
+import { canEnterComposer } from '../composer/composerAccess';
+import { requestComposerEnter } from '../composer/composerEntryRequests';
 import { isNewDashboard } from '../saving/shared';
 
 import { type DashboardScene } from './DashboardScene';
-import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from './dashboardModes';
+import {
+  dashboardComposerEnabled,
+  dashboardModesEnabled,
+  getDashboardMode,
+  type DashboardMode,
+} from './dashboardModes';
+
+const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
+const COMPOSER_ICON_GRADIENT_ID = 'grafana-assistant-composer-mode-icon-gradient';
 
 export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }) {
   const state = dashboard.useState();
@@ -16,6 +31,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const [buttonGroup, setButtonGroup] = useState<HTMLDivElement | null>(null);
   const [isCaretMenuOpen, setIsCaretMenuOpen] = useState(false);
   const mode = getDashboardMode(state);
+  const composer = useComposerOption(dashboard);
   const nextMode = mode === 'edit' ? 'view' : 'edit';
   const viewingDisabled = isNewDashboard(state);
   const disabled = dashboard.managedResourceCannotBeEdited();
@@ -62,6 +78,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
 
   const menu = (
     <div className={styles.menu}>
+      {composer && <AssistantSparkleGradient id={COMPOSER_ICON_GRADIENT_ID} />}
       <Menu ariaLabel={t('dashboard.modes.label', 'Dashboard mode')}>
         {options.map((option) => (
           <Menu.Item
@@ -77,6 +94,22 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             onClick={() => dashboard.setDashboardMode(option.value, 'picker')}
           />
         ))}
+        {composer && (
+          <Menu.Item
+            label={t('dashboard.modes.composer', 'Composer')}
+            description={
+              composer.disabledReason ??
+              t('dashboard.modes.composer-description', 'Point at panels and regions and ask Assistant to change them.')
+            }
+            // The Assistant sparkle in the Chat button's colours; disabled, it greys out like the others.
+            icon="ai-sparkle"
+            role="menuitemradio"
+            ariaChecked={false}
+            disabled={composer.disabledReason !== undefined}
+            className={cx(styles.item, composer.disabledReason === undefined && styles.assistantIcon)}
+            onClick={composer.request}
+          />
+        )}
       </Menu>
     </div>
   );
@@ -123,6 +156,37 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   );
 }
 
+/**
+ * Composer in the picker: offered while its flag is on and Assistant's sidebar can be shown. Choosing it
+ * opens that sidebar if needed and asks Assistant to enter Composer; core never enters it itself.
+ */
+function useComposerOption(dashboard: DashboardScene) {
+  const { availableComponents, dockedComponentId } = useExtensionSidebarContext();
+  const componentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
+  if (!dashboardComposerEnabled() || !componentTitle) {
+    return undefined;
+  }
+  const check = canEnterComposer(dashboard);
+  if (!check.ok && check.reason === 'no_document') {
+    return undefined;
+  }
+  let disabledReason: string | undefined;
+  if (!check.ok && check.reason === 'no_permission') {
+    disabledReason = t('dashboard.modes.composer-no-permission', 'You need permission to edit this dashboard.');
+  } else if (!check.ok) {
+    disabledReason = isNewDashboard(dashboard.state)
+      ? t('dashboard.modes.composer-save-first', 'Save the dashboard before using Composer.')
+      : t('dashboard.modes.composer-unsupported', 'Composer is not available for this dashboard right now.');
+  }
+  const request = () => {
+    if (dockedComponentId !== getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, componentTitle)) {
+      appEvents.publish(new OpenExtensionSidebarEvent({ pluginId: ASSISTANT_PLUGIN_ID, componentTitle }));
+    }
+    requestComposerEnter({ resource: 'dashboard', uid: dashboard.state.uid ?? '' });
+  };
+  return { disabledReason, request };
+}
+
 function SelectedMode() {
   const styles = useStyles2(getStyles);
   return <Icon name="check" className={styles.check} aria-hidden />;
@@ -133,5 +197,12 @@ function getStyles(theme: GrafanaTheme2) {
     menu: css({ width: 360, maxWidth: 'calc(100vw - 32px)', '> [role="menu"]': { width: '100%' } }),
     item: css({ padding: theme.spacing(1.5, 5, 1.5, 1.5) }),
     check: css({ position: 'absolute', right: theme.spacing(1.5), top: theme.spacing(1.5) }),
+    assistantIcon: css({
+      '& svg': { opacity: 1 },
+      '& svg path': {
+        fill: `url(#${COMPOSER_ICON_GRADIENT_ID})`,
+        stroke: `url(#${COMPOSER_ICON_GRADIENT_ID})`,
+      },
+    }),
   };
 }
