@@ -596,7 +596,6 @@ describe('useQueryCoauthoringSession', () => {
     expect(onAccept).not.toHaveBeenCalled();
     expect(stagePreview).toHaveBeenCalledWith('1', 'increase(http_requests_total[5m])');
     expect(onPreview).toHaveBeenCalledWith({ refId: 'A', expr: 'increase(http_requests_total[5m])' });
-    expect(screen.getByText('Suggestion updated')).toBeInTheDocument();
     expect(screen.getByText('Returns the increase over the selected range.')).toBeInTheDocument();
     expect(screen.getByText('increase')).toBeInTheDocument();
     const proposalDetails = screen.getByRole('region', { name: 'Query proposal details' });
@@ -728,7 +727,6 @@ describe('useQueryCoauthoringSession', () => {
     rerender(<QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning />);
     const proposalStatus = screen.getByRole('status');
     expect(proposalStatus).toHaveTextContent('Running updated query...');
-    expect(screen.getByText('Suggestion updated')).toBeInTheDocument();
 
     rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
     expect(screen.getByRole('status')).toBe(proposalStatus);
@@ -887,7 +885,7 @@ describe('useQueryCoauthoringSession', () => {
     });
 
     expect(onPreview).toHaveBeenCalledTimes(1);
-    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onRevertPreview).toHaveBeenCalledTimes(1);
   });
 

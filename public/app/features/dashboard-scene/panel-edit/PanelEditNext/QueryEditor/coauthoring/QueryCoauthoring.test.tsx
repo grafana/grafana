@@ -491,7 +491,7 @@ describe('QueryCoauthoring', () => {
     };
     const original = {
       tab: 'Original',
-      reasons: ['Original query'],
+      reasons: [],
       forbidden: [...firstReasons, ...secondReasons],
       diff: '',
       source: 'rate(http_requests_total[5m])',
@@ -669,16 +669,15 @@ describe('QueryCoauthoring', () => {
     const actions = screen.getByRole('button', { name: 'Accept' }).parentElement!.parentElement!;
     const proposal = explanation.parentElement!;
     const details = screen.getByRole('region', { name: 'Query proposal details' });
-    expect(screen.getByText('Previewing query')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeVisible();
-    expect(screen.getByText('Suggestion updated')).toBeVisible();
+    expect(screen.queryByText('Suggestion updated')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Close coauthoring' })).not.toBeInTheDocument();
+    for (const chip of screen.getAllByRole('tab')) {
+      expect(chip).toHaveStyle({ height: '24px', borderRadius: '16px' });
+    }
     expect(proposal).toHaveStyle({ gap: '8px' });
     await resizeProposal(user, 419);
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveTextContent('Cancel');
     expect(screen.getByRole('button', { name: 'Open in Chat' })).toHaveTextContent('Open in Chat');
-    expect(screen.getByText('Previewing query')).not.toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Close coauthoring' })).not.toBeInTheDocument();
-    expect(screen.getByText('Suggestion updated')).not.toBeVisible();
     expect(explanation).toHaveStyle({ padding: '12px' });
     expect(actions).toHaveStyle({ padding: '12px' });
     for (const chip of screen.getAllByRole('tab')) {
@@ -708,9 +707,6 @@ describe('QueryCoauthoring', () => {
     expect(dialog.style.height).toBe('');
     expect(details).toHaveStyle({ overflowY: 'auto' });
     await resizeProposal(user, 420);
-    expect(screen.getByText('Previewing query')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeVisible();
-    expect(screen.getByText('Suggestion updated')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Accept' })).toHaveTextContent('Accept');
     expect(proposal).toHaveStyle({ gap: '8px' });
   });
@@ -963,7 +959,7 @@ describe('QueryCoauthoring', () => {
         if (ending === 'unmount') {
           unmount();
         } else {
-          fireEvent.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+          fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
         }
         expect(queryRunner.state.data).toEqual(baselineData);
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -1047,7 +1043,7 @@ describe('QueryCoauthoring', () => {
       expect(screen.queryByText(text)).not.toBeInTheDocument();
       act(() => previewRequests[1].setState({ data: panelResult(12) }));
       await user.click(screen.getByRole('tab', { name: 'Original' }));
-      expect(screen.getByText('Original query')).toBeVisible();
+      expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
       expect(screen.queryByText(text)).not.toBeInTheDocument();
       await user.click(screen.getByRole('tab', { name: 'Option 1' }));
       expect(within(screen.getByRole('region', { name: 'Preview result' })).getByText(text)).toBeVisible();
@@ -1999,7 +1995,7 @@ describe('QueryCoauthoring', () => {
     expect(initial.capability.invoke).not.toHaveBeenCalled();
   });
 
-  it.each(['Close coauthoring', 'Cancel'])('keeps the proposal preview until explicit %s', async (action) => {
+  it.each(['Cancel'])('keeps the proposal preview until explicit %s', async (action) => {
     const { user, onPreview, onRevertPreview, dismissInvocation } = await setup();
     await user.type(screen.getByRole('textbox'), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -2279,7 +2275,7 @@ describe('QueryCoauthoring', () => {
       });
       request.onComplete('');
     });
-    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onRevertPreview).toHaveBeenCalledTimes(1);
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
@@ -2717,7 +2713,7 @@ describe('QueryCoauthoring', () => {
     expect(onAccept).not.toHaveBeenCalled();
     await user.keyboard('{Escape}');
 
-    act(() => screen.getByRole('button', { name: 'Close coauthoring' }).focus());
+    act(() => screen.getByRole('button', { name: 'Cancel' }).focus());
     await user.keyboard('{Enter}');
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
     expect(onAccept).not.toHaveBeenCalled();
