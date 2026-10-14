@@ -178,6 +178,7 @@ export {
   PanelContextProvider,
   type PanelContext,
   type PanelRuntimeTransformations,
+  type PanelStatusReport,
   type AdHocTransformationsState,
   PanelContextRoot,
   usePanelContext,

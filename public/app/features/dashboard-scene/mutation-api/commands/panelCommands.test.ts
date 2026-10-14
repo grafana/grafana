@@ -20,8 +20,13 @@ import type { DashboardScene } from '../../scene/DashboardScene';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { TabItem } from '../../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
+import { setPanelStatusReport } from '../../scene/panelStatusReports';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import {
   EXTRACT_FIELDS_FIXTURE,
@@ -102,6 +107,7 @@ function mockSerializer(elementMap: Record<string, number> = {}) {
   }
 
   return {
+    getElementPanelMapping: jest.fn(() => new Map(Object.entries(elementMap))),
     getPanelIdForElement: jest.fn((name: string) => elementMap[name]),
     getElementIdForPanel: jest.fn((id: number) => ensureMapping(id)),
     getDSReferencesMapping: jest.fn(() => ({
@@ -284,6 +290,344 @@ describe('Panel mutation commands', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  describe('GET_PANEL_ERRORS', () => {
+    it('indexes 300 panels without per-panel reverse scans and refreshes names on the next call', async () => {
+      const mapping: Record<string, number> = {};
+      const panels = Array.from({ length: 300 }, (_, index) => {
+        const id = index + 1;
+        mapping[`element-${id}`] = id;
+        return new VizPanel({
+          key: `panel-${id}`,
+          title: `Panel ${id}`,
+          pluginId: 'text',
+          _pluginLoadError: 'Plugin unavailable',
+        });
+      });
+      const scene = buildPanelScene(panels, mapping);
+      const client = new DashboardMutationClient(scene);
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: ['element-300'] } });
+      expect(result.data).toEqual({
+        errors: [
+          { element: 'element-300', title: 'Panel 300', errors: [{ source: 'plugin', message: 'Plugin unavailable' }] },
+        ],
+        noDataPanels: [],
+        panelsChecked: 1,
+        uncheckedPanels: [],
+      });
+      expect(scene.serializer.getElementPanelMapping).toHaveBeenCalledTimes(1);
+      expect(scene.serializer.getElementIdForPanel).not.toHaveBeenCalled();
+
+      delete mapping['element-300'];
+      mapping['renamed-panel'] = 300;
+      const refreshed = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: ['renamed-panel'] } });
+      expect(refreshed.data).toEqual({
+        errors: [
+          {
+            element: 'renamed-panel',
+            title: 'Panel 300',
+            errors: [{ source: 'plugin', message: 'Plugin unavailable' }],
+          },
+        ],
+        noDataPanels: [],
+        panelsChecked: 1,
+        uncheckedPanels: [],
+      });
+      expect(scene.serializer.getElementPanelMapping).toHaveBeenCalledTimes(2);
+      expect(scene.serializer.getElementIdForPanel).not.toHaveBeenCalled();
+    });
+
+    it('uses the generated element name for an unmapped runtime panel without a reverse scan', async () => {
+      const scene = buildPanelScene([new VizPanel({ key: 'panel-7', title: 'Notes', pluginId: 'text' })]);
+      const client = new DashboardMutationClient(scene);
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: ['panel-7'] } });
+      expect(result.data).toEqual({
+        errors: [],
+        noDataPanels: [],
+        panelsChecked: 0,
+        uncheckedPanels: [{ element: 'panel-7', reason: 'status_unavailable' }],
+      });
+      expect(scene.serializer.getElementIdForPanel).not.toHaveBeenCalled();
+    });
+
+    it('reports panels without runtime status using their dashboard element names', async () => {
+      const scene = buildPanelScene([new VizPanel({ key: 'panel-7', title: 'Notes', pluginId: 'text' })], { notes: 7 });
+      const client = new DashboardMutationClient(scene);
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: ['notes'] } });
+      expect(result.data).toEqual({
+        errors: [],
+        noDataPanels: [],
+        panelsChecked: 0,
+        uncheckedPanels: [{ element: 'notes', reason: 'status_unavailable' }],
+      });
+    });
+
+    it('returns compact errors with query references and never enters edit mode', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Broken query');
+      attachPanelData(
+        scene,
+        'Broken query',
+        makePanelData({ state: LoadingState.Error, errors: [{ message: 'Unknown column', refId: 'A' }] })
+      );
+      scene.setState({ isEditing: false });
+      jest.mocked(scene.onEnterEditMode).mockClear();
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(result).toEqual({
+        success: true,
+        changes: [],
+        data: {
+          errors: [
+            {
+              element: name,
+              title: 'Broken query',
+              errors: [{ source: 'query', message: 'Unknown column', refId: 'A' }],
+            },
+          ],
+          noDataPanels: [],
+          panelsChecked: 1,
+          uncheckedPanels: [],
+        },
+      });
+      expect(scene.onEnterEditMode).not.toHaveBeenCalled();
+      expect(scene.state.isEditing).toBe(false);
+    });
+
+    it('reports loading and missing elements without reporting stale query errors', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Loading query');
+      await addPanel(client, 'Excluded panel');
+      attachPanelData(
+        scene,
+        'Loading query',
+        makePanelData({ state: LoadingState.Loading, errors: [{ message: 'Stale error' }] })
+      );
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: [name, 'missing', name] } });
+      expect(result.data).toEqual({
+        errors: [],
+        noDataPanels: [],
+        panelsChecked: 0,
+        uncheckedPanels: [
+          { element: name, reason: 'loading' },
+          { element: 'missing', reason: 'not_found' },
+        ],
+      });
+    });
+
+    it('reports plugin errors and keeps no-data panels separate', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const broken = await addPanel(client, 'Broken plugin');
+      const empty = await addPanel(client, 'Empty query');
+      scene.state.body
+        .getVizPanels()
+        .find((p) => p.state.title === 'Broken plugin')
+        ?.setState({ _pluginLoadError: 'Plugin unavailable' });
+      attachPanelData(scene, 'Empty query', makePanelData({ state: LoadingState.Done, series: [] }));
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(result.data).toEqual({
+        errors: [
+          { element: broken, title: 'Broken plugin', errors: [{ source: 'plugin', message: 'Plugin unavailable' }] },
+        ],
+        noDataPanels: [{ element: empty, title: 'Empty query' }],
+        panelsChecked: 2,
+        uncheckedPanels: [],
+      });
+    });
+
+    it('uses the same error-notice extraction as LIST_PANELS', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Notices');
+      const frame = toDataFrame({
+        fields: [{ name: 'Value', values: [1] }],
+        meta: {
+          notices: [
+            { severity: 'error', text: 'Invalid frame' },
+            { severity: 'warning', text: 'Partial data' },
+          ],
+        },
+      });
+      attachPanelData(scene, 'Notices', makePanelData({ state: LoadingState.Done, series: [frame] }));
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(result.data).toEqual({
+        errors: [{ element: name, title: 'Notices', errors: [{ source: 'notice', message: 'Invalid frame' }] }],
+        noDataPanels: [],
+        panelsChecked: 1,
+        uncheckedPanels: [],
+      });
+    });
+
+    function buildLoadingScene() {
+      const scene = buildPanelScene([new VizPanel({ key: 'panel-1', title: 'Query', pluginId: 'timeseries' })], {
+        query: 1,
+      });
+      attachPanelData(scene, 'Query', makePanelData({ state: LoadingState.Loading }));
+      return { scene, client: new DashboardMutationClient(scene) };
+    }
+
+    it('waits up to waitMs for a loading panel to settle', async () => {
+      const { scene, client } = buildLoadingScene();
+      setTimeout(
+        () =>
+          attachPanelData(
+            scene,
+            'Query',
+            makePanelData({ state: LoadingState.Error, errors: [{ message: 'Unknown column', refId: 'A' }] })
+          ),
+        150
+      );
+
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { waitMs: 5000 } });
+      expect(result.data).toEqual({
+        errors: [
+          { element: 'query', title: 'Query', errors: [{ source: 'query', message: 'Unknown column', refId: 'A' }] },
+        ],
+        noDataPanels: [],
+        panelsChecked: 1,
+        uncheckedPanels: [],
+      });
+    });
+
+    it('stops waiting at waitMs and still reports the panel as loading', async () => {
+      const { client } = buildLoadingScene();
+
+      const started = Date.now();
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { waitMs: 250 } });
+      expect(Date.now() - started).toBeGreaterThanOrEqual(250);
+      expect(result.data).toEqual({
+        errors: [],
+        noDataPanels: [],
+        panelsChecked: 0,
+        uncheckedPanels: [{ element: 'query', reason: 'loading' }],
+      });
+    });
+
+    it('rejects a waitMs above the limit', async () => {
+      const { client } = buildLoadingScene();
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { waitMs: 60_000 } });
+      expect(result.success).toBe(false);
+    });
+
+    it('says when a loading panel sits in a hidden tab or a collapsed row, and does not wait for it', async () => {
+      const scene = buildPanelScene([], { hidden: 2, collapsed: 3 });
+      const gridWithLoadingPanel = (id: number) =>
+        DefaultGridLayoutManager.fromVizPanels([
+          new VizPanel({
+            key: `panel-${id}`,
+            title: `Panel ${id}`,
+            pluginId: 'timeseries',
+            $data: new SceneDataNode({ data: makePanelData({ state: LoadingState.NotStarted }) }),
+          }),
+        ]);
+      // The first tab is the one shown when none is selected.
+      const collapsedRow = new RowItem({ title: 'Details', collapse: true, layout: gridWithLoadingPanel(3) });
+      scene.setState({
+        body: new TabsLayoutManager({
+          tabs: [
+            new TabItem({ title: 'Overview', layout: new RowsLayoutManager({ rows: [collapsedRow] }) }),
+            new TabItem({ title: 'More', layout: gridWithLoadingPanel(2) }),
+          ],
+        }),
+      });
+
+      const started = Date.now();
+      const result = await new DashboardMutationClient(scene).execute({
+        type: 'GET_PANEL_ERRORS',
+        payload: { elements: ['hidden', 'collapsed'], waitMs: 5000 },
+      });
+      expect(Date.now() - started).toBeLessThan(1000);
+      expect(result.data).toEqual({
+        errors: [],
+        noDataPanels: [],
+        panelsChecked: 0,
+        uncheckedPanels: [
+          { element: 'hidden', reason: 'inactive_tab' },
+          { element: 'collapsed', reason: 'collapsed_row' },
+        ],
+      });
+    });
+  });
+
+  describe('GET_PANEL_ERRORS with panel status reports', () => {
+    function buildDrawingScene() {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        title: 'Drawing',
+        pluginId: 'custom-viz',
+        options: { source: 'a' },
+      });
+      const scene = buildPanelScene([panel], { drawing: 1 });
+      return { panel, scene, client: new DashboardMutationClient(scene) };
+    }
+
+    it('reports render errors the panel reports about itself next to its query state', async () => {
+      const { panel, scene, client } = buildDrawingScene();
+      attachPanelData(
+        scene,
+        'Drawing',
+        makePanelData({ series: [toDataFrame({ fields: [{ name: 'Value', values: [1] }] })] })
+      );
+      setPanelStatusReport(panel, { state: 'error', message: 'x is not defined', details: 'line 3' });
+
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(result.data).toEqual({
+        errors: [
+          {
+            element: 'drawing',
+            title: 'Drawing',
+            errors: [{ source: 'panel', message: 'x is not defined', details: 'line 3' }],
+          },
+        ],
+        noDataPanels: [],
+        panelsChecked: 1,
+        uncheckedPanels: [],
+      });
+    });
+
+    it('checks a panel without a data provider once it reports, and clears the error on an ok report', async () => {
+      const { panel, client } = buildDrawingScene();
+      setPanelStatusReport(panel, { state: 'error' });
+
+      const failed = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(failed.data).toEqual({
+        errors: [
+          {
+            element: 'drawing',
+            title: 'Drawing',
+            errors: [{ source: 'panel', message: 'Panel reported a render error without an error message.' }],
+          },
+        ],
+        noDataPanels: [],
+        panelsChecked: 1,
+        uncheckedPanels: [],
+      });
+
+      setPanelStatusReport(panel, { state: 'ok' });
+      const fixed = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(fixed.data).toEqual({ errors: [], noDataPanels: [], panelsChecked: 1, uncheckedPanels: [] });
+    });
+
+    it('treats a panel as loading after its options change until it reports again, and waits for it', async () => {
+      const { panel, client } = buildDrawingScene();
+      setPanelStatusReport(panel, { state: 'error', message: 'Draw failed' });
+      panel.setState({ options: { source: 'b' } });
+
+      const outdated = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(outdated.data).toEqual({
+        errors: [],
+        noDataPanels: [],
+        panelsChecked: 0,
+        uncheckedPanels: [{ element: 'drawing', reason: 'loading' }],
+      });
+
+      setTimeout(() => setPanelStatusReport(panel, { state: 'ok' }), 150);
+      const settled = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { waitMs: 5000 } });
+      expect(settled.data).toEqual({ errors: [], noDataPanels: [], panelsChecked: 1, uncheckedPanels: [] });
+    });
   });
 
   describe('LIST_PANELS', () => {

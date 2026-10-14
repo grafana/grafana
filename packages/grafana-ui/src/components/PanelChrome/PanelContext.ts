@@ -39,6 +39,19 @@ export interface AdHocTransformationsState {
   setTransformations(transformations: readonly DataTransformerConfig[]): void;
 }
 
+/**
+ * The outcome of a panel's own rendering, as reported by the panel plugin. Use it for failures
+ * the host cannot see from the panel's data, such as a drawing or parsing error. @alpha
+ */
+export interface PanelStatusReport {
+  /** `ok` replaces an earlier `error` report once the panel renders successfully again. */
+  state: 'ok' | 'error';
+  /** A short, human-readable summary of the error. */
+  message?: string;
+  /** Extra plain-text context for the error, such as a location in the panel's source. */
+  details?: string;
+}
+
 /** @alpha */
 export interface PanelContext {
   /** Identifier for the events scope */
@@ -126,6 +139,15 @@ export interface PanelContext {
 
   /** Present when the panel host supports ad-hoc transformations. @alpha */
   adHocTransformations?: PanelRuntimeTransformations;
+
+  /**
+   * Present when the panel host collects render status from panels. Call it after every render with
+   * the latest outcome, even when it did not change; the host keeps only the last report for the panel
+   * and treats it as outdated once the panel's options or field config change.
+   *
+   * @alpha
+   */
+  reportPanelStatus?: (report: PanelStatusReport) => void;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({

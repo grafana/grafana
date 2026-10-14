@@ -39,6 +39,7 @@ import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
+import { getPanelStatusReport } from './panelStatusReports';
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 
 jest.mock('../inspect/panelInspectorOpener', () => ({
@@ -218,6 +219,18 @@ describe('setDashboardPanelContext', () => {
 
       expect(context.adHocTransformations).toBe(controller);
       expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+  });
+
+  describe('reportPanelStatus', () => {
+    it('keeps the last report for the panel', () => {
+      const { vizPanel, context } = buildTestScene({});
+
+      context.reportPanelStatus?.({ state: 'error', message: 'Draw failed' });
+      expect(getPanelStatusReport(vizPanel)).toEqual({ report: { state: 'error', message: 'Draw failed' } });
+
+      context.reportPanelStatus?.({ state: 'ok' });
+      expect(getPanelStatusReport(vizPanel)).toEqual({ report: { state: 'ok' } });
     });
   });
 

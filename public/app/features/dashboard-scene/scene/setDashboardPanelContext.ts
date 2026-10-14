@@ -30,6 +30,7 @@ import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/u
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
+import { setPanelStatusReport } from './panelStatusReports';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
 
 // How long to wait for the assistant app plugin to report availability before giving up. Preloaded
@@ -50,6 +51,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   });
 
   context.adHocTransformations = vizPanel.getRuntimeTransformations();
+
+  context.reportPanelStatus = (report) => setPanelStatusReport(vizPanel, report);
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);

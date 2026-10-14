@@ -18,6 +18,7 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { type DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { getPanelStatusReport, setPanelStatusReport } from '../../scene/panelStatusReports';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
 import { getLibraryPanelBehavior } from '../../utils/utils';
@@ -242,6 +243,36 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
 
     expect(editedPanelKey(scene)).toBeUndefined();
+  });
+});
+
+describe('APPLY_SPEC with a panel that reports its own status', () => {
+  it('keeps the report for a rebuilt panel whose configuration did not change', async () => {
+    const scene = buildScene(makeSpec());
+    setPanelStatusReport(findVizPanelByKey(scene, 'panel-1')!, { state: 'error', message: 'Draw failed' });
+
+    await applySpec(scene, makeSpec());
+
+    expect(getPanelStatusReport(findVizPanelByKey(scene, 'panel-1')!)).toEqual({
+      report: { state: 'error', message: 'Draw failed' },
+    });
+  });
+
+  it('marks the report outdated when the applied spec changes the panel options', async () => {
+    const scene = buildScene(makeSpec());
+    setPanelStatusReport(findVizPanelByKey(scene, 'panel-1')!, { state: 'error', message: 'Draw failed' });
+
+    await applySpec(
+      scene,
+      makeSpec((spec) => {
+        const element = spec.elements['panel-1'];
+        if (element.kind === 'Panel') {
+          element.spec.vizConfig.spec.options = { source: 'fixed' };
+        }
+      })
+    );
+
+    expect(getPanelStatusReport(findVizPanelByKey(scene, 'panel-1')!)).toBe('outdated');
   });
 });
 

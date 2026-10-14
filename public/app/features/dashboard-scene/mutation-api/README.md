@@ -607,6 +607,36 @@ Remove one or more panels by element name.
 
 If some elements fail while others succeed, `success` is `true` and partial failures are reported in `warnings`.
 
+### `GET_PANEL_ERRORS`
+
+Read current errors on the open dashboard without returning panel specifications, queries, layout, or result data. This read-only command does not run queries, activate panels, or enter edit mode.
+
+```json
+{ "type": "GET_PANEL_ERRORS", "payload": { "elements": ["panel-1", "panel-5"] } }
+```
+
+Omit `elements` to inspect all elements. The response includes `errors` (element name, title, and structured query/plugin/error-notice/panel messages), separate `noDataPanels`, `panelsChecked`, and `uncheckedPanels` with reasons `loading`, `inactive_tab`, `collapsed_row`, `out_of_view`, `status_unavailable`, or `not_found`. Loading panels do not report stale errors. `inactive_tab`, `collapsed_row` and `out_of_view` mark panels that cannot load until the user shows them: `out_of_view` is a panel whose queries wait for it to be scrolled into view on a dashboard that loads panels lazily. Empty error lists do not establish that unchecked panels are healthy; render those panels and check again. Callers should detect command availability on older Grafana versions.
+
+Pass `waitMs` (at most 10000) to wait for loading panels to settle before the response, for example right after a write:
+
+```json
+{ "type": "GET_PANEL_ERRORS", "payload": { "elements": ["panel-1"], "waitMs": 3000 } }
+```
+
+Older Grafana versions ignore `waitMs` and answer immediately.
+
+Panel plugins can report failures the host cannot see from query data, such as a drawing or parsing error. These appear with `source: "panel"`:
+
+```tsx
+const { reportPanelStatus } = usePanelContext();
+// No dependency list: report after every render, including renders that did not change the outcome.
+useEffect(() => {
+  reportPanelStatus?.(drawError ? { state: 'error', message: drawError.message } : { state: 'ok' });
+});
+```
+
+The last report per panel is kept across whole-spec writes. Once the panel's options or field config change, the panel counts as `loading` until it reports again, so callers never read the previous outcome as current.
+
 ### `LIST_PANELS`
 
 List elements on the dashboard (panels, library panels, etc.) as an array of `{ element, layoutItem }` entries. Same shape as write command responses, with the element name embedded in `layoutItem.spec.element.name`.

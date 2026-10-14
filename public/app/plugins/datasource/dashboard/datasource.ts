@@ -255,6 +255,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const series = data.series.map((s) => {
       return {
         ...s,
+        // Lets a panel reading several source panels tell their frames apart, since refIds can collide.
+        meta: { ...s.meta, custom: { ...s.meta?.custom, dashboardSourcePanelId: query.panelId } },
         // Source attribution for the custom panel; other consumers get the frames unchanged. Frames
         // take the refId of the query that asked for them, so the panel's refId-based overrides and
         // code match them; the source refId (which collides across source panels) moves to meta.

@@ -43,6 +43,7 @@ describe('Command consistency', () => {
         cmd.name === 'GET_LAYOUT' ||
         cmd.name === 'LIST_PANELS' ||
         cmd.name === 'GET_PANEL_RENDER_STATUS' ||
+        cmd.name === 'GET_PANEL_ERRORS' ||
         cmd.name === 'GET_DASHBOARD_INFO'
       ) {
         const result = cmd.payloadSchema.safeParse({});
@@ -65,6 +66,7 @@ describe('Command consistency', () => {
       'GET_DASHBOARD_INFO',
       'GET_LAYOUT',
       'GET_METADATA_ANNOTATIONS',
+      'GET_PANEL_ERRORS',
       'GET_PANEL_RENDER_STATUS',
       'GET_SPEC',
       'LIST_ANNOTATIONS',

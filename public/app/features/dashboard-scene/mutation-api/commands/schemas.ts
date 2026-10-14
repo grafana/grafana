@@ -741,7 +741,7 @@ const listPanelsPayloadSchema = z.object({
     .optional()
     .default(false)
     .describe(
-      'When true, include per-panel runtime status: loadingState, hasError, hasNoData, a structured errors array (source query/plugin/notice, message, refId/type), and info/warning notices'
+      'When true, include per-panel runtime status: loadingState, hasError, hasNoData, a structured errors array (source query/plugin/notice/panel, message, refId/type, details), and info/warning notices'
     ),
   includeSchema: z
     .boolean()
@@ -951,6 +951,20 @@ export const payloads = {
     'Update an existing panel (partial update, deep-merge for options/fieldConfig)'
   ),
   removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
+  getPanelErrors: listPanelsPayloadSchema
+    .pick({ elements: true })
+    .extend({
+      waitMs: z
+        .number()
+        .int()
+        .min(0)
+        .max(10_000)
+        .optional()
+        .describe(
+          'Wait up to this many milliseconds for loading panels to settle before answering, for example right after a write. Panels that are not rendered are not waited for.'
+        ),
+    })
+    .describe('Read current panel errors without panel specifications'),
   listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
   getPanelRenderStatus: getPanelRenderStatusPayloadSchema.describe(
     'Read the last draw result of panels that report one (today the Custom panel, whose drawing runs in a sandboxed frame no other tool can see): state, error, diagnostics, timing and element count, whether the panel is paused out of view, and optionally a capture of the drawing, the shape of the data it received and a layout report (overflow, clipped text, text over text). A Custom panel that is not rendered (inactive tab, collapsed row, not scrolled to yet) is state not-mounted. waitMs waits for the drawings to settle.'
