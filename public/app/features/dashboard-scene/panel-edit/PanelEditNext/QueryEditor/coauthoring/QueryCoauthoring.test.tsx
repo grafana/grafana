@@ -1338,7 +1338,6 @@ describe('QueryCoauthoring', () => {
       if (engaged) {
         await user.click(screen.getByRole('button', { name: 'Explain this query' }));
         act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
-        await user.click(screen.getByRole('button', { name: 'Modify this query' }));
       }
       await user.type(screen.getByRole('textbox'), 'Use @in');
       expect(screen.getByRole('listbox')).toBeInTheDocument();
@@ -1586,11 +1585,6 @@ describe('QueryCoauthoring', () => {
     }
     await user.click(screen.getByRole('button', { name: 'Modify this query' }));
     expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('');
-    await user.click(document.body);
-    act(() => screen.getByRole('dialog', { name: 'Query coauthor' }).focus());
-    await user.keyboard('{Escape}');
-    expect(dismissInvocation).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
     await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Group the requests');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     act(() => mockGenerate.mock.calls[4][0].onComplete('Which label should I group by?'));
@@ -1598,6 +1592,22 @@ describe('QueryCoauthoring', () => {
     expect(screen.queryByRole('button', { name: 'Continue here' })).not.toBeInTheDocument();
     expect(readInvocation).toHaveBeenCalledTimes(1);
     expect(stagePreview).not.toHaveBeenCalled();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+  });
+
+  it.each(['Escape', 'outside click'])('closes Modify opened from Explain with %s', async (gesture) => {
+    const { user, dismissInvocation } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+    await user.click(screen.getByRole('button', { name: 'Modify this query' }));
+    expect(screen.queryByRole('button', { name: 'Close coauthoring' })).not.toBeInTheDocument();
+    if (gesture === 'Escape') {
+      act(() => screen.getByRole('textbox', { name: 'Describe a query change' }).focus());
+      await user.keyboard('{Escape}');
+    } else {
+      await user.click(document.body);
+    }
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
   });
 
   it.each(['prompt', 'Explain'])(
