@@ -69,6 +69,7 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 	return result, nil
 }
 
+//nolint:gocyclo
 func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo types.DatasourceInfo) (*types.AzureMonitorQuery, error) {
 	var target string
 	queryJSONModel := dataquery.AzureMonitorQuery{}
