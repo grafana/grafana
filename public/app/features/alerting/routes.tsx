@@ -7,7 +7,11 @@ import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navig
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
-import { shouldAllowRecoveringDeletedRules, shouldUseGmaOnlyListView } from './unified/featureToggles';
+import {
+  isNotificationHistoryEnabled,
+  shouldAllowRecoveringDeletedRules,
+  shouldUseGmaOnlyListView,
+} from './unified/featureToggles';
 import {
   LegacyRecentlyDeletedRedirect,
   LegacyRuleListRedirect,
@@ -283,7 +287,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications-history/view/:uuid',
-      component: cfg.featureToggles.alertingNotificationHistoryDetail
+      component: isNotificationHistoryEnabled(cfg)
         ? importAlertingComponent(
             () =>
               import(
@@ -303,14 +307,12 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingRuleCreate,
         AccessControlAction.AlertingProvisioningSetStatus,
       ]),
-      component: config.featureToggles.alertingMigrationUI
-        ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
-              )
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
           )
-        : () => <Navigate replace to="/alerting/list" />,
+      ),
     },
     {
       path: '/alerting/import-to-gma',

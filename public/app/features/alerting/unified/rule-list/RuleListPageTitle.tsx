@@ -9,14 +9,14 @@ import {
   trackViewExperienceToggleClick,
   trackViewExperienceToggleConfirmed,
 } from '../Analytics';
-import { shouldUseAlertingListViewV2 } from '../featureToggles';
+import { shouldShowAlertingListViewV2PreviewToggle, shouldUseAlertingListViewV2 } from '../featureToggles';
 import { setPreviewToggle } from '../previewToggles';
 import { ALERTING_PATHS } from '../utils/navigation';
 
 import { RevertToOldExperienceModal } from './AlertsActivityOptOutModal';
 
 export function RuleListPageTitle({ title }: { title: string }) {
-  const shouldShowV2Toggle = config.featureToggles.alertingListViewV2PreviewToggle ?? false;
+  const shouldShowV2Toggle = shouldShowAlertingListViewV2PreviewToggle();
   const listViewV2Enabled = shouldUseAlertingListViewV2();
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -113,7 +113,10 @@ export function RuleListPageTitle({ title }: { title: string }) {
     ? {
         variant: 'secondary',
         icon: undefined,
-        children: t('alerting.rule-list.toggle.view-previous-experience', 'Revert to previous experience'),
+        children: t(
+          'alerting.rule-list.toggle.view-previous-experience-deprecated',
+          'Revert to previous experience (deprecated)'
+        ),
         'data-testid': 'alerting-list-view-toggle-v1',
       }
     : {

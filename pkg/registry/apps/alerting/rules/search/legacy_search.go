@@ -2,75 +2,49 @@ package search
 
 import (
 	"context"
-	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	prom_model "github.com/prometheus/common/model"
-	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// legacyClient implements resourcepb.ResourceIndexClient over the provisioning
-// AlertRuleService (the ngalert SQL store). It is the legacy half of the
-// dual-writer-aware search router; selector-expressible filters are pushed to
-// the service and the rest (free-text title, label matchers, source datasource)
-// are applied in memory, mirroring the unified backend's result shape.
+var _ Backend = (*legacyClient)(nil)
+
 type legacyClient struct {
-	resourcepb.ResourceIndexClient
 	service provisioning.AlertRuleService
 	logger  log.Logger
 }
 
 func NewLegacyClient(service provisioning.AlertRuleService) *legacyClient {
-	logger := log.New("alerting.rules.search.legacy")
-
-	// Surface a degraded result table at startup. Both conditions are schema
-	// bugs the tests should have caught, so report them where an operator can
-	// see them rather than letting hits quietly lose fields.
-	if len(results.skipped) > 0 {
-		logger.Warn("rule search result columns dropped: no declared search field", "columns", results.skipped)
-	}
-	if results.err != nil {
-		logger.Error("rule search result table could not be built; legacy search will fail", "error", results.err)
-	}
-	return &legacyClient{service: service, logger: logger}
+	return &legacyClient{service: service, logger: log.New("alerting.rules.search.legacy")}
 }
 
-func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+func (c *legacyClient) Search(ctx context.Context, req *Query) (*Result, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := extractFilters(req)
+	f := extractFilters(req)
+	labelRegexes, err := compileLabelRegexes(req.Regexes)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
 	}
-	// singleKind is false only for the deprecated cross-kind /search route
-	// (search.go), the one caller that federates recording rules onto an alert
-	// rule request (or vice versa) via req.Federated. Both per-resource routes --
-	// the compatibility .../searchRules and the generic .../search this backs
-	// today -- always search one kind and never set it.
-	singleKind := len(req.Federated) == 0
-	if singleKind && f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
-		return emptyResponse(), nil
+	if f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
+		return &Result{Hits: []Hit{}, TotalHitsExact: true}, nil
 	}
 	rules, _, _, err := c.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:                  ruleTypeForRequest(req),
 		RuleUIDs:                  f.names,
 		GroupFilter:               provisioning.ListRuleStringFilter{Include: f.groupsInclude, Exclude: f.groupsExclude},
-		FolderFilter:              provisioning.ListRuleStringFilter{Include: f.folders, Exclude: f.foldersExclude},
+		FolderFilter:              includeFilter(f.folders),
 		PausedFilter:              provisioning.ListRuleBoolFilter{Value: f.paused},
 		DashboardFilter:           stringFilter(f.dashboardUID),
 		PanelIDFilter:             stringFilter(f.panelID),
@@ -81,6 +55,8 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		TargetDatasourceUIDFilter: stringFilter(f.targetDatasourceUID),
 		DatasourceUIDs:            f.datasourceUIDs,
 		SearchTitle:               f.title,
+		StateFilter:               listStringFilter(f.states),
+		HealthFilter:              listStringFilter(f.healths),
 	})
 	if err != nil {
 		return nil, err
@@ -88,106 +64,41 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	filtered := rules[:0]
 	for _, r := range rules {
-		if singleKind && !matchTitle(r, f.title) {
+		if !matchTitle(r, f.title) {
 			continue
 		}
 		if !matchLabels(r, f.labelMatchers) {
 			continue
 		}
-		if singleKind && !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
+		if !matchLabelRegexes(r, labelRegexes) {
 			continue
 		}
-		if singleKind && !matchNotificationTypeExclude(r, f.notificationTypeExclude) {
+		if !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
 			continue
 		}
 		filtered = append(filtered, r)
 	}
-	if singleKind {
-		perKindSortRules(filtered, f.sortField, f.sortDesc)
-	} else {
-		sortRules(filtered, f.sortField, f.sortDesc)
-	}
+	perKindSortRules(filtered, f.sortField, f.sortDesc)
 
 	total := len(filtered)
-	start, err := legacyResumeIndex(filtered, req)
-	if err != nil {
-		return nil, apierrors.NewBadRequest(err.Error())
-	}
-	page := applyOffset(filtered, start, req.Limit)
+	page := applyOffset(filtered, req.Offset, req.Limit)
 
-	// Only the requested fields are returned, matching the unified path's
-	// projection: it never returns undeclared columns, so a client asking for
-	// "state" and "health" must not also get every other field back.
-	wantedDefs := resultColumnDefinitionsFor(req.Fields)
-	table := &resourcepb.ResourceTable{Columns: wantedDefs}
+	hits := make([]Hit, 0, len(page))
 	for _, r := range page {
 		values := ruleColumnValues(r)
-		if singleKind {
-			c.addStatusValues(r, values)
+		c.addStatusValues(r, values)
+		// Empty strings were omitted by the old table decoder; retain that API shape.
+		for name, value := range values {
+			if text, ok := value.(string); ok && text == "" {
+				delete(values, name)
+			}
 		}
-		cells, err := ruleCells(values, wantedDefs)
-		if err != nil {
-			return nil, err
-		}
-		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{
-			Key:        ruleKey(req.Options.GetKey().GetNamespace(), r),
-			Cells:      cells,
-			SortFields: []string{legacySortKey(r)},
-		})
+		hits = append(hits, Hit{Name: r.UID, Values: values})
 	}
-	// ListAlertRules restricts the query to folders the caller can read, so total
-	// counts authorized rules exactly rather than bounding them from above.
-	return &resourcepb.ResourceSearchResponse{Results: table, TotalHits: int64(total), TotalHitsExact: true}, nil
+	// The provisioning service counts only rules in folders the caller can read.
+	return &Result{Hits: hits, TotalHits: int64(total), TotalHitsExact: true}, nil
 }
 
-// legacySortKey is the composite key filtered rows are ordered by. It is
-// opaque outside this package: the generic /search route's cursor and the
-// per-kind /searchRules route's offset cursor both wrap it (see
-// legacyResumeIndex), but neither inspects it. Title-then-UID mirrors
-// perKindSortRules/sortRules, so the same key totally orders the rows those
-// functions already sort by, letting a resume search for it with a plain
-// string comparison.
-func legacySortKey(r *ngmodels.AlertRule) string {
-	return strings.ToLower(r.Title) + "\x1f" + r.UID
-}
-
-// legacyResumeIndex resolves the row to resume paging from. The per-kind
-// /searchRules route always pages by offset (req.Offset, see
-// per_kind_query.go); the generic /search route instead pages by the last
-// page's sort values (req.SearchAfter, see
-// pkg/registry/apis/search/translate.go's decodeContinue), since the legacy
-// backend was never taught the generic route's offset field. Resolving both
-// here, against the same freshly filtered-and-sorted slice, keeps the two
-// routes' pages correct even when they are used against a changing rule set.
-func legacyResumeIndex(rules []*ngmodels.AlertRule, req *resourcepb.ResourceSearchRequest) (int64, error) {
-	if len(req.SearchAfter) == 0 {
-		return req.Offset, nil
-	}
-	cursor := req.SearchAfter[0]
-	desc := len(req.SortBy) > 0 && req.SortBy[0].Desc
-	idx := sort.Search(len(rules), func(i int) bool {
-		key := legacySortKey(rules[i])
-		if desc {
-			return key < cursor
-		}
-		return key > cursor
-	})
-	return int64(idx), nil
-}
-
-func ruleKey(namespace string, r *ngmodels.AlertRule) *resourcepb.ResourceKey {
-	res := alertrule.ResourceInfo
-	if r.Type() == ngmodels.RuleTypeRecording {
-		res = recordingrule.ResourceInfo
-	}
-	gr := res.GroupResource()
-	return &resourcepb.ResourceKey{Namespace: namespace, Group: gr.Group, Resource: gr.Resource, Name: r.UID}
-}
-
-// ruleColumnValues maps a rule onto the declared search columns, keyed by
-// column name. Values are in their native Go type — the column's encoder turns
-// them into cells — so this must not pre-format them as strings: a "42" written
-// into the int64 panelID column would be read back as a big-endian int64.
 func ruleColumnValues(r *ngmodels.AlertRule) map[string]any {
 	receiver, notificationType, routingTree := notificationFields(r.NotificationSettings)
 
@@ -229,61 +140,6 @@ func ruleColumnValues(r *ngmodels.AlertRule) map[string]any {
 	return vals
 }
 
-// ruleCells encodes a rule into the result table's cells, one per column in
-// defs, in the same order. Positions come from defs rather than the literal
-// order values was built in, so a caller-chosen projection cannot misalign the
-// row against the columns table.Columns declares for it.
-func ruleCells(values map[string]any, defs []*resourcepb.ResourceTableColumnDefinition) ([][]byte, error) {
-	if results.err != nil {
-		return nil, results.err
-	}
-	cells := make([][]byte, len(defs))
-	for i, def := range defs {
-		v, ok := values[def.Name]
-		if !ok {
-			continue
-		}
-		encoderIndex, ok := results.index[def.Name]
-		if !ok {
-			// skip undefined columns instead of failing
-			// This should never happnen in practice
-			continue
-		}
-		cell, err := results.encoders[encoderIndex](v)
-		if err != nil {
-			return nil, fmt.Errorf("encoding rule search column %q: %w", def.Name, err)
-		}
-		cells[i] = cell
-	}
-	return cells, nil
-}
-
-// resultColumnDefinitionsFor returns the column definitions for the requested
-// fields, defaulting to title and folder when none are requested (mirroring
-// both translators' default projection). An unrecognized name is dropped
-// rather than failing the search: both translators already validate field
-// names against the kind's declared capabilities before a request reaches
-// here.
-func resultColumnDefinitionsFor(fields []string) []*resourcepb.ResourceTableColumnDefinition {
-	if len(fields) == 0 {
-		fields = perKindDefaultReturnFields
-	}
-	defs := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
-	seen := make(map[string]bool, len(fields))
-	for _, name := range fields {
-		if seen[name] {
-			continue
-		}
-		seen[name] = true
-		i, ok := results.index[name]
-		if !ok {
-			continue
-		}
-		defs = append(defs, results.defs[i])
-	}
-	return defs
-}
-
 func promDuration(d time.Duration) string {
 	return prom_model.Duration(d).String()
 }
@@ -317,13 +173,8 @@ func ruleType(r *ngmodels.AlertRule) string {
 	return "alertrule"
 }
 
-func ruleTypeForRequest(req *resourcepb.ResourceSearchRequest) ngmodels.RuleTypeFilter {
-	resourceName := req.Options.GetKey().GetResource()
-	// A federated request (cross-kind /search) carries the other kind too.
-	if len(req.Federated) > 0 {
-		return ngmodels.RuleTypeFilterAll
-	}
-	if resourceName == recordingrule.ResourceInfo.GroupResource().Resource {
+func ruleTypeForRequest(req *Query) ngmodels.RuleTypeFilter {
+	if req.Resource.Resource == recordingrule.ResourceInfo.GroupResource().Resource {
 		return ngmodels.RuleTypeFilterRecording
 	}
 	return ngmodels.RuleTypeFilterAlerting

@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
@@ -105,7 +106,7 @@ func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request)
 
 	// Check the preview build actually exists before committing the browser to
 	// it for 24 hours.
-	if _, err := fswebassets.GetPreviewWebAssets(ctx, h.previewCfg, folder); err != nil {
+	if _, err := fswebassets.GetPreviewWebAssets(ctx, h.previewCfg, folder, webassets.ResolveBuildDir(ctx)); err != nil {
 		logger.Warn("preview assets manifest could not be loaded", "folder", folder, "err", err)
 		http.Error(w, "preview assets could not be loaded - check the deploy exists and has finished uploading", http.StatusBadGateway)
 		return

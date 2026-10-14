@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from 'react';
 
 import {
   type AnnotationEventUIModel,
@@ -6,6 +6,7 @@ import {
   type DashboardCursorSync,
   type DataFrame,
   type DataLinkPostProcessor,
+  type DataTransformerConfig,
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
@@ -13,6 +14,30 @@ import {
 import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
+
+/** Runtime transformations supplied by a panel host, grouped by owner. @alpha */
+export interface PanelRuntimeTransformations {
+  /** Returns the same immutable snapshot until this owner changes. */
+  get(owner: string): readonly DataTransformerConfig[];
+  /** Replaces one owner's transformations. An empty list removes the owner. */
+  set(owner: string, transformations: readonly DataTransformerConfig[]): void;
+  /** Returns data before this owner's transformations. */
+  getSourceSeries(owner: string): readonly DataFrame[];
+  /** Subscribes to changes for one owner. Returns an unsubscribe function. */
+  subscribe(owner: string, callback: () => void): () => void;
+}
+
+/** Reactive view of one owner's runtime transformations. @alpha */
+export interface AdHocTransformationsState {
+  /** Transformations currently applied after the panel's saved transformations. */
+  transformations: readonly DataTransformerConfig[];
+
+  /** Data before this owner's transformations, including columns they hide. */
+  sourceSeries: readonly DataFrame[];
+
+  /** Replaces this owner's transformations. Pass `[]` to clear them. */
+  setTransformations(transformations: readonly DataTransformerConfig[]): void;
+}
 
 /** @alpha */
 export interface PanelContext {
@@ -98,6 +123,9 @@ export interface PanelContext {
    * @deprecated Please use DataLinksContext instead. This property will be removed in next major.
    */
   dataLinkPostProcessor?: DataLinkPostProcessor;
+
+  /** Present when the panel host supports ad-hoc transformations. @alpha */
+  adHocTransformations?: PanelRuntimeTransformations;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({
@@ -114,3 +142,29 @@ export const PanelContextProvider = PanelContextRoot.Provider;
  * @alpha
  */
 export const usePanelContext = () => useContext(PanelContextRoot);
+
+/**
+ * Returns the selected owner's transformations and re-renders when the panel host changes them.
+ * Returns `undefined` when the panel host does not support ad-hoc transformations.
+ *
+ * @alpha
+ */
+export function useAdHocTransformations(owner: string): AdHocTransformationsState | undefined {
+  const api = usePanelContext().adHocTransformations;
+  const subscribe = useCallback(
+    (onChange: () => void) => (api ? api.subscribe(owner, onChange) : () => {}),
+    [api, owner]
+  );
+  const getSnapshot = useCallback(() => api?.get(owner), [api, owner]);
+  const transformations = useSyncExternalStore(subscribe, getSnapshot);
+  const sourceSeries = api?.getSourceSeries(owner);
+  const setTransformations = useCallback(
+    (nextTransformations: readonly DataTransformerConfig[]) => api?.set(owner, nextTransformations),
+    [api, owner]
+  );
+
+  return useMemo(
+    () => (transformations && sourceSeries ? { transformations, sourceSeries, setTransformations } : undefined),
+    [transformations, sourceSeries, setTransformations]
+  );
+}

@@ -198,6 +198,7 @@ export interface AzureResourceGraphOptions {
 export type GetMetricNamespacesQuery = AzureGetMetricNamespacesQuery | LegacyAzureGetMetricNamespacesQuery;
 export type GetMetricNamesQuery = AzureGetMetricNamesQuery | LegacyAzureGetMetricNamesQuery;
 export type GetMetricMetadataQuery = AzureGetMetricMetadataQuery | LegacyAzureGetMetricMetadataQuery;
+export type GetDimensionValuesQuery = LegacyAzureGetMetricMetadataQuery & { dimension: string };
 
 interface AzureGetMetricNamespacesQuery {
   resourceUri: string;

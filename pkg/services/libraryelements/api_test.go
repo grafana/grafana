@@ -214,7 +214,7 @@ func TestValidateK8sLibraryPanelUID(t *testing.T) {
 
 func TestFilterK8sLibraryPanelsFolderTitleSearchWithDeprecatedIDFilter(t *testing.T) {
 	handler := &libraryElementsK8sHandler{folderService: &foldertest.FakeService{ExpectedFolder: &folder.Folder{
-		ID: 42, UID: "folder-uid", Title: "Matching folder", OrgID: 1,
+		ID: 42, UID: "folder-uid", Title: "Matching folder", OrgID: 1, //nolint:staticcheck // Exercise legacy field compatibility.
 	}}}
 	items := []unstructured.Unstructured{{Object: map[string]interface{}{
 		"metadata": map[string]interface{}{
@@ -255,7 +255,7 @@ func TestFolderUIDFromLegacyID(t *testing.T) {
 	t.Run("folder", func(t *testing.T) {
 		handler := &libraryElementsK8sHandler{
 			folderService: &foldertest.FakeService{
-				ExpectedFolder: &folder.Folder{ID: 42, UID: "folder-uid", OrgID: 1},
+				ExpectedFolder: &folder.Folder{ID: 42, UID: "folder-uid", OrgID: 1}, //nolint:staticcheck // Exercise legacy field compatibility.
 			},
 		}
 
@@ -440,7 +440,7 @@ type fakeAccessControl struct {
 	evaluateFunc func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error)
 }
 
-var _ accesscontrol.AccessControl = new(fakeAccessControl)
+var _ accesscontrol.AccessControl = (*fakeAccessControl)(nil)
 
 func (f *fakeAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	if f.evaluateFunc != nil {

@@ -95,6 +95,48 @@ func TestIntegrationServerCheck(t *testing.T) {
 		assert.True(t, res.GetAllowed())
 	})
 
+	t.Run("user:6 should be able to read the granted folder with an empty name", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), &authzv1.CheckRequest{
+			Namespace: namespace,
+			Subject:   "user:6",
+			Verb:      utils.VerbGet,
+			Group:     folderGroup,
+			Resource:  folderResource,
+			Name:      "",
+			Folder:    "1",
+		})
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:6 should not be able to read all folders using a single folder grant", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), &authzv1.CheckRequest{
+			Namespace: namespace,
+			Subject:   "user:6",
+			Verb:      utils.VerbGet,
+			Group:     folderGroup,
+			Resource:  folderResource,
+			Name:      "*",
+			Folder:    "1",
+		})
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("user:6 should not be able to read teams using a folder grant", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), &authzv1.CheckRequest{
+			Namespace: namespace,
+			Subject:   "user:6",
+			Verb:      utils.VerbGet,
+			Group:     teamGroup,
+			Resource:  teamResource,
+			Name:      "",
+			Folder:    "1",
+		})
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
 	t.Run("user:7 should be able to read folder one through group_resource access", func(t *testing.T) {
 		res, err := server.Check(newContextWithNamespace(), newReq("user:7", utils.VerbGet, folderGroup, folderResource, "", "", "1"))
 		require.NoError(t, err)

@@ -3118,7 +3118,8 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardPanelKindOrLibraryPanelKind(ref
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Supported dashboard elements |* more element types in the future",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"PanelKind": {
 						SchemaProps: spec.SchemaProps{

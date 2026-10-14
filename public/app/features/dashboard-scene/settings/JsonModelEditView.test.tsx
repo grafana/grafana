@@ -22,6 +22,34 @@ jest.mock('../v2schema/DashboardSchemaEditor', () => ({
   DashboardSchemaEditor: () => null,
 }));
 
+describe('JsonModelEditView.getJsonText', () => {
+  it.each([
+    { uid: 'my-uid', expectedName: 'my-uid' },
+    { uid: undefined, expectedName: '<dashboard-uid>' },
+  ])('builds and validates a JSON resource with name $expectedName synchronously', ({ uid, expectedName }) => {
+    const dashboard = transformSaveModelSchemaV2ToScene({
+      apiVersion: 'dashboard.grafana.app/v2',
+      kind: 'DashboardWithAccessInfo',
+      metadata: { name: 'my-uid', resourceVersion: '1', creationTimestamp: '2026-01-01T00:00:00Z' },
+      spec: { ...defaultSpec(), title: 'JSON dashboard' },
+      access: { canSave: true },
+    });
+    const view = new JsonModelEditView({});
+    dashboard.setState({ uid, editview: view });
+    const jsonText = view.getJsonText();
+
+    expect(JSON.parse(jsonText)).toEqual(
+      expect.objectContaining({
+        kind: 'Dashboard',
+        metadata: { name: expectedName },
+        spec: expect.objectContaining({ title: 'JSON dashboard', elements: {} }),
+      })
+    );
+    view.setState({ jsonText });
+    expect(view.validateEditedResource()).toEqual({ success: true });
+  });
+});
+
 describe('JsonModelEditView.getEditedSaveModel', () => {
   it('unwraps the v2 resource envelope back to the bare spec', () => {
     const view = new JsonModelEditView({});
@@ -127,6 +155,42 @@ describe('JsonModelEditView.validateEditedResource', () => {
   });
 });
 
+describe('JsonModelEditView settings redesign', () => {
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
+  it.each([
+    { dashboardNewLayouts: true, redesign: true, expectedAction: 'Take me there' },
+    { dashboardNewLayouts: false, redesign: true, expectedAction: 'Save changes' },
+    { dashboardNewLayouts: true, redesign: false, expectedAction: 'Save changes' },
+    { dashboardNewLayouts: false, redesign: false, expectedAction: 'Save changes' },
+  ])(
+    'shows $expectedAction when dashboardNewLayouts=$dashboardNewLayouts and redesign=$redesign',
+    async ({ dashboardNewLayouts, redesign, expectedAction }) => {
+      setTestFlags({
+        [FlagKeys.DashboardNewLayouts]: dashboardNewLayouts,
+        [FlagKeys.GrafanaDashboardSettingsRedesign]: redesign,
+      });
+      const dashboard = transformSaveModelSchemaV2ToScene({
+        apiVersion: 'dashboard.grafana.app/v2',
+        kind: 'DashboardWithAccessInfo',
+        metadata: { name: 'my-uid', resourceVersion: '1', creationTimestamp: '2026-01-01T00:00:00Z' },
+        spec: { ...defaultSpec(), title: 'Dashboard' },
+        access: { canSave: true },
+      });
+      const view = new JsonModelEditView({});
+      dashboard.setState({ editview: view });
+      view.setState({ jsonText: view.getJsonText() });
+
+      render(<view.Component model={view} />);
+
+      expect(await screen.findByRole('button', { name: expectedAction })).toBeInTheDocument();
+    }
+  );
+});
+
 describe('JsonModelEditView save failures', () => {
   beforeEach(() => {
     setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
@@ -182,7 +246,7 @@ describe('JsonModelEditView save failures', () => {
       view.setState({ jsonText: view.getJsonText() });
       const { user } = render(<view.Component model={view} />);
 
-      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+      await user.click(await screen.findByRole('button', { name: 'Save changes' }));
 
       expect(await screen.findByText(expectedTitle)).toBeInTheDocument();
       expect(await screen.findByText(expectedMessage)).toBeInTheDocument();

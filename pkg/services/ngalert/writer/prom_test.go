@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"reflect"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -285,6 +286,195 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.ErrorIs(t, err, ErrRateLimited)
 		require.NotErrorIs(t, err, ErrUnexpectedWriteFailure)
 		require.NotErrorIs(t, err, ErrNonRetryableWrite)
+	})
+}
+
+func TestPrometheusWriter_Write_Batching(t *testing.T) {
+	now := time.Now()
+	series := []map[string]string{{"foo": "1"}, {"foo": "2"}, {"foo": "3"}, {"foo": "4"}}
+	frames := frameGenFromLabels(t, data.FrameTypeNumericWide, series)
+	ctx := ngmodels.WithRuleKey(context.Background(), ngmodels.GenerateRuleKey(1))
+
+	t.Run("MaxBatchSize zero sends everything in a single request", func(t *testing.T) {
+		client := &testClient{}
+		var mu sync.Mutex
+		var calls []int
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			mu.Lock()
+			defer mu.Unlock()
+			calls = append(calls, len(ts))
+			return promremote.WriteResult{}, nil
+		}
+		writer := &PrometheusWriter{
+			client:  client,
+			clock:   clock.New(),
+			logger:  log.New("test"),
+			metrics: metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.NoError(t, err)
+		require.Len(t, calls, 1)
+		require.Equal(t, len(series), calls[0])
+	})
+
+	t.Run("a small MaxBatchSize splits the write into several requests", func(t *testing.T) {
+		client := &testClient{}
+		var mu sync.Mutex
+		var calls []int
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			mu.Lock()
+			defer mu.Unlock()
+			calls = append(calls, len(ts))
+			return promremote.WriteResult{}, nil
+		}
+		writer := &PrometheusWriter{
+			client:       client,
+			clock:        clock.New(),
+			logger:       log.New("test"),
+			metrics:      metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+			maxBatchSize: 1, // forces one series per batch
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.NoError(t, err)
+
+		mu.Lock()
+		defer mu.Unlock()
+		require.Len(t, calls, len(series))
+		total := 0
+		for _, n := range calls {
+			total += n
+		}
+		require.Equal(t, len(series), total)
+	})
+
+	t.Run("a failing split request's error is returned", func(t *testing.T) {
+		client := &testClient{}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, testClientWriteError{statusCode: http.StatusInternalServerError}
+		}
+		writer := &PrometheusWriter{
+			client:              client,
+			clock:               clock.New(),
+			logger:              log.New("test"),
+			metrics:             metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+			maxBatchSize:        1,
+			maxWriteConcurrency: 2,
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
+	})
+
+	t.Run("keeps at most MaxWriteConcurrency requests in flight", func(t *testing.T) {
+		client := &trackingTestClient{block: make(chan struct{})}
+		writer := &PrometheusWriter{
+			client:              client,
+			clock:               clock.New(),
+			logger:              log.New("test"),
+			metrics:             metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+			maxBatchSize:        1,
+			maxWriteConcurrency: 2,
+		}
+
+		done := make(chan error, 1)
+		go func() { done <- writer.Write(ctx, "test", now, frames, 1, map[string]string{}) }()
+
+		require.Eventually(t, func() bool { return client.MaxInFlight() == 2 }, 2*time.Second, time.Millisecond,
+			"expected writes to run in parallel up to the limit")
+		close(client.block)
+
+		require.NoError(t, <-done)
+		require.Equal(t, 2, client.MaxInFlight())
+		require.Equal(t, len(series), client.Calls())
+	})
+
+	t.Run("MaxWriteConcurrency 0 defaults to sequential (1 at a time)", func(t *testing.T) {
+		// Each call sleeps briefly while "in flight" so two calls running concurrently
+		// (a regression in the 0 -> default fallback) would overlap and be caught.
+		client := &trackingTestClient{delay: 30 * time.Millisecond}
+		writer := &PrometheusWriter{
+			client:       client,
+			clock:        clock.New(),
+			logger:       log.New("test"),
+			metrics:      metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+			maxBatchSize: 1,
+			// maxWriteConcurrency left at its zero value.
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.NoError(t, err)
+		require.Equal(t, 1, client.MaxInFlight())
+		require.Equal(t, len(series), client.Calls())
+	})
+
+	t.Run("surfaces cancellation instead of reporting a partial write as success", func(t *testing.T) {
+		client := &trackingTestClient{
+			respond: func(call int) promremote.WriteError {
+				if call == 1 {
+					return testClientWriteError{statusCode: http.StatusInternalServerError}
+				}
+				return nil
+			},
+		}
+		writer := &PrometheusWriter{
+			client:              client,
+			clock:               clock.New(),
+			logger:              log.New("test"),
+			metrics:             metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+			maxBatchSize:        1,
+			maxWriteConcurrency: 1, // sequential, so failure is guaranteed to land before later batches start
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
+		require.Equal(t, 1, client.Calls(), "cancellation must stop the remaining batches")
+	})
+}
+
+func TestBatchTimeSeries(t *testing.T) {
+	seriesOfSize := func(n int) []promremote.TimeSeries {
+		out := make([]promremote.TimeSeries, n)
+		for i := range out {
+			// "name"+"value" = 4+1 bytes of labels, plus the fixed 16-byte sample overhead = 21 bytes/series.
+			out[i] = promremote.TimeSeries{Labels: []promremote.Label{{Name: "name", Value: "v"}}}
+		}
+		return out
+	}
+
+	t.Run("maxBytes<=0 never splits", func(t *testing.T) {
+		series := seriesOfSize(5)
+		batches := batchTimeSeries(series, 0)
+		require.Len(t, batches, 1)
+		require.Len(t, batches[0], 5)
+	})
+
+	t.Run("empty series returns the empty slice as a single batch", func(t *testing.T) {
+		batches := batchTimeSeries(nil, 100)
+		require.Len(t, batches, 1)
+		require.Empty(t, batches[0])
+	})
+
+	t.Run("splits once the running batch would exceed maxBytes", func(t *testing.T) {
+		series := seriesOfSize(5) // 21 bytes each
+		batches := batchTimeSeries(series, 50)
+
+		require.Len(t, batches, 3) // 21, 42(ok) -> 3rd pushes to 63>50 so: [1,2] [3,4] [5]
+		total := 0
+		for _, b := range batches {
+			total += len(b)
+		}
+		require.Equal(t, len(series), total)
+	})
+
+	t.Run("a single series larger than maxBytes still gets its own batch", func(t *testing.T) {
+		series := seriesOfSize(1)
+		batches := batchTimeSeries(series, 1)
+		require.Len(t, batches, 1)
+		require.Len(t, batches[0], 1)
 	})
 }
 
@@ -569,4 +759,66 @@ func (e testClientWriteError) Error() string {
 		return *e.msg
 	}
 	return "test client error"
+}
+
+// trackingTestClient is a concurrency-safe fake promremote.Client that counts how many
+// WriteTimeSeries calls are in flight at once, and can optionally hold every call until a
+// channel is closed, sleep for a fixed delay, or answer a given (1-based) call with an error.
+type trackingTestClient struct {
+	mu          sync.Mutex
+	calls       int
+	inFlight    int
+	maxInFlight int
+
+	// block, when set, holds every call until the channel is closed.
+	block chan struct{}
+	// delay, when set, is slept while the call is "in flight".
+	delay time.Duration
+	// respond, when set, returns the error to answer the given 1-based call with.
+	respond func(call int) promremote.WriteError
+}
+
+func (c *trackingTestClient) WriteProto(context.Context, *prompb.WriteRequest, promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+	return promremote.WriteResult{}, nil
+}
+
+func (c *trackingTestClient) WriteTimeSeries(_ context.Context, _ promremote.TSList, _ promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+	c.mu.Lock()
+	c.calls++
+	call := c.calls
+	c.inFlight++
+	if c.inFlight > c.maxInFlight {
+		c.maxInFlight = c.inFlight
+	}
+	c.mu.Unlock()
+
+	switch {
+	case c.block != nil:
+		<-c.block
+	case c.delay > 0:
+		time.Sleep(c.delay)
+	}
+
+	c.mu.Lock()
+	c.inFlight--
+	c.mu.Unlock()
+
+	if c.respond != nil {
+		if err := c.respond(call); err != nil {
+			return promremote.WriteResult{}, err
+		}
+	}
+	return promremote.WriteResult{}, nil
+}
+
+func (c *trackingTestClient) Calls() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.calls
+}
+
+func (c *trackingTestClient) MaxInFlight() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.maxInFlight
 }

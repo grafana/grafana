@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1197,9 +1197,9 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 		{
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
-			expectedCode:           http.StatusPreconditionFailed,
-			expectedMessage:        folder.ErrVersionMismatch.Error(),
-			expectedFolderSvcError: folder.ErrVersionMismatch,
+			expectedCode:           http.StatusConflict,
+			expectedMessage:        "a folder with the same UID already exists",
+			expectedFolderSvcError: folder.ErrSameUIDExists,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},
@@ -1627,7 +1627,7 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 	})
 
 	// Create parent and child folders
-	uid := uuid.NewString()[:8]
+	uid := uuid.NewV4().String()[:8]
 	parentUID := fmt.Sprintf("connected-parent-%s", uid)
 	childUID := fmt.Sprintf("connected-child-%s", uid)
 	createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %s", uid), "")
@@ -1690,7 +1690,7 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 	})
 
 	// Create parent and child folders
-	uid := uuid.NewString()[:8]
+	uid := uuid.NewV4().String()[:8]
 	parentUID := fmt.Sprintf("dangling-parent-%s", uid)
 	childUID := fmt.Sprintf("dangling-child-%s", uid)
 	createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %s", uid), "")

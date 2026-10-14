@@ -24,6 +24,8 @@ export const filterMetricsQuery = (query: CloudWatchMetricsQuery): boolean => {
   } else if (metricQueryType === MetricQueryType.Insights) {
     // still TBD how to validate the visual query builder for SQL
     return !!sqlExpression;
+  } else if (metricQueryType === MetricQueryType.PromQL) {
+    return !!query.promqlExpression;
   }
 
   return false;

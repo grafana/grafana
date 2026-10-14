@@ -31,7 +31,7 @@ type federatedClient struct {
 // Get the resource stats
 func (s *federatedClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	rsp, err := s.ResourceClient.GetStats(ctx, in, opts...)
-	if err != nil {
+	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
 		return nil, err
 	}
 

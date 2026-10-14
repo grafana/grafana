@@ -20,6 +20,8 @@ import (
 
 const (
 	PluginInstallSourceAnnotation = "plugins.grafana.app/install-source"
+	// PluginStoreSyncServiceIdentity identifies writes made by install sync.
+	PluginStoreSyncServiceIdentity = "plugins.installsync"
 	// AppliedDependenciesAnnotation records the dependency plugin IDs that the
 	// plugin storage hooks have applied for a plugin. The hooks stamp it
 	// authoritatively from plugin metadata on create/update.

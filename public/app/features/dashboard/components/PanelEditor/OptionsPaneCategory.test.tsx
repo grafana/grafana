@@ -33,6 +33,12 @@ describe('OptionsPaneCategory', () => {
   });
 
   describe('initial expanded state', () => {
+    it('labels expanded content when the category id contains whitespace', () => {
+      setup({ id: 'category with spaces' });
+
+      expect(screen.getByRole('group', { name: 'Test category' })).toHaveTextContent(childText);
+    });
+
     it('is expanded when it has items and is open by default', () => {
       setup({ itemsCount: 3, isOpenDefault: true });
       expect(screen.getByText(childText)).toBeInTheDocument();

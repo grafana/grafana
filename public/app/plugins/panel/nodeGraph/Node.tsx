@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import cx from 'clsx';
 import { type MouseEvent, memo } from 'react';
-import tinycolor from 'tinycolor2';
 
-import { type Field, getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type Field, getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, useTheme2 } from '@grafana/ui';
 
@@ -12,7 +11,11 @@ import { type NodeDatum } from './types';
 import { statToString } from './utils';
 
 export const nodeR = 40;
+
+// Nodes are drawn over the graph alongside user-supplied series colours, so these hold a fixed
+// value in both themes rather than following the theme surface.
 const highlightedNodeColor = '#a00';
+const defaultNodeCircumferenceColor = 'gray';
 
 const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
   mainGroup: css({
@@ -35,7 +38,7 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
   hoverCircle: css({
     opacity: 0.5,
     fill: 'transparent',
-    stroke: theme.colors.primary.text,
+    stroke: theme.colors.accent.text,
   }),
 
   text: css({
@@ -48,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
     textOverflow: 'ellipsis',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
-    backgroundColor: tinycolor(theme.colors.background.primary).setAlpha(0.6).toHex8String(),
+    backgroundColor: colorManipulator.alpha(theme.colors.background.primary, 0.6),
     width: '140px',
   }),
 
@@ -63,7 +66,7 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
   textHovering: css({
     width: '200px',
     '& span': {
-      backgroundColor: tinycolor(theme.colors.background.primary).setAlpha(0.8).toHex8String(),
+      backgroundColor: colorManipulator.alpha(theme.colors.background.primary, 0.8),
     },
   }),
 
@@ -108,7 +111,14 @@ export const Node = memo(function Node(props: {
         cy={node.y}
       />
       {isHovered && (
-        <circle className={styles.hoverCircle} r={nodeRadius - 3} cx={node.x} cy={node.y} strokeWidth={strokeWidth} />
+        <circle
+          data-testid={`node-hover-circle-${node.id}`}
+          className={styles.hoverCircle}
+          r={nodeRadius - 3}
+          cx={node.x}
+          cy={node.y}
+          strokeWidth={strokeWidth}
+        />
       )}
       <ColorCircle node={node} />
       <g className={styles.text} style={{ pointerEvents: 'none' }}>
@@ -209,7 +219,7 @@ function ColorCircle(props: { node: NodeDatum }) {
     return (
       <circle
         fill="none"
-        stroke={node.color ? getColor(node.color, node.dataFrameRowIndex, theme) : 'gray'}
+        stroke={node.color ? getColor(node.color, node.dataFrameRowIndex, theme) : defaultNodeCircumferenceColor}
         strokeWidth={strokeWidth}
         r={nodeRadius}
         cx={node.x}

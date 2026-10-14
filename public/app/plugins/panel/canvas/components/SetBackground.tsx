@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { ResourceDimensionMode } from '@grafana/schema';
 import { Portal, useTheme2 } from '@grafana/ui';
 import { type Scene } from 'app/features/canvas/runtime/scene';
-import { ResourcePickerPopover } from 'app/features/dimensions/editors/ResourcePickerPopover';
+import { ResourcePickerPopover } from 'app/features/dimensions/editors/ResourcePickerPopoverLazy';
 import { MediaType, ResourceFolderName } from 'app/features/dimensions/types';
 
 import { type AnchorPoint } from '../types';

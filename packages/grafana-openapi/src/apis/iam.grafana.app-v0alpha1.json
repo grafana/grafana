@@ -3112,7 +3112,6 @@
       "get": {
         "tags": ["User"],
         "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
-        "deprecated": true,
         "operationId": "getCurrentUserPermissions",
         "parameters": [],
         "responses": {
@@ -3125,7 +3124,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     }
   },
@@ -5122,6 +5122,10 @@
         "type": "object",
         "required": ["identity", "displayName"],
         "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -5130,6 +5134,10 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           },
           "identity": {
             "allOf": [
@@ -5273,6 +5281,10 @@
         "type": "object",
         "required": ["identity", "displayName"],
         "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -5281,6 +5293,10 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",
@@ -5563,20 +5579,20 @@
             "type": "string"
           },
           "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
             "type": "integer",
             "format": "int64",
             "default": 0
           },
           "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
             "type": "string",
             "default": ""
           }
         }
       },
       "SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -5624,13 +5640,13 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/WhereNode"
           }
         }
       },
       "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search.",
+        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {
@@ -5776,6 +5792,10 @@
         "type": "object",
         "required": ["identity", "displayName"],
         "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -5784,6 +5804,10 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",

@@ -14,16 +14,11 @@
 
 jest.mock('../../utils/date');
 
-// SpanDetailLinkButtons resolves data source settings via an async hook; return a
-// synchronous value so rendering doesn't trigger an un-acted state update in tests.
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, value: false, error: undefined }),
+  // Resolve synchronously so SpanDetailLinkButtons doesn't trigger un-acted state updates.
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
 jest.mock('./pluginPromo/attributePluginPromos', () => ({
@@ -210,9 +205,10 @@ describe('<SpanDetail>', () => {
     expect(screen.getByTestId('span-detail-cards-column')).toBeInTheDocument();
   });
 
-  it('shows the operation name', () => {
+  it('shows the operation name without an error icon when the span failed', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Span has an error')).not.toBeInTheDocument();
   });
 
   it('lists the service name, duration, start time and kind', () => {

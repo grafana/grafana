@@ -257,6 +257,25 @@ describe('backendSrv', () => {
       });
     });
 
+    it('rotates and retries when the server requires rotation despite a JWT auth label', async () => {
+      const { backendSrv, fromFetchMock } = getTestContext({ authenticatedBy: 'jwt' });
+      fromFetchMock.mockReturnValueOnce(
+        of({
+          ...createUnauthorizedResponse(),
+          text: async () => JSON.stringify({ messageId: 'session.token.rotate' }),
+        })
+      );
+
+      await expect(backendSrv.request({ url: '/api/ds/query', method: 'POST', retry: 0 })).resolves.toEqual({
+        test: 'hello world',
+      });
+      expect(fromFetchMock.mock.calls.map(([url]) => url)).toEqual([
+        '/api/ds/query',
+        '/api/user/auth-tokens/rotate',
+        '/api/ds/query',
+      ]);
+    });
+
     describe('when making an unsuccessful call because of soft token revocation', () => {
       it('then it should dispatch show Token Revoked modal event', async () => {
         const url = '/api/dashboard/';

@@ -25,7 +25,6 @@ import (
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type LegacyStorageProvider interface {
@@ -79,16 +78,6 @@ type StorageOptionsProvider interface {
 // first, and falls back to the unversioned answer for any GVR it declines.
 type VersionedStorageOptionsProvider interface {
 	GetVersionedStorageOptions(gvr schema.GroupVersionResource) *apistore.StorageOptions
-}
-
-// SearchIndexClientProvider lets an app installer serve the generic
-// POST .../{resource}/search endpoint for one of its GroupResources from a
-// client other than the apiserver's shared Unified Storage index -- for
-// example a dual-writer-aware client that still reads legacy SQL storage in
-// modes 0-3. Return nil for a GroupResource to defer to the shared index; only
-// the search route is affected, trash keeps using the shared index.
-type SearchIndexClientProvider interface {
-	GetSearchIndexClient(gr schema.GroupResource) resourcepb.ResourceIndexClient
 }
 
 type AppInstallerConfig struct {

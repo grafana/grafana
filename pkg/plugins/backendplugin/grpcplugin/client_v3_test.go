@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	v3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	pluginsdk "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 )
@@ -28,7 +29,7 @@ func TestLoadClientV3(t *testing.T) {
 		client := loadClientV3(protocol)
 
 		require.NotNil(t, client)
-		require.Implements(t, (*pluginv3.RouteServiceClient)(nil), client)
+		require.Implements(t, (*v3.Client)(nil), client)
 	})
 
 	t.Run("keeps legacy plugins working", func(t *testing.T) {

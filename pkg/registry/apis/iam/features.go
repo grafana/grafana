@@ -24,6 +24,7 @@ const (
 	APITeamLBACRules        API = "teamlbacrules"
 	APITeams                API = "teams"
 	APIUsers                API = "users"
+	APIUsersReadOnly        API = "users-readonly"
 	APIServiceAccounts      API = "serviceaccounts"
 	APIServiceAccountTokens API = "serviceaccounttokens"
 	APISSOSettings          API = "ssosettings"
@@ -40,6 +41,7 @@ var supportedAPIs = []API{
 	APITeamLBACRules,
 	APITeams,
 	APIUsers,
+	APIUsersReadOnly,
 	APIServiceAccounts,
 	APIServiceAccountTokens,
 	APISSOSettings,
@@ -55,6 +57,7 @@ type Features struct {
 	TeamLBACRulesAPI                  bool
 	TeamsAPI                          bool
 	UsersAPI                          bool
+	UsersAPIReadOnly                  bool
 	ServiceAccountsAPI                bool
 	ServiceAccountTokensAPI           bool
 	SSOSettingsAPI                    bool
@@ -62,6 +65,10 @@ type Features struct {
 	UserPermissionsAPI                bool
 	ServiceAccountResourcePermissions bool
 	ZanzanaSync                       bool
+}
+
+func (f Features) UserPermissionsAPIEnabled() bool {
+	return f.UserPermissionsAPI
 }
 
 // ProvideFeatures resolves the IAM startup feature set before any consumers
@@ -148,6 +155,9 @@ func FeaturesFromFlags(ctx context.Context, client openfeature.IClient) Features
 		return client.Boolean(ctx, key, false, openfeature.TransactionContext(ctx))
 	}
 
+	usersAPI := flag(featuremgmt.FlagKubernetesUsersApi)
+	usersReadAPI := flag(featuremgmt.FlagKubernetesUsersReadApi)
+
 	return Features{
 		RolesAPI:                          flag(featuremgmt.FlagKubernetesAuthzRolesApi),
 		RoleBindingsAPI:                   flag(featuremgmt.FlagKubernetesAuthzRoleBindingsApi),
@@ -155,7 +165,8 @@ func FeaturesFromFlags(ctx context.Context, client openfeature.IClient) Features
 		ResourcePermissionsAPI:            flag(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
 		TeamLBACRulesAPI:                  flag(featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi),
 		TeamsAPI:                          flag(featuremgmt.FlagKubernetesTeamsApi),
-		UsersAPI:                          flag(featuremgmt.FlagKubernetesUsersApi),
+		UsersAPI:                          usersAPI || usersReadAPI,
+		UsersAPIReadOnly:                  usersReadAPI && !usersAPI,
 		ServiceAccountsAPI:                flag(featuremgmt.FlagKubernetesServiceAccountsApi),
 		ServiceAccountTokensAPI:           flag(featuremgmt.FlagKubernetesServiceAccountTokensApi),
 		SSOSettingsAPI:                    flag(featuremgmt.FlagKubernetesSsoSettingsApi),
@@ -199,7 +210,8 @@ func (f *Features) SetAPIs(apis []API) {
 	f.ResourcePermissionsAPI = slices.Contains(apis, APIResourcePermissions)
 	f.TeamLBACRulesAPI = slices.Contains(apis, APITeamLBACRules)
 	f.TeamsAPI = slices.Contains(apis, APITeams)
-	f.UsersAPI = slices.Contains(apis, APIUsers)
+	f.UsersAPI = slices.Contains(apis, APIUsers) || slices.Contains(apis, APIUsersReadOnly)
+	f.UsersAPIReadOnly = slices.Contains(apis, APIUsersReadOnly) && !slices.Contains(apis, APIUsers)
 	f.ServiceAccountsAPI = slices.Contains(apis, APIServiceAccounts)
 	f.ServiceAccountTokensAPI = slices.Contains(apis, APIServiceAccountTokens)
 	f.SSOSettingsAPI = slices.Contains(apis, APISSOSettings)
@@ -232,7 +244,9 @@ func featureForAPI(f Features, api API) bool {
 	case APITeams:
 		return f.TeamsAPI
 	case APIUsers:
-		return f.UsersAPI
+		return f.UsersAPI && !f.UsersAPIReadOnly
+	case APIUsersReadOnly:
+		return f.UsersAPIReadOnly
 	case APIServiceAccounts:
 		return f.ServiceAccountsAPI
 	case APIServiceAccountTokens:

@@ -1581,9 +1581,6 @@
           "database": {
             "type": "string"
           },
-          "isDefault": {
-            "type": "boolean"
-          },
           "jsonData": {
             "type": "object",
             "additionalProperties": true,

@@ -1,4 +1,4 @@
-import { screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
@@ -114,7 +114,7 @@ async function buildAndRenderScenario({
 
   render(<drawer.Component model={drawer} />);
 
-  await waitForElementToBeRemoved(screen.getByText('Loading configuration'));
+  await screen.findByTestId(shareExternallySelector.container);
 
   return drawer.Component;
 }

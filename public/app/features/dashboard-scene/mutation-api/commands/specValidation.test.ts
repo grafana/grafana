@@ -13,13 +13,21 @@ jest.mock('../../serialization/transformSceneToSaveModelSchemaV2', () => ({
 
 jest.mock('../../serialization/transformSaveModelSchemaV2ToScene', () => ({
   transformSaveModelSchemaV2ToScene: (dto: unknown) => mockTransformSaveModelSchemaV2ToScene(dto),
+  createSceneVariableFromVariableModel: jest.fn(),
+}));
+
+jest.mock('../../serialization/sceneVariablesSetToVariables', () => ({
+  sceneVariablesSetToSchemaV2Variables: () => [],
 }));
 
 jest.mock('@grafana/scenes', () => ({
   sceneUtils: {
     cloneSceneObjectState: (state: unknown) => state,
+    getUrlState: () => ({}),
   },
+  sceneGraph: { findAllObjects: () => [] },
   NewSceneObjectAddedEvent: class {},
+  SceneVariableSet: class {},
 }));
 
 jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => ({

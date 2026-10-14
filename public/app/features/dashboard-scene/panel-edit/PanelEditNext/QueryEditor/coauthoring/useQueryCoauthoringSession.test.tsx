@@ -402,6 +402,58 @@ describe('useQueryCoauthoringSession', () => {
     expect(dismissInvocation).not.toHaveBeenCalled();
   });
 
+  it('restores the previewed proposal when retrying a failed acceptance', async () => {
+    const { user, onAccept, onPreview, onRevertPreview, queryCoauthoringProps, rerender } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+    onAccept.mockReturnValueOnce(false);
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(screen.getByText(/could not be accepted/i)).toBeInTheDocument();
+
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning />);
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Running updated query...');
+    expect(screen.getByText('Returns the increase over the selected range.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+
+    expect(onAccept).toHaveBeenCalledTimes(2);
+    expect(onAccept).toHaveBeenLastCalledWith({ refId: 'A', expr: 'increase(http_requests_total[5m])' });
+    expect(onPreview).toHaveBeenCalledTimes(1);
+    expect(onRevertPreview).not.toHaveBeenCalled();
+  });
+
+  it('returns to the submitted prompt when previewing a proposal fails', async () => {
+    const { user, onPreview, onAccept } = await setup();
+    onPreview.mockReturnValue(false);
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    expect(screen.getByText(/could not be previewed/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Use increase');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeEnabled();
+    expect(onAccept).not.toHaveBeenCalled();
+  });
+
   it('moves from running the updated query to previewing it without replacing the proposal', async () => {
     const { user, queryCoauthoringProps, rerender } = await setup();
 
@@ -425,6 +477,25 @@ describe('useQueryCoauthoringSession', () => {
     expect(screen.getByRole('status')).toBe(proposalStatus);
     expect(proposalStatus).toHaveTextContent('Previewing query');
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+  });
+
+  it('uses the current preview status when a request completes after the host starts running', async () => {
+    const { user, queryCoauthoringProps, rerender } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning />);
+
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Running updated query...');
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeEnabled();
   });
 
   it('does not preview a prepared proposal when generation later fails', async () => {
@@ -565,6 +636,40 @@ describe('useQueryCoauthoringSession', () => {
       datasource_type: 'prometheus',
     });
   });
+
+  it.each(['clarification', 'error'] as const)(
+    'ignores a late %s after Stop while a newer request completes',
+    async (outcome) => {
+      const { user, queryCoauthoringProps, rerender } = await setup();
+      await user.type(screen.getByRole('textbox'), 'Use increase');
+      await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+      const stoppedRequest = mockGenerate.mock.calls[0][0];
+
+      mockIsGenerating = true;
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      await user.click(screen.getByRole('button', { name: 'Stop' }));
+      mockIsGenerating = false;
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+
+      await user.clear(screen.getByRole('textbox'));
+      await user.type(screen.getByRole('textbox'), 'Group by handler');
+      await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+      act(() => {
+        if (outcome === 'clarification') {
+          stoppedRequest.onComplete('This response belongs to the stopped request.');
+        } else {
+          stoppedRequest.onError(new Error('stopped request failed'));
+        }
+      });
+      expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Group by handler');
+      act(() => mockGenerate.mock.calls[1][0].onComplete('Should I preserve the current range?'));
+
+      expect(screen.getByText('Should I preserve the current range?')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toHaveValue('');
+      expect(screen.queryByText('This response belongs to the stopped request.')).not.toBeInTheDocument();
+      expect(screen.queryByText(/could not build a query proposal/i)).not.toBeInTheDocument();
+    }
+  );
 
   it('terminates a stale proposal with an accurate outcome', async () => {
     const { user, stagePreview, onAccept, onPreview } = await setup();
@@ -858,6 +963,27 @@ describe('useQueryCoauthoringSession', () => {
     ]);
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('button', { name: 'Continue here' })).not.toBeInTheDocument();
+  });
+
+  it('keeps subsequent clarification turns inline after Continue here dismisses the iteration nudge', async () => {
+    const { user } = await setup();
+    for (let iteration = 0; iteration < 3; iteration++) {
+      await user.type(screen.getByRole('textbox'), `Iteration ${iteration + 1}`);
+      await user.click(screen.getByRole('button', { name: iteration === 0 ? 'Coauthor' : 'Continue' }));
+      act(() => mockGenerate.mock.calls[iteration][0].onComplete(`Could you clarify iteration ${iteration + 1}?`));
+    }
+
+    expect(screen.getByText(/Working on something big\?/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Continue here' }));
+    expect(screen.getByText('Could you clarify iteration 3?')).toBeInTheDocument();
+
+    await user.type(screen.getByRole('textbox', { name: 'Add extra detail' }), 'Group by handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    act(() => mockGenerate.mock.calls[3][0].onComplete('Should I preserve the current range?'));
+
+    expect(screen.getByText('Should I preserve the current range?')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toHaveValue('');
+    expect(screen.queryByText(/Working on something big\?/)).not.toBeInTheDocument();
   });
 
   it('keeps a failed third request separate from the iteration nudge', async () => {

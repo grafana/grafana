@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-var _ authorizer.Authorizer = &roleAuthorizer{}
+var _ authorizer.Authorizer = (*roleAuthorizer)(nil)
 
 var orgRoleNoneAsViewerAPIGroups = []string{
 	"productactivation.ext.grafana.com",

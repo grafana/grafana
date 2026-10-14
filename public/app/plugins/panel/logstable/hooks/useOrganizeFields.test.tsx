@@ -10,12 +10,14 @@ import {
 } from '@grafana/data';
 // Internal package imports, but not exposed to end users, how do we expect plugin developers to test anything that contains a transform?
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { setTemplateSrv } from '@grafana/runtime';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
+import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';
 
 import { useExtractFields } from './useExtractFields';
@@ -50,6 +52,7 @@ describe('useOrganizeFields', () => {
       // already initialized in this Jest worker
     }
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
+    setTemplateSrv(initTemplateSrv('key', []));
   });
 
   let extractedFrame: DataFrame;

@@ -249,7 +249,12 @@ export function TextNGEditor({
         />
       </div>
     ) : (
-      <TextNGHtmlView html={previewHtml} className={cx('markdown-html', styles.fullHeight)} testId={testId} />
+      <TextNGHtmlView
+        html={previewHtml}
+        hasData={Boolean(series?.length)}
+        className={cx('markdown-html', styles.fullHeight)}
+        testId={testId}
+      />
     );
   };
 
@@ -279,7 +284,15 @@ export function TextNGEditor({
         {showEditor && (
           // Outside interactions (Save, Apply, Back) blur the editor on mousedown,
           // so a pending draft is committed before anything reads the options.
-          <div ref={editorContainerRef} className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
+          // Escape stays here so it arms CodeMirror's Escape-then-Tab focus exit
+          // instead of reaching the global handler that leaves panel edit.
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div
+            ref={editorContainerRef}
+            className={cx(styles.pane, styles.editorPane)}
+            onBlur={commitDraft}
+            onKeyDown={(event) => event.key === 'Escape' && event.stopPropagation()}
+          >
             <CodeMirrorEditor
               value={draft}
               onChange={handleDraftChange}
