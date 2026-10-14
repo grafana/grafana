@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -42,10 +43,10 @@ type MockResourceIndex struct {
 	buildInfo IndexBuildInfo
 	docCount  int64
 
-	// Import times recorded through RecordImportTime, and an error to fail reading
-	// them with.
-	importTimes    map[schema.GroupResource]time.Time
-	importTimesErr error
+	// Types recorded through RecordCompletedTypeBuild, and an error to fail
+	// reading them with.
+	completedTypeBuilds    map[schema.GroupResource]TypeBuild
+	completedTypeBuildsErr error
 
 	// What the index reports holding, for reconciliation tests.
 	documentRefs    map[schema.GroupResource][]DocumentRef
@@ -123,22 +124,22 @@ func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats
 	return m.docCount, nil
 }
 
-func (m *MockResourceIndex) ImportTimes() (map[schema.GroupResource]time.Time, error) {
+func (m *MockResourceIndex) CompletedTypeBuilds() (map[schema.GroupResource]TypeBuild, error) {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
-	if m.importTimesErr != nil {
-		return nil, m.importTimesErr
+	if m.completedTypeBuildsErr != nil {
+		return nil, m.completedTypeBuildsErr
 	}
-	return maps.Clone(m.importTimes), nil
+	return maps.Clone(m.completedTypeBuilds), nil
 }
 
-func (m *MockResourceIndex) RecordImportTime(gr schema.GroupResource, t time.Time) error {
+func (m *MockResourceIndex) RecordCompletedTypeBuild(gr schema.GroupResource, build TypeBuild) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
-	if m.importTimes == nil {
-		m.importTimes = map[schema.GroupResource]time.Time{}
+	if m.completedTypeBuilds == nil {
+		m.completedTypeBuilds = map[schema.GroupResource]TypeBuild{}
 	}
-	m.importTimes[gr] = t
+	m.completedTypeBuilds[gr] = build
 	return nil
 }
 
@@ -177,7 +178,7 @@ func (m *MockResourceIndex) RecordReconciledAt(t time.Time) error {
 func (m *MockResourceIndex) ForgetType(gr schema.GroupResource) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
-	delete(m.importTimes, gr)
+	delete(m.completedTypeBuilds, gr)
 	delete(m.documentTypes, gr)
 	delete(m.documentRefs, gr)
 	return nil
@@ -185,17 +186,25 @@ func (m *MockResourceIndex) ForgetType(gr schema.GroupResource) error {
 
 // documentRefs is what ListDocumentRefs answers with, by resource type.
 func (m *MockResourceIndex) ListDocumentRefs(_ context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error] {
+	// One ref at a time, as the real index pages, so a document written while a
+	// caller is part way through is seen once the caller gets to it.
 	return func(yield func(DocumentRef, error) bool) {
 		m.updateIndexMu.Lock()
-		refs := slices.Clone(m.documentRefs[gr])
 		err := m.documentRefsErr
 		m.updateIndexMu.Unlock()
-
 		if err != nil {
 			yield(DocumentRef{}, err)
 			return
 		}
-		for _, ref := range refs {
+		for i := 0; ; i++ {
+			m.updateIndexMu.Lock()
+			refs := m.documentRefs[gr]
+			if i >= len(refs) {
+				m.updateIndexMu.Unlock()
+				return
+			}
+			ref := refs[i]
+			m.updateIndexMu.Unlock()
 			if !yield(ref, nil) {
 				return
 			}
@@ -318,6 +327,14 @@ func (m *mockStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr 
 		}
 	}
 	return time.Time{}, nil
+}
+
+func (m *mockStorageBackend) ListResourceLastImportTimes(context.Context) (map[NamespacedResource]time.Time, error) {
+	result := make(map[NamespacedResource]time.Time)
+	for _, entry := range m.lastImportTimes {
+		result[entry.NamespacedResource] = entry.LastImportTime
+	}
+	return result, nil
 }
 
 // featuresForTestIndex describes an index that does or does not keep deleted
@@ -1082,6 +1099,149 @@ func TestShouldRebuildIndex(t *testing.T) {
 	}
 }
 
+type countingImportTimeBackend struct {
+	StorageBackend
+	listCalls      int
+	singleCalls    int
+	readErr        error
+	failBeforeRead bool
+}
+
+func (b *countingImportTimeBackend) ListResourceLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
+	b.listCalls++
+	if b.failBeforeRead {
+		return nil, b.readErr
+	}
+	times, err := b.StorageBackend.ListResourceLastImportTimes(ctx)
+	if err != nil {
+		return times, err
+	}
+	return times, b.readErr
+}
+
+func (b *countingImportTimeBackend) GetResourceLastImportTime(ctx context.Context, key NamespacedResource) (time.Time, error) {
+	b.singleCalls++
+	return b.StorageBackend.GetResourceLastImportTime(ctx, key)
+}
+
+func TestScanForIndexesToRebuildReadsImportTimesOnce(t *testing.T) {
+	for _, namespaces := range []int{0, 1, 840} {
+		t.Run(fmt.Sprintf("%d namespaces", namespaces), func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			storage := &countingImportTimeBackend{StorageBackend: backend}
+			now := time.Now().UTC().Truncate(time.Second)
+			importTime := now.Add(-time.Minute)
+			require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+				NamespacedResource: dashboardType("ns-0"), LastImportTime: importTime,
+			}))
+			require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+				NamespacedResource: folderType("ns-0"), LastImportTime: now.Add(-10 * time.Minute),
+			}))
+			search := &mockSearchBackend{cache: make(map[NamespacedResource]ResourceIndex)}
+			server := globalTestServer(t, storage, search)
+			for i := range namespaces {
+				ns := fmt.Sprintf("ns-%d", i)
+				for _, key := range []NamespacedResource{dashboardType(ns), GlobalSearchKey(ns)} {
+					fields, hash, _ := server.searchFields.ForKey(key)
+					idx := &MockResourceIndex{
+						buildInfo:           IndexBuildInfo{BuildTime: now.Add(-5 * time.Minute), SelectableFields: fields, SearchFieldsHash: hash},
+						completedTypeBuilds: heldAt(time.Time{}, time.Time{}),
+						reconciledAt:        now,
+					}
+					if i == 0 {
+						idx.completedTypeBuilds = heldAt(now.Add(-10*time.Minute), now.Add(-10*time.Minute))
+					}
+					search.openIndexes = append(search.openIndexes, key)
+					search.cache[key] = idx
+				}
+			}
+
+			server.scanForIndexesToRebuild(t.Context(), true)
+
+			require.Equal(t, 1, storage.listCalls)
+			require.Zero(t, storage.singleCalls)
+			queued := server.rebuildQueue.Elements()
+			if namespaces == 0 {
+				require.Empty(t, queued)
+				return
+			}
+			require.Len(t, queued, 2)
+			for _, req := range queued {
+				if req.IsGlobal() {
+					require.Equal(t, GlobalSearchKey("ns-0"), req.NamespacedResource)
+					require.Equal(t, []schema.GroupResource{dashboardsGroupResource}, req.staleTypes)
+				} else {
+					require.Equal(t, dashboardType("ns-0"), req.NamespacedResource)
+					require.Equal(t, importTime, req.lastImportTime)
+				}
+			}
+		})
+	}
+}
+
+func TestScanForIndexesToRebuildContinuesAfterImportTimeReadError(t *testing.T) {
+	for _, failBeforeRead := range []bool{false, true} {
+		t.Run(fmt.Sprintf("fail before read=%t", failBeforeRead), func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			now := time.Now().UTC().Truncate(time.Second)
+			require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+				NamespacedResource: dashboardType("namespace"), LastImportTime: now,
+			}))
+			storage := &countingImportTimeBackend{
+				StorageBackend: backend, readErr: errors.New("storage unavailable"), failBeforeRead: failBeforeRead,
+			}
+			search := &mockSearchBackend{cache: make(map[NamespacedResource]ResourceIndex)}
+			server := globalTestServer(t, storage, search)
+			server.maxIndexAge = time.Hour
+			for _, key := range []NamespacedResource{dashboardType("namespace"), GlobalSearchKey("namespace"), folderType("namespace")} {
+				fields, hash, _ := server.searchFields.ForKey(key)
+				search.openIndexes = append(search.openIndexes, key)
+				search.cache[key] = &MockResourceIndex{
+					buildInfo:           IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), SelectableFields: fields, SearchFieldsHash: hash},
+					completedTypeBuilds: heldAt(time.Time{}, time.Time{}),
+					reconciledAt:        now,
+				}
+			}
+
+			server.scanForIndexesToRebuild(t.Context(), true)
+
+			require.Equal(t, 1, storage.listCalls)
+			require.Zero(t, storage.singleCalls, "a failed batch must not cause per-type reads")
+			queued := server.rebuildQueue.Elements()
+			if failBeforeRead {
+				require.Len(t, queued, 1, "age-based rebuilds still run without import times")
+				require.Equal(t, folderType("namespace"), queued[0].NamespacedResource)
+			} else {
+				require.Len(t, queued, 3, "available import times still trigger both kinds of index rebuild")
+			}
+		})
+	}
+}
+
+func TestStartupScanDoesNotQueueFullRebuilds(t *testing.T) {
+	storage := &mockStorageBackend{lastImportTimes: importedAt(importTuesday, importMonday)}
+	search := &mockSearchBackend{
+		openIndexes: []NamespacedResource{dashboardType("ns"), GlobalSearchKey("ns")},
+		cache: map[NamespacedResource]ResourceIndex{
+			dashboardType("ns"): &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importMonday}},
+			GlobalSearchKey("ns"): &MockResourceIndex{
+				buildInfo:           IndexBuildInfo{BuildTime: importMonday},
+				completedTypeBuilds: heldAt(importMonday, importMonday),
+				reconciledAt:        time.Now(),
+			},
+		},
+	}
+	server := globalTestServer(t, storage, search)
+
+	server.scanForIndexesToRebuild(t.Context(), false)
+
+	queued := server.rebuildQueue.Elements()
+	require.Len(t, queued, 1)
+	require.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
+	require.Equal(t, []schema.GroupResource{dashboardsGroupResource}, queued[0].staleTypes)
+	require.True(t, queued[0].lastImportTime.IsZero(), "only the imported type is queued, not a full rebuild")
+}
+
 func TestFindIndexesForRebuild(t *testing.T) {
 	storage := &mockStorageBackend{
 		resourceStats: []ResourceStats{
@@ -1223,6 +1383,47 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
 		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)
 	}
+}
+
+func TestRebuildIndexesIgnoresUnrelatedInvalidImportTime(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	storage := &countingImportTimeBackend{StorageBackend: backend}
+	now := time.Now().UTC().Truncate(time.Second)
+	importTime := now.Add(-time.Minute)
+	require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+		NamespacedResource: dashboardType("namespace"), LastImportTime: importTime,
+	}))
+	writer, err := backend.kv.Save(t.Context(), lastImportTimesSection, "unrelated~invalid-key")
+	require.NoError(t, err)
+	_, err = writer.Write([]byte{1})
+	require.NoError(t, err)
+	require.NoError(t, writer.Close())
+
+	_, err = backend.ListResourceLastImportTimes(t.Context())
+	require.Error(t, err, "a whole-store read fails on the unrelated record")
+
+	search := &mockSearchBackend{cache: make(map[NamespacedResource]ResourceIndex)}
+	server := globalTestServer(t, storage, search)
+	keys := make([]*resourcepb.ResourceKey, 0, 2)
+	for _, key := range []NamespacedResource{dashboardType("namespace"), GlobalSearchKey("namespace")} {
+		fields, hash, _ := server.searchFields.ForKey(key)
+		search.cache[key] = &MockResourceIndex{
+			buildInfo:           IndexBuildInfo{BuildTime: now, SelectableFields: fields, SearchFieldsHash: hash},
+			completedTypeBuilds: heldAt(importTime, time.Time{}),
+		}
+		keys = append(keys, &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource})
+	}
+
+	response, err := server.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+		Namespace: "namespace", Keys: keys,
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, response.Error)
+	require.Zero(t, response.RebuildCount, "both requested indexes have caught up with their imports")
+	require.Len(t, response.BuildTimes, len(keys))
+	require.Zero(t, storage.listCalls, "explicit rebuilds must not read unrelated records")
+	require.Equal(t, len(keys)+len(GlobalSearchResourceTypes()), storage.singleCalls)
 }
 
 func TestRebuildIndexes(t *testing.T) {
@@ -2361,11 +2562,10 @@ func TestBuildDeletedDocumentKeepsTags(t *testing.T) {
 	// An object with no usable tags is indexed without the field rather than with an
 	// empty list, so trash documents are shaped like live ones.
 	for name, body := range map[string]string{
-		"no tags":            `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone"}}`,
-		"empty list":         `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":[]}}`,
-		"tags not a list":    `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":"prod"}}`,
-		"no spec at all":     `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"}}`,
-		"spec not an object": `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":"just a string"}`,
+		"no tags":         `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone"}}`,
+		"empty list":      `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":[]}}`,
+		"tags not a list": `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":"prod"}}`,
+		"no spec at all":  `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"}}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			doc, err := buildDeletedDocument(key, 10, []byte(body))
@@ -2591,4 +2791,46 @@ func TestBuildResolvesDocumentBuilderOnFirstUse(t *testing.T) {
 
 		require.Equal(t, int32(1), supplier.resolved.Load(), "the builder resolved for the build should be reused by every update")
 	})
+}
+
+// decodeForTrash skips most of an object, so for any object the trash document has
+// to come out as from a full decode, failures included. If the document starts
+// reading a field decodeForTrash drops, the first case below fails.
+func TestBuildDeletedDocumentMatchesAFullDecode(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "group", Resource: "resource", Name: "gone"}
+	const head = `"apiVersion":"group/v1","kind":"Thing"`
+
+	for name, body := range map[string]string{
+		// Fields the document does not read hold values, so reading one shows up.
+		"every kind of field": `{` + head + `,
+			"metadata":{"name":"gone","labels":{"team":"a"},"deletionTimestamp":"2026-10-01T10:00:00Z",
+				"annotations":{"grafana.app/folder":"f1","grafana.app/updatedBy":"user:alice","grafana.app/managedBy":"repo"}},
+			"spec":{"title":"Gone","name":"n","tags":["a",1,"b"],"description":"d","panels":[{"id":1,"targets":[{"expr":"up"}]}],"ratio":0.5,"enabled":true,"empty":null},
+			"status":{"phase":"ready"}}`,
+		"title falls back to name":    `{` + head + `,"spec":{"title":"","name":"Named"}}`,
+		"title not a string":          `{` + head + `,"spec":{"title":{"x":1},"name":5}}`,
+		"spec null":                   `{` + head + `,"spec":null}`,
+		"no metadata":                 `{` + head + `,"spec":{"title":"Gone"}}`,
+		"null annotation value":       `{` + head + `,"metadata":{"annotations":{"grafana.app/folder":null,"grafana.app/updatedBy":"user:bob"}}}`,
+		"non-string annotation value": `{` + head + `,"metadata":{"annotations":{"grafana.app/updatedBy":7},"deletionTimestamp":"2026-10-01T10:00:00Z"}}`,
+		"deletion time unparseable":   `{` + head + `,"metadata":{"deletionTimestamp":"yesterday"}}`,
+		"not an object":               `["gone"]`,
+		"invalid json":                `{"kind":"Thing",`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			var whole unstructured.Unstructured
+			var want *IndexableDocument
+			wantErr := whole.UnmarshalJSON([]byte(body))
+			if wantErr == nil {
+				want, wantErr = deletedDocumentFrom(key, 42, &whole)
+			}
+			got, err := buildDeletedDocument(key, 42, []byte(body))
+			if wantErr != nil {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, want, got)
+		})
+	}
 }
