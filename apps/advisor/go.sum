@@ -592,8 +592,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.296.5 h1:86zOFJV6mSSYMPvcug6X4TlrrPm
 github.com/grafana/grafana-plugin-sdk-go v0.296.5/go.mod h1:E2WBpInzUESFrzNow91khsHYJPVEKTV0O05XLDMMKus=
 github.com/grafana/otel-profiling-go v0.6.0 h1:W7lOZaJj4IJISXMcM1UBk3fJF3tzF2OD6MJBJaQp1H8=
 github.com/grafana/otel-profiling-go v0.6.0/go.mod h1:cqLIDgNXlnzknJ0WLiEe+JPjZk2MZ4ftMdqRJRWj1ZM=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33 h1:ER9rMe2u+GhpTunXHZBIABONphXPyi8BfTLy8l3fdMs=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33/go.mod h1:sWX4vzxYuH91qFCd2Khubo61VjbksxRcb7SDHs5SDig=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623 h1:bHvgpgiN5QEnJTA8F6/REFyBB7s/OwAjlU/f6C+0eEY=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623/go.mod h1:zvcfvXbBCOpviFiPtQ1KClxQXJiteuDUwleRwaPUIZ0=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.12 h1:X6OemT2WcLtxdmNukEQuIp0c+efWVI/tBTd0oeWeDHI=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.12/go.mod h1:aNSXN1bn1VHAd06EiepmwhAabHsMc67gx8itecdF2c8=
 github.com/grafana/sqlds/v5 v5.3.1 h1:TEp3IKq3rcjz1LPDS1jkM8cFzXwvW3s0pA20EYOxGeM=
