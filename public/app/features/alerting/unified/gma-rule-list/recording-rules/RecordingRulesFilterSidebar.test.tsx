@@ -2,9 +2,15 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { render, screen } from 'test/test-utils';
 
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
+
+// Combobox (used for Health) measures its own floating-element size to render option rows;
+// jsdom reports zero for every element, so without this the option list never renders.
+mockComboboxRect();
 
 /** Feeds onChange back into criteria, so typing/selecting across multiple keystrokes behaves
  * like it does when a real page owns the criteria state. */
@@ -97,7 +103,25 @@ describe('RecordingRulesFilterSidebar', () => {
     expect(screen.queryByText('Paused')).not.toBeInTheDocument();
   });
 
-  it('SEARCH-5.1: shows Health as unavailable but visible', () => {
+  it('SEARCH-5.1: selecting a health calls onChange with that health', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(
+      <RecordingRulesFilterSidebar
+        criteria={createEmptyCriteria()}
+        onChange={onChange}
+        onClear={jest.fn()}
+        hasActiveFilters={false}
+      />
+    );
+
+    await user.click(screen.getByRole('combobox', { name: 'Health' }));
+    await user.click(await screen.findByRole('option', { name: 'OK' }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ health: 'ok' }));
+  });
+
+  it('does not offer an Alert state filter', () => {
     render(
       <RecordingRulesFilterSidebar
         criteria={createEmptyCriteria()}
@@ -107,7 +131,6 @@ describe('RecordingRulesFilterSidebar', () => {
       />
     );
 
-    expect(screen.getByText('Health')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/not available yet/i)).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Alert state' })).not.toBeInTheDocument();
   });
 });

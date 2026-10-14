@@ -2,6 +2,7 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { logWarning } from '../../Analytics';
 import { serialize } from '../rule-search/serializer';
+import { TOKEN_KEYS } from '../rule-search/tokens';
 
 import { type NameResolvers, resolveMigratedNames } from './migrationResolve';
 import {
@@ -10,6 +11,18 @@ import {
   type MigrationDiagnostics,
   migrateLegacyRuleListUrlSync,
 } from './migrationSync';
+
+// Event payloads carry names from this fixed list only; a user-typed token name is reported as `other`.
+const ANALYTICS_FILTER_KEYS = new Set<string>([
+  ...Object.values(TOKEN_KEYS),
+  'type',
+  'group',
+  'source',
+  'dataSource',
+  'alertState',
+  'ruleType',
+  'queryString',
+]);
 
 const DESTINATION_PATH: Record<Destination, string> = {
   alert: '/alerting/rules/alert',
@@ -20,6 +33,10 @@ export interface MigrationResult {
   pathname: string;
   search: string;
   diagnostics: MigrationDiagnostics;
+}
+
+function toAnalyticsKey(key: string): string {
+  return ANALYTICS_FILTER_KEYS.has(key) ? key : 'other';
 }
 
 /** Reads the legacy combined-list URL parameters this migration understands out of a
@@ -52,13 +69,14 @@ export async function migrateLegacyRuleListUrl(
 
   const diagnostics: MigrationDiagnostics = {
     migratedKeys: sync.diagnostics.migratedKeys,
-    droppedKeys: sync.diagnostics.droppedKeys,
-    unresolved: resolved.unresolved,
+    droppedKeys: [...new Set([...sync.diagnostics.droppedKeys, ...resolved.droppedKeys])].sort(),
   };
 
   reportMigrationDiagnostics(diagnostics);
   for (const key of diagnostics.droppedKeys) {
-    logWarning('Removed a rule-list filter incompatible with its migration destination', { filterKey: key });
+    logWarning('Removed a rule-list filter incompatible with its migration destination', {
+      filterKey: toAnalyticsKey(key),
+    });
   }
 
   const urlParams = new URLSearchParams();
@@ -93,7 +111,7 @@ function reportMigrationDiagnostics(diagnostics: MigrationDiagnostics): void {
     migrated_filter_keys: diagnostics.migratedKeys.join(','),
   };
   if (diagnostics.droppedKeys.length > 0) {
-    payload.dropped_filter_keys = diagnostics.droppedKeys.join(',');
+    payload.dropped_filter_keys = [...new Set(diagnostics.droppedKeys.map(toAnalyticsKey))].sort().join(',');
   }
 
   reportInteraction('grafana_alerting_gma_list_query_migration', payload);

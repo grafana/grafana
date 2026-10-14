@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Box, Divider, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Box, Divider, LoadingPlaceholder, Stack } from '@grafana/ui';
 
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { legacyRuleListNameResolvers } from '../legacy-migration/nameResolvers';
 import { RulesPageShell } from '../page-shell/RulesPageShell';
+import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { alertTokens } from '../rule-search/alertTokens';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
@@ -15,6 +16,7 @@ import { serialize } from '../rule-search/serializer';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { ConnectedSavedSearches } from '../saved-searches/ConnectedSavedSearches';
 import { SavedSearchesLoadingPlaceholder } from '../saved-searches/SavedSearchesLoadingPlaceholder';
+import { useDefaultSavedSearchGate } from '../saved-searches/useDefaultSavedSearchGate';
 import { useLegacySavedSearchesCopied } from '../saved-searches/useLegacySavedSearchesCopied';
 import { trackRuleListPageView } from '../shared/analytics';
 
@@ -24,7 +26,24 @@ import { AlertRulesHeaderActions } from './AlertRulesHeaderActions';
 import { ListView } from './AlertRulesListView';
 import { useAlertRulesSavedSearches } from './alertRulesSavedSearches';
 
-function AlertRulesBody({ canSearch, mode, criteria }: { canSearch: boolean; mode: RuleListMode; criteria: Criteria }) {
+function AlertRulesBody({
+  canSearch,
+  isApplyingDefault,
+  mode,
+  criteria,
+}: {
+  canSearch: boolean;
+  isApplyingDefault: boolean;
+  mode: RuleListMode;
+  criteria: Criteria;
+}) {
+  if (isApplyingDefault) {
+    return (
+      <LoadingPlaceholder
+        text={t('alerting.gma-rule-list.saved-searches.applying-default', 'Applying your default search...')}
+      />
+    );
+  }
   if (!canSearch) {
     return (
       <div role="alert">
@@ -39,11 +58,13 @@ function AlertRulesBody({ canSearch, mode, criteria }: { canSearch: boolean; mod
 }
 
 function AlertRulesPage() {
-  const { criteria, mode, setCriteria, setMode, reset } = useRuleListSearchState('alert');
+  const { criteria, mode, hasNonFolderFilters, hasSearchQuery, setCriteria, setMode, reset } =
+    useRuleListSearchState('alert');
   // getCriteriaIssues is cheap and pure; recomputed here rather than trusting a slot in the
   // hook's own return so this page never has to know its internal caching.
   const issues = getCriteriaIssues(criteria, 'alert');
   const savedSearchesReady = useLegacySavedSearchesCopied(legacyRuleListNameResolvers);
+  const defaultSearch = useDefaultSavedSearchGate(hasSearchQuery);
 
   const trackedView = useRef(false);
   useEffect(() => {
@@ -67,7 +88,7 @@ function AlertRulesPage() {
   };
 
   // The search/filter UI only ever produces criteria; it never fetches. Skip the request and
-  // show the invalid-filter state when getCriteriaIssues() reports an unresolved token or a
+  // show the invalid-filter state when getCriteriaIssues() reports an unsupported token or a
   // panel ID with no dashboard, rather than sending a narrower/wider request than intended.
   const canSearch = issues.length === 0;
 
@@ -95,6 +116,8 @@ function AlertRulesPage() {
                   parseForKind={(q) => parse(q, alertTokens).criteria}
                   resolvers={legacyRuleListNameResolvers}
                   setCriteria={setCriteria}
+                  applyDefault={defaultSearch.applyDefault}
+                  onDefaultSettled={defaultSearch.onSettled}
                   getHref={(search) => `/alerting/rules/alert?search=${encodeURIComponent(search.query)}`}
                 />
               ) : (
@@ -102,18 +125,7 @@ function AlertRulesPage() {
               )}
             </Box>
             <Box shrink={0}>
-              <RadioButtonGroup
-                value={mode}
-                onChange={setMode}
-                options={[
-                  {
-                    icon: 'folder',
-                    label: t('alerting.gma-rule-list.alert-rules.view-folders', 'Folders'),
-                    value: 'folders',
-                  },
-                  { icon: 'list-ul', label: t('alerting.gma-rule-list.alert-rules.view-list', 'List'), value: 'list' },
-                ]}
-              />
+              <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
             </Box>
           </Stack>
           <Stack direction="row" gap={2}>
@@ -129,7 +141,12 @@ function AlertRulesPage() {
               <Divider direction="vertical" spacing={0} />
             </Box>
             <Box grow={1} minWidth={0}>
-              <AlertRulesBody canSearch={canSearch} mode={mode} criteria={criteria} />
+              <AlertRulesBody
+                canSearch={canSearch}
+                isApplyingDefault={!defaultSearch.settled}
+                mode={mode}
+                criteria={criteria}
+              />
             </Box>
           </Stack>
         </Stack>

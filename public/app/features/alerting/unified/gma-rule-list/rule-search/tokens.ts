@@ -1,15 +1,10 @@
 import { type Criteria } from './criteria';
 
-/** Whether a token's backing API filter capability has landed yet. Unavailable tokens still
- * round-trip through the parser/serializer but are never turned into a search predicate. */
-export type TokenAvailability = 'available' | 'pending';
-
 export interface TokenDefinition {
   /** The `key` in `key:value`, e.g. `label`, `namespace`. */
   key: string;
   description: string;
   example: string;
-  availability: TokenAvailability;
   /** Whether the token may repeat (e.g. multiple `label:` or `datasource:` tokens). */
   multiValue?: boolean;
 }
@@ -65,21 +60,18 @@ export const sharedDefinitions: TokenDefinition[] = [
     key: TOKEN_KEYS.rule,
     description: 'Rule title text search (equivalent to free text).',
     example: 'rule:cpu-high',
-    availability: 'available',
     multiValue: true,
   },
   {
     key: TOKEN_KEYS.namespace,
     description: 'Folder (canonical value is the folder UID).',
     example: 'namespace:folder-uid',
-    availability: 'available',
     multiValue: true,
   },
   {
     key: TOKEN_KEYS.datasource,
     description: 'Query data source referenced by the rule (canonical value is the UID).',
     example: 'datasource:ds-uid',
-    availability: 'available',
     multiValue: true,
   },
   {
@@ -88,20 +80,17 @@ export const sharedDefinitions: TokenDefinition[] = [
       'Label matcher: label:key (exists), label:!key (absent), label:key=value (equal), ' +
       'label:key!=value (not equal), label:key=~re (regex), label:key!~re (not regex).',
     example: 'label:team=api',
-    availability: 'available',
     multiValue: true,
   },
   {
     key: TOKEN_KEYS.plugins,
     description: 'plugins:hide excludes rules created by plugins.',
     example: 'plugins:hide',
-    availability: 'available',
   },
   {
     key: TOKEN_KEYS.health,
-    description: 'Rule health. Visible but filtering is not deployed yet.',
+    description: 'Rule health: ok, nodata, error or unknown.',
     example: 'health:error',
-    availability: 'pending',
   },
 ];
 

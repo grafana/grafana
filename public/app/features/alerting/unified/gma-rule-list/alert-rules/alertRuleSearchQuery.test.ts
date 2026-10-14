@@ -1,4 +1,4 @@
-import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
+import { type Criteria, type HealthValue, type StateValue, createEmptyCriteria } from '../rule-search/criteria';
 import { getRuleSearchQueryViolations } from '../rule-search/ruleSearchQueryContract';
 
 import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
@@ -108,10 +108,10 @@ describe('buildAlertRuleSearchQuery', () => {
     });
   });
 
-  it('SEARCH-3.8: plugins:hide excludes the __grafana_origin label', () => {
+  it('SEARCH-3.8: plugins:hide excludes only plugin-managed rules, keeping rules without the origin label', () => {
     const criteria: Criteria = { ...createEmptyCriteria(), hidePluginRules: true };
     expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
-      filter: { field: 'labels', operator: 'NotIn', values: ['__grafana_origin'] },
+      regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true },
     });
   });
 
@@ -170,9 +170,38 @@ describe('buildAlertRuleSearchQuery', () => {
     });
   });
 
-  it('SEARCH-3.17: state/health never produce a leaf, even when set', () => {
+  it.each<[StateValue, string[]]>([
+    ['firing', ['Firing']],
+    ['pending', ['Pending']],
+    ['recovering', ['Recovering']],
+    ['normal', ['Healthy', 'Inactive']],
+    ['inactive', ['Healthy', 'Inactive']],
+  ])('SEARCH-5.1: state:%s sends state In %j', (state, values) => {
+    const criteria: Criteria = { ...createEmptyCriteria(), state };
+    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({ filter: { field: 'state', operator: 'In', values } });
+  });
+
+  it.each<[HealthValue, string]>([
+    ['ok', 'OK'],
+    ['nodata', 'NoData'],
+    ['error', 'Error'],
+    ['err', 'Error'],
+    ['unknown', 'Unknown'],
+  ])('SEARCH-5.2: health:%s sends health In [%s]', (health, value) => {
+    const criteria: Criteria = { ...createEmptyCriteria(), health };
+    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
+      filter: { field: 'health', operator: 'In', values: [value] },
+    });
+  });
+
+  it('SEARCH-5.3: state and health are separate leaves under one and', () => {
     const criteria: Criteria = { ...createEmptyCriteria(), state: 'firing', health: 'error' };
-    expect(buildAlertRuleSearchQuery(criteria).where).toBeUndefined();
+    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
+      and: [
+        { filter: { field: 'state', operator: 'In', values: ['Firing'] } },
+        { filter: { field: 'health', operator: 'In', values: ['Error'] } },
+      ],
+    });
   });
 
   it('SEARCH-3.18: passes through limit and continue', () => {
@@ -210,6 +239,7 @@ describe('buildAlertRuleSearchQuery', () => {
     ['contact point', { ...createEmptyCriteria(), contactPoint: 'on-call' }],
     ['default policy', { ...createEmptyCriteria(), policy: 'default' }],
     ['state and health', { ...createEmptyCriteria(), state: 'firing', health: 'error' }],
+    ['a state that sends two values', { ...createEmptyCriteria(), state: 'normal' }],
   ])('SEARCH-3.22 (%s): builds a request the per-kind rule search accepts', (_name, criteria) => {
     expect(getRuleSearchQueryViolations(buildAlertRuleSearchQuery(criteria, { continue: 'tok' }), 'alert')).toEqual([]);
   });

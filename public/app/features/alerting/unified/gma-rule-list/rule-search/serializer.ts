@@ -26,11 +26,6 @@ export function serialize(criteria: Criteria): string {
   for (const dataSourceUid of criteria.dataSourceUids) {
     parts.push(formatToken(TOKEN_KEYS.datasource, dataSourceUid));
   }
-  // Unresolved migration entries keep their original (name, not UID) value, unchanged.
-  for (const entry of criteria.unresolved) {
-    const key = entry.key === 'namespace' ? TOKEN_KEYS.namespace : TOKEN_KEYS.datasource;
-    parts.push(formatToken(key, entry.value));
-  }
   for (const label of criteria.labels) {
     parts.push(formatToken(TOKEN_KEYS.label, serializeLabelValue(label)));
   }
@@ -63,6 +58,9 @@ export function serialize(criteria: Criteria): string {
   }
   if (criteria.health) {
     parts.push(formatToken(TOKEN_KEYS.health, criteria.health));
+  }
+  for (const token of criteria.invalid) {
+    parts.push(token.raw);
   }
   for (const word of criteria.text) {
     parts.push(quoteIfNeeded(word));

@@ -1,9 +1,11 @@
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
+
 import { type Criteria } from '../rule-search/criteria';
 import {
   type BuildSearchQueryOptions,
-  DEFAULT_LIMIT,
   type SearchQuery,
   type SearchQueryLeaf,
+  buildHealthLeaves,
   buildSharedLeaves,
   toWhere,
 } from '../rule-search/searchQueryLeaves';
@@ -39,7 +41,11 @@ function buildRecordingOnlyLeaves(criteria: Criteria): SearchQueryLeaf[] {
 }
 
 export function buildRecordingRuleSearchQuery(criteria: Criteria, options: BuildSearchQueryOptions = {}): SearchQuery {
-  const leaves = [...buildSharedLeaves(criteria), ...buildRecordingOnlyLeaves(criteria)];
+  const leaves = [
+    ...buildSharedLeaves(criteria),
+    ...buildRecordingOnlyLeaves(criteria),
+    ...buildHealthLeaves(criteria, 'Recording'),
+  ];
 
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
@@ -47,7 +53,7 @@ export function buildRecordingRuleSearchQuery(criteria: Criteria, options: Build
     where: toWhere(leaves),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: RECORDING_RULE_FIELDS,
-    limit: options.limit ?? DEFAULT_LIMIT,
+    limit: options.limit ?? DEFAULT_PER_PAGE_PAGINATION,
     ...(options.continue ? { continue: options.continue } : {}),
   };
 }

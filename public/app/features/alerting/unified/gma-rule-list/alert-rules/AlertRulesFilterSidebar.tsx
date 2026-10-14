@@ -1,16 +1,14 @@
 import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
-import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Button, Combobox, type ComboboxOption, Input, Stack, Tooltip } from '@grafana/ui';
-import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 
-import { type Criteria, DEFAULT_POLICY } from '../rule-search/criteria';
+import { type Criteria, DEFAULT_POLICY, type StateValue } from '../rule-search/criteria';
 import { type CriteriaIssue } from '../rule-search/criteriaIssues';
 import {
   FilterSidebarContainer,
+  HealthField,
   InvalidTokenNote,
   LabelMatchersEditor,
   PendingFilterNote,
@@ -19,6 +17,7 @@ import {
   SidebarSection,
   SwitchField,
 } from '../rule-search/filterSidebarPrimitives';
+import { DataSourceMultiFilter, FolderMultiFilter } from '../rule-search/multiValueFilters';
 
 type PausedValue = 'any' | 'true' | 'false';
 
@@ -27,6 +26,18 @@ function getPausedOptions(): Array<ComboboxOption<PausedValue>> {
     { label: t('alerting.gma-rule-list.search.paused-any', 'Any'), value: 'any' },
     { label: t('alerting.gma-rule-list.search.paused-true', 'Paused'), value: 'true' },
     { label: t('alerting.gma-rule-list.search.paused-false', 'Not paused'), value: 'false' },
+  ];
+}
+
+type StateOption = StateValue | 'any';
+
+function getStateOptions(): Array<ComboboxOption<StateOption>> {
+  return [
+    { label: t('alerting.gma-rule-list.search.state-any', 'Any'), value: 'any' },
+    { label: t('alerting.gma-rule-list.search.state-firing', 'Firing'), value: 'firing' },
+    { label: t('alerting.gma-rule-list.search.state-pending', 'Pending'), value: 'pending' },
+    { label: t('alerting.gma-rule-list.search.state-recovering', 'Recovering'), value: 'recovering' },
+    { label: t('alerting.gma-rule-list.search.state-normal', 'Normal'), value: 'normal' },
   ];
 }
 
@@ -50,8 +61,8 @@ export function AlertRulesFilterSidebar({
   hasActiveFilters,
   issues = [],
 }: AlertRulesFilterSidebarProps) {
-  const unresolvedNamespace = issues.some((issue) => issue.key === 'namespace' && issue.reason === 'unresolved');
-  const unresolvedDataSource = issues.some((issue) => issue.key === 'datasource' && issue.reason === 'unresolved');
+  const invalidNamespace = hasIssue(issues, 'namespace');
+  const invalidDataSource = hasIssue(issues, 'datasource');
   const panelRequiresDashboard = issues.some(
     (issue) => issue.key === 'panelId' && issue.reason === 'requiresDashboard'
   );
@@ -75,28 +86,22 @@ export function AlertRulesFilterSidebar({
           <SidebarSection>
             <SidebarField
               label={<Trans i18nKey="alerting.gma-rule-list.search.property.folder">Folder</Trans>}
-              note={unresolvedNamespace && <InvalidTokenNote />}
+              note={invalidNamespace && <InvalidTokenNote />}
             >
-              <NestedFolderPicker
-                value={criteria.namespaces[0]}
-                invalid={unresolvedNamespace}
-                permission="view"
-                clearable
-                onChange={(uid) => onChange({ ...criteria, namespaces: uid ? [uid] : [] })}
+              <FolderMultiFilter
+                values={criteria.namespaces}
+                invalid={invalidNamespace}
+                onChange={(namespaces) => onChange({ ...criteria, namespaces })}
               />
             </SidebarField>
             <SidebarField
               label={<Trans i18nKey="alerting.gma-rule-list.search.property.datasource">Query data source</Trans>}
-              note={unresolvedDataSource && <InvalidTokenNote />}
+              note={invalidDataSource && <InvalidTokenNote />}
             >
-              <DataSourcePicker
-                current={criteria.dataSourceUids[0]}
-                // Without noDefault, an empty `current` preselects the org default data
-                // source instead of showing no selection — misleading here, where no
-                // selection means "don't filter by data source" rather than "use the default".
-                noDefault
-                onClear={() => onChange({ ...criteria, dataSourceUids: [] })}
-                onChange={(ds: DataSourceInstanceSettings) => onChange({ ...criteria, dataSourceUids: [ds.uid] })}
+              <DataSourceMultiFilter
+                values={criteria.dataSourceUids}
+                invalid={invalidDataSource}
+                onChange={(dataSourceUids) => onChange({ ...criteria, dataSourceUids })}
               />
             </SidebarField>
             <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.plugins">Plugin rules</Trans>}>
@@ -202,27 +207,25 @@ export function AlertRulesFilterSidebar({
           </SidebarSection>
 
           <SidebarSection>
-            <SidebarField
-              label={<Trans i18nKey="alerting.gma-rule-list.search.property.state">Alert state</Trans>}
-              note={<PendingFilterNote />}
-            >
-              <Input
-                disabled
-                placeholder={t('alerting.gma-rule-list.search.property.state-placeholder', 'Not available yet')}
+            <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.state">Alert state</Trans>}>
+              <Combobox<StateOption>
+                aria-label={t('alerting.gma-rule-list.search.property.state', 'Alert state')}
+                options={getStateOptions()}
+                // `inactive` is an accepted spelling of `normal`; both select the same option.
+                value={criteria.state === 'inactive' ? 'normal' : (criteria.state ?? 'any')}
+                onChange={(option) =>
+                  onChange({ ...criteria, state: !option || option.value === 'any' ? undefined : option.value })
+                }
               />
             </SidebarField>
-            <SidebarField
-              label={<Trans i18nKey="alerting.gma-rule-list.search.property.health">Health</Trans>}
-              note={<PendingFilterNote />}
-            >
-              <Input
-                disabled
-                placeholder={t('alerting.gma-rule-list.search.property.health-placeholder', 'Not available yet')}
-              />
-            </SidebarField>
+            <HealthField value={criteria.health} onChange={(health) => onChange({ ...criteria, health })} />
           </SidebarSection>
         </Stack>
       </Stack>
     </FilterSidebarContainer>
   );
+}
+
+function hasIssue(issues: CriteriaIssue[], key: string): boolean {
+  return issues.some((issue) => issue.key === key);
 }

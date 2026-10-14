@@ -41,7 +41,10 @@ function destinationForLegacyQuery(query: string): SavedSearchKind {
   return typeToken?.value === 'recording' ? 'recording' : 'alert';
 }
 
-async function migrateQuery(query: string, resolvers: NameResolvers): Promise<string> {
+async function migrateQuery(
+  query: string,
+  resolvers: NameResolvers
+): Promise<{ query: string; droppedKeys: string[] }> {
   const sync = migrateLegacyRuleListUrlSync({
     search: query,
     view: null,
@@ -51,7 +54,10 @@ async function migrateQuery(query: string, resolvers: NameResolvers): Promise<st
     queryString: null,
   });
   const resolved = await resolveMigratedNames(sync, resolvers);
-  return serialize(resolved.criteria);
+  return {
+    query: serialize(resolved.criteria),
+    droppedKeys: [...new Set([...sync.diagnostics.droppedKeys, ...resolved.droppedKeys])].sort(),
+  };
 }
 
 /**
@@ -83,7 +89,7 @@ async function migrateKind(
       continue;
     }
 
-    const query = await migrateQuery(legacy.query, resolvers);
+    const { query } = await migrateQuery(legacy.query, resolvers);
     const copy: SavedSearch = { ...legacy, query, isDefault: legacy.isDefault && !hasDefault };
     newSearches.push(copy);
     hasDefault = hasDefault || copy.isDefault;
@@ -147,6 +153,7 @@ function needsMigration(query: string): boolean {
  * conversion used for URL migration and persists the canonical form before returning
  * criteria to search with. A persistence failure never blocks applying — the caller still
  * gets criteria to search with even if the canonical form couldn't be saved back.
+ * `droppedKeys` names the filters the conversion removed, so the caller can say so.
  */
 export async function applySavedSearch(
   query: string,
@@ -154,16 +161,16 @@ export async function applySavedSearch(
   resolvers: NameResolvers,
   parseForKind: (query: string) => Criteria,
   persist: (canonicalQuery: string) => Promise<void>
-): Promise<{ criteria: Criteria; query: string }> {
+): Promise<{ criteria: Criteria; query: string; droppedKeys: string[] }> {
   if (!needsMigration(query)) {
-    return { criteria: parseForKind(query), query };
+    return { criteria: parseForKind(query), query, droppedKeys: [] };
   }
 
-  const canonicalQuery = await migrateQuery(query, resolvers);
+  const migrated = await migrateQuery(query, resolvers);
   try {
-    await persist(canonicalQuery);
+    await persist(migrated.query);
   } catch {
     // Swallow: the user should still see results even if storage is unavailable.
   }
-  return { criteria: parseForKind(canonicalQuery), query: canonicalQuery };
+  return { criteria: parseForKind(migrated.query), query: migrated.query, droppedKeys: migrated.droppedKeys };
 }

@@ -36,7 +36,7 @@ describe('useRuleListSearchState', () => {
     expect(new URLSearchParams(locationService.getLocation().search).get('view')).toBe('list');
   });
 
-  it('SEARCH-7.3: removing the non-folder criterion again does not switch back to Folders', () => {
+  it('SEARCH-7.3: clearing the last non-folder criterion returns to Folders and removes view from the URL', () => {
     const { result } = renderAt('/alerting/rules/alert');
 
     act(() => {
@@ -46,6 +46,39 @@ describe('useRuleListSearchState', () => {
 
     act(() => {
       result.current.setCriteria({ ...result.current.criteria, text: [] });
+    });
+
+    expect(result.current.mode).toBe('folders');
+    expect(new URLSearchParams(locationService.getLocation().search).has('view')).toBe(false);
+  });
+
+  it('SEARCH-7.7: clearing one of two non-folder criteria stays in List', () => {
+    const { result } = renderAt('/alerting/rules/alert?search=cpu%20paused%3Atrue&view=list');
+
+    act(() => {
+      result.current.setCriteria({ ...result.current.criteria, text: [] });
+    });
+
+    expect(result.current.mode).toBe('list');
+    expect(new URLSearchParams(locationService.getLocation().search).get('view')).toBe('list');
+  });
+
+  it('SEARCH-7.8: reset with filters applied returns to Folders', () => {
+    const { result } = renderAt('/alerting/rules/alert?search=cpu&view=list');
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current.mode).toBe('folders');
+    expect(locationService.getLocation().search).toBe('');
+  });
+
+  it('SEARCH-7.9: a List chosen with no filters is kept when the folder filter changes', () => {
+    const { result } = renderAt('/alerting/rules/alert?view=list');
+
+    act(() => {
+      result.current.setCriteria({ ...result.current.criteria, namespaces: ['folder-1'] });
     });
 
     expect(result.current.mode).toBe('list');
@@ -73,9 +106,24 @@ describe('useRuleListSearchState', () => {
     expect(result.current.mode).toBe('folders');
   });
 
-  it('SEARCH-7.6: an ignored state: token does not switch to List mode', () => {
-    const { result } = renderAt('/alerting/rules/alert?search=state%3Afiring');
+  it.each([
+    ['a state token', 'state%3Afiring'],
+    ['a health token', 'health%3Aerror'],
+    ['a token the page does not support', 'foo%3Abar'],
+  ])('SEARCH-7.6: %s switches to List mode', (_name, search) => {
+    const { result } = renderAt(`/alerting/rules/alert?search=${search}`);
+    expect(result.current.mode).toBe('list');
+  });
+
+  it('SEARCH-7.10: only a folder filter stays in Folders mode', () => {
+    const { result } = renderAt('/alerting/rules/alert?search=namespace%3Afolder-1');
     expect(result.current.mode).toBe('folders');
+    expect(result.current.hasNonFolderFilters).toBe(false);
+  });
+
+  it('reports whether the URL carries a search at all', () => {
+    expect(renderAt('/alerting/rules/alert').result.current.hasSearchQuery).toBe(false);
+    expect(renderAt('/alerting/rules/alert?search=cpu').result.current.hasSearchQuery).toBe(true);
   });
 
   it('SEARCH-1.1: setCriteria serializes criteria into the search URL param', () => {

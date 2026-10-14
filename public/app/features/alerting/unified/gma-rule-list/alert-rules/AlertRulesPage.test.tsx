@@ -1,7 +1,10 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { type DataSourceSrv, reportInteraction, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceSrv, locationService, reportInteraction, setDataSourceSrv } from '@grafana/runtime';
+import { UserStorage } from '@grafana/runtime/internal';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -9,12 +12,21 @@ import { setupMswServer } from '../../mockApi';
 
 import AlertRulesPage from './AlertRulesPage';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: jest.fn(),
-}));
+// test-utils replaces the runtime's locationService for every render. A plain spread would freeze
+// the first one here, and the page would then write URL changes to a history its router never sees.
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return Object.defineProperty({ ...actual, reportInteraction: jest.fn() }, 'locationService', {
+    enumerable: true,
+    get: () => actual.locationService,
+  });
+});
 
 const reportInteractionMock = jest.mocked(reportInteraction);
+
+// Combobox (state and health filters) measures its own floating element to render option rows, which
+// jsdom reports as zero.
+mockComboboxRect();
 
 const server = setupMswServer();
 
@@ -144,7 +156,7 @@ describe('AlertRulesPage', () => {
 
     render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
 
-    expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
     expect(lastWhere).toEqual({ filter: { field: 'name', operator: 'In', values: ['folder-1'] } });
   });
 
@@ -594,5 +606,273 @@ describe('AlertRulesPage', () => {
 
     expect(screen.getByRole('button', { name: 'Saved searches' })).toBeDisabled();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
+  });
+});
+
+describe('AlertRulesPage search and filters', () => {
+  const previousPermissions = contextSrv.user.permissions;
+  let ruleSearchBodies: Array<{ where?: unknown }>;
+
+  function whereOf(body: { where?: unknown } | undefined) {
+    return body?.where;
+  }
+
+  function urlSearchParams() {
+    return new URLSearchParams(locationService.getLocation().search);
+  }
+
+  beforeEach(() => {
+    localStorage.clear();
+    contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
+    const nameByUid: Record<string, string> = { 'ds-1': 'Prometheus', 'ds-2': 'Loki' };
+    setDataSourceSrv({
+      getList: () => [],
+      getInstanceSettings: (ref: string) =>
+        ref in nameByUid ? ({ uid: ref, name: nameByUid[ref] } as DataSourceInstanceSettings) : undefined,
+    } as unknown as DataSourceSrv);
+    mockFolderParents({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
+    mockFolderCounts({ 'folder-1': 3, 'folder-2': 1 });
+    mockFolderSearch(() => ({
+      items: [folderItem('folder-1', 'Team Alerts'), folderItem('folder-2', 'Infra')],
+      metadata: {},
+    }));
+    ruleSearchBodies = [];
+    mockAlertRuleSearch((body) => {
+      ruleSearchBodies.push(body as { where?: unknown });
+      return { items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} };
+    });
+    server.use(
+      http.get(ALERT_RULE_GET_URL, ({ params }) =>
+        HttpResponse.json({
+          apiVersion: 'v0alpha1',
+          kind: 'AlertRule',
+          metadata: { name: params.name },
+          spec: { title: 'rule', paused: false },
+        })
+      )
+    );
+  });
+
+  afterEach(() => {
+    contextSrv.user.permissions = previousPermissions;
+    setDataSourceSrv({ getList: () => [], getInstanceSettings: () => undefined } as unknown as DataSourceSrv);
+  });
+
+  // SEARCH-1
+  it('keeps a multi-token query exactly as typed, puts the applied criteria in the URL and sends them as one request', async () => {
+    const user = userEvent.setup();
+    render(<AlertRulesPage />);
+    const typed = 'paused:false cpu label:team=api  namespace:folder-1';
+
+    await user.type(await screen.findByRole('textbox', { name: 'Search' }), `${typed}{Enter}`);
+
+    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue(typed);
+    expect(urlSearchParams().get('search')).toBe('namespace:folder-1 label:team=api paused:false cpu');
+    expect(urlSearchParams().get('view')).toBe('list');
+    expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+      and: [
+        { text: { value: 'cpu' } },
+        { filter: { field: 'folder', operator: 'In', values: ['folder-1'] } },
+        { filter: { field: 'labels', operator: 'In', values: ['team=api'] } },
+        { filter: { field: 'paused', operator: 'In', values: ['false'] } },
+      ],
+    });
+  });
+
+  // SEARCH-1: sidebar and input edit the same criteria.
+  it('the search input follows a sidebar change', async () => {
+    const user = userEvent.setup();
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=cpu&view=list'] } });
+    await screen.findByText('CPU high');
+
+    await user.click(screen.getByRole('switch', { name: 'Hide plugin rules' }));
+
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('plugins:hide cpu'));
+  });
+
+  // NAV-5
+  it('shows an unsupported token as an invalid filter, keeps it in the input and sends no request', async () => {
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=foo%3Abar%20cpu&view=list'] } });
+
+    expect(await screen.findByText('Fix the invalid filter to see results')).toBeInTheDocument();
+    expect(screen.getByText('Some filters could not be applied: foo')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('foo:bar cpu');
+    expect(ruleSearchBodies).toEqual([]);
+  });
+
+  it('shows a Recording-only token as invalid on the Alert page', async () => {
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=metric%3Acpu_usage&view=list'] } });
+
+    expect(await screen.findByText('Some filters could not be applied: metric')).toBeInTheDocument();
+    expect(ruleSearchBodies).toEqual([]);
+  });
+
+  // SEARCH-5
+  it('sends the mapped state and health values for legacy token spellings', async () => {
+    render(<AlertRulesPage />, {
+      historyOptions: { initialEntries: ['/?search=state%3Anormal%20health%3Aerr&view=list'] },
+    });
+
+    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+      and: [
+        { filter: { field: 'state', operator: 'In', values: ['Healthy', 'Inactive'] } },
+        { filter: { field: 'health', operator: 'In', values: ['Error'] } },
+      ],
+    });
+    expect(screen.getByRole('combobox', { name: 'Alert state' })).toHaveValue('Normal');
+    expect(screen.getByRole('combobox', { name: 'Health' })).toHaveValue('Error');
+  });
+
+  it('choosing a state in the sidebar puts it in the URL and the request', async () => {
+    const user = userEvent.setup();
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await screen.findByText('CPU high');
+
+    await user.click(screen.getByRole('combobox', { name: 'Alert state' }));
+    await user.click(await screen.findByRole('option', { name: 'Firing' }));
+
+    await waitFor(() =>
+      expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+        filter: { field: 'state', operator: 'In', values: ['Firing'] },
+      })
+    );
+    expect(urlSearchParams().get('search')).toBe('state:firing');
+  });
+
+  // SEARCH-3: the sidebar shows and edits every value.
+  it('shows every folder and data source from the URL, sends each as one In and edits them from the sidebar', async () => {
+    const user = userEvent.setup();
+    render(<AlertRulesPage />, {
+      historyOptions: {
+        initialEntries: [
+          '/?search=namespace%3Afolder-1%20namespace%3Afolder-2%20datasource%3Ads-1%20datasource%3Ads-2&view=list',
+        ],
+      },
+    });
+
+    expect(await screen.findByRole('button', { name: 'Remove Team Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Infra' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Prometheus' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Loki' })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+        and: [
+          { filter: { field: 'folder', operator: 'In', values: ['folder-1', 'folder-2'] } },
+          { filter: { field: 'datasourceUIDs', operator: 'In', values: ['ds-1', 'ds-2'] } },
+        ],
+      })
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Remove Team Alerts' }));
+    await user.click(screen.getByRole('button', { name: 'Remove Loki' }));
+
+    await waitFor(() =>
+      expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+        and: [
+          { filter: { field: 'folder', operator: 'In', values: ['folder-2'] } },
+          { filter: { field: 'datasourceUIDs', operator: 'In', values: ['ds-1'] } },
+        ],
+      })
+    );
+    expect(urlSearchParams().get('search')).toBe('namespace:folder-2 datasource:ds-1');
+  });
+
+  // SEARCH-1: Add label filter.
+  it('Add label filter shows an empty row without changing the URL or sending a request until it has a key', async () => {
+    const user = userEvent.setup();
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await screen.findByText('CPU high');
+    const requestsBefore = ruleSearchBodies.length;
+
+    await user.click(screen.getByRole('button', { name: 'Add label filter' }));
+    await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api');
+    await user.tab();
+
+    expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('');
+    expect(urlSearchParams().has('search')).toBe(false);
+    expect(ruleSearchBodies).toHaveLength(requestsBefore);
+
+    await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
+
+    await waitFor(() =>
+      expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+        filter: { field: 'labels', operator: 'In', values: ['team=api'] },
+      })
+    );
+    expect(urlSearchParams().get('search')).toBe('label:team=api');
+  });
+
+  // SEARCH-7
+  it('applying a non-folder filter switches to List, disables Folders with its tooltip, and clearing returns to Folders', async () => {
+    const user = userEvent.setup();
+    render(<AlertRulesPage />);
+    expect(await screen.findByRole('radio', { name: 'Folders' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Folders' })).toBeEnabled();
+
+    await user.type(screen.getByRole('textbox', { name: 'Search' }), 'cpu{Enter}');
+
+    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'List' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Folders' })).toBeDisabled();
+    await user.hover(screen.getByRole('radiogroup'));
+    expect(await screen.findByText('Clear filters to browse by folder')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Folders' })).toBeEnabled();
+    expect(urlSearchParams().has('view')).toBe(false);
+  });
+
+  it('a folder-only filter stays in Folders mode', async () => {
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
+
+    expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Folders' })).toBeEnabled();
+  });
+
+  // SAVE-3
+  describe('default saved search', () => {
+    async function seedDefaultSearch(query: string) {
+      await new UserStorage('alerting').setItem(
+        'alertRulesSavedSearches',
+        JSON.stringify([{ id: 'saved-1', name: 'My default', query, isDefault: true, createdAt: 1 }])
+      );
+    }
+
+    it('applies the default saved search when the page opens with no query, without an unfiltered request first', async () => {
+      await seedDefaultSearch('cpu paused:false');
+
+      render(<AlertRulesPage />);
+
+      expect(await screen.findByText('CPU high')).toBeInTheDocument();
+      expect(urlSearchParams().get('search')).toBe('paused:false cpu');
+      expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('paused:false cpu');
+      expect(ruleSearchBodies.map(whereOf)).toEqual([
+        { and: [{ text: { value: 'cpu' } }, { filter: { field: 'paused', operator: 'In', values: ['false'] } }] },
+      ]);
+    });
+
+    it('does not apply the default saved search when the URL already has a query', async () => {
+      await seedDefaultSearch('cpu paused:false');
+
+      render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
+
+      expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
+      expect(urlSearchParams().get('search')).toBe('namespace:folder-1');
+      expect(ruleSearchBodies).toEqual([]);
+    });
+
+    it('shows the Folders view when there is no default saved search', async () => {
+      render(<AlertRulesPage />);
+
+      expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
+    });
   });
 });

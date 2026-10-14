@@ -1,7 +1,9 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
-import { type DataSourceSrv, reportInteraction, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, locationService, reportInteraction, setDataSourceSrv } from '@grafana/runtime';
+import { UserStorage } from '@grafana/runtime/internal';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -9,10 +11,19 @@ import { setupMswServer } from '../../mockApi';
 
 import RecordingRulesPage from './RecordingRulesPage';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: jest.fn(),
-}));
+// test-utils replaces the runtime's locationService for every render. A plain spread would freeze
+// the first one here, and the page would then write URL changes to a history its router never sees.
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return Object.defineProperty({ ...actual, reportInteraction: jest.fn() }, 'locationService', {
+    enumerable: true,
+    get: () => actual.locationService,
+  });
+});
+
+// Combobox (the health filter) measures its own floating element to render option rows, which
+// jsdom reports as zero.
+mockComboboxRect();
 
 const reportInteractionMock = jest.mocked(reportInteraction);
 
@@ -323,5 +334,122 @@ describe('RecordingRulesPage', () => {
 
     expect(screen.getByRole('button', { name: 'Saved searches' })).toBeDisabled();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
+  });
+
+  describe('search and filters', () => {
+    function urlSearchParams() {
+      return new URLSearchParams(locationService.getLocation().search);
+    }
+
+    let ruleSearchBodies: Array<{ where?: unknown }>;
+
+    beforeEach(() => {
+      localStorage.clear();
+      mockFolderSearch(() => ({
+        items: [folderItem('folder-1', 'Team Alerts'), folderItem('folder-2', 'Infra')],
+        metadata: {},
+      }));
+      ruleSearchBodies = [];
+      mockRecordingRuleSearch((body) => {
+        ruleSearchBodies.push(body as { where?: unknown });
+        return { items: [ruleItem('rule-1', 'CPU recorded', 'folder-1')], metadata: {} };
+      });
+    });
+
+    // SEARCH-1
+    it('keeps a multi-token query exactly as typed and sends the applied criteria as one request', async () => {
+      const user = userEvent.setup();
+      render(<RecordingRulesPage />);
+      const typed = 'metric:cpu_usage  cpu health:ok';
+
+      await user.type(await screen.findByRole('textbox', { name: 'Search' }), `${typed}{Enter}`);
+
+      expect(await screen.findByText('CPU recorded')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue(typed);
+      expect(urlSearchParams().get('search')).toBe('metric:cpu_usage health:ok cpu');
+      expect(ruleSearchBodies.at(-1)?.where).toEqual({
+        and: [
+          { text: { value: 'cpu' } },
+          { filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] } },
+          { filter: { field: 'health', operator: 'In', values: ['Recording'] } },
+        ],
+      });
+    });
+
+    // SEARCH-5
+    it('sends health In [NoData] for health:nodata and shows it in the sidebar', async () => {
+      render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=health%3Anodata&view=list'] } });
+
+      expect(await screen.findByText('CPU recorded')).toBeInTheDocument();
+      expect(ruleSearchBodies.at(-1)?.where).toEqual({
+        filter: { field: 'health', operator: 'In', values: ['NoData'] },
+      });
+      expect(screen.getByRole('combobox', { name: 'Health' })).toHaveValue('No data');
+    });
+
+    // NAV-5
+    it('shows an Alert-only state token as an invalid filter and sends no request', async () => {
+      render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=state%3Afiring&view=list'] } });
+
+      expect(await screen.findByText('Some filters could not be applied: state')).toBeInTheDocument();
+      expect(screen.getByText('Fix the invalid filter to see results')).toBeInTheDocument();
+      expect(ruleSearchBodies).toEqual([]);
+    });
+
+    // SEARCH-7
+    it('applying a filter switches to List with Folders disabled, and clearing it returns to Folders', async () => {
+      const user = userEvent.setup();
+      render(<RecordingRulesPage />);
+      expect(await screen.findByRole('radio', { name: 'Folders' })).toBeChecked();
+
+      await user.type(screen.getByRole('textbox', { name: 'Search' }), 'cpu{Enter}');
+
+      expect(await screen.findByText('CPU recorded')).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'List' })).toBeChecked();
+      expect(screen.getByRole('radio', { name: 'Folders' })).toBeDisabled();
+
+      await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+      expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
+    });
+
+    // SAVE-3
+    it('applies the Recording default saved search, not the Alert one, when the page opens with no query', async () => {
+      const storage = new UserStorage('alerting');
+      await storage.setItem(
+        'recordingRulesSavedSearches',
+        JSON.stringify([
+          { id: 'rec-1', name: 'Recording default', query: 'health:error', isDefault: true, createdAt: 1 },
+        ])
+      );
+      await storage.setItem(
+        'alertRulesSavedSearches',
+        JSON.stringify([{ id: 'alert-1', name: 'Alert default', query: 'cpu', isDefault: true, createdAt: 1 }])
+      );
+
+      render(<RecordingRulesPage />);
+
+      expect(await screen.findByText('CPU recorded')).toBeInTheDocument();
+      expect(urlSearchParams().get('search')).toBe('health:error');
+      expect(ruleSearchBodies.map((body) => body.where)).toEqual([
+        { filter: { field: 'health', operator: 'In', values: ['Error'] } },
+      ]);
+    });
+
+    it('does not apply the default saved search when the URL already has a query', async () => {
+      await new UserStorage('alerting').setItem(
+        'recordingRulesSavedSearches',
+        JSON.stringify([
+          { id: 'rec-1', name: 'Recording default', query: 'health:error', isDefault: true, createdAt: 1 },
+        ])
+      );
+
+      render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
+
+      expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
+      expect(urlSearchParams().get('search')).toBe('namespace:folder-1');
+    });
   });
 });

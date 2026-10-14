@@ -23,19 +23,17 @@ export interface MigrationDiagnostics {
   /** Sorted, allowlisted legacy param/token names that were translated into their canonical
    * equivalent. */
   migratedKeys: string[];
-  /** Sorted, allowlisted token names removed because they don't apply to the destination
-   * page, or no longer exist. */
+  /** Sorted token names removed because the destination page cannot apply them: they do not
+   * apply to it, no longer exist, are unknown, or are malformed. Names only, never values. */
   droppedKeys: string[];
-  /** Token keys (namespace/datasource) whose value could not be resolved to a UID. Always
-   * empty from the sync stage — filled in by the orchestrator after async resolution. */
-  unresolved: string[];
 }
 
 export interface SyncMigrationResult {
   destination: Destination;
   mode: ViewMode;
   /** Criteria with namespace/data-source entries still possibly holding legacy display
-   * names rather than UIDs — resolved by the async stage (migrationResolve.ts). */
+   * names rather than UIDs — resolved by the async stage (migrationResolve.ts). Never holds an
+   * invalid token: those are dropped here. */
   criteria: Criteria;
   diagnostics: MigrationDiagnostics;
 }
@@ -44,8 +42,6 @@ interface WorkingToken {
   key: string | null;
   value: string;
 }
-
-const KNOWN_FILTER_KEYS = new Set([...alertTokens, ...recordingTokens].map((t) => t.key));
 
 function destinationRegistry(destination: Destination) {
   return destination === 'recording' ? recordingTokens : alertTokens;
@@ -61,7 +57,16 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
   const migratedKeys = new Set<string>();
   const droppedKeys = new Set<string>();
 
-  let working: WorkingToken[] = tokenize(params.search ?? '').map((t) => ({ key: t.key, value: t.value }));
+  // An unterminated quote swallows the rest of the query into one value, so a keyed token that
+  // has one is malformed: it is removed rather than reinterpreted as a different filter.
+  let working: WorkingToken[] = [];
+  for (const token of tokenize(params.search ?? '')) {
+    if (token.key !== null && token.quoted && !token.closed) {
+      droppedKeys.add(token.key);
+    } else {
+      working.push({ key: token.key, value: token.value });
+    }
+  }
 
   // 1. Destination: an explicit `type:` token wins over the legacy `ruleType` param, which
   // wins over defaulting to Alert. `type:` only ever selects a page — it's not a filter, so
@@ -101,25 +106,18 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
     working = working.filter((t) => t.key !== 'source');
   }
 
-  // 5. Drop tokens that are known filters, but not for this destination (e.g. dashboard:
-  // arriving at the Recording page). Genuinely unknown tokens are left alone — they are not
-  // "incompatible", just not (yet) meaningful, and the parser preserves them as drafts.
-  const allowed = new Set(destinationRegistry(destination).map((t) => t.key));
-  working = working.filter((t) => {
-    if (t.key === null || !KNOWN_FILTER_KEYS.has(t.key)) {
-      return true;
-    }
-    if (allowed.has(t.key)) {
-      return true;
-    }
-    droppedKeys.add(t.key);
-    return false;
-  });
-
   const reserialized = working
     .map((t) => (t.key ? `${t.key}:${quoteIfNeeded(t.value)}` : quoteIfNeeded(t.value)))
     .join(' ');
   const { criteria } = parse(reserialized, destinationRegistry(destination));
+
+  // 5. Whatever the destination cannot apply is removed rather than carried into the new URL:
+  // a filter that belongs to the other page (dashboard: on Recording), an unknown token, or a
+  // malformed or repeated one.
+  for (const token of criteria.invalid) {
+    droppedKeys.add(token.key);
+  }
+  criteria.invalid = [];
 
   // 6. View mode: keep `view=list`; `view=grouped`, the unsupported legacy `view=state`, and
   // no `view` at all all become Folders (evaluation groups don't exist in the migrated UI,
@@ -133,7 +131,6 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
     diagnostics: {
       migratedKeys: [...migratedKeys].sort(),
       droppedKeys: [...droppedKeys].sort(),
-      unresolved: [],
     },
   };
 }

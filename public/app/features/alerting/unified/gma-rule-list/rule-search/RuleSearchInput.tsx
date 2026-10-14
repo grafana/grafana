@@ -6,16 +6,18 @@ import { FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
 import { PopupCard } from '../../components/HoverCard';
 
 import { type CriteriaIssue } from './criteriaIssues';
+import { parse } from './parser';
+import { serialize } from './serializer';
 import { type TokenDefinition } from './tokens';
 
 export interface RuleSearchInputProps {
   /** The applied canonical query — the full serialized criteria, not just free text. */
   query: string;
-  /** Called on a debounced valid edit, and immediately on Enter or blur. */
+  /** Called with the typed text on a debounced valid edit, and immediately on Enter or blur. */
   onApply: (query: string) => void;
   /** This page's token registry, used to generate the help popover. */
   tokens: TokenDefinition[];
-  /** Invalid/unresolved tokens to describe accessibly — from getCriteriaIssues(). */
+  /** Filters that could not be applied, to describe accessibly — from getCriteriaIssues(). */
   issues?: CriteriaIssue[];
   debounceMs?: number;
   id?: string;
@@ -25,9 +27,11 @@ const DEFAULT_DEBOUNCE_MS = 400;
 const ISSUES_DESCRIPTION_ID = 'rule-search-input-issues';
 
 /**
- * Free-text + filter-syntax search input shared by the Alert and Recording pages. Keeps a
- * local typing draft separate from the applied query so incomplete input never corrupts URL
- * state, matching the debounce-while-typing / apply-immediately-on-Enter contract.
+ * Free-text + filter-syntax search input shared by the Alert and Recording pages. The typed
+ * text is a local draft: applying it parses the text into criteria for the URL, but the input
+ * never takes the canonical form back, so typing never reorders tokens or drops unfinished ones.
+ * The draft is replaced only when the applied query changes for another reason (sidebar edit,
+ * saved search, Clear filters, browser navigation).
  */
 export function RuleSearchInput({
   query,
@@ -38,18 +42,25 @@ export function RuleSearchInput({
   id = 'rule-search-input',
 }: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
-  // Tracks the last value *this component* applied, so the effect below only resyncs the
-  // draft when `query` changed for some other reason (URL nav, sidebar edit, Clear
-  // filters) — not as an echo of our own apply causing a re-render.
+  const draftRef = useRef(query);
+  // The last text this component applied. A `query` that is its canonical form is an echo of
+  // our own apply, not an outside change.
   const lastAppliedRef = useRef(query);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  const canonicalize = useCallback((text: string) => serialize(parse(text, tokens).criteria), [tokens]);
+
   useEffect(() => {
-    if (query !== lastAppliedRef.current) {
-      lastAppliedRef.current = query;
-      setDraft(query);
+    if (query === canonicalize(lastAppliedRef.current)) {
+      return;
     }
-  }, [query]);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    lastAppliedRef.current = query;
+    draftRef.current = query;
+    setDraft(query);
+  }, [query, canonicalize]);
 
   useEffect(() => {
     return () => {
@@ -71,11 +82,16 @@ export function RuleSearchInput({
   );
 
   const handleChange = (value: string) => {
+    draftRef.current = value;
     setDraft(value);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    timeoutRef.current = setTimeout(() => apply(value), debounceMs);
+    // A half-typed filter would only flash an invalid-filter state, so only complete text is
+    // applied while typing; Enter and blur apply whatever is there.
+    if (parse(value, tokens).criteria.invalid.length === 0) {
+      timeoutRef.current = setTimeout(() => apply(value), debounceMs);
+    }
   };
 
   const invalidKeys = [...new Set(issues.map((issue) => issue.key))];
@@ -110,7 +126,11 @@ export function RuleSearchInput({
             apply(draft);
           }
         }}
-        onBlur={() => apply(draft)}
+        onBlur={() => {
+          if (canonicalize(draft) !== query) {
+            apply(draft);
+          }
+        }}
         aria-invalid={hasIssues || undefined}
         aria-describedby={hasIssues ? ISSUES_DESCRIPTION_ID : undefined}
       />
@@ -130,8 +150,7 @@ function SearchHelp({ tokens }: { tokens: TokenDefinition[] }) {
     <Stack direction="column" gap={1}>
       <Text element="p">
         <Trans i18nKey="alerting.gma-rule-list.search.help-intro">
-          Search syntax allows you to query rules by the filters below. Filters marked &quot;coming soon&quot; are
-          visible but not yet functional.
+          Search syntax allows you to query rules by the filters below.
         </Trans>
       </Text>
       <hr />
@@ -153,17 +172,7 @@ function SearchHelp({ tokens }: { tokens: TokenDefinition[] }) {
 function HelpRow({ definition }: { definition: TokenDefinition }) {
   return (
     <>
-      <Text element="span">
-        {definition.description}
-        {definition.availability === 'pending' && (
-          <>
-            {' '}
-            <Text color="secondary" variant="bodySmall">
-              (<Trans i18nKey="alerting.gma-rule-list.search.help-coming-soon">coming soon</Trans>)
-            </Text>
-          </>
-        )}
-      </Text>
+      <Text element="span">{definition.description}</Text>
       <code>{definition.example}</code>
     </>
   );

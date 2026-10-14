@@ -1,5 +1,6 @@
 import { type ResultItem, generatedAPI as folderSearchAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { dispatch } from 'app/store/store';
 
 import { type NameResolvers } from './migrationResolve';
@@ -22,7 +23,7 @@ export async function resolveFolderUidByName(name: string): Promise<string | und
         kind: 'SearchQuery',
         where: { and: [{ text: { value: title, fields: ['title'] } }] },
         fields: ['title'],
-        limit: 40,
+        limit: DEFAULT_PER_PAGE_PAGINATION,
       },
     })
   ).unwrap();

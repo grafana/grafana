@@ -2,20 +2,20 @@ import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, Input, Stack } from '@grafana/ui';
-import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
 import { type Criteria } from '../rule-search/criteria';
 import { type CriteriaIssue } from '../rule-search/criteriaIssues';
 import {
   FilterSidebarContainer,
+  HealthField,
   InvalidTokenNote,
   LabelMatchersEditor,
-  PendingFilterNote,
   RuleTitleField,
   SidebarField,
   SidebarSection,
   SwitchField,
 } from '../rule-search/filterSidebarPrimitives';
+import { DataSourceMultiFilter, FolderMultiFilter } from '../rule-search/multiValueFilters';
 
 export interface RecordingRulesFilterSidebarProps {
   criteria: Criteria;
@@ -35,8 +35,8 @@ export function RecordingRulesFilterSidebar({
   hasActiveFilters,
   issues = [],
 }: RecordingRulesFilterSidebarProps) {
-  const unresolvedNamespace = issues.some((issue) => issue.key === 'namespace' && issue.reason === 'unresolved');
-  const unresolvedDataSource = issues.some((issue) => issue.key === 'datasource' && issue.reason === 'unresolved');
+  const invalidNamespace = issues.some((issue) => issue.key === 'namespace');
+  const invalidDataSource = issues.some((issue) => issue.key === 'datasource');
 
   return (
     <FilterSidebarContainer>
@@ -57,25 +57,22 @@ export function RecordingRulesFilterSidebar({
           <SidebarSection>
             <SidebarField
               label={<Trans i18nKey="alerting.gma-rule-list.search.property.folder">Folder</Trans>}
-              note={unresolvedNamespace && <InvalidTokenNote />}
+              note={invalidNamespace && <InvalidTokenNote />}
             >
-              <NestedFolderPicker
-                value={criteria.namespaces[0]}
-                invalid={unresolvedNamespace}
-                permission="view"
-                clearable
-                onChange={(uid) => onChange({ ...criteria, namespaces: uid ? [uid] : [] })}
+              <FolderMultiFilter
+                values={criteria.namespaces}
+                invalid={invalidNamespace}
+                onChange={(namespaces) => onChange({ ...criteria, namespaces })}
               />
             </SidebarField>
             <SidebarField
               label={<Trans i18nKey="alerting.gma-rule-list.search.property.datasource">Query data source</Trans>}
-              note={unresolvedDataSource && <InvalidTokenNote />}
+              note={invalidDataSource && <InvalidTokenNote />}
             >
-              <DataSourcePicker
-                current={criteria.dataSourceUids[0]}
-                noDefault
-                onClear={() => onChange({ ...criteria, dataSourceUids: [] })}
-                onChange={(ds: DataSourceInstanceSettings) => onChange({ ...criteria, dataSourceUids: [ds.uid] })}
+              <DataSourceMultiFilter
+                values={criteria.dataSourceUids}
+                invalid={invalidDataSource}
+                onChange={(dataSourceUids) => onChange({ ...criteria, dataSourceUids })}
               />
             </SidebarField>
             <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.plugins">Plugin rules</Trans>}>
@@ -112,15 +109,7 @@ export function RecordingRulesFilterSidebar({
           </SidebarSection>
 
           <SidebarSection>
-            <SidebarField
-              label={<Trans i18nKey="alerting.gma-rule-list.search.property.health">Health</Trans>}
-              note={<PendingFilterNote />}
-            >
-              <Input
-                disabled
-                placeholder={t('alerting.gma-rule-list.search.property.health-placeholder', 'Not available yet')}
-              />
-            </SidebarField>
+            <HealthField value={criteria.health} onChange={(health) => onChange({ ...criteria, health })} />
           </SidebarSection>
         </Stack>
       </Stack>

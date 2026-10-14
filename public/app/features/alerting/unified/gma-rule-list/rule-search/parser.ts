@@ -1,18 +1,20 @@
-import { type Criteria, createEmptyCriteria } from './criteria';
+import { type Criteria, HEALTH_VALUES, STATE_VALUES, createEmptyCriteria } from './criteria';
 import { parseLabelValue } from './labelMatcher';
 import { tokenize } from './tokenizer';
 import { type ParseResult, type ParsedToken, TOKEN_KEYS, type TokenDefinition, buildTokenRegistry } from './tokens';
 
 /**
  * Parses a flat search string into an ordered token list (for later caret-based editing)
- * and a canonical Criteria object. Tokens whose key is not in `registry`, and tokens that
- * are still incomplete (e.g. `label:` with no value yet, or an unterminated quote), are
- * preserved in the token list but never contribute to `criteria` — see README.md.
+ * and a canonical Criteria object. A token the page cannot apply (a key outside `registry`, an
+ * incomplete or malformed value, a repeat of a single-value token) stays in the token list and
+ * is recorded in `criteria.invalid` exactly as written, so it is shown as invalid rather than
+ * silently ignored — see README.md.
  */
 export function parse(input: string, registry: TokenDefinition[]): ParseResult {
   const byKey = buildTokenRegistry(registry);
   const criteria = createEmptyCriteria();
   const tokens: ParsedToken[] = [];
+  const appliedSingleValueKeys = new Set<string>();
 
   for (const raw of tokenize(input)) {
     if (raw.key === null) {
@@ -23,71 +25,87 @@ export function parse(input: string, registry: TokenDefinition[]): ParseResult {
       continue;
     }
 
-    const known = byKey.has(raw.key);
+    const definition = byKey.get(raw.key);
     const incomplete = raw.value.length === 0 || (raw.quoted && !raw.closed);
-    tokens.push({ ...raw, known, incomplete });
+    tokens.push({ ...raw, known: Boolean(definition), incomplete });
 
-    if (known && !incomplete) {
-      applyToken(criteria, raw.key, raw.value);
+    const isRepeat = !definition?.multiValue && appliedSingleValueKeys.has(raw.key);
+    const applied = definition && !incomplete && !isRepeat && applyToken(criteria, raw.key, raw.value);
+
+    if (applied) {
+      appliedSingleValueKeys.add(raw.key);
+    } else {
+      criteria.invalid.push({ key: raw.key, raw: input.slice(raw.start, raw.end) });
     }
   }
 
   return { tokens, criteria };
 }
 
-function applyToken(criteria: Criteria, key: string, value: string): void {
+/** Returns false when `value` is not one this token accepts, leaving `criteria` untouched. */
+function applyToken(criteria: Criteria, key: string, value: string): boolean {
   switch (key) {
     case TOKEN_KEYS.rule:
       criteria.text.push(value);
-      return;
+      return true;
     case TOKEN_KEYS.namespace:
       criteria.namespaces.push(value);
-      return;
+      return true;
     case TOKEN_KEYS.datasource:
       criteria.dataSourceUids.push(value);
-      return;
+      return true;
     case TOKEN_KEYS.label: {
       const matcher = parseLabelValue(value);
       if (matcher) {
         criteria.labels.push(matcher);
       }
-      return;
+      return Boolean(matcher);
     }
     case TOKEN_KEYS.plugins:
       if (value === 'hide') {
         criteria.hidePluginRules = true;
+        return true;
       }
-      return;
-    case TOKEN_KEYS.health:
-      criteria.health = value;
-      return;
-    case TOKEN_KEYS.state:
-      criteria.state = value;
-      return;
+      return false;
+    case TOKEN_KEYS.health: {
+      const health = HEALTH_VALUES.find((candidate) => candidate === value.toLowerCase());
+      if (health) {
+        criteria.health = health;
+      }
+      return Boolean(health);
+    }
+    case TOKEN_KEYS.state: {
+      const state = STATE_VALUES.find((candidate) => candidate === value.toLowerCase());
+      if (state) {
+        criteria.state = state;
+      }
+      return Boolean(state);
+    }
     case TOKEN_KEYS.dashboard:
       criteria.dashboardUid = value;
-      return;
+      return true;
     case TOKEN_KEYS.panelId:
       criteria.panelId = value;
-      return;
+      return true;
     case TOKEN_KEYS.contactPoint:
       criteria.contactPoint = value;
-      return;
+      return true;
     case TOKEN_KEYS.policy:
       criteria.policy = value;
-      return;
+      return true;
     case TOKEN_KEYS.paused:
       if (value === 'true' || value === 'false') {
         criteria.paused = value;
+        return true;
       }
-      return;
+      return false;
     case TOKEN_KEYS.metric:
       criteria.metric = value;
-      return;
+      return true;
     case TOKEN_KEYS.targetDatasource:
       criteria.targetDataSourceUid = value;
-      return;
+      return true;
     default:
-      return;
+      return false;
   }
 }

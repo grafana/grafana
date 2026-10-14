@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Box, Divider, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Box, Divider, LoadingPlaceholder, Stack } from '@grafana/ui';
 
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { legacyRuleListNameResolvers } from '../legacy-migration/nameResolvers';
 import { RulesPageShell } from '../page-shell/RulesPageShell';
+import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 import { getCriteriaIssues } from '../rule-search/criteriaIssues';
@@ -15,6 +16,7 @@ import { serialize } from '../rule-search/serializer';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { ConnectedSavedSearches } from '../saved-searches/ConnectedSavedSearches';
 import { SavedSearchesLoadingPlaceholder } from '../saved-searches/SavedSearchesLoadingPlaceholder';
+import { useDefaultSavedSearchGate } from '../saved-searches/useDefaultSavedSearchGate';
 import { useLegacySavedSearchesCopied } from '../saved-searches/useLegacySavedSearchesCopied';
 import { trackRuleListPageView } from '../shared/analytics';
 
@@ -26,13 +28,22 @@ import { useRecordingRulesSavedSearches } from './recordingRulesSavedSearches';
 
 function RecordingRulesBody({
   canSearch,
+  isApplyingDefault,
   mode,
   criteria,
 }: {
   canSearch: boolean;
+  isApplyingDefault: boolean;
   mode: RuleListMode;
   criteria: Criteria;
 }) {
+  if (isApplyingDefault) {
+    return (
+      <LoadingPlaceholder
+        text={t('alerting.gma-rule-list.saved-searches.applying-default', 'Applying your default search...')}
+      />
+    );
+  }
   if (!canSearch) {
     return (
       <div role="alert">
@@ -47,9 +58,11 @@ function RecordingRulesBody({
 }
 
 function RecordingRulesPage() {
-  const { criteria, mode, setCriteria, setMode, reset } = useRuleListSearchState('recording');
+  const { criteria, mode, hasNonFolderFilters, hasSearchQuery, setCriteria, setMode, reset } =
+    useRuleListSearchState('recording');
   const issues = getCriteriaIssues(criteria, 'recording');
   const savedSearchesReady = useLegacySavedSearchesCopied(legacyRuleListNameResolvers);
+  const defaultSearch = useDefaultSavedSearchGate(hasSearchQuery);
 
   const trackedView = useRef(false);
   useEffect(() => {
@@ -98,6 +111,8 @@ function RecordingRulesPage() {
                   parseForKind={(q) => parse(q, recordingTokens).criteria}
                   resolvers={legacyRuleListNameResolvers}
                   setCriteria={setCriteria}
+                  applyDefault={defaultSearch.applyDefault}
+                  onDefaultSettled={defaultSearch.onSettled}
                   getHref={(search) => `/alerting/rules/recording?search=${encodeURIComponent(search.query)}`}
                 />
               ) : (
@@ -105,22 +120,7 @@ function RecordingRulesPage() {
               )}
             </Box>
             <Box shrink={0}>
-              <RadioButtonGroup
-                value={mode}
-                onChange={setMode}
-                options={[
-                  {
-                    icon: 'folder',
-                    label: t('alerting.gma-rule-list.recording-rules.view-folders', 'Folders'),
-                    value: 'folders',
-                  },
-                  {
-                    icon: 'list-ul',
-                    label: t('alerting.gma-rule-list.recording-rules.view-list', 'List'),
-                    value: 'list',
-                  },
-                ]}
-              />
+              <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
             </Box>
           </Stack>
           <Stack direction="row" gap={0}>
@@ -136,7 +136,12 @@ function RecordingRulesPage() {
               <Divider direction="vertical" spacing={2} />
             </Box>
             <Box grow={1} minWidth={0}>
-              <RecordingRulesBody canSearch={canSearch} mode={mode} criteria={criteria} />
+              <RecordingRulesBody
+                canSearch={canSearch}
+                isApplyingDefault={!defaultSearch.settled}
+                mode={mode}
+                criteria={criteria}
+              />
             </Box>
           </Stack>
         </Stack>

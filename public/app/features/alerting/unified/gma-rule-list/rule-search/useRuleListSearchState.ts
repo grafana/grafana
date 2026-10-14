@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 
 import { alertTokens } from './alertTokens';
-import { type Criteria } from './criteria';
+import { type Criteria, createEmptyCriteria } from './criteria';
 import { type CriteriaIssue, getCriteriaIssues } from './criteriaIssues';
 import { parse } from './parser';
 import { recordingTokens } from './recordingTokens';
@@ -16,7 +16,11 @@ export interface UseRuleListSearchStateResult {
   criteria: Criteria;
   issues: CriteriaIssue[];
   mode: RuleListMode;
-  setCriteria: (criteria: Criteria) => void;
+  /** Whether any filter other than the folder filter is applied, which makes Folders unavailable. */
+  hasNonFolderFilters: boolean;
+  /** True when the URL carries a `search` value at all, whether or not it parses to any filter. */
+  hasSearchQuery: boolean;
+  setCriteria: (criteria: Criteria, options?: { replace?: boolean }) => void;
   setMode: (mode: RuleListMode) => void;
   reset: () => void;
 }
@@ -25,21 +29,23 @@ function registryFor(kind: RuleListKind) {
   return kind === 'alert' ? alertTokens : recordingTokens;
 }
 
-/** A criterion is folder-only when it's empty or just the folder filter. State/health don't
- * count: they're ignored tokens with no search predicate, so they never force a switch. */
+/** Folders mode supports only the folder filter, so any other criterion, including a token the
+ * page cannot apply, makes the list a List. */
 function hasNonFolderCriteria(criteria: Criteria): boolean {
   return (
     criteria.text.length > 0 ||
     criteria.dataSourceUids.length > 0 ||
     criteria.labels.length > 0 ||
     criteria.hidePluginRules ||
-    criteria.unresolved.length > 0 ||
+    criteria.invalid.length > 0 ||
     Boolean(
       criteria.dashboardUid ||
         criteria.panelId ||
         criteria.contactPoint ||
         criteria.policy ||
         criteria.paused ||
+        criteria.state ||
+        criteria.health ||
         criteria.metric ||
         criteria.targetDataSourceUid
     )
@@ -48,10 +54,9 @@ function hasNonFolderCriteria(criteria: Criteria): boolean {
 
 /**
  * Reads/writes the canonical `search` and `view` URL params for one page (Alert or
- * Recording). Enforces the mode rule on both directions: any non-folder criterion forces
- * List, and once forced, clearing that criterion again does not switch back to Folders on
- * its own — the URL's `view` param is the only source of truth for mode, so it simply keeps
- * whatever it was last explicitly set to.
+ * Recording). Any non-folder criterion shows List, whatever `view` says. Applying one writes
+ * `view=list`; clearing the last one removes `view`, so the page returns to Folders instead of
+ * staying on a List with nothing to list. `view=list` on its own (the user picked List) is kept.
  */
 export function useRuleListSearchState(kind: RuleListKind): UseRuleListSearchStateResult {
   const [queryParams, updateQueryParams] = useURLSearchParams();
@@ -65,34 +70,46 @@ export function useRuleListSearchState(kind: RuleListKind): UseRuleListSearchSta
 
   // Folders is unavailable while non-folder criteria are active, regardless of what `view`
   // says — this is the one place the rule is enforced on read, not just on write.
-  const mode: RuleListMode = hasNonFolderCriteria(criteria) || viewParam === 'list' ? 'list' : 'folders';
+  const hasNonFolderFilters = hasNonFolderCriteria(criteria);
+  const mode: RuleListMode = hasNonFolderFilters || viewParam === 'list' ? 'list' : 'folders';
 
   const setCriteria = useCallback(
-    (next: Criteria) => {
+    (next: Criteria, options?: { replace?: boolean }) => {
       const nextSearch = serialize(next);
-      // Force List once a non-folder criterion is active; otherwise leave `view` exactly as
-      // it was, so removing the criterion doesn't silently switch back to Folders.
-      const nextView = hasNonFolderCriteria(next) ? 'list' : (viewParam ?? undefined);
-      updateQueryParams({ search: nextSearch.length > 0 ? nextSearch : undefined, view: nextView });
+      const hasNext = hasNonFolderCriteria(next);
+      let nextView = viewParam ?? undefined;
+      if (hasNext) {
+        nextView = 'list';
+      } else if (hasNonFolderFilters) {
+        nextView = undefined;
+      }
+      updateQueryParams({ search: nextSearch.length > 0 ? nextSearch : undefined, view: nextView }, options?.replace);
     },
-    [updateQueryParams, viewParam]
+    [hasNonFolderFilters, updateQueryParams, viewParam]
   );
 
   const setMode = useCallback(
     (next: RuleListMode) => {
-      if (next === 'folders' && hasNonFolderCriteria(criteria)) {
+      if (next === 'folders' && hasNonFolderFilters) {
         // Folders is unavailable while non-folder criteria are active — the caller should
         // have disabled the control; this is a defensive no-op, not a silent filter clear.
         return;
       }
       updateQueryParams({ view: next === 'list' ? 'list' : undefined });
     },
-    [criteria, updateQueryParams]
+    [hasNonFolderFilters, updateQueryParams]
   );
 
-  const reset = useCallback(() => {
-    updateQueryParams({ search: undefined });
-  }, [updateQueryParams]);
+  const reset = useCallback(() => setCriteria(createEmptyCriteria()), [setCriteria]);
 
-  return { criteria, issues, mode, setCriteria, setMode, reset };
+  return {
+    criteria,
+    issues,
+    mode,
+    hasNonFolderFilters,
+    hasSearchQuery: search.length > 0,
+    setCriteria,
+    setMode,
+    reset,
+  };
 }

@@ -33,7 +33,7 @@ export function getRuleSearchQueryViolations(query: SearchQuery, kind: 'alert' |
         violations.push(`regex pattern must be key=<regex> with a literal key: ${pattern}`);
       }
     } else {
-      violations.push(...getFilterViolations(leaf.filter, filterable, seenFields));
+      violations.push(...getFilterViolations(leaf.filter, filterable, seenFields, kind));
     }
   }
 
@@ -100,6 +100,12 @@ const RETURNABLE_FIELDS = {
 };
 const MULTI_VALUE_FIELDS = new Set(['name', 'folder', 'datasourceUIDs', 'state', 'health']);
 const NEGATABLE_FIELDS = new Set(['labels', 'state', 'health']);
+// The store compares these exactly and case-sensitively, so only the capitalised spellings match.
+const ALERT_STATE_API_VALUES = new Set(['Inactive', 'Healthy', 'Firing', 'Pending', 'Recovering']);
+const HEALTH_API_VALUES = {
+  alert: new Set(['Unknown', 'OK', 'Paused', 'Error', 'NoData']),
+  recording: new Set(['Unknown', 'Recording', 'Paused', 'Error', 'NoData']),
+};
 const EXPRESSION_DATASOURCE_UIDS = new Set(['__expr__', '-100', '__ml__']);
 
 type Leaf = Exclude<NonNullable<SearchQuery['where']>, { and: unknown }>;
@@ -120,7 +126,8 @@ function flattenWhere(where: SearchQuery['where'], violations: string[]): Leaf[]
 function getFilterViolations(
   filter: { field: string; operator: string; values: string[] },
   filterable: Set<string>,
-  seenFields: Set<string>
+  seenFields: Set<string>,
+  kind: 'alert' | 'recording'
 ): string[] {
   const { field, operator, values } = filter;
   const violations: string[] = [];
@@ -148,6 +155,12 @@ function getFilterViolations(
   }
 
   const [first = ''] = values;
+  if (field === 'state' && values.some((value) => !ALERT_STATE_API_VALUES.has(value))) {
+    violations.push(`state values must be one of ${[...ALERT_STATE_API_VALUES].join(', ')}`);
+  }
+  if (field === 'health' && values.some((value) => !HEALTH_API_VALUES[kind].has(value))) {
+    violations.push(`health values must be one of ${[...HEALTH_API_VALUES[kind]].join(', ')}`);
+  }
   if (field === 'paused' && first !== 'true' && first !== 'false') {
     violations.push('paused must be a boolean');
   }

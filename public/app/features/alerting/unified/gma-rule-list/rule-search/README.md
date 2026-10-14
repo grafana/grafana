@@ -25,10 +25,15 @@ A query is a flat, space-separated sequence of free text and `key:value` filter 
   - `label:team=~api.*` — regex match
   - `label:team!~api.*` — negated regex match
 
-An unknown `key:` (not in the page's token registry) and an incomplete token (`label:` with
-no value yet, or an unterminated quote) are never dropped: they round-trip through
-`parse`/token list as drafts so a user's in-progress typing, or a filter this page doesn't
-support, isn't silently destroyed.
+A token the page cannot apply is never dropped or ignored. That covers a `key:` outside the
+page's token registry, an incomplete token (`label:` with no value yet, an unterminated quote),
+a value the token does not accept (`paused:maybe`, `state:bogus`, `label:=api`), and a repeat of a
+single-value token. `parse` records each in `criteria.invalid` exactly as written, `serialize`
+writes it back unchanged, and `getCriteriaIssues` reports it, so the page shows it as an invalid
+filter and sends no request until it is fixed.
+
+The search input keeps the typed text as a draft: applying it writes the canonical criteria to the
+URL, but the input never takes the canonical form back, so typing does not reorder or drop tokens.
 
 ## Modules
 
@@ -39,13 +44,13 @@ support, isn't silently destroyed.
   `buildTokenRegistry`.
 - `alertTokens.ts` / `recordingTokens.ts` — the per-page registries built from shared +
   kind-specific `TokenDefinition`s (key, description, example, `availability`).
-- `parser.ts` — `parse(input, registry)`: `RawToken[]` → `{ tokens, criteria }`. Unknown or
-  incomplete tokens still appear in `tokens`, never in `criteria`.
+- `parser.ts` — `parse(input, registry)`: `RawToken[]` → `{ tokens, criteria }`. Tokens the page
+  cannot apply appear in `tokens` and in `criteria.invalid`.
 - `serializer.ts` — `serialize(criteria)`: canonical string form. `parse(serialize(c))`
   round-trips for any `Criteria` populated only from fields the given registry defines.
-- `criteriaIssues.ts` — `getCriteriaIssues(criteria, kind)`: problems (an unresolved migrated
-  name, a `panelId` with no `dashboardUid`, `policy:default`, a value the rule search rejects
-  such as a wildcard) the page must act on before issuing a request.
+- `criteriaIssues.ts` — `getCriteriaIssues(criteria, kind)`: problems (an unsupported token, a
+  `panelId` with no `dashboardUid`, `policy:default`, a value the rule search rejects such as a
+  wildcard) the page must act on before issuing a request.
 - `searchQueryLeaves.ts` — the rule search request types and the leaves shared by both
   kinds; `alert-rules/alertRuleSearchQuery.ts` and
   `recording-rules/recordingRuleSearchQuery.ts` build each kind's request body from `Criteria`;
@@ -72,7 +77,11 @@ The rule search has no accepted request form for it yet, so it is reported by
 
 ## `state:` / `health:`
 
-Both tokens parse and round-trip (so a typed or migrated URL isn't mangled), but neither
-`buildAlertRuleSearchQuery` nor `buildRecordingRuleSearchQuery` ever emits a leaf for them:
-filtering on these fields isn't deployed yet. They are marked `availability: 'pending'` in
-their `TokenDefinition` for the sidebar/help UI to show as visible-but-disabled.
+`state:` (Alert only) accepts `firing`, `pending`, `recovering`, `normal` and `inactive`; `health:`
+(both pages) accepts `ok`, `nodata`, `error`, `err` and `unknown`, in any letter case. The request
+builders send the API's own values: `state:normal` and `state:inactive` both send
+`state In [Healthy, Inactive]`, and `health:ok` sends `OK` on Alert rules and `Recording` on
+Recording rules. A rule with no stored status matches none of them.
+
+`ruleSearchQueryContract.ts` mirrors what the per-kind rule search accepts, including these values,
+so builder tests can assert every request stays inside it.

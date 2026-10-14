@@ -8,6 +8,13 @@
 /** Reserved `policy` value that stands for "rules using the default notification policy". */
 export const DEFAULT_POLICY = 'default';
 
+/** Spellings the `state:` and `health:` tokens accept, kept as the old list's so existing links keep working. */
+export const STATE_VALUES = ['firing', 'pending', 'recovering', 'normal', 'inactive'] as const;
+export const HEALTH_VALUES = ['ok', 'nodata', 'error', 'err', 'unknown'] as const;
+
+export type StateValue = (typeof STATE_VALUES)[number];
+export type HealthValue = (typeof HEALTH_VALUES)[number];
+
 export type LabelOperator = 'equal' | 'notEqual' | 'regex' | 'notRegex' | 'exists' | 'absent';
 
 export interface LabelMatcher {
@@ -15,6 +22,12 @@ export interface LabelMatcher {
   operator: LabelOperator;
   /** Absent for `exists`/`absent`, which carry no value. */
   value?: string;
+}
+
+export interface InvalidToken {
+  key: string;
+  /** The token exactly as it was written, so serializing keeps it unchanged. */
+  raw: string;
 }
 
 /**
@@ -27,21 +40,18 @@ export interface Criteria {
    * Both map to the same request text leaf: they mean the same thing (a title search) so
    * there's no reason to keep them separate downstream. */
   text: string[];
-  /** Folder UIDs. Never holds a display name — a name that failed migration resolution is
-   * kept in `unresolved`, not here (see below). */
+  /** Folder UIDs. Display names are resolved to UIDs only by legacy-link migration. */
   namespaces: string[];
-  /** Query datasource UIDs. Same rule as `namespaces` for unresolved entries. */
+  /** Query datasource UIDs. */
   dataSourceUids: string[];
   labels: LabelMatcher[];
   hidePluginRules: boolean;
 
-  /** Folder/datasource display names that URL migration could not resolve to a UID —
-   * kept as-is (never dropped) rather than mixed into `namespaces`/`dataSourceUids`, so a
-   * resolved UID and an unresolved name are never ambiguous. Only ever populated by
-   * migrationResolve.ts; getCriteriaIssues() surfaces these so the page can show the token
-   * as invalid and skip the request, rather than silently searching without that filter.
-   * serialize() keeps them in the URL unchanged. */
-  unresolved: Array<{ key: 'namespace' | 'datasource'; value: string }>;
+  /** Tokens the page cannot apply: an unsupported key, an incomplete or malformed value, or a
+   * repeat of a single-value token. They stay in the criteria (and the URL) as typed so they are
+   * shown as invalid and never silently dropped; getCriteriaIssues() reports them and the page
+   * sends no request while any are present. */
+  invalid: InvalidToken[];
 
   // Alert-only
   dashboardUid?: string;
@@ -52,15 +62,12 @@ export interface Criteria {
   /** Named routing tree, or `DEFAULT_POLICY` for the default-policy filter (not searchable yet). */
   policy?: string;
   paused?: 'true' | 'false';
+  state?: StateValue;
 
   // Recording-only
   metric?: string;
   targetDataSourceUid?: string;
-
-  /** Pending (state/health): filtering isn't deployed yet, so these are preserved for
-   * round-tripping and future UI but never turned into a search predicate. */
-  state?: string;
-  health?: string;
+  health?: HealthValue;
 }
 
 export function createEmptyCriteria(): Criteria {
@@ -70,6 +77,6 @@ export function createEmptyCriteria(): Criteria {
     dataSourceUids: [],
     labels: [],
     hidePluginRules: false,
-    unresolved: [],
+    invalid: [],
   };
 }

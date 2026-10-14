@@ -1,5 +1,8 @@
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { type NameResolvers } from '../legacy-migration/migrationResolve';
+import { alertTokens } from '../rule-search/alertTokens';
+import { type Criteria } from '../rule-search/criteria';
+import { parse } from '../rule-search/parser';
 
 // In-memory store keyed by storage key, shared across the mocked UserStorage instances that
 // createStorageLoader/UserStorage construct internally — mirrors the module-level cache the
@@ -38,6 +41,10 @@ import {
   copyLegacySavedSearchesOnce,
   migratedMarkerKeyForKind,
 } from './savedSearchesMigration';
+
+function parseAlertQuery(query: string): Criteria {
+  return parse(query, alertTokens).criteria;
+}
 
 function resolvers(overrides: Partial<NameResolvers> = {}): NameResolvers {
   return {
@@ -210,14 +217,7 @@ describe('applySavedSearch', () => {
   });
 
   it('SAVE-2.1: returns criteria straight from an already-canonical query, without migrating', async () => {
-    const parseForKind = jest.fn((query: string) => ({
-      text: [query],
-      namespaces: [],
-      dataSourceUids: [],
-      labels: [],
-      hidePluginRules: false,
-      unresolved: [],
-    }));
+    const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn();
 
     const result = await applySavedSearch('cpu', 'alert', resolvers(), parseForKind, persist);
@@ -228,14 +228,7 @@ describe('applySavedSearch', () => {
   });
 
   it('SAVE-2.2: migrates a still-legacy query and persists the canonical form before returning', async () => {
-    const parseForKind = jest.fn((query: string) => ({
-      text: [query],
-      namespaces: [],
-      dataSourceUids: [],
-      labels: [],
-      hidePluginRules: false,
-      unresolved: [],
-    }));
+    const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn(async () => {});
 
     const result = await applySavedSearch('type:alerting cpu', 'alert', resolvers(), parseForKind, persist);
@@ -245,14 +238,7 @@ describe('applySavedSearch', () => {
   });
 
   it('SAVE-2.3: still returns criteria to search with even when persisting the migrated query fails', async () => {
-    const parseForKind = jest.fn((query: string) => ({
-      text: [query],
-      namespaces: [],
-      dataSourceUids: [],
-      labels: [],
-      hidePluginRules: false,
-      unresolved: [],
-    }));
+    const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn(async () => {
       throw new Error('storage unavailable');
     });
@@ -261,5 +247,18 @@ describe('applySavedSearch', () => {
 
     expect(result.query).toBe('cpu');
     expect(result.criteria.text).toEqual(['cpu']);
+  });
+
+  it('SAVE-2.4: names the filters the conversion removed, without their values', async () => {
+    const result = await applySavedSearch(
+      'type:alerting namespace:Gone group:g1 cpu',
+      'alert',
+      resolvers({ resolveFolderUidByName: jest.fn(async () => undefined) }),
+      parseAlertQuery,
+      jest.fn(async () => {})
+    );
+
+    expect(result.query).toBe('cpu');
+    expect(result.droppedKeys).toEqual(['group', 'namespace']);
   });
 });

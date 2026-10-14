@@ -1,4 +1,4 @@
-import { type Criteria } from './criteria';
+import { type Criteria, type HealthValue } from './criteria';
 
 /**
  * Structural type for the `search.grafana.app` SearchQuery body the per-kind rule search
@@ -55,9 +55,7 @@ export interface BuildSearchQueryOptions {
   continue?: string;
 }
 
-export const DEFAULT_LIMIT = 40;
-
-/** Builds the shared leaves: text, folders, query data sources, labels, plugin-origin. */
+/** Builds the shared leaves: text, folders, query data sources, labels, plugin-managed rules. */
 export function buildSharedLeaves(criteria: Criteria): SearchQueryLeaf[] {
   const leaves: SearchQueryLeaf[] = [];
 
@@ -80,14 +78,30 @@ export function buildSharedLeaves(criteria: Criteria): SearchQueryLeaf[] {
   }
 
   if (criteria.hidePluginRules) {
-    leaves.push({ filter: { field: 'labels', operator: 'NotIn', values: ['__grafana_origin'] } });
+    // Only an origin that starts with `plugin/` marks a plugin-managed rule, and a rule without
+    // the label counts as an empty value, so it is kept.
+    leaves.push({ regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true } });
   }
 
-  // criteria.state / criteria.health are intentionally never turned into leaves: filtering
-  // on these fields is not deployed yet, so sending them would silently return zero (or
-  // wrong) results.
-
   return leaves;
+}
+
+/** The API's health values by token spelling. `ok` differs by kind: Recording rules report
+ * `Recording` where Alert rules report `OK`. */
+const HEALTH_API_VALUES: Record<Exclude<HealthValue, 'ok'>, string> = {
+  nodata: 'NoData',
+  error: 'Error',
+  err: 'Error',
+  unknown: 'Unknown',
+};
+
+/** `In` never matches a rule with no stored status, so a health filter hides those rules. */
+export function buildHealthLeaves(criteria: Criteria, okValue: 'OK' | 'Recording'): SearchQueryLeaf[] {
+  if (!criteria.health) {
+    return [];
+  }
+  const value = criteria.health === 'ok' ? okValue : HEALTH_API_VALUES[criteria.health];
+  return [{ filter: { field: 'health', operator: 'In', values: [value] } }];
 }
 
 function buildLabelLeaves(label: Criteria['labels'][number]): SearchQueryLeaf[] {

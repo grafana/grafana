@@ -16,17 +16,17 @@ describe('getCriteriaIssues', () => {
     expect(getCriteriaIssues(criteria, 'alert')).toEqual([]);
   });
 
-  it('NAV-4.11: reports each unresolved migration entry with its key and original value', () => {
+  it('NAV-5.1: reports each token the page cannot apply, by the key the user typed', () => {
     const criteria: Criteria = {
       ...createEmptyCriteria(),
-      unresolved: [
-        { key: 'namespace', value: 'Unknown Folder' },
-        { key: 'datasource', value: 'unknown-ds' },
+      invalid: [
+        { key: 'foo', raw: 'foo:bar' },
+        { key: 'label', raw: 'label:' },
       ],
     };
     expect(getCriteriaIssues(criteria, 'alert')).toEqual([
-      { key: 'namespace', reason: 'unresolved', value: 'Unknown Folder' },
-      { key: 'datasource', reason: 'unresolved', value: 'unknown-ds' },
+      { key: 'foo', reason: 'unsupported' },
+      { key: 'label', reason: 'unsupported' },
     ]);
   });
 

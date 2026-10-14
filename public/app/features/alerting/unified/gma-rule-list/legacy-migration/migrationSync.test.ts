@@ -20,14 +20,14 @@ describe('migrateLegacyRuleListUrlSync', () => {
     expect(result.destination).toBe('alert');
     expect(result.mode).toBe('folders');
     expect(result.criteria).toEqual(createEmptyCriteria());
-    expect(result.diagnostics).toEqual({ migratedKeys: [], droppedKeys: [], unresolved: [] });
+    expect(result.diagnostics).toEqual({ migratedKeys: [], droppedKeys: [] });
   });
 
   it('NAV-3.2: type:recording routes to Recording and removes the token', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'type:recording cpu' }));
     expect(result.destination).toBe('recording');
     expect(result.criteria.text).toEqual(['cpu']);
-    expect(result.diagnostics).toEqual({ migratedKeys: [], droppedKeys: [], unresolved: [] });
+    expect(result.diagnostics).toEqual({ migratedKeys: [], droppedKeys: [] });
   });
 
   it('NAV-3.3: legacy ruleType=recording routes to Recording when no type: token is present', () => {
@@ -94,23 +94,41 @@ describe('migrateLegacyRuleListUrlSync', () => {
     }
   );
 
-  it('NAV-4.2: keeps state: (pending) as an inert token when migrating to Alert', () => {
+  it('NAV-4.2: keeps state: when migrating to Alert', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'state:firing' }));
     expect(result.destination).toBe('alert');
     expect(result.criteria.state).toBe('firing');
     expect(result.diagnostics.droppedKeys).toEqual([]);
   });
 
-  it('NAV-4.3: keeps health: (pending) on both destinations without sending it as a predicate', () => {
+  it('NAV-4.3: keeps health: on both destinations', () => {
     expect(migrateLegacyRuleListUrlSync(params({ search: 'health:error' })).criteria.health).toBe('error');
     expect(migrateLegacyRuleListUrlSync(params({ search: 'type:recording health:error' })).criteria.health).toBe(
       'error'
     );
   });
 
-  it('NAV-4.4: preserves a genuinely unknown token instead of treating it as incompatible', () => {
+  it('NAV-4.4: removes a genuinely unknown token and reports its key', () => {
     const result = migrateLegacyRuleListUrlSync(params({ search: 'unknownFilter:value cpu' }));
-    expect(result.diagnostics.droppedKeys).toEqual([]);
+    expect(result.diagnostics.droppedKeys).toEqual(['unknownFilter']);
     expect(result.criteria.text).toEqual(['cpu']);
+    expect(result.criteria.invalid).toEqual([]);
+  });
+
+  it.each([
+    ['an incomplete label', 'label:', 'label'],
+    ['a label with no key', 'label:=api', 'label'],
+    ['an unknown state value', 'state:bogus', 'state'],
+    ['an unknown health value', 'health:great', 'health'],
+  ])('NAV-4.15: removes %s and reports its key', (_name, token, key) => {
+    const result = migrateLegacyRuleListUrlSync(params({ search: `${token} namespace:folder-1` }));
+    expect(result.diagnostics.droppedKeys).toEqual([key]);
+    expect(result.criteria.invalid).toEqual([]);
+    expect(result.criteria.namespaces).toEqual(['folder-1']);
+  });
+
+  it('NAV-4.16: reports each removed key once, sorted', () => {
+    const result = migrateLegacyRuleListUrlSync(params({ search: 'zeta:1 group:g1 zeta:2 alpha:1' }));
+    expect(result.diagnostics.droppedKeys).toEqual(['alpha', 'group', 'zeta']);
   });
 });

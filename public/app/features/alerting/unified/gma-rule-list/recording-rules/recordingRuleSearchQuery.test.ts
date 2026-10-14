@@ -1,4 +1,4 @@
-import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
+import { type Criteria, type HealthValue, createEmptyCriteria } from '../rule-search/criteria';
 import { getRuleSearchQueryViolations } from '../rule-search/ruleSearchQueryContract';
 
 import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
@@ -54,6 +54,26 @@ describe('buildRecordingRuleSearchQuery', () => {
     });
   });
 
+  it.each<[HealthValue, string]>([
+    ['ok', 'Recording'],
+    ['nodata', 'NoData'],
+    ['error', 'Error'],
+    ['err', 'Error'],
+    ['unknown', 'Unknown'],
+  ])('SEARCH-5.4: health:%s sends health In [%s]', (health, value) => {
+    const criteria: Criteria = { ...createEmptyCriteria(), health };
+    expect(buildRecordingRuleSearchQuery(criteria).where).toEqual({
+      filter: { field: 'health', operator: 'In', values: [value] },
+    });
+  });
+
+  it('SEARCH-4.6: plugins:hide sends the negated plugin-origin regex', () => {
+    const criteria: Criteria = { ...createEmptyCriteria(), hidePluginRules: true };
+    expect(buildRecordingRuleSearchQuery(criteria).where).toEqual({
+      regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true },
+    });
+  });
+
   it.each<[string, Criteria]>([
     ['empty criteria', createEmptyCriteria()],
     ['free text and a folder', { ...createEmptyCriteria(), text: ['cpu'], namespaces: ['f1'] }],
@@ -65,7 +85,7 @@ describe('buildRecordingRuleSearchQuery', () => {
       'metric and target data source',
       { ...createEmptyCriteria(), metric: 'cpu_usage', targetDataSourceUid: 'target-ds-1' },
     ],
-    ['health', { ...createEmptyCriteria(), health: 'error' }],
+    ['health', { ...createEmptyCriteria(), health: 'ok' }],
   ])('SEARCH-4.5 (%s): builds a request the per-kind rule search accepts', (_name, criteria) => {
     expect(getRuleSearchQueryViolations(buildRecordingRuleSearchQuery(criteria), 'recording')).toEqual([]);
   });

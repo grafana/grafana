@@ -63,17 +63,42 @@ describe('migrateLegacyRuleListUrl', () => {
 
     expect(result.pathname).toBe('/alerting/rules/alert');
     expect(new URLSearchParams(result.search).get('search')).toBe('namespace:folder-uid-1');
-    expect(result.diagnostics.unresolved).toEqual([]);
+    expect(result.diagnostics.droppedKeys).toEqual([]);
   });
 
-  it('NAV-4.6: keeps an unresolved folder name as-is and reports it as unresolved', async () => {
+  it('NAV-4.6: removes an unresolved folder name from the destination and reports its key', async () => {
     const result = await migrateLegacyRuleListUrl(
-      legacyLocation({ search: 'namespace:unknown-folder' }),
+      legacyLocation({ search: 'namespace:unknown-folder cpu' }),
       resolvers({ resolveFolderUidByName: jest.fn(async () => undefined) })
     );
 
-    expect(new URLSearchParams(result.search).get('search')).toBe('namespace:unknown-folder');
-    expect(result.diagnostics.unresolved).toEqual(['namespace']);
+    expect(new URLSearchParams(result.search).get('search')).toBe('cpu');
+    expect(result.diagnostics.droppedKeys).toEqual(['namespace']);
+  });
+
+  it('NAV-4.18: still redirects, dropping the filter, when the name lookup fails', async () => {
+    const result = await migrateLegacyRuleListUrl(
+      legacyLocation({ search: 'namespace:Team datasource:Prom cpu' }),
+      resolvers({
+        resolveFolderUidByName: jest.fn().mockRejectedValue(new Error('500')),
+        resolveDataSourceUidByName: jest.fn().mockRejectedValue(new Error('403')),
+      })
+    );
+
+    expect(result.pathname).toBe('/alerting/rules/alert');
+    expect(new URLSearchParams(result.search).get('search')).toBe('cpu');
+    expect(result.diagnostics.droppedKeys).toEqual(['datasource', 'namespace']);
+  });
+
+  it('NAV-4.19: still redirects and drops malformed and unknown parameters', async () => {
+    const result = await migrateLegacyRuleListUrl(
+      legacyLocation({ search: 'state:bogus nonsense:1 cpu label:"unterminated', view: 'bogus' }),
+      resolvers()
+    );
+
+    expect(result.pathname).toBe('/alerting/rules/alert');
+    expect(new URLSearchParams(result.search).get('search')).toBe('cpu');
+    expect(result.diagnostics.droppedKeys).toEqual(['label', 'nonsense', 'state']);
   });
 
   it('NAV-4.7: emits the migration analytics event once, with only sorted filter-key names', async () => {
@@ -89,6 +114,16 @@ describe('migrateLegacyRuleListUrl', () => {
   it('NAV-4.8: does not emit the analytics event when nothing was migrated or dropped', async () => {
     await migrateLegacyRuleListUrl(legacyLocation({ search: 'cpu' }), resolvers());
     expect(reportInteractionMock).not.toHaveBeenCalled();
+  });
+
+  it('NAV-4.20: reports a user-typed filter name as other in analytics and logs, never as typed', async () => {
+    await migrateLegacyRuleListUrl(legacyLocation({ search: 'secret-team-name:1 cpu' }), resolvers());
+
+    expect(reportInteractionMock).toHaveBeenCalledWith('grafana_alerting_gma_list_query_migration', {
+      migrated_filter_keys: '',
+      dropped_filter_keys: 'other',
+    });
+    expect(logWarningMock).toHaveBeenCalledWith(expect.any(String), { filterKey: 'other' });
   });
 
   it('NAV-4.9: logs a warning with only the filter key name for each dropped filter', async () => {
