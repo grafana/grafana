@@ -118,6 +118,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "name",
+										In:          "query",
+										Description: "only include resources with these names (UIDs)",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "facet",
 										In:          "query",
 										Description: "count distinct terms for selected fields",
@@ -740,7 +749,7 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := &resourcepb.HybridSearchRequest{
-		Key:           key,
+		Key:           key, //nolint:staticcheck // Older search servers require key.
 		Query:         queryParams.Get("query"),
 		SemanticQuery: queryParams.Get("semanticQuery"),
 		Limit:         int64(limit),

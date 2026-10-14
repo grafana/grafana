@@ -10,7 +10,7 @@ import {
   type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -56,7 +56,6 @@ jest.mock('@grafana/runtime', () => {
       ...original.config,
       featureToggles: {
         ...original.config.featureToggles,
-        dashboardNewLayouts: false,
         reloadDashboardsOnParamsChange: false,
       },
       datasources: {
@@ -106,10 +105,16 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
 }));
 
 const mockUserStorageGetItem = jest.fn();
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  UserStorage: jest.fn().mockImplementation(() => ({ getItem: mockUserStorageGetItem })),
-}));
+const mockGetPanelPluginMetasMap = jest.fn();
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return {
+    ...actual,
+    UserStorage: jest.fn().mockImplementation(() => ({ getItem: mockUserStorageGetItem })),
+    getPanelPluginMetasMap: (...args: unknown[]) =>
+      mockGetPanelPluginMetasMap(...args) ?? actual.getPanelPluginMetasMap(...args),
+  };
+});
 
 const mockFetchPredefinedVariables = jest.fn();
 jest.mock('../utils/predefinedVariables', () => ({
@@ -434,6 +439,23 @@ describe('DashboardScenePageStateManager v1', () => {
         messageId: undefined,
         message: 'Dashboard not found',
       });
+    });
+
+    it('should load the panel plugin metas as part of loading the dashboard', async () => {
+      const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      let resolveMetas: () => void = () => {};
+      mockGetPanelPluginMetasMap.mockReturnValueOnce(new Promise<void>((resolve) => (resolveMetas = resolve)));
+
+      const loader = new DashboardScenePageStateManager({});
+      const loading = loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(mockGetPanelPluginMetasMap).toHaveBeenCalled();
+
+      resolveMetas();
+      await loading;
+
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+      expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
     });
 
     it('should clear current dashboard while loading next', async () => {
@@ -845,13 +867,7 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     describe('predefined variables', () => {
-      beforeEach(() => {
-        setTestFlags({ 'grafana.dashboardGlobalVariables': true });
-      });
-
-      afterEach(() => {
-        setTestFlags({});
-      });
+      testWithFlags({ 'grafana.dashboardGlobalVariables': true });
 
       const predefinedVariable = {
         kind: 'CustomVariable' as const,
@@ -2147,11 +2163,12 @@ describe('DashboardScenePageStateManager v2', () => {
 describe('UnifiedDashboardScenePageStateManager', () => {
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
-    config.featureToggles.dashboardNewLayouts = false;
+    setTestFlags({});
   });
 
   describe('when fetching/loading a dashboard', () => {
-    it('should use v1 manager by default and handle v1 dashboards', async () => {
+    it('should use v1 manager and handle v1 dashboards when dashboardNewLayouts is disabled', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2162,6 +2179,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should switch to v2 manager when loading v2 dashboard', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const getDashSpy = setupV1FailureV2Success();
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2207,7 +2225,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('clears the previous dashboard when a later load fails', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       setupV1FailureV2Success();
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2237,6 +2255,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should not sync state back to v1 manager after loadDashboard', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2319,6 +2338,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should transform responses correctly based on dashboard version', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const manager = new UnifiedDashboardScenePageStateManager({});
 
       // V1 dashboard response
@@ -2350,6 +2370,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should switch to v2 manager when AssistantPreview contains v2 dashboard', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       mockUserStorageGetItem.mockResolvedValue(JSON.stringify(defaultDashboardV2Spec()));
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2362,6 +2383,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
   describe('reloadDashboard', () => {
     it('should reload v1 dashboard with v1 manager', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2442,6 +2464,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should not use cache if cache version and current dashboard state version differ in v1', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const loadDashboardMock = setupLoadDashboardMock({
         dashboard: { uid: 'fake-dash', editable: true, version: 0 },
         meta: {},
@@ -2477,6 +2500,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should use v1 reloadDashboard implementation and update unified state', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const loadDashboardMock = setupLoadDashboardMock({
         dashboard: { uid: 'fake-dash', editable: true, version: 1 },
         meta: {},
@@ -2786,8 +2810,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
   describe('New dashboards', () => {
     it('should use v1 manager for new dashboards when dashboardNewLayouts feature toggle is disabled', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
-
+      setTestFlags({ dashboardNewLayouts: false });
       const manager = new UnifiedDashboardScenePageStateManager({});
       manager.setActiveManager('v2');
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
@@ -2799,9 +2822,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(manager.state.dashboard?.state.title).toBe('New dashboard');
     });
 
-    it('should use v2 manager for new dashboards when dashboardNewLayouts feature toggle is enabled', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
-
+    it('should use v2 manager for new dashboards by default', async () => {
       const manager = new UnifiedDashboardScenePageStateManager({});
       manager.setActiveManager('v1');
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
@@ -2814,7 +2835,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should maintain manager version for subsequent loads based on feature toggle', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
       const manager1 = new UnifiedDashboardScenePageStateManager({});
       manager1.setActiveManager('v2');
       await manager1.loadDashboard({ uid: '', route: DashboardRoutes.New });
@@ -2824,7 +2845,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       await manager1.loadDashboard({ uid: '', route: DashboardRoutes.New });
       expect(manager1['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
 
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       const manager2 = new UnifiedDashboardScenePageStateManager({});
       manager2.setActiveManager('v1');
       await manager2.loadDashboard({ uid: '', route: DashboardRoutes.New });
@@ -2855,8 +2876,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       locationService.getLocation = originalGetLocation;
     });
 
-    it('should always use v1 manager for Grafana dashboard templates even when dashboardNewLayouts is enabled', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+    it('should always use v1 manager for Grafana dashboard templates', async () => {
       config.featureToggles.suggestedDashboards = true;
 
       // Mock location service with gnetId and mappings parameters
@@ -2892,7 +2912,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should reset to V2 manager when loading a new dashboard after template', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       config.featureToggles.suggestedDashboards = true;
 
       // Mock locationService for this test too

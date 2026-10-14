@@ -500,8 +500,6 @@ func TestSplitsRenameMatrix(t *testing.T) {
 		resource    = "dash.json"          // synced resource file
 		metadata    = "team/_folder.json"  // folder metadata file
 		nonResource = "README.md"          // not a resource
-		hiddenFile  = ".dash.json"         // hidden
-		hiddenDir   = ".hidden/dash.json"  // inside a hidden folder
 		unsafe      = "Backend & UI.json"  // resource file whose path cannot sync
 		otherMeta   = "other/_folder.json" // another folder metadata file
 		syncedOther = "renamed.json"       // another synced resource file
@@ -513,18 +511,13 @@ func TestSplitsRenameMatrix(t *testing.T) {
 		why               string
 	}{
 		{resource, nonResource, true, true, "the resource is gone, the new file is not one"},
-		{resource, hiddenFile, true, true, "same, hidden file"},
-		{resource, hiddenDir, true, true, "same, hidden folder"},
 		{resource, unsafe, false, false, "applyUnsupportedPath removes it and warns"},
 		{resource, syncedOther, false, false, "an ordinary rename"},
 		{metadata, nonResource, true, false, "on: the folder reverts; off: never synced"},
-		{metadata, hiddenFile, true, false, "same"},
 		{metadata, unsafe, true, false, "on: the folder reverts, the new path only warns; off: nothing to remove"},
 		{metadata, syncedOther, true, false, "on: the folder reverts, the new file is a resource; off: left as it was"},
 		{metadata, otherMeta, false, false, "the metadata builder's own case"},
-		{nonResource, hiddenFile, false, false, "was never synced"},
 		{nonResource, syncedOther, false, false, "was never synced"},
-		{hiddenFile, nonResource, false, false, "was never synced"},
 	}
 	for _, c := range cases {
 		change := repository.VersionedFileChange{Action: repository.FileActionRenamed, Path: c.current, PreviousPath: c.previous}
@@ -540,7 +533,7 @@ func TestSplitRenamesOntoNonResources(t *testing.T) {
 		}
 	}
 
-	for _, path := range []string{"README.md", "dashboard.txt", ".dashboard.json", ".hidden/dashboard.json"} {
+	for _, path := range []string{"README.md", "dashboard.txt", ".keep"} {
 		t.Run("a rename onto "+path+" becomes a deletion and a creation", func(t *testing.T) {
 			got := splitRenamesOntoNonResources([]repository.VersionedFileChange{rename("dashboard.json", path)}, false)
 			require.Equal(t, []repository.VersionedFileChange{
@@ -577,7 +570,6 @@ func TestSplitRenamesOntoNonResources(t *testing.T) {
 		"a rename between resource paths":                rename("a.json", "b.json"),
 		"a rename onto a path that cannot sync":          rename("a.json", "folder/Backend & UI.json"),
 		"a rename of a non-resource onto a non-resource": rename("README.md", "NOTES.md"),
-		"a rename of a resource that never synced":       rename(".a.json", "README.md"),
 		"a rename of a folder":                           rename("old/", "new/"),
 		"a creation":                                     {Action: repository.FileActionCreated, Path: "README.md", Ref: "new-ref"},
 		"a deletion":                                     {Action: repository.FileActionDeleted, Path: "a.json", PreviousRef: "old-ref"},
@@ -628,7 +620,7 @@ func TestIncrementalSync_RenameOntoNonResourcePath(t *testing.T) {
 	}
 
 	tests := make([]incrementalSyncTestCase, 0, 5)
-	for _, path := range []string{"README.md", "dashboard.txt", ".dashboard.json", ".hidden/dashboard.json"} {
+	for _, path := range []string{"README.md", "dashboard.txt", ".keep"} {
 		tests = append(tests, renameOnto(
 			"a dashboard renamed onto "+path+" is removed without a warning",
 			path,

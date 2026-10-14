@@ -1,5 +1,5 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, reportInteraction, setPluginImportUtils } from '@grafana/runtime';
+import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -12,6 +12,7 @@ import {
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
@@ -50,19 +51,18 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     getInstanceSettings: (_uid: string | null) => ({ uid: 'ds1' }),
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
-
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
 describe('DashboardSidebar', () => {
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   describe('Pending pane requests', () => {
     let dashboard: DashboardScene;
     let sidebar: DashboardSidebarLike;
@@ -240,7 +240,7 @@ describe('DashboardSidebar', () => {
         }),
       });
       const dashboard = new DashboardScene({ isEditing: true, body: layout });
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       activateFullSceneTree(dashboard);
 
       const sidebar = dashboard.state.sidebar;
@@ -1336,7 +1336,7 @@ describe('DashboardSidebar', () => {
         isEditing: true,
         body: new TabsLayoutManager({ tabs: [tabWithPanel] }),
       });
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       activateFullSceneTree(sourceDashboard);
       sourceDashboard.copyPanel(panel);
 
@@ -1354,7 +1354,7 @@ function buildTestScene() {
     tags: ['tag1', 'tag2'],
     editable: true,
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(scene);
 
   return scene;
@@ -1416,7 +1416,7 @@ function setupEmptyDashboard(): {
     isEditing: true,
     body: AutoGridLayoutManager.createEmpty(),
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
   return { dashboard, sidebar: dashboard.state.sidebar };
 }
@@ -1440,7 +1440,7 @@ function setupWithTwoTabs(): {
     isEditing: true,
     body: new TabsLayoutManager({ tabs: [tab1, tab2] }),
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
   return { dashboard, tab1, tab2, tab1Viz: panel, sidebar: dashboard.state.sidebar };
 }
@@ -1464,7 +1464,7 @@ function setupWithTwoRows(): {
     isEditing: true,
     body: new RowsLayoutManager({ rows: [row1, row2] }),
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
   return { dashboard, row1, row2, row1Viz: panel, sidebar: dashboard.state.sidebar };
 }

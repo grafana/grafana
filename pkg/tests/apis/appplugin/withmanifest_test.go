@@ -347,6 +347,16 @@ func TestIntegrationPluginManifestKindCRUD(t *testing.T) {
 	})
 
 	t.Run("status is only writable through its subresource", func(t *testing.T) {
+		serviceClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			ServiceAccountToken: helper.Org1.AdminServiceAccountToken,
+			Namespace:           "default",
+			GVR: schema.GroupVersionResource{
+				Group:    testAppGroup,
+				Version:  "v1",
+				Resource: "things",
+			},
+		}).Resource
+
 		current, err := client.Get(ctx, "thing-1", metav1.GetOptions{})
 		require.NoError(t, err)
 
@@ -357,15 +367,39 @@ func TestIntegrationPluginManifestKindCRUD(t *testing.T) {
 		require.NoError(t, err)
 		require.NotContains(t, updated.Object, "status", "a write to the main resource cannot set status")
 
-		// A write to the subresource may only change status: the spec it carries
-		// is whatever the caller read, not an edit it is entitled to make.
+		// A user may not write the status subresource through any write verb,
+		// not even an admin; status belongs to the services that reconcile it.
+		withStatus = updated.DeepCopy()
+		withStatus.Object["status"] = map[string]any{"state": "from-user"}
+		_, err = client.UpdateStatus(ctx, withStatus, metav1.UpdateOptions{})
+		require.Truef(t, apierrors.IsForbidden(err), "update: got %v", err)
+		_, err = client.Patch(ctx, "thing-1", types.MergePatchType,
+			[]byte(`{"status":{"state":"from-user"}}`), metav1.PatchOptions{}, "status")
+		require.Truef(t, apierrors.IsForbidden(err), "merge patch: got %v", err)
+		_, err = client.Patch(ctx, "thing-1", types.JSONPatchType,
+			[]byte(`[{"op":"add","path":"/status","value":{"state":"from-user"}}]`), metav1.PatchOptions{}, "status")
+		require.Truef(t, apierrors.IsForbidden(err), "json patch: got %v", err)
+		applyStatus := newThing("thing-1", nil)
+		delete(applyStatus.Object, "spec")
+		applyStatus.Object["status"] = map[string]any{"state": "from-user"}
+		_, err = client.Apply(ctx, "thing-1", applyStatus,
+			metav1.ApplyOptions{Force: true, FieldManager: "pluginmanifest-test"}, "status")
+		require.Truef(t, apierrors.IsForbidden(err), "apply: got %v", err)
+
+		unchanged, err := client.Get(ctx, "thing-1", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotContains(t, unchanged.Object, "status", "a rejected status write leaves no status behind")
+		require.Equal(t, updated.GetResourceVersion(), unchanged.GetResourceVersion())
+
+		// A service account may write the subresource, but only the status: the
+		// spec it carries is whatever the caller read, not an edit it is entitled to make.
 		spec := updated.Object["spec"]
 		generation := updated.GetGeneration()
 
 		withStatus = updated.DeepCopy()
 		withStatus.Object["status"] = map[string]any{"state": "running"}
 		withStatus.Object["spec"] = map[string]any{"foo": "written-through-status"}
-		updated, err = client.UpdateStatus(ctx, withStatus, metav1.UpdateOptions{})
+		updated, err = serviceClient.UpdateStatus(ctx, withStatus, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, map[string]any{"state": "running"}, updated.Object["status"])
 		require.Equal(t, spec, updated.Object["spec"], "a status write cannot reach the spec")
@@ -620,9 +654,8 @@ func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 	}
 }
 
-// A manifest may declare custom routes and no kinds. The version still needs
-// storage for the apiserver to install it, and that placeholder must not leak
-// into the OpenAPI spec.
+// A manifest may declare custom routes and no kinds. No API server is built for
+// it, and its discovery and OpenAPI documents list only what it declares.
 func TestIntegrationPluginManifestRoutesOnly(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -642,10 +675,8 @@ func TestIntegrationPluginManifestRoutesOnly(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(disco), &versions))
 	require.Len(t, versions, 1)
 	require.Equal(t, "v1", versions[0].Version)
-	// The placeholder is visible in discovery, but serves no verbs.
-	for _, resource := range versions[0].Resources {
-		require.Empty(t, resource.Verbs, "resource %s", resource.Resource)
-	}
+	// Without kinds there is no API server, and no resources to list.
+	require.Empty(t, versions[0].Resources)
 
 	raw, err := client.Get().AbsPath("/openapi/v3/apis/" + testAppGroup + "/v1").DoRaw(ctx)
 	require.NoError(t, err)
@@ -654,7 +685,8 @@ func TestIntegrationPluginManifestRoutesOnly(t *testing.T) {
 	}
 	require.NoError(t, json.Unmarshal(raw, &doc))
 	root := "/apis/" + testAppGroup + "/v1/"
-	require.ElementsMatch(t, []string{root, root + "namespaces/{namespace}/ping"}, slices.Collect(maps.Keys(doc.Paths)))
+	require.ElementsMatch(t, []string{root + "namespaces/{namespace}/ping"}, slices.Collect(maps.Keys(doc.Paths)),
+		"the document describes the plugin's routes")
 
 	// The route is mounted and reaches the plugin, which has no v3 backend.
 	raw, err = client.Get().AbsPath(root + "namespaces/default/ping").DoRaw(ctx)
