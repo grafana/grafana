@@ -41,15 +41,21 @@ export function SidebarSection({ children }: { children: ReactNode }) {
 export interface SidebarFieldProps {
   label: ReactNode;
   children: ReactNode;
-  labelId?: string;
+  /** The id of the control the label names, for controls that cannot take an `aria-label` themselves. */
+  controlId?: string;
   /** Shown under the label, e.g. "Coming soon" or "Requires a dashboard". */
   note?: ReactNode;
 }
 
-export function SidebarField({ label, children, labelId, note }: SidebarFieldProps) {
+/** A labelled group: the label names the group, so assistive tech announces which field a control belongs to. */
+export function SidebarField({ label, children, controlId, note }: SidebarFieldProps) {
+  const labelId = useId();
+
   return (
-    <Stack direction="column" gap={0.5}>
-      <Label id={labelId}>{label}</Label>
+    <Stack direction="column" gap={0.5} role="group" aria-labelledby={labelId}>
+      <Label id={labelId} htmlFor={controlId}>
+        {label}
+      </Label>
       {children}
       {note}
     </Stack>
@@ -226,6 +232,7 @@ export function RuleTitleField({ criteria, onChange }: { criteria: Criteria; onC
   return (
     <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.rule-name">Rule name</Trans>}>
       <Input
+        aria-label={t('alerting.gma-rule-list.search.property.rule-name', 'Rule name')}
         value={draft}
         placeholder={t('alerting.gma-rule-list.search.rule-name-placeholder', 'Filter by name...')}
         onChange={(e) => setDraft(e.currentTarget.value)}

@@ -93,7 +93,7 @@ describe('useRuleActionAbilities', () => {
 
     expect(result.current.edit.available).toBe(false);
     expect(result.current.pause.available).toBe(false);
-    expect(result.current.edit.reason).toContain('provisioned');
+    expect(result.current.edit.reason).toBe('Provisioned');
   });
 
   it('does not block duplicate for a provisioned rule when the user can create rules', () => {
@@ -143,6 +143,30 @@ describe('useRuleActionAbilities', () => {
     expect(result.current.delete).toEqual({ available: false, reason: 'Managed by Terraform' });
     expect(result.current.duplicate).toEqual({ available: true });
   });
+
+  it.each(['classic-file-provisioning', 'classic-api-provisioning'])(
+    'ACT-7: gives the plain Provisioned reason, not a managed one, for the %s manager kind',
+    (managedBy) => {
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+      const { result } = renderHook(() =>
+        useRuleActionAbilities(
+          loaded(
+            buildRule({
+              'grafana.com/access/canWrite': 'true',
+              'grafana.com/access/canDelete': 'true',
+              'grafana.com/provenance': 'api',
+              'grafana.app/managedBy': managedBy,
+            })
+          )
+        )
+      );
+
+      expect(result.current.edit).toEqual({ available: false, reason: 'Provisioned' });
+      expect(result.current.pause).toEqual({ available: false, reason: 'Provisioned' });
+      expect(result.current.delete).toEqual({ available: false, reason: 'Provisioned' });
+      expect(result.current.duplicate).toEqual({ available: true });
+    }
+  );
 
   it('ACT-7: does not treat the Grafana UI as a manager', () => {
     const { result } = renderHook(() =>

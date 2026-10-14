@@ -11,6 +11,8 @@ export interface AlertRuleSearchHit {
   title: string;
   folderUid?: string;
   paused?: boolean;
+  /** The rule's own evaluation interval, as a duration such as `1m`. */
+  interval?: string;
   /** Persisted evaluation state/health - absent unless `alerting.ruleStatusSync` has populated
    * it. Absence must read as Unavailable, never a healthy default. */
   state?: string;
@@ -78,6 +80,7 @@ export function toAlertRuleSearchHit(item: RuleSearchResultItem): AlertRuleSearc
     title: typeof fields.title === 'string' ? fields.title : item.resource.name,
     folderUid: typeof fields.folder === 'string' ? fields.folder : undefined,
     paused: typeof fields.paused === 'boolean' ? fields.paused : undefined,
+    interval: typeof fields.interval === 'string' ? fields.interval : undefined,
     state: typeof fields.state === 'string' ? fields.state : undefined,
     health: typeof fields.health === 'string' ? fields.health : undefined,
     lastError: typeof fields.lastError === 'string' ? fields.lastError : undefined,

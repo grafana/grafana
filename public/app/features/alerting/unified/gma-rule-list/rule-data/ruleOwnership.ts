@@ -22,13 +22,28 @@ export function getPluginId(labels: Record<string, string> | undefined): string 
   return isPluginManaged(labels) ? labels?.[GRAFANA_ORIGIN_LABEL]?.slice(PLUGIN_ORIGIN_PREFIX.length) : undefined;
 }
 
-/** The kind of the tool that manages the rule (for example `terraform`), read from the full rule. */
+/** The kinds the backend derives from legacy provenance, so these rules read as provisioned, not managed. */
+const CLASSIC_PROVISIONING_KINDS = new Set(['classic-file-provisioning', 'classic-api-provisioning']);
+
+/** The kind of whatever created the rule outside the UI (including classic provisioning), read from the full rule. */
 export function getManagerKind(rule: AlertRule | RecordingRule): string | undefined {
   const kind = rule.metadata.annotations?.[AnnoKeyManagerKind];
   return kind && kind !== USER_MANAGER_KIND ? kind : undefined;
 }
 
+/** The manager kind of a rule that a tool such as Terraform or Git sync manages; classic provisioning does not count. */
+export function getManagedByKind(rule: AlertRule | RecordingRule): string | undefined {
+  const kind = getManagerKind(rule);
+  return kind && !CLASSIC_PROVISIONING_KINDS.has(kind) ? kind : undefined;
+}
+
+/** Provisioned through the provenance annotation or one of the classic provisioning manager kinds. */
+export function isProvisioned(rule: AlertRule | RecordingRule): boolean {
+  const kind = getManagerKind(rule);
+  return isK8sEntityProvisioned(rule) || (kind !== undefined && CLASSIC_PROVISIONING_KINDS.has(kind));
+}
+
 /** Whether something outside the UI owns the rule, which earns it the provisioning badge. */
 export function isProvisionedOrManaged(rule: AlertRule | RecordingRule): boolean {
-  return isK8sEntityProvisioned(rule) || getManagerKind(rule) !== undefined;
+  return isProvisioned(rule) || getManagedByKind(rule) !== undefined;
 }

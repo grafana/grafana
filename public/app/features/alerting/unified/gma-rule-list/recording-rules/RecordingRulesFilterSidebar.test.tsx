@@ -4,6 +4,7 @@ import { render, screen } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
 
+import { setupMswServer } from '../../mockApi';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
@@ -11,6 +12,11 @@ import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 // Combobox (used for Health) measures its own floating-element size to render option rows;
 // jsdom reports zero for every element, so without this the option list never renders.
 mockComboboxRect();
+
+// The folder picker scrolls the focused row into view, which jsdom does not implement.
+window.HTMLElement.prototype.scrollIntoView = function () {};
+
+setupMswServer();
 
 /** Feeds onChange back into criteria, so typing/selecting across multiple keystrokes behaves
  * like it does when a real page owns the criteria state. */
@@ -25,25 +31,6 @@ function ControlledSidebar() {
     />
   );
 }
-
-jest.mock('app/core/components/NestedFolderPicker/NestedFolderPicker', () => ({
-  NestedFolderPicker: ({
-    value,
-    onChange,
-  }: {
-    value?: string;
-    onChange: (uid: string | undefined, name: string | undefined) => void;
-  }) => (
-    <select
-      aria-label="Folder"
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value || undefined, e.target.value || undefined)}
-    >
-      <option value="">none</option>
-      <option value="folder-1">folder-1</option>
-    </select>
-  ),
-}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -65,9 +52,9 @@ describe('RecordingRulesFilterSidebar', () => {
     const user = userEvent.setup();
     render(<ControlledSidebar />);
 
-    await user.type(screen.getByPlaceholderText('Metric name (exact match)'), 'cpu_usage');
+    await user.type(screen.getByRole('textbox', { name: 'Recorded metric' }), 'cpu_usage');
 
-    expect(screen.getByPlaceholderText('Metric name (exact match)')).toHaveValue('cpu_usage');
+    expect(screen.getByRole('textbox', { name: 'Recorded metric' })).toHaveValue('cpu_usage');
   });
 
   it('SEARCH-1.12: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
@@ -82,9 +69,68 @@ describe('RecordingRulesFilterSidebar', () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText('Folder'), 'folder-1');
+    await user.click(screen.getByRole('button', { name: 'Folder' }));
+    await user.click(await screen.findByLabelText('Alerting-folder'));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-1'] }));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ namespaces: ['e3d1f4fd-9e7c-4f63-9a9e-2b5a1d2e6a9c'] })
+    );
+  });
+
+  it.each([
+    'Rule name',
+    'Labels',
+    'Folder',
+    'Query data source',
+    'Plugin rules',
+    'Recorded metric',
+    'Target data source',
+    'Health',
+  ])('ACC-6: the "%s" field is a labelled group', (name) => {
+    render(<ControlledSidebar />);
+
+    expect(screen.getByRole('group', { name })).toBeInTheDocument();
+  });
+
+  it('ACC-1: the rule name input is found by role and name and applies on Enter', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(
+      <RecordingRulesFilterSidebar
+        criteria={createEmptyCriteria()}
+        onChange={onChange}
+        onClear={jest.fn()}
+        hasActiveFilters={false}
+      />
+    );
+
+    await user.type(screen.getByRole('textbox', { name: 'Rule name' }), 'cpu{Enter}');
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ text: ['cpu'] }));
+  });
+
+  it('ACC-3: the folder picker is a button named Folder that opens from the keyboard and selects with arrow keys', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(
+      <RecordingRulesFilterSidebar
+        criteria={createEmptyCriteria()}
+        onChange={onChange}
+        onClear={jest.fn()}
+        hasActiveFilters={false}
+      />
+    );
+
+    screen.getByRole('button', { name: 'Folder' }).focus();
+    await user.keyboard('{Enter}');
+    expect(await screen.findByPlaceholderText('Search folders')).toHaveFocus();
+
+    await screen.findByLabelText('Alerting-folder');
+    await user.keyboard('{ArrowDown}{Enter}');
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ namespaces: ['e3d1f4fd-9e7c-4f63-9a9e-2b5a1d2e6a9c'] })
+    );
   });
 
   it('does not render Alert-only controls (dashboard, panel, contact point, policy, paused)', () => {

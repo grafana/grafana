@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DataSourcePicker } from '@grafana/runtime';
@@ -35,6 +37,7 @@ export function RecordingRulesFilterSidebar({
   hasActiveFilters,
   issues = [],
 }: RecordingRulesFilterSidebarProps) {
+  const folderPickerId = useId();
   const invalidNamespace = issues.some((issue) => issue.key === 'namespace');
   const invalidDataSource = issues.some((issue) => issue.key === 'datasource');
 
@@ -57,9 +60,11 @@ export function RecordingRulesFilterSidebar({
           <SidebarSection>
             <SidebarField
               label={<Trans i18nKey="alerting.gma-rule-list.search.property.folder">Folder</Trans>}
+              controlId={folderPickerId}
               note={invalidNamespace && <InvalidTokenNote />}
             >
               <FolderMultiFilter
+                id={folderPickerId}
                 values={criteria.namespaces}
                 invalid={invalidNamespace}
                 onChange={(namespaces) => onChange({ ...criteria, namespaces })}
@@ -89,6 +94,7 @@ export function RecordingRulesFilterSidebar({
               label={<Trans i18nKey="alerting.gma-rule-list.search.property.metric">Recorded metric</Trans>}
             >
               <Input
+                aria-label={t('alerting.gma-rule-list.search.property.metric', 'Recorded metric')}
                 placeholder={t('alerting.gma-rule-list.search.metric-placeholder', 'Metric name (exact match)')}
                 value={criteria.metric ?? ''}
                 onChange={(e) => onChange({ ...criteria, metric: e.currentTarget.value || undefined })}

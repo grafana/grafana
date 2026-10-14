@@ -157,6 +157,17 @@ describe('RecordingRuleActionsMenu', () => {
       return element.getAttribute('aria-disabled') === 'true' || element.hasAttribute('disabled');
     }
 
+    it('ACC-7: opens from the keyboard and arrow navigation skips the disabled actions', async () => {
+      const user = userEvent.setup();
+      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loading' }} />);
+
+      screen.getByRole('button', { name: 'More' }).focus();
+      await user.keyboard('{Enter}');
+      await user.keyboard('{ArrowDown}');
+
+      expect(screen.getByRole('menuitem', { name: 'Copy link' })).toHaveFocus();
+    });
+
     it.each([
       {
         name: 'the full rule is loading',
@@ -197,7 +208,7 @@ describe('RecordingRuleActionsMenu', () => {
           status: 'loaded',
           rule: buildRule({ annotations: { ...WRITABLE_ANNOTATIONS, 'grafana.com/provenance': 'api' } }),
         } as const,
-        reason: 'This rule is provisioned and cannot be edited through the UI',
+        reason: 'Provisioned',
         duplicateDisabled: false,
       },
       {
@@ -226,13 +237,14 @@ describe('RecordingRuleActionsMenu', () => {
       const user = await openMenu();
 
       for (const name of ['Pause', 'Delete']) {
-        const item = screen.getByRole('menuitem', { name });
+        // ACC-7: the reason is part of the disabled item's accessible name, not only a hover tooltip.
+        const item = screen.getByRole('menuitem', { name: `${name}: ${reason}` });
         expect(isDisabled(item)).toBe(true);
         await user.hover(item);
         expect(await screen.findByText(reason)).toBeInTheDocument();
         await user.unhover(item);
       }
-      expect(isDisabled(screen.getByRole('menuitem', { name: 'Duplicate' }))).toBe(duplicateDisabled);
+      expect(isDisabled(screen.getByRole('menuitem', { name: /^Duplicate/ }))).toBe(duplicateDisabled);
     });
 
     it('does not restrict a rule whose origin label is not a plugin', async () => {

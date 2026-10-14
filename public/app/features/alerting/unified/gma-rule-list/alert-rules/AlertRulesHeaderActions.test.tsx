@@ -1,5 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -30,6 +31,20 @@ describe('AlertRulesHeaderActions', () => {
 
     await user.click(screen.getByRole('button', { name: /more/i }));
     expect(screen.getByRole('menuitem', { name: /design rule for provisioning/i })).toBeInTheDocument();
+  });
+
+  it('NAV-6: links to New alert rule and Design rule for provisioning without returnTo, from a filtered list', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+    locationService.push('/alerting/rules/alert?search=state%3Afiring');
+    const { user } = render(<AlertRulesHeaderActions />);
+
+    expect(screen.getByRole('link', { name: /new alert rule/i })).toHaveAttribute('href', '/alerting/new/alerting');
+
+    await user.click(screen.getByRole('button', { name: /more/i }));
+    expect(screen.getByRole('menuitem', { name: /design rule for provisioning/i })).toHaveAttribute(
+      'href',
+      '/alerting/export-new-rule'
+    );
   });
 
   it('never offers Recording-rule or export-all/import actions', async () => {

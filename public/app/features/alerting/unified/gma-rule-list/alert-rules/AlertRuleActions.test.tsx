@@ -32,6 +32,17 @@ describe('AlertRuleActions', () => {
     expect(screen.getByRole('button', { name: /more/i })).toBeInTheDocument();
   });
 
+  it('ACC-7: a disabled Edit button stays keyboard-focusable and shows its reason on focus', async () => {
+    mockFullRule({ 'grafana.com/access/canWrite': 'false' });
+    const { user } = render(<AlertRuleActions ruleUid="rule-1" />);
+
+    const edit = await screen.findByRole('button', { name: 'Edit: You do not have permission to do this' });
+    await user.tab();
+
+    expect(edit).toHaveFocus();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('You do not have permission to do this');
+  });
+
   it.each([
     {
       name: 'is still loading',
@@ -55,7 +66,7 @@ describe('AlertRuleActions', () => {
     },
     {
       name: 'is provisioned',
-      reason: 'This rule is provisioned and cannot be edited through the UI',
+      reason: 'Provisioned',
       setup: () => mockFullRule({ 'grafana.com/access/canWrite': 'true', 'grafana.com/provenance': 'api' }),
     },
     {
@@ -77,7 +88,8 @@ describe('AlertRuleActions', () => {
     setup();
     const { user } = render(<AlertRuleActions ruleUid="rule-1" />);
 
-    const edit = await screen.findByRole('button', { name: 'Edit' });
+    // ACC-7: the reason is part of the disabled button's accessible name, not only a hover tooltip.
+    const edit = await screen.findByRole('button', { name: `Edit: ${reason}` });
     expect(edit).toHaveAttribute('aria-disabled', 'true');
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     await user.hover(edit);

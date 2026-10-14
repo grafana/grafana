@@ -6,7 +6,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { LogMessages } from '../../Analytics';
 import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
-import { createReturnTo } from '../../hooks/useReturnTo';
 import { createRelativeUrl } from '../../utils/url';
 import { MoreButton } from '../shared/MoreButton';
 
@@ -16,14 +15,13 @@ import { MoreButton } from '../shared/MoreButton';
  */
 export function AlertRulesHeaderActions() {
   const canCreate = ctx.hasPermission(AccessControlAction.AlertingRuleCreate);
-  const returnTo = createReturnTo();
 
   return (
     <Stack direction="row" gap={1}>
       {canCreate && (
         <LinkButton
           variant="primary"
-          href={createRelativeUrl('/alerting/new/alerting', { returnTo })}
+          href={createRelativeUrl('/alerting/new/alerting')}
           icon="plus"
           onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
         >
@@ -37,7 +35,7 @@ export function AlertRulesHeaderActions() {
             <Menu.Item
               label={t('alerting.gma-rule-list.actions.design-rule-for-provisioning', 'Design rule for provisioning')}
               icon="download-alt"
-              url={createRelativeUrl('/alerting/export-new-rule', { returnTo })}
+              url={createRelativeUrl('/alerting/export-new-rule')}
               onClick={() => logInfo(LogMessages.exportNewGrafanaRule)}
             />
           </Menu>

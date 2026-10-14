@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 
+import { managerKindName } from '../rule-data/managerKindName';
+
 import { type ActionAvailability } from './ruleActionTypes';
 
 /** The reasons an action is shown disabled, as ready-made availabilities. */
@@ -22,10 +24,7 @@ export function denied(): ActionAvailability {
 export function provisioned(): ActionAvailability {
   return {
     available: false,
-    reason: t(
-      'alerting.rule-actions.reason-provisioned',
-      'This rule is provisioned and cannot be edited through the UI'
-    ),
+    reason: t('alerting.rule-actions.reason-provisioned', 'Provisioned'),
   };
 }
 
@@ -46,21 +45,12 @@ export function managed(kind: string): ActionAvailability {
   };
 }
 
-function managerKindName(kind: string) {
-  switch (kind) {
-    case 'terraform':
-      return 'Terraform';
-    case 'kubectl':
-      return 'kubectl';
-    case 'repo':
-      return t('alerting.rule-actions.manager-git-sync', 'Git sync');
-    case 'classic-file-provisioning':
-      return t('alerting.rule-actions.manager-file-provisioning', 'file provisioning');
-    case 'classic-api-provisioning':
-      return t('alerting.rule-actions.manager-provisioning-api', 'the provisioning API');
-    case 'classic-converted-prometheus':
-      return t('alerting.rule-actions.manager-prometheus-import', 'Prometheus import');
-    default:
-      return kind;
-  }
+/**
+ * Accessible name of a disabled action. A disabled control is skipped by keyboard navigation and its
+ * tooltip only opens on hover or focus, so the reason has to be part of the name to reach assistive tech.
+ */
+export function unavailableActionLabel(label: string, reason: string | undefined): string {
+  return reason
+    ? t('alerting.gma-rule-list.actions.unavailable-label', '{{action}}: {{reason}}', { action: label, reason })
+    : label;
 }

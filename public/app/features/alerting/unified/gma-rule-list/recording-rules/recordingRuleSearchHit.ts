@@ -9,6 +9,8 @@ export interface RecordingRuleSearchHit {
   title: string;
   folderUid?: string;
   paused?: boolean;
+  /** The rule's own evaluation interval, as a duration such as `1m`. */
+  interval?: string;
   metric?: string;
   targetDataSourceUid?: string;
   /** Persisted health - absent unless `alerting.ruleStatusSync` has populated it. `Recording`
@@ -46,6 +48,7 @@ export function toRecordingRuleSearchHit(item: RuleSearchResultItem): RecordingR
     title: typeof fields.title === 'string' ? fields.title : item.resource.name,
     folderUid: typeof fields.folder === 'string' ? fields.folder : undefined,
     paused: typeof fields.paused === 'boolean' ? fields.paused : undefined,
+    interval: typeof fields.interval === 'string' ? fields.interval : undefined,
     metric: typeof fields.metric === 'string' ? fields.metric : undefined,
     targetDataSourceUid: typeof fields.targetDatasourceUID === 'string' ? fields.targetDatasourceUID : undefined,
     health: typeof fields.health === 'string' ? fields.health : undefined,

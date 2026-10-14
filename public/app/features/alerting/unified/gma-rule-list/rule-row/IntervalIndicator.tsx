@@ -1,7 +1,7 @@
 import { Icon, Stack, Text } from '@grafana/ui';
 
 interface IntervalIndicatorProps {
-  /** Pre-formatted duration, e.g. `1m`. Nothing is rendered while unknown rather than a placeholder. */
+  /** Pre-formatted duration, e.g. `1m`. Nothing is rendered while unknown rather than a wrong placeholder. */
   interval?: string;
 }
 

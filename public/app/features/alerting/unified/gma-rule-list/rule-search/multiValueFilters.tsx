@@ -14,18 +14,24 @@ interface MultiValueFilterProps {
   invalid?: boolean;
 }
 
+interface FolderMultiFilterProps extends MultiValueFilterProps {
+  /** Id for the picker's own control, so a field label can name it. */
+  id?: string;
+}
+
 /**
  * Folder filter that shows and edits every selected folder. The picker only ever adds one more
  * folder; each selected folder is listed with its own remove button, so a URL or saved search
  * carrying several folders never hides all but the first.
  */
-export function FolderMultiFilter({ values, onChange, invalid }: MultiValueFilterProps) {
+export function FolderMultiFilter({ id, values, onChange, invalid }: FolderMultiFilterProps) {
   return (
     <Stack direction="column" gap={0.5}>
       {values.map((uid) => (
         <FolderValue key={uid} uid={uid} onRemove={() => onChange(values.filter((value) => value !== uid))} />
       ))}
       <NestedFolderPicker
+        id={id}
         value={undefined}
         invalid={invalid}
         permission="view"

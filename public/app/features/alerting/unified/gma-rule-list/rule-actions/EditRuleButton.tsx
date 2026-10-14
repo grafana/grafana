@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Button, LinkButton } from '@grafana/ui';
 
+import { unavailableActionLabel } from './actionReasons';
 import { type ActionAvailability } from './ruleActionTypes';
 import { ruleEditUrl } from './ruleLinks';
 
@@ -18,7 +19,14 @@ export function EditRuleButton({ uid, availability }: EditRuleButtonProps) {
 
   if (!availability.available) {
     return (
-      <Button size="sm" variant="secondary" fill="text" disabled tooltip={availability.reason}>
+      <Button
+        size="sm"
+        variant="secondary"
+        fill="text"
+        disabled
+        tooltip={availability.reason}
+        aria-label={unavailableActionLabel(label, availability.reason)}
+      >
         {label}
       </Button>
     );

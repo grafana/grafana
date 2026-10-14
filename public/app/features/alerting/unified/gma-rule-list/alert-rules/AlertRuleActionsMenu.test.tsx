@@ -201,8 +201,9 @@ describe('AlertRuleActionsMenu', () => {
   describe('unavailable actions show their reason', () => {
     const MUTATING_ACTIONS = ['Pause', 'Delete'];
 
+    // ACC-7: the reason is part of the disabled item's accessible name, not only a hover tooltip.
     async function expectDisabledWithReason(user: Awaited<ReturnType<typeof openMenu>>, name: string, reason: string) {
-      const item = screen.getByRole('menuitem', { name });
+      const item = screen.getByRole('menuitem', { name: `${name}: ${reason}` });
       expect(isDisabled(item)).toBe(true);
       await user.hover(item);
       expect(await screen.findByText(reason)).toBeInTheDocument();
@@ -224,6 +225,17 @@ describe('AlertRuleActionsMenu', () => {
       }
       expect(screen.getByRole('menuitem', { name: 'Copy link' })).toBeEnabled();
       expect((await requests).length).toBe(0);
+    });
+
+    it('ACC-7: opens from the keyboard and arrow navigation skips the disabled actions', async () => {
+      const user = userEvent.setup();
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loading' }} />);
+
+      screen.getByRole('button', { name: 'More' }).focus();
+      await user.keyboard('{Enter}');
+      await user.keyboard('{ArrowDown}');
+
+      expect(screen.getByRole('menuitem', { name: 'Copy link' })).toHaveFocus();
     });
 
     it('ACT-2: shows every action disabled as unknown when the full rule failed to load', async () => {
@@ -283,7 +295,7 @@ describe('AlertRuleActionsMenu', () => {
       const user = await openMenu();
 
       for (const name of MUTATING_ACTIONS) {
-        await expectDisabledWithReason(user, name, 'This rule is provisioned and cannot be edited through the UI');
+        await expectDisabledWithReason(user, name, 'Provisioned');
       }
       expect(isDisabled(screen.getByRole('menuitem', { name: 'Duplicate' }))).toBe(false);
     });
@@ -409,8 +421,11 @@ describe('AlertRuleActionsMenu', () => {
       render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       const user = await openMenu();
 
-      await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Silence notifications' })).toBeDisabled());
-      await user.hover(screen.getByRole('menuitem', { name: 'Silence notifications' }));
+      const silence = await screen.findByRole('menuitem', {
+        name: 'Silence notifications: You do not have permission to do this',
+      });
+      expect(silence).toBeDisabled();
+      await user.hover(silence);
       expect(await screen.findByText('You do not have permission to do this')).toBeInTheDocument();
     });
 
@@ -425,8 +440,9 @@ describe('AlertRuleActionsMenu', () => {
       render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       const user = await openMenu();
 
-      await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Silence notifications' })).toBeDisabled());
-      await user.hover(screen.getByRole('menuitem', { name: 'Silence notifications' }));
+      const silence = await screen.findByRole('menuitem', { name: /^Silence notifications: .*external Alertmanagers/ });
+      expect(silence).toBeDisabled();
+      await user.hover(silence);
       expect(await screen.findByText(/only to external Alertmanagers/)).toBeInTheDocument();
     });
 
@@ -452,7 +468,7 @@ describe('AlertRuleActionsMenu', () => {
 
       render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
       const user = await openMenu();
-      const silence = screen.getByRole('menuitem', { name: 'Silence notifications' });
+      const silence = screen.getByRole('menuitem', { name: 'Silence notifications: Checking permissions...' });
 
       expect(silence).toBeDisabled();
       await user.hover(silence);

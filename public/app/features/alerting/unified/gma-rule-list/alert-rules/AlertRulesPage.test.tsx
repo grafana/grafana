@@ -557,6 +557,8 @@ describe('AlertRulesPage', () => {
 
     const ruleRow = await screen.findByRole('listitem', { name: 'CPU high' });
     await userEvent.click(await within(ruleRow).findByRole('button', { name: /more/i }));
+    // Until the full rule has loaded the item is disabled and named "Pause: Checking permissions...",
+    // so waiting for the plain name waits for it to become usable; clicking it earlier does nothing.
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Pause' }));
 
     expect(await screen.findByText('2 alert rules')).toBeInTheDocument();

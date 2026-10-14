@@ -36,12 +36,24 @@ describe('RecordingRuleActions', () => {
     mockRule({ 'grafana.com/access/canWrite': 'false' });
     const { user } = render(<RecordingRuleActions ruleUid="rule-1" />);
 
-    const edit = await screen.findByRole('button', { name: 'Edit' });
+    // ACC-7: the reason is part of the disabled button's accessible name, not only a hover tooltip.
+    const edit = await screen.findByRole('button', { name: 'Edit: You do not have permission to do this' });
     expect(edit).toHaveAttribute('aria-disabled', 'true');
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     await user.hover(edit);
 
     expect(await screen.findByText('You do not have permission to do this')).toBeInTheDocument();
+  });
+
+  it('ACC-7: a disabled Edit button stays keyboard-focusable and shows its reason on focus', async () => {
+    mockRule({ 'grafana.com/access/canWrite': 'false' });
+    const { user } = render(<RecordingRuleActions ruleUid="rule-1" />);
+
+    const edit = await screen.findByRole('button', { name: 'Edit: You do not have permission to do this' });
+    await user.tab();
+
+    expect(edit).toHaveFocus();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('You do not have permission to do this');
   });
 
   it('shows Edit disabled as managed, naming the manager, for a rule managed by Terraform', async () => {
@@ -52,7 +64,7 @@ describe('RecordingRuleActions', () => {
     });
     const { user } = render(<RecordingRuleActions ruleUid="rule-1" />);
 
-    await user.hover(await screen.findByRole('button', { name: 'Edit' }));
+    await user.hover(await screen.findByRole('button', { name: 'Edit: Managed by Terraform' }));
 
     expect(await screen.findByText('Managed by Terraform')).toBeInTheDocument();
   });

@@ -5,7 +5,6 @@ import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { LogMessages } from '../../Analytics';
-import { createReturnTo } from '../../hooks/useReturnTo';
 import { createRelativeUrl } from '../../utils/url';
 
 /**
@@ -20,11 +19,9 @@ export function RecordingRulesHeaderActions() {
     return null;
   }
 
-  const returnTo = createReturnTo();
-
   return (
     <LinkButton
-      href={createRelativeUrl('/alerting/new/grafana-recording', { returnTo })}
+      href={createRelativeUrl('/alerting/new/grafana-recording')}
       icon="plus"
       onClick={() => logInfo(LogMessages.recordingRuleFromScratch)}
     >

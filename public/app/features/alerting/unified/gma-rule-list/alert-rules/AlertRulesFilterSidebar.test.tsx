@@ -2,6 +2,12 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
+import {
+  ContactPointFactory,
+  ListReceiverApiResponseFactory,
+  listReceiverHandler,
+  simpleRoutingTreesListScenario,
+} from '@grafana/alerting/testing';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -15,72 +21,8 @@ import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 // jsdom reports zero for every element, so without this the option list never renders.
 mockComboboxRect();
 
-// Placeholder rendered as the empty option's own text (rather than a real combobox
-// placeholder attribute) so a plain <select> mock can still prove the prop reaches the real
-// component, without re-testing Combobox's own placeholder rendering.
-jest.mock('@grafana/alerting/unstable', () => ({
-  ContactPointSelector: ({
-    value,
-    disabled,
-    placeholder,
-    onChange,
-  }: {
-    value?: string;
-    disabled?: boolean;
-    placeholder?: string;
-    onChange: (cp: { spec: { title: string } } | null) => void;
-  }) => (
-    <select
-      aria-label="Contact point"
-      value={value ?? ''}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value ? { spec: { title: e.target.value } } : null)}
-    >
-      <option value="">{placeholder}</option>
-      <option value="on-call">on-call</option>
-    </select>
-  ),
-  RoutingTreeSelector: ({
-    value,
-    disabled,
-    placeholder,
-    onChange,
-  }: {
-    value?: string;
-    disabled?: boolean;
-    placeholder?: string;
-    onChange: (tree: { metadata: { name: string } } | null) => void;
-  }) => (
-    <select
-      aria-label="Notification policy"
-      value={value ?? ''}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value ? { metadata: { name: e.target.value } } : null)}
-    >
-      <option value="">{placeholder}</option>
-      <option value="escalation">escalation</option>
-    </select>
-  ),
-}));
-
-jest.mock('app/core/components/NestedFolderPicker/NestedFolderPicker', () => ({
-  NestedFolderPicker: ({
-    value,
-    onChange,
-  }: {
-    value?: string;
-    onChange: (uid: string | undefined, name: string | undefined) => void;
-  }) => (
-    <select
-      aria-label="Folder"
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value || undefined, e.target.value || undefined)}
-    >
-      <option value="">none</option>
-      <option value="folder-1">folder-1</option>
-    </select>
-  ),
-}));
+// The folder picker scrolls the focused row into view, which jsdom does not implement.
+window.HTMLElement.prototype.scrollIntoView = function () {};
 
 jest.mock('app/core/components/Select/DashboardPicker', () => ({
   DashboardPicker: ({
@@ -134,6 +76,9 @@ jest.mock('@grafana/runtime', () => ({
 
 const server = setupMswServer();
 
+// The folder the default folder handlers list as "Alerting-folder".
+const FOLDER_UID = 'e3d1f4fd-9e7c-4f63-9a9e-2b5a1d2e6a9c';
+
 const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/parents';
 
 function mockDataSourceNames(nameByUid: Record<string, string>) {
@@ -154,6 +99,20 @@ function mockFolderTitles(titleByUid: Record<string, string>) {
 }
 
 describe('AlertRulesFilterSidebar', () => {
+  beforeEach(() => {
+    server.use(
+      listReceiverHandler(
+        ListReceiverApiResponseFactory.build({
+          items: [
+            ContactPointFactory.build({ metadata: { uid: 'cp-uid-1' }, spec: { title: 'on-call', integrations: [] } }),
+            ContactPointFactory.build({ metadata: { uid: 'cp-uid-2' }, spec: { title: 'pager', integrations: [] } }),
+          ],
+        })
+      ),
+      ...simpleRoutingTreesListScenario
+    );
+  });
+
   it('SEARCH-1.5: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
@@ -166,9 +125,10 @@ describe('AlertRulesFilterSidebar', () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText('Folder'), 'folder-1');
+    await user.click(screen.getByRole('button', { name: 'Folder' }));
+    await user.click(await screen.findByLabelText('Alerting-folder'));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-1'] }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: [FOLDER_UID] }));
   });
 
   it('SEARCH-1.6: selecting a query data source calls onChange with that data source UID', async () => {
@@ -183,7 +143,7 @@ describe('AlertRulesFilterSidebar', () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText('Query data source'), 'ds-1');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Query data source' }), 'ds-1');
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-1'] }));
   });
@@ -215,7 +175,7 @@ describe('AlertRulesFilterSidebar', () => {
       />
     );
 
-    expect(screen.getByLabelText('Panel ID')).toBeDisabled();
+    expect(screen.getByRole('spinbutton', { name: 'Panel ID' })).toBeDisabled();
   });
 
   it('the panel ID field is enabled once a dashboard is selected', () => {
@@ -224,7 +184,7 @@ describe('AlertRulesFilterSidebar', () => {
       <AlertRulesFilterSidebar criteria={criteria} onChange={jest.fn()} onClear={jest.fn()} hasActiveFilters={false} />
     );
 
-    expect(screen.getByLabelText('Panel ID')).toBeEnabled();
+    expect(screen.getByRole('spinbutton', { name: 'Panel ID' })).toBeEnabled();
   });
 
   it('SEARCH-1.8: choosing a contact point disables and clears the notification policy field', () => {
@@ -233,7 +193,7 @@ describe('AlertRulesFilterSidebar', () => {
       <AlertRulesFilterSidebar criteria={criteria} onChange={jest.fn()} onClear={jest.fn()} hasActiveFilters={false} />
     );
 
-    expect(screen.getByLabelText('Notification policy')).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: 'Notification policy' })).toBeDisabled();
   });
 
   it('SEARCH-1.9: choosing a notification policy disables the contact point field', () => {
@@ -242,7 +202,7 @@ describe('AlertRulesFilterSidebar', () => {
       <AlertRulesFilterSidebar criteria={criteria} onChange={jest.fn()} onClear={jest.fn()} hasActiveFilters={false} />
     );
 
-    expect(screen.getByLabelText('Contact point')).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: 'Contact point' })).toBeDisabled();
   });
 
   it('SEARCH-1.10: selecting Paused calls onChange with paused "true"', async () => {
@@ -383,9 +343,10 @@ describe('AlertRulesFilterSidebar', () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText('Folder'), 'folder-1');
+    await user.click(screen.getByRole('button', { name: 'Folder' }));
+    await user.click(await screen.findByLabelText('Alerting-folder'));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-2', 'folder-1'] }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-2', FOLDER_UID] }));
   });
 
   it('SEARCH-3.3: shows every selected query data source by name and removes only the one chosen', async () => {
@@ -421,7 +382,7 @@ describe('AlertRulesFilterSidebar', () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText('Query data source'), 'ds-1');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Query data source' }), 'ds-1');
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-2', 'ds-1'] }));
   });
@@ -548,7 +509,97 @@ describe('AlertRulesFilterSidebar', () => {
       />
     );
 
-    expect(screen.getByText('Select contact point')).toBeInTheDocument();
-    expect(screen.getByText('Select policy')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Contact point' })).toHaveAttribute(
+      'placeholder',
+      'Select contact point'
+    );
+    expect(screen.getByRole('combobox', { name: 'Notification policy' })).toHaveAttribute(
+      'placeholder',
+      'Select policy'
+    );
+  });
+
+  describe('accessible names and keyboard use', () => {
+    function renderSidebar(criteria = createEmptyCriteria(), onChange = jest.fn()) {
+      const view = render(
+        <AlertRulesFilterSidebar criteria={criteria} onChange={onChange} onClear={jest.fn()} hasActiveFilters={false} />
+      );
+      return { ...view, onChange };
+    }
+
+    it.each([
+      'Rule name',
+      'Labels',
+      'Folder',
+      'Query data source',
+      'Plugin rules',
+      'Dashboard',
+      'Panel ID',
+      'Contact point',
+      'Notification policy',
+      'Paused',
+      'Alert state',
+      'Health',
+    ])('ACC-6: the "%s" field is a labelled group', (name) => {
+      renderSidebar();
+
+      expect(screen.getByRole('group', { name })).toBeInTheDocument();
+    });
+
+    it('ACC-1: the rule name input is found by role and name and applies on Enter', async () => {
+      const { user, onChange } = renderSidebar();
+
+      await user.type(screen.getByRole('textbox', { name: 'Rule name' }), 'cpu{Enter}');
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ text: ['cpu'] }));
+    });
+
+    it('ACC-3: the folder picker is a button named Folder that opens from the keyboard and selects with arrow keys', async () => {
+      const { user, onChange } = renderSidebar();
+
+      screen.getByRole('button', { name: 'Folder' }).focus();
+      await user.keyboard('{Enter}');
+      const search = await screen.findByPlaceholderText('Search folders');
+      expect(search).toHaveFocus();
+
+      await screen.findByLabelText('Alerting-folder');
+      await user.keyboard('{ArrowDown}{Enter}');
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: [FOLDER_UID] }));
+    });
+
+    it('ACC-5: the contact point picker is named, filters by typing and selects with Enter', async () => {
+      const { user, onChange } = renderSidebar();
+
+      await user.click(screen.getByRole('combobox', { name: 'Contact point' }));
+      await user.keyboard('pag');
+      expect(await screen.findByRole('option', { name: /pager/ })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: /on-call/ })).not.toBeInTheDocument();
+      await user.keyboard('{ArrowDown}{Enter}');
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ contactPoint: 'pager' }));
+    });
+
+    it('ACC-4: the notification policy picker is named and selects with the keyboard', async () => {
+      const { user, onChange } = renderSidebar();
+
+      await user.click(screen.getByRole('combobox', { name: 'Notification policy' }));
+      await user.keyboard('platform');
+      expect(await screen.findByRole('option', { name: /team-platform/ })).toBeInTheDocument();
+      await user.keyboard('{ArrowDown}{Enter}');
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ policy: 'team-platform' }));
+    });
+
+    it('a contact point chosen by title is shown as selected in the picker, whose options are keyed by UID', async () => {
+      const { user } = renderSidebar({ ...createEmptyCriteria(), contactPoint: 'pager' });
+
+      const picker = screen.getByRole('combobox', { name: 'Contact point' });
+      expect(picker).toHaveValue('pager');
+      await user.click(picker);
+
+      expect(await screen.findByRole('option', { name: /pager/ })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('option', { name: /on-call/ })).toHaveAttribute('aria-selected', 'false');
+    });
   });
 });

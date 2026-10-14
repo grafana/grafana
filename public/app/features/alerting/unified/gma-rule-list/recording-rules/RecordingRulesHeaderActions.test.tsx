@@ -1,5 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -13,6 +14,17 @@ describe('RecordingRulesHeaderActions', () => {
     expect(screen.getByRole('link', { name: /new recording rule/i })).toHaveAttribute(
       'href',
       expect.stringContaining('/alerting/new/grafana-recording')
+    );
+  });
+
+  it('NAV-6: links to New recording rule without returnTo, from a filtered list', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+    locationService.push('/alerting/rules/recording?search=health%3Aerror');
+    render(<RecordingRulesHeaderActions />);
+
+    expect(screen.getByRole('link', { name: /new recording rule/i })).toHaveAttribute(
+      'href',
+      '/alerting/new/grafana-recording'
     );
   });
 

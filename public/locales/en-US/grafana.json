@@ -1090,8 +1090,6 @@
       "empty-state-title": "No recently deleted rules found",
       "errorloading": "Failed to load alert deleted rules",
       "load-error-title": "Unable to load recently deleted rules",
-      "load-more": "Load more",
-      "load-more-error-title": "Unable to load more recently deleted rules",
       "loading": "Loading recently deleted rules...",
       "permanently-delete": "Permanently delete",
       "restore": "Restore",
@@ -1114,8 +1112,7 @@
         "updated": "Deletion Date",
         "updatedBy": "Deleted By"
       },
-      "unknown": "Unknown",
-      "unknown-error": "Something went wrong. Please try again."
+      "unknown": "Unknown"
     },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluations to start alerting",
@@ -1459,9 +1456,7 @@
         "delete-title": "Delete rule",
         "design-rule-for-provisioning": "Design rule for provisioning",
         "duplicate": "Duplicate",
-        "duplicate-provisioned-body": "The new rule will <strong>not</strong> be marked as provisioned - it will be managed in the UI like any other rule.",
-        "duplicate-provisioned-confirm": "Copy",
-        "duplicate-provisioned-title": "Copy provisioned rule",
+        "edit": "Edit",
         "manage-enrichments": "Manage enrichments",
         "new-alert-rule": "New alert rule",
         "new-recording-rule": "New recording rule",
@@ -1471,14 +1466,12 @@
         "rule-paused": "Rule paused",
         "rule-resume-error": "Failed to resume rule",
         "rule-resumed": "Rule resumed",
-        "silence-notifications": "Silence notifications"
+        "silence-notifications": "Silence notifications",
+        "unavailable-label": "{{action}}: {{reason}}"
       },
       "alert-rules": {
-        "edit": "Edit",
         "folders-error": "Failed to load folders",
         "invalid-filter": "Fix the invalid filter to see results",
-        "load-more": "Load more",
-        "load-more-error": "Failed to load more rules",
         "loading-folders": "Loading folders...",
         "loading-rules": "Loading rules...",
         "next": "Next",
@@ -1486,14 +1479,11 @@
         "no-rules": "No Alert rules found",
         "no-rules-in-folder": "No Alert rules in this folder",
         "previous": "Previous",
-        "retry": "Retry",
         "routing-default": "Default policy",
         "routing-direct": "Delivered to",
         "routing-named": "Policy: {{policy}}",
         "rules-error": "Failed to load rules",
-        "title": "Alert rules",
-        "view-folders": "Folders",
-        "view-list": "List"
+        "title": "Alert rules"
       },
       "folder-row": {
         "alert-rule-count_one": "{{count}} alert rule",
@@ -1504,13 +1494,11 @@
         "recording-rule-count_other": "{{count}} recording rules"
       },
       "migrating-link": "Redirecting...",
-      "placeholder-message": "This page is under construction",
+      "migration-dropped-text": "These filters could not be migrated and were removed: {{filters}}",
+      "migration-dropped-title": "Some filters were removed",
       "recording-rules": {
-        "edit": "Edit",
         "folders-error": "Failed to load folders",
         "invalid-filter": "Fix the invalid filter to see results",
-        "load-more": "Load more",
-        "load-more-error": "Failed to load more rules",
         "loading-folders": "Loading folders...",
         "loading-rules": "Loading rules...",
         "metric-and-target": "Records {{metric}} to {{target}}",
@@ -1520,20 +1508,25 @@
         "no-rules": "No Recording rules found",
         "no-rules-in-folder": "No Recording rules in this folder",
         "previous": "Previous",
-        "retry": "Retry",
         "rules-error": "Failed to load rules",
         "target-only": "Records to {{target}}",
-        "title": "Recording rules",
-        "view-folders": "Folders",
-        "view-list": "List"
+        "title": "Recording rules"
+      },
+      "saved-searches": {
+        "applying-default": "Applying your default search..."
       },
       "search": {
         "clear-filters": "Clear filters",
         "contact-point-placeholder": "Select contact point",
-        "help-coming-soon": "coming soon",
+        "folders-disabled": "Clear filters to browse by folder",
+        "health-any": "Any",
+        "health-error": "Error",
+        "health-nodata": "No data",
+        "health-ok": "OK",
+        "health-unknown": "Unknown",
         "help-expression": "Expression",
         "help-filter-type": "Filter type",
-        "help-intro": "Search syntax allows you to query rules by the filters below. Filters marked \"coming soon\" are visible but not yet functional.",
+        "help-intro": "Search syntax allows you to query rules by the filters below.",
         "help-title": "Search help",
         "invalid-tokens": "Some filters could not be applied: {{tokens}}",
         "label": "Search",
@@ -1559,8 +1552,8 @@
           "default-policy": "Default policy",
           "folder": "Folder",
           "health": "Health",
-          "health-placeholder": "Not available yet",
           "hide-plugin-rules": "Hide plugin rules",
+          "invalid": "This filter is not valid — showing no results until this is fixed.",
           "labels": "Labels",
           "metric": "Recorded metric",
           "panel": "Panel ID",
@@ -1571,22 +1564,42 @@
           "policy": "Notification policy",
           "rule-name": "Rule name",
           "state": "Alert state",
-          "state-placeholder": "Not available yet",
-          "target-datasource": "Target data source",
-          "unresolved": "Could not be resolved — showing no results until this is fixed."
+          "target-datasource": "Target data source"
         },
-        "rule-name-placeholder": "Filter by name..."
+        "remove-value": "Remove {{value}}",
+        "rule-name-placeholder": "Filter by name...",
+        "state-any": "Any",
+        "state-firing": "Firing",
+        "state-normal": "Normal",
+        "state-pending": "Pending",
+        "state-recovering": "Recovering",
+        "view-folders": "Folders",
+        "view-list": "List"
       },
       "shared": {
         "data-sources-count_one": "{{count}} data source",
         "data-sources-count_other": "{{count}} data sources",
         "label-count_one": "{{count}} label",
         "label-count_other": "{{count}} labels",
+        "load-more": "Load more",
+        "load-more-error": "Failed to load more results",
         "more-button-aria-label": "More",
         "more-button-text": "More",
         "plugin-origin-tooltip": "This rule is managed by the {{pluginName}} plugin",
         "provisioned-badge": "Provisioned",
-        "status-unavailable": "Status unavailable"
+        "provisioned-tooltip": "Provisioned",
+        "provisioned-tooltip-api": "Provisioned via the provisioning API",
+        "provisioned-tooltip-file": "Provisioned via file provisioning",
+        "provisioned-tooltip-manager": "Provisioned by {{manager}}",
+        "refresh-error": "Failed to refresh results",
+        "retry": "Retry",
+        "status-unavailable": "Status unavailable",
+        "totals-error": "{{total}} error",
+        "totals-firing": "{{total}} firing",
+        "totals-healthy": "{{total}} healthy",
+        "totals-no-data": "{{total}} no data",
+        "totals-pending": "{{total}} pending",
+        "totals-recovering": "{{total}} recovering"
       },
       "tab-recently-deleted": "Recently deleted"
     },
@@ -2957,10 +2970,14 @@
       "repeat-interval": "Repeat interval: <strong>{{repeatIntervalValue}}</strong>"
     },
     "rule-actions": {
+      "manager-git-sync": "Git sync",
+      "manager-prometheus-import": "Prometheus import",
       "reason-checking": "Checking permissions...",
       "reason-denied": "You do not have permission to do this",
+      "reason-managed": "Managed by {{kind}}",
       "reason-plugin-managed": "This rule is managed by a plugin and cannot be edited through the UI",
-      "reason-provisioned": "This rule is provisioned and cannot be edited through the UI",
+      "reason-provisioned": "Provisioned",
+      "reason-silence-unsupported": "Grafana is configured to send alerts only to external Alertmanagers, which cannot silence this rule here",
       "reason-unknown": "Permission unknown"
     },
     "rule-actions-buttons": {

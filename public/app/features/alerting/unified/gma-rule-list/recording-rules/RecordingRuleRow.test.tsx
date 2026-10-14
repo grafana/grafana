@@ -37,6 +37,12 @@ function mockFullRule(spec: Record<string, unknown> = {}, annotations: Record<st
   );
 }
 
+interface ManagerCase {
+  name: string;
+  annotations: Record<string, string>;
+  tooltip: string;
+}
+
 // The same rule shows the same fields in both modes; only List mode adds the folder path.
 // Recording rules have no state, instances, routing, or summary, so none of that renders.
 describe('RecordingRuleRow', () => {
@@ -75,12 +81,28 @@ describe('RecordingRuleRow', () => {
     expect(screen.getByLabelText(label)).toBeInTheDocument();
   });
 
-  it('never prints health, paused or interval placeholders as text', () => {
+  it('never prints health or paused as text', () => {
     render(<RecordingRuleRow hit={baseHit({ health: 'Recording', paused: true })} showFolderPath={false} />);
     expect(screen.getByLabelText('Paused')).toBeInTheDocument();
     expect(screen.queryByText(/Unavailable/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Interval/)).not.toBeInTheDocument();
     expect(screen.queryByText('Paused')).not.toBeInTheDocument();
+  });
+
+  it("REC-3: shows the rule's own evaluation interval, ahead of the actions", () => {
+    render(
+      <RecordingRuleRow hit={baseHit({ interval: '5m' })} showFolderPath={false} actions={<button>Edit</button>} />
+    );
+
+    const interval = screen.getByText('5m');
+    const edit = screen.getByRole('button', { name: 'Edit' });
+    expect(interval.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('shows no interval when the search hit has none', () => {
+    render(<RecordingRuleRow hit={baseHit()} showFolderPath={false} />);
+
+    expect(screen.getByRole('link', { name: 'cpu_usage:avg' })).toBeInTheDocument();
+    expect(screen.queryByText(/^\d+[smhd]$/)).not.toBeInTheDocument();
   });
 
   it('shows "Records metric to target" as the description when there is no error', () => {
@@ -170,6 +192,28 @@ describe('RecordingRuleRow', () => {
     mockFullRule({}, { 'grafana.app/managedBy': 'terraform' });
     render(<RecordingRuleRow hit={baseHit()} showFolderPath={false} />);
     expect(await screen.findByText('Provisioned')).toBeInTheDocument();
+  });
+
+  it.each<ManagerCase>([
+    { name: 'Terraform', annotations: { 'grafana.app/managedBy': 'terraform' }, tooltip: 'Provisioned by Terraform' },
+    { name: 'Git sync', annotations: { 'grafana.app/managedBy': 'repo' }, tooltip: 'Provisioned by Git sync' },
+    {
+      name: 'classic file provisioning',
+      annotations: { 'grafana.com/provenance': 'file', 'grafana.app/managedBy': 'classic-file-provisioning' },
+      tooltip: 'Provisioned via file provisioning',
+    },
+    {
+      name: 'classic API provisioning',
+      annotations: { 'grafana.com/provenance': 'api', 'grafana.app/managedBy': 'classic-api-provisioning' },
+      tooltip: 'Provisioned via the provisioning API',
+    },
+    { name: 'no manager properties', annotations: { 'grafana.com/provenance': 'api' }, tooltip: 'Provisioned' },
+  ])('ACT-8: the badge tooltip reads "$tooltip" for $name', async ({ annotations, tooltip }) => {
+    mockFullRule({}, annotations);
+    const { user } = render(<RecordingRuleRow hit={baseHit()} showFolderPath={false} />);
+    await user.hover(await screen.findByText('Provisioned'));
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(new RegExp(`^${tooltip}$`));
   });
 
   describe('plugin badge', () => {

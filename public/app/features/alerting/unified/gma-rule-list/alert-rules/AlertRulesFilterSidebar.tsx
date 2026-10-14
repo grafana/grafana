@@ -1,4 +1,6 @@
-import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
+import { useId } from 'react';
+
+import { RoutingTreeSelector } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Combobox, type ComboboxOption, Input, Stack, Tooltip } from '@grafana/ui';
@@ -18,6 +20,8 @@ import {
   SwitchField,
 } from '../rule-search/filterSidebarPrimitives';
 import { DataSourceMultiFilter, FolderMultiFilter } from '../rule-search/multiValueFilters';
+
+import { ContactPointFilter } from './ContactPointFilter';
 
 type PausedValue = 'any' | 'true' | 'false';
 
@@ -61,6 +65,7 @@ export function AlertRulesFilterSidebar({
   hasActiveFilters,
   issues = [],
 }: AlertRulesFilterSidebarProps) {
+  const folderPickerId = useId();
   const invalidNamespace = hasIssue(issues, 'namespace');
   const invalidDataSource = hasIssue(issues, 'datasource');
   const panelRequiresDashboard = issues.some(
@@ -86,9 +91,11 @@ export function AlertRulesFilterSidebar({
           <SidebarSection>
             <SidebarField
               label={<Trans i18nKey="alerting.gma-rule-list.search.property.folder">Folder</Trans>}
+              controlId={folderPickerId}
               note={invalidNamespace && <InvalidTokenNote />}
             >
               <FolderMultiFilter
+                id={folderPickerId}
                 values={criteria.namespaces}
                 invalid={invalidNamespace}
                 onChange={(namespaces) => onChange({ ...criteria, namespaces })}
@@ -154,13 +161,11 @@ export function AlertRulesFilterSidebar({
             <SidebarField
               label={<Trans i18nKey="alerting.gma-rule-list.search.property.contact-point">Contact point</Trans>}
             >
-              <ContactPointSelector
-                value={criteria.contactPoint}
-                placeholder={t('alerting.gma-rule-list.search.contact-point-placeholder', 'Select contact point')}
-                isClearable
+              <ContactPointFilter
+                title={criteria.contactPoint}
                 disabled={Boolean(criteria.policy)}
-                onChange={(cp: { spec: { title: string } } | null) =>
-                  onChange({ ...criteria, contactPoint: cp?.spec.title, policy: cp ? undefined : criteria.policy })
+                onChange={(contactPoint) =>
+                  onChange({ ...criteria, contactPoint, policy: contactPoint ? undefined : criteria.policy })
                 }
               />
             </SidebarField>
@@ -169,6 +174,7 @@ export function AlertRulesFilterSidebar({
             >
               <Stack direction="column" gap={0.5}>
                 <RoutingTreeSelector
+                  aria-label={t('alerting.gma-rule-list.search.property.policy', 'Notification policy')}
                   value={criteria.policy === DEFAULT_POLICY ? undefined : criteria.policy}
                   placeholder={t('alerting.gma-rule-list.search.policy-placeholder', 'Select policy')}
                   isClearable

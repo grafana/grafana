@@ -7,11 +7,12 @@ import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../../utils/datas
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { useFolderPath } from '../folder-browsing/folderLookups';
-import { getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
+import { getManagerKind, getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
 import { useFullAlertRuleState } from '../rule-data/ruleResourceLookups';
 import { DataSourcesMeta } from '../rule-row/DataSourcesMeta';
 import { FolderPath } from '../rule-row/FolderPath';
 import { InstanceTotalsMeta } from '../rule-row/InstanceTotalsMeta';
+import { IntervalIndicator } from '../rule-row/IntervalIndicator';
 import { LabelsMeta } from '../rule-row/LabelsMeta';
 import { PluginOriginBadge } from '../rule-row/PluginOriginBadge';
 import { ProvisioningBadge } from '../rule-row/ProvisioningBadge';
@@ -69,6 +70,7 @@ export function AlertRuleRow({ hit, showFolderPath, actions }: AlertRuleRowProps
 
   const pluginId = getPluginId(hit.labels);
   // Managed rules get the provisioning badge too: they are owned by something outside the UI.
+  const managerKind = fullRule.status === 'loaded' ? getManagerKind(fullRule.rule) : undefined;
   const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
   // Each meta entry is gated on its data here because the separator is added per truthy entry,
   // so a component that renders null would still leave a stray `|`.
@@ -91,7 +93,7 @@ export function AlertRuleRow({ hit, showFolderPath, actions }: AlertRuleRowProps
             {hit.title}
           </TextLink>
           {pluginId === undefined ? (
-            isOwnedElsewhere && <ProvisioningBadge />
+            isOwnedElsewhere && <ProvisioningBadge managerKind={managerKind} />
           ) : (
             <PluginOriginBadge pluginId={pluginId} size="sm" />
           )}
@@ -105,9 +107,7 @@ export function AlertRuleRow({ hit, showFolderPath, actions }: AlertRuleRowProps
         hasDisplayLabels && <LabelsMeta key="labels" labels={hit.labels} />,
         <RoutingMeta key="routing" hit={hit} />,
       ]}
-      // The effective interval depends on rule-sequence membership, which has no API yet;
-      // showing the stored per-rule interval would be wrong for sequence members.
-      metaRight={undefined}
+      metaRight={<IntervalIndicator interval={hit.interval} />}
       actions={actions}
     />
   );

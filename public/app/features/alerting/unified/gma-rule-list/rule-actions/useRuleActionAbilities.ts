@@ -1,10 +1,10 @@
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import { getAnnotation, isK8sEntityProvisioned } from 'app/features/alerting/unified/utils/k8s/utils';
+import { getAnnotation } from 'app/features/alerting/unified/utils/k8s/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { getManagerKind, isPluginManaged } from '../rule-data/ruleOwnership';
+import { getManagedByKind, isPluginManaged, isProvisioned } from '../rule-data/ruleOwnership';
 import { type RuleResourceState } from '../rule-data/ruleResourceState';
 
 import { checking, denied, managed, pluginManaged, provisioned, unknown } from './actionReasons';
@@ -19,11 +19,11 @@ const AVAILABLE: ActionAvailability = { available: true };
  */
 function capabilityGate(rule: AlertRule | RecordingRule, annotation: K8sAnnotations): ActionAvailability {
   // A rule that is both provisioned and managed names its manager, which says more than "provisioned".
-  const managerKind = getManagerKind(rule);
+  const managerKind = getManagedByKind(rule);
   if (managerKind) {
     return managed(managerKind);
   }
-  if (isK8sEntityProvisioned(rule)) {
+  if (isProvisioned(rule)) {
     return provisioned();
   }
   if (isPluginManaged(rule.spec.labels)) {

@@ -6,7 +6,7 @@ import { Stack, Text, TextLink, Tooltip } from '@grafana/ui';
 import { getDataSourceByUid } from '../../utils/datasource';
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { useFolderPath } from '../folder-browsing/folderLookups';
-import { getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
+import { getManagerKind, getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
 import { useFullRecordingRuleState } from '../rule-data/ruleResourceLookups';
 import { DataSourcesMeta } from '../rule-row/DataSourcesMeta';
 import { FolderPath } from '../rule-row/FolderPath';
@@ -37,6 +37,7 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
 
   const pluginId = getPluginId(hit.labels);
   // Managed rules get the provisioning badge too: they are owned by something outside the UI.
+  const managerKind = fullRule.status === 'loaded' ? getManagerKind(fullRule.rule) : undefined;
   const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
   const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
   const hasDisplayLabels = Object.keys(hit.labels).some((key) => key !== GRAFANA_ORIGIN_LABEL);
@@ -62,7 +63,7 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
             {hit.title}
           </TextLink>
           {pluginId === undefined ? (
-            isOwnedElsewhere && <ProvisioningBadge />
+            isOwnedElsewhere && <ProvisioningBadge managerKind={managerKind} />
           ) : (
             <PluginOriginBadge pluginId={pluginId} size="sm" />
           )}
@@ -87,9 +88,7 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
         hasQueriedDataSources && <DataSourcesMeta key="data-sources" uids={hit.dataSourceUids} />,
         hasDisplayLabels && <LabelsMeta key="labels" labels={hit.labels} />,
       ]}
-      // The effective interval depends on sequence membership, which the search hit does not carry
-      // yet; showing the stored per-rule interval would be wrong for sequence members.
-      metaRight={<IntervalIndicator interval={undefined} />}
+      metaRight={<IntervalIndicator interval={hit.interval} />}
       actions={actions}
     />
   );
