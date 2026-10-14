@@ -19,6 +19,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -1175,4 +1176,137 @@ func TestParsedResource_Run(t *testing.T) {
 func TestExistingFolderCanonicalRoot(t *testing.T) {
 	parsed := &ParsedResource{Existing: &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"annotations": map[string]interface{}{"grafana.app/folder": "general"}}}}}
 	require.Empty(t, parsed.ExistingFolder(), "root must not become an orphan-folder cleanup target")
+}
+
+// sampleBundleGVK is an example kind registered with the bundle capability. Any kind can
+// opt in the same way; nothing about bundles is specific to this group.
+var (
+	sampleBundleGVK = schema.GroupVersionKind{Group: "example.grafana.app", Version: "v0alpha1", Kind: "SampleBundle"}
+	sampleBundleGVR = schema.GroupVersionResource{Group: "example.grafana.app", Version: "v0alpha1", Resource: "samplebundles"}
+)
+
+func TestParserBundleKind(t *testing.T) {
+	supported := []SupportedResource{
+		{GroupKind: dashboardV0.DashboardResourceInfo.GroupVersionKind().GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+		{GroupKind: sampleBundleGVK.GroupKind(), Capabilities: sets.New(CapabilityFolder, CapabilityBundle)},
+	}
+
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("ForKind", mock.Anything, sampleBundleGVK).
+		Return(nil, sampleBundleGVR, nil).Maybe()
+	clients.On("SupportedResources").Return(supported).Maybe()
+
+	parser := &parser{
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.LocalRepositoryType,
+			Namespace: "xxx",
+			Name:      "repo",
+		},
+		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		},
+	}
+
+	const manifestPath = "bundles/sample/bundle.yaml"
+	// The file set is declared in a top-level files block, a sibling of spec: which
+	// files belong to a resource is a provisioning concern and must not collide with
+	// the kind's own schema.
+	manifest := []byte(`apiVersion: example.grafana.app/v0alpha1
+kind: SampleBundle
+metadata:
+  name: sample
+spec:
+  title: A sample bundle
+files:
+  docs:
+    include: bundles/sample/docs/**
+    exclude:
+      - "**/*.tmp"
+  query:
+    path: shared/query.sql
+`)
+
+	t.Run("collects the declared parts", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: manifestPath,
+			Data: manifest,
+		})
+		require.NoError(t, err)
+
+		require.True(t, parsed.IsBundle)
+		require.Len(t, parsed.BundleSelectors, 2)
+
+		require.Equal(t, "docs", parsed.BundleSelectors[0].Name)
+		require.Equal(t, "bundles/sample/docs/**", parsed.BundleSelectors[0].Include)
+		require.True(t, parsed.BundleSelectors[0].IsPattern())
+
+		require.Equal(t, "query", parsed.BundleSelectors[1].Name)
+		require.Equal(t, "shared/query.sql", parsed.BundleSelectors[1].Path)
+		require.False(t, parsed.BundleSelectors[1].IsPattern())
+
+		// The arbitrary part of the spec is untouched: a bundle is a normal resource
+		// that happens to also name supporting files.
+		title, found, err := unstructured.NestedString(parsed.Obj.Object, "spec", "title")
+		require.NoError(t, err)
+		require.True(t, found)
+		require.Equal(t, "A sample bundle", title)
+	})
+
+	t.Run("an unusable files block invalidates the manifest", func(t *testing.T) {
+		_, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: manifestPath,
+			Data: []byte(`apiVersion: example.grafana.app/v0alpha1
+kind: SampleBundle
+metadata:
+  name: sample
+files:
+  escape:
+    include: ../../etc/**
+`),
+		})
+
+		var resourceErr *ResourceValidationError
+		require.ErrorAs(t, err, &resourceErr)
+		require.ErrorIs(t, err, safepath.ErrPathTraversalAttempt)
+	})
+
+	t.Run("an unrooted pattern invalidates the manifest", func(t *testing.T) {
+		_, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: manifestPath,
+			Data: []byte(`apiVersion: example.grafana.app/v0alpha1
+kind: SampleBundle
+metadata:
+  name: sample
+files:
+  everything:
+    include: "**/*.md"
+`),
+		})
+
+		require.ErrorIs(t, err, ErrBundleSelectorUnrooted)
+	})
+
+	t.Run("a kind without the capability declares no bundle parts", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "dashboards/one.json",
+			Data: []byte(`{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind": "Dashboard",
+				"metadata": {"name": "one"},
+				"spec": {"title": "one"},
+				"files": {"ignored": {"path": "should/be/ignored.md"}}
+			}`),
+		})
+		require.NoError(t, err)
+
+		require.False(t, parsed.IsBundle)
+		require.Empty(t, parsed.BundleSelectors)
+	})
 }

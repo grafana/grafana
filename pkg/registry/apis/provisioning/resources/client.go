@@ -34,10 +34,15 @@ const (
 	// CapabilityDisabled marks a resource as declared but not acted on (surfaced, inert).
 	// Absent means active.
 	CapabilityDisabled = "disabled"
+	// CapabilityBundle marks a resource whose definition spans a set of supporting files
+	// in the repository. The resource file is the manifest; the files it lists in
+	// spec.files belong to it and are treated as one atomic unit with it. Absent means
+	// the resource is defined entirely by its own file.
+	CapabilityBundle = "bundle"
 )
 
 // KnownCapabilities is the set of recognised capability tokens; unknown tokens are rejected.
-var KnownCapabilities = sets.New(CapabilityFolder, CapabilitySkipValidation, CapabilityDisabled)
+var KnownCapabilities = sets.New(CapabilityFolder, CapabilitySkipValidation, CapabilityDisabled, CapabilityBundle)
 
 // Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
 // so there is a single source of truth. Folder and User live here because
@@ -81,6 +86,9 @@ func (r SupportedResource) IsValidated() bool { return !r.Capabilities.Has(Capab
 
 // IsFolderScoped reports whether the resource carries the folder annotation on write.
 func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(CapabilityFolder) }
+
+// IsBundle reports whether the resource declares supporting files in spec.files.
+func (r SupportedResource) IsBundle() bool { return r.Capabilities.Has(CapabilityBundle) }
 
 // ParseSupportedResources parses the shared resource grammar — one entry per resource:
 //
@@ -140,6 +148,18 @@ func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVer
 	gk := gvk.GroupKind()
 	for _, r := range supported {
 		if r.IsFolderScoped() && r.GroupKind == gk {
+			return true
+		}
+	}
+	return false
+}
+
+// isBundleKind reports whether gvk is a supported resource declared with the bundle
+// capability.
+func isBundleKind(supported []SupportedResource, gvk schema.GroupVersionKind) bool {
+	gk := gvk.GroupKind()
+	for _, r := range supported {
+		if r.IsBundle() && r.GroupKind == gk {
 			return true
 		}
 	}

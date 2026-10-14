@@ -119,6 +119,37 @@ var HistoricJobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		},
 	})
 
+var BundleFileResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"bundlefiles", "bundlefile", "BundleFile",
+	func() runtime.Object { return &BundleFile{} },     // newObj
+	func() runtime.Object { return &BundleFileList{} }, // newList
+	utils.TableColumns{ // Returned by `kubectl get`. Doesn't affect disk storage.
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+			{Name: "Bundle", Type: "string"},
+			{Name: "Path", Type: "string"},
+			{Name: "Ref", Type: "string"},
+			{Name: "Size", Type: "integer"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*BundleFile)
+			if !ok {
+				return nil, errors.New("expected BundleFile")
+			}
+
+			return []interface{}{
+				m.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+				m.Spec.Bundle,
+				m.Spec.Path,
+				m.Spec.Ref,
+				m.Spec.Size,
+			}, nil
+		},
+	},
+)
+
 var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"connections", "connection", "Connection",
 	func() runtime.Object { return &Connection{} },     // newObj
@@ -208,6 +239,8 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&Connection{},
 		&ConnectionList{},
 		&ExternalRepositoryList{},
+		&BundleFile{},
+		&BundleFileList{},
 	)
 	return nil
 }

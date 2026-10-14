@@ -147,6 +147,17 @@ type ParsedResource struct {
 	// and must never have a folder annotation stamped onto them.
 	FolderScoped bool
 
+	// IsBundle reports whether this resource's kind declares the bundle capability, in
+	// which case Info.Path is a bundle manifest and BundleSelectors are the named parts
+	// of the file set it declares.
+	IsBundle bool
+
+	// BundleSelectors are the statically validated parts of this bundle's file set, in
+	// sorted-name order. What each part matches needs a listing of the repository at a
+	// ref, which a single-file parse does not have; see ResolveBundleFiles. Always empty
+	// for a non-bundle kind.
+	BundleSelectors []BundleSelector
+
 	// The Existing object (same name)
 	// ?? do we need/want the whole thing??
 	Existing *unstructured.Unstructured
@@ -275,7 +286,19 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// are contained in folders. Org-scoped resources (those not folder-scoped in the
 	// configured supported set) must not have a folder annotation stamped onto them:
 	// it would be meaningless and possibly dangling.
-	parsed.FolderScoped = supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK)
+	supported := r.clients.SupportedResources()
+	parsed.FolderScoped = supportsFolderAnnotation(supported, parsed.GVK)
+
+	// A bundle's file set is part of its definition, so an unusable files block makes
+	// the manifest itself invalid rather than yielding a bundle whose files the pipeline
+	// would silently ignore.
+	if isBundleKind(supported, parsed.GVK) {
+		parsed.IsBundle = true
+		parsed.BundleSelectors, err = ParseBundleSelectors(parsed.Obj, info.Path)
+		if err != nil {
+			return nil, NewResourceValidationError(err)
+		}
+	}
 	if info.Path != "" && parsed.FolderScoped {
 		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
 	}

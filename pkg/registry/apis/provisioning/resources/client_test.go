@@ -77,6 +77,22 @@ func TestSupportsFolderAnnotation(t *testing.T) {
 	assert.True(t, supportsFolderAnnotation(supported, other))
 }
 
+func TestSupportedResourceBundleCapability(t *testing.T) {
+	got, err := ParseSupportedResources([]string{
+		"example.grafana.app/SampleBundle:folder:bundle",
+		"dashboard.grafana.app/Dashboard:folder",
+	})
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+
+	bundle := got[0]
+	require.True(t, bundle.IsBundle())
+	require.True(t, bundle.IsFolderScoped())
+	require.True(t, bundle.IsActive())
+
+	require.False(t, got[1].IsBundle())
+}
+
 func TestParseSupportedResources(t *testing.T) {
 	t.Run("parses ids and capabilities", func(t *testing.T) {
 		got, err := ParseSupportedResources([]string{

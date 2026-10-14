@@ -19,6 +19,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		BitbucketConnectionConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
 		BitbucketRepositoryConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
 		BranchOptions{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref),
+		BundleFile{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_BundleFile(ref),
+		BundleFileList{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_BundleFileList(ref),
+		BundleFileSpec{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_BundleFileSpec(ref),
 		CommitOptions{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref),
 		Connection{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
 		ConnectionAuthorizeRequest{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequest(ref),
@@ -221,6 +224,160 @@ func schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref common.ReferenceCal
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleFile(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "BundleFile is a copy of one supporting file of a bundle, as it was at a particular repository ref.\n\nBundles are resources whose definition spans a set of files the resource pipeline cannot parse. Storing each of those files here rather than reading them from the provider on demand gives them ordinary resource authorization, keeps the provider out of the read path, and lets consumers watch them. The repository stays authoritative: a BundleFile is derived, server-owned and overwritten from the repository on every sync, never written by a user.\n\nIdentity is (bundle, path) and the ref is a field, not part of the name: when a bundle advances to a newer ref each of its files is either updated in place or deleted, and a name cannot be updated. So for a bundle at its current ref there is exactly one BundleFile per claimed path.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(BundleFileSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			BundleFileSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleFileList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(BundleFile{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			BundleFile{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleFileSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Repository this file was read from.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"bundle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Bundle resource that claims this file. A file belongs to exactly one bundle.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the file's location, relative to the repository root -- the same form every other provisioning path takes.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ref is the repository ref this copy was read at. A consumer needing a consistent view compares it against the owning bundle's published ref and retries on a mismatch: files are updated in place, so there is a brief window during which a changed file is ahead of the bundle.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Hash of the decoded content, used to tell a file that moved refs without changing from one that has to be rewritten.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"size": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Size of the decoded content in bytes.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"content": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Content of the file, base64-encoded. Always encoded, whatever the file holds: bundles carry arbitrary files, and a single representation avoids both guessing at text and silently mangling anything that is not valid UTF-8.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"repository", "bundle", "path", "ref"},
 			},
 		},
 	}
