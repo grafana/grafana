@@ -12,6 +12,24 @@ import {
 import { FilterByValueTransformerEditor } from './FilterByValueTransformerEditor';
 
 describe('FilterByValueTransformerEditor', () => {
+  it('displays the saved inSet matcher and values without changing the filter', () => {
+    const onChange = jest.fn();
+    const input: DataFrame[] = [
+      { fields: [{ name: 'Value', type: FieldType.number, config: {}, values: [1, 2, 3] }], length: 3 },
+    ];
+    const options: FilterByValueTransformerOptions = {
+      type: FilterByValueType.include,
+      match: FilterByValueMatch.all,
+      filters: [{ fieldName: 'Value', config: { id: ValueMatcherID.inSet, options: { values: [1, 2] } } }],
+    };
+
+    render(<FilterByValueTransformerEditor input={input} options={options} onChange={onChange} />);
+
+    expect(screen.getByText('Is in set: 1, 2')).toBeInTheDocument();
+    expect(screen.queryByText('Is null')).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('filters the newly selected field instead of the saved raw field identity', async () => {
     const onChange = jest.fn<void, [FilterByValueTransformerOptions]>();
     const input: DataFrame[] = [
