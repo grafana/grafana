@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -2862,11 +2863,15 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 // Fields are listed rather than cleared, so a field added to IndexableDocument
 // later cannot reach trash documents by accident.
 func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
-	var u unstructured.Unstructured
-	if err := u.UnmarshalJSON(value); err != nil {
+	u, err := decodeForTrash(value)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal deleted object: %w", err)
 	}
-	obj, err := utils.MetaAccessor(&u)
+	return deletedDocumentFrom(key, rv, u)
+}
+
+func deletedDocumentFrom(key *resourcepb.ResourceKey, rv int64, u *unstructured.Unstructured) (*IndexableDocument, error) {
+	obj, err := utils.MetaAccessor(u)
 	if err != nil {
 		return nil, err
 	}
@@ -2883,8 +2888,8 @@ func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (
 		DeletedRV: new(strconv.FormatInt(rv, 10)),
 	}
 	// Tags come from the marker's spec, which is the whole object as it was, so this
-	// costs no extra read. A spec that is missing or not an object leaves them unset,
-	// exactly as it leaves the title falling back to the name.
+	// costs no extra read. A spec that is missing leaves them unset, exactly as it
+	// leaves the title falling back to the name.
 	if spec, err := obj.GetSpec(); err == nil {
 		if specValue, ok := spec.(map[string]any); ok {
 			doc.Tags = specTags(specValue["tags"])
@@ -2904,6 +2909,35 @@ func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (
 		doc.IsProvisioned = new(true)
 	}
 	return doc, nil
+}
+
+// decodeForTrash decodes only what a trash document reads: the metadata and the
+// spec's title, name and tags, skipping the rest of the spec.
+func decodeForTrash(value []byte) (*unstructured.Unstructured, error) {
+	var partial struct {
+		Metadata map[string]any `json:"metadata"`
+		Spec     *struct {
+			Title any `json:"title"`
+			Name  any `json:"name"`
+			Tags  any `json:"tags"`
+		} `json:"spec"`
+	}
+	if err := json.Unmarshal(value, &partial); err != nil {
+		return nil, err
+	}
+
+	object := map[string]any{}
+	if partial.Metadata != nil {
+		object["metadata"] = partial.Metadata
+	}
+	if partial.Spec != nil {
+		object["spec"] = map[string]any{
+			"title": partial.Spec.Title,
+			"name":  partial.Spec.Name,
+			"tags":  partial.Spec.Tags,
+		}
+	}
+	return &unstructured.Unstructured{Object: object}, nil
 }
 
 type builderCache struct {
