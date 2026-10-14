@@ -1747,7 +1747,7 @@ func TestReconciler_Sweep_SeedSurvivesProviderFailure(t *testing.T) {
 	addStoredEvent(t, s, dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
 	text.failNext = &embedder.RetryableError{Err: errBoom}
 	s.sweep(t.Context())
-	require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), time.Millisecond), vec.latestRV)
+	require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), seedLookback), vec.latestRV)
 	s, _ = newReconciler(t, st, vec)
 	s.sweep(t.Context())
 	assert.Len(t, vec.upserts, 1)
@@ -1809,7 +1809,7 @@ func TestReconciler_SeedLookback(t *testing.T) {
 			st.lookback = 8192
 			s.observeWrite(&resource.WrittenEvent{Key: &st.changes[0].Key, ResourceVersion: snowflakeRV(100)})
 			vec.onSetLatestRV = func(rv int64) {
-				if rv != resource.SubtractDurationFromSnowflake(snowflakeRV(100), time.Millisecond) {
+				if rv != resource.SubtractDurationFromSnowflake(snowflakeRV(100), seedLookback) {
 					return
 				}
 				late := dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "late", snowflakeRV(90), minimalDashboard("late", "Late"))
@@ -1829,7 +1829,7 @@ func TestReconciler_SeedLookback(t *testing.T) {
 			if restart {
 				st.listErr = errBoom
 				s.sweep(t.Context())
-				require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), time.Millisecond), vec.latestRV)
+				require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), seedLookback), vec.latestRV)
 				require.Empty(t, vec.upserts)
 				st.listErr = nil
 				s, _ = newReconciler(t, st, vec)
@@ -2124,12 +2124,40 @@ func TestReconciler_MultipleBuildersKeepRetriesSeparate(t *testing.T) {
 	assert.Equal(t, snowflakeRV(100), vec.latestRV)
 }
 
+// Written keys arrive in no particular order, so a write to another type can be
+// delivered only after a newer write has seeded the checkpoint. The seed sits
+// far enough below the newer write for the sweep to list the older one and
+// create its type's backfill job.
+func TestReconciler_Sweep_SeedCoversOlderWriteDeliveredLate(t *testing.T) {
+	widgets := fakeBuilder{group: "test.grafana.app", resource: "widgets"}
+	newer := snowflakeRV(100)
+	older := resource.SubtractDurationFromSnowflake(newer, 2*time.Second)
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		change(widgets.group, widgets.resource, "ns", "widget", older, []byte("widget")),
+	}}
+	vec := newFakeVector()
+	s := newReconcilerWithBuilders(t, st, vec, dashboard.New(), widgets)
+
+	// Only the newer dashboard write has been delivered.
+	addStoredEvent(t, s, dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", newer, minimalDashboard("dash", "Dash")))
+	s.sweep(t.Context())
+
+	assert.True(t, vec.hasUpsertFor("ns", widgets.resource, "widget"), "the older write is listed")
+	var stoppingRVs []int64
+	for _, job := range vec.backfillJobs {
+		if job.Resource == widgets.resource {
+			stoppingRVs = append(stoppingRVs, job.StoppingRV)
+		}
+	}
+	assert.Equal(t, []int64{older}, stoppingRVs, "the older write's type gets its backfill job")
+}
+
 func TestReconciler_SeedPredecessorSurvivesSQLRVConversion(t *testing.T) {
 	sqlSeed := time.Now().Truncate(time.Millisecond).UnixMicro()
 	seed := rvmanager.SnowflakeFromRV(sqlSeed)
 	legacyPredecessor := rvmanager.RVFromSnowflake(seed - 1)
 	assert.Greater(t, legacyPredecessor, sqlSeed, "subtracting one Snowflake tick can cross into the next millisecond when converted to SQL RV")
 
-	predecessor := resource.SubtractDurationFromSnowflake(seed, time.Millisecond)
+	predecessor := resource.SubtractDurationFromSnowflake(seed, seedLookback)
 	assert.Less(t, rvmanager.RVFromSnowflake(predecessor), sqlSeed)
 }

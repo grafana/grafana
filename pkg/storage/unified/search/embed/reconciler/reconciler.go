@@ -44,6 +44,11 @@ const DefaultInterval = time.Minute
 // providers can misclassify an invalid request as temporarily unavailable.
 const maxEventAttempts = 5
 
+// seedLookback puts the first checkpoint below the earliest observed write, so
+// the sweep still lists older writes whose keys arrive later, as the KV notifier
+// settles events for 3s.
+const seedLookback = 3 * time.Second
+
 // seedWatchRetryDelay is how long the seed watch waits before opening again
 // after it failed or its stream ended.
 const seedWatchRetryDelay = 5 * time.Second
@@ -566,9 +571,7 @@ func (s *Reconciler) ensureCheckpoint(ctx context.Context) (int64, error) {
 		if seed == 0 {
 			return 0, nil
 		}
-		// A full millisecond keeps this predecessor below the seed after a
-		// legacy SQL RV is converted back from Snowflake format.
-		rv = resource.SubtractDurationFromSnowflake(seed, time.Millisecond)
+		rv = resource.SubtractDurationFromSnowflake(seed, seedLookback)
 		// Persist before any provider call so the first write survives a restart.
 		if err := s.vectorBackend.SetLatestRV(ctx, rv); err != nil {
 			return 0, fmt.Errorf("seed checkpoint: %w", err)
