@@ -33,7 +33,7 @@ const EMPTY_LAYOUT: Layout = { highlight: null, items: {} };
 export function ComposerOverlay({ session }: { session: ComposerSession }) {
   const styles = useStyles2(getStyles);
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
-  const { picking, pickMode, paused, annotations } = overlayState;
+  const { picking, pickMode, paused, capturing, annotations } = overlayState;
   const rootRef = useRef<HTMLDivElement>(null);
   const anchorHostRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
@@ -177,7 +177,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     stop(event);
     swallowClickRef.current = false;
     // Shift is read at pointer-down only; the Region tool drags without it.
-    if (event.button !== 0 || !picking || paused || (pickMode !== 'region' && !event.shiftKey)) {
+    if (event.button !== 0 || !picking || paused || capturing || (pickMode !== 'region' && !event.shiftKey)) {
       return;
     }
     dragStartRef.current = { x: event.clientX, y: event.clientY };
@@ -227,6 +227,10 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       swallowClickRef.current = false;
       return;
     }
+    // A capture renders the current tab: nothing changes under it until it settles.
+    if (capturing) {
+      return;
+    }
     // Tab headers stay usable: switching tabs is how regions on other tabs get drawn.
     const tab = elementAt(event.clientX, event.clientY, TAB_SELECTOR);
     if (tab) {
@@ -258,9 +262,9 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
   };
 
   return (
-    <div ref={rootRef} className={styles.root}>
+    <div ref={rootRef} className={styles.root} data-composer-capture-exclude>
       <div
-        className={cx(styles.blocker, picking && !paused && styles.picking)}
+        className={cx(styles.blocker, picking && !paused && !capturing && styles.picking)}
         data-testid="dashboard-composer-overlay"
         // Pointer-only layer: keyboard users select through the navigator (M3); Escape is handled on window.
         role="presentation"

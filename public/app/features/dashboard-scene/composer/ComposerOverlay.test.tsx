@@ -11,11 +11,18 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 
 import { ComposerOverlay } from './ComposerOverlay';
 import { ComposerSession } from './ComposerSession';
+import { cropToBlob, releaseCanvas, renderNode } from './raster';
 import { type ComposerAnnotation } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+}));
+
+jest.mock('./raster', () => ({
+  renderNode: jest.fn(),
+  cropToBlob: jest.fn(),
+  releaseCanvas: jest.fn(),
 }));
 
 jest.mock('../saving/createDetectChangesWorker', () => ({
@@ -40,15 +47,16 @@ let panelRoot: HTMLElement | undefined;
 const originalElementsFromPoint = document.elementsFromPoint;
 /** Where the stand-in panel sits in the viewport; everything else measures as the full viewport. */
 let panelRect = { left: 100, top: 200, width: 400, height: 300 };
+/** Where the dashboard content (the overlay and its container) sits. */
+let contentRect = { left: 0, top: 0, width: 1024, height: 768 };
 
 beforeEach(() => {
   setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true, 'grafana.dashboardComposer': true });
   locationService.replace('/d/overlay-test');
   panelRect = { left: 100, top: 200, width: 400, height: 300 };
+  contentRect = { left: 0, top: 0, width: 1024, height: 768 };
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-    const { left, top, width, height } = this.hasAttribute('data-viz-panel-key')
-      ? panelRect
-      : { left: 0, top: 0, width: 1024, height: 768 };
+    const { left, top, width, height } = this.hasAttribute('data-viz-panel-key') ? panelRect : contentRect;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured rect without toJSON
     return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top } as DOMRect;
   });
@@ -620,5 +628,167 @@ describe('regions', () => {
 
     expect(screen.queryByRole('button', { name: 'Comment 1' })).not.toBeInTheDocument();
     expect(session.getAnnotationAnchor('r')).toBeNull();
+  });
+});
+
+describe('region capture', () => {
+  const mockRenderNode = jest.mocked(renderNode);
+  const mockCropToBlob = jest.mocked(cropToBlob);
+  const mockReleaseCanvas = jest.mocked(releaseCanvas);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the size is read
+  const raster = { width: 2048, height: 1536 } as HTMLCanvasElement;
+  const webp = new Blob(['webp'], { type: 'image/webp' });
+  const live = () => new AbortController().signal;
+
+  beforeEach(() => {
+    mockRenderNode.mockReset().mockResolvedValue(raster);
+    mockCropToBlob.mockReset().mockResolvedValue(webp);
+    mockReleaseCanvas.mockReset();
+  });
+
+  async function drawRegion(session: ComposerSession) {
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickRegion(live());
+    });
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    return ((await pick) as { ref: { kind: 'region'; regionId: string } }).ref.regionId;
+  }
+
+  async function capture(session: ComposerSession, regionId: string) {
+    let result: unknown;
+    await act(async () => {
+      result = await session.captureRegion(regionId, live());
+    });
+    return result;
+  }
+
+  function start(session: ComposerSession, regionId: string) {
+    let pending: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pending = session.captureRegion(regionId, live());
+    });
+    return pending;
+  }
+
+  function deferred<T>() {
+    let resolve: (value: T) => void = () => {};
+    const promise = new Promise<T>((done) => (resolve = done));
+    return { promise, resolve };
+  }
+
+  it('renders the dashboard without Composer or the sidebar and crops at the raster scale', async () => {
+    const { session } = setup();
+    const regionId = await drawRegion(session);
+    const sidebar = document.createElement('div');
+    sidebar.setAttribute('data-extension-sidebar', '');
+
+    const result = await capture(session, regionId);
+
+    expect(result).toEqual({ status: 'ready', image: webp, width: 400, height: 400, capturedAt: expect.any(String) });
+    const overlayRoot = screen.getByTestId('dashboard-composer-overlay').parentElement!;
+    const [node, { filter }] = mockRenderNode.mock.calls[0];
+    expect(node).toBe(overlayRoot.parentElement);
+    expect(filter(overlayRoot)).toBe(false);
+    expect(filter(sidebar)).toBe(false);
+    expect(filter(panelRoot!)).toBe(true);
+    // A 1024px wide dashboard rendered 2048px wide: 2 raster pixels per CSS pixel.
+    expect(mockCropToBlob).toHaveBeenCalledWith(
+      raster,
+      { sx: 300, sy: 500, sw: 400, sh: 400, width: 400, height: 400 },
+      'image/webp',
+      0.85
+    );
+    expect(mockReleaseCanvas).toHaveBeenCalledWith(raster);
+  });
+
+  it('runs one capture at a time and locks picking and tabs until it settles', async () => {
+    const { session } = setup();
+    const regionId = await drawRegion(session);
+    const render = deferred<HTMLCanvasElement>();
+    mockRenderNode.mockReturnValue(render.promise);
+
+    const first = start(session, regionId);
+    await expect(session.captureRegion(regionId, live())).resolves.toEqual({ status: 'failed', reason: 'busy' });
+    expect(session.getOverlayState().capturing).toBe(true);
+
+    const tab = document.createElement('button');
+    tab.setAttribute('role', 'tab');
+    const onTabClick = jest.fn();
+    tab.addEventListener('click', onTabClick);
+    document.elementsFromPoint = () => [screen.getByTestId('dashboard-composer-overlay'), tab];
+    fireEvent.click(screen.getByTestId('dashboard-composer-overlay'), { clientX: 10, clientY: 10 });
+    expect(onTabClick).not.toHaveBeenCalled();
+
+    await act(async () => {
+      render.resolve(raster);
+      await first;
+    });
+    await expect(first).resolves.toMatchObject({ status: 'ready' });
+    expect(session.getOverlayState().capturing).toBe(false);
+  });
+
+  it('times out after 10 seconds and drops the late result', async () => {
+    const { session } = setup();
+    const regionId = await drawRegion(session);
+    const render = deferred<HTMLCanvasElement>();
+    mockRenderNode.mockReturnValue(render.promise);
+    jest.useFakeTimers();
+    try {
+      const pending = start(session, regionId);
+      await act(async () => {
+        jest.advanceTimersByTime(10_000);
+      });
+      await expect(pending).resolves.toEqual({ status: 'failed', reason: 'timeout' });
+
+      await act(async () => render.resolve(raster));
+      expect(mockCropToBlob).not.toHaveBeenCalled();
+      expect(mockReleaseCanvas).toHaveBeenCalledWith(raster);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('is not_visible unless the region is fully in view, and when the page scrolls mid-capture', async () => {
+    const { session } = setup();
+    const regionId = await drawRegion(session);
+
+    contentRect = { ...contentRect, top: -300 };
+    await expect(capture(session, regionId)).resolves.toEqual({ status: 'failed', reason: 'not_visible' });
+    expect(mockRenderNode).not.toHaveBeenCalled();
+
+    contentRect = { ...contentRect, top: 0 };
+    mockRenderNode.mockReturnValue(deferred<HTMLCanvasElement>().promise);
+    const pending = start(session, regionId);
+    await act(async () => {
+      fireEvent.scroll(window);
+      await pending;
+    });
+    await expect(pending).resolves.toEqual({ status: 'failed', reason: 'not_visible' });
+  });
+
+  it('reports tainted content as unsupported and an oversized dashboard as too_large', async () => {
+    const { session } = setup();
+    const regionId = await drawRegion(session);
+
+    mockCropToBlob.mockRejectedValue(new DOMException('Tainted canvas', 'SecurityError'));
+    await expect(capture(session, regionId)).resolves.toEqual({ status: 'failed', reason: 'unsupported' });
+
+    contentRect = { ...contentRect, height: 20_000 };
+    await expect(capture(session, regionId)).resolves.toEqual({ status: 'failed', reason: 'too_large' });
+  });
+
+  it('fails for an unknown region or a closed session', async () => {
+    const { session } = setup();
+    const regionId = await drawRegion(session);
+    await expect(session.captureRegion('region-unknown', live())).resolves.toEqual({
+      status: 'failed',
+      reason: 'failed',
+    });
+    act(() => session.exit());
+    await expect(session.captureRegion(regionId, live())).resolves.toEqual({ status: 'failed', reason: 'failed' });
   });
 });

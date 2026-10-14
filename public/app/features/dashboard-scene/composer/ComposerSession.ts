@@ -19,6 +19,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { dashboardV2SpecSchema } from '../v2schema/dashboardV2Schema';
 
 import { canEnterComposer, canStillEdit } from './composerAccess';
+import { CAPTURE_TIMEOUT_MS, failed, renderRegionImage } from './regionCapture';
 import {
   type ApplyOutcome,
   type ComposerAnnotation,
@@ -28,8 +29,12 @@ import {
   type ElementPick,
   type ElementPoint,
   type ElementRef,
+  type RegionCapture,
   type RegionPick,
 } from './types';
+
+/** Left out of region captures: Composer's own layer and the extension sidebar. */
+export const CAPTURE_EXCLUDE_SELECTOR = '[data-composer-capture-exclude], [data-extension-sidebar]';
 
 /** A rectangle in CSS pixels; relative to the overlay unless said otherwise. */
 export interface Box {
@@ -53,6 +58,8 @@ export interface ComposerOverlayState {
   picking: boolean;
   /** Which tool the pending pick uses; null when none is pending. */
   pickMode: 'element' | 'region' | null;
+  /** A region capture is running: picking and tab switching wait for it. */
+  capturing: boolean;
   paused: boolean;
   highlight: ElementRef | null;
   annotations: ComposerAnnotation[];
@@ -63,6 +70,7 @@ export interface ComposerOverlayState {
 const INITIAL_OVERLAY_STATE: ComposerOverlayState = {
   picking: false,
   pickMode: null,
+  capturing: false,
   paused: false,
   highlight: null,
   annotations: [],
@@ -173,6 +181,58 @@ export class ComposerSession implements ComposerSessionAPI {
       };
       this.setOverlayState({ picking: true, pickMode: mode });
     });
+  }
+
+  public async captureRegion(regionId: string, signal: AbortSignal): Promise<RegionCapture> {
+    const region = this.regions.get(regionId);
+    const root = this.getOverlayRoot();
+    const node = root?.parentElement;
+    if (this.closed || signal.aborted || !region || !root || !node) {
+      return failed('failed');
+    }
+    if (this.overlayState.capturing) {
+      return failed('busy');
+    }
+    const rect = this.getRegionViewportRect(regionId);
+    if (!rect || !isFullyVisible(rect, getVisibleBounds(getScrollContainer(root)))) {
+      return failed('not_visible');
+    }
+
+    this.setOverlayState({ capturing: true });
+    let settled = false;
+    const cleanups: Array<() => void> = [];
+    const result = await new Promise<RegionCapture>((resolve) => {
+      const settle = (outcome: RegionCapture) => {
+        if (!settled) {
+          settled = true;
+          resolve(outcome);
+        }
+      };
+      const onAbort = () => settle(failed('failed'));
+      const onScroll = () => settle(failed('not_visible'));
+      const timer = setTimeout(() => settle(failed('timeout')), CAPTURE_TIMEOUT_MS);
+      signal.addEventListener('abort', onAbort, { once: true });
+      this.signal.addEventListener('abort', onAbort, { once: true });
+      window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+      cleanups.push(
+        () => clearTimeout(timer),
+        () => signal.removeEventListener('abort', onAbort),
+        () => this.signal.removeEventListener('abort', onAbort),
+        () => window.removeEventListener('scroll', onScroll, { capture: true })
+      );
+      renderRegionImage({
+        node,
+        region: rect,
+        exclude: (candidate) => candidate instanceof Element && candidate.matches(CAPTURE_EXCLUDE_SELECTOR),
+        // A settled capture is dropped: its buffers are freed and its result never returned.
+        isCancelled: () => settled,
+      }).then(settle, () => settle(failed('failed')));
+    });
+    cleanups.forEach((cleanup) => cleanup());
+    if (!this.closed) {
+      this.setOverlayState({ capturing: false });
+    }
+    return result;
   }
 
   public listElements(): ComposerElement[] {
@@ -660,6 +720,15 @@ function getSelectedTabChain(scene: DashboardScene): TabItem[] {
 /** Like `TabItem.isCurrentTab`, but also true for the first tab shown before any slug is set. */
 function isSelectedTab(tab: TabItem): boolean {
   return tab.parent instanceof TabsLayoutManager && tab.parent.getCurrentTab() === tab;
+}
+
+function isFullyVisible(rect: Box, visible: { top: number; bottom: number }): boolean {
+  return (
+    rect.left >= 0 &&
+    rect.left + rect.width <= window.innerWidth &&
+    rect.top >= visible.top &&
+    rect.top + rect.height <= visible.bottom
+  );
 }
 
 function isInHiddenTab(obj: SceneObject): boolean {
