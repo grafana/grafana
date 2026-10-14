@@ -225,6 +225,36 @@ describe('annotations', () => {
     expect(session.getAnnotationAnchor('a')).toBeNull();
   });
 
+  it('draws pins as comment bubbles in Grafana blue, with the tail on the point', () => {
+    const { annotate } = setup();
+    annotate([item(), item({ id: 'b', label: '2', state: 'staged', point: { x: 1, y: 0 } })]);
+    const theme = createTheme();
+    const active = screen.getByRole('button', { name: 'Comment 1' });
+    const staged = screen.getByRole('button', { name: 'Comment 2' });
+
+    // The box's bottom-left corner is the tail: placed on the point and lifted by the pin's own height.
+    expect(active).toHaveStyle({ left: '200px', top: '350px' });
+    expect(staged).toHaveStyle({ left: '500px', top: '200px' });
+    const style = getComputedStyle(staged);
+    expect(style.transform).toBe('translateY(-100%)');
+    expect(style.borderRadius).toBe('50% 50% 50% 0');
+    // As the browser reports colours.
+    const asCss = (color: string) => {
+      const probe = document.createElement('div');
+      probe.style.color = color;
+      return probe.style.color;
+    };
+    expect(style.backgroundColor).toBe(asCss(theme.colors.info.main));
+    expect(style.color).toBe(asCss(theme.colors.info.contrastText));
+    expect(style.boxShadow).toContain(`0 0 0 2px ${theme.colors.background.primary}`);
+
+    // Active pins are a size up.
+    expect(style.width).toBe('26px');
+    expect(getComputedStyle(active).width).toBe('28px');
+    expect(active).toHaveAttribute('data-state', 'active');
+    expect(staged).toHaveAttribute('data-state', 'staged');
+  });
+
   it('reports pin clicks and keyboard activation', async () => {
     const { session, annotate } = setup();
     const listener = jest.fn();
@@ -329,23 +359,25 @@ describe('annotations', () => {
     await nextFrame();
     const pin = screen.getByRole('button', { name: 'Comment 1' });
     expect(screen.getByTestId('dashboard-composer-overlay').parentElement).toContainElement(anchor);
-    expect(anchor).toHaveStyle({ position: 'absolute', left: '200px', top: '350px' });
-    expect(anchor.style.left).toBe(pin.style.left);
-    expect(anchor.style.top).toBe(pin.style.top);
+    // The pin's tail tip is on the point (200, 350); the anchor is at its visual centre, half an active
+    // (28px) pin right of and above the tail.
+    expect(pin).toHaveStyle({ left: '200px', top: '350px' });
+    expect(anchor).toHaveStyle({ position: 'absolute', left: '214px', top: '336px' });
 
     // Follows the element like the pin does.
     panelRect = { ...panelRect, top: 50 };
     fireEvent.scroll(window);
     await nextFrame();
-    expect(anchor).toHaveStyle({ left: '200px', top: '200px' });
-    expect(anchor.style.top).toBe(pin.style.top);
+    expect(pin).toHaveStyle({ left: '200px', top: '200px' });
+    expect(anchor).toHaveStyle({ left: '214px', top: '186px' });
 
     // The element is partly visible but the point is above the overlay: the pin, and the anchor with it,
-    // stays inside the overlay by half a pin.
+    // stays inside the overlay.
     panelRect = { ...panelRect, top: -200 };
     fireEvent.scroll(window);
     await nextFrame();
-    expect(anchor).toHaveStyle({ left: '200px', top: '12px' });
+    expect(pin).toHaveStyle({ top: '28px' });
+    expect(anchor).toHaveStyle({ left: '214px', top: '14px' });
     expect(anchor).not.toHaveStyle({ display: 'none' });
 
     annotate([item({ label: '2', state: 'staged' })]);
@@ -372,7 +404,7 @@ describe('annotations', () => {
     panelRect = { ...panelRect, top: 200 };
     fireEvent.scroll(window);
     await nextFrame();
-    expect(anchor).toHaveStyle({ left: '200px', top: '350px' });
+    expect(anchor).toHaveStyle({ left: '214px', top: '336px' });
     expect(anchor).not.toHaveStyle({ display: 'none' });
 
     annotate([item({ ref: { kind: 'panel', panelId: 99 } })]);
@@ -776,8 +808,8 @@ describe('regions', () => {
     annotate([item({ id: 'r', ref, point: { x: 1, y: 0 } })]);
 
     expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ top: '0px', height: '200px' });
-    // A corner pin on the overlay's top edge is kept whole inside it.
-    expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '350px', top: '12px' });
+    // A corner pin on the overlay's top edge is kept whole inside it: its tail drops to a pin's height.
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '350px', top: '28px' });
     expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toEqual({
       left: 150,
       top: 0,

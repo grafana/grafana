@@ -139,7 +139,10 @@ export interface ComposerSessionAPI {
   highlight(target: ElementRef | null): void;
   setPaused(paused: boolean): void;
 
-  /** Replaces the drawn annotations. Pins are disabled while paused. */
+  /**
+   * Replaces the drawn annotations. Each is a comment-bubble pin whose tail (its square bottom-left corner)
+   * sits on the item's point; active pins are drawn slightly larger. Pins are disabled while paused.
+   */
   setAnnotations(items: ComposerAnnotation[]): void;
   /** Fires with the item id when its pin is clicked or activated with Enter or Space. Returns an unsubscribe. */
   onAnnotationClick(listener: (id: string) => void): () => void;
@@ -150,8 +153,9 @@ export interface ComposerSessionAPI {
   onAnnotationHover(listener: (id: string | null) => void): () => void;
   /**
    * A stable, zero-size container for the plugin to portal its editor or a read-only preview into. Works
-   * for active and staged items alike. It sits at the pin's centre (the item's element-relative point,
-   * clamped to the viewport) and follows scroll, resize and layout like the pin; it is hidden
+   * for active and staged items alike. It sits at the pin's visual centre (half a pin right of and above
+   * the tail on the item's point, clamped to the viewport), so a popover placed beside it sits beside the
+   * pin, and it follows scroll, resize and layout like the pin; it is hidden
    * (`display: none`) while the element is entirely off-screen. Core does no collision handling and never
    * reads, styles or clears its content. Null when the item is not set or does not resolve.
    */

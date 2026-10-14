@@ -8,7 +8,7 @@ import { useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
 import { type Box, type ComposerSession } from './ComposerSession';
-import { type ElementPoint } from './types';
+import { type ComposerAnnotation } from './types';
 
 const PANEL_ROOT_SELECTOR = '[data-viz-panel-key]';
 const TAB_SELECTOR = '[role="tab"]';
@@ -99,7 +99,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     session.getAnchors().forEach((anchor, id) => {
       const item = items.find((candidate) => candidate.id === id);
       const box = next.items[id];
-      const position = item && box ? anchorPosition(box, pinCentre(box, item.point, next), rootRect) : null;
+      const position = item && box ? anchorPosition(box, pinCentre(box, item, next), rootRect) : null;
       if (!position) {
         anchor.style.display = 'none';
         return;
@@ -450,7 +450,8 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
         {picking && hovered && <div className={cx(styles.box, styles.hover)} style={hovered.box} />}
         {draft && <div className={cx(styles.box, styles.draft)} style={draft} data-testid="composer-region-draft" />}
       </div>
-      {annotations.map(({ id, label, point }) => {
+      {annotations.map((item) => {
+        const { id, label, state } = item;
         const box = layout.items[id];
         if (!box) {
           return null;
@@ -459,8 +460,9 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
           <button
             key={id}
             type="button"
-            className={cx(styles.pin, paused && styles.pinDisabled)}
-            style={pinCentre(box, point, layout)}
+            className={cx(styles.pin, state === 'active' && styles.pinActive, paused && styles.pinDisabled)}
+            style={pinTail(box, item, layout)}
+            data-state={state}
             aria-label={t('dashboard.composer.annotation-pin', 'Comment {{label}}', { label })}
             aria-disabled={paused || undefined}
             data-testid={`composer-annotation-pin-${id}`}
@@ -520,16 +522,28 @@ function coverContent(root: HTMLElement) {
   }
 }
 
+function pinSize(state: ComposerAnnotation['state']) {
+  return state === 'active' ? PIN_SIZE_ACTIVE : PIN_SIZE;
+}
+
 /**
- * Where a pin is drawn, relative to the overlay: the element-relative point, kept far enough inside the
- * overlay that the whole pin shows (a pin on a region's corner at the overlay's edge would be half outside).
+ * Where a pin's tail tip (its square bottom-left corner) sits, relative to the overlay: on the item's point
+ * (a panel's click point, a region's top-right corner), kept far enough inside the overlay that the whole
+ * pin shows.
  */
-function pinCentre(box: Box, point: ElementPoint, overlay: { width: number; height: number }) {
-  const half = PIN_SIZE / 2;
+function pinTail(box: Box, { point, state }: Pick<ComposerAnnotation, 'point' | 'state'>, overlay: Size) {
+  const size = pinSize(state);
   return {
-    left: clamp(box.left + point.x * box.width, half, Math.max(half, overlay.width - half)),
-    top: clamp(box.top + point.y * box.height, half, Math.max(half, overlay.height - half)),
+    left: clamp(box.left + point.x * box.width, 0, Math.max(0, overlay.width - size)),
+    top: clamp(box.top + point.y * box.height, size, Math.max(size, overlay.height)),
   };
+}
+
+/** The pin's visual centre, where the editor anchor sits: half a pin right of and above the tail tip. */
+function pinCentre(box: Box, item: Pick<ComposerAnnotation, 'point' | 'state'>, overlay: Size) {
+  const tail = pinTail(box, item, overlay);
+  const half = pinSize(item.state) / 2;
+  return { left: tail.left + half, top: tail.top - half };
 }
 
 /**
@@ -557,7 +571,13 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-const PIN_SIZE = 24;
+const PIN_SIZE = 26;
+const PIN_SIZE_ACTIVE = 28;
+
+interface Size {
+  width: number;
+  height: number;
+}
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -584,45 +604,57 @@ function getStyles(theme: GrafanaTheme2) {
       pointerEvents: 'none',
       borderRadius: theme.shape.radius.default,
     }),
+    // Grafana blue in both the classic and refreshed themes, like the pins (the refreshed primary is
+    // monochrome).
     hover: css({
-      outline: `2px solid ${theme.colors.primary.border}`,
-      background: theme.colors.primary.transparent,
+      outline: `2px solid ${theme.colors.info.border}`,
+      background: theme.colors.info.transparent,
     }),
     highlight: css({
-      outline: `2px dashed ${theme.colors.primary.main}`,
+      outline: `2px dashed ${theme.colors.info.main}`,
     }),
     active: css({
-      outline: `2px solid ${theme.colors.primary.border}`,
+      outline: `2px solid ${theme.colors.info.border}`,
     }),
     draft: css({
-      border: `2px dashed ${theme.colors.primary.main}`,
-      background: theme.colors.primary.transparent,
+      border: `2px dashed ${theme.colors.info.main}`,
+      background: theme.colors.info.transparent,
     }),
     regionActive: css({
-      border: `2px solid ${theme.colors.primary.border}`,
+      border: `2px solid ${theme.colors.info.border}`,
     }),
     regionStaged: css({
-      border: `1px dashed ${theme.colors.primary.border}`,
+      border: `1px dashed ${theme.colors.info.border}`,
       opacity: 0.6,
     }),
+    // A comment bubble: round on three corners, with the square bottom-left corner as the tail on the point.
+    // `info` is Grafana's blue in both the classic and refreshed themes (the refreshed `primary` is
+    // monochrome, near white on dark), and the ring in the page background separates it from any panel.
     pin: css({
       position: 'absolute',
-      transform: 'translate(-50%, -50%)',
-      minWidth: PIN_SIZE,
+      transform: 'translateY(-100%)',
+      width: PIN_SIZE,
       height: PIN_SIZE,
-      padding: theme.spacing(0, 0.5),
+      padding: 0,
       border: 'none',
-      borderRadius: theme.shape.radius.circle,
-      background: theme.colors.primary.main,
-      color: theme.colors.primary.contrastText,
-      boxShadow: theme.shadows.z2,
+      // eslint-disable-next-line @grafana/no-border-radius-literal -- the bubble shape, not a theme radius
+      borderRadius: '50% 50% 50% 0',
+      background: theme.colors.info.main,
+      color: theme.colors.info.contrastText,
+      boxShadow: `0 0 0 2px ${theme.colors.background.primary}, ${theme.shadows.z2}`,
       fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
+      fontWeight: theme.typography.fontWeightBold,
       lineHeight: `${PIN_SIZE}px`,
+      textAlign: 'center',
       whiteSpace: 'nowrap',
       cursor: 'pointer',
       pointerEvents: 'auto',
       '&:focus-visible': getFocusStyles(theme),
+    }),
+    pinActive: css({
+      width: PIN_SIZE_ACTIVE,
+      height: PIN_SIZE_ACTIVE,
+      lineHeight: `${PIN_SIZE_ACTIVE}px`,
     }),
     pinDisabled: css({
       cursor: 'not-allowed',
