@@ -5,11 +5,14 @@ import { config } from '@grafana/runtime';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
 import { dashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
+import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 
 const restrictedGrafanaApis: RestrictedGrafanaApisContextType = config.featureToggles.restrictedPluginApis
   ? {
       alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
       dashboardMutationAPI: dashboardMutationApi,
+      // Always present; `canFloat()` reports whether grafana.extensionSidebarFloating lets it float.
+      extensionSidebar: extensionSidebarApi,
     }
   : {};
 
