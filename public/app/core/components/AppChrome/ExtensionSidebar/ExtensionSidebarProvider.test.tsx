@@ -11,6 +11,7 @@ import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionS
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import {
   claimFloatingExtensionSidebar,
+  onExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
@@ -554,6 +555,28 @@ describe('ExtensionSidebarProvider', () => {
 
       act(() => release());
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('tells close listeners when the open sidebar closes or switches component, not when it opens', () => {
+      const closed = jest.fn();
+      const stop = onExtensionSidebarClosed(closed);
+      renderPresentation();
+      const open = (title: string) =>
+        act(() =>
+          getAppEvents().publish(
+            new OpenExtensionSidebarEvent({ pluginId: mockPluginMeta.pluginId, componentTitle: title })
+          )
+        );
+
+      open(mockComponent.title);
+      expect(closed).not.toHaveBeenCalled();
+
+      open(mockDifferentComponent.title);
+      expect(closed).toHaveBeenCalledTimes(1);
+
+      act(() => getAppEvents().publish(new CloseExtensionSidebarEvent()));
+      expect(closed).toHaveBeenCalledTimes(2);
+      stop();
     });
 
     it('docks a floating sidebar when the flag is turned off', async () => {

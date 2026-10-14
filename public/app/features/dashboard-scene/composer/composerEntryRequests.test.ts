@@ -10,6 +10,7 @@ import {
   PENDING_REQUEST_TTL_MS,
   requestComposerEnter,
   settleComposerEnterRequest,
+  wasComposerEnterRequestDocked,
 } from './composerEntryRequests';
 
 const TARGET = { resource: 'dashboard', uid: 'abc' } as const;
@@ -117,15 +118,21 @@ describe('a request that floats the sidebar', () => {
     expect(getExtensionSidebarPresentation()).toBe('floating');
   });
 
-  it('is withdrawn when the user docks the sidebar while it waits', () => {
+  it('still goes ahead, docked, when the user docks the sidebar while it waits', () => {
     requestComposerEnter(TARGET, { float: true });
+    expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(false);
     setExtensionSidebarPresentation('docked');
     expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(true);
+    expect(wasComposerEnterRequestDocked('another-dashboard')).toBe(false);
 
     const listener = jest.fn();
     const unsubscribe = addComposerEnterRequestListener(listener);
-    expect(listener).not.toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledWith(TARGET);
     unsubscribe();
+
+    settleComposerEnterRequest(TARGET.uid);
+    expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(false);
   });
 
   it('leaves the layout alone for a request that does not float it', () => {

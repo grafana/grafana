@@ -1083,6 +1083,106 @@ describe('region capture', () => {
   });
 });
 
+// Composer is a mode, not a layout: the user may dock the extension sidebar next to the page and stay in it.
+describe('with the extension sidebar docked', () => {
+  let sidebar: HTMLElement | undefined;
+
+  beforeEach(() => {
+    jest
+      .mocked(renderNode)
+      .mockReset()
+      .mockResolvedValue(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the size is read
+        { width: 1400, height: 1536 } as HTMLCanvasElement
+      );
+    jest
+      .mocked(cropToBlob)
+      .mockReset()
+      .mockResolvedValue(new Blob(['webp'], { type: 'image/webp' }));
+    // The docked column beside the page, which narrows from 1024px to 700px.
+    sidebar = document.createElement('div');
+    sidebar.setAttribute('data-extension-sidebar', '');
+    document.body.appendChild(sidebar);
+    contentRect = { ...contentRect, width: 700 };
+  });
+
+  afterEach(() => sidebar?.remove());
+
+  it('moves pins with the content when the page narrows, without a scroll or window resize', async () => {
+    const callbacks = new Map<Element, () => void>();
+    const original = window.ResizeObserver;
+    class ManualResizeObserver {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+      observe(target: Element) {
+        callbacks.set(target, () => this.callback([], this));
+      }
+      unobserve() {}
+      disconnect() {}
+    }
+    window.ResizeObserver = ManualResizeObserver;
+    try {
+      const { annotate } = setup();
+      annotate([item()]);
+      expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '200px' });
+
+      // Docking narrows the dashboard container, and the grid lays the panel out narrower.
+      panelRect = { ...panelRect, width: 200 };
+      const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+      act(() => callbacks.get(container)?.());
+      await nextFrame();
+
+      expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '150px' });
+    } finally {
+      window.ResizeObserver = original;
+    }
+  });
+
+  it('still picks panels and draws regions', async () => {
+    const { session, startPick } = setup();
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.click(overlay, { clientX: 200, clientY: 350 });
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'panel', panelId: 3 } });
+
+    let region: Promise<unknown> = Promise.resolve();
+    act(() => {
+      region = session.pickRegion(new AbortController().signal);
+    });
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    await expect(region).resolves.toMatchObject({ ref: { kind: 'region' } });
+  });
+
+  it('captures a region without the docked sidebar, at the narrower page scale', async () => {
+    const { session } = setup();
+    let region: Promise<unknown> = Promise.resolve();
+    act(() => {
+      region = session.pickRegion(new AbortController().signal);
+    });
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { regionId } = ((await region) as { ref: { kind: 'region'; regionId: string } }).ref;
+
+    let result: unknown;
+    await act(async () => {
+      result = await session.captureRegion(regionId, new AbortController().signal);
+    });
+
+    expect(result).toMatchObject({ status: 'ready', width: 400, height: 400 });
+    const [, { filter }] = jest.mocked(renderNode).mock.calls[0];
+    expect(filter(sidebar!)).toBe(false);
+    // A 700px wide page rendered 1400px wide: 2 raster pixels per CSS pixel.
+    expect(jest.mocked(cropToBlob)).toHaveBeenCalledWith(
+      expect.anything(),
+      { sx: 300, sy: 500, sw: 400, sh: 400, width: 400, height: 400 },
+      'image/webp',
+      0.85
+    );
+  });
+});
+
 describe('dashboard controls', () => {
   function mountControls() {
     const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;

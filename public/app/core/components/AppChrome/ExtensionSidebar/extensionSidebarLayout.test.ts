@@ -5,6 +5,8 @@ import {
   claimFloatingExtensionSidebar,
   getExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
+  notifyExtensionSidebarClosed,
+  onExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
@@ -77,7 +79,7 @@ describe('extensionSidebarLayout', () => {
       expect(getExtensionSidebarPresentation()).toBe('floating');
     });
 
-    it('end when the user docks the sidebar, after it has docked', () => {
+    it('are withdrawn when the user docks the sidebar, after it has docked', () => {
       const seen: string[] = [];
       const onDocked = jest.fn(() => seen.push(getExtensionSidebarPresentation()));
       claimFloatingExtensionSidebar({ onDocked });
@@ -99,5 +101,17 @@ describe('extensionSidebarLayout', () => {
       expect(onDocked).not.toHaveBeenCalled();
       expect(getExtensionSidebarPresentation()).toBe('floating');
     });
+  });
+
+  it('tells close listeners when the sidebar closes, until they unsubscribe', () => {
+    const listener = jest.fn();
+    const unsubscribe = onExtensionSidebarClosed(listener);
+
+    notifyExtensionSidebarClosed();
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    notifyExtensionSidebarClosed();
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });
