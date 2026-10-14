@@ -1253,3 +1253,24 @@ func TestRetrieveSubscriptionDetails_ServicePrincipalAuthSharesAcrossUsers(t *te
 	require.NoError(t, err)
 	require.Equal(t, int64(1), hits.Load(), "service-principal mode shares cache across users")
 }
+
+func TestExecuteTimeSeriesQueryResourcesDecodeErrorIsDownstream(t *testing.T) {
+	// resources stored as a single object instead of an array, e.g. a broken rule created through the API
+	q := backend.DataQuery{
+		RefID: "A",
+		TimeRange: backend.TimeRange{
+			From: time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2018, 3, 15, 13, 34, 0, 0, time.UTC),
+		},
+		JSON: []byte(`{"azureMonitor":{"aggregation":"Average","metricNamespace":"Microsoft.Compute/virtualMachines","metricName":"Percentage CPU","timeGrain":"PT1M","resources":{"subscription":"s","resourceGroup":"rg","resourceName":"vm"}}}`),
+	}
+
+	res, err := (&AzureMonitorDatasource{}).ExecuteTimeSeriesQuery(context.Background(), []backend.DataQuery{q}, types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{SubscriptionId: "default-subscription"},
+	}, nil, "", false)
+
+	require.NoError(t, err)
+	require.Error(t, res.Responses["A"].Error)
+	assert.Contains(t, res.Responses["A"].Error.Error(), "failed to decode the Azure Monitor query object from JSON")
+	assert.Equal(t, backend.ErrorSourceDownstream, res.Responses["A"].ErrorSource)
+}
