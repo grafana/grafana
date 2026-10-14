@@ -1840,21 +1840,6 @@
     },
     {
       "metadata": {
-        "name": "datasources.queryGatewayAuditPolicy",
-        "resourceVersion": "1791968820043",
-        "creationTimestamp": "2026-10-14T09:07:00Z",
-        "deletionTimestamp": "2026-10-14T10:58:23Z"
-      },
-      "spec": {
-        "description": "Enable support for the query gateway audit policies",
-        "stage": "experimental",
-        "codeowner": "@grafana/data-sources-plugins",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "datasources.queryGatewaySlimAudit",
         "resourceVersion": "1790805819665",
         "creationTimestamp": "2026-10-01T14:36:39Z"
