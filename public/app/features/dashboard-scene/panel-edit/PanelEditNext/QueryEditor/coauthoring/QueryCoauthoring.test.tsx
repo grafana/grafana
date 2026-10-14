@@ -1076,7 +1076,7 @@ describe('QueryCoauthoring', () => {
     },
     { kind: 'ok', text: 'Results were truncated', severity: undefined },
   ])(
-    'shows the $kind preview callout above why and reclassifies cached selections without logging returned text',
+    'shows the $kind preview callout below why and reclassifies cached selections without logging returned text',
     async ({ kind, text, severity, errorMessage }) => {
       const { user, previewRequests, panelResult } = await setup(0, true, undefined, {
         transaction: true,
@@ -1112,7 +1112,7 @@ describe('QueryCoauthoring', () => {
         expect(within(slot).getByRole('status')).toHaveTextContent(text);
       }
       expect(
-        slot.compareDocumentPosition(screen.getByText('Counts selected requests.')) & Node.DOCUMENT_POSITION_FOLLOWING
+        slot.compareDocumentPosition(screen.getByText('Counts selected requests.')) & Node.DOCUMENT_POSITION_PRECEDING
       ).toBeTruthy();
       await user.click(screen.getByRole('tab', { name: 'Option 2' }));
       expect(screen.getByText('Uses the latest two samples.')).toBeVisible();

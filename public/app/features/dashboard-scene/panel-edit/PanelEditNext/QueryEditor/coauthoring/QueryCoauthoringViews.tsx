@@ -736,9 +736,6 @@ export function QueryCoauthoringProposal({
                   {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
                 </div>
               </div>
-              <div role="region" aria-label={t('query-editor-coauthoring.preview-result', 'Preview result')}>
-                <QueryCoauthoringPreviewResult outcome={previewOutcome} tiny={tiny} />
-              </div>
               <div className={cx(styles.collapsible, narrow && styles.collapsed)}>
                 <div className={styles.collapsibleContent}>
                   {why.map((reason, index) => (
@@ -747,6 +744,9 @@ export function QueryCoauthoringProposal({
                     </Text>
                   ))}
                 </div>
+              </div>
+              <div role="region" aria-label={t('query-editor-coauthoring.preview-result', 'Preview result')}>
+                <QueryCoauthoringPreviewResult outcome={previewOutcome} tiny={tiny} />
               </div>
               {unconfirmedValues?.map((value, index) => (
                 <div key={index} className={styles.unconfirmedValue}>
