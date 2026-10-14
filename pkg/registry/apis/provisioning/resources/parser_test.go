@@ -1260,13 +1260,17 @@ spec:
 	})
 
 	t.Run("a linkable resource records the bundle it references", func(t *testing.T) {
+		// The reference is a label, so no consuming kind owes a schema change for it.
 		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
 			Path: "bundles/sample/resource.json",
 			Data: []byte(`{
 				"apiVersion": "example.grafana.app/v0alpha1",
 				"kind": "SampleResource",
-				"metadata": {"name": "sample"},
-				"spec": {"title": "sample", "bundle": "sample"}
+				"metadata": {
+					"name": "sample",
+					"labels": {"provisioning.grafana.app/bundle": "sample"}
+				},
+				"spec": {"title": "sample"}
 			}`),
 		})
 		require.NoError(t, err)
@@ -1274,22 +1278,20 @@ spec:
 		require.False(t, parsed.IsBundle)
 		require.Empty(t, parsed.BundleEntries)
 		require.Equal(t, "sample", parsed.BundleRef)
-
-		// The resource is labelled with the bundle it uses, so "what uses this bundle"
-		// is a selector rather than a read of every linkable resource.
-		require.Equal(t, "sample", parsed.Obj.GetLabels()[provisioning.BundleLabel])
 	})
 
 	t.Run("a kind without the capability ignores a bundle reference", func(t *testing.T) {
-		// Without this, a stray spec.bundle on an unrelated kind would silently claim
-		// files.
+		// Without this, a stray label on an unrelated kind would silently claim files.
 		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
 			Path: "dashboards/one.json",
 			Data: []byte(`{
 				"apiVersion": "dashboard.grafana.app/v0alpha1",
 				"kind": "Dashboard",
-				"metadata": {"name": "one"},
-				"spec": {"title": "one", "bundle": "sample"}
+				"metadata": {
+					"name": "one",
+					"labels": {"provisioning.grafana.app/bundle": "sample"}
+				},
+				"spec": {"title": "one"}
 			}`),
 		})
 		require.NoError(t, err)
@@ -1297,6 +1299,5 @@ spec:
 		require.False(t, parsed.IsBundle)
 		require.Empty(t, parsed.BundleRef)
 		require.Empty(t, parsed.BundleEntries)
-		require.NotContains(t, parsed.Obj.GetLabels(), provisioning.BundleLabel)
 	})
 }

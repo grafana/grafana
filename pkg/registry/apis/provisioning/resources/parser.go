@@ -156,9 +156,10 @@ type ParsedResource struct {
 	// does not have; see ResolveBundleFiles. Always empty unless IsBundle.
 	BundleEntries []BundleEntry
 
-	// BundleRef is the name of the Bundle this resource references, read from
-	// spec.bundle. Only populated for a kind declared with the bundle capability, so a
-	// stray field on another kind is ignored rather than silently claiming files.
+	// BundleRef is the name of the Bundle this resource references, read from the
+	// provisioning bundle label. Only populated for a kind declared with the bundle
+	// capability, so a stray label on another kind is ignored rather than silently
+	// claiming files.
 	BundleRef string
 
 	// The Existing object (same name)
@@ -305,17 +306,6 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		parsed.BundleRef, err = ParseBundleRef(parsed.Obj)
 		if err != nil {
 			return nil, NewResourceValidationError(err)
-		}
-		if parsed.BundleRef != "" {
-			// Label the resource with the bundle it uses, so that "what uses this
-			// bundle" is a selector rather than a read of every resource of every
-			// linkable kind.
-			labels := parsed.Obj.GetLabels()
-			if labels == nil {
-				labels = make(map[string]string, 1)
-			}
-			labels[provisioning.BundleLabel] = parsed.BundleRef
-			parsed.Obj.SetLabels(labels)
 		}
 	}
 	if info.Path != "" && parsed.FolderScoped {

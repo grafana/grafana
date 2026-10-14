@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
 
@@ -121,17 +122,19 @@ func TestParseBundleEntries(t *testing.T) {
 }
 
 func TestParseBundleRef_TooLong(t *testing.T) {
-	// A referencing resource is labelled with the bundle name, and a label value may not
-	// exceed 63 characters.
-	obj := &unstructured.Unstructured{Object: map[string]any{
-		"spec": map[string]any{"bundle": strings.Repeat("b", 64)},
-	}}
+	// The reference is carried as a label value, and those may not exceed 63 characters.
+	withLabel := func(value string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"labels": map[string]any{provisioning.BundleLabel: value},
+			},
+		}}
+	}
 
-	_, err := ParseBundleRef(obj)
+	_, err := ParseBundleRef(withLabel(strings.Repeat("b", 64)))
 	require.ErrorIs(t, err, ErrBundleRefTooLong)
 
-	obj.Object["spec"] = map[string]any{"bundle": strings.Repeat("b", 63)}
-	_, err = ParseBundleRef(obj)
+	_, err = ParseBundleRef(withLabel(strings.Repeat("b", 63)))
 	require.NoError(t, err)
 }
 
@@ -165,32 +168,39 @@ func TestBundleEntryIsFolder(t *testing.T) {
 }
 
 func TestParseBundleRef(t *testing.T) {
-	ref := func(value any) *unstructured.Unstructured {
-		spec := map[string]any{"title": "a resource"}
-		if value != nil {
-			spec["bundle"] = value
+	ref := func(labels map[string]any) *unstructured.Unstructured {
+		meta := map[string]any{"name": "sample"}
+		if labels != nil {
+			meta["labels"] = labels
 		}
 		return &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "example.grafana.app/v0alpha1",
 			"kind":       "SampleResource",
-			"spec":       spec,
+			"metadata":   meta,
+			"spec":       map[string]any{"title": "a resource"},
 		}}
 	}
 
-	t.Run("reads the bundle name", func(t *testing.T) {
-		got, err := ParseBundleRef(ref("sample"))
+	t.Run("reads the bundle label", func(t *testing.T) {
+		got, err := ParseBundleRef(ref(map[string]any{provisioning.BundleLabel: "sample"}))
 		require.NoError(t, err)
 		assert.Equal(t, "sample", got)
 	})
 
 	t.Run("trims whitespace", func(t *testing.T) {
-		got, err := ParseBundleRef(ref("  sample  "))
+		got, err := ParseBundleRef(ref(map[string]any{provisioning.BundleLabel: "  sample  "}))
 		require.NoError(t, err)
 		assert.Equal(t, "sample", got)
 	})
 
-	t.Run("no bundle is valid", func(t *testing.T) {
+	t.Run("no label is valid", func(t *testing.T) {
 		got, err := ParseBundleRef(ref(nil))
+		require.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	t.Run("other labels are ignored", func(t *testing.T) {
+		got, err := ParseBundleRef(ref(map[string]any{"team": "sre"}))
 		require.NoError(t, err)
 		assert.Empty(t, got)
 	})
@@ -199,11 +209,6 @@ func TestParseBundleRef(t *testing.T) {
 		got, err := ParseBundleRef(nil)
 		require.NoError(t, err)
 		assert.Empty(t, got)
-	})
-
-	t.Run("a non-string is rejected", func(t *testing.T) {
-		_, err := ParseBundleRef(ref(42))
-		require.ErrorIs(t, err, ErrBundleRefType)
 	})
 }
 

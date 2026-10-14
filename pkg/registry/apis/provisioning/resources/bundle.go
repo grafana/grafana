@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
 
@@ -104,18 +105,32 @@ func ParseBundleEntries(obj *unstructured.Unstructured) ([]BundleEntry, error) {
 	if !ok {
 		return nil, ErrBundlePathsType
 	}
-	if len(values) > BundleMaxEntries {
-		return nil, ErrBundleTooManyEntries
-	}
-
-	entries := make([]BundleEntry, 0, len(values))
-	seen := sets.New[string]()
+	paths := make([]string, 0, len(values))
 	for _, value := range values {
 		raw, ok := value.(string)
 		if !ok {
 			return nil, ErrBundlePathsType
 		}
+		paths = append(paths, raw)
+	}
 
+	return BundleEntriesFromPaths(paths)
+}
+
+// BundleEntriesFromPaths validates declared paths and turns them into entries.
+//
+// Split out from ParseBundleEntries so admission can apply exactly the same rules to a
+// typed Bundle written straight to the API as the parser applies to one read from a
+// repository. The two must not drift: a path rejected on one route and accepted on the
+// other is a bundle whose contents depend on how it arrived.
+func BundleEntriesFromPaths(paths []string) ([]BundleEntry, error) {
+	if len(paths) > BundleMaxEntries {
+		return nil, ErrBundleTooManyEntries
+	}
+
+	entries := make([]BundleEntry, 0, len(paths))
+	seen := sets.New[string]()
+	for _, raw := range paths {
 		path := strings.TrimSpace(raw)
 		if path == "" || path == "/" {
 			return nil, &BundleEntryError{Path: raw, Err: ErrBundleEntryEmpty}
@@ -318,25 +333,26 @@ func (i *BundleIndex) Bundles() []string {
 // BundleKind is the kind of the provisioning resource that groups repository files.
 const BundleKind = "Bundle"
 
-// bundleRefField is where a resource names the Bundle it uses.
+// A resource names the Bundle it uses with the provisioning.BundleLabel label.
 //
-// It is a spec field rather than an annotation on purpose: using a bundle is part of what
-// the resource is, so it belongs in the resource's own API. The cost is that a kind has
-// to declare the field -- but one string is a small thing for a kind author to add, and
-// far less than carrying a whole file set in its schema.
-var bundleRefField = []string{"spec", "bundle"}
+// A label rather than a spec field so that no consuming kind owes a schema change: a
+// strictly validated kind would otherwise have its manifest rejected while decoding for
+// an undeclared field, which is the whole problem the separate Bundle resource exists to
+// avoid. Provisioning already attaches its own metadata to kinds it does not own --
+// managedBy, managerId, sourcePath -- and this is the same kind of thing.
+//
+// A label rather than an annotation because the reference is used for selection: it is
+// what answers "what uses this bundle" without reading the spec of every resource of
+// every linkable kind.
 
-var (
-	// ErrBundleRefType reports a spec.bundle value that is not a string.
-	ErrBundleRefType = errors.New("spec.bundle must be a bundle name")
-	// ErrBundleRefTooLong reports a bundle name that cannot be carried as a label value.
-	ErrBundleRefTooLong = fmt.Errorf("a bundle name must be at most %d characters", bundleRefMaxLen)
-)
+// ErrBundleRefTooLong reports a bundle name that cannot be carried as a label value.
+// Caught here so the error names the bundle reference rather than surfacing later as a
+// generic label validation failure from the apiserver.
+var ErrBundleRefTooLong = fmt.Errorf("a referenced bundle name must be at most %d characters", bundleRefMaxLen)
 
-// bundleRefMaxLen bounds a referenced bundle's name. A resource that uses a bundle is
-// labelled with its name so that "what uses this bundle" is a selector rather than a scan
-// of every linkable kind, and a label value may not exceed 63 characters. Resource names
-// may be longer, so the limit has to be stated rather than assumed.
+// bundleRefMaxLen bounds a referenced bundle's name: it is carried as a label value, and
+// those may not exceed 63 characters. Resource names may be longer, so the limit has to
+// be stated rather than assumed.
 const bundleRefMaxLen = 63
 
 // ParseBundleRef reads the name of the Bundle a resource references. An empty result
@@ -346,20 +362,7 @@ func ParseBundleRef(obj *unstructured.Unstructured) (string, error) {
 		return "", nil
 	}
 
-	raw, found, err := unstructured.NestedFieldNoCopy(obj.Object, bundleRefField...)
-	if err != nil {
-		return "", ErrBundleRefType
-	}
-	if !found || raw == nil {
-		return "", nil
-	}
-
-	value, ok := raw.(string)
-	if !ok {
-		return "", ErrBundleRefType
-	}
-
-	name := strings.TrimSpace(value)
+	name := strings.TrimSpace(obj.GetLabels()[provisioning.BundleLabel])
 	if len(name) > bundleRefMaxLen {
 		return "", ErrBundleRefTooLong
 	}
