@@ -77,6 +77,8 @@ const INITIAL_OVERLAY_STATE: ComposerOverlayState = {
 };
 
 const ORIGIN: ElementPoint = { x: 0, y: 0 };
+/** The DOM root of a variable's control in the dashboard controls. */
+export const VARIABLE_CONTROL_SELECTOR = '[data-dashboard-element-type="variable"]';
 const MAX_INTERSECTS = 20;
 
 /**
@@ -324,7 +326,7 @@ export class ComposerSession implements ComposerSessionAPI {
     }
     const panel = item.ref.kind === 'panel' ? this.findPanel(item.ref.panelId) : undefined;
     const element = this.findElementRoot(item.ref);
-    if (!panel || !element || isInHiddenTab(panel)) {
+    if (!element || (item.ref.kind === 'panel' && (!panel || isInHiddenTab(panel)))) {
       return;
     }
     const container = getScrollContainer(element);
@@ -537,7 +539,7 @@ export class ComposerSession implements ComposerSessionAPI {
       },
       point: { x: 1, y: 0 },
       tabPath,
-      intersects: this.findIntersectingPanels(rect),
+      intersects: this.findIntersectingElements(rect),
       timeRange: {
         from: String(timeRange.state.from),
         to: String(timeRange.state.to),
@@ -590,8 +592,32 @@ export class ComposerSession implements ComposerSessionAPI {
 
   /** @internal The rendered DOM root of the element a ref points at. */
   public findElementRoot(ref: ElementRef): HTMLElement | null {
+    if (ref.kind === 'variable') {
+      const key = sceneGraph.lookupVariable(ref.name, this.scene)?.state.key;
+      return key
+        ? document.querySelector<HTMLElement>(
+            `${VARIABLE_CONTROL_SELECTOR}[data-dashboard-element-key="${CSS.escape(key)}"]`
+          )
+        : null;
+    }
     const key = this.getPanelKey(ref);
     return key ? document.querySelector<HTMLElement>(`[data-viz-panel-key="${CSS.escape(key)}"]`) : null;
+  }
+
+  /** @internal Resolves the dashboard variable whose control has `key`, pointing at its top-right corner. */
+  public resolveVariablePick(key: string): ElementPick | null {
+    const found = sceneGraph.findObject(this.scene, (obj) => obj.state.key === key);
+    const name = found && 'name' in found.state && typeof found.state.name === 'string' ? found.state.name : undefined;
+    const variable = name ? sceneGraph.lookupVariable(name, this.scene) : null;
+    if (!name || !variable || variable !== found) {
+      return null;
+    }
+    return {
+      ref: { kind: 'variable', name },
+      label: variable.state.label || name,
+      tabPath: [],
+      point: { x: 1, y: 0 },
+    };
   }
 
   /** @internal Resolves the panel rendered under a `data-viz-panel-key` DOM root. */
@@ -643,6 +669,30 @@ export class ComposerSession implements ComposerSessionAPI {
     }
     const rootRect = root.getBoundingClientRect();
     return { ...region.box, left: rootRect.left + region.box.left, top: rootRect.top + region.box.top };
+  }
+
+  private findIntersectingElements(rect: Box): Array<{ ref: ElementRef; label: string }> {
+    const panels = this.findIntersectingPanels(rect);
+    const variables = this.findIntersectingVariables(rect);
+    return [...panels, ...variables].slice(0, MAX_INTERSECTS);
+  }
+
+  private findIntersectingVariables(rect: Box): Array<{ ref: ElementRef; label: string }> {
+    const container = this.getOverlayRoot()?.parentElement;
+    const found = new Map<string, string>();
+    for (const element of container?.querySelectorAll<HTMLElement>(VARIABLE_CONTROL_SELECTOR) ?? []) {
+      const key = element.getAttribute('data-dashboard-element-key');
+      const pick = key ? this.resolveVariablePick(key) : null;
+      if (pick?.ref.kind === 'variable' && !found.has(pick.ref.name)) {
+        const bounds = element.getBoundingClientRect();
+        const overlapWidth = Math.min(rect.left + rect.width, bounds.right) - Math.max(rect.left, bounds.left);
+        const overlapHeight = Math.min(rect.top + rect.height, bounds.bottom) - Math.max(rect.top, bounds.top);
+        if (overlapWidth > 0 && overlapHeight > 0) {
+          found.set(pick.ref.name, pick.label);
+        }
+      }
+    }
+    return [...found].map(([name, label]) => ({ ref: { kind: 'variable', name }, label }));
   }
 
   private findIntersectingPanels(rect: Box): Array<{ ref: ElementRef; label: string }> {

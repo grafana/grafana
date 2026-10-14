@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { CustomVariable, SceneVariableSet, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -63,7 +64,9 @@ beforeEach(() => {
         ? { left: 0, top: 0, width: 200, height: 24 }
         : this.getAttribute('data-testid') === 'data-testid dashboard controls'
           ? { left: 0, top: 0, width: 1024, height: 64 }
-          : contentRect;
+          : this.getAttribute('data-dashboard-element-type') === 'variable'
+            ? { left: 20, top: 10, width: 200, height: 40 }
+            : contentRect;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured rect without toJSON
     return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top } as DOMRect;
   });
@@ -1217,6 +1220,115 @@ describe('dashboard controls', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Comment 1' }));
 
     expect(listener).toHaveBeenCalledWith('r');
+  });
+});
+
+describe('variables', () => {
+  function withVariable(scene: DashboardScene) {
+    scene.setState({
+      $variables: new SceneVariableSet({
+        variables: [new CustomVariable({ name: 'env', label: 'Environment', query: 'dev,prod' })],
+      }),
+    });
+  }
+
+  /** A stand-in for the variable's control in the dashboard controls: a label and a value picker. */
+  function mountVariableControl(scene: DashboardScene) {
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    const controls = document.createElement('div');
+    controls.setAttribute('data-testid', 'data-testid dashboard controls');
+    const control = document.createElement('div');
+    control.setAttribute('data-dashboard-element-type', 'variable');
+    control.setAttribute('data-dashboard-element-key', sceneGraph.lookupVariable('env', scene)!.state.key!);
+    const label = document.createElement('label');
+    label.textContent = 'Environment';
+    const value = document.createElement('button');
+    value.textContent = 'dev';
+    control.append(label, value);
+    controls.appendChild(control);
+    container.appendChild(controls);
+    return { label, value };
+  }
+
+  it('picks a variable from a click on its label', async () => {
+    let scene: DashboardScene | undefined;
+    const { startPick } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    const pick = startPick();
+    const { label } = mountVariableControl(scene!);
+
+    const clicked = fireEvent.click(label);
+
+    expect(clicked).toBe(false); // the label does not go on to focus the value picker
+    await expect(pick).resolves.toEqual({
+      ref: { kind: 'variable', name: 'env' },
+      label: 'Environment',
+      tabPath: [],
+      point: { x: 1, y: 0 },
+    });
+  });
+
+  it('leaves the value picker working', async () => {
+    let scene: DashboardScene | undefined;
+    const { startPick } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    const settled = jest.fn();
+    startPick().then(settled);
+    const { value } = mountVariableControl(scene!);
+    const onOpen = jest.fn();
+    value.addEventListener('click', onOpen);
+
+    fireEvent.click(value);
+    await act(async () => {});
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(settled).not.toHaveBeenCalled();
+  });
+
+  it('lists variables a region covers among its intersects', async () => {
+    let scene: DashboardScene | undefined;
+    const { startPick } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    const pick = startPick();
+    const { label } = mountVariableControl(scene!);
+
+    fireEvent.pointerDown(label, { clientX: 15, clientY: 5, button: 0 });
+    fireEvent.pointerMove(window, { clientX: 300, clientY: 300 });
+    fireEvent.pointerUp(label, { clientX: 300, clientY: 300 });
+
+    await expect(pick).resolves.toMatchObject({
+      ref: { kind: 'region' },
+      intersects: [
+        { ref: { kind: 'panel', panelId: 3 }, label: 'Latency' },
+        { ref: { kind: 'variable', name: 'env' }, label: 'Environment' },
+      ],
+    });
+  });
+
+  it('outlines a variable and pins it on its top-right corner', () => {
+    let scene: DashboardScene | undefined;
+    const { annotate } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    mountVariableControl(scene!);
+
+    annotate([item({ id: 'v', ref: { kind: 'variable', name: 'env' }, point: { x: 1, y: 0 } })]);
+
+    expect(screen.getByTestId('composer-annotation-outline-v')).toHaveStyle({
+      left: '20px',
+      top: '10px',
+      width: '200px',
+      height: '40px',
+    });
+    // Tail on the top-right corner (220, 10), held a pin's height inside the overlay's top edge.
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '220px', top: '28px' });
   });
 });
 

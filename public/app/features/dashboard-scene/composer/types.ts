@@ -51,7 +51,9 @@ export interface ComposerAPI {
 export type ElementRef =
   | { kind: 'panel'; panelId: number }
   | { kind: 'row' | 'tab'; name: string }
-  | { kind: 'region'; regionId: string };
+  | { kind: 'region'; regionId: string }
+  /** A dashboard variable, by its name in the spec. */
+  | { kind: 'variable'; name: string };
 
 /** A position inside an element, each axis normalised to 0..1 of its bounds. */
 export interface ElementPoint {
@@ -64,7 +66,10 @@ export interface ElementPick {
   label: string;
   /** Titles of the tabs containing the element, outermost first. */
   tabPath: string[];
-  /** Where the element was clicked; `{ x: 0, y: 0 }` for picks without a pointer. */
+  /**
+   * Where the element was clicked; `{ x: 0, y: 0 }` for picks without a pointer. A variable's pick points
+   * at its control's top-right corner, where its pin goes.
+   */
   point: ElementPoint;
 }
 
@@ -91,7 +96,7 @@ export interface RegionPick {
   /** The pin sits on the region's top-right corner. */
   point: { x: 1; y: 0 };
   tabPath: string[];
-  /** Panels the region overlaps with a positive area, at most 20. */
+  /** Panels and variable controls the region overlaps with a positive area, at most 20. */
   intersects: Array<{ ref: ElementRef; label: string }>;
   timeRange: { from: string; to: string; timezone: string };
 }

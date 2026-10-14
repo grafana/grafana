@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
-import { type Box, type ComposerSession } from './ComposerSession';
+import { type Box, type ComposerSession, VARIABLE_CONTROL_SELECTOR } from './ComposerSession';
 import { type ComposerAnnotation } from './types';
 
 const PANEL_ROOT_SELECTOR = '[data-viz-panel-key]';
@@ -390,7 +390,8 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       if (swallowControlsClickRef.current) {
         swallowControlsClickRef.current = false;
         event.preventDefault();
-        event.stopPropagation();
+        // Also keeps the variable-label pick below from treating it as a click.
+        event.stopImmediatePropagation();
       }
     };
     const onDown = () => {
@@ -404,6 +405,32 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       window.removeEventListener('pointerdown', onDown, true);
     };
   }, []);
+
+  // With Select, a click on a variable's label picks the variable; its value picker still works as usual.
+  useEffect(() => {
+    if (pickMode !== 'element' || paused || capturing) {
+      return;
+    }
+    const onClick = (event: MouseEvent) => {
+      const container = rootRef.current?.parentElement;
+      const target = event.target instanceof Element ? event.target : null;
+      const control = target?.closest<HTMLElement>(VARIABLE_CONTROL_SELECTOR);
+      const label = target?.closest('label');
+      const key = control?.getAttribute('data-dashboard-element-key');
+      if (!container?.contains(control ?? null) || !label || !control?.contains(label) || !key) {
+        return;
+      }
+      const pick = session.resolveVariablePick(key);
+      if (pick) {
+        // The label would otherwise focus the value picker.
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        session.completePick(pick);
+      }
+    };
+    window.addEventListener('click', onClick, true);
+    return () => window.removeEventListener('click', onClick, true);
+  }, [pickMode, paused, capturing, session]);
 
   const onPointerDown = (event: React.PointerEvent) => {
     stop(event);
