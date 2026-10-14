@@ -1,5 +1,5 @@
 /**
- * Dashboard Composer API -- restricted API that lets Grafana Assistant enter Composer on the open dashboard.
+ * Composer API -- restricted API that lets Grafana Assistant enter Composer on the open document.
  *
  * Only *finding* the dashboard uses the mounted-document stack the Mutation API serves; a session is bound
  * to that scene when it is entered and never writes through the stack afterwards. When the top document
@@ -7,11 +7,11 @@
  */
 
 import { canEnterComposer } from 'app/features/dashboard-scene/composer/composerAccess';
-import { type DashboardComposerAPI } from 'app/features/dashboard-scene/composer/types';
+import { type ComposerAPI } from 'app/features/dashboard-scene/composer/types';
 
 import { getMountedDashboardScene } from '../dashboardMutation/dashboardMutationApi';
 
-export const dashboardComposerApi: DashboardComposerAPI = {
+export const composerApi: ComposerAPI = {
   version: 1,
   canEnter: () => canEnterComposer(getMountedDashboardScene()),
   enter: async () => {

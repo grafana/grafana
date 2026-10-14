@@ -26,7 +26,7 @@ export interface DashboardMutationAPI {
  *
  * @alpha
  */
-export interface DashboardComposerAPI {
+export interface ComposerAPI {
   readonly version: 1;
   canEnter(): { ok: true } | { ok: false; reason: 'not_dashboard' | 'no_permission' | 'unsupported' };
   enter(): Promise<unknown>;
@@ -37,7 +37,7 @@ interface RestrictedGrafanaApisContextTypeInternal {
   // (Make sure that they are typed as optional properties)
   alertingAlertRuleFormSchema?: ZodSchema;
   dashboardMutationAPI?: DashboardMutationAPI;
-  dashboardComposer?: DashboardComposerAPI;
+  composer?: ComposerAPI;
 }
 
 // We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).

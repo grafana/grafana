@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { useFlagGrafanaDashboardComposer } from '@grafana/runtime/internal';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
-import { dashboardComposerApi } from './dashboardComposer/dashboardComposerApi';
+import { composerApi } from './composer/composerApi';
 import { createDashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
 
 // This existing flag is only generated for the legacy frontend API.
@@ -34,7 +34,7 @@ export function RestrictedGrafanaApisProvider({
     () => ({
       ...restrictedGrafanaApis,
       ...(mutationApi ? { dashboardMutationAPI: mutationApi } : {}),
-      ...(restrictedApisEnabled && composerEnabled ? { dashboardComposer: dashboardComposerApi } : {}),
+      ...(restrictedApisEnabled && composerEnabled ? { composer: composerApi } : {}),
     }),
     [mutationApi, composerEnabled]
   );

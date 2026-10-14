@@ -1,8 +1,8 @@
 /**
- * The Composer contract between core and Grafana Assistant (restricted API `dashboardComposer`).
+ * The Composer contract between core and Grafana Assistant (restricted API `composer`).
  *
  * The plugin declares these types locally and checks the handle at runtime; only the outer
- * `DashboardComposerAPI` shape is mirrored in `@grafana/data` so the restricted APIs context can carry it.
+ * `ComposerAPI` shape is mirrored in `@grafana/data` so the restricted APIs context can carry it.
  */
 
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -14,7 +14,7 @@ export type ComposerEnterCheck =
   | { ok: true }
   | { ok: false; reason: 'not_dashboard' | 'no_permission' | 'unsupported' };
 
-export interface DashboardComposerAPI {
+export interface ComposerAPI {
   readonly version: 1;
   canEnter(): ComposerEnterCheck;
   /** Rejects when `canEnter()` would not return ok, or another session is open. */

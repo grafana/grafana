@@ -5,7 +5,7 @@ import { transformSaveModelToScene } from 'app/features/dashboard-scene/serializ
 
 import { setDashboardMutationClientForTests } from '../dashboardMutation/dashboardMutationApi';
 
-import { dashboardComposerApi } from './dashboardComposerApi';
+import { composerApi } from './composerApi';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -31,8 +31,8 @@ afterEach(() => {
 });
 
 it('enters Composer on the mounted dashboard only', async () => {
-  expect(dashboardComposerApi.version).toBe(1);
-  expect(dashboardComposerApi.canEnter()).toEqual({ ok: false, reason: 'not_dashboard' });
+  expect(composerApi.version).toBe(1);
+  expect(composerApi.canEnter()).toEqual({ ok: false, reason: 'not_dashboard' });
 
   const scene = transformSaveModelToScene({
     dashboard: {
@@ -60,10 +60,10 @@ it('enters Composer on the mounted dashboard only', async () => {
   deactivate = scene.activate();
   setDashboardMutationClientForTests(new DashboardMutationClient(scene));
 
-  expect(dashboardComposerApi.canEnter()).toEqual({ ok: true });
-  const session = await dashboardComposerApi.enter();
+  expect(composerApi.canEnter()).toEqual({ ok: true });
+  const session = await composerApi.enter();
   expect(session.dashboardUid).toBe('composer-api-test');
   expect(scene.getComposerSession()).toBe(session);
-  await expect(dashboardComposerApi.enter()).rejects.toThrow('unsupported');
+  await expect(composerApi.enter()).rejects.toThrow('unsupported');
   session.exit();
 });

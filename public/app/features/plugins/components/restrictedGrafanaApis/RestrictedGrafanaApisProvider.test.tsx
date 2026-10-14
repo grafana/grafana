@@ -16,13 +16,13 @@ jest.mock('@grafana/runtime', () => {
 
 const COMPOSER_FLAG = 'grafana.dashboardComposer';
 
-describe('RestrictedGrafanaApisProvider dashboardComposer', () => {
+describe('RestrictedGrafanaApisProvider composer', () => {
   beforeEach(() => {
     jest.replaceProperty(config.bootData, 'settings', {
       ...config.bootData.settings,
       pluginRestrictedAPIsAllowList: {
         dashboardMutationAPI: ['grafana-assistant-app'],
-        dashboardComposer: ['grafana-assistant-app'],
+        composer: ['grafana-assistant-app'],
       },
     });
   });
@@ -35,29 +35,31 @@ describe('RestrictedGrafanaApisProvider dashboardComposer', () => {
   it('exposes Composer to Assistant while the flag is on', () => {
     setTestFlags({ [COMPOSER_FLAG]: true });
     const { result } = renderRestrictedApis('grafana-assistant-app');
-    expect(result.current.dashboardComposer?.version).toBe(1);
-    expect(result.current.dashboardComposer?.canEnter()).toEqual({ ok: false, reason: 'not_dashboard' });
+    expect(result.current.composer?.version).toBe(1);
+    expect(result.current.composer?.canEnter()).toEqual({ ok: false, reason: 'not_dashboard' });
     expect(result.current.dashboardMutationAPI).toBeDefined();
+    // Only the `composer` key: the earlier `dashboardComposer` name is gone.
+    expect(result.current).not.toHaveProperty('dashboardComposer');
   });
 
   it('withholds Composer from other plugins', () => {
     setTestFlags({ [COMPOSER_FLAG]: true });
     const { result } = renderRestrictedApis('another-app');
-    expect(result.current.dashboardComposer).toBeUndefined();
+    expect(result.current.composer).toBeUndefined();
   });
 
   it('removes and restores Composer with the flag without replacing the mutation API', async () => {
     setTestFlags({ [COMPOSER_FLAG]: false });
     const { result } = renderRestrictedApis('grafana-assistant-app');
-    expect(result.current.dashboardComposer).toBeUndefined();
+    expect(result.current.composer).toBeUndefined();
     const mutationApi = result.current.dashboardMutationAPI;
 
     act(() => setTestFlags({ [COMPOSER_FLAG]: true }));
-    await waitFor(() => expect(result.current.dashboardComposer).toBeDefined());
+    await waitFor(() => expect(result.current.composer).toBeDefined());
     expect(result.current.dashboardMutationAPI).toBe(mutationApi);
 
     act(() => setTestFlags({ [COMPOSER_FLAG]: false }));
-    await waitFor(() => expect(result.current.dashboardComposer).toBeUndefined());
+    await waitFor(() => expect(result.current.composer).toBeUndefined());
   });
 });
 
