@@ -23,12 +23,15 @@ export function OnCallCard({ now }: { now: number }) {
 
   return (
     <SummaryCard
-      title={t('home.alerts-incidents.on-call-tab-label', 'My on call schedules')}
+      title={t('home.alerts-incidents.on-call-tab-label', 'My on-call schedules')}
       loading={loading}
       error={error ? { title: scheduleErrorTitle(error), onRetry: () => refetch() } : undefined}
-      emptyMessage={t('home.on-call-card.empty', 'No on-call shifts for you or your teams in the next {{days}} days.', {
-        days: SHIFTS_LOOKAHEAD_DAYS,
-      })}
+      // Team schedules only earn a row while someone is on call, so the copy can't promise their next 30 days.
+      emptyMessage={t(
+        'home.on-call-card.empty',
+        'You have no shifts in the next {{days}} days, and nobody on your teams is on call right now.',
+        { days: SHIFTS_LOOKAHEAD_DAYS }
+      )}
       items={rows}
       getItemKey={(row) => row.id}
       renderItem={(row) => (

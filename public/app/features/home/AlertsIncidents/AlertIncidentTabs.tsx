@@ -21,7 +21,7 @@ import { useAlertFilterOptions } from './useAlertFilterOptions';
 import { type FiringAlertsData } from './useFiringAlerts';
 import { useIncidentFilterOptions } from './useIncidentFilterOptions';
 import { type IncidentsData } from './useIncidents';
-import { useMinuteClock, useMyShifts } from './useOnCallSchedules';
+import { useMyShifts } from './useOnCallSchedules';
 
 export const ALERTS_TAB_ID = 'firing-alerts' as const;
 export const INCIDENTS_TAB_ID = 'incidents' as const;
@@ -74,9 +74,7 @@ export function AlertIncidentTabs({
   const canViewAlerts = alertsData.enabled;
 
   const [storedTab, setActiveTab] = useStoredString(ALERTS_INCIDENTS_TAB_STORAGE_KEY, '');
-  // One clock for badge and list, so a shift boundary flips both in the same render.
-  const now = useMinuteClock();
-  const onCall = useMyShifts(now);
+  const onCall = useMyShifts();
   const { count, hasAlerts, hasTeams, teamsLoading, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
@@ -163,8 +161,9 @@ export function AlertIncidentTabs({
     },
     isOffered(ON_CALL_TAB_ID, onCall.enabled) && {
       id: ON_CALL_TAB_ID,
-      label: t('home.alerts-incidents.on-call-tab-label', 'My on call schedules'),
-      content: <OnCallCard now={now} />,
+      label: t('home.alerts-incidents.on-call-tab-label', 'My on-call schedules'),
+      // Shares the header's clock, so a shift boundary flips badge and row in the same render.
+      content: <OnCallCard now={onCall.now} />,
       // A static link to the plugin page: it needs no load state, only the page access check.
       footer: onCall.canAccess && <ViewSchedulesButton href={onCall.schedulesHref} />,
     },

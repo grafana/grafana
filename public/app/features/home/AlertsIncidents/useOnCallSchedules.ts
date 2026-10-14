@@ -19,7 +19,10 @@ import { type ScheduleLoadError, classifyScheduleError } from './scheduleErrors'
 import { type ShiftWindow, dayKey, nextShift } from './shiftTiming';
 
 const PLUGIN_ID = SupportedPlugin.Irm;
+// The clock moves labels and badge across shift boundaries without a fetch; the poll picks up overrides,
+// swaps and roster changes. Each list page makes the engine resolve who is on call for 100 schedules.
 const CLOCK_TICK_MS = 60_000;
+const POLL_INTERVAL_MS = 15 * 60_000;
 
 interface OnCallScheduleRow {
   id: string;
@@ -31,6 +34,8 @@ interface OnCallScheduleRow {
 }
 
 export interface MyShiftsData {
+  /** The instant the badge was evaluated at; the list formats its shifts against the same clock. */
+  now: number;
   /** Undefined while the plugin probe is in flight. */
   enabled: boolean | undefined;
   /** Whether the user may open the plugin's schedules pages; the footer link renders only then. */
@@ -49,16 +54,6 @@ export interface OnCallSchedulesData {
   loading: boolean;
   error: ScheduleLoadError | undefined;
   refetch: () => void;
-}
-
-/**
- * Wall clock ticking once a minute. A shift can start or end while the homepage sits open; evaluating shifts
- * against this clock moves the badge and labels without a fetch, and at local midnight it loads the next window.
- */
-export function useMinuteClock(): number {
-  const [now, setNow] = useState(() => Date.now());
-  useInterval(() => setNow(Date.now()), CLOCK_TICK_MS);
-  return now;
 }
 
 function useIrmPlugin() {
@@ -80,9 +75,9 @@ function resolveUserTimeZone(now: number): string {
   return getTimeZoneInfo(getTimeZone(), now)?.ianaName || getTimeZoneInfo('browser', now)?.ianaName || 'UTC';
 }
 
-// Both hooks build their args here so they subscribe to one cache entry.
-function currentUserEventsArgs(now: number) {
-  return { pluginId: PLUGIN_ID, date: dayKey(now), userTz: resolveUserTimeZone(now) };
+/** Every subscription refetches on mount so a revisit shows fresh data; polling, where asked for, pauses unfocused. */
+function subscription(pollingInterval = 0) {
+  return { refetchOnMountOrArgChange: true, pollingInterval, skipPollingIfUnfocused: true };
 }
 
 /** The running or next shift per schedule id; undefined where every shift in the window has ended. */
@@ -118,19 +113,35 @@ const isPending = (query: { isFetching: boolean; currentData?: unknown }) =>
   query.isFetching && query.currentData === undefined;
 
 /**
- * The header's view of the user's shifts in the next 30 days. Loads with the homepage and never polls on its own;
- * the list's subscription below refreshes the shared cache entry whenever the tab is open.
+ * The IRM probe and the user's shifts in the window, evaluated against `now`. Both exported hooks subscribe
+ * through here, so they share one cache entry and a refetch by either refreshes the other. The window starts
+ * on the user's current day, so the clock crossing local midnight loads the next one.
  */
-export function useMyShifts(now: number): MyShiftsData {
-  const { ready, enabled, canAccess, schedulesHref } = useIrmPlugin();
-  const events = onCallApi.useGetCurrentUserEventsQuery(ready ? currentUserEventsArgs(now) : skipToken, {
-    refetchOnMountOrArgChange: true,
-  });
+function useShifts(now: number, pollingInterval?: number) {
+  const plugin = useIrmPlugin();
+  const events = onCallApi.useGetCurrentUserEventsQuery(
+    plugin.ready ? { pluginId: PLUGIN_ID, date: dayKey(now), userTz: resolveUserTimeZone(now) } : skipToken,
+    subscription(pollingInterval)
+  );
   const shifts = useMemo(() => toShifts(events.currentData, now), [events.currentData, now]);
+  return { plugin, events, shifts };
+}
+
+/**
+ * The header's view: whether one of the user's shifts is running right now, on a clock that ticks once a minute
+ * so the badge follows shift boundaries without a fetch. Loads with the homepage and never polls on its own;
+ * the list's subscription refreshes the shared cache entry while the tab is open.
+ */
+export function useMyShifts(): MyShiftsData {
+  const [now, setNow] = useState(() => Date.now());
+  const { plugin, events, shifts } = useShifts(now);
+  // Nothing reads the clock until IRM is confirmed installed, so don't re-render the card for anyone else.
+  useInterval(() => setNow(Date.now()), plugin.ready ? CLOCK_TICK_MS : null);
   return {
-    enabled,
-    canAccess,
-    schedulesHref,
+    now,
+    enabled: plugin.enabled,
+    canAccess: plugin.canAccess,
+    schedulesHref: plugin.schedulesHref,
     isOnCall: !events.error && [...shifts.values()].some((shift) => shift?.isCurrent),
   };
 }
@@ -138,20 +149,15 @@ export function useMyShifts(now: number): MyShiftsData {
 /**
  * Everything the "On call" list shows: the user's shifts and the schedules of the teams those belong to, with who
  * is on call right now. Run it where the list renders: mounting refetches both sources, and while mounted in a
- * focused window they poll at the clock's cadence, so a shift boundary moves the roster along with the user's
- * label. Unmounting stops the polling. Anything cached stays on screen meanwhile.
+ * focused window they poll every 15 minutes. Unmounting stops the polling. Anything cached stays on screen
+ * meanwhile.
  */
 export function useOnCallSchedules(now: number): OnCallSchedulesData {
-  const { loading: pluginLoading, ready, canAccess } = useIrmPlugin();
-  const queryOptions = {
-    refetchOnMountOrArgChange: true,
-    pollingInterval: CLOCK_TICK_MS,
-    skipPollingIfUnfocused: true,
-  };
-  const events = onCallApi.useGetCurrentUserEventsQuery(ready ? currentUserEventsArgs(now) : skipToken, queryOptions);
-  const schedules = onCallApi.useGetRelatedSchedulesQuery(ready ? { pluginId: PLUGIN_ID } : skipToken, queryOptions);
-
-  const shifts = useMemo(() => toShifts(events.currentData, now), [events.currentData, now]);
+  const { plugin, events, shifts } = useShifts(now, POLL_INTERVAL_MS);
+  const schedules = onCallApi.useGetRelatedSchedulesQuery(
+    plugin.ready ? { pluginId: PLUGIN_ID } : skipToken,
+    subscription(POLL_INTERVAL_MS)
+  );
   const rows = useMemo(
     () => toRows(schedules.currentData ?? [], shifts, contextSrv.user.login),
     [schedules.currentData, shifts]
@@ -160,9 +166,9 @@ export function useOnCallSchedules(now: number): OnCallSchedulesData {
   const error = events.error ?? schedules.error;
   return {
     pluginId: PLUGIN_ID,
-    canAccess,
+    canAccess: plugin.canAccess,
     rows,
-    loading: pluginLoading || isPending(events) || isPending(schedules),
+    loading: plugin.loading || isPending(events) || isPending(schedules),
     error: error ? classifyScheduleError(error) : undefined,
     // Both queries start together, so either error leaves both refetchable.
     refetch: () => {

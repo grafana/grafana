@@ -11118,7 +11118,7 @@
       "incident-filter-label": "Filter incidents by label",
       "incident-tab-label": "Incidents",
       "on-call-now": "On call now",
-      "on-call-tab-label": "My on call schedules",
+      "on-call-tab-label": "My on-call schedules",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
@@ -11198,7 +11198,7 @@
     },
     "on-call-card": {
       "current-shift": "You're on call until {{end}}",
-      "empty": "No on-call shifts for you or your teams in the next {{days}} days.",
+      "empty": "You have no shifts in the next {{days}} days, and nobody on your teams is on call right now.",
       "error-failed": "Could not load schedules",
       "error-forbidden": "You don't have access to IRM schedules",
       "error-not-available": "Grafana IRM is not available",
