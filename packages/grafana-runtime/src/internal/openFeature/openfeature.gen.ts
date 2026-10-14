@@ -216,6 +216,8 @@ export const FlagKeys = {
   GrafanaScopesDashboardsMegaMenu: "grafana.scopesDashboardsMegaMenu",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
+  /** Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service */
+  GrafanaSmtpSettingsPage: "grafana.smtpSettingsPage",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
@@ -302,6 +304,8 @@ export const FlagKeys = {
   QueryService: "queryService",
   /** Routes requests to the new query service */
   QueryServiceFromUI: "queryServiceFromUI",
+  /** Adds datasource connections to the query service */
+  QueryServiceWithConnections: "queryServiceWithConnections",
   /** Enables the Query with Assistant button in the query editor */
   QueryWithAssistant: "queryWithAssistant",
   /** Enables AI-assisted coauthoring in code query editors */
@@ -360,8 +364,6 @@ export const FlagKeys = {
   TextNewFeatures: "text.newFeatures",
   /** Enables time comparison option in supported panels */
   TimeComparison: "timeComparison",
-  /** Enables time pickers sync */
-  TimeRangeProvider: "timeRangeProvider",
   /** Show transformation quick-start cards in empty transformations state */
   TransformationsEmptyPlaceholder: "transformationsEmptyPlaceholder",
   /** Enables unified navbars */
@@ -1486,6 +1488,17 @@ export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluat
 };
 
 /**
+ * Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service
+ *
+ * **Details:**
+ * - flag key: `grafana.smtpSettingsPage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSmtpSettingsPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.smtpSettingsPage", false, options).value;
+};
+
+/**
  * Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker
  *
  * **Details:**
@@ -1959,6 +1972,17 @@ export const useFlagQueryServiceFromUI = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Adds datasource connections to the query service
+ *
+ * **Details:**
+ * - flag key: `queryServiceWithConnections`
+ * - default value: `false`
+ */
+export const useFlagQueryServiceWithConnections = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryServiceWithConnections", false, options).value;
+};
+
+/**
  * Enables the Query with Assistant button in the query editor
  *
  * **Details:**
@@ -2275,17 +2299,6 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagTimeComparison = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("timeComparison", true, options).value;
-};
-
-/**
- * Enables time pickers sync
- *
- * **Details:**
- * - flag key: `timeRangeProvider`
- * - default value: `false`
- */
-export const useFlagTimeRangeProvider = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("timeRangeProvider", false, options).value;
 };
 
 /**

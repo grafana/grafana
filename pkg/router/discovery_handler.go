@@ -63,6 +63,7 @@ func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http
 			groups[name] = entry.group
 		}
 	}
+	groups[discoveryGroup] = discoveryAPIGroup
 	fallback.Groups = make([]metav1.APIGroup, 0, len(groups))
 	for _, group := range groups {
 		fallback.Groups = append(fallback.Groups, group)
@@ -136,6 +137,7 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	for _, f := range fetches {
 		groups[f.name] = f.result
 	}
+	groups[discoveryGroup] = discoveryAggregated
 	items := make([]apidiscoveryv2.APIGroupDiscovery, 0, len(groups))
 	for _, group := range groups {
 		items = append(items, group)
@@ -224,6 +226,8 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 		return
 	}
 	handlers := *r.snapshot.Load()
+	discoveryPath, discoveryURL := discoveryOpenAPIEntry()
+	fallback.Paths[discoveryPath] = handler3.OpenAPIV3DiscoveryGroupVersion{ServerRelativeURL: discoveryURL}
 	for path := range fallback.Paths {
 		group, _, ok := parseOpenAPIGroupVersionPath(openapiV3Prefix + "/" + path)
 		if entry, owned := handlers[group]; ok && owned && (!entry.callerScoped || !scoped) {

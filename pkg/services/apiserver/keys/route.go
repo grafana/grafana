@@ -4,13 +4,11 @@ import (
 	"net/http"
 	"strings"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/util"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 )
 
 // ConfigSection and ConfigKey name the ini setting that turns the endpoint on.
@@ -18,14 +16,6 @@ import (
 const (
 	ConfigSection = "grafana-apiserver"
 	ConfigKey     = "enable_keys_api"
-)
-
-const componentPrefix = "#/components/schemas/"
-
-// Standard meta.k8s.io/v1 types, so there is no envelope to define or generate.
-var (
-	listOptionsModel = metav1.ListOptions{}.OpenAPIModelName()
-	partialListModel = metav1.PartialObjectMetadataList{}.OpenAPIModelName()
 )
 
 // Route is an endpoint to mount. Deliberately not builder.APIRouteHandler: more
@@ -47,7 +37,7 @@ func (h *Handler) ListKeysRoute(group, version, resourceName, kindName string) R
 		Path:    resourceName + "/" + utils.ListKeysPathSegment,
 		Spec:    listKeysRouteSpec(kindName, version, false),
 		Handler: h.ListKeysFor(kind),
-		Schemas: metaSchemas(listOptionsModel, partialListModel),
+		Schemas: envelopeSchemas(listKeyRequestGoName, partialListGoName),
 	}
 }
 
@@ -60,25 +50,8 @@ func (h *Handler) ListKeysInNamespaceRoute(group, version, resourceName, kindNam
 		Path:    resourceName + "/" + utils.ListKeysPathSegment,
 		Spec:    listKeysRouteSpec(kindName, version, true),
 		Handler: h.ListKeysInNamespaceFor(kind),
-		Schemas: metaSchemas(listOptionsModel, partialListModel),
+		Schemas: envelopeSchemas(listKeyRequestGoName, partialListGoName),
 	}
-}
-
-// The version is part of the name because the endpoint is mounted on every served
-// version and operation IDs must stay unique once the specs are merged. Starts
-// with a Kubernetes verb so the route builder does not prefix one.
-func listKeysOperationID(kindName, version string, namespaced bool) string {
-	if namespaced {
-		return "listNamespaced" + kindName + "Keys" + capitalize(version)
-	}
-	return "list" + kindName + "Keys" + capitalize(version)
-}
-
-func capitalize(s string) string {
-	if s == "" {
-		return s
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathProps {
@@ -112,10 +85,9 @@ func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathPro
 				RequestBody: &spec3.RequestBody{
 					RequestBodyProps: spec3.RequestBodyProps{
 						Required: false,
-						Description: "A ListOptions carrying limit, continue and resourceVersion. " +
-							"Selectors, watch and timeouts are rejected: they cannot be evaluated " +
-							"without reading objects.",
-						Content: jsonContent(listOptionsModel),
+						Description: "A " + storagev0.KindListKeyRequest + " carrying limit, continue and resourceVersion, " +
+							"optionally with apiVersion and kind. Any other field is rejected.",
+						Content: jsonContent(listKeyRequestGoName),
 					},
 				},
 				Responses: &spec3.Responses{
@@ -125,7 +97,7 @@ func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathPro
 								ResponseProps: spec3.ResponseProps{
 									Description: "A PartialObjectMetadataList in which only namespace, name, " +
 										"resourceVersion and the grafana.app/folder annotation are populated.",
-									Content: jsonContent(partialListModel),
+									Content: jsonContent(partialListGoName),
 								},
 							},
 						},
@@ -136,53 +108,19 @@ func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathPro
 	}
 }
 
-// Generated dependencies come as either Go import paths or names already
-// converted by OpenAPIModelName; converting an already-converted name reverses it.
-func friendly(name string) string {
-	if strings.Contains(name, "/") {
-		return util.ToRESTFriendlyName(name)
+// The version is part of the name because the endpoint is mounted on every served
+// version and operation IDs must stay unique once the specs are merged. Starts
+// with a Kubernetes verb so the route builder does not prefix one.
+func listKeysOperationID(kindName, version string, namespaced bool) string {
+	if namespaced {
+		return "listNamespaced" + kindName + "Keys" + capitalize(version)
 	}
-	return name
+	return "list" + kindName + "Keys" + capitalize(version)
 }
 
-func schemaRef(goName string) spec.Ref {
-	return spec.MustCreateRef(componentPrefix + friendly(goName))
-}
-
-// Each group version's spec is self-contained, so the components have to travel
-// with the route. Dependencies are followed rather than listed because a missing
-// one renders as an empty model with no error.
-func metaSchemas(roots ...string) map[string]spec.Schema {
-	defs := commonv0.GetOpenAPIDefinitions(schemaRef)
-
-	out := map[string]spec.Schema{}
-	queue := append([]string{}, roots...)
-	for len(queue) > 0 {
-		name := queue[0]
-		queue = queue[1:]
-
-		if _, seen := out[friendly(name)]; seen {
-			continue
-		}
-		def, ok := defs[name]
-		if !ok {
-			continue
-		}
-		out[friendly(name)] = def.Schema
-		queue = append(queue, def.Dependencies...)
+func capitalize(s string) string {
+	if s == "" {
+		return s
 	}
-
-	return out
-}
-
-func jsonContent(goName string) map[string]*spec3.MediaType {
-	return map[string]*spec3.MediaType{
-		"application/json": {
-			MediaTypeProps: spec3.MediaTypeProps{
-				Schema: &spec.Schema{
-					SchemaProps: spec.SchemaProps{Ref: schemaRef(goName)},
-				},
-			},
-		},
-	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
