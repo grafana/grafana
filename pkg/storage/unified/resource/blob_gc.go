@@ -12,12 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
-// BlobGarbageCollector tracks orphan observations without changing the deployed KV contract.
-// A restart resets the grace period rather than risking collection of an in-flight upload.
+// BlobGarbageCollector scans blobs without retaining the keys of referenced blobs.
 // Collect must be called serially.
 type BlobGarbageCollector struct {
 	store     BlobGCStore
-	orphans   map[string]time.Time
 	batchSize int
 	batchWait time.Duration
 }
@@ -31,7 +29,7 @@ func NewBlobGarbageCollector(store BlobGCStore, batchSize int, batchWait time.Du
 	if batchSize <= 0 {
 		batchSize = 100
 	}
-	return &BlobGarbageCollector{store: store, orphans: make(map[string]time.Time), batchSize: batchSize, batchWait: batchWait}
+	return &BlobGarbageCollector{store: store, batchSize: batchSize, batchWait: batchWait}
 }
 
 // Collect preserves blobs referenced by any retained revision, including trash.
@@ -40,11 +38,22 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 	if grace <= 0 {
 		return 0, fmt.Errorf("blob GC grace period must be positive")
 	}
-	seen := make(map[string]struct{})
+	// SQL and bucket stores use upload time; Badger persists the first unused observation.
+	ages, ok := g.store.(interface {
+		FirstUnused(context.Context, string, time.Time) (time.Time, error)
+		ClearUnused(context.Context, string) error
+	})
+	if !ok {
+		return 0, fmt.Errorf("blob GC store does not support durable age tracking")
+	}
+	keys := g.store.Keys(ctx, kv.BlobDataSection, kv.ListOptions{})
+	if store, ok := g.store.(kv.KV); ok {
+		keys = pagedKeys(ctx, store, kv.BlobDataSection, kv.ListOptions{}, g.batchSize)
+	}
 	count := 0
 	processed := 0
 	var errs []error
-	for key, err := range g.store.Keys(ctx, kv.BlobDataSection, kv.ListOptions{}) {
+	for key, err := range keys {
 		if err != nil {
 			return count, errors.Join(append(errs, err)...)
 		}
@@ -61,7 +70,6 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 			}
 		}
 		processed++
-		seen[key] = struct{}{}
 		bk, err := kv.ParseBlobKey(key)
 		if err != nil {
 			errs = append(errs, err)
@@ -72,25 +80,25 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 		// TODO: Replace this exemption with durable URL-reference tracking and a
 		// retention plan for previews already published in PR comments.
 		if bk.Group == "provisioning.grafana.app" && bk.Resource == "repositories" {
-			delete(g.orphans, key)
 			continue
 		}
 		live, err := referenced(ctx, bk)
 		if err != nil {
-			delete(g.orphans, key)
 			errs = append(errs, err)
 			continue
 		}
 		if live {
-			delete(g.orphans, key)
+			if err := ages.ClearUnused(ctx, key); err != nil {
+				errs = append(errs, err)
+			}
 			continue
 		}
-		first, ok := g.orphans[key]
-		if !ok {
-			g.orphans[key] = now
+		first, err := ages.FirstUnused(ctx, key, now)
+		if err != nil {
+			errs = append(errs, err)
 			continue
 		}
-		if now.Sub(first) < grace {
+		if first.IsZero() || now.Sub(first) < grace {
 			continue
 		}
 		if !dryRun {
@@ -98,14 +106,11 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 				errs = append(errs, err)
 				continue
 			}
-			delete(g.orphans, key)
+			if err := ages.ClearUnused(ctx, key); err != nil {
+				errs = append(errs, err)
+			}
 		}
 		count++
-	}
-	for key := range g.orphans {
-		if _, ok := seen[key]; !ok {
-			delete(g.orphans, key)
-		}
 	}
 	return count, errors.Join(errs...)
 }

@@ -67,12 +67,12 @@ func TestBlobGarbageCollector(t *testing.T) {
 			count, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, scenario == "dry run", referenced)
 			require.Equal(t, scenario == "read error", err != nil)
 			expectedCount := 0
-			if scenario == "orphan" || scenario == "dry run" {
+			if scenario == "orphan" || scenario == "dry run" || scenario == "restart" {
 				expectedCount = 1
 			}
 			require.Equal(t, expectedCount, count)
 			reader, err := store.Get(t.Context(), kv.BlobDataSection, key.String())
-			if scenario == "orphan" {
+			if scenario == "orphan" || scenario == "restart" {
 				require.ErrorIs(t, err, kv.ErrNotFound)
 			} else {
 				require.NoError(t, err)
@@ -80,6 +80,80 @@ func TestBlobGarbageCollector(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBlobGCPagedKeysAndReferenceReset(t *testing.T) {
+	store := setupBadgerKV(t)
+	base := kv.BlobKey{Group: "group", Resource: "resource", Name: "name", UID: "a"}
+	for _, uid := range []string{"a", "a-long", "b"} {
+		key := base
+		key.UID = uid
+		writer, err := store.Save(t.Context(), kv.BlobDataSection, key.String())
+		require.NoError(t, err)
+		_, err = writer.Write([]byte("payload"))
+		require.NoError(t, err)
+		require.NoError(t, writer.Close())
+	}
+	now := time.Now()
+	gc := NewBlobGarbageCollector(store, 1, 0)
+	live := func(_ context.Context, key kv.BlobKey) (bool, error) { return key.UID == "b", nil }
+	count, err := gc.Collect(t.Context(), now, time.Hour, false, live)
+	require.NoError(t, err)
+	require.Zero(t, count)
+	gc = NewBlobGarbageCollector(store, 1, 0)
+	count, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, false, live)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+	key := base
+	key.UID = "b"
+	reader, err := store.Get(t.Context(), kv.BlobDataSection, key.String())
+	require.NoError(t, err)
+	require.NoError(t, reader.Close())
+}
+
+func TestBlobGCReferenceResetsObservation(t *testing.T) {
+	store := setupBadgerKV(t)
+	key := kv.BlobKey{Group: "group", Resource: "resource", Name: "name", UID: "uid"}.String()
+	writer, err := store.Save(t.Context(), kv.BlobDataSection, key)
+	require.NoError(t, err)
+	_, err = writer.Write([]byte("payload"))
+	require.NoError(t, err)
+	require.NoError(t, writer.Close())
+	gc := NewBlobGarbageCollector(store, 1, 0)
+	now := time.Now()
+	live := false
+	referenced := func(context.Context, kv.BlobKey) (bool, error) { return live, nil }
+	_, err = gc.Collect(t.Context(), now, time.Hour, false, referenced)
+	require.NoError(t, err)
+	live = true
+	_, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, false, referenced)
+	require.NoError(t, err)
+	live = false
+	count, err := gc.Collect(t.Context(), now.Add(3*time.Hour), time.Hour, false, referenced)
+	require.NoError(t, err)
+	require.Zero(t, count)
+}
+
+func TestBlobGCReuploadResetsObservation(t *testing.T) {
+	store := setupBadgerKV(t)
+	key := kv.BlobKey{Group: "group", Resource: "resource", Name: "name", UID: "uid"}.String()
+	write := func() {
+		writer, err := store.Save(t.Context(), kv.BlobDataSection, key)
+		require.NoError(t, err)
+		_, err = writer.Write([]byte("payload"))
+		require.NoError(t, err)
+		require.NoError(t, writer.Close())
+	}
+	write()
+	gc := NewBlobGarbageCollector(store, 1, 0)
+	now := time.Now()
+	referenced := func(context.Context, kv.BlobKey) (bool, error) { return false, nil }
+	_, err := gc.Collect(t.Context(), now, time.Hour, false, referenced)
+	require.NoError(t, err)
+	write()
+	count, err := gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, false, referenced)
+	require.NoError(t, err)
+	require.Zero(t, count)
 }
 
 func TestKVBlobGCOptInAndDryRun(t *testing.T) {

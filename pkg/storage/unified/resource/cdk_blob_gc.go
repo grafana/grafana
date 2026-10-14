@@ -7,19 +7,20 @@ import (
 	"io"
 	"iter"
 	"strings"
+	"time"
 
 	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
-// CDKBlobGCStore enumerates the objects written by cdkBlobSupport. The
-// original object path is retained so deletion does not have to guess the
-// extension selected by mime.ExtensionsByType at upload time.
+// CDKBlobGCStore enumerates the objects written by cdkBlobSupport.
 type CDKBlobGCStore struct {
-	bucket CDKBucket
-	root   string
-	paths  map[string]string
+	bucket  CDKBucket
+	root    string
+	key     string
+	path    string
+	modTime time.Time
 }
 
 func NewCDKBlobGCStore(bucket CDKBucket, root string) *CDKBlobGCStore {
@@ -32,7 +33,6 @@ func (s *CDKBlobGCStore) Keys(ctx context.Context, section string, _ kv.ListOpti
 			yield("", fmt.Errorf("unsupported blob GC section %q", section))
 			return
 		}
-		s.paths = make(map[string]string)
 		it := s.bucket.List(&blob.ListOptions{Prefix: s.root})
 		for {
 			obj, err := it.Next(ctx)
@@ -63,7 +63,7 @@ func (s *CDKBlobGCStore) Keys(ctx context.Context, section string, _ kv.ListOpti
 			if _, err := kv.ParseBlobKey(key); err != nil {
 				continue
 			}
-			s.paths[key] = obj.Key
+			s.key, s.path, s.modTime = key, obj.Key, obj.ModTime
 			if !yield(key, nil) {
 				return
 			}
@@ -75,9 +75,17 @@ func (s *CDKBlobGCStore) Delete(ctx context.Context, section, key string) error 
 	if section != kv.BlobDataSection {
 		return fmt.Errorf("unsupported blob GC section %q", section)
 	}
-	path, ok := s.paths[key]
-	if !ok {
+	if key != s.key {
 		return fmt.Errorf("blob GC path not found for %q", key)
 	}
-	return s.bucket.Delete(ctx, path)
+	return s.bucket.Delete(ctx, s.path)
 }
+
+func (s *CDKBlobGCStore) FirstUnused(_ context.Context, key string, _ time.Time) (time.Time, error) {
+	if key != s.key {
+		return time.Time{}, fmt.Errorf("blob GC path not found for %q", key)
+	}
+	return s.modTime, nil
+}
+
+func (s *CDKBlobGCStore) ClearUnused(context.Context, string) error { return nil }

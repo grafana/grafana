@@ -381,8 +381,8 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 				// EndKey is exclusive; keep the original inclusive lower bound.
 				opts.EndKey = page[len(page)-1]
 			} else {
-				// StartKey is inclusive, so advance past the last key we saw.
-				opts.StartKey = PrefixRangeEnd(page[len(page)-1])
+				// StartKey is inclusive; retain keys that extend the last key.
+				opts.StartKey = page[len(page)-1] + "\x00"
 			}
 		}
 	}

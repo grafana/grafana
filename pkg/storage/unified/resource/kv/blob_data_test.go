@@ -3,6 +3,9 @@ package kv
 import (
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/stretchr/testify/require"
 )
@@ -85,6 +88,31 @@ func TestDecodeBlobValue(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tc.wantContentType, contentType)
 			require.Equal(t, tc.wantBody, string(body))
+		})
+	}
+}
+
+func TestSQLBlobKeysArePagedAndUseUploadTime(t *testing.T) {
+	for _, dialect := range []string{"sqlite", "postgres", "mysql"} {
+		t.Run(dialect, func(t *testing.T) {
+			store, _, mock := setupSQLKVMock(t, dialect)
+			key := testBlobKey("default")
+			mock.ExpectQuery("SELECT .* FROM .*resource_blob.* WHERE .* ORDER BY .* LIMIT").
+				WithArgs("", int64(1)).WillReturnRows(sqlmock.NewRows([]string{"key"}).AddRow(key.String()))
+			var keys []string
+			for got, err := range store.Keys(t.Context(), BlobDataSection, ListOptions{Limit: 1}) {
+				require.NoError(t, err)
+				keys = append(keys, got)
+			}
+			require.Equal(t, []string{key.String()}, keys)
+
+			created := time.Now().Add(-48 * time.Hour).UTC().Truncate(time.Second)
+			mock.ExpectQuery("SELECT .*created.* FROM .*resource_blob.* WHERE").
+				WithArgs(key.UID, key.Namespace, key.Group, key.Resource, key.Name).WillReturnRows(sqlmock.NewRows([]string{"created"}).AddRow(created))
+			first, err := store.FirstUnused(t.Context(), key.String(), time.Now())
+			require.NoError(t, err)
+			require.Equal(t, created, first)
+			require.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
 }

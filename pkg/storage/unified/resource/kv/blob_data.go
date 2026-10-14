@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"slices"
 	"strings"
 	"time"
 )
@@ -186,13 +185,31 @@ func (k *SqlKV) deleteBlob(ctx context.Context, key string) error {
 }
 
 func (k *SqlKV) blobKeys(ctx context.Context, opt ListOptions, yield func(string, error) bool) {
-	query := fmt.Sprintf("SELECT %s, %s, %s, %s, %s FROM %s",
-		k.dialect.QuoteIdent("group"), k.dialect.QuoteIdent("resource"), k.dialect.QuoteIdent("namespace"),
-		k.dialect.QuoteIdent("name"), k.dialect.QuoteIdent("uuid"),
-		k.dialect.QuoteIdent(resourceBlobTable))
-	cols, args := blobKeyFilter(opt)
-	if len(cols) > 0 {
-		query += " WHERE " + k.blobWhere(cols)
+	parts := []string{k.dialect.QuoteIdent("group"), k.dialect.QuoteIdent("resource"), k.dialect.QuoteIdent("namespace"), k.dialect.QuoteIdent("name"), k.dialect.QuoteIdent("uuid")}
+	var keyExpr string
+	switch k.dialect.Name() {
+	case "mysql":
+		keyExpr = "CAST(CONCAT(" + strings.Join(parts, ", '/', ") + ") AS BINARY)"
+	case "postgres":
+		keyExpr = "(" + strings.Join(parts, " || '/' || ") + `) COLLATE "C"`
+	default:
+		keyExpr = "(" + strings.Join(parts, " || '/' || ") + ") COLLATE BINARY"
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s >= %s",
+		keyExpr, k.dialect.QuoteIdent(resourceBlobTable), keyExpr, k.dialect.Placeholder(1))
+	args := []any{opt.StartKey}
+	if opt.EndKey != "" {
+		query += " AND " + keyExpr + " < " + k.dialect.Placeholder(2)
+		args = append(args, opt.EndKey)
+	}
+	order := "ASC"
+	if opt.Sort == SortOrderDesc {
+		order = "DESC"
+	}
+	query += " ORDER BY " + keyExpr + " " + order
+	if opt.Limit > 0 {
+		query += " LIMIT " + k.dialect.Placeholder(len(args)+1)
+		args = append(args, opt.Limit)
 	}
 	rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
 	if err != nil {
@@ -202,34 +219,30 @@ func (k *SqlKV) blobKeys(ctx context.Context, opt ListOptions, yield func(string
 	shouldYield := true
 	defer func() { closeRows(rows, yield, shouldYield) }()
 
-	keys := make([]string, 0)
 	for rows.Next() {
-		var bk BlobKey
-		if err := rows.Scan(&bk.Group, &bk.Resource, &bk.Namespace, &bk.Name, &bk.UID); err != nil {
+		var key string
+		if err := rows.Scan(&key); err != nil {
 			shouldYield = yield("", fmt.Errorf("error reading row: %w", err))
 			return
 		}
-		key := bk.String()
-		if key < opt.StartKey || (opt.EndKey != "" && key >= opt.EndKey) {
-			continue
-		}
-		keys = append(keys, key)
-	}
-	if err := rows.Err(); err != nil {
-		shouldYield = yield("", fmt.Errorf("failed to read rows: %w", err))
-		return
-	}
-
-	slices.Sort(keys)
-	if opt.Sort == SortOrderDesc {
-		slices.Reverse(keys)
-	}
-	if opt.Limit > 0 && int64(len(keys)) > opt.Limit {
-		keys = keys[:opt.Limit]
-	}
-	for _, key := range keys {
 		if shouldYield = yield(key, nil); !shouldYield {
 			return
 		}
 	}
+	if err := rows.Err(); err != nil {
+		yield("", fmt.Errorf("failed to read rows: %w", err))
+	}
 }
+
+func (k *SqlKV) FirstUnused(ctx context.Context, key string, _ time.Time) (time.Time, error) {
+	bk, err := ParseBlobKey(key)
+	if err != nil {
+		return time.Time{}, err
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s", k.dialect.QuoteIdent("created"), k.dialect.QuoteIdent(resourceBlobTable), k.blobWhere(blobIdentityColumns))
+	var created time.Time
+	err = k.conn(ctx).QueryRowContext(ctx, query, blobIdentityArgs(bk)...).Scan(&created)
+	return created, err
+}
+
+func (k *SqlKV) ClearUnused(context.Context, string) error { return nil }
