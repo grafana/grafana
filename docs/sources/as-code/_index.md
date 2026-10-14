@@ -3,7 +3,10 @@ aliases:
   - ./as-code/observability-as-code/
   - ./as-code/observability-as-code/get-started/
   - ./as-code/infrastructure-as-code/
-description: Deploy, configure and provision Grafana with as-code workflows.
+  - ../infrastructure-as-code/grizzly/dashboards-folders-datasources
+  - ./infrastructure-as-code/grizzly/
+  - ../infrastructure-as-code/grizzly/
+description: Deploy, configure and provision Grafana with as code workflows.
 keywords:
   - observability
   - configuration
@@ -12,19 +15,23 @@ keywords:
   - git integration
   - git sync
   - github
+  - provisioning
+  - operator
+  - terraform
+  - ansible
 labels:
   products:
     - enterprise
     - oss
     - cloud
 menuTitle: As code and provisioning
-title: Deploy, configure and provision Grafana with as-code workflows
+title: Deploy, configure and provision Grafana with as code workflows
 hero:
-  title: Configure and provision Grafana with as-code workflows
+  title: Deploy, provision and manage Grafana with as code workflows
   level: 1
   width: 100
   height: 100
-  description: Manage resources, including folders and dashboards, and configurations with as-code workflows.
+  description: Manage resources, including folders and dashboards, and configurations with as code workflows.
 cards:
   items:
     - title: Git Sync
@@ -97,12 +104,14 @@ Historically, managing Grafana as code involved various community and Grafana La
 
 In Grafana Cloud, you can create and manage dashboards via configuration files in source code, and incorporate them efficiently into your own use cases. This enables you to review code, reuse it, and create better workflows. Infrastructure as code tools include Terraform, Ansible, the Grafana Operator, and Grizzly.
 
-## as Code for Kubernetes: Grafana Operator and Grafana Crossplane provider
+## as code for Kubernetes: Grafana Operator and Grafana Crossplane provider
 
-The Grafana Operator is a Kubernetes operator that can provision, manage, and operate Grafana instances and their associated resources within Kubernetes through Custom Resources. This Kubernetes-native tool eases the administration of Grafana, including managing dashboards, data sources, and folders. It also automatically syncs the Kubernetes Custom resources and the actual resources in the Grafana Instance.
+The **Grafana Operator** is a Kubernetes operator that can provision, manage, and operate Grafana instances and their associated resources within Kubernetes through Custom Resources. The Operator eases the administration of Grafana, including managing dashboards, data sources, and folders. To get started, refer to the [quickstart guides for the Grafana Operator](https://grafana.com/docs/grafana-cloud/as-code/grafana-operator) or check out the [Grafana Operator's documentation](https://grafana.github.io/grafana-operator/).
 
-To get started, refer to the [quickstart guides for the Grafana Operator](https://grafana.com/docs/grafana-cloud/as-code/grafana-operator) or check out the [Grafana Operator's documentation](https://grafana.github.io/grafana-operator/). For Grafana Crossplane, refer to [Use the Grafana Crossplane provider](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator#use-the-grafana-crossplane-provider).
+For Grafana Crossplane, refer to [Use the Grafana Crossplane provider](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator#use-the-grafana-crossplane-provider).
 
 ## Additional as code tools
 
 [Grafonnet](https://github.com/grafana/grafonnet) is a Jsonnet library for generating Grafana dashboard JSON definitions programmatically. **Grafonnet is not officially supported by Grafana. Instead, use the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/foundation-sdk/)** to create dashboards as code.
+
+**Grizzly has been removed**, and is no longer deployed, enhanced, or supported. Use the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/) instead.

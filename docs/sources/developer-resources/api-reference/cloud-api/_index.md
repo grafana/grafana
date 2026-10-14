@@ -73,13 +73,13 @@ POST https://www.grafana.com/api/v1/accesspolicies
 
 #### Request body
 
-| Name          | Type         | Description                                                                                                                                                                                  | Required |
+| Name | Type | Description | Required |
 | ------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --- | --- |
-| `name`        | String       | Name of the access policy. It must be 1-255 characters long. Characters can only include lowercase letters from the English alphabet (a-z), numbers (0-9), hyphens (-) and underscores (\_). | Yes      |
-| `displayName` | String       | Display name of the access policy, visible in the UI. Set to `name` if not provided. It must be 1-255 characters long.                                                                       | No       |     | No  |
-| `scopes`      | List[String] | List of [**scopes**](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/#scopes).                                                      | Yes      |
-| `realms`      | List[Realm]  | List of [**realms**](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/#realms).                                                      | Yes      |
-| `conditions`  | Conditions   | A set of criteria that is used to restrict access of the access policy and tokens.                                                                                                           | No       |
+| `name` | String | Name of the access policy. It must be 1-255 characters long. Characters can only include lowercase letters from the English alphabet (a-z), numbers (0-9), hyphens (-) and underscores (\_). | Yes |
+| `displayName` | String | Display name of the access policy, visible in the UI. Set to `name` if not provided. It must be 1-255 characters long. | No | | No |
+| `scopes` | List[String] | List of [**scopes**](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/#scopes). | Yes |
+| `realms` | List[Realm] | List of [**realms**](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/#realms). | Yes |
+| `conditions` | Conditions | A set of criteria that is used to restrict access of the access policy and tokens. | No |
 
 **Realm**
 
@@ -324,13 +324,13 @@ POST https://www.grafana.com/api/v1/accesspolicies/{accessPolicyId}
 
 The request body specifies the revised access policy.
 
-| Name          | Type         | Description                                                                                                                                                        | Required |
+| Name | Type | Description | Required |
 | ------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | --- | --- |
-| `displayName` | String       | Display name of the access policy, visible in the UI. It must be 1-255 characters long.                                                                            | No       |     | No  |
-| `scopes`      | List[String] | List of [**scopes**](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/#scopes).                            | Yes      |
-| `realms`      | List[Realm]  | List of [**realms**](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/#realms).                            | Yes      |
-| `conditions`  | Conditions   | A set of criteria that is used to restrict access of the access policy and tokens. Providing an empty object `{}` results in the complete removal of `conditions`. | No       |
-| `status`      | String       | The status of the access policy. Must be `active` or `inactive`.                                                                                                   | No       |
+| `displayName` | String | Display name of the access policy, visible in the UI. It must be 1-255 characters long. | No | | No |
+| `scopes` | List[String] | List of [**scopes**](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/#scopes). | Yes |
+| `realms` | List[Realm] | List of [**realms**](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/#realms). | Yes |
+| `conditions` | Conditions | A set of criteria that is used to restrict access of the access policy and tokens. Providing an empty object `{}` results in the complete removal of `conditions`. | No |
+| `status` | String | The status of the access policy. Must be `active` or `inactive`. | No |
 
 **Realm**
 
