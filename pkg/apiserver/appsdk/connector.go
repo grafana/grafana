@@ -174,32 +174,24 @@ func (h *handlerWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		writeCustomRouteError(req.Context(), err, w)
 	}
 }
-
-func writeCustomRouteError(ctx context.Context, err error, w http.ResponseWriter) {
-	code := int32(http.StatusInternalServerError)
-	reason := metav1.StatusReasonInternalError
-	message := err.Error()
+func writeCustomRouteError(_ context.Context, err error, w http.ResponseWriter) {
+	var s metav1.Status
 	var apiStatus apierrors.APIStatus
 	if errors.As(err, &apiStatus) {
-		st := apiStatus.Status()
-		if st.Code != 0 {
-			code = st.Code
-		}
-		if st.Reason != "" {
-			reason = st.Reason
-		}
-		if st.Message != "" {
-			message = st.Message
+		s = apiStatus.Status()
+	} else {
+		s = metav1.Status{
+			Code:    int32(http.StatusInternalServerError),
+			Reason:  metav1.StatusReasonInternalError,
+			Message: err.Error(),
 		}
 	}
+	s.Kind = "Status"
+	s.APIVersion = "v1"
+
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(int(code))
-	_ = json.NewEncoder(w).Encode(metav1.Status{
-		Status:  metav1.StatusFailure,
-		Code:    code,
-		Reason:  reason,
-		Message: message,
-	})
+	w.WriteHeader(int(s.Code))
+	_ = json.NewEncoder(w).Encode(s)
 }
 
 // CovertURLValuesToResourceCallOptions reads from the input *url.Values and assigns fields in the out *ResourceCallOptions
