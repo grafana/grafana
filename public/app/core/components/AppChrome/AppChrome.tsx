@@ -396,16 +396,18 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
     }),
-    // A panel anchored to the bottom-right corner: content-driven height, no chrome of its own.
+    // A panel anchored to the bottom centre: content-driven height, no chrome of its own.
     sidebarContainerFloatingBar: css({
       // `Resizable` sets width and height inline.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      width: `min(560px, calc(100% - ${theme.spacing(6)})) !important` as 'auto',
+      width: `min(480px, calc(100% - ${theme.spacing(6)})) !important` as 'auto',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       height: 'auto !important' as 'auto',
       top: 'auto',
-      left: 'auto',
-      right: theme.spacing(3),
+      // The drag moves the sidebar wrapper inside, so this box's own transform is free for centring.
+      left: '50%',
+      right: 'auto',
+      transform: 'translateX(-50%)',
       bottom: theme.spacing(3),
       background: 'transparent',
       // The sidebar inside can be moved off this box; the box itself must not block the page.
