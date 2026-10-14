@@ -130,6 +130,29 @@ describe('picking', () => {
 
     await expect(pick).resolves.toBeNull();
   });
+
+  it('leaves Escape and pointer events inside an annotation anchor to the plugin', async () => {
+    const { session, startPick, annotate } = setup();
+    annotate([item()]);
+    const editor = document.createElement('textarea');
+    session.getAnnotationAnchor('a')!.appendChild(editor);
+    const resolved = jest.fn();
+    const pick = startPick();
+    pick.then(resolved);
+
+    const escape = fireEvent.keyDown(editor, { key: 'Escape' });
+    fireEvent.pointerMove(editor, { clientX: 200, clientY: 350 });
+    fireEvent.pointerDown(editor, { clientX: 200, clientY: 350 });
+    fireEvent.click(editor, { clientX: 200, clientY: 350 });
+    await act(async () => {});
+
+    expect(escape).toBe(true); // not prevented by the overlay
+    expect(resolved).not.toHaveBeenCalled();
+    expect(session.getOverlayState().picking).toBe(true);
+
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await expect(pick).resolves.toBeNull();
+  });
 });
 
 describe('annotations', () => {

@@ -130,9 +130,11 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       setHovered(null);
       return;
     }
-    // Escape cancels the pick before any other Escape handler (exit edit, close view panel) sees it.
+    // Escape cancels the pick before any other Escape handler (exit edit, close view panel) sees it,
+    // except inside an annotation anchor: that Escape belongs to the plugin's editor.
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      const fromAnchor = event.target instanceof Node && anchorHostRef.current?.contains(event.target);
+      if (event.key === 'Escape' && !fromAnchor) {
         event.preventDefault();
         event.stopPropagation();
         session.completePick(null);
