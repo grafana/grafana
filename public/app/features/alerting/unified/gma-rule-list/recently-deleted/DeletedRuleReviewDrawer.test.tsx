@@ -1,12 +1,14 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { getAPIBaseURL } from '@grafana/api-clients';
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDashboardApi } from 'app/features/alerting/unified/mockApi';
+import { mockDashboardDto, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
@@ -162,15 +164,117 @@ describe('DeletedRuleReviewDrawer', () => {
   });
 
   describe('dashboard reference', () => {
-    it('links to the dashboard panel with a readable label', async () => {
+    const DASHBOARD_DTO_URL = '/apis/dashboard.grafana.app/:version/namespaces/:namespace/dashboards/:uid/dto';
+
+    beforeEach(() => {
+      // The v1 dashboard fixtures are served through the legacy dashboard API, which new layouts would bypass.
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('links to the dashboard panel using the dashboard and panel titles', async () => {
+      mockDashboardApi(server).dashboard(
+        mockDashboardDto({
+          uid: 'dash-1',
+          title: 'Node overview',
+          panels: [
+            { id: 6, type: 'stat', title: 'Uptime' },
+            { id: 7, type: 'timeseries', title: 'CPU usage' },
+          ],
+        })
+      );
       const rule = buildAlertRule({ panelRef: { dashboardUID: 'dash-1', panelID: 7 } });
 
       render(<DeletedRuleReviewDrawer kind="alert" rule={rule} onClose={jest.fn()} />);
 
-      expect(await screen.findByRole('link', { name: 'Dashboard dash-1, panel 7' })).toHaveAttribute(
+      expect(await screen.findByRole('link', { name: 'Node overview › CPU usage' })).toHaveAttribute(
         'href',
         '/d/dash-1?viewPanel=7'
       );
+    });
+
+    it('finds a panel nested in a collapsed row', async () => {
+      mockDashboardApi(server).dashboard(
+        mockDashboardDto({
+          uid: 'dash-1',
+          title: 'Node overview',
+          panels: [
+            {
+              id: 1,
+              type: 'row',
+              title: 'Details',
+              collapsed: true,
+              panels: [{ id: 7, type: 'timeseries', title: 'Disk IO' }],
+            },
+          ],
+        })
+      );
+      const rule = buildAlertRule({ panelRef: { dashboardUID: 'dash-1', panelID: 7 } });
+
+      render(<DeletedRuleReviewDrawer kind="alert" rule={rule} onClose={jest.fn()} />);
+
+      expect(await screen.findByRole('link', { name: 'Node overview › Disk IO' })).toBeInTheDocument();
+    });
+
+    it('resolves titles from a v2 dashboard', async () => {
+      setTestFlags({ dashboardNewLayouts: true });
+      server.use(
+        http.get(DASHBOARD_DTO_URL, ({ params }) =>
+          HttpResponse.json({
+            apiVersion: 'dashboard.grafana.app/v2',
+            kind: 'DashboardWithAccessInfo',
+            metadata: { name: params.uid, generation: 1, creationTimestamp: '2024-01-01T00:00:00Z' },
+            access: {},
+            spec: {
+              title: 'Node overview v2',
+              elements: {
+                'panel-7': {
+                  kind: 'Panel',
+                  spec: { id: 7, title: 'Memory usage', vizConfig: { group: 'timeseries' } },
+                },
+              },
+            },
+          })
+        )
+      );
+      const rule = buildAlertRule({ panelRef: { dashboardUID: 'dash-1', panelID: 7 } });
+
+      render(<DeletedRuleReviewDrawer kind="alert" rule={rule} onClose={jest.fn()} />);
+
+      expect(await screen.findByRole('link', { name: 'Node overview v2 › Memory usage' })).toBeInTheDocument();
+    });
+
+    it('shows the dashboard title with the panel ID when the panel no longer exists', async () => {
+      mockDashboardApi(server).dashboard(
+        mockDashboardDto({ uid: 'dash-1', title: 'Node overview', panels: [{ id: 6, type: 'stat', title: 'Uptime' }] })
+      );
+      const rule = buildAlertRule({ panelRef: { dashboardUID: 'dash-1', panelID: 7 } });
+
+      render(<DeletedRuleReviewDrawer kind="alert" rule={rule} onClose={jest.fn()} />);
+
+      expect(await screen.findByRole('link', { name: 'Node overview › Panel 7' })).toHaveAttribute(
+        'href',
+        '/d/dash-1?viewPanel=7'
+      );
+    });
+
+    it('shows the dashboard UID and panel ID when the dashboard cannot be loaded', async () => {
+      // useDashboardQuery logs fetch failures instead of surfacing them.
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      server.use(http.get(DASHBOARD_DTO_URL, () => HttpResponse.json({ message: 'not found' }, { status: 404 })));
+      const rule = buildAlertRule({ panelRef: { dashboardUID: 'dash-1', panelID: 7 } });
+
+      render(<DeletedRuleReviewDrawer kind="alert" rule={rule} onClose={jest.fn()} />);
+
+      await waitFor(() => expect(consoleError).toHaveBeenCalledWith('Failed to fetch dashboard', expect.anything()));
+      expect(screen.getByRole('link', { name: 'Dashboard dash-1, panel 7' })).toHaveAttribute(
+        'href',
+        '/d/dash-1?viewPanel=7'
+      );
+      consoleError.mockRestore();
     });
 
     it('shows no dashboard section when the rule was not linked to a panel', async () => {

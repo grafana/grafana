@@ -115,7 +115,7 @@ export function DeletedRulesTable<T extends DeletedRule>({
       disableGrow: true,
       cell: ({ row }) => (
         <Button variant="secondary" size="sm" onClick={() => setRuleToReview(row.original)}>
-          <Trans i18nKey="alerting.deleted-rules.review">Review</Trans>
+          <Trans i18nKey="alerting.deleted-rules.table.review">Review</Trans>
         </Button>
       ),
     },

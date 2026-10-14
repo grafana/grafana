@@ -121,6 +121,7 @@ const gmaAllowedUnifiedModules = [
   'components/AlertingPageWrapper',
   'components/HoverCard',
   'components/assistant/AnalyzeK8sRuleButton',
+  'components/rule-editor/useDashboardQuery',
   'components/rule-list/extensions/EnrichmentDrawerExtension',
   'components/saved-searches/SavedSearches',
   'components/saved-searches/savedSearchesSchema',
