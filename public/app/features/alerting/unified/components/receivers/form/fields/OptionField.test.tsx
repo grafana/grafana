@@ -600,6 +600,7 @@ describe('OptionField', () => {
     });
 
     it('clears nested secure flags when a map entry is deleted', async () => {
+      const user = userEvent.setup();
       const onResetSecureField = jest.fn();
       renderOptionField(option, {
         defaultValue: { 'X-Request.Trace': { values: [], secrets: [] } },
@@ -608,21 +609,66 @@ describe('OptionField', () => {
         onResetSecureField,
       });
 
-      await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+      await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
       expect(onResetSecureField).toHaveBeenCalledWith('http_config.http_headers.X-Request%2ETrace.secrets');
       expect(screen.queryByDisplayValue('X-Request.Trace')).not.toBeInTheDocument();
     });
 
     it('adds a map entry with its schema-defined fields', async () => {
+      const user = userEvent.setup();
       renderOptionField(option, { defaultValue: {} });
 
-      await userEvent.type(screen.getByRole('textbox', { name: 'New name' }), 'X-Request-ID');
-      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+      await user.type(screen.getByRole('textbox', { name: 'New name' }), 'X-Request-ID');
+      await user.click(screen.getByRole('button', { name: 'Add' }));
 
       expect(screen.getByDisplayValue('X-Request-ID')).toBeInTheDocument();
       expect(screen.getByText('Values')).toBeInTheDocument();
       expect(screen.getByText('Secrets')).toBeInTheDocument();
+    });
+
+    it('submits dotted header names as literal object keys after editing an entry', async () => {
+      const user = userEvent.setup();
+      const onSubmit = jest.fn();
+      const defaultValues = {
+        test: {
+          http_headers: {
+            'X.Request.Trace': { values: ['before'], secrets: [] },
+          },
+        },
+      };
+
+      function TestForm() {
+        const methods = useForm({ defaultValues });
+        return (
+          <FormProvider {...methods}>
+            <form onSubmit={methods.handleSubmit(onSubmit)}>
+              <OptionField
+                option={option}
+                defaultValue={defaultValues.test.http_headers}
+                pathPrefix="test."
+                secureFields={{}}
+              />
+              <button type="submit">Save</button>
+            </form>
+          </FormProvider>
+        );
+      }
+
+      render(<TestForm />);
+
+      await user.clear(screen.getByDisplayValue('before'));
+      await user.type(screen.getByRole('textbox', { name: 'Values' }), 'after');
+      await user.click(screen.getByRole('button', { name: 'Save' }));
+
+      await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+      expect(onSubmit.mock.calls[0][0]).toEqual({
+        test: {
+          http_headers: {
+            'X.Request.Trace': { values: ['after'], secrets: [] },
+          },
+        },
+      });
     });
   });
 });

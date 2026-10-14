@@ -355,7 +355,6 @@ const OptionInput: FC<Props & { id: string }> = ({
           render={({ field: { value, onChange } }) => (
             <KeyValueObjectMapInput
               option={option}
-              pathPrefix={pathPrefix}
               secureFieldPathPrefix={secureFieldPathPrefix}
               secureFields={secureFields}
               errors={isNestedErrors(error) ? error : undefined}

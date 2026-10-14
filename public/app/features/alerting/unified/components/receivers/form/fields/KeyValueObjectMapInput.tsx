@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
-import { type DeepMap, type FieldError, type FieldValues, useFormContext } from 'react-hook-form';
+import { isEqual } from 'lodash';
+import { useEffect, useRef, useState } from 'react';
+import { type DeepMap, type FieldError, type FieldValues, FormProvider, useForm, useWatch } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -18,7 +19,6 @@ import { OptionField } from './OptionField';
 interface Props {
   value?: Record<string, Record<string, unknown>>;
   option: NotificationChannelOption;
-  pathPrefix: string;
   secureFieldPathPrefix: string;
   secureFields: NotificationChannelSecureFields;
   errors?: DeepMap<FieldValues, FieldError>;
@@ -32,7 +32,6 @@ interface Props {
 export function KeyValueObjectMapInput({
   value,
   option,
-  pathPrefix,
   secureFieldPathPrefix,
   secureFields,
   errors,
@@ -43,7 +42,6 @@ export function KeyValueObjectMapInput({
   getOptionMeta,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const { unregister } = useFormContext();
   const [newKey, setNewKey] = useState('');
   const entries = Object.entries(value ?? {});
 
@@ -69,13 +67,11 @@ export function KeyValueObjectMapInput({
     const nextValue = { ...(value ?? {}) };
     delete nextValue[key];
     onChange(nextValue);
-    unregister(`${pathPrefix}${option.propertyName}${toFieldPathSegment(key)}`);
   };
 
   return (
     <div>
       {entries.map(([key, entryValue]) => {
-        const fieldPathPrefix = `${pathPrefix}${option.propertyName}${toFieldPathSegment(key)}.`;
         const securePathPrefix = `${secureFieldPathPrefix}${option.propertyName}.${toSecurePathSegment(key)}.`;
 
         return (
@@ -90,21 +86,20 @@ export function KeyValueObjectMapInput({
                 />
               )}
             </Stack>
-            {(option.subformOptions ?? []).map((field) => (
-              <OptionField
-                key={field.propertyName}
-                option={field}
-                defaultValue={entryValue[field.propertyName]}
-                pathPrefix={fieldPathPrefix}
-                secureFieldPathPrefix={securePathPrefix}
-                secureFields={secureFields}
-                readOnly={readOnly}
-                onResetSecureField={onResetSecureField}
-                onDeleteSubform={onDeleteSubform}
-                getOptionMeta={getOptionMeta}
-                error={errors?.[key]?.[field.propertyName]}
-              />
-            ))}
+            <KeyValueObjectMapEntry
+              key={key}
+              entryKey={key}
+              value={entryValue}
+              option={option}
+              securePathPrefix={securePathPrefix}
+              secureFields={secureFields}
+              errors={errors?.[key]}
+              readOnly={readOnly}
+              onChange={(nextEntryValue) => onChange({ ...(value ?? {}), [key]: nextEntryValue })}
+              onResetSecureField={onResetSecureField}
+              onDeleteSubform={onDeleteSubform}
+              getOptionMeta={getOptionMeta}
+            />
           </section>
         );
       })}
@@ -139,6 +134,83 @@ export function KeyValueObjectMapInput({
   );
 }
 
+interface EntryProps {
+  entryKey: string;
+  value: Record<string, unknown>;
+  option: NotificationChannelOption;
+  securePathPrefix: string;
+  secureFields: NotificationChannelSecureFields;
+  errors?: DeepMap<FieldValues, FieldError>;
+  readOnly: boolean;
+  onChange: (value: Record<string, unknown>) => void;
+  onResetSecureField?: (propertyName: string) => void;
+  onDeleteSubform?: (settingsPath: string, option: NotificationChannelOption) => void;
+  getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
+}
+
+function KeyValueObjectMapEntry({
+  entryKey,
+  value,
+  option,
+  securePathPrefix,
+  secureFields,
+  errors,
+  readOnly,
+  onChange,
+  onResetSecureField,
+  onDeleteSubform,
+  getOptionMeta,
+}: EntryProps) {
+  const formKey = `entry_${btoa(encodeURIComponent(entryKey))}`;
+  const methods = useForm<Record<string, Record<string, unknown>>>({ defaultValues: { [formKey]: value } });
+  const { control, reset } = methods;
+  const entryValue = useWatch({ control, name: formKey }) ?? value;
+  const lastSyncedValue = useRef(value);
+  const isSyncingExternalValue = useRef(false);
+
+  useEffect(() => {
+    if (isEqual(value, lastSyncedValue.current)) {
+      return;
+    }
+
+    lastSyncedValue.current = value;
+    isSyncingExternalValue.current = true;
+    reset({ [formKey]: value });
+  }, [formKey, reset, value]);
+
+  useEffect(() => {
+    if (isSyncingExternalValue.current) {
+      isSyncingExternalValue.current = false;
+      return;
+    }
+
+    if (!isEqual(entryValue, value)) {
+      lastSyncedValue.current = entryValue;
+      onChange(entryValue);
+    }
+  }, [entryValue, onChange, value]);
+
+  return (
+    <FormProvider {...methods}>
+      {(option.subformOptions ?? []).map((field) => (
+        <OptionField
+          key={field.propertyName}
+          option={field}
+          defaultValue={entryValue[field.propertyName]}
+          pathPrefix={`${formKey}.`}
+          secureFieldPathPrefix={securePathPrefix}
+          secureFields={secureFields}
+          readOnly={readOnly}
+          onResetSecureField={onResetSecureField}
+          onDeleteSubform={onDeleteSubform}
+          getOptionMeta={getOptionMeta}
+          error={errors?.[field.propertyName]}
+        />
+      ))}
+    </FormProvider>
+  );
+}
+
 function getDefaultValue(option: NotificationChannelOption): unknown {
   if (option.defaultValue) {
     return option.defaultValue.value;
@@ -167,13 +239,6 @@ function resetSecureFields(
   (option.subformOptions ?? []).forEach((field) => {
     resetSecureFields(field, `${pathPrefix}${option.propertyName}.`, onResetSecureField);
   });
-}
-
-function toFieldPathSegment(key: string): string {
-  if (/^[\w-]+$/.test(key)) {
-    return `.${key}`;
-  }
-  return `[${JSON.stringify(key)}]`;
 }
 
 function toSecurePathSegment(key: string): string {
