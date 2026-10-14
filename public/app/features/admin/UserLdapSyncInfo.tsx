@@ -28,9 +28,6 @@ export const UserLdapSyncInfo = memo(({ ldapSyncInfo, user, onUserSync }: Props)
 
   return (
     <>
-      <h3 className="page-heading">
-        <Trans i18nKey="admin.ldap-sync.title">LDAP Synchronisation</Trans>
-      </h3>
       <div className="gf-form-group">
         <div className="gf-form">
           <table className="filter-table form-inline">

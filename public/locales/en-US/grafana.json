@@ -173,8 +173,7 @@
       "external-sync-label": "External sync",
       "next-sync-label": "Next scheduled synchronization",
       "not-enabled": "Not enabled",
-      "sync-button": "Sync user",
-      "title": "LDAP Synchronisation"
+      "sync-button": "Sync user"
     },
     "ldap-sync-info": {
       "title": "LDAP Synchronization"
@@ -239,13 +238,6 @@
     "upgrade-info": {
       "title": "Enterprise license"
     },
-    "user-admin-page": {
-      "page-nav": {
-        "subTitle": {
-          "manage-settings-for-an-individual-user": "Manage settings for an individual user."
-        }
-      }
-    },
     "user-create-page": {
       "label-email": "Email",
       "label-name": "Name",
@@ -280,20 +272,60 @@
       "change-role-button": "Change role",
       "external-user-tooltip": "This user's built-in role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
       "remove-button": "Remove from organization",
-      "role-not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
-      "title": "Organizations"
+      "role-not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
     },
     "user-orgs-modal": {
       "add-button": "Add to organization",
       "cancel-button": "Cancel"
     },
-    "user-permissions": {
-      "change-button": "Change",
-      "confirmText-change": "Change",
-      "grafana-admin-key": "Grafana Admin",
-      "grafana-admin-no": "No",
-      "grafana-admin-yes": "Yes",
-      "title": "Permissions"
+    "user-overview": {
+      "assignment": "Assignment type",
+      "authentication": "Authentication",
+      "basic": "Basic role",
+      "cancel": "Cancel",
+      "created": "Created",
+      "default": "Default basic role",
+      "details": "User details",
+      "direct": "Directly assigned",
+      "disabled": "Disabled",
+      "done": "Done",
+      "edit-field": "Edit {{field}}",
+      "edit-roles": "Edit roles",
+      "email": "Email",
+      "enabled": "Enabled",
+      "forbidden": "You do not have permission to view this information",
+      "grafana-admin": "Grafana admin",
+      "inherited": "Inherited from team",
+      "last-active": "Last active",
+      "ldap-error": "Unable to load authentication information",
+      "load-error": "Unable to load this information. Please try again.",
+      "loading": "Loading…",
+      "local": "Grafana",
+      "login": "Login",
+      "managed-externally": "Managed externally",
+      "name": "Name",
+      "never": "Never",
+      "no": "No",
+      "no-basic-role": "No basic role",
+      "no-teams": "This user does not belong to any teams in the current organization.",
+      "not-found": "This information is not available",
+      "organizations": "Organizations",
+      "orgs-error": "Unable to load organizations",
+      "origin": "Origin",
+      "provisioned": "Provisioned",
+      "role": "Role",
+      "role-options-error": "Unable to load available roles",
+      "roles": "Roles",
+      "save": "Save",
+      "sessions": "Sessions",
+      "sessions-error": "Unable to load sessions",
+      "source": "Source",
+      "status": "Status",
+      "team-name": "Team name",
+      "teams": "Teams",
+      "title": "User",
+      "update-error": "Unable to update user. Please try again.",
+      "yes": "Yes"
     },
     "user-profile": {
       "body-delete": "Are you sure you want to delete this user?",
@@ -304,17 +336,10 @@
       "disable-button": "Disable user",
       "edit-button": "Edit",
       "enable-button": "Enable user",
-      "label-email": "Email",
-      "label-name": "Name",
       "label-numerical-identifier": "Numerical identifier",
       "label-password": "Password",
-      "label-username": "Username",
-      "title": "User information",
       "title-delete-user": "Delete user",
       "title-disable-user": "Disable user"
-    },
-    "user-profile-row": {
-      "confirmText-save": "Save"
     },
     "user-sessions": {
       "browser-column": "Browser and OS",
@@ -323,8 +348,7 @@
       "ip-column": "IP address",
       "last-seen-column": "Last seen",
       "logged-on-column": "Logged on",
-      "now": "Now",
-      "title": "Sessions"
+      "now": "Now"
     },
     "users-create": {
       "create-button": "Create user"
@@ -335,7 +359,7 @@
     "users-table": {
       "columns": {
         "content-grafana-admin": "Grafana Admin",
-        "title-edit-user": "Edit user"
+        "title-view-user": "View user"
       },
       "edit-aria-label": "Edit user: {{name}}",
       "edit-tooltip": "Edit user",

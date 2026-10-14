@@ -100,19 +100,6 @@ export interface UserOrg {
   role: OrgRole;
 }
 
-export interface UserAdminState {
-  user?: UserDTO;
-  sessions: UserSession[];
-  orgs: UserOrg[];
-  isLoading: boolean;
-  error?: UserAdminError;
-}
-
-export interface UserAdminError {
-  title: string;
-  body: string;
-}
-
 export type UserFilter = Record<string, string | boolean | SelectableValue[]>;
 export interface UserListAdminState {
   users: UserDTO[];
