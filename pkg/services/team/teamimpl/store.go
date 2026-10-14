@@ -20,7 +20,9 @@ import (
 type store interface {
 	Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error)
 	Update(ctx context.Context, cmd *team.UpdateTeamCommand) error
-	Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error
+	// Delete returns the deleted team's UID.
+	Delete(ctx context.Context, cmd *team.DeleteTeamCommand) (string, error)
+	GetUID(ctx context.Context, orgID, teamID int64) (string, error)
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
@@ -149,14 +151,15 @@ type deleteDashboardACLQuery struct {
 func (q deleteDashboardACLQuery) Validate() error { return nil }
 
 // DeleteTeam will delete a team, its members and any permissions connected to the team.
-func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error {
+func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) (string, error) {
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if _, err := teamExists(dbHelper, sess, cmd.OrgID, cmd.ID); err != nil {
+	var uid string
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if uid, err = teamExists(dbHelper, sess, cmd.OrgID, cmd.ID); err != nil {
 			return err
 		}
 
@@ -201,6 +204,7 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 		}
 		return nil
 	})
+	return uid, err
 }
 
 type teamExistsQuery struct {
@@ -212,7 +216,22 @@ type teamExistsQuery struct {
 
 func (q teamExistsQuery) Validate() error { return nil }
 
-func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64, teamID int64) (bool, error) {
+// GetUID returns the UID of the team with the given internal ID.
+func (ss *xormStore) GetUID(ctx context.Context, orgID, teamID int64) (string, error) {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return "", err
+	}
+	var uid string
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		uid, err = teamExists(dbHelper, sess, orgID, teamID)
+		return err
+	})
+	return uid, err
+}
+
+// teamExists returns the team's UID, or team.ErrTeamNotFound.
+func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64, teamID int64) (string, error) {
 	query := teamExistsQuery{
 		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 		TeamTable:   dbHelper.Table("team"),
@@ -221,16 +240,17 @@ func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgI
 	}
 	rawSQL, err := sqltemplate.Execute(teamExistsTemplate, query)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	if res, err := sess.Query(append([]any{rawSQL}, query.GetArgs()...)...); err != nil {
-		return false, err
+	res, err := sess.Query(append([]any{rawSQL}, query.GetArgs()...)...)
+	if err != nil {
+		return "", err
 	} else if len(res) != 1 {
-		return false, team.ErrTeamNotFound
+		return "", team.ErrTeamNotFound
 	}
 
-	return true, nil
+	return string(res[0]["uid"]), nil
 }
 
 func isTeamNameTaken(dbHelper *legacysql.LegacyDatabaseHelper, orgId int64, name string, existingId int64, sess *db.Session) (bool, error) {

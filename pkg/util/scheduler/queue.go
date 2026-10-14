@@ -303,8 +303,12 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) e
 		q.discardedRequests.WithLabelValues(tenantID, "dispatcher_stopped").Inc()
 		err = ErrQueueClosed
 	case <-ctx.Done():
-		q.discardedRequests.WithLabelValues(tenantID, "context_canceled").Inc()
 		err = ctx.Err()
+		reason := "context_canceled"
+		if errors.Is(err, context.DeadlineExceeded) {
+			reason = "deadline_exceeded"
+		}
+		q.discardedRequests.WithLabelValues(tenantID, reason).Inc()
 	}
 
 	return err

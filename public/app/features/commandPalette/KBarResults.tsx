@@ -21,8 +21,7 @@ interface ItemInfo {
 }
 
 interface KBarResultsProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  items: any[];
+  items: Array<ActionImpl | string>;
   onRender: (params: RenderParams) => React.ReactElement<Record<string, unknown>>;
   maxHeight?: number;
   /** The scroll container, focusable so keyboard navigation can target the list. */

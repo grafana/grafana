@@ -27,6 +27,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
 	index "github.com/blevesearch/bleve_index_api"
+	zapv16 "github.com/blevesearch/zapx/v16"
 	"github.com/prometheus/client_golang/prometheus"
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.opentelemetry.io/otel"
@@ -53,11 +54,22 @@ const (
 const (
 	internalRVKey                    = "rv"                      // Encoded as big-endian int64
 	internalBuildInfoKey             = "build_info"              // Encoded as JSON of buildInfo struct
-	internalImportTimesKey           = "import_times"            // Encoded as JSON of "group/resource" to unix nanoseconds
+	internalCompletedTypeBuildsKey   = "import_times"            // Completed type builds, encoded as JSON of "group/resource" to the storage import time in unix nanoseconds, 0 for none. Named for its first use; renaming the key would make existing indexes forget their types.
+	internalDocumentTypesKey         = "document_types"          // Encoded as JSON list of "group/resource"
+	internalReconciledAtKey          = "reconciled_at"           // Encoded as big-endian int64 unix nanoseconds
 	internalSnapshotMutationCountKey = "snapshot_mutation_count" // Encoded as big-endian int64
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search")
+
+func init() {
+	// zapx reserves each new segment buffer for the batch plus 100 extra documents,
+	// sized from whatever batch any index wrote last, and the segment keeps it.
+	// In-memory indexes never merge or persist segments, so that unused space
+	// stayed until eviction. Despite its name, this factor scales the borrowed
+	// document size; zero turns the reservation off.
+	zapv16.NewSegmentBufferNumResultsFactor = 0
+}
 
 var _ resource.SearchBackend = (*bleveBackend)(nil)
 var _ resource.ResourceIndex = (*bleveIndex)(nil)
@@ -867,7 +879,7 @@ type preparedBuildIndex struct {
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 // Existing index in the file system is reused, if it exists, and lastImportTime
-// check passes (if the index was built before lastImportTime, it will be rebuilt).
+// check passes (the index must be built after lastImportTime to be reused).
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV.
 //
 // maxFreshSnapshotAge is the maximum age (by BuildTime) of a remote snapshot
@@ -1218,8 +1230,8 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 		reason = fmt.Sprintf("index requires features this instance does not understand %v", unknown)
 	} else if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
 		reason = fmt.Sprintf("index is missing required features %v", missing)
-	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
-		reason = "index was built before the last import"
+	} else if !lastImportTime.IsZero() && !indexBuildTime.After(lastImportTime) {
+		reason = "index was not built after the last import"
 	}
 	if reason == "" {
 		return idx, name, rv, nil
@@ -1772,8 +1784,15 @@ type bleveIndex struct {
 	// False on an index built before deleted documents were kept, until it rebuilds.
 	keepsDeletedDocuments bool
 
-	// Guards the read and rewrite of the recorded import times.
-	importTimesMu sync.Mutex
+	// Guards the read and rewrite of the completed type builds and document types.
+	typeRecordsMu sync.Mutex
+	// The recorded document types, loaded on first use, so a batch does not read
+	// them from the index each time.
+	documentTypes map[schema.GroupResource]struct{}
+
+	// The folder tree of a global index, for searches of a folder and everything
+	// below it.
+	folders folderTree
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
@@ -1891,11 +1910,15 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		return mapErr
 	}
 
+	if err := b.recordDocumentTypes(req.Items); err != nil {
+		return err
+	}
+
 	// The mutation count is part of writing the batch: it reads and writes the
 	// index's own data, so it belongs to the commit phase. Its failure does not
 	// unmake the write, so the bytes are reported on the batch alone.
 	commitStart := time.Now()
-	commitErr := b.index.Batch(batch)
+	commitErr := b.folders.commit(req.Items, func() error { return b.index.Batch(batch) })
 	err := commitErr
 	if err == nil {
 		err = b.addSnapshotMutationCount(int64(len(req.Items)))
@@ -2318,7 +2341,9 @@ func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest
 		}
 	}
 	return &resourcepb.ResourceSearchResponse{
-		Error:           b.verifyKey(req.Options.Key),
+		Error: b.verifyKey(req.Options.Key),
+		// For a global index this is the version it was built at: it replays no
+		// events, so its resource version does not move after the build.
 		ResourceVersion: b.resourceVersion.Load(),
 		ResultFormat:    resultFormat,
 	}
@@ -2331,7 +2356,7 @@ func (b *bleveIndex) Search(
 	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 	stats *resource.SearchStats,
-) (response *resourcepb.ResourceSearchResponse, _ error) {
+) (response *resourcepb.ResourceSearchResponse, resultErr error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
@@ -2358,6 +2383,8 @@ func (b *bleveIndex) Search(
 	// the match set, otherwise Bleve's unfiltered count with
 	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
+	access, authMetrics := withSearchAuthObservation(access, b.indexMetrics)
+	cursorFallback := false
 
 	// A trash search replaces the read check with the trash rule on whichever authz
 	// path runs. Built once per request, because it caches folder-admin results.
@@ -2377,9 +2404,7 @@ func (b *bleveIndex) Search(
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
 		}, func(err error) {
-			// Swallowed (the caller is treated as not an admin), so without this the
-			// failure would be invisible.
-			b.logger.FromContext(ctx).Error("trash folder admin check failed, treating user as not an admin", "error", err)
+			b.logger.FromContext(ctx).Error("Trash folder admin check failed", "error", err)
 		})
 	}
 
@@ -2417,6 +2442,7 @@ func (b *bleveIndex) Search(
 	}
 	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
+		cursorFallback = true
 		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz)
 		if e != nil {
 			response.Error = e
@@ -2440,6 +2466,8 @@ func (b *bleveIndex) Search(
 			}, nil
 		}
 	}
+	observeAuth := authMetrics.start(req, access, postRank, cursorFallback)
+	defer func() { observeAuth(response, resultErr) }()
 	if postRank {
 		b.ensureAuthzFields(searchrequest, trashAuthz != nil)
 	}
@@ -2518,16 +2546,12 @@ func (b *bleveIndex) deletedDocCount(ctx context.Context) (int64, error) {
 
 // DocCount counts live documents, so callers using it as a size estimate
 // undercount by whatever trash the index holds. Close enough for a threshold.
-// listDocumentRefsPageSize is how many documents one page of an enumeration
-// reads. Reconciliation walks every document, so this trades the number of
-// searches against how much is held at once. A variable so a test can page
-// without indexing thousands of documents.
-var listDocumentRefsPageSize = 1000
-
 // ListDocumentRefs implements resource.ResourceIndex.
 //
-// Paged rather than returned at once: an index can hold hundreds of thousands of
-// documents, and the caller compares them a page at a time.
+// The documents are read once, in index order, and sorted by name in memory.
+// Paging through them sorted, as a search does, reads every document of the type
+// again for each page. The cost is holding a name and a version for every
+// document, and reading all of them before the first is returned.
 func (b *bleveIndex) ListDocumentRefs(ctx context.Context, gr schema.GroupResource) iter.Seq2[resource.DocumentRef, error] {
 	return func(yield func(resource.DocumentRef, error) bool) {
 		ctx, span := tracer.Start(ctx, "search.bleveIndex.ListDocumentRefs")
@@ -2538,103 +2562,297 @@ func (b *bleveIndex) ListDocumentRefs(ctx context.Context, gr schema.GroupResour
 			yield(resource.DocumentRef{}, err)
 			return
 		}
-
-		var searchAfter []string
-		for {
-			req := &bleve.SearchRequest{
-				Size:  listDocumentRefsPageSize,
-				Query: scopeQuery(q, false, 0),
-				// The stored copy, because a resource version is too large to survive
-				// being held as the float64 bleve stores numbers as.
-				Fields:      []string{resource.SEARCH_FIELD_RV_STRING},
-				SearchAfter: searchAfter,
-			}
-			// By document id, which is unique, so paging cannot repeat or skip a
-			// document the way ordering by a shared value could.
-			req.SortBy([]string{"_id"})
-
-			rsp, err := b.index.SearchInContext(ctx, req)
+		var refs []resource.DocumentRef
+		err = b.visitLiveDocuments(ctx, q, nil, func(reader index.IndexReader, id string, _ index.IndexInternalID, _ index.DocValueReader) error {
+			ref, err := documentRefFromID(reader, id)
 			if err != nil {
-				yield(resource.DocumentRef{}, err)
-				return
+				return err
 			}
-			for _, hit := range rsp.Hits {
-				ref, err := documentRefFromHit(hit)
-				if err != nil {
-					if !yield(resource.DocumentRef{}, err) {
-						return
-					}
-					continue
-				}
-				if !yield(ref, nil) {
-					return
-				}
-			}
-			if len(rsp.Hits) < listDocumentRefsPageSize {
-				return
-			}
-			searchAfter = rsp.Hits[len(rsp.Hits)-1].Sort
+			refs = append(refs, ref)
+			return nil
+		})
+		if err != nil {
+			yield(resource.DocumentRef{}, err)
+			return
 		}
+		// Checked before each reference and after the last: a caller cancelled part
+		// way must not mistake what it saw for a complete listing.
+		cancelled := func() bool {
+			if err := ctx.Err(); err != nil {
+				yield(resource.DocumentRef{}, err)
+				return true
+			}
+			return false
+		}
+		if cancelled() {
+			return
+		}
+		// By name, which within one type orders them as their document ids do.
+		slices.SortFunc(refs, func(x, y resource.DocumentRef) int { return strings.Compare(x.Name, y.Name) })
+		for _, ref := range refs {
+			if cancelled() || !yield(ref, nil) {
+				return
+			}
+		}
+		cancelled()
 	}
 }
 
-// ImportTimes implements resource.ResourceIndex.
-func (b *bleveIndex) ImportTimes() (map[schema.GroupResource]time.Time, error) {
-	raw, err := b.index.GetInternal([]byte(internalImportTimesKey))
+// visitLiveDocuments calls visit for every live document q matches, in index
+// order, with one reader for the whole pass. docValueFields are read through the
+// DocValueReader visit is given, which is nil when there are none.
+func (b *bleveIndex) visitLiveDocuments(ctx context.Context, q query.Query, docValueFields []string,
+	visit func(reader index.IndexReader, id string, internal index.IndexInternalID, docValues index.DocValueReader) error,
+) error {
+	advanced, err := b.index.Advanced()
+	if err != nil {
+		return err
+	}
+	reader, err := advanced.Reader()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = reader.Close() }()
+	// No scores: callers want which documents match, not how well.
+	searcher, err := scopeQuery(q, false, 0).Searcher(ctx, reader, b.index.Mapping(), search.SearcherOptions{Score: "none"})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = searcher.Close() }()
+	var docValues index.DocValueReader
+	if len(docValueFields) > 0 {
+		if docValues, err = reader.DocValueReader(docValueFields); err != nil {
+			return err
+		}
+	}
+
+	sctx := &search.SearchContext{DocumentMatchPool: search.NewDocumentMatchPool(searcher.DocumentMatchPoolSize(), 0)}
+	for read := 0; ; read++ {
+		if read%256 == 0 {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+		}
+		match, err := searcher.Next(sctx)
+		if err != nil {
+			return err
+		}
+		if match == nil {
+			return nil
+		}
+		id, err := reader.ExternalID(match.IndexInternalID)
+		if err != nil {
+			return err
+		}
+		if err := visit(reader, id, match.IndexInternalID, docValues); err != nil {
+			return err
+		}
+		sctx.DocumentMatchPool.Put(match)
+	}
+}
+
+// DocumentTypes implements resource.ResourceIndex.
+func (b *bleveIndex) DocumentTypes() ([]schema.GroupResource, error) {
+	if !b.key.IsGlobal() {
+		return []schema.GroupResource{{Group: b.key.Group, Resource: b.key.Resource}}, nil
+	}
+	b.typeRecordsMu.Lock()
+	defer b.typeRecordsMu.Unlock()
+	types, err := b.loadDocumentTypesLocked()
 	if err != nil {
 		return nil, err
 	}
-	times := map[schema.GroupResource]time.Time{}
+	out := slices.Collect(maps.Keys(types))
+	slices.SortFunc(out, func(x, y schema.GroupResource) int { return strings.Compare(x.String(), y.String()) })
+	return out, nil
+}
+
+// recordDocumentTypes records the types of the documents about to be written,
+// before they are written, so a write that stops part way still leaves them
+// recorded. A global index only: every other index holds one type.
+func (b *bleveIndex) recordDocumentTypes(items []*resource.BulkIndexItem) error {
+	if !b.key.IsGlobal() {
+		return nil
+	}
+	b.typeRecordsMu.Lock()
+	defer b.typeRecordsMu.Unlock()
+	recorded, err := b.loadDocumentTypesLocked()
+	if err != nil {
+		return err
+	}
+	var types map[schema.GroupResource]struct{}
+	for _, item := range items {
+		if item.Action != resource.ActionIndex || item.Doc == nil || item.Doc.Key == nil {
+			continue
+		}
+		gr := schema.GroupResource{Group: item.Doc.Key.Group, Resource: item.Doc.Key.Resource}
+		if _, ok := recorded[gr]; ok {
+			continue
+		}
+		if types == nil {
+			types = maps.Clone(recorded)
+		}
+		types[gr] = struct{}{}
+	}
+	if types == nil {
+		return nil
+	}
+	return b.writeDocumentTypesLocked(types)
+}
+
+func (b *bleveIndex) loadDocumentTypesLocked() (map[schema.GroupResource]struct{}, error) {
+	if b.documentTypes != nil {
+		return b.documentTypes, nil
+	}
+	raw, err := b.index.GetInternal([]byte(internalDocumentTypesKey))
+	if err != nil {
+		return nil, err
+	}
+	var stored []string
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &stored); err != nil {
+			return nil, fmt.Errorf("reading document types: %w", err)
+		}
+	}
+	types := make(map[schema.GroupResource]struct{}, len(stored))
+	for _, key := range stored {
+		group, res, ok := strings.Cut(key, "/")
+		if !ok {
+			return nil, fmt.Errorf("reading document types: unexpected key %q", key)
+		}
+		types[schema.GroupResource{Group: group, Resource: res}] = struct{}{}
+	}
+	b.documentTypes = types
+	return types, nil
+}
+
+// writeDocumentTypesLocked replaces the cached copy only once the write
+// succeeded, so a failed write is tried again by the next batch.
+func (b *bleveIndex) writeDocumentTypesLocked(types map[schema.GroupResource]struct{}) error {
+	stored := make([]string, 0, len(types))
+	for gr := range types {
+		stored = append(stored, gr.Group+"/"+gr.Resource)
+	}
+	slices.Sort(stored)
+	raw, err := json.Marshal(stored)
+	if err != nil {
+		return err
+	}
+	if err := b.index.SetInternal([]byte(internalDocumentTypesKey), raw); err != nil {
+		return err
+	}
+	b.documentTypes = types
+	return nil
+}
+
+// ReconciledAt implements resource.ResourceIndex.
+func (b *bleveIndex) ReconciledAt() (time.Time, error) {
+	raw, err := b.index.GetInternal([]byte(internalReconciledAtKey))
+	if err != nil || len(raw) < 8 {
+		return time.Time{}, err
+	}
+	return time.Unix(0, int64(binary.BigEndian.Uint64(raw))).UTC(), nil
+}
+
+// RecordReconciledAt implements resource.ResourceIndex.
+func (b *bleveIndex) RecordReconciledAt(t time.Time) error {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, uint64(t.UnixNano()))
+	return b.index.SetInternal([]byte(internalReconciledAtKey), buf)
+}
+
+// CompletedTypeBuilds implements resource.ResourceIndex.
+func (b *bleveIndex) CompletedTypeBuilds() (map[schema.GroupResource]resource.TypeBuild, error) {
+	raw, err := b.index.GetInternal([]byte(internalCompletedTypeBuildsKey))
+	if err != nil {
+		return nil, err
+	}
+	builds := map[schema.GroupResource]resource.TypeBuild{}
 	if len(raw) == 0 {
-		return times, nil
+		return builds, nil
 	}
 	// Our own encoding, so the stored format does not depend on how
 	// schema.GroupResource happens to marshal.
 	stored := map[string]int64{}
 	if err := json.Unmarshal(raw, &stored); err != nil {
-		return nil, fmt.Errorf("reading import times: %w", err)
+		return nil, fmt.Errorf("reading completed type builds: %w", err)
 	}
 	for key, nanos := range stored {
 		group, res, ok := strings.Cut(key, "/")
 		if !ok {
-			return nil, fmt.Errorf("reading import times: unexpected key %q", key)
+			return nil, fmt.Errorf("reading completed type builds: unexpected key %q", key)
 		}
-		times[schema.GroupResource{Group: group, Resource: res}] = time.Unix(0, nanos).UTC()
+		var build resource.TypeBuild
+		if nanos != 0 {
+			build.StorageImportTime = time.Unix(0, nanos).UTC()
+		}
+		builds[schema.GroupResource{Group: group, Resource: res}] = build
 	}
-	return times, nil
+	return builds, nil
 }
 
-// RecordImportTime implements resource.ResourceIndex.
-func (b *bleveIndex) RecordImportTime(gr schema.GroupResource, t time.Time) error {
+// RecordCompletedTypeBuild implements resource.ResourceIndex.
+func (b *bleveIndex) RecordCompletedTypeBuild(gr schema.GroupResource, build resource.TypeBuild) error {
 	// Held across the read and the write, so two callers cannot each write back a
 	// record missing the other's type.
-	b.importTimesMu.Lock()
-	defer b.importTimesMu.Unlock()
-
-	times, err := b.ImportTimes()
+	b.typeRecordsMu.Lock()
+	defer b.typeRecordsMu.Unlock()
+	builds, err := b.CompletedTypeBuilds()
 	if err != nil {
 		return err
 	}
-	times[gr] = t
-	stored := make(map[string]int64, len(times))
-	for key, value := range times {
-		stored[key.Group+"/"+key.Resource] = value.UnixNano()
+	builds[gr] = build
+	return b.writeCompletedTypeBuildsLocked(builds)
+}
+
+// ForgetType implements resource.ResourceIndex.
+func (b *bleveIndex) ForgetType(gr schema.GroupResource) error {
+	b.typeRecordsMu.Lock()
+	defer b.typeRecordsMu.Unlock()
+	builds, err := b.CompletedTypeBuilds()
+	if err != nil {
+		return err
+	}
+	delete(builds, gr)
+	if err := b.writeCompletedTypeBuildsLocked(builds); err != nil {
+		return err
+	}
+	types, err := b.loadDocumentTypesLocked()
+	if err != nil {
+		return err
+	}
+	if _, ok := types[gr]; !ok {
+		return nil
+	}
+	types = maps.Clone(types)
+	delete(types, gr)
+	return b.writeDocumentTypesLocked(types)
+}
+
+func (b *bleveIndex) writeCompletedTypeBuildsLocked(builds map[schema.GroupResource]resource.TypeBuild) error {
+	stored := make(map[string]int64, len(builds))
+	for key, build := range builds {
+		// The zero time has no unix nanoseconds.
+		nanos := int64(0)
+		if !build.StorageImportTime.IsZero() {
+			nanos = build.StorageImportTime.UnixNano()
+		}
+		stored[key.Group+"/"+key.Resource] = nanos
 	}
 	raw, err := json.Marshal(stored)
 	if err != nil {
 		return err
 	}
-	return b.index.SetInternal([]byte(internalImportTimesKey), raw)
+	return b.index.SetInternal([]byte(internalCompletedTypeBuildsKey), raw)
 }
 
 // documentsOfQuery matches the documents of one resource type. A global index
 // holds several types of one namespace and indexes which is which; every other
 // index holds one, and does not.
 func (b *bleveIndex) documentsOfQuery(gr schema.GroupResource) (query.Query, error) {
+	// Not limited to the covered types: a type dropped from them is still listed,
+	// so its documents can be removed.
 	if b.key.IsGlobal() {
-		if !resource.GlobalIndexCoversType(gr) {
-			return nil, fmt.Errorf("resource type %s is not covered by the global index", gr.String())
-		}
 		return &query.TermQuery{
 			Term:     gr.Group + "/" + gr.Resource,
 			FieldVal: resource.SEARCH_FIELD_GROUP_RESOURCE,
@@ -2646,27 +2864,35 @@ func (b *bleveIndex) documentsOfQuery(gr schema.GroupResource) (query.Query, err
 	return bleve.NewMatchAllQuery(), nil
 }
 
-// documentRefFromHit reads the name and resource version off a hit. The name
-// comes from the document id, which every document has, rather than from a
-// stored field that a document could be missing.
-func documentRefFromHit(hit *search.DocumentMatch) (resource.DocumentRef, error) {
-	parts := strings.Split(hit.ID, "/")
+// documentRefFromID reads the name off a document id, which every document has,
+// and the resource version from the document's stored copy.
+func documentRefFromID(reader index.IndexReader, id string) (resource.DocumentRef, error) {
+	parts := strings.Split(id, "/")
 	if len(parts) != 4 {
-		return resource.DocumentRef{}, fmt.Errorf("unexpected document id %q", hit.ID)
+		return resource.DocumentRef{}, fmt.Errorf("unexpected document id %q", id)
 	}
-	ref := resource.DocumentRef{Name: parts[3]}
+	// A copy, so the refs held until they are sorted do not keep every whole id.
+	ref := resource.DocumentRef{Name: strings.Clone(parts[3])}
 
-	rv, ok := hit.Fields[resource.SEARCH_FIELD_RV_STRING].(string)
-	if !ok || rv == "" {
-		// Nothing to compare against, so the caller treats it as out of date and
-		// reindexes rather than skipping it.
-		return ref, nil
-	}
-	parsed, err := strconv.ParseInt(rv, 10, 64)
+	doc, err := reader.Document(id)
 	if err != nil {
-		return ref, nil
+		return ref, err
 	}
-	ref.RV = parsed
+	// The stored copy, because a resource version is too large to survive being
+	// held as the float64 bleve stores numbers as.
+	rv := ""
+	if doc != nil {
+		doc.VisitFields(func(f index.Field) {
+			if f.Name() == resource.SEARCH_FIELD_RV_STRING {
+				rv = string(f.Value())
+			}
+		})
+	}
+	// Nothing to compare against means out of date, so the caller reindexes rather
+	// than skipping it.
+	if parsed, err := strconv.ParseInt(rv, 10, 64); err == nil {
+		ref.RV = parsed
+	}
 	return ref, nil
 }
 
@@ -2834,7 +3060,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// Label/field filters are constraints, not relevance signals, so they go into
 	// the boolean Filter clause (scored "none" by bleve) while the free-text query
 	// scores in Must. This keeps ranking driven by text relevance alone.
-	filters, errResult := b.filterQueries(req)
+	filters, errResult := b.filterQueries(ctx, req)
 	if errResult != nil {
 		return nil, errResult
 	}
@@ -2853,7 +3079,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			expirationThreshold = t
 		}
 	}
-	searchrequest.Query = scopeQuery(combineFilterAndTextQueries(filters, textQuery), req.IsDeleted, expirationThreshold)
+	searchrequest.Query = scopeQuery(wrapInFolderSets(filters, textQuery), req.IsDeleted, expirationThreshold)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -3291,7 +3517,7 @@ var declaredTopLevelNames = func() map[string]bool {
 
 // filterQueries builds the label and field filter clauses (the AND terms that
 // are not the free-text query) for a search request.
-func (b *bleveIndex) filterQueries(req *resourcepb.ResourceSearchRequest) ([]query.Query, *resourcepb.ErrorResult) {
+func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]query.Query, *resourcepb.ErrorResult) {
 	queries := []query.Query{}
 	if len(req.Options.Labels) > 0 {
 		for _, v := range req.Options.Labels {
@@ -3312,6 +3538,16 @@ func (b *bleveIndex) filterQueries(req *resourcepb.ResourceSearchRequest) ([]que
 	}
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
+			if v.Key == resource.SEARCH_FIELD_FOLDER_TREE {
+				q, err := b.folderTreeQuery(ctx, v)
+				if err != nil {
+					return nil, err
+				}
+				if q != nil {
+					queries = append(queries, q)
+				}
+				continue
+			}
 			// Fresh requirement (not a proto value copy, which trips the lock check)
 			// so re-running the builder stays idempotent.
 			rq := &resourcepb.Requirement{

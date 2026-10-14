@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,11 +27,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -97,6 +98,131 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.NotNil(t, result.Result)
 			require.Equal(t, 0, len(result.Result.Elements))
 		})
+
+	scenarioWithPanel(t, "When an admin deletes a folder, the delete query is routed through LegacyDatabaseProvider",
+		func(t *testing.T, sc scenarioContext) {
+			var requestedTables []string
+			spy := &dbSpy{DB: sc.service.SQLStore}
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					DB: spy,
+					Table: func(n string) string {
+						requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+						return n
+					},
+				}, nil
+			}
+
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+			require.Contains(t, requestedTables, "library_element")
+			require.True(t, spy.withDbSessionCalled, "select should run on dbHelper.DB, not l.SQLStore directly")
+			require.True(t, spy.withTransactionalDbSessionCalled, "delete should run on dbHelper.DB, not l.SQLStore directly")
+		})
+
+	scenarioWithPanel(t, "the routed delete attaches the requester so a context-dependent provider can resolve the target database",
+		func(t *testing.T, sc scenarioContext) {
+			var gotCtx context.Context
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				gotCtx = ctx
+				return &legacysql.LegacyDatabaseHelper{
+					DB:    sc.service.SQLStore,
+					Table: func(n string) string { return n },
+				}, nil
+			}
+
+			// A bare context, not sc.reqContext.Req.Context(): that one already has the requester
+			// attached by test setup, which would make this pass without the fix under test.
+			err := sc.service.DeleteLibraryElementsInFolder(context.Background(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			require.NotNil(t, gotCtx, "provider should have been called")
+			got, err := identity.GetRequester(gotCtx)
+			require.NoError(t, err, "requester should be attached to ctx, not just passed as an argument")
+			require.Same(t, sc.reqContext.SignedInUser, got)
+		})
+
+	scenarioWithPanel(t, "the routed delete does not reuse an ambient session from a different db.DB",
+		func(t *testing.T, sc scenarioContext) {
+			// sqlstore.startSessionOrUseExisting reuses whatever session is already on ctx
+			// regardless of which db.DB created it, so a routed delete must force a fresh session
+			// or it could silently run on the wrong connection.
+			spy := &dbSpy{DB: sc.service.SQLStore}
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					DB:    spy,
+					Table: func(n string) string { return n },
+				}, nil
+			}
+
+			var ambientSess *db.Session
+			err := sc.service.SQLStore.InTransaction(sc.reqContext.Req.Context(), func(ctx context.Context) error {
+				if err := sc.service.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+					ambientSess = sess
+					return nil
+				}); err != nil {
+					return err
+				}
+				return sc.service.DeleteLibraryElementsInFolder(ctx, sc.reqContext.SignedInUser, sc.folder.UID)
+			})
+			require.NoError(t, err)
+
+			require.NotNil(t, ambientSess)
+			require.NotNil(t, spy.lastSession)
+			require.NotSame(t, ambientSess, spy.lastSession, "routed delete should not reuse the ambient session from a different db.DB")
+		})
+
+	scenarioWithPanel(t, "the default delete (no routed database) joins the caller's ambient transaction",
+		func(t *testing.T, sc scenarioContext) {
+			// Without a configured provider, the delete must keep participating in the caller's
+			// transaction: if the caller later rolls back, the delete must roll back with it too.
+			spy := &dbSpy{DB: sc.service.SQLStore}
+			sc.service.SQLStore = spy
+
+			var ambientSess *db.Session
+			err := spy.InTransaction(sc.reqContext.Req.Context(), func(ctx context.Context) error {
+				if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+					ambientSess = sess
+					return nil
+				}); err != nil {
+					return err
+				}
+				spy.lastSession = nil // setup call above also recorded a session; reset it first
+				return sc.service.DeleteLibraryElementsInFolder(ctx, sc.reqContext.SignedInUser, sc.folder.UID)
+			})
+			require.NoError(t, err)
+
+			require.NotNil(t, ambientSess)
+			require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
+			require.Same(t, ambientSess, spy.lastSession, "default delete should join the caller's ambient transaction")
+		})
+}
+
+// dbSpy wraps a db.DB and records whether WithDbSession/WithTransactionalDbSession were called on
+// it, so a test can prove a query went through this specific connection rather than l.SQLStore.
+type dbSpy struct {
+	db.DB
+	withDbSessionCalled              bool
+	withTransactionalDbSessionCalled bool
+	// lastSession is the session actually used, so a test can prove it isn't the same session
+	// object as an ambient one from a different db.DB (which withoutAmbientSession forces).
+	lastSession *db.Session
+}
+
+func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withDbSessionCalled = true
+	return s.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
+}
+
+func (s *dbSpy) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withTransactionalDbSessionCalled = true
+	return s.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
 }
 
 func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
@@ -325,7 +451,8 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	dashService := dashboards.NewFakeDashboardService(t)
 
-	alertStore, err := ngstore.ProvideDBStore(cfg, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	provenanceStore := ngprovenance.ProvideProvenanceStore(features, sqlStore)
+	alertStore, err := ngrules.ProvideRuleStore(cfg, features, sqlStore, &foldertest.FakeService{}, ac, provenanceStore)
 	require.NoError(t, err)
 	err = folderSvc.RegisterService(alertStore)
 	require.NoError(t, err)

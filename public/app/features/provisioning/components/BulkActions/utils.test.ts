@@ -7,6 +7,7 @@ import {
   getNestedFolderPath,
   getResourceTargetPath,
   isResourceAlreadyInTarget,
+  isSelectionAlreadyInFolder,
 } from './utils';
 
 const MOCK_FOLDER = {
@@ -109,6 +110,32 @@ describe('isResourceAlreadyInTarget', () => {
 
   it('returns false when the resource would move to a different path', () => {
     expect(isResourceAlreadyInTarget('test/dashboard.json', 'test2/')).toBe(false);
+  });
+});
+
+describe('isSelectionAlreadyInFolder', () => {
+  it('returns true when every selected item is directly under the target folder', () => {
+    expect(isSelectionAlreadyInFolder(['parent', 'parent'], 'parent')).toBe(true);
+  });
+
+  it('returns false for a nested item when the target is its grandparent', () => {
+    expect(isSelectionAlreadyInFolder(['parent'], 'my-repo')).toBe(false);
+  });
+
+  it('returns false when only some selected items are already under the target', () => {
+    expect(isSelectionAlreadyInFolder(['my-repo', 'parent'], 'my-repo')).toBe(false);
+  });
+
+  it('returns false when a selected item is not in the loaded tree', () => {
+    expect(isSelectionAlreadyInFolder([undefined], 'parent')).toBe(false);
+  });
+
+  it('matches root items against the empty root UID', () => {
+    expect(isSelectionAlreadyInFolder([''], '')).toBe(true);
+  });
+
+  it('returns false for an empty selection', () => {
+    expect(isSelectionAlreadyInFolder([], 'parent')).toBe(false);
   });
 });
 

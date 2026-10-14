@@ -428,7 +428,7 @@ func callFailure(resp any, err error) (int32, error) {
 	if !ok || r.GetError() == nil {
 		return 0, nil
 	}
-	return r.GetError().GetCode(), GetError(r.GetError())
+	return r.GetError().GetCode(), StatusError(r.GetError())
 }
 
 // shuffled returns the instances in random order, which spreads the load

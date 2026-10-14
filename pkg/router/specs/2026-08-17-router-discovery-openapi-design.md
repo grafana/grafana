@@ -1,7 +1,25 @@
 # GrafanaRouter: OpenAPI v3 + Discovery
 
-Status: approved for planning
-Scope: `pkg/router/` (standalone cloud-apps router, `pkg/extensions/router/cli.go`)
+Status: superseded. Implemented, then reworked. Decisions 1, 3, 6 and 7 still hold; the rest of
+this document is history. Current behavior is described in `pkg/router/AGENTS.md` ("Serving and
+discovery").
+Scope: `pkg/router/`
+
+> **What changed since this was written (as of 2026-10-10):**
+>
+> - Routes no longer come from `RouteBackend`/`AppManifest` resources. That source was removed in
+>   #134652. The cloud loader polls the ST fallback, aggregate targets, `core_url` and `plugins_url`.
+> - `Backend` has no `Manifest()`. Groups come from `Backend.Group()`, and the cache key is
+>   `Backend.Key()`, not a resource version (`handlerEntry.lastKey`, `?hash=<key>`).
+> - The router imports the k8s discovery types (`metav1`, `apidiscovery/v2`, `kube-openapi`)
+>   directly. The stdlib-only rule and the hand-rolled structs are gone.
+> - In middleware mode, `/apis` and `/openapi/v3` are merged with Grafana's embedded API server
+>   (`discovery_handler.go`). Standalone, unknown groups go to the ST fallback, not a 404.
+> - Aggregated discovery (`APIGroupDiscoveryList`) is served too. It is built locally through
+>   `DiscoveryProvider`, or fetched through `discoveryCache`.
+> - ETags hash the served keys (root documents) or key plus body (per-group documents). The OpenAPI
+>   cache varies by `Accept` and `Accept-Encoding`, bypasses private responses, and is pruned in
+>   `publish`.
 
 ## Context
 

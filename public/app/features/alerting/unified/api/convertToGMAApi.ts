@@ -131,6 +131,8 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         headers: {
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
         },
+        // The revert modal reports failures itself; the default toast would duplicate it.
+        notificationOptions: { showErrorAlert: false },
       }),
       // The staged config lives inside the AM config, so refetching it removes the staged card.
       invalidatesTags: ['AlertmanagerConfiguration'],
