@@ -18,8 +18,8 @@ has changed shape:
   aggregate targets (`[router.aggregate.<name>]`), core APIs (`core_url`) and managed plugins
   (`plugins_url`).
 - **Aggregate targets are a configured list** (#134381). Section order sets priority. The legacy
-  `[cloud_router] <name>.url` keys are still read as a rollout shim. Targets can poll discovery
-  anonymously with `discovery_auth = none` (#134461).
+  `[cloud_router] <name>.url` keys are no longer read. Targets can poll discovery anonymously with
+  `discovery_auth = none` (#134461).
 - **The router authenticates every request** (#133656). It trusts a requester already set by
   Grafana's middleware and otherwise verifies `X-Access-Token`.
 - **Plugin breakers cover only the plugin's client calls** (#133943). They no longer wrap the
@@ -73,8 +73,7 @@ branch to merge.
 1. **Lifecycle:** R1 and R2 together, since they share the drain-then-close step. Then R4.
 2. **Readiness:** O7, before any deployment that configures only aggregate targets.
 3. **Small fixes:** P14, O5, O6 and C6. Each is independent and local.
-4. **Config:** the rest of A4, including removing the legacy aggregate keys once the deployed
-   configs use `[router.aggregate.<name>]`.
+4. **Config:** the rest of A4.
 5. **Restructure:** A2 with A5, then A1.
 
 ---
@@ -155,8 +154,6 @@ branch to merge.
   - Move the hardcoded stack DNS template in `st_fallback.go`
     (`http://%s-grafana-http.hosted-grafana.svc.cluster.local.:80`) into config, for example
     `st_stack_url`.
-  - Remove the legacy `[cloud_router] <target>.url` keys (`parseAggregateTargets`, marked "REMOVE
-    THIS SECTION") once deployed configs use `[router.aggregate.<name>]`.
   - `ProvideCloudRoutesLoaderFactory` returns a loader, not a factory. Fold it into
     `ProvideCloudRoutesLoader`, or rename it.
 
