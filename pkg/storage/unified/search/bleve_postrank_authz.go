@@ -387,6 +387,9 @@ func (b *bleveIndex) runPostFilterAuthz(
 			// authorized count is still exact. candidates never exceeds the
 			// number of hits walked, so this can only under-claim.
 			exhausted = candidates >= int64(firstRes.Total)
+			if !exhausted {
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("candidate_budget").Inc()
+			}
 			break
 		}
 		// Window returned fewer hits than requested -> no more matches: every
@@ -550,6 +553,9 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 		if candidates >= maxCandidates {
 			// Like the page scan: a budget that covered every match leaves
 			// nothing unsampled, so the facets are the complete authorized set.
+			if candidates < int64(firstRes.Total) {
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("facet_budget").Inc()
+			}
 			return agg, authorized, candidates >= int64(firstRes.Total), nil
 		}
 		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {

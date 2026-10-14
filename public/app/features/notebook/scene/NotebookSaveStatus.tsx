@@ -22,7 +22,7 @@ const SAVING_SHOWN_AFTER_MS = 150;
  * did not do, and a label that is always there stops being information.
  */
 export function NotebookSaveStatus({ autosave }: { autosave: NotebookAutosave }) {
-  const { status, errorMessage } = autosave.useState();
+  const { status, errorMessage, isConflict } = autosave.useState();
   const [savedExpired, setSavedExpired] = useState(false);
   const [savingShown, setSavingShown] = useState(false);
 
@@ -78,7 +78,9 @@ export function NotebookSaveStatus({ autosave }: { autosave: NotebookAutosave })
       ) : (
         label
       )}
-      {shown === 'error' ? (
+      {/* Retrying a conflict would just resend the same revision and fail the same way again; the
+          confirm modal autosave already raised is where that case gets resolved, not this button. */}
+      {shown === 'error' && !isConflict ? (
         <Button variant="secondary" fill="text" size="sm" onClick={() => autosave.retry()}>
           {t('notebooks.save-status.retry', 'Retry')}
         </Button>

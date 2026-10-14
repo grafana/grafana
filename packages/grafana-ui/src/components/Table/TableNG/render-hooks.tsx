@@ -68,6 +68,7 @@ import {
   type TableRow,
   type TableSummaryRow,
   type TypographyCtx,
+  type TextWrapFallback,
 } from './types';
 import {
   type ApplyFilterResult,
@@ -150,9 +151,12 @@ export function useDataGridRows(
 // -----------------------------------------------------------------------------
 
 export interface ColumnBuildConfig {
+  wrapFallback?: TextWrapFallback;
+  nestedWrapFallback?: TextWrapFallback;
   disableKeyboardEvents?: boolean;
   hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
+  hasColumnSidebar?: boolean;
   filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
@@ -171,6 +175,11 @@ export interface ColumnBuildConfig {
   maxRowHeight?: number;
   numFrozenColsFullyInView: number;
   onCellFilterAdded?: TableFilterActionCallback;
+  onHideColumn?: (displayName: string) => void;
+  canHideColumn?: boolean;
+  onOpenColumnPanel?: () => void;
+  onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
+  onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
   setFilter: Dispatch<SetStateAction<FilterType>>;
@@ -250,6 +259,7 @@ function buildColumnsFromFields(
   config: ColumnBuildConfig
 ): FromFieldsResult {
   const {
+    wrapFallback,
     theme,
     getCellColorInlineStyles,
     getTextColorForBackground,
@@ -261,12 +271,18 @@ function buildColumnsFromFields(
     gridRef,
     getCellActions,
     onCellFilterAdded,
+    onHideColumn,
+    canHideColumn = false,
+    onOpenColumnPanel,
+    onFieldAddToAssistant,
+    onCellAddToAssistant,
     frozenColumns,
     numFrozenColsFullyInView,
     maxRowHeight,
     disableKeyboardEvents,
     hoverOverflow = true,
     disableSanitizeHtml,
+    hasColumnSidebar,
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
@@ -343,9 +359,11 @@ function buildColumnsFromFields(
     const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
     const CellType = getCellRenderer(field, cellOptions);
 
-    const cellInspect = isCellInspectEnabled(field);
+    const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
+    const cellInspect = wrappingDisabled || isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
-    const showActions = cellInspect || showFilters;
+    const showAssistant = tableRefreshEnabled && onCellAddToAssistant != null;
+    const showActions = cellInspect || showFilters || showAssistant;
     const width = widths[i];
     const contentWidth =
       width -
@@ -359,9 +377,12 @@ function buildColumnsFromFields(
       : undefined;
 
     const shouldOverflow =
-      !IS_SAFARI_26 && typeof rowHeight !== 'string' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
+      !wrappingDisabled &&
+      !IS_SAFARI_26 &&
+      typeof rowHeight !== 'string' &&
+      (shouldTextOverflow(field) || Boolean(maxRowHeight));
     const textWidthCache = new Map<string, number>();
-    const textWrap = typeof rowHeight === 'string' || shouldTextWrap(field);
+    const textWrap = !wrappingDisabled && (typeof rowHeight === 'string' || shouldTextWrap(field));
     const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
     const fieldAppliesToRow =
       cellOptions.type === TableCellDisplayMode.ColorBackground && cellOptions.applyToRow === true;
@@ -484,6 +505,7 @@ function buildColumnsFromFields(
               className={cellActionClassName}
               setInspectCell={setInspectCell}
               onCellFilterAdded={onCellFilterAdded}
+              onAddToAssistant={showAssistant ? () => onCellAddToAssistant?.(frame, field, rowIdx) : undefined}
             />
           )}
         </>
@@ -605,8 +627,13 @@ function buildColumnsFromFields(
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
+          hasColumnSidebar={hasColumnSidebar}
+          onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
+          canHideColumn={canHideColumn}
+          onOpenColumnPanel={onOpenColumnPanel}
+          onAddToAssistant={onFieldAddToAssistant ? () => onFieldAddToAssistant(frame, field) : undefined}
           selectFirstCell={() => {
-            gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+            gridRef.current?.setActivePosition({ rowIdx: 0, idx: 0 });
           }}
         />
       ),
@@ -645,6 +672,7 @@ export function useColumnBuilderFromFields(
         parentIndex == null || nestedRows == null ? filterResult : nestedRows[parentIndex].filterResult;
       return buildColumnsFromFields(fields, widths, frame, rawRows, visibleRows, resolvedFilterResult, {
         ...config,
+        wrapFallback: rawRows[0]?.__parentIndex != null ? config.nestedWrapFallback : config.wrapFallback,
         lastColumnExtraPadding,
       });
     },

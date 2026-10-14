@@ -26,14 +26,6 @@ import (
 // namespace. Cluster-scoped kinds have no namespace to search within.
 const namespacedScope = "Namespaced"
 
-// trashAllowlist holds the kinds allowed to serve the trash endpoint.
-//
-// Trash grants access to whoever deleted the object, or to folder admins, which
-// only makes sense for kinds that live in folders.
-var trashAllowlist = map[string]bool{
-	"dashboard.grafana.app/dashboards": true,
-}
-
 type Options struct {
 	HybridEnabled bool
 }
@@ -41,8 +33,8 @@ type Options struct {
 // Build returns the search, trash and hybrid routes to mount, or nil when all are off or
 // there is no client to serve them with.
 //
-// Each endpoint has its own switch. Trash also has a separate allowlist because
-// it grants access differently from search.
+// Trash has a separate allowlist because it grants access differently from search.
+// See resource.TrashSearchAllowed.
 //
 // builders and installers are the two ways a kind reaches the apiserver; a route
 // is only mounted on a group version one of them actually serves.
@@ -137,9 +129,8 @@ func BuildForServedGroupVersions(
 	index resourcepb.ResourceIndexClient,
 	opts Options,
 ) ([]builder.GroupVersionRoutes, error) {
-	// Whether an endpoint is on is read by the caller, because the two servers
-	// that mount them are configured differently: one from an ini file, one from
-	// flags.
+	// The booleans also let BuildFromManifests build hybrid-only routes without
+	// exposing lexical search or trash for installer manifests.
 	if (!searchEnabled && !trashEnabled && !opts.HybridEnabled) || index == nil {
 		return nil, nil
 	}
@@ -184,7 +175,7 @@ func BuildForServedGroupVersions(
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
-				if trashEnabled && trashAllowlist[gv.Group+"/"+resourceName] && kind.HasTrashEndpoint() {
+				if trashEnabled && resource.TrashSearchAllowed(gv.Group, resourceName) && kind.HasTrashEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.TrashRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}

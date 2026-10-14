@@ -128,7 +128,9 @@ interface BaseTableProps {
    * frame indexes (`TableRow.__index`), not the current page slice.
    */
   onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
+  onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellFilterAdded?: TableFilterActionCallback;
+  onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
@@ -178,6 +180,13 @@ interface BaseTableProps {
   jsonSyntaxHighlightingEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
+  /** Initial sidebar state. Later prop changes also update the sidebar. */
+  showColumnsSidebar?: boolean;
+  /** Controlled hidden columns, by display name. */
+  hiddenColumns?: ReadonlySet<string>;
+  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
+  /** All columns the controlling owner can show, including those removed from `data`. */
+  columnCatalog?: string[];
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -212,6 +221,7 @@ export type InspectCellProps = {
 };
 
 export interface TableCellActionsProps {
+  onAddToAssistant?: () => void;
   tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
@@ -320,6 +330,15 @@ export interface TypographyCtx {
   fontFamily: string;
   letterSpacing: number;
   avgCharWidth: number;
+  /**
+   * Width of a single digit under `font-variant-numeric: tabular-nums` (which react-data-grid applies
+   * to every cell): all digits render at this uniform, wider advance. Used to size digit-heavy
+   * numeric/date columns, which `avgCharWidth` (a prose average) under-measures.
+   * Only applied when `dataviz.tabularNums` is enabled, otherwise set to `normal`.
+   */
+  numericCharWidth: number;
+  /** Width of a single character in the monospace font used by JSON/Geo cells (all chars are equal). */
+  monoCharWidth: number;
   estimateHeight: MeasureCellHeight;
   measureHeight: MeasureCellHeight;
   /**
@@ -338,6 +357,12 @@ export type MeasureCellHeight = (
   rowIdx: number,
   lineHeight: number
 ) => number;
+
+export interface TextWrapFallback {
+  disabledFields: ReadonlySet<string>;
+  shouldDisable: (field: Field, value: unknown) => boolean;
+}
+
 export interface MeasureCellHeightEntry {
   /**
    * given a values and the available width, returns the line count for that value

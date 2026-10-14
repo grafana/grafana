@@ -450,6 +450,16 @@ describe('PieChartPanel', () => {
       expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
     });
 
+    it('does not render the legend when displayMode is hidden, even if showLegend is true', () => {
+      setup({
+        options: buildOptions({ legend: buildLegend({ showLegend: true, displayMode: LegendDisplayMode.Hidden }) }),
+        data: { series: defaultSliceSeries },
+      });
+
+      expect(screen.getAllByTestId('data testid Pie Chart Slice')).toHaveLength(2);
+      expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+    });
+
     it('shows the raw value in the legend when legend values include Value', () => {
       // Table mode renders the value column; List mode would only show names.
       setup({

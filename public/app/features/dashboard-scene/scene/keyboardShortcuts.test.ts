@@ -1,5 +1,7 @@
-import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { createBrowserHistory } from 'history';
+
+import { type GrafanaConfig, LegacyGraphHoverClearEvent, locationUtil, SetPanelAttentionEvent } from '@grafana/data';
+import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
@@ -8,12 +10,15 @@ import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByPathId } from '../utils/pathId';
+import { tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 
 import { DashboardScene } from './DashboardScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
@@ -26,6 +31,10 @@ jest.mock('app/core/services/KeybindingSet');
 jest.mock('../sharing/ShareButton/utils');
 jest.mock('../utils/pathId', () => ({
   findVizPanelByPathId: jest.fn(),
+}));
+jest.mock('../utils/urlBuilders', () => ({
+  ...jest.requireActual('../utils/urlBuilders'),
+  tryGetExploreUrlForPanel: jest.fn(),
 }));
 const mockOnRefresh = jest.fn();
 jest.mock('@grafana/scenes', () => ({
@@ -302,6 +311,69 @@ describe('setupKeyboardShortcuts', () => {
     it('refuses panel inspect (i)', async () => {
       await getBinding('i')();
       expect(mockScene.showModal).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('navigation when Grafana is served from a sub-path', () => {
+    const originalLocationService = locationService;
+    let panel: VizPanel;
+    let scene: DashboardScene;
+
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+      // Mirrors production: the router's browser history applies the sub-path itself.
+      window.history.replaceState({}, '', '/grafana/d/test-uid?editPanel=1');
+      setLocationService(new HistoryWrapper(createBrowserHistory({ basename: '/grafana' })));
+
+      panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
+      scene = new DashboardScene({
+        title: 'Test Dashboard',
+        uid: 'test-uid',
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+      jest.spyOn(scene, 'canEditDashboard').mockReturnValue(true);
+      jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+
+      setupKeyboardShortcuts(scene);
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+    });
+
+    afterEach(() => {
+      setLocationService(originalLocationService);
+      window.history.replaceState({}, '', '/');
+      locationUtil.initialize({
+        config: { appSubUrl: '' } as GrafanaConfig,
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+    });
+
+    function getBinding(key: string) {
+      return mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === key)![0].onTrigger;
+    }
+
+    it('opens Explore (p x) with the sub-path in the browser URL exactly once', async () => {
+      // tryGetExploreUrlForPanel returns an href, which already carries the sub-path.
+      jest.mocked(tryGetExploreUrlForPanel).mockResolvedValue('/grafana/explore?schemaVersion=1');
+
+      await getBinding('p x')();
+
+      expect(window.location.pathname).toBe('/grafana/explore');
+      expect(window.location.search).toBe('?schemaVersion=1');
+    });
+
+    it('exits panel edit (e) with the sub-path in the browser URL exactly once', async () => {
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
+
+      await getBinding('e')();
+
+      expect(window.location.pathname).toBe('/grafana/d/test-uid');
+      expect(window.location.search).toBe('');
     });
   });
 

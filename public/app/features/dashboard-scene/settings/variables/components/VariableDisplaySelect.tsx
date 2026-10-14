@@ -14,6 +14,7 @@ interface Props {
   hideControlsMenuOption?: boolean;
   topPlacementLabel?: string;
   minWidth?: number;
+  disabled?: boolean;
 }
 
 export function VariableDisplaySelect({
@@ -23,6 +24,7 @@ export function VariableDisplaySelect({
   hideControlsMenuOption = false,
   topPlacementLabel,
   minWidth = 52,
+  disabled = false,
 }: PropsWithChildren<Props>) {
   const displayId = useId();
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
@@ -78,6 +80,7 @@ export function VariableDisplaySelect({
         options={OPTIONS}
         onChange={(option) => option && onChange(option.value)}
         value={value}
+        disabled={disabled}
         width="auto"
         minWidth={minWidth}
       />

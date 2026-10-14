@@ -298,14 +298,10 @@ describe('browse-dashboards BrowseView', () => {
     }
 
     afterEach(() => {
-      act(() => {
-        setTestFlags({});
-      });
       jest.restoreAllMocks();
     });
 
     it('appends the README panel as the last row when the folder is provisioned and has children', async () => {
-      setTestFlags({ 'provisioning.readmes': true });
       mockReadme();
 
       render(
@@ -321,26 +317,7 @@ describe('browse-dashboards BrowseView', () => {
       expect(await screen.findByRole('tab', { name: 'README' })).toBeInTheDocument();
     });
 
-    it('does not append the README row when the toggle is off', async () => {
-      setTestFlags({ 'provisioning.readmes': false });
-      mockReadme();
-
-      render(
-        <BrowseView
-          permissions={mockPermissions}
-          folderUID={folderA.item.uid}
-          isProvisionedFolder
-          width={WIDTH}
-          height={HEIGHT}
-        />
-      );
-      await screen.findByText(folderA_folderA.item.title);
-
-      expect(screen.queryByRole('tab', { name: 'README' })).not.toBeInTheDocument();
-    });
-
     it('does not append the README row when the folder is not provisioned', async () => {
-      setTestFlags({ 'provisioning.readmes': true });
       mockReadme();
 
       render(<BrowseView permissions={mockPermissions} folderUID={folderA.item.uid} width={WIDTH} height={HEIGHT} />);
@@ -350,7 +327,6 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('does not append the README row when there is no folderUID (root)', async () => {
-      setTestFlags({ 'provisioning.readmes': true });
       mockReadme();
 
       render(
@@ -368,7 +344,6 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('appends the README panel for empty provisioned folders', async () => {
-      setTestFlags({ 'provisioning.readmes': true });
       mockReadme();
 
       render(
@@ -386,7 +361,6 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('shows the Add README CTA for empty provisioned folders without a README', async () => {
-      setTestFlags({ 'provisioning.readmes': true });
       mockReadmeMissing();
 
       render(
@@ -404,7 +378,6 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('keeps a ?docTab= deep link when navigating from one folder to another', async () => {
-      setTestFlags({ 'provisioning.readmes': true });
       mockDocs([readmeDoc, { key: 'security', path: 'SECURITY.md', fileName: 'SECURITY.md' }]);
       const readmeSpy = jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
         status: 'ok',

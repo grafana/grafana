@@ -183,7 +183,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: theme.spacing(theme.components.height.md),
 
       h1: {
-        height: theme.spacing(theme.components.height.md),
+        lineHeight: 'normal',
       },
     }),
     buttons: css({
