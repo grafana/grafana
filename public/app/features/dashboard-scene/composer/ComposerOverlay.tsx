@@ -70,13 +70,12 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     const rootRect = root.getBoundingClientRect();
     session.getAnchors().forEach((anchor, id) => {
       const item = items.find((candidate) => candidate.id === id);
-      const box = next.items[id];
-      if (!item || !box) {
+      const position = item && next.items[id] ? anchorPosition(next.items[id], item.point, rootRect) : null;
+      if (!position) {
         anchor.style.display = 'none';
         return;
       }
-      const { left, top } = anchorPosition(box, item.point, rootRect);
-      Object.assign(anchor.style, { display: '', left: `${left}px`, top: `${top}px` });
+      Object.assign(anchor.style, { display: '', left: `${position.left}px`, top: `${position.top}px` });
     });
     setLayout(next);
   }, [boxFor, session]);
@@ -245,28 +244,19 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
 }
 
 /**
- * Top-centre of the part of the element inside the viewport; the pin's point, clamped to the viewport,
- * when none of the element is visible. Returned relative to the overlay.
+ * The pin's centre (the element-relative point), clamped to the viewport, relative to the overlay.
+ * Null when no part of the element is in the viewport.
  */
-function anchorPosition(box: Box, point: ElementPoint, root: DOMRect): { left: number; top: number } {
+function anchorPosition(box: Box, point: ElementPoint, root: DOMRect): { left: number; top: number } | null {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const left = root.left + box.left;
   const top = root.top + box.top;
-  const visibleLeft = Math.max(left, 0);
-  const visibleRight = Math.min(left + box.width, viewportWidth);
-  const visibleTop = Math.max(top, 0);
-  const visibleBottom = Math.min(top + box.height, viewportHeight);
-
-  let x: number;
-  let y: number;
-  if (visibleLeft <= visibleRight && visibleTop <= visibleBottom) {
-    x = clamp(left + box.width / 2, visibleLeft, visibleRight);
-    y = visibleTop;
-  } else {
-    x = clamp(left + point.x * box.width, 0, viewportWidth);
-    y = clamp(top + point.y * box.height, 0, viewportHeight);
+  if (left > viewportWidth || top > viewportHeight || left + box.width < 0 || top + box.height < 0) {
+    return null;
   }
+  const x = clamp(left + point.x * box.width, 0, viewportWidth);
+  const y = clamp(top + point.y * box.height, 0, viewportHeight);
   return { left: x - root.left, top: y - root.top };
 }
 

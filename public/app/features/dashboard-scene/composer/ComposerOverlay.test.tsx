@@ -263,7 +263,7 @@ describe('annotations', () => {
     expect(listener).toHaveBeenCalledWith('a');
   });
 
-  it('keeps one anchor at the top-centre of the visible element, across scroll and updates, until removed', async () => {
+  it('keeps one anchor at the pin centre, across scroll and updates, until removed', async () => {
     const { session, annotate } = setup();
     expect(session.getAnnotationAnchor('a')).toBeNull();
     annotate([item()]);
@@ -272,20 +272,25 @@ describe('annotations', () => {
     const content = document.createElement('div');
     anchor.appendChild(content);
     await nextFrame();
+    const pin = screen.getByRole('button', { name: 'Comment 1' });
     expect(screen.getByTestId('dashboard-composer-overlay').parentElement).toContainElement(anchor);
-    expect(anchor).toHaveStyle({ position: 'absolute', left: '300px', top: '200px' });
+    expect(anchor).toHaveStyle({ position: 'absolute', left: '200px', top: '350px' });
+    expect(anchor.style.left).toBe(pin.style.left);
+    expect(anchor.style.top).toBe(pin.style.top);
 
-    // Scrolled so the element's top is above the viewport: the anchor clamps to the visible top.
-    panelRect = { ...panelRect, top: -50 };
+    // Follows the element like the pin does.
+    panelRect = { ...panelRect, top: 50 };
     fireEvent.scroll(window);
     await nextFrame();
-    expect(anchor).toHaveStyle({ left: '300px', top: '0px' });
+    expect(anchor).toHaveStyle({ left: '200px', top: '200px' });
+    expect(anchor.style.top).toBe(pin.style.top);
 
-    // Entirely out of view: falls back to the pin's point, clamped to the viewport.
-    panelRect = { ...panelRect, top: -1000 };
+    // The element is partly visible but the point is above the viewport: the anchor clamps to it.
+    panelRect = { ...panelRect, top: -200 };
     fireEvent.scroll(window);
     await nextFrame();
     expect(anchor).toHaveStyle({ left: '200px', top: '0px' });
+    expect(anchor).not.toHaveStyle({ display: 'none' });
 
     annotate([item({ label: '2', state: 'staged' })]);
     expect(session.getAnnotationAnchor('a')).toBe(anchor);
@@ -294,6 +299,30 @@ describe('annotations', () => {
     annotate([]);
     expect(anchor.isConnected).toBe(false);
     expect(session.getAnnotationAnchor('a')).toBeNull();
+  });
+
+  it('hides the anchor while its element is entirely off-screen or no longer resolves', async () => {
+    const { session, annotate } = setup();
+    annotate([item()]);
+    const anchor = session.getAnnotationAnchor('a')!;
+    await nextFrame();
+    expect(anchor).not.toHaveStyle({ display: 'none' });
+
+    panelRect = { ...panelRect, top: -1000 };
+    fireEvent.scroll(window);
+    await nextFrame();
+    expect(anchor).toHaveStyle({ display: 'none' });
+
+    panelRect = { ...panelRect, top: 200 };
+    fireEvent.scroll(window);
+    await nextFrame();
+    expect(anchor).toHaveStyle({ left: '200px', top: '350px' });
+    expect(anchor).not.toHaveStyle({ display: 'none' });
+
+    annotate([item({ ref: { kind: 'panel', panelId: 99 } })]);
+    await nextFrame();
+    expect(anchor).toHaveStyle({ display: 'none' });
+    expect(anchor).toBeInTheDocument();
   });
 
   it('removes anchors and pins when the session ends', () => {

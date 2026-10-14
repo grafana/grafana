@@ -97,9 +97,11 @@ export interface ComposerSessionAPI {
    */
   onAnnotationHover(listener: (id: string | null) => void): () => void;
   /**
-   * A stable container, positioned at the item's element, for the plugin to portal its editor or a
-   * read-only preview into. Works for active and staged items alike.
-   * Core never reads, styles or clears its content. Null when the item is not set or does not resolve.
+   * A stable, zero-size container for the plugin to portal its editor or a read-only preview into. Works
+   * for active and staged items alike. It sits at the pin's centre (the item's element-relative point,
+   * clamped to the viewport) and follows scroll, resize and layout like the pin; it is hidden
+   * (`display: none`) while the element is entirely off-screen. Core does no collision handling and never
+   * reads, styles or clears its content. Null when the item is not set or does not resolve.
    */
   getAnnotationAnchor(id: string): HTMLElement | null;
 
