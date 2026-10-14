@@ -224,10 +224,6 @@ export function AppChrome({ children }: Props) {
               <Resizable
                 className={cx(styles.sidebarContainer, {
                   [styles.sidebarContainerFloatingBar]: isExtensionSidebarFloating,
-                  [styles.sidebarContainerFloatingBarMenuDocked]:
-                    isExtensionSidebarFloating && (menuDockedAndOpen || isScopesDashboardsOpen),
-                  [styles.sidebarContainerFloatingBarMenuDockedScopes]:
-                    isExtensionSidebarFloating && menuDockedAndOpen && isScopesDashboardsOpen,
                 })}
                 defaultSize={{ width: extensionSidebarWidth }}
                 enable={isExtensionSidebarFloating ? false : { left: true }}
@@ -400,30 +396,18 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
     }),
-    // A bar centred over the page content area: content-driven height, no chrome of its own.
+    // A panel anchored to the bottom-right corner: content-driven height, no chrome of its own.
     sidebarContainerFloatingBar: css({
       // `Resizable` sets width and height inline.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      width: `min(880px, calc(100% - ${theme.spacing(6)})) !important` as 'auto',
+      width: `min(560px, calc(100% - ${theme.spacing(6)})) !important` as 'auto',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       height: 'auto !important' as 'auto',
       top: 'auto',
-      left: 0,
-      right: 0,
+      left: 'auto',
+      right: theme.spacing(3),
       bottom: theme.spacing(3),
-      marginLeft: 'auto',
-      marginRight: 'auto',
       background: 'transparent',
-    }),
-    sidebarContainerFloatingBarMenuDocked: css({
-      left: MENU_WIDTH,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      width: `min(880px, calc(100% - ${MENU_WIDTH} - ${theme.spacing(6)})) !important` as 'auto',
-    }),
-    sidebarContainerFloatingBarMenuDockedScopes: css({
-      left: `calc(${MENU_WIDTH} * 2)`,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      width: `min(880px, calc(100% - ${MENU_WIDTH} * 2 - ${theme.spacing(6)})) !important` as 'auto',
     }),
     // Lets the last row of the page scroll above the floating bar.
     pageContainerFloatingInset: css({
