@@ -439,6 +439,7 @@ describe('when creating variables objects', () => {
     expect(migrated).toBeInstanceOf(AdHocFiltersVariable);
     expect(filterVarState).toEqual({
       key: expect.any(String),
+      layout: 'combobox',
       description: 'Adhoc Description',
       allowCustomValue: false,
       hide: 0,
@@ -518,6 +519,7 @@ describe('when creating variables objects', () => {
     expect(migrated).toBeInstanceOf(AdHocFiltersVariable);
     expect(filterVarState).toEqual({
       key: expect.any(String),
+      layout: 'combobox',
       description: 'Adhoc Description',
       hide: 0,
       label: 'Adhoc Label',

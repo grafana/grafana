@@ -408,7 +408,7 @@ describe('DashboardDatasourceBehaviour', () => {
   describe('Library panels', () => {
     it('should re-run queries when library panel re-runs query', async () => {
       const libPanelBehavior = new LibraryPanelBehavior({
-        isLoaded: false,
+        isLoaded: true,
         uid: 'fdcvggvfy2qdca',
         name: 'My Library Panel',
         _loadedPanel: undefined,
