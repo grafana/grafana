@@ -9,6 +9,7 @@ import (
 	"iter"
 	"math/rand"
 	"regexp"
+	"strings"
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -286,9 +287,13 @@ func (w *badgerWriteCloser) Close() error {
 	txn := w.db.NewTransaction(true)
 	defer txn.Discard()
 
-	err := txn.Set([]byte(w.keyWithSection), data)
-	if err != nil {
+	if err := txn.Set([]byte(w.keyWithSection), data); err != nil {
 		return err
+	}
+	if blobKey, ok := strings.CutPrefix(w.keyWithSection, BlobDataSection+"/"); ok {
+		if err := txn.Delete([]byte(blobGCObservedSection + "/" + blobKey)); err != nil {
+			return err
+		}
 	}
 	return txn.Commit()
 }
@@ -413,6 +418,44 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 			count++
 		}
 	}
+}
+
+const blobGCObservedSection = "unified/blob-gc-observed"
+
+var _ interface {
+	FirstUnused(context.Context, string, time.Time) (time.Time, error)
+	ClearUnused(context.Context, string) error
+} = (*badgerKV)(nil)
+
+func (k *badgerKV) FirstUnused(ctx context.Context, key string, now time.Time) (time.Time, error) {
+	reader, err := k.Get(ctx, blobGCObservedSection, key)
+	if errors.Is(err, ErrNotFound) {
+		writer, err := k.Save(ctx, blobGCObservedSection, key)
+		if err != nil {
+			return time.Time{}, err
+		}
+		if _, err := writer.Write([]byte(now.Format(time.RFC3339Nano))); err != nil {
+			_ = writer.Close()
+			return time.Time{}, err
+		}
+		return now, writer.Close()
+	}
+	if err != nil {
+		return time.Time{}, err
+	}
+	data, err := io.ReadAll(reader)
+	closeErr := reader.Close()
+	if err != nil {
+		return time.Time{}, err
+	}
+	if closeErr != nil {
+		return time.Time{}, closeErr
+	}
+	return time.Parse(time.RFC3339Nano, string(data))
+}
+
+func (k *badgerKV) ClearUnused(ctx context.Context, key string) error {
+	return k.Delete(ctx, blobGCObservedSection, key)
 }
 
 func (k *badgerKV) UnixTimestamp(ctx context.Context) (int64, error) {
