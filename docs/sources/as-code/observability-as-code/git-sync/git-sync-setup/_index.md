@@ -62,7 +62,7 @@ Select any of these options to proceed:
 
 ### Configure with GitHub
 
-If you want to configure Git Sync for public cloud GitHub, you can connect using a **Personal Access Token** or with **GitHub App**. Whichever you choose, make sure you have the following permissions:
+If you want to configure Git Sync for public cloud GitHub, you can connect using a **Personal Access Token**, with **GitHub App**, or with an [**OAuth App**](#connect-with-an-oauth-app). Whichever you choose, make sure you have the following permissions:
 
 - **Administration**: Read-only permission
   - This enables validation of branch protection rules against the configured branch when users can push directly to it
@@ -76,6 +76,7 @@ For information on how to set up each method, refer to:
 
 - [Create a new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new). You need a Personal Access Token from an **Admin** role to set up the repository. GitHub only grants the **Webhooks: Read and write** permission to repository admins, so tokens created by non-admin users can't manage the webhooks Git Sync relies on for instantaneous updates and pull request previews.
 - [Create a GitHub App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#create-a-github-app).
+- [Create an OAuth App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#create-an-oauth-app).
 
 #### Connect with a GitHub Personal Access Token
 
@@ -105,7 +106,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with GitHub Enterprise
 
-Similarly, you can connect to GitHub Enterprise Server or GitHub Enterprise Cloud using a **Personal Access Token** or with **GitHub App**. Refer to [Configure with GitHub](#configure-with-github) for details on the required permissions.
+Similarly, you can connect to GitHub Enterprise Server or GitHub Enterprise Cloud using a **Personal Access Token**, with **GitHub App**, or with an [**OAuth App**](#connect-with-an-oauth-app). Refer to [Configure with GitHub](#configure-with-github) for details on the required permissions.
 
 #### Connect with a GitHub Personal Access Token
 
@@ -138,7 +139,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with GitLab
 
-If you want to configure Git Sync for GitLab, you need a GitLab Personal Access Token. To create one, [sign in to GitLab](https://gitlab.com/users/sign_in) and create a token with these permissions:
+If you want to configure Git Sync for GitLab, you need a GitLab Personal Access Token or an [OAuth App](#connect-with-an-oauth-app). To create a token, [sign in to GitLab](https://gitlab.com/users/sign_in) and create a token with these permissions:
 
 - **Repository**: Read and write permission
 - **User**: Read only permission
@@ -163,7 +164,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with Bitbucket
 
-If you want to configure Git Sync for Bitbucket, you need a Bitbucket API token with scopes. To create one, [sign in to Bitbucket](https://id.atlassian.com/login?application=bitbucket) and create an API token with these permissions:
+If you want to configure Git Sync for Bitbucket, you need a Bitbucket API token with scopes or an [OAuth App](#connect-with-an-oauth-app). To create a token, [sign in to Bitbucket](https://id.atlassian.com/login?application=bitbucket) and create an API token with these permissions:
 
 - **Repositories**: Read and write permission
 - **Pull requests**: Read and write permission
@@ -188,13 +189,37 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with Pure Git
 
-If you're using another Git provider, you need to use the Pure Git option to configure your connection with a Personal Access Token:
+If you're using another Git provider, you need to use the Pure Git option to configure your connection with a Personal Access Token or an [OAuth App](#connect-with-an-oauth-app):
 
 1. Paste the access token or password of the Git repository you want to sync in **Access Token**.
 1. Enter a **Username**. Git Sync will use this name to access the Git repository.
 1. Paste the **Repository URL** of your Git repository into the text box.
 
 Select **Configure repository** to set up your provisioning folder.
+
+### Connect with an OAuth App
+
+You can connect GitHub, GitHub Enterprise, GitLab, Bitbucket, and Pure Git repositories with an OAuth App. Grafana authorizes the app once and uses the resulting token for every repository that uses the connection.
+
+Before you begin, make sure that the [OAuth connection type is enabled](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#enable-oauth-connection-types) for your provider, and [create an OAuth App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#create-an-oauth-app).
+
+To connect with an OAuth App, select **Connect with OAuth App** as the authentication method:
+
+- If you already have an OAuth App connection, select **Choose an existing app**, and select the connection from the **Connection** drop-down menu.
+- If you want to connect with a new OAuth App, select **Connect to a new app**:
+  1. Enter a **Title** for the connection.
+  1. Fill in the fields for your provider:
+     - GitHub: **Client ID** and **Client secret**.
+     - GitHub Enterprise: **Custom server URL**, **Client ID**, and **Client secret**.
+     - GitLab: **Application ID** and **Client secret**.
+     - Bitbucket: **Client ID**, **Workspace**, and **Client secret**.
+     - Pure Git: **Client ID**, **Client secret**, **Authorization URL**, **Token URL**, and **Scopes**. Also enter the **Repository URL**. If your provider expects a specific username with OAuth tokens, enter it in **Username**, for example `x-token-auth` for Bitbucket.
+  1. Click **Create and authorize**. Grafana opens the consent page of your provider in a new tab.
+  1. Approve the access.
+
+Next, select **Configure repository** to set up your provisioning folder.
+
+If the connection later shows as **Disconnected**, for example because the token expired or was revoked, go to the **Connections** tab, select the connection, and click **Reauthorize**.
 
 ## Configure the provisioning repository
 

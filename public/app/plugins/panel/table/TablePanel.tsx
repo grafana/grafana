@@ -78,9 +78,9 @@ export function TablePanel(props: Props) {
   const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
   const getFrameScope = useTableFrameScope(sourceSeries ?? frames);
   // Rebuild against original rows while retaining cross-frame display and data-link context.
-  const displayFrames = useMemo(
+  const sourceFramesWithOverrides = useMemo(
     () =>
-      sourceSeries && sourceFrameIndex >= 0
+      sourceSeries
         ? applyFieldOverrides({
             data: [...sourceSeries],
             fieldConfig,
@@ -90,22 +90,38 @@ export function TablePanel(props: Props) {
             replaceVariables,
             dataLinkPostProcessor,
           })
-        : frames,
-    [
-      sourceSeries,
-      sourceFrameIndex,
-      frames,
-      fieldConfig,
-      theme,
-      props.timeZone,
-      replaceVariables,
-      dataLinkPostProcessor,
-    ]
+        : undefined,
+    [sourceSeries, fieldConfig, theme, props.timeZone, replaceVariables, dataLinkPostProcessor]
   );
+  const displayFrames = sourceFrameIndex >= 0 && sourceFramesWithOverrides ? sourceFramesWithOverrides : frames;
   useCacheFieldDisplayNames(displayFrames);
   const rawMain = displayFrames[sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex] ?? outputMain;
+  const configuredSourceSeries = useMemo(
+    () =>
+      sourceSeries &&
+      sourceFramesWithOverrides?.map((frame, frameIndex) => ({
+        ...sourceSeries[frameIndex],
+        // Runtime transforms match source names, before display-name overrides are applied.
+        fields: frame.fields.map((field, fieldIndex) => {
+          const sourceField = sourceSeries[frameIndex].fields[fieldIndex];
+          return {
+            ...sourceField,
+            config: {
+              ...sourceField.config,
+              custom: { ...sourceField.config.custom, hideFrom: field.config.custom?.hideFrom },
+            },
+          };
+        }),
+      })),
+    [sourceSeries, sourceFramesWithOverrides]
+  );
   const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
-  const adHocColumns = useAdHocColumnState(frames, currentIndex, tableRefreshNewFeaturesEnabled);
+  const adHocColumns = useAdHocColumnState(
+    frames,
+    currentIndex,
+    tableRefreshNewFeaturesEnabled,
+    configuredSourceSeries
+  );
   const main = useMemo(
     () =>
       tableRefreshNewFeaturesEnabled && rawMain

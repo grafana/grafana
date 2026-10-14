@@ -499,12 +499,12 @@ describe('useColumnBuilderFromFields', () => {
       expect(headerProps.onHideColumn).toBeUndefined();
     });
 
-    it('sets canHideColumn based on the number of fields being built', () => {
+    it.each([true, false])('passes configured canHideColumn=%s to the header', (canHideColumn) => {
       const singleFieldFrame = createDataFrame({ fields: [{ name: 'A', type: FieldType.string, values: ['x'] }] });
-      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig({ canHideColumn }) });
       const result = callFromFields(hook, singleFieldFrame.fields, [100], singleFieldFrame, rows, rows);
 
-      expect(getHeaderCellProps(result.columns[0]).canHideColumn).toBe(false);
+      expect(getHeaderCellProps(result.columns[0]).canHideColumn).toBe(canHideColumn);
     });
   });
 

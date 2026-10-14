@@ -4,7 +4,7 @@ import { type DataFrame } from '@grafana/data';
 
 import { RenderMode, type TextMode } from '../panelcfg.gen';
 
-import { MAX_RENDERED_ROWS, type RowWindow } from './renderContent';
+import { countRows, MAX_RENDERED_ROWS, type RowWindow } from './renderContent';
 
 const PAGINATION_ROW_THRESHOLD = 100;
 const PAGINATION_HEIGHT = 38;
@@ -14,10 +14,6 @@ const ESTIMATED_ROW_HEIGHT = 24;
 export const CONTENT_PADDING = 16;
 // Marks the element the row blocks render into, since wrappers sit between it and the box.
 export const BLOCKS_ATTR = 'data-text-blocks';
-
-export function countRows(series: DataFrame[]): number {
-  return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
-}
 
 export function clampPageSize(pageSize: number): number {
   return Math.max(1, Math.min(Math.floor(pageSize), MAX_RENDERED_ROWS));
@@ -38,11 +34,16 @@ interface Measured {
 // Not scrollHeight: the element holding the blocks is stretched to the box, so it reports
 // the box once a page fits inside it.
 function measureContentHeight(element: HTMLElement): number {
+  const frameHeight = Number(element.querySelector('iframe')?.getAttribute('data-text-content-height'));
+  if (frameHeight > 0) {
+    return frameHeight;
+  }
   const blocks = element.querySelector(`[${BLOCKS_ATTR}]`);
   const first = blocks?.firstElementChild;
   const last = blocks?.lastElementChild;
 
-  if (!(first instanceof HTMLElement) || !(last instanceof HTMLElement)) {
+  const frameWindow = first?.ownerDocument.defaultView;
+  if (!frameWindow || !(first instanceof frameWindow.HTMLElement) || !(last instanceof frameWindow.HTMLElement)) {
     return 0;
   }
 
@@ -127,15 +128,21 @@ export function usePagination({
       return;
     }
 
-    const available = element.clientHeight - CONTENT_PADDING;
-    const contentHeight = measureContentHeight(element);
-
-    if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
-      return;
-    }
-
-    measuredFor.current = { key: measureKey, element };
-    setMeasured({ rowHeight: contentHeight / rowsOnPage, available, element });
+    const measure = () => {
+      if (measuredFor.current?.key === measureKey && measuredFor.current.element === element) {
+        return;
+      }
+      const available = element.clientHeight - CONTENT_PADDING;
+      const contentHeight = measureContentHeight(element);
+      if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
+        return;
+      }
+      measuredFor.current = { key: measureKey, element };
+      setMeasured({ rowHeight: contentHeight / rowsOnPage, available, element });
+    };
+    measure();
+    element.addEventListener('text-content-resized', measure);
+    return () => element.removeEventListener('text-content-resized', measure);
   }, [fitToHeight, measureKey, rowsOnPage, element]);
 
   // Stable across renders: the editor memoises its preview on this.

@@ -1,5 +1,4 @@
 export type ColumnOption = 'filter' | 'hide' | 'manage' | 'assistant';
-export type CellOption = 'inspect' | 'filterFor' | 'filterOut' | 'assistant';
 
 export function getColumnMenuOptions({
   filterable = false,
@@ -28,28 +27,4 @@ export function getColumnMenuOptions({
     assistant.push('assistant');
   }
   return [filters, columns, assistant].filter((group) => group.length > 0);
-}
-
-export function getCellMenuOptions({
-  cellInspect,
-  showFilters,
-  hasAssistantAction,
-}: {
-  cellInspect: boolean;
-  showFilters: boolean;
-  hasAssistantAction: boolean;
-}): CellOption[][] {
-  const inspect: CellOption[] = [];
-  const filters: CellOption[] = [];
-  const assistant: CellOption[] = [];
-  if (cellInspect) {
-    inspect.push('inspect');
-  }
-  if (showFilters) {
-    filters.push('filterFor', 'filterOut');
-  }
-  if (hasAssistantAction) {
-    assistant.push('assistant');
-  }
-  return [inspect, filters, assistant].filter((group) => group.length > 0);
 }

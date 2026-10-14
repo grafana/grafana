@@ -32,6 +32,22 @@ export interface AppChromeState {
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
 
+/**
+ * Nav held before a page sets its own: at startup and between a route change and the new page's first
+ * update. Its empty `main.text` is what `getPageTitle` keys on, so it never reads as a page title.
+ */
+function placeholderSectionNav(): NavModel {
+  return { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } };
+}
+
+/** The title the current page gave the chrome: its `pageNav` text, else its section's; `undefined` while the placeholder is held. */
+export function getPageTitle({ pageNav, sectionNav }: AppChromeState): string | undefined {
+  if (pageNav?.text) {
+    return pageNav.text;
+  }
+  return sectionNav.main.text ? sectionNav.node.text : undefined;
+}
+
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
@@ -48,7 +64,7 @@ export class AppChromeService {
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
-    sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
+    sectionNav: placeholderSectionNav(),
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
@@ -74,7 +90,7 @@ export class AppChromeService {
     if (!this.routeChangeHandled) {
       newState.actions = undefined;
       newState.pageNav = undefined;
-      newState.sectionNav = { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } };
+      newState.sectionNav = placeholderSectionNav();
       newState.chromeless = this.currentRoute?.chromeless;
       newState.layout = PageLayoutType.Standard;
       this.routeChangeHandled = true;
