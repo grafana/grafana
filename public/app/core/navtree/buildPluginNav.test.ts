@@ -9,6 +9,7 @@ import * as appNavConfig from './appNavConfig';
 import { buildNavTree } from './buildNavTree';
 import { applyPluginNav } from './buildPluginNav';
 import { NavID, NavWeight } from './constants';
+import { setAppAccessScopes } from './pluginAccess';
 import {
   appPage as page,
   appPluginConfig as app,
@@ -525,6 +526,34 @@ describe('applyPluginNav', () => {
 
       const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
       expect(assistant?.children?.length).toBe(1);
+    });
+  });
+
+  describe('scoped app access', () => {
+    afterEach(() => {
+      setAppAccessScopes(null);
+    });
+
+    it('keeps only the apps the user holds a scope for', () => {
+      setAppAccessScopes(new Set(['plugins:id:kept-app']));
+
+      const merged = merge(
+        app('kept-app', 'Kept app', [page('Page', '/a/kept-app/page')]),
+        app('denied-app', 'Denied app', [page('Page', '/a/denied-app/page')])
+      );
+
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-kept-app']);
+    });
+
+    // Without scopes the unscoped permission stands in, which is the behaviour
+    // before this feature: every app the user can reach at all
+    it('keeps every app while the scopes are unavailable', () => {
+      const merged = merge(
+        app('kept-app', 'Kept app', [page('Page', '/a/kept-app/page')]),
+        app('denied-app', 'Denied app', [page('Page', '/a/denied-app/page')])
+      );
+
+      expect(ids(moreApps(merged)?.children ?? [])).toEqual(['plugin-page-denied-app', 'plugin-page-kept-app']);
     });
   });
 

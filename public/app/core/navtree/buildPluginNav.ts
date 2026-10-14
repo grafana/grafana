@@ -7,10 +7,10 @@ import {
 } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
+import { hasAppAccess } from './pluginAccess';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
 
@@ -42,15 +42,17 @@ const collator = new Intl.Collator();
  * anything the Go builder gates on those is out of reach here.
  */
 export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): NavModelItem[] {
-  if (!contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
-    return tree;
-  }
-
   const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
   let next = tree;
 
   for (const app of byTitle(apps)) {
     try {
+      // Per app, because the server scopes plugins.app:access to plugins:id:<id>.
+      // Where no scopes were recorded this is the unscoped check, which answers
+      // the same for every app, so a user with no app access gets none of them.
+      if (!hasAppAccess(app.id)) {
+        continue;
+      }
       const { appLink, navChildren, standalonePages } = buildAppLink(app);
       // Built up locally and committed in one go, so a throw part-way through
       // leaves none of this app behind — not even its standalone pages
