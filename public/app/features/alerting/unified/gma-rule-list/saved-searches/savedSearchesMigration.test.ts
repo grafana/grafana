@@ -73,7 +73,7 @@ describe('copyLegacySavedSearchesOnce', () => {
     jest.clearAllMocks();
   });
 
-  it('SAVE-1.1: creates no collection entries when the legacy collection is empty, but still marks both kinds migrated', async () => {
+  it('SAVE-2: creates no collection entries when the legacy collection is empty, but still marks both kinds migrated', async () => {
     await copyLegacySavedSearchesOnce(resolvers());
 
     expect(await readCollection(ALERT_SAVED_SEARCHES_STORAGE_KEY)).toEqual([]);
@@ -82,7 +82,7 @@ describe('copyLegacySavedSearchesOnce', () => {
     expect(await mockUserStorage.getItem(migratedMarkerKeyForKind('recording'))).toBe('true');
   });
 
-  it('SAVE-1.2: copies an untyped legacy entry into the Alert collection', async () => {
+  it('SAVE-2: copies an untyped legacy entry into the Alert collection', async () => {
     store.savedSearches = JSON.stringify([legacySearch({ query: 'cpu' })]);
 
     await copyLegacySavedSearchesOnce(resolvers());
@@ -94,7 +94,7 @@ describe('copyLegacySavedSearchesOnce', () => {
     expect(await readCollection(RECORDING_SAVED_SEARCHES_STORAGE_KEY)).toEqual([]);
   });
 
-  it('SAVE-1.3: routes type:recording to the Recording collection and strips the type: token', async () => {
+  it('SAVE-2: routes type:recording to the Recording collection and strips the type: token', async () => {
     store.savedSearches = JSON.stringify([legacySearch({ query: 'type:recording cpu' })]);
 
     await copyLegacySavedSearchesOnce(resolvers());
@@ -105,7 +105,7 @@ describe('copyLegacySavedSearchesOnce', () => {
     ]);
   });
 
-  it('SAVE-1.4: resolves legacy folder names to UIDs in the copied query', async () => {
+  it('SAVE-2: resolves legacy folder names to UIDs in the copied query', async () => {
     store.savedSearches = JSON.stringify([legacySearch({ query: 'namespace:My-Folder' })]);
 
     await copyLegacySavedSearchesOnce(resolvers({ resolveFolderUidByName: jest.fn(async () => 'folder-uid-1') }));
@@ -114,7 +114,7 @@ describe('copyLegacySavedSearchesOnce', () => {
     expect(copied.query).toBe('namespace:folder-uid-1');
   });
 
-  it('SAVE-1.5: is idempotent — a retry does not duplicate or overwrite an edited entry', async () => {
+  it('SAVE-2: is idempotent — a retry does not duplicate or overwrite an edited entry', async () => {
     store.savedSearches = JSON.stringify([legacySearch({ query: 'cpu' })]);
     store[ALERT_SAVED_SEARCHES_STORAGE_KEY] = JSON.stringify([
       { id: 'legacy-1', name: 'Renamed by user', query: 'cpu', isDefault: false, createdAt: 1 },
@@ -179,7 +179,7 @@ describe('copyLegacySavedSearchesOnce', () => {
     expect(await mockUserStorage.getItem(migratedMarkerKeyForKind('alert'))).toBe('true');
   });
 
-  it('SAVE-1.6: preserves the default flag when the destination collection has no default yet', async () => {
+  it('SAVE-2: preserves the default flag when the destination collection has no default yet', async () => {
     store.savedSearches = JSON.stringify([legacySearch({ isDefault: true })]);
 
     await copyLegacySavedSearchesOnce(resolvers());
@@ -188,7 +188,7 @@ describe('copyLegacySavedSearchesOnce', () => {
     expect(copied.isDefault).toBe(true);
   });
 
-  it('SAVE-1.7: does not create a second default when the destination already has one', async () => {
+  it('SAVE-2: does not create a second default when the destination already has one', async () => {
     store.savedSearches = JSON.stringify([legacySearch({ isDefault: true })]);
     store[ALERT_SAVED_SEARCHES_STORAGE_KEY] = JSON.stringify([
       { id: 'existing', name: 'Existing default', query: 'foo', isDefault: true, createdAt: 0 },
@@ -201,7 +201,7 @@ describe('copyLegacySavedSearchesOnce', () => {
     expect(copied?.isDefault).toBe(false);
   });
 
-  it('SAVE-1.8: leaves the legacy collection untouched', async () => {
+  it('SAVE-2: leaves the legacy collection untouched', async () => {
     store.savedSearches = JSON.stringify([legacySearch({ query: 'cpu' })]);
 
     await copyLegacySavedSearchesOnce(resolvers());
@@ -216,7 +216,7 @@ describe('applySavedSearch', () => {
     jest.clearAllMocks();
   });
 
-  it('SAVE-2.1: returns criteria straight from an already-canonical query, without migrating', async () => {
+  it('SAVE-2: returns criteria straight from an already-canonical query, without migrating', async () => {
     const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn();
 
@@ -227,7 +227,7 @@ describe('applySavedSearch', () => {
     expect(parseForKind).toHaveBeenCalledWith('cpu');
   });
 
-  it('SAVE-2.2: migrates a still-legacy query and persists the canonical form before returning', async () => {
+  it('SAVE-2: migrates a still-legacy query and persists the canonical form before returning', async () => {
     const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn(async () => {});
 
@@ -237,7 +237,7 @@ describe('applySavedSearch', () => {
     expect(persist).toHaveBeenCalledWith('cpu');
   });
 
-  it('SAVE-2.3: still returns criteria to search with even when persisting the migrated query fails', async () => {
+  it('SAVE-2: still returns criteria to search with even when persisting the migrated query fails', async () => {
     const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn(async () => {
       throw new Error('storage unavailable');
@@ -249,7 +249,7 @@ describe('applySavedSearch', () => {
     expect(result.criteria.text).toEqual(['cpu']);
   });
 
-  it('SAVE-2.4: names the filters the conversion removed, without their values', async () => {
+  it('SAVE-2: names the filters the conversion removed, without their values', async () => {
     const result = await applySavedSearch(
       'type:alerting namespace:Gone group:g1 cpu',
       'alert',

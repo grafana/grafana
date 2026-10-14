@@ -2,22 +2,18 @@ import { type Page } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { gotoResilient } from './waitForAppLoad';
-
 // No corpus dependency: this only exercises URL/mode wiring against whatever rules already
 // exist on the instance, not specific counts.
 test.describe('Search mode switch (SEARCH-7)', () => {
-  test.slow();
-
   async function assertModeSwitchBehavior(page: Page, path: string) {
-    await gotoResilient(page, path);
-    await expect(page.getByRole('radio', { name: 'Folders' })).toBeChecked({ timeout: 20_000 });
+    await page.goto(path);
+    await expect(page.getByRole('radio', { name: 'Folders' })).toBeChecked();
 
     const search = page.getByRole('textbox', { name: /^search/i });
     await search.fill('cpu');
     await search.press('Enter');
 
-    await expect(page.getByRole('radio', { name: 'List' })).toBeChecked({ timeout: 20_000 });
+    await expect(page.getByRole('radio', { name: 'List' })).toBeChecked();
     await expect(page).toHaveURL(/view=list/);
 
     // Folders is unavailable while a non-folder criterion is applied, and says how to get it back.
@@ -31,7 +27,7 @@ test.describe('Search mode switch (SEARCH-7)', () => {
     // Clearing the last non-folder filter returns to Folders.
     await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(search).toHaveValue('');
-    await expect(page.getByRole('radio', { name: 'Folders' })).toBeChecked({ timeout: 20_000 });
+    await expect(page.getByRole('radio', { name: 'Folders' })).toBeChecked();
     await expect(page.getByRole('radio', { name: 'Folders' })).toBeEnabled();
   }
 

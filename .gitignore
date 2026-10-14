@@ -12,6 +12,7 @@ awsconfig
 /reports
 /e2e/tmp
 /scripts/grafana-server/tmp*
+/e2e-playwright/alerting-suite/corpus/.gma-corpus-manifest.json
 vendor/
 /docs/menu.yaml
 /requests

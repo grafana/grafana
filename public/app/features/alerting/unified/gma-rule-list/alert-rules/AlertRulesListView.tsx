@@ -6,8 +6,7 @@ import { type Criteria } from '../rule-search/criteria';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 
-import { AlertRuleActions } from './AlertRuleActions';
-import { AlertRuleRow } from './AlertRuleRow';
+import { AlertRuleListEntry } from './AlertRuleListEntry';
 import { useAlertRuleSearch } from './alertRuleSearch';
 
 interface ListViewProps {
@@ -43,7 +42,7 @@ export function ListView({ criteria }: ListViewProps) {
     <Stack direction="column" gap={0.5}>
       <RuleRowList>
         {items.map((hit) => (
-          <AlertRuleRow key={hit.uid} hit={hit} showFolderPath actions={<AlertRuleActions ruleUid={hit.uid} />} />
+          <AlertRuleListEntry key={hit.uid} hit={hit} showFolderPath />
         ))}
       </RuleRowList>
       <LoadMoreFooter

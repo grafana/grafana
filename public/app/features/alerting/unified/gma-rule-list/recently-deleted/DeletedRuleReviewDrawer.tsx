@@ -1,14 +1,19 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { CollapsableSection, Drawer, JSONFormatter, Stack, Text } from '@grafana/ui';
+import { CollapsableSection, Drawer, JSONFormatter, Stack } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
 
 import { useFolderPath } from '../folder-browsing/folderLookups';
+import { FolderPath } from '../rule-row/FolderPath';
 
+import { DeletedRuleDashboardReference } from './DeletedRuleDashboardReference';
+import { DeletedRuleExpressions } from './DeletedRuleExpressions';
+import { DeletedRuleNotificationSettings } from './DeletedRuleNotificationSettings';
+import { DeletedRuleReviewField as ReviewField } from './DeletedRuleReviewField';
 import { trackDeletedRuleAdvancedJsonOpened, trackDeletedRuleReviewOpened } from './analytics';
 import { sanitizeDeletedRule } from './sanitizeDeletedRule';
 import { useDeletedByDisplayNames } from './useDeletedByDisplayNames';
@@ -16,18 +21,6 @@ import { useDeletedByDisplayNames } from './useDeletedByDisplayNames';
 export type DeletedRuleReviewDrawerProps =
   | { kind: 'alert'; rule: AlertRule; onClose: () => void }
   | { kind: 'recording'; rule: RecordingRule; onClose: () => void };
-
-/** A labeled row in the human-readable preview; value can be blank while a lookup is pending. */
-function ReviewField({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <Stack direction="column" gap={0.25}>
-      <Text variant="bodySmall" color="secondary">
-        {label}
-      </Text>
-      <Text>{value ?? ''}</Text>
-    </Stack>
-  );
-}
 
 function formatLabels(labels: Record<string, string> | undefined): string {
   if (!labels || Object.keys(labels).length === 0) {
@@ -43,7 +36,7 @@ export function DeletedRuleReviewDrawer(props: DeletedRuleReviewDrawerProps) {
   const folderUid = rule.metadata.annotations?.[AnnoKeyFolder];
   const updatedBy = rule.metadata.annotations?.[AnnoKeyUpdatedBy];
 
-  const folderPath = useFolderPath(folderUid)?.join(' / ');
+  const folderPath = useFolderPath(folderUid);
   const { resolve: resolveDeletedBy } = useDeletedByDisplayNames([updatedBy]);
   const { settings: targetDataSourceSettings } = useDataSourceInstanceSettings(
     kind === 'recording' ? props.rule.spec.targetDatasourceUID : undefined
@@ -73,7 +66,13 @@ export function DeletedRuleReviewDrawer(props: DeletedRuleReviewDrawerProps) {
       <Stack direction="column" gap={2}>
         <ReviewField
           label={t('alerting.deleted-rules.review.folder', 'Folder')}
-          value={folderPath ?? folderUid ?? t('alerting.deleted-rules.review.unknown', 'Unknown')}
+          value={
+            folderPath && folderPath.length > 0 ? (
+              <FolderPath segments={folderPath} />
+            ) : (
+              (folderUid ?? t('alerting.deleted-rules.review.unknown', 'Unknown'))
+            )
+          }
         />
         <ReviewField
           label={t('alerting.deleted-rules.review.deleted', 'Deleted')}
@@ -108,15 +107,12 @@ export function DeletedRuleReviewDrawer(props: DeletedRuleReviewDrawerProps) {
           </>
         )}
         {kind === 'alert' && props.rule.spec.notificationSettings && (
-          <ReviewField
-            label={t('alerting.deleted-rules.review.notification-settings', 'Notification settings')}
-            value={<Trans i18nKey="alerting.deleted-rules.review.notification-settings-present">Configured</Trans>}
-          />
+          <DeletedRuleNotificationSettings settings={props.rule.spec.notificationSettings} />
         )}
         {kind === 'alert' && props.rule.spec.panelRef && (
-          <ReviewField
-            label={t('alerting.deleted-rules.review.dashboard-panel', 'Dashboard panel')}
-            value={`${props.rule.spec.panelRef.dashboardUID} / ${props.rule.spec.panelRef.panelID}`}
+          <DeletedRuleDashboardReference
+            dashboardUid={props.rule.spec.panelRef.dashboardUID}
+            panelId={props.rule.spec.panelRef.panelID}
           />
         )}
         <ReviewField
@@ -131,11 +127,7 @@ export function DeletedRuleReviewDrawer(props: DeletedRuleReviewDrawerProps) {
         )}
         <ReviewField
           label={t('alerting.deleted-rules.review.expressions', 'Expressions and query definitions')}
-          value={
-            <pre>
-              <code>{JSON.stringify(rule.spec.expressions, null, 2)}</code>
-            </pre>
-          }
+          value={<DeletedRuleExpressions expressions={rule.spec.expressions} />}
         />
 
         <CollapsableSection

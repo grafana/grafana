@@ -185,6 +185,10 @@ export interface AlertRuleSeed {
   receiver?: string;
   /** Named routing tree. Takes precedence over `receiver`. */
   routingTree?: string;
+  /** Leave the notification settings out so the rule follows the default policy. This is the way to
+   * seed into an organization that has no provisioned "empty" contact point. Takes precedence over
+   * `routingTree` and `receiver`. */
+  defaultRouting?: boolean;
   panel?: { dashboardUid: string; panelId: number };
   /** A real data source the rule queries; without it the rule only has server-side expressions. */
   queryDataSourceUid?: string;
@@ -262,9 +266,11 @@ export async function createAlertRule(
   folderUid: string,
   seed: AlertRuleSeed
 ): Promise<string> {
-  const notificationSettings = seed.routingTree
-    ? { type: 'NamedRoutingTree', routingTree: seed.routingTree }
-    : { type: 'SimplifiedRouting', receiver: seed.receiver ?? contactPoint };
+  const notificationSettings = seed.defaultRouting
+    ? undefined
+    : seed.routingTree
+      ? { type: 'NamedRoutingTree', routingTree: seed.routingTree }
+      : { type: 'SimplifiedRouting', receiver: seed.receiver ?? contactPoint };
 
   const response = await postWithRetry(request, `${rulesApiBase(namespace)}/alertrules`, {
     apiVersion: 'rules.alerting.grafana.app/v0alpha1',
@@ -279,7 +285,7 @@ export async function createAlertRule(
       ...(seed.labels ? { labels: seed.labels } : {}),
       ...(seed.annotations ? { annotations: seed.annotations } : {}),
       ...(seed.panel ? { panelRef: { dashboardUID: seed.panel.dashboardUid, panelID: seed.panel.panelId } } : {}),
-      notificationSettings,
+      ...(notificationSettings ? { notificationSettings } : {}),
       expressions: alertExpressions(seed.queryDataSourceUid),
     },
   });
@@ -426,9 +432,10 @@ export async function createDashboard(
 // another role (the Viewer and Editor projects authenticate as those users).
 export async function newAdminRequest(
   playwright: PlaywrightWorkerArgs['playwright'],
-  baseURL: string
+  baseURL: string,
+  extraHTTPHeaders?: Record<string, string>
 ): Promise<APIRequestContext> {
-  return playwright.request.newContext({ baseURL, storageState: 'playwright/.auth/admin.json' });
+  return playwright.request.newContext({ baseURL, storageState: 'playwright/.auth/admin.json', extraHTTPHeaders });
 }
 
 export async function getNamespace(request: APIRequestContext): Promise<string> {

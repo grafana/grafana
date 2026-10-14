@@ -6,8 +6,7 @@ import { type Criteria } from '../rule-search/criteria';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 
-import { RecordingRuleActions } from './RecordingRuleActions';
-import { RecordingRuleRow } from './RecordingRuleRow';
+import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 import { useRecordingRuleSearch } from './recordingRuleSearch';
 
 interface ListViewProps {
@@ -44,12 +43,7 @@ export function ListView({ criteria }: ListViewProps) {
     <Stack direction="column" gap={0.5}>
       <RuleRowList>
         {items.map((hit) => (
-          <RecordingRuleRow
-            key={hit.uid}
-            hit={hit}
-            showFolderPath
-            actions={<RecordingRuleActions ruleUid={hit.uid} />}
-          />
+          <RecordingRuleListEntry key={hit.uid} hit={hit} showFolderPath />
         ))}
       </RuleRowList>
       <LoadMoreFooter

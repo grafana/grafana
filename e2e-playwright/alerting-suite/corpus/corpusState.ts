@@ -6,21 +6,33 @@ import path from 'path';
 // a single test file.
 const MANIFEST_PATH = path.join(__dirname, '.gma-corpus-manifest.json');
 
+export interface CorpusRule {
+  uid: string;
+  title: string;
+}
+
 export interface CorpusFolder {
   uid: string;
   title: string;
   /** UID of the folder this one is nested under, if any — used to prove folder-path display. */
   parentUid?: string;
-  alertRuleUids: string[];
-  recordingRuleUids: string[];
+  alertRules: CorpusRule[];
+  recordingRules: CorpusRule[];
 }
 
 export interface CorpusManifest {
   /** The unique label value stamped on every rule this run created — read-only browsing tests
    * assert against this, never an organization-wide total. */
   runMarker: string;
+  /** 80 Alert and 80 Recording rules. */
   denseFolderUid: string;
+  /** Holds exactly one Alert rule and no Recording rule. */
+  alertOnlyFolderUid: string;
+  /** Holds exactly one Recording rule and no Alert rule. */
+  recordingOnlyFolderUid: string;
+  /** Holds no rules, so the lists never show it. */
   emptyFolderUid: string;
+  /** Holds one rule of each kind and sits under another one-of-each folder. */
   nestedFolderUid: string;
   folders: CorpusFolder[];
   setupDurationMs: number;
@@ -47,6 +59,25 @@ export function requireCorpusManifest(): CorpusManifest {
     );
   }
   return manifest;
+}
+
+export function getCorpusFolder(manifest: CorpusManifest, uid: string): CorpusFolder {
+  const folder = manifest.folders.find((f) => f.uid === uid);
+  if (!folder) {
+    throw new Error(`Folder ${uid} is not in the corpus manifest`);
+  }
+  return folder;
+}
+
+/** A top-level folder holding one rule of each kind, which no test changes. */
+export function getPlainCorpusFolder(manifest: CorpusManifest): CorpusFolder {
+  const folder = manifest.folders.find(
+    (f) => f.alertRules.length === 1 && f.recordingRules.length === 1 && f.parentUid === undefined
+  );
+  if (!folder) {
+    throw new Error('The corpus has no top-level folder with one rule of each kind');
+  }
+  return folder;
 }
 
 export function clearCorpusManifest(): void {

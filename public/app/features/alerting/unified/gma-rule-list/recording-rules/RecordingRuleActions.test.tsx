@@ -1,31 +1,29 @@
-import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
+import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
 import { setupMswServer } from '../../mockApi';
+import { type RuleResourceState } from '../rule-data/ruleResourceState';
 
 import { RecordingRuleActions } from './RecordingRuleActions';
 
-const server = setupMswServer();
+setupMswServer();
 
-const RECORDING_RULE_GET_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/recordingrules/:name';
-
-function mockRule(annotations: Record<string, string>) {
-  server.use(
-    http.get(RECORDING_RULE_GET_URL, ({ params }) =>
-      HttpResponse.json({
-        apiVersion: 'v0alpha1',
-        kind: 'RecordingRule',
-        metadata: { name: params.name, annotations },
-        spec: { title: 'rule', paused: false },
-      })
-    )
-  );
+function loaded(annotations: Record<string, string>): RuleResourceState<RecordingRule> {
+  return {
+    status: 'loaded',
+    rule: {
+      apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+      kind: 'RecordingRule',
+      metadata: { name: 'rule-1', annotations },
+      spec: { title: 'rule', paused: false },
+    } as RecordingRule,
+  };
 }
 
 describe('RecordingRuleActions', () => {
   it('REC-5: shows Edit as a plain link to the editor, with no returnTo, next to the More menu when the user can write', async () => {
-    mockRule({ 'grafana.com/access/canWrite': 'true' });
-    render(<RecordingRuleActions ruleUid="rule-1" />);
+    render(<RecordingRuleActions ruleUid="rule-1" resourceState={loaded({ 'grafana.com/access/canWrite': 'true' })} />);
 
     const edit = await screen.findByRole('link', { name: 'Edit' });
     expect(edit).toHaveAttribute('href', '/alerting/rule-1/edit');
@@ -33,8 +31,9 @@ describe('RecordingRuleActions', () => {
   });
 
   it('shows a disabled Edit button that explains why when the user cannot write', async () => {
-    mockRule({ 'grafana.com/access/canWrite': 'false' });
-    const { user } = render(<RecordingRuleActions ruleUid="rule-1" />);
+    const { user } = render(
+      <RecordingRuleActions ruleUid="rule-1" resourceState={loaded({ 'grafana.com/access/canWrite': 'false' })} />
+    );
 
     // ACC-7: the reason is part of the disabled button's accessible name, not only a hover tooltip.
     const edit = await screen.findByRole('button', { name: 'Edit: You do not have permission to do this' });
@@ -46,8 +45,9 @@ describe('RecordingRuleActions', () => {
   });
 
   it('ACC-7: a disabled Edit button stays keyboard-focusable and shows its reason on focus', async () => {
-    mockRule({ 'grafana.com/access/canWrite': 'false' });
-    const { user } = render(<RecordingRuleActions ruleUid="rule-1" />);
+    const { user } = render(
+      <RecordingRuleActions ruleUid="rule-1" resourceState={loaded({ 'grafana.com/access/canWrite': 'false' })} />
+    );
 
     const edit = await screen.findByRole('button', { name: 'Edit: You do not have permission to do this' });
     await user.tab();
@@ -57,12 +57,16 @@ describe('RecordingRuleActions', () => {
   });
 
   it('shows Edit disabled as managed, naming the manager, for a rule managed by Terraform', async () => {
-    mockRule({
-      'grafana.com/access/canWrite': 'true',
-      'grafana.com/provenance': 'api',
-      'grafana.app/managedBy': 'terraform',
-    });
-    const { user } = render(<RecordingRuleActions ruleUid="rule-1" />);
+    const { user } = render(
+      <RecordingRuleActions
+        ruleUid="rule-1"
+        resourceState={loaded({
+          'grafana.com/access/canWrite': 'true',
+          'grafana.com/provenance': 'api',
+          'grafana.app/managedBy': 'terraform',
+        })}
+      />
+    );
 
     await user.hover(await screen.findByRole('button', { name: 'Edit: Managed by Terraform' }));
 

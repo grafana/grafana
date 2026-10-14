@@ -3,13 +3,13 @@ import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Icon, IconButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, Icon, IconButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { FolderPath } from '../rule-row/FolderPath';
 
 import { makeFolderRulesLink } from './folderLinks';
-import { useFolderPath } from './folderLookups';
+import { type FolderRuleCount, useFolderPath } from './folderLookups';
 
 interface FolderListRowProps {
   folderUid: string;
@@ -17,9 +17,8 @@ interface FolderListRowProps {
   title: string;
   /** Which rule kind the count refers to; only used for the count label. */
   kind: 'alert' | 'recording';
-  /** The rule kind's direct count for this folder (e.g. Alert rules only, never
-   * descendant/Recording counts) - undefined while its `/counts` lookup is pending. */
-  ruleCount: number | undefined;
+  /** The rule kind's direct count for this folder (e.g. Alert rules only, never descendant/Recording counts). */
+  count: FolderRuleCount;
   expanded: boolean;
   onToggle: () => void;
   /** Rendered only while expanded - the folder's own rule-search results. */
@@ -32,7 +31,7 @@ interface FolderListRowProps {
  * Expandable to show that folder's rules. Only the count and the expanded content are
  * rule-kind-specific, which is why both pages share it.
  */
-export function FolderListRow({ folderUid, title, kind, ruleCount, expanded, onToggle, children }: FolderListRowProps) {
+export function FolderListRow({ folderUid, title, kind, count, expanded, onToggle, children }: FolderListRowProps) {
   const styles = useStyles2(getStyles);
   const path = useFolderPath(folderUid);
   // The last segment is the folder itself, already shown as the title.
@@ -59,9 +58,7 @@ export function FolderListRow({ folderUid, title, kind, ruleCount, expanded, onT
             </TextLink>
             {parents.length > 0 && <FolderPath segments={parents} showIcon={false} />}
           </Stack>
-          <Text variant="bodySmall" color="secondary">
-            {ruleCount === undefined ? <Skeleton width={64} /> : countLabel(kind, ruleCount)}
-          </Text>
+          <FolderCount kind={kind} count={count} title={title} />
         </Stack>
       </div>
       {expanded && (
@@ -70,6 +67,42 @@ export function FolderListRow({ folderUid, title, kind, ruleCount, expanded, onT
         </ul>
       )}
     </li>
+  );
+}
+
+function FolderCount({ kind, count, title }: { kind: 'alert' | 'recording'; count: FolderRuleCount; title: string }) {
+  if (count.status === 'loading') {
+    return <Skeleton width={64} />;
+  }
+  if (count.status === 'error') {
+    return (
+      <Stack direction="row" alignItems="center" gap={0.5}>
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="alerting.gma-rule-list.folder-row.count-unavailable">Count unavailable</Trans>
+        </Text>
+        <Button
+          size="sm"
+          variant="secondary"
+          fill="text"
+          icon="sync"
+          aria-label={t(
+            'alerting.gma-rule-list.folder-row.count-retry-label',
+            'Retry loading the rule count of {{title}}',
+            {
+              title,
+            }
+          )}
+          onClick={count.retry}
+        >
+          <Trans i18nKey="alerting.gma-rule-list.folder-row.count-retry">Retry</Trans>
+        </Button>
+      </Stack>
+    );
+  }
+  return (
+    <Text variant="bodySmall" color="secondary">
+      {countLabel(kind, count.count)}
+    </Text>
   );
 }
 

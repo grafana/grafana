@@ -21,7 +21,7 @@ function resolvers(overrides: Partial<NameResolvers> = {}): NameResolvers {
 }
 
 describe('resolveMigratedNames', () => {
-  it('NAV-4.12: resolves every name and leaves namespaces/dataSourceUids holding only UIDs', async () => {
+  it('NAV-4: resolves every name and leaves namespaces/dataSourceUids holding only UIDs', async () => {
     const result = await resolveMigratedNames(
       sync({ namespaces: ['My Folder'], dataSourceUids: ['My DS'] }),
       resolvers()
@@ -32,7 +32,7 @@ describe('resolveMigratedNames', () => {
     expect(result.droppedKeys).toEqual([]);
   });
 
-  it('NAV-4.13: a name that resolves to nothing is removed and its key reported, never kept as a token', async () => {
+  it('NAV-4: a name that resolves to nothing is removed and its key reported, never kept as a token', async () => {
     const result = await resolveMigratedNames(
       sync({ namespaces: ['Missing Folder'] }),
       resolvers({ resolveFolderUidByName: jest.fn(async () => undefined) })
@@ -43,7 +43,7 @@ describe('resolveMigratedNames', () => {
     expect(result.droppedKeys).toEqual(['namespace']);
   });
 
-  it('NAV-4.14: keeps the names that resolve when only some do, in their original order', async () => {
+  it('NAV-4: keeps the names that resolve when only some do, in their original order', async () => {
     const resolveFolderUidByName = jest.fn(async (name: string) =>
       name === 'Unknown' ? undefined : `${name.toLowerCase()}-uid`
     );
@@ -56,7 +56,7 @@ describe('resolveMigratedNames', () => {
     expect(result.droppedKeys).toEqual(['namespace']);
   });
 
-  it('NAV-4.17: a failing lookup is removed like an unresolved name and does not reject', async () => {
+  it('NAV-4: a failing lookup is removed like an unresolved name and does not reject', async () => {
     const result = await resolveMigratedNames(
       sync({ namespaces: ['My Folder'], dataSourceUids: ['My DS'] }),
       resolvers({ resolveFolderUidByName: jest.fn().mockRejectedValue(new Error('403')) })

@@ -12,8 +12,7 @@ import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 import { PagedFailureAlert } from '../shared/PagedFailureAlert';
 
-import { RecordingRuleActions } from './RecordingRuleActions';
-import { RecordingRuleRow } from './RecordingRuleRow';
+import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 import { useRecordingRuleSearch } from './recordingRuleSearch';
 
 interface FoldersViewProps {
@@ -100,7 +99,7 @@ function ExpandableFolderRow({ folderUid, title, expanded, onToggle }: Expandabl
       folderUid={folderUid}
       title={title}
       kind="recording"
-      ruleCount={count}
+      count={count}
       expanded={expanded}
       onToggle={onToggle}
     >
@@ -146,12 +145,7 @@ function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
   return (
     <>
       {items.map((hit) => (
-        <RecordingRuleRow
-          key={hit.uid}
-          hit={hit}
-          showFolderPath={false}
-          actions={<RecordingRuleActions ruleUid={hit.uid} />}
-        />
+        <RecordingRuleListEntry key={hit.uid} hit={hit} showFolderPath={false} />
       ))}
       {(hasMore || failure) && (
         <li>

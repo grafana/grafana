@@ -111,32 +111,89 @@ const transitionNodeRefRestriction = {
 
 const gmaRuleListRoot = 'public/app/features/alerting/unified/gma-rule-list';
 
+// Alerting modules, relative to unified/, that the GMA-only rule list may import. Everything here is
+// infrastructure that stays after the legacy list is removed. Anything tied to the legacy rule or
+// group model (rule-list/, components/rules/, MetaText, MoreButton, Provisioning, legacy rule hooks
+// and APIs) is deliberately absent.
+const gmaAllowedUnifiedModules = [
+  'Analytics',
+  'withPageErrorBoundary',
+  'components/AlertingPageWrapper',
+  'components/HoverCard',
+  'components/assistant/AnalyzeK8sRuleButton',
+  'components/rule-list/extensions/EnrichmentDrawerExtension',
+  'components/saved-searches/SavedSearches',
+  'components/saved-searches/savedSearchesSchema',
+  'components/silences/SilenceGrafanaRuleDrawer',
+  'enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton',
+  'hooks/abilities/abilityUtils',
+  'hooks/abilities/otherAbilities',
+  'hooks/abilities/rules/ruleAbilities.utils',
+  'hooks/abilities/types',
+  'hooks/useFolder',
+  'hooks/useGenericSavedSearches',
+  'hooks/useReturnTo',
+  'hooks/useURLSearchParams',
+  'state/AlertmanagerContext',
+  'utils/datasource',
+  'utils/k8s/*',
+  'utils/labels',
+  'utils/misc',
+  'utils/url',
+];
+
+// Modules outside the alerting feature, relative to app/.
+const gmaAllowedAppModules = [
+  'api/clients/folder/v1beta1/utils',
+  'api/clients/iam/v0alpha1',
+  'core/app_events',
+  'core/components/NestedFolderPicker/NestedFolderPicker',
+  'core/components/Select/DashboardPicker',
+  'core/constants',
+  'core/copy/appNotification',
+  'core/services/context_srv',
+  'core/utils/kbn',
+  'features/apiserver/types',
+  'store/store',
+  'types/accessControl',
+  'types/store',
+];
+
+const gmaAllowedTestUnifiedModules = ['mockApi', 'mocks', 'mocks/server/events', 'testSetup/datasources'];
+const gmaAllowedTestAppModules = ['core/services/backend_srv', 'plugins/datasource/alertmanager/types'];
+
+const gmaUnifiedAppPath = 'features/alerting/unified';
+
+function modulesRegex(modules) {
+  return modules.map((module) => module.replace(/[.+?^${}()|\\]/g, '\\$&').replace(/\/\*$/, '/[^/]+')).join('|');
+}
+
+// Imports of app/** and of relative paths that leave gma-rule-list/ must be on the allowlist; imports
+// of packages and of files inside gma-rule-list/ are not restricted here. Regexes are used because
+// gitignore-style negation cannot re-include a file under an excluded directory.
+function gmaImportAllowlistPatterns({ tests }) {
+  const unifiedModules = modulesRegex([...gmaAllowedUnifiedModules, ...(tests ? gmaAllowedTestUnifiedModules : [])]);
+  const appModules = modulesRegex([...gmaAllowedAppModules, ...(tests ? gmaAllowedTestAppModules : [])]);
+  const ownFolders = modulesRegex([...gmaKindFolders, ...gmaCapabilityFolders, 'shared']);
+  const message =
+    'The GMA-only rule list may import only files inside gma-rule-list/, packages, and the shared alerting infrastructure on the allowlist in eslint.config.js. Do not reuse the legacy rule list, its components, rule hooks or models; build an equivalent under gma-rule-list/.';
+
+  return [
+    {
+      regex: `^app/(?!(?:${gmaUnifiedAppPath}/(?:${unifiedModules})|${gmaUnifiedAppPath}/gma-rule-list/.+|${appModules})$)`,
+      message,
+    },
+    // `(?!\.)` keeps the engine from backtracking into fewer `../` segments to dodge the lookahead.
+    { regex: `^(?:\\.\\./)+(?!\\.)(?!(?:${ownFolders})(?:/|$)|(?:${unifiedModules})$)`, message },
+  ];
+}
+
 const gmaRuleListBasePatterns = [
-  {
-    group: ['**/unified/rule-list/**', '**/unified/components/rules/**'],
-    message:
-      'The GMA-only rule list is a greenfield implementation; the legacy combined rule list is a behavioral reference only, not a source of reusable code.',
-  },
-  {
-    group: [
-      '**/components/MetaText',
-      '**/components/MoreButton',
-      '**/components/Provisioning',
-      '**/plugins/PluginOriginBadge',
-    ],
-    message:
-      'The GMA-only rule list must not reuse the legacy list presentational components; use the equivalents in gma-rule-list/rule-row and gma-rule-list/shared instead.',
-  },
   {
     group: ['**/utils/misc'],
     importNames: ['makeFolderAlertsLink'],
     message:
       'makeFolderAlertsLink belongs to the legacy list; use makeFolderRulesLink from gma-rule-list/folder-browsing instead.',
-  },
-  {
-    group: ['**/api/alertRuleApi', '**/api/prometheusApi'],
-    message:
-      'The GMA-only rule list must not depend on legacy rule APIs; use the generated rules.alerting client instead.',
   },
   {
     group: ['@grafana/api-clients/rtkq/rules.alerting*'],
@@ -180,6 +237,15 @@ const gmaSearchEndpointRestrictions = [
 ];
 
 const gmaKindFolders = ['alert-rules', 'recording-rules'];
+const gmaOutsideImportsMessage =
+  'Only the GMA-only rule list route pages and legacy-migration/legacyRedirects may be imported from outside gma-rule-list/.';
+const gmaPublicEntryPoints = [
+  'alert-rules/AlertRulesPage',
+  'alert-rules/recently-deleted/AlertRulesDeletedPage',
+  'recording-rules/RecordingRulesPage',
+  'recording-rules/recently-deleted/RecordingRulesDeletedPage',
+  'legacy-migration/legacyRedirects',
+];
 const gmaCapabilityFolders = [
   'rule-row',
   'folder-browsing',
@@ -193,20 +259,25 @@ const gmaCapabilityFolders = [
 ];
 
 // A later config block's no-restricted-imports replaces an earlier one for the same files, so each
-// block carries the base patterns plus only its own folder boundary.
-function gmaRuleListBlock(name, folders, extraPatterns) {
-  return {
-    name: `grafana/gma-rule-list-overrides-${name}`,
-    files: folders.map((folder) => `${gmaRuleListRoot}/${folder}/**/*.{ts,tsx,js,jsx}`),
+// block carries the base patterns plus only its own folder boundary. Tests get their own block because
+// they may also import the alerting test helpers.
+function gmaRuleListBlocks(name, globs, extraPatterns) {
+  const blockFor = (suffix, files, ignores, tests) => ({
+    name: `grafana/gma-rule-list-overrides-${name}${suffix}`,
+    files,
+    ignores,
     rules: {
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
-          patterns: [...gmaRuleListBasePatterns, ...extraPatterns],
+          patterns: [...gmaRuleListBasePatterns, ...gmaImportAllowlistPatterns({ tests }), ...extraPatterns],
         }),
       ],
     },
-  };
+  });
+  const sources = globs.map((glob) => `${glob}/**/*.{ts,tsx,js,jsx}`);
+  const tests = globs.map((glob) => `${glob}/**/*.test.{ts,tsx}`);
+  return [blockFor('', sources, ['**/*.test.{ts,tsx}'], false), blockFor('-tests', tests, [], true)];
 }
 
 function gmaRuleListOverrides() {
@@ -224,13 +295,13 @@ function gmaRuleListOverrides() {
     group: allFolders.flatMap((folder) => [`**/${folder}`, `**/${folder}/**`]),
     message: 'gma-rule-list/shared holds generic pieces and must not import from any other gma-rule-list folder.',
   };
+  const folderGlobs = (folders) => folders.map((folder) => `${gmaRuleListRoot}/${folder}`);
 
   return [
     {
       name: 'grafana/gma-rule-list-overrides',
       files: [`${gmaRuleListRoot}/**/*.{ts,tsx,js,jsx}`],
       rules: {
-        'no-restricted-imports': ['error', withBaseRestrictedImportsConfig({ patterns: gmaRuleListBasePatterns })],
         'no-restricted-syntax': ['error', ...gmaSearchEndpointRestrictions],
       },
     },
@@ -249,10 +320,45 @@ function gmaRuleListOverrides() {
       files: [`${gmaRuleListRoot}/**/*.test.{ts,tsx}`],
       rules: { 'no-restricted-syntax': ['error', transitionNodeRefRestriction] },
     },
-    gmaRuleListBlock('alert-rules', ['alert-rules'], [siblingKindMessage('recording-rules')]),
-    gmaRuleListBlock('recording-rules', ['recording-rules'], [siblingKindMessage('alert-rules')]),
-    gmaRuleListBlock('capabilities', gmaCapabilityFolders, [kindFoldersPattern]),
-    gmaRuleListBlock('shared', ['shared'], [sharedPattern]),
+    ...gmaRuleListBlocks('alert-rules', folderGlobs(['alert-rules']), [siblingKindMessage('recording-rules')]),
+    ...gmaRuleListBlocks('recording-rules', folderGlobs(['recording-rules']), [siblingKindMessage('alert-rules')]),
+    ...gmaRuleListBlocks('capabilities', folderGlobs(gmaCapabilityFolders), [kindFoldersPattern]),
+    ...gmaRuleListBlocks('shared', folderGlobs(['shared']), [sharedPattern]),
+    // Everything else in the app reaches the list only through its route pages and the legacy URL redirects.
+    {
+      name: 'grafana/gma-rule-list-outside-imports',
+      files: ['public/app/**/*.{ts,tsx,js,jsx}'],
+      ignores: [`${gmaRuleListRoot}/**`, 'public/app/extensions/**/*'],
+      rules: {
+        // ESLint's no-restricted-imports does not see dynamic import(), which the route table uses.
+        // esquery regexes cannot contain a slash, so `.` stands in for it.
+        'no-restricted-syntax': [
+          'error',
+          transitionNodeRefRestriction,
+          {
+            selector: `ImportExpression[source.value=/gma-rule-list/]:not([source.value=/gma-rule-list.(${gmaPublicEntryPoints
+              .join('|')
+              .replaceAll('/', '.')})$/])`,
+            message: gmaOutsideImportsMessage,
+          },
+        ],
+        'no-restricted-imports': [
+          'error',
+          withBaseRestrictedImportsConfig({
+            patterns: [
+              {
+                group: ['app/extensions', 'app/extensions/*'],
+                message: 'Importing from app/extensions is not allowed',
+              },
+              {
+                regex: `(?:^|/)gma-rule-list(?:/(?!(?:${gmaPublicEntryPoints.join('|')})$)|$)`,
+                message: gmaOutsideImportsMessage,
+              },
+            ],
+          }),
+        ],
+      },
+    },
   ];
 }
 
@@ -292,6 +398,7 @@ module.exports = [
       'public/locales/**/*.js',
       'public/vendor/',
       'scripts/grafana-server/tmp',
+      'scripts/grafana-server/tmp-gma',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
       'public/build-swagger', // swagger build output
       'apps/plugins/plugin/src/generated/meta/v0alpha1',

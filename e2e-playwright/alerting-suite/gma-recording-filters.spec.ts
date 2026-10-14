@@ -32,8 +32,6 @@ function metricOf(run: string, name: string): string {
 }
 
 test.describe('Recording rules: token filters', () => {
-  test.slow();
-
   test('SEARCH-3: rule: matches rule titles', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
@@ -171,8 +169,6 @@ test.describe('Recording rules: token filters', () => {
 });
 
 test.describe('Recording rules: sidebar filters', () => {
-  test.slow();
-
   test('SEARCH-3: Rule name filters by title', async ({ page, recordingRules }) => {
     const run = newRunMarker();
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));

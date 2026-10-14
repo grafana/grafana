@@ -16,12 +16,18 @@ export function useFolderPath(folderUid: string | undefined): string[] | undefin
   return data?.items.map((folder: FolderInfo) => folder.title);
 }
 
-export function useFolderAlertRuleCount(folderUid: string | undefined): number | undefined {
-  return useFolderCounts(folderUid)?.alertrules;
+/** A folder's count for one rule kind; `error` means the `/counts` lookup failed, not that it is pending. */
+export type FolderRuleCount =
+  | { status: 'loading' }
+  | { status: 'loaded'; count: number }
+  | { status: 'error'; retry: () => void };
+
+export function useFolderAlertRuleCount(folderUid: string | undefined): FolderRuleCount {
+  return useFolderRuleCount(folderUid, 'alertrules');
 }
 
-export function useFolderRecordingRuleCount(folderUid: string | undefined): number | undefined {
-  return useFolderCounts(folderUid)?.recordingrules;
+export function useFolderRecordingRuleCount(folderUid: string | undefined): FolderRuleCount {
+  return useFolderRuleCount(folderUid, 'recordingrules');
 }
 
 /**
@@ -36,10 +42,15 @@ export function useInvalidateFolderData() {
   }, [dispatch]);
 }
 
-function useFolderCounts(folderUid: string | undefined): Record<string, number> | undefined {
+function useFolderRuleCount(folderUid: string | undefined, resource: 'alertrules' | 'recordingrules'): FolderRuleCount {
   // Counts change when a rule is created or duplicated in the editor, outside these queries.
-  const { data } = useGetFolderCountsQuery(folderUid ? { name: folderUid } : skipToken, {
+  const { data, isError, refetch } = useGetFolderCountsQuery(folderUid ? { name: folderUid } : skipToken, {
     refetchOnMountOrArgChange: true,
   });
-  return data ? getParsedCounts(data.counts) : undefined;
+  // A failed refetch keeps the last good count, so the row only reports an error when it has nothing to show.
+  if (data) {
+    // The response omits resources the folder holds none of.
+    return { status: 'loaded', count: getParsedCounts(data.counts)[resource] ?? 0 };
+  }
+  return isError ? { status: 'error', retry: refetch } : { status: 'loading' };
 }

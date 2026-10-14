@@ -1,31 +1,32 @@
-import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
+import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
 import { setupMswServer } from '../../mockApi';
+import { type RuleResourceState } from '../rule-data/ruleResourceState';
 
 import { AlertRuleActions } from './AlertRuleActions';
 
-const server = setupMswServer();
+setupMswServer();
 
-const ALERT_RULE_GET_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/alertrules/:name';
-
-function mockFullRule(annotations: Record<string, string>, labels: Record<string, string> = {}) {
-  server.use(
-    http.get(ALERT_RULE_GET_URL, ({ params }) =>
-      HttpResponse.json({
-        apiVersion: 'v0alpha1',
-        kind: 'AlertRule',
-        metadata: { name: params.name, annotations },
-        spec: { title: 'CPU high', paused: false, labels },
-      })
-    )
-  );
+function loaded(
+  annotations: Record<string, string>,
+  labels: Record<string, string> = {}
+): RuleResourceState<AlertRule> {
+  return {
+    status: 'loaded',
+    rule: {
+      apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+      kind: 'AlertRule',
+      metadata: { name: 'rule-1', annotations },
+      spec: { title: 'CPU high', paused: false, labels },
+    } as AlertRule,
+  };
 }
 
 describe('AlertRuleActions', () => {
   it('ALERT-6: shows Edit as a plain link to the editor, with no returnTo, when the rule is writable', async () => {
-    mockFullRule({ 'grafana.com/access/canWrite': 'true' });
-    render(<AlertRuleActions ruleUid="rule-1" />);
+    render(<AlertRuleActions ruleUid="rule-1" resourceState={loaded({ 'grafana.com/access/canWrite': 'true' })} />);
 
     const edit = await screen.findByRole('link', { name: 'Edit' });
     expect(edit).toHaveAttribute('href', '/alerting/rule-1/edit');
@@ -33,8 +34,9 @@ describe('AlertRuleActions', () => {
   });
 
   it('ACC-7: a disabled Edit button stays keyboard-focusable and shows its reason on focus', async () => {
-    mockFullRule({ 'grafana.com/access/canWrite': 'false' });
-    const { user } = render(<AlertRuleActions ruleUid="rule-1" />);
+    const { user } = render(
+      <AlertRuleActions ruleUid="rule-1" resourceState={loaded({ 'grafana.com/access/canWrite': 'false' })} />
+    );
 
     const edit = await screen.findByRole('button', { name: 'Edit: You do not have permission to do this' });
     await user.tab();
@@ -47,46 +49,44 @@ describe('AlertRuleActions', () => {
     {
       name: 'is still loading',
       reason: 'Checking permissions...',
-      setup: () => server.use(http.get(ALERT_RULE_GET_URL, () => new Promise(() => {}))),
+      state: { status: 'loading' } as RuleResourceState<AlertRule>,
     },
     {
       name: 'failed to load',
       reason: 'Permission unknown',
-      setup: () => server.use(http.get(ALERT_RULE_GET_URL, () => HttpResponse.json({}, { status: 500 }))),
+      state: { status: 'error' } as RuleResourceState<AlertRule>,
     },
     {
       name: 'has no capability annotation',
       reason: 'Permission unknown',
-      setup: () => mockFullRule({}),
+      state: loaded({}),
     },
     {
       name: 'is not writable',
       reason: 'You do not have permission to do this',
-      setup: () => mockFullRule({ 'grafana.com/access/canWrite': 'false' }),
+      state: loaded({ 'grafana.com/access/canWrite': 'false' }),
     },
     {
       name: 'is provisioned',
       reason: 'Provisioned',
-      setup: () => mockFullRule({ 'grafana.com/access/canWrite': 'true', 'grafana.com/provenance': 'api' }),
+      state: loaded({ 'grafana.com/access/canWrite': 'true', 'grafana.com/provenance': 'api' }),
     },
     {
       name: 'is managed by Terraform',
       reason: 'Managed by Terraform',
-      setup: () =>
-        mockFullRule({
-          'grafana.com/access/canWrite': 'true',
-          'grafana.com/provenance': 'api',
-          'grafana.app/managedBy': 'terraform',
-        }),
+      state: loaded({
+        'grafana.com/access/canWrite': 'true',
+        'grafana.com/provenance': 'api',
+        'grafana.app/managedBy': 'terraform',
+      }),
     },
     {
       name: 'is managed by a plugin',
       reason: 'This rule is managed by a plugin and cannot be edited through the UI',
-      setup: () => mockFullRule({ 'grafana.com/access/canWrite': 'true' }, { __grafana_origin: 'plugin/my-app' }),
+      state: loaded({ 'grafana.com/access/canWrite': 'true' }, { __grafana_origin: 'plugin/my-app' }),
     },
-  ])('ACT: shows a disabled Edit button that explains why when the rule $name', async ({ reason, setup }) => {
-    setup();
-    const { user } = render(<AlertRuleActions ruleUid="rule-1" />);
+  ])('ACT: shows a disabled Edit button that explains why when the rule $name', async ({ reason, state }) => {
+    const { user } = render(<AlertRuleActions ruleUid="rule-1" resourceState={state} />);
 
     // ACC-7: the reason is part of the disabled button's accessible name, not only a hover tooltip.
     const edit = await screen.findByRole('button', { name: `Edit: ${reason}` });

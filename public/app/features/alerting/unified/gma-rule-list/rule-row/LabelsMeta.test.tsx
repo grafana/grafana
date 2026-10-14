@@ -16,7 +16,12 @@ describe('LabelsMeta', () => {
     expect(screen.getByText('1 label')).toBeInTheDocument();
   });
 
-  it('does not count the origin label', () => {
+  it('counts an origin label that does not mark a plugin rule as an ordinary label', () => {
+    render(<LabelsMeta labels={{ team: 'ops', __grafana_origin: 'my-app' }} />);
+    expect(screen.getByText('2 labels')).toBeInTheDocument();
+  });
+
+  it('does not count the plugin origin label', () => {
     render(<LabelsMeta labels={{ team: 'ops', __grafana_origin: 'plugin/x' }} />);
     expect(screen.getByText('1 label')).toBeInTheDocument();
   });

@@ -1,7 +1,6 @@
 import { type Page, test, expect } from './fixtures';
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
 import { RuleListPage, type RuleListKind } from './pages/RuleListPage';
-import { gotoResilient } from './waitForAppLoad';
 
 // ALERT-6/REC-5: Duplicate opens the existing creation flow prefilled from the source rule
 // (`copyFrom=<uid>`); the editor itself is responsible for stripping identity/status/ownership
@@ -18,15 +17,12 @@ test.use({
   },
 });
 
-function gotoAlertFolderList(page: Page, folderUid: string): Promise<void> {
-  return gotoResilient(page, `/alerting/rules/alert?search=${encodeURIComponent(`namespace:${folderUid}`)}&view=list`);
+async function gotoAlertFolderList(page: Page, folderUid: string): Promise<void> {
+  await page.goto(`/alerting/rules/alert?search=${encodeURIComponent(`namespace:${folderUid}`)}&view=list`);
 }
 
-function gotoRecordingFolderList(page: Page, folderUid: string): Promise<void> {
-  return gotoResilient(
-    page,
-    `/alerting/rules/recording?search=${encodeURIComponent(`namespace:${folderUid}`)}&view=list`
-  );
+async function gotoRecordingFolderList(page: Page, folderUid: string): Promise<void> {
+  await page.goto(`/alerting/rules/recording?search=${encodeURIComponent(`namespace:${folderUid}`)}&view=list`);
 }
 
 async function markProvisioned(page: Page, kind: 'alertrules' | 'recordingrules', uid: string) {
@@ -51,12 +47,10 @@ async function duplicateThroughMenu(page: Page, kind: RuleListKind, title: strin
     await dialog.getByRole('button', { name: 'Copy' }).click();
   }
 
-  await expect(page).toHaveURL(/\/alerting\/new/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/\/alerting\/new/);
 }
 
 test.describe('Duplicate (ALERT-6/REC-5)', () => {
-  test.slow();
-
   test('ALERT-6: duplicating a normal Alert rule creates an independent copy and leaves the original untouched', async ({
     page,
     folder,
@@ -66,12 +60,12 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     const originalUid = await alertRules.seedRule({ title, interval: '1m' });
 
     await gotoAlertFolderList(page, folder.uid);
-    await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByRole('link', { name: title })).toBeVisible();
 
     await duplicateThroughMenu(page, 'alert', title, false);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
-    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
     const copyUid = new URL(page.url()).pathname.split('/')[3];
     alertRules.trackRule(copyUid);
 
@@ -106,12 +100,12 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await markProvisioned(page, 'alertrules', originalUid);
 
     await gotoAlertFolderList(page, folder.uid);
-    await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByRole('link', { name: title })).toBeVisible();
 
     await duplicateThroughMenu(page, 'alert', title, true);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
-    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
     const copyUid = new URL(page.url()).pathname.split('/')[3];
     alertRules.trackRule(copyUid);
 
@@ -139,12 +133,12 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     const originalUid = await recordingRules.seedRule({ title, interval: '1m', metric });
 
     await gotoRecordingFolderList(page, folder.uid);
-    await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByRole('link', { name: title })).toBeVisible();
 
     await duplicateThroughMenu(page, 'recording', title, false);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
-    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
     const copyUid = new URL(page.url()).pathname.split('/')[3];
     recordingRules.trackRule(copyUid);
 
@@ -177,12 +171,12 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await markProvisioned(page, 'recordingrules', originalUid);
 
     await gotoRecordingFolderList(page, folder.uid);
-    await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByRole('link', { name: title })).toBeVisible();
 
     await duplicateThroughMenu(page, 'recording', title, true);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
-    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
     const copyUid = new URL(page.url()).pathname.split('/')[3];
     recordingRules.trackRule(copyUid);
 

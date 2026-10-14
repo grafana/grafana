@@ -2,17 +2,16 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { Text, Tooltip } from '@grafana/ui';
 
+import { getDisplayLabels } from '../rule-data/ruleOwnership';
 import { MetaItem } from '../shared/MetaItem';
-
-const GRAFANA_ORIGIN_LABEL = '__grafana_origin';
 
 interface LabelsMetaProps {
   labels: Record<string, string>;
 }
 
-/** Label count whose tooltip lists the labels. The origin label is shown as a badge instead, so it is not counted. */
+/** Label count whose tooltip lists the labels. A plugin origin label is shown as a badge instead, so it is not counted. */
 export function LabelsMeta({ labels }: LabelsMetaProps) {
-  const displayLabels = Object.fromEntries(Object.entries(labels).filter(([key]) => key !== GRAFANA_ORIGIN_LABEL));
+  const displayLabels = getDisplayLabels(labels);
   const count = Object.keys(displayLabels).length;
 
   if (count === 0) {

@@ -12,8 +12,7 @@ import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 import { PagedFailureAlert } from '../shared/PagedFailureAlert';
 
-import { AlertRuleActions } from './AlertRuleActions';
-import { AlertRuleRow } from './AlertRuleRow';
+import { AlertRuleListEntry } from './AlertRuleListEntry';
 import { useAlertRuleSearch } from './alertRuleSearch';
 
 interface FoldersViewProps {
@@ -98,7 +97,7 @@ function ExpandableFolderRow({ folderUid, title, expanded, onToggle }: Expandabl
       folderUid={folderUid}
       title={title}
       kind="alert"
-      ruleCount={count}
+      count={count}
       expanded={expanded}
       onToggle={onToggle}
     >
@@ -144,7 +143,7 @@ function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
   return (
     <>
       {items.map((hit) => (
-        <AlertRuleRow key={hit.uid} hit={hit} showFolderPath={false} actions={<AlertRuleActions ruleUid={hit.uid} />} />
+        <AlertRuleListEntry key={hit.uid} hit={hit} showFolderPath={false} />
       ))}
       {(hasMore || failure) && (
         <li>

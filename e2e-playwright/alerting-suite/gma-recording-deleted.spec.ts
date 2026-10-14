@@ -1,5 +1,4 @@
 import { test, expect, recordingTargetDataSource } from './fixtures';
-import { gotoResilient } from './waitForAppLoad';
 
 // Recently deleted has no search/filter controls (by design - the trash selector can't be
 // combined with ordinary ones), so unlike the mutation specs there's no folder-scoped view to
@@ -8,8 +7,6 @@ import { gotoResilient } from './waitForAppLoad';
 // titles (see AGENTS.md) - `exact: true` alone isn't enough since a corpus rule could
 // coincidentally share the exact title otherwise.
 test.describe('Recording rules: Recently deleted', () => {
-  test.slow();
-
   test('RDEL-3: Review shows metric/target data source and advanced JSON with no server/group data', async ({
     page,
     folder,
@@ -23,8 +20,8 @@ test.describe('Recording rules: Recently deleted', () => {
       `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(uid)}`
     );
 
-    await gotoResilient(page, '/alerting/rules/recording/deleted');
-    await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible({ timeout: 40_000 });
+    await page.goto('/alerting/rules/recording/deleted');
+    await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
 
     const row = page.getByRole('row', { name: new RegExp(title) });
     await expect(row.getByRole('cell', { name: metric, exact: true })).toBeVisible();
@@ -59,10 +56,15 @@ test.describe('Recording rules: Recently deleted', () => {
       `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(uid)}`
     );
 
-    await gotoResilient(page, '/alerting/rules/recording/deleted');
-    await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible({ timeout: 40_000 });
+    await page.goto('/alerting/rules/recording/deleted');
+    await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
 
-    await gotoResilient(page, '/alerting/rules/alert/deleted');
-    await expect(page.getByRole('cell', { name: title, exact: true })).not.toBeVisible({ timeout: 20_000 });
+    await page.goto('/alerting/rules/alert/deleted');
+    // The other tab has finished loading once it shows either its table or its empty state; asserting
+    // absence earlier would pass while the request is still in flight.
+    await expect(
+      page.getByRole('columnheader', { name: 'Title' }).or(page.getByText('No recently deleted rules found'))
+    ).toBeVisible();
+    await expect(page.getByRole('cell', { name: title, exact: true })).toBeHidden();
   });
 });

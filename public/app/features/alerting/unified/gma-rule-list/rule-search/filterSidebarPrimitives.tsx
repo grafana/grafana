@@ -1,15 +1,13 @@
-import { type KeyboardEvent, type ReactNode, useEffect, useId, useState } from 'react';
+import { type KeyboardEvent, useEffect, useId, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import {
-  Box,
   Button,
   Combobox,
   type ComboboxOption,
   Icon,
   IconButton,
   Input,
-  Label,
   RadioButtonGroup,
   Stack,
   Switch,
@@ -17,50 +15,6 @@ import {
 } from '@grafana/ui';
 
 import { type Criteria, type HealthValue, type LabelMatcher, type LabelOperator } from './criteria';
-
-// Box's `width` is a spacing-token multiplier for numbers (theme.spacing(n)), not a literal
-// pixel value — a plain CSS length string passes through unchanged instead.
-const SIDEBAR_WIDTH = '250px';
-
-export function FilterSidebarContainer({ children }: { children: ReactNode }) {
-  return (
-    <Box width={SIDEBAR_WIDTH} shrink={0}>
-      {children}
-    </Box>
-  );
-}
-
-export function SidebarSection({ children }: { children: ReactNode }) {
-  return (
-    <Stack direction="column" gap={1.5}>
-      {children}
-    </Stack>
-  );
-}
-
-export interface SidebarFieldProps {
-  label: ReactNode;
-  children: ReactNode;
-  /** The id of the control the label names, for controls that cannot take an `aria-label` themselves. */
-  controlId?: string;
-  /** Shown under the label, e.g. "Coming soon" or "Requires a dashboard". */
-  note?: ReactNode;
-}
-
-/** A labelled group: the label names the group, so assistive tech announces which field a control belongs to. */
-export function SidebarField({ label, children, controlId, note }: SidebarFieldProps) {
-  const labelId = useId();
-
-  return (
-    <Stack direction="column" gap={0.5} role="group" aria-labelledby={labelId}>
-      <Label id={labelId} htmlFor={controlId}>
-        {label}
-      </Label>
-      {children}
-      {note}
-    </Stack>
-  );
-}
 
 function getOperatorOptions(): Array<{ label: string; value: LabelOperator }> {
   return [
@@ -230,20 +184,18 @@ export function RuleTitleField({ criteria, onChange }: { criteria: Criteria; onC
   };
 
   return (
-    <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.rule-name">Rule name</Trans>}>
-      <Input
-        aria-label={t('alerting.gma-rule-list.search.property.rule-name', 'Rule name')}
-        value={draft}
-        placeholder={t('alerting.gma-rule-list.search.rule-name-placeholder', 'Filter by name...')}
-        onChange={(e) => setDraft(e.currentTarget.value)}
-        onBlur={apply}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            apply();
-          }
-        }}
-      />
-    </SidebarField>
+    <Input
+      aria-label={t('alerting.gma-rule-list.search.property.rule-name', 'Rule name')}
+      value={draft}
+      placeholder={t('alerting.gma-rule-list.search.rule-name-placeholder', 'Filter by name...')}
+      onChange={(e) => setDraft(e.currentTarget.value)}
+      onBlur={apply}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          apply();
+        }
+      }}
+    />
   );
 }
 
@@ -287,14 +239,12 @@ export function SwitchField({ label, value, onChange, disabled }: SwitchFieldPro
   );
 }
 
-export function PendingFilterNote() {
+export function UnavailableFilterNote({ reason }: { reason: string }) {
   return (
     <Stack gap={0.5} alignItems="center">
       <Icon name="info-circle" size="sm" />
       <Text color="secondary" variant="bodySmall">
-        <Trans i18nKey="alerting.gma-rule-list.search.property.pending-note">
-          Filtering by this isn&apos;t available yet.
-        </Trans>
+        {reason}
       </Text>
     </Stack>
   );
@@ -317,17 +267,15 @@ export interface HealthFieldProps {
   onChange: (value: HealthValue | undefined) => void;
 }
 
-/** Health filter shared by both pages; a rule with no stored status matches none of its values. */
+/** Health control shared by both pages; a rule with no stored status matches none of its values. */
 export function HealthField({ value, onChange }: HealthFieldProps) {
   return (
-    <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.health">Health</Trans>}>
-      <Combobox<HealthOption>
-        aria-label={t('alerting.gma-rule-list.search.property.health', 'Health')}
-        options={getHealthOptions()}
-        // `err` is an accepted spelling of `error`; both select the same option.
-        value={value === 'err' ? 'error' : (value ?? 'any')}
-        onChange={(option) => onChange(!option || option.value === 'any' ? undefined : option.value)}
-      />
-    </SidebarField>
+    <Combobox<HealthOption>
+      aria-label={t('alerting.gma-rule-list.search.property.health', 'Health')}
+      options={getHealthOptions()}
+      // `err` is an accepted spelling of `error`; both select the same option.
+      value={value === 'err' ? 'error' : (value ?? 'any')}
+      onChange={(option) => onChange(!option || option.value === 'any' ? undefined : option.value)}
+    />
   );
 }

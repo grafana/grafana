@@ -102,7 +102,7 @@ describe('LegacyRuleListRedirect', () => {
 
   // NAV-4: the redirect never fails or hangs; what cannot be migrated is removed and named.
   it.each([403, 500])(
-    'NAV-4.1: still redirects, without the folder filter, and warns when the folder lookup fails with %s',
+    'NAV-4: still redirects, without the folder filter, and warns when the folder lookup fails with %s',
     async (status) => {
       server.use(http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ message: 'nope' }, { status })));
 
@@ -115,7 +115,7 @@ describe('LegacyRuleListRedirect', () => {
     }
   );
 
-  it('NAV-4.2: warns about a folder name that matches no folder, and redirects without it', async () => {
+  it('NAV-4: warns about a folder name that matches no folder, and redirects without it', async () => {
     server.use(http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ items: [], metadata: {} })));
 
     renderAt('/alerting/list?search=namespace%3AGone&view=grouped', <LegacyRuleListRedirect />);
@@ -125,7 +125,7 @@ describe('LegacyRuleListRedirect', () => {
     expect(warning).toHaveBeenCalledWith('Some filters were removed', expect.stringContaining('namespace'));
   });
 
-  it('NAV-4.3: redirects and names every removed key when parameters are malformed or unknown', async () => {
+  it('NAV-4: redirects and names every removed key when parameters are malformed or unknown', async () => {
     renderAt(
       '/alerting/list?search=state%3Abogus%20nonsense%3A1%20cpu%20label%3A%22unterminated&view=list',
       <LegacyRuleListRedirect />

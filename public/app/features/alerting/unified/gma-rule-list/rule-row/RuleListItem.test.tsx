@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { RuleListItem, RuleListItemDescription } from './RuleListItem';
 
 describe('RuleListItem', () => {
-  it('renders title, description, actions and separates only truthy meta entries with a pipe', () => {
+  it('VIS-1: renders title, description, actions and separates only truthy meta entries with a pipe', () => {
     render(
       <ul>
         <RuleListItem

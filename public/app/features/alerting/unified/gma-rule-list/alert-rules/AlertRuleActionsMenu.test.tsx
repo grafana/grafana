@@ -37,7 +37,7 @@ const FOLDER_COUNTS_URL = `${getAPIBaseURL('folder.grafana.app', 'v1beta1')}/fol
 /** Stands in for a Folders-mode row, so a mutation's effect on folder counts is observable. */
 function FolderCountProbe() {
   const count = useFolderAlertRuleCount('folder-uid-1');
-  return <div>{`Folder holds ${count ?? 'unknown'} rules`}</div>;
+  return <div>{`Folder holds ${count.status === 'loaded' ? count.count : 'unknown'} rules`}</div>;
 }
 
 function mockFolderCounts() {
@@ -196,6 +196,36 @@ describe('AlertRuleActionsMenu', () => {
     await user.click(screen.getByRole('menuitem', { name: /copy link/i }));
 
     await waitFor(() => expect(emitSpy).toHaveBeenCalledWith('alert-error', ['Could not copy URL to clipboard']));
+  });
+
+  it('reports Copy link failure when the clipboard is unavailable', async () => {
+    const emitSpy = jest.spyOn(appEvents, 'emit');
+
+    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    const user = await openMenu();
+    const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    try {
+      await user.click(screen.getByRole('menuitem', { name: /copy link/i }));
+
+      await waitFor(() => expect(emitSpy).toHaveBeenCalledWith('alert-error', ['Could not copy URL to clipboard']));
+      expect(emitSpy).not.toHaveBeenCalledWith('alert-success', expect.anything());
+    } finally {
+      if (clipboard) {
+        Object.defineProperty(navigator, 'clipboard', clipboard);
+      }
+    }
+  });
+
+  it('confirms Copy link when the clipboard write succeeds', async () => {
+    const emitSpy = jest.spyOn(appEvents, 'emit');
+
+    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    const user = await openMenu();
+    jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+    await user.click(screen.getByRole('menuitem', { name: /copy link/i }));
+
+    await waitFor(() => expect(emitSpy).toHaveBeenCalledWith('alert-success', ['URL copied to clipboard']));
   });
 
   describe('unavailable actions show their reason', () => {
@@ -479,7 +509,7 @@ describe('AlertRuleActionsMenu', () => {
     });
   });
 
-  describe('ALERT-9: Manage enrichments availability gate', () => {
+  describe('ACT-9: Manage enrichments availability gate', () => {
     const previousOrgRole = contextSrv.user.orgRole;
 
     beforeEach(() => {
@@ -550,6 +580,96 @@ describe('AlertRuleActionsMenu', () => {
       await openMenu();
 
       expect(screen.queryByRole('menuitem', { name: /manage enrichments/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('ALERT-9: Analyze availability gate and payload from the loaded full Alert rule, never defaulting state to firing', () => {
+    function mockAssistant(isAvailable: boolean) {
+      const openAssistant = jest.fn();
+      jest.mocked(useAssistant).mockReturnValue({
+        isLoading: false,
+        isAvailable,
+        openAssistant,
+      } as unknown as ReturnType<typeof useAssistant>);
+      return openAssistant;
+    }
+
+    afterEach(() => {
+      mockAssistant(false);
+    });
+
+    it('hides Analyze when the Assistant is unavailable', async () => {
+      mockAssistant(false);
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      await openMenu();
+
+      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Analyze rule' })).not.toBeInTheDocument();
+    });
+
+    it('hides Analyze while the full rule is not loaded, even when the Assistant is available', async () => {
+      mockAssistant(true);
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loading' }} />);
+      await openMenu();
+
+      expect(screen.getByRole('menuitem', { name: /^Delete/ })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Analyze rule' })).not.toBeInTheDocument();
+    });
+
+    it('shows Analyze when the Assistant is available', async () => {
+      mockAssistant(true);
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      await openMenu();
+
+      expect(screen.getByRole('menuitem', { name: 'Analyze rule' })).toBeInTheDocument();
+    });
+
+    it('opens the Assistant with the loaded rule and omits state from the prompt when status.state is missing', async () => {
+      const openAssistant = mockAssistant(true);
+      const rule = buildRule({ labels: { team: 'infra' } });
+      rule.spec.annotations = { summary: 'CPU is high' };
+      rule.spec.expressions = { A: { model: { expr: 'avg(cpu)' } } as AlertRule['spec']['expressions'][string] };
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      const user = await openMenu();
+
+      await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
+
+      expect(openAssistant).toHaveBeenCalledTimes(1);
+      const [{ prompt, context, origin, autoSend }] = openAssistant.mock.calls[0];
+      expect(origin).toBe('alerting/analyze-rule-menu-item');
+      expect(autoSend).toBe(true);
+      expect(prompt).toContain('Analyze the alert rule "High CPU usage (uid: rule-uid-1)".');
+      expect(prompt).toContain('CPU is high Labels: team="infra".');
+      expect(prompt).not.toMatch(/firing|currently/i);
+      expect(context).toEqual([
+        {
+          type: 'structured',
+          title: 'Alert: High CPU usage',
+          data: {
+            rule: {
+              name: 'rule-uid-1',
+              title: 'High CPU usage',
+              labels: { team: 'infra' },
+              expressions: { A: { model: { expr: 'avg(cpu)' } } },
+              annotations: { summary: 'CPU is high' },
+            },
+          },
+        },
+      ]);
+    });
+
+    it('reports the state the API returned instead of a default', async () => {
+      const openAssistant = mockAssistant(true);
+      const rule = buildRule();
+      rule.status = { state: 'Healthy' };
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      const user = await openMenu();
+
+      await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
+
+      const [{ prompt }] = openAssistant.mock.calls[0];
+      expect(prompt).toContain('Analyze the alert rule "High CPU usage (uid: rule-uid-1)" (currently Healthy).');
+      expect(prompt).not.toMatch(/firing/i);
     });
   });
 });

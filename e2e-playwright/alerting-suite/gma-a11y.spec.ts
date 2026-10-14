@@ -3,7 +3,7 @@ import { type AxeResults } from 'axe-core';
 import { type AxeScanContext, DEFAULT_A11Y_TAGS } from '@grafana/plugin-e2e';
 
 import { type Page, test, expect } from './fixtures';
-import { gotoResilient } from './waitForAppLoad';
+import { RuleListPage } from './pages/RuleListPage';
 
 // Scoped to this test's own folder (namespace:<uid>) so Folders mode shows exactly one row
 // regardless of whatever else exists in the dev instance - same technique the mutation specs
@@ -19,7 +19,6 @@ function listModeUrl(kind: 'alert' | 'recording', folderUid: string): string {
 }
 
 async function runA11yScan(page: Page, scanForA11yViolations: (context?: AxeScanContext) => Promise<AxeResults>) {
-  await page.waitForTimeout(500); // let any open/close animation settle before scanning
   const results = await scanForA11yViolations({
     options: { runOnly: { type: 'tag', values: DEFAULT_A11Y_TAGS } },
   });
@@ -32,8 +31,6 @@ test.describe(
     tag: ['@a11y'],
   },
   () => {
-    test.slow();
-
     test('Alert rules: Folders mode with one folder expanded has no violations', async ({
       page,
       folder,
@@ -43,12 +40,9 @@ test.describe(
       const title = 'High CPU usage';
       await alertRules.seedRule({ title, interval: '1m' });
 
-      await gotoResilient(page, foldersModeUrl('alert', folder.uid));
-      await expect(page.getByRole('button', { name: folder.title, expanded: false })).toBeVisible({
-        timeout: 40_000,
-      });
-      await page.getByRole('button', { name: folder.title, expanded: false }).click();
-      await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
+      await page.goto(foldersModeUrl('alert', folder.uid));
+      await new RuleListPage(page, 'alert').toggleFolder(folder.title);
+      await expect(page.getByRole('link', { name: title })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
     });
@@ -57,8 +51,8 @@ test.describe(
       const title = 'Memory pressure';
       await alertRules.seedRule({ title, interval: '1m' });
 
-      await gotoResilient(page, listModeUrl('alert', folder.uid));
-      await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
+      await page.goto(listModeUrl('alert', folder.uid));
+      await expect(page.getByRole('link', { name: title })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
     });
@@ -72,12 +66,9 @@ test.describe(
       const title = 'cpu_usage:avg';
       await recordingRules.seedRule({ title, interval: '1m', metric: 'cpu_usage:avg' });
 
-      await gotoResilient(page, foldersModeUrl('recording', folder.uid));
-      await expect(page.getByRole('button', { name: folder.title, expanded: false })).toBeVisible({
-        timeout: 40_000,
-      });
-      await page.getByRole('button', { name: folder.title, expanded: false }).click();
-      await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
+      await page.goto(foldersModeUrl('recording', folder.uid));
+      await new RuleListPage(page, 'recording').toggleFolder(folder.title);
+      await expect(page.getByRole('link', { name: title })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
     });
@@ -91,8 +82,8 @@ test.describe(
       const title = 'mem_usage:avg';
       await recordingRules.seedRule({ title, interval: '1m', metric: 'mem_usage:avg' });
 
-      await gotoResilient(page, listModeUrl('recording', folder.uid));
-      await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
+      await page.goto(listModeUrl('recording', folder.uid));
+      await expect(page.getByRole('link', { name: title })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
     });
@@ -104,8 +95,8 @@ test.describe(
         `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules/${encodeURIComponent(uid)}`
       );
 
-      await gotoResilient(page, '/alerting/rules/alert/deleted');
-      await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible({ timeout: 40_000 });
+      await page.goto('/alerting/rules/alert/deleted');
+      await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
     });
@@ -121,8 +112,8 @@ test.describe(
         `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(uid)}`
       );
 
-      await gotoResilient(page, '/alerting/rules/recording/deleted');
-      await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible({ timeout: 40_000 });
+      await page.goto('/alerting/rules/recording/deleted');
+      await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
     });
@@ -135,10 +126,10 @@ test.describe(
       const title = 'Disk space low';
       await alertRules.seedRule({ title, interval: '1m' });
 
-      await gotoResilient(page, foldersModeUrl('alert', folder.uid));
+      await page.goto(foldersModeUrl('alert', folder.uid));
 
       const searchInput = page.getByRole('textbox', { name: 'Search' });
-      await expect(searchInput).toBeVisible({ timeout: 40_000 });
+      await expect(searchInput).toBeVisible();
       await searchInput.focus();
       await expect(searchInput).toBeFocused();
 
@@ -161,12 +152,12 @@ test.describe(
       await expect(foldersRadio).toBeFocused();
       await expect(foldersRadio).toBeChecked();
 
-      // Folder expand control: Enter toggles aria-expanded, Space toggles it back. Matched by
-      // exact name rather than by `expanded`, which would stop matching the moment the value
-      // flips - the sidebar's "Remove <title>" button for the applied folder contains the
-      // title as a substring too.
-      const expandButton = page.getByRole('button', { name: folder.title, exact: true });
-      await expect(expandButton).toBeVisible({ timeout: 40_000 });
+      // Folder expand control: Enter toggles aria-expanded, Space toggles it back. Matched through
+      // the folder's row, by a name that fits both states, since neither `expanded` nor "Expand ..."
+      // would keep matching once the value flips.
+      const list = new RuleListPage(page, 'alert');
+      const expandButton = list.folderRow(folder.title).getByRole('button', { name: /^(Expand|Collapse) / });
+      await expect(expandButton).toBeVisible();
       await expandButton.focus();
       await expect(expandButton).toHaveAttribute('aria-expanded', 'false');
       await page.keyboard.press('Enter');
@@ -176,14 +167,18 @@ test.describe(
       await page.keyboard.press('Enter');
       await expect(expandButton).toHaveAttribute('aria-expanded', 'true');
 
-      // Rule title link and the row's More menu: both keyboard-operable, and Tab from the
-      // link lands directly on its row's More button (confirms real DOM/tab order, not just
+      // The rule title link and the row's Edit link and More button are all keyboard-operable, and
+      // Shift+Tab from More lands on the Edit link next to it (confirms real DOM/tab order, not just
       // that the elements exist somewhere on the page).
-      const ruleLink = page.getByRole('link', { name: title });
-      await expect(ruleLink).toBeVisible({ timeout: 40_000 });
-      const moreButton = ruleLink.locator('xpath=following::button[@aria-label="More"][1]');
-      await ruleLink.focus();
-      await expect(ruleLink).toBeFocused();
+      await expect(list.ruleLink(title)).toBeVisible();
+      await list.ruleLink(title).focus();
+      await expect(list.ruleLink(title)).toBeFocused();
+
+      const moreButton = list.rowMoreButton(title);
+      await moreButton.focus();
+      await expect(moreButton).toBeFocused();
+      await page.keyboard.press('Shift+Tab');
+      await expect(list.editLink(title)).toBeFocused();
       await page.keyboard.press('Tab');
       await expect(moreButton).toBeFocused();
 

@@ -1,7 +1,14 @@
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { AnnoKeyManagerAllowsEdits, AnnoKeyManagerIdentity, AnnoKeyManagerKind } from 'app/features/apiserver/types';
 
-const PROVENANCE_ANNOTATION_KEYS: string[] = [AnnoKeyManagerKind, AnnoKeyManagerIdentity, AnnoKeyManagerAllowsEdits];
+import { K8sAnnotations } from '../../utils/k8s/constants';
+
+const PROVENANCE_ANNOTATION_KEYS: string[] = [
+  K8sAnnotations.Provenance,
+  AnnoKeyManagerKind,
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerAllowsEdits,
+];
 const ACCESS_ANNOTATION_PREFIX = 'grafana.com/access/';
 const GROUP_LABEL_PREFIX = 'grafana.com/group';
 

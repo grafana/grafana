@@ -48,7 +48,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('RecordingRulesFilterSidebar', () => {
-  it('SEARCH-1.11: typing a metric ends up in criteria.metric', async () => {
+  it('ACC-2: the recorded metric input is found by role and name, and typing in it sets criteria.metric', async () => {
     const user = userEvent.setup();
     render(<ControlledSidebar />);
 
@@ -57,7 +57,7 @@ describe('RecordingRulesFilterSidebar', () => {
     expect(screen.getByRole('textbox', { name: 'Recorded metric' })).toHaveValue('cpu_usage');
   });
 
-  it('SEARCH-1.12: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
+  it('SEARCH-3: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -149,7 +149,7 @@ describe('RecordingRulesFilterSidebar', () => {
     expect(screen.queryByText('Paused')).not.toBeInTheDocument();
   });
 
-  it('SEARCH-5.1: selecting a health calls onChange with that health', async () => {
+  it('SEARCH-5: selecting a health calls onChange with that health', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(

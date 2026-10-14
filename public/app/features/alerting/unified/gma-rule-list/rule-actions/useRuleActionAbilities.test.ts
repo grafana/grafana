@@ -33,7 +33,7 @@ describe('useRuleActionAbilities', () => {
     grantUserPermissions([]);
   });
 
-  it('STATE-2: makes edit/pause/delete/duplicate unavailable while the resource is loading', () => {
+  it('ACT-1: makes edit/pause/delete/duplicate unavailable while the resource is loading', () => {
     const { result } = renderHook(() => useRuleActionAbilities({ status: 'loading' }));
 
     expect(result.current.edit.available).toBe(false);
@@ -42,14 +42,14 @@ describe('useRuleActionAbilities', () => {
     expect(result.current.duplicate.available).toBe(false);
   });
 
-  it('STATE-2: makes edit/pause/delete/duplicate unavailable when the resource failed to load', () => {
+  it('ACT-2: makes edit/pause/delete/duplicate unavailable when the resource failed to load', () => {
     const { result } = renderHook(() => useRuleActionAbilities({ status: 'error' }));
 
     expect(result.current.edit.available).toBe(false);
     expect(result.current.delete.available).toBe(false);
   });
 
-  it('STATE-2: grants edit only when canWrite is the exact string "true"', () => {
+  it('ACT-3: grants edit only when canWrite is the exact string "true"', () => {
     const { result } = renderHook(() =>
       useRuleActionAbilities(loaded(buildRule({ 'grafana.com/access/canWrite': 'true' })))
     );
@@ -57,14 +57,14 @@ describe('useRuleActionAbilities', () => {
     expect(result.current.edit).toEqual({ available: true });
   });
 
-  it('STATE-2: treats a missing canWrite annotation as unknown, not denied, with a distinct reason', () => {
+  it('ACT-2: treats a missing canWrite annotation as unknown, not denied, with a distinct reason', () => {
     const { result } = renderHook(() => useRuleActionAbilities(loaded(buildRule({}))));
 
     expect(result.current.edit.available).toBe(false);
     expect(result.current.edit.reason).toBe('Permission unknown');
   });
 
-  it('STATE-2: denies edit when canWrite is present but not "true"', () => {
+  it('ACT-3: denies edit when canWrite is present but not "true"', () => {
     const { result } = renderHook(() =>
       useRuleActionAbilities(loaded(buildRule({ 'grafana.com/access/canWrite': 'false' })))
     );

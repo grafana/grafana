@@ -6,6 +6,7 @@ import { RuleSearchInput } from './RuleSearchInput';
 import { alertTokens } from './alertTokens';
 import { parse } from './parser';
 import { serialize } from './serializer';
+import { type TokenDefinition } from './tokens';
 
 /** Owns the applied query the way a page does: the canonical form of whatever was applied. */
 function PageLikeInput({ initialQuery = '' }: { initialQuery?: string }) {
@@ -25,7 +26,7 @@ function PageLikeInput({ initialQuery = '' }: { initialQuery?: string }) {
 }
 
 describe('RuleSearchInput', () => {
-  it('SEARCH-1.2: applies a valid edit after the debounce, not on every keystroke', async () => {
+  it('SEARCH-1: applies a valid edit after the debounce, not on every keystroke', async () => {
     // Fake timers make the debounce deterministic: with real timers, userEvent's own
     // per-keystroke delay can exceed a short debounce under load, firing onApply early on a
     // partial value instead of waiting for the full "cpu". advanceTimers ties userEvent's
@@ -45,7 +46,7 @@ describe('RuleSearchInput', () => {
     jest.useRealTimers();
   });
 
-  it('SEARCH-1.3: Enter applies immediately, without waiting for the debounce', async () => {
+  it('SEARCH-1: Enter applies immediately, without waiting for the debounce', async () => {
     const user = userEvent.setup();
     const onApply = jest.fn();
     render(<RuleSearchInput query="" onApply={onApply} tokens={alertTokens} debounceMs={10_000} />);
@@ -56,7 +57,7 @@ describe('RuleSearchInput', () => {
     expect(onApply).toHaveBeenCalledWith('cpu');
   });
 
-  it('SEARCH-1.4: blur applies the current draft immediately', async () => {
+  it('SEARCH-1: blur applies the current draft immediately', async () => {
     const user = userEvent.setup();
     const onApply = jest.fn();
     render(
@@ -80,7 +81,7 @@ describe('RuleSearchInput', () => {
     expect(screen.getByRole('textbox', { name: /search/i })).toHaveValue('');
   });
 
-  it('SEARCH-6.1: marks the input as invalid and names each filter that could not be applied', () => {
+  it('NAV-5: marks the input as invalid and names each filter that could not be applied', () => {
     render(
       <RuleSearchInput
         query="foo:bar"
@@ -96,7 +97,7 @@ describe('RuleSearchInput', () => {
     expect(screen.getByText('Some filters could not be applied: foo')).toBeInTheDocument();
   });
 
-  it('SEARCH-1.5: keeps a multi-token query exactly as typed after it is applied', async () => {
+  it('SEARCH-1: keeps a multi-token query exactly as typed after it is applied', async () => {
     const user = userEvent.setup();
     render(<PageLikeInput />);
     const typed = 'label:team=api cpu namespace:folder-1 foo:bar label:';
@@ -110,7 +111,7 @@ describe('RuleSearchInput', () => {
     );
   });
 
-  it('SEARCH-1.6: does not apply a half-typed filter while typing, only on Enter', async () => {
+  it('SEARCH-1: does not apply a half-typed filter while typing, only on Enter', async () => {
     jest.useFakeTimers();
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     const onApply = jest.fn();
@@ -126,7 +127,7 @@ describe('RuleSearchInput', () => {
     jest.useRealTimers();
   });
 
-  it('SEARCH-1.7: replaces the draft when the applied query changes from outside', async () => {
+  it('SEARCH-1: replaces the draft when the applied query changes from outside', async () => {
     const user = userEvent.setup();
     render(<PageLikeInput />);
 
@@ -136,7 +137,7 @@ describe('RuleSearchInput', () => {
     expect(screen.getByRole('textbox', { name: /search/i })).toHaveValue('');
   });
 
-  it('SEARCH-1.8: does not apply again on blur when the text is already applied', async () => {
+  it('SEARCH-1: does not apply again on blur when the text is already applied', async () => {
     const user = userEvent.setup();
     const onApply = jest.fn();
     render(
@@ -152,7 +153,7 @@ describe('RuleSearchInput', () => {
     expect(onApply).not.toHaveBeenCalled();
   });
 
-  it('SEARCH-6.4: the help popover lists an example for every token in the given registry', async () => {
+  it('SEARCH-6: the help popover lists an example for every token in the given registry', async () => {
     const user = userEvent.setup();
     render(<RuleSearchInput query="" onApply={jest.fn()} tokens={alertTokens} />);
 
@@ -161,5 +162,44 @@ describe('RuleSearchInput', () => {
     for (const token of alertTokens) {
       expect(screen.getByText(token.example)).toBeInTheDocument();
     }
+  });
+
+  it('SEARCH-6: the help popover names each filter and says which ones are available', async () => {
+    const user = userEvent.setup();
+    const tokens: TokenDefinition[] = [
+      {
+        key: 'folder',
+        label: () => 'Folder',
+        description: () => 'Folder to search in.',
+        example: 'folder:uid',
+        availability: { status: 'supported' },
+      },
+      {
+        key: 'later',
+        label: () => 'Later filter',
+        description: () => 'Not built yet.',
+        example: 'later:value',
+        availability: { status: 'unavailable', reason: () => 'Needs a backend change.' },
+      },
+    ];
+    render(<RuleSearchInput query="" onApply={jest.fn()} tokens={tokens} />);
+
+    await user.click(screen.getByTitle('Search help'));
+
+    expect(screen.getByText('Folder')).toBeInTheDocument();
+    expect(screen.getByText('Later filter')).toBeInTheDocument();
+    expect(screen.getByText('Available')).toBeInTheDocument();
+    expect(screen.getByText('Not available yet')).toBeInTheDocument();
+    expect(screen.getByText('Needs a backend change.')).toBeInTheDocument();
+  });
+
+  it('SEARCH-6: the help popover explains that the default notification policy cannot be searched yet', async () => {
+    const user = userEvent.setup();
+    render(<RuleSearchInput query="" onApply={jest.fn()} tokens={alertTokens} />);
+
+    await user.click(screen.getByTitle('Search help'));
+
+    expect(screen.getByText('Notification policy')).toBeInTheDocument();
+    expect(screen.getByText("Filtering by the default policy isn't available yet.")).toBeInTheDocument();
   });
 });

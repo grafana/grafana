@@ -1,6 +1,5 @@
 import { type Page, test, expect } from './fixtures';
 import { RuleListPage } from './pages/RuleListPage';
-import { gotoResilient } from './waitForAppLoad';
 
 // RBAC-A: this file runs under the Admin-authenticated `alerting-gma` project (see
 // playwright.config.ts), unlike the `.editor.spec.ts`/`.viewer.spec.ts` role-specific projects
@@ -21,18 +20,16 @@ async function markProvisioned(page: Page, kind: 'alertrules' | 'recordingrules'
 }
 
 test.describe('Admin (RBAC-A)', () => {
-  test.slow();
-
   test('RBAC-A: Admin can reach both active rule pages and both Recently deleted tabs', async ({ page }) => {
-    await gotoResilient(page, '/alerting/rules/alert');
-    await expect(page.getByRole('heading', { name: 'Alert rules' })).toBeVisible({ timeout: 40_000 });
+    await page.goto('/alerting/rules/alert');
+    await expect(page.getByRole('heading', { name: 'Alert rules' })).toBeVisible();
 
     await page.getByRole('tab', { name: 'Recently deleted' }).click();
     await expect(page).toHaveURL(/\/alerting\/rules\/alert\/deleted/);
     await expect(page.getByRole('tab', { name: 'Recently deleted', selected: true })).toBeVisible();
 
-    await gotoResilient(page, '/alerting/rules/recording');
-    await expect(page.getByRole('heading', { name: 'Recording rules' })).toBeVisible({ timeout: 40_000 });
+    await page.goto('/alerting/rules/recording');
+    await expect(page.getByRole('heading', { name: 'Recording rules' })).toBeVisible();
 
     await page.getByRole('tab', { name: 'Recently deleted' }).click();
     await expect(page).toHaveURL(/\/alerting\/rules\/recording\/deleted/);
@@ -51,19 +48,16 @@ test.describe('Admin (RBAC-A)', () => {
     await markProvisioned(page, 'alertrules', provisionedUid);
     const list = new RuleListPage(page, 'alert');
 
-    await gotoResilient(
-      page,
-      `/alerting/rules/alert?search=${encodeURIComponent(`namespace:${folder.uid}`)}&view=list`
-    );
+    await page.goto(`/alerting/rules/alert?search=${encodeURIComponent(`namespace:${folder.uid}`)}&view=list`);
 
-    await expect(page.getByRole('link', { name: normalTitle })).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByRole('link', { name: normalTitle })).toBeVisible();
     await list.rowMoreButton(normalTitle).click();
     await expect(page.getByRole('menuitem', { name: 'Resume', exact: true })).toBeEnabled();
     await expect(page.getByRole('menuitem', { name: 'Delete', exact: true })).toBeEnabled();
     await expect(page.getByRole('menuitem', { name: 'Duplicate', exact: true })).toBeEnabled();
     await page.keyboard.press('Escape');
 
-    await expect(page.getByRole('link', { name: provisionedTitle })).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByRole('link', { name: provisionedTitle })).toBeVisible();
     await list.rowMoreButton(provisionedTitle).click();
     await expect(page.getByRole('menuitem', { name: 'Duplicate', exact: true })).toBeEnabled();
     // Unavailable actions stay in the menu, disabled, with the reason as part of their name.
@@ -92,19 +86,16 @@ test.describe('Admin (RBAC-A)', () => {
     await markProvisioned(page, 'recordingrules', provisionedUid);
     const list = new RuleListPage(page, 'recording');
 
-    await gotoResilient(
-      page,
-      `/alerting/rules/recording?search=${encodeURIComponent(`namespace:${folder.uid}`)}&view=list`
-    );
+    await page.goto(`/alerting/rules/recording?search=${encodeURIComponent(`namespace:${folder.uid}`)}&view=list`);
 
-    await expect(page.getByRole('link', { name: normalTitle })).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByRole('link', { name: normalTitle })).toBeVisible();
     await list.rowMoreButton(normalTitle).click();
     await expect(page.getByRole('menuitem', { name: 'Resume', exact: true })).toBeEnabled();
     await expect(page.getByRole('menuitem', { name: 'Delete', exact: true })).toBeEnabled();
     await expect(page.getByRole('menuitem', { name: 'Duplicate', exact: true })).toBeEnabled();
     await page.keyboard.press('Escape');
 
-    await expect(page.getByRole('link', { name: provisionedTitle })).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByRole('link', { name: provisionedTitle })).toBeVisible();
     await list.rowMoreButton(provisionedTitle).click();
     await expect(page.getByRole('menuitem', { name: 'Duplicate', exact: true })).toBeEnabled();
     // Unavailable actions stay in the menu, disabled, with the reason as part of their name.

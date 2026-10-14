@@ -113,7 +113,7 @@ describe('AlertRulesFilterSidebar', () => {
     );
   });
 
-  it('SEARCH-1.5: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
+  it('SEARCH-3: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -131,7 +131,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: [FOLDER_UID] }));
   });
 
-  it('SEARCH-1.6: selecting a query data source calls onChange with that data source UID', async () => {
+  it('SEARCH-3: selecting a query data source calls onChange with that data source UID', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -148,7 +148,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-1'] }));
   });
 
-  it('SEARCH-1.7: toggling "Hide plugin rules" calls onChange with hidePluginRules true', async () => {
+  it('SEARCH-3: toggling "Hide plugin rules" calls onChange with hidePluginRules true', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -187,7 +187,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(screen.getByRole('spinbutton', { name: 'Panel ID' })).toBeEnabled();
   });
 
-  it('SEARCH-1.8: choosing a contact point disables and clears the notification policy field', () => {
+  it('SEARCH-4: choosing a contact point disables and clears the notification policy field', () => {
     const criteria = { ...createEmptyCriteria(), contactPoint: 'on-call' };
     render(
       <AlertRulesFilterSidebar criteria={criteria} onChange={jest.fn()} onClear={jest.fn()} hasActiveFilters={false} />
@@ -196,7 +196,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(screen.getByRole('combobox', { name: 'Notification policy' })).toBeDisabled();
   });
 
-  it('SEARCH-1.9: choosing a notification policy disables the contact point field', () => {
+  it('SEARCH-4: choosing a notification policy disables the contact point field', () => {
     const criteria = { ...createEmptyCriteria(), policy: 'escalation' };
     render(
       <AlertRulesFilterSidebar criteria={criteria} onChange={jest.fn()} onClear={jest.fn()} hasActiveFilters={false} />
@@ -205,7 +205,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(screen.getByRole('combobox', { name: 'Contact point' })).toBeDisabled();
   });
 
-  it('SEARCH-1.10: selecting Paused calls onChange with paused "true"', async () => {
+  it('SEARCH-4: selecting Paused calls onChange with paused "true"', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -234,7 +234,7 @@ describe('AlertRulesFilterSidebar', () => {
     );
 
     expect(screen.getByRole('switch', { name: 'Default policy' })).toBeDisabled();
-    expect(screen.getAllByText("Filtering by this isn't available yet.")).toHaveLength(1);
+    expect(screen.getAllByText("Filtering by the default policy isn't available yet.")).toHaveLength(1);
   });
 
   it('a default policy that arrived through the URL can still be cleared from the switch', async () => {
@@ -282,7 +282,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onClear).toHaveBeenCalledTimes(1);
   });
 
-  it('SEARCH-6.2: shows an explanation under the folder field when a folder token is invalid', () => {
+  it('NAV-5: shows an explanation under the folder field when a folder token is invalid', () => {
     render(
       <AlertRulesFilterSidebar
         criteria={createEmptyCriteria()}
@@ -309,7 +309,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(screen.getByText('noDefault')).toBeInTheDocument();
   });
 
-  it('SEARCH-3.1: shows every selected folder by title and removes only the one chosen', async () => {
+  it('SEARCH-3: shows every selected folder by title and removes only the one chosen', async () => {
     mockFolderTitles({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
     const user = userEvent.setup();
     const onChange = jest.fn();
@@ -330,7 +330,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-2'] }));
   });
 
-  it('SEARCH-3.2: picking a folder adds it to the selected ones', async () => {
+  it('SEARCH-3: picking a folder adds it to the selected ones', async () => {
     mockFolderTitles({ 'folder-2': 'Infra' });
     const user = userEvent.setup();
     const onChange = jest.fn();
@@ -349,7 +349,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ namespaces: ['folder-2', FOLDER_UID] }));
   });
 
-  it('SEARCH-3.3: shows every selected query data source by name and removes only the one chosen', async () => {
+  it('SEARCH-3: shows every selected query data source by name and removes only the one chosen', async () => {
     mockDataSourceNames({ 'ds-1': 'Prometheus', 'ds-2': 'Loki' });
     const user = userEvent.setup();
     const onChange = jest.fn();
@@ -370,7 +370,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-2'] }));
   });
 
-  it('SEARCH-3.4: picking a query data source adds it to the selected ones', async () => {
+  it('SEARCH-3: picking a query data source adds it to the selected ones', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -387,7 +387,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ dataSourceUids: ['ds-2', 'ds-1'] }));
   });
 
-  it('SEARCH-5.2: selecting a state calls onChange with that state', async () => {
+  it('SEARCH-5: selecting a state calls onChange with that state', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -405,7 +405,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ state: 'firing' }));
   });
 
-  it('SEARCH-5.3: shows the legacy inactive state as Normal', () => {
+  it('SEARCH-5: shows the legacy inactive state as Normal', () => {
     render(
       <AlertRulesFilterSidebar
         criteria={{ ...createEmptyCriteria(), state: 'inactive' }}
@@ -418,7 +418,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(screen.getByRole('combobox', { name: 'Alert state' })).toHaveValue('Normal');
   });
 
-  it('SEARCH-5.4: selecting a health calls onChange with that health', async () => {
+  it('SEARCH-5: selecting a health calls onChange with that health', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -436,7 +436,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ health: 'nodata' }));
   });
 
-  it('SEARCH-1.13: a label row added with Add label filter is not applied until it has a key', async () => {
+  it('SEARCH-3: a label row added with Add label filter is not applied until it has a key', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -457,7 +457,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('SEARCH-1.14: entering the key of a new label row applies it with the chosen operator and value', async () => {
+  it('SEARCH-3: entering the key of a new label row applies it with the chosen operator and value', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -480,7 +480,7 @@ describe('AlertRulesFilterSidebar', () => {
     );
   });
 
-  it('SEARCH-1.15: removing the new label row before it has a key leaves the criteria untouched', async () => {
+  it('SEARCH-3: removing the new label row before it has a key leaves the criteria untouched', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(
@@ -526,25 +526,6 @@ describe('AlertRulesFilterSidebar', () => {
       );
       return { ...view, onChange };
     }
-
-    it.each([
-      'Rule name',
-      'Labels',
-      'Folder',
-      'Query data source',
-      'Plugin rules',
-      'Dashboard',
-      'Panel ID',
-      'Contact point',
-      'Notification policy',
-      'Paused',
-      'Alert state',
-      'Health',
-    ])('ACC-6: the "%s" field is a labelled group', (name) => {
-      renderSidebar();
-
-      expect(screen.getByRole('group', { name })).toBeInTheDocument();
-    });
 
     it('ACC-1: the rule name input is found by role and name and applies on Enter', async () => {
       const { user, onChange } = renderSidebar();

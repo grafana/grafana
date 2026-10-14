@@ -16,6 +16,7 @@ function buildTombstone(): AlertRule {
       annotations: {
         'grafana.app/folder': 'folder-uid',
         'grafana.app/updatedBy': 'user:1',
+        'grafana.com/provenance': 'none',
         'grafana.app/managedBy': 'repo',
         'grafana.app/managerId': 'repo-1',
         'grafana.app/managerAllowsEdits': 'true',

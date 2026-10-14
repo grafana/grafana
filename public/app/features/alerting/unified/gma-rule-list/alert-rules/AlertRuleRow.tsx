@@ -1,14 +1,13 @@
 import { type ReactNode, useId } from 'react';
 
+import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
 import { Stack, TextLink } from '@grafana/ui';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../../utils/datasource';
-import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createContactPointSearchLink } from '../../utils/misc';
-import { useFolderPath } from '../folder-browsing/folderLookups';
-import { getManagerKind, getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
-import { useFullAlertRuleState } from '../rule-data/ruleResourceLookups';
+import { getDisplayLabels, getManagerKind, getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
+import { type RuleResourceState } from '../rule-data/ruleResourceState';
 import { DataSourcesMeta } from '../rule-row/DataSourcesMeta';
 import { FolderPath } from '../rule-row/FolderPath';
 import { InstanceTotalsMeta } from '../rule-row/InstanceTotalsMeta';
@@ -24,9 +23,11 @@ import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
 interface AlertRuleRowProps {
   hit: AlertRuleSearchHit;
-  /** Folder path is shown in List mode only - Folders mode already shows it on the folder
-   * row, so repeating it on every rule row would be redundant. */
-  showFolderPath: boolean;
+  /** The full rule, for provenance and manager properties the search hit does not carry. */
+  fullRule: RuleResourceState<AlertRule>;
+  /** Root-to-folder titles. Only List mode passes one - Folders mode already shows the folder
+   * on the folder row, so repeating it on every rule row would be redundant. */
+  folderPath?: string[];
   /** Rendered at the right edge of the row - the Edit button and actions menu. */
   actions?: ReactNode;
 }
@@ -59,14 +60,12 @@ function RoutingMeta({ hit }: { hit: AlertRuleSearchHit }) {
 
 /**
  * GMA-only Alert rule row for both Folders and List mode. Presentation-only: everything shown
- * comes from the search hit plus the folder-path and full-rule lookups, which are deduplicated
- * queries rather than anything the row manages. Missing runtime state/health renders a neutral "status unavailable"
- * icon, never a healthy default (alerting.ruleStatusSync may not have populated them yet).
+ * comes from the search hit and the lookups its container passes in, so the row fetches nothing.
+ * Missing runtime state/health renders a neutral "status unavailable" icon, never a healthy
+ * default (alerting.ruleStatusSync may not have populated them yet).
  */
-export function AlertRuleRow({ hit, showFolderPath, actions }: AlertRuleRowProps) {
+export function AlertRuleRow({ hit, fullRule, folderPath, actions }: AlertRuleRowProps) {
   const titleId = useId();
-  const fullRule = useFullAlertRuleState(hit.uid);
-  const folderPath = useFolderPath(showFolderPath ? hit.folderUid : undefined);
 
   const pluginId = getPluginId(hit.labels);
   // Managed rules get the provisioning badge too: they are owned by something outside the UI.
@@ -76,7 +75,7 @@ export function AlertRuleRow({ hit, showFolderPath, actions }: AlertRuleRowProps
   // so a component that renders null would still leave a stray `|`.
   const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
   const hasTotals = Object.values(hit.totals).some((total) => total !== undefined);
-  const hasDisplayLabels = Object.keys(hit.labels).some((key) => key !== GRAFANA_ORIGIN_LABEL);
+  const hasDisplayLabels = Object.keys(getDisplayLabels(hit.labels)).length > 0;
 
   return (
     <RuleListItem

@@ -7,6 +7,7 @@ import { Button, type Column, EmptyState, InteractiveTable, LoadingPlaceholder, 
 import { AnnoKeyFolder, AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
 
 import { useFolderPath } from '../folder-browsing/folderLookups';
+import { FolderPath } from '../rule-row/FolderPath';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 
@@ -29,7 +30,7 @@ function FolderPathCell({ folderUid }: { folderUid: string | undefined }) {
     return <>{t('alerting.deleted-rules.unknown', 'Unknown')}</>;
   }
   // A folder that cannot be resolved keeps its UID rather than disabling the row.
-  return <>{path?.join(' / ') || folderUid}</>;
+  return path && path.length > 0 ? <FolderPath segments={path} /> : <>{folderUid}</>;
 }
 
 function DeletedByCell({

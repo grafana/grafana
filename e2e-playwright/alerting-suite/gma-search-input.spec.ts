@@ -36,8 +36,6 @@ const journeys: Array<{
 ];
 
 test.describe('Search input draft text', () => {
-  test.slow();
-
   for (const { kind, typed, canonical, leaves } of journeys) {
     test(`SEARCH-1 (${kind}): Enter applies a multi-token query and the input keeps the typed text`, async ({
       page,

@@ -65,8 +65,6 @@ const healthCases: Array<{
 ];
 
 test.describe('Recording rules: health filter', () => {
-  test.slow();
-
   for (const { token, apiValues, matching, other } of healthCases) {
     test(`SEARCH-5: ${token} shows rules with ${apiValues.join(' or ')} health and leaves out other health and rules without status`, async ({
       page,
@@ -133,8 +131,6 @@ test.describe('Recording rules: health filter', () => {
 });
 
 test.describe('Recording rules: status icon', () => {
-  test.slow();
-
   test('REC-3: each row shows the icon for its seeded health, and Status unavailable when it has none', async ({
     page,
     request,
@@ -154,7 +150,7 @@ test.describe('Recording rules: status icon', () => {
     await list.goto(runScope(run));
 
     for (const { name, icon } of rules) {
-      await expect(list.statusIcon(titleOf(run, name), icon), `${name} shows ${icon}`).toBeVisible({ timeout: 20_000 });
+      await expect(list.statusIcon(titleOf(run, name), icon), `${name} shows ${icon}`).toBeVisible();
     }
   });
 });

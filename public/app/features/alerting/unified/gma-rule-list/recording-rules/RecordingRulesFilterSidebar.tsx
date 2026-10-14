@@ -1,23 +1,23 @@
 import { useId } from 'react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, Input, Stack } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 
+import { FilterSidebar, type SidebarControl } from '../rule-search/FilterSidebar';
 import { type Criteria } from '../rule-search/criteria';
 import { type CriteriaIssue } from '../rule-search/criteriaIssues';
 import {
-  FilterSidebarContainer,
   HealthField,
   InvalidTokenNote,
   LabelMatchersEditor,
   RuleTitleField,
-  SidebarField,
-  SidebarSection,
   SwitchField,
 } from '../rule-search/filterSidebarPrimitives';
 import { DataSourceMultiFilter, FolderMultiFilter } from '../rule-search/multiValueFilters';
+import { recordingTokens } from '../rule-search/recordingTokens';
+import { TOKEN_KEYS } from '../rule-search/tokens';
 
 export interface RecordingRulesFilterSidebarProps {
   criteria: Criteria;
@@ -38,87 +38,80 @@ export function RecordingRulesFilterSidebar({
   issues = [],
 }: RecordingRulesFilterSidebarProps) {
   const folderPickerId = useId();
+  const targetDataSourcePickerId = useId();
   const invalidNamespace = issues.some((issue) => issue.key === 'namespace');
   const invalidDataSource = issues.some((issue) => issue.key === 'datasource');
 
+  const controls: Record<string, SidebarControl> = {
+    [TOKEN_KEYS.rule]: { render: () => <RuleTitleField criteria={criteria} onChange={onChange} /> },
+    [TOKEN_KEYS.label]: {
+      render: () => (
+        <LabelMatchersEditor labels={criteria.labels} onChange={(labels) => onChange({ ...criteria, labels })} />
+      ),
+    },
+    [TOKEN_KEYS.namespace]: {
+      controlId: folderPickerId,
+      note: invalidNamespace && <InvalidTokenNote />,
+      render: () => (
+        <FolderMultiFilter
+          id={folderPickerId}
+          values={criteria.namespaces}
+          invalid={invalidNamespace}
+          onChange={(namespaces) => onChange({ ...criteria, namespaces })}
+        />
+      ),
+    },
+    [TOKEN_KEYS.datasource]: {
+      note: invalidDataSource && <InvalidTokenNote />,
+      render: () => (
+        <DataSourceMultiFilter
+          values={criteria.dataSourceUids}
+          invalid={invalidDataSource}
+          onChange={(dataSourceUids) => onChange({ ...criteria, dataSourceUids })}
+        />
+      ),
+    },
+    [TOKEN_KEYS.plugins]: {
+      render: () => (
+        <SwitchField
+          label={t('alerting.gma-rule-list.search.property.hide-plugin-rules', 'Hide plugin rules')}
+          value={criteria.hidePluginRules}
+          onChange={(hidePluginRules) => onChange({ ...criteria, hidePluginRules })}
+        />
+      ),
+    },
+    [TOKEN_KEYS.metric]: {
+      render: () => (
+        <Input
+          aria-label={t('alerting.gma-rule-list.search.property.metric', 'Recorded metric')}
+          placeholder={t('alerting.gma-rule-list.search.metric-placeholder', 'Metric name (exact match)')}
+          value={criteria.metric ?? ''}
+          onChange={(e) => onChange({ ...criteria, metric: e.currentTarget.value || undefined })}
+        />
+      ),
+    },
+    [TOKEN_KEYS.targetDatasource]: {
+      render: () => (
+        <DataSourcePicker
+          inputId={targetDataSourcePickerId}
+          current={criteria.targetDataSourceUid}
+          noDefault
+          onClear={() => onChange({ ...criteria, targetDataSourceUid: undefined })}
+          onChange={(ds: DataSourceInstanceSettings) => onChange({ ...criteria, targetDataSourceUid: ds.uid })}
+        />
+      ),
+    },
+    [TOKEN_KEYS.health]: {
+      render: () => <HealthField value={criteria.health} onChange={(health) => onChange({ ...criteria, health })} />,
+    },
+  };
+
   return (
-    <FilterSidebarContainer>
-      <Stack direction="column" gap={0}>
-        <Stack direction="row" justifyContent="flex-end">
-          <Button size="sm" variant="primary" fill="text" onClick={onClear} disabled={!hasActiveFilters}>
-            <Trans i18nKey="alerting.gma-rule-list.search.clear-filters">Clear filters</Trans>
-          </Button>
-        </Stack>
-        <Stack direction="column" gap={2}>
-          <SidebarSection>
-            <RuleTitleField criteria={criteria} onChange={onChange} />
-            <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.labels">Labels</Trans>}>
-              <LabelMatchersEditor labels={criteria.labels} onChange={(labels) => onChange({ ...criteria, labels })} />
-            </SidebarField>
-          </SidebarSection>
-
-          <SidebarSection>
-            <SidebarField
-              label={<Trans i18nKey="alerting.gma-rule-list.search.property.folder">Folder</Trans>}
-              controlId={folderPickerId}
-              note={invalidNamespace && <InvalidTokenNote />}
-            >
-              <FolderMultiFilter
-                id={folderPickerId}
-                values={criteria.namespaces}
-                invalid={invalidNamespace}
-                onChange={(namespaces) => onChange({ ...criteria, namespaces })}
-              />
-            </SidebarField>
-            <SidebarField
-              label={<Trans i18nKey="alerting.gma-rule-list.search.property.datasource">Query data source</Trans>}
-              note={invalidDataSource && <InvalidTokenNote />}
-            >
-              <DataSourceMultiFilter
-                values={criteria.dataSourceUids}
-                invalid={invalidDataSource}
-                onChange={(dataSourceUids) => onChange({ ...criteria, dataSourceUids })}
-              />
-            </SidebarField>
-            <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.plugins">Plugin rules</Trans>}>
-              <SwitchField
-                label={t('alerting.gma-rule-list.search.property.hide-plugin-rules', 'Hide plugin rules')}
-                value={criteria.hidePluginRules}
-                onChange={(hidePluginRules) => onChange({ ...criteria, hidePluginRules })}
-              />
-            </SidebarField>
-          </SidebarSection>
-
-          <SidebarSection>
-            <SidebarField
-              label={<Trans i18nKey="alerting.gma-rule-list.search.property.metric">Recorded metric</Trans>}
-            >
-              <Input
-                aria-label={t('alerting.gma-rule-list.search.property.metric', 'Recorded metric')}
-                placeholder={t('alerting.gma-rule-list.search.metric-placeholder', 'Metric name (exact match)')}
-                value={criteria.metric ?? ''}
-                onChange={(e) => onChange({ ...criteria, metric: e.currentTarget.value || undefined })}
-              />
-            </SidebarField>
-            <SidebarField
-              label={
-                <Trans i18nKey="alerting.gma-rule-list.search.property.target-datasource">Target data source</Trans>
-              }
-            >
-              <DataSourcePicker
-                current={criteria.targetDataSourceUid}
-                noDefault
-                onClear={() => onChange({ ...criteria, targetDataSourceUid: undefined })}
-                onChange={(ds: DataSourceInstanceSettings) => onChange({ ...criteria, targetDataSourceUid: ds.uid })}
-              />
-            </SidebarField>
-          </SidebarSection>
-
-          <SidebarSection>
-            <HealthField value={criteria.health} onChange={(health) => onChange({ ...criteria, health })} />
-          </SidebarSection>
-        </Stack>
-      </Stack>
-    </FilterSidebarContainer>
+    <FilterSidebar
+      definitions={recordingTokens}
+      controls={controls}
+      onClear={onClear}
+      hasActiveFilters={hasActiveFilters}
+    />
   );
 }

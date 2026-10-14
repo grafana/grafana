@@ -154,12 +154,15 @@ function SearchHelp({ tokens }: { tokens: TokenDefinition[] }) {
         </Trans>
       </Text>
       <hr />
-      <Grid columns={2} gap={1} alignItems="center">
+      <Grid columns={3} gap={1} alignItems="center">
         <Text weight="bold">
           <Trans i18nKey="alerting.gma-rule-list.search.help-filter-type">Filter type</Trans>
         </Text>
         <Text weight="bold">
           <Trans i18nKey="alerting.gma-rule-list.search.help-expression">Expression</Trans>
+        </Text>
+        <Text weight="bold">
+          <Trans i18nKey="alerting.gma-rule-list.search.help-availability">Availability</Trans>
         </Text>
         {tokens.map((token) => (
           <HelpRow key={token.key} definition={token} />
@@ -172,8 +175,44 @@ function SearchHelp({ tokens }: { tokens: TokenDefinition[] }) {
 function HelpRow({ definition }: { definition: TokenDefinition }) {
   return (
     <>
-      <Text element="span">{definition.description}</Text>
+      <Stack direction="column" gap={0.25}>
+        <Text weight="medium">{definition.label()}</Text>
+        <Text element="span" variant="bodySmall" color="secondary">
+          {definition.description()}
+        </Text>
+      </Stack>
       <code>{definition.example}</code>
+      <HelpAvailability definition={definition} />
     </>
+  );
+}
+
+function HelpAvailability({ definition }: { definition: TokenDefinition }) {
+  const { availability, unavailableValues = [] } = definition;
+
+  if (availability.status === 'unavailable') {
+    return (
+      <Stack direction="column" gap={0.25}>
+        <Text element="span" color="warning">
+          <Trans i18nKey="alerting.gma-rule-list.search.help-unavailable">Not available yet</Trans>
+        </Text>
+        <Text element="span" variant="bodySmall" color="secondary">
+          {availability.reason()}
+        </Text>
+      </Stack>
+    );
+  }
+
+  return (
+    <Stack direction="column" gap={0.25}>
+      <Text element="span">
+        <Trans i18nKey="alerting.gma-rule-list.search.help-available">Available</Trans>
+      </Text>
+      {unavailableValues.map(({ value, reason }) => (
+        <Text key={value} element="span" variant="bodySmall" color="secondary">
+          {reason()}
+        </Text>
+      ))}
+    </Stack>
   );
 }

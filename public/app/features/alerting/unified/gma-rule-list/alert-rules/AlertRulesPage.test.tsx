@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { type DataSourceSrv, locationService, reportInteraction, setDataSourceSrv } from '@grafana/runtime';
@@ -835,6 +835,171 @@ describe('AlertRulesPage search and filters', () => {
     expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeEnabled();
+  });
+
+  // SEARCH-2
+  it('Back and Forward restore the search input, the sidebar, the mode and the request for each applied query', async () => {
+    const user = userEvent.setup();
+    render(<AlertRulesPage />);
+    await user.type(await screen.findByRole('textbox', { name: 'Search' }), 'cpu{Enter}');
+    await screen.findByText('CPU high');
+    await user.click(screen.getByRole('switch', { name: 'Hide plugin rules' }));
+    await waitFor(() => expect(urlSearchParams().get('search')).toBe('plugins:hide cpu'));
+
+    act(() => locationService.getHistory().goBack());
+
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('cpu'));
+    expect(screen.getByRole('switch', { name: 'Hide plugin rules' })).not.toBeChecked();
+    await waitFor(() => expect(whereOf(ruleSearchBodies.at(-1))).toEqual({ text: { value: 'cpu' } }));
+
+    act(() => locationService.getHistory().goBack());
+
+    expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('');
+    expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
+
+    act(() => locationService.getHistory().goForward());
+    act(() => locationService.getHistory().goForward());
+
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('plugins:hide cpu'));
+    expect(screen.getByRole('switch', { name: 'Hide plugin rules' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'List' })).toBeChecked();
+    await waitFor(() =>
+      expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+        and: [
+          { text: { value: 'cpu' } },
+          { regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true } },
+        ],
+      })
+    );
+  });
+
+  // SEARCH-2
+  it('rendering again from the URL restores the input, the sidebar and the request', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<AlertRulesPage />);
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Search' }),
+      'cpu namespace:folder-1 label:team=api paused:false{Enter}'
+    );
+    await screen.findByText('CPU high');
+    const { pathname, search } = locationService.getLocation();
+    unmount();
+    ruleSearchBodies.length = 0;
+
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: [`${pathname}${search}`] } });
+
+    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue(
+      'namespace:folder-1 label:team=api paused:false cpu'
+    );
+    expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('team');
+    expect(screen.getByRole('textbox', { name: 'Label value' })).toHaveValue('api');
+    expect(screen.getByRole('combobox', { name: 'Paused' })).toHaveValue('Not paused');
+    expect(await screen.findByRole('button', { name: 'Remove Team Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'List' })).toBeChecked();
+    expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+      and: [
+        { text: { value: 'cpu' } },
+        { filter: { field: 'folder', operator: 'In', values: ['folder-1'] } },
+        { filter: { field: 'labels', operator: 'In', values: ['team=api'] } },
+        { filter: { field: 'paused', operator: 'In', values: ['false'] } },
+      ],
+    });
+  });
+
+  // SAVE-1
+  describe('saved searches', () => {
+    const RECORDING_SEARCH = {
+      id: 'rec-1',
+      name: 'Recording search',
+      query: 'health:error',
+      isDefault: false,
+      createdAt: 1,
+    };
+
+    async function readCollection(key: string): Promise<Array<{ name: string; query: string; isDefault: boolean }>> {
+      return JSON.parse((await new UserStorage('alerting').getItem(key)) ?? '[]');
+    }
+
+    async function seed(key: string, searches: object[]) {
+      await new UserStorage('alerting').setItem(key, JSON.stringify(searches));
+    }
+
+    async function openSavedSearches(user: ReturnType<typeof userEvent.setup>) {
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
+      await user.click(screen.getByRole('button', { name: 'Saved searches' }));
+    }
+
+    it('saves, renames, sets as default and deletes a search in the Alert collection and leaves the Recording one untouched', async () => {
+      const user = userEvent.setup();
+      await seed('recordingRulesSavedSearches', [RECORDING_SEARCH]);
+      render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=cpu&view=list'] } });
+      await screen.findByText('CPU high');
+      await openSavedSearches(user);
+
+      await user.click(await screen.findByRole('button', { name: 'Save current search' }));
+      await user.type(await screen.findByPlaceholderText('Enter a name...'), 'CPU rules');
+      await user.click(screen.getByRole('button', { name: 'Save' }));
+
+      expect(await screen.findByRole('link', { name: 'CPU rules' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Recording search' })).not.toBeInTheDocument();
+      expect(await readCollection('alertRulesSavedSearches')).toEqual([
+        expect.objectContaining({ name: 'CPU rules', query: 'cpu', isDefault: false }),
+      ]);
+
+      await user.click(screen.getByRole('button', { name: 'Actions' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Rename' }));
+      const nameInput = await screen.findByDisplayValue('CPU rules');
+      await user.clear(nameInput);
+      await user.type(nameInput, 'High CPU{Enter}');
+
+      expect(await screen.findByRole('link', { name: 'High CPU' })).toBeInTheDocument();
+      expect(await readCollection('alertRulesSavedSearches')).toEqual([
+        expect.objectContaining({ name: 'High CPU', query: 'cpu' }),
+      ]);
+
+      await user.click(screen.getByRole('button', { name: 'Actions' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Set as default' }));
+
+      await waitFor(async () =>
+        expect(await readCollection('alertRulesSavedSearches')).toEqual([
+          expect.objectContaining({ name: 'High CPU', isDefault: true }),
+        ])
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Actions' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+      await user.click(await screen.findByRole('button', { name: 'Delete' }));
+
+      await waitFor(async () => expect(await readCollection('alertRulesSavedSearches')).toEqual([]));
+      expect(await readCollection('recordingRulesSavedSearches')).toEqual([RECORDING_SEARCH]);
+    });
+
+    it('applying a saved search updates the input, the sidebar, the URL and the request, and lists only Alert searches', async () => {
+      const user = userEvent.setup();
+      await seed('alertRulesSavedSearches', [
+        { id: 'alert-1', name: 'Running rules', query: 'cpu paused:false', isDefault: false, createdAt: 1 },
+      ]);
+      await seed('recordingRulesSavedSearches', [RECORDING_SEARCH]);
+      render(<AlertRulesPage />);
+      expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+      await openSavedSearches(user);
+
+      expect(await screen.findByRole('link', { name: 'Running rules' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Recording search' })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('link', { name: 'Running rules' }));
+
+      expect(await screen.findByText('CPU high')).toBeInTheDocument();
+      expect(urlSearchParams().get('search')).toBe('paused:false cpu');
+      expect(urlSearchParams().get('view')).toBe('list');
+      expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('paused:false cpu');
+      expect(screen.getByRole('combobox', { name: 'Paused' })).toHaveValue('Not paused');
+      expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+        and: [{ text: { value: 'cpu' } }, { filter: { field: 'paused', operator: 'In', values: ['false'] } }],
+      });
+    });
   });
 
   // SAVE-3

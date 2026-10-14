@@ -1,12 +1,28 @@
+import { t } from '@grafana/i18n';
+
 import { type Criteria } from './criteria';
 
+export type TokenAvailability = { status: 'supported' } | { status: 'unavailable'; reason: () => string };
+
+/**
+ * One filter, described once. The search input's parser and help and the filter sidebar are all
+ * derived from these definitions, and the sidebar lists its fields in the order the page's
+ * definitions are listed. Text is produced lazily so it is translated when shown, not when the
+ * module loads.
+ */
 export interface TokenDefinition {
   /** The `key` in `key:value`, e.g. `label`, `namespace`. */
   key: string;
-  description: string;
+  /** Name of the filter, shared by the help and the sidebar field. */
+  label: () => string;
+  description: () => string;
   example: string;
   /** Whether the token may repeat (e.g. multiple `label:` or `datasource:` tokens). */
   multiValue?: boolean;
+  /** Whether the search can apply this filter at all. */
+  availability: TokenAvailability;
+  /** Values of an otherwise available filter that the search cannot apply yet. */
+  unavailableValues?: Array<{ value: string; reason: () => string }>;
 }
 
 /** A single token as produced by the tokenizer, with its source span for later caret-based
@@ -55,44 +71,66 @@ export const TOKEN_KEYS = {
   targetDatasource: 'targetDatasource',
 } as const;
 
-export const sharedDefinitions: TokenDefinition[] = [
-  {
+const SUPPORTED: TokenAvailability = { status: 'supported' };
+
+export const sharedDefinitions = {
+  rule: {
     key: TOKEN_KEYS.rule,
-    description: 'Rule title text search (equivalent to free text).',
+    label: () => t('alerting.gma-rule-list.search.property.rule-name', 'Rule name'),
+    description: () =>
+      t('alerting.gma-rule-list.search.help.rule', 'Rule title text search (equivalent to free text).'),
     example: 'rule:cpu-high',
     multiValue: true,
+    availability: SUPPORTED,
   },
-  {
+  namespace: {
     key: TOKEN_KEYS.namespace,
-    description: 'Folder (canonical value is the folder UID).',
+    label: () => t('alerting.gma-rule-list.search.property.folder', 'Folder'),
+    description: () => t('alerting.gma-rule-list.search.help.namespace', 'Folder (canonical value is the folder UID).'),
     example: 'namespace:folder-uid',
     multiValue: true,
+    availability: SUPPORTED,
   },
-  {
+  datasource: {
     key: TOKEN_KEYS.datasource,
-    description: 'Query data source referenced by the rule (canonical value is the UID).',
+    label: () => t('alerting.gma-rule-list.search.property.datasource', 'Query data source'),
+    description: () =>
+      t(
+        'alerting.gma-rule-list.search.help.datasource',
+        'Query data source referenced by the rule (canonical value is the UID).'
+      ),
     example: 'datasource:ds-uid',
     multiValue: true,
+    availability: SUPPORTED,
   },
-  {
+  label: {
     key: TOKEN_KEYS.label,
-    description:
-      'Label matcher: label:key (exists), label:!key (absent), label:key=value (equal), ' +
-      'label:key!=value (not equal), label:key=~re (regex), label:key!~re (not regex).',
+    label: () => t('alerting.gma-rule-list.search.property.labels', 'Labels'),
+    description: () =>
+      t(
+        'alerting.gma-rule-list.search.help.label',
+        'Label matcher: label:key (exists), label:!key (absent), label:key=value (equal), label:key!=value (not equal), label:key=~re (regex), label:key!~re (not regex).'
+      ),
     example: 'label:team=api',
     multiValue: true,
+    availability: SUPPORTED,
   },
-  {
+  plugins: {
     key: TOKEN_KEYS.plugins,
-    description: 'plugins:hide excludes rules created by plugins.',
+    label: () => t('alerting.gma-rule-list.search.property.plugins', 'Plugin rules'),
+    description: () =>
+      t('alerting.gma-rule-list.search.help.plugins', 'plugins:hide excludes rules created by plugins.'),
     example: 'plugins:hide',
+    availability: SUPPORTED,
   },
-  {
+  health: {
     key: TOKEN_KEYS.health,
-    description: 'Rule health: ok, nodata, error or unknown.',
+    label: () => t('alerting.gma-rule-list.search.property.health', 'Health'),
+    description: () => t('alerting.gma-rule-list.search.help.health', 'Rule health: ok, nodata, error or unknown.'),
     example: 'health:error',
+    availability: SUPPORTED,
   },
-];
+} satisfies Record<string, TokenDefinition>;
 
 export function buildTokenRegistry(definitions: TokenDefinition[]): Map<string, TokenDefinition> {
   return new Map(definitions.map((definition) => [definition.key, definition]));

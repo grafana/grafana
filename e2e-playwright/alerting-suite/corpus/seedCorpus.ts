@@ -32,14 +32,16 @@ const SUBJECTS = [
   'Queue depth',
 ];
 
-const ONE_EACH_FOLDER_COUNT = 40;
-const DENSE_FOLDER_COUNT = 80;
+const DENSE_RULE_COUNT = 80;
+const ONE_EACH_FOLDER_COUNT = 39;
+// The dense folder, the one-of-each folders, plus one folder holding a single rule of only that kind.
+const RULES_PER_KIND = DENSE_RULE_COUNT + ONE_EACH_FOLDER_COUNT + 1;
 const CONCURRENCY = 6;
 
 /** Runs `items` through `worker` with at most `CONCURRENCY` in flight at once — the shared
  * dev server's SQLite connection pool is small enough that full parallelism just trades write
  * latency for SQLITE_BUSY retries instead of finishing faster. */
-async function mapBounded<T, R>(items: T[], worker: (item: T, index: number) => Promise<R>): Promise<R[]> {
+export async function mapBounded<T, R>(items: T[], worker: (item: T, index: number) => Promise<R>): Promise<R[]> {
   const results = new Array<R>(items.length);
   let next = 0;
   async function runNext(): Promise<void> {
@@ -160,20 +162,21 @@ function metricName(folderIndex: number, ruleIndex: number, runSuffix: string): 
 }
 
 /**
- * Seeds the shared read-only corpus: one dense folder (80 Alert + 80 Recording rules), 40
- * folders with one of each (one of them nested under another), and one empty folder — 120 of
- * each rule kind in total, every rule labeled with a unique run marker so read-only tests can
- * assert against that marker instead of an organization-wide total.
+ * Seeds the shared read-only corpus: 43 folders — one dense folder (80 Alert + 80 Recording
+ * rules), 39 with one of each (one of them nested under another), one with a single Alert rule,
+ * one with a single Recording rule, and one empty folder. That is 120 rules of each kind, every
+ * one labeled with a unique run marker so read-only tests can assert against that marker instead
+ * of an organization-wide total.
  */
 export async function seedCorpus(request: APIRequestContext, namespace: string): Promise<CorpusManifest> {
   const startedAt = Date.now();
   const runMarker = crypto.randomUUID().slice(0, 8);
   const runSuffix = runMarker;
 
-  const folderUids = Array.from({ length: 42 }, (_, i) => `e2e-corpus-${runSuffix}-f${i}`);
+  const folderUids = Array.from({ length: 1 + ONE_EACH_FOLDER_COUNT + 3 }, (_, i) => `e2e-corpus-${runSuffix}-f${i}`);
   const [denseFolderUid, ...restFolderUids] = folderUids;
   const oneEachFolderUids = restFolderUids.slice(0, ONE_EACH_FOLDER_COUNT);
-  const [emptyFolderUid] = restFolderUids.slice(ONE_EACH_FOLDER_COUNT);
+  const [alertOnlyFolderUid, recordingOnlyFolderUid, emptyFolderUid] = restFolderUids.slice(ONE_EACH_FOLDER_COUNT);
   // Nest the second one-each folder under the first, so folder-path assertions have a real
   // multi-level path to check, distinct from every flat top-level folder.
   const nestedFolderUid = oneEachFolderUids[1];
@@ -200,17 +203,17 @@ export async function seedCorpus(request: APIRequestContext, namespace: string):
     uid,
     title: folderTitle(index, runSuffix),
     parentUid: uid === nestedFolderUid ? nestedParentUid : undefined,
-    alertRuleUids: [],
-    recordingRuleUids: [],
+    alertRules: [],
+    recordingRules: [],
   }));
   const folderByUid = new Map(folders.map((f) => [f.uid, f]));
 
-  // One (folderUid, ruleIndex) task per rule, of both kinds — dense folder gets 80 of each,
-  // every other non-empty folder gets exactly 1 of each.
+  // One (folderUid, ruleIndex) task per rule of each kind: the dense folder gets 80, every
+  // one-of-each folder gets 1, and the single-kind folders get 1 of their own kind only.
   type RuleTask = { folderUid: string; folderIndex: number; ruleIndex: number };
   const alertTasks: RuleTask[] = [];
   const recordingTasks: RuleTask[] = [];
-  for (let r = 0; r < DENSE_FOLDER_COUNT; r++) {
+  for (let r = 0; r < DENSE_RULE_COUNT; r++) {
     alertTasks.push({ folderUid: denseFolderUid, folderIndex: 0, ruleIndex: r });
     recordingTasks.push({ folderUid: denseFolderUid, folderIndex: 0, ruleIndex: r });
   }
@@ -219,28 +222,32 @@ export async function seedCorpus(request: APIRequestContext, namespace: string):
     alertTasks.push({ folderUid: uid, folderIndex, ruleIndex: 0 });
     recordingTasks.push({ folderUid: uid, folderIndex, ruleIndex: 0 });
   });
+  alertTasks.push({ folderUid: alertOnlyFolderUid, folderIndex: ONE_EACH_FOLDER_COUNT + 1, ruleIndex: 0 });
+  recordingTasks.push({ folderUid: recordingOnlyFolderUid, folderIndex: ONE_EACH_FOLDER_COUNT + 2, ruleIndex: 0 });
 
   await mapBounded(alertTasks, async ({ folderUid, folderIndex, ruleIndex }, i) => {
     const title = ruleTitle(i, folderIndex, ruleIndex, runSuffix);
     const uid = await seedAlertRule(request, namespace, folderUid, title, runMarker);
-    folderByUid.get(folderUid)!.alertRuleUids.push(uid);
+    folderByUid.get(folderUid)!.alertRules.push({ uid, title });
   });
 
   await mapBounded(recordingTasks, async ({ folderUid, folderIndex, ruleIndex }, i) => {
     const title = ruleTitle(i, folderIndex, ruleIndex, runSuffix);
     const metric = metricName(folderIndex, ruleIndex, runSuffix);
     const uid = await seedRecordingRule(request, namespace, folderUid, title, metric, runMarker);
-    folderByUid.get(folderUid)!.recordingRuleUids.push(uid);
+    folderByUid.get(folderUid)!.recordingRules.push({ uid, title });
   });
 
   // A single marker-scoped readiness check covers the whole corpus cheaply, instead of one
   // rule-search poll per folder — search visibility, not the write, is what may lag here.
-  await waitForMarkerCount(request, namespace, 'alertrules', runMarker, DENSE_FOLDER_COUNT + ONE_EACH_FOLDER_COUNT);
-  await waitForMarkerCount(request, namespace, 'recordingrules', runMarker, DENSE_FOLDER_COUNT + ONE_EACH_FOLDER_COUNT);
+  await waitForMarkerCount(request, namespace, 'alertrules', runMarker, RULES_PER_KIND);
+  await waitForMarkerCount(request, namespace, 'recordingrules', runMarker, RULES_PER_KIND);
 
   return {
     runMarker,
     denseFolderUid,
+    alertOnlyFolderUid,
+    recordingOnlyFolderUid,
     emptyFolderUid,
     nestedFolderUid,
     folders,

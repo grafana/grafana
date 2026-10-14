@@ -1,11 +1,12 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { getAPIBaseURL } from '@grafana/api-clients';
 import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { useAssistant } from '@grafana/assistant';
 import { setBackendSrv } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
+import { appEvents } from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
@@ -31,7 +32,7 @@ const FOLDER_COUNTS_URL = `${getAPIBaseURL('folder.grafana.app', 'v1beta1')}/fol
 /** Stands in for a Folders-mode row, so a mutation's effect on folder counts is observable. */
 function FolderCountProbe() {
   const count = useFolderRecordingRuleCount('folder-uid-1');
-  return <div>{`Folder holds ${count ?? 'unknown'} rules`}</div>;
+  return <div>{`Folder holds ${count.status === 'loaded' ? count.count : 'unknown'} rules`}</div>;
 }
 
 function mockFolderCounts() {
@@ -110,6 +111,35 @@ describe('RecordingRuleActionsMenu', () => {
 
     expect(await screen.findByText('Folder holds 4 rules')).toBeInTheDocument();
     expect(capturedBody).toEqual({ spec: { paused: true } });
+  });
+
+  it('reports Copy link failure when the clipboard write rejects', async () => {
+    const emitSpy = jest.spyOn(appEvents, 'emit');
+
+    render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    const user = await openMenu();
+    jest.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+    await user.click(screen.getByRole('menuitem', { name: /copy link/i }));
+
+    await waitFor(() => expect(emitSpy).toHaveBeenCalledWith('alert-error', ['Could not copy URL to clipboard']));
+  });
+
+  it('reports Copy link failure when the clipboard is unavailable', async () => {
+    const emitSpy = jest.spyOn(appEvents, 'emit');
+
+    render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    const user = await openMenu();
+    const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    try {
+      await user.click(screen.getByRole('menuitem', { name: /copy link/i }));
+
+      await waitFor(() => expect(emitSpy).toHaveBeenCalledWith('alert-error', ['Could not copy URL to clipboard']));
+    } finally {
+      if (clipboard) {
+        Object.defineProperty(navigator, 'clipboard', clipboard);
+      }
+    }
   });
 
   it('REC-7: Delete failure preserves the row and leaves the folder counts as they were', async () => {
@@ -274,5 +304,106 @@ describe('RecordingRuleActionsMenu', () => {
 
     expect(screen.queryByRole('menuitem', { name: /silence/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /manage enrichments/i })).not.toBeInTheDocument();
+  });
+
+  describe('REC-8: Analyze sends the full Recording rule without inventing Alert state or routing', () => {
+    function mockAssistant(isAvailable: boolean) {
+      const openAssistant = jest.fn();
+      jest.mocked(useAssistant).mockReturnValue({
+        isLoading: false,
+        isAvailable,
+        openAssistant,
+      } as unknown as ReturnType<typeof useAssistant>);
+      return openAssistant;
+    }
+
+    afterEach(() => {
+      mockAssistant(false);
+    });
+
+    it('hides Analyze when the Assistant is unavailable', async () => {
+      mockAssistant(false);
+      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      await openMenu();
+
+      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Analyze rule' })).not.toBeInTheDocument();
+    });
+
+    it('hides Analyze while the full rule is not loaded, even when the Assistant is available', async () => {
+      mockAssistant(true);
+      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loading' }} />);
+      await openMenu();
+
+      expect(screen.getByRole('menuitem', { name: /^Delete/ })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Analyze rule' })).not.toBeInTheDocument();
+    });
+
+    it('shows Analyze when the Assistant is available', async () => {
+      mockAssistant(true);
+      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      await openMenu();
+
+      expect(screen.getByRole('menuitem', { name: 'Analyze rule' })).toBeInTheDocument();
+    });
+
+    it('opens the Assistant with the loaded rule definition and no alert state, instances or routing', async () => {
+      const openAssistant = mockAssistant(true);
+      const rule = buildRule({ labels: { team: 'infra' } });
+      rule.spec.expressions = { A: { model: { expr: 'avg(cpu)' } } as RecordingRule['spec']['expressions'][string] };
+      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      const user = await openMenu();
+
+      await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
+
+      expect(openAssistant).toHaveBeenCalledTimes(1);
+      const [{ prompt, context, origin, autoSend }] = openAssistant.mock.calls[0];
+      expect(origin).toBe('alerting/analyze-rule-menu-item');
+      expect(autoSend).toBe(true);
+      expect(prompt).toBe(
+        'Analyze the recording rule "CPU usage average (uid: rule-uid-1)", which records its query result as the metric "cpu_usage:avg" on data source "prometheus-uid". Labels: team="infra".'
+      );
+      expect(context).toEqual([
+        {
+          type: 'structured',
+          title: 'Recording: CPU usage average',
+          data: {
+            rule: {
+              name: 'rule-uid-1',
+              title: 'CPU usage average',
+              labels: { team: 'infra' },
+              expressions: { A: { model: { expr: 'avg(cpu)' } } },
+              metric: 'cpu_usage:avg',
+              targetDatasourceUID: 'prometheus-uid',
+            },
+          },
+        },
+      ]);
+    });
+
+    it('keeps server-reported status out of the Assistant payload', async () => {
+      const openAssistant = mockAssistant(true);
+      const rule = buildRule();
+      rule.status = {
+        health: 'Recording',
+        lastError: 'boom',
+        lastEvaluationTime: '2026-01-01T00:00:00Z',
+      };
+      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      const user = await openMenu();
+
+      await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
+
+      const [{ prompt, context }] = openAssistant.mock.calls[0];
+      expect(Object.keys(context[0].data.rule).sort()).toEqual([
+        'expressions',
+        'labels',
+        'metric',
+        'name',
+        'targetDatasourceUID',
+        'title',
+      ]);
+      expect(prompt).not.toMatch(/firing|state|instance|routing|notification|contact point|boom/i);
+    });
   });
 });

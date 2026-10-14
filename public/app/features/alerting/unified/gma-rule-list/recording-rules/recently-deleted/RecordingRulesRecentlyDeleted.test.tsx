@@ -267,4 +267,159 @@ describe('RecordingRulesRecentlyDeleted', () => {
 
     expect(await screen.findByText('CPU usage average')).toBeInTheDocument();
   });
+
+  it('RDEL-2: reveals more than 40 rows from an oversized response in a 40-row chunk via Load more, without duplicate requests', async () => {
+    let requestCount = 0;
+    const rules = Array.from({ length: 65 }, (_, i) =>
+      buildRecordingRule({
+        metadata: { name: `rule-${i}` },
+        spec: { ...buildRecordingRule().spec, title: `Rule ${i}` },
+      })
+    );
+    mockRecordingRulesResponse({ items: rules, metadata: {} }, () => {
+      requestCount += 1;
+    });
+
+    const { user } = render(<RecordingRulesRecentlyDeleted />);
+
+    await screen.findByText('Rule 0');
+    expect(screen.getByText('Rule 39')).toBeInTheDocument();
+    expect(screen.queryByText('Rule 40')).not.toBeInTheDocument();
+    expect(requestCount).toBe(1);
+
+    await user.click(screen.getByRole('button', { name: /load more/i }));
+
+    await screen.findByText('Rule 40');
+    expect(screen.getByText('Rule 64')).toBeInTheDocument();
+    // The remaining rows came from the local buffer, so no second request was needed.
+    expect(requestCount).toBe(1);
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
+  });
+
+  it('RDEL-2: follows a metadata.continue token via Load more', async () => {
+    const requestedTokens: Array<string | null> = [];
+    server.use(
+      http.get(RECORDING_RULES_URL, ({ request }) => {
+        const continueToken = new URL(request.url).searchParams.get('continue');
+        requestedTokens.push(continueToken);
+        if (!continueToken) {
+          return HttpResponse.json({
+            items: [
+              buildRecordingRule({
+                metadata: { name: 'rule-page1' },
+                spec: { ...buildRecordingRule().spec, title: 'Page 1 rule' },
+              }),
+            ],
+            metadata: { continue: 'next-page-token' },
+          });
+        }
+        return HttpResponse.json({
+          items: [
+            buildRecordingRule({
+              metadata: { name: 'rule-page2' },
+              spec: { ...buildRecordingRule().spec, title: 'Page 2 rule' },
+            }),
+          ],
+          metadata: {},
+        });
+      })
+    );
+
+    const { user } = render(<RecordingRulesRecentlyDeleted />);
+
+    await screen.findByText('Page 1 rule');
+    await user.click(screen.getByRole('button', { name: /load more/i }));
+
+    await screen.findByText('Page 2 rule');
+    expect(screen.getByText('Page 1 rule')).toBeInTheDocument();
+    expect(requestedTokens).toEqual([null, 'next-page-token']);
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
+  });
+
+  it('STATE-4: loads the continuation page once when Load more is double clicked', async () => {
+    const tokens: Array<string | null> = [];
+    let releasePage: () => void = () => {};
+    const pageGate = new Promise<void>((resolve) => {
+      releasePage = resolve;
+    });
+    const rules = Array.from({ length: 40 }, (_, i) =>
+      buildRecordingRule({
+        metadata: { name: `rule-${i}` },
+        spec: { ...buildRecordingRule().spec, title: `Rule ${i}` },
+      })
+    );
+    server.use(
+      http.get(RECORDING_RULES_URL, async ({ request }) => {
+        const token = new URL(request.url).searchParams.get('continue');
+        tokens.push(token);
+        if (!token) {
+          return HttpResponse.json({ items: rules, metadata: { continue: 'next-page-token' } });
+        }
+        await pageGate;
+        return HttpResponse.json({
+          items: [
+            buildRecordingRule({
+              metadata: { name: 'rule-last' },
+              spec: { ...buildRecordingRule().spec, title: 'Last rule' },
+            }),
+          ],
+          metadata: {},
+        });
+      })
+    );
+
+    const { user } = render(<RecordingRulesRecentlyDeleted />);
+    await screen.findByText('Rule 0');
+    await user.dblClick(screen.getByRole('button', { name: /load more/i }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /load more/i })).toBeDisabled());
+    releasePage();
+
+    expect(await screen.findByText('Last rule')).toBeInTheDocument();
+    expect(tokens).toEqual([null, 'next-page-token']);
+  });
+
+  it('STATE-1: Retry after a failed Load more repeats the same continuation request and keeps the loaded rows', async () => {
+    const tokens: Array<string | null> = [];
+    let failNext = true;
+    const rules = Array.from({ length: 40 }, (_, i) =>
+      buildRecordingRule({
+        metadata: { name: `rule-${i}` },
+        spec: { ...buildRecordingRule().spec, title: `Rule ${i}` },
+      })
+    );
+    server.use(
+      http.get(RECORDING_RULES_URL, ({ request }) => {
+        const token = new URL(request.url).searchParams.get('continue');
+        tokens.push(token);
+        if (!token) {
+          return HttpResponse.json({ items: rules, metadata: { continue: 'next-page-token' } });
+        }
+        if (failNext) {
+          failNext = false;
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({
+          items: [
+            buildRecordingRule({
+              metadata: { name: 'rule-last' },
+              spec: { ...buildRecordingRule().spec, title: 'Last rule' },
+            }),
+          ],
+          metadata: {},
+        });
+      })
+    );
+
+    const { user } = render(<RecordingRulesRecentlyDeleted />);
+    await screen.findByText('Rule 0');
+    await user.click(screen.getByRole('button', { name: /load more/i }));
+    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Last rule')).toBeInTheDocument();
+    expect(screen.getByText('Rule 0')).toBeInTheDocument();
+    expect(tokens).toEqual([null, 'next-page-token', 'next-page-token']);
+  });
 });

@@ -23,8 +23,6 @@ function titleOf(run: string, name: string): string {
 }
 
 test.describe('Alert rules: token filters', () => {
-  test.slow();
-
   test('SEARCH-3: rule: matches rule titles', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high'));
@@ -252,8 +250,6 @@ test.describe('Alert rules: token filters', () => {
 });
 
 test.describe('Alert rules: sidebar filters', () => {
-  test.slow();
-
   test('SEARCH-3: Rule name filters by title', async ({ page, alertRules }) => {
     const run = newRunMarker();
     await alertRules.seedRule(rule(run, 'Checkout latency high'));

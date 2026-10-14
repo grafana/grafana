@@ -17,7 +17,7 @@ describe('parseLabelValue', () => {
     expect(parseLabelValue(raw)).toEqual(expected);
   });
 
-  it('SEARCH-L1: uses the earliest operator when a value contains more than one', () => {
+  it('SEARCH-3: uses the earliest operator when a value contains more than one', () => {
     // "!=" occurs before "=" in "a!=b=c", so it must not be mistaken for "a!" equal "b=c"
     expect(parseLabelValue('a!=b=c')).toEqual({ key: 'a', operator: 'notEqual', value: 'b=c' });
   });

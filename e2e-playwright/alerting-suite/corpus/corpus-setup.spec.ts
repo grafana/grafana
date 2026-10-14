@@ -16,6 +16,6 @@ test('seed the shared Alert/Recording rule corpus', async ({ request }) => {
 
   // eslint-disable-next-line no-console -- intentional: surfaces setup cost in the run log.
   console.log(
-    `[gma-corpus] seeded 120 Alert + 120 Recording rules across 42 folders (run ${manifest.runMarker}) in ${manifest.setupDurationMs}ms`
+    `[gma-corpus] seeded 120 Alert + 120 Recording rules across ${manifest.folders.length} folders (run ${manifest.runMarker}) in ${manifest.setupDurationMs}ms`
   );
 });

@@ -41,7 +41,7 @@ export function RuleStatusIcon({ kind, state, health, paused }: RuleStatusIconPr
   const mappedHealth = normalizedHealth ? HEALTH_MAP[normalizedHealth] : undefined;
   const mappedState = normalizedState ? STATE_MAP[normalizedState] : undefined;
 
-  // Alerts need a state or a failing health: health `ok` alone says nothing StateIcon can show for them.
+  // Alerts need a state or a failing health: health `ok` alone leaves StateIcon showing "unknown".
   const hasStatus =
     isPaused ||
     (kind === 'recording'

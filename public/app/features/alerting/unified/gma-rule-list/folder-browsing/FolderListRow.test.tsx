@@ -18,7 +18,7 @@ function mockParents(titles: string[]) {
 }
 
 describe('FolderListRow', () => {
-  it('shows the own title as a link, the parent path for a nested folder, and the pluralized count', async () => {
+  it('VIS-2: shows the own title as a link, the parent path for a nested folder, and the pluralized count', async () => {
     mockParents(['Platform', 'Infra', 'Kubernetes']);
     render(
       <ul>
@@ -26,7 +26,7 @@ describe('FolderListRow', () => {
           folderUid="k8s"
           title="Kubernetes"
           kind="alert"
-          ruleCount={21}
+          count={{ status: 'loaded', count: 21 }}
           expanded={false}
           onToggle={jest.fn()}
         />
@@ -51,7 +51,7 @@ describe('FolderListRow', () => {
           folderUid="root"
           title="Root"
           kind="recording"
-          ruleCount={1}
+          count={{ status: 'loaded', count: 1 }}
           expanded={false}
           onToggle={jest.fn()}
         />
@@ -70,7 +70,7 @@ describe('FolderListRow', () => {
           folderUid="root"
           title="Root"
           kind="alert"
-          ruleCount={undefined}
+          count={{ status: 'loading' }}
           expanded={false}
           onToggle={jest.fn()}
         />
@@ -81,12 +81,40 @@ describe('FolderListRow', () => {
     expect(screen.queryByText('–')).not.toBeInTheDocument();
   });
 
+  it('shows an unavailable message with a Retry that calls the lookup retry when the count failed', async () => {
+    mockParents(['Root']);
+    const retry = jest.fn();
+    const { user } = render(
+      <ul>
+        <FolderListRow
+          folderUid="root"
+          title="Root"
+          kind="alert"
+          count={{ status: 'error', retry }}
+          expanded={false}
+          onToggle={jest.fn()}
+        />
+      </ul>
+    );
+
+    expect(screen.getByText('Count unavailable')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retry loading the rule count of Root' }));
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
+
   it('toggles through the chevron button only and renders children only while expanded', async () => {
     mockParents(['Root']);
     const onToggle = jest.fn();
     const { user, rerender } = render(
       <ul>
-        <FolderListRow folderUid="root" title="Root" kind="alert" ruleCount={2} expanded={false} onToggle={onToggle}>
+        <FolderListRow
+          folderUid="root"
+          title="Root"
+          kind="alert"
+          count={{ status: 'loaded', count: 2 }}
+          expanded={false}
+          onToggle={onToggle}
+        >
           <li>child rule</li>
         </FolderListRow>
       </ul>
@@ -98,7 +126,14 @@ describe('FolderListRow', () => {
 
     rerender(
       <ul>
-        <FolderListRow folderUid="root" title="Root" kind="alert" ruleCount={2} expanded onToggle={onToggle}>
+        <FolderListRow
+          folderUid="root"
+          title="Root"
+          kind="alert"
+          count={{ status: 'loaded', count: 2 }}
+          expanded
+          onToggle={onToggle}
+        >
           <li>child rule</li>
         </FolderListRow>
       </ul>

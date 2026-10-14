@@ -1,9 +1,5 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 
-import { selectors } from '@grafana/e2e-selectors';
-
-import { gotoResilient } from '../waitForAppLoad';
-
 export type RuleListKind = 'alert' | 'recording';
 
 export type SearchLeaf = Record<string, unknown>;
@@ -33,9 +29,12 @@ export function filterLeaf(field: string, operator: 'In' | 'NotIn', values: stri
   return { filter: { field, operator, values } };
 }
 
-type LabelOperator = '=' | '!=' | '=~' | '!~' | 'exists' | 'absent';
+/** The search that limits a list to these folders; Folders mode supports no other filter. */
+export function folderScope(...folderUids: string[]): string {
+  return folderUids.map((uid) => `namespace:${uid}`).join(' ');
+}
 
-const LONG_WAIT = 20_000;
+type LabelOperator = '=' | '!=' | '=~' | '!~' | 'exists' | 'absent';
 
 /**
  * The Alert and Recording rule pages: search input, filter sidebar and result rows, plus a record
@@ -67,8 +66,8 @@ export class RuleListPage {
     if (search) {
       params.set('search', search);
     }
-    await gotoResilient(this.page, `/alerting/rules/${this.kind}?${params.toString()}`);
-    await expect(this.searchInput).toBeVisible({ timeout: LONG_WAIT });
+    await this.page.goto(`/alerting/rules/${this.kind}?${params.toString()}`);
+    await expect(this.searchInput).toBeVisible();
   }
 
   async search(text: string): Promise<void> {
@@ -85,20 +84,17 @@ export class RuleListPage {
     await expect
       .poll(() => this.searchBodies.flatMap(searchLeaves), {
         message: `a ${this.kind} search request containing ${JSON.stringify(leaf)}`,
-        timeout: LONG_WAIT,
       })
       .toContainEqual(leaf);
   }
 
   async expectRequestFields(fields: string[]): Promise<void> {
-    await expect
-      .poll(() => this.searchBodies.at(-1)?.fields ?? [], { timeout: LONG_WAIT })
-      .toEqual(expect.arrayContaining(fields));
+    await expect.poll(() => this.searchBodies.at(-1)?.fields ?? []).toEqual(expect.arrayContaining(fields));
   }
 
   async expectSearchParam(expected: string | RegExp): Promise<void> {
     await expect
-      .poll(() => new URL(this.page.url()).searchParams.get('search') ?? '', { timeout: LONG_WAIT })
+      .poll(() => new URL(this.page.url()).searchParams.get('search') ?? '')
       .toEqual(typeof expected === 'string' ? expect.stringContaining(expected) : expect.stringMatching(expected));
   }
 
@@ -106,15 +102,71 @@ export class RuleListPage {
     return this.page.getByRole('link', { name: title, exact: true });
   }
 
+  // A rule row is a list item named by its title. Filtering list items by the title link instead would
+  // also match an expanded folder's own row in Folders mode.
   ruleRow(title: string): Locator {
-    return this.page.getByRole('listitem').filter({ has: this.ruleLink(title) });
+    return this.page.getByRole('listitem', { name: title, exact: true });
+  }
+
+  get newRuleLink(): Locator {
+    return this.page.getByRole('link', { name: this.kind === 'alert' ? 'New alert rule' : 'New recording rule' });
+  }
+
+  editLink(title: string): Locator {
+    return this.ruleRow(title).getByRole('link', { name: 'Edit', exact: true });
+  }
+
+  async openRowMenu(title: string): Promise<void> {
+    await this.rowMoreButton(title).click();
+  }
+
+  // Opens Folders mode, which is the page's default view, with an optional applied search.
+  async gotoFolders(search?: string): Promise<void> {
+    const params = new URLSearchParams();
+    if (search) {
+      params.set('search', search);
+    }
+    const query = params.size > 0 ? `?${params.toString()}` : '';
+    await this.page.goto(`/alerting/rules/${this.kind}${query}`);
+    await expect(this.page.getByRole('radio', { name: 'Folders' })).toBeChecked();
+  }
+
+  // Folder rows are the list items that carry an expand or collapse control.
+  get folderRows(): Locator {
+    return this.page
+      .getByRole('listitem')
+      .filter({ has: this.page.getByRole('button', { name: /^(Expand|Collapse) / }) });
+  }
+
+  folderRow(title: string): Locator {
+    return this.folderRows.filter({ has: this.page.getByRole('link', { name: title, exact: true }) });
+  }
+
+  async toggleFolder(title: string): Promise<void> {
+    await this.folderRow(title)
+      .getByRole('button', { name: /^(Expand|Collapse) / })
+      .click();
+  }
+
+  // The titles of the folders on the shown page, in order. Meant for a page whose folders are all collapsed,
+  // since an expanded folder adds its rules' links.
+  async expectFolders(titles: string[]): Promise<void> {
+    await expect(this.folderRows.getByRole('link')).toHaveText(titles);
+  }
+
+  get previousButton(): Locator {
+    return this.page.getByRole('button', { name: 'Previous', exact: true });
+  }
+
+  get nextButton(): Locator {
+    return this.page.getByRole('button', { name: 'Next', exact: true });
   }
 
   // Shown rules are awaited first: the list loads asynchronously, so a rule's absence only means
   // something once the matching ones have rendered.
   async expectRules({ shown, hidden = [] }: { shown: string[]; hidden?: string[] }): Promise<void> {
     for (const title of shown) {
-      await expect(this.ruleLink(title)).toBeVisible({ timeout: LONG_WAIT });
+      await expect(this.ruleLink(title)).toBeVisible();
     }
     for (const title of hidden) {
       await expect(this.ruleLink(title)).toHaveCount(0);
@@ -173,14 +225,17 @@ export class RuleListPage {
   }
 
   async addFolder(title: string): Promise<void> {
-    await this.sidebarField('Folder').getByRole('button', { name: 'Folder', exact: true }).click();
-    await this.page.getByTestId(selectors.components.FolderPicker.input).fill(title);
+    const field = this.sidebarField('Folder');
+    await field.getByRole('button', { name: 'Folder', exact: true }).click();
+    // The opened picker's search box has no accessible name of its own (only a placeholder), so it
+    // is found as the field group's one combobox.
+    await field.getByRole('combobox').fill(title);
     await this.page.getByRole('treeitem', { name: title }).click();
   }
 
   async addDataSource(name: string, fieldLabel = 'Query data source'): Promise<void> {
     await this.sidebarField(fieldLabel).getByRole('combobox', { name: 'Select a data source' }).click();
-    await this.page.getByTestId(selectors.components.DataSourcePicker.dataSourceCard(name)).click();
+    await this.page.getByRole('option', { name, exact: true }).click();
   }
 
   async removeSelectedValue(label: string): Promise<void> {

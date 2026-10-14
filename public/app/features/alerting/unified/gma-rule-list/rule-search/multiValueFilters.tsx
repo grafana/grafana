@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataSourcePicker } from '@grafana/runtime';
@@ -48,12 +50,15 @@ export function FolderMultiFilter({ id, values, onChange, invalid }: FolderMulti
 
 /** Query data source filter with the same list-plus-picker shape as the folder filter. */
 export function DataSourceMultiFilter({ values, onChange, invalid }: MultiValueFilterProps) {
+  // The picker's default input id would repeat on a page with a second data source picker.
+  const pickerId = useId();
   return (
     <Stack direction="column" gap={0.5}>
       {values.map((uid) => (
         <DataSourceValue key={uid} uid={uid} onRemove={() => onChange(values.filter((value) => value !== uid))} />
       ))}
       <DataSourcePicker
+        inputId={pickerId}
         current={undefined}
         // Without noDefault, an empty `current` preselects the org default data source instead of
         // showing no selection, which here means "do not filter by data source".

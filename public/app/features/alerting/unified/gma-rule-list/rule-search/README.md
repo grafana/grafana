@@ -42,8 +42,13 @@ URL, but the input never takes the canonical form back, so typing does not reord
 - `criteria.ts` — the `Criteria` model every page works with.
 - `tokens.ts` — token types, `TOKEN_KEYS`, the shared `TokenDefinition`s and
   `buildTokenRegistry`.
-- `alertTokens.ts` / `recordingTokens.ts` — the per-page registries built from shared +
-  kind-specific `TokenDefinition`s (key, description, example, `availability`).
+- `alertTokens.ts` / `recordingTokens.ts` — each page's filter definitions, listed in the order
+  the sidebar shows them. A definition carries the filter's `key`, `label`, `description`,
+  `example` and `availability` (supported, or unavailable with a reason; a supported filter can
+  also list values it cannot search yet).
+- `RuleSearchInput.tsx` builds its help from the definitions, and `FilterSidebar.tsx` builds the
+  sidebar's fields, labels and order from the same ones; each page's sidebar supplies the control
+  for each definition key. Adding a filter means adding one definition and its control.
 - `parser.ts` — `parse(input, registry)`: `RawToken[]` → `{ tokens, criteria }`. Tokens the page
   cannot apply appear in `tokens` and in `criteria.invalid`.
 - `serializer.ts` — `serialize(criteria)`: canonical string form. `parse(serialize(c))`

@@ -22,6 +22,14 @@ export function getPluginId(labels: Record<string, string> | undefined): string 
   return isPluginManaged(labels) ? labels?.[GRAFANA_ORIGIN_LABEL]?.slice(PLUGIN_ORIGIN_PREFIX.length) : undefined;
 }
 
+/** The labels a row counts and lists: the plugin origin label is left out because the plugin badge shows it. */
+export function getDisplayLabels(labels: Record<string, string>): Record<string, string> {
+  if (!isPluginManaged(labels)) {
+    return labels;
+  }
+  return Object.fromEntries(Object.entries(labels).filter(([key]) => key !== GRAFANA_ORIGIN_LABEL));
+}
+
 /** The kinds the backend derives from legacy provenance, so these rules read as provisioned, not managed. */
 const CLASSIC_PROVISIONING_KINDS = new Set(['classic-file-provisioning', 'classic-api-provisioning']);
 

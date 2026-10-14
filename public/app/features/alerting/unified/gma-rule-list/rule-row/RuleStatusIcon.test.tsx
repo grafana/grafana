@@ -51,14 +51,29 @@ describe('RuleStatusIcon', () => {
   it.each([
     { name: 'no status at all', props: {} },
     { name: 'health Unknown without a state', props: { health: 'Unknown' } },
-    { name: 'health OK without a state', props: { health: 'OK' } },
   ])('renders "Status unavailable" instead of the unknown state icon for $name', ({ props }) => {
     render(<RuleStatusIcon kind="alert" {...props} />);
     expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
     expect(screen.queryByLabelText('Unknown')).not.toBeInTheDocument();
   });
 
-  it('renders "Status unavailable" for a recording rule without health', () => {
+  it('VIS-1: renders "Status unavailable" for an Alert rule with health OK but no state', () => {
+    render(<RuleStatusIcon kind="alert" health="OK" />);
+    expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
+    expect(screen.queryByLabelText('unknown')).not.toBeInTheDocument();
+  });
+
+  it('renders "Status unavailable" for an Alert rule with an unmapped state and health Unknown', () => {
+    render(<RuleStatusIcon kind="alert" state="Mystery" health="Unknown" />);
+    expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
+  });
+
+  it('lets paused win over health Unknown and an absent status', () => {
+    render(<RuleStatusIcon kind="alert" health="Unknown" paused />);
+    expect(screen.getByLabelText('Paused')).toBeInTheDocument();
+  });
+
+  it('VIS-1: renders "Status unavailable" for a recording rule without health', () => {
     render(<RuleStatusIcon kind="recording" />);
     expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
   });

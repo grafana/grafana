@@ -8,7 +8,7 @@ function withoutSpans(tokens: RawToken[]) {
 }
 
 describe('tokenize', () => {
-  it('SEARCH-P1: splits free text and key:value tokens', () => {
+  it('SEARCH-1: splits free text and key:value tokens', () => {
     expect(withoutSpans(tokenize('cpu namespace:folder-1 high'))).toEqual([
       { key: null, value: 'cpu', quoted: false, closed: true },
       { key: 'namespace', value: 'folder-1', quoted: false, closed: true },
@@ -16,39 +16,39 @@ describe('tokenize', () => {
     ]);
   });
 
-  it('SEARCH-P2: reads a quoted value as a single token', () => {
+  it('SEARCH-1: reads a quoted value as a single token', () => {
     expect(withoutSpans(tokenize('namespace:"My Folder"'))).toEqual([
       { key: 'namespace', value: 'My Folder', quoted: true, closed: true },
     ]);
   });
 
-  it('SEARCH-P3: reads quoted free text as a single token', () => {
+  it('SEARCH-1: reads quoted free text as a single token', () => {
     expect(withoutSpans(tokenize('"cpu high"'))).toEqual([
       { key: null, value: 'cpu high', quoted: true, closed: true },
     ]);
   });
 
-  it('SEARCH-P4: marks an unterminated quote as not closed, without dropping it', () => {
+  it('SEARCH-1: marks an unterminated quote as not closed, without dropping it', () => {
     expect(withoutSpans(tokenize('namespace:"My Fol'))).toEqual([
       { key: 'namespace', value: 'My Fol', quoted: true, closed: false },
     ]);
   });
 
-  it('SEARCH-P5: preserves an empty value after a trailing colon as a draft token', () => {
+  it('SEARCH-1: preserves an empty value after a trailing colon as a draft token', () => {
     expect(withoutSpans(tokenize('label:'))).toEqual([{ key: 'label', value: '', quoted: false, closed: true }]);
   });
 
-  it('SEARCH-P6: treats a colon with no valid key as part of a free-text word', () => {
+  it('SEARCH-1: treats a colon with no valid key as part of a free-text word', () => {
     expect(withoutSpans(tokenize('1:2:3'))).toEqual([{ key: null, value: '1:2:3', quoted: false, closed: true }]);
   });
 
-  it('SEARCH-P7: does not treat a key starting with a digit as a filter token', () => {
+  it('SEARCH-1: does not treat a key starting with a digit as a filter token', () => {
     expect(withoutSpans(tokenize('4chan:test'))).toEqual([
       { key: null, value: '4chan:test', quoted: false, closed: true },
     ]);
   });
 
-  it('SEARCH-P8: reports accurate source spans for each token', () => {
+  it('SEARCH-1: reports accurate source spans for each token', () => {
     expect(tokenize('cpu namespace:folder-1')).toEqual([
       { key: null, value: 'cpu', quoted: false, closed: true, start: 0, end: 3 },
       { key: 'namespace', value: 'folder-1', quoted: false, closed: true, start: 4, end: 22 },

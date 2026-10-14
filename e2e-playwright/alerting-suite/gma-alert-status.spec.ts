@@ -66,8 +66,6 @@ const healthCases: Array<{ token: string; apiValues: string[]; matching: AlertRu
 ];
 
 test.describe('Alert rules: state and health filters', () => {
-  test.slow();
-
   for (const { token, apiValues, matching, other } of stateCases) {
     test(`SEARCH-5: ${token} shows rules in ${apiValues.join(' or ')} and leaves out other states and rules without status`, async ({
       page,
@@ -208,8 +206,6 @@ test.describe('Alert rules: state and health filters', () => {
 });
 
 test.describe('Alert rules: status icon', () => {
-  test.slow();
-
   test('ALERT-4: each row shows the icon for its seeded status, and Status unavailable when it has none', async ({
     page,
     request,
@@ -236,14 +232,12 @@ test.describe('Alert rules: status icon', () => {
     await list.goto(runScope(run));
 
     for (const { name, icon } of rules) {
-      await expect(list.statusIcon(titleOf(run, name), icon), `${name} shows ${icon}`).toBeVisible({ timeout: 20_000 });
+      await expect(list.statusIcon(titleOf(run, name), icon), `${name} shows ${icon}`).toBeVisible();
     }
   });
 });
 
 test.describe('Alert rules: instance totals', () => {
-  test.slow();
-
   // Every count differs, and the zero is deliberate: a returned 0 is shown as 0, not hidden.
   test('ALERT-10: the row shows every seeded instance count, labelled, including a zero', async ({
     page,
@@ -266,7 +260,7 @@ test.describe('Alert rules: instance totals', () => {
     await list.goto(runScope(run));
 
     const row = list.ruleRow(titleOf(run, rule.name));
-    await expect(row.getByText('7 healthy')).toBeVisible({ timeout: 20_000 });
+    await expect(row.getByText('7 healthy')).toBeVisible();
     for (const count of ['0 firing', '2 pending', '3 recovering', '4 no data', '5 error']) {
       await expect(row.getByText(count), `${count} is shown`).toBeVisible();
     }
@@ -292,7 +286,7 @@ test.describe('Alert rules: instance totals', () => {
     await list.goto(runScope(run));
 
     const partialRow = list.ruleRow(titleOf(run, partial.name));
-    await expect(partialRow.getByText('2 firing')).toBeVisible({ timeout: 20_000 });
+    await expect(partialRow.getByText('2 firing')).toBeVisible();
     await expect(partialRow.getByText('1 error')).toBeVisible();
     for (const label of ['healthy', 'pending', 'recovering', 'no data']) {
       await expect(partialRow.getByText(new RegExp(`\\d+ ${label}`)), `no ${label} count`).toHaveCount(0);

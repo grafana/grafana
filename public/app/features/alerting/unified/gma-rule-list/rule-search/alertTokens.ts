@@ -1,36 +1,80 @@
+import { t } from '@grafana/i18n';
+
+import { DEFAULT_POLICY } from './criteria';
 import { TOKEN_KEYS, type TokenDefinition, sharedDefinitions } from './tokens';
 
-const alertOnlyDefinitions: TokenDefinition[] = [
-  {
-    key: TOKEN_KEYS.state,
-    description: 'Alert state: firing, pending, recovering or normal.',
-    example: 'state:firing',
-  },
+/** The Alert rules filters in the order the sidebar lists them. */
+export const alertTokens: TokenDefinition[] = [
+  sharedDefinitions.rule,
+  sharedDefinitions.label,
+  sharedDefinitions.namespace,
+  sharedDefinitions.datasource,
+  sharedDefinitions.plugins,
   {
     key: TOKEN_KEYS.dashboard,
-    description: 'Dashboard the rule is linked to (canonical value is the dashboard UID).',
+    label: () => t('alerting.gma-rule-list.search.property.dashboard', 'Dashboard'),
+    description: () =>
+      t(
+        'alerting.gma-rule-list.search.help.dashboard',
+        'Dashboard the rule is linked to (canonical value is the dashboard UID).'
+      ),
     example: 'dashboard:dash-uid',
+    availability: { status: 'supported' },
   },
   {
     key: TOKEN_KEYS.panelId,
-    description: 'Panel the rule is linked to. Panel IDs are dashboard-local; pair with dashboard:.',
+    label: () => t('alerting.gma-rule-list.search.property.panel', 'Panel ID'),
+    description: () =>
+      t(
+        'alerting.gma-rule-list.search.help.panel-id',
+        'Panel the rule is linked to. Panel IDs are dashboard-local; pair with dashboard:.'
+      ),
     example: 'panelId:4',
+    availability: { status: 'supported' },
   },
   {
     key: TOKEN_KEYS.contactPoint,
-    description: 'Direct contact point (mutually exclusive with policy:).',
+    label: () => t('alerting.gma-rule-list.search.property.contact-point', 'Contact point'),
+    description: () =>
+      t('alerting.gma-rule-list.search.help.contact-point', 'Direct contact point (mutually exclusive with policy:).'),
     example: 'contactPoint:on-call',
+    availability: { status: 'supported' },
   },
   {
     key: TOKEN_KEYS.policy,
-    description: 'Named notification policy. The reserved value "default" is not searchable yet.',
-    example: 'policy:default',
+    label: () => t('alerting.gma-rule-list.search.property.policy', 'Notification policy'),
+    description: () =>
+      t(
+        'alerting.gma-rule-list.search.help.policy',
+        'Named notification policy (mutually exclusive with contactPoint:).'
+      ),
+    example: 'policy:team-platform',
+    availability: { status: 'supported' },
+    unavailableValues: [
+      {
+        value: DEFAULT_POLICY,
+        reason: () =>
+          t(
+            'alerting.gma-rule-list.search.default-policy-unavailable',
+            "Filtering by the default policy isn't available yet."
+          ),
+      },
+    ],
   },
   {
     key: TOKEN_KEYS.paused,
-    description: 'Whether the rule is paused (true/false).',
+    label: () => t('alerting.gma-rule-list.search.property.paused', 'Paused'),
+    description: () => t('alerting.gma-rule-list.search.help.paused', 'Whether the rule is paused (true/false).'),
     example: 'paused:true',
+    availability: { status: 'supported' },
   },
+  {
+    key: TOKEN_KEYS.state,
+    label: () => t('alerting.gma-rule-list.search.property.state', 'Alert state'),
+    description: () =>
+      t('alerting.gma-rule-list.search.help.state', 'Alert state: firing, pending, recovering or normal.'),
+    example: 'state:firing',
+    availability: { status: 'supported' },
+  },
+  sharedDefinitions.health,
 ];
-
-export const alertTokens: TokenDefinition[] = [...sharedDefinitions, ...alertOnlyDefinitions];

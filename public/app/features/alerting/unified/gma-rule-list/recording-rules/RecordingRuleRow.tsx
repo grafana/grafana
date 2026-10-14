@@ -1,52 +1,48 @@
 import { type ReactNode } from 'react';
 
+import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
-import { Stack, Text, TextLink, Tooltip } from '@grafana/ui';
+import { Stack, Text, TextLink } from '@grafana/ui';
 
 import { getDataSourceByUid } from '../../utils/datasource';
-import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
-import { useFolderPath } from '../folder-browsing/folderLookups';
-import { getManagerKind, getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
-import { useFullRecordingRuleState } from '../rule-data/ruleResourceLookups';
+import { getDisplayLabels, getManagerKind, getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
+import { type RuleResourceState } from '../rule-data/ruleResourceState';
 import { DataSourcesMeta } from '../rule-row/DataSourcesMeta';
 import { FolderPath } from '../rule-row/FolderPath';
 import { IntervalIndicator } from '../rule-row/IntervalIndicator';
 import { LabelsMeta } from '../rule-row/LabelsMeta';
 import { PluginOriginBadge } from '../rule-row/PluginOriginBadge';
 import { ProvisioningBadge } from '../rule-row/ProvisioningBadge';
-import { RuleListItem } from '../rule-row/RuleListItem';
+import { RuleListItem, RuleListItemDescription } from '../rule-row/RuleListItem';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
 interface RecordingRuleRowProps {
   hit: RecordingRuleSearchHit;
-  /** Folder path is shown in List mode only - Folders mode already shows it on the folder row. */
-  showFolderPath: boolean;
+  /** The full rule, for provenance and manager properties the search hit does not carry. */
+  fullRule: RuleResourceState<RecordingRule>;
+  /** Root-to-folder titles. Only List mode passes one - Folders mode already shows the folder on the folder row. */
+  folderPath?: string[];
   actions?: ReactNode;
 }
 
 /**
- * GMA-only Recording rule row for both Folders and List mode. Presentation-only, same
- * lookups as AlertRuleRow. No alert state, instances, notification routing,
+ * GMA-only Recording rule row for both Folders and List mode. Presentation-only, fed by its
+ * container like AlertRuleRow. No alert state, instances, notification routing,
  * summary, Silence, or Declare-incident information - Recording rules have none of those.
  */
-export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRuleRowProps) {
-  const fullRule = useFullRecordingRuleState(hit.uid);
-  const folderPath = useFolderPath(showFolderPath ? hit.folderUid : undefined);
-
+export function RecordingRuleRow({ hit, fullRule, folderPath, actions }: RecordingRuleRowProps) {
   const pluginId = getPluginId(hit.labels);
   // Managed rules get the provisioning badge too: they are owned by something outside the UI.
   const managerKind = fullRule.status === 'loaded' ? getManagerKind(fullRule.rule) : undefined;
   const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
   const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
-  const hasDisplayLabels = Object.keys(hit.labels).some((key) => key !== GRAFANA_ORIGIN_LABEL);
+  const hasDisplayLabels = Object.keys(getDisplayLabels(hit.labels)).length > 0;
   const titleId = `recording-rule-title-${hit.uid}`;
-
-  const recordsTo =
-    hit.metric || hit.targetDataSourceUid ? (
-      <RecordsTo metric={hit.metric} targetDataSourceUid={hit.targetDataSourceUid} />
-    ) : null;
+  // An unresolvable target UID leaves nothing to say when the metric is also missing.
+  const target = hit.targetDataSourceUid ? getDataSourceByUid(hit.targetDataSourceUid) : undefined;
+  const hasRecordsTo = Boolean(hit.metric) || target !== undefined;
 
   return (
     <RuleListItem
@@ -69,22 +65,12 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
           )}
         </Stack>
       }
-      description={
-        hit.lastError ? (
-          <Tooltip content={hit.lastError}>
-            <Text variant="bodySmall" color="error" weight="light" truncate element="p">
-              {hit.lastError}
-            </Text>
-          </Tooltip>
-        ) : (
-          recordsTo
-        )
-      }
+      description={<RuleListItemDescription error={hit.lastError} />}
       // Items are gated here on their data because the list item only drops falsy entries, so an
       // element that renders nothing would still leave a stray separator.
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
-        hit.lastError && recordsTo,
+        hasRecordsTo && <RecordsTo key="records-to" metric={hit.metric} target={target} />,
         hasQueriedDataSources && <DataSourcesMeta key="data-sources" uids={hit.dataSourceUids} />,
         hasDisplayLabels && <LabelsMeta key="labels" labels={hit.labels} />,
       ]}
@@ -94,32 +80,34 @@ export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRule
   );
 }
 
-function RecordsTo({ metric, targetDataSourceUid }: { metric?: string; targetDataSourceUid?: string }) {
-  const target = targetDataSourceUid ? getDataSourceByUid(targetDataSourceUid) : undefined;
+interface RecordsToProps {
+  metric?: string;
+  target?: ReturnType<typeof getDataSourceByUid>;
+}
 
-  // An unresolvable target UID leaves nothing to say when the metric is also missing.
-  if (!target && !metric) {
-    return null;
-  }
-
+function RecordsTo({ metric, target }: RecordsToProps) {
   let text: string;
   if (target && metric) {
-    text = t('alerting.gma-rule-list.recording-rules.metric-and-target', 'Records {{metric}} to {{target}}', {
-      metric,
-      target: target.name,
-    });
+    text = t('alerting.gma-rule-list.recording-rules.metric-and-target', 'Records {{metric}} to', { metric });
   } else if (target) {
-    text = t('alerting.gma-rule-list.recording-rules.target-only', 'Records to {{target}}', { target: target.name });
+    text = t('alerting.gma-rule-list.recording-rules.target-only', 'Records to');
   } else {
     text = t('alerting.gma-rule-list.recording-rules.metric-only', 'Records {{metric}}', { metric });
   }
 
   return (
     <Stack direction="row" alignItems="center" gap={0.5} wrap={false}>
-      {target && <img alt="" src={target.meta.info.logos.small} width={16} height={16} />}
-      <Text variant="bodySmall" color="secondary" truncate>
+      <Text variant="bodySmall" color="secondary">
         {text}
       </Text>
+      {target && (
+        <>
+          <img alt="" src={target.meta.info.logos.small} width={16} height={16} />
+          <Text variant="bodySmall" color="secondary">
+            {target.name}
+          </Text>
+        </>
+      )}
     </Stack>
   );
 }
