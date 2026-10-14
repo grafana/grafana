@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -1154,6 +1156,19 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated:  []*resourcepb.ResourceKey{folderKey},
 			},
 		},
+		"create permission": {
+			queryString: "permission=create&type=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:    &resourcepb.ListOptions{Key: folderKey},
+				Query:      "",
+				Limit:      50,
+				Offset:     0,
+				Page:       1,
+				Explain:    false,
+				Fields:     defaultFields,
+				Permission: int64(dashboardaccess.PERMISSION_CREATE),
+			},
+		},
 		"admin permission": {
 			queryString: "permission=ADMIN",
 			expected: &resourcepb.ResourceSearchRequest{
@@ -1594,6 +1609,18 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		})
 	}
 
+	t.Run("rejects create permission unless searching only folders", func(t *testing.T) {
+		for _, qs := range []string{"permission=create", "permission=create&type=dashboard", "permission=create&type=dashboard&type=folder"} {
+			queryParams, err := url.ParseQuery(qs)
+			require.NoError(t, err)
+
+			_, err = convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+				return nil, nil
+			})
+			assert.True(t, apierrors.IsBadRequest(err), qs)
+		}
+	})
+
 	t.Run("names the logical title field once", func(t *testing.T) {
 		queryParams, err := url.ParseQuery("query=cpu")
 		require.NoError(t, err)
@@ -1815,4 +1842,39 @@ func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 
 func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
 	return nil, nil
+}
+
+func TestSearchHandlerCreatePermissionToggle(t *testing.T) {
+	for name, tc := range map[string]struct {
+		enabled  bool
+		expected dashboardaccess.PermissionType
+	}{
+		"enabled keeps create":        {enabled: true, expected: dashboardaccess.PERMISSION_CREATE},
+		"disabled falls back to edit": {enabled: false, expected: dashboardaccess.PERMISSION_EDIT},
+	} {
+		t.Run(name, func(t *testing.T) {
+			variant := "disabled"
+			if tc.enabled {
+				variant = "enabled"
+			}
+			require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagFolderPickerCreatePermission: {
+					Key:            featuremgmt.FlagFolderPickerCreatePermission,
+					DefaultVariant: variant,
+					Variants:       map[string]any{"enabled": true, "disabled": false},
+				},
+			})))
+			t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+
+			mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{{Results: &resourcepb.ResourceTable{}}}}
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
+			req := httptest.NewRequest("GET", "/search?type=folder&permission=create", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1}))
+
+			handler.DoSearch(httptest.NewRecorder(), req)
+
+			require.Equal(t, 1, mockClient.CallCount)
+			assert.Equal(t, int64(tc.expected), mockClient.MockCalls[0].Permission)
+		})
+	}
 }

@@ -2470,6 +2470,20 @@
     },
     {
       "metadata": {
+        "name": "folderPickerCreatePermission",
+        "resourceVersion": "1792016123062",
+        "creationTimestamp": "2026-10-14T22:15:23Z"
+      },
+      "spec": {
+        "description": "Allow searching folders by dashboards:create (permission=create). When off, permission=create is treated as edit",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "foldersAppPlatformAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-07-03T14:15:23Z"

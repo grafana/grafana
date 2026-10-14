@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -556,9 +557,15 @@ func permissionFromQueryParams(queryParams url.Values) dashboardaccess.Permissio
 		return dashboardaccess.PERMISSION_VIEW
 	case "admin":
 		return dashboardaccess.PERMISSION_ADMIN
+	case "create":
+		return dashboardaccess.PERMISSION_CREATE
 	default:
 		return 0
 	}
+}
+
+func createPermissionEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagFolderPickerCreatePermission, false, openfeature.TransactionContext(ctx))
 }
 
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
@@ -580,6 +587,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
+	if err == nil && searchRequest.Permission == int64(dashboardaccess.PERMISSION_CREATE) && !createPermissionEnabled(ctx) {
+		searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
+	}
 	if err != nil {
 		if errors.Is(err, errEmptyResults) {
 			s.write(w, dashboardv0alpha1.SearchResults{
@@ -909,6 +919,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	types := queryParams["type"]
 	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
 	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
+	if accessPermission == dashboardaccess.PERMISSION_CREATE && (hasDash || !hasFolder) {
+		return nil, apierrors.NewBadRequest("permission=create is only supported with type=folder")
+	}
 	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
 	var err error
 	if (hasDash && hasFolder) || (!hasDash && !hasFolder) {
