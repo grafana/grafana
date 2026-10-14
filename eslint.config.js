@@ -132,11 +132,26 @@ const gmaRuleListBasePatterns = [
   },
   {
     group: ['@grafana/api-clients/rtkq/rules.alerting*'],
-    importNamePattern: '.*SearchRules.*',
+    importNamePattern: '^(?:use)?(?:Lazy)?CreateSearchRules',
     message:
-      '/searchRules is deprecated; use the generated /alertrules/search and /recordingrules/search operations instead.',
+      'The cross-kind /searchRules operation is not used by the GMA-only rule list; search each kind through its own transport module.',
+  },
+  {
+    group: ['@grafana/api-clients/rtkq/rules.alerting*'],
+    importNamePattern: '^use(?:Lazy)?List(?:Alert|Recording)RuleSearchV0Alpha1',
+    message:
+      'The per-kind /search operations are reserved for a later phase; search through alertRuleSearch.ts or recordingRuleSearch.ts.',
   },
 ];
+
+// Only the per-kind transport modules may name the per-kind /searchRules operations, so the endpoint
+// is chosen in one place per kind. Every block except the transport overrides below carries this.
+const gmaRuleSearchTransportPattern = {
+  group: ['@grafana/api-clients/rtkq/rules.alerting*'],
+  importNamePattern: '^use(?:Lazy)?List(?:Alert|Recording)RuleSearchRules',
+  message:
+    'Search rules through useAlertRuleSearch or useRecordingRuleSearch instead of naming the generated search operation.',
+};
 
 const gmaKindFolders = ['alert-rules', 'recording-rules'];
 const gmaCapabilityFolders = [
@@ -157,6 +172,23 @@ function gmaRuleListBlock(name, folders, extraPatterns) {
   return {
     name: `grafana/gma-rule-list-overrides-${name}`,
     files: folders.map((folder) => `${gmaRuleListRoot}/${folder}/**/*.{ts,tsx,js,jsx}`),
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [...gmaRuleListBasePatterns, gmaRuleSearchTransportPattern, ...extraPatterns],
+        }),
+      ],
+    },
+  };
+}
+
+// The transport modules keep the base and sibling-kind boundaries but may import the per-kind
+// /searchRules operations.
+function gmaRuleSearchTransportBlock(folder, file, extraPatterns) {
+  return {
+    name: `grafana/gma-rule-list-overrides-search-transport-${folder}`,
+    files: [`${gmaRuleListRoot}/${folder}/${file}`],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -187,13 +219,18 @@ function gmaRuleListOverrides() {
       name: 'grafana/gma-rule-list-overrides',
       files: [`${gmaRuleListRoot}/**/*.{ts,tsx,js,jsx}`],
       rules: {
-        'no-restricted-imports': ['error', withBaseRestrictedImportsConfig({ patterns: gmaRuleListBasePatterns })],
+        'no-restricted-imports': [
+          'error',
+          withBaseRestrictedImportsConfig({ patterns: [...gmaRuleListBasePatterns, gmaRuleSearchTransportPattern] }),
+        ],
       },
     },
     gmaRuleListBlock('alert-rules', ['alert-rules'], [siblingKindMessage('recording-rules')]),
     gmaRuleListBlock('recording-rules', ['recording-rules'], [siblingKindMessage('alert-rules')]),
     gmaRuleListBlock('capabilities', gmaCapabilityFolders, [kindFoldersPattern]),
     gmaRuleListBlock('shared', ['shared'], [sharedPattern]),
+    gmaRuleSearchTransportBlock('alert-rules', 'alertRuleSearch.ts', [siblingKindMessage('recording-rules')]),
+    gmaRuleSearchTransportBlock('recording-rules', 'recordingRuleSearch.ts', [siblingKindMessage('alert-rules')]),
   ];
 }
 

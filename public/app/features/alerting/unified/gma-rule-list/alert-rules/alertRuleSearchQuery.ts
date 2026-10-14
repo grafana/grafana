@@ -1,4 +1,4 @@
-import { type Criteria } from '../rule-search/criteria';
+import { type Criteria, DEFAULT_POLICY } from '../rule-search/criteria';
 import {
   type BuildSearchQueryOptions,
   DEFAULT_LIMIT,
@@ -44,25 +44,18 @@ function buildRoutingLeaves(criteria: Criteria): SearchQueryLeaf[] {
   }
 
   // policy: and contactPoint: are mutually exclusive in the UI; policy wins if a query
-  // somehow carries both (mirrors the legacy buildRoutingFilter precedence).
-  if (criteria.policy === 'default') {
-    // Candidate mapping, not yet verified against fixtures: default-policy rules have
-    // neither notification type, so excluding both explicit types should select them.
-    leaves.push({
-      filter: { field: 'notificationType', operator: 'NotIn', values: ['SimplifiedRouting', 'NamedRoutingTree'] },
-    });
-  } else if (criteria.policy) {
+  // somehow carries both. The reserved value 'default' has no accepted request form (it would
+  // need a NotIn on notificationType), so it is reported by getCriteriaIssues and never sent.
+  if (criteria.policy && criteria.policy !== DEFAULT_POLICY) {
     leaves.push({ filter: { field: 'routingTree', operator: 'In', values: [criteria.policy] } });
-  } else if (criteria.contactPoint) {
+  } else if (!criteria.policy && criteria.contactPoint) {
     leaves.push({ filter: { field: 'receiver', operator: 'In', values: [criteria.contactPoint] } });
   }
 
-  if (criteria.paused === 'true') {
-    leaves.push({ filter: { field: 'paused', operator: 'In', values: ['true'] } });
-  } else if (criteria.paused === 'false') {
-    // NotIn ["true"] also matches rules where the optional paused field is absent, which is
-    // what "not paused" should mean.
-    leaves.push({ filter: { field: 'paused', operator: 'NotIn', values: ['true'] } });
+  if (criteria.paused) {
+    // NotIn is only accepted on labels, state and health, so "not paused" is an explicit
+    // paused=false rather than the complement of paused=true.
+    leaves.push({ filter: { field: 'paused', operator: 'In', values: [criteria.paused] } });
   }
 
   return leaves;

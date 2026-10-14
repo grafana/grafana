@@ -1,4 +1,5 @@
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
+import { getRuleSearchQueryViolations } from '../rule-search/ruleSearchQueryContract';
 
 import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
@@ -51,5 +52,21 @@ describe('buildRecordingRuleSearchQuery', () => {
         { filter: { field: 'targetDatasourceUID', operator: 'In', values: ['target-ds-1'] } },
       ],
     });
+  });
+
+  it.each<[string, Criteria]>([
+    ['empty criteria', createEmptyCriteria()],
+    ['free text and a folder', { ...createEmptyCriteria(), text: ['cpu'], namespaces: ['f1'] }],
+    [
+      'labels and hidden plugin rules',
+      { ...createEmptyCriteria(), hidePluginRules: true, labels: [{ key: 'a', operator: 'notEqual', value: 'x' }] },
+    ],
+    [
+      'metric and target data source',
+      { ...createEmptyCriteria(), metric: 'cpu_usage', targetDataSourceUid: 'target-ds-1' },
+    ],
+    ['health', { ...createEmptyCriteria(), health: 'error' }],
+  ])('SEARCH-4.5 (%s): builds a request the per-kind rule search accepts', (_name, criteria) => {
+    expect(getRuleSearchQueryViolations(buildRecordingRuleSearchQuery(criteria), 'recording')).toEqual([]);
   });
 });

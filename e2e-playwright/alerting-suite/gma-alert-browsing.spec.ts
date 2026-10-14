@@ -25,7 +25,7 @@ test.describe('Alert rules: Folders and List browsing', () => {
 
     const searchRequestBodies: string[] = [];
     page.on('request', (request) => {
-      if (request.url().includes('/alertrules/search')) {
+      if (request.url().includes('/alertrules/searchRules')) {
         searchRequestBodies.push(request.postData() ?? '');
       }
     });

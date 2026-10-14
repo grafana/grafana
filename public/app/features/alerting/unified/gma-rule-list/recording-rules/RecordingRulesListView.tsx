@@ -1,4 +1,3 @@
-import { useListRecordingRuleSearchV0Alpha1Mutation } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 
@@ -8,8 +7,7 @@ import { useContinuationSearch } from '../shared/useContinuationSearch';
 
 import { RecordingRuleActions } from './RecordingRuleActions';
 import { RecordingRuleRow } from './RecordingRuleRow';
-import { toRecordingRuleSearchHit } from './recordingRuleSearchHit';
-import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
+import { useRecordingRuleSearch } from './recordingRuleSearch';
 
 interface ListViewProps {
   criteria: Criteria;
@@ -21,16 +19,11 @@ interface ListViewProps {
  * its folder path - no folder-count requests happen here.
  */
 export function ListView({ criteria, resetKey }: ListViewProps) {
-  const [triggerRuleSearch] = useListRecordingRuleSearchV0Alpha1Mutation();
+  const searchRules = useRecordingRuleSearch();
 
   const fetchPage = async (continueToken: string | undefined) => {
-    const result = await triggerRuleSearch({
-      searchQuery: buildRecordingRuleSearchQuery(criteria, { continue: continueToken }),
-    }).unwrap();
-    return {
-      items: result.items.map(toRecordingRuleSearchHit),
-      continueToken: result.metadata.continue,
-    };
+    const page = await searchRules(criteria, { continueToken });
+    return { items: page.hits, continueToken: page.continueToken };
   };
 
   const { rows, isLoading, error, loadMoreError, hasMore, loadMore, retry } = useContinuationSearch(

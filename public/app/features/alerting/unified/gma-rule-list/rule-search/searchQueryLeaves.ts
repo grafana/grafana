@@ -1,11 +1,15 @@
 import { type Criteria } from './criteria';
 
 /**
- * Structural type for the generic `search.grafana.app` SearchQuery request body. No
- * generated client type exists yet for `/alertrules/search` / `/recordingrules/search` —
- * `generate-rtk-apis.ts` currently skips per-resource `/search` routes. Once that client is
- * regenerated, this local type should be swapped for the generated one; the shape here
- * matches it field for field so that swap should be a type-only change.
+ * Structural type for the `search.grafana.app` SearchQuery body the per-kind rule search
+ * endpoints accept. It is deliberately independent of the generated request types so the
+ * builders stay valid for whichever endpoint the transport modules pick; the generated body
+ * types accept it field for field.
+ *
+ * The per-kind rule search accepts one leaf or one flat `and`; filters (In, and NotIn only on
+ * labels, state and health) with exactly one value on every field except folder, datasource
+ * UIDs, state and health; regex on labels only; a single title text leaf; and title sort. The
+ * builders stay inside that subset, and criteriaIssues.ts reports criteria that cannot.
  */
 export interface SearchQuery {
   apiVersion: 'search.grafana.app/v0alpha1';
@@ -15,6 +19,12 @@ export interface SearchQuery {
   fields: string[];
   limit: number;
   continue?: string;
+}
+
+/** The part of a search hit the row mappers read: the rule UID and the projected field bag. */
+export interface RuleSearchResultItem {
+  resource: { name: string };
+  fields?: Record<string, unknown>;
 }
 
 export interface SearchQuerySort {
@@ -28,7 +38,7 @@ export type SearchQueryLeaf = { text: { value: string } } | { filter: SearchQuer
 
 export interface SearchQueryFilter {
   field: string;
-  operator: 'In' | 'NotIn' | 'All';
+  operator: 'In' | 'NotIn';
   values: string[];
 }
 

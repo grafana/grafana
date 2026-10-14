@@ -7,7 +7,7 @@ import { Button, Combobox, type ComboboxOption, Input, Stack, Tooltip } from '@g
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 
-import { type Criteria } from '../rule-search/criteria';
+import { type Criteria, DEFAULT_POLICY } from '../rule-search/criteria';
 import { type CriteriaIssue } from '../rule-search/criteriaIssues';
 import {
   FilterSidebarContainer,
@@ -164,10 +164,10 @@ export function AlertRulesFilterSidebar({
             >
               <Stack direction="column" gap={0.5}>
                 <RoutingTreeSelector
-                  value={criteria.policy === 'default' ? undefined : criteria.policy}
+                  value={criteria.policy === DEFAULT_POLICY ? undefined : criteria.policy}
                   placeholder={t('alerting.gma-rule-list.search.policy-placeholder', 'Select policy')}
                   isClearable
-                  disabled={Boolean(criteria.contactPoint) || criteria.policy === 'default'}
+                  disabled={Boolean(criteria.contactPoint) || criteria.policy === DEFAULT_POLICY}
                   onChange={(tree: RoutingTree | null) =>
                     onChange({
                       ...criteria,
@@ -178,12 +178,15 @@ export function AlertRulesFilterSidebar({
                 />
                 <SwitchField
                   label={t('alerting.gma-rule-list.search.property.default-policy', 'Default policy')}
-                  value={criteria.policy === 'default'}
-                  disabled={Boolean(criteria.contactPoint)}
+                  value={criteria.policy === DEFAULT_POLICY}
+                  // Filtering by the default policy isn't supported yet; the switch stays usable only
+                  // to clear a value that arrived through the URL or a saved search.
+                  disabled={criteria.policy !== DEFAULT_POLICY}
                   onChange={(isDefault) =>
-                    onChange({ ...criteria, policy: isDefault ? 'default' : undefined, contactPoint: undefined })
+                    onChange({ ...criteria, policy: isDefault ? DEFAULT_POLICY : undefined, contactPoint: undefined })
                   }
                 />
+                <PendingFilterNote />
               </Stack>
             </SidebarField>
             <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.paused">Paused</Trans>}>

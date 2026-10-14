@@ -238,6 +238,40 @@ describe('AlertRulesFilterSidebar', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ paused: 'true' }));
   });
 
+  it('the Default policy switch is disabled and explains it is not available yet when it is off', () => {
+    render(
+      <AlertRulesFilterSidebar
+        criteria={createEmptyCriteria()}
+        onChange={jest.fn()}
+        onClear={jest.fn()}
+        hasActiveFilters={false}
+      />
+    );
+
+    expect(screen.getByRole('switch', { name: 'Default policy' })).toBeDisabled();
+    // Alert state, Health and Default policy each carry the note.
+    expect(screen.getAllByText("Filtering by this isn't available yet.")).toHaveLength(3);
+  });
+
+  it('a default policy that arrived through the URL can still be cleared from the switch', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(
+      <AlertRulesFilterSidebar
+        criteria={{ ...createEmptyCriteria(), policy: 'default' }}
+        onChange={onChange}
+        onClear={jest.fn()}
+        hasActiveFilters
+      />
+    );
+
+    const toggle = screen.getByRole('switch', { name: 'Default policy' });
+    expect(toggle).toBeChecked();
+    await user.click(toggle);
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ policy: undefined }));
+  });
+
   it('Clear filters is disabled with no active filters and calls onClear when active', async () => {
     const user = userEvent.setup();
     const onClear = jest.fn();

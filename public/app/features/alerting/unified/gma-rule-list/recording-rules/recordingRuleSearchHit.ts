@@ -1,8 +1,8 @@
-import { type ResultItem } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { type RuleSearchResultItem } from '../rule-search/searchQueryLeaves';
 
 /**
- * The per-row shape read out of a `/recordingrules/search` hit. Kept separate from the raw
- * `ResultItem.fields` bag so row code never touches that bag directly.
+ * The per-row shape read out of a Recording rule search hit. Kept separate from the raw
+ * `fields` bag so row code never touches that bag directly.
  */
 export interface RecordingRuleSearchHit {
   uid: string;
@@ -38,7 +38,7 @@ function asLabels(value: unknown): Record<string, string> {
   return result;
 }
 
-export function toRecordingRuleSearchHit(item: ResultItem): RecordingRuleSearchHit {
+export function toRecordingRuleSearchHit(item: RuleSearchResultItem): RecordingRuleSearchHit {
   const fields: Record<string, unknown> = item.fields ?? {};
 
   return {

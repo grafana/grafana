@@ -41,10 +41,10 @@ type Folder = {
 
 type RuleSearchKind = 'alertrules' | 'recordingrules';
 
-// A write is durable as soon as the POST resolves, but the generic /search endpoint reads a
-// search index that updates asynchronously — the same visibility gap `workerFolder` already
-// works around for the folders list. Poll rule-search filtered to one folder until the
-// expected count appears, instead of a fixed sleep or trusting the write response alone.
+// A write is durable as soon as the POST resolves, but the rule search may read an index that
+// updates asynchronously — the same visibility gap `workerFolder` already works around for the
+// folders list. Poll the per-kind searchRules endpoint the UI reads, filtered to one folder, until
+// the expected count appears, instead of a fixed sleep or trusting the write response alone.
 export async function waitForRuleSearchVisible(
   request: APIRequestContext,
   namespace: string,
@@ -54,17 +54,20 @@ export async function waitForRuleSearchVisible(
   timeout = 20_000
 ): Promise<void> {
   await expect(async () => {
-    const res = await request.post(`/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${kind}/search`, {
-      data: {
-        apiVersion: 'search.grafana.app/v0alpha1',
-        kind: 'SearchQuery',
-        where: { filter: { field: 'folder', operator: 'In', values: [folderUid] } },
-        sort: [{ field: 'title', direction: 'asc' }],
-        fields: ['title'],
-        limit: 1,
-      },
-    });
-    expect(res.ok(), `POST ${kind}/search -> ${res.status()} ${await res.text()}`).toBeTruthy();
+    const res = await request.post(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${kind}/searchRules`,
+      {
+        data: {
+          apiVersion: 'search.grafana.app/v0alpha1',
+          kind: 'SearchQuery',
+          where: { filter: { field: 'folder', operator: 'In', values: [folderUid] } },
+          sort: [{ field: 'title', direction: 'asc' }],
+          fields: ['title'],
+          limit: 1,
+        },
+      }
+    );
+    expect(res.ok(), `POST ${kind}/searchRules -> ${res.status()} ${await res.text()}`).toBeTruthy();
     const body = await res.json();
     expect(
       body.metadata?.totalHits,

@@ -20,7 +20,8 @@ const reportInteractionMock = jest.mocked(reportInteraction);
 
 const server = setupMswServer();
 
-const RECORDING_SEARCH_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/recordingrules/search';
+const RECORDING_SEARCH_URL =
+  '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/recordingrules/searchRules';
 const FOLDER_SEARCH_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/search';
 const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/parents';
 const FOLDER_COUNTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/counts';

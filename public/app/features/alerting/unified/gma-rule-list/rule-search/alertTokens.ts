@@ -27,7 +27,7 @@ const alertOnlyDefinitions: TokenDefinition[] = [
   },
   {
     key: TOKEN_KEYS.policy,
-    description: 'Named notification policy, or the reserved value "default".',
+    description: 'Named notification policy. The reserved value "default" is not searchable yet.',
     example: 'policy:default',
     availability: 'available',
   },

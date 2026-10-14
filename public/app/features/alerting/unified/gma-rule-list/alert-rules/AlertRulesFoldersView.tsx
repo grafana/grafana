@@ -4,7 +4,6 @@ import {
   type ResultItem as FolderResultItem,
   useListFolderSearchV1Beta1Mutation,
 } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { useListAlertRuleSearchV0Alpha1Mutation } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 
@@ -18,8 +17,7 @@ import { type ContinuationPage, useContinuationSearch } from '../shared/useConti
 
 import { AlertRuleActions } from './AlertRuleActions';
 import { AlertRuleRow } from './AlertRuleRow';
-import { toAlertRuleSearchHit } from './alertRuleSearchHit';
-import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
+import { useAlertRuleSearch } from './alertRuleSearch';
 
 interface FoldersViewProps {
   /** Folder UIDs from the active criterion - the only filter Folders mode supports. Scopes
@@ -127,18 +125,11 @@ function ExpandableFolderRow({ folderUid, title, expanded, onToggle, resetKey }:
 }
 
 function ExpandedFolderRules({ folderUid, resetKey }: { folderUid: string; resetKey: unknown }) {
-  const [triggerRuleSearch] = useListAlertRuleSearchV0Alpha1Mutation();
+  const searchRules = useAlertRuleSearch();
 
   const fetchPage = async (continueToken: string | undefined) => {
-    const query = buildAlertRuleSearchQuery(
-      { ...createEmptyCriteria(), namespaces: [folderUid] },
-      { continue: continueToken }
-    );
-    const result = await triggerRuleSearch({ searchQuery: query }).unwrap();
-    return {
-      items: result.items.map(toAlertRuleSearchHit),
-      continueToken: result.metadata.continue,
-    };
+    const page = await searchRules({ ...createEmptyCriteria(), namespaces: [folderUid] }, { continueToken });
+    return { items: page.hits, continueToken: page.continueToken };
   };
 
   const { rows, isLoading, error, loadMoreError, hasMore, loadMore, retry } = useContinuationSearch(

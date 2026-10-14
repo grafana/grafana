@@ -20,7 +20,7 @@ const reportInteractionMock = jest.mocked(reportInteraction);
 
 const server = setupMswServer();
 
-const ALERT_SEARCH_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/alertrules/search';
+const ALERT_SEARCH_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/alertrules/searchRules';
 const FOLDER_SEARCH_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/search';
 const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/parents';
 const FOLDER_COUNTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/counts';
@@ -218,6 +218,36 @@ describe('AlertRulesPage', () => {
     render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
+  });
+
+  it('does not search and names the filter when the URL asks for the default notification policy', async () => {
+    const requests: unknown[] = [];
+    mockAlertRuleSearch((body) => {
+      requests.push(body);
+      return { items: [], metadata: {} };
+    });
+
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=policy%3Adefault&view=list'] } });
+
+    expect(await screen.findByText('Fix the invalid filter to see results')).toBeInTheDocument();
+    expect(screen.getByText(/Some filters could not be applied: policy/)).toBeInTheDocument();
+    expect(requests).toEqual([]);
+  });
+
+  it('sends the List search to the per-kind searchRules endpoint with the criteria as the request body', async () => {
+    let body: unknown;
+    mockAlertRuleSearch((received) => {
+      body = received;
+      return { items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} };
+    });
+
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=paused%3Afalse&view=list'] } });
+
+    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(body).toMatchObject({
+      kind: 'SearchQuery',
+      where: { filter: { field: 'paused', operator: 'In', values: ['false'] } },
+    });
   });
 
   // STATE-3: a Load-more failure keeps the already-loaded rows visible and offers retry.

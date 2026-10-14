@@ -198,7 +198,7 @@ describe('AlertRuleActionsMenu', () => {
     expect((await requests).length).toBe(0);
   });
 
-  it('never calls the deprecated searchRules endpoint', async () => {
+  it('never issues a rule search request', async () => {
     const requests = captureRequests(
       (request) => request.url.includes('searchRules') || request.url.includes('/search')
     );

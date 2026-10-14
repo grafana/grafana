@@ -22,7 +22,7 @@ test.describe('Recording rules: Folders and List browsing', () => {
 
     let sawAlertRuleSearch = false;
     page.on('request', (request) => {
-      if (request.url().includes('/alertrules/search')) {
+      if (request.url().includes('/alertrules/searchRules')) {
         sawAlertRuleSearch = true;
       }
     });

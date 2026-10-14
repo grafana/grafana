@@ -209,7 +209,7 @@ export async function seedCorpus(request: APIRequestContext, namespace: string):
   });
 
   // A single marker-scoped readiness check covers the whole corpus cheaply, instead of one
-  // rule-search poll per folder — search-index visibility, not the write, is what's async here.
+  // rule-search poll per folder — search visibility, not the write, is what may lag here.
   await waitForMarkerCount(request, namespace, 'alertrules', runMarker, DENSE_FOLDER_COUNT + ONE_EACH_FOLDER_COUNT);
   await waitForMarkerCount(request, namespace, 'recordingrules', runMarker, DENSE_FOLDER_COUNT + ONE_EACH_FOLDER_COUNT);
 
@@ -231,7 +231,7 @@ async function waitForMarkerCount(
   expectedCount: number
 ): Promise<void> {
   await expect(async () => {
-    const res = await request.post(`/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${kind}/search`, {
+    const res = await request.post(`/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${kind}/searchRules`, {
       data: {
         apiVersion: 'search.grafana.app/v0alpha1',
         kind: 'SearchQuery',
@@ -241,7 +241,7 @@ async function waitForMarkerCount(
         limit: 1,
       },
     });
-    expect(res.ok(), `POST ${kind}/search -> ${res.status()} ${await res.text()}`).toBeTruthy();
+    expect(res.ok(), `POST ${kind}/searchRules -> ${res.status()} ${await res.text()}`).toBeTruthy();
     const body = await res.json();
     expect(body.metadata?.totalHits, `expected ${expectedCount} ${kind} for run ${runMarker}`).toBe(expectedCount);
   }).toPass({ intervals: [300, 700, 1500, 3000], timeout: 60_000 });

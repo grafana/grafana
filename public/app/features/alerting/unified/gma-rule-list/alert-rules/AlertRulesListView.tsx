@@ -1,4 +1,3 @@
-import { useListAlertRuleSearchV0Alpha1Mutation } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 
@@ -8,8 +7,7 @@ import { useContinuationSearch } from '../shared/useContinuationSearch';
 
 import { AlertRuleActions } from './AlertRuleActions';
 import { AlertRuleRow } from './AlertRuleRow';
-import { toAlertRuleSearchHit } from './alertRuleSearchHit';
-import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
+import { useAlertRuleSearch } from './alertRuleSearch';
 
 interface ListViewProps {
   criteria: Criteria;
@@ -20,19 +18,14 @@ interface ListViewProps {
 
 /**
  * List mode: a single flat, title-sorted Alert-rule search with Load more. Every row shows
- * its folder path (alert-rules-page.md "List mode") - no folder-count requests happen here.
+ * its folder path - no folder-count requests happen here.
  */
 export function ListView({ criteria, resetKey }: ListViewProps) {
-  const [triggerRuleSearch] = useListAlertRuleSearchV0Alpha1Mutation();
+  const searchRules = useAlertRuleSearch();
 
   const fetchPage = async (continueToken: string | undefined) => {
-    const result = await triggerRuleSearch({
-      searchQuery: buildAlertRuleSearchQuery(criteria, { continue: continueToken }),
-    }).unwrap();
-    return {
-      items: result.items.map(toAlertRuleSearchHit),
-      continueToken: result.metadata.continue,
-    };
+    const page = await searchRules(criteria, { continueToken });
+    return { items: page.hits, continueToken: page.continueToken };
   };
 
   const { rows, isLoading, error, loadMoreError, hasMore, loadMore, retry } = useContinuationSearch(

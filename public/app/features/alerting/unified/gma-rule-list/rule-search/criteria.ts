@@ -1,9 +1,12 @@
 /**
  * Shared types for the GMA rule-list search language: a flat sequence of free text and
  * `key:value` filter tokens (see README.md for the exact syntax). Kept separate from the
- * generic `/search` request shape (searchQueryLeaves.ts) so the query language never has to grow
+ * rule search request shape (searchQueryLeaves.ts) so the query language never has to grow
  * new syntax purely to express the API's request structure.
  */
+
+/** Reserved `policy` value that stands for "rules using the default notification policy". */
+export const DEFAULT_POLICY = 'default';
 
 export type LabelOperator = 'equal' | 'notEqual' | 'regex' | 'notRegex' | 'exists' | 'absent';
 
@@ -46,7 +49,7 @@ export interface Criteria {
    * getCriteriaIssues() for the 'requiresDashboard' issue this produces on its own. */
   panelId?: string;
   contactPoint?: string;
-  /** Named routing tree, or the reserved value `'default'` for the default-policy filter. */
+  /** Named routing tree, or `DEFAULT_POLICY` for the default-policy filter (not searchable yet). */
   policy?: string;
   paused?: 'true' | 'false';
 

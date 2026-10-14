@@ -1,9 +1,9 @@
-import { type ResultItem } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { type RuleSearchResultItem } from '../rule-search/searchQueryLeaves';
 
 /**
- * The per-row shape read out of an `/alertrules/search` hit. Kept separate from the raw
- * `ResultItem.fields` bag (typed `Unstructured`/`any`) so row code never touches that bag
- * directly, and so growing the projected field set later only changes this one place.
+ * The per-row shape read out of an Alert rule search hit. Kept separate from the raw
+ * `fields` bag (typed `any`) so row code never touches that bag directly, and so growing the
+ * projected field set later only changes this one place.
  */
 export interface AlertRuleSearchHit {
   uid: string;
@@ -62,7 +62,7 @@ function asLabels(value: unknown): Record<string, string> {
   return asRecord(value);
 }
 
-export function toAlertRuleSearchHit(item: ResultItem): AlertRuleSearchHit {
+export function toAlertRuleSearchHit(item: RuleSearchResultItem): AlertRuleSearchHit {
   const fields: Record<string, unknown> = item.fields ?? {};
   const annotations = asRecord(fields.annotations);
 

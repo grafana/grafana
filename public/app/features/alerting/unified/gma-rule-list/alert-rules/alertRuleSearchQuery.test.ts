@@ -1,4 +1,5 @@
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
+import { getRuleSearchQueryViolations } from '../rule-search/ruleSearchQueryContract';
 
 import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
 
@@ -121,10 +122,10 @@ describe('buildAlertRuleSearchQuery', () => {
     });
   });
 
-  it('SEARCH-3.10: paused false excludes paused, including rules with no paused value', () => {
+  it('SEARCH-3.10: paused false filters to paused=false with In, since NotIn is not accepted on paused', () => {
     const criteria: Criteria = { ...createEmptyCriteria(), paused: 'false' };
     expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
-      filter: { field: 'paused', operator: 'NotIn', values: ['true'] },
+      filter: { field: 'paused', operator: 'In', values: ['false'] },
     });
   });
 
@@ -150,11 +151,9 @@ describe('buildAlertRuleSearchQuery', () => {
     });
   });
 
-  it('SEARCH-3.14: default policy excludes both explicit notification types', () => {
+  it('SEARCH-3.14: default policy never produces a notificationType NotIn leaf', () => {
     const criteria: Criteria = { ...createEmptyCriteria(), policy: 'default' };
-    expect(buildAlertRuleSearchQuery(criteria).where).toEqual({
-      filter: { field: 'notificationType', operator: 'NotIn', values: ['SimplifiedRouting', 'NamedRoutingTree'] },
-    });
+    expect(buildAlertRuleSearchQuery(criteria).where).toBeUndefined();
   });
 
   it('SEARCH-3.15: direct contact point filters by receiver', () => {
@@ -180,5 +179,38 @@ describe('buildAlertRuleSearchQuery', () => {
     const query = buildAlertRuleSearchQuery(createEmptyCriteria(), { limit: 10, continue: 'opaque-token' });
     expect(query.limit).toBe(10);
     expect(query.continue).toBe('opaque-token');
+  });
+
+  it.each<[string, Criteria]>([
+    ['empty criteria', createEmptyCriteria()],
+    ['free text', { ...createEmptyCriteria(), text: ['cpu', 'high'] }],
+    [
+      'multiple folders and data sources',
+      { ...createEmptyCriteria(), namespaces: ['f1', 'f2'], dataSourceUids: ['a', 'b'] },
+    ],
+    [
+      'every label operator',
+      {
+        ...createEmptyCriteria(),
+        labels: [
+          { key: 'a', operator: 'exists' },
+          { key: 'b', operator: 'absent' },
+          { key: 'c', operator: 'equal', value: 'x' },
+          { key: 'd', operator: 'notEqual', value: 'y' },
+          { key: 'e', operator: 'regex', value: 'z.*' },
+          { key: 'f', operator: 'notRegex', value: 'w.*' },
+        ],
+      },
+    ],
+    ['hidden plugin rules', { ...createEmptyCriteria(), hidePluginRules: true }],
+    ['paused false', { ...createEmptyCriteria(), paused: 'false' }],
+    ['paused true', { ...createEmptyCriteria(), paused: 'true' }],
+    ['dashboard and panel', { ...createEmptyCriteria(), dashboardUid: 'dash', panelId: '4' }],
+    ['named policy', { ...createEmptyCriteria(), policy: 'escalation' }],
+    ['contact point', { ...createEmptyCriteria(), contactPoint: 'on-call' }],
+    ['default policy', { ...createEmptyCriteria(), policy: 'default' }],
+    ['state and health', { ...createEmptyCriteria(), state: 'firing', health: 'error' }],
+  ])('SEARCH-3.22 (%s): builds a request the per-kind rule search accepts', (_name, criteria) => {
+    expect(getRuleSearchQueryViolations(buildAlertRuleSearchQuery(criteria, { continue: 'tok' }), 'alert')).toEqual([]);
   });
 });

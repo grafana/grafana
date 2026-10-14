@@ -2,7 +2,7 @@
 
 A small handwritten tokenizer/parser for the Alert rules and Recording rules search input.
 No Lezer grammar: the query language is a flat sequence of free text and filter tokens, kept
-separate from the `/search` request shape, so it never has to grow new syntax purely to
+separate from the rule search request shape, so it never has to grow new syntax purely to
 express the API's request structure.
 
 ## Syntax
@@ -43,12 +43,13 @@ support, isn't silently destroyed.
   incomplete tokens still appear in `tokens`, never in `criteria`.
 - `serializer.ts` — `serialize(criteria)`: canonical string form. `parse(serialize(c))`
   round-trips for any `Criteria` populated only from fields the given registry defines.
-- `criteriaIssues.ts` — `getCriteriaIssues(criteria, kind)`: structural problems (an
-  unresolved migrated name, a `panelId` with no `dashboardUid`) the page must act on before
-  issuing a request.
-- `searchQueryLeaves.ts` — the generic `/search` request types and the leaves shared by both
+- `criteriaIssues.ts` — `getCriteriaIssues(criteria, kind)`: problems (an unresolved migrated
+  name, a `panelId` with no `dashboardUid`, `policy:default`, a value the rule search rejects
+  such as a wildcard) the page must act on before issuing a request.
+- `searchQueryLeaves.ts` — the rule search request types and the leaves shared by both
   kinds; `alert-rules/alertRuleSearchQuery.ts` and
-  `recording-rules/recordingRuleSearchQuery.ts` build each kind's request body from `Criteria`.
+  `recording-rules/recordingRuleSearchQuery.ts` build each kind's request body from `Criteria`;
+  `alert-rules/alertRuleSearch.ts` and `recording-rules/recordingRuleSearch.ts` send it.
 - `legacy-migration/migrationSync.ts` / `migrationResolve.ts` / `legacyUrlMigration.ts` — legacy
   URL → canonical URL migration pipeline; `legacyUrlMigration.ts` is the public entry point
   (`migrateLegacyRuleListUrl`).
@@ -65,8 +66,9 @@ so flagging the exact names here for review:
 | `metric:<name>`                 | Recording | `metric`                                            |
 | `targetDatasource:<uid>`        | Recording | `targetDatasourceUID`                               |
 
-`policy:default` is a reserved value (not a new token) selecting the default-notification-
-policy candidate mapping — see `alert-rules/alertRuleSearchQuery.ts`.
+`policy:default` is a reserved value (not a new token) for the default notification policy.
+The rule search has no accepted request form for it yet, so it is reported by
+`getCriteriaIssues` as unavailable and never sent.
 
 ## `state:` / `health:`
 
