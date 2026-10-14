@@ -26,13 +26,37 @@ func UnaryErrorResultInterceptor() grpc.UnaryServerInterceptor {
 		if !ok || result.GetError() == nil {
 			return resp, nil
 		}
-		failure := result.GetError()
-		st, err := status.New(grpcCodeFromErrorResult(failure), failure.Message).WithDetails(failure)
-		if err != nil {
-			return nil, status.Error(codes.Internal, "failed to encode error details")
-		}
-		return nil, st.Err()
+		return nil, errorResultStatus(result.GetError())
 	}
+}
+
+func errorResultStatus(failure *resourcepb.ErrorResult) error {
+	st, err := status.New(grpcCodeFromErrorResult(failure), failure.Message).WithDetails(failure)
+	if err != nil {
+		return status.Error(codes.Internal, "failed to encode error details")
+	}
+	return st.Err()
+}
+
+// BlobStreamErrorResultInterceptor converts embedded blob errors before sending
+// them, so no successful response is observed before the gRPC status error.
+func BlobStreamErrorResultInterceptor() grpc.StreamServerInterceptor {
+	return func(srv any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		return handler(srv, &blobErrorResultStream{ServerStream: stream})
+	}
+}
+
+type blobErrorResultStream struct {
+	grpc.ServerStream
+}
+
+func (s *blobErrorResultStream) SendMsg(msg any) error {
+	if result, ok := msg.(interface {
+		GetError() *resourcepb.ErrorResult
+	}); ok && result.GetError() != nil {
+		return errorResultStatus(result.GetError())
+	}
+	return s.ServerStream.SendMsg(msg)
 }
 
 const listPathNotApplicable = "not_applicable"

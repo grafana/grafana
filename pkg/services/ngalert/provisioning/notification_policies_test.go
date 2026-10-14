@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/alertmanager/config"
+	config "github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -336,6 +336,26 @@ func TestResetPolicyTree(t *testing.T) {
 		}
 
 		_, err := sut.ResetPolicyTree(context.Background(), orgID, models.ProvenanceNone)
+		require.ErrorIs(t, err, expectedErr)
+	})
+
+	t.Run("Error if saving the config fails", func(t *testing.T) {
+		defaultConfig := getDefaultConfigRevision().Config
+		data, err := legacy_storage.SerializeAlertmanagerConfig(*defaultConfig)
+		require.NoError(t, err)
+
+		sut, store, _ := createNotificationPolicyServiceSut()
+		sut.settings = setting.UnifiedAlertingSettings{DefaultConfiguration: string(data)}
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			rev := getDefaultConfigRevision()
+			return &rev, nil
+		}
+		expectedErr := errors.New("save failed")
+		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
+			return expectedErr
+		}
+
+		_, err = sut.ResetPolicyTree(context.Background(), orgID, models.ProvenanceNone)
 		require.ErrorIs(t, err, expectedErr)
 	})
 

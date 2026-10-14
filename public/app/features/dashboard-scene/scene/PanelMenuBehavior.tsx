@@ -15,7 +15,8 @@ import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
-import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
+import { type DataQuery, LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
+import { shouldShowLegend } from '@grafana/ui/internal';
 import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -243,10 +244,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
-        text: panel.state.options.legend.showLegend
+        text: shouldShowLegend(panel.state.options.legend)
           ? t('panel.header-menu.hide-legend', 'Hide legend')
           : t('panel.header-menu.show-legend', 'Show legend'),
-        iconClassName: panel.state.options.legend.showLegend ? 'legend-hide' : 'legend-show',
+        iconClassName: shouldShowLegend(panel.state.options.legend) ? 'legend-hide' : 'legend-show',
         onClick: (e) => {
           e.preventDefault();
           toggleVizPanelLegend(panel);
@@ -640,9 +641,16 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
+    if (shouldShowLegend(options.legend)) {
+      vizPanel.onOptionsChange({ legend: { showLegend: false } });
+      return;
+    }
+
+    // The deprecated hidden mode renders no legend at all, so showing it also needs a real display mode.
     vizPanel.onOptionsChange({
       legend: {
-        showLegend: options.legend.showLegend ? false : true,
+        showLegend: true,
+        ...(options.legend.displayMode === LegendDisplayMode.Hidden && { displayMode: LegendDisplayMode.List }),
       },
     });
   }

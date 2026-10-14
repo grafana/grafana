@@ -57,11 +57,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newService(loader, auth, reg)
 	s.standalone = standalone
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
-	if s.middleware && !s.standalone {
-		// The middleware runs ahead of the embedded API server, so it hosts only
-		// app plugin groups and can never shadow a group the server owns.
-		s.router.acceptGroup = isPluginAPIGroup
-	}
 	return s, nil
 }
 
@@ -85,7 +80,7 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		s.metrics.instrument(s.router, w, req, next)
 	})
-	for _, path := range []string{"/apis", "/openapi/v3"} {
+	for _, path := range []string{apisPrefix, openapiV3Prefix} {
 		httpRouter.Handle(path, handler)
 		httpRouter.PathPrefix(path + "/").Handler(handler)
 	}
