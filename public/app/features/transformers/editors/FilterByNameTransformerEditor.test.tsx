@@ -100,6 +100,30 @@ describe('FilterByNameTransformerEditor', () => {
     expect(onChange).toHaveBeenLastCalledWith({ include: { names: ['C', 'A'], pattern: 'C' } });
   });
 
+  it('shows no fields selected when a committed regex matches none of them', async () => {
+    const onChange = jest.fn();
+    render(<FilterByNameTransformerEditor input={frameWithFields('A', 'B')} options={{}} onChange={onChange} />);
+
+    await userEvent.type(screen.getByRole('textbox'), 'Z');
+    await userEvent.tab();
+    expect(pillStates()).toEqual(['A:false', 'B:false']);
+
+    await userEvent.click(getPill('A'));
+    expect(onChange).toHaveBeenLastCalledWith({ include: { names: ['A'], pattern: 'Z' } });
+  });
+
+  it('shows no fields selected when the saved pattern matches none of them', () => {
+    render(
+      <FilterByNameTransformerEditor
+        input={frameWithFields('A', 'B')}
+        options={{ include: { pattern: 'Z' } }}
+        onChange={jest.fn()}
+      />
+    );
+
+    expect(pillStates()).toEqual(['A:false', 'B:false']);
+  });
+
   it.each([
     { button: 'Select all', pressed: 'true' },
     { button: 'Deselect all', pressed: 'false' },

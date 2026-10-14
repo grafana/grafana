@@ -49,6 +49,11 @@ function getFieldNameInfos(input: DataFrame[]): FieldNameInfo[] {
 function getSelectedNames(fieldNames: FieldNameInfo[], options: FilterFieldsByNameTransformerOptions): string[] {
   const configuredOptions = Array.from(options.include?.names ?? []);
 
+  // Checked before matching: a pattern or names that match no field still filter every field out.
+  if (!configuredOptions.length && !options.include?.pattern) {
+    return fieldNames.map((n) => n.name);
+  }
+
   if (options.include?.pattern) {
     try {
       const regex = stringToJsRegex(options.include.pattern);
@@ -63,11 +68,7 @@ function getSelectedNames(fieldNames: FieldNameInfo[], options: FilterFieldsByNa
     }
   }
 
-  if (configuredOptions.length) {
-    return fieldNames.filter((n) => configuredOptions.includes(n.name)).map((s) => s.name);
-  }
-
-  return fieldNames.map((n) => n.name);
+  return fieldNames.filter((n) => configuredOptions.includes(n.name)).map((s) => s.name);
 }
 
 export function FilterByNameTransformerEditor({ input, options, onChange }: FilterByNameTransformerEditorProps) {
