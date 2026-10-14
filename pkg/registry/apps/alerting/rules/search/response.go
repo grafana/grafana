@@ -1,47 +1,32 @@
 package search
 
 import (
-	"context"
-	"encoding/json"
-	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apiserver/pkg/endpoints/request"
+
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-// WithAPIStatusErrorResponse writes a client error to the response rather than
-// returning it, so a rejected query is reported with the status it carries.
-//
-// The app-sdk turns any error returned from a custom route into a hardcoded 500
-// with err.Error() as the message, discarding the status (see the
-// CallCustomRoute branch in k8s/apiserver/installer.go). Returning a 400 from a
-// handler therefore reaches the client as a server fault. The annotation app
-// works around it the same way.
-//
-// Only 4xx is intercepted. A 5xx really is a server fault, so it is still
-// returned and keeps whatever logging the sdk applies.
-func WithAPIStatusErrorResponse(next simple.AppCustomRouteHandler) simple.AppCustomRouteHandler {
-	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-		err := next(ctx, writer, request)
-		if err == nil {
-			return nil
+// HTTPHandler serves a per-kind search route on the generic search endpoint of
+// its resource, which mounts plain HTTP handlers. Errors are written with the
+// status they carry, as the generic handler writes them.
+func HTTPHandler(route simple.AppCustomRouteHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		namespace, _ := request.NamespaceFrom(ctx)
+		err := route(ctx, w, &app.CustomRouteRequest{
+			ResourceIdentifier: appresource.FullIdentifier{Namespace: namespace},
+			URL:                r.URL,
+			Method:             r.Method,
+			Headers:            r.Header,
+			Body:               r.Body,
+		})
+		if err != nil {
+			errhttp.Write(ctx, err, w)
 		}
-
-		var statusErr apierrors.APIStatus
-		if !errors.As(err, &statusErr) {
-			return err
-		}
-
-		status := statusErr.Status()
-		if status.Code < http.StatusBadRequest || status.Code >= http.StatusInternalServerError {
-			return err
-		}
-
-		writer.Header().Set("Content-Type", "application/json")
-		writer.WriteHeader(int(status.Code))
-		_ = json.NewEncoder(writer).Encode(status)
-		return nil
 	}
 }

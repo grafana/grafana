@@ -67,8 +67,7 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds:          managedKinds,
-		VersionedCustomRoutes: buildSearchRoutes(runtimeCfg),
+		ManagedKinds: managedKinds,
 	}
 
 	a, err := simple.NewApp(c)
@@ -82,32 +81,6 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
-}
-
-// SearchRulesPathSegment is the final segment of the per-kind search routes. The
-// apiserver parses /{resource}/searchRules as a request on an object with this
-// name, which the rules authorizer relies on to treat the search as a read.
-const SearchRulesPathSegment = "searchRules"
-
-// buildSearchRoutes wires the per-kind rule search handlers
-// (provided by the registry) to their namespaced compatibility routes. A route
-// is skipped when its handler is unset, so manifest validation without a
-// backing instance does not register a nil handler.
-func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
-	handlers := simple.AppVersionRouteHandlers{}
-	for path, handler := range map[string]simple.AppCustomRouteHandler{
-		"/alertrules/" + SearchRulesPathSegment:     cfg.SearchAlertRulesHandler,
-		"/recordingrules/" + SearchRulesPathSegment: cfg.SearchRecordingRulesHandler,
-	} {
-		if handler == nil {
-			continue
-		}
-		handlers[simple.AppVersionRoute{Namespaced: true, Path: path, Method: simple.AppCustomRouteMethodPost}] = handler
-	}
-	if len(handlers) == 0 {
-		return nil
-	}
-	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
 }
 
 func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.ManifestData) (*simple.Validator, error) {

@@ -38,8 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	searchauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -58,13 +58,15 @@ var (
 	_ appinstaller.LegacyStorageProvider  = (*AppInstaller)(nil)
 	_ appinstaller.LegacyStatusProvider   = (*AppInstaller)(nil)
 	_ appinstaller.StorageOptionsProvider = (*AppInstaller)(nil)
+	_ searchroutes.SearchHandlerProvider  = (*AppInstaller)(nil)
 )
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg          *setting.Cfg
-	ng           *ngalert.AlertNG
-	hybridSearch http.HandlerFunc
+	cfg            *setting.Cfg
+	ng             *ngalert.AlertNG
+	hybridSearch   http.HandlerFunc
+	searchHandlers map[schema.GroupResource]http.HandlerFunc
 }
 
 func RegisterAppInstaller(
@@ -89,12 +91,18 @@ func RegisterAppInstaller(
 
 	// Search routes through a dual-writer-aware client per kind: the legacy
 	// backend (provisioning service) serves modes 0-3, the unified client 4+.
+	// It replaces the generic handler on each kind's search endpoint, which
+	// only reads the unified index.
 	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
 	unifiedSearch := search.NewUnifiedClient(unifiedClient)
 	searchHandler := search.NewHandler(
 		dualwrite.NewSelector[search.Backend](dual, alertrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
 		dualwrite.NewSelector[search.Backend](dual, recordingrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
 	)
+	installer.searchHandlers = map[schema.GroupResource]http.HandlerFunc{
+		alertrule.ResourceInfo.GroupResource():     search.HTTPHandler(searchHandler.SearchAlertRules),
+		recordingrule.ResourceInfo.GroupResource(): search.HTTPHandler(searchHandler.SearchRecordingRules),
+	}
 
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
 		FolderValidator:                  newFolderValidator(ng),
@@ -104,8 +112,6 @@ func RegisterAppInstaller(
 		MembershipResolver:               membershipIndex,
 		NotificationSettingsValidator:    newNotificationSettingsValidator(ng),
 		WatchNamespace:                   watchNamespace(cfg),
-		SearchAlertRulesHandler:          search.WithAPIStatusErrorResponse(searchHandler.SearchAlertRules),
-		SearchRecordingRulesHandler:      search.WithAPIStatusErrorResponse(searchHandler.SearchRecordingRules),
 		CheckExternalRulerSyncDatasource: newExternalRulerSyncDatasourceChecker(cfg, ng.DataSourceService, ng.Api.AccessControl),
 	}
 
@@ -315,7 +321,6 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-			attr = ruleSearchReadAttributes(attr)
 			switch attr.GetResource() {
 			case recordingrule.ResourceInfo.GroupResource().Resource:
 				return recordingrule.Authorize(ctx, authz, attr)
@@ -333,16 +338,10 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	)
 }
 
-// ruleSearchReadAttributes restates the compatibility POST as the list it
-// performs. Kubernetes parses /{resource}/searchRules as a create of an object
-// named searchRules, which would otherwise require rule-create permission.
-func ruleSearchReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
-	resourceName := attr.GetResource()
-	isRule := resourceName == alertrule.ResourceInfo.GroupResource().Resource || resourceName == recordingrule.ResourceInfo.GroupResource().Resource
-	if isRule && attr.IsResourceRequest() && attr.GetVerb() == "create" && attr.GetName() == rulesApp.SearchRulesPathSegment && attr.GetSubresource() == "" {
-		return searchauthorizer.AsReadAttributes(attr)
-	}
-	return attr
+// SearchHandlers serves the rule kinds' search endpoints from the store the
+// dual writer currently reads, which the generic handler cannot do.
+func (a *AppInstaller) SearchHandlers() map[schema.GroupResource]http.HandlerFunc {
+	return a.searchHandlers
 }
 
 func (a *AppInstaller) AdmissionPlugin() admission.Factory {

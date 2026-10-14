@@ -16,9 +16,11 @@ import (
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana-app-sdk/simple"
 
 	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -122,16 +124,22 @@ func callWith(t *testing.T, body io.ReadCloser, resp *resourcepb.ResourceSearchR
 	t.Helper()
 	index := &fakeIndex{resp: resp}
 	h := newUnifiedHandler(index, &fakeIndex{})
-	rec := httptest.NewRecorder()
-	err := WithAPIStatusErrorResponse(h.SearchAlertRules)(context.Background(), rec, &app.CustomRouteRequest{
-		ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
-		Body:               body,
-	})
-	require.NoError(t, err)
+	rec := serveHTTP(h.SearchAlertRules, body)
 	if index.got != nil {
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, index.got.ResultFormat)
 	}
 	return rec, index
+}
+
+// serveHTTP calls route the way the generic search endpoint does, in the
+// "default" namespace.
+func serveHTTP(route simple.AppCustomRouteHandler, body io.ReadCloser) *httptest.ResponseRecorder {
+	r := httptest.NewRequest(http.MethodPost, "/", nil)
+	r = r.WithContext(request.WithNamespace(r.Context(), "default"))
+	r.Body = body
+	rec := httptest.NewRecorder()
+	HTTPHandler(route)(rec, r)
+	return rec
 }
 
 func readCloser(s string) *closeTracker {

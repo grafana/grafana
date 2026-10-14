@@ -728,6 +728,81 @@ func TestBuildForServedGroupVersions_MountsWithoutBuildersOrInstallers(t *testin
 	})
 }
 
+func TestBuildForServedGroupVersions_SearchHandlerOverride(t *testing.T) {
+	gv := schema.GroupVersion{Group: "exampletodoapp.ext.grafana.app", Version: "v1alpha1"}
+	served := map[schema.GroupVersion]bool{gv: true}
+	manifests := todoManifest(gv, "string", "filter")
+
+	generic, err := BuildForServedGroupVersions(manifests, served, true, false, nil, fakeClient{}, Options{})
+	require.NoError(t, err)
+	overridden, err := BuildForServedGroupVersions(manifests, served, true, false, nil, fakeClient{}, Options{
+		SearchHandlers: map[schema.GroupResource]http.HandlerFunc{
+			gv.WithResource("todos").GroupResource(): func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusTeapot)
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	route := searchRoute(t, overridden, gv)
+	rec := httptest.NewRecorder()
+	route.Handler(rec, httptest.NewRequest(http.MethodPost, "/", nil))
+	assert.Equal(t, http.StatusTeapot, rec.Code, "the override serves the route")
+
+	want := searchRoute(t, generic, gv)
+	assert.Equal(t, want.Path, route.Path)
+	assert.Equal(t, want.Spec, route.Spec, "the override keeps the generic contract")
+	assert.Equal(t, want.Schemas, route.Schemas)
+}
+
+type searchHandlerInstaller struct {
+	hybridInstaller
+	handlers map[schema.GroupResource]http.HandlerFunc
+}
+
+func (i searchHandlerInstaller) SearchHandlers() map[schema.GroupResource]http.HandlerFunc {
+	return i.handlers
+}
+
+func TestBuild_InstallerSearchHandlers(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	manifest := hybridManifest(gv)
+	manifest.Versions[0].Kinds[0].Search = nil
+	b := &manifestBuilder{
+		resourceBuilder: &resourceBuilder{fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}}},
+		manifest:        manifest,
+	}
+	installer := searchHandlerInstaller{
+		hybridInstaller: hybridInstaller{gv: gv, manifest: manifest},
+		handlers: map[schema.GroupResource]http.HandlerFunc{
+			gv.WithResource("widgets").GroupResource(): func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusTeapot)
+			},
+		},
+	}
+
+	routes := Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, []appsdkapiserver.AppInstaller{installer}, Options{})
+	rec := httptest.NewRecorder()
+	searchRoute(t, routes, gv).Handler(rec, httptest.NewRequest(http.MethodPost, "/", nil))
+	assert.Equal(t, http.StatusTeapot, rec.Code)
+}
+
+func searchRoute(t *testing.T, routes []builder.GroupVersionRoutes, gv schema.GroupVersion) builder.APIRouteHandler {
+	t.Helper()
+	for _, r := range routes {
+		if r.GroupVersion != gv || r.Routes == nil {
+			continue
+		}
+		for _, h := range r.Routes.Namespace {
+			if strings.HasSuffix(h.Path, "/"+searchv0.SearchPathSegment) {
+				return h
+			}
+		}
+	}
+	require.FailNow(t, "no search route mounted", "group version %s", gv)
+	return builder.APIRouteHandler{}
+}
+
 // Runtime declarations are refused rather than fatal.
 func TestBuildForServedGroupVersions_RejectsAMalformedDeclaration(t *testing.T) {
 	gv := schema.GroupVersion{Group: "exampletodoapp.ext.grafana.app", Version: "v1alpha1"}

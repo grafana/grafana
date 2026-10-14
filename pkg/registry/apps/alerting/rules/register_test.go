@@ -2,18 +2,20 @@ package rules
 
 import (
 	"context"
+	"maps"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 
 	"github.com/emicklei/go-restful/v3"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 
-	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
@@ -86,50 +88,23 @@ func TestHybridSearchAuthorizer(t *testing.T) {
 	}
 }
 
-func TestRuleSearchReadAttributes(t *testing.T) {
-	request := func(resource, name string) authorizer.AttributesRecord {
-		return authorizer.AttributesRecord{
-			Verb:            "create",
-			Resource:        resource,
-			Name:            name,
-			ResourceRequest: true,
-		}
+// The generic search endpoint only reads the unified index, so both rule kinds
+// must replace its handler, and nothing else may.
+func TestSearchHandlers(t *testing.T) {
+	enabled := true
+	cfg := &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{Enabled: &enabled}}
+	ng := &ngalert.AlertNG{Cfg: cfg, Api: &api.API{AlertRules: &provisioning.AlertRuleService{}}}
+	inst, err := RegisterAppInstaller(cfg, ng, nil, nil, nil)
+	require.NoError(t, err)
+
+	handlers := inst.SearchHandlers()
+	require.ElementsMatch(t, []schema.GroupResource{
+		alertrule.ResourceInfo.GroupResource(),
+		recordingrule.ResourceInfo.GroupResource(),
+	}, slices.Collect(maps.Keys(handlers)))
+	for gr, h := range handlers {
+		require.NotNil(t, h, gr.String())
 	}
-
-	t.Run("compatibility search is authorized as a list", func(t *testing.T) {
-		for _, resource := range []string{
-			alertrule.ResourceInfo.GroupResource().Resource,
-			recordingrule.ResourceInfo.GroupResource().Resource,
-		} {
-			got := ruleSearchReadAttributes(request(resource, rulesApp.SearchRulesPathSegment))
-			require.Equal(t, "list", got.GetVerb(), resource)
-			require.Empty(t, got.GetName(), resource)
-		}
-	})
-
-	t.Run("a normal create is unchanged", func(t *testing.T) {
-		got := ruleSearchReadAttributes(request(alertrule.ResourceInfo.GroupResource().Resource, ""))
-		require.Equal(t, "create", got.GetVerb())
-	})
-
-	t.Run("another resource is unchanged", func(t *testing.T) {
-		got := ruleSearchReadAttributes(request("rulesequences", rulesApp.SearchRulesPathSegment))
-		require.Equal(t, "create", got.GetVerb())
-	})
-
-	t.Run("a subresource request is unchanged", func(t *testing.T) {
-		attr := request(alertrule.ResourceInfo.GroupResource().Resource, rulesApp.SearchRulesPathSegment)
-		attr.Subresource = "status"
-		got := ruleSearchReadAttributes(attr)
-		require.Equal(t, "create", got.GetVerb())
-	})
-
-	t.Run("a non-resource request is unchanged", func(t *testing.T) {
-		attr := request(alertrule.ResourceInfo.GroupResource().Resource, rulesApp.SearchRulesPathSegment)
-		attr.ResourceRequest = false
-		got := ruleSearchReadAttributes(attr)
-		require.Equal(t, "create", got.GetVerb())
-	})
 }
 
 func TestNewFolderValidatorRejectsRootFolder(t *testing.T) {

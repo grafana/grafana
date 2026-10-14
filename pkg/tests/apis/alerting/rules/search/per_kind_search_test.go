@@ -138,7 +138,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		require.NoError(t, err)
 
 		raw, err := rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, "searchRules").
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, searchv0.SearchPathSegment).
 			Body(payload).
 			DoRaw(ctx)
 		require.NoError(t, err)
@@ -158,7 +158,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 
 		for _, resourceName := range []string{alertRules, recordingRules} {
 			raw, err := viewerRC.Post().
-				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, "searchRules").
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, searchv0.SearchPathSegment).
 				Body(payload).
 				DoRaw(ctx)
 			require.NoError(t, err, resourceName)
@@ -344,7 +344,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 			payload, err := json.Marshal(newPerKindQuery().regex("labels", "team=a.*?", false).body)
 			require.NoError(t, err)
 			raw, err := rc.Post().
-				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, "searchRules").
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, searchv0.SearchPathSegment).
 				Body(payload).
 				DoRaw(ctx)
 			var statusErr *apierrors.StatusError
@@ -446,7 +446,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		payload, err := json.Marshal(newPerKindQuery().fields("metric").body)
 		require.NoError(t, err)
 		raw, err := rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, "searchRules").
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, searchv0.SearchPathSegment).
 			Body(payload).
 			DoRaw(ctx)
 		var statusErr *apierrors.StatusError

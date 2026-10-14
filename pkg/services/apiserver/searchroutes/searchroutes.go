@@ -7,6 +7,8 @@
 package searchroutes
 
 import (
+	"maps"
+	"net/http"
 	"slices"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -29,6 +31,18 @@ const namespacedScope = "Namespaced"
 
 type Options struct {
 	HybridEnabled bool
+
+	// SearchHandlers serve a resource's search endpoint in place of the generic
+	// handler, keeping the generic route's path and contract. For a kind whose
+	// objects the unified index cannot answer for yet, such as one still served
+	// from legacy storage.
+	SearchHandlers map[schema.GroupResource]http.HandlerFunc
+}
+
+// SearchHandlerProvider is implemented by an installer that serves the search
+// endpoint of some of its kinds itself. See Options.SearchHandlers.
+type SearchHandlerProvider interface {
+	SearchHandlers() map[schema.GroupResource]http.HandlerFunc
 }
 
 // Build returns the search, trash and hybrid routes to mount, or nil when all are off or
@@ -56,7 +70,8 @@ func Build(
 // A host that learns about apps after it starts can pass those manifests here,
 // merged with the compiled-in set, and their kinds are mounted like any other.
 // Build supplies the compiled-in set. Both add builder manifests, and installer
-// manifests for hybrid routes only.
+// manifests for hybrid routes only. Installers that implement
+// SearchHandlerProvider replace the handler of their kinds' search routes.
 //
 // The provider is built from the manifests passed in, so a route can only ever
 // validate against the declarations it was mounted from.
@@ -74,6 +89,15 @@ func BuildFromManifests(
 ) []builder.GroupVersionRoutes {
 	builderManifests := builder.ManifestsFromBuilders(builders)
 	served := builder.ServedGroupVersions(builders, installers)
+	searchHandlers := maps.Clone(opts.SearchHandlers)
+	for _, installer := range installers {
+		if p, ok := installer.(SearchHandlerProvider); ok {
+			if searchHandlers == nil {
+				searchHandlers = map[schema.GroupResource]http.HandlerFunc{}
+			}
+			maps.Copy(searchHandlers, p.SearchHandlers())
+		}
+	}
 	routes, err := BuildForServedGroupVersions(
 		slices.Concat(manifests, builderManifests),
 		served,
@@ -81,7 +105,7 @@ func BuildFromManifests(
 		trashEnabled,
 		tracer,
 		index,
-		Options{},
+		Options{SearchHandlers: searchHandlers},
 	)
 	if err != nil {
 		panic(err.Error())
@@ -173,8 +197,11 @@ func BuildForServedGroupVersions(
 				mounted[gvr] = true
 				// A kind can opt out of each endpoint independently.
 				if searchEnabled && kind.HasSearchEndpoint() {
-					byGroupVersion[gv] = append(byGroupVersion[gv],
-						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
+					route := handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind)
+					if h := opts.SearchHandlers[gvr.GroupResource()]; h != nil {
+						route.Handler = h
+					}
+					byGroupVersion[gv] = append(byGroupVersion[gv], route)
 				}
 				if trashEnabled && resource.TrashSearchAllowed(gv.Group, resourceName) && kind.HasTrashEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],

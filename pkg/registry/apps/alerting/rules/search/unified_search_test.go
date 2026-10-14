@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -71,11 +69,7 @@ func TestUnifiedBackendErrorResultCompatibility(t *testing.T) {
 				"alert rules": h.SearchAlertRules, "recording rules": h.SearchRecordingRules,
 			} {
 				t.Run(route, func(t *testing.T) {
-					rec := httptest.NewRecorder()
-					err := WithAPIStatusErrorResponse(handler)(t.Context(), rec, &app.CustomRouteRequest{
-						ResourceIdentifier: sdkresource.FullIdentifier{Namespace: "default"}, Body: readCloser(validBody),
-					})
-					require.NoError(t, err)
+					rec := serveHTTP(handler, readCloser(validBody))
 					require.Equal(t, int(result.Code), rec.Code, rec.Body.String())
 					var got metav1.Status
 					require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
@@ -97,19 +91,16 @@ func TestUnifiedBackendTransportErrors(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			h := newUnifiedHandler(&fakeIndex{err: tc.err}, &fakeIndex{})
-			rec := httptest.NewRecorder()
-			err := WithAPIStatusErrorResponse(h.SearchAlertRules)(t.Context(), rec, &app.CustomRouteRequest{
-				ResourceIdentifier: sdkresource.FullIdentifier{Namespace: "default"}, Body: readCloser(validBody),
-			})
+			rec := serveHTTP(h.SearchAlertRules, readCloser(validBody))
+			require.NotContains(t, rec.Body.String(), "private connection failure")
 			if errors.Is(tc.err, ordinaryErr) {
-				require.Same(t, ordinaryErr, err)
+				require.Equal(t, http.StatusInternalServerError, rec.Code)
 			} else {
-				require.Implements(t, (*apierrors.APIStatus)(nil), err)
-				got := err.(apierrors.APIStatus).Status()
-				require.Equal(t, int32(http.StatusServiceUnavailable), got.Code)
+				require.Equal(t, http.StatusServiceUnavailable, rec.Code)
+				var got metav1.Status
+				require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 				require.Equal(t, http.StatusText(http.StatusServiceUnavailable), got.Message)
 			}
-			require.Empty(t, rec.Body.String())
 		})
 	}
 }
