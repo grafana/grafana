@@ -233,7 +233,7 @@ func schema_pkg_apis_provisioning_v0alpha1_BundleFile(ref common.ReferenceCallba
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "BundleFile is a copy of one supporting file of a bundle, as it was at a particular repository ref.\n\nBundles are resources whose definition spans a set of files the resource pipeline cannot parse. Storing each of those files here rather than reading them from the provider on demand gives them ordinary resource authorization, keeps the provider out of the read path, and lets consumers watch them. The repository stays authoritative: a BundleFile is derived, server-owned and overwritten from the repository on every sync, never written by a user.\n\nIdentity is (bundle, path) and the ref is a field, not part of the name: when a bundle advances to a newer ref each of its files is either updated in place or deleted, and a name cannot be updated. So for a bundle at its current ref there is exactly one BundleFile per claimed path.",
+				Description: "BundleFile is a copy of one supporting file of a bundle, as it was at a particular repository ref.\n\nBundles are resources whose definition spans a set of files the resource pipeline cannot parse. Storing each of those files here rather than reading them from the provider on demand gives them ordinary resource authorization, keeps the provider out of the read path, and lets consumers watch them. The repository stays authoritative: a BundleFile is derived, server-owned and overwritten from the repository on every sync, never written by a user.\n\nIdentity is (repository, path): a file belongs to a repository, not to one bundle, and any number of bundles may claim it. A shared asset is therefore stored once, and is removed only once no bundle references it.\n\nThere is no ref: the hash identifies which version of the content is stored, which is all a consumer needs to tell a current file from a stale one. Not carrying a ref also means a file whose content did not change costs no write when a bundle advances.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -331,14 +331,6 @@ func schema_pkg_apis_provisioning_v0alpha1_BundleFileSpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"bundle": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Bundle resource that claims this file. A file belongs to exactly one bundle.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Path is the file's location, relative to the repository root -- the same form every other provisioning path takes.",
@@ -347,17 +339,9 @@ func schema_pkg_apis_provisioning_v0alpha1_BundleFileSpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"ref": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Ref is the repository ref this copy was read at. A consumer needing a consistent view compares it against the owning bundle's published ref and retries on a mismatch: files are updated in place, so there is a brief window during which a changed file is ahead of the bundle.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"hash": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Hash of the decoded content, used to tell a file that moved refs without changing from one that has to be rewritten.",
+							Description: "Hash of the decoded content. It is both the change detector and the version a consumer checks: a bundle records the hashes it resolved, so a file whose hash matches is the one the bundle expects.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -377,7 +361,7 @@ func schema_pkg_apis_provisioning_v0alpha1_BundleFileSpec(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"repository", "bundle", "path", "ref"},
+				Required: []string{"repository", "path"},
 			},
 		},
 	}

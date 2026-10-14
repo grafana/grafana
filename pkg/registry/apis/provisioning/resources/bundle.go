@@ -55,8 +55,6 @@ var (
 	ErrBundleSelectorPattern = errors.New("invalid include or exclude pattern")
 	// ErrBundleFileIsManifest reports a selector matching the bundle's own manifest.
 	ErrBundleFileIsManifest = errors.New("a bundle cannot claim its own manifest")
-	// ErrBundleFileConflict reports a path claimed by more than one bundle.
-	ErrBundleFileConflict = errors.New("bundle file is already claimed by another bundle")
 )
 
 // BundleSelectorError reports an invalid named part, naming it so the caller can surface
@@ -86,10 +84,6 @@ type BundleSelector struct {
 	Include string
 	// Exclude narrows Include. Ignored when Path is set.
 	Exclude []string
-	// Own reports whether the bundle owns the matched files, meaning they are deleted
-	// with it. Nil means derive it: a part confined to the manifest's own directory is
-	// owned, anything reaching outside it is only referenced.
-	Own *bool
 
 	include glob.Glob
 	exclude []glob.Glob
@@ -97,24 +91,6 @@ type BundleSelector struct {
 
 // IsPattern reports whether the part selects by pattern rather than by exact path.
 func (s BundleSelector) IsPattern() bool { return s.Include != "" }
-
-// EffectiveOwn resolves Own, deriving the default from whether the part is confined to
-// manifestDir. Reaching outside the bundle's own directory defaults to referenced, so a
-// shared asset is never deleted by a bundle that merely points at it.
-func (s BundleSelector) EffectiveOwn(manifestDir string) bool {
-	if s.Own != nil {
-		return *s.Own
-	}
-
-	target := s.Path
-	if s.IsPattern() {
-		target = patternRoot(s.Include)
-	}
-	if manifestDir == "" {
-		return false
-	}
-	return target == manifestDir || strings.HasPrefix(target, manifestDir+"/")
-}
 
 // matches reports whether path is selected by this part.
 func (s BundleSelector) matches(path string) bool {
@@ -223,9 +199,6 @@ func parseBundleSelector(name string, raw any, manifestPath string) (BundleSelec
 	if selector.Exclude, err = optionalStringSlice(fields, "exclude"); err != nil {
 		return selector, &BundleSelectorError{Name: name, Err: err}
 	}
-	if selector.Own, err = optionalBool(fields, "own"); err != nil {
-		return selector, &BundleSelectorError{Name: name, Err: err}
-	}
 
 	switch {
 	case selector.Path == "" && selector.Include == "":
@@ -298,18 +271,6 @@ func optionalString(fields map[string]any, key string) (string, error) {
 	return strings.TrimSpace(value), nil
 }
 
-func optionalBool(fields map[string]any, key string) (*bool, error) {
-	raw, ok := fields[key]
-	if !ok || raw == nil {
-		return nil, nil
-	}
-	value, ok := raw.(bool)
-	if !ok {
-		return nil, fmt.Errorf("%w: %s must be a boolean", ErrBundleFilesType, key)
-	}
-	return &value, nil
-}
-
 func optionalStringSlice(fields map[string]any, key string) ([]string, error) {
 	raw, ok := fields[key]
 	if !ok || raw == nil {
@@ -336,8 +297,6 @@ type ResolvedBundlePart struct {
 	// Matched paths, sorted. Empty is reported rather than hidden: a part that stops
 	// matching (a renamed directory, say) must surface, not silently empty the bundle.
 	Matched []string
-	// Own reports whether these files are deleted with the bundle.
-	Own bool
 }
 
 // BundleResolution is a bundle's file set as resolved against one repository ref. It is
@@ -397,12 +356,9 @@ func ResolveBundleFiles(selectors []BundleSelector, candidates []string, opts Re
 	}
 	sort.Strings(eligible)
 
-	manifestDir := safepath.Dir(opts.ManifestPath)
-	manifestDir = strings.TrimSuffix(manifestDir, "/")
-
 	claimed := make(map[string]struct{}, len(eligible))
 	for _, selector := range selectors {
-		part := ResolvedBundlePart{Name: selector.Name, Own: selector.EffectiveOwn(manifestDir)}
+		part := ResolvedBundlePart{Name: selector.Name}
 		for _, path := range eligible {
 			if _, taken := claimed[path]; taken {
 				continue
@@ -429,81 +385,109 @@ func ResolveBundleFiles(selectors []BundleSelector, candidates []string, opts Re
 	return resolution, nil
 }
 
-// BundleIndex maps a repository's bundle files back to the bundle that claims them.
+// BundleIndex counts, for a repository, which bundles claim which files.
 //
-// It answers one question cheaply: "is this path owned by a bundle?". A claimed path must
-// not also be treated as a standalone resource or as an unmanaged raw file -- otherwise
-// the same bytes have two lifecycles -- and it must not be claimed twice, which would
-// make deletion ambiguous.
+// A file may be claimed by any number of bundles: a shared asset is stored once and
+// referenced by each bundle that needs it. The index is therefore a reference count
+// rather than an ownership map, and it answers the question cleanup depends on -- which
+// stored files no bundle references any more.
 //
 // A BundleIndex is built per operation (a sync pass, a request) and is not safe for
 // concurrent writes.
 type BundleIndex struct {
-	// claims maps a bundle file path to the manifest path of its owner.
-	claims map[string]string
-	// files maps a manifest path to the paths it claims, sorted.
+	// claims maps a file path to the manifest paths of the bundles claiming it.
+	claims map[string]sets.Set[string]
+	// files maps a manifest path to the paths it claims, in resolution order.
 	files map[string][]string
 }
 
 // NewBundleIndex returns an empty index.
 func NewBundleIndex() *BundleIndex {
 	return &BundleIndex{
-		claims: make(map[string]string),
+		claims: make(map[string]sets.Set[string]),
 		files:  make(map[string][]string),
 	}
 }
 
-// Add records the files claimed by the bundle at manifestPath. A path already claimed by
-// a different bundle is rejected, and a rejected bundle claims nothing, so a conflict
-// leaves no partial state. Re-adding the same bundle replaces its previous claim.
-func (i *BundleIndex) Add(manifestPath string, files []string) error {
-	for _, path := range i.files[manifestPath] {
-		delete(i.claims, path)
-	}
+// Add records the files claimed by the bundle at manifestPath, replacing any claim it
+// previously held. Claiming a path another bundle already claims is not an error -- that
+// is how two bundles share an asset.
+func (i *BundleIndex) Add(manifestPath string, files []string) {
+	i.Remove(manifestPath)
 
 	for _, path := range files {
-		if owner, ok := i.claims[path]; ok && owner != manifestPath {
-			return fmt.Errorf("%w: %q claimed by both %q and %q",
-				ErrBundleFileConflict, path, owner, manifestPath)
+		owners, ok := i.claims[path]
+		if !ok {
+			owners = sets.New[string]()
+			i.claims[path] = owners
 		}
-	}
-
-	for _, path := range files {
-		i.claims[path] = manifestPath
+		owners.Insert(manifestPath)
 	}
 	i.files[manifestPath] = files
-
-	return nil
 }
 
 // AddResolution records a resolved bundle's files.
-func (i *BundleIndex) AddResolution(manifestPath string, resolution BundleResolution) error {
-	return i.Add(manifestPath, resolution.Files)
+func (i *BundleIndex) AddResolution(manifestPath string, resolution BundleResolution) {
+	i.Add(manifestPath, resolution.Files)
 }
 
-// Remove drops a bundle and releases every path it claimed.
+// Remove drops a bundle and releases its share of every path it claimed.
 func (i *BundleIndex) Remove(manifestPath string) {
 	for _, path := range i.files[manifestPath] {
-		delete(i.claims, path)
+		owners, ok := i.claims[path]
+		if !ok {
+			continue
+		}
+		owners.Delete(manifestPath)
+		if owners.Len() == 0 {
+			delete(i.claims, path)
+		}
 	}
 	delete(i.files, manifestPath)
 }
 
-// Owner returns the manifest path of the bundle claiming path, if any.
-func (i *BundleIndex) Owner(path string) (string, bool) {
-	owner, ok := i.claims[path]
-	return owner, ok
+// Owners returns the manifest paths of every bundle claiming path, sorted.
+func (i *BundleIndex) Owners(path string) []string {
+	return sets.List(i.claims[path])
 }
 
-// IsClaimed reports whether path belongs to any bundle.
+// References returns how many bundles claim path.
+func (i *BundleIndex) References(path string) int {
+	return i.claims[path].Len()
+}
+
+// IsClaimed reports whether any bundle claims path.
 func (i *BundleIndex) IsClaimed(path string) bool {
-	_, ok := i.claims[path]
-	return ok
+	return i.References(path) > 0
 }
 
 // Files returns the paths claimed by the bundle at manifestPath.
 func (i *BundleIndex) Files(manifestPath string) []string {
 	return i.files[manifestPath]
+}
+
+// Paths returns every claimed path across all bundles, sorted. This is the set a
+// repository should hold stored files for; anything else is unreferenced.
+func (i *BundleIndex) Paths() []string {
+	out := make([]string, 0, len(i.claims))
+	for path := range i.claims {
+		out = append(out, path)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// Unreferenced returns the subset of paths that no bundle claims, sorted. Cleanup deletes
+// exactly these: a stored file is kept while any bundle still references it.
+func (i *BundleIndex) Unreferenced(paths []string) []string {
+	out := make([]string, 0)
+	for _, path := range paths {
+		if !i.IsClaimed(path) {
+			out = append(out, path)
+		}
+	}
+	sort.Strings(out)
+	return out
 }
 
 // Bundles returns the manifest paths of every indexed bundle, sorted.

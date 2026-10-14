@@ -127,9 +127,8 @@ var BundleFileResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Created At", Type: "date"},
-			{Name: "Bundle", Type: "string"},
+			{Name: "Repository", Type: "string"},
 			{Name: "Path", Type: "string"},
-			{Name: "Ref", Type: "string"},
 			{Name: "Size", Type: "integer"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -141,9 +140,8 @@ var BundleFileResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			return []interface{}{
 				m.Name,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
-				m.Spec.Bundle,
+				m.Spec.Repository,
 				m.Spec.Path,
-				m.Spec.Ref,
 				m.Spec.Size,
 			}, nil
 		},

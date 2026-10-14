@@ -75,7 +75,7 @@ func TestParseBundleSelectors(t *testing.T) {
 		{
 			name: "neither path nor include",
 			obj: bundleObj(map[string]any{
-				"docs": map[string]any{"own": true},
+				"docs": map[string]any{"exclude": []any{"**/*.tmp"}},
 			}),
 			wantErr: ErrBundleSelectorEmpty,
 		},
@@ -126,13 +126,6 @@ func TestParseBundleSelectors(t *testing.T) {
 			}),
 			wantErr: ErrBundleFilesType,
 		},
-		{
-			name: "own must be a boolean",
-			obj: bundleObj(map[string]any{
-				"docs": map[string]any{"path": "bundles/sample/a.md", "own": "yes"},
-			}),
-			wantErr: ErrBundleFilesType,
-		},
 	}
 
 	for _, tt := range tests {
@@ -176,58 +169,6 @@ func TestPatternRoot(t *testing.T) {
 	for pattern, want := range tests {
 		t.Run(pattern, func(t *testing.T) {
 			assert.Equal(t, want, patternRoot(pattern))
-		})
-	}
-}
-
-func TestBundleSelectorEffectiveOwn(t *testing.T) {
-	yes, no := true, false
-
-	tests := []struct {
-		name     string
-		selector BundleSelector
-		want     bool
-	}{
-		{
-			name:     "explicit own wins over the derived default",
-			selector: BundleSelector{Path: "shared/query.sql", Own: &yes},
-			want:     true,
-		},
-		{
-			name:     "explicit disown wins too",
-			selector: BundleSelector{Path: "bundles/sample/a.md", Own: &no},
-			want:     false,
-		},
-		{
-			name:     "a path inside the manifest directory is owned",
-			selector: BundleSelector{Path: "bundles/sample/a.md"},
-			want:     true,
-		},
-		{
-			name:     "a path outside it is only referenced",
-			selector: BundleSelector{Path: "shared/query.sql"},
-			want:     false,
-		},
-		{
-			name:     "a pattern rooted inside is owned",
-			selector: BundleSelector{Include: "bundles/sample/docs/**"},
-			want:     true,
-		},
-		{
-			name:     "a pattern rooted outside is only referenced",
-			selector: BundleSelector{Include: "shared/**"},
-			want:     false,
-		},
-		{
-			name:     "a sibling directory sharing a prefix is not inside",
-			selector: BundleSelector{Path: "bundles/sample-other/a.md"},
-			want:     false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.selector.EffectiveOwn("bundles/sample"))
 		})
 	}
 }
@@ -279,17 +220,13 @@ func TestResolveBundleFiles(t *testing.T) {
 			"shared/query.sql",
 		}, got.Files)
 
+		// Parts are in sorted-name order: docs, query, scripts.
 		require.Len(t, got.Parts, 3)
 		assert.Equal(t, "docs", got.Parts[0].Name)
 		assert.Equal(t, []string{"bundles/sample/docs/a.md", "bundles/sample/docs/nested/b.md"}, got.Parts[0].Matched)
-		assert.True(t, got.Parts[0].Own)
-
-		// Parts are in sorted-name order: docs, query, scripts.
-		// shared/query.sql reaches outside the bundle, so it is referenced not owned.
 		assert.Equal(t, "query", got.Parts[1].Name)
-		assert.False(t, got.Parts[1].Own)
+		assert.Equal(t, []string{"shared/query.sql"}, got.Parts[1].Matched)
 		assert.Equal(t, "scripts", got.Parts[2].Name)
-		assert.True(t, got.Parts[2].Own)
 	})
 
 	t.Run("never matches the manifest", func(t *testing.T) {
@@ -383,56 +320,83 @@ func TestResolveBundleFiles_TooManyFiles(t *testing.T) {
 func TestBundleIndex(t *testing.T) {
 	t.Run("claims and releases paths", func(t *testing.T) {
 		idx := NewBundleIndex()
-		require.NoError(t, idx.Add("a/bundle.yaml", []string{"a/one.md", "shared/two.md"}))
+		idx.Add("a/bundle.yaml", []string{"a/one.md", "shared/two.md"})
 
-		owner, ok := idx.Owner("shared/two.md")
-		assert.True(t, ok)
-		assert.Equal(t, "a/bundle.yaml", owner)
+		assert.Equal(t, []string{"a/bundle.yaml"}, idx.Owners("shared/two.md"))
 		assert.True(t, idx.IsClaimed("a/one.md"))
 		assert.False(t, idx.IsClaimed("a/unclaimed.md"))
+		assert.Equal(t, []string{"a/one.md", "shared/two.md"}, idx.Paths())
 
 		idx.Remove("a/bundle.yaml")
 		assert.False(t, idx.IsClaimed("a/one.md"))
 		assert.Empty(t, idx.Bundles())
 	})
 
-	t.Run("rejects a path claimed by another bundle", func(t *testing.T) {
+	t.Run("a file may be shared by several bundles", func(t *testing.T) {
 		idx := NewBundleIndex()
-		require.NoError(t, idx.Add("a/bundle.yaml", []string{"shared/two.md"}))
+		idx.Add("a/bundle.yaml", []string{"shared/two.md", "a/one.md"})
+		idx.Add("b/bundle.yaml", []string{"shared/two.md"})
 
-		err := idx.Add("b/bundle.yaml", []string{"shared/two.md"})
-		require.ErrorIs(t, err, ErrBundleFileConflict)
-		assert.Contains(t, err.Error(), "shared/two.md")
+		assert.Equal(t, 2, idx.References("shared/two.md"))
+		assert.Equal(t, []string{"a/bundle.yaml", "b/bundle.yaml"}, idx.Owners("shared/two.md"))
+	})
 
-		// The losing bundle claims nothing, so a conflict leaves no partial state.
-		assert.Empty(t, idx.Files("b/bundle.yaml"))
-		owner, _ := idx.Owner("shared/two.md")
-		assert.Equal(t, "a/bundle.yaml", owner)
+	t.Run("a shared file survives until the last bundle lets go", func(t *testing.T) {
+		idx := NewBundleIndex()
+		idx.Add("a/bundle.yaml", []string{"shared/two.md"})
+		idx.Add("b/bundle.yaml", []string{"shared/two.md"})
+
+		idx.Remove("a/bundle.yaml")
+		assert.True(t, idx.IsClaimed("shared/two.md"), "still referenced by b")
+		assert.Empty(t, idx.Unreferenced([]string{"shared/two.md"}))
+
+		idx.Remove("b/bundle.yaml")
+		assert.False(t, idx.IsClaimed("shared/two.md"))
+		assert.Equal(t, []string{"shared/two.md"}, idx.Unreferenced([]string{"shared/two.md"}))
 	})
 
 	t.Run("re-adding the same bundle replaces its claims", func(t *testing.T) {
 		idx := NewBundleIndex()
-		require.NoError(t, idx.Add("a/bundle.yaml", []string{"a/one.md", "a/two.md"}))
-		require.NoError(t, idx.Add("a/bundle.yaml", []string{"a/two.md", "a/three.md"}))
+		idx.Add("a/bundle.yaml", []string{"a/one.md", "a/two.md"})
+		idx.Add("a/bundle.yaml", []string{"a/two.md", "a/three.md"})
 
 		assert.False(t, idx.IsClaimed("a/one.md"))
 		assert.True(t, idx.IsClaimed("a/three.md"))
 		assert.Equal(t, []string{"a/two.md", "a/three.md"}, idx.Files("a/bundle.yaml"))
 	})
 
+	t.Run("re-adding does not drop a path another bundle still claims", func(t *testing.T) {
+		idx := NewBundleIndex()
+		idx.Add("a/bundle.yaml", []string{"shared/two.md"})
+		idx.Add("b/bundle.yaml", []string{"shared/two.md"})
+
+		// b stops claiming it; a still does.
+		idx.Add("b/bundle.yaml", []string{"b/other.md"})
+
+		assert.True(t, idx.IsClaimed("shared/two.md"))
+		assert.Equal(t, []string{"a/bundle.yaml"}, idx.Owners("shared/two.md"))
+	})
+
+	t.Run("unreferenced reports only what no bundle claims", func(t *testing.T) {
+		idx := NewBundleIndex()
+		idx.Add("a/bundle.yaml", []string{"a/kept.md"})
+
+		stored := []string{"a/kept.md", "a/orphan.md", "shared/orphan.md"}
+		assert.Equal(t, []string{"a/orphan.md", "shared/orphan.md"}, idx.Unreferenced(stored))
+	})
+
 	t.Run("indexes a resolution", func(t *testing.T) {
 		idx := NewBundleIndex()
-		resolution := BundleResolution{Ref: "abc", Files: []string{"a/one.md"}}
-		require.NoError(t, idx.AddResolution("a/bundle.yaml", resolution))
+		idx.AddResolution("a/bundle.yaml", BundleResolution{Ref: "abc", Files: []string{"a/one.md"}})
 
 		assert.True(t, idx.IsClaimed("a/one.md"))
 	})
 
 	t.Run("bundles are listed deterministically", func(t *testing.T) {
 		idx := NewBundleIndex()
-		require.NoError(t, idx.Add("z/bundle.yaml", nil))
-		require.NoError(t, idx.Add("a/bundle.yaml", nil))
-		require.NoError(t, idx.Add("m/bundle.yaml", nil))
+		idx.Add("z/bundle.yaml", nil)
+		idx.Add("a/bundle.yaml", nil)
+		idx.Add("m/bundle.yaml", nil)
 
 		assert.Equal(t, []string{"a/bundle.yaml", "m/bundle.yaml", "z/bundle.yaml"}, idx.Bundles())
 	})

@@ -13,39 +13,37 @@ import (
 )
 
 // bundleFileNameHashLen is how much of the path hash goes into a bundle file's name.
-// 12 hex characters is 48 bits, which is ample for the at-most-128 paths one bundle may
-// claim while keeping the name readable.
+// 12 hex characters is 48 bits, which is ample for a repository's file set while keeping
+// the name readable.
 const bundleFileNameHashLen = 12
 
-// bundleFileNamePrefixMax bounds the bundle portion of a generated name so that the
+// bundleFileNamePrefixMax bounds the repository portion of a generated name so that the
 // result stays inside the 253-character limit for a resource name.
 const bundleFileNamePrefixMax = 200
 
-// BundleFileName derives the stable name of the BundleFile holding path for a bundle.
+// BundleFileName derives the stable name of the BundleFile holding path in a repository.
 //
-// The name covers (bundle, path) and deliberately not the ref: when a bundle advances,
-// each of its files is updated in place or deleted, and a name cannot be updated.
-func BundleFileName(bundle, path string) string {
+// The name covers (repository, path): a file belongs to a repository rather than to one
+// bundle, so any number of bundles claiming the same path share a single stored file. It
+// deliberately covers neither the bundle nor a ref -- a name cannot be updated, and both
+// of those change while the file stays the same file.
+func BundleFileName(repository, path string) string {
 	sum := sha256.Sum256([]byte(path))
 	suffix := hex.EncodeToString(sum[:])[:bundleFileNameHashLen]
 
-	prefix := bundle
+	prefix := repository
 	if len(prefix) > bundleFileNamePrefixMax {
 		prefix = prefix[:bundleFileNamePrefixMax]
 	}
 	return prefix + "-" + suffix
 }
 
-// BundleFileOptions describes one file to be stored for a bundle.
+// BundleFileOptions describes one file to be stored for a repository.
 type BundleFileOptions struct {
 	Namespace  string
 	Repository string
-	// Bundle is the name of the resource claiming this file.
-	Bundle string
 	// Path is repository-root-relative.
 	Path string
-	// Ref is the repository ref this content was read at.
-	Ref string
 	// Data is the raw file content; it is base64-encoded into the object.
 	Data []byte
 }
@@ -55,24 +53,22 @@ type BundleFileOptions struct {
 // Content is always base64-encoded, whatever the file holds: bundles carry arbitrary
 // files, and one representation avoids both guessing at text and mangling anything that
 // is not valid UTF-8. Hash and Size describe the decoded content, so they can be compared
-// against a freshly read file without decoding the stored one.
+// against a freshly read file without decoding the stored one -- the hash is also the
+// version a bundle records, so there is nothing else to keep in step.
 func NewBundleFile(opts BundleFileOptions) *provisioning.BundleFile {
 	sum := sha256.Sum256(opts.Data)
 
 	return &provisioning.BundleFile{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      BundleFileName(opts.Bundle, opts.Path),
+			Name:      BundleFileName(opts.Repository, opts.Path),
 			Namespace: opts.Namespace,
 			Labels: map[string]string{
 				provisioning.BundleFileRepositoryLabel: opts.Repository,
-				provisioning.BundleFileBundleLabel:     opts.Bundle,
 			},
 		},
 		Spec: provisioning.BundleFileSpec{
 			Repository: opts.Repository,
-			Bundle:     opts.Bundle,
 			Path:       opts.Path,
-			Ref:        opts.Ref,
 			Hash:       "sha256:" + hex.EncodeToString(sum[:]),
 			Size:       int64(len(opts.Data)),
 			Content:    base64.StdEncoding.EncodeToString(opts.Data),
@@ -88,15 +84,10 @@ const (
 	BundleFileActionCreate BundleFileAction = "create"
 	// BundleFileActionUpdate replaces a file whose content changed.
 	BundleFileActionUpdate BundleFileAction = "update"
-	// BundleFileActionRefresh advances a file to a newer ref without changing its
-	// content. Separate from update so a caller can see how much of a reconcile is
-	// content and how much is only the ref moving.
-	BundleFileActionRefresh BundleFileAction = "refresh"
-	// BundleFileActionDelete removes a file the bundle no longer claims.
+	// BundleFileActionDelete removes a file no bundle references any more.
 	BundleFileActionDelete BundleFileAction = "delete"
-	// BundleFileActionUnchanged is a file already at the target ref with the same
-	// content. It is reported so a caller can account for the whole set, and carries no
-	// write.
+	// BundleFileActionUnchanged is a stored file whose content already matches. It is
+	// reported so a caller can account for the whole set, and carries no write.
 	BundleFileActionUnchanged BundleFileAction = "unchanged"
 )
 
@@ -111,21 +102,18 @@ type BundleFileChange struct {
 	File *provisioning.BundleFile
 }
 
-// BundleFileChanges is the full reconcile for one bundle's file set at a ref.
+// BundleFileChanges is the full reconcile for a repository's stored bundle files.
 type BundleFileChanges struct {
-	// Ref the desired set was read at.
-	Ref string
 	// Changes in path order.
 	Changes []BundleFileChange
 }
 
-// Writes returns the changes that have to be applied before the bundle may publish the
-// ref, in path order.
+// Writes returns the changes that have to be applied, in path order.
 func (c BundleFileChanges) Writes() []BundleFileChange {
 	out := make([]BundleFileChange, 0, len(c.Changes))
 	for _, change := range c.Changes {
 		switch change.Action {
-		case BundleFileActionCreate, BundleFileActionUpdate, BundleFileActionRefresh, BundleFileActionDelete:
+		case BundleFileActionCreate, BundleFileActionUpdate, BundleFileActionDelete:
 			out = append(out, change)
 		case BundleFileActionUnchanged:
 		}
@@ -147,18 +135,20 @@ func (c BundleFileChanges) Count(action BundleFileAction) int {
 // IsEmpty reports whether the reconcile has nothing to write.
 func (c BundleFileChanges) IsEmpty() bool { return len(c.Writes()) == 0 }
 
-// DiffBundleFiles works out what has to change for a bundle to hold exactly desired at
-// its ref, given the files it currently holds.
+// DiffBundleFiles works out what has to change for a repository to hold exactly desired,
+// given the files it currently stores.
 //
-// Deletions are emitted for files the bundle no longer claims, so a path dropped from a
-// selector -- or one that stopped matching a pattern -- does not linger. Nothing is
-// delete-then-created: a file that persists is updated in place, because deleting it
-// first would be a visible gap for anything reading concurrently.
+// Desired is the union of every path claimed by any bundle in the repository, because a
+// file may be shared: it is kept while any bundle still references it and deleted only
+// once none does. Callers build that union with BundleIndex.
 //
-// Files already at the target ref with unchanged content are reported as unchanged
-// rather than omitted, so a caller can tell "nothing to do" from "nothing found".
-func DiffBundleFiles(existing, desired []*provisioning.BundleFile, ref string) BundleFileChanges {
-	changes := BundleFileChanges{Ref: ref}
+// Nothing is delete-then-created: a file that persists is updated in place, because
+// deleting it first would be a visible gap for anything reading concurrently. A stored
+// file whose content already matches is reported as unchanged rather than omitted, so a
+// caller can tell "nothing to do" from "nothing found" -- and because the hash is the
+// only version marker, an unchanged file costs no write at all when bundles advance.
+func DiffBundleFiles(existing, desired []*provisioning.BundleFile) BundleFileChanges {
+	var changes BundleFileChanges
 
 	current := make(map[string]*provisioning.BundleFile, len(existing))
 	for _, file := range existing {
@@ -187,17 +177,6 @@ func DiffBundleFiles(existing, desired []*provisioning.BundleFile, ref string) B
 		case have.Spec.Hash != want.Spec.Hash:
 			changes.Changes = append(changes.Changes, BundleFileChange{
 				Action: BundleFileActionUpdate,
-				Name:   want.Name,
-				Path:   want.Spec.Path,
-				File:   want,
-			})
-		case have.Spec.Ref != want.Spec.Ref:
-			// Content is identical, so only the ref moves. The file still has to be
-			// written: a stale ref cannot be told from a current one by a reader, and
-			// every file carrying its own ref is what lets a consumer check it against
-			// the bundle's published ref.
-			changes.Changes = append(changes.Changes, BundleFileChange{
-				Action: BundleFileActionRefresh,
 				Name:   want.Name,
 				Path:   want.Spec.Path,
 				File:   want,
@@ -235,15 +214,28 @@ func DiffBundleFiles(existing, desired []*provisioning.BundleFile, ref string) B
 	return changes
 }
 
-// BundleFilesPublishable reports whether every file in the set is stored at ref.
+// BundleFilesPublishable reports whether every file a bundle resolved is stored with the
+// hash the bundle resolved for it. Expected maps a repository path to its content hash.
 //
 // This is the barrier a bundle publishes behind: its ref is advanced only once all of its
-// supporting files are present at that ref, so a consumer reading the published ref is
-// guaranteed the whole set. A partial failure leaves the bundle on its previous ref with
-// its previous, consistent set.
-func BundleFilesPublishable(files []*provisioning.BundleFile, ref string) bool {
-	for _, file := range files {
-		if file == nil || file.Spec.Ref != ref {
+// supporting files are stored at the content it resolved, so a consumer reading the
+// published ref is guaranteed the whole set. A partial failure leaves the bundle on its
+// previous ref with its previous, consistent set.
+//
+// The hash is what makes this work without a ref on the file: a shared file advanced by
+// another bundle is still the content this one expects, or it is not, and the hash says
+// which.
+func BundleFilesPublishable(stored []*provisioning.BundleFile, expected map[string]string) bool {
+	byPath := make(map[string]string, len(stored))
+	for _, file := range stored {
+		if file == nil {
+			continue
+		}
+		byPath[file.Spec.Path] = file.Spec.Hash
+	}
+
+	for path, hash := range expected {
+		if byPath[path] != hash {
 			return false
 		}
 	}
