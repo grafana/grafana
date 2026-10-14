@@ -55,13 +55,8 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     getInstanceSettings: (_uid: string | null) => ({ uid: 'ds1' }),
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
-
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,

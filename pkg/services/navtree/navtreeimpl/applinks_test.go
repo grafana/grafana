@@ -1119,6 +1119,68 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 	}
 }
 
+func TestAssistantPagesTopLevelNavigation(t *testing.T) {
+	for _, tt := range []struct {
+		name      string
+		ossMode   bool
+		trialMode bool
+		role      identity.RoleType
+		wantPages bool
+	}{
+		{name: "cloud", role: identity.RoleAdmin, wantPages: true},
+		{name: "OSS", role: identity.RoleAdmin, ossMode: true},
+		{name: "trial", role: identity.RoleAdmin, trialMode: true},
+		{name: "without access", role: identity.RoleViewer},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppSubURL = "/grafana"
+			service := ServiceImpl{
+				cfg: cfg,
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+					assistantAppID: {JSONData: map[string]any{"ossMode": tt.ossMode, "trialMode": tt.trialMode}},
+				}},
+			}
+			service.readNavigationSettings()
+			httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+			require.NoError(t, err)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{OrgRole: tt.role},
+				Context:      &web.Context{Req: httpReq},
+			}
+			plugin := pluginstore.Plugin{JSONData: plugins.JSONData{
+				ID:   assistantAppID,
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{Name: "Assistant", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+					{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Icon: "file-alt", Type: "page", AddToNav: true, Role: identity.RoleAdmin},
+				},
+			}}
+			dashboards := &navtree.NavLink{Id: navtree.NavIDDashboards, SortWeight: navtree.WeightDashboard}
+			explore := &navtree.NavLink{Id: navtree.NavIDExplore, SortWeight: navtree.WeightExplore}
+			tree := navtree.NavTreeRoot{Children: []*navtree.NavLink{dashboards, explore}}
+			service.processAppPlugin(plugin, reqCtx, &tree)
+			ai := tree.FindById("plugin-page-" + assistantAppID)
+			require.NotNil(t, ai)
+			require.Len(t, ai.Children, 1)
+			require.Equal(t, "Assistant", ai.Children[0].Text)
+			pages := tree.FindByURL("/grafana/a/grafana-assistant-app/pages")
+			if !tt.wantPages {
+				require.Nil(t, pages)
+				return
+			}
+			require.NotNil(t, pages)
+			require.Contains(t, tree.Children, pages)
+			require.Equal(t, "Pages", pages.Text)
+			require.Equal(t, "pages", pages.Icon)
+			require.True(t, pages.IsNew)
+			require.Equal(t, assistantAppID, pages.PluginID)
+			tree.Sort()
+			require.Equal(t, []*navtree.NavLink{dashboards, pages, explore, ai}, tree.Children)
+		})
+	}
+}
+
 func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}

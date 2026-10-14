@@ -73,7 +73,7 @@ func TestSingleTenantDiscoveryBreakerIsSeparateOnSameHost(t *testing.T) {
 	tenantCalls := 0
 	st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
 		code := http.StatusNoContent
-		if req.URL.Path == "/apis" {
+		if req.URL.Path == "/apis/example" {
 			discoveryCalls++
 			code = http.StatusBadGateway
 		} else {
@@ -87,9 +87,9 @@ func TestSingleTenantDiscoveryBreakerIsSeparateOnSameHost(t *testing.T) {
 		return recorder.Code
 	}
 	for range 6 {
-		require.Equal(t, http.StatusBadGateway, request("/apis"))
+		require.Equal(t, http.StatusBadGateway, request("/apis/example"))
 	}
-	require.Equal(t, http.StatusServiceUnavailable, request("/apis"))
+	require.Equal(t, http.StatusServiceUnavailable, request("/apis/example"))
 	require.Equal(t, http.StatusNoContent, request("/apis/%3Cdisco%3E/v1/namespaces/stacks-123/widgets"))
 	require.Equal(t, 6, discoveryCalls)
 	require.Equal(t, 1, tenantCalls)

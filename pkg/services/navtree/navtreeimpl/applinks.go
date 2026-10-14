@@ -217,14 +217,17 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 			// Register standalone plugin pages to certain sections using the Grafana config
 			if pathConfig, ok := s.navigationAppPathConfig[include.Path]; ok {
-				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
-					link.Id = "standalone-plugin-page-" + include.Path
-					link.SortWeight = pathConfig.SortWeight
+				link.Id = "standalone-plugin-page-" + include.Path
+				link.SortWeight = pathConfig.SortWeight
+				link.IsNew = pathConfig.IsNew
+				link.SubTitle = pathConfig.SubTitle
+				if pathConfig.Icon != "" {
+					link.Icon = pathConfig.Icon
+				}
 
-					if len(pathConfig.SubTitle) > 0 {
-						link.SubTitle = pathConfig.SubTitle
-					}
-
+				if pathConfig.SectionID == navtree.NavIDRoot {
+					treeRoot.AddSection(link)
+				} else if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					// Check if the section already has a page with the same URL, and in that case override it
 					// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
 					isOverridingCorePage := false
@@ -594,6 +597,12 @@ func (s *ServiceImpl) readNavigationSettings() {
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
+		"/a/grafana-assistant-app/pages": {
+			SectionID:  navtree.NavIDRoot,
+			SortWeight: navtree.WeightDashboard + 1,
+			Icon:       "pages",
+			IsNew:      true,
+		},
 		"/a/grafana-auth-app": {
 			SectionID:  navtree.NavIDCfgAccess,
 			SortWeight: 2,

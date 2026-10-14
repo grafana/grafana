@@ -743,11 +743,10 @@ func TestWatchWrittenKeys(t *testing.T) {
 		Type: resourcepb.WatchNotification_MODIFIED, Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a", ResourceVersion: 11,
 	}))
 	select {
-	case key := <-keys:
-		assert.Equal(t, "ns", key.Namespace)
-		assert.Equal(t, "dashboard.grafana.app", key.Group)
-		assert.Equal(t, "dashboards", key.Resource)
-		assert.Equal(t, "dash-a", key.Name)
+	case written := <-keys:
+		assert.Equal(t, &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"}, written.Key)
+		assert.Equal(t, int64(11), written.ResourceVersion)
+		assert.Nil(t, written.Value)
 	case <-time.After(time.Second):
 		t.Fatal("the key was not delivered at once")
 	}
