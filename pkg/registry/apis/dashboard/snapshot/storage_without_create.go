@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -139,6 +140,19 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 
 	if err := authorizeSnapshotDelete(ctx, snap, n.accessControl, n.blobs); err != nil {
 		return nil, false, err
+	}
+	if options.Preconditions != nil {
+		if uid := options.Preconditions.UID; uid != nil && *uid != snap.UID {
+			return nil, false, apierrors.NewConflict(dashv0.SnapshotResourceInfo.GroupResource(), name, fmt.Errorf("UID precondition failed"))
+		}
+		if rv := options.Preconditions.ResourceVersion; rv != nil && *rv != snap.ResourceVersion {
+			return nil, false, apierrors.NewConflict(dashv0.SnapshotResourceInfo.GroupResource(), name, fmt.Errorf("resourceVersion precondition failed"))
+		}
+	}
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, snap); err != nil {
+			return nil, false, err
+		}
 	}
 
 	// Unified deletion reads the object again internally. Revalidate that object as
