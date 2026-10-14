@@ -61,3 +61,61 @@ func TestDatasourceProxyUnmappedAction(t *testing.T) {
 		}
 	}
 }
+
+func TestDatasourceProxyAlertingPermissions(t *testing.T) {
+	actions := []struct {
+		action      string
+		subresource string
+		verb        string
+	}{
+		{accesscontrol.ActionAlertingRuleExternalRead, "alertrules", "get"},
+		{accesscontrol.ActionAlertingRuleExternalWrite, "alertrules", "update"},
+		{accesscontrol.ActionAlertingInstancesExternalRead, "alertinstances", "get"},
+		{accesscontrol.ActionAlertingInstancesExternalWrite, "alertinstances", "update"},
+		{accesscontrol.ActionAlertingNotificationsExternalRead, "alertnotifications", "get"},
+		{accesscontrol.ActionAlertingNotificationsExternalWrite, "alertnotifications", "update"},
+	}
+	for _, group := range []string{"datasource.grafana.app", "prometheus.datasource.grafana.app", "loki.datasource.grafana.app", "alertmanager.datasource.grafana.app"} {
+		for _, action := range actions {
+			t.Run(group+"/"+action.action, func(t *testing.T) {
+				check := func(t *testing.T, permissions []accesscontrol.Permission, allowed bool) {
+					t.Helper()
+					service := NewTestService("user-1", permissions, nil)
+					ctx := types.WithAuthInfo(t.Context(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{Namespace: "default"}}))
+					res, err := service.Check(ctx, &authzv1.CheckRequest{
+						Namespace: "default", Subject: "user:user-1", Group: group,
+						Resource: "datasources", Subresource: action.subresource, Name: "ds-1", Verb: action.verb,
+					})
+					require.NoError(t, err)
+					require.Equal(t, allowed, res.Allowed)
+				}
+				t.Run("no grants", func(t *testing.T) { check(t, nil, false) })
+				for _, tc := range []struct {
+					scope   string
+					allowed bool
+				}{
+					{"datasources:uid:ds-1", true},
+					{"datasources:uid:ds-2", false},
+					{"datasources:uid:*", true},
+					{"datasources:*", true},
+					{"*", true},
+					{"", false},
+				} {
+					t.Run("scope="+tc.scope, func(t *testing.T) {
+						check(t, []accesscontrol.Permission{{Action: action.action, Scope: tc.scope}}, tc.allowed)
+					})
+				}
+				for _, grant := range actions {
+					t.Run("grant="+grant.action, func(t *testing.T) {
+						check(t, []accesscontrol.Permission{{Action: grant.action, Scope: "datasources:uid:ds-1"}}, grant.action == action.action)
+					})
+				}
+				for _, grant := range []string{datasources.ActionQuery, datasources.ActionRead, "datasources:admin", "datasources:edit"} {
+					t.Run("grant="+grant, func(t *testing.T) {
+						check(t, []accesscontrol.Permission{{Action: grant, Scope: "datasources:uid:ds-1"}}, false)
+					})
+				}
+			})
+		}
+	}
+}

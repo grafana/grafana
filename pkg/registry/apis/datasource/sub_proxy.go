@@ -17,8 +17,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -212,12 +214,30 @@ func (b *DataSourceAPIBuilder) checkProxyRouteAccess(ctx context.Context, user i
 	if err != nil {
 		return false, err
 	}
-	result, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+	req := authlib.CheckRequest{
 		Namespace: ns.Value,
 		Group:     b.GetGroupVersion().Group,
 		Resource:  "datasources",
 		Name:      uid,
 		Verb:      action,
-	}, "")
+	}
+	// Route actions describe the required permission independently of the proxied HTTP method.
+	switch action {
+	case datasources.ActionQuery:
+		req.Subresource, req.Verb = "query", utils.VerbCreate
+	case accesscontrol.ActionAlertingRuleExternalRead:
+		req.Subresource, req.Verb = "alertrules", utils.VerbGet
+	case accesscontrol.ActionAlertingRuleExternalWrite:
+		req.Subresource, req.Verb = "alertrules", utils.VerbUpdate
+	case accesscontrol.ActionAlertingInstancesExternalRead:
+		req.Subresource, req.Verb = "alertinstances", utils.VerbGet
+	case accesscontrol.ActionAlertingInstancesExternalWrite:
+		req.Subresource, req.Verb = "alertinstances", utils.VerbUpdate
+	case accesscontrol.ActionAlertingNotificationsExternalRead:
+		req.Subresource, req.Verb = "alertnotifications", utils.VerbGet
+	case accesscontrol.ActionAlertingNotificationsExternalWrite:
+		req.Subresource, req.Verb = "alertnotifications", utils.VerbUpdate
+	}
+	result, err := b.accessClient.Check(ctx, user, req, "")
 	return result.Allowed, err
 }

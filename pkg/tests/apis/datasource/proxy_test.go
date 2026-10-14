@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -184,6 +185,27 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 			ResourceAttribute: "uid",
 		},
 	})
+	alertReader := func(name, scopeUID string) apis.User {
+		permissions := []resourcepermissions.SetResourcePermissionCommand{{
+			Actions:           []string{datasources.ActionQuery},
+			Resource:          datasources.ScopeRoot,
+			ResourceID:        uid,
+			ResourceAttribute: "uid",
+		}}
+		if scopeUID == uid {
+			permissions[0].Actions = append(permissions[0].Actions, accesscontrol.ActionAlertingRuleExternalRead)
+		} else {
+			permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
+				Actions:           []string{accesscontrol.ActionAlertingRuleExternalRead},
+				Resource:          datasources.ScopeRoot,
+				ResourceID:        scopeUID,
+				ResourceAttribute: "uid",
+			})
+		}
+		return helper.CreateUser(name, apis.Org1, org.RoleNone, permissions)
+	}
+	scopedAlertReader := alertReader("proxy-alert-reader", uid)
+	otherAlertReader := alertReader("proxy-other-alert-reader", "another-datasource")
 
 	transports := []struct {
 		name string
@@ -248,7 +270,7 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 			require.Equal(t, http.StatusForbidden, status)
 			require.Nil(t, upstreamGot(), "RBAC-denied request must not reach the upstream")
 
-			// Explicit route actions remain supported by the legacy proxy only.
+			// Both proxy endpoints evaluate the same explicit route permissions.
 			for _, request := range []struct {
 				user   apis.User
 				method string
@@ -260,14 +282,19 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 				{helper.Org1.Admin, http.MethodDelete, "rules"},
 			} {
 				status, body := doProxy(request.user, request.method, transport.path(uid, request.path), nil)
-				if transport.name == "apiserver" {
-					require.Equal(t, http.StatusForbidden, status, "body: %s", body)
-					require.Nil(t, upstreamGot(), "unsupported route action must not reach the upstream")
-				} else {
-					require.Equal(t, http.StatusOK, status, "body: %s", body)
-					require.NotNil(t, upstreamGot())
-				}
+				require.Equal(t, http.StatusOK, status, "body: %s", body)
+				require.NotNil(t, upstreamGot())
 			}
+		})
+
+		t.Run(transport.name+" scopes alert permissions to the datasource", func(t *testing.T) {
+			status, body := doProxy(scopedAlertReader, http.MethodGet, transport.path(uid, "rules"), nil)
+			require.Equal(t, http.StatusOK, status, "body: %s", body)
+			require.NotNil(t, upstreamGot())
+
+			status, body = doProxy(otherAlertReader, http.MethodGet, transport.path(uid, "rules"), nil)
+			require.Equal(t, http.StatusForbidden, status, "body: %s", body)
+			require.Nil(t, upstreamGot(), "a grant on another datasource must not reach the upstream")
 		})
 
 		t.Run(transport.name+" returns 404 for an unknown datasource", func(t *testing.T) {

@@ -35,9 +35,9 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "datasources:query", action)
 
-		// The group exposes the datasources resource plus its query and caching subresources.
+		// The group exposes the datasources resource and its query, caching and alerting subresources.
 		all := reg.GetAll(group)
-		require.Len(t, all, 3)
+		require.Len(t, all, 6)
 	}
 
 	// Security: wildcard-matched group must not resolve to resources from other groups
@@ -50,7 +50,7 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
 	reg := NewMapperRegistry()
 
-	for _, subresource := range []string{"", "query", "caching"} {
+	for _, subresource := range []string{"", "query", "caching", "alertrules", "alertinstances", "alertnotifications"} {
 		shared, ok := reg.Get("datasource.grafana.app", "datasources", subresource)
 		require.True(t, ok)
 		plugin, ok := reg.Get("loki.datasource.grafana.app", "datasources", subresource)
