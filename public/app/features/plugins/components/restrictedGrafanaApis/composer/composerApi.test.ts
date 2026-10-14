@@ -1,6 +1,7 @@
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
+import { requestComposerEnter } from 'app/features/dashboard-scene/composer/composerEntryRequests';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { SetExtensionSidebarPresentationEvent } from 'app/types/events';
@@ -128,4 +129,15 @@ describe('presentation', () => {
     session.exit();
     expect(presentations).toEqual([]);
   });
+});
+
+it('passes entry requests from Grafana to the registered listeners until they unsubscribe', () => {
+  const listener = jest.fn();
+  const unsubscribe = composerApi.onEnterRequested(listener);
+  requestComposerEnter(DASHBOARD);
+  expect(listener).toHaveBeenCalledWith(DASHBOARD);
+
+  unsubscribe();
+  requestComposerEnter(DASHBOARD);
+  expect(listener).toHaveBeenCalledTimes(1);
 });

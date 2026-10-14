@@ -36,6 +36,7 @@ export interface ComposerAPI {
     target?: { resource: 'dashboard' | 'notebook'; uid: string },
     options?: { presentation?: 'floating' | 'none' }
   ): Promise<unknown>;
+  onEnterRequested(listener: (target: { resource: 'dashboard' | 'notebook'; uid: string }) => void): () => void;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {

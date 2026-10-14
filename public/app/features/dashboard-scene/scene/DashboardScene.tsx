@@ -70,6 +70,7 @@ import {
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { type ComposerSession } from '../composer/ComposerSession';
+import { clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { isNewDashboard, type DashboardChangeInfo } from '../saving/shared';
@@ -492,7 +493,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
 
     return () => {
-      // Leaving the dashboard ends Composer; the cached scene must not come back in it.
+      // Leaving the dashboard ends Composer, and drops a request to enter it that Assistant has not taken
+      // yet; the cached scene must not come back in it.
+      clearPendingComposerEnterRequest();
       this.exitComposerMode();
       this.closeComposerSession();
       composerSubscription.unsubscribe();

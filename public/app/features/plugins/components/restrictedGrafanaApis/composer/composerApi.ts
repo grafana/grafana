@@ -8,6 +8,7 @@
 
 import { appEvents } from 'app/core/app_events';
 import { canEnterComposer } from 'app/features/dashboard-scene/composer/composerAccess';
+import { addComposerEnterRequestListener } from 'app/features/dashboard-scene/composer/composerEntryRequests';
 import {
   type ComposerAPI,
   type ComposerEnterCheck,
@@ -32,6 +33,7 @@ function resolveTarget(target?: ComposerTarget): { scene: DashboardScene } | { r
 
 export const composerApi: ComposerAPI = {
   version: 1,
+  onEnterRequested: addComposerEnterRequestListener,
   canEnter: (target) => {
     const resolved = resolveTarget(target);
     return 'refusal' in resolved ? resolved.refusal : canEnterComposer(resolved.scene);

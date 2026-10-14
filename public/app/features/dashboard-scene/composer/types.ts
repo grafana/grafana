@@ -35,6 +35,13 @@ export interface ComposerAPI {
   canEnter(target?: ComposerTarget): ComposerEnterCheck;
   /** Rejects when `canEnter(target)` would not return ok, or another session is open. */
   enter(target?: ComposerTarget, options?: ComposerEnterOptions): Promise<ComposerSessionAPI>;
+  /**
+   * Called with the target when the user asks for Composer from Grafana's own UI (the dashboard mode
+   * picker). A request made while no listener is registered (the Assistant sidebar was closed and is being
+   * opened) goes to the first listener that subscribes within 10 seconds; each request is delivered once.
+   * Core does not enter Composer itself: the listener calls `enter` as usual. Returns an unsubscribe.
+   */
+  onEnterRequested(listener: (target: ComposerTarget) => void): () => void;
 }
 
 /**
