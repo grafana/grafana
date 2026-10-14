@@ -20,7 +20,6 @@ import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
 import { type TableRowTransformations } from './TableViewContext';
-import { type CellOption } from './menuOptions';
 import { type TextAlign } from './styles';
 import { type ApplyFilterResult } from './utils';
 
@@ -232,7 +231,6 @@ export type InspectCellProps = {
 };
 
 export interface TableCellActionsProps {
-  groups?: CellOption[][];
   onAddToAssistant?: () => void;
   tableRefreshEnabled?: boolean;
   field: Field;

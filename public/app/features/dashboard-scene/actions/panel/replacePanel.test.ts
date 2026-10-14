@@ -1,5 +1,3 @@
-import { testWithFeatureToggles } from 'test/test-utils';
-
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
@@ -18,7 +16,6 @@ setPluginImportUtils({
 });
 
 describe('replacePanel', () => {
-  testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
   let deactivate: () => void;
 
   afterEach(() => deactivate?.());

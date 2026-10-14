@@ -65,6 +65,23 @@ describe('TableSidebar', () => {
     expect(screen.queryByRole('button', { name: /^Reorder / })).not.toBeInTheDocument();
   });
 
+  it('keeps checkbox and label interactions out of panel selection', async () => {
+    const onPointerDown = jest.fn();
+    const onPointerUp = jest.fn();
+    render(
+      <div onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+        <Harness />
+      </div>
+    );
+
+    await userEvent.click(screen.getByLabelText('Hide Column A'));
+    expect(screen.getByLabelText('Show Column A')).not.toBeChecked();
+    await userEvent.click(screen.getByText('Column B'));
+    expect(screen.getByLabelText('Hide Column B')).toBeChecked();
+    expect(onPointerDown).not.toHaveBeenCalled();
+    expect(onPointerUp).not.toHaveBeenCalled();
+  });
+
   it('places checkboxes at the row padding without reserving space for drag handles', () => {
     render(<Harness reorderable={false} />);
 

@@ -80,14 +80,14 @@ export type NotebookEntryPoint = (typeof NOTEBOOK_ENTRY_POINT)[keyof typeof NOTE
  * How an edit session began. `TOGGLE` is the Edit control inside an open notebook. `NAVIGATION` is
  * an arrival at `?edit=true`, such as the list's Edit action, a pasted link, or a reload. `NEW` is
  * a notebook with no uid yet. It wins over the other two: a notebook that does not exist yet is
- * the more useful fact.
- *
- * Nothing sends an assistant value. The assistant writes cells without entering edit mode.
+ * the more useful fact. `ASSISTANT` is the mutation API rewriting the open document, same as
+ * DashboardScene's own `'assistant'` edit source.
  */
 export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   TOGGLE: 'toggle',
   NAVIGATION: 'navigation',
   NEW: 'new',
+  ASSISTANT: 'assistant',
 } as const;
 
 export type NotebookEditSessionSource =

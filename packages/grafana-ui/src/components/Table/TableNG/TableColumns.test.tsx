@@ -203,6 +203,44 @@ it('keeps restore controls when the only hideable column is absent from transfor
   expect(screen.getByRole('checkbox', { name: 'Hide B' })).toBeChecked();
 });
 
+it('enables hiding after another catalog column is restored before transformed data arrives', async () => {
+  const data = createDataFrame({
+    fields: [
+      {
+        name: 'A',
+        type: FieldType.string,
+        values: ['visible'],
+        config: { custom: { hideable: true } },
+        display: () => ({ text: 'visible', numeric: NaN }),
+      },
+    ],
+  });
+  const onHiddenColumnsChange = jest.fn();
+  const table = (hiddenColumns: ReadonlySet<string>) => (
+    <TableNG
+      data={data}
+      width={800}
+      height={400}
+      tableRefreshEnabled
+      columnCatalog={['A', 'B']}
+      hiddenColumns={hiddenColumns}
+      onHiddenColumnsChange={onHiddenColumnsChange}
+    />
+  );
+  const user = userEvent.setup();
+  const { rerender } = render(table(new Set(['B'])));
+  await user.click(screen.getByRole('button', { name: 'Column options for A' }));
+  expect(await screen.findByRole('menuitem', { name: 'Hide column' })).toBeDisabled();
+  await user.keyboard('{Escape}');
+
+  rerender(table(new Set()));
+  await user.click(screen.getByRole('button', { name: 'Column options for A' }));
+  const hideColumn = await screen.findByRole('menuitem', { name: 'Hide column' });
+  expect(hideColumn).toBeEnabled();
+  await user.click(hideColumn);
+  expect(onHiddenColumnsChange).toHaveBeenCalledWith(new Set(['A']));
+});
+
 function Harness({
   revision = 0,
   reorderable = true,

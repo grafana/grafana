@@ -36,6 +36,8 @@ it('previews exact bounds and missing values, then commits only on Apply', async
   const { user, onApply } = setup();
   await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '1');
   await user.type(screen.getByRole('textbox', { name: 'Maximum' }), '2');
+  expect(screen.getByRole('slider', { name: 'Minimum' })).toHaveAttribute('aria-valuenow', '1');
+  expect(screen.getByRole('slider', { name: 'Maximum' })).toHaveAttribute('aria-valuenow', '2');
   expect(screen.getByRole('status')).toHaveTextContent('3 of 7 rows match');
   expect(onApply).not.toHaveBeenCalled();
   await user.click(screen.getByRole('checkbox'));

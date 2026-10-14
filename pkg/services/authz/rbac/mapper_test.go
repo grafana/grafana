@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -142,9 +143,43 @@ func TestMapperRegistry_DatasourceCachingActionSets(t *testing.T) {
 	}
 }
 
+func TestMapperRegistry_Snapshots(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("dashboard.grafana.app", "snapshots", "")
+	require.True(t, ok)
+	assert.False(t, mapping.HasFolderSupport())
+
+	for verb, action := range map[string]string{
+		utils.VerbGet:    "snapshots:read",
+		utils.VerbList:   "snapshots:read",
+		utils.VerbWatch:  "snapshots:read",
+		utils.VerbCreate: "snapshots:create",
+		utils.VerbDelete: "snapshots:delete",
+	} {
+		t.Run(verb, func(t *testing.T) {
+			got, ok := mapping.Action(verb)
+			require.True(t, ok)
+			assert.Equal(t, action, got)
+			assert.True(t, mapping.SkipScope(verb))
+
+			allowed, err := (&Service{}).checkPermissionWithMapping(context.Background(), map[string]bool{"": true},
+				&checkRequest{Verb: verb}, mapping, nil)
+			require.NoError(t, err)
+			assert.True(t, allowed)
+		})
+	}
+
+	for _, verb := range []string{utils.VerbUpdate, utils.VerbPatch, utils.VerbDeleteCollection} {
+		_, ok := mapping.Action(verb)
+		assert.False(t, ok, "verb %q must not grant snapshot writes", verb)
+	}
+	_, ok = reg.Get("dashboard.grafana.app", "snapshots", "dashboard")
+	assert.False(t, ok, "dashboard subresource must not inherit snapshot write permissions")
+}
+
 // TestMapperRegistry_Playlist verifies playlists map to their real two-action model
 // (playlists:read / playlists:write) rather than the default create/delete actions, and
-// that create skips scope since playlists are neither folder-scoped nor scope-checked.
+// that every verb skips scope since playlists are neither folder-scoped nor scope-checked.
 // This is what lets the provisioning export preflight authorize playlists.
 func TestMapperRegistry_Playlist(t *testing.T) {
 	reg := NewMapperRegistry()
@@ -164,7 +199,9 @@ func TestMapperRegistry_Playlist(t *testing.T) {
 		assert.Equal(t, "playlists:write", action, "verb %q should map to write (no playlists:create/delete action exists)", verb)
 	}
 
-	assert.True(t, mapping.SkipScope(utils.VerbCreate), "create must skip scope; playlists are not folder-scoped")
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		assert.True(t, mapping.SkipScope(verb), "verb %q must skip scope; playlist roles are unscoped", verb)
+	}
 	assert.False(t, mapping.HasFolderSupport(), "playlists are not folder-scoped")
 }
 

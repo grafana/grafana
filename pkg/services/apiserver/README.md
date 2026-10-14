@@ -45,6 +45,17 @@ data/grafana-apiserver
             └── hi.json
 ```
 
+## Configure remote storage response size
+
+For standalone API servers using `unified-grpc` storage, set
+`--grpc-client-max-recv-msg-size` to the maximum response size in bytes for storage
+and search clients. The default, `0`, preserves the gRPC receive limit of 4 MiB;
+negative values are rejected.
+
+For example, `--grpc-client-max-recv-msg-size=104857600` allows responses up to
+100 MiB. This client flag is independent of `[grpc_server] max_recv_msg_size`,
+which limits incoming requests on the server.
+
 ## Enable aggregation
 
 See [aggregator/README.md](./aggregator/README.md) for more information.

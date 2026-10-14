@@ -28,7 +28,7 @@ const viewStateKeyList = Object.keys(viewStateKeys) as ViewStateKey[];
 
 type ViewRequest<K extends ViewStateKey> = {
   key: K;
-  load: () => Promise<DashboardViewState[K]>;
+  load: (signal: AbortSignal) => Promise<DashboardViewState[K]>;
 };
 
 export type DashboardViewRequest = {

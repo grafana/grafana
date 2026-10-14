@@ -17,7 +17,7 @@ import { Button } from '../../../Button/Button';
 import { TimeRangeFields } from '../../../DateTimePickers/TimeRangePicker/TimeRangeFields';
 import { Input } from '../../../Input/Input';
 import { Stack } from '../../../Layout/Stack/Stack';
-import { RangeSlider } from '../../../Slider/RangeSlider';
+import { RangeSliderG14 } from '../../../Slider/RangeSliderG14';
 import { type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
@@ -152,7 +152,7 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
                 })}
               </svg>
               {histogram.min !== histogram.max && (
-                <RangeSlider
+                <RangeSliderG14
                   min={histogram.min}
                   max={histogram.max}
                   value={[

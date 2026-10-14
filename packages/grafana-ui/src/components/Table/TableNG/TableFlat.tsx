@@ -71,10 +71,10 @@ type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellC
 const EMPTY_EXPANDED_ROWS: Set<string> = new Set();
 const NOOP_STABLE_KEY = () => '';
 
-// Must match useSplitter's unexported `sm` handle width.
 const COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH = 220;
 const COLUMN_VISIBILITY_PANEL_MIN_WIDTH = 160;
 const COLUMN_VISIBILITY_PANEL_MAX_WIDTH = 400;
+// Must match useSplitter's unexported `sm` handle width.
 const COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH = 8;
 const COLUMN_VISIBILITY_TABLE_BORDER_WIDTH = 1;
 
@@ -539,6 +539,7 @@ export function TableFlat(props: TableNGProps) {
       reorderable,
       settlingColumnKeys,
       onHideColumn: handleHideColumn,
+      canHideColumn: canHideAnotherColumn,
       onOpenColumnPanel: hasColumnSidebar ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
@@ -571,6 +572,7 @@ export function TableFlat(props: TableNGProps) {
       reorderable,
       settlingColumnKeys,
       handleHideColumn,
+      canHideAnotherColumn,
       noPanelPadding,
     ]
   );
