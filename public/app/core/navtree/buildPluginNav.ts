@@ -13,9 +13,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { appNavConfigFor } from './appNavConfig';
+import { appNavConfigFor, type AppNavConfig } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
-import { appendIntoSection, arePluginNavItemsEnabled, pluginPageId } from './utils';
+import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
+import { appendIntoSection, arePluginNavItemsEnabled, pluginPageId, standalonePluginPageIdFromText } from './utils';
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -37,7 +38,12 @@ const collator = new Intl.Collator();
  *
  * Apps are placed in the section their nav config names, falling back to
  * "More apps" under their own plugin.json name. A section that does not exist
- * yet is created from its shell by the first app to need it.
+ * yet is created from its shell by the first app to need it. The cross-plugin
+ * overrides run last, once every app is known.
+ *
+ * The [navigation.app_sections] and [navigation.app_standalone_pages] INI
+ * overrides are not reproduced; app_sections needs a backend half to deliver it
+ * through frontend settings.
  *
  * Call it with a tree whose sections are already built, and sort the result:
  * apps carry weights that only take effect downstream. Urls stay app-sub-url
@@ -54,6 +60,7 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
     return tree;
   }
 
+  const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
   let next = tree;
 
   for (const app of byTitle(apps)) {
@@ -71,6 +78,13 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
       // One malformed plugin meta costs its own app and nothing else: this runs
       // while the redux store is being created, so a throw would take the tree
       console.warn('[navtree] failed to build nav for app plugin', app.id, error);
+    }
+  }
+
+  // Last, because each override reads nodes other apps placed
+  for (const override of PLUGIN_NAV_OVERRIDES) {
+    if (override.when(next, installedPluginIds)) {
+      next = override.apply(next, installedPluginIds);
     }
   }
 
@@ -201,7 +215,7 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
   const navConfig = appNavConfigFor(app.id);
   const sectionId = navConfig?.sectionId ?? NavID.apps;
 
-  const sectionChildren = [appLink];
+  const sectionChildren = navConfig?.hoistPages ? hoistAppPages(appLink, navConfig.hoistPages) : [appLink];
 
   const placed = appendIntoSection(tree, sectionId, sectionChildren);
   if (placed) {
@@ -234,6 +248,30 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
       ...(imgFromAppLogo && app.info?.logos && { img: config.appSubUrl + app.info.logos.large }),
     },
   ];
+}
+
+// Hoisted pages without a pinned slot sort above the section's app entries
+// (which sit at small positive weights) while keeping their own relative order
+const HOISTED_PAGE_WEIGHT_OFFSET = -100;
+
+/**
+ * Expands an app's pages into its target section as standalone entries instead
+ * of nesting them under an app node (`hoistPages` in the app's nav config).
+ * Pages pinned by `slotWeightByPath` take that section slot; the rest sort
+ * above the section's app entries in their own order.
+ */
+function hoistAppPages(
+  appLink: NavModelItem,
+  { slotWeightByPath = {} }: NonNullable<AppNavConfig['hoistPages']>
+): NavModelItem[] {
+  return (appLink.children ?? []).map((child) => {
+    const slotWeight = child.url ? slotWeightByPath[child.url] : undefined;
+    return {
+      ...child,
+      sortWeight: slotWeight ?? HOISTED_PAGE_WEIGHT_OFFSET + (child.sortWeight ?? 0),
+      id: standalonePluginPageIdFromText(child.text ?? ''),
+    };
+  });
 }
 
 function hasAccessToInclude(include: PluginInclude): boolean {
