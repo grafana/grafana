@@ -41,15 +41,6 @@ func (r *DisplayHandler) selfRouteSpec() *spec3.PathProps {
 							Description: "workspace",
 							Schema:      spec.StringProperty(),
 						},
-					}, {
-						ParameterProps: spec3.ParameterProps{
-							Name:        "permissions",
-							In:          "query",
-							Example:     "true",
-							Description: "Include permissions in the response (deprecated)",
-							Schema:      spec.BoolProperty(),
-							Deprecated:  true, // Avoid this for new applications
-						},
 					},
 				},
 				Responses: &spec3.Responses{
@@ -110,32 +101,6 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 	if !anonymous && (rsp.Identity.Name == "" || authInfo.GetUID() == "") {
 		errhttp.Write(ctx, apierrors.NewUnauthorized("unable to resolve current identity"), w)
 		return
-	}
-
-	// Fetch the permissions for the current user
-	if req.URL.Query().Get("permissions") == "true" && r.client != nil && rsp.Namespace != "" {
-		groups := authInfo.GetGroups()
-		if r.useExternalGroups {
-			if externalGroupsInfo, ok := authInfo.(interface{ GetExternalGroups() []string }); ok {
-				groups = externalGroupsInfo.GetExternalGroups()
-			}
-		}
-
-		response, err := r.client.GetUserPermissions(ctx, delegatedAuthInfo{
-			AuthInfo: authInfo,
-			groups:   groups,
-		}, authlib.GetUserPermissionsRequest{
-			Namespace: rsp.Namespace,
-		})
-		if err != nil {
-			errhttp.Write(ctx, err, w)
-			return
-		}
-
-		rsp.Permissions = make([]iam.UserPermission, 0, len(response.Permissions))
-		for _, permission := range response.Permissions {
-			rsp.Permissions = append(rsp.Permissions, iam.UserPermission{Action: permission.Action, Scope: permission.Scope})
-		}
 	}
 
 	// Anonymous access is established by authentication; it has no user row to resolve.

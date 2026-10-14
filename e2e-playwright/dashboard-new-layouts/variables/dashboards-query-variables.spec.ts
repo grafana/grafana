@@ -34,7 +34,7 @@ test.describe(
         value: '',
       };
 
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       await sidebar.variableOptions.query.openEditor();
 
@@ -127,7 +127,7 @@ test.describe(
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
       // create a data source and a constant variables
 
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, {
+      await flows.variables.addNewGenericVariable(sidebar, controls, {
         type: 'datasource',
         name: 'ds',
         label: '',
@@ -136,7 +136,6 @@ test.describe(
       await sidebar.variableOptions.datasource.selectType('TestData');
 
       await flows.variables.addNewGenericVariable(
-        page,
         sidebar,
         controls,
         {
@@ -158,7 +157,7 @@ test.describe(
         value: '',
       };
 
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable, true);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable, true);
 
       await sidebar.variableOptions.query.openEditor();
 

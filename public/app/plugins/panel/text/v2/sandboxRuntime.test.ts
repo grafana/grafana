@@ -82,7 +82,7 @@ describe('sandbox runtime', () => {
 
   test('legacy content renders without policy verification and keeps measuring', async () => {
     initialize();
-    expectNotification('ready');
+    expectNotification('ready', { document: expect.any(String) });
     violation('https://external.test/image');
     message();
     await flush();
@@ -108,7 +108,7 @@ describe('sandbox runtime', () => {
     violation(CSP_CHECK_URL);
     violation(new URL(CSP_CHECK_URL).origin);
     await flush();
-    expectNotification('ready');
+    expectNotification('ready', { document: expect.any(String) });
     expect(document.querySelector('img')).toBeNull();
     message();
     await flush();

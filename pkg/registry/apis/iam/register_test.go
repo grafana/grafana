@@ -63,7 +63,7 @@ func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &IdentityAccessManagementAPIBuilder{
 				features:        Features{UserPermissionsAPI: tt.enabled},
-				display:         display.NewDisplayHandler(nil, false),
+				display:         display.NewDisplayHandler(),
 				userPermissions: userpermissions.NewHandler(noopUserPermissionsClient{}, false),
 			}
 			routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
@@ -516,7 +516,8 @@ func TestPostProcessOpenAPI_PermissionItems(t *testing.T) {
 		Components: &spec3.Components{Schemas: map[string]*spec.Schema{}},
 	})
 	require.NoError(t, err)
-	for _, name := range []string{"UserPermissions", "CurrentUserInfo"} {
+	require.NotContains(t, oas.Components.Schemas[legacyiamv0.OpenAPIPrefix+"CurrentUserInfo"].Properties, "permissions")
+	for _, name := range []string{"UserPermissions"} {
 		t.Run(name, func(t *testing.T) {
 			permissions := oas.Components.Schemas[legacyiamv0.OpenAPIPrefix+name].Properties["permissions"]
 			require.Equal(t, spec.StringOrArray{"array"}, permissions.Type)

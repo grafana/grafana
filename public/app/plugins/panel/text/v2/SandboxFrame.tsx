@@ -5,7 +5,13 @@ import { textUtil } from '@grafana/data';
 
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import { resourceOrigin, type BlockedResource, type TextSandboxState } from './sandboxPolicy';
-import { isFrameNotification, TEXT_FRAME_PROTOCOL, type RenderCommand, type MermaidCommand } from './sandboxProtocol';
+import {
+  isFrameNotification,
+  randomId,
+  TEXT_FRAME_PROTOCOL,
+  type RenderCommand,
+  type MermaidCommand,
+} from './sandboxProtocol';
 
 export const WATCHDOG_TIMEOUT_MS = 15_000;
 
@@ -90,9 +96,9 @@ function useFrameRuntime({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [sandboxState, setSandboxState] = useState<TextSandboxState>({ status: 'loading', resources: [] });
   const [dimensions, setDimensions] = useState({ height: 1, contentHeight: 0 });
-  const [channel] = useState(randomChannel);
+  const [channel] = useState(randomId);
   // srcdoc inherits deployment CSP, so reuse Grafana's server nonce when one is present.
-  const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomChannel());
+  const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomId());
   const protectedFrame = policy !== undefined;
 
   useLayoutEffect(() => {
@@ -150,14 +156,14 @@ function createFrameController({
   onBlocked,
 }: FrameControllerOptions) {
   // Protocol guards update synchronously, independently of React's reported state.
-  let renderCommandSent = false;
+  let renderedDocument: string | undefined;
   let hasFailed = false;
   let mermaidRequested = false;
   let disposed = false;
   const expectedOrigin = protectedFrame ? 'null' : window.location.origin;
   // Opaque-origin frames require '*'; commands still target only this document's WindowProxy.
   const targetOrigin = protectedFrame ? '*' : window.location.origin;
-  const watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
+  let watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
   window.addEventListener('message', onMessage);
   void loadSandboxRuntime()
     .then((runtimeSource) => {
@@ -193,7 +199,7 @@ function createFrameController({
     }
     switch (message.type) {
       case 'ready':
-        return sendRender();
+        return sendRender(message.document);
       case 'mermaid-needed':
         return loadRequestedMermaid();
       case 'rendered':
@@ -207,24 +213,37 @@ function createFrameController({
     }
   }
 
-  function sendRender() {
+  function sendRender(documentId: string) {
     // Protected frames verify CSP violation delivery before sending ready and receiving panel data.
-    if (renderCommandSent || hasFailed) {
+    if (renderedDocument === documentId) {
       return;
     }
-    renderCommandSent = true;
+    // Moving an iframe within the DOM reloads its srcdoc. The new document passed its own CSP check, so it is a
+    // fresh attempt even if the previous one failed.
+    if (renderedDocument !== undefined) {
+      hasFailed = false;
+      mermaidRequested = false;
+      clearTimeout(watchdog);
+      watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
+    } else if (hasFailed) {
+      return;
+    }
+    renderedDocument = documentId;
     iframe.contentWindow?.postMessage(renderCommand, targetOrigin);
   }
 
   function loadRequestedMermaid() {
-    if (!renderCommandSent || hasFailed || !renderCommand.mermaid || mermaidRequested) {
+    if (renderedDocument === undefined || hasFailed || !renderCommand.mermaid || mermaidRequested) {
       return;
     }
     mermaidRequested = true;
     const target = iframe.contentWindow;
+    // A reloaded document requests its own copy; a late result for the previous one must not fail it.
+    const requestedBy = renderedDocument;
+    const isCurrent = () => !disposed && renderedDocument === requestedBy;
     void loadSandboxMermaid()
       .then((source) => {
-        if (disposed || hasFailed || !target || iframe.contentWindow !== target) {
+        if (!isCurrent() || hasFailed || !target || iframe.contentWindow !== target) {
           return;
         }
         const command: MermaidCommand = {
@@ -236,14 +255,14 @@ function createFrameController({
         target.postMessage(command, targetOrigin);
       })
       .catch(() => {
-        if (!disposed) {
+        if (isCurrent()) {
           fail();
         }
       });
   }
 
   function markRendered() {
-    if (renderCommandSent && !hasFailed) {
+    if (renderedDocument !== undefined && !hasFailed) {
       clearTimeout(watchdog);
       onStatus('ready');
     }
@@ -251,13 +270,13 @@ function createFrameController({
 
   // Content can still resize or report violations after a rendering failure.
   function updateDimensions(height: number, contentHeight: number) {
-    if (renderCommandSent) {
+    if (renderedDocument !== undefined) {
       onResize({ height, contentHeight });
     }
   }
 
   function recordBlockedResources(resources: BlockedResource[]) {
-    if (renderCommandSent) {
+    if (renderedDocument !== undefined) {
       onBlocked(resources);
     }
   }
@@ -322,10 +341,4 @@ function mergeBlockedResources(current: BlockedResource[], incoming: BlockedReso
     }
   }
   return resources.length === current.length ? current : resources;
-}
-
-function randomChannel() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (value) => value.toString(16).padStart(2, '0')).join(
-    ''
-  );
 }

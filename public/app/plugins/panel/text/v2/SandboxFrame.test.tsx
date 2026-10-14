@@ -36,7 +36,7 @@ function notify(frame: HTMLIFrameElement, type: string, extra = {}, envelope = {
     new MessageEvent('message', {
       source: frame.contentWindow,
       origin: frame.hasAttribute('sandbox') ? 'null' : window.location.origin,
-      data: { protocol: TEXT_FRAME_PROTOCOL, channel, type, ...extra },
+      data: { protocol: TEXT_FRAME_PROTOCOL, channel, type, ...(type === 'ready' && { document: 'first' }), ...extra },
       ...envelope,
     })
   );
@@ -106,6 +106,43 @@ it('rejects foreign sources, origins, channels, and premature rendered messages'
   notify(element, 'ready');
   notify(element, 'ready');
   expect(postMessage).toHaveBeenCalledTimes(1);
+});
+
+it('renders again into a reloaded document and fails closed if it never completes', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+
+  notify(element, 'ready', { document: 'reloaded' });
+  notify(element, 'ready', { document: 'reloaded' });
+  expect(postMessage).toHaveBeenCalledTimes(2);
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'render', html: '<p>Private content</p>' }),
+    '*'
+  );
+
+  act(() => jest.advanceTimersByTime(WATCHDOG_TIMEOUT_MS));
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+});
+
+it('renders into a reloaded document after the previous document failed', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'error');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+
+  notify(element, 'ready', { document: 'reloaded' });
+  expect(postMessage).toHaveBeenCalledTimes(2);
+  expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'render' }), '*');
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
 });
 
 it('retains the visible frame and reports a late violation', async () => {
@@ -419,6 +456,21 @@ it.each(['error', 'timeout'] as const)('discards pending Mermaid source after %s
   expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
   expect(postMessage).toHaveBeenCalledTimes(1);
   expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'render' }), '*');
+});
+
+it('ignores a Mermaid failure from the document before a reload', async () => {
+  let reject!: (error: Error) => void;
+  jest.mocked(loadSandboxMermaid).mockReturnValueOnce(new Promise((_, fail) => (reject = fail)));
+  const options = props({ mermaid: {} });
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed');
+  notify(element, 'ready', { document: 'reloaded' });
+  notify(element, 'rendered');
+  await act(async () => reject(new Error('Chunk failed')));
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
 });
 
 it('fails closed on a forbidden shell policy and preserves TrustedHTML branding when permitted', async () => {

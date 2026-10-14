@@ -1243,7 +1243,7 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 			require.NotNil(t, pages)
 			require.Contains(t, tree.Children, pages)
 			require.Equal(t, "Pages", pages.Text)
-			require.Equal(t, "file-alt", pages.Icon)
+			require.Equal(t, "pages", pages.Icon)
 			require.True(t, pages.IsNew)
 			require.Equal(t, assistantAppID, pages.PluginID)
 			tree.Sort()

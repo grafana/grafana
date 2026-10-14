@@ -95,29 +95,12 @@ func schema_pkg_apis_iam_v0alpha1_CurrentUserInfo(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
-					"permissions": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(UserPermission{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
 				},
-				Required: []string{"identity", "displayName", "permissions"},
+				Required: []string{"identity", "displayName"},
 			},
 		},
 		Dependencies: []string{
-			IdentityRef{}.OpenAPIModelName(), UserPermission{}.OpenAPIModelName()},
+			IdentityRef{}.OpenAPIModelName()},
 	}
 }
 

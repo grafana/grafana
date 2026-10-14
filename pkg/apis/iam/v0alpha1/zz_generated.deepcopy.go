@@ -15,11 +15,6 @@ import (
 func (in *CurrentUserInfo) DeepCopyInto(out *CurrentUserInfo) {
 	*out = *in
 	out.Display = in.Display
-	if in.Permissions != nil {
-		in, out := &in.Permissions, &out.Permissions
-		*out = make([]UserPermission, len(*in))
-		copy(*out, *in)
-	}
 	return
 }
 

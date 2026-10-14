@@ -525,14 +525,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "queryServiceFromUI",
-			Description: "Routes requests to the new query service",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // and can change at startup
-			Expression:  "false",
-		},
-		{
 			Name:            "datasourcesRerouteLegacyCRUDAPIs",
 			Description:     "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
 			Stage:           FeatureStageExperimental,
@@ -1326,14 +1318,6 @@ var (
 			Owner:       grafanaCatalogSquad,
 			Expression:  "false", // disabled by default
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "timeRangeProvider",
-			Description: "Enables time pickers sync",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",

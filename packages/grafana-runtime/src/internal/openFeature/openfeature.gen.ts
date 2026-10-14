@@ -302,8 +302,6 @@ export const FlagKeys = {
   QueryLibrary: "queryLibrary",
   /** Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query */
   QueryService: "queryService",
-  /** Routes requests to the new query service */
-  QueryServiceFromUI: "queryServiceFromUI",
   /** Adds datasource connections to the query service */
   QueryServiceWithConnections: "queryServiceWithConnections",
   /** Enables the Query with Assistant button in the query editor */
@@ -364,8 +362,6 @@ export const FlagKeys = {
   TextNewFeatures: "text.newFeatures",
   /** Enables time comparison option in supported panels */
   TimeComparison: "timeComparison",
-  /** Enables time pickers sync */
-  TimeRangeProvider: "timeRangeProvider",
   /** Show transformation quick-start cards in empty transformations state */
   TransformationsEmptyPlaceholder: "transformationsEmptyPlaceholder",
   /** Enables unified navbars */
@@ -1963,17 +1959,6 @@ export const useFlagQueryService = (options?: ReactFlagEvaluationOptions): boole
 };
 
 /**
- * Routes requests to the new query service
- *
- * **Details:**
- * - flag key: `queryServiceFromUI`
- * - default value: `false`
- */
-export const useFlagQueryServiceFromUI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryServiceFromUI", false, options).value;
-};
-
-/**
  * Adds datasource connections to the query service
  *
  * **Details:**
@@ -2301,17 +2286,6 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagTimeComparison = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("timeComparison", true, options).value;
-};
-
-/**
- * Enables time pickers sync
- *
- * **Details:**
- * - flag key: `timeRangeProvider`
- * - default value: `false`
- */
-export const useFlagTimeRangeProvider = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("timeRangeProvider", false, options).value;
 };
 
 /**

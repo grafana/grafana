@@ -33,7 +33,7 @@ func (a selfAuthInfo) GetIdentifier() string { return a.identifier }
 func (a selfAuthInfo) GetUID() string        { return a.uid }
 
 func TestCurrentUserRoutes(t *testing.T) {
-	routes := NewDisplayHandler(nil, false).GetAPIRoutes(nil)
+	routes := NewDisplayHandler().GetAPIRoutes(nil)
 	require.Len(t, routes.Root, 1)
 	whoami := routes.Root[0]
 	require.Equal(t, "whoami", whoami.Path)
@@ -54,7 +54,7 @@ func TestCurrentUserRoutes(t *testing.T) {
 			require.True(t, route.Spec.Get.Deprecated)
 			require.Contains(t, route.Spec.Get.Description, "/apis/iam.grafana.app/v0alpha1/whoami")
 			require.Equal(t, whoami.Spec.Get.Responses, route.Spec.Get.Responses)
-			require.Len(t, route.Spec.Get.Parameters, 2)
+			require.Len(t, route.Spec.Get.Parameters, 1)
 			require.Equal(t, "namespace", route.Spec.Get.Parameters[0].Name)
 			return
 		}
@@ -90,7 +90,7 @@ func TestDisplayHandlersPreserveErrorStatus(t *testing.T) {
 	} {
 		for _, endpoint := range []string{"display", "self"} {
 			t.Run(name+"/"+endpoint, func(t *testing.T) {
-				h := NewDisplayHandler(nil, false, &fakeResolver{err: input.err})
+				h := NewDisplayHandler(&fakeResolver{err: input.err})
 				req := httptest.NewRequest(http.MethodGet, "/display?key=user:u1", nil)
 				req = req.WithContext(authlib.WithAuthInfo(req.Context(), caller))
 				rec := httptest.NewRecorder()
@@ -121,7 +121,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 	}
 
 	t.Run("missing auth info returns 401", func(t *testing.T) {
-		h := NewDisplayHandler(nil, false, &fakeResolver{})
+		h := NewDisplayHandler(&fakeResolver{})
 		rec := httptest.NewRecorder()
 
 		h.handleSelf(rec, selfRequest(t, nil))
@@ -140,7 +140,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 			Email:           "alice@example.com",
 		}
 		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want.Display}}}
-		h := NewDisplayHandler(nil, false, resolver)
+		h := NewDisplayHandler(resolver)
 		rec := httptest.NewRecorder()
 
 		h.handleSelf(rec, selfRequest(t, caller))
@@ -167,7 +167,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		require.False(t, isRequester)
 		want := iam.CurrentUserInfo{Display: iam.Display{Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"}, DisplayName: "Alice"}}
 		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want.Display}}}
-		h := NewDisplayHandler(nil, false, resolver)
+		h := NewDisplayHandler(resolver)
 		rec := httptest.NewRecorder()
 
 		h.handleSelf(rec, selfRequest(t, caller))
@@ -191,7 +191,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 			resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{{
 				Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
 			}}}}
-			h := NewDisplayHandler(nil, false, resolver)
+			h := NewDisplayHandler(resolver)
 			rec := httptest.NewRecorder()
 			h.handleSelf(rec, selfRequest(t, caller))
 			if namespace == "stacks-invalid" {
@@ -239,7 +239,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 				for _, items := range tc.results {
 					resolvers = append(resolvers, &fakeResolver{result: &iam.DisplayList{Items: items}})
 				}
-				h := NewDisplayHandler(nil, false, resolvers...)
+				h := NewDisplayHandler(resolvers...)
 				rec := httptest.NewRecorder()
 				h.handleSelf(rec, selfRequest(t, caller))
 				if tc.name == "ignores unrelated results" {
@@ -271,7 +271,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 			}}}}
 			rec := httptest.NewRecorder()
 
-			NewDisplayHandler(nil, false, resolver).handleSelf(rec, selfRequest(t, auth))
+			NewDisplayHandler(resolver).handleSelf(rec, selfRequest(t, auth))
 
 			require.Equal(t, http.StatusUnauthorized, rec.Code)
 			require.Nil(t, resolver.gotKeys)
@@ -281,7 +281,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 
 	t.Run("unresolved caller returns 401", func(t *testing.T) {
 		resolver := &fakeResolver{result: &iam.DisplayList{}}
-		h := NewDisplayHandler(nil, false, resolver)
+		h := NewDisplayHandler(resolver)
 		rec := httptest.NewRecorder()
 
 		h.handleSelf(rec, selfRequest(t, caller))
@@ -296,7 +296,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 			}
 			resolver := &fakeResolver{err: errors.New("anonymous must not query user records")}
 			rec := httptest.NewRecorder()
-			NewDisplayHandler(nil, false, resolver).handleSelf(rec, selfRequest(t, caller))
+			NewDisplayHandler(resolver).handleSelf(rec, selfRequest(t, caller))
 
 			require.Equal(t, http.StatusOK, rec.Code)
 			require.Nil(t, resolver.gotKeys)
@@ -313,7 +313,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 
 	t.Run("resolver error returns 500", func(t *testing.T) {
 		resolver := &fakeResolver{err: errors.New("boom")}
-		h := NewDisplayHandler(nil, false, resolver)
+		h := NewDisplayHandler(resolver)
 		rec := httptest.NewRecorder()
 
 		h.handleSelf(rec, selfRequest(t, caller))

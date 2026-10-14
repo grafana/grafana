@@ -25,18 +25,13 @@ type Resolver interface {
 
 type DisplayHandler struct {
 	resolvers []Resolver
-
-	client            authlib.UserPermissionsClient
-	useExternalGroups bool
 }
 
 // NewDisplayHandler creates a new DisplayHandler with the given resolvers.
 // We have multiple resolvers to allow the transition from SQL to search
-func NewDisplayHandler(client authlib.UserPermissionsClient, useExternalGroups bool, resolvers ...Resolver) *DisplayHandler {
+func NewDisplayHandler(resolvers ...Resolver) *DisplayHandler {
 	return &DisplayHandler{
-		resolvers:         resolvers,
-		client:            client,
-		useExternalGroups: useExternalGroups,
+		resolvers: resolvers,
 	}
 }
 
