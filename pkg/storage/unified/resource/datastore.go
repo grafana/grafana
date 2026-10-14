@@ -349,9 +349,10 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 	return func(yield func(string, error) bool) {
 		opts := base
 		opts.Limit = int64(pageSize)
+		resuming := false
 
 		for {
-			page := make([]string, 0, pageSize)
+			page := make([]string, 0, opts.Limit)
 			var scanErr error
 			for key, err := range kv.Keys(ctx, section, opts) {
 				if err != nil {
@@ -366,14 +367,18 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 				return
 			}
 
-			for _, key := range page {
+			start := 0
+			if resuming && len(page) > 0 && page[0] == opts.StartKey {
+				start = 1 // Inclusive cursor repeats the previous page's last key.
+			}
+			for _, key := range page[start:] {
 				if !yield(key, nil) {
 					return
 				}
 			}
 
 			// A short page means we reached the end of the range.
-			if len(page) < pageSize {
+			if len(page) < int(opts.Limit) {
 				return
 			}
 
@@ -381,8 +386,11 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 				// EndKey is exclusive; keep the original inclusive lower bound.
 				opts.EndKey = page[len(page)-1]
 			} else {
-				// StartKey is inclusive; retain keys that extend the last key.
-				opts.StartKey = page[len(page)-1] + "\x00"
+				// Include the boundary key and request one extra row to avoid losing
+				// keys that extend it, without passing a NUL byte to SQL text columns.
+				opts.StartKey = page[len(page)-1]
+				opts.Limit = int64(pageSize + 1)
+				resuming = true
 			}
 		}
 	}
