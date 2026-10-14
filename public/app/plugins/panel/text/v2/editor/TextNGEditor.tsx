@@ -11,6 +11,7 @@ import config from 'app/core/config';
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
+import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
@@ -151,7 +152,11 @@ export function TextNGEditor({
   const format = getInterpolateFormat(mode, codeLanguage);
   const showPreview = view !== 'write';
 
-  const { content: interpolatedContent, error: previewError } = useMemo(
+  const {
+    content: interpolatedContent,
+    error: previewError,
+    truncated,
+  } = useMemo(
     () =>
       catchTemplateError(() =>
         showPreview
@@ -159,7 +164,7 @@ export function TextNGEditor({
               { content: previewSource, mode, series, renderMode, rowWindow, format },
               replaceVariables
             )
-          : ''
+          : { content: '', truncated: false }
       ),
     [showPreview, previewSource, mode, series, renderMode, rowWindow, format, replaceVariables]
   );
@@ -237,6 +242,7 @@ export function TextNGEditor({
   const showEditor = view !== 'preview';
   const isCode = mode === TextMode.Code;
   const footerPagination = showPreview ? pagination : null;
+  const truncationNotice = truncated ? <TextNGTruncationNotice /> : null;
 
   const renderOutput = (testId: string) => {
     if (previewError) {
@@ -328,13 +334,14 @@ export function TextNGEditor({
         )}
       </div>
 
-      {(isCode || frameSelector || footerPagination) && (
+      {(isCode || frameSelector || footerPagination || truncationNotice) && (
         <TextNGEditorFooter
           showLineNumbersSwitch={isCode}
           showLineNumbers={showLineNumbers}
           onShowLineNumbersChange={(next) => changeOption({ showLineNumbers: next })}
           frameSelector={frameSelector}
           pagination={footerPagination}
+          notice={truncationNotice}
         />
       )}
     </div>
