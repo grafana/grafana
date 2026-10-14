@@ -52,7 +52,7 @@ In Grafana 13.3 and later 13.x releases, you can go back to the core plugin. To 
 as_external = false
 ```
 
-Grafana 14.0 removes the core plugin. After you upgrade to Grafana 14.0, the standalone plugin is the only canvas plugin, and the `as_external` setting has no effect.
+Grafana 14.0 will remove the core plugin. After you upgrade to Grafana 14.0, the standalone plugin will be the only canvas plugin, and the `as_external` setting will have no effect.
 
 {{< admonition type="note" >}}
 On Grafana Cloud, the canvas plugin is managed by Grafana and updates automatically.
