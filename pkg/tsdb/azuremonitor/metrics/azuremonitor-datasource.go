@@ -69,6 +69,7 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 	return result, nil
 }
 
+//nolint:gocyclo
 func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo types.DatasourceInfo) (*types.AzureMonitorQuery, error) {
 	var target string
 	queryJSONModel := dataquery.AzureMonitorQuery{}
@@ -87,6 +88,10 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	}
 
 	azJSONModel := queryJSONModel.AzureMonitor
+	if azJSONModel == nil {
+		// A query saved through the API can set queryType "Azure Monitor" without the azureMonitor object.
+		return nil, backend.DownstreamError(fmt.Errorf("query %s: the Azure Monitor metrics query has no azureMonitor object", query.RefID))
+	}
 	// Legacy: If only MetricDefinition is set, use it as namespace
 	if azJSONModel.MetricDefinition != nil && *azJSONModel.MetricDefinition != "" &&
 		azJSONModel.MetricNamespace != nil && *azJSONModel.MetricNamespace == "" {
