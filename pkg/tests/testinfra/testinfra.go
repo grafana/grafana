@@ -1058,6 +1058,17 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.EnableGlobalSearch {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_global_search_api", "true")
+		require.NoError(t, err)
+		usSection, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = usSection.NewKey("global_search_index_enabled", "true")
+		require.NoError(t, err)
+	}
+
 	if opts.ScopesApiEnabled {
 		section, err := getOrCreateSection("scopes")
 		require.NoError(t, err)
@@ -1213,6 +1224,10 @@ type GrafanaOpts struct {
 
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool
+
+	// EnableGlobalSearch turns on the search that spans resource types, and the
+	// index it reads. Both are off by default.
+	EnableGlobalSearch bool
 
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change

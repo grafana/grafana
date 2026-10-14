@@ -304,16 +304,17 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 
 	for _, namespace := range []string{"*", "default", "stacks-404"} {
 		t.Run(namespace, func(t *testing.T) {
-			require.Equal(t, []string{"default.grafana.app", "mt.grafana.app"}, groupList(namespace))
-			require.Equal(t, []string{"default.grafana.app", "mt.grafana.app"}, aggregated(namespace))
-			require.Equal(t, []string{"apis/default.grafana.app/v1", "apis/mt.grafana.app/v2"}, openAPIIndex(namespace))
+			// discovery is the router's own group, so it is always listed.
+			require.Equal(t, []string{"default.grafana.app", "discovery", "mt.grafana.app"}, groupList(namespace))
+			require.Equal(t, []string{"default.grafana.app", "discovery", "mt.grafana.app"}, aggregated(namespace))
+			require.Equal(t, []string{"apis/default.grafana.app/v1", "apis/discovery/v1alpha2", "apis/mt.grafana.app/v2"}, openAPIIndex(namespace))
 			require.Empty(t, calls, "the defaults come from the discovery poll")
 		})
 	}
 	t.Run("stacks-123", func(t *testing.T) {
-		require.Equal(t, []string{"mt.grafana.app", "stack.grafana.app"}, groupList("stacks-123"))
-		require.Equal(t, []string{"mt.grafana.app", "stack.grafana.app"}, aggregated("stacks-123"))
-		require.Equal(t, []string{"apis/mt.grafana.app/v2", "apis/stack.grafana.app/v1"}, openAPIIndex("stacks-123"))
+		require.Equal(t, []string{"discovery", "mt.grafana.app", "stack.grafana.app"}, groupList("stacks-123"))
+		require.Equal(t, []string{"discovery", "mt.grafana.app", "stack.grafana.app"}, aggregated("stacks-123"))
+		require.Equal(t, []string{"apis/discovery/v1alpha2", "apis/mt.grafana.app/v2", "apis/stack.grafana.app/v1"}, openAPIIndex("stacks-123"))
 	})
 
 	t.Run("OpenAPI documents are not shared across callers", func(t *testing.T) {
@@ -415,8 +416,12 @@ func TestSingleTenantDiscoveryFromLegacyOnlyStack(t *testing.T) {
 	var list metav1.APIGroupList
 	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &list))
 	require.Equal(t, "APIGroupList", list.Kind)
-	require.Len(t, list.Groups, 1)
-	require.Equal(t, "legacy.grafana.app", list.Groups[0].Name, "never the defaults from the discovery host")
+	names := make([]string, 0, len(list.Groups))
+	for _, g := range list.Groups {
+		names = append(names, g.Name)
+	}
+	// discovery is the router's own group, so it is always listed.
+	require.Equal(t, []string{"discovery", "legacy.grafana.app"}, names, "never the defaults from the discovery host")
 
 	require.Equal(t, http.StatusNotAcceptable, serve(aggregatedDiscoveryJSON).Code)
 }
