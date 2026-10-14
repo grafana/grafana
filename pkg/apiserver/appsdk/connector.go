@@ -193,7 +193,7 @@ func writeCustomRouteError(_ context.Context, err error, w http.ResponseWriter) 
 	st.APIVersion = "v1"
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(int(s.Code))
+	w.WriteHeader(int(st.Code))
 	_ = json.NewEncoder(w).Encode(st)
 }
 
