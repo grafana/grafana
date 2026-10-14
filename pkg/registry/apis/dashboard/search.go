@@ -184,9 +184,9 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "permission",
 										In:          "query",
-										Description: "permission needed for the resource (view, edit, admin)",
+										Description: "permission needed for the resource (view, edit, admin, create). create is only valid with type=folder",
 										Required:    false,
-										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin"),
+										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin", "create"),
 									},
 								},
 								{
