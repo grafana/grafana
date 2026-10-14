@@ -81,8 +81,6 @@ test.describe(
   },
   () => {
     test('should detect an issue and fix it', async ({ page }) => {
-      // Report generation, data source deletion, and retry processing share the test's time budget.
-      test.slow();
       await expectEmptyReport(page);
       const dsName = await createEmptyDatasource(page);
       await runChecks(page);
