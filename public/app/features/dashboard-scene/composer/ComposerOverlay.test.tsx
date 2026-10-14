@@ -617,6 +617,44 @@ describe('regions', () => {
     tab.remove();
   });
 
+  it('stretches over content that overflows its container, so tall regions are drawn whole', async () => {
+    const { session, annotate } = setup();
+    const overlayRoot = screen.getByTestId('dashboard-composer-overlay').parentElement!;
+    // The dashboard body overflows the container down to 2400px.
+    const body = document.createElement('div');
+    Object.defineProperties(body, {
+      offsetTop: { value: 64 },
+      offsetHeight: { value: 700 },
+      scrollHeight: { value: 2336 },
+      offsetLeft: { value: 0 },
+      offsetWidth: { value: 1024 },
+      scrollWidth: { value: 1024 },
+    });
+    overlayRoot.parentElement!.appendChild(body);
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickRegion(new AbortController().signal);
+    });
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 1900 });
+    expect(screen.getByTestId('composer-region-draft')).toHaveStyle({ top: '250px', height: '1650px' });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 1900 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
+    annotate([item({ id: 'r', ref, point: { x: 1, y: 0 } })]);
+    await nextFrame();
+
+    expect(overlayRoot).toHaveStyle({ minHeight: '2400px', minWidth: '1024px' });
+    expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({
+      left: '150px',
+      top: '250px',
+      width: '200px',
+      height: '1650px',
+    });
+    body.remove();
+  });
+
   it('switches tabs with the Region tool active instead of starting a drag', async () => {
     const { session } = setup();
     let pick: Promise<unknown> = Promise.resolve();
@@ -751,6 +789,21 @@ describe('region capture', () => {
       { sx: 256, sy: 256, sw: 1024, sh: 1024, width: 1024, height: 1024 },
       'image/webp',
       0.85
+    );
+  });
+
+  it('captures the same box the outline draws', async () => {
+    const { session, annotate } = setup();
+    const regionId = await drawRegion(session);
+    annotate([item({ id: 'r', ref: { kind: 'region', regionId }, point: { x: 1, y: 0 } })]);
+    const outline = screen.getByTestId('composer-annotation-outline-r');
+
+    await capture(session, regionId);
+
+    // The container renders at 2 raster px per CSS px and sits at the viewport origin, like the overlay.
+    const { sx, sy, sw, sh } = mockCropToBlob.mock.calls[0][1];
+    expect([sx / 2, sy / 2, sw / 2, sh / 2]).toEqual(
+      ['left', 'top', 'width', 'height'].map((side) => parseFloat(outline.style.getPropertyValue(side)))
     );
   });
 

@@ -59,6 +59,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     if (!root) {
       return;
     }
+    coverContent(root);
     const rootRect = root.getBoundingClientRect();
     const { highlight, annotations: items } = session.getOverlayState();
     const next: Layout = { highlight: highlight ? session.resolveBox(highlight, rootRect) : null, items: {} };
@@ -337,6 +338,35 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       <div ref={anchorHostRef} className={styles.anchorHost} />
     </div>
   );
+}
+
+/**
+ * Stretches the overlay over everything its container lays out, including content that overflows the
+ * container, so outlines and pins of regions further down are never cut short. Writes only on change, and
+ * leaves the overlay itself out of the measurement so its own size never feeds back into it.
+ */
+function coverContent(root: HTMLElement) {
+  const container = root.parentElement;
+  if (!container) {
+    return;
+  }
+  let height = 0;
+  let width = 0;
+  for (const child of container.children) {
+    if (child === root || !(child instanceof HTMLElement)) {
+      continue;
+    }
+    height = Math.max(height, child.offsetTop + Math.max(child.offsetHeight, child.scrollHeight));
+    width = Math.max(width, child.offsetLeft + Math.max(child.offsetWidth, child.scrollWidth));
+  }
+  const minHeight = `${Math.ceil(height)}px`;
+  const minWidth = `${Math.ceil(width)}px`;
+  if (root.style.minHeight !== minHeight) {
+    root.style.minHeight = minHeight;
+  }
+  if (root.style.minWidth !== minWidth) {
+    root.style.minWidth = minWidth;
+  }
 }
 
 /**
