@@ -632,7 +632,7 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "SearchQuery is the request body for POST .../{resource}/search.",
+				Description: "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -651,7 +651,7 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 					},
 					"where": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+							Description: "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
 						},
 					},
@@ -732,7 +732,7 @@ func schema_pkg_apis_search_v0alpha1_SearchResults(ref common.ReferenceCallback)
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "SearchResults is the response body for POST .../{resource}/search.",
+				Description: "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {

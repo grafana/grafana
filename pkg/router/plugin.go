@@ -27,11 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -260,6 +260,7 @@ func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definit
 				continue
 			}
 			backend.info = plugin.JSONData.Info
+			backend.hasBackend = plugin.JSONData.Backend
 			backends = append(backends, backend)
 		}
 	}
@@ -359,6 +360,15 @@ type PluginBackend struct {
 	manifest *app.ManifestData
 	client   PluginClientProvider
 	deps     PluginDependencies
+
+	// hasBackend is whether the plugin runs a backend process, for the
+	// status page.
+	hasBackend bool
+}
+
+// PluginStatus implements [PluginStatusProvider].
+func (b *PluginBackend) PluginStatus() (PluginStatus, bool) {
+	return PluginStatus{ID: b.pluginID, Version: b.info.Version, HasBackend: b.hasBackend}, true
 }
 
 func (b *PluginBackend) Group() metav1.APIGroup {
@@ -367,6 +377,11 @@ func (b *PluginBackend) Group() metav1.APIGroup {
 
 // Source implements [Backend].
 func (b *PluginBackend) Source() string { return sourceLocalPlugin }
+
+// Manifest implements [ManifestProvider].
+func (b *PluginBackend) Manifest() (*app.ManifestData, bool) {
+	return b.manifest, b.manifest != nil
+}
 
 func (b *PluginBackend) Key() string {
 	return b.key

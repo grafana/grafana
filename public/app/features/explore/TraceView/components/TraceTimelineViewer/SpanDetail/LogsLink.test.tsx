@@ -13,13 +13,14 @@ import {
   store,
   toDataFrame,
 } from '@grafana/data';
-import { reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
 import {
+  reportInteraction,
+  usePluginLinks,
   getDataSourceInstance,
   useDataSourceInstanceList,
   useDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
+} from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider } from '@grafana/ui';
@@ -43,15 +44,10 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
   usePluginLinks: jest.fn().mockReturnValue({ links: [], isLoading: false }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
   useDataSourceInstanceList: jest.fn().mockReturnValue({ isLoading: false, items: [] }),
 }));
-
 const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
 const useDataSourceInstanceSettingsMock = jest.mocked(useDataSourceInstanceSettings);
 const useDataSourceInstanceListMock = jest.mocked(useDataSourceInstanceList);
