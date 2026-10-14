@@ -2,6 +2,7 @@ package appsdk
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 type CustomRoute struct {
@@ -176,17 +176,30 @@ func (h *handlerWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func writeCustomRouteError(ctx context.Context, err error, w http.ResponseWriter) {
-	// Force a k8s error shape
-	if _, ok := err.(apierrors.APIStatus); !ok {
-		err = &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Code:    int32(http.StatusInternalServerError),
-				Reason:  metav1.StatusReasonInternalError,
-				Message: err.Error(),
-			},
+	code := int32(http.StatusInternalServerError)
+	reason := metav1.StatusReasonInternalError
+	message := err.Error()
+	var apiStatus apierrors.APIStatus
+	if errors.As(err, &apiStatus) {
+		st := apiStatus.Status()
+		if st.Code != 0 {
+			code = st.Code
+		}
+		if st.Reason != "" {
+			reason = st.Reason
+		}
+		if st.Message != "" {
+			message = st.Message
 		}
 	}
-	_ = errhttp.Write(ctx, err, w)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(int(code))
+	_ = json.NewEncoder(w).Encode(metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    code,
+		Reason:  reason,
+		Message: message,
+	})
 }
 
 // CovertURLValuesToResourceCallOptions reads from the input *url.Values and assigns fields in the out *ResourceCallOptions
