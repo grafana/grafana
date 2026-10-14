@@ -186,16 +186,25 @@ func TestAccessToken_datasourceIsolation(t *testing.T) {
 		name       string
 		namespaces [2]string
 		uids       [2]string
+		types      [2]string
 	}{
 		{
 			name:       "same UID in different tenants",
 			namespaces: [2]string{"stacks-1", "stacks-2"},
 			uids:       [2]string{"datasource", "datasource"},
+			types:      [2]string{"plugin-a", "plugin-a"},
 		},
 		{
 			name:       "different UIDs in the same tenant without legacy IDs",
 			namespaces: [2]string{"stacks-1", "stacks-1"},
 			uids:       [2]string{"datasource-a", "datasource-b"},
+			types:      [2]string{"plugin-a", "plugin-a"},
+		},
+		{
+			name:       "same UID in the same tenant with different datasource types",
+			namespaces: [2]string{"stacks-1", "stacks-1"},
+			uids:       [2]string{"datasource", "datasource"},
+			types:      [2]string{"plugin-a", "plugin-b"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -240,7 +249,7 @@ func TestAccessToken_datasourceIsolation(t *testing.T) {
 				secret := "secret-" + strconv.Itoa(i)
 				req := httptest.NewRequest(http.MethodGet, "http://datasource/query", nil)
 				ApplyRoute(context.Background(), req, "query", route,
-					dsInfo(ds, map[string]string{"client_secret": secret}), &DataSourceProxySettings{})
+					dsInfo(ds, tc.types[i], map[string]string{"client_secret": secret}), &DataSourceProxySettings{})
 				require.Equal(t, "Bearer "+secret+"-token", req.Header.Get("Authorization"))
 			}
 			require.EqualValues(t, 2, authCalls.Load())

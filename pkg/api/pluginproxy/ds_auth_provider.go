@@ -16,6 +16,7 @@ type DSInfo struct {
 	ID                      int64
 	Namespace               string
 	UID                     string
+	Type                    string
 	Updated                 time.Time
 	URL                     string
 	JSONData                map[string]any

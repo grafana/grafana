@@ -28,6 +28,7 @@ type genericAccessTokenProvider struct {
 	datasourceId        int64
 	datasourceNamespace string
 	datasourceUID       string
+	datasourceType      string
 	datasourceUpdated   time.Time
 	route               *plugins.Route
 	authParams          *plugins.JWTTokenAuth
@@ -75,6 +76,7 @@ func newGenericAccessTokenProvider(ds DSInfo, pluginRoute *plugins.Route,
 		datasourceId:        ds.ID,
 		datasourceNamespace: ds.Namespace,
 		datasourceUID:       ds.UID,
+		datasourceType:      ds.Type,
 		datasourceUpdated:   ds.Updated,
 		route:               pluginRoute,
 		authParams:          authParams,
@@ -127,5 +129,5 @@ func (provider *genericAccessTokenProvider) GetAccessToken() (string, error) {
 }
 
 func (provider *genericAccessTokenProvider) getAccessTokenCacheKey() string {
-	return fmt.Sprintf("%q_%q_%v_%v_%v_%v", provider.datasourceNamespace, provider.datasourceUID, provider.datasourceId, provider.datasourceUpdated.Unix(), provider.route.Path, provider.route.Method)
+	return fmt.Sprintf("%q_%q_%q_%v_%v_%v_%v", provider.datasourceNamespace, provider.datasourceUID, provider.datasourceType, provider.datasourceId, provider.datasourceUpdated.Unix(), provider.route.Path, provider.route.Method)
 }
