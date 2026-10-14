@@ -10,7 +10,7 @@ import { useAsyncResource } from './useAsyncResource';
 import { useMetricCacheGeneration } from './useMetricCacheGeneration';
 
 const NO_METRICS: MetricInfo[] = [];
-const NO_CATALOG: Catalog = { metrics: NO_METRICS, truncated: false };
+const NO_CATALOG: Catalog = { metrics: NO_METRICS, truncated: false, searchable: false };
 
 export const SEARCH_DEBOUNCE_MS = 300;
 
@@ -24,9 +24,8 @@ export interface MetricCatalog {
 }
 
 /**
- * A datasource's metrics, narrowed by `searchText`. A complete catalog is filtered in place; one the
- * series limit truncated is searched on the datasource instead, since the names a user is looking for
- * may be exactly the ones that were cut.
+ * A datasource's metrics, narrowed by `searchText`. A term is matched by the datasource, as the query
+ * editor's metric search is, since the catalog may be missing exactly the names a user is looking for.
  */
 export function useMetricCatalog(
   dsRef: DataSourceRef,
@@ -47,7 +46,10 @@ export function useMetricCatalog(
   }
   useDebounce(() => setDebouncedTerm(term), SEARCH_DEBOUNCE_MS, [term]);
 
-  const serverSearch = catalog.data.truncated && debouncedTerm !== '';
+  // Every term goes to the datasource, however complete the catalog looks: a server can answer with
+  // fewer names than the series limit and still hold more, as Mimir does under its
+  // `max_label_values_limit`.
+  const serverSearch = catalog.data.searchable && debouncedTerm !== '';
   const search = useAsyncResource(
     serverSearch ? `${requestKey}|${debouncedTerm}` : null,
     () => searchCatalog(dsRef, timeRange, debouncedTerm),
@@ -67,8 +69,8 @@ export function useMetricCatalog(
     }
   }, [searchInFlight, settledSource]);
 
-  // With nothing settled to keep, as on the first search after the catalog (re)loads, the truncated
-  // catalog's own matches are the best interim answer.
+  // With nothing settled to keep, as on the first search after the catalog (re)loads, the catalog's
+  // own matches are the best interim answer.
   const source = searchInFlight ? (lastSettled.length > 0 ? lastSettled : catalog.data.metrics) : settledSource;
 
   // Filtered by the live term even when the datasource already did the matching, so results keep
@@ -79,8 +81,8 @@ export function useMetricCatalog(
     return source.filter((m) => (!q || m.name.toLowerCase().includes(q)) && (!type || m.type === type));
   }, [source, term, opts?.typeFilter]);
 
-  // A truncated catalog holds no answer for a term the debounce has not released yet.
-  const pending = catalog.data.truncated && term !== '' && term !== debouncedTerm;
+  // A term the debounce has not released yet is still waiting on the datasource.
+  const pending = catalog.data.searchable && term !== '' && term !== debouncedTerm;
 
   return {
     metrics,
