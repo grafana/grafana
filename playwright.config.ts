@@ -7,6 +7,16 @@ export const testDirRoot = 'e2e-playwright';
 const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');
 export const DEFAULT_URL = 'http://localhost:3001';
 
+// The new rule lists need backend feature flags that are fixed at server startup, so their specs
+// run against a second Grafana server started with its own config
+// (scripts/grafana-server/custom-gma-rule-list.ini). Their projects are defined only when
+// GMA_RULE_LIST_SERVER is set, which also moves the default URL and the auto-started server to that
+// second one; select them with --project (`yarn e2e:playwright:gma-list`). The default shards never
+// define them, so the old-list specs keep running on the default server.
+const gmaRuleListServer = process.env.GMA_RULE_LIST_SERVER === 'true';
+const GMA_RULE_LIST_URL = 'http://localhost:3011';
+const serverUrl = gmaRuleListServer ? GMA_RULE_LIST_URL : DEFAULT_URL;
+
 export function withAuth(project: Project): Project {
   project.dependencies ??= [];
   project.use ??= {};
@@ -46,12 +56,93 @@ export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
   },
 };
 
+// The second server runs from its own run directory so starting it never replaces the default
+// server's files; the extra ini turns on the backend flags the new lists need.
+const gmaRuleListServerEnv =
+  'PORT=3011 RUNDIR=scripts/grafana-server/tmp-gma EXTRA_CUSTOM_INI=scripts/grafana-server/custom-gma-rule-list.ini';
+
+// New-list projects, defined only when GMA_RULE_LIST_SERVER is set. They match the `gma-*` specs and
+// the corpus setup/teardown, none of which the default `alerting` project runs.
+const gmaRuleListProjects: Project[] = [
+  // Admin-authenticated journeys. Role-specific ones (RBAC-V/RBAC-E) run only under their own
+  // projects below, matched by the `*.viewer.spec.ts`/`*.editor.spec.ts` filename convention;
+  // without the ignores, this project would also run them as Admin and they would fail. The two
+  // corpus-browsing specs and the corpus setup/teardown specs run only under
+  // `alerting-corpus-tests` and its dependencies: running them here too would seed and tear down
+  // a 240-rule fixture with no consuming test in between.
+  withAuth({
+    name: 'alerting-gma',
+    testDir: path.join(testDirRoot, '/alerting-suite'),
+    testMatch: ['gma-*.spec.ts'],
+    testIgnore: [
+      /\.viewer\.spec\.ts$/,
+      /\.editor\.spec\.ts$/,
+      'gma-alert-browsing.spec.ts',
+      'gma-recording-browsing.spec.ts',
+    ],
+  }),
+  // Dedicated Viewer/Editor role journeys for the alerting suite: the org-wide `viewer`
+  // project belongs to plugin API tests, not alerting, so RBAC-V/RBAC-E use their own.
+  {
+    name: 'alerting-viewer',
+    testDir: path.join(testDirRoot, '/alerting-suite'),
+    testMatch: [/\.viewer\.spec\.ts$/],
+    use: {
+      ...devices['Desktop Chrome'],
+      storageState: 'playwright/.auth/viewer.json',
+    },
+    dependencies: ['createUserAndAuthenticate'],
+  },
+  {
+    name: 'alerting-editor',
+    testDir: path.join(testDirRoot, '/alerting-suite'),
+    testMatch: [/\.editor\.spec\.ts$/],
+    use: {
+      ...devices['Desktop Chrome'],
+      storageState: 'playwright/.auth/editor.json',
+    },
+    dependencies: ['createEditorAndAuthenticate'],
+  },
+  // Once-per-run shared Alert/Recording rule corpus (see alerting-suite/corpus/), run as a
+  // setup-project dependency rather than `beforeAll` in a fully-parallel spec. Only the
+  // browsing specs that need it depend on it, via `alerting-corpus-tests` below.
+  withAuth({
+    name: 'alerting-corpus-setup',
+    testDir: path.join(testDirRoot, '/alerting-suite/corpus'),
+    testMatch: ['corpus-setup.spec.ts'],
+    timeout: 180_000,
+  }),
+  // Browsing journeys that read the corpus manifest (ALERT-1/2/3, REC-1/2). Teardown depends on
+  // this project, not directly on setup, so running `alerting-corpus-teardown` gives the full
+  // setup, tests, teardown chain without seeding a second corpus on top of the first.
+  withAuth({
+    name: 'alerting-corpus-tests',
+    testDir: path.join(testDirRoot, '/alerting-suite'),
+    testMatch: ['gma-alert-browsing.spec.ts', 'gma-recording-browsing.spec.ts'],
+    dependencies: ['alerting-corpus-setup'],
+    timeout: 180_000,
+  }),
+  withAuth({
+    name: 'alerting-corpus-teardown',
+    testDir: path.join(testDirRoot, '/alerting-suite/corpus'),
+    testMatch: ['corpus-teardown.spec.ts'],
+    dependencies: ['alerting-corpus-tests'],
+    timeout: 180_000,
+  }),
+];
+
 export default defineConfig<PluginOptions>({
   ...baseConfig,
+  use: {
+    ...baseConfig.use,
+    baseURL: process.env.GRAFANA_URL ?? serverUrl,
+  },
   ...(!process.env.GRAFANA_URL && {
     webServer: {
-      command: 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
-      url: DEFAULT_URL,
+      command: gmaRuleListServer
+        ? `yarn e2e:plugin:build && ${gmaRuleListServerEnv} ./e2e-playwright/start-server`
+        : 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
+      url: serverUrl,
       stdout: 'pipe',
       stderr: 'pipe',
     },
@@ -186,72 +277,9 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'alerting',
       testDir: path.join(testDirRoot, '/alerting-suite'),
-      // Role-specific journeys (RBAC-V/RBAC-E) run only under their own project below — the
-      // `*.viewer.spec.ts`/`*.editor.spec.ts` filename convention. Without this, the default
-      // Admin project also ran the Viewer/Editor specs (and failed, since it's Admin), and the
-      // role projects ran every alerting spec, not just their own. The two corpus-browsing
-      // specs, and the corpus setup/teardown specs themselves (this project's testDir also
-      // covers the `corpus/` subdirectory), run only under `alerting-corpus-tests` and its
-      // dependencies — running them here too would seed/tear down a 240-rule fixture with no
-      // consuming test in between.
-      testIgnore: [
-        /\.viewer\.spec\.ts$/,
-        /\.editor\.spec\.ts$/,
-        'gma-alert-browsing.spec.ts',
-        'gma-recording-browsing.spec.ts',
-        'corpus/**',
-      ],
-    }),
-    // Dedicated Viewer/Editor role journeys for the alerting suite — the org-wide `viewer`
-    // project belongs to plugin API tests, not alerting, so RBAC-V/RBAC-E use their own.
-    {
-      name: 'alerting-viewer',
-      testDir: path.join(testDirRoot, '/alerting-suite'),
-      testMatch: [/\.viewer\.spec\.ts$/],
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/viewer.json',
-      },
-      dependencies: ['createUserAndAuthenticate'],
-    },
-    {
-      name: 'alerting-editor',
-      testDir: path.join(testDirRoot, '/alerting-suite'),
-      testMatch: [/\.editor\.spec\.ts$/],
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/editor.json',
-      },
-      dependencies: ['createEditorAndAuthenticate'],
-    },
-    // Once-per-run shared Alert/Recording rule corpus (see alerting-suite/corpus/), run as a
-    // setup-project dependency rather than `beforeAll` in a fully-parallel spec. Only the
-    // browsing specs that actually need it depend on it (via `alerting-corpus-tests` below) —
-    // the plain `alerting` project (which testIgnores them) doesn't pay this setup cost.
-    withAuth({
-      name: 'alerting-corpus-setup',
-      testDir: path.join(testDirRoot, '/alerting-suite/corpus'),
-      testMatch: ['corpus-setup.spec.ts'],
-      timeout: 180_000,
-    }),
-    // Browsing journeys that read the corpus manifest (ALERT-1/2/3, REC-1/2) — kept out of
-    // the plain `alerting` project so it doesn't seed 240 rules for specs that don't need
-    // them; run `--project=alerting-corpus-teardown` to get the full setup → tests →
-    // teardown chain in one invocation (teardown depends on this project, not directly on
-    // setup, so it never re-seeds a second corpus on top of this one).
-    withAuth({
-      name: 'alerting-corpus-tests',
-      testDir: path.join(testDirRoot, '/alerting-suite'),
-      testMatch: ['gma-alert-browsing.spec.ts', 'gma-recording-browsing.spec.ts'],
-      dependencies: ['alerting-corpus-setup'],
-      timeout: 180_000,
-    }),
-    withAuth({
-      name: 'alerting-corpus-teardown',
-      testDir: path.join(testDirRoot, '/alerting-suite/corpus'),
-      testMatch: ['corpus-teardown.spec.ts'],
-      dependencies: ['alerting-corpus-tests'],
-      timeout: 180_000,
+      // The new-list specs (`gma-*` and the corpus setup/teardown) need the second server and run
+      // under the `alerting-gma` family of projects when GMA_RULE_LIST_SERVER is set.
+      testIgnore: [/\/gma-[^/]*\.spec\.ts$/, 'corpus/**'],
     }),
     withAuth({
       name: 'dashboard-new-layouts',
@@ -304,5 +332,6 @@ export default defineConfig<PluginOptions>({
       // Runs only after plugin-catalog finishes, so the two never install/uninstall at the same time.
       dependencies: ['plugin-catalog'],
     }),
+    ...(gmaRuleListServer ? gmaRuleListProjects : []),
   ],
 });

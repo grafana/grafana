@@ -11,7 +11,7 @@ awsconfig
 /emails/dist
 /reports
 /e2e/tmp
-/scripts/grafana-server/tmp
+/scripts/grafana-server/tmp*
 vendor/
 /docs/menu.yaml
 /requests

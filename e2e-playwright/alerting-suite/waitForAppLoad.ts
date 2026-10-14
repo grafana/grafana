@@ -5,7 +5,7 @@ import { type Page } from '@playwright/test';
 // and render Grafana's own "failed to load its application files" fallback instead of the
 // app. That's a dev-server race, not a broken route — reload and retry a few times rather
 // than fail the whole test on what's effectively a transient network error.
-const APP_LOAD_FAILURE_TEXT = "Grafana has failed to load its application files";
+const APP_LOAD_FAILURE_TEXT = 'Grafana has failed to load its application files';
 
 export async function gotoResilient(page: Page, url: string, attempts = 3): Promise<void> {
   for (let attempt = 1; attempt <= attempts; attempt++) {

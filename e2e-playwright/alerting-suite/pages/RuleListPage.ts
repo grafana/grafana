@@ -125,23 +125,24 @@ export class RuleListPage {
     return this.page.getByRole('button', { name: 'Clear filters' });
   }
 
-  // The sidebar's label is not bound to its control and the fields are not groups, so a field is
-  // found as the container (label wrapper -> field stack) of its label text.
+  // A row's own More button: the page header has one too, so it is scoped to the row.
+  rowMoreButton(title: string): Locator {
+    return this.ruleRow(title).getByRole('button', { name: 'More', exact: true });
+  }
+
+  // Each sidebar field is a group named by its label, for the controls that do not name themselves.
   sidebarField(label: string): Locator {
-    return this.page
-      .locator('label')
-      .filter({ hasText: new RegExp(`^${label}$`) })
-      .locator('xpath=../..');
+    return this.page.getByRole('group', { name: label, exact: true });
   }
 
   async setRuleName(text: string): Promise<void> {
-    const input = this.sidebarField('Rule name').getByRole('textbox');
+    const input = this.page.getByRole('textbox', { name: 'Rule name', exact: true });
     await input.fill(text);
     await input.press('Enter');
   }
 
   async setRecordedMetric(metric: string): Promise<void> {
-    await this.sidebarField('Recorded metric').getByRole('textbox').fill(metric);
+    await this.page.getByRole('textbox', { name: 'Recorded metric', exact: true }).fill(metric);
   }
 
   // Adds a row and applies it: the row stays a local draft until it has a key, then key and value
@@ -172,8 +173,7 @@ export class RuleListPage {
   }
 
   async addFolder(title: string): Promise<void> {
-    const field = this.sidebarField('Folder');
-    await field.getByRole('button', { name: /select folder/i }).click();
+    await this.sidebarField('Folder').getByRole('button', { name: 'Folder', exact: true }).click();
     await this.page.getByTestId(selectors.components.FolderPicker.input).fill(title);
     await this.page.getByRole('treeitem', { name: title }).click();
   }
@@ -193,22 +193,22 @@ export class RuleListPage {
   }
 
   async pickDashboard(title: string): Promise<void> {
-    await this.sidebarField('Dashboard').getByRole('combobox').fill(title);
+    await this.page.getByRole('combobox', { name: 'Dashboard', exact: true }).fill(title);
     await this.page.getByRole('option', { name: title }).click();
   }
 
   async setPanelId(panelId: number): Promise<void> {
-    await this.sidebarField('Panel ID').getByRole('spinbutton').fill(String(panelId));
+    await this.page.getByRole('spinbutton', { name: 'Panel ID', exact: true }).fill(String(panelId));
   }
 
   // Contact point and policy options carry a description, which becomes part of their accessible
   // name, so they are matched by the unique name they start with rather than exactly.
   async pickContactPoint(name: string): Promise<void> {
-    await this.pickFromCombobox(this.sidebarField('Contact point').getByRole('combobox'), name);
+    await this.pickFromCombobox(this.page.getByRole('combobox', { name: 'Contact point', exact: true }), name);
   }
 
   async pickPolicy(name: string): Promise<void> {
-    await this.pickFromCombobox(this.sidebarField('Notification policy').getByRole('combobox'), name);
+    await this.pickFromCombobox(this.page.getByRole('combobox', { name: 'Notification policy', exact: true }), name);
   }
 
   private async pickFromCombobox(combobox: Locator, name: string): Promise<void> {
@@ -217,7 +217,7 @@ export class RuleListPage {
     await this.page.getByRole('option', { name }).click();
   }
 
-  // The Paused, Alert state and Health selects name themselves with an aria-label equal to their field label.
+  // The Paused, Alert state and Health selects are named by their field label.
   async chooseOption(select: 'Paused' | 'Alert state' | 'Health', option: string): Promise<void> {
     await this.page.getByRole('combobox', { name: select, exact: true }).click();
     await this.page.getByRole('option', { name: option, exact: true }).click();

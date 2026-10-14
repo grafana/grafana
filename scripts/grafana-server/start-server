@@ -40,6 +40,11 @@ mkdir $PROV_DIR/alerting
 mkdir $PROV_DIR/plugins
 
 cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
+# Lets a second server enable extra settings without forking the shared config.
+if [ -n "$EXTRA_CUSTOM_INI" ]; then
+  printf '\n' >> $RUNDIR/conf/custom.ini
+  cat "$EXTRA_CUSTOM_INI" >> $RUNDIR/conf/custom.ini
+fi
 cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
 
 echo -e "Copying custom plugins from e2e tests"

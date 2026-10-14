@@ -75,12 +75,15 @@ test.describe('Viewer', () => {
         const row = list.ruleRow(title);
         await expect(row).toBeVisible({ timeout: 40_000 });
         await expect(page.getByRole('link', { name: newRuleButton })).toHaveCount(0);
+        // Unavailable actions are shown disabled with their reason in the name, never usable.
         await expect(row.getByRole('link', { name: 'Edit' })).toHaveCount(0);
+        await expect(row.getByRole('button', { name: /^Edit: /, disabled: true })).toBeVisible();
 
-        await row.getByRole('button', { name: 'More' }).click();
+        await row.getByRole('button', { name: 'More', exact: true }).click();
         await expect(page.getByRole('menuitem', { name: 'Copy link' })).toBeVisible();
-        // Unavailable actions are shown disabled, never usable.
-        await expect(page.getByRole('menuitem', { name: /^(Pause|Resume|Delete)$/, disabled: false })).toHaveCount(0);
+        await expect(page.getByRole('menuitem', { name: /^(Pause|Resume|Delete)$/ })).toHaveCount(0);
+        await expect(page.getByRole('menuitem', { name: /^(Pause|Resume): /, disabled: true })).toBeVisible();
+        await expect(page.getByRole('menuitem', { name: /^Delete: /, disabled: true })).toBeVisible();
         await page.keyboard.press('Escape');
       }
     } finally {

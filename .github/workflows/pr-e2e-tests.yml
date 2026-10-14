@@ -275,6 +275,18 @@ jobs:
       backend-artifact-name: grafana-backend
       frontend-artifact-name: grafana-frontend
 
+  run-gma-rule-list-e2e:
+    needs:
+      - build-backend
+      - build-frontend
+    name: GMA rule list e2e
+    permissions:
+      contents: read
+    uses: ./.github/workflows/pr-gma-rule-list-e2e.yml
+    with:
+      backend-artifact-name: grafana-backend
+      frontend-artifact-name: grafana-frontend
+
   playwright-report:
     needs: run-playwright-tests
     if: ${{ !cancelled() }}

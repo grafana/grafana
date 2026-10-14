@@ -126,6 +126,25 @@ Workarounds:
    yarn e2e:pw --project=alerting --reporter=line --grep "your test title"
    ```
 
+## New rule list specs run on their own server
+
+The `gma-*` specs and the `corpus/` setup/teardown need `alerting.gmaOnlyListView` and
+`alerting.folderHasRulesLabel`, which the backend reads at startup, so a per-test
+`featureToggles` override cannot enable them. They run in the `alerting-gma`,
+`alerting-viewer`, `alerting-editor` and `alerting-corpus-*` projects, which exist only when
+`GMA_RULE_LIST_SERVER=true`, against a second server configured by
+`scripts/grafana-server/custom-gma-rule-list.ini`. The default `alerting` project and the main CI
+shards keep the old list and never see them.
+
+```sh
+yarn e2e:playwright:gma-list                                  # starts the server on :3011 itself
+GRAFANA_URL=http://localhost:3011 yarn e2e:playwright:gma-list   # reuse a server you started
+```
+
+The ini file shows how to start that server by hand. Both servers share `playwright/.auth`, so
+run one server's projects at a time. Specs added here that must run on the default server must not
+be named `gma-*`.
+
 ## SQLite / dev-env caveats
 
 The e2e Grafana instance uses SQLite with a small `max_open_conn` cap

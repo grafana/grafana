@@ -16,7 +16,10 @@ test.describe('Navigation', () => {
     await expect(nav.getByRole('link', { name: 'Alert rules' })).toHaveAttribute('href', '/alerting/rules/alert', {
       timeout: 40_000,
     });
-    await expect(nav.getByRole('link', { name: 'Recording rules' })).toHaveAttribute('href', '/alerting/rules/recording');
+    await expect(nav.getByRole('link', { name: 'Recording rules' })).toHaveAttribute(
+      'href',
+      '/alerting/rules/recording'
+    );
     // No leftover combined-list or evaluation-group entry in the new experience.
     await expect(nav.getByRole('link', { name: 'Alert rules', exact: true })).toHaveCount(1);
 

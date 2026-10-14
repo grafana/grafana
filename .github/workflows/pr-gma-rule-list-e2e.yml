@@ -1,0 +1,111 @@
+name: GMA rule list e2e
+
+# The new Alert/Recording rule lists need backend feature flags that are fixed at server startup, and
+# run-playwright-tests's shared server must keep the old list for every other suite. So this boots its
+# own instance with the extra flags, reusing the same build-backend/build-frontend artifacts rather
+# than rebuilding them.
+on:
+  workflow_call:
+    inputs:
+      backend-artifact-name:
+        description: Name of the Actions artifact containing the built backend (bin/)
+        type: string
+        required: true
+      frontend-artifact-name:
+        description: Name of the Actions artifact containing the built frontend (public/)
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  run-gma-rule-list-e2e:
+    name: GMA rule list e2e
+    runs-on: ubuntu-x64-large
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.backend-artifact-name }}
+          path: grafana-server/bin
+      - name: Fix binary permissions
+        run: chmod +x grafana-server/bin/grafana*
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.frontend-artifact-name }}
+          path: grafana-server/public
+      - name: Copy misc server files
+        run: |
+          cp -r conf/ grafana-server
+          cp -r tools/ grafana-server
+
+      # Same E2E configuration as the shared server, plus the flags the new lists need.
+      - name: Configure for E2E testing
+        run: |
+          mkdir -p grafana-server/conf/provisioning/{datasources,dashboards,alerting,plugins}
+          cp scripts/grafana-server/custom.ini grafana-server/conf/custom.ini
+          printf '\n' >> grafana-server/conf/custom.ini
+          cat scripts/grafana-server/custom-gma-rule-list.ini >> grafana-server/conf/custom.ini
+          cp devenv/datasources.yaml grafana-server/conf/provisioning/datasources/
+          cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
+          cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
+          cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
+
+      - name: Start Grafana server
+        run: |
+          grafana-server/bin/grafana server \
+            --homepath="$PWD/grafana-server" \
+            cfg:server.http_port=3003 \
+            > grafana-server/grafana.log 2>&1 &
+
+      - name: Install Playwright browsers
+        uses: ./.github/actions/setup-playwright
+
+      - name: Wait for Grafana server to start
+        run: |
+          timeout=90
+          elapsed=0
+          until curl -sf http://localhost:3003/api/health > /dev/null 2>&1; do
+            if [ "$elapsed" -ge "$timeout" ]; then
+              cat grafana-server/grafana.log
+              echo "Timeout after ${timeout}s waiting for Grafana"
+              exit 1
+            fi
+            sleep 2
+            elapsed=$((elapsed + 2))
+          done
+
+      - name: Run GMA rule list e2e
+        run: yarn e2e:playwright:gma-list --reporter=list
+        env:
+          GRAFANA_URL: http://localhost:3003
+          CI: true
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: grafana-server-log-gma-rule-list
+          path: grafana-server/grafana.log
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-results-gma-rule-list
+          path: test-results
+          retention-days: 7

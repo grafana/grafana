@@ -1,9 +1,9 @@
 import { type Page, test, expect } from './fixtures';
+import { RuleListPage } from './pages/RuleListPage';
 import { gotoResilient } from './waitForAppLoad';
 
 // Each test seeds exactly one rule into its own worker folder and filters the list down to
-// that folder (`namespace:<uid>`), so the page-level locators below are unambiguous (one row)
-// without a dedicated page object - see fixtures.ts and AGENTS.md for the isolation/cascade
+// that folder (`namespace:<uid>`) - see fixtures.ts and AGENTS.md for the isolation/cascade
 // cleanup model.
 async function gotoFolderList(page: Page, folderUid: string): Promise<void> {
   await gotoResilient(
@@ -12,19 +12,12 @@ async function gotoFolderList(page: Page, folderUid: string): Promise<void> {
   );
 }
 
-// The page header also has its own "More" button, so the row's own More button - the next
-// one after the rule's title link in DOM order - has to be targeted explicitly.
 function rowMoreButton(page: Page, title: string) {
-  return page.getByRole('link', { name: title }).locator('xpath=following::button[@aria-label="More"][1]');
+  return new RuleListPage(page, 'recording').rowMoreButton(title);
 }
 
-// A paused rule's status icon is named "Paused"; scoped to the row because the Alert page's sidebar
-// also has a control with that name.
 function pausedIcon(page: Page, title: string) {
-  return page
-    .getByRole('listitem')
-    .filter({ has: page.getByRole('link', { name: title }) })
-    .getByLabel('Paused', { exact: true });
+  return new RuleListPage(page, 'recording').statusIcon(title, 'Paused');
 }
 
 test.describe('Recording rule mutations', () => {
@@ -40,7 +33,7 @@ test.describe('Recording rule mutations', () => {
     await expect(pausedIcon(page, title)).toBeVisible();
 
     await rowMoreButton(page, title).click();
-    await page.getByRole('menuitem', { name: 'Resume' }).click();
+    await page.getByRole('menuitem', { name: 'Resume', exact: true }).click();
     await expect(page.getByText('Rule resumed')).toBeVisible({ timeout: 20_000 });
 
     await gotoFolderList(page, folder.uid);
@@ -48,7 +41,7 @@ test.describe('Recording rule mutations', () => {
     await expect(pausedIcon(page, title)).not.toBeVisible();
 
     await rowMoreButton(page, title).click();
-    await page.getByRole('menuitem', { name: 'Pause' }).click();
+    await page.getByRole('menuitem', { name: 'Pause', exact: true }).click();
     await expect(page.getByText('Rule paused')).toBeVisible({ timeout: 20_000 });
 
     await gotoFolderList(page, folder.uid);
@@ -67,10 +60,10 @@ test.describe('Recording rule mutations', () => {
     await gotoFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
     await rowMoreButton(page, title).click();
-    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await page.getByRole('menuitem', { name: 'Delete', exact: true }).click();
 
     await expect(page.getByRole('dialog').getByText(title, { exact: false })).toBeVisible();
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 20_000 });
 
     await gotoFolderList(page, folder.uid);

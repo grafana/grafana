@@ -1,5 +1,6 @@
 import { type Page, test, expect } from './fixtures';
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
+import { RuleListPage, type RuleListKind } from './pages/RuleListPage';
 import { gotoResilient } from './waitForAppLoad';
 
 // ALERT-6/REC-5: Duplicate opens the existing creation flow prefilled from the source rule
@@ -28,13 +29,6 @@ function gotoRecordingFolderList(page: Page, folderUid: string): Promise<void> {
   );
 }
 
-// The page header also has its own "More" button (Design rule for provisioning), so the row's
-// own More button - the next one after the rule's title link in DOM order - has to be targeted
-// explicitly rather than by role+name alone (see gma-alert-mutations.spec.ts).
-function rowMoreButton(page: Page, title: string) {
-  return page.getByRole('link', { name: title }).locator('xpath=following::button[@aria-label="More"][1]');
-}
-
 async function markProvisioned(page: Page, kind: 'alertrules' | 'recordingrules', uid: string) {
   const response = await page.request.patch(
     `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/${kind}/${encodeURIComponent(uid)}`,
@@ -46,9 +40,10 @@ async function markProvisioned(page: Page, kind: 'alertrules' | 'recordingrules'
   expect(response.ok(), `mark provisioned -> ${response.status()}`).toBeTruthy();
 }
 
-async function duplicateThroughMenu(page: Page, title: string, isProvisioned: boolean) {
-  await rowMoreButton(page, title).click();
-  await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+async function duplicateThroughMenu(page: Page, kind: RuleListKind, title: string, isProvisioned: boolean) {
+  await new RuleListPage(page, kind).rowMoreButton(title).click();
+  // Duplicate stays available on a provisioned rule, so an enabled item is what must be found.
+  await page.getByRole('menuitem', { name: 'Duplicate', exact: true }).click();
 
   if (isProvisioned) {
     const dialog = page.getByRole('dialog', { name: 'Copy provisioned rule' });
@@ -73,7 +68,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoAlertFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-    await duplicateThroughMenu(page, title, false);
+    await duplicateThroughMenu(page, 'alert', title, false);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/, { timeout: 20_000 });
@@ -113,7 +108,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoAlertFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-    await duplicateThroughMenu(page, title, true);
+    await duplicateThroughMenu(page, 'alert', title, true);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/, { timeout: 20_000 });
@@ -146,7 +141,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoRecordingFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-    await duplicateThroughMenu(page, title, false);
+    await duplicateThroughMenu(page, 'recording', title, false);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/, { timeout: 20_000 });
@@ -184,7 +179,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoRecordingFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-    await duplicateThroughMenu(page, title, true);
+    await duplicateThroughMenu(page, 'recording', title, true);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/, { timeout: 20_000 });

@@ -1,4 +1,6 @@
-import { type AxeResults, type AxeScanContext, DEFAULT_A11Y_TAGS } from '@grafana/plugin-e2e';
+import { type AxeResults } from 'axe-core';
+
+import { type AxeScanContext, DEFAULT_A11Y_TAGS } from '@grafana/plugin-e2e';
 
 import { type Page, test, expect } from './fixtures';
 import { gotoResilient } from './waitForAppLoad';
@@ -16,31 +18,10 @@ function listModeUrl(kind: 'alert' | 'recording', folderUid: string): string {
   return `${foldersModeUrl(kind, folderUid)}&view=list`;
 }
 
-// axe's exclude only takes CSS selector strings (this @axe-core/playwright version pushes them
-// straight through - it doesn't resolve Playwright Locators), so the exclusion below is a
-// plain attribute selector rather than a Locator.
-
-// NestedFolderPicker's own closed-state trigger (app/core/components/NestedFolderPicker/
-// Trigger.tsx) nests a clear-selection icon with role="button" inside the trigger's own
-// <button>, which axe reports as `nested-interactive`. That's inside the core component
-// itself, not how search/AlertRulesFilterSidebar.tsx or search/RecordingRulesFilterSidebar.tsx
-// use it - confirmed by reading Trigger.tsx - so it's an upstream component issue, not fixable
-// from this spec's or the sidebars' ownership, and is excluded from the scan rather than
-// silently failing every run.
-const FOLDER_PICKER_EXCLUDE = '[aria-label^="Select folder:"]';
-
-async function runA11yScan(
-  page: Page,
-  scanForA11yViolations: (context?: AxeScanContext) => Promise<AxeResults>,
-  exclude?: string[]
-) {
+async function runA11yScan(page: Page, scanForA11yViolations: (context?: AxeScanContext) => Promise<AxeResults>) {
   await page.waitForTimeout(500); // let any open/close animation settle before scanning
-  // A multi-element exclude array is treated by this axe-core/playwright version as a nested-
-  // frame selector path, not as several independent exclusions - so multiple exclusions are
-  // joined into one CSS selector list (comma-combinator) and passed as a single entry.
   const results = await scanForA11yViolations({
     options: { runOnly: { type: 'tag', values: DEFAULT_A11Y_TAGS } },
-    ...(exclude ? { exclude: [exclude.join(', ')] } : {}),
   });
   expect(results).toHaveNoA11yViolations();
 }
@@ -69,7 +50,7 @@ test.describe(
       await page.getByRole('button', { name: folder.title, expanded: false }).click();
       await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-      await runA11yScan(page, scanForA11yViolations, [FOLDER_PICKER_EXCLUDE]);
+      await runA11yScan(page, scanForA11yViolations);
     });
 
     test('Alert rules: List mode has no violations', async ({ page, folder, alertRules, scanForA11yViolations }) => {
@@ -79,7 +60,7 @@ test.describe(
       await gotoResilient(page, listModeUrl('alert', folder.uid));
       await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-      await runA11yScan(page, scanForA11yViolations, [FOLDER_PICKER_EXCLUDE]);
+      await runA11yScan(page, scanForA11yViolations);
     });
 
     test('Recording rules: Folders mode with one folder expanded has no violations', async ({
@@ -98,7 +79,7 @@ test.describe(
       await page.getByRole('button', { name: folder.title, expanded: false }).click();
       await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-      await runA11yScan(page, scanForA11yViolations, [FOLDER_PICKER_EXCLUDE]);
+      await runA11yScan(page, scanForA11yViolations);
     });
 
     test('Recording rules: List mode has no violations', async ({
@@ -113,14 +94,10 @@ test.describe(
       await gotoResilient(page, listModeUrl('recording', folder.uid));
       await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-      await runA11yScan(page, scanForA11yViolations, [FOLDER_PICKER_EXCLUDE]);
+      await runA11yScan(page, scanForA11yViolations);
     });
 
-    test('Alert rules: Recently deleted has no violations', async ({
-      page,
-      alertRules,
-      scanForA11yViolations,
-    }) => {
+    test('Alert rules: Recently deleted has no violations', async ({ page, alertRules, scanForA11yViolations }) => {
       const title = `Node load average ${crypto.randomUUID().slice(0, 8)}`;
       const uid = await alertRules.seedRule({ title, interval: '1m' });
       await page.request.delete(
@@ -184,11 +161,10 @@ test.describe(
       await expect(foldersRadio).toBeFocused();
       await expect(foldersRadio).toBeChecked();
 
-      // Folder expand control: Enter toggles aria-expanded, Space toggles it back. `exact`
-      // matters here (rather than filtering on `expanded`, which would stop matching the
-      // moment the value flips) - the sidebar's folder picker button's name also contains
-      // folder.title as a substring ("Select folder: <title> currently selected"), so a
-      // substring match would be ambiguous.
+      // Folder expand control: Enter toggles aria-expanded, Space toggles it back. Matched by
+      // exact name rather than by `expanded`, which would stop matching the moment the value
+      // flips - the sidebar's "Remove <title>" button for the applied folder contains the
+      // title as a substring too.
       const expandButton = page.getByRole('button', { name: folder.title, exact: true });
       await expect(expandButton).toBeVisible({ timeout: 40_000 });
       await expandButton.focus();

@@ -1,9 +1,10 @@
 import { test, expect } from './fixtures';
 import { gotoResilient } from './waitForAppLoad';
 
-// This stack has `alerting.gmaOnlyListView` permanently on, so only the "flag on" half of
-// NAV-1 is exercisable here — the "flag off" half (old page stays, new routes unavailable)
-// needs a stack with the flag off and is covered by Integration tests instead.
+// The Grafana server these specs run on starts with `alerting.gmaOnlyListView` on (see
+// scripts/grafana-server/custom-gma-rule-list.ini), so only the "flag on" half of NAV-1 is
+// exercisable here — the "flag off" half (old page stays, new routes unavailable) is covered by
+// Integration tests instead.
 //
 // test.slow() triples the test timeout — this dev instance's rspack watcher rebuilds on every
 // file change from any concurrently running agent, and a request landing mid-rebuild is slow

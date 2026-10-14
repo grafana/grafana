@@ -8,4 +8,4 @@ if [ -f "$PIDFILE" ]; then
   rm $PIDFILE
 fi
 
-rm -rf scripts/grafana-server/tmp
+rm -rf "$RUNDIR"

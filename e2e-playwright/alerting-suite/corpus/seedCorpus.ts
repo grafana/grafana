@@ -23,7 +23,14 @@ const TEAMS = [
   'Reporting',
 ];
 
-const SUBJECTS = ['CPU usage', 'Memory pressure', 'Disk space low', 'Node load average', 'HTTP error rate', 'Queue depth'];
+const SUBJECTS = [
+  'CPU usage',
+  'Memory pressure',
+  'Disk space low',
+  'Node load average',
+  'HTTP error rate',
+  'Queue depth',
+];
 
 const ONE_EACH_FOLDER_COUNT = 40;
 const DENSE_FOLDER_COUNT = 80;
@@ -74,23 +81,32 @@ async function seedAlertRule(
   title: string,
   runMarker: string
 ): Promise<string> {
-  const response = await postWithRetry(request, `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/alertrules`, {
-    apiVersion: 'rules.alerting.grafana.app/v0alpha1',
-    kind: 'AlertRule',
-    metadata: { annotations: { 'grafana.app/folder': folderUid } },
-    spec: {
-      title,
-      trigger: { interval: '1m' },
-      noDataState: 'NoData',
-      execErrState: 'Error',
-      paused: true,
-      labels: { 'e2e-corpus-run': runMarker },
-      notificationSettings: { type: 'SimplifiedRouting', receiver: 'empty' },
-      expressions: {
-        A: { model: { refId: 'A', type: 'math', expression: '1 == 1' }, datasourceUID: '__expr__', queryType: '', source: true },
+  const response = await postWithRetry(
+    request,
+    `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/alertrules`,
+    {
+      apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+      kind: 'AlertRule',
+      metadata: { annotations: { 'grafana.app/folder': folderUid } },
+      spec: {
+        title,
+        trigger: { interval: '1m' },
+        noDataState: 'NoData',
+        execErrState: 'Error',
+        paused: true,
+        labels: { 'e2e-corpus-run': runMarker },
+        notificationSettings: { type: 'SimplifiedRouting', receiver: 'empty' },
+        expressions: {
+          A: {
+            model: { refId: 'A', type: 'math', expression: '1 == 1' },
+            datasourceUID: '__expr__',
+            queryType: '',
+            source: true,
+          },
+        },
       },
-    },
-  });
+    }
+  );
   return (await response.json()).metadata.name;
 }
 
@@ -102,22 +118,31 @@ async function seedRecordingRule(
   metric: string,
   runMarker: string
 ): Promise<string> {
-  const response = await postWithRetry(request, `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/recordingrules`, {
-    apiVersion: 'rules.alerting.grafana.app/v0alpha1',
-    kind: 'RecordingRule',
-    metadata: { annotations: { 'grafana.app/folder': folderUid } },
-    spec: {
-      title,
-      trigger: { interval: '1m' },
-      paused: true,
-      metric,
-      targetDatasourceUID: recordingTargetDataSource,
-      labels: { 'e2e-corpus-run': runMarker },
-      expressions: {
-        A: { model: { refId: 'A', type: 'math', expression: '1 == 1' }, datasourceUID: '__expr__', queryType: '', source: true },
+  const response = await postWithRetry(
+    request,
+    `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/recordingrules`,
+    {
+      apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+      kind: 'RecordingRule',
+      metadata: { annotations: { 'grafana.app/folder': folderUid } },
+      spec: {
+        title,
+        trigger: { interval: '1m' },
+        paused: true,
+        metric,
+        targetDatasourceUID: recordingTargetDataSource,
+        labels: { 'e2e-corpus-run': runMarker },
+        expressions: {
+          A: {
+            model: { refId: 'A', type: 'math', expression: '1 == 1' },
+            datasourceUID: '__expr__',
+            queryType: '',
+            source: true,
+          },
+        },
       },
-    },
-  });
+    }
+  );
   return (await response.json()).metadata.name;
 }
 
@@ -231,16 +256,19 @@ async function waitForMarkerCount(
   expectedCount: number
 ): Promise<void> {
   await expect(async () => {
-    const res = await request.post(`/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${kind}/searchRules`, {
-      data: {
-        apiVersion: 'search.grafana.app/v0alpha1',
-        kind: 'SearchQuery',
-        where: { filter: { field: 'labels', operator: 'In', values: [`e2e-corpus-run=${runMarker}`] } },
-        sort: [{ field: 'title', direction: 'asc' }],
-        fields: ['title'],
-        limit: 1,
-      },
-    });
+    const res = await request.post(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${kind}/searchRules`,
+      {
+        data: {
+          apiVersion: 'search.grafana.app/v0alpha1',
+          kind: 'SearchQuery',
+          where: { filter: { field: 'labels', operator: 'In', values: [`e2e-corpus-run=${runMarker}`] } },
+          sort: [{ field: 'title', direction: 'asc' }],
+          fields: ['title'],
+          limit: 1,
+        },
+      }
+    );
     expect(res.ok(), `POST ${kind}/searchRules -> ${res.status()} ${await res.text()}`).toBeTruthy();
     const body = await res.json();
     expect(body.metadata?.totalHits, `expected ${expectedCount} ${kind} for run ${runMarker}`).toBe(expectedCount);
@@ -253,7 +281,10 @@ export async function teardownCorpus(request: APIRequestContext, manifest: Corpu
   const folderUids = manifest.folders.map((f) => f.uid);
   // Delete the nested folder before its parent, in case cascade delete on a folder with a
   // still-existing child folder behaves differently than deleting a genuinely empty one.
-  const ordered = [...folderUids.filter((uid) => uid === manifest.nestedFolderUid), ...folderUids.filter((uid) => uid !== manifest.nestedFolderUid)];
+  const ordered = [
+    ...folderUids.filter((uid) => uid === manifest.nestedFolderUid),
+    ...folderUids.filter((uid) => uid !== manifest.nestedFolderUid),
+  ];
 
   await mapBounded(ordered, async (uid) => {
     try {
