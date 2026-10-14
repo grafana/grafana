@@ -105,6 +105,10 @@ func setupOpenFGAServer(t *testing.T) *Server {
 
 	// Use a test-specific database to avoid migration conflicts
 	testStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+	// Bound OpenFGA query fan-out and retain connections between checks to avoid
+	// exhausting database connections during the integration suite.
+	cfg.Raw.Section("database").Key("max_open_conn").SetValue("10")
+	cfg.Raw.Section("database").Key("max_idle_conn").SetValue("10")
 
 	// Hack to skip these tests on mysql 5.7
 	if testStore.GetDialect().DriverName() == migrator.MySQL {
