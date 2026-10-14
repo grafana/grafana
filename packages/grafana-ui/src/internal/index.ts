@@ -29,6 +29,7 @@ export {
   type StackingGroup,
 } from '../components/uPlot/utils';
 export { hasVisibleLegendSeries, PlotLegend } from '../components/uPlot/PlotLegend';
+export { shouldShowLegend } from '../components/VizLegend/utils';
 export { getScaleGradientFn } from '../components/uPlot/config/gradientFills';
 export { buildScaleKey } from '../components/uPlot/internal';
 export { type TimeRange2, TooltipHoverMode } from '../components/uPlot/plugins/TooltipPlugin2';
@@ -112,6 +113,8 @@ export { flattenTokens } from '../slate-plugins/slate-prism';
 export { RadialGauge } from '../components/RadialGauge/RadialGauge';
 
 export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';
+export { useColumnTransformations } from '../components/Table/TableNG/transformations/useColumnTransformations';
+export { getSourceFrameIndex } from '../components/Table/TableNG/transformations/columnContext';
 
 export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';

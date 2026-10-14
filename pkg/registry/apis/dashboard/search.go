@@ -740,7 +740,7 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := &resourcepb.HybridSearchRequest{
-		Key:           key,
+		Key:           key, //nolint:staticcheck // Older search servers require key.
 		Query:         queryParams.Get("query"),
 		SemanticQuery: queryParams.Get("semanticQuery"),
 		Limit:         int64(limit),

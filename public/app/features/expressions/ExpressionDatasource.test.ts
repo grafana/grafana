@@ -24,13 +24,8 @@ jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({
     replace: (val: string) => (val ? val.replace('$input', '10').replace('$window', '10s') : val),
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: (...args: unknown[]) => mockGetDatasource(...args),
 }));
-
 describe('ExpressionDatasourceApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func TestOpenAPI_GetPathOperations(t *testing.T) {
@@ -112,4 +113,31 @@ func TestAddBuilderRoutes_IgnoresOtherGroupVersions(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Empty(t, got.Paths.Paths)
+}
+
+// A group version served only through caller-supplied routes has no builder and
+// no discovery path. Its spec still gets the routes' full description and the
+// components they reference, not the bare path the WebService alone produces.
+func TestOpenAPIPostProcessor_DescribesRoutesOfAGroupWithoutBuilders(t *testing.T) {
+	gv := schema.GroupVersion{Group: "routes-only.grafana.app", Version: "v1"}
+	var reached string
+	route := postRoute("widgets/search", &reached, "Search")
+	route.Spec.Post.Description = "Search widgets."
+	route.Schemas = map[string]spec.Schema{"com.example.SearchQuery": {SchemaProps: spec.SchemaProps{Type: []string{"object"}}}}
+
+	path := "/apis/routes-only.grafana.app/v1/namespaces/{namespace}/widgets/search"
+	bare := &spec3.OpenAPI{Paths: &spec3.Paths{Paths: map[string]*spec3.Path{
+		path: {PathProps: spec3.PathProps{Post: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "listSearch"}}}},
+	}}, Components: &spec3.Components{}}
+
+	process := getOpenAPIPostProcessor("test", nil, nil, enabledConfig(gv), []GroupVersionRoutes{{
+		GroupVersion: gv,
+		Routes:       &APIRoutes{Namespace: []APIRouteHandler{route}},
+	}})
+	got, err := process(bare)
+	require.NoError(t, err)
+
+	require.NotNil(t, got.Paths.Paths[path])
+	require.Equal(t, "Search widgets.", got.Paths.Paths[path].Post.Description)
+	require.Contains(t, got.Components.Schemas, "com.example.SearchQuery")
 }

@@ -1,6 +1,5 @@
 import { stringToJsRegex } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-import { getDataSourceInstanceList, getDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
+import { getTemplateSrv, getDataSourceInstanceList, getDefaultDataSourceInstanceListItem } from '@grafana/runtime';
 import { type ThunkResult } from 'app/types/store';
 
 import { validateVariableSelectionState } from '../state/actions';

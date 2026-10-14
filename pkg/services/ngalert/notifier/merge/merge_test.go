@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
+	config "github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

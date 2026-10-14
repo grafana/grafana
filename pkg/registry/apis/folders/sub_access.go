@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,6 +15,7 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
@@ -50,9 +53,12 @@ func (r *subAccessREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx, span := tracer.Start(ctx, "folders.subAccessREST.Connect")
+		defer span.End()
+
 		access, err := r.getAccessInfo(ctx, name)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 		} else {
 			responder.Object(200, access)
 		}
@@ -242,16 +248,30 @@ func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user 
 	g.SetLimit(maxConcurrentProbeBatches)
 	for i, batch := range folderAccessProbeBatches {
 		g.Go(func() error {
+			first := batch.probes[0]
+			batchCtx, span := tracer.Start(gctx, "folders.subAccessREST.checkAccess.BatchCheck", trace.WithAttributes(
+				attribute.String("group", first.group),
+				attribute.String("resource", first.resource),
+				attribute.String("subresource", first.subresource),
+			))
+			defer span.End()
+
 			checks := make([]authlib.BatchCheckItem, len(batch.probes))
 			for j, p := range batch.probes {
 				checks[j] = p.item(name, parent)
 			}
-			resp, err := r.accessClient.BatchCheck(gctx, user, authlib.BatchCheckRequest{
+			resp, err := r.accessClient.BatchCheck(batchCtx, user, authlib.BatchCheckRequest{
 				Namespace: namespace,
 				Checks:    checks,
 			})
 			if err != nil {
-				return err
+				return tracing.Error(span, err)
+			}
+			for _, p := range batch.probes {
+				if err := resp.Results[p.correlationID].Error; err != nil {
+					_ = tracing.Error(span, err)
+					break
+				}
 			}
 			responses[i] = resp
 			return nil

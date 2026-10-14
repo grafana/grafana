@@ -116,7 +116,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 
 	defaultCfg, err := notifier.Load([]byte(nps.settings.DefaultConfiguration))
 	if err != nil {
-		nps.log.Error("Failed to parse default alertmanager config: %w", err)
+		nps.log.Error("Failed to parse default alertmanager config", "error", err)
 		return definitions.Route{}, fmt.Errorf("failed to parse default alertmanager config: %w", err)
 	}
 	route := defaultCfg.AlertmanagerConfig.Route
@@ -138,8 +138,8 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	})
 
 	if err != nil {
-		return definitions.Route{}, nil
-	} // TODO should be error?
+		return definitions.Route{}, err
+	}
 
 	return *notifier.RouteToAPI(route), nil
 }
