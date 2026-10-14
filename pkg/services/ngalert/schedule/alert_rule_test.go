@@ -1373,7 +1373,7 @@ func TestAlertRuleRetry(t *testing.T) {
 	sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
 	sch, ruleStore, _, reg := createSchedule(evalAppliedChan, sender)
-	fakeClock := sch.clock.(*clock.Mock)
+	fakeClock := &afterNotifyingClock{Mock: sch.clock.(*clock.Mock), afterCalled: make(chan time.Duration, 10)}
 
 	ruleStore.PutRule(context.Background(), rule)
 
@@ -1446,7 +1446,7 @@ func TestAlertRuleRetry(t *testing.T) {
 	})
 
 	t.Run("second attempt", func(t *testing.T) {
-		// advance the clock by the backoff duration
+		fakeClock.waitForAfter(t)
 		fakeClock.Add(backoffDuration)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 2)
@@ -1454,7 +1454,7 @@ func TestAlertRuleRetry(t *testing.T) {
 	})
 
 	t.Run("third attempt", func(t *testing.T) {
-		// advance the clock by the backoff duration
+		fakeClock.waitForAfter(t)
 		fakeClock.Add(backoffDuration)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 3)
@@ -1468,6 +1468,30 @@ func TestAlertRuleRetry(t *testing.T) {
 			compareMetrics(c, 1, 3)
 		}, time.Second, 10*time.Millisecond)
 	})
+}
+
+// afterNotifyingClock reports each backoff timer once it is registered. The
+// failure metric is updated before the retry loop calls After, so advancing
+// the mock clock as soon as the metric changes can run before the timer
+// exists, and the advance is lost.
+type afterNotifyingClock struct {
+	*clock.Mock
+	afterCalled chan time.Duration
+}
+
+func (c *afterNotifyingClock) After(d time.Duration) <-chan time.Time {
+	ch := c.Mock.After(d)
+	c.afterCalled <- d
+	return ch
+}
+
+func (c *afterNotifyingClock) waitForAfter(t *testing.T) {
+	t.Helper()
+	select {
+	case <-c.afterCalled:
+	case <-time.After(time.Second):
+		t.Fatal("the retry loop did not start a backoff timer")
+	}
 }
 
 func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
