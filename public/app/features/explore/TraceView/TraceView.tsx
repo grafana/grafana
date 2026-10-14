@@ -300,7 +300,12 @@ export function TraceView(props: Props) {
   //
   // Refs keep the effect stable: revealSpan is recreated whenever childrenHiddenIDs changes,
   // so a direct dependency would cause the effect to re-run on every user expand/collapse and
-  // undo their interactions. We only want this to fire when focusedSpanId or traceProp change.
+  // undo their interactions. We only want this to fire when focusedSpanId changes or the
+  // user navigates to a different trace (different traceID). Using traceProp.traceID rather
+  // than traceProp itself avoids re-triggering on query refreshes, which replace the trace
+  // object with a new reference for the same trace and would otherwise clear matchesOnly.
+  const tracePropRef = useRef(traceProp);
+  tracePropRef.current = traceProp;
   const revealSpanRef = useRef(revealSpan);
   revealSpanRef.current = revealSpan;
   const openDetailRef = useRef(openDetail);
@@ -315,10 +320,11 @@ export function TraceView(props: Props) {
   setSearchRef.current = setSearch;
 
   useEffect(() => {
-    if (!focusedSpanId || !traceProp?.spans?.length) {
+    const trace = tracePropRef.current;
+    if (!focusedSpanId || !trace?.spans?.length) {
       return;
     }
-    const span = traceProp.spans.find((s) => s.spanID === focusedSpanId);
+    const span = trace.spans.find((s) => s.spanID === focusedSpanId);
     if (!span) {
       return;
     }
@@ -328,7 +334,7 @@ export function TraceView(props: Props) {
     if (searchRef.current.matchesOnly && spanFilterMatchesRef.current && !spanFilterMatchesRef.current.has(focusedSpanId)) {
       setSearchRef.current({ ...searchRef.current, matchesOnly: false });
     }
-  }, [focusedSpanId, traceProp]);
+  }, [focusedSpanId, traceProp?.traceID]);
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
   // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
