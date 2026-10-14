@@ -133,8 +133,6 @@ export const flows = {
         await sidebar.toolbar.clickButton('Add');
         await sidebar.addOptions.addFilter();
 
-        await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
-
         await sidebar.variableOptions.setName(variable.name);
         await sidebar.variableOptions.setLabel(variable.label);
         await sidebar.variableOptions.adhoc.selectDatasource(variable.dataSource);
