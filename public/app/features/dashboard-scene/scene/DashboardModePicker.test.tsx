@@ -1,8 +1,8 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import {
@@ -20,8 +20,9 @@ import { ComposerSession } from '../composer/ComposerSession';
 import { canEnterComposer } from '../composer/composerAccess';
 import {
   addComposerEnterRequestListener,
-  clearPendingComposerEnterRequest,
   getPendingComposerEnterTarget,
+  PENDING_REQUEST_TTL_MS,
+  resetComposerEnterRequestsForTests,
 } from '../composer/composerEntryRequests';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
@@ -86,7 +87,7 @@ afterEach(() => {
   stopAssistant();
   deactivate();
   deactivate = () => {};
-  clearPendingComposerEnterRequest();
+  resetComposerEnterRequestsForTests();
   resetExtensionSidebarPresentationForTests();
   setTestFlags({});
   jest.restoreAllMocks();
@@ -244,6 +245,61 @@ it('ends a request Assistant has not acted on when the dashboard goes away', asy
   // The floated sidebar goes back to the user's layout.
   expect(getExtensionSidebarPresentation()).toBe('docked');
   expect(getPendingComposerEnterTarget()).toBeUndefined();
+});
+
+// A fresh load with the Assistant sidebar closed: Assistant registers only once one of its roots mounts.
+describe('before Assistant first registers', () => {
+  const original = {
+    restrictedPluginApis: config.featureToggles.restrictedPluginApis,
+    allow: config.bootData.settings.pluginRestrictedAPIsAllowList,
+  };
+
+  beforeEach(() => {
+    stopAssistant();
+    resetComposerEnterRequestsForTests();
+    config.featureToggles.restrictedPluginApis = true;
+    config.bootData.settings.pluginRestrictedAPIsAllowList = { composer: [ASSISTANT] };
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    config.featureToggles.restrictedPluginApis = original.restrictedPluginApis;
+    config.bootData.settings.pluginRestrictedAPIsAllowList = original.allow;
+  });
+
+  it('offers Composer, and hands the request to the first listener that registers', async () => {
+    const { user } = await openPicker();
+    expect(composerItem()).toBeEnabled();
+
+    await user.click(composerItem()!);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(getPendingComposerEnterTarget()).toEqual({ resource: 'dashboard', uid: 'picker-test' });
+
+    const listener = jest.fn();
+    act(() => {
+      stopAssistant = addComposerEnterRequestListener(listener);
+    });
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
+  });
+
+  it('releases the held request after 10 seconds, docking the sidebar again', async () => {
+    await openPicker();
+    jest.useFakeTimers();
+    fireEvent.click(composerItem()!);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+
+    act(() => jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS));
+
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
+  });
+
+  it('does not offer Composer while the composer API is not allowed for Assistant', async () => {
+    config.bootData.settings.pluginRestrictedAPIsAllowList = {};
+    await openPicker();
+    expect(composerItem()).not.toBeInTheDocument();
+  });
 });
 
 describe('while Composer is active', () => {

@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   getExtensionSidebarPresentation,
   resetExtensionSidebarPresentationForTests,
@@ -11,6 +13,7 @@ import {
   getSupportedComposerResources,
   PENDING_REQUEST_TTL_MS,
   requestComposerEnter,
+  resetComposerEnterRequestsForTests,
   settleComposerEnterRequest,
   subscribeToComposerEnterRequests,
   wasComposerEnterRequestDocked,
@@ -31,7 +34,7 @@ function listen(options?: ComposerEnterRequestOptions) {
 
 afterEach(() => {
   cleanups.splice(0).forEach((cleanup) => cleanup());
-  clearPendingComposerEnterRequest();
+  resetComposerEnterRequestsForTests();
   resetExtensionSidebarPresentationForTests();
   jest.useRealTimers();
 });
@@ -209,5 +212,115 @@ describe('the outstanding request', () => {
     requestComposerEnter(TARGET);
     clearPendingComposerEnterRequest();
     expect(getPendingComposerEnterTarget()).toBeUndefined();
+  });
+});
+
+// A fresh load with the Assistant sidebar closed: Assistant registers only once one of its roots mounts.
+describe('before Assistant first registers', () => {
+  const COMPOSER_FLAGS = {
+    dashboardNewLayouts: true,
+    'grafana.dashboardPreviewMode': true,
+    'grafana.dashboardComposer': true,
+  };
+  const original = {
+    restrictedPluginApis: config.featureToggles.restrictedPluginApis,
+    allow: config.bootData.settings.pluginRestrictedAPIsAllowList,
+    block: config.bootData.settings.pluginRestrictedAPIsBlockList,
+  };
+
+  beforeEach(() => {
+    setTestFlags(COMPOSER_FLAGS);
+    config.featureToggles.restrictedPluginApis = true;
+    config.bootData.settings.pluginRestrictedAPIsAllowList = { composer: ['grafana-assistant-app'] };
+    config.bootData.settings.pluginRestrictedAPIsBlockList = undefined;
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+    config.featureToggles.restrictedPluginApis = original.restrictedPluginApis;
+    config.bootData.settings.pluginRestrictedAPIsAllowList = original.allow;
+    config.bootData.settings.pluginRestrictedAPIsBlockList = original.block;
+  });
+
+  it('assumes dashboards, never notebooks', () => {
+    expect(getSupportedComposerResources()).toEqual(['dashboard']);
+    expect(requestComposerEnter(NOTEBOOK, { float: true })).toBe(false);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it.each([
+    ['grafana.dashboardComposer is off', () => setTestFlags({ ...COMPOSER_FLAGS, 'grafana.dashboardComposer': false })],
+    ['the restricted APIs are off', () => (config.featureToggles.restrictedPluginApis = false)],
+    [
+      'the composer API is not allowed for Assistant',
+      () => (config.bootData.settings.pluginRestrictedAPIsAllowList = { composer: ['another-app'] }),
+    ],
+    [
+      'the composer API is blocked for Assistant',
+      () => {
+        config.bootData.settings.pluginRestrictedAPIsAllowList = {};
+        config.bootData.settings.pluginRestrictedAPIsBlockList = { composer: ['grafana-assistant-app'] };
+      },
+    ],
+  ])('assumes nothing while %s', (_, arrange) => {
+    arrange();
+    expect(getSupportedComposerResources()).toEqual([]);
+    expect(requestComposerEnter(TARGET, { float: true })).toBe(false);
+  });
+
+  it('holds a dashboard request, floating, and delivers it once to the first listener that registers', () => {
+    expect(requestComposerEnter(TARGET, { float: true })).toBe(true);
+    expect(getPendingComposerEnterTarget()).toEqual(TARGET);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+
+    const first = listen();
+    const second = listen();
+
+    expect(first.listener).toHaveBeenCalledTimes(1);
+    expect(first.listener).toHaveBeenCalledWith(TARGET);
+    expect(second.listener).not.toHaveBeenCalled();
+    // Outstanding, and floating, until the entry attempt settles.
+    expect(getPendingComposerEnterTarget()).toEqual(TARGET);
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+  });
+
+  it('releases a held request after 10 seconds, and delivers nothing later', () => {
+    jest.useFakeTimers();
+    requestComposerEnter(TARGET, { float: true });
+
+    jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS);
+
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+    const { listener } = listen();
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('releases a held request the first listener does not support', () => {
+    requestComposerEnter(TARGET, { float: true });
+
+    const { listener } = listen({ resources: ['notebook'] });
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(getPendingComposerEnterTarget()).toBeUndefined();
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it('uses only the declared types once Assistant has registered, even after everything unsubscribes', () => {
+    const { unsubscribe } = listen({ resources: ['dashboard', 'notebook'] });
+    expect(getSupportedComposerResources()).toEqual(['dashboard', 'notebook']);
+
+    unsubscribe();
+
+    expect(getSupportedComposerResources()).toEqual([]);
+    expect(requestComposerEnter(TARGET, { float: true })).toBe(false);
+  });
+
+  it('tells subscribers when the first registration replaces the assumption', () => {
+    const changed = jest.fn();
+    cleanups.push(subscribeToComposerEnterRequests(changed));
+    listen({ resources: ['notebook'] });
+    expect(changed).toHaveBeenCalledTimes(1);
+    expect(getSupportedComposerResources()).toEqual(['notebook']);
   });
 });

@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, within } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
@@ -18,8 +18,9 @@ import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/E
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   addComposerEnterRequestListener,
-  clearPendingComposerEnterRequest,
   getPendingComposerEnterTarget,
+  getSupportedComposerResources,
+  resetComposerEnterRequestsForTests,
   PENDING_REQUEST_TTL_MS,
   settleComposerEnterRequest,
   wasComposerEnterRequestDocked,
@@ -69,10 +70,12 @@ function sidebarContext(assistant: 'available' | 'missing', docked = false): Ext
 
 /** Assistant listening for entry requests on dashboards and notebooks. */
 let assistant: jest.Mock;
+let stopAssistant = () => {};
 
 beforeEach(() => {
   assistant = jest.fn();
-  cleanups.push(addComposerEnterRequestListener(assistant, { resources: ['dashboard', 'notebook'] }));
+  stopAssistant = addComposerEnterRequestListener(assistant, { resources: ['dashboard', 'notebook'] });
+  cleanups.push(() => stopAssistant());
   setTestFlags({ [NOTEBOOKS_FLAG]: true, 'grafana.notebookComposer': true });
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.mocked(useExtensionSidebarContext).mockReturnValue(sidebarContext('available'));
@@ -80,7 +83,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanups.splice(0).forEach((cleanup) => cleanup());
-  clearPendingComposerEnterRequest();
+  resetComposerEnterRequestsForTests();
   resetExtensionSidebarPresentationForTests();
   jest.useRealTimers();
   jest.restoreAllMocks();
@@ -144,7 +147,7 @@ describe('Composer in the notebook mode switch', () => {
 
   it('follows the document types Assistant listens for', () => {
     // Assistant registered without options: dashboards only.
-    cleanups.splice(0).forEach((cleanup) => cleanup());
+    stopAssistant();
     let stop = addComposerEnterRequestListener(jest.fn());
     render(<NotebookEditToggle notebook={notebook()} />);
     expect(composerOption()).not.toBeInTheDocument();
@@ -172,6 +175,34 @@ describe('Composer in the notebook mode switch', () => {
     act(() => stop());
     expect(composerOption()).not.toBeInTheDocument();
     expect(radio('View')).toBeInTheDocument();
+  });
+
+  it('is left out on a fresh page before Assistant registers, where only dashboards are assumed', () => {
+    const original = {
+      restrictedPluginApis: config.featureToggles.restrictedPluginApis,
+      allow: config.bootData.settings.pluginRestrictedAPIsAllowList,
+    };
+    cleanups.push(() => {
+      config.featureToggles.restrictedPluginApis = original.restrictedPluginApis;
+      config.bootData.settings.pluginRestrictedAPIsAllowList = original.allow;
+    });
+    stopAssistant();
+    resetComposerEnterRequestsForTests();
+    setTestFlags({
+      [NOTEBOOKS_FLAG]: true,
+      'grafana.notebookComposer': true,
+      dashboardNewLayouts: true,
+      'grafana.dashboardPreviewMode': true,
+      'grafana.dashboardComposer': true,
+    });
+    config.featureToggles.restrictedPluginApis = true;
+    config.bootData.settings.pluginRestrictedAPIsAllowList = { composer: [ASSISTANT] };
+
+    render(<NotebookEditToggle notebook={notebook()} />);
+
+    expect(getSupportedComposerResources()).toEqual(['dashboard']);
+    expect(radio('Edit')).toBeInTheDocument();
+    expect(composerOption()).not.toBeInTheDocument();
   });
 
   it('is left out while Composer cannot start on the notebook, such as a draft', () => {

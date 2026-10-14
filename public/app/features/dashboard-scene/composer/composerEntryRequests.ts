@@ -4,11 +4,22 @@
  * Core cannot start a session itself: the Assistant plugin owns the chat and the presentation. Its listeners
  * say which document types they enter Composer on, and Grafana offers Composer only for those: a request
  * goes straight to the first listener that supports its resource, and a request nobody supports is never
- * made. Process-wide on purpose: there is one picker and one plugin registration per page, and the API
- * object it backs is a module singleton too.
+ * made.
+ *
+ * Until Assistant first registers in this page lifetime (a fresh load with its sidebar closed: it registers
+ * only once one of its roots has mounted), Grafana assumes dashboards when Assistant can have the `composer`
+ * API at all, and holds a dashboard request for up to `PENDING_REQUEST_TTL_MS` while the sidebar it opens
+ * loads. The first listener to register gets it, once, if it supports dashboards; otherwise it is released.
+ *
+ * Process-wide on purpose: there is one picker and one plugin registration per page, and the API object it
+ * backs is a module singleton too.
  */
 
+import { config } from '@grafana/runtime';
 import { claimFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
+import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
+
+import { dashboardComposerEnabled } from '../scene/dashboardModes';
 
 import { type ComposerEnterRequestOptions, type ComposerResource, type ComposerTarget } from './types';
 
@@ -17,6 +28,9 @@ type EnterRequestListener = (target: ComposerTarget) => void;
 const COMPOSER_RESOURCES: readonly ComposerResource[] = ['dashboard', 'notebook'];
 /** What a listener registered without options supports: the plugin then only knows dashboards. */
 const DEFAULT_RESOURCES: readonly ComposerResource[] = ['dashboard'];
+/** What Grafana assumes before Assistant first registers, when Assistant can have the `composer` API. */
+const BEFORE_FIRST_REGISTRATION: readonly ComposerResource[] = ['dashboard'];
+const NONE: readonly ComposerResource[] = [];
 
 export const PENDING_REQUEST_TTL_MS = 10_000;
 
@@ -24,7 +38,15 @@ export const PENDING_REQUEST_TTL_MS = 10_000;
 const listeners = new Map<EnterRequestListener, ReadonlySet<ComposerResource>>();
 const changeListeners = new Set<() => void>();
 /** The union of the listeners' resources, kept as one array between changes for `useSyncExternalStore`. */
-let supported: readonly ComposerResource[] = [];
+let supported: readonly ComposerResource[] = NONE;
+/**
+ * Whether any listener has registered in this page lifetime. From then on only the declared resources count:
+ * once every listener has unsubscribed, nothing is supported, and Grafana does not go back to assuming
+ * dashboards. Assistant registered, so it knows what it supports, and its silence means none.
+ */
+let registered = false;
+/** A dashboard request made before Assistant first registered, held for the first listener (see above). */
+let held: { target: ComposerTarget; at: number } | undefined;
 /**
  * The request Composer has not settled yet: from the moment it is made until an entry attempt on it ends,
  * it is cleared, or `PENDING_REQUEST_TTL_MS` passes. What the UI that made it shows as pending.
@@ -52,19 +74,28 @@ export function addComposerEnterRequestListener(
   const valid = Array.isArray(resources)
     ? resources.filter((resource): resource is ComposerResource => COMPOSER_RESOURCES.includes(resource))
     : [];
+  const before = getSupportedComposerResources();
   listeners.delete(listener);
   listeners.set(listener, new Set(valid));
-  updateSupported();
+  registered = true;
+  updateSupported(before);
+  deliverHeldRequest(listener, new Set(valid));
   return () => {
     if (listeners.delete(listener)) {
-      updateSupported();
+      updateSupported(getSupportedComposerResources());
     }
   };
 }
 
-/** The document types some listener enters Composer on. Stable between changes. */
+/**
+ * The document types some listener enters Composer on, or, before Assistant first registers, the ones Grafana
+ * assumes. Stable between changes.
+ */
 export function getSupportedComposerResources(): readonly ComposerResource[] {
-  return supported;
+  if (registered) {
+    return supported;
+  }
+  return dashboardComposerEnabled() && canAssistantHaveComposerApi() ? BEFORE_FIRST_REGISTRATION : NONE;
 }
 
 /**
@@ -73,7 +104,8 @@ export function getSupportedComposerResources(): readonly ComposerResource[] {
  */
 export function requestComposerEnter(target: ComposerTarget, { float = false } = {}): boolean {
   const listener = [...listeners].find(([, resources]) => resources.has(target.resource))?.[0];
-  if (!listener) {
+  const hold = !listener && !registered && getSupportedComposerResources().includes(target.resource);
+  if (!listener && !hold) {
     return false;
   }
   clearPendingComposerEnterRequest();
@@ -92,7 +124,11 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
     floated = request;
   }
   notifyChange();
-  listener(target);
+  if (listener) {
+    listener(target);
+  } else {
+    held = { target, at: Date.now() };
+  }
   return true;
 }
 
@@ -102,6 +138,7 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
  */
 export function clearPendingComposerEnterRequest(): void {
   const hadRequest = outstanding !== undefined;
+  held = undefined;
   releaseFloatedSidebar();
   dropOutstanding();
   if (hadRequest) {
@@ -161,12 +198,59 @@ function notifyChange(): void {
   [...changeListeners].forEach((listener) => listener());
 }
 
-function updateSupported(): void {
+function updateSupported(before: readonly ComposerResource[]): void {
   const union = COMPOSER_RESOURCES.filter((resource) =>
     [...listeners.values()].some((resources) => resources.has(resource))
   );
   if (union.length !== supported.length || union.some((resource, index) => resource !== supported[index])) {
-    supported = union;
+    supported = union.length > 0 ? union : NONE;
+  }
+  const after = getSupportedComposerResources();
+  if (after !== before) {
     notifyChange();
   }
+}
+
+/**
+ * Hands the held request to the first listener to register, once. One that does not support its resource
+ * releases it instead: the claim goes and the picker shows what the dashboard is in.
+ */
+function deliverHeldRequest(listener: EnterRequestListener, resources: ReadonlySet<ComposerResource>): void {
+  const request = held;
+  held = undefined;
+  if (!request) {
+    return;
+  }
+  if (!resources.has(request.target.resource) || Date.now() - request.at > PENDING_REQUEST_TTL_MS) {
+    clearPendingComposerEnterRequest();
+    return;
+  }
+  listener(request.target);
+}
+
+/**
+ * Whether the `composer` API would be shared with Assistant, as RestrictedGrafanaApisProvider and
+ * RestrictedGrafanaApisContextProvider decide: the restricted APIs on, then the allow list (or, without one,
+ * the block list). Whether Assistant is enabled is the entry points' check: they need its sidebar component,
+ * which only an enabled Assistant registers.
+ */
+function canAssistantHaveComposerApi(): boolean {
+  // eslint-disable-next-line @grafana/no-config-feature-toggles -- only generated for the legacy frontend API
+  if (!config.featureToggles.restrictedPluginApis) {
+    return false;
+  }
+  const matches = (list: string[] | undefined) => Boolean(list?.includes(ASSISTANT_PLUGIN_ID));
+  const { pluginRestrictedAPIsAllowList: allow, pluginRestrictedAPIsBlockList: block } = config.bootData.settings;
+  if (allow && Object.keys(allow).length > 0) {
+    return matches(allow.composer);
+  }
+  return Boolean(block?.composer) && !matches(block?.composer);
+}
+
+/** @internal Forgets listeners and the first registration between tests. */
+export function resetComposerEnterRequestsForTests(): void {
+  clearPendingComposerEnterRequest();
+  listeners.clear();
+  supported = NONE;
+  registered = false;
 }

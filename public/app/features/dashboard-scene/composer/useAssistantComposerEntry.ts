@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react';
 import { appEvents } from 'app/core/app_events';
 import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
+import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import {
@@ -11,8 +12,6 @@ import {
   subscribeToComposerEnterRequests,
 } from './composerEntryRequests';
 import { type ComposerResource, type ComposerTarget } from './types';
-
-export const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 
 /**
  * How Grafana's own UI (the dashboard mode picker, the notebook mode switch) asks Assistant to enter Composer
