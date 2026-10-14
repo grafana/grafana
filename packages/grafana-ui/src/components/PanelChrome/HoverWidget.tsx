@@ -18,9 +18,20 @@ interface Props {
   dragClass?: string;
   onDragStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
   onOpenMenu?: () => void;
+  /** Renders the contents without the floating container, for embedding in another element. */
+  inline?: boolean;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu, onDragStart }: Props) {
+export function HoverWidget({
+  menu,
+  title,
+  dragClass,
+  children,
+  offset = -32,
+  onOpenMenu,
+  onDragStart,
+  inline = false,
+}: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
   const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
@@ -43,8 +54,8 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
 
   return (
     <div
-      className={cx(styles.container, 'show-on-hover')}
-      style={{ top: offset === 0 ? -1 : offset }}
+      className={inline ? styles.inlineContainer : cx(styles.container, 'show-on-hover')}
+      style={inline ? undefined : { top: offset === 0 ? -1 : offset }}
       data-testid={selectors.container}
     >
       {dragClass && (
@@ -94,6 +105,13 @@ function getStyles(theme: GrafanaTheme2) {
       boxShadow: theme.shadows.z1,
       gap: theme.spacing(1),
       padding: theme.spacing(0, 1),
+    }),
+    inlineContainer: css({
+      label: 'hover-container-widget-inline',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      color: theme.colors.text.primary,
     }),
     square: css({
       display: 'flex',
