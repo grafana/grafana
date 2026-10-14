@@ -3026,7 +3026,7 @@ If `true`, propagate the tracing context to the plugin backend and enable tracin
 
 If `true`, load the standalone (external) version of a core plugin instead of the core version.
 For most plugins this requires the standalone plugin to be installed. Some plugins, such as
-[canvas](../../visualizations/panels-visualizations/visualizations/canvas/), default to `true` and are bundled with Grafana.
+[canvas](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/canvas/), default to `true` and are bundled with Grafana.
 
 <hr>
 
