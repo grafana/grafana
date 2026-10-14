@@ -53,7 +53,7 @@ func TestListKeysRoute_PublishesReferencedSchemas(t *testing.T) {
 	require.NotEmpty(t, r.Schemas)
 
 	for _, want := range []string{
-		"io.k8s.apimachinery.pkg.apis.meta.v1.ListOptions",
+		"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyRequest",
 		"io.k8s.apimachinery.pkg.apis.meta.v1.PartialObjectMetadataList",
 		// Reached transitively.
 		"io.k8s.apimachinery.pkg.apis.meta.v1.PartialObjectMetadata",
@@ -63,12 +63,37 @@ func TestListKeysRoute_PublishesReferencedSchemas(t *testing.T) {
 		assert.Contains(t, r.Schemas, want)
 	}
 
+	assert.NotContains(t, r.Schemas, "io.k8s.apimachinery.pkg.apis.meta.v1.ListOptions")
+
 	// Every $ref the spec emits must be one of the published components.
 	bodyRef := r.Spec.Post.RequestBody.Content["application/json"].Schema.Ref.String()
 	respRef := r.Spec.Post.Responses.StatusCodeResponses[200].Content["application/json"].Schema.Ref.String()
 	for _, ref := range []string{bodyRef, respRef} {
 		require.True(t, len(ref) > len(componentPrefix), "unexpected ref %q", ref)
 		assert.Contains(t, r.Schemas, ref[len(componentPrefix):])
+	}
+}
+
+// The published request schema is the contract: exactly what the handler decodes.
+func TestListKeysRoute_RequestSchemaExposesOnlySupportedFields(t *testing.T) {
+	h := NewHandler(&fakeStore{}, noop.NewTracerProvider().Tracer("test"))
+	for name, r := range map[string]Route{
+		"cluster-wide": h.ListKeysRoute(testGroup, testVersion, testResource, testKind),
+		"namespaced":   h.ListKeysInNamespaceRoute(testGroup, testVersion, testResource, testKind),
+	} {
+		t.Run(name, func(t *testing.T) {
+			ref := r.Spec.Post.RequestBody.Content["application/json"].Schema.Ref.String()
+			require.Equal(t, componentPrefix+"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyRequest", ref)
+
+			schema, ok := r.Schemas[ref[len(componentPrefix):]]
+			require.True(t, ok)
+
+			props := make([]string, 0, len(schema.Properties))
+			for name := range schema.Properties {
+				props = append(props, name)
+			}
+			assert.ElementsMatch(t, []string{"apiVersion", "kind", "limit", "continue", "resourceVersion"}, props)
+		})
 	}
 }
 

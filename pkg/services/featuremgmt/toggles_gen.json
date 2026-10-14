@@ -2831,6 +2831,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.navigationInfoArchRefresh",
+        "resourceVersion": "1791988590221",
+        "creationTimestamp": "2026-10-14T14:36:30Z"
+      },
+      "spec": {
+        "description": "Enables the refreshed information architecture for Grafana's navigation",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1791798499805",
         "creationTimestamp": "2026-06-19T08:30:47Z",
@@ -3056,6 +3069,19 @@
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.smtpSettingsPage",
+        "resourceVersion": "1791896266088",
+        "creationTimestamp": "2026-10-13T12:57:46Z"
+      },
+      "spec": {
+        "description": "Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/grafana-backend-services-squad",
         "expression": "false"
       }
     },
@@ -4829,7 +4855,8 @@
       "metadata": {
         "name": "queryServiceFromUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-04-19T09:26:21Z"
+        "creationTimestamp": "2024-04-19T09:26:21Z",
+        "deletionTimestamp": "2026-10-12T12:55:02Z"
       },
       "spec": {
         "description": "Routes requests to the new query service",
@@ -5692,7 +5719,8 @@
       "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-10-22T10:52:33Z"
+        "creationTimestamp": "2024-10-22T10:52:33Z",
+        "deletionTimestamp": "2026-10-07T23:03:15Z"
       },
       "spec": {
         "description": "Enables time pickers sync",

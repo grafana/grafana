@@ -133,6 +133,10 @@ export const ExemplarMarker = ({
     dataFrame.fields.forEach((field: Field) => {
       const value = field.values[rowIndex];
 
+      if (value == null && field.config.noValue == null) {
+        return;
+      }
+
       links.push(...getFieldDisplayLinks(field, rowIndex));
 
       const fieldDisplay = field.display?.(value) ?? { text: `${value}`, numeric: +value };
