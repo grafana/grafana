@@ -226,14 +226,15 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 	key, coll := target.key, target.collection
 	if !coll.IsExternal {
 		lexReq := hybridLexicalRequest(req, key, depth)
-		queryFields, rerankFields := s.hybridLexicalFields(key, req.SkipRerank)
-		lexReq.QueryFields = queryFields
-		for _, field := range rerankFields {
-			if !slices.Contains(lexReq.Fields, field) {
-				lexReq.Fields = append(lexReq.Fields, field)
+		lexResp, err := s.searchWithIndex(ctx, lexReq, func(idx ResourceIndex) {
+			queryFields, rerankFields := hybridLexicalFields(idx.SearchFieldDefinitions(), s.reranker != nil && !req.SkipRerank)
+			lexReq.QueryFields = queryFields
+			for _, field := range rerankFields {
+				if !slices.Contains(lexReq.Fields, field) {
+					lexReq.Fields = append(lexReq.Fields, field)
+				}
 			}
-		}
-		lexResp, err := s.Search(ctx, lexReq)
+		})
 		if err := searchCallError(lexResp, err); err != nil {
 			return nil, fmt.Errorf("lexical leg: %w", err)
 		}

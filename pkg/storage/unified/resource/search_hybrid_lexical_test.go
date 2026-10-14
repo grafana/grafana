@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
@@ -57,19 +56,12 @@ func TestHybridSearch_LexicalHitRerankText(t *testing.T) {
 				backend.results = []vector.VectorSearchResult{{UID: "a", Content: "Semantic context"}}
 			}
 			s, idx, _ := newHybridTestServer(lexResp, backend)
-			provider := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
-				{Group: "g", Resource: "r", Version: "v1"}: {
-					{Name: "summary", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText, SearchCapabilityRetrieve}},
-					{Name: "category", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityRetrieve}},
-					{Name: "unstored", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText}},
-				},
-				{Group: "g", Resource: "r", Version: "v2"}: {
-					{Name: "messages", Type: SearchFieldTypeString, Array: true, Capabilities: []SearchCapability{SearchCapabilityText, SearchCapabilityRetrieve}},
-				},
-			}, nil)
-			s.searchFields = NewSearchFieldsRegistry(nil, nil, map[LowerGroupResource]SearchFieldsProvider{
-				NewLowerGroupResource("g", "r"): provider,
-			})
+			idx.fieldDefinitions = append(StandardSearchFieldDefinitions(),
+				SearchFieldDefinition{Name: "summary", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText, SearchCapabilityRetrieve}},
+				SearchFieldDefinition{Name: "category", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityRetrieve}},
+				SearchFieldDefinition{Name: "unstored", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText}},
+				SearchFieldDefinition{Name: "messages", Type: SearchFieldTypeString, Array: true, Capabilities: []SearchCapability{SearchCapabilityText, SearchCapabilityRetrieve}},
+			)
 			scorer := &fakeRerankScorer{}
 			if !tt.noReranker {
 				s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})

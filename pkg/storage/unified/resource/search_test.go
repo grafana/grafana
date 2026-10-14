@@ -39,8 +39,9 @@ type MockResourceIndex struct {
 	updateIndexMu    sync.Mutex
 	updateIndexCalls int
 
-	buildInfo IndexBuildInfo
-	docCount  int64
+	buildInfo        IndexBuildInfo
+	docCount         int64
+	fieldDefinitions []SearchFieldDefinition
 
 	// Types recorded through RecordCompletedTypeBuild, and an error to fail
 	// reading them with.
@@ -106,6 +107,13 @@ func (m *MockResourceIndex) indexedItems() []*BulkIndexItem {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
 	return slices.Clone(m.bulkItems)
+}
+
+func (m *MockResourceIndex) SearchFieldDefinitions() []SearchFieldDefinition {
+	if m.fieldDefinitions != nil {
+		return m.fieldDefinitions
+	}
+	return StandardSearchFieldDefinitions()
 }
 
 func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {

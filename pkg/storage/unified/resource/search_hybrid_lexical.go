@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"google.golang.org/protobuf/types/known/structpb"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
@@ -17,17 +16,10 @@ const maxLexicalRerankTextBytes = 4096
 // Bound the returned fields separately from the text sent to the reranker.
 const maxHybridLexicalBytes = 4096
 
-// hybridLexicalFields selects standard and manifest text fields for lexical search.
+// hybridLexicalFields selects text fields from the serving index's definitions.
 // queryFields controls matching; rerankFields selects retrievable values returned
 // by that same search for reranking, and is empty when reranking is disabled.
-func (s *searchServer) hybridLexicalFields(key *resourcepb.ResourceKey, skipRerank bool) (queryFields []*resourcepb.ResourceSearchRequest_QueryField, rerankFields []string) {
-	definitions := StandardSearchFieldDefinitions()
-	if s.searchFields != nil {
-		_, _, provider := s.searchFields.For(NewLowerGroupResource(key.Group, key.Resource))
-		if provider != nil {
-			definitions = append(definitions, provider.Fields(schema.GroupVersionResource{Group: key.Group, Resource: key.Resource})...)
-		}
-	}
+func hybridLexicalFields(definitions []SearchFieldDefinition, rerank bool) (queryFields []*resourcepb.ResourceSearchRequest_QueryField, rerankFields []string) {
 	for _, field := range definitions {
 		if field.Type != SearchFieldTypeString || !field.HasCapability(SearchCapabilityText) {
 			continue
@@ -35,7 +27,7 @@ func (s *searchServer) hybridLexicalFields(key *resourcepb.ResourceKey, skipRera
 		// Bleve expands title into its boosted variants; other text fields need
 		// an explicit boost because the protobuf default is zero.
 		queryFields = append(queryFields, &resourcepb.ResourceSearchRequest_QueryField{Name: field.Name, Boost: 1})
-		if s.reranker != nil && !skipRerank && field.HasCapability(SearchCapabilityRetrieve) {
+		if rerank && field.HasCapability(SearchCapabilityRetrieve) {
 			rerankFields = append(rerankFields, field.Name)
 		}
 	}
