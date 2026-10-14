@@ -309,30 +309,56 @@ export const prepareConfig = (
     const display = yField.display ?? getDisplayProcessor({ field: yField, theme });
     // Emit only on index change; emit null once when leaving a hovered point.
     let prevIdx: number | null | undefined;
+    let pending: Omit<SparklineHoverInfo, 'display'> | undefined;
+    let animationFrame: number | undefined;
+
+    const clearHover = () => {
+      if (animationFrame !== undefined) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = undefined;
+      }
+      pending = undefined;
+      if (typeof prevIdx === 'number') {
+        prevIdx = null;
+        onHover(null);
+      }
+    };
+
+    builder.addHook('destroy', clearHover);
 
     builder.addHook('setCursor', (u) => {
       const idx = u.cursor.idxs?.[seriesIdx] ?? null;
       const value = idx != null ? u.data[seriesIdx]?.[idx] : null;
 
       if (idx == null || value == null || !Number.isFinite(value)) {
-        if (typeof prevIdx === 'number') {
-          prevIdx = null;
-          onHover(null);
-        }
+        clearHover();
         return;
       }
 
       if (idx === prevIdx) {
+        // Returning to the emitted point also supersedes a different queued point.
+        pending = undefined;
         return;
       }
-      prevIdx = idx;
 
-      onHover({
+      pending = {
         index: idx,
         value,
-        display: formattedValueToString(display(value)),
         left: u.rect.left + (u.cursor.left ?? 0),
         top: u.rect.top + (u.cursor.top ?? 0),
+      };
+      if (animationFrame !== undefined) {
+        return;
+      }
+
+      animationFrame = requestAnimationFrame(() => {
+        animationFrame = undefined;
+        const hover = pending;
+        pending = undefined;
+        if (hover && hover.index !== prevIdx) {
+          prevIdx = hover.index;
+          onHover({ ...hover, display: formattedValueToString(display(hover.value)) });
+        }
       });
     });
   }
