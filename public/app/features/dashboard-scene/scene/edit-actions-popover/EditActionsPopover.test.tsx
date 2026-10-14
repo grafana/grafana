@@ -175,6 +175,98 @@ describe('<EditActionsPopover />', () => {
     });
   });
 
+  describe('when showOutsideEditMode is set', () => {
+    test('resting the pointer shows floating content while element selection is not enabled', async () => {
+      render(
+        <EditActionsPopover showOutsideEditMode content={<span>popover-actions</span>}>
+          <div data-testid="reference-child">panel</div>
+        </EditActionsPopover>
+      );
+
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(screen.getByText('popover-actions')).toBeInTheDocument();
+    });
+  });
+
+  describe('when keepOpen is set', () => {
+    test('unhovering the reference does not hide floating content', async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const tree = (keepOpen: boolean) => (
+        <EditActionsPopover showOutsideEditMode keepOpen={keepOpen} content={<span>popover-actions</span>}>
+          <div data-testid="reference-child">panel</div>
+        </EditActionsPopover>
+      );
+      const { rerender } = render(tree(false));
+
+      await user.hover(screen.getByTestId('reference-child'));
+      act(() => {
+        jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
+      });
+      rerender(tree(true));
+      await act(async () => {
+        await user.unhover(screen.getByTestId('reference-child'));
+      });
+
+      expect(screen.getByText('popover-actions')).toBeInTheDocument();
+
+      rerender(tree(false));
+
+      expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when keyboardAccessible is set', () => {
+    function renderKeyboardAccessible() {
+      return render(
+        <>
+          <button>before</button>
+          <EditActionsPopover
+            showOutsideEditMode
+            keyboardAccessible
+            ariaLabel="Panel actions"
+            content={<button>action</button>}
+          >
+            <div data-testid="reference-child">
+              <button>inside reference</button>
+            </div>
+          </EditActionsPopover>
+        </>
+      );
+    }
+
+    test('keyboard focus within the reference shows the content as a labelled toolbar', async () => {
+      const { user } = renderKeyboardAccessible();
+
+      await user.tab();
+      await user.tab();
+
+      expect(screen.getByRole('button', { name: 'inside reference' })).toHaveFocus();
+      expect(screen.getByRole('toolbar', { name: 'Panel actions' })).toBeInTheDocument();
+    });
+
+    test('the content is next in the tab order after the reference', async () => {
+      const { user } = renderKeyboardAccessible();
+
+      await user.tab();
+      await user.tab();
+      await user.tab();
+
+      expect(screen.getByRole('button', { name: 'action' })).toHaveFocus();
+    });
+
+    test('pressing Escape hides the content', async () => {
+      const { user } = renderKeyboardAccessible();
+
+      await user.tab();
+      await user.tab();
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('toolbar', { name: 'Panel actions' })).not.toBeInTheDocument();
+    });
+  });
+
   describe('when element selection is toggled off and on', () => {
     test('the child is not remounted, so its transient state is preserved', async () => {
       const tree = (selectionEnabled: boolean) => (

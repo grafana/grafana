@@ -128,6 +128,60 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[3].subMenu?.[1].text).toBe('Get help');
   });
 
+  describe('when grafana.panelActionsPopover is on', () => {
+    beforeEach(() => {
+      setTestFlags({ [FlagKeys.GrafanaPanelActionsPopover]: true });
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    async function getMenuItems(setup?: (scene: DashboardScene) => void) {
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      setup?.(scene);
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const items = menu.state.items ?? [];
+      const moreItems = items.find((i) => i.text === 'More...')?.subMenu ?? [];
+      return { itemTexts: items.map((i) => i.text), moreItemTexts: moreItems.map((i) => i.text) };
+    }
+
+    it('in view mode, leaves out View, Edit and Explore but keeps Copy', async () => {
+      const { itemTexts, moreItemTexts } = await getMenuItems();
+
+      expect(itemTexts).not.toContain('View');
+      expect(itemTexts).not.toContain('Edit');
+      expect(itemTexts).not.toContain('Explore');
+      expect(itemTexts).toContain('Share');
+      expect(itemTexts).toContain('Inspect');
+      expect(moreItemTexts).toContain('Copy');
+    });
+
+    it('in edit mode, leaves out View, Edit, Copy, Duplicate and Remove but keeps Explore', async () => {
+      const { itemTexts, moreItemTexts } = await getMenuItems((scene) => scene.setState({ isEditing: true }));
+
+      expect(itemTexts).not.toContain('View');
+      expect(itemTexts).not.toContain('Edit');
+      expect(itemTexts).not.toContain('Remove');
+      expect(itemTexts).toContain('Explore');
+      expect(moreItemTexts).not.toContain('Copy');
+      expect(moreItemTexts).not.toContain('Duplicate');
+      expect(moreItemTexts).toContain('New library panel');
+    });
+
+    it('while searching panels, keeps all items because panels are shown without the popover', async () => {
+      const { itemTexts } = await getMenuItems((scene) => scene.setState({ panelSearch: 'cpu' }));
+
+      expect(itemTexts).toEqual(expect.arrayContaining(['View', 'Edit', 'Explore']));
+    });
+  });
+
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', async () => {
       getObservablePluginLinksMock.mockReturnValue(

@@ -7414,6 +7414,17 @@
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
       "tooltip-remove-option": "Remove option"
     },
+    "panel-actions-popover": {
+      "aria-label": "Panel actions",
+      "edit": "Edit (e)",
+      "expand": "Expand (v)",
+      "explore": "Explore (p x)",
+      "more-actions": "More actions",
+      "remove": "Remove (p r)",
+      "remove-confirm": "Remove",
+      "restore-size": "Restore size (v)",
+      "settings": "Settings"
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
     },
