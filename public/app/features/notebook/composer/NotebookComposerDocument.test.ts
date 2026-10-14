@@ -4,6 +4,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import {
   getExtensionSidebarPresentation,
+  notifyExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
@@ -159,11 +160,53 @@ describe('the extension sidebar', () => {
     expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
-  it('ends the notebook session when the user docks it', async () => {
+  it('keeps the notebook session open, and writing, when the user docks it', async () => {
     const scene = onRoute();
     const session = await composerApi.enter(NOTEBOOK);
 
     setExtensionSidebarPresentation('docked');
+
+    expect(session.signal.aborted).toBe(false);
+    expect(scene.state.isComposing).toBe(true);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the notebook session the API entered
+    await expect(retitle(session as ReturnType<typeof enterNotebookComposer>, 'Docked')).resolves.toMatchObject({
+      status: 'applied',
+    });
+    expect(scene.state.title).toBe('Docked');
+
+    session.exit();
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it("brings back the user's floating layout after a session they did not re-lay out", async () => {
+    setTestFlags({ ...COMPOSER_FLAGS, 'grafana.extensionSidebarFloating': true });
+    setExtensionSidebarPresentation('floating');
+    onRoute();
+    const session = await composerApi.enter(NOTEBOOK);
+
+    session.exit();
+
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+  });
+
+  it("keeps the user's mid-session dock after the notebook session ends", async () => {
+    setTestFlags({ ...COMPOSER_FLAGS, 'grafana.extensionSidebarFloating': true });
+    setExtensionSidebarPresentation('floating');
+    onRoute();
+    const session = await composerApi.enter(NOTEBOOK);
+    setExtensionSidebarPresentation('docked');
+
+    session.exit();
+
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it('ends the notebook session when the sidebar closes', async () => {
+    const scene = onRoute();
+    const session = await composerApi.enter(NOTEBOOK);
+
+    notifyExtensionSidebarClosed();
 
     expect(session.signal.aborted).toBe(true);
     expect(scene.state.isComposing).toBe(false);

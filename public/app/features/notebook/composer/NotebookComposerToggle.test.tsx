@@ -12,6 +12,7 @@ import {
 import {
   getExtensionSidebarPresentation,
   resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -19,6 +20,7 @@ import {
   addComposerEnterRequestListener,
   clearPendingComposerEnterRequest,
   PENDING_REQUEST_TTL_MS,
+  wasComposerEnterRequestDocked,
 } from 'app/features/dashboard-scene/composer/composerEntryRequests';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
@@ -126,6 +128,19 @@ describe('the notebook toolbar Composer toggle', () => {
     expect(listener).toHaveBeenCalledWith(TARGET);
     expect(getExtensionSidebarPresentation()).toBe('floating');
     unsubscribe();
+  });
+
+  it('still hands the request over, docked, when the user docks the sidebar while it waits', async () => {
+    const { user } = render(<NotebookComposerToggle scene={notebook()} />);
+    await user.click(composerButton()!);
+
+    setExtensionSidebarPresentation('docked');
+
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(true);
+    const listener = jest.fn();
+    cleanups.push(addComposerEnterRequestListener(listener));
+    expect(listener).toHaveBeenCalledWith(TARGET);
   });
 
   it('asks a listening Assistant straight away, without entering Composer itself', async () => {

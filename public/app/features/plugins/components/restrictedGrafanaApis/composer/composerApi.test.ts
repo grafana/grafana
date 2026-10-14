@@ -2,6 +2,7 @@ import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   getExtensionSidebarPresentation,
+  notifyExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
@@ -153,14 +154,73 @@ describe('presentation', () => {
     expect(getExtensionSidebarPresentation()).toBe('floating');
   });
 
-  it('ends the session when the user docks the sidebar', async () => {
+  it('keeps the session open when the user docks the sidebar', async () => {
     mountDashboard();
     const session = await composerApi.enter(DASHBOARD);
 
     setExtensionSidebarPresentation('docked');
 
+    expect(session.signal.aborted).toBe(false);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+    session.exit();
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it("keeps the user's mid-session dock after exit, even when they entered floating", async () => {
+    setTestFlags({ ...COMPOSER_FLAGS, [FLOATING_FLAG]: true });
+    setExtensionSidebarPresentation('floating');
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+    setExtensionSidebarPresentation('docked');
+
+    session.exit();
+
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it('ends the session when the sidebar closes', async () => {
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+
+    notifyExtensionSidebarClosed();
+
     expect(session.signal.aborted).toBe(true);
     expect(getExtensionSidebarPresentation()).toBe('docked');
+  });
+
+  it('ends a session the user docked when the sidebar closes', async () => {
+    mountDashboard();
+    const session = await composerApi.enter(DASHBOARD);
+    setExtensionSidebarPresentation('docked');
+
+    notifyExtensionSidebarClosed();
+
+    expect(session.signal.aborted).toBe(true);
+  });
+
+  it('stops watching the sidebar once the session ends', async () => {
+    mountDashboard();
+    const first = await composerApi.enter(DASHBOARD);
+    first.exit();
+    const exitFirst = jest.spyOn(first, 'exit');
+    const second = await composerApi.enter(DASHBOARD);
+
+    notifyExtensionSidebarClosed();
+
+    expect(second.signal.aborted).toBe(true);
+    expect(exitFirst).not.toHaveBeenCalled();
+  });
+
+  it('enters docked when the user docked the sidebar while the picker request waited', async () => {
+    mountDashboard();
+    requestComposerEnter(DASHBOARD, { float: true });
+    setExtensionSidebarPresentation('docked');
+
+    const session = await composerApi.enter(DASHBOARD);
+
+    expect(session.signal.aborted).toBe(false);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+    session.exit();
   });
 
   it('docks a sidebar the picker floated when entering fails', async () => {
@@ -185,12 +245,12 @@ describe('presentation', () => {
     expect(getExtensionSidebarPresentation()).toBe('docked');
   });
 
-  it("never touches the extension sidebar with presentation 'none'", async () => {
+  it("never touches the extension sidebar with presentation 'none', nor ends with it", async () => {
     mountDashboard();
     const session = await composerApi.enter(DASHBOARD, { presentation: 'none' });
     expect(getExtensionSidebarPresentation()).toBe('docked');
 
-    setExtensionSidebarPresentation('docked');
+    notifyExtensionSidebarClosed();
     expect(session.signal.aborted).toBe(false);
     session.exit();
   });

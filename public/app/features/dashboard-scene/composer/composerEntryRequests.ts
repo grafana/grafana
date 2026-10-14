@@ -21,9 +21,12 @@ let pending: { target: ComposerTarget; at: number; timer: ReturnType<typeof setT
 /**
  * A request that floats the extension sidebar until Composer takes over, so a sidebar the picker opens never
  * paints docked first. The session takes its own claim when it starts; a failure, expiry or teardown
- * releases this one, so the user is never left with an empty floating box.
+ * releases this one, so the user is never left with an empty floating box. `docked` records that the user
+ * docked the sidebar while it waited: the entry still goes ahead, docked.
  */
-let floated: { target: ComposerTarget; release: () => void; timer: ReturnType<typeof setTimeout> } | undefined;
+let floated:
+  | { target: ComposerTarget; release: () => void; timer: ReturnType<typeof setTimeout>; docked: boolean }
+  | undefined;
 
 /**
  * Registers a listener for Composer entry requests and hands it a request still waiting for one.
@@ -47,14 +50,18 @@ export function addComposerEnterRequestListener(listener: EnterRequestListener):
 export function requestComposerEnter(target: ComposerTarget, { float = false } = {}): void {
   clearPendingComposerEnterRequest();
   if (float) {
-    const release = claimFloatingExtensionSidebar({
-      // Docking while waiting withdraws the request; the claim is already gone.
-      onDocked: () => {
-        forgetFloated();
-        dropPendingRequest();
-      },
-    });
-    floated = { target, release, timer: setTimeout(releaseFloatedSidebar, PENDING_REQUEST_TTL_MS) };
+    const request = {
+      target,
+      release: claimFloatingExtensionSidebar({
+        // The user's choice wins: the claim is gone, and the session this request starts stays docked.
+        onDocked: () => {
+          request.docked = true;
+        },
+      }),
+      timer: setTimeout(releaseFloatedSidebar, PENDING_REQUEST_TTL_MS),
+      docked: false,
+    };
+    floated = request;
   }
   const [listener] = listeners;
   if (listener) {
@@ -87,6 +94,11 @@ export function settleComposerEnterRequest(uid: string): void {
   if (floated?.target.uid === uid) {
     releaseFloatedSidebar();
   }
+}
+
+/** Whether the user docked the sidebar while the request on `uid` waited, so its session should not float. */
+export function wasComposerEnterRequestDocked(uid: string): boolean {
+  return floated?.target.uid === uid && floated.docked;
 }
 
 function releaseFloatedSidebar(): void {

@@ -4,9 +4,15 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import {
+  getExtensionSidebarPresentation,
+  resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarPresentation,
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ComposerOverlay } from 'app/features/dashboard-scene/composer/ComposerOverlay';
 import { cropToBlob, releaseCanvas, renderNode } from 'app/features/dashboard-scene/composer/raster';
+import { composerApi } from 'app/features/plugins/components/restrictedGrafanaApis/composer/composerApi';
 
 import { NOTEBOOKS_FLAG } from '../mutation-api/test-utils';
 import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
@@ -66,6 +72,7 @@ afterEach(() => {
   cleanups.splice(0).forEach((cleanup) => cleanup());
   document.elementsFromPoint = originalElementsFromPoint;
   jest.restoreAllMocks();
+  resetExtensionSidebarPresentationForTests();
   setTestFlags({});
 });
 
@@ -93,9 +100,7 @@ function buildNotebook() {
 }
 
 /** The overlay over a stand-in for the notebook's container, with one cell root under the pointer. */
-function setup() {
-  const scene = buildNotebook();
-  const session = enterNotebookComposer(scene);
+function setup(session = enterNotebookComposer(buildNotebook())) {
   render(
     <div>
       <div data-notebook-cell-key="cell-summary">
@@ -106,7 +111,7 @@ function setup() {
   );
   const overlay = screen.getByTestId('dashboard-composer-overlay');
   document.elementsFromPoint = () => [overlay, screen.getByTestId('cell-content')];
-  return { scene, session, overlay };
+  return { session, overlay };
 }
 
 const live = () => new AbortController().signal;
@@ -244,5 +249,59 @@ describe('notebook rendering in Composer', () => {
     });
 
     expect(screen.queryByTestId('dashboard-composer-overlay')).not.toBeInTheDocument();
+  });
+});
+
+// Composer is a mode, not a layout: the user may dock the extension sidebar next to the notebook and stay in it.
+describe('notebook Composer with the extension sidebar docked', () => {
+  it('keeps the session open, and still picks and captures, without the docked sidebar', async () => {
+    buildNotebook();
+    const entered = await composerApi.enter({ resource: 'notebook', uid: 'nb-overlay' });
+    expect(getExtensionSidebarPresentation()).toBe('floating');
+    setExtensionSidebarPresentation('docked');
+    expect(entered.signal.aborted).toBe(false);
+    expect(getExtensionSidebarPresentation()).toBe('docked');
+    const sidebar = document.createElement('div');
+    sidebar.setAttribute('data-extension-sidebar', '');
+    document.body.appendChild(sidebar);
+    cleanups.push(() => sidebar.remove());
+    jest
+      .mocked(renderNode)
+      .mockReset()
+      .mockResolvedValue(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the size is read
+        { width: 1200, height: 600 } as HTMLCanvasElement
+      );
+    jest
+      .mocked(cropToBlob)
+      .mockReset()
+      .mockResolvedValue(new Blob(['webp'], { type: 'image/webp' }));
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the notebook session the API entered
+    const { session, overlay } = setup(entered as unknown as ReturnType<typeof enterNotebookComposer>);
+
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickElement(live());
+    });
+    fireEvent.click(overlay, { clientX: 400, clientY: 350 });
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'cell', name: 'summary' } });
+
+    act(() => {
+      pick = session.pickRegion(live());
+    });
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const region = (await pick) as { ref: { regionId: string } };
+    let result: unknown;
+    await act(async () => {
+      result = await session.captureRegion(region.ref.regionId, live());
+    });
+
+    expect(result).toMatchObject({ status: 'ready' });
+    expect(jest.mocked(renderNode).mock.calls[0][1].filter(sidebar)).toBe(false);
+    await act(async () => {
+      session.exit();
+    });
   });
 });

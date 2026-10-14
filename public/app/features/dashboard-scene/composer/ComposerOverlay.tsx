@@ -140,8 +140,20 @@ export function ComposerOverlay({
     window.addEventListener('scroll', scheduleMeasure, { capture: true, passive: true });
     window.addEventListener('resize', scheduleMeasure);
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(scheduleMeasure);
-    if (rootRef.current) {
-      observer?.observe(rootRef.current);
+    const root = rootRef.current;
+    if (root) {
+      observer?.observe(root);
+      // The overlay covers at least the content it measured, so a page that narrows (the extension sidebar
+      // docking next to it) does not resize the overlay itself: watch the container and its content too.
+      const container = root.parentElement;
+      if (container) {
+        observer?.observe(container);
+        for (const child of container.children) {
+          if (child !== root) {
+            observer?.observe(child);
+          }
+        }
+      }
     }
     return () => {
       cancelAnimationFrame(frameRef.current);

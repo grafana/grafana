@@ -8,7 +8,10 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 export type ExtensionSidebarPresentation = 'docked' | 'floating';
 
 interface FloatingClaim {
-  /** Called when the user docks the sidebar while the claim holds. The claim is already released. */
+  /**
+   * Called when the user docks the sidebar while the claim holds. The claim is already withdrawn: the
+   * user's choice wins, and whatever took the claim carries on docked.
+   */
   onDocked?: () => void;
 }
 
@@ -26,6 +29,7 @@ interface FloatingClaim {
 let requested: ExtensionSidebarPresentation = 'docked';
 const claims = new Set<FloatingClaim>();
 const listeners = new Set<() => void>();
+const closeListeners = new Set<() => void>();
 
 function notify() {
   listeners.forEach((listener) => listener());
@@ -38,7 +42,7 @@ export function canFloatExtensionSidebar(): boolean {
 
 /**
  * Sets the layout the user asked for. Floating is ignored while `canFloatExtensionSidebar()` is false.
- * Docking also ends every claim, calling its `onDocked`, so a docked sidebar never stays floated by one.
+ * Docking also withdraws every claim, calling its `onDocked`, so a docked sidebar never stays floated by one.
  */
 export function setExtensionSidebarPresentation(presentation: ExtensionSidebarPresentation): void {
   if (presentation === 'floating' && !canFloatExtensionSidebar()) {
@@ -54,7 +58,10 @@ export function setExtensionSidebarPresentation(presentation: ExtensionSidebarPr
   ended.forEach((claim) => claim.onDocked?.());
 }
 
-/** Floats the sidebar until the returned release is called, or until the user docks it. */
+/**
+ * Floats the sidebar until the returned release is called, or until the user docks it. Releasing brings back
+ * the layout the user asked for: the one from before the claim, or the last one they chose since.
+ */
 export function claimFloatingExtensionSidebar(claim: FloatingClaim = {}): () => void {
   // A fresh entry, so the same options object can back two claims.
   const entry: FloatingClaim = { ...claim };
@@ -82,6 +89,22 @@ export function getExtensionSidebarPresentation(): ExtensionSidebarPresentation 
   return isExtensionSidebarFloatingClaimed() || (requested === 'floating' && canFloatExtensionSidebar())
     ? 'floating'
     : 'docked';
+}
+
+/**
+ * Calls `listener` whenever the open extension sidebar closes, or its component is replaced by another one.
+ * Returns an unsubscribe. For whatever lives only while the sidebar shows, such as a Composer session.
+ */
+export function onExtensionSidebarClosed(listener: () => void): () => void {
+  closeListeners.add(listener);
+  return () => {
+    closeListeners.delete(listener);
+  };
+}
+
+/** @internal Called by `ExtensionSidebarContextProvider` when the open sidebar closes. */
+export function notifyExtensionSidebarClosed(): void {
+  [...closeListeners].forEach((listener) => listener());
 }
 
 /** For `useSyncExternalStore`. */

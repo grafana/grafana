@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useMemo,
+  useRef,
   useSyncExternalStore,
 } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
@@ -22,6 +23,7 @@ import {
   type ExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   isExtensionSidebarFloatingClaimed,
+  notifyExtensionSidebarClosed,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
@@ -241,6 +243,16 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       toggleSubscription.unsubscribe();
     };
   }, [setDockedComponentWithProps, availableComponents, dockedComponentId]);
+
+  // Closing the sidebar, or replacing its component, ends what lived in it (a Composer session).
+  const shownComponentId = useRef(dockedComponentId);
+  useEffect(() => {
+    const previous = shownComponentId.current;
+    shownComponentId.current = dockedComponentId;
+    if (previous !== undefined && previous !== dockedComponentId) {
+      notifyExtensionSidebarClosed();
+    }
+  }, [dockedComponentId]);
 
   // update the stored docked component id when it changes
   useEffect(() => {
