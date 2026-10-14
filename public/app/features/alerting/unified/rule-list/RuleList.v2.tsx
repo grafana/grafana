@@ -11,8 +11,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { WatchersBanner } from '../components/WatchersBanner';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
-import { ImportToGMABanner } from '../components/import-to-gma/ImportToGMABanner';
-import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useShowImportToGMARulesBanner';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
@@ -33,7 +31,6 @@ import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
-  const showImportToGMABanner = useShowImportToGMARulesBanner();
   const [hideEmptyDataSources, setHideEmptyDataSources] = useLocalStorage(
     `grafana.unifiedalerting.hideEmptyDataSources-org-${config.bootData.user.orgId}`,
     true
@@ -41,7 +38,7 @@ function RuleList() {
 
   return (
     <Stack direction="column">
-      {showImportToGMABanner && <ImportToGMABanner />}
+      {/* The Import to GMA banner is intentionally not rendered here while the Watchers promo runs */}
       <WatchersBanner />
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
