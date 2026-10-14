@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
@@ -46,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
@@ -365,8 +365,6 @@ func (s *service) start(ctx context.Context) error {
 	// Read here rather than next to the routes: whether the search that spans
 	// resource types is on decides what the api resource config below enables.
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
-	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
-	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
 	hybridAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true)
 	globalSearchAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyGlobalSearch).MustBool(false)
 	globalSearchGV := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
@@ -444,7 +442,7 @@ func (s *service) start(ctx context.Context) error {
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
 	searchAndStorageRoutes := searchroutes.Build(
-		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
+		true, true, s.tracing, s.unified, builders, s.appInstallers,
 		searchroutes.Options{HybridEnabled: hybridAPIEnabled},
 	)
 	if globalSearchAPIEnabled {
@@ -510,7 +508,6 @@ func (s *service) start(ctx context.Context) error {
 			Scheme:                s.scheme,
 			RESTOptionsGetter:     serverConfig.RESTOptionsGetter,
 			StorageClient:         s.unified,
-			SearchAPIEnabled:      searchAPIEnabled,
 			HybridAPIEnabled:      hybridAPIEnabled,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,

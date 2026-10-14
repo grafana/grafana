@@ -773,6 +773,7 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	SearchClientForwardAuthEnabled             bool
 	// SearchEnforceSortCapability rejects a sort on a field that does not declare
 	// sorting. Off by default: violations are counted first, so they can be fixed
 	// before requests start failing.
@@ -856,7 +857,6 @@ type Cfg struct {
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
-	SearchBackedListResources     []string
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend           bool
@@ -871,6 +871,8 @@ type Cfg struct {
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
+	BlobGarbageCollectionEnabled      bool
+	BlobGarbageCollectionDryRun       bool
 	GarbageCollectionInterval         time.Duration
 	GarbageCollectionBatchSize        int
 	GarbageCollectionBatchWait        time.Duration
@@ -884,6 +886,7 @@ type Cfg struct {
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
+	SeededWatchesEnabled bool
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration

@@ -434,10 +434,14 @@ const injectedRtkApi = api
       }),
       getCurrentUserDisplay: build.query<GetCurrentUserDisplayApiResponse, GetCurrentUserDisplayApiArg>({
         query: () => ({ url: `/users/~` }),
-        providesTags: ['Display'],
+        providesTags: ['User'],
       }),
       getCurrentUserPermissions: build.query<GetCurrentUserPermissionsApiResponse, GetCurrentUserPermissionsApiArg>({
         query: () => ({ url: `/users/~/permissions` }),
+        providesTags: ['User'],
+      }),
+      getWhoAmI: build.query<GetWhoAmIApiResponse, GetWhoAmIApiArg>({
+        query: () => ({ url: `/whoami` }),
         providesTags: ['User'],
       }),
     }),
@@ -896,10 +900,12 @@ export type GetUserTeamsApiArg = {
   /** Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail. */
   continue?: string;
 };
-export type GetCurrentUserDisplayApiResponse = /** status 200 undefined */ Display;
+export type GetCurrentUserDisplayApiResponse = /** status 200 undefined */ CurrentUserInfo;
 export type GetCurrentUserDisplayApiArg = void;
 export type GetCurrentUserPermissionsApiResponse = /** status 200 undefined */ UserPermissions;
 export type GetCurrentUserPermissionsApiArg = void;
+export type GetWhoAmIApiResponse = /** status 200 undefined */ CurrentUserInfo;
+export type GetWhoAmIApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -946,8 +952,6 @@ export type Display = {
   identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
-  /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user ("users/~") endpoint. */
-  role?: string;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -1192,8 +1196,6 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
      - `"admin"`
      - `"member"` */
   permission?: 'admin' | 'member';
-  /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user ("users/~") endpoint. */
-  role?: string;
 };
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1260,6 +1262,23 @@ export type GetUserTeamsResponse = {
   kind?: string;
   metadata: any;
 };
+export type CurrentUserInfo = {
+  /** AuthenticatedBy is the authentication provider used for the current identity. */
+  authenticatedBy?: string;
+  /** AvatarURL is the url where we can get the avatar for identity */
+  avatarURL?: string;
+  /** Display name for identity. */
+  displayName: string;
+  /** Email is the email address for the current identity. */
+  email?: string;
+  identity: IdentityRef;
+  /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
+  internalId?: number;
+  /** Namespace is the namespace of the current identity. */
+  namespace?: string;
+  /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). */
+  role?: string;
+};
 export type UserPermission = {
   action: string;
   scope: string;
@@ -1323,4 +1342,6 @@ export const {
   useLazyGetCurrentUserDisplayQuery,
   useGetCurrentUserPermissionsQuery,
   useLazyGetCurrentUserPermissionsQuery,
+  useGetWhoAmIQuery,
+  useLazyGetWhoAmIQuery,
 } = injectedRtkApi;

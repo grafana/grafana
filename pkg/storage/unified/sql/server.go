@@ -88,9 +88,9 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withVectorIndexers,
 		withSearchClient,
 		withQuotaConfig,
-		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
+		withSeededWatches,
 		withNatsWatchMaxAge,
 	)
 	if err != nil {
@@ -192,16 +192,20 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	if resourceOpts.Blob.URL == "" {
 		resourceOpts.Blob.Backend = opts.BlobBackend
 	}
-	// Support local file blob
-	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
-		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
-		if err != nil {
-			return err
+	var err error
+	resourceOpts.Blob.URL, err = resolvedBlobURL(resourceOpts.Blob.URL, opts.Cfg.DataPath)
+	return err
+}
+
+func resolvedBlobURL(url, dataPath string) (string, error) {
+	if strings.HasPrefix(url, "./data/") {
+		dir := strings.Replace(url, "./data", dataPath, 1)
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			return "", err
 		}
-		resourceOpts.Blob.URL = "file:///" + dir
+		return "file:///" + dir, nil
 	}
-	return nil
+	return url, nil
 }
 
 func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
@@ -219,6 +223,11 @@ func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.Resour
 func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
+	return nil
+}
+
+func withSeededWatches(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.SeededWatchesEnabled = opts.Cfg.SeededWatchesEnabled
 	return nil
 }
 
@@ -368,17 +377,6 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
 		EnforcedResources: enforced,
 		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
-	}
-	return nil
-}
-
-func withSearchBackedListConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	allowed := make(map[string]bool, len(opts.Cfg.SearchBackedListResources))
-	for _, r := range opts.Cfg.SearchBackedListResources {
-		allowed[r] = true
-	}
-	resourceOpts.SearchBackedListConfig = resource.SearchBackedListConfig{
-		AllowedResources: allowed,
 	}
 	return nil
 }

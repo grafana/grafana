@@ -257,8 +257,8 @@ func MyResourceMigration(m migrator.MyResourceMigrator) migrations.MigrationDefi
 
 `LockTables` must list every table the migrator reads. Set `SkipWhenMissing` when new deployments no longer
 create the legacy table, so a missing table skips the migration instead of failing it. Leave `RenameTables`
-empty while other code paths still read the legacy table. Set `ResourceGroupsFunc` only if the groups
-present in a namespace have to be discovered at runtime, as datasources do for per-plugin groups.
+empty while other code paths still read the legacy table. List the stored group for each resource
+in `Resources`; datasources use the shared `datasource.grafana.app` group rather than per-plugin groups.
 
 ### 3. Wire it up
 

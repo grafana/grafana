@@ -3434,7 +3434,7 @@
           {
             "name": "continue",
             "in": "query",
-            "description": "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail.",
+            "description": "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) \u2014 clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail.",
             "schema": {
               "type": "string"
             }
@@ -3485,9 +3485,9 @@
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/~": {
       "get": {
         "tags": [
-          "Display"
+          "User"
         ],
-        "description": "Show display information for the currently authenticated identity",
+        "description": "Show display information for the currently authenticated identity. Deprecated: use /apis/iam.grafana.app/v0alpha1/whoami instead.",
         "operationId": "getCurrentUserDisplay",
         "parameters": [
           {
@@ -3506,12 +3506,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.CurrentUserInfo"
                 }
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/~/permissions": {
@@ -3520,7 +3521,6 @@
           "User"
         ],
         "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
-        "deprecated": true,
         "operationId": "getCurrentUserPermissions",
         "parameters": [
           {
@@ -3539,6 +3539,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserPermissions"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/apis/iam.grafana.app/v0alpha1/whoami": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Show display information for the currently authenticated identity",
+        "operationId": "getWhoAmI",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.CurrentUserInfo"
                 }
               }
             }
@@ -5831,6 +5852,52 @@
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
       },
+      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.CurrentUserInfo": {
+        "type": "object",
+        "required": [
+          "identity",
+          "displayName"
+        ],
+        "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity.",
+            "type": "string"
+          },
+          "avatarURL": {
+            "description": "AvatarURL is the url where we can get the avatar for identity",
+            "type": "string"
+          },
+          "displayName": {
+            "description": "Display name for identity.",
+            "type": "string",
+            "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity.",
+            "type": "string"
+          },
+          "identity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.IdentityRef"
+              }
+            ]
+          },
+          "internalId": {
+            "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
+            "type": "integer",
+            "format": "int64"
+          },
+          "namespace": {
+            "description": "Namespace is the namespace of the current identity.",
+            "type": "string"
+          },
+          "role": {
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None).",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display": {
         "type": "object",
         "required": [
@@ -5858,10 +5925,6 @@
             "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
             "type": "integer",
             "format": "int64"
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },
@@ -6034,10 +6097,6 @@
               "admin",
               "member"
             ]
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },
@@ -6353,7 +6412,7 @@
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -6401,13 +6460,13 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
           }
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search.",
+        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
         "type": "object",
         "required": [
           "metadata",
@@ -6601,10 +6660,6 @@
               "admin",
               "member"
             ]
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },
@@ -6857,7 +6912,7 @@
         }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
-        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
+        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:<name>', where <name> is the name of a field in a struct, or key in a map 'v:<value>', where <value> is the exact json formatted value of a list item 'i:<index>', where <index> is position of a item in a list 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {

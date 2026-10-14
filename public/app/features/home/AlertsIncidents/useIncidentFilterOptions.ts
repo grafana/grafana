@@ -1,33 +1,32 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { type ComboboxOption } from '@grafana/ui';
 import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
-import { encodeIncidentFilter } from './incidentFilter';
-
-// Stable so the combobox's sort memo doesn't rerun on every render while hidden.
-const NO_OPTIONS: Array<ComboboxOption<string>> = [];
+import { type LoadFilterOptions } from './LabelFilterCombobox';
+import { encodeFilterLabel } from './filterSelection';
 
 /**
- * Values of the org's incident label fields, shaped for the incidents filter dropdown:
- * each value under its field's name, selecting to the encoded `slug:value`.
- * Empty while loading or on any error (a 404 included) so the dropdown stays
- * hidden rather than showing a stale list.
+ * Values of the org's incident label fields for the incidents filter dropdown: each value
+ * under its field's name, selecting to the encoded `slug:value`. Undefined while loading,
+ * on any error (a 404 included) or with no label fields, so there's no dropdown rather
+ * than a stale list.
  */
-export function useIncidentFilterOptions(enabled: boolean): Array<ComboboxOption<string>> {
+export function useIncidentFilterOptions(enabled: boolean): LoadFilterOptions | undefined {
   const { data, isLoading, error } = incidentsApi.useGetIncidentFilterOptionsQuery(
     enabled ? { pluginId: SupportedPlugin.Irm } : skipToken
   );
   const options = useMemo(
     () =>
-      data?.map((option) => ({
+      (data ?? []).map((option) => ({
         label: option.value,
-        value: encodeIncidentFilter(option),
+        // Field slugs are identifiers, so they never hold the ':' that ends a key.
+        value: encodeFilterLabel({ key: option.slug, value: option.value }),
         group: option.fieldName,
       })),
     [data]
   );
-  return isLoading || error ? NO_OPTIONS : (options ?? NO_OPTIONS);
+  const loadOptions = useCallback(async () => options, [options]);
+  return isLoading || error || options.length === 0 ? undefined : loadOptions;
 }

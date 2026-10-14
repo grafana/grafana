@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useId, useMemo, useState } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
@@ -65,20 +64,17 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const statusFilterLabelId = useId();
   // Folder paths that are currently unfolded. Empty by default so the tree starts fully folded.
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
-  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
 
-  const statusFilterOptions: Array<ComboboxOption<StatusCategory>> = useMemo(() => {
-    const options: Array<ComboboxOption<StatusCategory>> = [
+  const statusFilterOptions: Array<ComboboxOption<StatusCategory>> = useMemo(
+    () => [
       { label: t('provisioning.resource-tree.status-filter-synced', 'Synced'), value: 'synced' },
       { label: t('provisioning.resource-tree.status-filter-pending', 'Not in sync'), value: 'pending' },
-    ];
-    if (provisioningFolderMetadataEnabled) {
-      options.push({ label: t('provisioning.resource-tree.status-filter-warning', 'Warnings'), value: 'warning' });
-    }
-    return options;
-  }, [provisioningFolderMetadataEnabled]);
+      { label: t('provisioning.resource-tree.status-filter-warning', 'Warnings'), value: 'warning' },
+    ],
+    []
+  );
 
   const tree = useMemo(() => {
     const files = filesQuery.data?.items ?? [];
@@ -89,19 +85,10 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
     // Filter by status before search: status filtering relies on the aggregate folder statuses
     // computed by buildTree, which filterTree would leave stale after pruning hidden children.
-    const statusFiltered =
-      statusFilter.length > 0
-        ? filterByStatusCategories(built, statusFilter, provisioningFolderMetadataEnabled)
-        : built;
+    const statusFiltered = statusFilter.length > 0 ? filterByStatusCategories(built, statusFilter) : built;
 
     return searchQuery ? filterTree(statusFiltered, searchQuery) : statusFiltered;
-  }, [
-    filesQuery.data?.items,
-    resourcesQuery.data?.items,
-    searchQuery,
-    statusFilter,
-    provisioningFolderMetadataEnabled,
-  ]);
+  }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery, statusFilter]);
 
   // A search or a status filter narrows the tree, so ignore the folded state while either is
   // active to keep every matching item visible instead of hidden inside a collapsed folder.
@@ -177,7 +164,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'status',
         header: t('provisioning.resource-tree.header-status', 'Status'),
         cell: ({ row: { original } }: TreeCell) => {
-          const category = getStatusCategory(original.item, provisioningFolderMetadataEnabled);
+          const category = getStatusCategory(original.item);
           if (category === 'warning') {
             return (
               <Tooltip
@@ -270,7 +257,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
     ],
-    [handleToggleExpand, isFiltering, provisioningFolderMetadataEnabled, repo.spec, styles]
+    [handleToggleExpand, isFiltering, repo.spec, styles]
   );
 
   if (isLoading) {

@@ -1,8 +1,13 @@
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { type FetchResponse, type CorrelationData, type CorrelationsData } from '@grafana/runtime';
-import { getDataSourceInstanceSettings, getLogger } from '@grafana/runtime/unstable';
+import {
+  type FetchResponse,
+  type CorrelationData,
+  type CorrelationsData,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
