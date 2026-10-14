@@ -71,6 +71,10 @@ func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 				c.OrgID = tc.orgID
 			}
 			hs.Cfg.StackID = tc.stack
+			namespace := "default"
+			if tc.stack != "" {
+				namespace = "stacks-" + tc.stack
+			}
 			expires := time.Now().Add(time.Hour).UnixMilli()
 			if tc.noExpiry {
 				expires = 0
@@ -87,9 +91,9 @@ func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 				require.Equal(t, expectedOrgID, requester.GetOrgID())
 				require.Equal(t, c.GetIdentityType(), requester.GetIdentityType())
 				switch r.URL.Path {
-				case "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/snapshot-key":
+				case "/apis/dashboard.grafana.app/v0alpha1/namespaces/" + namespace + "/snapshots/snapshot-key":
 					return snapshotAPIResponse(r, 200, fmt.Sprintf(`{"metadata":{"name":"snapshot-key","creationTimestamp":"2026-10-01T10:00:00Z"},"spec":{"expires":%d}}`, expires)), nil
-				case "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/snapshot-key/dashboard":
+				case "/apis/dashboard.grafana.app/v0alpha1/namespaces/" + namespace + "/snapshots/snapshot-key/dashboard":
 					return snapshotAPIResponse(r, 200, `{"spec":{"title":"smoke","panels":[]}}`), nil
 				default:
 					t.Fatalf("unexpected request %s", r.URL)
