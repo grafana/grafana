@@ -241,6 +241,14 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 			if err != nil {
 				return err
 			}
+
+			// Provenance is keyed by title, not UID (TimeInterval.ResourceID returns Title), so it
+			// doesn't move with the interval the way the UID does. Delete the stale entry under the
+			// old title - otherwise a future, unrelated interval later renamed/created under that
+			// freed title would silently inherit this one's provenance.
+			if err := svc.provenanceStore.DeleteProvenance(ctx, &existing, orgID); err != nil {
+				return err
+			}
 		}
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err

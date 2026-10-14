@@ -806,6 +806,10 @@ func TestUpdateMuteTimings(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
 		prov.EXPECT().GetProvenance(mock.Anything, mock.MatchedBy(func(*v1.Route) bool { return true }), mock.Anything).Return(expectedProvenance, nil).Maybe()
+		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, provisionable models.Provisionable, i int64) error {
+			assertInTransaction(t, ctx)
+			return nil
+		})
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
 			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
 				assertInTransaction(t, ctx)
@@ -850,6 +854,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool {
 			return m.Title == interval.Title
 		}), orgID, expectedProvenance)
+		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool {
+			return m.Title == original.Title
+		}), orgID)
 
 		require.Len(t, store.Calls, 2)
 		require.Equal(t, "Get", store.Calls[0].Method)
