@@ -1,16 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useGetHealthQuery } from 'app/api/clients/legacy';
 
 import {
+  getStPodStatus,
+  invalidateStPodReadiness,
   markStPodGaveUp,
   markStPodReady,
   markStPodWaiting,
   ST_POD_GIVE_UP_MS,
   ST_POD_POLL_INTERVAL_MS,
+  StPodStatus,
 } from './stPodReadiness';
 
 export const STPodHealthPoller = ({ skip }: { skip: boolean }) => {
+  const didResetStaleGaveUp = useRef(false);
+  if (!skip && !didResetStaleGaveUp.current) {
+    didResetStaleGaveUp.current = true;
+    if (getStPodStatus() === StPodStatus.GaveUp) {
+      invalidateStPodReadiness();
+    }
+  }
+
   const [finished, setFinished] = useState(false);
   const { data, isLoading } = useGetHealthQuery(undefined, {
     skip: skip || finished,
@@ -33,7 +44,9 @@ export const STPodHealthPoller = ({ skip }: { skip: boolean }) => {
       return;
     }
     const timer = setTimeout(() => {
-      markStPodGaveUp();
+      if (getStPodStatus() !== StPodStatus.Ready) {
+        markStPodGaveUp();
+      }
       setFinished(true);
     }, ST_POD_GIVE_UP_MS);
 

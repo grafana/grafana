@@ -9,6 +9,7 @@ import { STPodHealthPoller } from './STPodHealthPoller';
 import {
   getStPodStatus,
   invalidateStPodReadiness,
+  markStPodGaveUp,
   ST_POD_GIVE_UP_MS,
   ST_POD_POLL_INTERVAL_MS,
   StPodStatus,
@@ -61,6 +62,16 @@ describe('STPodHealthPoller', () => {
 
   it('marks the pod waiting when the health endpoint reports not found', async () => {
     mockHealth(podDown);
+
+    render(<STPodHealthPoller skip={false} />);
+
+    await waitFor(() => expect(getStPodStatus()).toBe(StPodStatus.Waiting));
+  });
+
+  it('resets a stale gaveUp verdict when a fresh non-allow-listed route mounts the poller', async () => {
+    mockHealth(podDown);
+    markStPodGaveUp();
+    expect(getStPodStatus()).toBe(StPodStatus.GaveUp);
 
     render(<STPodHealthPoller skip={false} />);
 
