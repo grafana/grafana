@@ -135,7 +135,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const backdropRef = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
   const isNarrow = useMedia(theme.breakpoints.down('sm').replace('@media ', ''));
-  const placement = 'bottom-start';
+  const placement = 'bottom-end';
   const { refs, floatingStyles } = useFloating({
     open: isOpen,
     placement,
