@@ -686,6 +686,7 @@ export function useQueryCoauthoringSession({
     closeFeedback,
     dismiss: dismissPopover,
     dismissUntouched,
+    engaged: session.data.engaged,
     feedback: session.data.feedback,
     state,
     mention,

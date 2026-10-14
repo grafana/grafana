@@ -1,6 +1,19 @@
-import { type PointerEvent, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import {
+  type PointerEvent,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { type QueryCoauthoringGroupEvent, type QueryCoauthoringGroupLayout } from './queryCoauthoringGroupLayout';
+
+const REST_WIDTH = 720;
+const MARGIN = 8;
+const MIN_WIDTH = 200;
 
 export function useQueryCoauthoringGroup({
   portalTarget,
@@ -16,14 +29,28 @@ export function useQueryCoauthoringGroup({
   update(event: QueryCoauthoringGroupEvent): void;
 }) {
   const surfaceTarget = useMemo(() => document.createElement('div'), []);
-  const current = useRef({ isProposal, layout });
-  current.current = { isProposal, layout };
+  const [restWidth, setRestWidth] = useState<number>();
+  const current = useRef({ isProposal, layout, restWidth });
+  current.current = { isProposal, layout, restWidth };
   useLayoutEffect(() => {
     portalTarget.append(surfaceTarget);
     return () => surfaceTarget.remove();
   }, [portalTarget, surfaceTarget]);
 
   const frozen = layout !== undefined;
+  // Set the proposal width before paint so the surface animates from the prompt width to the rest width.
+  useLayoutEffect(() => {
+    if (!isProposal) {
+      setRestWidth(undefined);
+      return;
+    }
+    if (frozen || current.current.restWidth !== undefined) {
+      return;
+    }
+    const left = containerRef.current?.getBoundingClientRect().left ?? MARGIN;
+    const available = window.innerWidth - Math.max(left, MARGIN) - MARGIN;
+    setRestWidth(Math.max(Math.min(REST_WIDTH, available), Math.min(MIN_WIDTH, window.innerWidth - MARGIN * 2)));
+  }, [containerRef, frozen, isProposal]);
   useLayoutEffect(() => {
     if (!frozen) {
       return;
@@ -50,21 +77,35 @@ export function useQueryCoauthoringGroup({
     return {
       left: rect?.left ?? 8,
       top: rect?.top ?? 8,
-      width: rect?.width || Math.min(423, window.innerWidth - 16),
+      width: current.current.restWidth ?? (rect?.width || Math.min(423, window.innerWidth - 16)),
     };
   }, [containerRef]);
-  const freeze = useCallback(() => {
-    if (current.current.isProposal && !current.current.layout) {
+  const freeze = useCallback(
+    (force = false) => {
+      const { isProposal: proposal, layout: frozenLayout, restWidth: target } = current.current;
+      if (!proposal || frozenLayout) {
+        return;
+      }
+      const width = containerRef.current?.getBoundingClientRect().width;
+      // Freezing moves the surface to the body, which cancels a running width transition.
+      if (!force && target !== undefined && width && Math.abs(width - target) > 1) {
+        return;
+      }
       update({ type: 'group-layout-frozen', layout: readLayout(), bounds: readBounds() });
-    }
-  }, [readBounds, readLayout, update]);
+    },
+    [containerRef, readBounds, readLayout, update]
+  );
 
   useEffect(() => {
     if (!isProposal || frozen) {
       return;
     }
-    const settle = setTimeout(freeze, 160);
-    return () => clearTimeout(settle);
+    const settle = setTimeout(() => freeze(), 160);
+    const fallback = setTimeout(() => freeze(true), 600);
+    return () => {
+      clearTimeout(settle);
+      clearTimeout(fallback);
+    };
   }, [freeze, frozen, isProposal]);
 
   useEffect(() => {
@@ -95,16 +136,15 @@ export function useQueryCoauthoringGroup({
 
   return {
     surfaceTarget,
+    restWidth,
     freeze,
     start(event: PointerEvent<HTMLDivElement>) {
       if (!current.current.isProposal || event.button !== 0 || !(event.target instanceof Element)) {
         return;
       }
       const edge = event.target.closest('[data-proposal-resize]')?.getAttribute('data-proposal-resize');
-      if (
-        !edge &&
-        event.target.closest('button, a, input, textarea, select, [role="button"], [role="tab"], [data-no-drag]')
-      ) {
+      // Drag only from the handle so text in the cards stays selectable.
+      if (!edge && !event.target.closest('[data-proposal-drag-handle]')) {
         return;
       }
       event.preventDefault();

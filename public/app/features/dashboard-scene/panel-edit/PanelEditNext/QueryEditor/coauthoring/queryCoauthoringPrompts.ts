@@ -4,6 +4,7 @@ import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContr
 
 export interface QueryProposal {
   proposedQuery: string;
+  title?: string;
   why: string[];
   unconfirmedValues?: string[];
 }
@@ -42,6 +43,8 @@ const MAX_INLINE_CLARIFICATION_LENGTH = 240;
 // Allow a modest model overrun before treating free text as an implicit handoff.
 export const MAX_INLINE_CLARIFICATION_RESPONSE_LENGTH = 320;
 
+const MAX_OPTION_TITLE_LENGTH = 40;
+
 function validateOption(input: Record<string, unknown>): QueryProposal {
   if (
     typeof input.proposedQuery !== 'string' ||
@@ -71,7 +74,18 @@ function validateOption(input: Record<string, unknown>): QueryProposal {
   const unconfirmedValues = Array.isArray(input.unconfirmedValues)
     ? input.unconfirmedValues.filter((value): value is string => typeof value === 'string')
     : undefined;
-  return { proposedQuery: input.proposedQuery, why, ...(unconfirmedValues ? { unconfirmedValues } : {}) };
+  const title =
+    typeof input.title === 'string' &&
+    input.title.trim().length > 0 &&
+    input.title.trim().length <= MAX_OPTION_TITLE_LENGTH
+      ? input.title.trim()
+      : undefined;
+  return {
+    proposedQuery: input.proposedQuery,
+    why,
+    ...(title ? { title } : {}),
+    ...(unconfirmedValues ? { unconfirmedValues } : {}),
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -107,6 +121,8 @@ export function buildExplainPrompt(context: QueryEditorCoauthoringContextV1): st
     : `Explain the focused part of this existing ${context.language.displayName} query.`;
 }
 
+const MAX_FOLLOW_UP_LENGTH = 40;
+
 export function buildExplainSystemPrompt(
   context: QueryEditorCoauthoringContextV1,
   datasourceType: string,
@@ -130,9 +146,10 @@ export function buildExplainSystemPrompt(
         ? 'Explain how the complete query works as one expression.'
         : 'Describe what the focused text does in the context of the full query.',
     'Return JSON with explanation and followUps. Do not use markdown, headings, prefixes, or suggested edits.',
-    'followUps must be exactly two short questions the user might ask next to understand this query better, phrased in first person.',
-    'For example: "Why do I group by code?" or "What does rate() do over 5m?".',
-    'Never make followUps questions addressed to the user, and never suggest edits.',
+    `followUps must be exactly two short labels of 2 to 5 words and at most ${MAX_FOLLOW_UP_LENGTH} characters, each starting with "Explain".`,
+    'Each followUp names one part of the current query to explain, such as a function, metric, label, range, or aggregation, using text that appears in the query.',
+    'For example: "Explain 5m window" or "Explain prometheus_http_requests_total".',
+    'Never make followUps that suggest changing, filtering, breaking down, or extending the query.',
     'Explore similar metrics and labels only using the datasource metadata already provided. Do not fetch additional data.',
     'Do not invent metric or label names that are not in the provided metadata.',
     ...(request.kind === 'follow-up'
@@ -164,6 +181,7 @@ export function buildCoauthoringSystemPrompt(
     'Do not reformat query text outside the requested change.',
     'Submit one to three complete replacement queries, ranked best first. Prefer ranked alternatives over a clarification when the missing preference does not materially affect the result.',
     'For each option, provide short why bullets. Flag unconfirmed filter values in unconfirmedValues; never claim that an unconfirmed value exists.',
+    'For each option, provide a title of 2 to 4 words that names the change, such as "Scope to namespace" or "Average instead of sum".',
     'Datasource-provided context is advisory. Do not invent context that is not provided.',
     'Follow the datasource-provided editing guidance. Ask one concise clarification question only when a user preference can resolve the missing information.',
     `Keep clarifications to one plain-text question, at most two sentences and ${MAX_INLINE_CLARIFICATION_LENGTH} characters. Do not use Markdown, lists, headings, or examples.`,
@@ -320,15 +338,13 @@ export function parseQueryExplanation(completionText: string, fallback: string):
   }
   const explanation = normalizeClarificationMessage(parsed.explanation).slice(0, 500) || fallback;
   const questions: unknown = 'followUps' in parsed ? parsed.followUps : undefined;
-  const followUps =
-    Array.isArray(questions) &&
-    questions.length === 2 &&
-    questions.every(
-      (question): question is string =>
-        typeof question === 'string' && question.trim().length > 0 && question.length <= 240
-    )
-      ? questions.map((question) => normalizeClarificationMessage(question))
-      : [];
+  const followUps = Array.isArray(questions)
+    ? questions
+        .filter((question): question is string => typeof question === 'string')
+        .map((question) => normalizeClarificationMessage(question))
+        .filter((question) => question.length > 0 && question.length <= MAX_FOLLOW_UP_LENGTH)
+        .slice(0, 2)
+    : [];
   return { explanation, followUps };
 }
 

@@ -128,6 +128,7 @@ export function createQueryCoauthoringRequest({
               required: ['proposedQuery', 'why'],
               properties: {
                 proposedQuery: { type: 'string', minLength: 1, maxLength: 20_000 },
+                title: { type: 'string', minLength: 1, maxLength: 40 },
                 why: {
                   type: 'array',
                   minItems: 1,

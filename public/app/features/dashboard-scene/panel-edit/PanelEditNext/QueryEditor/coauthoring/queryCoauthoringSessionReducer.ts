@@ -452,10 +452,18 @@ export function queryCoauthoringSessionReducer(
       );
     case 'modify-started': {
       const prompt = { ...state.data.prompt, intent: '', clarification: undefined };
+      // Explain does not change the query, so Modify starts untouched and Escape or an outside click can close it.
       return transition(
         {
           ...state,
-          data: { ...state.data, prompt, mention: undefined, closedMentionFrom: undefined, cursorPosition: undefined },
+          data: {
+            ...state.data,
+            engaged: false,
+            prompt,
+            mention: undefined,
+            closedMentionFrom: undefined,
+            cursorPosition: undefined,
+          },
         },
         updateSession(current, () => prompt)
       );
