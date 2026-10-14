@@ -79,7 +79,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const hideable = isFieldHideable(field);
   const reorderable = column.draggable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
-  const headerTooltip = field.config.custom?.headerTooltip;
+  const headerTooltip = field.config.custom?.headerTooltip ?? field.config.description;
 
   const columnOptions = getColumnMenuOptions({
     filterable,
