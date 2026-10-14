@@ -354,7 +354,7 @@ func InhibitionRuleToDB(in InhibitionRule) (*store.InhibitionRuleDB, error) {
 		SourceMatchers: sourceMatchers,
 		TargetMatchers: targetMatchers,
 		Equal:          slices.Clone(in.Equal),
-		Provenance:     definition.Provenance(in.Provenance),
+		Provenance:     string(in.Provenance),
 	}, errors.Join(errs...)
 }
 

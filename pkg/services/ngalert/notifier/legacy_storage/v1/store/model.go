@@ -79,11 +79,11 @@ type ManagedInhibitionRulesDB map[string]*InhibitionRuleDB
 // of config.InhibitRule's fields are here: SourceMatch/SourceMatchRE/TargetMatch/TargetMatchRE
 // (the deprecated map/regex-based matchers) are not supported.
 type InhibitionRuleDB struct {
-	Name           string                `json:"name" yaml:"name"`
-	SourceMatchers common.Matchers       `yaml:"source_matchers,omitempty" json:"source_matchers,omitempty"`
-	TargetMatchers common.Matchers       `yaml:"target_matchers,omitempty" json:"target_matchers,omitempty"`
-	Equal          []string              `yaml:"equal,omitempty" json:"equal,omitempty"`
-	Provenance     definition.Provenance `json:"provenance,omitempty"`
+	Name           string          `json:"name" yaml:"name"`
+	SourceMatchers common.Matchers `yaml:"source_matchers,omitempty" json:"source_matchers,omitempty"`
+	TargetMatchers common.Matchers `yaml:"target_matchers,omitempty" json:"target_matchers,omitempty"`
+	Equal          []string        `yaml:"equal,omitempty" json:"equal,omitempty"`
+	Provenance     string          `json:"provenance,omitempty"`
 }
 
 // AlertingConfigDB is the persisted "alertmanager_config" object. Route/InhibitRules reuse the
