@@ -3,26 +3,21 @@ import { ClientProviderEvents } from '@openfeature/web-sdk';
 import { generateUUID } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { sceneGraph, SceneObjectStateChangedEvent, VizPanel, type SceneObject } from '@grafana/scenes';
 
-import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import type { DashboardScene } from '../scene/DashboardScene';
-import { dashboardComposerEnabled } from '../scene/dashboardModes';
-import { TabItem } from '../scene/layout-tabs/TabItem';
-import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
-import { DashboardStateChangedEvent } from '../sidebar/events';
-import { isRepeatCloneOrChildOf } from '../utils/clone';
-import { getPanelIdForVizPanel } from '../utils/utils-panels';
-import { dashboardV2SpecSchema } from '../v2schema/dashboardV2Schema';
 
-import { canEnterComposer, canStillEdit } from './composerAccess';
+import { type ComposerDocument } from './ComposerDocument';
+import { DashboardComposerDocument } from './DashboardComposerDocument';
+import { canEnterComposer } from './composerAccess';
+import { type Box, clamp01 } from './composerGeometry';
 import { CAPTURE_TIMEOUT_MS, failed, renderRegionImage } from './regionCapture';
 import {
   type ApplyOutcome,
   type ComposerAnnotation,
+  type ComposerApplyOptions,
   type ComposerDashboardSpec,
   type ComposerElement,
+  type ComposerExitResult,
   type ComposerSessionAPI,
   type ComposerTarget,
   type ElementPick,
@@ -34,14 +29,6 @@ import {
 
 /** Left out of region captures: Composer's own layer and the extension sidebar. */
 export const CAPTURE_EXCLUDE_SELECTOR = '[data-composer-capture-exclude], [data-extension-sidebar]';
-
-/** A rectangle in CSS pixels; relative to the overlay unless said otherwise. */
-export interface Box {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
 
 /** A drawn region, kept in overlay (dashboard content) coordinates so it scrolls with the content. */
 interface StoredRegion {
@@ -77,25 +64,21 @@ const INITIAL_OVERLAY_STATE: ComposerOverlayState = {
 };
 
 const ORIGIN: ElementPoint = { x: 0, y: 0 };
-/** The DOM root of a variable's control in the dashboard controls. */
-export const VARIABLE_CONTROL_SELECTOR = '[data-dashboard-element-type="variable"]';
-const MAX_INTERSECTS = 20;
 
 /**
- * One Composer session, bound to the dashboard it was entered on. Writes go to that scene only,
- * never to whichever mutation client is newest on the global stack (that can be a notebook).
- *
- * `revision` increases on every definition change, whatever its source: this session's applies, and
- * every edit action, undo or redo the dashboard records. A write prepared against an older revision is
- * refused, so Assistant never overwrites a change it has not read.
+ * One Composer session, bound to the document it was entered on. Everything the documents share (picks,
+ * regions, pins, anchors, capture) lives here; what differs per resource (finding elements, reading,
+ * writing, saving) is the `ComposerDocument` strategy's.
  */
-export class ComposerSession implements ComposerSessionAPI {
+export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSessionAPI<Spec> {
   public readonly target: ComposerTarget;
+  public readonly closed: Promise<ComposerExitResult>;
+  /** Notebooks only: see `ComposerSessionAPI.retrySave`. Before the session ends it waits for the end. */
+  public readonly retrySave?: () => Promise<ComposerExitResult>;
 
   private readonly controller = new AbortController();
-  private revision = 0;
-  private applying = false;
-  private closed = false;
+  private resolveClosed!: (result: ComposerExitResult) => void;
+  private ended = false;
   private pendingPick?: (pick: PickResult) => void;
   private readonly regions = new Map<string, StoredRegion>();
   private overlayState: ComposerOverlayState = INITIAL_OVERLAY_STATE;
@@ -114,16 +97,43 @@ export class ComposerSession implements ComposerSessionAPI {
     if (!check.ok || !scene) {
       throw new Error(`Composer is not available: ${check.ok ? 'no_document' : check.reason}`);
     }
-    const session = new ComposerSession(scene);
-    if (!scene.enterComposerMode(session)) {
+    return ComposerSession.open(new DashboardComposerDocument(scene));
+  }
+
+  /** Enters Composer on `document`, whose own checks have passed. Throws when its scene refuses. */
+  public static open<S>(document: ComposerDocument<S, ComposerSession<S>>): ComposerSession<S> {
+    const session = new ComposerSession<S>(document);
+    if (!document.attach(session)) {
       throw new Error('Composer is not available: unsupported');
     }
     session.start();
     return session;
   }
 
-  private constructor(private readonly scene: DashboardScene) {
-    this.target = { resource: 'dashboard', uid: scene.state.uid ?? '' };
+  private constructor(private readonly document: ComposerDocument<Spec, ComposerSession<Spec>>) {
+    this.target = document.target;
+    this.closed = new Promise((resolve) => {
+      this.resolveClosed = resolve;
+    });
+    const retry = document.retrySave?.bind(document);
+    if (retry) {
+      this.retrySave = () => (this.ended ? retry() : this.closed);
+    }
+  }
+
+  /** @internal What the overlay hit-tests for element picks. */
+  public get elementSelector(): string {
+    return this.document.elementSelector;
+  }
+
+  /** @internal */
+  public get elementKeyAttribute(): string {
+    return this.document.elementKeyAttribute;
+  }
+
+  /** @internal The pick hint over a pickable element. */
+  public elementHint(): string {
+    return this.document.elementHint();
   }
 
   public get signal(): AbortSignal {
@@ -131,26 +141,16 @@ export class ComposerSession implements ComposerSessionAPI {
   }
 
   private start() {
-    const stateChanged = this.scene.subscribeToEvent(DashboardStateChangedEvent, () => {
-      if (!this.applying) {
-        this.revision++;
-        this.setOverlayState({ layoutTick: this.overlayState.layoutTick + 1 });
-      }
-    });
-    this.cleanups.push(() => stateChanged.unsubscribe());
+    this.cleanups.push(
+      this.document.start({
+        layoutChanged: () => this.setOverlayState({ layoutTick: this.overlayState.layoutTick + 1 }),
+      })
+    );
 
-    // Switching tabs mounts other panels and shows other regions without a definition change.
-    const tabChanged = this.scene.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
-      if (payload.changedObject instanceof TabsLayoutManager && 'currentTabSlug' in payload.partialUpdate) {
-        this.setOverlayState({ layoutTick: this.overlayState.layoutTick + 1 });
-      }
-    });
-    this.cleanups.push(() => tabChanged.unsubscribe());
-
-    // Turning the flag off ends the session; unsaved edits stay.
+    // Turning the flag off ends the session; unsaved edits stay (a notebook saves them on the way out).
     const client = getFeatureFlagClient();
     const onFlagsChanged = () => {
-      if (!dashboardComposerEnabled()) {
+      if (!this.document.isEnabled()) {
         this.exit();
       }
     };
@@ -168,7 +168,7 @@ export class ComposerSession implements ComposerSessionAPI {
 
   private startPick(mode: 'element' | 'region', signal: AbortSignal): Promise<PickResult> {
     this.cancelPick();
-    if (this.closed || this.overlayState.paused || signal.aborted) {
+    if (this.ended || this.overlayState.paused || signal.aborted) {
       return Promise.resolve(null);
     }
     return new Promise((resolve) => {
@@ -187,7 +187,7 @@ export class ComposerSession implements ComposerSessionAPI {
     const overlay = this.getOverlayRoot();
     // The dashboard's own container (controls and body), which the overlay covers exactly.
     const container = overlay?.parentElement;
-    if (this.closed || signal.aborted || !region || !overlay || !container) {
+    if (this.ended || signal.aborted || !region || !overlay || !container) {
       return failed('failed');
     }
     if (this.overlayState.capturing) {
@@ -222,7 +222,7 @@ export class ComposerSession implements ComposerSessionAPI {
       );
       renderRegionImage({
         // Rendering only what the region needs keeps tall dashboards fast; the crop is relative to it.
-        root: findCaptureRoot(rect, container),
+        root: this.document.findCaptureRoot(rect, container),
         region: rect,
         exclude: (candidate) => candidate instanceof Element && candidate.matches(CAPTURE_EXCLUDE_SELECTOR),
         // A settled capture is dropped: its buffers are freed and its result never returned.
@@ -230,7 +230,7 @@ export class ComposerSession implements ComposerSessionAPI {
       }).then(settle, () => settle(failed('failed')));
     });
     cleanups.forEach((cleanup) => cleanup());
-    if (!this.closed) {
+    if (!this.ended) {
       this.setOverlayState({ capturing: false });
     }
     return result;
@@ -241,13 +241,13 @@ export class ComposerSession implements ComposerSessionAPI {
   }
 
   public highlight(target: ElementRef | null): void {
-    if (!this.closed) {
+    if (!this.ended) {
       this.setOverlayState({ highlight: target });
     }
   }
 
   public setPaused(paused: boolean): void {
-    if (this.closed) {
+    if (this.ended) {
       return;
     }
     if (paused) {
@@ -257,7 +257,7 @@ export class ComposerSession implements ComposerSessionAPI {
   }
 
   public setAnnotations(items: ComposerAnnotation[]): void {
-    if (this.closed) {
+    if (this.ended) {
       return;
     }
     const annotations = items.map(({ id, ref, point, label, state }) => ({
@@ -296,7 +296,7 @@ export class ComposerSession implements ComposerSessionAPI {
 
   public getAnnotationAnchor(id: string): HTMLElement | null {
     const item = this.findAnnotation(id);
-    if (this.closed || !item || !this.resolves(item.ref)) {
+    if (this.ended || !item || !this.resolves(item.ref)) {
       return null;
     }
     let anchor = this.anchors.get(id);
@@ -314,7 +314,7 @@ export class ComposerSession implements ComposerSessionAPI {
 
   public revealAnnotation(id: string): void {
     const item = this.findAnnotation(id);
-    if (this.closed || !item) {
+    if (this.ended || !item) {
       return;
     }
     const behavior: ScrollBehavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -324,9 +324,8 @@ export class ComposerSession implements ComposerSessionAPI {
       this.revealRegion(item.ref.regionId, item.point, behavior);
       return;
     }
-    const panel = item.ref.kind === 'panel' ? this.findPanel(item.ref.panelId) : undefined;
     const element = this.findElementRoot(item.ref);
-    if (!element || (item.ref.kind === 'panel' && (!panel || isInHiddenTab(panel)))) {
+    if (!element || this.document.isHidden(item.ref)) {
       return;
     }
     const container = getScrollContainer(element);
@@ -363,107 +362,32 @@ export class ComposerSession implements ComposerSessionAPI {
     }
   }
 
-  public async readSpec(): Promise<{ spec: ComposerDashboardSpec; revision: number }> {
-    if (this.closed) {
+  public async readSpec(): Promise<{ spec: Spec; revision: number }> {
+    if (this.ended) {
       throw new Error('The Composer session has ended.');
     }
-    return { spec: transformSceneToSaveModelSchemaV2(this.scene), revision: this.revision };
+    return this.document.readSpec();
   }
 
-  public async applySpec(
-    spec: ComposerDashboardSpec,
-    { signal, baseRevision }: { signal: AbortSignal; baseRevision: number }
-  ): Promise<ApplyOutcome> {
-    // 1. Prepare. Everything awaited or fallible-without-writing happens here.
-    const parsed = dashboardV2SpecSchema.safeParse(spec);
-    if (!parsed.success) {
-      const issues = parsed.error.issues.map((issue) => {
-        const path = issue.path.join('.');
-        return path ? `${path}: ${issue.message}` : issue.message;
-      });
-      return { status: 'invalid', message: `Validation failed: ${issues.join(', ')}` };
-    }
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the parsed output is the v2 spec the transform expects
-    const validSpec = parsed.data as unknown as ComposerDashboardSpec;
-
-    // 2. Gate, synchronously: nothing below this line awaits, so nothing can run between the checks
-    // and the write.
-    const refusal = this.checkWrite(signal, baseRevision);
-    if (refusal) {
-      return refusal;
-    }
-
-    // 3. Swap inside the edit session, so native undo and the change list see it.
-    const body = this.scene.state.body;
-    this.applying = true;
-    try {
-      // Edit actions only run while the sidebar is active.
-      this.scene.activateSidebar();
-      this.scene.withAssistantWrite(() =>
-        applyDashboardSpec({
-          scene: this.scene,
-          spec: validSpec,
-          description: t('dashboard.composer.apply-undo-title', 'Assistant Composer edit'),
-          scope: 'composer',
-        })
-      );
-    } catch (error) {
-      return { status: 'invalid', message: error instanceof Error ? error.message : String(error) };
-    } finally {
-      this.applying = false;
-    }
-    if (this.scene.state.body === body) {
-      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings -- read by the Assistant model
-      return { status: 'denied', message: 'The dashboard did not accept the edit.' };
-    }
-    this.revision++;
-    this.setOverlayState({ layoutTick: this.overlayState.layoutTick + 1 });
-    // Restoring the saved spec (Assistant Undo) leaves nothing to save.
-    this.scene.clearDirtyIfUnchanged();
-    this.scene.recordEditMutation('assistant');
-    this.scene.forceRender();
-    return { status: 'applied', appliedSpec: transformSceneToSaveModelSchemaV2(this.scene), revision: this.revision };
+  public applySpec(spec: Spec, opts: ComposerApplyOptions): Promise<ApplyOutcome<Spec>> {
+    return this.document.applySpec(spec, opts, () => !this.ended);
   }
 
-  /* eslint-disable @grafana/i18n/no-untranslated-strings -- outcome messages are read by the Assistant model, not shown in the UI */
-  private checkWrite(signal: AbortSignal, baseRevision: number): ApplyOutcome | undefined {
-    if (this.closed || !this.scene.isActive || this.scene.getComposerSession() !== this) {
-      return { status: 'closed', message: 'The Composer session has ended. Nothing was changed.' };
+  public exit(): void | Promise<ComposerExitResult> {
+    if (!this.ended) {
+      this.document.detach();
+      // The scene closes the session when it leaves Composer; this covers a scene already out of it.
+      this.close();
     }
-    if (signal.aborted) {
-      return { status: 'aborted', message: 'The request was stopped before the edit was applied.' };
-    }
-    if (!dashboardComposerEnabled()) {
-      return { status: 'closed', message: 'Composer is turned off. Nothing was changed.' };
-    }
-    if (!canStillEdit(this.scene)) {
-      return { status: 'denied', message: 'You no longer have permission to edit this dashboard.' };
-    }
-    if (baseRevision !== this.revision) {
-      return {
-        status: 'stale',
-        message: `The dashboard changed since it was read (revision ${baseRevision}, now ${this.revision}). Read it again.`,
-      };
-    }
-    return undefined;
-  }
-  /* eslint-enable @grafana/i18n/no-untranslated-strings */
-
-  public exit(): void {
-    if (this.closed) {
-      return;
-    }
-    this.scene.exitComposerMode();
-    // The scene closes the session when its mode changes; this covers a scene already out of Composer.
-    this.close();
+    return this.document.reportsSave ? this.closed : undefined;
   }
 
   /** @internal Called by the scene when it leaves Composer, and by `exit`. */
   public close(): void {
-    if (this.closed) {
+    if (this.ended) {
       return;
     }
-    this.closed = true;
+    this.ended = true;
     this.cancelPick();
     this.controller.abort();
     this.cleanups.splice(0).forEach((cleanup) => cleanup());
@@ -475,10 +399,11 @@ export class ComposerSession implements ComposerSessionAPI {
     this.annotationHoverListeners.clear();
     this.overlayState = INITIAL_OVERLAY_STATE;
     this.notify();
+    this.document.finish().then(this.resolveClosed, () => this.resolveClosed({}));
   }
 
   public get isClosed(): boolean {
-    return this.closed;
+    return this.ended;
   }
 
   /** @internal The overlay's view of the session. */
@@ -497,7 +422,7 @@ export class ComposerSession implements ComposerSessionAPI {
       return;
     }
     this.pendingPick = undefined;
-    if (!this.closed) {
+    if (!this.ended) {
       this.setOverlayState({ picking: false, pickMode: null });
     }
     resolve(pick);
@@ -509,15 +434,15 @@ export class ComposerSession implements ComposerSessionAPI {
    */
   public createRegionPick(rect: Box): RegionPick | null {
     const root = this.getOverlayRoot();
-    if (this.closed || !root) {
+    if (this.ended || !root) {
       return null;
     }
     const rootRect = root.getBoundingClientRect();
-    const tabs = getSelectedTabChain(this.scene);
+    const { tabKeys, tabPath, timeRange } = this.document.regionContext();
     const regionId = `region-${generateUUID()}`;
     this.regions.set(regionId, {
       box: { left: rect.left - rootRect.left, top: rect.top - rootRect.top, width: rect.width, height: rect.height },
-      tabKeys: tabs.map((tab) => tab.state.key ?? ''),
+      tabKeys,
     });
 
     // Normalised to the visible part of the dashboard.
@@ -525,8 +450,6 @@ export class ComposerSession implements ComposerSessionAPI {
     const visibleTop = Math.max(rootRect.top, 0);
     const visibleWidth = Math.max(Math.min(rootRect.left + rootRect.width, window.innerWidth) - visibleLeft, 1);
     const visibleHeight = Math.max(Math.min(rootRect.top + rootRect.height, window.innerHeight) - visibleTop, 1);
-    const tabPath = tabs.map((tab) => tab.state.title ?? '');
-    const timeRange = sceneGraph.getTimeRange(this.scene);
 
     return {
       ref: { kind: 'region', regionId },
@@ -539,12 +462,8 @@ export class ComposerSession implements ComposerSessionAPI {
       },
       point: { x: 1, y: 0 },
       tabPath,
-      intersects: this.findIntersectingElements(rect),
-      timeRange: {
-        from: String(timeRange.state.from),
-        to: String(timeRange.state.to),
-        timezone: timeRange.getTimeZone(),
-      },
+      intersects: this.document.findIntersectingElements(rect, root.parentElement),
+      timeRange,
     };
   }
 
@@ -562,7 +481,7 @@ export class ComposerSession implements ComposerSessionAPI {
 
   /** @internal A pin was clicked or activated from the keyboard. Ignored while paused. */
   public activateAnnotation(id: string): void {
-    if (this.closed || this.overlayState.paused || !this.findAnnotation(id)) {
+    if (this.ended || this.overlayState.paused || !this.findAnnotation(id)) {
       return;
     }
     this.annotationListeners.forEach((listener) => listener(id));
@@ -570,7 +489,7 @@ export class ComposerSession implements ComposerSessionAPI {
 
   /** @internal A pin gained (id) or lost (null) pointer hover or focus. Ignored while paused. */
   public hoverAnnotation(id: string | null): void {
-    if (this.closed || this.overlayState.paused || (id !== null && !this.findAnnotation(id))) {
+    if (this.ended || this.overlayState.paused || (id !== null && !this.findAnnotation(id))) {
       return;
     }
     this.annotationHoverListeners.forEach((listener) => listener(id));
@@ -592,57 +511,17 @@ export class ComposerSession implements ComposerSessionAPI {
 
   /** @internal The rendered DOM root of the element a ref points at. */
   public findElementRoot(ref: ElementRef): HTMLElement | null {
-    if (ref.kind === 'variable') {
-      const key = sceneGraph.lookupVariable(ref.name, this.scene)?.state.key;
-      return key
-        ? document.querySelector<HTMLElement>(
-            `${VARIABLE_CONTROL_SELECTOR}[data-dashboard-element-key="${CSS.escape(key)}"]`
-          )
-        : null;
-    }
-    const key = this.getPanelKey(ref);
-    return key ? document.querySelector<HTMLElement>(`[data-viz-panel-key="${CSS.escape(key)}"]`) : null;
+    return this.document.findElementRoot(ref, this.getOverlayRoot()?.parentElement ?? null);
   }
 
-  /** @internal Resolves the dashboard variable whose control has `key`, pointing at its top-right corner. */
+  /** @internal Resolves a dashboard variable whose control has `key`; null on other documents. */
   public resolveVariablePick(key: string): ElementPick | null {
-    const found = sceneGraph.findObject(this.scene, (obj) => obj.state.key === key);
-    const name = found && 'name' in found.state && typeof found.state.name === 'string' ? found.state.name : undefined;
-    const variable = name ? sceneGraph.lookupVariable(name, this.scene) : null;
-    if (!name || !variable || variable !== found) {
-      return null;
-    }
-    return {
-      ref: { kind: 'variable', name },
-      label: variable.state.label || name,
-      tabPath: [],
-      point: { x: 1, y: 0 },
-    };
+    return this.document.resolveVariablePick?.(key) ?? null;
   }
 
-  /** @internal Resolves the panel rendered under a `data-viz-panel-key` DOM root. */
-  public resolvePanelPick(key: string, point: ElementPoint = ORIGIN): ElementPick | null {
-    const found = sceneGraph.findObject(this.scene, (obj) => obj.state.key === key);
-    if (!(found instanceof VizPanel)) {
-      return null;
-    }
-    // A repeat resolves to its source panel, which shares the id.
-    const panelId = getPanelIdForVizPanel(found);
-    if (!Number.isFinite(panelId)) {
-      return null;
-    }
-    const source = this.findPanel(panelId) ?? found;
-    return {
-      ref: { kind: 'panel', panelId },
-      label: source.state.title || t('dashboard.composer.untitled-panel', 'Panel {{panelId}}', { panelId }),
-      tabPath: getTabPath(source),
-      point: { x: clamp01(point.x), y: clamp01(point.y) },
-    };
-  }
-
-  /** @internal The DOM key of the panel a ref points at, for highlighting. */
-  public getPanelKey(ref: ElementRef): string | undefined {
-    return ref.kind === 'panel' ? this.findPanel(ref.panelId)?.state.key : undefined;
+  /** @internal Resolves the element rendered under a DOM root whose `elementKeyAttribute` is `key`. */
+  public resolveElementPick(key: string, point: ElementPoint = ORIGIN): ElementPick | null {
+    return this.document.resolveElementPick(key, point);
   }
 
   private resolves(ref: ElementRef): boolean {
@@ -654,10 +533,7 @@ export class ComposerSession implements ComposerSessionAPI {
   }
 
   private isRegionShown({ tabKeys }: StoredRegion): boolean {
-    return tabKeys.every((key) => {
-      const tab = sceneGraph.findObject(this.scene, (obj) => obj.state.key === key);
-      return tab instanceof TabItem && isSelectedTab(tab);
-    });
+    return this.document.isRegionShown(tabKeys);
   }
 
   /** The region in viewport coordinates, or null when it is unknown or its tab is not selected. */
@@ -671,56 +547,6 @@ export class ComposerSession implements ComposerSessionAPI {
     return { ...region.box, left: rootRect.left + region.box.left, top: rootRect.top + region.box.top };
   }
 
-  private findIntersectingElements(rect: Box): Array<{ ref: ElementRef; label: string }> {
-    const panels = this.findIntersectingPanels(rect);
-    const variables = this.findIntersectingVariables(rect);
-    return [...panels, ...variables].slice(0, MAX_INTERSECTS);
-  }
-
-  private findIntersectingVariables(rect: Box): Array<{ ref: ElementRef; label: string }> {
-    const container = this.getOverlayRoot()?.parentElement;
-    const found = new Map<string, string>();
-    for (const element of container?.querySelectorAll<HTMLElement>(VARIABLE_CONTROL_SELECTOR) ?? []) {
-      const key = element.getAttribute('data-dashboard-element-key');
-      const pick = key ? this.resolveVariablePick(key) : null;
-      if (pick?.ref.kind === 'variable' && !found.has(pick.ref.name)) {
-        const bounds = element.getBoundingClientRect();
-        const overlapWidth = Math.min(rect.left + rect.width, bounds.right) - Math.max(rect.left, bounds.left);
-        const overlapHeight = Math.min(rect.top + rect.height, bounds.bottom) - Math.max(rect.top, bounds.top);
-        if (overlapWidth > 0 && overlapHeight > 0) {
-          found.set(pick.ref.name, pick.label);
-        }
-      }
-    }
-    return [...found].map(([name, label]) => ({ ref: { kind: 'variable', name }, label }));
-  }
-
-  private findIntersectingPanels(rect: Box): Array<{ ref: ElementRef; label: string }> {
-    const found = new Map<number, string>();
-    for (const panel of this.scene.state.body.getVizPanels()) {
-      if (found.size >= MAX_INTERSECTS) {
-        break;
-      }
-      const key = panel.state.key;
-      const element = key ? document.querySelector(`[data-viz-panel-key="${CSS.escape(key)}"]`) : null;
-      const panelId = getPanelIdForVizPanel(panel);
-      if (!element || !Number.isFinite(panelId) || found.has(panelId)) {
-        continue;
-      }
-      const bounds = element.getBoundingClientRect();
-      const overlapWidth = Math.min(rect.left + rect.width, bounds.right) - Math.max(rect.left, bounds.left);
-      const overlapHeight = Math.min(rect.top + rect.height, bounds.bottom) - Math.max(rect.top, bounds.top);
-      if (overlapWidth > 0 && overlapHeight > 0) {
-        const source = this.findPanel(panelId) ?? panel;
-        found.set(
-          panelId,
-          source.state.title || t('dashboard.composer.untitled-panel', 'Panel {{panelId}}', { panelId })
-        );
-      }
-    }
-    return [...found].map(([panelId, label]) => ({ ref: { kind: 'panel', panelId }, label }));
-  }
-
   /** The overlay root: the parent of the anchor host the overlay registers. */
   private getOverlayRoot(): HTMLElement | null {
     return this.anchorHost?.parentElement ?? null;
@@ -728,12 +554,6 @@ export class ComposerSession implements ComposerSessionAPI {
 
   private findAnnotation(id: string): ComposerAnnotation | undefined {
     return this.overlayState.annotations.find((item) => item.id === id);
-  }
-
-  private findPanel(panelId: number): VizPanel | undefined {
-    return this.scene.state.body
-      .getVizPanels()
-      .find((panel) => !isRepeatCloneOrChildOf(panel) && getPanelIdForVizPanel(panel) === panelId);
   }
 
   private cancelPick() {
@@ -750,62 +570,6 @@ export class ComposerSession implements ComposerSessionAPI {
   }
 }
 
-/** The selected tab at each level of nested tabs under the dashboard body, outermost first. */
-function getSelectedTabChain(scene: DashboardScene): TabItem[] {
-  const chain: TabItem[] = [];
-  let layout: unknown = scene.state.body;
-  while (layout instanceof TabsLayoutManager) {
-    const tab = layout.getCurrentTab();
-    if (!tab) {
-      break;
-    }
-    chain.push(tab);
-    layout = tab.getLayout();
-  }
-  return chain;
-}
-
-/** Like `TabItem.isCurrentTab`, but also true for the first tab shown before any slug is set. */
-function isSelectedTab(tab: TabItem): boolean {
-  return tab.parent instanceof TabsLayoutManager && tab.parent.getCurrentTab() === tab;
-}
-
-/**
- * The smallest element under `container` that holds the whole `rect` (viewport coordinates): the nearest
- * common ancestor of the panels it overlaps, widened until it covers the rect, else the container.
- */
-export function findCaptureRoot(rect: Box, container: HTMLElement): HTMLElement {
-  const overlapping = [...container.querySelectorAll<HTMLElement>('[data-viz-panel-key]')].filter((element) =>
-    overlaps(element.getBoundingClientRect(), rect)
-  );
-  const holdsAll = (candidate: HTMLElement) => overlapping.every((element) => candidate.contains(element));
-  let root: HTMLElement | null = overlapping[0] ?? null;
-  while (root && root !== container && !holdsAll(root)) {
-    root = root.parentElement;
-  }
-  while (root && root !== container && !covers(root.getBoundingClientRect(), rect)) {
-    root = root.parentElement;
-  }
-  return root && container.contains(root) ? root : container;
-}
-
-function overlaps(bounds: DOMRect, rect: Box): boolean {
-  return (
-    Math.min(rect.left + rect.width, bounds.right) > Math.max(rect.left, bounds.left) &&
-    Math.min(rect.top + rect.height, bounds.bottom) > Math.max(rect.top, bounds.top)
-  );
-}
-
-/** Half a pixel of slack for sub-pixel layout. */
-function covers(bounds: DOMRect, rect: Box): boolean {
-  return (
-    bounds.left <= rect.left + 0.5 &&
-    bounds.top <= rect.top + 0.5 &&
-    bounds.right >= rect.left + rect.width - 0.5 &&
-    bounds.bottom >= rect.top + rect.height - 0.5
-  );
-}
-
 function isFullyVisible(rect: Box, visible: { top: number; bottom: number }): boolean {
   return (
     rect.left >= 0 &&
@@ -813,15 +577,6 @@ function isFullyVisible(rect: Box, visible: { top: number; bottom: number }): bo
     rect.top >= visible.top &&
     rect.top + rect.height <= visible.bottom
   );
-}
-
-function isInHiddenTab(obj: SceneObject): boolean {
-  for (let parent = obj.parent; parent; parent = parent.parent) {
-    if (parent instanceof TabItem && !isSelectedTab(parent)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 /** The nearest ancestor that scrolls vertically, else the document's scroller. */
@@ -841,18 +596,4 @@ function getVisibleBounds(container: HTMLElement): { top: number; bottom: number
   }
   const rect = container.getBoundingClientRect();
   return { top: Math.max(rect.top, 0), bottom: Math.min(rect.bottom, window.innerHeight) };
-}
-
-function clamp01(value: number): number {
-  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
-}
-
-function getTabPath(obj: SceneObject): string[] {
-  const path: string[] = [];
-  for (let parent = obj.parent; parent; parent = parent.parent) {
-    if (parent instanceof TabItem) {
-      path.unshift(parent.state.title ?? '');
-    }
-  }
-  return path;
 }

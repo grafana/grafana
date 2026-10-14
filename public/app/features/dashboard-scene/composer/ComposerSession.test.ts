@@ -423,7 +423,7 @@ describe('picking', () => {
     const pick = session.pickElement(live());
     expect(session.getOverlayState().picking).toBe(true);
 
-    session.completePick(session.resolvePanelPick('panel-1'));
+    session.completePick(session.resolveElementPick('panel-1'));
 
     await expect(pick).resolves.toEqual({
       ref: { kind: 'panel', panelId: 1 },
@@ -432,7 +432,7 @@ describe('picking', () => {
       point: { x: 0, y: 0 },
     });
     expect(session.getOverlayState().picking).toBe(false);
-    expect(session.getPanelKey({ kind: 'panel', panelId: 1 })).toBe('panel-1');
+    expect(session.findElementRoot({ kind: 'panel', panelId: 1 })).toBeNull();
   });
 
   it('cancels a pick on pause, on the caller signal and on exit, and refuses picks while paused', async () => {

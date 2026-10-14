@@ -7,10 +7,11 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
-import { type Box, type ComposerSession, VARIABLE_CONTROL_SELECTOR } from './ComposerSession';
+import { type ComposerSession } from './ComposerSession';
+import { VARIABLE_CONTROL_SELECTOR } from './DashboardComposerDocument';
+import { type Box } from './composerGeometry';
 import { type ComposerAnnotation } from './types';
 
-const PANEL_ROOT_SELECTOR = '[data-viz-panel-key]';
 const TAB_SELECTOR = '[role="tab"]';
 /** The dashboard controls (time picker, refresh, save, share, variables) stay usable in Composer. */
 const CONTROLS_SELECTOR = `[data-testid="${selectors.pages.Dashboard.Controls}"]`;
@@ -38,7 +39,7 @@ const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, width: 0, height: 0 }
  * under the pointer. Above it sit the annotation pins and the anchors the plugin portals its editor into.
  * All positions are relative to this layer and re-measured on scroll, resize and layout changes.
  */
-export function ComposerOverlay({ session }: { session: ComposerSession }) {
+export function ComposerOverlay({ session }: { session: ComposerSession<unknown> }) {
   const styles = useStyles2(getStyles);
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
   const { picking, pickMode, paused, capturing, annotations } = overlayState;
@@ -62,7 +63,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
    * The pick hint that follows the pointer. React state holds only which copy shows (or none); its position
    * is written to the element once per animation frame, so moving the pointer renders nothing.
    */
-  const [hintCopy, setHintCopy] = useState<'panel' | 'region' | null>(null);
+  const [hintCopy, setHintCopy] = useState<'element' | 'region' | null>(null);
   const hintRef = useRef<HTMLDivElement>(null);
   const hintPointerRef = useRef<{ x: number; y: number } | null>(null);
   const hintFrameRef = useRef(0);
@@ -250,7 +251,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     hintPointerRef.current = { x, y };
     cancelAnimationFrame(hintFrameRef.current);
     hintFrameRef.current = requestAnimationFrame(() => {
-      setHintCopy(elementAt(x, y, PANEL_ROOT_SELECTOR) ? 'panel' : 'region');
+      setHintCopy(elementAt(x, y, session.elementSelector) ? 'element' : 'region');
       positionHint();
     });
   };
@@ -493,8 +494,8 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     if (pickMode !== 'element') {
       return;
     }
-    const root = elementAt(event.clientX, event.clientY, PANEL_ROOT_SELECTOR);
-    const key = root?.getAttribute('data-viz-panel-key');
+    const root = elementAt(event.clientX, event.clientY, session.elementSelector);
+    const key = root?.getAttribute(session.elementKeyAttribute);
     const box = root ? boxFor(root) : null;
     setHovered(key && box ? { key, box } : null);
   };
@@ -519,8 +520,8 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     if (pickMode !== 'element') {
       return;
     }
-    const root = elementAt(event.clientX, event.clientY, PANEL_ROOT_SELECTOR);
-    const key = root?.getAttribute('data-viz-panel-key');
+    const root = elementAt(event.clientX, event.clientY, session.elementSelector);
+    const key = root?.getAttribute(session.elementKeyAttribute);
     if (!root || !key) {
       return;
     }
@@ -529,7 +530,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       x: rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0,
       y: rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0,
     };
-    const pick = session.resolvePanelPick(key, point);
+    const pick = session.resolveElementPick(key, point);
     if (pick) {
       session.completePick(pick);
     }
@@ -618,8 +619,8 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       {hintCopy && (
         // The same guidance is in Assistant's placeholder and the Select button's tooltip.
         <div ref={hintRef} className={styles.hint} role="tooltip" aria-hidden>
-          {hintCopy === 'panel'
-            ? t('dashboard.composer.overlay.hint-panel', 'Click to comment on a panel, or drag to draw a region')
+          {hintCopy === 'element'
+            ? session.elementHint()
             : t('dashboard.composer.overlay.hint-region', 'Drag to draw a region')}
         </div>
       )}

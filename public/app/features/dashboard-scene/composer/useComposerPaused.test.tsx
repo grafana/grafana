@@ -77,7 +77,9 @@ it('disables saving while a turn pauses the session and re-enables it on resume 
   expect(saveButton()).not.toHaveAttribute('aria-disabled', 'true');
 
   act(() => session.setPaused(true));
-  act(() => session.exit());
+  act(() => {
+    session.exit();
+  });
   expect(saveButton()).not.toHaveAttribute('aria-disabled', 'true');
 });
 

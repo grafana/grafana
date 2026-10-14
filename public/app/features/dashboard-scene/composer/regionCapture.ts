@@ -4,7 +4,7 @@
  * not always the device pixel ratio: html-to-image may round, and a large dashboard renders below it.
  */
 
-import { type Box } from './ComposerSession';
+import { type Box } from './composerGeometry';
 import { cropToBlob, releaseCanvas, renderNode } from './raster';
 import { type RegionCapture } from './types';
 

@@ -321,7 +321,9 @@ describe('annotations', () => {
 
     const unsubscribeHover = session.onAnnotationHover(jest.fn());
     const unsubscribeClick = session.onAnnotationClick(jest.fn());
-    act(() => session.exit());
+    act(() => {
+      session.exit();
+    });
 
     expect(unsubscribeHover()).toBe(false);
     expect(unsubscribeClick()).toBe(false);
@@ -475,7 +477,9 @@ describe('annotations', () => {
       panelRoot!.scrollIntoView = scrollIntoView;
 
       session.revealAnnotation('missing');
-      act(() => session.exit());
+      act(() => {
+        session.exit();
+      });
       session.revealAnnotation('a');
 
       expect(scrollIntoView).not.toHaveBeenCalled();
@@ -487,7 +491,9 @@ describe('annotations', () => {
     annotate([item()]);
     const anchor = session.getAnnotationAnchor('a')!;
 
-    act(() => session.exit());
+    act(() => {
+      session.exit();
+    });
 
     expect(anchor.isConnected).toBe(false);
     expect(session.getAnnotationAnchor('a')).toBeNull();
@@ -1078,7 +1084,9 @@ describe('region capture', () => {
       status: 'failed',
       reason: 'failed',
     });
-    act(() => session.exit());
+    act(() => {
+      session.exit();
+    });
     await expect(session.captureRegion(regionId, live())).resolves.toEqual({ status: 'failed', reason: 'failed' });
   });
 });

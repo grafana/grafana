@@ -6,11 +6,18 @@
  */
 
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as NotebookSpec } from 'app/features/notebook/types';
 
 /** What GET_SPEC / APPLY_SPEC use. */
 export type ComposerDashboardSpec = DashboardV2Spec;
 
-/** The document a session edits. Only dashboards are supported so far. */
+/** What GET_NOTEBOOK_SPEC / APPLY_NOTEBOOK_SPEC use. */
+export type ComposerNotebookSpec = NotebookSpec;
+
+/**
+ * The document a session edits: a dashboard, or (behind `grafana.notebookComposer`) a notebook on its own
+ * route, `/notebooks/:uid`.
+ */
 export interface ComposerTarget {
   resource: 'dashboard' | 'notebook';
   uid: string;
@@ -30,7 +37,8 @@ export interface ComposerAPI {
   readonly version: 1;
   /**
    * Whether Composer can start on `target`, or on the mounted dashboard when it is omitted. 'no_document'
-   * when that document is not the one mounted; 'unsupported' for a notebook.
+   * when that document is not the one mounted. A notebook is supported only on its own route; one rendered
+   * anywhere else (the Assistant canvas) is 'unsupported'.
    */
   canEnter(target?: ComposerTarget): ComposerEnterCheck;
   /** Rejects when `canEnter(target)` would not return ok, or another session is open. */
@@ -53,7 +61,9 @@ export type ElementRef =
   | { kind: 'row' | 'tab'; name: string }
   | { kind: 'region'; regionId: string }
   /** A dashboard variable, by its name in the spec. */
-  | { kind: 'variable'; name: string };
+  | { kind: 'variable'; name: string }
+  /** A notebook cell, by the `elementName` its layout cell references. */
+  | { kind: 'cell'; name: string };
 
 /** A position inside an element, each axis normalised to 0..1 of its bounds. */
 export interface ElementPoint {
@@ -96,7 +106,7 @@ export interface RegionPick {
   /** The pin sits on the region's top-right corner. */
   point: { x: 1; y: 0 };
   tabPath: string[];
-  /** Panels and variable controls the region overlaps with a positive area, at most 20. */
+  /** Panels and variable controls (on a notebook, cells) the region overlaps with a positive area, at most 20. */
   intersects: Array<{ ref: ElementRef; label: string }>;
   timeRange: { from: string; to: string; timezone: string };
 }
@@ -111,11 +121,36 @@ export interface ComposerElement {
   tabPath: string[];
 }
 
-export type ApplyOutcome =
-  | { status: 'applied'; appliedSpec: ComposerDashboardSpec; revision: number }
+export type ApplyOutcome<Spec = ComposerDashboardSpec> =
+  | { status: 'applied'; appliedSpec: Spec; revision: number }
   | { status: 'aborted' | 'stale' | 'denied' | 'closed' | 'invalid'; message: string };
 
-export interface ComposerSessionAPI {
+export interface ComposerApplyOptions {
+  signal: AbortSignal;
+  baseRevision: number;
+  /**
+   * Notebooks only: what to do with panel looks the person reading changed during the session (Undo passes
+   * 'discard'). Defaults to 'keep', which is how changes made before entry are resolved too.
+   */
+  viewOnlyChanges?: 'keep' | 'discard';
+}
+
+/**
+ * How the one save a notebook session makes on exit ended. 'unchanged' when nothing was left to write.
+ * On 'conflict' core also shows the notebook's own conflict prompt, unless the person has navigated away.
+ */
+export interface ComposerSaveOutcome {
+  status: 'saved' | 'save_failed' | 'conflict' | 'unchanged';
+  /** The autosave's error text: translated for a conflict, the raw API error for a failed save. */
+  message?: string;
+}
+
+/** What a session reports once it has ended. Dashboards never save, so theirs carries no `save`. */
+export interface ComposerExitResult {
+  save?: ComposerSaveOutcome;
+}
+
+export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   readonly target: ComposerTarget;
   /** Aborted on exit, navigation away, scene deactivation or flag-off. */
   readonly signal: AbortSignal;
@@ -172,9 +207,27 @@ export interface ComposerSessionAPI {
    */
   revealAnnotation(id: string): void;
 
-  readSpec(): Promise<{ spec: ComposerDashboardSpec; revision: number }>;
-  applySpec(spec: ComposerDashboardSpec, opts: { signal: AbortSignal; baseRevision: number }): Promise<ApplyOutcome>;
+  /**
+   * The document and its revision. A dashboard's revision counts definition changes; a notebook's counts
+   * changes to its edit history (applies, undo, redo), so query refreshes never make a read stale.
+   */
+  readSpec(): Promise<{ spec: Spec; revision: number }>;
+  applySpec(spec: Spec, opts: ComposerApplyOptions): Promise<ApplyOutcome<Spec>>;
 
-  /** Leaves Composer. Never saves or discards. */
-  exit(): void;
+  /**
+   * Leaves Composer. A dashboard session never saves or discards and returns nothing. A notebook keeps its
+   * autosave paused for the session, so leaving makes the one save of everything applied, and this
+   * resolves with its outcome (the same result as `closed`).
+   */
+  exit(): void | Promise<ComposerExitResult>;
+  /**
+   * Resolves once, after the session has ended by any path (exit, navigation away, disposal or flag-off)
+   * and a notebook's exit save has settled.
+   */
+  readonly closed: Promise<ComposerExitResult>;
+  /**
+   * Notebooks only, after the session ended: retries a failed exit save once. A conflict is not retried
+   * here (overwriting is the notebook's own conflict prompt), so it resolves with 'conflict' again.
+   */
+  retrySave?(): Promise<ComposerExitResult>;
 }
