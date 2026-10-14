@@ -1,43 +1,41 @@
-package accesscontrol
+package acimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
-	"github.com/go-jose/go-jose/v4/jwt"
-	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-const LegacyUserPermissionsGrant = "authz.grafana.app/legacyuserpermissions:get"
 
 func LegacyUserPermissionsEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthzLegacyUserPermissions, false, openfeature.TransactionContext(ctx))
 }
 
-// LegacyPermissionCaller represents only the trusted in-process Grafana service,
-// never the user whose permissions are being enumerated.
-func LegacyPermissionCaller(namespace string) authlib.AuthInfo {
-	return authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: "access-policy:embedded-grafana"},
-		Rest:   authnlib.AccessTokenClaims{Namespace: namespace, Permissions: []string{LegacyUserPermissionsGrant}},
-	})
-}
+func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, usr identity.Requester, options ac.Options, cfg *setting.Cfg) (permissions []ac.Permission, err error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.GetLegacyUserPermissions")
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+		}
+		span.End()
+	}()
 
-func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, usr identity.Requester, options Options, cfg *setting.Cfg) ([]Permission, error) {
 	if client == nil {
 		return nil, fmt.Errorf("embedded legacy AuthZ client is not configured")
 	}
 	originalNamespace, cacheKey := usr.GetNamespace(), usr.GetCacheKey()
 	namespace := originalNamespace
-	global := usr.GetOrgID() == GlobalOrgID
+	global := usr.GetOrgID() == ac.GlobalOrgID
 	noOrgMembership := usr.GetOrgID() == -1
 	// Self-managed global and missing-membership namespaces are requester state,
 	// not transport tenants. Preserve them in Identity using an instance anchor.
@@ -67,7 +65,7 @@ func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, 
 	if cfg.IDUseExternalGroupsForGroupsClaim {
 		groups = usr.GetExternalGroups()
 	}
-	response, err := client.LegacyGetUserPermissions(ctx, LegacyPermissionCaller(namespace), legacyclient.LegacyGetUserPermissionsRequest{
+	response, err := client.LegacyGetUserPermissions(ctx, legacypermissions.LegacyPermissionCaller(namespace), legacyclient.LegacyGetUserPermissionsRequest{
 		Namespace:        namespace,
 		GlobalOrg:        global,
 		NoOrgMembership:  noOrgMembership,
@@ -81,14 +79,11 @@ func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, 
 		},
 	})
 	if err != nil {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-		return nil, err
+		return nil, errors.Join(ctx.Err(), err)
 	}
-	permissions := make([]Permission, len(response.Permissions))
+	permissions = make([]ac.Permission, len(response.Permissions))
 	for i, p := range response.Permissions {
-		permissions[i] = Permission{Action: p.Action, Scope: p.Scope}
+		permissions[i] = ac.Permission{Action: p.Action, Scope: p.Scope}
 	}
 	return permissions, nil
 }

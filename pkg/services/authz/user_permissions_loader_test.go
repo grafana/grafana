@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -47,7 +48,7 @@ func TestIntegrationEmbeddedPermissionRPCsShareLoader(t *testing.T) {
 		previous, err := previousClient.GetUserPermissions(t.Context(), requester, ac.Options{})
 		require.NoError(t, err)
 		require.ElementsMatch(t, []ac.Permission{current, baseline}, previous)
-		compatibility, err := ac.GetLegacyUserPermissions(t.Context(), legacyClient, requester, ac.Options{}, cfg)
+		compatibility, err := acimpl.GetLegacyUserPermissions(t.Context(), legacyClient, requester, ac.Options{}, cfg)
 		require.NoError(t, err)
 		require.ElementsMatch(t, []ac.Permission{current, current, baseline}, compatibility)
 	}

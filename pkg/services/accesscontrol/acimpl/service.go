@@ -179,7 +179,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	defer span.End()
 
 	delegate := s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled
-	legacy := !delegate && accesscontrol.LegacyUserPermissionsEnabled(ctx)
+	legacy := !delegate && LegacyUserPermissionsEnabled(ctx)
 	// The legacy loader owns timing on this route.
 	if !legacy {
 		timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
@@ -194,7 +194,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	}
 	// The legacy toggle replaces local enumeration, not the delegated authority.
 	if legacy {
-		return accesscontrol.GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
+		return GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
 	}
 	return s.getLocalUserPermissions(ctx, user, options)
 }

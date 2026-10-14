@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
@@ -53,7 +54,7 @@ func TestIntegrationOSSLoaderAndLegacyRPCMergeZanzanaWithoutLicense(t *testing.T
 				got, err := loader.GetLocalUserPermissions(t.Context(), requester, options)
 				require.NoError(t, err)
 				require.ElementsMatch(t, want, got)
-				got, err = ac.GetLegacyUserPermissions(t.Context(), legacyClient, requester, options, cfg)
+				got, err = acimpl.GetLegacyUserPermissions(t.Context(), legacyClient, requester, options, cfg)
 				require.NoError(t, err)
 				require.ElementsMatch(t, want, got)
 			}

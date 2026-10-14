@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -49,7 +50,7 @@ func TestIntegrationEmbeddedLegacySentinelAssertions(t *testing.T) {
 			client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, migrated), cfg)
 			for _, cacheKey := range []string{"", "missing-org-cache-key"} {
 				requester := &identity.StaticRequester{Type: types.TypeUser, UserID: 7, UserUID: "seven", OrgID: tc.orgID, Namespace: tc.namespace, CacheKey: cacheKey}
-				_, err := ac.GetLegacyUserPermissions(t.Context(), client, requester, ac.Options{}, cfg)
+				_, err := acimpl.GetLegacyUserPermissions(t.Context(), client, requester, ac.Options{}, cfg)
 				require.NoError(t, err)
 				require.NotNil(t, migrated.requester)
 				require.Equal(t, tc.orgID, migrated.requester.GetOrgID())
@@ -82,7 +83,7 @@ func TestIntegrationEmbeddedLegacySentinelNamespaceValidation(t *testing.T) {
 			cfg := loaderConfig(false)
 			cfg.StackID = tc.stack
 			client := legacypermissions.NewEmbeddedClient(nil, cfg)
-			got, err := client.LegacyGetUserPermissions(t.Context(), ac.LegacyPermissionCaller(tc.namespace), legacyclient.LegacyGetUserPermissionsRequest{
+			got, err := client.LegacyGetUserPermissions(t.Context(), legacypermissions.LegacyPermissionCaller(tc.namespace), legacyclient.LegacyGetUserPermissionsRequest{
 				Namespace: tc.namespace, NoOrgMembership: tc.noOrgMembership, GlobalOrg: tc.globalOrg,
 				Identity: legacyclient.LegacyPermissionIdentity{RequesterNamespace: &tc.original},
 			})
@@ -101,7 +102,7 @@ func TestIntegrationEmbeddedLegacyRequesterAssertions(t *testing.T) {
 	client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, migrated), cfg)
 	empty, namespace, cacheKey, id := "", "stacks-12", "caller-cache-key", int64(7)
 	for _, original := range []*string{nil, &empty, &namespace} {
-		_, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("stacks-12"), legacyclient.LegacyGetUserPermissionsRequest{
+		_, err := client.LegacyGetUserPermissions(context.Background(), legacypermissions.LegacyPermissionCaller("stacks-12"), legacyclient.LegacyGetUserPermissionsRequest{
 			Namespace: "stacks-12", GlobalOrg: true,
 			Identity: legacyclient.LegacyPermissionIdentity{
 				Type: types.TypeUser, UID: "8", InternalID: &id, HasUniqueID: true,
@@ -124,7 +125,7 @@ func TestIntegrationEmbeddedLegacyRequesterAssertions(t *testing.T) {
 		require.True(t, migrated.requester.GetIsGrafanaAdmin())
 	}
 	wrongNamespace := "stacks-13"
-	_, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("stacks-12"), legacyclient.LegacyGetUserPermissionsRequest{
+	_, err := client.LegacyGetUserPermissions(context.Background(), legacypermissions.LegacyPermissionCaller("stacks-12"), legacyclient.LegacyGetUserPermissionsRequest{
 		Namespace: "stacks-12", Identity: legacyclient.LegacyPermissionIdentity{RequesterNamespace: &wrongNamespace},
 	})
 	require.ErrorContains(t, err, "requester namespace does not match tenant scope")

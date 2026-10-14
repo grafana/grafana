@@ -103,7 +103,7 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 			}
 		}
 		ctx = context.WithValue(ctx, embeddedCallKey{}, guard)
-		ctx = types.WithAuthInfo(ctx, ac.LegacyPermissionCaller("*"))
+		ctx = types.WithAuthInfo(ctx, LegacyPermissionCaller("*"))
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)

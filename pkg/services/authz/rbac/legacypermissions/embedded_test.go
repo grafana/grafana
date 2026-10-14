@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,7 +19,7 @@ import (
 func TestLegacyHandlerRejectsUntrustedTransport(t *testing.T) {
 	channel := &inprocgrpc.Channel{}
 	authzv1.RegisterLegacyAuthzServiceServer(channel, &embeddedServer{guard: new(int)})
-	ctx := types.WithAuthInfo(context.Background(), ac.LegacyPermissionCaller("*"))
+	ctx := types.WithAuthInfo(context.Background(), LegacyPermissionCaller("*"))
 	//nolint:staticcheck // Exercise the deprecated RPC's private-transport guard.
 	stream, err := authzv1.NewLegacyAuthzServiceClient(channel).LegacyGetUserPermissions(ctx, &authzv1.LegacyGetUserPermissionsRequest{
 		Namespace: "default", Identity: &authzv1.LegacyPermissionIdentity{Type: "user", Uid: "one"},
@@ -63,7 +62,7 @@ func TestEmbeddedLegacyNamespaceValidation(t *testing.T) {
 			cfg.StackID = tc.stack
 			client := NewEmbeddedClient(nil, cfg) // Rejection must happen before any load.
 			for _, evaluation := range []struct{ global, noOrgMembership bool }{{}, {global: true}, {noOrgMembership: true}} {
-				result, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("*"), legacyclient.LegacyGetUserPermissionsRequest{
+				result, err := client.LegacyGetUserPermissions(context.Background(), LegacyPermissionCaller("*"), legacyclient.LegacyGetUserPermissionsRequest{
 					Namespace: tc.namespace, GlobalOrg: evaluation.global, NoOrgMembership: evaluation.noOrgMembership, Identity: legacyclient.LegacyPermissionIdentity{Type: types.TypeUser, UID: "one"},
 				})
 				require.Equal(t, codes.PermissionDenied, status.Code(err))

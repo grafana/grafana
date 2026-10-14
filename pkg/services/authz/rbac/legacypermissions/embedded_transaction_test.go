@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -57,7 +58,7 @@ func TestIntegrationEmbeddedLegacyTransactionCancellation(t *testing.T) {
 		defer cancel()
 		result := make(chan error, 1)
 		go func() {
-			_, err := ac.GetLegacyUserPermissions(ctx, client, requester, ac.Options{}, cfg)
+			_, err := acimpl.GetLegacyUserPermissions(ctx, client, requester, ac.Options{}, cfg)
 			result <- err
 		}()
 		<-blocked.started
@@ -91,16 +92,16 @@ func TestIntegrationEmbeddedLegacyTransactionRejectedCalls(t *testing.T) {
 	requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1}
 	require.NoError(t, sql.InTransaction(t.Context(), func(ctx context.Context) error {
 		// Client-side validation can return without ever starting a handler.
-		_, err := client.LegacyGetUserPermissions(ctx, ac.LegacyPermissionCaller("default"), legacyclient.LegacyGetUserPermissionsRequest{Namespace: "*"})
+		_, err := client.LegacyGetUserPermissions(ctx, legacypermissions.LegacyPermissionCaller("default"), legacyclient.LegacyGetUserPermissionsRequest{Namespace: "*"})
 		require.Error(t, err)
 		canceled, cancel := context.WithCancel(ctx)
 		cancel()
-		permissions, err := ac.GetLegacyUserPermissions(canceled, client, requester, ac.Options{}, cfg)
+		permissions, err := acimpl.GetLegacyUserPermissions(canceled, client, requester, ac.Options{}, cfg)
 		require.ErrorIs(t, err, context.Canceled)
 		require.Empty(t, permissions)
 		expired, cancel := context.WithDeadline(ctx, time.Now().Add(-time.Second))
 		defer cancel()
-		permissions, err = ac.GetLegacyUserPermissions(expired, client, requester, ac.Options{}, cfg)
+		permissions, err = acimpl.GetLegacyUserPermissions(expired, client, requester, ac.Options{}, cfg)
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 		require.Empty(t, permissions)
 		return nil
@@ -138,9 +139,9 @@ func TestIntegrationEmbeddedLegacyTransactionContextIsolation(t *testing.T) {
 	loader := legacypermissions.NewLoader(store, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(),
 		localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{}, nil)
 	client := legacypermissions.NewEmbeddedClient(loader, cfg)
-	ctx := types.WithAuthInfo(context.WithValue(t.Context(), callerContextKey{}, "private"), ac.LegacyPermissionCaller("org-2"))
+	ctx := types.WithAuthInfo(context.WithValue(t.Context(), callerContextKey{}, "private"), legacypermissions.LegacyPermissionCaller("org-2"))
 	require.NoError(t, sql.InTransaction(ctx, func(ctx context.Context) error {
-		_, err := ac.GetLegacyUserPermissions(ctx, client, &user.SignedInUser{UserID: 7, OrgID: 1}, ac.Options{}, cfg)
+		_, err := acimpl.GetLegacyUserPermissions(ctx, client, &user.SignedInUser{UserID: 7, OrgID: 1}, ac.Options{}, cfg)
 		return err
 	}))
 	select {
@@ -168,13 +169,13 @@ func TestIntegrationEmbeddedLegacyTransactionRollback(t *testing.T) {
 		}); err != nil {
 			return err
 		}
-		permissions, err := ac.GetLegacyUserPermissions(ctx, client, requester, ac.Options{}, cfg)
+		permissions, err := acimpl.GetLegacyUserPermissions(ctx, client, requester, ac.Options{}, cfg)
 		require.NoError(t, err)
 		require.NotContains(t, permissions, grant)
 		return rollback
 	})
 	require.ErrorIs(t, err, rollback)
-	permissions, err := ac.GetLegacyUserPermissions(t.Context(), client, requester, ac.Options{}, cfg)
+	permissions, err := acimpl.GetLegacyUserPermissions(t.Context(), client, requester, ac.Options{}, cfg)
 	require.NoError(t, err)
 	require.Contains(t, permissions, grant)
 }
@@ -195,7 +196,7 @@ func TestIntegrationEmbeddedLegacyTransactionRefresh(t *testing.T) {
 				shared := ac.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"}
 				seedGrant(t, sql, "managed:receiver", 1, 7, oldGrant)
 
-				permissions, err := ac.GetLegacyUserPermissions(t.Context(), client, requester, ac.Options{}, cfg)
+				permissions, err := acimpl.GetLegacyUserPermissions(t.Context(), client, requester, ac.Options{}, cfg)
 				require.NoError(t, err)
 				require.ElementsMatch(t, []ac.Permission{shared, oldGrant}, permissions)
 
@@ -208,12 +209,12 @@ func TestIntegrationEmbeddedLegacyTransactionRefresh(t *testing.T) {
 					}); err != nil {
 						return err
 					}
-					permissions, err := ac.GetLegacyUserPermissions(ctx, client, requester, ac.Options{ReloadCache: true}, cfg)
+					permissions, err := acimpl.GetLegacyUserPermissions(ctx, client, requester, ac.Options{ReloadCache: true}, cfg)
 					require.NoError(t, err)
 					require.ElementsMatch(t, []ac.Permission{shared, newGrant}, permissions)
 					return nil
 				}))
-				permissions, err = ac.GetLegacyUserPermissions(t.Context(), client, requester, ac.Options{}, cfg)
+				permissions, err = acimpl.GetLegacyUserPermissions(t.Context(), client, requester, ac.Options{}, cfg)
 				require.NoError(t, err)
 				require.ElementsMatch(t, []ac.Permission{shared, newGrant}, permissions)
 			})
