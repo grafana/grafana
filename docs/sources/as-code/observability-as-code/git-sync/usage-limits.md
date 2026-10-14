@@ -132,7 +132,7 @@ This feature is available starting in Grafana 13.0.4, but not supported until Gr
 
 ### Configure multiple orgs
 
-If you're configuring Git Sync as code or with Terraform and want to allow multiple organizations, use an aliased provider block per organization.
+If you're setting up Git Sync as code or with Terraform and want to configure multiple organizations, use an aliased provider block per organization.
 
 ## Compatible Git providers
 
