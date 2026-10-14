@@ -24,9 +24,28 @@ export function toPercentUnit(size: number | null, decimals: DecimalCount): Form
 // defaultValue_ordinal_* below — it isn't a real suffix, only used to detect that case (see below).
 const UNTRANSLATED_ORDINAL_CATEGORY = '\u0000';
 
+const ENGLISH_ORDINAL_SUFFIXES: Partial<Record<Intl.LDMLPluralRule, string>> = {
+  one: 'st',
+  two: 'nd',
+  few: 'rd',
+};
+
+function englishOrdinalSuffix(value: number): string {
+  const category = new Intl.PluralRules('en-US', { type: 'ordinal' }).select(value);
+  return ENGLISH_ORDINAL_SUFFIXES[category] ?? 'th';
+}
+
 function ordinalSuffix(value: number): string {
+  const otherSuffix = t('grafana-data.valueFormats.ordinal-suffix_ordinal_other', 'th');
+
+  // A locale without its own ordinal translations resolves to the English default. Applying that
+  // locale's plural rules to English suffixes gives nonsense (e.g. French "2th"), so use English rules.
+  if (otherSuffix === 'th') {
+    return englishOrdinalSuffix(value);
+  }
+
   // Delegates to Intl.PluralRules (via i18next's `ordinal` option) so the suffix follows each
-  // locale's own ordinal rules (e.g. English's 1st/2nd/3rd/4th) instead of assuming English.
+  // locale's own ordinal rules instead of assuming English.
   const suffix = t('grafana-data.valueFormats.ordinal-suffix', '', {
     count: value,
     ordinal: true,
@@ -50,7 +69,7 @@ function ordinalSuffix(value: number): string {
   // Italian's "many" never gets a translatable key of its own, and Crowdin's i18next plural
   // support doesn't reliably create one either. Reuse the locale's own "other" suffix instead of
   // leaking English, since ordinal suffixes rarely vary by category outside English anyway.
-  return t('grafana-data.valueFormats.ordinal-suffix_ordinal_other', 'th');
+  return otherSuffix;
 }
 
 export function toOrdinal(value: number | null): FormattedValue {

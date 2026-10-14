@@ -11,6 +11,23 @@ describe('ordinal unit', () => {
     await changeLanguage('en-US');
   });
 
+  it.each([
+    ['fr-FR', 2, '2nd'],
+    ['fr-FR', 3, '3rd'],
+    ['fr-FR', 21, '21st'],
+    ['de-DE', 1, '1st'],
+    ['de-DE', 2, '2nd'],
+    ['de-DE', 3, '3rd'],
+    ['it-IT', 1, '1st'],
+    ['it-IT', 8, '8th'],
+    ['it-IT', 11, '11th'],
+  ])('uses a valid English fallback for %s and %i without ordinal translations', async (language, value, expected) => {
+    await changeLanguage(language);
+
+    const toOrdinal = getValueFormat('ordinal');
+    expect(formattedValueToString(toOrdinal(value))).toBe(expected);
+  });
+
   it('renders French ordinal suffixes, which only distinguish "1er" from everything else', async () => {
     const toOrdinal = getValueFormat('ordinal');
 
