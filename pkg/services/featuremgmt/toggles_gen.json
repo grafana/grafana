@@ -3061,6 +3061,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.smtpSettingsPage",
+        "resourceVersion": "1791896266088",
+        "creationTimestamp": "2026-10-13T12:57:46Z"
+      },
+      "spec": {
+        "description": "Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.ssoSettingsToMTSettings",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-13T09:18:35Z"
@@ -5692,7 +5705,8 @@
       "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-10-22T10:52:33Z"
+        "creationTimestamp": "2024-10-22T10:52:33Z",
+        "deletionTimestamp": "2026-10-07T23:03:15Z"
       },
       "spec": {
         "description": "Enables time pickers sync",

@@ -21,9 +21,9 @@ import {
   getTemplateSrv,
   isExpressionReference,
   toDataQueryResponse,
+  getDataSourceInstance,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
