@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/services"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type testReadyNotifier struct {
@@ -33,7 +35,7 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, ready))
 
@@ -71,7 +73,7 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 func TestProvideServiceRequiresCollaborators(t *testing.T) {
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
-	_, err := ProvideService(cfg, features, nil, prometheus.NewRegistry())
+	_, err := ProvideService(cfg, features, nil, prometheus.NewRegistry(), nil)
 	require.ErrorContains(t, err, "routes loader is required")
 }
 
@@ -83,7 +85,7 @@ func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	features := featuremgmt.WithFeatures()
 
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	err = svc.RegisterTargetRoutes(httpRouter, nil)
 	require.NoError(t, err)
@@ -111,7 +113,7 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 	})
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
 
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
 	t.Cleanup(func() {
@@ -148,11 +150,11 @@ func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 	cfg := setting.NewCfg()
 	loader := dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}
 
-	enabled, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
+	enabled, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.False(t, enabled.IsDisabled())
 
-	disabled, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+	disabled, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.True(t, disabled.IsDisabled())
 
@@ -180,7 +182,7 @@ func TestRouterTargetCloudFallback(t *testing.T) {
 				return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
 			})
 		}
-		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), nil)
 		require.NoError(t, err)
 		httpRouter := mux.NewRouter()
 		httpRouter.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
@@ -207,7 +209,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 		require.Equal(t, "https://discovery.example.com/apis", req.URL.String())
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"fallback.example.com","versions":[],"preferredVersion":{"groupVersion":"","version":""}}]}`))}, nil
 	})
-	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	httpRouter := mux.NewRouter()
 	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
@@ -222,7 +224,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
 	cfg := setting.NewCfg()
 	loader := &cloudLoader{singleTenantFallback: newTestSingleTenantFallback(t)}
-	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(mux.NewRouter(), nil))
 	recorder := httptest.NewRecorder()
@@ -230,4 +232,43 @@ func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
 		w.WriteHeader(http.StatusTeapot)
 	}))
 	require.Equal(t, http.StatusTeapot, recorder.Code)
+}
+
+func TestServiceGroupManifest(t *testing.T) {
+	cfg := setting.NewCfg()
+	loader := staticLoader{backends: testManifestBackends()}
+
+	t.Run("a disabled router serves no manifests", func(t *testing.T) {
+		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry(), resource.ProvideLocalManifestSource())
+		require.NoError(t, err)
+		m, _, found, err := svc.GroupManifest(manifestTestGroup)
+		require.NoError(t, err)
+		require.False(t, found)
+		require.Nil(t, m)
+	})
+
+	t.Run("serves the published manifest once reconciled", func(t *testing.T) {
+		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry(), nil)
+		require.NoError(t, err)
+
+		_, _, _, err = svc.GroupManifest(manifestTestGroup)
+		require.ErrorIs(t, err, resource.ErrManifestSourceNotReady)
+
+		require.NoError(t, svc.router.Run(t.Context()))
+		require.Eventually(t, func() bool {
+			_, _, _, err := svc.GroupManifest(manifestTestGroup)
+			return err == nil
+		}, 5*time.Second, 10*time.Millisecond)
+
+		m, key, found, err := svc.GroupManifest(manifestTestGroup)
+		require.NoError(t, err)
+		require.True(t, found)
+		require.Equal(t, manifestTestGroup, m.Group)
+		require.Equal(t, "widgets-key", key)
+
+		// A group served without a manifest has none to give.
+		_, _, found, err = svc.GroupManifest("gadgets.example.com")
+		require.NoError(t, err)
+		require.False(t, found)
+	})
 }

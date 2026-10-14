@@ -11,9 +11,12 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana-app-sdk/app"
+
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const readinessPollInterval = time.Second
@@ -40,7 +43,9 @@ type Service struct {
 
 // ProvideService creates the router service. RegisterTargetRoutes enables it
 // for the router module; otherwise the middleware feature toggle controls it.
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer) (*Service, error) {
+// The service registers with manifests, when given, so in-process search loads
+// the manifests of the groups it serves.
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer, manifests *resource.LocalManifestSource) (*Service, error) {
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
 	}
@@ -57,7 +62,22 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newService(loader, auth, reg)
 	s.standalone = standalone
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	manifests.Set(s)
 	return s, nil
+}
+
+// GroupManifest implements resource.GroupManifestSource. A disabled router
+// serves nothing, which is an answer rather than not being ready, so storage
+// doesn't keep retrying it.
+func (s *Service) GroupManifest(group string) (*app.ManifestData, string, bool, error) {
+	if s.IsDisabled() {
+		return nil, "", false, nil
+	}
+	m, key, found, reconciled := s.router.GroupManifest(group)
+	if !reconciled {
+		return nil, "", false, resource.ErrManifestSourceNotReady
+	}
+	return m, key, found, nil
 }
 
 // RegisterTargetRoutes enables the service and mounts it on the dskit module server.

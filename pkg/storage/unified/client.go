@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-app-sdk/app"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -78,6 +80,9 @@ type Options struct {
 	// gated on Enabled(), so a disabled bus starts nothing.
 	Subscriber  nats.Subscriber
 	WatchExpiry resource.WatchExpiry
+	// LocalManifests is filled in by the router in this process, so in-process
+	// search can load the manifests of the groups it serves, plugins included.
+	LocalManifests *resource.LocalManifestSource
 }
 
 // natsEventSubscriber adapts nats.Subscriber to resource.EventSubscriber for the
@@ -116,6 +121,47 @@ type clientMetrics struct {
 	requestRetries  *prometheus.CounterVec
 }
 
+// resolveManifests sets up the manifests in-process search reads beyond those
+// compiled in. Provisioned AppManifest files are read once at startup. A router
+// is asked for a group's manifest when search first needs it: the one at
+// manifest_router_address when configured, otherwise the one in this process.
+// Sources are layered builtin < provisioned < router.
+func resolveManifests(cfg *setting.Cfg, reg prometheus.Registerer, searchOptions resource.SearchOptions, local *resource.LocalManifestSource) error {
+	builtin := resource.AppManifests()
+	var provisioned []*app.ManifestData
+	if cfg.EnableEmbeddedAPIExtensions {
+		var err error
+		provisioned, err = loadEmbeddedAppManifests(cfg.ProvisioningPath)
+		if err != nil {
+			cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
+		}
+		if err := searchOptions.ReloadManifests(builtin, provisioned); err != nil {
+			cfg.Logger.Error("failed to load embedded search fields", "error", err)
+		}
+	}
+	if searchOptions.SearchFields == nil {
+		return nil
+	}
+
+	// Groups already covered at startup never wait on the router.
+	known := slices.Concat(builtin, provisioned)
+	apply := func(live []*app.ManifestData) error {
+		return searchOptions.ReloadManifests(builtin, provisioned, live)
+	}
+	if rc := resource.NewManifestResolverConfig(cfg); rc != nil {
+		resolver, err := resource.NewManifestResolver(*rc, reg, known, apply)
+		if err != nil {
+			return err
+		}
+		searchOptions.SearchFields.SetResolver(resolver)
+		return nil
+	}
+	if local != nil {
+		searchOptions.SearchFields.SetResolver(resource.NewLocalManifestResolver(local, reg, known, apply))
+	}
+	return nil
+}
+
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
@@ -132,7 +178,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV, opts.WatchExpiry)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV, opts.WatchExpiry, opts.LocalManifests)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -170,6 +216,7 @@ func newClient(opts options.StorageOptions,
 	eventSubscriber nats.Subscriber,
 	experimentalKV *resource.ExperimentalKVOptions,
 	watchExpiry resource.WatchExpiry,
+	localManifests *resource.LocalManifestSource,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -247,17 +294,8 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		if cfg.EnableEmbeddedAPIExtensions {
-			if cfg.ManifestApiServerAddress != "" {
-				cfg.Logger.Warn("manifest_api_server_address is ignored by in-process storage; embedded search reads startup-provisioned AppManifest files")
-			}
-			manifests, err := loadEmbeddedAppManifests(cfg.ProvisioningPath)
-			if err != nil {
-				cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
-			}
-			if err := searchOptions.ReloadManifests(resource.AppManifests(), manifests); err != nil {
-				cfg.Logger.Error("failed to load embedded search fields", "error", err)
-			}
+		if err := resolveManifests(cfg, reg, searchOptions, localManifests); err != nil {
+			return nil, err
 		}
 
 		if backendService, ok := backend.(services.Service); ok {

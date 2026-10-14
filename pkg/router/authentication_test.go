@@ -115,7 +115,7 @@ func TestProvideStandaloneServiceRequiresTokenVerificationConfig(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Target = []string{"router"}
 		cfg.ExtJWTAuth.JWKSUrl = jwks
-		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), stubLoader{}, prometheus.NewRegistry())
+		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), stubLoader{}, prometheus.NewRegistry(), nil)
 		require.Error(t, err)
 		require.Nil(t, svc)
 	}

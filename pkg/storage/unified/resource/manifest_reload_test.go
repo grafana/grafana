@@ -1,11 +1,8 @@
 package resource
 
 import (
-	"context"
 	"testing"
-	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -49,36 +46,58 @@ func manifestReloadOptions(t *testing.T, builtin []*app.ManifestData) SearchOpti
 	return opts
 }
 
-func TestManifestWatcher_ReloadsSearchOptionsBeforeRunning(t *testing.T) {
+// resolvedOptions wires a resolver into opts the way the storage service does,
+// so search fields and embedding config are loaded through the registry.
+func resolvedOptions(opts SearchOptions, router *fakeRouter, builtin []*app.ManifestData) *ManifestResolver {
+	r := newManifestResolver(router.fetcher(), builtin, func(live []*app.ManifestData) error {
+		return opts.ReloadManifests(builtin, live)
+	}, nil)
+	opts.SearchFields.SetResolver(r)
+	return r
+}
+
+func TestSearchFieldsRegistry_ResolveLoadsUnknownKind(t *testing.T) {
+	opts := manifestReloadOptions(t, nil)
+	resolvedOptions(opts, newFakeRouter(t, manifestReloadObject("live", 2,
+		app.ManifestVersionKindEmbedField{Name: "body", Path: "spec.body"})), nil)
+	gvr := schema.GroupVersionResource{Group: "widgets.test", Version: "v1", Resource: "widgets"}
+	key := NewLowerGroupResource(gvr.Group, gvr.Resource)
+
+	_, _, provider := opts.SearchFields.For(key)
+	require.Nil(t, provider)
+
+	// The fields are there as soon as Resolve returns, which is what lets the
+	// first index for a new kind be built with them.
+	opts.SearchFields.Resolve(t.Context(), key)
+	_, hash, provider := opts.SearchFields.For(key)
+	require.NotEmpty(t, hash)
+	require.NotNil(t, provider)
+	require.Equal(t, "live", provider.Fields(gvr)[0].Name)
+	config, found := opts.EmbeddingConfig.For(gvr)
+	require.True(t, found)
+	require.Equal(t, 2, config.ReembedVersion)
+}
+
+func TestSearchFieldsRegistry_ResolveWithoutResolver(t *testing.T) {
+	var nilRegistry *SearchFieldsRegistry
+	nilRegistry.Resolve(t.Context(), widgetsKey)
+	NewSearchFieldsRegistry(nil, nil, nil).Resolve(t.Context(), widgetsKey)
+}
+
+func TestManifestResolver_LiveManifestOverridesBuiltin(t *testing.T) {
 	builtinManifest, err := ManifestFromUnstructured(manifestReloadObject("builtin", 1,
 		app.ManifestVersionKindEmbedField{Name: "title", Path: "spec.title"}))
 	require.NoError(t, err)
 	builtin := []*app.ManifestData{builtinManifest}
 	opts := manifestReloadOptions(t, builtin)
-	live := manifestReloadObject("live", 2,
-		app.ManifestVersionKindEmbedField{Name: "body", Path: "spec.body"})
-
-	type initialReload struct {
-		state services.State
-		err   error
-	}
-	reloads := make(chan initialReload, 1)
-	var watcher *ManifestWatcher
-	watcher = newManifestWatcher(fakeManifestClient(live), time.Hour, func(manifests []*app.ManifestData) {
-		reloads <- initialReload{state: watcher.State(), err: opts.ReloadManifests(builtin, manifests)}
-	}, nil)
-	watcher.Service = services.NewBasicService(watcher.starting, watcher.running, nil)
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
-		defer cancel()
-		require.NoError(t, services.StopAndAwaitTerminated(ctx, watcher))
-	})
-	require.NoError(t, services.StartAndAwaitRunning(t.Context(), watcher))
-
-	reload := <-reloads
-	require.Equal(t, services.Starting, reload.state)
-	require.NoError(t, reload.err)
+	r := resolvedOptions(opts, newFakeRouter(t, manifestReloadObject("live", 2,
+		app.ManifestVersionKindEmbedField{Name: "body", Path: "spec.body"})), builtin)
 	gvr := schema.GroupVersionResource{Group: "widgets.test", Version: "v1", Resource: "widgets"}
+
+	// A builtin group doesn't wait; the override arrives from the background fetch.
+	r.background = func(f func()) { f() }
+	opts.SearchFields.Resolve(t.Context(), NewLowerGroupResource(gvr.Group, gvr.Resource))
+
 	_, _, provider := opts.SearchFields.For(NewLowerGroupResource(gvr.Group, gvr.Resource))
 	require.NotNil(t, provider)
 	require.Len(t, provider.Fields(gvr), 1)
@@ -90,7 +109,7 @@ func TestManifestWatcher_ReloadsSearchOptionsBeforeRunning(t *testing.T) {
 	}}, config)
 }
 
-func TestManifestWatcher_KeepsPreviousConfigWhenSDKRejectsEmbedding(t *testing.T) {
+func TestManifestResolver_KeepsPreviousConfigWhenSDKRejectsEmbedding(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
 		revision int64
@@ -102,18 +121,19 @@ func TestManifestWatcher_KeepsPreviousConfigWhenSDKRejectsEmbedding(t *testing.T
 		t.Run(tc.name, func(t *testing.T) {
 			initial := manifestReloadObject("title", 1,
 				app.ManifestVersionKindEmbedField{Name: "title", Path: "spec.title"})
-			client := fakeManifestClient(initial)
+			router := newFakeRouter(t, initial)
 			opts := manifestReloadOptions(t, nil)
 			var reloadErr error
 			var reloads int
-			watcher := newManifestWatcher(client, 0, func(manifests []*app.ManifestData) {
+			resolver := newManifestResolver(router.fetcher(), nil, func(manifests []*app.ManifestData) error {
 				reloads++
 				reloadErr = opts.ReloadManifests(nil, manifests)
+				return reloadErr
 			}, nil)
-			watcher.runPollCycle(t.Context())
+			resolver.fetch(t.Context(), "widgets.test", "test")
 			require.Equal(t, 1, reloads)
 			require.NoError(t, reloadErr)
-			initialManifests := watcher.Manifests()
+			initialManifests := resolver.Manifests()
 
 			gvr := schema.GroupVersionResource{Group: "widgets.test", Version: "v1", Resource: "widgets"}
 			key := NewLowerGroupResource(gvr.Group, gvr.Resource)
@@ -124,11 +144,11 @@ func TestManifestWatcher_KeepsPreviousConfigWhenSDKRejectsEmbedding(t *testing.T
 
 			invalid := manifestReloadObject("label", tc.revision,
 				app.ManifestVersionKindEmbedField{Name: "body", Path: tc.path})
-			require.NoError(t, client.Tracker().Update(AppManifestGVR, invalid, ""))
-			watcher.runPollCycle(t.Context())
+			router.set(invalid)
+			resolver.fetch(t.Context(), "widgets.test", "test")
 			require.Equal(t, 1, reloads)
 			require.NoError(t, reloadErr)
-			require.Equal(t, initialManifests, watcher.Manifests())
+			require.Equal(t, initialManifests, resolver.Manifests())
 
 			_, hash, provider := opts.SearchFields.For(key)
 			require.NotNil(t, provider)
@@ -141,8 +161,8 @@ func TestManifestWatcher_KeepsPreviousConfigWhenSDKRejectsEmbedding(t *testing.T
 
 			updated := manifestReloadObject("label", 2,
 				app.ManifestVersionKindEmbedField{Name: "body", Path: "spec.body"})
-			require.NoError(t, client.Tracker().Update(AppManifestGVR, updated, ""))
-			watcher.runPollCycle(t.Context())
+			router.set(updated)
+			resolver.fetch(t.Context(), "widgets.test", "test")
 			require.Equal(t, 2, reloads)
 			require.NoError(t, reloadErr)
 			_, hash, provider = opts.SearchFields.For(key)
@@ -191,18 +211,19 @@ func TestSearchOptions_ReloadsEmbeddingWhenSearchMappingIsInvalid(t *testing.T) 
 	}}, config)
 }
 
-func TestManifestWatcher_EmbeddingOnlyChangesPreserveSearchHash(t *testing.T) {
+func TestManifestResolver_EmbeddingOnlyChangesPreserveSearchHash(t *testing.T) {
 	initial := manifestReloadObject("title", 1,
 		app.ManifestVersionKindEmbedField{Name: "title", Path: "spec.title"})
-	client := fakeManifestClient(initial)
+	router := newFakeRouter(t, initial)
 	opts := manifestReloadOptions(t, nil)
 	var reloadErr error
 	var reloads int
-	watcher := newManifestWatcher(client, 0, func(manifests []*app.ManifestData) {
+	resolver := newManifestResolver(router.fetcher(), nil, func(manifests []*app.ManifestData) error {
 		reloads++
 		reloadErr = opts.ReloadManifests(nil, manifests)
+		return reloadErr
 	}, nil)
-	watcher.runPollCycle(t.Context())
+	resolver.fetch(t.Context(), "widgets.test", "test")
 	require.NoError(t, reloadErr)
 	gvr := schema.GroupVersionResource{Group: "widgets.test", Version: "v1", Resource: "widgets"}
 	key := NewLowerGroupResource(gvr.Group, gvr.Resource)
@@ -211,8 +232,8 @@ func TestManifestWatcher_EmbeddingOnlyChangesPreserveSearchHash(t *testing.T) {
 
 	updated := manifestReloadObject("title", 2,
 		app.ManifestVersionKindEmbedField{Name: "body", Path: "spec.body"})
-	require.NoError(t, client.Tracker().Update(AppManifestGVR, updated, ""))
-	watcher.runPollCycle(t.Context())
+	router.set(updated)
+	resolver.fetch(t.Context(), "widgets.test", "test")
 	require.Equal(t, 2, reloads)
 	require.NoError(t, reloadErr)
 	_, hash, provider := opts.SearchFields.For(key)
@@ -228,8 +249,8 @@ func TestManifestWatcher_EmbeddingOnlyChangesPreserveSearchHash(t *testing.T) {
 	absent := updated.DeepCopy()
 	delete(absent.Object["spec"].(map[string]interface{}), "embed")
 	delete(manifestReloadKind(absent), "embed")
-	require.NoError(t, client.Tracker().Update(AppManifestGVR, absent, ""))
-	watcher.runPollCycle(t.Context())
+	router.set(absent)
+	resolver.fetch(t.Context(), "widgets.test", "test")
 	require.Equal(t, 3, reloads)
 	require.NoError(t, reloadErr)
 	_, found = opts.EmbeddingConfig.For(gvr)
@@ -238,8 +259,8 @@ func TestManifestWatcher_EmbeddingOnlyChangesPreserveSearchHash(t *testing.T) {
 	require.Equal(t, initialHash, hash)
 
 	empty := manifestReloadObject("title", 2)
-	require.NoError(t, client.Tracker().Update(AppManifestGVR, empty, ""))
-	watcher.runPollCycle(t.Context())
+	router.set(empty)
+	resolver.fetch(t.Context(), "widgets.test", "test")
 	require.Equal(t, 4, reloads)
 	require.NoError(t, reloadErr)
 	config, found = opts.EmbeddingConfig.For(gvr)
@@ -249,6 +270,6 @@ func TestManifestWatcher_EmbeddingOnlyChangesPreserveSearchHash(t *testing.T) {
 	_, hash, _ = opts.SearchFields.For(key)
 	require.Equal(t, initialHash, hash)
 
-	watcher.runPollCycle(t.Context())
+	resolver.fetch(t.Context(), "widgets.test", "test")
 	require.Equal(t, 4, reloads)
 }

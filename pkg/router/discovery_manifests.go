@@ -63,6 +63,10 @@ type manifestDocs struct {
 	listETag  string
 	listLen   int
 
+	// served holds each published group's manifest and backend key, for
+	// in-process readers that need the manifest itself rather than its document.
+	served map[string]servedManifest
+
 	// The index is rendered on its first request, since most route changes
 	// are never followed by one.
 	backends  []Backend
@@ -320,6 +324,19 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 	r.manifestFingerprint = fingerprint.String()
 }
 
+// servedManifest is a published group's manifest and the key of the backend
+// that serves it. The manifest changes only when the key does.
+type servedManifest struct {
+	manifest *app.ManifestData
+	key      string
+}
+
+// groupManifest returns the manifest published for group under /apis/discovery.
+func (d *manifestDocs) groupManifest(group string) (servedManifest, bool) {
+	m, ok := d.served[group]
+	return m, ok
+}
+
 // buildManifestDocs builds the documents for backends without a cache.
 func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
 	docs, _ := buildManifestDocsFrom(ctx, sortedManifestBackends(backends), nil)
@@ -332,7 +349,7 @@ func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
 // fails to convert is left out of the manifests, but its group stays in the
 // index; the cache remembers the failure, so it is logged once.
 func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[string]*cachedDoc) (*manifestDocs, map[string]*cachedDoc) {
-	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, backends: sorted}
+	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, served: map[string]servedManifest{}, backends: sorted}
 	next := make(map[string]*cachedDoc, len(sorted))
 	listHash := sha256.New()
 	_, _ = io.WriteString(listHash, manifestListPrefix)
@@ -361,6 +378,7 @@ func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[stri
 		docs.items = append(docs.items, doc)
 		docs.names = append(docs.names, b.Group().Name)
 		docs.manifests[b.Group().Name] = doc
+		docs.served[b.Group().Name] = servedManifest{manifest: manifest, key: b.Key()}
 		docs.listLen += len(doc.body)
 		_, _ = io.WriteString(listHash, doc.etag)
 	}

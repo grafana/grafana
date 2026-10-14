@@ -332,7 +332,8 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating routes loader: %w", err)
 	}
-	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.registerer)
+	// The router target runs no storage, so nothing reads its manifests in-process.
+	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.registerer, nil)
 	if err != nil {
 		return nil, err
 	}

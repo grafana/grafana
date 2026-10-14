@@ -12,14 +12,16 @@ import (
 
 var manifestMergeLogger = log.New("search-manifest-merge")
 
-// ReloadManifests trusts the SDK's embedding declarations. Search fields still
+// ReloadManifests replaces search fields and embedding config with those the
+// sources declare, given in increasing order of priority (typically builtin,
+// then live). It trusts the SDK's embedding declarations. Search fields still
 // require the existing index-specific validation before replacing their view.
-func (o SearchOptions) ReloadManifests(builtin, live []*app.ManifestData) error {
+func (o SearchOptions) ReloadManifests(sources ...[]*app.ManifestData) error {
 	if o.EmbeddingConfig != nil {
-		o.EmbeddingConfig.Reload(builtin, live)
+		o.EmbeddingConfig.Reload(sources...)
 	}
 	if o.SearchFields != nil {
-		return ApplyManifests(o.SearchFields, builtin, live)
+		return ApplyManifests(o.SearchFields, sources...)
 	}
 	return nil
 }
@@ -165,11 +167,11 @@ func SearchFieldsHashesForProviders(providers map[LowerGroupResource]SearchField
 	return out
 }
 
-// ApplyManifests rebuilds the registry from the built-in and live manifest sets
-// and swaps them in. On error the registry is left unchanged, so a bad reload
-// keeps the current search fields.
-func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []*app.ManifestData) error {
-	merged := MergeManifestsByKind(builtin, live)
+// ApplyManifests rebuilds the registry from the manifest sources, given in
+// increasing order of priority, and swaps them in. On error the registry is
+// left unchanged, so a bad reload keeps the current search fields.
+func ApplyManifests(registry *SearchFieldsRegistry, sources ...[]*app.ManifestData) error {
+	merged := MergeManifestsByKind(sources...)
 	selectable, hashes, providers, err := SearchFieldsForManifests(merged...)
 	if err != nil {
 		return err

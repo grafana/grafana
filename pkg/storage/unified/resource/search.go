@@ -2638,6 +2638,13 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		updater = nil
 	}
 
+	// The backend reads the kind's search fields to build the mapping, so a kind
+	// a plugin added since startup must be loaded first or its index is built
+	// without them. A namespace-wide index declares its own fields.
+	if !nsr.IsGlobal() {
+		s.searchFields.Resolve(ctx, NewLowerGroupResource(nsr.Group, nsr.Resource))
+	}
+
 	index, err := s.search.BuildIndex(ctx, nsr, size, indexBuildReason, builderFn, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
 
 	if err != nil {
