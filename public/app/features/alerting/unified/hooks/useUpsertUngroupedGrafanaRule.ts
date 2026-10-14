@@ -5,7 +5,7 @@ import {
   useCreateRecordingRuleMutation,
   useReplaceAlertRuleMutation,
   useReplaceRecordingRuleMutation,
-} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+} from '@grafana/api-clients/rtkq/rules.alerting/v1beta1';
 
 import {
   buildAlertRuleResource,

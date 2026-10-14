@@ -78,8 +78,8 @@ const grantAlertingPermissions = () => {
   grantUserPermissions(ALERTING_PERMISSIONS);
 };
 
-const APP_PLATFORM_ALERTRULES_BASE = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules';
-const APP_PLATFORM_RECORDINGRULES_BASE = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules';
+const APP_PLATFORM_ALERTRULES_BASE = '/apis/rules.alerting.grafana.app/v1beta1/namespaces/default/alertrules';
+const APP_PLATFORM_RECORDINGRULES_BASE = '/apis/rules.alerting.grafana.app/v1beta1/namespaces/default/recordingrules';
 const LEGACY_RULER_BASE = '/api/ruler/grafana/api/v1/rules/';
 
 type EvaluationMode = 'new' | 'legacy';

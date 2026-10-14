@@ -7,7 +7,7 @@ import {
   type RecordingRule,
   type RecordingRuleExpression,
   type RecordingRuleSpec,
-} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+} from '@grafana/api-clients/rtkq/rules.alerting/v1beta1';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
@@ -16,7 +16,7 @@ import { type RuleFormValues } from '../../../types/rule-form';
 import { cleanAnnotations, cleanLabels, fixBothInstantAndRangeQuery } from '../../../utils/rule-form';
 import { stripNamedRouteLabel } from '../../notification-policies/useNotificationPolicyRoute';
 
-const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v0alpha1';
+const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v1beta1';
 const FOLDER_ANNOTATION = 'grafana.app/folder';
 
 // TODO: GrafanaAlertStateDecision is a single enum used for both noDataState and execErrState form
