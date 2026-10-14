@@ -107,6 +107,8 @@ export function buildExplainPrompt(context: QueryEditorCoauthoringContextV1): st
     : `Explain the focused part of this existing ${context.language.displayName} query.`;
 }
 
+const MAX_FOLLOW_UP_LENGTH = 40;
+
 export function buildExplainSystemPrompt(
   context: QueryEditorCoauthoringContextV1,
   datasourceType: string,
@@ -130,9 +132,10 @@ export function buildExplainSystemPrompt(
         ? 'Explain how the complete query works as one expression.'
         : 'Describe what the focused text does in the context of the full query.',
     'Return JSON with explanation and followUps. Do not use markdown, headings, prefixes, or suggested edits.',
-    'followUps must be exactly two short questions the user might ask next to understand this query better, phrased in first person.',
-    'For example: "Why do I group by code?" or "What does rate() do over 5m?".',
-    'Never make followUps questions addressed to the user, and never suggest edits.',
+    `followUps must be exactly two short labels of 2 to 5 words and at most ${MAX_FOLLOW_UP_LENGTH} characters, each starting with "Explain".`,
+    'Each followUp names one part of the current query to explain, such as a function, metric, label, range, or aggregation, using text that appears in the query.',
+    'For example: "Explain 5m window" or "Explain prometheus_http_requests_total".',
+    'Never make followUps that suggest changing, filtering, breaking down, or extending the query.',
     'Explore similar metrics and labels only using the datasource metadata already provided. Do not fetch additional data.',
     'Do not invent metric or label names that are not in the provided metadata.',
     ...(request.kind === 'follow-up'
@@ -320,15 +323,13 @@ export function parseQueryExplanation(completionText: string, fallback: string):
   }
   const explanation = normalizeClarificationMessage(parsed.explanation).slice(0, 500) || fallback;
   const questions: unknown = 'followUps' in parsed ? parsed.followUps : undefined;
-  const followUps =
-    Array.isArray(questions) &&
-    questions.length === 2 &&
-    questions.every(
-      (question): question is string =>
-        typeof question === 'string' && question.trim().length > 0 && question.length <= 240
-    )
-      ? questions.map((question) => normalizeClarificationMessage(question))
-      : [];
+  const followUps = Array.isArray(questions)
+    ? questions
+        .filter((question): question is string => typeof question === 'string')
+        .map((question) => normalizeClarificationMessage(question))
+        .filter((question) => question.length > 0 && question.length <= MAX_FOLLOW_UP_LENGTH)
+        .slice(0, 2)
+    : [];
   return { explanation, followUps };
 }
 

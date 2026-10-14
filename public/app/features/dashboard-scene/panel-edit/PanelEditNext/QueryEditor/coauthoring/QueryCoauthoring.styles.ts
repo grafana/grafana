@@ -211,6 +211,15 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       justifyContent: 'flex-end',
       paddingInline: theme.spacing(1),
     }),
+    followUpChips: css({
+      display: 'flex',
+      flex: '0 0 auto',
+      flexWrap: 'wrap',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      paddingInline: theme.spacing(1),
+    }),
+    followUpChip: css({ maxWidth: '100%' }),
     menuActions: css({
       display: 'flex',
       flex: '0 0 auto',
@@ -230,14 +239,6 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       '&:hover:not(:disabled)': { background: theme.colors.action.hover },
       '&:focus-visible': getFocusStyles(theme),
       '&:disabled': { color: theme.colors.text.disabled, cursor: 'not-allowed' },
-    }),
-    quickActions: css({
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      gap: theme.spacing(0.5),
-      padding: theme.spacing(0, 1, 0.5),
-      button: { maxWidth: '100%', whiteSpace: 'normal', height: 'auto', textAlign: 'left' },
     }),
     status: css({
       display: 'flex',
