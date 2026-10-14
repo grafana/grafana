@@ -5,7 +5,7 @@ import { config, usePluginComponents } from '@grafana/runtime';
 import { type AddedComponentRegistryItem } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
-import { EXTENSION_FLOATING_INSET_VAR, ExtensionSidebar } from './ExtensionSidebar';
+import { EXTENSION_FLOATING_INSET_VAR, ExtensionSidebar, MAX_EXTENSION_FLOATING_INSET } from './ExtensionSidebar';
 import { type ExtensionSidebarContextType, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { getComponentIdFromComponentMeta } from './extensionSidebarUtils';
 
@@ -144,6 +144,62 @@ describe('ExtensionSidebar', () => {
     const { container } = render(<ExtensionSidebar />);
     expect(container.firstChild).toBeInTheDocument();
     expect(screen.getByText('Mock Component')).toBeInTheDocument();
+  });
+
+  it('writes the floating inset, capped, only when it changes', () => {
+    let notify = () => {};
+    const original = window.ResizeObserver;
+    class ManualResizeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        notify = () => callback([], this);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+    window.ResizeObserver = ManualResizeObserver;
+    const setProperty = jest.spyOn(document.documentElement.style, 'setProperty');
+    let height = 60;
+    const rect = jest
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the height is read
+      .mockImplementation(() => ({ height }) as DOMRect);
+    try {
+      mockUsePluginComponents.mockReturnValue({
+        components: [createComponentWithMeta(addedComponentRegistryItemMock, extensionPointId)],
+        isLoading: false,
+      });
+      mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'floating' });
+      render(<ExtensionSidebar />);
+      const writes = () => setProperty.mock.calls.filter(([name]) => name === EXTENSION_FLOATING_INSET_VAR);
+      expect(writes()).toHaveLength(1);
+
+      // Small content: its height plus the 24px gap.
+      expect(document.documentElement.style.getPropertyValue(EXTENSION_FLOATING_INSET_VAR)).toBe('84px');
+
+      notify();
+      notify();
+      expect(writes()).toHaveLength(1);
+
+      height = 80;
+      notify();
+      expect(writes()).toHaveLength(2);
+      expect(document.documentElement.style.getPropertyValue(EXTENSION_FLOATING_INSET_VAR)).toBe('104px');
+
+      // An expanded panel is capped, and further growth past the cap writes nothing.
+      height = 720;
+      notify();
+      expect(document.documentElement.style.getPropertyValue(EXTENSION_FLOATING_INSET_VAR)).toBe(
+        `${MAX_EXTENSION_FLOATING_INSET}px`
+      );
+      height = 900;
+      notify();
+      expect(writes()).toHaveLength(3);
+    } finally {
+      window.ResizeObserver = original;
+      setProperty.mockRestore();
+      rect.mockRestore();
+    }
   });
 
   it('tells the extension its presentation and publishes the floating inset only while floating', () => {

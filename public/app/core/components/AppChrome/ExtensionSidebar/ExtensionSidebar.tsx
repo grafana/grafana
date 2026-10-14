@@ -15,6 +15,11 @@ import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
  * Page scroll containers pad by it so their last row can scroll above the bar.
  */
 export const EXTENSION_FLOATING_INSET_VAR = '--extension-floating-inset';
+/**
+ * Upper bound for the inset, in CSS px: about a collapsed floating bar plus its gap. The floating panel
+ * covers only part of the page, so an expanded one must not pad the whole page by its height.
+ */
+export const MAX_EXTENSION_FLOATING_INSET = 120;
 
 type ExtensionSidebarComponentProps = {
   props?: Record<string, unknown>;
@@ -123,14 +128,24 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+/**
+ * Publishes the floating sidebar's height as the page inset. Only the sidebar is observed: it is fixed, so
+ * the page padding the inset produces never changes its size, and an unchanged size writes nothing.
+ */
 function useFloatingInset(element: HTMLElement | null, bottomGap: number) {
   useLayoutEffect(() => {
     if (!element) {
       return;
     }
     const root = document.documentElement;
+    let published = '';
     const update = () => {
-      root.style.setProperty(EXTENSION_FLOATING_INSET_VAR, `${element.getBoundingClientRect().height + bottomGap}px`);
+      const height = Math.round(element.getBoundingClientRect().height + bottomGap);
+      const inset = `${Math.min(height, MAX_EXTENSION_FLOATING_INSET)}px`;
+      if (inset !== published) {
+        published = inset;
+        root.style.setProperty(EXTENSION_FLOATING_INSET_VAR, inset);
+      }
     };
     update();
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(update);
