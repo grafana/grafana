@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { createTheme } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -333,11 +334,12 @@ describe('annotations', () => {
     expect(anchor).toHaveStyle({ left: '200px', top: '200px' });
     expect(anchor.style.top).toBe(pin.style.top);
 
-    // The element is partly visible but the point is above the viewport: the anchor clamps to it.
+    // The element is partly visible but the point is above the overlay: the pin, and the anchor with it,
+    // stays inside the overlay by half a pin.
     panelRect = { ...panelRect, top: -200 };
     fireEvent.scroll(window);
     await nextFrame();
-    expect(anchor).toHaveStyle({ left: '200px', top: '0px' });
+    expect(anchor).toHaveStyle({ left: '200px', top: '12px' });
     expect(anchor).not.toHaveStyle({ display: 'none' });
 
     annotate([item({ label: '2', state: 'staged' })]);
@@ -704,6 +706,8 @@ describe('regions', () => {
       scrollWidth: { value: 1024 },
     });
     overlayRoot.parentElement!.appendChild(body);
+    // jsdom does not lay out: report the stretched overlay the way a browser would.
+    contentRect = { ...contentRect, height: 2400 };
     let pick: Promise<unknown> = Promise.resolve();
     act(() => {
       pick = session.pickRegion(new AbortController().signal);
@@ -726,6 +730,54 @@ describe('regions', () => {
       height: '1650px',
     });
     body.remove();
+  });
+
+  it('draws a region starting at the tab header row whole, above the sticky controls', async () => {
+    const { startPick, annotate } = setup();
+    const pick = startPick();
+    // The tab header row sits just under the controls bar.
+    drag({ x: 114, y: 55 }, { x: 193, y: 107 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
+    annotate([item({ id: 'r', ref, point: { x: 1, y: 0 } })]);
+
+    expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({
+      left: '114px',
+      top: '55px',
+      width: '79px',
+      height: '52px',
+    });
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '193px', top: '55px' });
+    const overlayRoot = screen.getByTestId('dashboard-composer-overlay').parentElement!;
+    // The sticky dashboard controls are at theme.zIndex.sidemenu in the same stacking context.
+    expect(Number(getComputedStyle(overlayRoot).zIndex)).toBeGreaterThan(createTheme().zIndex.sidemenu);
+  });
+
+  it('clamps a drag that starts above the overlay to its top, and captures the clamped box', async () => {
+    const { session, annotate } = setup();
+    contentRect = { ...contentRect, top: 100 };
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickElement(new AbortController().signal);
+    });
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 40, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 300 });
+    expect(screen.getByTestId('composer-region-draft')).toHaveStyle({ top: '0px', height: '200px' });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 300 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
+    annotate([item({ id: 'r', ref, point: { x: 1, y: 0 } })]);
+
+    expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ top: '0px', height: '200px' });
+    // A corner pin on the overlay's top edge is kept whole inside it.
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '350px', top: '12px' });
+    expect(session.resolveBox(ref, overlay.parentElement!.getBoundingClientRect())).toEqual({
+      left: 150,
+      top: 0,
+      width: 200,
+      height: 200,
+    });
   });
 
   it('switches tabs with the Region tool active instead of starting a drag', async () => {

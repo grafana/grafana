@@ -18,9 +18,12 @@ interface Layout {
   highlight: Box | null;
   /** Element bounds per annotation id; an id without an entry does not resolve and is hidden. */
   items: Record<string, Box>;
+  /** The overlay's own size, which pins are kept inside. */
+  width: number;
+  height: number;
 }
 
-const EMPTY_LAYOUT: Layout = { highlight: null, items: {} };
+const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, width: 0, height: 0 };
 
 /**
  * A layer over the dashboard controls and body while Composer is active.
@@ -65,7 +68,12 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     coverContent(root);
     const rootRect = root.getBoundingClientRect();
     const { highlight, annotations: items } = session.getOverlayState();
-    const next: Layout = { highlight: highlight ? session.resolveBox(highlight, rootRect) : null, items: {} };
+    const next: Layout = {
+      highlight: highlight ? session.resolveBox(highlight, rootRect) : null,
+      items: {},
+      width: rootRect.width,
+      height: rootRect.height,
+    };
     for (const item of items) {
       const box = session.resolveBox(item.ref, rootRect);
       if (box) {
@@ -74,7 +82,8 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     }
     session.getAnchors().forEach((anchor, id) => {
       const item = items.find((candidate) => candidate.id === id);
-      const position = item && next.items[id] ? anchorPosition(next.items[id], item.point, rootRect) : null;
+      const box = next.items[id];
+      const position = item && box ? anchorPosition(box, pinCentre(box, item.point, next), rootRect) : null;
       if (!position) {
         anchor.style.display = 'none';
         return;
@@ -170,12 +179,17 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     };
   }, [picking, session, cancelDrag]);
 
-  const toDraft = (start: { x: number; y: number }, x: number, y: number): Box => ({
-    left: Math.min(start.x, x),
-    top: Math.min(start.y, y),
-    width: Math.abs(x - start.x),
-    height: Math.abs(y - start.y),
-  });
+  /**
+   * The rectangle between the press and the pointer, in viewport coordinates, clamped to the overlay (the
+   * dashboard controls and body): core cannot draw or capture outside it.
+   */
+  const toDraft = (start: { x: number; y: number }, x: number, y: number): Box => {
+    const bounds = rootRef.current?.getBoundingClientRect();
+    const clampX = (value: number) => (bounds ? clamp(value, bounds.left, bounds.left + bounds.width) : value);
+    const clampY = (value: number) => (bounds ? clamp(value, bounds.top, bounds.top + bounds.height) : value);
+    const [x1, x2, y1, y2] = [clampX(start.x), clampX(x), clampY(start.y), clampY(y)];
+    return { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) };
+  };
 
   const onPointerDown = (event: React.PointerEvent) => {
     stop(event);
@@ -333,7 +347,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
             key={id}
             type="button"
             className={cx(styles.pin, paused && styles.pinDisabled)}
-            style={{ left: box.left + point.x * box.width, top: box.top + point.y * box.height }}
+            style={pinCentre(box, point, layout)}
             aria-label={t('dashboard.composer.annotation-pin', 'Comment {{label}}', { label })}
             aria-disabled={paused || undefined}
             data-testid={`composer-annotation-pin-${id}`}
@@ -386,10 +400,26 @@ function coverContent(root: HTMLElement) {
 }
 
 /**
- * The pin's centre (the element-relative point), clamped to the viewport, relative to the overlay.
- * Null when no part of the element is in the viewport.
+ * Where a pin is drawn, relative to the overlay: the element-relative point, kept far enough inside the
+ * overlay that the whole pin shows (a pin on a region's corner at the overlay's edge would be half outside).
  */
-function anchorPosition(box: Box, point: ElementPoint, root: DOMRect): { left: number; top: number } | null {
+function pinCentre(box: Box, point: ElementPoint, overlay: { width: number; height: number }) {
+  const half = PIN_SIZE / 2;
+  return {
+    left: clamp(box.left + point.x * box.width, half, Math.max(half, overlay.width - half)),
+    top: clamp(box.top + point.y * box.height, half, Math.max(half, overlay.height - half)),
+  };
+}
+
+/**
+ * The pin's centre, clamped to the viewport, relative to the overlay. Null when no part of the element is
+ * in the viewport.
+ */
+function anchorPosition(
+  box: Box,
+  pin: { left: number; top: number },
+  root: DOMRect
+): { left: number; top: number } | null {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const left = root.left + box.left;
@@ -397,8 +427,8 @@ function anchorPosition(box: Box, point: ElementPoint, root: DOMRect): { left: n
   if (left > viewportWidth || top > viewportHeight || left + box.width < 0 || top + box.height < 0) {
     return null;
   }
-  const x = clamp(left + point.x * box.width, 0, viewportWidth);
-  const y = clamp(top + point.y * box.height, 0, viewportHeight);
+  const x = clamp(root.left + pin.left, 0, viewportWidth);
+  const y = clamp(root.top + pin.top, 0, viewportHeight);
   return { left: x - root.left, top: y - root.top };
 }
 
@@ -413,8 +443,9 @@ function getStyles(theme: GrafanaTheme2) {
     root: css({
       position: 'absolute',
       inset: 0,
-      // Local to the dashboard container's stacking context: above the sticky controls, below app chrome.
-      zIndex: theme.zIndex.navbarFixed,
+      // Local to the dashboard container's stacking context, so below app chrome. The sticky dashboard
+      // controls sit at `sidemenu` in the same context; anything lower lets them cover pins and outlines.
+      zIndex: theme.zIndex.sidemenu + 1,
       pointerEvents: 'none',
     }),
     blocker: css({
