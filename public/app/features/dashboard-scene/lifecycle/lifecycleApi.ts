@@ -70,12 +70,25 @@ export interface DraftListItem {
   uid: string;
   title: string;
   folder?: string;
+  /** Epoch milliseconds. */
+  created?: number;
+  /** Epoch milliseconds of the last edit; its creation until a draft is edited. */
+  updated?: number;
 }
 
-/** The requester's own drafts. */
+/** The requester's own drafts, most recently edited first. */
 export async function listMyDrafts(): Promise<DraftListItem[]> {
   const res = await getBackendSrv().get<{
-    hits?: Array<{ name: string; title: string; folder?: string }>;
-  }>(searchURL(), { lifecycle: 'draft', type: 'dashboard', limit: 200 });
-  return (res.hits ?? []).map((hit) => ({ uid: hit.name, title: hit.title, folder: hit.folder }));
+    hits?: Array<{ name: string; title: string; folder?: string; field?: { created?: number; updated?: number } }>;
+  }>(searchURL(), { lifecycle: 'draft', type: 'dashboard', limit: 200, field: ['created', 'updated'] });
+  return (res.hits ?? [])
+    .map((hit) => ({
+      uid: hit.name,
+      title: hit.title,
+      folder: hit.folder,
+      created: hit.field?.created || undefined,
+      // Search reports 0 for a draft not edited since it was created.
+      updated: hit.field?.updated || hit.field?.created,
+    }))
+    .sort((a, b) => (b.updated ?? 0) - (a.updated ?? 0));
 }
