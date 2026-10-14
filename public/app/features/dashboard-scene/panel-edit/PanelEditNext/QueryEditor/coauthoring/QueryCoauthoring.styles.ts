@@ -72,10 +72,11 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
     dragHandle: css({
       position: 'absolute',
       top: 0,
-      left: '50%',
-      transform: 'translateX(-50%)',
+      left: theme.spacing(1),
+      right: theme.spacing(1),
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
       height: theme.spacing(3),
       cursor: 'grab',
       opacity: 0,

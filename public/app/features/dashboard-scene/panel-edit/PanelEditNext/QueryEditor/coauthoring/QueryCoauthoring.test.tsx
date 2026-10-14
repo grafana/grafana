@@ -837,30 +837,36 @@ describe('QueryCoauthoring', () => {
     expect(screen.getAllByRole('tab')).toHaveLength(3);
   });
 
-  it('drags card backgrounds as a group without dimming, ignores controls, and reports adjustment once', async () => {
+  it('drags only from the handle without dimming, leaves card text selectable, and reports adjustment once', async () => {
     const { user } = await setupPeek();
     const dialog = screen.getByRole('dialog');
     mockProposalGeometry(dialog);
     fireEvent.animationEnd(dialog);
-    const details = screen.getByRole('region', { name: 'Query proposal details' });
-    await user.pointer({ keys: '[MouseLeft>]', target: details, coords: { x: 250, y: 350 } });
+    const handle = dialog.querySelector<HTMLElement>('[data-proposal-drag-handle]')!;
+    await user.pointer({ keys: '[MouseLeft>]', target: handle, coords: { x: 250, y: 310 } });
     expect(dialog).not.toHaveStyle({ opacity: 0.04 });
-    await user.pointer({ target: document.body, coords: { x: 280, y: 370 } });
+    await user.pointer({ target: document.body, coords: { x: 280, y: 330 } });
     expect(dialog.getBoundingClientRect().left).toBe(230);
     expect(dialog.getBoundingClientRect().top).toBe(326);
     await user.pointer({ keys: '[/MouseLeft]', target: document.body });
-    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
-    const option = screen.getByRole('tab', { name: 'Option 2' });
-    await user.pointer({ keys: '[MouseLeft>]', target: option });
-    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
-    await user.pointer({ keys: '[/MouseLeft]', target: option });
+
+    const why = screen.getByText('Counts selected requests.');
+    expect(fireEvent.pointerDown(why, { button: 0 })).toBe(true);
+    fireEvent.pointerUp(why);
+    await user.pointer({ keys: '[MouseLeft>]', target: why, coords: { x: 250, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 400, y: 450 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
     expect(dialog.getBoundingClientRect().left).toBe(230);
     const footer = screen.getByRole('button', { name: 'Accept' }).parentElement!;
     await user.pointer({ keys: '[MouseLeft>]', target: footer, coords: { x: 250, y: 600 } });
     await user.pointer({ target: document.body, coords: { x: 270, y: 610 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog.getBoundingClientRect().left).toBe(230);
+
+    await user.pointer({ keys: '[MouseLeft>]', target: handle, coords: { x: 250, y: 310 } });
+    await user.pointer({ target: document.body, coords: { x: 270, y: 320 } });
     fireEvent.pointerCancel(document, { pointerId: 2 });
     expect(dialog.getBoundingClientRect().left).toBe(250);
-    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
     const adjusted = mockReportInteraction.mock.calls.filter(
       ([name]) => name === 'grafana_query_coauthoring_proposal_group_adjusted'
     );
@@ -943,8 +949,8 @@ describe('QueryCoauthoring', () => {
     await user.pointer({ target: document.body, coords: { x: 2000, y: 350 } });
     await user.pointer({ keys: '[/MouseLeft]', target: document.body });
     expect(dialog.getBoundingClientRect().right).toBe(window.innerWidth - 8);
-    const details = screen.getByRole('region', { name: 'Query proposal details' });
-    await user.pointer({ keys: '[MouseLeft>]', target: details, coords: { x: 350, y: 350 } });
+    const handle = dialog.querySelector<HTMLElement>('[data-proposal-drag-handle]')!;
+    await user.pointer({ keys: '[MouseLeft>]', target: handle, coords: { x: 350, y: 310 } });
     await user.pointer({ target: document.body, coords: { x: -1000, y: -1000 } });
     expect(dialog.getBoundingClientRect().left).toBe(8);
     expect(dialog.getBoundingClientRect().top).toBe(8);
