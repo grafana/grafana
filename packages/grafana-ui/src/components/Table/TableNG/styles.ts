@@ -68,6 +68,14 @@ const headerCornerMask = (radius: string) =>
     pointerEvents: 'none',
   }) as const;
 
+export const getGridBackgroundColor = (theme: GrafanaTheme2, transparent?: boolean): string => {
+  return transparent
+    ? theme.flags.visualDesignRefresh
+      ? theme.colors.background.page
+      : theme.colors.background.canvas
+    : theme.components.panel.background;
+};
+
 export const getGridStyles = memoize(
   (
     theme: GrafanaTheme2,
@@ -75,14 +83,11 @@ export const getGridStyles = memoize(
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
     noPanelPadding?: boolean,
-    zebraStriping?: boolean
+    zebraStriping?: boolean,
+    showColumnSidebarBorder?: boolean
   ) => {
     const table = theme.components.table;
-    const bgColor = transparent
-      ? theme.flags.visualDesignRefresh
-        ? theme.colors.background.page
-        : theme.colors.background.canvas
-      : theme.components.panel.background;
+    const bgColor = getGridBackgroundColor(theme, transparent);
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
     const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
     const cornerRadius = theme.shape.radius.default;
@@ -149,6 +154,7 @@ export const getGridStyles = memoize(
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
+        ...(showColumnSidebarBorder && { borderInlineStart: `1px solid ${table.border}` }),
 
         // The grid defaults to tabular digits; override them while dataviz.tabularNums is disabled.
         ...(theme.flags.tabularNums ? {} : { fontVariantNumeric: 'normal' }),

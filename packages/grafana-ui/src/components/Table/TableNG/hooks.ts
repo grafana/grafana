@@ -42,6 +42,7 @@ import {
   SCROLL_SHADOW_THRESHOLD,
   TABLE,
 } from './constants';
+import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -436,6 +437,7 @@ interface UseHeaderHeightOptions {
   tableRefreshEnabled?: boolean;
   /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
 }
 
 export function useHeaderHeight({
@@ -448,6 +450,7 @@ export function useHeaderHeight({
   tableRefreshEnabled = false,
   filter,
   lastColumnExtraPadding = 0,
+  hasColumnSidebar = false,
   hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
@@ -472,7 +475,13 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
-          hasAssistantAction,
+          hasColumnOptions:
+            getColumnMenuOptions({
+              filterable: field.config.custom?.filterable,
+              hideable: field.config.custom?.hideable,
+              hasColumnSidebar,
+              hasAssistantAction,
+            }).length > 0,
         });
         return Math.floor(width);
       }),
@@ -484,6 +493,7 @@ export function useHeaderHeight({
       tableRefreshEnabled,
       filteredKeys,
       lastColumnExtraPadding,
+      hasColumnSidebar,
       hasAssistantAction,
     ]
   );
@@ -1043,6 +1053,7 @@ export interface ContentAwareWidths {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1093,6 +1104,7 @@ interface UseContentAwareWidthsOptions {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1110,6 +1122,7 @@ export function useContentAwareWidths({
   getActions,
   tableRefreshEnabled = false,
   filter,
+  hasColumnSidebar = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
@@ -1129,6 +1142,7 @@ export function useContentAwareWidths({
             getActions,
             tableRefreshEnabled,
             filter,
+            hasColumnSidebar,
             noPanelPadding,
             preventHorizontalOverflow,
           }
@@ -1144,6 +1158,7 @@ export function useContentAwareWidths({
       filter,
       tableRefreshEnabled,
       theme,
+      hasColumnSidebar,
       noPanelPadding,
       preventHorizontalOverflow,
     ]
@@ -1354,3 +1369,42 @@ export const useReducerEntries = (
     });
   }, [field, rows, displayName, colIdx]);
 };
+
+interface ColumnViewStateOptions {
+  hiddenColumns?: ReadonlySet<string>;
+  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
+  structureRev?: number;
+}
+
+interface ColumnViewState {
+  hiddenColumns: ReadonlySet<string>;
+  setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
+}
+
+const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
+
+// Change handlers select controlled mode because controlled values may initially be empty.
+export function useColumnViewState({
+  hiddenColumns,
+  onHiddenColumnsChange,
+  structureRev,
+}: ColumnViewStateOptions): ColumnViewState {
+  const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
+
+  useEffect(() => {
+    if (!onHiddenColumnsChange) {
+      setLocalHiddenColumns(NO_HIDDEN_COLUMNS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structureRev]);
+
+  const setHiddenColumns = useCallback(
+    (next: ReadonlySet<string>) => (onHiddenColumnsChange ? onHiddenColumnsChange(next) : setLocalHiddenColumns(next)),
+    [onHiddenColumnsChange]
+  );
+
+  return {
+    hiddenColumns: (onHiddenColumnsChange ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
+    setHiddenColumns,
+  };
+}
