@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
 	config "github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
@@ -333,45 +333,15 @@ var fullMimirWithOnlyExtraReceiver string
 //go:embed testdata/mimir_swapped_intervals.yaml
 var fullMimirSwappedIntervals string
 
-func load(t *testing.T, yaml string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMConfigV1 {
+func load(t *testing.T, raw string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMConfigV1 {
 	t.Helper()
-	orig, err := definition.LoadCompat([]byte(yaml))
+	orig := store.AMConfigDB{
+		AlertmanagerConfig: store.AlertingConfigDB{},
+	}
+	err := yaml.Unmarshal([]byte(raw), &orig.AlertmanagerConfig)
 	require.NoError(t, err)
 
-	receivers := make([]*store.ReceiverDB, 0, len(orig.Receivers))
-	for _, r := range orig.Receivers {
-		integrations := make([]*store.PostableGrafanaReceiverDB, 0, len(r.GrafanaManagedReceivers))
-		for _, g := range r.GrafanaManagedReceivers {
-			integrations = append(integrations, &store.PostableGrafanaReceiverDB{
-				UID:                   g.UID,
-				Name:                  g.Name,
-				Type:                  g.Type,
-				Version:               g.Version,
-				DisableResolveMessage: g.DisableResolveMessage,
-				Settings:              g.Settings,
-				SecureSettings:        g.SecureSettings,
-			})
-		}
-		receivers = append(receivers, &store.ReceiverDB{Name: r.Name, GrafanaManagedReceivers: integrations})
-	}
-	timeIntervals := make([]store.TimeIntervalDB, 0, len(orig.TimeIntervals))
-	for _, ti := range orig.TimeIntervals {
-		timeIntervals = append(timeIntervals, store.TimeIntervalDB{Name: ti.Name, TimeIntervals: ti.TimeIntervals})
-	}
-	muteTimeIntervals := make([]store.TimeIntervalDB, 0, len(orig.MuteTimeIntervals))
-	for _, mti := range orig.MuteTimeIntervals {
-		muteTimeIntervals = append(muteTimeIntervals, store.TimeIntervalDB{Name: mti.Name, TimeIntervals: mti.TimeIntervals})
-	}
-
-	cfg := v1.ToModel(&store.AMConfigDB{
-		AlertmanagerConfig: store.AlertingConfigDB{
-			Route:             orig.Route,
-			InhibitRules:      orig.InhibitRules,
-			Receivers:         receivers,
-			TimeIntervals:     timeIntervals,
-			MuteTimeIntervals: muteTimeIntervals,
-		},
-	})
+	cfg := v1.ToModel(&orig)
 	for _, m := range mutate {
 		m(cfg)
 	}

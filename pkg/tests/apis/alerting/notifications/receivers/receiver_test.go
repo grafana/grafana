@@ -805,7 +805,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	route1.Routes = nil
 	route2 := route1
 	parentRoute := *amConfig.AlertmanagerConfig.Route.Routes[0]
-	parentRoute.Routes = []*definitions.Route{&route1, &route2}
+	parentRoute.Routes = []*v1store.RouteDB{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
 	persistInitialConfig(t, amConfig, helper.Org1.Admin)

@@ -106,7 +106,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
 	// route
-	routingTree := legacy_storage.WithManagedRoutes(prepared)
+	routingTree := WithManagedRoutes(prepared)
 
 	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, prepared, routingTree, onInvalid, moa.featureManager); err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err

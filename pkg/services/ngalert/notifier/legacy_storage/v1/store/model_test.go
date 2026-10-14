@@ -44,6 +44,16 @@ func TestAMConfigDB_UnmarshalJSON_Validation(t *testing.T) {
 			wantErrSubstr: "root route must not have any mute time intervals",
 		},
 		{
+			name:          "root route with object matchers",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "object_matchers": [["a", "=", "b"]]}, "receivers": [{"name": "empty"}]}}`,
+			wantErrSubstr: "root route must not have any matchers",
+		},
+		{
+			name:          "root route with active time intervals",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "active_time_intervals": ["t"]}, "receivers": [{"name": "empty"}]}}`,
+			wantErrSubstr: "root route must not have any active time intervals",
+		},
+		{
 			name:          "continue in root route",
 			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "continue": true}, "receivers": [{"name": "empty"}]}}`,
 			wantErrSubstr: "cannot have continue in root route",
@@ -68,6 +78,36 @@ func TestAMConfigDB_UnmarshalJSON_Validation(t *testing.T) {
 		{
 			name:          "zero repeat_interval",
 			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "repeat_interval": "0s"}, "receivers": [{"name": "empty"}]}}`,
+			wantErrSubstr: "repeat_interval cannot be zero",
+		},
+		{
+			name:          "invalid match_re label name",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "routes": [{"receiver": "empty", "match_re": {"1bad": "x.*"}}]}, "receivers": [{"name": "empty"}]}}`,
+			wantErrSubstr: `invalid label name "1bad"`,
+		},
+		{
+			name:          "null match_re value",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "routes": [{"receiver": "empty", "match_re": {"a": null}}]}, "receivers": [{"name": "empty"}]}}`,
+			wantErrSubstr: `invalid regexp value for "a"`,
+		},
+		{
+			name:          "duplicate group_by label in nested route",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "routes": [{"receiver": "empty", "routes": [{"receiver": "empty", "group_by": ["a", "a"]}]}]}, "receivers": [{"name": "empty"}]}}`,
+			wantErrSubstr: `duplicated label "a" in group_by`,
+		},
+		{
+			name:          "wildcard and other labels in group_by in nested route",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "routes": [{"receiver": "empty", "group_by": ["...", "a"]}]}, "receivers": [{"name": "empty"}]}}`,
+			wantErrSubstr: "cannot have wildcard group_by",
+		},
+		{
+			name:          "zero group_interval in nested route",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "routes": [{"receiver": "empty", "group_interval": "0s"}]}, "receivers": [{"name": "empty"}]}}`,
+			wantErrSubstr: "group_interval cannot be zero",
+		},
+		{
+			name:          "zero repeat_interval in nested route",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty", "routes": [{"receiver": "empty", "repeat_interval": "0s"}]}, "receivers": [{"name": "empty"}]}}`,
 			wantErrSubstr: "repeat_interval cannot be zero",
 		},
 
@@ -144,12 +184,43 @@ func TestAMConfigDB_UnmarshalJSON_Validation(t *testing.T) {
 			wantErrSubstr: `invalid label name "" in equal list`,
 		},
 
-		// --- managed_routes (ManagedRoutesDB) - decoded via a YAML divert, since its values
-		// (definition.Route) only define UnmarshalYAML, not UnmarshalJSON. Confirms a managed
-		// route still goes through the same per-node ValidateChild checks a regular route does.
+		// --- managed_routes - validated by AMConfigDB.UnmarshalJSON. A managed route is the root
+		// of its own routing tree, so it needs a receiver and its routes get the usual checks.
+		// It has no matchers or time intervals to validate.
+		{
+			name:          "managed route missing receiver",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}]}, "managed_routes": {"route1": {}}}`,
+			wantErrSubstr: "root route must specify a default receiver",
+		},
+
 		{
 			name:          "managed route with duplicate group_by label",
 			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}]}, "managed_routes": {"route1": {"receiver": "empty", "group_by": ["a", "a"]}}}`,
+			wantErrSubstr: `duplicated label "a" in group_by`,
+		},
+		{
+			name:          "managed route with invalid match_re label name",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}]}, "managed_routes": {"route1": {"receiver": "empty", "routes": [{"receiver": "empty", "match_re": {"1bad": "x.*"}}]}}}`,
+			wantErrSubstr: `invalid label name "1bad"`,
+		},
+		{
+			name:          "managed route with wildcard and other labels in group_by",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}]}, "managed_routes": {"route1": {"receiver": "empty", "group_by": ["...", "a"]}}}`,
+			wantErrSubstr: "cannot have wildcard group_by",
+		},
+		{
+			name:          "managed route with zero group_interval",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}]}, "managed_routes": {"route1": {"receiver": "empty", "group_interval": "0s"}}}`,
+			wantErrSubstr: "group_interval cannot be zero",
+		},
+		{
+			name:          "managed route with zero repeat_interval",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}]}, "managed_routes": {"route1": {"receiver": "empty", "repeat_interval": "0s"}}}`,
+			wantErrSubstr: "repeat_interval cannot be zero",
+		},
+		{
+			name:          "managed route with invalid nested route",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}]}, "managed_routes": {"route1": {"receiver": "empty", "routes": [{"receiver": "empty", "group_by": ["a", "a"]}]}}}`,
 			wantErrSubstr: `duplicated label "a" in group_by`,
 		},
 	}
@@ -262,15 +333,8 @@ func TestAMConfigDB_UnmarshalJSON_Valid(t *testing.T) {
 
 	child := route.Routes[0]
 	assert.Equal(t, "other", child.Receiver)
-	// GroupBy is derived from GroupByStr by Route.Validate (ValidateChild) at decode time - not
-	// itself persisted (`json:"-"`) - so this also confirms that ran.
-	require.Len(t, child.GroupBy, 1)
-	assert.Equal(t, "alertname", string(child.GroupBy[0]))
-	assert.False(t, child.GroupByAll)
-
-	// The wildcard group_by on the root resolves to GroupByAll, not a literal "..." entry.
-	assert.Empty(t, route.GroupBy)
-	assert.True(t, route.GroupByAll)
+	assert.Equal(t, []string{"alertname"}, child.GroupByStr)
+	assert.Equal(t, []string{"..."}, route.GroupByStr)
 
 	require.Len(t, c.AlertmanagerConfig.Receivers, 2)
 	require.Len(t, c.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers, 1)
@@ -295,8 +359,7 @@ func TestAMConfigDB_UnmarshalJSON_Valid(t *testing.T) {
 	require.Contains(t, c.ManagedRoutes, "route1")
 	managedRoute := c.ManagedRoutes["route1"]
 	require.NotNil(t, managedRoute)
-	require.Len(t, managedRoute.GroupBy, 1)
-	assert.Equal(t, "alertname", string(managedRoute.GroupBy[0]))
+	assert.Equal(t, []string{"alertname"}, managedRoute.GroupByStr)
 
 	require.Contains(t, c.ManagedInhibitionRules, "rule1")
 	rule := c.ManagedInhibitionRules["rule1"]
@@ -322,4 +385,38 @@ func TestReceiverDB_UnmarshalJSON_NormalizesSettings(t *testing.T) {
 
 	require.Len(t, r.GrafanaManagedReceivers, 1)
 	assert.Equal(t, `{"a":{"y":"x","z":true},"b":1}`, string(r.GrafanaManagedReceivers[0].Settings))
+}
+
+func TestAllReceivers(t *testing.T) {
+	t.Run("collects receivers recursively and skips empty", func(t *testing.T) {
+		route := &RouteDB{Receiver: "a", Routes: []*RouteDB{
+			{Receiver: "b", Routes: []*RouteDB{{Receiver: "c"}}},
+			{},
+		}}
+		assert.Equal(t, []string{"a", "b", "c"}, allReceivers(route))
+	})
+	t.Run("nil route", func(t *testing.T) {
+		assert.Empty(t, allReceivers(nil))
+	})
+}
+
+// TestManagedRouteDB_IgnoresRootOnlyFields locks in that a managed route only holds the fields a
+// root route can carry: anything else in a stored blob is dropped on decode.
+func TestManagedRouteDB_IgnoresRootOnlyFields(t *testing.T) {
+	var c AMConfigDB
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"alertmanager_config": {"route": {"receiver": "a"}, "receivers": [{"name": "a"}]},
+		"managed_routes": {"r": {
+			"receiver": "a",
+			"group_by": ["x"],
+			"matchers": ["a=\"b\""],
+			"mute_time_intervals": ["t"],
+			"continue": true,
+			"routes": [{"receiver": "a", "matchers": ["c=d"], "continue": true}]
+		}}
+	}`), &c))
+
+	got, err := json.Marshal(c.ManagedRoutes["r"])
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"receiver": "a", "group_by": ["x"], "routes": [{"receiver": "a", "matchers": ["c=\"d\""], "continue": true}]}`, string(got))
 }

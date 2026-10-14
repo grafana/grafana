@@ -140,7 +140,7 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaReceivers() ([]*PostableApiReceiver, 
 
 // ToGrafanaRoute converts the imported route to Grafana's Route type.
 func (c *ExtraAlertmanagerConfig) ToGrafanaRoute() *Route {
-	return RouteToModel(definition.AsGrafanaRoute(c.Route))
+	return AMRouteToModel(c.Route)
 }
 
 // ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type.

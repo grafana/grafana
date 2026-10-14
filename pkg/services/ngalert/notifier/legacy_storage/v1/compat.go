@@ -9,8 +9,10 @@ import (
 
 	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -103,18 +105,57 @@ func PostableGrafanaReceiverDBsToModel(in []*store.PostableGrafanaReceiverDB) []
 	return out
 }
 
-func ManagedRoutesToModel(in map[string]*definition.Route) map[string]*Route {
+func ManagedRoutesToModel(in map[string]*store.ManagedRouteDB) map[string]*Route {
 	if in == nil {
 		return nil
 	}
 	routes := make(map[string]*Route, len(in))
 	for name, route := range in {
-		routes[name] = RouteToModel(route)
+		routes[name] = ManagedRouteToModel(route)
 	}
 	return routes
 }
 
-func RouteToModel(in *definition.Route) *Route {
+// ManagedRouteToModel converts a persisted managed route into the domain model, computing the
+// derived GroupBy/GroupByAll fields from GroupByStr.
+func ManagedRouteToModel(in *store.ManagedRouteDB) *Route {
+	if in == nil {
+		return nil
+	}
+	out := Route{
+		Receiver:       in.Receiver,
+		GroupByStr:     slices.Clone(in.GroupByStr),
+		GroupWait:      in.GroupWait,
+		GroupInterval:  in.GroupInterval,
+		RepeatInterval: in.RepeatInterval,
+		Provenance:     Provenance(in.Provenance),
+	}
+	out.GroupBy, out.GroupByAll = splitGroupBy(in.GroupByStr)
+
+	if in.Routes != nil {
+		out.Routes = make([]*Route, 0, len(in.Routes))
+		for _, r := range in.Routes {
+			out.Routes = append(out.Routes, RouteToModel(r))
+		}
+	}
+
+	return &out
+}
+
+// splitGroupBy derives Route.GroupBy/GroupByAll from the persisted group_by strings.
+func splitGroupBy(groupByStr []string) (groupBy []model.LabelName, groupByAll bool) {
+	for _, l := range groupByStr {
+		if l == "..." {
+			groupByAll = true
+		} else {
+			groupBy = append(groupBy, model.LabelName(l))
+		}
+	}
+	return groupBy, groupByAll
+}
+
+// AMRouteToModel converts an upstream Alertmanager route into the domain model.
+func AMRouteToModel(in *config.Route) *Route {
 	if in == nil {
 		return nil
 	}
@@ -123,6 +164,34 @@ func RouteToModel(in *definition.Route) *Route {
 		GroupByStr:          slices.Clone(in.GroupByStr),
 		GroupBy:             slices.Clone(in.GroupBy),
 		GroupByAll:          in.GroupByAll,
+		Match:               maps.Clone(in.Match),
+		MatchRE:             maps.Clone(in.MatchRE),
+		Matchers:            slices.Clone(in.Matchers),
+		MuteTimeIntervals:   slices.Clone(in.MuteTimeIntervals),
+		ActiveTimeIntervals: slices.Clone(in.ActiveTimeIntervals),
+		Continue:            in.Continue,
+		GroupWait:           in.GroupWait,
+		GroupInterval:       in.GroupInterval,
+		RepeatInterval:      in.RepeatInterval,
+	}
+
+	out.Routes = make([]*Route, 0, len(in.Routes))
+	for _, r := range in.Routes {
+		out.Routes = append(out.Routes, AMRouteToModel(r))
+	}
+
+	return &out
+}
+
+// RouteToModel converts a persisted route into the domain model, computing the derived
+// GroupBy/GroupByAll fields from GroupByStr.
+func RouteToModel(in *store.RouteDB) *Route {
+	if in == nil {
+		return nil
+	}
+	out := Route{
+		Receiver:            in.Receiver,
+		GroupByStr:          slices.Clone(in.GroupByStr),
 		Match:               maps.Clone(in.Match),
 		MatchRE:             maps.Clone(in.MatchRE),
 		Matchers:            slices.Clone(in.Matchers),
@@ -135,6 +204,7 @@ func RouteToModel(in *definition.Route) *Route {
 		RepeatInterval:      in.RepeatInterval,
 		Provenance:          Provenance(in.Provenance),
 	}
+	out.GroupBy, out.GroupByAll = splitGroupBy(in.GroupByStr)
 
 	if in.Routes != nil {
 		out.Routes = make([]*Route, 0, len(in.Routes))
@@ -287,26 +357,50 @@ func PostableGrafanaReceiversToDB(in []*PostableGrafanaReceiver) []*store.Postab
 	return out
 }
 
-func ManagedRoutesToDB(in map[string]*Route) store.ManagedRoutesDB {
+func ManagedRoutesToDB(in map[string]*Route) map[string]*store.ManagedRouteDB {
 	if in == nil {
 		return nil
 	}
-	routes := make(store.ManagedRoutesDB, len(in))
+	routes := make(map[string]*store.ManagedRouteDB, len(in))
 	for name, route := range in {
-		routes[name] = RouteToDB(route)
+		routes[name] = ManagedRouteToDB(route)
 	}
 	return routes
 }
 
-func RouteToDB(in *Route) *definition.Route {
+// ManagedRouteToDB converts a domain managed route into its persisted shape, which only holds the
+// fields a managed (root) route supports.
+func ManagedRouteToDB(in *Route) *store.ManagedRouteDB {
 	if in == nil {
 		return nil
 	}
-	out := definition.Route{
+	out := store.ManagedRouteDB{
+		Receiver:       in.Receiver,
+		GroupByStr:     slices.Clone(in.GroupByStr),
+		GroupWait:      in.GroupWait,
+		GroupInterval:  in.GroupInterval,
+		RepeatInterval: in.RepeatInterval,
+		Provenance:     string(in.Provenance),
+	}
+
+	if in.Routes != nil {
+		out.Routes = make([]*store.RouteDB, 0, len(in.Routes))
+		for _, r := range in.Routes {
+			out.Routes = append(out.Routes, RouteToDB(r))
+		}
+	}
+
+	return &out
+}
+
+// RouteToDB converts a domain route into its persisted shape.
+func RouteToDB(in *Route) *store.RouteDB {
+	if in == nil {
+		return nil
+	}
+	out := store.RouteDB{
 		Receiver:            in.Receiver,
 		GroupByStr:          slices.Clone(in.GroupByStr),
-		GroupBy:             slices.Clone(in.GroupBy),
-		GroupByAll:          in.GroupByAll,
 		Match:               maps.Clone(in.Match),
 		MatchRE:             maps.Clone(in.MatchRE),
 		Matchers:            slices.Clone(in.Matchers),
@@ -317,11 +411,11 @@ func RouteToDB(in *Route) *definition.Route {
 		GroupWait:           in.GroupWait,
 		GroupInterval:       in.GroupInterval,
 		RepeatInterval:      in.RepeatInterval,
-		Provenance:          definition.Provenance(in.Provenance),
+		Provenance:          string(in.Provenance),
 	}
 
 	if in.Routes != nil {
-		out.Routes = make([]*definition.Route, 0, len(in.Routes))
+		out.Routes = make([]*store.RouteDB, 0, len(in.Routes))
 		for _, r := range in.Routes {
 			out.Routes = append(out.Routes, RouteToDB(r))
 		}
