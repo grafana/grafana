@@ -157,6 +157,8 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 		return v1.TimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
 
+	// A brand new interval gets a fresh, name-derived UID; it has no existing identity to preserve.
+	mt.UID = v1.TimeIntervalUID(mt.Title)
 	created := revision.SetTimeInterval(mt)
 
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -219,20 +221,17 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 		return v1.TimeInterval{}, err
 	}
 
+	// Preserve the existing UID regardless of how it was resolved above: the legacy provisioning
+	// API never sends a UID, so without this a rename would otherwise fall through to
+	// SetTimeInterval's new-interval fallback and derive a fresh UID from the new title.
+	mt.UID = existing.UID
 	updated := revision.SetTimeInterval(mt)
 
 	// TODO add diff and noop detection
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// if the name of the time interval changed
 		if existing.Title != updated.Title {
-			revision.DeleteTimeInterval(existing.UID)
-
 			err = svc.renameTimeIntervalInDependentResources(ctx, orgID, revision, existing.Title, updated.Title, updated.Provenance)
-			if err != nil {
-				return err
-			}
-
-			err = svc.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
 			if err != nil {
 				return err
 			}

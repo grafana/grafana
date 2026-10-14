@@ -62,10 +62,16 @@ func TimeIntervalsToModel(muteIntervals []store.TimeIntervalDB, timeIntervals []
 	out := make(map[ResourceUID]TimeInterval, len(muteIntervals)+len(timeIntervals))
 	for _, interval := range muteIntervals {
 		ti := NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone)
+		if interval.UID != "" {
+			ti.UID = ResourceUID(interval.UID)
+		}
 		out[ti.UID] = ti
 	}
 	for _, interval := range timeIntervals {
 		ti := NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone)
+		if interval.UID != "" {
+			ti.UID = ResourceUID(interval.UID)
+		}
 		out[ti.UID] = ti
 	}
 	return out
@@ -309,6 +315,7 @@ func TimeIntervalsToDB(in []TimeInterval) []store.TimeIntervalDB {
 	out := make([]store.TimeIntervalDB, 0, len(in))
 	for _, interval := range in {
 		out = append(out, store.TimeIntervalDB{
+			UID:           string(interval.UID),
 			Name:          interval.Title,
 			TimeIntervals: interval.TimeIntervals,
 		})

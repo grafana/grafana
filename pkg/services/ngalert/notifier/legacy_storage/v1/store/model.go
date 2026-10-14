@@ -417,8 +417,10 @@ func (r *ReceiverDB) UnmarshalJSON(b []byte) error {
 }
 
 // TimeIntervalDB is the persisted representation of a single "time_intervals"/"mute_time_intervals"
-// entry.
+// entry. UID is omitempty for rows written before UID persistence existed; callers fall back to a
+// name-derived UID for those.
 type TimeIntervalDB struct {
+	UID           string                      `yaml:"uid,omitempty" json:"uid,omitempty"`
 	Name          string                      `yaml:"name" json:"name"`
 	TimeIntervals []timeinterval.TimeInterval `yaml:"time_intervals" json:"time_intervals"`
 }
