@@ -1753,7 +1753,7 @@ func loadDBModel(rawConfig []byte) (*v1store.AMConfigDB, error) {
 func receiverDBToAPI(r *v1store.ReceiverDB) *definition.PostableApiReceiver {
 	return &definition.PostableApiReceiver{
 		Name:                    r.Name,
-		GrafanaManagedReceivers: r.GrafanaManagedReceivers,
+		GrafanaManagedReceivers: integrationsDBToAPI(r.GrafanaManagedReceivers),
 	}
 }
 
@@ -1762,8 +1762,40 @@ func receiverDBToAPI(r *v1store.ReceiverDB) *definition.PostableApiReceiver {
 func receiverAPIToDB(r *definition.PostableApiReceiver) *v1store.ReceiverDB {
 	return &v1store.ReceiverDB{
 		Name:                    r.Name,
-		GrafanaManagedReceivers: r.GrafanaManagedReceivers,
+		GrafanaManagedReceivers: integrationsAPIToDB(r.GrafanaManagedReceivers),
 	}
+}
+
+func integrationsDBToAPI(in []*v1store.PostableGrafanaReceiverDB) []*definition.PostableGrafanaReceiver {
+	out := make([]*definition.PostableGrafanaReceiver, 0, len(in))
+	for _, r := range in {
+		out = append(out, &definition.PostableGrafanaReceiver{
+			UID:                   r.UID,
+			Name:                  r.Name,
+			Type:                  r.Type,
+			Version:               r.Version,
+			DisableResolveMessage: r.DisableResolveMessage,
+			Settings:              r.Settings,
+			SecureSettings:        r.SecureSettings,
+		})
+	}
+	return out
+}
+
+func integrationsAPIToDB(in []*definition.PostableGrafanaReceiver) []*v1store.PostableGrafanaReceiverDB {
+	out := make([]*v1store.PostableGrafanaReceiverDB, 0, len(in))
+	for _, r := range in {
+		out = append(out, &v1store.PostableGrafanaReceiverDB{
+			UID:                   r.UID,
+			Name:                  r.Name,
+			Type:                  r.Type,
+			Version:               r.Version,
+			DisableResolveMessage: r.DisableResolveMessage,
+			Settings:              r.Settings,
+			SecureSettings:        r.SecureSettings,
+		})
+	}
+	return out
 }
 
 // encryptedGrafanaReceivers encrypts each receiver's secure settings.

@@ -167,14 +167,45 @@ func ModelToInhibitionRules(inhibitionRules map[v1.ResourceUID]v1.InhibitionRule
 	return res, nil
 }
 
-// Route, Matchers and PostableGrafanaReceivers don't have a persisted shape
+// Route and Matchers don't have a persisted shape
 // distinct from their API shape (their names already serve as their identity, or they're plain
 // value types with no persistence-specific concerns), so their DB-side conversions double as the
 // API-side ones. Doing it this way makes caller intent clearer than reusing the "ToDB" names
 // directly.
 var RouteToAPI = v1.RouteToDB
 var MatchersToAPI = v1.MatchersToDB
-var PostableGrafanaReceiversToAPI = v1.PostableGrafanaReceiversToDB
+
+// PostableGrafanaReceiversFromAPI converts the public/API integrations into the domain model.
+func PostableGrafanaReceiversFromAPI(in []*definition.PostableGrafanaReceiver) []*v1.PostableGrafanaReceiver {
+	if in == nil {
+		return nil
+	}
+	out := make([]*v1.PostableGrafanaReceiver, 0, len(in))
+	for _, receiver := range in {
+		out = append(out, new(v1.PostableGrafanaReceiver(*receiver)))
+	}
+	return out
+}
+
+// PostableGrafanaReceiversToAPI converts the domain integrations into their API shape.
+func PostableGrafanaReceiversToAPI(in []*v1.PostableGrafanaReceiver) []*definition.PostableGrafanaReceiver {
+	if in == nil {
+		return nil
+	}
+	out := make([]*definition.PostableGrafanaReceiver, 0, len(in))
+	for _, r := range in {
+		out = append(out, &definition.PostableGrafanaReceiver{
+			UID:                   r.UID,
+			Name:                  r.Name,
+			Type:                  r.Type,
+			Version:               r.Version,
+			DisableResolveMessage: r.DisableResolveMessage,
+			Settings:              slices.Clone(r.Settings),
+			SecureSettings:        maps.Clone(r.SecureSettings),
+		})
+	}
+	return out
+}
 
 // ExtraConfigsToAPI converts the domain extra configurations into their API shape. ManagedBy is
 // left empty; callers set it.

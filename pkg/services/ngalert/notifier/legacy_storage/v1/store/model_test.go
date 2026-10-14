@@ -307,3 +307,19 @@ func TestAMConfigDB_UnmarshalJSON_Valid(t *testing.T) {
 	assert.Equal(t, `cluster="prod"`, rule.SourceMatchers[0].String())
 	assert.Equal(t, []string{"alertname"}, rule.Equal)
 }
+
+// TestReceiverDB_UnmarshalJSON_NormalizesSettings locks in that integration settings are
+// re-marshalled with sorted keys and no insignificant whitespace, which keeps calculated
+// fingerprints and remote Alertmanager config hashes stable.
+func TestReceiverDB_UnmarshalJSON_NormalizesSettings(t *testing.T) {
+	var r ReceiverDB
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"name": "r",
+		"grafana_managed_receiver_configs": [
+			{"uid": "u", "name": "r", "type": "email", "settings": {"b": 1,   "a": {"z": true, "y": "x"}}}
+		]
+	}`), &r))
+
+	require.Len(t, r.GrafanaManagedReceivers, 1)
+	assert.Equal(t, `{"a":{"y":"x","z":true},"b":1}`, string(r.GrafanaManagedReceivers[0].Settings))
+}

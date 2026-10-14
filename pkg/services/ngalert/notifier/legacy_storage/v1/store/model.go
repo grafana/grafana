@@ -229,8 +229,20 @@ func validateInhibitRuleLabelNames(sourceMatch, targetMatch map[string]string, e
 
 // ReceiverDB is the persisted representation of a receiver/contact point.
 type ReceiverDB struct {
-	Name                    string                                `json:"name" yaml:"name"`
-	GrafanaManagedReceivers []*definition.PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
+	Name                    string                       `json:"name" yaml:"name"`
+	GrafanaManagedReceivers []*PostableGrafanaReceiverDB `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
+}
+
+// PostableGrafanaReceiverDB is the persisted representation of a receiver integration. Settings
+// stays a definition.RawMessage because its YAML unmarshalling normalizes the stored JSON.
+type PostableGrafanaReceiverDB struct {
+	UID                   string                `json:"uid" yaml:"uid"`
+	Name                  string                `json:"name" yaml:"name"`
+	Type                  string                `json:"type" yaml:"type"`
+	Version               string                `json:"version,omitempty" yaml:"version,omitempty"`
+	DisableResolveMessage bool                  `json:"disableResolveMessage" yaml:"disableResolveMessage"`
+	Settings              definition.RawMessage `json:"settings,omitempty" yaml:"settings,omitempty"`
+	SecureSettings        map[string]string     `json:"secureSettings,omitempty" yaml:"secureSettings,omitempty"`
 }
 
 // UnmarshalJSON diverts to yaml.Unmarshal to keep legacy behaviour. It normalizes each

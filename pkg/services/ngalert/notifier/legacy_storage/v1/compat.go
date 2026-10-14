@@ -7,7 +7,6 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config/common"
@@ -79,19 +78,27 @@ func ReceiversToModel(in []*store.ReceiverDB) map[ResourceUID]PostableApiReceive
 		if receiver == nil {
 			continue
 		}
-		m := NewReceiver(receiver.Name, PostableGrafanaReceiversToModel(receiver.GrafanaManagedReceivers), models.ProvenanceNone)
+		m := NewReceiver(receiver.Name, PostableGrafanaReceiverDBsToModel(receiver.GrafanaManagedReceivers), models.ProvenanceNone)
 		out[m.UID] = m
 	}
 	return out
 }
 
-func PostableGrafanaReceiversToModel(in []*definition.PostableGrafanaReceiver) []*PostableGrafanaReceiver {
+func PostableGrafanaReceiverDBsToModel(in []*store.PostableGrafanaReceiverDB) []*PostableGrafanaReceiver {
 	if in == nil {
 		return nil
 	}
 	out := make([]*PostableGrafanaReceiver, 0, len(in))
-	for _, receiver := range in {
-		out = append(out, new(PostableGrafanaReceiver(*receiver)))
+	for _, r := range in {
+		out = append(out, &PostableGrafanaReceiver{
+			UID:                   r.UID,
+			Name:                  r.Name,
+			Type:                  r.Type,
+			Version:               r.Version,
+			DisableResolveMessage: r.DisableResolveMessage,
+			Settings:              slices.Clone(r.Settings),
+			SecureSettings:        maps.Clone(r.SecureSettings),
+		})
 	}
 	return out
 }
@@ -261,13 +268,21 @@ func PostableApiReceiverToDB(in *PostableApiReceiver) *store.ReceiverDB {
 	}
 }
 
-func PostableGrafanaReceiversToDB(in []*PostableGrafanaReceiver) []*definition.PostableGrafanaReceiver {
+func PostableGrafanaReceiversToDB(in []*PostableGrafanaReceiver) []*store.PostableGrafanaReceiverDB {
 	if in == nil {
 		return nil
 	}
-	out := make([]*definition.PostableGrafanaReceiver, 0, len(in))
-	for _, receiver := range in {
-		out = append(out, new(definition.PostableGrafanaReceiver(*receiver)))
+	out := make([]*store.PostableGrafanaReceiverDB, 0, len(in))
+	for _, r := range in {
+		out = append(out, &store.PostableGrafanaReceiverDB{
+			UID:                   r.UID,
+			Name:                  r.Name,
+			Type:                  r.Type,
+			Version:               r.Version,
+			DisableResolveMessage: r.DisableResolveMessage,
+			Settings:              slices.Clone(r.Settings),
+			SecureSettings:        maps.Clone(r.SecureSettings),
+		})
 	}
 	return out
 }

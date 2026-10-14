@@ -340,7 +340,19 @@ func load(t *testing.T, yaml string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMC
 
 	receivers := make([]*store.ReceiverDB, 0, len(orig.Receivers))
 	for _, r := range orig.Receivers {
-		receivers = append(receivers, &store.ReceiverDB{Name: r.Name, GrafanaManagedReceivers: r.GrafanaManagedReceivers})
+		integrations := make([]*store.PostableGrafanaReceiverDB, 0, len(r.GrafanaManagedReceivers))
+		for _, g := range r.GrafanaManagedReceivers {
+			integrations = append(integrations, &store.PostableGrafanaReceiverDB{
+				UID:                   g.UID,
+				Name:                  g.Name,
+				Type:                  g.Type,
+				Version:               g.Version,
+				DisableResolveMessage: g.DisableResolveMessage,
+				Settings:              g.Settings,
+				SecureSettings:        g.SecureSettings,
+			})
+		}
+		receivers = append(receivers, &store.ReceiverDB{Name: r.Name, GrafanaManagedReceivers: integrations})
 	}
 	timeIntervals := make([]store.TimeIntervalDB, 0, len(orig.TimeIntervals))
 	for _, ti := range orig.TimeIntervals {
