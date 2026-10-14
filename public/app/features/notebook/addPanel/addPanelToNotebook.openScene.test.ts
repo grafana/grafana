@@ -136,6 +136,22 @@ describe('adding to a notebook that is open', () => {
     expect(addPanelErrorMessage(new OpenNotebookConflictError())).toMatch(/Reload it/);
   });
 
+  it('counts as added when the open notebook takes the cells but its save fails, so a retry cannot duplicate them', async () => {
+    const scene = openNotebook();
+    jest.mocked(updateNotebook).mockRejectedValue(new Error('apiserver unavailable'));
+
+    const added = await addCellsToExistingNotebook(
+      'nb-1',
+      [{ kind: 'markdown', text: 'Latency rose.' }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE,
+      'user'
+    );
+
+    expect(added.uid).toBe('nb-1');
+    expect(cellNamesOf(scene)).toHaveLength(2);
+    expect(scene.autosave.state.status).toBe('error');
+  });
+
   it('writes through the API when the notebook is not open anywhere', async () => {
     openNotebook('nb-other');
     jest.mocked(updateNotebookSpec).mockResolvedValue(notebookSpec());

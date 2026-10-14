@@ -73,7 +73,7 @@ async function appendThroughScene(
 
   const refused = await guardNotebookSceneWrite(scene, { viewOnlyChanges: 'keep' });
   if (refused) {
-    throw isConflict(refused.data) ? new OpenNotebookConflictError() : new Error(refused.error);
+    throw hasFlag(refused.data, 'conflict') ? new OpenNotebookConflictError() : new Error(refused.error);
   }
 
   const current = transformNotebookSceneToSaveModel(scene);
@@ -83,15 +83,17 @@ async function appendThroughScene(
     undoLabel: t('notebooks.add-panel.undo-label', 'Add to notebook'),
     editSessionSource: NOTEBOOK_EDIT_SESSION_SOURCE.ADD_TO_NOTEBOOK,
   });
-  if (!result.success) {
+  // Applied but not saved: the cells are on screen and the notebook's own "Save failed" + Retry owns
+  // the save. Throwing would keep the form open, and adding again would duplicate them.
+  if (!result.success && !hasFlag(result.data, 'applied')) {
     throw new Error(result.error);
   }
 
   return { spec, firstPosition: current.layout.spec.cells.length };
 }
 
-function isConflict(data: unknown): boolean {
-  return typeof data === 'object' && data !== null && 'conflict' in data && data.conflict === true;
+function hasFlag(data: unknown, flag: 'conflict' | 'applied'): boolean {
+  return typeof data === 'object' && data !== null && flag in data && Reflect.get(data, flag) === true;
 }
 
 export async function addPanelToExistingNotebook(
