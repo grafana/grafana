@@ -152,7 +152,7 @@ describe('notebook Composer overlay', () => {
     await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
 
     expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
-      'Click to comment on a block, or drag to draw a region'
+      'Click to comment on a cell, or drag to draw a region'
     );
   });
 

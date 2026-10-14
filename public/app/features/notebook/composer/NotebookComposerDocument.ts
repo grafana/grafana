@@ -66,7 +66,7 @@ export class NotebookComposerDocument implements ComposerDocument<ComposerNotebo
   }
 
   public elementHint(): string {
-    return t('notebook.composer.hint-cell', 'Click to comment on a block, or drag to draw a region');
+    return t('notebook.composer.hint-cell', 'Click to comment on a cell, or drag to draw a region');
   }
 
   public attach(session: NotebookSession): boolean {
