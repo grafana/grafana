@@ -214,17 +214,23 @@ func (k *SqlKV) BlobGCKeys(ctx context.Context, batchSize int) iter.Seq2[string,
 	}
 }
 
-func (k *SqlKV) blobGCPage(ctx context.Context, cursor string, batchSize int) ([]BlobKey, error) {
-	query := fmt.Sprintf("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s > %s ORDER BY %s ASC LIMIT %s",
+func (k *SqlKV) blobGCPage(ctx context.Context, cursor string, batchSize int) (page []BlobKey, err error) {
+	query := fmt.Sprintf("SELECT %s, %s, %s, %s, %s FROM %s",
 		k.dialect.QuoteIdent("group"), k.dialect.QuoteIdent("resource"), k.dialect.QuoteIdent("namespace"),
-		k.dialect.QuoteIdent("name"), k.dialect.QuoteIdent("uuid"), k.dialect.QuoteIdent(resourceBlobTable),
-		k.dialect.QuoteIdent("uuid"), k.dialect.Placeholder(1), k.dialect.QuoteIdent("uuid"), k.dialect.Placeholder(2))
-	rows, err := k.conn(ctx).QueryContext(ctx, query, cursor, batchSize)
+		k.dialect.QuoteIdent("name"), k.dialect.QuoteIdent("uuid"), k.dialect.QuoteIdent(resourceBlobTable))
+	var args []any
+	if cursor != "" {
+		query += " WHERE " + k.dialect.QuoteIdent("uuid") + " > " + k.dialect.Placeholder(1)
+		args = append(args, cursor)
+	}
+	query += " ORDER BY " + k.dialect.QuoteIdent("uuid") + " ASC LIMIT " + k.dialect.Placeholder(len(args)+1)
+	args = append(args, batchSize)
+	rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	page := make([]BlobKey, 0, batchSize)
+	defer func() { err = errors.Join(err, rows.Close()) }()
+	page = make([]BlobKey, 0, batchSize)
 	for rows.Next() {
 		var key BlobKey
 		if err := rows.Scan(&key.Group, &key.Resource, &key.Namespace, &key.Name, &key.UID); err != nil {
@@ -235,7 +241,7 @@ func (k *SqlKV) blobGCPage(ctx context.Context, cursor string, batchSize int) ([
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return page, rows.Close()
+	return page, nil
 }
 
 func (k *SqlKV) FirstUnused(ctx context.Context, key string, _ time.Time) (time.Time, error) {

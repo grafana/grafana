@@ -55,13 +55,20 @@ func TestIntegrationExternalBlobGarbageCollection(t *testing.T) {
 func TestIntegrationBlobGarbageCollection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	t.Cleanup(db.CleanupTestDB)
-	storage, database := newTestBackend(t, GarbageCollectionConfig{Interval: time.Minute, MaxAge: time.Hour, BatchSize: 100})
+	const batchSize = 2
+	const blobCount = 5
+	storage, database := newTestBackend(t, GarbageCollectionConfig{Interval: time.Minute, MaxAge: time.Hour, BatchSize: batchSize})
 	b := storage.(*backend)
 	ctx := t.Context()
 	key := &resourcepb.ResourceKey{Group: "group", Resource: "resource", Namespace: "namespace", Name: "snap"}
 	response, err := b.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, ContentType: "application/json", Value: []byte(`{}`)})
 	require.NoError(t, err)
 	require.Nil(t, response.Error)
+	for i := 1; i < blobCount; i++ {
+		response, err := b.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, ContentType: "application/json", Value: []byte(`{}`)})
+		require.NoError(t, err)
+		require.Nil(t, response.Error)
+	}
 	_, err = test.WriteEvent(ctx, storage, key.Name, resourcepb.WatchEvent_ADDED)
 	require.NoError(t, err)
 	dialect, err := kv.DialectFromDriver(database.DriverName())
@@ -70,7 +77,7 @@ func TestIntegrationBlobGarbageCollection(t *testing.T) {
 	require.NoError(t, err)
 	store, err := kv.NewSQLKV(database.SqlDB(), database.DriverName())
 	require.NoError(t, err)
-	gc := resource.NewBlobGarbageCollector(store, 100, 0)
+	gc := resource.NewBlobGarbageCollector(store, batchSize, 0)
 	now := time.Now()
 	count, err := gc.Collect(ctx, now, time.Hour, false, b.blobReferenced)
 	require.NoError(t, err)
@@ -82,10 +89,10 @@ func TestIntegrationBlobGarbageCollection(t *testing.T) {
 	require.Zero(t, count)
 	count, err = gc.Collect(ctx, now.Add(2*time.Hour), time.Hour, true, b.blobReferenced)
 	require.NoError(t, err)
-	require.Equal(t, 1, count)
+	require.Equal(t, blobCount, count)
 	count, err = gc.Collect(ctx, now.Add(2*time.Hour), time.Hour, false, b.blobReferenced)
 	require.NoError(t, err)
-	require.Equal(t, 1, count)
+	require.Equal(t, blobCount, count)
 	keys := 0
 	for _, err := range store.Keys(ctx, kv.BlobDataSection, kv.ListOptions{}) {
 		require.NoError(t, err)
