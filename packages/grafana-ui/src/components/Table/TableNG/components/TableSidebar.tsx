@@ -113,6 +113,7 @@ export function TableSidebar({
                     })}
                     onDragStart={(ev) => {
                       ev.dataTransfer.effectAllowed = 'move';
+                      ev.dataTransfer.setData('text/plain', displayName);
                       setDraggedColumn(displayName);
                     }}
                     onKeyDown={(ev) => {

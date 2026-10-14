@@ -227,7 +227,13 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
         {reorderable && (
           // Chrome requires an interactive drag target inside the draggable header.
-          <button type="button" tabIndex={-1} aria-hidden="true" className={styles.headerCellDragHandle}>
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            className={styles.headerCellDragHandle}
+            onClick={(event) => event.stopPropagation()}
+          >
             <Icon name="draggabledots" aria-hidden="true" />
           </button>
         )}
