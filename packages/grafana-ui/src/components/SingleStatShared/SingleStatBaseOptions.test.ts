@@ -80,7 +80,7 @@ describe('sharedSingleStatMigrationHandler', () => {
     `);
   });
 
-  it('converts string minValue/maxValue saved by 6.0/6.1 gauges to numbers', () => {
+  it('converts string minValue/maxValue to numbers', () => {
     const panel = {
       options: {
         valueOptions: {

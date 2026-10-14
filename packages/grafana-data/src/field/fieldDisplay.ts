@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, toNumber } from 'lodash';
 
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { getTimeField } from '../dataframe/processDataFrame';
@@ -13,7 +13,6 @@ import { type DisplayValue, type DisplayValueAlignmentFactors } from '../types/d
 import { type FieldConfigSource } from '../types/fieldOverrides';
 import { type InterpolateFunction } from '../types/panel';
 import { type TimeRange, type TimeZone } from '../types/time';
-import { anyToNumberOrUndefined } from '../utils/anyToNumber';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { getFieldDisplayName } from './fieldState';
@@ -450,8 +449,8 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
     name: displayName,
     field: {
       ...defaults,
-      max: anyToNumberOrUndefined(defaults.max) ?? 0,
-      min: anyToNumberOrUndefined(defaults.min) ?? 0,
+      max: toNumber(defaults.max) || 0,
+      min: toNumber(defaults.min) || 0,
     },
     display: {
       text,

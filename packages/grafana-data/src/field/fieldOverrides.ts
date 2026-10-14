@@ -34,7 +34,7 @@ import {
 import { type InterpolateFunction, type PanelData } from '../types/panel';
 import { type TimeZone } from '../types/time';
 import { type FieldMatcher } from '../types/transformations';
-import { anyToNumberOrUndefined } from '../utils/anyToNumber';
+import { anyToNumber } from '../utils/anyToNumber';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { locationUtil } from '../utils/location';
 
@@ -496,7 +496,7 @@ export function validateFieldConfig(config: FieldConfig) {
     delete config.color;
   }
 
-  // min/max set by a data source or saved by Grafana 6.0/6.1 can be strings, and "50" > "100" as strings
+  // min/max can be strings (for example from a data source or from saved panel JSON), and "50" > "100" as strings
   if (config.min != null) {
     config.min = anyToNumberOrUndefined(config.min);
   }
@@ -510,6 +510,19 @@ export function validateFieldConfig(config: FieldConfig) {
     config.max = config.min;
     config.min = tmp;
   }
+}
+
+/**
+ * Will return any value as a number, or undefined when it is not a number
+ */
+function anyToNumberOrUndefined(value: unknown): number | undefined {
+  // lodash turns whitespace-only strings into 0
+  if (typeof value === 'string' && value.trim() === '') {
+    return undefined;
+  }
+
+  const num = anyToNumber(value);
+  return isNaN(num) ? undefined : num;
 }
 
 const defaultInternalLinkPostProcessor: DataLinkPostProcessor = (options) => {
