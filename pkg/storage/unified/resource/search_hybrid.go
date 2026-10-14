@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -123,6 +124,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return nil, err
 		}
 	}
+	span.SetAttributes(attribute.Int("results_truncated", max(0, len(results)-limit)))
 	if len(results) > limit {
 		results = results[:limit]
 	}
@@ -210,12 +212,19 @@ func (s *searchServer) hybridSearchCandidates(ctx context.Context, user types.Au
 		return nil, status.FromContextError(err).Err()
 	}
 	candidates := make([]hybridCandidates, len(targets))
+	lexicalResultsTruncated := 0
 	for i, target := range targets {
+		for _, hit := range lex[i] {
+			if hit.lexicalTruncated {
+				lexicalResultsTruncated++
+			}
+		}
 		candidates[i] = hybridCandidates{
 			key: target.key, results: fuseRRF(target.key, lex[i], sem[i]),
 			lexUIDs: lexicalUIDSet(lex[i]), external: target.collection.IsExternal,
 		}
 	}
+	trace.SpanFromContext(ctx).SetAttributes(attribute.Int("lexical_results_truncated", lexicalResultsTruncated))
 	return candidates, nil
 }
 
@@ -492,9 +501,14 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 	// Keep the best semantic chunk (or title), with returned lexical text as
 	// additional context even when the resource was found by both legs.
 	texts := make([]string, len(results))
+	lexicalRerankTextsTruncated := 0
 	for i, r := range results {
 		texts[i] = r.Chunks[0].Content
-		if text := lexicalRerankText(r.Lexical); text != "" && !strings.Contains(texts[i], text) {
+		text, truncated := lexicalRerankText(r.Lexical)
+		if truncated {
+			lexicalRerankTextsTruncated++
+		}
+		if text != "" && !strings.Contains(texts[i], text) {
 			if strings.Contains(text, texts[i]) {
 				texts[i] = text
 			} else {
@@ -506,6 +520,7 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 			texts[i] = r.Key.Name
 		}
 	}
+	trace.SpanFromContext(ctx).SetAttributes(attribute.Int("lexical_rerank_texts_truncated", lexicalRerankTextsTruncated))
 
 	scores, err := s.reranker.Score(ctx, query, texts)
 	if err != nil {
@@ -565,12 +580,13 @@ const maxChunksPerHybridResult = 10
 const maxRerankCandidates = 500
 
 type lexicalHit struct {
-	uid         string
-	title       string
-	folder      string
-	managerKind string
-	managerID   string
-	lexical     map[string]*structpb.Value
+	uid              string
+	title            string
+	folder           string
+	managerKind      string
+	managerID        string
+	lexical          map[string]*structpb.Value
+	lexicalTruncated bool
 
 	// Best chunk, only set by the external leg; bleve hits get a
 	// synthesized title chunk in fuseRRF instead.
@@ -784,7 +800,7 @@ func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexi
 		if hit.managerID, err = searchStringValue(values, SEARCH_FIELD_MANAGER_ID); err != nil {
 			return nil, fmt.Errorf("row %d: %w", i, err)
 		}
-		hit.lexical = boundedLexicalFields(values)
+		hit.lexical, hit.lexicalTruncated = boundedLexicalFields(values)
 		hits = append(hits, hit)
 	}
 	return hits, nil

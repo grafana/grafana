@@ -37,8 +37,9 @@ func hybridLexicalFields(definitions []SearchFieldDefinition, rerank bool) (quer
 // boundedLexicalFields converts strings and string arrays into result fields,
 // sharing a 4 KiB budget across field names and values. Title takes priority,
 // then fields are sorted by name so truncation is deterministic. Empty values
-// are omitted, and truncation preserves UTF-8.
-func boundedLexicalFields(values map[string]any) map[string]*structpb.Value {
+// are omitted, and truncation preserves UTF-8. The boolean reports whether the
+// byte limit dropped nonempty text.
+func boundedLexicalFields(values map[string]any) (map[string]*structpb.Value, bool) {
 	names := make([]string, 1, len(values)+1)
 	names[0] = SEARCH_FIELD_TITLE
 	for name := range values {
@@ -49,17 +50,16 @@ func boundedLexicalFields(values map[string]any) map[string]*structpb.Value {
 	slices.Sort(names[1:])
 	fields := make(map[string]*structpb.Value)
 	remaining := maxHybridLexicalBytes
+	truncated := false
 	for _, name := range names {
-		if remaining == 0 {
+		if remaining == 0 && truncated {
 			break
 		}
-		budget := remaining - len(name)
-		if budget <= 0 {
-			continue
-		}
+		budget := max(remaining-len(name), 0)
 		switch value := values[name].(type) {
 		case string:
 			text := util.TruncateUTF8(value, budget)
+			truncated = truncated || len(text) < len(value)
 			if text != "" {
 				fields[name] = structpb.NewStringValue(text)
 				remaining = budget - len(text)
@@ -67,12 +67,13 @@ func boundedLexicalFields(values map[string]any) map[string]*structpb.Value {
 		case []string:
 			list := &structpb.ListValue{}
 			for _, text := range value {
-				truncated := util.TruncateUTF8(text, budget)
-				if truncated != "" {
-					list.Values = append(list.Values, structpb.NewStringValue(truncated))
-					budget -= len(truncated)
+				retained := util.TruncateUTF8(text, budget)
+				if retained != "" {
+					list.Values = append(list.Values, structpb.NewStringValue(retained))
+					budget -= len(retained)
 				}
-				if budget == 0 || len(truncated) < len(text) {
+				if len(retained) < len(text) {
+					truncated = true
 					break
 				}
 			}
@@ -82,13 +83,14 @@ func boundedLexicalFields(values map[string]any) map[string]*structpb.Value {
 			}
 		}
 	}
-	return fields
+	return fields, truncated
 }
 
 // lexicalRerankText builds reranker context from returned lexical fields, excluding
 // folder/manager metadata and duplicate or empty text. Title comes first, then
-// fields in name order; the combined text is capped at 4 KiB.
-func lexicalRerankText(fields map[string]*structpb.Value) string {
+// fields in name order; the combined text is capped at 4 KiB. The boolean reports
+// whether the byte limit dropped nonempty text.
+func lexicalRerankText(fields map[string]*structpb.Value) (string, bool) {
 	// Keep title first and make truncation deterministic despite map iteration order.
 	names := make([]string, 1, len(fields)+1)
 	names[0] = SEARCH_FIELD_TITLE
@@ -116,16 +118,20 @@ func lexicalRerankText(fields map[string]*structpb.Value) string {
 			if _, ok := seen[value]; ok || value == "" {
 				continue
 			}
+			if text.Len() == maxLexicalRerankTextBytes {
+				return text.String(), true
+			}
 			seen[value] = struct{}{}
 			if text.Len() > 0 {
 				text.WriteByte('\n')
 			}
 			remaining := maxLexicalRerankTextBytes - text.Len()
-			text.WriteString(util.TruncateUTF8(value, remaining))
-			if len(value) >= remaining {
-				return text.String()
+			retained := util.TruncateUTF8(value, remaining)
+			text.WriteString(retained)
+			if len(retained) < len(value) {
+				return text.String(), true
 			}
 		}
 	}
-	return text.String()
+	return text.String(), false
 }

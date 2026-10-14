@@ -124,28 +124,55 @@ func TestLexicalRerankText(t *testing.T) {
 			"count":                   123,
 		})
 		require.NoError(t, err)
-		assert.Equal(t, "Overview\nService status\nLe délai est élevé\nUnrelated message\nSummary", lexicalRerankText(hit.Fields))
+		text, truncated := lexicalRerankText(hit.Fields)
+		assert.Equal(t, "Overview\nService status\nLe délai est élevé\nUnrelated message\nSummary", text)
+		assert.False(t, truncated)
 	})
 
 	t.Run("bounds all values without splitting UTF-8", func(t *testing.T) {
 		values := []any{"Details", strings.Repeat("界", maxLexicalRerankTextBytes)}
 		hit, err := structpb.NewStruct(map[string]any{"messages": values})
 		require.NoError(t, err)
-		text := lexicalRerankText(hit.Fields)
+		text, truncated := lexicalRerankText(hit.Fields)
+		assert.True(t, truncated)
 		assert.LessOrEqual(t, len(text), maxLexicalRerankTextBytes)
 		assert.Greater(t, len(text), maxLexicalRerankTextBytes-utf8.UTFMax)
 		assert.True(t, utf8.ValidString(text))
 		assert.True(t, strings.HasPrefix(text, "Details\n界"))
 		assert.Equal(t, values[1], hit.Fields["messages"].GetListValue().Values[1].GetStringValue())
 	})
+
+	for _, tt := range []struct {
+		name      string
+		suffix    string
+		truncated bool
+	}{
+		{name: "exact fit followed by empty and duplicate values"},
+		{name: "exact fit omits later text", suffix: "More text", truncated: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			full := strings.Repeat("x", maxLexicalRerankTextBytes)
+			hit, err := structpb.NewStruct(map[string]any{
+				SEARCH_FIELD_TITLE:  full,
+				SEARCH_FIELD_FOLDER: "folder-1",
+				"messages":          []any{full, "", "  ", tt.suffix},
+			})
+			require.NoError(t, err)
+			text, truncated := lexicalRerankText(hit.Fields)
+			assert.Equal(t, full, text)
+			assert.Equal(t, tt.truncated, truncated)
+		})
+	}
 }
 
 func TestBoundedLexicalFields(t *testing.T) {
 	longName := strings.Repeat("x", maxHybridLexicalBytes)
+	full := strings.Repeat("x", maxHybridLexicalBytes-len(SEARCH_FIELD_TITLE)-len("Overview")-len("messages"))
 	for _, tt := range []struct {
-		name   string
-		values map[string]any
-		check  func(*testing.T, map[string]*structpb.Value)
+		name      string
+		values    map[string]any
+		truncated bool
+		check     func(*testing.T, map[string]*structpb.Value)
 	}{
 		{
 			name: "preserves nonempty values and duplicates",
@@ -161,8 +188,9 @@ func TestBoundedLexicalFields(t *testing.T) {
 			},
 		},
 		{
-			name:   "title precedes an oversized scalar",
-			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", "aaa": strings.Repeat("界", maxHybridLexicalBytes), "zzz": "last"},
+			name:      "title precedes an oversized scalar",
+			values:    map[string]any{SEARCH_FIELD_TITLE: "Overview", "aaa": strings.Repeat("界", maxHybridLexicalBytes), "zzz": "last"},
+			truncated: true,
 			check: func(t *testing.T, fields map[string]*structpb.Value) {
 				text := fields["aaa"].GetStringValue()
 				assert.NotEmpty(t, text)
@@ -173,8 +201,9 @@ func TestBoundedLexicalFields(t *testing.T) {
 			},
 		},
 		{
-			name:   "array order and UTF-8 survive truncation",
-			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", "messages": []string{"", "first", strings.Repeat("界", maxHybridLexicalBytes), "last"}},
+			name:      "array order and UTF-8 survive truncation",
+			values:    map[string]any{SEARCH_FIELD_TITLE: "Overview", "messages": []string{"", "first", strings.Repeat("界", maxHybridLexicalBytes), "last"}},
+			truncated: true,
 			check: func(t *testing.T, fields map[string]*structpb.Value) {
 				values := fields["messages"].GetListValue().GetValues()
 				require.Len(t, values, 2)
@@ -192,17 +221,45 @@ func TestBoundedLexicalFields(t *testing.T) {
 			},
 		},
 		{
-			name:   "field names consume the budget",
-			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", longName: "text"},
+			name:      "field names consume the budget",
+			values:    map[string]any{SEARCH_FIELD_TITLE: "Overview", longName: "text"},
+			truncated: true,
 			check: func(t *testing.T, fields map[string]*structpb.Value) {
 				assert.NotContains(t, fields, longName)
+			},
+		},
+		{
+			name:   "exact fit followed by empty values and fields",
+			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", "messages": []string{full, ""}, "zzz": "", longName: []string{""}},
+			check: func(t *testing.T, fields map[string]*structpb.Value) {
+				require.Len(t, fields["messages"].GetListValue().Values, 1)
+				assert.Equal(t, full, fields["messages"].GetListValue().Values[0].GetStringValue())
+			},
+		},
+		{
+			name:      "exact fit omits a later array value",
+			values:    map[string]any{SEARCH_FIELD_TITLE: "Overview", "messages": []string{full, "", "More text"}},
+			truncated: true,
+			check: func(t *testing.T, fields map[string]*structpb.Value) {
+				require.Len(t, fields["messages"].GetListValue().Values, 1)
+				assert.Equal(t, full, fields["messages"].GetListValue().Values[0].GetStringValue())
+			},
+		},
+		{
+			name:      "exact fit omits a later field",
+			values:    map[string]any{SEARCH_FIELD_TITLE: "Overview", "messages": full, "zzz": "More text"},
+			truncated: true,
+			check: func(t *testing.T, fields map[string]*structpb.Value) {
+				assert.Equal(t, full, fields["messages"].GetStringValue())
+				assert.NotContains(t, fields, "zzz")
 			},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			before, err := json.Marshal(tt.values)
 			require.NoError(t, err)
-			fields := boundedLexicalFields(tt.values)
+			fields, truncated := boundedLexicalFields(tt.values)
+			assert.Equal(t, tt.truncated, truncated)
 			bytes := 0
 			for name, value := range fields {
 				bytes += len(name) + len(value.GetStringValue())
@@ -214,7 +271,9 @@ func TestBoundedLexicalFields(t *testing.T) {
 			assert.Equal(t, "Overview", fields[SEARCH_FIELD_TITLE].GetStringValue())
 			tt.check(t, fields)
 			for range 3 {
-				assert.True(t, proto.Equal(&structpb.Struct{Fields: fields}, &structpb.Struct{Fields: boundedLexicalFields(tt.values)}), "map iteration must not change retained values")
+				repeated, repeatedTruncated := boundedLexicalFields(tt.values)
+				assert.True(t, proto.Equal(&structpb.Struct{Fields: fields}, &structpb.Struct{Fields: repeated}), "map iteration must not change retained values")
+				assert.Equal(t, truncated, repeatedTruncated)
 			}
 			after, err := json.Marshal(tt.values)
 			require.NoError(t, err)
