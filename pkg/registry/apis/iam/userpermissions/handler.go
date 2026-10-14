@@ -5,20 +5,19 @@ import (
 	"fmt"
 	"net/http"
 
+	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	authlib "github.com/grafana/authlib/types"
-
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-const UserPermissionsDelegatedGrant = "authz.grafana.app/userpermissions:get"
+const userPermissionsDelegatedGrant = "authz.grafana.app/userpermissions:get"
 const currentUserPermissionsPath = "users/~/permissions"
 
 // Handler serves the current identity's effective permissions.
@@ -107,5 +106,5 @@ func (i delegatedAuthInfo) GetGroups() []string {
 }
 
 func (delegatedAuthInfo) GetTokenDelegatedPermissions() []string {
-	return []string{UserPermissionsDelegatedGrant}
+	return []string{userPermissionsDelegatedGrant}
 }

@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -139,17 +138,4 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 	// Did not find a user
 	w.WriteHeader(http.StatusUnauthorized)
 	_ = json.NewEncoder(w).Encode(rsp)
-}
-
-type delegatedAuthInfo struct {
-	authlib.AuthInfo
-	groups []string
-}
-
-func (i delegatedAuthInfo) GetGroups() []string {
-	return i.groups
-}
-
-func (delegatedAuthInfo) GetTokenDelegatedPermissions() []string {
-	return []string{userpermissions.UserPermissionsDelegatedGrant}
 }
