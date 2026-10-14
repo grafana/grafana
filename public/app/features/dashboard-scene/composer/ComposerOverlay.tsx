@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
+import { FLOATING_DRAG_HANDLE_ATTRIBUTE } from 'app/core/components/AppChrome/ExtensionSidebar/useFloatingDrag';
 
 import { type Box, type ComposerSession, VARIABLE_CONTROL_SELECTOR } from './ComposerSession';
 import { type ComposerAnnotation } from './types';
@@ -14,6 +15,8 @@ const PANEL_ROOT_SELECTOR = '[data-viz-panel-key]';
 const TAB_SELECTOR = '[role="tab"]';
 /** The dashboard controls (time picker, refresh, save, share, variables) stay usable in Composer. */
 const CONTROLS_SELECTOR = `[data-testid="${selectors.pages.Dashboard.Controls}"]`;
+/** The extension sidebar, docked or floating: never part of the document Composer annotates. */
+const EXTENSION_SIDEBAR_SELECTOR = '[data-extension-sidebar]';
 /** A drawn rectangle smaller than this, in CSS pixels on either side, is ignored. */
 const MIN_REGION_SIZE = 8;
 /** How far from the pointer the pick hint sits. */
@@ -215,8 +218,15 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     const bounds = rootRef.current?.getBoundingClientRect();
     const clampX = (value: number) => (bounds ? clamp(value, bounds.left, bounds.left + bounds.width) : value);
     const clampY = (value: number) => (bounds ? clamp(value, bounds.top, bounds.top + bounds.height) : value);
-    const [x1, x2, y1, y2] = [clampX(start.x), clampX(x), clampY(start.y), clampY(y)];
-    return { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) };
+    const from = { x: clampX(start.x), y: clampY(start.y) };
+    // Nor under the extension sidebar: the pointer may run on over it while the drag holds the capture.
+    const to = keepClearOf(from, { x: clampX(x), y: clampY(y) }, getExtensionSidebarBoxes());
+    return {
+      left: Math.min(from.x, to.x),
+      top: Math.min(from.y, to.y),
+      width: Math.abs(to.x - from.x),
+      height: Math.abs(to.y - from.y),
+    };
   }, []);
 
   /** Shows a draft rectangle given in viewport coordinates. */
@@ -454,7 +464,12 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     }
     // A press on a tab header is a tab switch, never the start of a region: its click passes through.
     // A press on the controls is theirs too (it lands here only before the pointer has moved onto them).
-    if (elementAt(event.clientX, event.clientY, TAB_SELECTOR) || isOverControls(event.clientX, event.clientY)) {
+    // So is a press inside the extension sidebar, which only reaches this layer if a host stacks it wrong.
+    if (
+      elementAt(event.clientX, event.clientY, TAB_SELECTOR) ||
+      isOverControls(event.clientX, event.clientY) ||
+      isOverExtensionSidebar(event.clientX, event.clientY)
+    ) {
       return;
     }
     dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false };
@@ -501,6 +516,11 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
         return;
       }
     }
+    if (isOverExtensionSidebar(event.clientX, event.clientY)) {
+      hideHint();
+      setHovered(null);
+      return;
+    }
     followHint(event.clientX, event.clientY);
     if (pickMode !== 'element') {
       return;
@@ -519,7 +539,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       return;
     }
     // A capture renders the current tab: nothing changes under it until it settles.
-    if (capturing) {
+    if (capturing || isOverExtensionSidebar(event.clientX, event.clientY)) {
       return;
     }
     // Tab headers stay usable: switching tabs is how regions on other tabs get drawn.
@@ -714,6 +734,58 @@ function anchorPosition(
   return { left: x - root.left, top: y - root.top };
 }
 
+/**
+ * The extension sidebar's boxes in viewport coordinates: the docked column, or the floating panel with any
+ * drag handle that sticks out of it.
+ */
+function getExtensionSidebarBoxes(): Box[] {
+  return [...document.querySelectorAll<HTMLElement>(EXTENSION_SIDEBAR_SELECTOR)]
+    .flatMap((sidebar) => [sidebar, ...sidebar.querySelectorAll<HTMLElement>(`[${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`)])
+    .map((element) => {
+      const { left, top, width, height } = element.getBoundingClientRect();
+      return { left, top, width, height };
+    })
+    .filter((box) => box.width > 0 && box.height > 0);
+}
+
+function isOverExtensionSidebar(x: number, y: number): boolean {
+  return getExtensionSidebarBoxes().some((box) => containsPoint(box, x, y));
+}
+
+function containsPoint(box: Box, x: number, y: number): boolean {
+  return x >= box.left && x <= box.left + box.width && y >= box.top && y <= box.top + box.height;
+}
+
+/**
+ * Moves the drag's end so the rectangle from `start` stays clear of every box. For each box it would cover,
+ * the end stops at whichever of the box's edges facing `start` keeps the larger rectangle. A box holding
+ * `start` itself is left alone: a drag never starts inside the sidebar.
+ */
+function keepClearOf(start: { x: number; y: number }, end: { x: number; y: number }, boxes: Box[]) {
+  let to = end;
+  for (const box of boxes) {
+    const right = box.left + box.width;
+    const bottom = box.top + box.height;
+    const covers =
+      Math.min(start.x, to.x) < right &&
+      Math.max(start.x, to.x) > box.left &&
+      Math.min(start.y, to.y) < bottom &&
+      Math.max(start.y, to.y) > box.top;
+    if (!covers || containsPoint(box, start.x, start.y)) {
+      continue;
+    }
+    const candidates = [
+      start.x <= box.left && { x: Math.min(to.x, box.left), y: to.y },
+      start.x >= right && { x: Math.max(to.x, right), y: to.y },
+      start.y <= box.top && { x: to.x, y: Math.min(to.y, box.top) },
+      start.y >= bottom && { x: to.x, y: Math.max(to.y, bottom) },
+    ].filter((candidate) => candidate !== false);
+    const area = ({ x, y }: { x: number; y: number }) => Math.abs(x - start.x) * Math.abs(y - start.y);
+    to = candidates.reduce((best, candidate) => (area(candidate) > area(best) ? candidate : best), candidates[0]);
+  }
+  return to;
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -733,6 +805,8 @@ function getStyles(theme: GrafanaTheme2) {
       inset: 0,
       // Local to the dashboard container's stacking context, so below app chrome. The sticky dashboard
       // controls sit at `sidemenu` in the same context; anything lower lets them cover pins and outlines.
+      // A host must give its container such a context below app chrome, or this layer rises above the
+      // extension sidebar (`navbarFixed + 1`) and covers the Assistant.
       zIndex: theme.zIndex.sidemenu + 1,
       pointerEvents: 'none',
     }),

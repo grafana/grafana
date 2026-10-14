@@ -33,14 +33,16 @@ export interface RenderToCanvasOptions {
   pixelRatio?: number;
   /** Return false to leave a node (and its subtree) out of the rendered clone. */
   filter?: (node: HTMLElement) => boolean;
+  /** Painted under the element. Without it, whatever the element does not paint itself is transparent. */
+  backgroundColor?: string;
 }
 
 export async function renderToCanvas(
   element: HTMLElement,
-  { pixelRatio, filter }: RenderToCanvasOptions = {}
+  { pixelRatio, filter, backgroundColor }: RenderToCanvasOptions = {}
 ): Promise<HTMLCanvasElement> {
   const htmlToImage = await loadHtmlToImage();
-  return htmlToImage.toCanvas(element, { pixelRatio, filter });
+  return htmlToImage.toCanvas(element, { pixelRatio, filter, backgroundColor });
 }
 
 function requireBlob(blob: Blob | null): Blob {

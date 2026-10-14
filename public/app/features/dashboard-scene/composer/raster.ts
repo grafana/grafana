@@ -9,7 +9,7 @@ import { type CropPlan } from './regionCapture';
 
 export function renderNode(
   node: HTMLElement,
-  options: { pixelRatio: number; filter: (node: HTMLElement) => boolean }
+  options: { pixelRatio: number; filter: (node: HTMLElement) => boolean; backgroundColor?: string }
 ): Promise<HTMLCanvasElement> {
   return renderToCanvas(node, options);
 }

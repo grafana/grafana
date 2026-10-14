@@ -87,7 +87,13 @@ export async function renderRegionImage({
 
   let raster: HTMLCanvasElement;
   try {
-    raster = await renderNode(root, { pixelRatio, filter: (candidate) => !exclude(candidate) });
+    raster = await renderNode(root, {
+      pixelRatio,
+      filter: (candidate) => !exclude(candidate),
+      // The page's background usually lives on an ancestor (a notebook cell paints none of its own), and a
+      // transparent capture shows light-theme-on-dark text as nothing on a light background.
+      backgroundColor: getEffectiveBackground(root),
+    });
   } catch (error) {
     return failed(isSecurityError(error) ? 'unsupported' : 'failed');
   }
@@ -107,6 +113,33 @@ export async function renderRegionImage({
   } finally {
     releaseCanvas(raster);
   }
+}
+
+/**
+ * The colour `element` shows on screen behind its own content: its background, or the first one an ancestor
+ * paints. Undefined when nothing does.
+ */
+export function getEffectiveBackground(element: Element): string | undefined {
+  for (let node: Element | null = element; node; node = node.parentElement) {
+    const color = getComputedStyle(node).backgroundColor;
+    if (color && !isTransparent(color)) {
+      return color;
+    }
+  }
+  return undefined;
+}
+
+function isTransparent(color: string): boolean {
+  if (color === 'transparent') {
+    return true;
+  }
+  // Computed colours are rgb() or rgba(); only a fourth component is an alpha, as in rgba(0, 0, 0, 0).
+  const components =
+    /^rgba?\(([^)]*)\)$/
+      .exec(color)?.[1]
+      .split(/[\s,/]+/)
+      .filter(Boolean) ?? [];
+  return components.length === 4 && parseFloat(components[3]) === 0;
 }
 
 export function failed(reason: Failure['reason']): Failure {
