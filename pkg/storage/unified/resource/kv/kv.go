@@ -422,6 +422,11 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 
 const blobGCObservedSection = "unified/blob-gc-observed"
 
+var _ interface {
+	FirstUnused(context.Context, string, time.Time) (time.Time, error)
+	ClearUnused(context.Context, string) error
+} = (*badgerKV)(nil)
+
 func (k *badgerKV) FirstUnused(ctx context.Context, key string, now time.Time) (time.Time, error) {
 	reader, err := k.Get(ctx, blobGCObservedSection, key)
 	if errors.Is(err, ErrNotFound) {

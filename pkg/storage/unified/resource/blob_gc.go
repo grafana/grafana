@@ -25,6 +25,17 @@ type BlobGCStore interface {
 	Delete(context.Context, string, string) error
 }
 
+type blobGCAgeStore interface {
+	BlobGCStore
+	FirstUnused(context.Context, string, time.Time) (time.Time, error)
+	ClearUnused(context.Context, string) error
+}
+
+var (
+	_ blobGCAgeStore = (*CDKBlobGCStore)(nil)
+	_ blobGCAgeStore = (*kv.SqlKV)(nil)
+)
+
 func NewBlobGarbageCollector(store BlobGCStore, batchSize int, batchWait time.Duration) *BlobGarbageCollector {
 	if batchSize <= 0 {
 		batchSize = 100
@@ -39,10 +50,7 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 		return 0, fmt.Errorf("blob GC grace period must be positive")
 	}
 	// SQL and bucket stores use upload time; Badger persists the first unused observation.
-	ages, ok := g.store.(interface {
-		FirstUnused(context.Context, string, time.Time) (time.Time, error)
-		ClearUnused(context.Context, string) error
-	})
+	ages, ok := g.store.(blobGCAgeStore)
 	if !ok {
 		return 0, fmt.Errorf("blob GC store does not support durable age tracking")
 	}

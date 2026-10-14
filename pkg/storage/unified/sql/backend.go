@@ -639,11 +639,11 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 }
 
 func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
+	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
+	defer span.End()
 	if b.garbageCollection.BlobEnabled {
 		defer b.collectBlobs(ctx)
 	}
-	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
-	defer span.End()
 	start := time.Now()
 
 	deletedByKey := map[string]int64{}

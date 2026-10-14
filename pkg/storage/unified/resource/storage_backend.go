@@ -803,11 +803,11 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 // runGarbageCollection identifies deleted resources that are safe
 // to be fully removed from the datastore and deletes them in batches.
 func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.runGarbageCollection")
+	defer span.End()
 	if b.garbageCollection.BlobEnabled {
 		defer b.collectBlobs(ctx)
 	}
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.runGarbageCollection")
-	defer span.End()
 
 	start := time.Now()
 	var batches int
