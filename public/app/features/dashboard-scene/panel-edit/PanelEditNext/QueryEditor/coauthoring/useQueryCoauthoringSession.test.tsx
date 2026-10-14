@@ -530,7 +530,7 @@ describe('useQueryCoauthoringSession', () => {
 
     expect(mockGenerate).toHaveBeenCalledTimes(1);
     act(() => mockGenerate.mock.calls[0][0].onComplete('Should I preserve the current range?'));
-    fireEvent.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open in Chat' }));
 
     expect(mockOpenAssistant.mock.calls[0][0].context[0].node.data.data.intentHistory).toEqual(['Use increase']);
   });
@@ -1155,7 +1155,7 @@ describe('useQueryCoauthoringSession', () => {
     act(() => mockGenerate.mock.calls[0][0].onComplete('Should I group by handler, route, or both?'));
 
     await user.type(screen.getByRole('textbox', { name: 'Add extra detail' }), 'Use handler');
-    await user.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
 
     expect(mockOpenAssistant).toHaveBeenCalledWith(
       expect.objectContaining({

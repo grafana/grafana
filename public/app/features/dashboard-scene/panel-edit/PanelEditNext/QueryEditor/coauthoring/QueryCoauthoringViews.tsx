@@ -298,8 +298,8 @@ export function QueryCoauthoringClarificationAction({ onContinue }: { onContinue
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <div className={styles.clarificationAction}>
-      <Button size="sm" fill="text" icon="ai-sparkle" onClick={onContinue}>
-        <Trans i18nKey="query-editor-coauthoring.continue-in-assistant-chat">Continue in Assistant chat</Trans>
+      <Button size="sm" fill="text" variant="secondary" icon="ai-sparkle" onClick={onContinue}>
+        <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in Chat</Trans>
       </Button>
     </div>
   );
