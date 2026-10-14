@@ -37,7 +37,9 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
+	WatchExpiry      resource.WatchExpiry
 	Backend          resource.StorageBackend
+	BlobBackend      resource.BlobSupport
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
 	Reranker         *rerank.Reranker
@@ -86,9 +88,9 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withVectorIndexers,
 		withSearchClient,
 		withQuotaConfig,
-		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
+		withSeededWatches,
 		withNatsWatchMaxAge,
 	)
 	if err != nil {
@@ -187,16 +189,23 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	resourceOpts.Blob = resource.BlobConfig{
 		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
-	// Support local file blob
-	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
-		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
-		if err != nil {
-			return err
-		}
-		resourceOpts.Blob.URL = "file:///" + dir
+	if resourceOpts.Blob.URL == "" {
+		resourceOpts.Blob.Backend = opts.BlobBackend
 	}
-	return nil
+	var err error
+	resourceOpts.Blob.URL, err = resolvedBlobURL(resourceOpts.Blob.URL, opts.Cfg.DataPath)
+	return err
+}
+
+func resolvedBlobURL(url, dataPath string) (string, error) {
+	if strings.HasPrefix(url, "./data/") {
+		dir := strings.Replace(url, "./data", dataPath, 1)
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			return "", err
+		}
+		return "file:///" + dir, nil
+	}
+	return url, nil
 }
 
 func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
@@ -217,6 +226,11 @@ func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	return nil
 }
 
+func withSeededWatches(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.SeededWatchesEnabled = opts.Cfg.SeededWatchesEnabled
+	return nil
+}
+
 func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.Cfg == nil || !opts.Cfg.NATS.Enabled || !opts.Cfg.NATS.Notifier {
 		return nil
@@ -226,6 +240,7 @@ func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceSer
 }
 
 func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.WatchExpiry = opts.WatchExpiry
 	if opts.Backend == nil {
 		return fmt.Errorf("missing storage backend")
 	}
@@ -362,17 +377,6 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
 		EnforcedResources: enforced,
 		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
-	}
-	return nil
-}
-
-func withSearchBackedListConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	allowed := make(map[string]bool, len(opts.Cfg.SearchBackedListResources))
-	for _, r := range opts.Cfg.SearchBackedListResources {
-		allowed[r] = true
-	}
-	resourceOpts.SearchBackedListConfig = resource.SearchBackedListConfig{
-		AllowedResources: allowed,
 	}
 	return nil
 }

@@ -1,14 +1,20 @@
 package search
 
 import (
+	"errors"
+	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/regex"
 )
 
 // negateMatcher flips a matcher to its complement, so a NotIn labels filter
@@ -27,9 +33,6 @@ func negateMatcher(m labelMatcher) labelMatcher {
 	return m
 }
 
-// filters is the backend-neutral view of a ResourceSearchRequest used by the
-// legacy backend. The handler encodes these into the request; the legacy and
-// unified backends each decode the request in their own way.
 type filters struct {
 	// title is the free-text query: a word search over the rule title, pushed
 	// down as SearchTitle. A title filter leaf is rejected (see
@@ -57,65 +60,79 @@ type filters struct {
 	targetDatasourceUID string
 	sortField           string
 	sortDesc            bool
+	states              listFilter
+	healths             listFilter
 }
 
-func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
-	f := filters{title: req.Query}
-	opts := req.Options
-	if opts != nil {
-		for _, r := range opts.Fields {
-			switch r.Key {
-			case fieldName:
-				f.names = r.Values
-			case fieldFolder:
-				f.folders = r.Values
-			case fieldType:
-				f.ruleType = firstValue(r.Values)
-			case fieldLabels:
-				if len(r.Values) == 1 {
-					f.labelMatchers = append(f.labelMatchers, requirementToLabelMatcher(r))
+type listFilter struct {
+	include []string
+	exclude []string
+}
+
+func (l *listFilter) add(r *searchv0.FilterPredicate) {
+	if r.Operator == perKindFilterOperatorNotIn {
+		l.exclude = append(l.exclude, r.Values...)
+		return
+	}
+	l.include = append(l.include, r.Values...)
+}
+
+func extractFilters(req *Query) filters {
+	f := filters{title: req.Text}
+	for _, r := range req.Filters {
+		switch r.Field {
+		case fieldName:
+			f.names = r.Values
+		case fieldFolder:
+			f.folders = r.Values
+		case fieldType:
+			f.ruleType = firstValue(r.Values)
+		case fieldLabels:
+			if len(r.Values) == 1 {
+				f.labelMatchers = append(f.labelMatchers, requirementToLabelMatcher(r))
+			}
+		case fieldDatasourceUIDs:
+			f.datasourceUIDs = r.Values
+		case fieldPaused:
+			if len(r.Values) == 1 {
+				if b, err := strconv.ParseBool(r.Values[0]); err == nil {
+					f.paused = &b
 				}
-			case fieldDatasourceUIDs:
-				f.datasourceUIDs = r.Values
-			case fieldPaused:
-				if len(r.Values) == 1 {
-					if b, err := strconv.ParseBool(r.Values[0]); err == nil {
-						f.paused = &b
-					}
-				}
-			case fieldDashboardUID:
-				f.dashboardUID = firstValue(r.Values)
-			case fieldPanelID:
-				f.panelID = firstValue(r.Values)
-			case fieldReceiver:
-				f.receiver = firstValue(r.Values)
-			case fieldNotificationType:
-				f.notificationType = firstValue(r.Values)
-			case fieldRoutingTree:
-				f.routingTree = firstValue(r.Values)
-			case fieldMetric:
-				f.metric = firstValue(r.Values)
-			case fieldTargetDatasourceUID:
-				f.targetDatasourceUID = firstValue(r.Values)
 			}
-		}
-		// Metadata label requirements come from the labelSelector. Only the
-		// controlled group label is selectable (see perKindSelectableLabelKeys), and the
-		// legacy backend applies it through GroupFilter.
-		for _, r := range opts.Labels {
-			if r.Key != model.GroupLabelKey {
-				continue
-			}
-			if r.Operator == "notin" {
-				f.groupsExclude = append(f.groupsExclude, r.Values...)
-				continue
-			}
-			f.groupsInclude = append(f.groupsInclude, r.Values...)
+		case fieldDashboardUID:
+			f.dashboardUID = firstValue(r.Values)
+		case fieldPanelID:
+			f.panelID = firstValue(r.Values)
+		case fieldReceiver:
+			f.receiver = firstValue(r.Values)
+		case fieldNotificationType:
+			f.notificationType = firstValue(r.Values)
+		case fieldRoutingTree:
+			f.routingTree = firstValue(r.Values)
+		case fieldMetric:
+			f.metric = firstValue(r.Values)
+		case fieldTargetDatasourceUID:
+			f.targetDatasourceUID = firstValue(r.Values)
+		case fieldState:
+			f.states.add(r)
+		case fieldHealth:
+			f.healths.add(r)
 		}
 	}
-	if len(req.SortBy) > 0 {
-		f.sortField = req.SortBy[0].Field
-		f.sortDesc = req.SortBy[0].Desc
+	// Only the controlled group metadata label is selectable on the legacy store.
+	for _, r := range req.GroupFilters {
+		if r.Key != model.GroupLabelKey {
+			continue
+		}
+		if r.Operator == metav1.LabelSelectorOpNotIn {
+			f.groupsExclude = append(f.groupsExclude, r.Values...)
+			continue
+		}
+		f.groupsInclude = append(f.groupsInclude, r.Values...)
+	}
+	if len(req.Sort) > 0 {
+		f.sortField = req.Sort[0].Field
+		f.sortDesc = req.Sort[0].Direction == sortDescending
 	}
 	return f
 }
@@ -161,12 +178,12 @@ func parseLabelMatcher(s string) labelMatcher {
 // to and from a requirement on the indexed "labels" field, using flattened
 // "key"/"key=value" terms and in/notin operators so a matcher survives the
 // request and resolves the same way on both backends.
-func labelMatcherRequirement(m labelMatcher) *resourcepb.Requirement {
-	operator := "in"
+func labelMatcherRequirement(m labelMatcher) *searchv0.FilterPredicate {
+	operator := "In"
 	if labelMatcherIsNegated(m) {
-		operator = "notin"
+		operator = "NotIn"
 	}
-	return &resourcepb.Requirement{Key: fieldLabels, Operator: operator, Values: []string{labelTerm(m)}}
+	return &searchv0.FilterPredicate{Field: fieldLabels, Operator: operator, Values: []string{labelTerm(m)}}
 }
 
 // labelTerm is the indexed term for a matcher: a bare key for an existence
@@ -186,8 +203,8 @@ func labelMatcherIsNegated(m labelMatcher) bool {
 
 // requirementToLabelMatcher rebuilds the matcher a labels requirement encodes.
 // The term carries the key and value, the operator carries the polarity.
-func requirementToLabelMatcher(r *resourcepb.Requirement) labelMatcher {
-	negated := r.Operator == "notin" || r.Operator == "!="
+func requirementToLabelMatcher(r *searchv0.FilterPredicate) labelMatcher {
+	negated := r.Operator == "NotIn"
 	if k, v, ok := strings.Cut(r.Values[0], "="); ok {
 		op := matchEquals
 		if negated {
@@ -228,6 +245,63 @@ func matchLabel(r *ngmodels.AlertRule, m labelMatcher) bool {
 	return false
 }
 
+// labelRegexMatcher is a labels regex leaf compiled for in-memory evaluation.
+type labelRegexMatcher struct {
+	key    string
+	re     *regexp.Regexp
+	negate bool
+}
+
+// parseLabelRegex splits a "key=<value regex>" pattern on its first "=", as the
+// unified index does for flattened label terms, so the key is always literal.
+// The value is parsed with the regex subset unified search accepts.
+func parseLabelRegex(pattern string) (string, regex.Matcher, error) {
+	key, value, ok := strings.Cut(pattern, "=")
+	if !ok || key == "" {
+		return "", regex.Matcher{}, errors.New("must be a key=<value regex> expression with a literal key")
+	}
+	m, err := regex.Parse(value)
+	if err != nil {
+		return "", regex.Matcher{}, err
+	}
+	return key, m, nil
+}
+
+// compileLabelRegexes compiles each value regex anchored to the whole value, the
+// same construction the unified index uses.
+func compileLabelRegexes(preds []*searchv0.RegexPredicate) ([]labelRegexMatcher, error) {
+	matchers := make([]labelRegexMatcher, 0, len(preds))
+	for _, p := range preds {
+		key, m, err := parseLabelRegex(p.Pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid regex %q: %w", p.Pattern, err)
+		}
+		pattern := m.Expression.String()
+		if m.CaseInsensitive {
+			pattern = "(?i:" + pattern + ")"
+		}
+		re, err := regexp.Compile("^(?:" + pattern + ")$")
+		if err != nil {
+			return nil, fmt.Errorf("invalid regex %q: %w", p.Pattern, err)
+		}
+		matchers = append(matchers, labelRegexMatcher{key: key, re: re, negate: p.Negate})
+	}
+	return matchers, nil
+}
+
+// matchLabelRegexes returns true when a rule satisfies every regex. A missing
+// label is evaluated as an empty value, as Prometheus matchers and the unified
+// index do, so "team=.*" matches rules without a team label and "team!~.*"
+// matches none.
+func matchLabelRegexes(r *ngmodels.AlertRule, matchers []labelRegexMatcher) bool {
+	for _, m := range matchers {
+		if m.re.MatchString(r.Labels[m.key]) == m.negate {
+			return false
+		}
+	}
+	return true
+}
+
 // isQueryDatasource reports whether a UID names a datasource a user actually
 // queries, as opposed to a synthetic node: the __expr__/-100 command nodes and
 // the __ml__ node are not. expr.NodeTypeFromDatasourceUID is the single source
@@ -250,4 +324,8 @@ func stringFilter(value string) provisioning.ListRuleStringFilter {
 		return provisioning.ListRuleStringFilter{}
 	}
 	return provisioning.ListRuleStringFilter{Include: []string{value}}
+}
+
+func listStringFilter(f listFilter) provisioning.ListRuleStringFilter {
+	return provisioning.ListRuleStringFilter{Include: f.include, Exclude: f.exclude}
 }

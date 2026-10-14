@@ -14,6 +14,7 @@ export const COLUMN = {
 
 /** Table layout and display constants */
 export const TABLE = {
+  MAX_WRAP_TEXT_LENGTH: 10_000,
   CELL_PADDING: 6,
   FRAME_BORDER_WIDTH: 1,
   LINE_HEIGHT: 22,

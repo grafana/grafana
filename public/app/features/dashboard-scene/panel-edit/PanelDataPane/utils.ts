@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { isExpressionReference } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { isExpressionReference, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 

@@ -64,12 +64,12 @@ func TestSearchResults_MapsItemsAndFields(t *testing.T) {
 		{"__name": "dash-b", "title": "B dashboard"},
 	}, nil)
 
-	out, err := searchResults(&resourcepb.ResourceSearchResponse{
+	out, err := ToSearchResults(&resourcepb.ResourceSearchResponse{
 		ResultFormat:   resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
 		Results:        table,
 		TotalHits:      2,
 		TotalHitsExact: true,
-	}, testKind, 10)
+	}, testKind.gvr(), testKind.kind, 10)
 	require.NoError(t, err)
 
 	require.Len(t, out.Items, 2)
@@ -150,7 +150,7 @@ func TestSearchResults_MapsFieldValueResults(t *testing.T) {
 		TotalHitsExact: true,
 	}
 
-	out, err := searchResults(response, testKind, 2)
+	out, err := ToSearchResults(response, testKind.gvr(), testKind.kind, 2)
 	require.NoError(t, err)
 	require.Len(t, out.Items, 2)
 
@@ -193,6 +193,14 @@ func TestSearchResults_TotalHitsRelation(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(700), approx.Metadata.TotalHits)
 	assert.Equal(t, searchv0.TotalHitsAtMost, approx.Metadata.TotalHitsRelation)
+
+	zero, err := ToSearchResults(&resourcepb.ResourceSearchResponse{
+		Results: table, TotalHits: 0, TotalHitsExact: false,
+	}, testKind.gvr(), testKind.kind, 10)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), zero.Metadata.TotalHits)
+	assert.Equal(t, searchv0.TotalHitsAtMost, zero.Metadata.TotalHitsRelation, "the shared converter must not apply a custom endpoint's unknown-count policy")
+	assert.Equal(t, approx.Metadata.Continue, zero.Metadata.Continue)
 }
 
 func TestSearchResults_ContinueToken(t *testing.T) {

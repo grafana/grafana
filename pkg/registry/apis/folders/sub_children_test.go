@@ -3,14 +3,18 @@ package folders
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -198,17 +202,64 @@ func TestSubChildren_PaginationProducesContinue(t *testing.T) {
 	require.Equal(t, int64(2), *list.RemainingItemCount)
 }
 
-func TestSubChildren_InvalidContinueRejected(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
-	rest := &subChildrenREST{getter: getter, searcher: &capturingSearchClient{}}
+func TestSubChildren_InvalidPagingRejected(t *testing.T) {
+	invalidValues := []struct {
+		name  string
+		value string
+	}{
+		{name: "negative", value: "-1"},
+		{name: "nonnumeric", value: "not a number&extra=value"},
+		{name: "fractional", value: "1.5"},
+		{name: "int64 overflow", value: "9223372036854775808"},
+	}
+	for _, parameter := range []string{"limit", "continue"} {
+		for _, invalid := range invalidValues {
+			t.Run(parameter+"/"+invalid.name, func(t *testing.T) {
+				getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+				search := &capturingSearchClient{}
+				rest := &subChildrenREST{getter: getter, searcher: search}
+				resp := &recordingResponder{}
+				handler, err := rest.Connect(newChildrenCtx(), "parent", nil, resp)
+				require.NoError(t, err)
+				query := url.Values{parameter: {invalid.value}}
+				handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/parent/children?"+query.Encode(), nil))
 
-	resp := &recordingResponder{}
-	handler, err := rest.Connect(newChildrenCtx(), "parent", nil, resp)
-	require.NoError(t, err)
-	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/parent/children?continue=not-a-number", nil))
+				require.Error(t, resp.err)
+				require.Nil(t, resp.obj)
+				require.Nil(t, search.lastReq)
+				status := responsewriters.ErrorToAPIStatus(resp.err)
+				require.EqualValues(t, http.StatusBadRequest, status.Code)
+				require.Equal(t, metav1.StatusReasonBadRequest, status.Reason)
+				require.True(t, apierrors.IsBadRequest(resp.err))
+			})
+		}
+	}
+}
 
-	require.Error(t, resp.err)
-	require.Nil(t, resp.obj)
+func TestParseChildrenPaging_Valid(t *testing.T) {
+	tests := []struct {
+		name   string
+		query  string
+		limit  int64
+		offset int64
+	}{
+		{name: "omitted", limit: 500},
+		{name: "empty", query: "limit=&continue=", limit: 500},
+		{name: "zero", query: "limit=0&continue=0", limit: 500},
+		{name: "positive", query: "limit=2&continue=3", limit: 2, offset: 3},
+		{name: "at cap", query: "limit=500", limit: 500},
+		{name: "above cap", query: "limit=501", limit: 500},
+		{name: "max int64 limit", query: "limit=9223372036854775807", limit: 500},
+		{name: "max int64 offset", query: "continue=9223372036854775807", limit: 500, offset: 9223372036854775807},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			limit, offset, err := parseChildrenPaging(httptest.NewRequest("GET", "/parent/children?"+tt.query, nil))
+			require.NoError(t, err)
+			require.Equal(t, tt.limit, limit)
+			require.Equal(t, tt.offset, offset)
+		})
+	}
 }
 
 func TestSubChildren_SearchErrorSurfaces(t *testing.T) {

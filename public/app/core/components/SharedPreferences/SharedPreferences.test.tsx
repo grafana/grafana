@@ -1,17 +1,19 @@
 import { HttpResponse } from 'msw';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { preferencesHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import { SharedPreferences } from './SharedPreferences';
 import { homeDashboardChanged } from './analytics/main';
+import { GLOBAL_HOME_DASHBOARD_UID } from './utils';
 
 jest.mock('./analytics/main', () => ({
   saveButtonClicked: jest.fn(),
@@ -288,6 +290,79 @@ describe('SharedPreferences', () => {
         preferenceType: 'user',
         action: 'cleared',
       });
+    });
+  });
+
+  it('does not offer Grafana home while the flag is off', async () => {
+    const { user } = await setup();
+
+    await user.click(await screen.findByRole('combobox', { name: /home dashboard/i }));
+    await screen.findAllByRole('option');
+
+    expect(screen.queryByRole('option', { name: 'Grafana home' })).not.toBeInTheDocument();
+  });
+});
+
+describe('SharedPreferences with grafana.globalHomePreference', () => {
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.GrafanaGlobalHomePreference]: true });
+  });
+
+  afterEach(async () => {
+    // Resetting fires OpenFeature events into mounted components.
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('lists Grafana home first and saves the sentinel when selected', async () => {
+    const capture = captureRequests();
+    const { user } = await setup();
+
+    const combobox = await screen.findByRole('combobox', { name: /home dashboard/i });
+    await user.click(combobox);
+    const options = await screen.findAllByRole('option');
+    expect(options[0]).toHaveTextContent('Grafana home');
+    await user.click(options[0]);
+
+    await user.click(screen.getByText('Save preferences'));
+
+    const requests = await capture;
+    const newPreferences = await getPrefsUpdateRequest(requests);
+    expect(newPreferences).toMatchObject({
+      spec: { homeDashboardUID: GLOBAL_HOME_DASHBOARD_UID },
+    });
+  });
+
+  it('fires home_dashboard_changed with action set_global_home when Grafana home is saved', async () => {
+    const { user } = await setup();
+
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /home dashboard/i }), 'Grafana home');
+    await user.click(screen.getByText('Save preferences'));
+
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'set_global_home',
+      });
+    });
+  });
+
+  it('renders Grafana home when the stored preference is the sentinel', async () => {
+    server.use(
+      preferencesHandlers.listPreferencesHandler(
+        HttpResponse.json({
+          metadata: {},
+          items: [{ metadata: { name: 'user' }, spec: { homeDashboardUID: GLOBAL_HOME_DASHBOARD_UID } }],
+        })
+      )
+    );
+
+    await setup();
+
+    const dashboardSelect = getSelectParent(screen.getByLabelText('Home Dashboard'));
+    await waitFor(() => {
+      expect(dashboardSelect).toHaveTextContent('Grafana home');
     });
   });
 });

@@ -158,15 +158,40 @@ const FeatureControlOFREP = ({ value }: { value: string }) => {
   const hasError = 'errorCode' in result;
   const badgeText = hasError ? (result.errorCode ?? 'Error') : getEvaluationValueText(result.value);
   const badgeColor = hasError ? 'red' : getBadgeColor(badgeText);
-  const reason = hasError ? result.errorDetails : result.reason;
+  const info = hasError
+    ? result.errorDetails
+    : (result.variant || result.reason) && (
+        <Stack direction="column" gap={0.5}>
+          {result.variant && (
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="feature-control.ofrep-variant" values={{ variant: result.variant }}>
+                Variant:{' '}
+                <Text variant="code" color="primary">
+                  {'{{variant}}'}
+                </Text>
+              </Trans>
+            </Text>
+          )}
+          {result.reason && (
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="feature-control.ofrep-reason" values={{ reason: result.reason }}>
+                Reason:{' '}
+                <Text variant="code" color="primary">
+                  {'{{reason}}'}
+                </Text>
+              </Trans>
+            </Text>
+          )}
+        </Stack>
+      );
 
   return (
     <Stack direction="row" gap={1} alignItems="center">
       <Text color="secondary" variant="bodySmall">
         <Stack direction="row" gap={0.5} alignItems="center">
           <Trans i18nKey="feature-control.ofrep-evaluation">OFREP evaluation</Trans>
-          {reason && (
-            <Tooltip content={reason}>
+          {info && (
+            <Tooltip content={info}>
               <Icon name="info-circle" size="sm" />
             </Tooltip>
           )}

@@ -249,6 +249,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
 
   const onClickApply = async () => {
     edit({
+      meta: { actionId: 'variable.changeQuery', scope: 'query' },
       source: variable,
       description: t('dashboard-scene.query-variable-editor.modal.apply-description', 'Change variable query'),
       perform: async () => {

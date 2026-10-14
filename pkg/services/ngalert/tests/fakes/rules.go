@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -162,6 +161,34 @@ func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleB
 		}
 	}
 	return nil, models.ErrAlertRuleNotFound
+}
+
+func (f *RuleStore) GetRuleByID(_ context.Context, q models.GetAlertRuleByIDQuery) (*models.AlertRule, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, q)
+	if err := f.Hook(q); err != nil {
+		return nil, err
+	}
+	for _, rule := range f.Rules[q.OrgID] {
+		if rule.ID == q.ID {
+			return rule, nil
+		}
+	}
+	return nil, models.ErrAlertRuleNotFound
+}
+
+func (f *RuleStore) Count(_ context.Context, orgID int64) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	if orgID != 0 {
+		return int64(len(f.Rules[orgID])), nil
+	}
+	var total int64
+	for _, rules := range f.Rules {
+		total += int64(len(rules))
+	}
+	return total, nil
 }
 
 func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error) {
@@ -611,35 +638,6 @@ func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceU
 		}
 	}
 	return nil
-}
-
-func (f *RuleStore) IncreaseVersionForAllRulesInNamespaces(_ context.Context, orgID int64, namespaceUIDs []string) ([]models.AlertRuleKeyWithVersion, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-
-	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
-		Name:   "IncreaseVersionForAllRulesInNamespaces",
-		Params: []any{orgID, namespaceUIDs},
-	})
-
-	var result []models.AlertRuleKeyWithVersion
-
-	namespaceUIDsMap := make(map[string]struct{}, len(namespaceUIDs))
-	for _, namespaceUID := range namespaceUIDs {
-		namespaceUIDsMap[namespaceUID] = struct{}{}
-	}
-
-	for _, rule := range f.Rules[orgID] {
-		if _, ok := namespaceUIDsMap[rule.NamespaceUID]; ok && rule.OrgID == orgID {
-			rule.Version++
-			rule.Updated = time.Now()
-			result = append(result, models.AlertRuleKeyWithVersion{
-				Version:      rule.Version,
-				AlertRuleKey: rule.GetKey(),
-			})
-		}
-	}
-	return result, nil
 }
 
 func (f *RuleStore) UpdateFolderFullpathsForFolders(_ context.Context, orgID int64, folderUIDs []string) error {

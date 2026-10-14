@@ -90,6 +90,35 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 	})
 }
 
+func TestPluginEnvVarsProvider_insecureSkipAuthentication(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		devMode bool
+		want    bool
+	}{
+		{name: "passed on in development mode", devMode: true, want: true},
+		{name: "dropped outside development mode", devMode: false, want: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &PluginInstanceCfg{
+				PluginSettings: map[string]map[string]string{
+					"test": {"insecure_skip_authentication": "true", "custom_env_var": "customVal"},
+				},
+				DevMode:  tc.devMode,
+				Features: featuremgmt.WithFeatures(),
+			}
+			provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+			envVars := provider.pluginSettingsEnvVars("test")
+			assert.Contains(t, envVars, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal")
+			if tc.want {
+				assert.Contains(t, envVars, "GF_PLUGIN_INSECURE_SKIP_AUTHENTICATION=true")
+			} else {
+				assert.NotContains(t, envVars, "GF_PLUGIN_INSECURE_SKIP_AUTHENTICATION=true")
+			}
+		})
+	}
+}
+
 func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 	const grafanaAppURL = "https://grafana.example.com/"
 	marketplaceLicenseDirectory := mustAbs(t, "marketplace-license-test")
@@ -209,6 +238,18 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 		require.Equal(t, "hmac:marketplace-environment", getEnvVar(envVars, "GF_MARKETPLACE_APP_URL"))
 		_, hasText := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_TEXT")
 		require.False(t, hasText)
+	})
+
+	t.Run("nested plugin uses the parent's license", func(t *testing.T) {
+		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
+		environment.token = "parent-token"
+		parent := &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-app"}}
+		child := &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-datasource"}, Parent: parent}
+		envVars := newProvider(environment).PluginEnvVars(context.Background(), child)
+
+		require.Equal(t, "acme-app", environment.preparedWith)
+		require.Equal(t, "parent-token", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
+		require.Equal(t, filepath.Join(mustAbs(t, "marketplace-licenses"), "license-acme-app.jwt"), getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_PATH"))
 	})
 
 	t.Run("passes selected token verbatim with path when available", func(t *testing.T) {

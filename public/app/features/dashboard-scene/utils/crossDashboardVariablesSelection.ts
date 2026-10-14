@@ -177,6 +177,52 @@ export function setScopeAll(checked: boolean): ScopeSelection {
 }
 
 /**
+ * Opt the names shown in a partial picker in or out without rewriting the rest of the scope.
+ *
+ * A stored `"all"` stays `"all"` when the picker hides some names, so those variables —
+ * including ones added later — keep arriving. Unchecking still removes the shown names
+ * from an explicit list, and from the other scope's explicit list, so a same-named
+ * filter does not stay selected after All is cleared.
+ */
+export function setShownScopeNames(
+  selection: UseCrossDashboardVariables,
+  scope: PredefinedVariableScope,
+  shownNames: string[],
+  allNamesInScope: string[],
+  checked: boolean
+): UseCrossDashboardVariables {
+  if (checked) {
+    const current = selection[scope];
+    if (current === 'all') {
+      return selection;
+    }
+    const names = current === 'none' ? [] : [...current];
+    for (const name of shownNames) {
+      if (!names.includes(name)) {
+        names.push(name);
+      }
+    }
+    const coversScope = allNamesInScope.length > 0 && allNamesInScope.every((name) => names.includes(name));
+    return {
+      ...selection,
+      [scope]: coversScope ? 'all' : names.length === 0 ? 'none' : names,
+    };
+  }
+
+  const current = selection[scope];
+  const hiddenNamesRemain = current === 'all' && allNamesInScope.some((name) => !shownNames.includes(name));
+  if (hiddenNamesRemain) {
+    return selection;
+  }
+
+  const nextScope = removeShownNames(current, shownNames);
+  return {
+    global: scope === 'global' ? nextScope : dropShownNames(selection.global, shownNames),
+    folder: scope === 'folder' ? nextScope : dropShownNames(selection.folder, shownNames),
+  };
+}
+
+/**
  * Apply a per-name checkbox to the full selection.
  *
  * Unchecking drops the name from both scopes so a folder variable that shadowed a
@@ -243,6 +289,18 @@ export function applyUseCrossDashboardVariables(
     }
     return true;
   });
+}
+
+function removeShownNames(scope: ScopeSelection, shownNames: string[]): ScopeSelection {
+  if (scope === 'all' || scope === 'none') {
+    return 'none';
+  }
+  const remaining = scope.filter((name) => !shownNames.includes(name));
+  return remaining.length === 0 ? 'none' : remaining;
+}
+
+function dropShownNames(scope: ScopeSelection, shownNames: string[]): ScopeSelection {
+  return shownNames.reduce((current, name) => dropListedName(current, name), scope);
 }
 
 function dropListedName(scope: ScopeSelection, name: string): ScopeSelection {

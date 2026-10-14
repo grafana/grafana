@@ -35,13 +35,6 @@ export function trackDashboardLoaded(dashboard: DashboardModel, duration?: numbe
   });
 }
 
-export function trackDashboardCreatedOrSaved(
-  isNew: boolean | undefined,
-  trackingProps: { name: string; url: string; uid: string; numPanels: number; numRows: number }
-) {
-  DashboardInteractions.dashboardCreatedOrSaved(isNew, trackingProps);
-}
-
 export function getPanelPluginCounts(panels: string[]) {
   return panels.reduce((r: Record<string, number>, p) => {
     r[panelName(p)] = 1 + r[panelName(p)] || 1;

@@ -37,13 +37,62 @@ import { QueryInput } from '@grafana/ui';
 
 ### What's different, React-wise
 
-| Concern          | `QueryField` (Slate)                                              | `QueryInput`                                                     |
-| ---------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Component model  | Class component; mutable Slate `Value` with local two-way binding | Controlled function component; plain `value` + `onChange(value)` |
-| Theming          | `Themeable2` — a `theme` prop must be threaded through            | Handled internally                                               |
-| Run shortcuts    | `RunnerPlugin` + `onRunQuery`                                     | `onRunQuery` handles Shift+Enter and Ctrl+Enter                  |
-| Typeahead portal | required `portalOrigin` prop                                      | not needed                                                       |
-| Accessibility    | `contenteditable` div; `aria-labelledby` set manually             | use `aria-label` or `aria-labelledby` on the editor input        |
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Concern</th>
+      <th scope="col">
+        <code>QueryField</code> (Slate)
+      </th>
+      <th scope="col">
+        <code>QueryInput</code>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Component model</th>
+      <td>
+        Class component; mutable Slate <code>Value</code> with local two-way binding
+      </td>
+      <td>
+        Controlled function component; plain <code>value</code> + <code>onChange(value)</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Theming</th>
+      <td>
+        <code>Themeable2</code> — a <code>theme</code> prop must be threaded through
+      </td>
+      <td>Handled internally</td>
+    </tr>
+    <tr>
+      <th scope="row">Run shortcuts</th>
+      <td>
+        <code>RunnerPlugin</code> + <code>onRunQuery</code>
+      </td>
+      <td>
+        <code>onRunQuery</code> handles Shift+Enter and Ctrl+Enter
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Typeahead portal</th>
+      <td>
+        required <code>portalOrigin</code> prop
+      </td>
+      <td>not needed</td>
+    </tr>
+    <tr>
+      <th scope="row">Accessibility</th>
+      <td>
+        <code>contenteditable</code> div; <code>aria-labelledby</code> set manually
+      </td>
+      <td>
+        use <code>aria-label</code> or <code>aria-labelledby</code> on the editor input
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ### Before / after
 

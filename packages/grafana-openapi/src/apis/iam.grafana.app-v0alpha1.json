@@ -3091,8 +3091,8 @@
     },
     "/users/~": {
       "get": {
-        "tags": ["Display"],
-        "description": "Show display information for the currently authenticated identity",
+        "tags": ["User"],
+        "description": "Show display information for the currently authenticated identity. Deprecated: use /apis/iam.grafana.app/v0alpha1/whoami instead.",
         "operationId": "getCurrentUserDisplay",
         "parameters": [],
         "responses": {
@@ -3100,19 +3100,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Display"
+                  "$ref": "#/components/schemas/CurrentUserInfo"
                 }
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/users/~/permissions": {
       "get": {
         "tags": ["User"],
         "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
-        "deprecated": true,
         "operationId": "getCurrentUserPermissions",
         "parameters": [],
         "responses": {
@@ -3121,6 +3121,25 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserPermissions"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/whoami": {
+      "get": {
+        "tags": ["User"],
+        "description": "Show display information for the currently authenticated identity",
+        "operationId": "getWhoAmI",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserInfo"
                 }
               }
             }
@@ -5118,6 +5137,49 @@
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
       },
+      "CurrentUserInfo": {
+        "type": "object",
+        "required": ["identity", "displayName"],
+        "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity.",
+            "type": "string"
+          },
+          "avatarURL": {
+            "description": "AvatarURL is the url where we can get the avatar for identity",
+            "type": "string"
+          },
+          "displayName": {
+            "description": "Display name for identity.",
+            "type": "string",
+            "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity.",
+            "type": "string"
+          },
+          "identity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdentityRef"
+              }
+            ]
+          },
+          "internalId": {
+            "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
+            "type": "integer",
+            "format": "int64"
+          },
+          "namespace": {
+            "description": "Namespace is the namespace of the current identity.",
+            "type": "string"
+          },
+          "role": {
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None).",
+            "type": "string"
+          }
+        }
+      },
       "Display": {
         "type": "object",
         "required": ["identity", "displayName"],
@@ -5142,10 +5204,6 @@
             "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
             "type": "integer",
             "format": "int64"
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },
@@ -5298,10 +5356,6 @@
             "description": "Permission member has in team.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",
             "type": "string",
             "enum": ["admin", "member"]
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },
@@ -5563,20 +5617,20 @@
             "type": "string"
           },
           "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
             "type": "integer",
             "format": "int64",
             "default": 0
           },
           "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
             "type": "string",
             "default": ""
           }
         }
       },
       "SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -5624,13 +5678,13 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/WhereNode"
           }
         }
       },
       "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search.",
+        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {
@@ -5806,10 +5860,6 @@
             "description": "Permission member has in team.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",
             "type": "string",
             "enum": ["admin", "member"]
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },

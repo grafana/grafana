@@ -7,10 +7,8 @@ import {
   isVirtualTeamFolder,
 } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { AnnoKeyFolder, AnnoKeyUpdatedBy, type ManagerKind, type ResourceList } from '../../apiserver/types';
-import { isRootFolderUID } from '../constants';
+import { type ManagerKind } from '../../apiserver/types';
 import { type DashboardViewItem, type DashboardViewItemKind } from '../types';
 
 import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
@@ -174,37 +172,38 @@ export function queryResultToViewItem(
   return viewItem;
 }
 
-export function resourceToSearchResult(
-  resource: ResourceList<DashboardDataDTO>,
-  deletedByDisplayMap?: Map<string, string>
-): SearchHit[] {
-  return resource.items.map((item) => {
-    const field: Record<string, string | number> = {};
-    if (item.metadata.deletionTimestamp) {
-      field.deletionTimestamp = item.metadata.deletionTimestamp;
+/**
+ * The deletion time of a search hit, or undefined when it carries none, which is the case
+ * for an object deleted before deletion times were recorded.
+ */
+export function parseDeletionTimestamp(value: string | number | undefined | null): Date | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const parsed = Date.parse(value);
+  return isNaN(parsed) ? undefined : new Date(parsed);
+}
+
+/**
+ * Orders hits by a key, putting those without one last whichever way the sort runs. Sorting
+ * by a value an item does not have would otherwise place it arbitrarily.
+ */
+function absentLast<T>(
+  key: (hit: SearchHit) => T | undefined,
+  compare: (a: T, b: T) => number,
+  mult: number
+): (a: SearchHit, b: SearchHit) => number {
+  return (a, b) => {
+    const keyA = key(a);
+    const keyB = key(b);
+    if (keyA === undefined) {
+      return keyB === undefined ? 0 : 1;
     }
-
-    const deletedByUid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
-    if (deletedByUid) {
-      field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? DELETED_BY_UNKNOWN;
+    if (keyB === undefined) {
+      return -1;
     }
-
-    // Collapse root-parented items ("" or "general") into the "general" UID
-    // the rest of the search UI uses for the synthetic root folder.
-    const folderAnno = item?.metadata?.annotations?.[AnnoKeyFolder] ?? '';
-    const folder = isRootFolderUID(folderAnno) ? 'general' : folderAnno;
-    const hit: SearchHit = {
-      resource: 'dashboards',
-      name: item.metadata.name,
-      title: item.spec?.title,
-      folder,
-      tags: item.spec?.tags || [],
-      field,
-      url: '',
-    };
-
-    return hit;
-  });
+    return mult * compare(keyA, keyB);
+  };
 }
 
 /**
@@ -232,49 +231,22 @@ export function filterSearchResults(
   if (query.sort) {
     if (query.sort === 'deleted-asc' || query.sort === 'deleted-desc') {
       const mult = query.sort === 'deleted-desc' ? -1 : 1;
-      filtered.sort((a, b) => {
-        const timestampA = a.field.deletionTimestamp;
-        const timestampB = b.field.deletionTimestamp;
-
-        // Handle missing or invalid timestamps - items without timestamps go to the end
-        if (typeof timestampA !== 'string' && typeof timestampB !== 'string') {
-          return 0;
-        }
-        if (typeof timestampA !== 'string') {
-          return 1;
-        }
-        if (typeof timestampB !== 'string') {
-          return -1;
-        }
-
-        const timeA = Date.parse(timestampA);
-        const timeB = Date.parse(timestampB);
-        return mult * (timeA - timeB);
-      });
+      filtered.sort(
+        absentLast(
+          (hit) => parseDeletionTimestamp(hit.field.deletionTimestamp)?.getTime(),
+          (a, b) => a - b,
+          mult
+        )
+      );
     } else if (query.sort === 'deletedby-asc' || query.sort === 'deletedby-desc') {
       const collator = new Intl.Collator();
       const mult = query.sort === 'deletedby-desc' ? -1 : 1;
-      const isSortable = (v: string | number | undefined): v is string =>
-        typeof v === 'string' && v !== DELETED_BY_REMOVED && v !== DELETED_BY_UNKNOWN;
-      filtered.sort((a, b) => {
-        const byA = a.field.deletedBy;
-        const byB = b.field.deletedBy;
-
-        // Missing or sentinel deleter values sort to the end regardless of direction.
-        const sortableA = isSortable(byA);
-        const sortableB = isSortable(byB);
-        if (!sortableA && !sortableB) {
-          return 0;
-        }
-        if (!sortableA) {
-          return 1;
-        }
-        if (!sortableB) {
-          return -1;
-        }
-
-        return mult * collator.compare(byA, byB);
-      });
+      // A missing or sentinel deleter value is not something to order by.
+      const deleter = (hit: SearchHit): string | undefined => {
+        const v = hit.field.deletedBy;
+        return typeof v === 'string' && v !== DELETED_BY_REMOVED && v !== DELETED_BY_UNKNOWN ? v : undefined;
+      };
+      filtered.sort(absentLast(deleter, (a, b) => collator.compare(a, b), mult));
     } else {
       // Alphabetical sorting
       const collator = new Intl.Collator();

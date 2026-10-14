@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -2035,5 +2037,203 @@ func TestDetectRenames(t *testing.T) {
 		require.Equal(t, repository.FileActionDeleted, result[0].Action)
 		require.True(t, result[0].OrphanCleanup)
 		require.Equal(t, repository.FileActionCreated, result[1].Action)
+	})
+}
+
+func unsupportedPaths(changes []ResourceFileChange) []string {
+	var paths []string
+	for _, c := range changes {
+		var unsupported *resources.UnsupportedPathError
+		if errors.As(c.Warning, &unsupported) {
+			paths = append(paths, unsupported.Path)
+		}
+	}
+	return paths
+}
+
+func TestChanges_UnsupportedPaths(t *testing.T) {
+	ctx := context.Background()
+	folder := provisioning.ResourceListItem{Path: "folder/", Resource: "folders"}
+
+	t.Run("a resource file with an unsafe path is kept as an ignored change with a warning", func(t *testing.T) {
+		source := []repository.FileTreeEntry{{Path: "folder/Backend & UI.json", Hash: "h1", Blob: true}}
+		target := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{folder}}
+
+		changes, err := Changes(ctx, source, target, true)
+		require.NoError(t, err)
+
+		require.Len(t, changes, 1)
+		require.Equal(t, repository.FileActionIgnored, changes[0].Action, "nothing is applied for it")
+		require.Equal(t, "folder/Backend & UI.json", changes[0].Path)
+		require.ErrorIs(t, changes[0].Warning, safepath.ErrInvalidCharacters)
+	})
+
+	t.Run("every unsafe path is kept, next to the valid ones", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/one & two.json", Hash: "abc", Blob: true},
+			{Path: "folder/valid.json", Hash: "def", Blob: true},
+			{Path: "folder/three%four.json", Hash: "ghi", Blob: true},
+		}
+		changes, err := Changes(ctx, source, &provisioning.ResourceList{}, true)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, []string{"folder/one & two.json", "folder/three%four.json"}, unsupportedPaths(changes))
+		var supported []string
+		for _, c := range changes {
+			if c.Warning == nil && c.Path == "folder/valid.json" {
+				supported = append(supported, c.Path)
+			}
+		}
+		require.Equal(t, []string{"folder/valid.json"}, supported)
+	})
+
+	t.Run("a traversal path is unsupported, not hidden", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/../evil.json", Hash: "xyz", Blob: true},
+			{Path: "../.secret.json", Hash: "xyz", Blob: true},
+		}
+		changes, err := Changes(ctx, source, &provisioning.ResourceList{}, true)
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"folder/../evil.json", "../.secret.json"}, unsupportedPaths(changes))
+	})
+
+	t.Run("files that are not resources are not reported", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/README.md", Hash: "a", Blob: true},
+			{Path: "folder/.keep", Hash: "b", Blob: true},
+			{Path: "folder/.hidden & broken.json", Hash: "c", Blob: true},
+			{Path: "folder/screenshot & notes.png", Hash: "d", Blob: true},
+		}
+		target := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{folder}}
+
+		changes, err := Changes(ctx, source, target, true)
+		require.NoError(t, err)
+
+		require.Empty(t, unsupportedPaths(changes))
+		require.Empty(t, changes, "the folder is kept and nothing else is a resource")
+	})
+
+	t.Run("the folder holding an unsafe path is kept", func(t *testing.T) {
+		source := []repository.FileTreeEntry{{Path: "folder/Backend & UI.json", Hash: "h1", Blob: true}}
+		target := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{folder}}
+
+		changes, err := Changes(ctx, source, target, true)
+		require.NoError(t, err)
+		for _, c := range changes {
+			require.NotEqual(t, repository.FileActionDeleted, c.Action, "nothing may be deleted: %s", c.Path)
+		}
+	})
+
+	t.Run("a file under an unsafe folder: the safe part is created, the unsafe path is only reported", func(t *testing.T) {
+		source := []repository.FileTreeEntry{{Path: "parent/bad & dir/dash.json", Hash: "h1", Blob: true}}
+
+		changes, err := Changes(ctx, source, &provisioning.ResourceList{}, true)
+		require.NoError(t, err)
+
+		var created, reported []string
+		for _, c := range changes {
+			switch {
+			case c.Warning != nil:
+				reported = append(reported, c.Path)
+			case c.Action == repository.FileActionCreated:
+				created = append(created, c.Path)
+			}
+		}
+		require.Equal(t, []string{"parent/"}, created, "the nearest safe folder exists in Grafana")
+		require.Equal(t, []string{"parent/bad & dir/dash.json"}, reported)
+	})
+
+	t.Run("a resource that moved under an unsafe folder is deleted, the old folder goes", func(t *testing.T) {
+		source := []repository.FileTreeEntry{{Path: "bad & dir/dash.json", Hash: "h1", Blob: true}}
+		target := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{
+			{Path: "old-dir/", Resource: "folders", Name: "old-dir-uid"},
+			{Path: "old-dir/dash.json", Hash: "h1", Resource: "dashboards", Name: "d1"},
+		}}
+
+		changes, err := Changes(ctx, source, target, true)
+		require.NoError(t, err)
+		changes = attachUnsupportedPaths(changes)
+
+		got := map[string]repository.FileAction{}
+		for _, c := range changes {
+			got[c.Path] = c.Action
+		}
+		require.Equal(t, repository.FileActionDeleted, got["old-dir/dash.json"], "the resource goes with its old file")
+		require.Equal(t, repository.FileActionDeleted, got["old-dir/"], "the folder it left is no longer in the repository")
+		require.NotContains(t, got, "bad & dir/dash.json", "the rewrite replaced the change for the unsafe path")
+	})
+}
+
+func TestAttachUnsupportedPaths(t *testing.T) {
+	unsupported := func(path string) error {
+		return &resources.UnsupportedPathError{Path: path, Err: safepath.ErrInvalidCharacters}
+	}
+	deleted := func(path, hash string) ResourceFileChange {
+		return ResourceFileChange{
+			Action:   repository.FileActionDeleted,
+			Path:     path,
+			Existing: &provisioning.ResourceListItem{Path: path, Hash: hash, Resource: "dashboards", Name: "n-" + path},
+		}
+	}
+	ignored := func(path, hash string) ResourceFileChange {
+		return ResourceFileChange{Action: repository.FileActionIgnored, Path: path, Hash: hash, Warning: unsupported(path)}
+	}
+
+	t.Run("a deletion with the same content takes the warning and the change for the file is dropped", func(t *testing.T) {
+		got := attachUnsupportedPaths([]ResourceFileChange{deleted("dashboard.json", "h1"), ignored("Backend & UI.json", "h1")})
+
+		require.Len(t, got, 1)
+		require.Equal(t, repository.FileActionDeleted, got[0].Action)
+		require.Equal(t, "dashboard.json", got[0].Path)
+		var warned *resources.UnsupportedPathError
+		require.ErrorAs(t, got[0].Warning, &warned)
+		require.Equal(t, "Backend & UI.json", warned.Path, "the warning names the new path")
+	})
+
+	t.Run("a file with no matching deletion stays an ignored change that carries its warning", func(t *testing.T) {
+		got := attachUnsupportedPaths([]ResourceFileChange{deleted("other.json", "h2"), ignored("Backend & UI.json", "h1")})
+
+		require.Len(t, got, 2)
+		require.Nil(t, got[0].Warning)
+		require.Equal(t, repository.FileActionIgnored, got[1].Action)
+		require.NotNil(t, got[1].Warning)
+	})
+
+	t.Run("two deletions with the same content are ambiguous: nothing is rewritten", func(t *testing.T) {
+		got := attachUnsupportedPaths([]ResourceFileChange{deleted("a.json", "h1"), deleted("b.json", "h1"), ignored("Backend & UI.json", "h1")})
+
+		require.Len(t, got, 3)
+		require.Nil(t, got[0].Warning)
+		require.Nil(t, got[1].Warning)
+	})
+
+	t.Run("a valid file with the same content is the rename target: the unsupported one only warns", func(t *testing.T) {
+		valid := ResourceFileChange{Action: repository.FileActionCreated, Path: "Backend UI.json", Hash: "h1"}
+
+		got := DetectRenames(attachUnsupportedPaths([]ResourceFileChange{deleted("dashboard.json", "h1"), valid, ignored("Backend & UI.json", "h1")}))
+
+		var renamed, warned []string
+		for _, c := range got {
+			switch {
+			case c.Action == repository.FileActionRenamed:
+				renamed = append(renamed, c.Path)
+			case c.Warning != nil:
+				warned = append(warned, c.Path)
+			}
+		}
+		require.Equal(t, []string{"Backend UI.json"}, renamed, "the resource moves to the valid copy")
+		require.Equal(t, []string{"Backend & UI.json"}, warned, "the unsupported copy is still reported")
+	})
+
+	t.Run("orphan cleanups and folders are never taken for the old file", func(t *testing.T) {
+		orphan := deleted("a.json", "h1")
+		orphan.OrphanCleanup = true
+		folder := deleted("dir/", "h1")
+
+		got := attachUnsupportedPaths([]ResourceFileChange{orphan, folder, ignored("Backend & UI.json", "h1")})
+
+		require.Len(t, got, 3)
+		require.Nil(t, got[0].Warning)
+		require.Nil(t, got[1].Warning)
 	})
 }

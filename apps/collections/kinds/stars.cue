@@ -5,7 +5,8 @@ starsV1alpha1: {
 	pluralName: "Stars"
 	scope:      "Namespaced"
 
-	// Normal list reads are restricted to the caller's own stars.
+	// Generic read routes cannot apply the caller filtering used by normal list reads.
+	listKeys: false
 	search: {
 		endpoint: false
 	}
