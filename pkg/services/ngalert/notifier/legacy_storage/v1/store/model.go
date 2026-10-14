@@ -241,7 +241,8 @@ type InhibitionRuleDB struct {
 
 // AlertingConfigDB is the persisted "alertmanager_config" object. Route/InhibitRules reuse the
 // shared Alertmanager types directly. Receivers and TimeIntervals/MuteTimeIntervals use DB-owned
-// wrapper types instead, so a `uid` field can be added to them later without touching the
+// wrapper types instead: TimeIntervals already persists its own `uid` (TimeIntervalDB.UID);
+// Receivers doesn't yet, but the wrapper type means one can be added later without touching the
 // shared/upstream types.
 //
 // Global and the legacy top-level Templates (template file names, distinct from
