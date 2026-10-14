@@ -1004,7 +1004,7 @@ func TestApplyConfigWithExtraConfigs(t *testing.T) {
 	var cfg v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfig), &cfg))
 
-	cfg.ExtraConfigs = []apimodels.ExtraConfiguration{
+	cfg.ExtraConfigs = []v1store.ExtraConfigurationDB{
 		{
 			Identifier:    "test-external",
 			TemplateFiles: map[string]string{},

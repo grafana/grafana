@@ -390,7 +390,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 			}
 		},
 		"extra_config": [
-			{"identifier": "remote-1", "template_files": {}, "alertmanager_config": "route:\n  receiver: x\n", "managed_by": ""}
+			{"identifier": "remote-1", "template_files": {}, "alertmanager_config": "route:\n  receiver: x\n"}
 		]
 	}`
 

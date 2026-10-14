@@ -167,15 +167,31 @@ func ModelToInhibitionRules(inhibitionRules map[v1.ResourceUID]v1.InhibitionRule
 	return res, nil
 }
 
-// Route, ExtraConfig, Matchers and PostableGrafanaReceivers don't have a persisted shape
+// Route, Matchers and PostableGrafanaReceivers don't have a persisted shape
 // distinct from their API shape (their names already serve as their identity, or they're plain
 // value types with no persistence-specific concerns), so their DB-side conversions double as the
 // API-side ones. Doing it this way makes caller intent clearer than reusing the "ToDB" names
 // directly.
 var RouteToAPI = v1.RouteToDB
-var ExtraConfigsToAPI = v1.ExtraConfigsToDB
 var MatchersToAPI = v1.MatchersToDB
 var PostableGrafanaReceiversToAPI = v1.PostableGrafanaReceiversToDB
+
+// ExtraConfigsToAPI converts the domain extra configurations into their API shape. ManagedBy is
+// left empty; callers set it.
+func ExtraConfigsToAPI(in []v1.ExtraConfiguration) []apimodels.ExtraConfiguration {
+	if in == nil {
+		return nil
+	}
+	out := make([]apimodels.ExtraConfiguration, len(in))
+	for i, cfg := range in {
+		out[i] = apimodels.ExtraConfiguration{
+			Identifier:         cfg.Identifier,
+			TemplateFiles:      maps.Clone(cfg.TemplateFiles),
+			AlertmanagerConfig: cfg.AlertmanagerConfig,
+		}
+	}
+	return out
+}
 
 // InhibitionRuleToAPI converts a managed inhibition rule into the shape used by
 // definition.Config.InhibitRules, for the real notification routing tree and API responses.

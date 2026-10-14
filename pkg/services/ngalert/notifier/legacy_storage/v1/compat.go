@@ -176,7 +176,7 @@ func MatchersToModel(in common.Matchers) []Matcher {
 	return out
 }
 
-func ExtraConfigsToModel(in []definitions.ExtraConfiguration) []ExtraConfiguration {
+func ExtraConfigsToModel(in []store.ExtraConfigurationDB) []ExtraConfiguration {
 	if in == nil {
 		return nil
 	}
@@ -187,7 +187,7 @@ func ExtraConfigsToModel(in []definitions.ExtraConfiguration) []ExtraConfigurati
 	return out
 }
 
-func ExtraConfigToModel(in definitions.ExtraConfiguration) ExtraConfiguration {
+func ExtraConfigToModel(in store.ExtraConfigurationDB) ExtraConfiguration {
 	return ExtraConfiguration{
 		Identifier:         in.Identifier,
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
@@ -400,19 +400,19 @@ func MatcherTypeToDB(mType MatcherType) (labels.MatchType, error) {
 	}
 }
 
-func ExtraConfigsToDB(in []ExtraConfiguration) []definitions.ExtraConfiguration {
+func ExtraConfigsToDB(in []ExtraConfiguration) []store.ExtraConfigurationDB {
 	if in == nil {
 		return nil
 	}
-	out := make([]definitions.ExtraConfiguration, len(in))
+	out := make([]store.ExtraConfigurationDB, len(in))
 	for i, cfg := range in {
 		out[i] = ExtraConfigToDB(cfg)
 	}
 	return out
 }
 
-func ExtraConfigToDB(in ExtraConfiguration) definitions.ExtraConfiguration {
-	return definitions.ExtraConfiguration{
+func ExtraConfigToDB(in ExtraConfiguration) store.ExtraConfigurationDB {
+	return store.ExtraConfigurationDB{
 		Identifier:         in.Identifier,
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
 		AlertmanagerConfig: in.AlertmanagerConfig,
