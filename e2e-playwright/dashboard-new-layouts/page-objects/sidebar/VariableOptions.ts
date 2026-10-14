@@ -2,6 +2,9 @@ import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
+type SelectionOptionSwitch = 'Multi-value' | 'Include All value' | 'Allow custom values';
+type SelectionOptionTitle = SelectionOptionSwitch | 'Custom all value';
+
 /**
  * The "Variable options" pane in the sidebar — variable type,
  * name/label inputs, plus type-specific options (e.g. datasource variables)
@@ -136,6 +139,34 @@ export class VariableOptions extends PageObject {
         await this.getByGrafanaSelector(
           this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton
         ).click();
+      });
+    },
+  };
+
+  readonly selection = {
+    /** Returns a "Selection options" field, found by its title */
+    getField: (title: SelectionOptionTitle): Locator =>
+      this.getByGrafanaSelector(
+        this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`selection-options-category ${title}`),
+        { root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container) }
+      ),
+    /** Returns a "Selection options" switch, found by its field title */
+    getSwitch: (title: SelectionOptionSwitch): Locator => this.selection.getField(title).getByRole('switch'),
+    /** Toggles a "Selection options" switch */
+    toggle: async (title: SelectionOptionSwitch) => {
+      await test.step(`Toggle "${title}" option`, async () => {
+        // force: true because the switch input is visually covered by its label
+        await this.selection.getSwitch(title).click({ force: true });
+      });
+    },
+    /** Returns the custom All value input (only rendered while "Include All value" is on) */
+    getCustomAllValueInput: (): Locator => this.selection.getField('Custom all value').getByRole('textbox'),
+    /** Sets the custom All value; the field applies it on blur */
+    setCustomAllValue: async (allValue: string) => {
+      await test.step(`Set custom all value to "${allValue}"`, async () => {
+        const input = this.selection.getCustomAllValueInput();
+        await input.fill(allValue);
+        await input.blur();
       });
     },
   };
