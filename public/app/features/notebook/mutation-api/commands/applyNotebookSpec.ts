@@ -133,10 +133,10 @@ export async function guardNotebookSceneWrite(
   return undefined;
 }
 
-/** Replaces the scene's document with `notebookSpec` as one undoable edit, then saves it. */
+/** Replaces the scene's document with a spec, or with what an updater makes of the current one, as one undoable edit, then saves it. */
 export async function writeNotebookSpecToScene(
   scene: NotebookScene,
-  inputSpec: NotebookSpec,
+  inputSpec: NotebookSpec | ((current: NotebookSpec) => NotebookSpec),
   options: NotebookSceneWriteOptions & {
     undoLabel: string;
     editSessionSource: NotebookEditSessionSource;
@@ -144,7 +144,17 @@ export async function writeNotebookSpecToScene(
   }
 ): Promise<MutationResult> {
   const warnings = [...(options.warnings ?? [])];
-  let notebookSpec = inputSpec;
+
+  const { transformNotebookToScene } = await import(
+    /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'
+  );
+
+  // Panel cells in the incoming spec are built synchronously by the transform below.
+  await getPanelPluginMetasMap();
+
+  // No await from here to the swap: an updater reads the scene as it is now, so an edit or another
+  // write that landed during the loads above is built on rather than overwritten.
+  let notebookSpec = typeof inputSpec === 'function' ? inputSpec(transformNotebookSceneToSaveModel(scene)) : inputSpec;
   if (options.viewOnlyChanges) {
     const resolved = scene.autosave.resolveViewOnlyVizChanges(options.viewOnlyChanges);
     if (resolved.size > 0) {
@@ -158,13 +168,6 @@ export async function writeNotebookSpecToScene(
       notebookSpec = { ...notebookSpec, elements };
     }
   }
-
-  const { transformNotebookToScene } = await import(
-    /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'
-  );
-
-  // Panel cells in the incoming spec are built synchronously by the transform below.
-  await getPanelPluginMetasMap();
 
   const rebuilt = transformNotebookToScene(notebookResourceFor(scene.state.uid, notebookSpec));
 

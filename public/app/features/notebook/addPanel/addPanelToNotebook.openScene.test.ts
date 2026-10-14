@@ -1,5 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -29,6 +30,12 @@ jest.mock('../api/notebookResource', () => ({
   updateNotebookSpec: jest.fn(),
   readNotebookResourceVersion: jest.fn(),
 }));
+
+// Real by default; one test makes an edit while the write is waiting on it.
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return { ...actual, getPanelPluginMetasMap: jest.fn(actual.getPanelPluginMetasMap) };
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
@@ -87,6 +94,45 @@ describe('adding to a notebook that is open', () => {
     expect(scene.state.body.state.cells.slice(1).map((cell) => cell.state.source)).toEqual(['assistant', 'assistant']);
     expect(updateNotebookSpec).not.toHaveBeenCalled();
     expect(updateNotebook).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps both of two adds made at once, in the order they were made', async () => {
+    const scene = openNotebook();
+
+    await Promise.all([
+      addCellsToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'First.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user'),
+      addCellsToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'Second.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user'),
+    ]);
+
+    expect(cellContents(scene)).toEqual([
+      { kind: 'Markdown', spec: { text: '## Intro' } },
+      { kind: 'Markdown', spec: { text: 'First.' } },
+      { kind: 'Markdown', spec: { text: 'Second.' } },
+    ]);
+  });
+
+  it('keeps an edit made while the add was still loading', async () => {
+    const scene = openNotebook();
+    const loadMetas = jest.requireActual('@grafana/runtime/internal').getPanelPluginMetasMap;
+    jest.mocked(getPanelPluginMetasMap).mockImplementationOnce(async () => {
+      scene.state.body.setCellContent(scene.state.body.state.cells[0], {
+        kind: 'Markdown',
+        spec: { text: '## Edited intro' },
+      });
+      return loadMetas();
+    });
+
+    await addCellsToExistingNotebook(
+      'nb-1',
+      [{ kind: 'markdown', text: 'Latency rose.' }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE,
+      'user'
+    );
+
+    expect(cellContents(scene)).toEqual([
+      { kind: 'Markdown', spec: { text: '## Edited intro' } },
+      { kind: 'Markdown', spec: { text: 'Latency rose.' } },
+    ]);
   });
 
   it('lands as one undoable step named for the add', async () => {

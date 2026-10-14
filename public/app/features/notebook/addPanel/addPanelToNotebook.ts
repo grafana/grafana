@@ -65,31 +65,40 @@ async function appendThroughScene(
   source: AppendedCellSource
 ): Promise<Appended> {
   // Lazy so a dashboard or Explore caller with no notebook open never loads the scene write path.
-  const [{ guardNotebookSceneWrite, writeNotebookSpecToScene }, { transformNotebookSceneToSaveModel }] =
-    await Promise.all([
-      import('../mutation-api/commands/applyNotebookSpec'),
-      import('../serialization/transformNotebookSceneToSaveModel'),
-    ]);
+  const { guardNotebookSceneWrite, writeNotebookSpecToScene } = await import(
+    '../mutation-api/commands/applyNotebookSpec'
+  );
 
   const refused = await guardNotebookSceneWrite(scene, { viewOnlyChanges: 'keep' });
   if (refused) {
     throw hasFlag(refused.data, 'conflict') ? new OpenNotebookConflictError() : new Error(refused.error);
   }
 
-  const current = transformNotebookSceneToSaveModel(scene);
-  const spec = appendElementsToNotebook(current, cells, source);
-  const result = await writeNotebookSpecToScene(scene, spec, {
-    viewOnlyChanges: 'keep',
-    undoLabel: t('notebooks.add-panel.undo-label', 'Add to notebook'),
-    editSessionSource: NOTEBOOK_EDIT_SESSION_SOURCE.ADD_TO_NOTEBOOK,
-  });
+  let appended: Appended | undefined;
+  const result = await writeNotebookSpecToScene(
+    scene,
+    // Built from the scene at swap time, so concurrent edits and adds are kept.
+    (current) => {
+      const spec = appendElementsToNotebook(current, cells, source);
+      appended = { spec, firstPosition: current.layout.spec.cells.length };
+      return spec;
+    },
+    {
+      viewOnlyChanges: 'keep',
+      undoLabel: t('notebooks.add-panel.undo-label', 'Add to notebook'),
+      editSessionSource: NOTEBOOK_EDIT_SESSION_SOURCE.ADD_TO_NOTEBOOK,
+    }
+  );
   // Applied but not saved: the cells are on screen and the notebook's own "Save failed" + Retry owns
   // the save. Throwing would keep the form open, and adding again would duplicate them.
   if (!result.success && !hasFlag(result.data, 'applied')) {
     throw new Error(result.error);
   }
+  if (!appended) {
+    throw new Error(result.error ?? 'The notebook could not be updated.');
+  }
 
-  return { spec, firstPosition: current.layout.spec.cells.length };
+  return appended;
 }
 
 function hasFlag(data: unknown, flag: 'conflict' | 'applied'): boolean {
