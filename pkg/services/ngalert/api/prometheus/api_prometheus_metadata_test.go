@@ -178,6 +178,32 @@ func TestCompact_RunsMutatorAndStripsQuery(t *testing.T) {
 	}
 }
 
+// TestCompactAndMetadataOnly_BehavesAsMetadataOnly documents that the flags are not mutually
+// exclusive: compact is a subset of metadata_only, so both-set is equivalent to metadata_only.
+func TestCompactAndMetadataOnly_BehavesAsMetadataOnly(t *testing.T) {
+	store := &fakeRuleGroupReader{rules: makeRules(5)}
+	m := &countingMutator{}
+
+	q := url.Values{}
+	q.Set("compact", "true")
+	q.Set("metadata_only", "true")
+	q.Set("group_limit", "100")
+
+	resp := PrepareRuleGroupStatusesV2(log.NewNopLogger(), store, makeOpts(q), m.mutate, nil)
+
+	require.Equal(t, "success", resp.Status)
+	assert.Equal(t, 0, m.calls, "mutator should not be called when metadata_only is set")
+	for _, group := range resp.Data.RuleGroups {
+		for _, rule := range group.Rules {
+			assert.Empty(t, rule.Query, "query should be empty")
+			assert.Empty(t, rule.Health, "health should be empty like metadata_only, not populated like compact")
+			assert.Equal(t, "inactive", rule.State, "state should be default inactive")
+			assert.Empty(t, rule.Annotations, "annotations should be omitted")
+			assert.Empty(t, rule.QueriedDatasourceUIDs, "datasource UIDs should be omitted")
+		}
+	}
+}
+
 // BenchmarkPrepareRuleGroupStatusesV2_Normal is the baseline: full mutator + query serialization.
 func BenchmarkPrepareRuleGroupStatusesV2_Normal(b *testing.B) {
 	for _, n := range []int{100, 500, 1000} {
