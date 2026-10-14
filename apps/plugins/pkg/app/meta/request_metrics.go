@@ -22,7 +22,7 @@ func AddCallerRequestMetrics(services []*restful.WebService) {
 func callerRequestMetricsFilter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	ctx := req.Request.Context()
 	if info, ok := request.RequestInfoFrom(ctx); ok && info.IsResourceRequest {
-		metrics.APIRequestsTotal.WithLabelValues(info.Resource, info.Verb, callerIdentity(ctx), originIdentity(ctx)).Inc()
+		metrics.APIRequestsTotal.WithLabelValues(info.Resource, info.Verb, callerIdentity(ctx)).Inc()
 	}
 	chain.ProcessFilter(req, resp)
 }

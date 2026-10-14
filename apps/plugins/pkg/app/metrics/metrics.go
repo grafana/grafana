@@ -93,9 +93,9 @@ var (
 		prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "api_requests_total",
-			Help:      "Total number of plugins API requests by resource, verb, calling service identity and originating service identity",
+			Help:      "Total number of plugins API requests by resource, verb and calling service identity",
 		},
-		[]string{"resource", "verb", "caller", "origin"}, // caller: immediate service identity, origin: originating service identity (equals caller when there is no distinct origin); "unknown" if none
+		[]string{"resource", "verb", "caller"}, // caller: immediate service identity from the access token, or "unknown"
 	)
 
 	MetaResolutionFailuresTotal = prometheus.NewCounterVec(

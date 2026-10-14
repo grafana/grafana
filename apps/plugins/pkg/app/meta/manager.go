@@ -172,18 +172,6 @@ func callerIdentity(ctx context.Context) string {
 	return identities[0]
 }
 
-// originIdentity returns the service identity that originated the request when the access token
-// carries an actor chain, and falls back to the immediate caller otherwise. Chains that end in a user
-// actor have no service identity on the innermost actor, so those also fall back to the immediate caller.
-func originIdentity(ctx context.Context) string {
-	if authInfo, ok := authtypes.AuthInfoFrom(ctx); ok && authInfo != nil {
-		if origin := authInfo.GetExtra()[authn.InnermostServiceIdentityKey]; len(origin) > 0 && origin[0] != "" {
-			return origin[0]
-		}
-	}
-	return callerIdentity(ctx)
-}
-
 func (pm *ProviderManager) cacheKey(ref PluginRef) string {
 	if ref.HasParent() {
 		return fmt.Sprintf("%s:%s:%s", ref.ID, ref.Version, ref.GetParentID())

@@ -112,6 +112,8 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 	}()
 
 	if resp.StatusCode != http.StatusOK {
+		// Every non-200 maps to ErrMetaNotFound because that is the signal the manager uses to try the
+		// next provider. It does not mean the plugin is absent. Reason keeps the real status for metrics.
 		statusErr := &FetchError{Reason: strconv.Itoa(resp.StatusCode), Err: ErrMetaNotFound}
 		if resp.StatusCode == http.StatusNotFound {
 			logger.Debug("Plugin metadata not found", "pluginId", lookupID, "version", ref.Version, "url", catalogURL.String())

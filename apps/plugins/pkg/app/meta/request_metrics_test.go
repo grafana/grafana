@@ -17,8 +17,10 @@ import (
 )
 
 func TestAddCallerRequestMetrics(t *testing.T) {
-	count := func(resource, verb, caller, origin string) float64 {
-		return testutil.ToFloat64(metrics.APIRequestsTotal.WithLabelValues(resource, verb, caller, origin))
+	const root = "/apis/plugins.grafana.app/v0alpha1"
+
+	count := func(resource, verb, caller string) float64 {
+		return testutil.ToFloat64(metrics.APIRequestsTotal.WithLabelValues(resource, verb, caller))
 	}
 
 	newContainer := func(rootPath string) *restful.Container {
@@ -33,68 +35,38 @@ func TestAddCallerRequestMetrics(t *testing.T) {
 		return container
 	}
 
-	do := func(c *restful.Container, rootPath string, claims *authn.AccessTokenClaims) {
+	do := func(c *restful.Container, rootPath string, serviceIdentity string) {
 		req := httptest.NewRequest(http.MethodGet, rootPath+"/namespaces/stacks-1/metas", nil)
 		ctx := request.WithRequestInfo(req.Context(), &request.RequestInfo{IsResourceRequest: true, Resource: "metas", Verb: "list"})
-		if claims != nil {
-			ctx = authtypes.WithAuthInfo(ctx, authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Rest: *claims}))
+		if serviceIdentity != "" {
+			ctx = authtypes.WithAuthInfo(ctx, authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+				Rest: authn.AccessTokenClaims{ServiceIdentity: serviceIdentity},
+			}))
 		}
 		rec := httptest.NewRecorder()
 		c.ServeHTTP(rec, req.WithContext(ctx))
 		require.Equal(t, http.StatusOK, rec.Code)
 	}
 
-	const root = "/apis/plugins.grafana.app/v0alpha1"
-
-	t.Run("origin equals caller when there is no actor chain", func(t *testing.T) {
+	t.Run("counts requests by caller", func(t *testing.T) {
 		c := newContainer(root)
-		before := count("metas", "list", "direct-svc", "direct-svc")
+		before := count("metas", "list", "request-metrics-test")
+		beforeUnknown := count("metas", "list", "unknown")
 
-		do(c, root, &authn.AccessTokenClaims{ServiceIdentity: "direct-svc"})
+		do(c, root, "request-metrics-test")
+		do(c, root, "")
 
-		assert.Equal(t, before+1, count("metas", "list", "direct-svc", "direct-svc"))
-	})
-
-	t.Run("origin is the innermost actor's service identity", func(t *testing.T) {
-		c := newContainer(root)
-		before := count("metas", "list", "proxy-svc", "origin-svc")
-
-		do(c, root, &authn.AccessTokenClaims{
-			ServiceIdentity: "proxy-svc",
-			Actor:           &authn.ActorClaims{Subject: "access-policy:origin", ServiceIdentity: "origin-svc"},
-		})
-
-		assert.Equal(t, before+1, count("metas", "list", "proxy-svc", "origin-svc"))
-	})
-
-	t.Run("origin falls back to caller when the innermost actor has no service identity", func(t *testing.T) {
-		c := newContainer(root)
-		before := count("metas", "list", "proxy-svc", "proxy-svc")
-
-		do(c, root, &authn.AccessTokenClaims{
-			ServiceIdentity: "proxy-svc",
-			Actor:           &authn.ActorClaims{Subject: "user:123"},
-		})
-
-		assert.Equal(t, before+1, count("metas", "list", "proxy-svc", "proxy-svc"))
-	})
-
-	t.Run("requests without a service identity are unknown", func(t *testing.T) {
-		c := newContainer(root)
-		before := count("metas", "list", "unknown", "unknown")
-
-		do(c, root, nil)
-
-		assert.Equal(t, before+1, count("metas", "list", "unknown", "unknown"))
+		assert.Equal(t, before+1, count("metas", "list", "request-metrics-test"))
+		assert.Equal(t, beforeUnknown+1, count("metas", "list", "unknown"))
 	})
 
 	t.Run("ignores other API groups", func(t *testing.T) {
 		const other = "/apis/other.grafana.app/v1"
 		c := newContainer(other)
-		before := count("metas", "list", "other-svc", "other-svc")
+		before := count("metas", "list", "other-svc")
 
-		do(c, other, &authn.AccessTokenClaims{ServiceIdentity: "other-svc"})
+		do(c, other, "other-svc")
 
-		assert.Equal(t, before, count("metas", "list", "other-svc", "other-svc"))
+		assert.Equal(t, before, count("metas", "list", "other-svc"))
 	})
 }
