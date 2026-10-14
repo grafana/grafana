@@ -141,6 +141,11 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       minWidth: 0,
     }),
     close: css({ flex: '0 0 auto' }),
+    explanationHeader: css({
+      flex: '0 1 auto',
+      overflowY: 'auto',
+      scrollbarGutter: 'stable',
+    }),
     pulsingStatus: css({
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${statusPulse} 900ms ease-in-out infinite`,
