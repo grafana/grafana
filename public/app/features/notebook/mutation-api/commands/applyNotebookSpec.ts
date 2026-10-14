@@ -152,9 +152,9 @@ export async function writeNotebookSpecToScene(
   // Panel cells in the incoming spec are built synchronously by the transform below.
   await getPanelPluginMetasMap();
 
-  // No await from here to the swap: an updater reads the scene as it is now, so an edit or another
-  // write that landed during the loads above is built on rather than overwritten.
-  let notebookSpec = typeof inputSpec === 'function' ? inputSpec(transformNotebookSceneToSaveModel(scene)) : inputSpec;
+  // No await from here to the swap, so an edit or write that landed during the loads above is built on.
+  // The updater gets what a save would send, so a reader's own time ranges don't become the notebook's.
+  let notebookSpec = typeof inputSpec === 'function' ? inputSpec(scene.autosave.specToSave()) : inputSpec;
   if (options.viewOnlyChanges) {
     const resolved = scene.autosave.resolveViewOnlyVizChanges(options.viewOnlyChanges);
     if (resolved.size > 0) {

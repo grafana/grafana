@@ -1,3 +1,4 @@
+import { rangeUtil } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
@@ -14,6 +15,7 @@ import {
 } from '../api/notebookResource';
 import { NOTEBOOKS_FLAG, cellNamesOf, markdownCell, notebookSpec } from '../mutation-api/test-utils';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { defaultPanelKind } from '../types';
 
@@ -133,6 +135,23 @@ describe('adding to a notebook that is open', () => {
       { kind: 'Markdown', spec: { text: '## Edited intro' } },
       { kind: 'Markdown', spec: { text: 'Latency rose.' } },
     ]);
+  });
+
+  it("keeps a reader's own time range out of the notebook it saves", async () => {
+    const scene = openNotebook();
+    const savedTimeSettings = transformNotebookSceneToSaveModel(scene).timeSettings;
+    scene.state.$timeRange.onTimeRangeChange(rangeUtil.convertRawToRange({ from: 'now-1h', to: 'now' }));
+
+    await addCellsToExistingNotebook(
+      'nb-1',
+      [{ kind: 'markdown', text: 'Latency rose.' }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE,
+      'user'
+    );
+
+    const written = jest.mocked(updateNotebook).mock.calls[0][1];
+    expect(written.timeSettings).toEqual(savedTimeSettings);
+    expect(written.timeSettings.from).not.toBe('now-1h');
   });
 
   it('lands as one undoable step named for the add', async () => {
