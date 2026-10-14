@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { dateTime } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { Stack } from '@grafana/ui';
 import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
@@ -11,6 +12,7 @@ import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps 
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
 import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
+import { AlertInstanceSilenceAction } from './AlertInstanceSilenceAction';
 import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
@@ -19,6 +21,7 @@ interface Props {
   pagination?: PaginationProps;
   footerRow?: React.ReactNode;
   showNotificationColumn?: boolean;
+  showSilenceAction?: boolean;
 }
 
 interface RuleAndAlert {
@@ -29,7 +32,14 @@ interface RuleAndAlert {
 type AlertTableColumnProps = DynamicTableColumnProps<RuleAndAlert>;
 type AlertTableItemProps = DynamicTableItemProps<RuleAndAlert>;
 
-export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, showNotificationColumn }: Props) => {
+export const AlertInstancesTable = ({
+  rule,
+  instances,
+  pagination,
+  footerRow,
+  showNotificationColumn,
+  showSilenceAction,
+}: Props) => {
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -72,13 +82,16 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
       }) => <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
       size: '150px',
     },
-    ...(showNotificationColumn
+    ...(showNotificationColumn || showSilenceAction
       ? [
           {
             id: 'actions',
             label: t('alerting.alert-instances-table.destination', 'Destination'),
             renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
-              <AlertInstanceNotificationAction rule={rule} instance={alert} />
+              <Stack direction="column" gap={0.5} alignItems="flex-start">
+                {showNotificationColumn && <AlertInstanceNotificationAction rule={rule} instance={alert} />}
+                {showSilenceAction && <AlertInstanceSilenceAction rule={rule} instance={alert} />}
+              </Stack>
             ),
             size: '120px',
           } satisfies AlertTableColumnProps,
