@@ -1136,7 +1136,8 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AppSubURL = "/grafana"
 			service := ServiceImpl{
-				cfg: cfg,
+				cfg:           cfg,
+				accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 					assistantAppID: {JSONData: map[string]any{"ossMode": tt.ossMode, "trialMode": tt.trialMode}},
 				}},
