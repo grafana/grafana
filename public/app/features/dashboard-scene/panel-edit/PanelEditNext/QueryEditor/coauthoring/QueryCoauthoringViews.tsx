@@ -339,17 +339,6 @@ export function QueryCoauthoringExplain({
           <Text variant="body">{answer.explanation}</Text>
         </div>
       </QueryCoauthoringHeader>
-      {answer.followUps.length > 0 && (
-        <div className={styles.body}>
-          <div className={styles.quickActions}>
-            {answer.followUps.map((question, index) => (
-              <Button key={index} size="sm" variant="secondary" onClick={() => onFollowUp(question)}>
-                {question}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
       <QueryCoauthoringPromptInput
         value={intent}
         placeholder={t('query-editor-coauthoring.follow-up-placeholder', 'Ask a follow up…')}
@@ -363,6 +352,21 @@ export function QueryCoauthoringExplain({
         cursorPosition={cursorPosition}
         onCaretChange={onCaretChange}
       />
+      {answer.followUps.length > 0 && (
+        <div className={styles.followUpChips}>
+          {answer.followUps.map((question, index) => (
+            <Button
+              key={index}
+              size="sm"
+              variant="secondary"
+              className={styles.followUpChip}
+              onClick={() => onFollowUp(question)}
+            >
+              {question}
+            </Button>
+          ))}
+        </div>
+      )}
       <div className={styles.menuActions}>
         <button type="button" className={styles.menuAction} onClick={onModify}>
           <Icon name="pen" size="sm" />

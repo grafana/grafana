@@ -1449,10 +1449,10 @@ describe('QueryCoauthoring', () => {
       expect(followUpRequest.systemPrompt).not.toContain('Describe what the focused text does');
       for (const request of [initialRequest, followUpRequest]) {
         expect(request.systemPrompt).toContain(
-          'followUps must be exactly two short questions the user might ask next to understand this query better, phrased in first person.'
+          'followUps must be exactly two short labels of 2 to 5 words and at most 40 characters, each starting with "Explain".'
         );
         expect(request.systemPrompt).toContain(
-          'Never make followUps questions addressed to the user, and never suggest edits.'
+          'Never make followUps that suggest changing, filtering, breaking down, or extending the query.'
         );
       }
     }
@@ -1524,7 +1524,7 @@ describe('QueryCoauthoring', () => {
     'The request rate is averaged over five minutes.',
     JSON.stringify({
       explanation: 'The request rate is averaged over five minutes.',
-      followUps: ['Only one question?'],
+      followUps: ['How would I break down this rate by response code to see which fail?', 7],
     }),
   ])('degrades malformed structured Explain output to the explanation alone: %s', async (completion) => {
     const { user } = await setup();
@@ -1532,7 +1532,37 @@ describe('QueryCoauthoring', () => {
     act(() => mockGenerate.mock.calls[0][0].onComplete(completion));
     expect(screen.getByText('The request rate is averaged over five minutes.')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Ask a follow up' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Only one question?' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /How would I break down this rate/ })).not.toBeInTheDocument();
+  });
+
+  it('shows at most two short follow-up chips below the follow-up input', async () => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() =>
+      mockGenerate.mock.calls[0][0].onComplete(
+        JSON.stringify({
+          explanation: 'It calculates the request rate.',
+          followUps: [
+            'Explain 5m window',
+            'Explain the full meaning of every label and function in this query',
+            'Explain http_requests_total',
+            'Explain sum',
+          ],
+        })
+      )
+    );
+    const input = screen.getByRole('textbox', { name: 'Ask a follow up' });
+    const chips = [
+      screen.getByRole('button', { name: 'Explain 5m window' }),
+      screen.getByRole('button', { name: 'Explain http_requests_total' }),
+    ];
+    expect(screen.queryByRole('button', { name: /full meaning/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explain sum' })).not.toBeInTheDocument();
+    for (const chip of chips) {
+      expect(input.compareDocumentPosition(chip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    await user.click(chips[0]);
+    expect(mockGenerate.mock.calls[1][0].prompt).toBe('Explain 5m window');
   });
 
   it('moves from Explain to Modify in the same engaged invocation and does not count Explain toward the nudge', async () => {
