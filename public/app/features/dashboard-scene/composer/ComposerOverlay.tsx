@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
@@ -11,6 +12,8 @@ import { type ElementPoint } from './types';
 
 const PANEL_ROOT_SELECTOR = '[data-viz-panel-key]';
 const TAB_SELECTOR = '[role="tab"]';
+/** The dashboard controls (time picker, refresh, save, share, variables) stay usable in Composer. */
+const CONTROLS_SELECTOR = `[data-testid="${selectors.pages.Dashboard.Controls}"]`;
 /** A drawn rectangle smaller than this, in CSS pixels on either side, is ignored. */
 const MIN_REGION_SIZE = 8;
 /** How far from the pointer the pick hint sits. */
@@ -40,6 +43,9 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
   const { picking, pickMode, paused, capturing, annotations } = overlayState;
   const rootRef = useRef<HTMLDivElement>(null);
+  const blockerRef = useRef<HTMLDivElement>(null);
+  /** The pointer is over the dashboard controls, which then receive it instead of the blocking layer. */
+  const overControlsRef = useRef(false);
   const anchorHostRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
   const [hovered, setHovered] = useState<{ key: string; box: Box } | null>(null);
@@ -231,7 +237,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
   }, []);
 
   const followHint = (x: number, y: number) => {
-    if (!hintAllowed || dragStartRef.current?.moved) {
+    if (!hintAllowed || dragStartRef.current?.moved || overControlsRef.current) {
       hideHint();
       return;
     }
@@ -254,6 +260,42 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
 
   useEffect(() => () => cancelAnimationFrame(hintFrameRef.current), []);
 
+  const isOverControls = useCallback((x: number, y: number) => {
+    const rect = rootRef.current?.parentElement?.querySelector(CONTROLS_SELECTOR)?.getBoundingClientRect();
+    return Boolean(rect && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom);
+  }, []);
+
+  // Over the controls band the blocking layer lets the pointer through to the real controls; pins and
+  // anchors drawn there sit above it and stay clickable. Tracked on the window, since the layer gets no
+  // events while it is transparent to them.
+  useEffect(() => {
+    const blocker = blockerRef.current;
+    if (!blocker) {
+      return;
+    }
+    const onMove = (event: PointerEvent) => {
+      if (dragStartRef.current) {
+        return;
+      }
+      const over = isOverControls(event.clientX, event.clientY);
+      if (over === overControlsRef.current) {
+        return;
+      }
+      overControlsRef.current = over;
+      blocker.style.pointerEvents = over ? 'none' : '';
+      if (over) {
+        hideHint();
+        setHovered(null);
+      }
+    };
+    window.addEventListener('pointermove', onMove, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener('pointermove', onMove, { capture: true });
+      blocker.style.pointerEvents = '';
+      overControlsRef.current = false;
+    };
+  }, [isOverControls, hideHint]);
+
   const onPointerDown = (event: React.PointerEvent) => {
     stop(event);
     hideHint();
@@ -263,7 +305,8 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
       return;
     }
     // A press on a tab header is a tab switch, never the start of a region: its click passes through.
-    if (elementAt(event.clientX, event.clientY, TAB_SELECTOR)) {
+    // A press on the controls is theirs too (it lands here only before the pointer has moved onto them).
+    if (elementAt(event.clientX, event.clientY, TAB_SELECTOR) || isOverControls(event.clientX, event.clientY)) {
       return;
     }
     dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false };
@@ -365,6 +408,7 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
   return (
     <div ref={rootRef} className={styles.root} data-composer-capture-exclude>
       <div
+        ref={blockerRef}
         className={cx(styles.blocker, picking && !paused && !capturing && styles.picking)}
         data-testid="dashboard-composer-overlay"
         // Pointer-only layer: keyboard users select through the navigator (M3); Escape is handled on window.

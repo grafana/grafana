@@ -61,7 +61,9 @@ beforeEach(() => {
       ? panelRect
       : this.getAttribute('role') === 'tooltip'
         ? { left: 0, top: 0, width: 200, height: 24 }
-        : contentRect;
+        : this.getAttribute('data-testid') === 'data-testid dashboard controls'
+          ? { left: 0, top: 0, width: 1024, height: 64 }
+          : contentRect;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured rect without toJSON
     return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top } as DOMRect;
   });
@@ -1043,6 +1045,88 @@ describe('region capture', () => {
     });
     act(() => session.exit());
     await expect(session.captureRegion(regionId, live())).resolves.toEqual({ status: 'failed', reason: 'failed' });
+  });
+});
+
+describe('dashboard controls', () => {
+  function mountControls() {
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    const controls = document.createElement('div');
+    controls.setAttribute('data-testid', 'data-testid dashboard controls');
+    const save = document.createElement('button');
+    save.textContent = 'Save';
+    controls.appendChild(save);
+    container.appendChild(controls);
+    return { controls, save };
+  }
+  const blocker = () => screen.getByTestId('dashboard-composer-overlay');
+
+  it('lets the pointer through to the controls band and blocks the body again below it', () => {
+    const { startPick } = setup();
+    startPick();
+    const { save } = mountControls();
+    const onSave = jest.fn();
+    save.addEventListener('click', onSave);
+
+    fireEvent.pointerMove(window, { clientX: 100, clientY: 30 });
+    // Transparent to the pointer, so the real Save, Refresh and time picker receive it.
+    expect(blocker()).toHaveStyle({ pointerEvents: 'none' });
+    fireEvent.click(save);
+    expect(onSave).toHaveBeenCalledTimes(1);
+
+    fireEvent.pointerMove(window, { clientX: 100, clientY: 300 });
+    expect(blocker().style.pointerEvents).toBe('');
+  });
+
+  it('never starts a pick or a region from a press on the controls', async () => {
+    const { startPick } = setup();
+    const settled = jest.fn();
+    startPick().then(settled);
+    mountControls();
+
+    fireEvent.pointerDown(blocker(), { clientX: 100, clientY: 30, button: 0 });
+    fireEvent.pointerMove(blocker(), { clientX: 300, clientY: 300 });
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    fireEvent.pointerUp(blocker(), { clientX: 300, clientY: 300 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+  });
+
+  it('shows no hint over the controls', () => {
+    jest.useFakeTimers();
+    try {
+      const { startPick } = setup();
+      startPick();
+      mountControls();
+      fireEvent.pointerMove(window, { clientX: 100, clientY: 30 });
+      fireEvent.pointerMove(blocker(), { clientX: 100, clientY: 30 });
+      act(() => {
+        jest.advanceTimersByTime(16);
+      });
+      expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps pins drawn over the controls clickable', async () => {
+    const { session, startPick, annotate } = setup();
+    const pick = startPick();
+    fireEvent.pointerDown(blocker(), { clientX: 150, clientY: 40, button: 0 });
+    fireEvent.pointerMove(blocker(), { clientX: 350, clientY: 200 });
+    fireEvent.pointerUp(blocker(), { clientX: 350, clientY: 200 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const { ref } = (await pick) as { ref: { kind: 'region'; regionId: string } };
+    mountControls();
+    annotate([item({ id: 'r', ref, point: { x: 1, y: 0 } })]);
+    const listener = jest.fn();
+    session.onAnnotationClick(listener);
+
+    fireEvent.pointerMove(window, { clientX: 350, clientY: 40 });
+    await userEvent.click(screen.getByRole('button', { name: 'Comment 1' }));
+
+    expect(listener).toHaveBeenCalledWith('r');
   });
 });
 
