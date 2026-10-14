@@ -176,6 +176,7 @@ function QueryCoauthoringEntry({
       data-testid={selectors.components.QueryEditorCoauthoring.selectionToolbar}
     >
       <Button
+        className={styles.entryButton}
         fill="text"
         icon="ai-sparkle"
         onClick={adapter.invoke}
@@ -193,6 +194,13 @@ function QueryCoauthoringEntry({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    // The secondary text button hover matches background.secondary, so it needs a visible overlay here.
+    entryButton: css({
+      '&:hover, &:focus-visible': {
+        background: theme.colors.action.hover,
+        color: theme.colors.text.primary,
+      },
+    }),
     shortcut: css({
       marginLeft: theme.spacing(0.75),
       color: theme.colors.text.disabled,
