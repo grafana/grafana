@@ -137,7 +137,14 @@ func (s *RepositorySnapshot) Replace(objs []runtime.Object, listRV int64) (added
 
 	// Prune the mirrored tombstones on the store's rule: a delete the snapshot
 	// now reflects is spent, and anything the snapshot re-added is a re-creation
-	// the store already accepted.
+	// the store already accepted. A snapshot the caller could not date makes no
+	// claim about when it was read, so the store drops every tombstone and the
+	// mirror must too -- keeping them would reject writes the store now accepts,
+	// and would leak an entry per delete for as long as lists stay undated.
+	if listRV <= 0 {
+		clear(s.tombs)
+		return added, updated, removed
+	}
 	for key, trv := range s.tombs {
 		if trv <= listRV {
 			delete(s.tombs, key)

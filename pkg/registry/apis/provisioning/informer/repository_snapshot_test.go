@@ -225,3 +225,37 @@ func TestRepositorySnapshot_ConcurrentMutationsAgreeWithTheStore(t *testing.T) {
 	// Whatever order they landed in, the tally has to describe the snapshot.
 	requireAgrees(t, snapshot, "ns")
 }
+
+// listAllPages returns 0 when it cannot read the snapshot's resource version,
+// and the store responds by dropping every tombstone: an undated snapshot makes
+// no claim about when it was read, so it cannot be used to arbitrate a delete.
+// The mirror has to drop them too, or it rejects writes the store now accepts
+// and leaks an entry per delete for as long as lists stay undated.
+func TestRepositorySnapshot_UndatedReplaceClearsTheTombstones(t *testing.T) {
+	snapshot := NewRepositorySnapshot(usinformer.NewStore())
+	snapshot.DeleteAt(t.Context(), "ns", "going", 20)
+	snapshot.Replace(nil, 0)
+
+	snapshot.Update(t.Context(), repoAt("ns", "going", "10"))
+
+	assert.Equal(t, 1, snapshot.CountActive("ns"), "the store took the write, so it must be counted")
+	requireAgrees(t, snapshot, "ns")
+
+	snapshot.mu.RLock()
+	defer snapshot.mu.RUnlock()
+	assert.Empty(t, snapshot.tombs, "an undated snapshot must leave no mirrored tombstones")
+}
+
+// Deletes arriving while lists stay undated must not pile up in the mirror.
+func TestRepositorySnapshot_UndatedReplacesDoNotAccumulateTombstones(t *testing.T) {
+	snapshot := NewRepositorySnapshot(usinformer.NewStore())
+
+	for i := range 50 {
+		snapshot.DeleteAt(t.Context(), "ns", "r"+strconv.Itoa(i), int64(20+i))
+		snapshot.Replace(nil, 0)
+	}
+
+	snapshot.mu.RLock()
+	defer snapshot.mu.RUnlock()
+	assert.Empty(t, snapshot.tombs, "the mirror must not grow while snapshots stay undated")
+}
