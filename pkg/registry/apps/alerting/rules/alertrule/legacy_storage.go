@@ -13,7 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
@@ -277,8 +278,9 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		}
 	}
 
-	p, ok := obj.(*model.AlertRule)
-	if !ok {
+	// The dual writer can pass the object in the version of the request.
+	p, err := convert.Hub[*model.AlertRule](obj)
+	if err != nil {
 		return nil, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
@@ -324,8 +326,8 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		}
 	}
 
-	new, ok := obj.(*model.AlertRule)
-	if !ok {
+	new, err := convert.Hub[*model.AlertRule](obj)
+	if err != nil {
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
@@ -372,8 +374,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 			return nil, false, err
 		}
 	}
-	p, ok := old.(*model.AlertRule)
-	if !ok {
+	p, err := convert.Hub[*model.AlertRule](old)
+	if err != nil {
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 

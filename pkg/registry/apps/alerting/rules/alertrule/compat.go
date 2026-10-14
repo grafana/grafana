@@ -16,7 +16,7 @@ import (
 
 	prom_model "github.com/prometheus/common/model"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -49,6 +49,9 @@ func convertToK8sResource(
 	}
 
 	k8sRule := &model.AlertRule{
+		// The apiserver converts the object to the requested version, which
+		// starts from the version named here.
+		TypeMeta: ResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
 			UID:             types.UID(rule.GUID),
