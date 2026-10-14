@@ -188,6 +188,63 @@ describe('annotations', () => {
     expect(listener).toHaveBeenCalledTimes(3);
   });
 
+  it('reports pin hover and focus, and their end, until unsubscribed', () => {
+    const { session, annotate } = setup();
+    const listener = jest.fn();
+    const unsubscribe = session.onAnnotationHover(listener);
+    annotate([item(), item({ id: 'b', label: '2', state: 'staged' })]);
+    const staged = screen.getByRole('button', { name: 'Comment 2' });
+
+    fireEvent.pointerEnter(staged);
+    fireEvent.pointerLeave(staged);
+    act(() => staged.focus());
+    act(() => staged.blur());
+    expect(listener.mock.calls).toEqual([['b'], [null], ['b'], [null]]);
+
+    unsubscribe();
+    fireEvent.pointerEnter(staged);
+    expect(listener).toHaveBeenCalledTimes(4);
+  });
+
+  it('ignores pin hover while paused', () => {
+    const { session, annotate } = setup();
+    const listener = jest.fn();
+    session.onAnnotationHover(listener);
+    annotate([item()]);
+    const pin = screen.getByRole('button', { name: 'Comment 1' });
+
+    act(() => session.setPaused(true));
+    fireEvent.pointerEnter(pin);
+    fireEvent.pointerLeave(pin);
+    expect(listener).not.toHaveBeenCalled();
+
+    act(() => session.setPaused(false));
+    fireEvent.pointerEnter(pin);
+    expect(listener).toHaveBeenCalledWith('a');
+  });
+
+  it('releases hover and click listeners when the session ends', () => {
+    const { session } = setup();
+    // The unsubscribe reports whether the listener was still registered (Set#delete), which tells a
+    // released listener apart from one a closed session merely ignores.
+    const probe = session.onAnnotationHover(jest.fn());
+    expect(probe()).toBe(true);
+    expect(probe()).toBe(false);
+
+    const unsubscribeHover = session.onAnnotationHover(jest.fn());
+    const unsubscribeClick = session.onAnnotationClick(jest.fn());
+    act(() => session.exit());
+
+    expect(unsubscribeHover()).toBe(false);
+    expect(unsubscribeClick()).toBe(false);
+  });
+
+  it('gives staged items an anchor too', () => {
+    const { session, annotate } = setup();
+    annotate([item({ state: 'staged' })]);
+    expect(session.getAnnotationAnchor('a')).toBeInstanceOf(HTMLElement);
+  });
+
   it('keeps pins visible but inert while paused', async () => {
     const { session, annotate } = setup();
     const listener = jest.fn();

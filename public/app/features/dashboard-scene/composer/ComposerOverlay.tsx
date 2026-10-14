@@ -226,6 +226,10 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
             aria-disabled={paused || undefined}
             data-testid={`composer-annotation-pin-${id}`}
             onPointerDown={(event) => event.stopPropagation()}
+            onPointerEnter={() => session.hoverAnnotation(id)}
+            onPointerLeave={() => session.hoverAnnotation(null)}
+            onFocus={() => session.hoverAnnotation(id)}
+            onBlur={() => session.hoverAnnotation(null)}
             onClick={(event) => {
               event.stopPropagation();
               session.activateAnnotation(id);

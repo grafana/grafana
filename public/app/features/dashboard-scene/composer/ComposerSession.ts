@@ -68,6 +68,7 @@ export class ComposerSession implements ComposerSessionAPI {
   private overlayState: ComposerOverlayState = INITIAL_OVERLAY_STATE;
   private readonly listeners = new Set<() => void>();
   private readonly annotationListeners = new Set<(id: string) => void>();
+  private readonly annotationHoverListeners = new Set<(id: string | null) => void>();
   /** Containers the plugin portals into, kept across re-renders and moved with the overlay. */
   private readonly anchors = new Map<string, HTMLDivElement>();
   private anchorHost: HTMLElement | null = null;
@@ -182,6 +183,11 @@ export class ComposerSession implements ComposerSessionAPI {
   public onAnnotationClick(listener: (id: string) => void): () => void {
     this.annotationListeners.add(listener);
     return () => this.annotationListeners.delete(listener);
+  }
+
+  public onAnnotationHover(listener: (id: string | null) => void): () => void {
+    this.annotationHoverListeners.add(listener);
+    return () => this.annotationHoverListeners.delete(listener);
   }
 
   public getAnnotationAnchor(id: string): HTMLElement | null {
@@ -308,6 +314,7 @@ export class ComposerSession implements ComposerSessionAPI {
     this.anchors.clear();
     this.requestMeasure = undefined;
     this.annotationListeners.clear();
+    this.annotationHoverListeners.clear();
     this.overlayState = INITIAL_OVERLAY_STATE;
     this.notify();
     appEvents.publish(new SetExtensionSidebarPresentationEvent({ presentation: 'docked' }));
@@ -345,6 +352,14 @@ export class ComposerSession implements ComposerSessionAPI {
       return;
     }
     this.annotationListeners.forEach((listener) => listener(id));
+  }
+
+  /** @internal A pin gained (id) or lost (null) pointer hover or focus. Ignored while paused. */
+  public hoverAnnotation(id: string | null): void {
+    if (this.closed || this.overlayState.paused || (id !== null && !this.findAnnotation(id))) {
+      return;
+    }
+    this.annotationHoverListeners.forEach((listener) => listener(id));
   }
 
   /** @internal The overlay hosts and positions the anchor containers; a new host takes the existing ones over. */

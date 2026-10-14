@@ -92,7 +92,13 @@ export interface ComposerSessionAPI {
   /** Fires with the item id when its pin is clicked or activated with Enter or Space. Returns an unsubscribe. */
   onAnnotationClick(listener: (id: string) => void): () => void;
   /**
-   * A stable container, positioned at the item's element, for the plugin to portal its editor into.
+   * Fires with the item id when a pin gains pointer hover or keyboard focus, and with null when it loses
+   * it. Ignored while paused. Returns an unsubscribe.
+   */
+  onAnnotationHover(listener: (id: string | null) => void): () => void;
+  /**
+   * A stable container, positioned at the item's element, for the plugin to portal its editor or a
+   * read-only preview into. Works for active and staged items alike.
    * Core never reads, styles or clears its content. Null when the item is not set or does not resolve.
    */
   getAnnotationAnchor(id: string): HTMLElement | null;
