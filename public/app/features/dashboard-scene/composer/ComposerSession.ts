@@ -208,6 +208,29 @@ export class ComposerSession implements ComposerSessionAPI {
     return anchor;
   }
 
+  public revealAnnotation(id: string): void {
+    const item = this.findAnnotation(id);
+    const panel = item?.ref.kind === 'panel' ? this.findPanel(item.ref.panelId) : undefined;
+    const element = item ? this.findElementRoot(item.ref) : null;
+    if (this.closed || !item || !panel || !element || isInHiddenTab(panel)) {
+      return;
+    }
+    const behavior: ScrollBehavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      ? 'auto'
+      : 'smooth';
+    const container = getScrollContainer(element);
+    const visible = getVisibleBounds(container);
+    const rect = element.getBoundingClientRect();
+    if (rect.height <= visible.bottom - visible.top) {
+      // The whole element fits, so the pin's point is visible once the element is.
+      element.scrollIntoView({ behavior, block: 'nearest', inline: 'nearest' });
+      return;
+    }
+    // Taller than the visible area: centre the pin's point instead.
+    const pointY = rect.top + item.point.y * rect.height;
+    container.scrollBy({ top: pointY - (visible.top + visible.bottom) / 2, behavior });
+  }
+
   public async readSpec(): Promise<{ spec: ComposerDashboardSpec; revision: number }> {
     if (this.closed) {
       throw new Error('The Composer session has ended.');
@@ -429,6 +452,34 @@ export class ComposerSession implements ComposerSessionAPI {
   private notify() {
     this.listeners.forEach((listener) => listener());
   }
+}
+
+function isInHiddenTab(obj: SceneObject): boolean {
+  for (let parent = obj.parent; parent; parent = parent.parent) {
+    if (parent instanceof TabItem && !parent.isCurrentTab()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** The nearest ancestor that scrolls vertically, else the document's scroller. */
+function getScrollContainer(element: HTMLElement): HTMLElement {
+  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+    const { overflowY } = getComputedStyle(parent);
+    if (/(auto|scroll|overlay)/.test(overflowY) && parent.scrollHeight > parent.clientHeight) {
+      return parent;
+    }
+  }
+  return document.scrollingElement instanceof HTMLElement ? document.scrollingElement : document.documentElement;
+}
+
+function getVisibleBounds(container: HTMLElement): { top: number; bottom: number } {
+  if (container === document.scrollingElement || container === document.documentElement) {
+    return { top: 0, bottom: window.innerHeight };
+  }
+  const rect = container.getBoundingClientRect();
+  return { top: Math.max(rect.top, 0), bottom: Math.min(rect.bottom, window.innerHeight) };
 }
 
 function clamp01(value: number): number {

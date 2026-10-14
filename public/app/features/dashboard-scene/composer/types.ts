@@ -104,6 +104,12 @@ export interface ComposerSessionAPI {
    * reads, styles or clears its content. Null when the item is not set or does not resolve.
    */
   getAnnotationAnchor(id: string): HTMLElement | null;
+  /**
+   * Scrolls the item's element into view in the dashboard's scroll container, keeping the pin's point
+   * visible. Smooth unless the user prefers reduced motion. No-op for an unknown id, a closed session,
+   * or an element in a tab that is not selected (tab switching is M3 navigation).
+   */
+  revealAnnotation(id: string): void;
 
   readSpec(): Promise<{ spec: ComposerDashboardSpec; revision: number }>;
   applySpec(spec: ComposerDashboardSpec, opts: { signal: AbortSignal; baseRevision: number }): Promise<ApplyOutcome>;

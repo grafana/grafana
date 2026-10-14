@@ -348,6 +348,72 @@ describe('annotations', () => {
     expect(anchor).toBeInTheDocument();
   });
 
+  describe('revealAnnotation', () => {
+    it('scrolls an element that fits into view', () => {
+      const { session, annotate } = setup();
+      annotate([item()]);
+      const scrollIntoView = jest.fn();
+      panelRoot!.scrollIntoView = scrollIntoView;
+
+      session.revealAnnotation('a');
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    });
+
+    it('does not animate when the user prefers reduced motion', () => {
+      const { session, annotate } = setup();
+      annotate([item()]);
+      const scrollIntoView = jest.fn();
+      panelRoot!.scrollIntoView = scrollIntoView;
+      jest.spyOn(window, 'matchMedia').mockImplementation(
+        (query) =>
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only `matches` is read
+          ({ matches: query === '(prefers-reduced-motion: reduce)' }) as MediaQueryList
+      );
+
+      session.revealAnnotation('a');
+
+      expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
+    });
+
+    it('centres the pin point of a tall element in its scroll container', () => {
+      const { session, annotate } = setup();
+      annotate([item()]);
+      panelRect = { left: 100, top: 200, width: 400, height: 2000 };
+      const container = document.createElement('div');
+      container.style.overflowY = 'auto';
+      Object.defineProperty(container, 'scrollHeight', { value: 4000 });
+      Object.defineProperty(container, 'clientHeight', { value: 768 });
+      container.scrollBy = jest.fn();
+      document.body.appendChild(container);
+      container.appendChild(panelRoot!);
+      const documentScroll = jest.fn();
+      document.documentElement.scrollBy = documentScroll;
+
+      session.revealAnnotation('a');
+
+      // Point at 200 + 0.5 * 2000 = 1200, visible centre at 384.
+      expect(container.scrollBy).toHaveBeenCalledWith({ top: 816, behavior: 'smooth' });
+      expect(documentScroll).not.toHaveBeenCalled();
+      // jsdom has no Element#scrollBy; drop the stub again.
+      Reflect.deleteProperty(document.documentElement, 'scrollBy');
+      container.remove();
+    });
+
+    it('does nothing for an unknown id or a closed session', () => {
+      const { session, annotate } = setup();
+      annotate([item()]);
+      const scrollIntoView = jest.fn();
+      panelRoot!.scrollIntoView = scrollIntoView;
+
+      session.revealAnnotation('missing');
+      act(() => session.exit());
+      session.revealAnnotation('a');
+
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    });
+  });
+
   it('removes anchors and pins when the session ends', () => {
     const { session, annotate } = setup();
     annotate([item()]);
