@@ -11,9 +11,15 @@ type user
 
 type service-account
   relations
-    define get: [user, service-account, team#member, role#assignee]
-    define update: [user, service-account, team#member, role#assignee]
-    define delete: [user, service-account, team#member, role#assignee]
+    define edit: [user, service-account, team#member, role#assignee] or admin
+    define admin: [user, service-account, team#member, role#assignee]
+
+    define get: [user, service-account, team#member, role#assignee] or edit
+    define update: [user, service-account, team#member, role#assignee] or edit
+    define delete: [user, service-account, team#member, role#assignee] or admin
+
+    define get_permissions: [user, service-account, team#member, role#assignee] or admin
+    define set_permissions: [user, service-account, team#member, role#assignee] or admin
 
 type render
 

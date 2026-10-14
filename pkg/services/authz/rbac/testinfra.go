@@ -31,10 +31,10 @@ import (
 )
 
 // NewTestService returns a Service backed by in-memory fakes, seeded with the
-// permissions the identity holds and the namespace's folder tree. Everything
-// else (mapper, caches, folder-tree building) is the real implementation, so
-// the service evaluates requests exactly as it does in production.
-func NewTestService(userUID string, permissions []accesscontrol.Permission, folders []store.Folder) *Service {
+// permissions the identity holds, the namespace's folder tree, and any service
+// accounts needed for ID-to-UID resolution. Everything else (mapper, caches,
+// folder-tree building, scope resolution) is the real implementation.
+func NewTestService(userUID string, permissions []accesscontrol.Permission, folders []store.Folder, serviceAccounts ...legacy.ServiceAccount) *Service {
 	s := setupService()
 	fake := &fakeStore{
 		userID:          &store.UserIdentifiers{UID: userUID, ID: 1},
@@ -44,7 +44,7 @@ func NewTestService(userUID string, permissions []accesscontrol.Permission, fold
 	s.store = fake
 	s.permissionStore = fake
 	s.folderStore = fake
-	s.identityStore = &fakeIdentityStore{}
+	s.identityStore = &fakeIdentityStore{serviceAccounts: serviceAccounts}
 	return s
 }
 

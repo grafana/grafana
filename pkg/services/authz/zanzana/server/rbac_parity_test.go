@@ -38,6 +38,7 @@ import (
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
@@ -1194,6 +1195,262 @@ func TestIntegrationRBACParityRoleManagement(t *testing.T) {
 	}
 }
 
+// Edit allows reading/updating a service account, but only Admin allows deletion
+// and permission management. Neither action set includes service-account creation.
+// Use production writers so mismatches in tuple translation remain visible.
+func TestIntegrationRBACParityServiceAccountPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	const (
+		group    = "iam.grafana.app"
+		resource = "serviceaccounts"
+		uid      = "sa-target"
+	)
+
+	grants := []struct {
+		action         string
+		permissionVerb string
+		allowed        map[string]bool
+	}{
+		{"serviceaccounts:edit", "Edit", map[string]bool{utils.VerbGet: true, utils.VerbList: true, utils.VerbWatch: true, utils.VerbUpdate: true, utils.VerbPatch: true}},
+		{"serviceaccounts:admin", "Admin", map[string]bool{utils.VerbGet: true, utils.VerbList: true, utils.VerbWatch: true, utils.VerbUpdate: true, utils.VerbPatch: true, utils.VerbDelete: true, utils.VerbDeleteCollection: true, utils.VerbGetPermissions: true, utils.VerbSetPermissions: true}},
+		{"serviceaccounts:read", "", map[string]bool{utils.VerbGet: true, utils.VerbList: true, utils.VerbWatch: true}},
+		{"serviceaccounts:write", "", map[string]bool{utils.VerbUpdate: true, utils.VerbPatch: true}},
+		{"serviceaccounts:delete", "", map[string]bool{utils.VerbDelete: true, utils.VerbDeleteCollection: true}},
+		{"serviceaccounts.permissions:read", "", map[string]bool{utils.VerbGetPermissions: true}},
+		{"serviceaccounts.permissions:write", "", map[string]bool{utils.VerbSetPermissions: true}},
+		{"serviceaccounts:create", "", map[string]bool{utils.VerbCreate: true}},
+		{"", "", map[string]bool{}},
+	}
+	for _, source := range []string{"role", "resource-permission"} {
+		for _, scope := range []string{"serviceaccounts:uid:" + uid, "serviceaccounts:uid:*", "serviceaccounts:*", ""} {
+			for _, grant := range grants {
+				unscoped := grant.action == "serviceaccounts:create" || grant.action == ""
+				if unscoped != (scope == "") {
+					continue
+				}
+				// ResourcePermission grants target an existing object, not a wildcard.
+				if source == "resource-permission" && (grant.permissionVerb == "" || scope != "serviceaccounts:uid:"+uid) {
+					continue
+				}
+				t.Run(source+"/"+grant.action+"/"+scope, func(t *testing.T) {
+					permissions := []accesscontrol.Permission{}
+					rolePermissions := []*authzextv1.RolePermission{}
+					if grant.action != "" {
+						permissions = append(permissions, accesscontrol.Permission{Action: grant.action, Scope: scope})
+						rolePermissions = append(rolePermissions, &authzextv1.RolePermission{Action: grant.action, Scope: scope})
+					}
+					var tuples []*openfgav1.TupleKey
+					var err error
+					if source == "role" {
+						tuples, err = zanzana.RoleToTuples("sa-permissions", rolePermissions)
+						// Keep the binding even if the translator drops an unsupported action.
+						tuples = append(tuples, common.NewTuple(paritySubject, common.RelationAssignee, "role:sa-permissions"))
+					} else {
+						tuples, err = zanzana.GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{
+							Resource:   &authzextv1.Resource{Group: group, Resource: resource, Name: uid},
+							Permission: &authzextv1.Permission{Kind: "User", Name: parityUserUID, Verb: grant.permissionVerb},
+						})
+					}
+					require.NoError(t, err)
+					srv := setupOpenFGAServer(t)
+					setupOpenFGADatabase(t, srv, tuples)
+					rbacService := rbac.NewTestService(parityUserUID, permissions, nil)
+					batch := &authzv1.BatchCheckRequest{Namespace: namespace, Subject: paritySubject}
+					expectedBatch := map[string]bool{}
+					for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection, utils.VerbGetPermissions, utils.VerbSetPermissions, utils.VerbCreate} {
+						t.Run(verb, func(t *testing.T) {
+							names := []string{uid, "sa-other"}
+							if verb == utils.VerbCreate {
+								names = []string{""}
+							}
+							for _, name := range names {
+								allowed := grant.allowed[verb] && (unscoped || strings.HasSuffix(scope, ":*") || name == uid)
+								id := verb + "-" + name
+								expectedBatch[id] = allowed
+								batch.Checks = append(batch.Checks, &authzv1.BatchCheckItem{CorrelationId: id, Group: group, Resource: resource, Verb: verb, Name: name})
+								t.Run("Check/"+name, func(t *testing.T) {
+									req := parityCheckReq(group, resource, "", verb, name, "")
+									rbacRes, err := rbacService.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+									require.NoError(t, err)
+									require.Equal(t, allowed, rbacRes.GetAllowed(), "RBAC answer changed")
+									res, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+									require.NoError(t, err)
+									assert.Equal(t, allowed, res.GetAllowed(), "Zanzana diverges from RBAC")
+								})
+							}
+							t.Run("List", func(t *testing.T) {
+								expected := parityListResult{}
+								if grant.allowed[verb] {
+									if unscoped || strings.HasSuffix(scope, ":*") {
+										expected.All = true
+									} else {
+										expected.Items = []string{uid}
+									}
+								}
+								req := parityListReq(group, resource, "", verb)
+								rbacRes, err := rbacService.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								require.Equal(t, normalizeParityList(expected), toParityListResult(rbacRes), "RBAC answer changed")
+								res, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								assert.Equal(t, normalizeParityList(expected), toParityListResult(res), "Zanzana diverges from RBAC")
+							})
+						})
+					}
+					t.Run("BatchCheck", func(t *testing.T) {
+						rbacRes, err := rbacService.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						res, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						for engine, response := range map[string]*authzv1.BatchCheckResponse{"RBAC": rbacRes, "Zanzana": res} {
+							require.Len(t, response.GetResults(), len(expectedBatch), engine)
+							for id, allowed := range expectedBatch {
+								t.Run(engine+"/"+id, func(t *testing.T) {
+									require.Contains(t, response.GetResults(), id)
+									result := response.GetResults()[id]
+									require.Empty(t, result.GetError())
+									assert.Equal(t, allowed, result.GetAllowed())
+								})
+							}
+						}
+					})
+				})
+			}
+		}
+	}
+}
+
+func TestIntegrationRBACParityServiceAccountIDScopes(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	const (
+		group    = "iam.grafana.app"
+		resource = "serviceaccounts"
+	)
+	accounts := []legacy.ServiceAccount{
+		{ID: 42, UID: "account-a"},
+		{ID: 99, UID: "42"},
+		{ID: 100, UID: "404"},
+	}
+	// Numeric UIDs are legitimate names, but must never be mistaken for database
+	// IDs. No account has ID 404, even though an account has that UID.
+	// Unlike RBAC, Zanzana intentionally drops concrete ID scopes until it can
+	// resolve them safely; even a valid database ID must grant nothing.
+	scopes := []struct {
+		name        string
+		scope       string
+		uid         string
+		all         bool
+		unsupported bool
+	}{
+		{name: "database ID fails closed in Zanzana", scope: "serviceaccounts:id:42", uid: "account-a", unsupported: true},
+		{name: "UID targets account A", scope: "serviceaccounts:uid:account-a", uid: "account-a"},
+		{name: "numeric UID targets account B", scope: "serviceaccounts:uid:42", uid: "42"},
+		{name: "missing ID must not target numeric UID", scope: "serviceaccounts:id:404", unsupported: true},
+		{name: "numeric UID needs no matching database ID", scope: "serviceaccounts:uid:404", uid: "404"},
+		{name: "ID wildcard", scope: "serviceaccounts:id:*", all: true},
+		{name: "UID wildcard", scope: "serviceaccounts:uid:*", all: true},
+		{name: "resource wildcard", scope: "serviceaccounts:*", all: true},
+	}
+	grants := []struct {
+		action  string
+		allowed map[string]bool
+	}{
+		{"serviceaccounts:read", map[string]bool{utils.VerbGet: true}},
+		{"serviceaccounts:write", map[string]bool{utils.VerbUpdate: true}},
+		{"serviceaccounts:delete", map[string]bool{utils.VerbDelete: true}},
+		{"serviceaccounts.permissions:read", map[string]bool{utils.VerbGetPermissions: true}},
+		{"serviceaccounts.permissions:write", map[string]bool{utils.VerbSetPermissions: true}},
+		{"serviceaccounts:edit", map[string]bool{utils.VerbGet: true, utils.VerbUpdate: true}},
+		{"serviceaccounts:admin", map[string]bool{utils.VerbGet: true, utils.VerbUpdate: true, utils.VerbDelete: true, utils.VerbGetPermissions: true, utils.VerbSetPermissions: true}},
+	}
+	for _, grant := range grants {
+		for _, scope := range scopes {
+			t.Run(grant.action+"/"+scope.name, func(t *testing.T) {
+				permissions := []accesscontrol.Permission{{Action: grant.action, Scope: scope.scope}}
+				rbacService := rbac.NewTestService(parityUserUID, permissions, nil, accounts...)
+				tuples, err := zanzana.RoleToTuples("sa-id-scopes", []*authzextv1.RolePermission{
+					{Action: grant.action, Scope: scope.scope},
+				})
+				require.NoError(t, err)
+				tuples = append(tuples, common.NewTuple(paritySubject, common.RelationAssignee, "role:sa-id-scopes"))
+				srv := setupOpenFGAServer(t)
+				setupOpenFGADatabase(t, srv, tuples)
+				batch := &authzv1.BatchCheckRequest{Namespace: namespace, Subject: paritySubject}
+				expectedBatch := map[string]bool{}
+				for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete, utils.VerbGetPermissions, utils.VerbSetPermissions} {
+					t.Run(verb, func(t *testing.T) {
+						for _, name := range []string{"account-a", "42", "404", "sa-other"} {
+							allowed := grant.allowed[verb] && (scope.all || name == scope.uid)
+							id := verb + "-" + name
+							expectedBatch[id] = allowed
+							batch.Checks = append(batch.Checks, &authzv1.BatchCheckItem{CorrelationId: id, Group: group, Resource: resource, Verb: verb, Name: name})
+							t.Run("Check/"+name, func(t *testing.T) {
+								req := parityCheckReq(group, resource, "", verb, name, "")
+								rbacRes, err := rbacService.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								require.Equal(t, allowed, rbacRes.GetAllowed(), "RBAC answer changed")
+								res, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								assert.Equal(t, allowed && !scope.unsupported, res.GetAllowed(), "Zanzana must fail closed for concrete ID scopes")
+							})
+						}
+						t.Run("List", func(t *testing.T) {
+							expected := parityListResult{}
+							if grant.allowed[verb] {
+								if scope.all {
+									expected.All = true
+								} else if scope.uid != "" {
+									expected.Items = []string{scope.uid}
+								}
+							}
+							req := parityListReq(group, resource, "", verb)
+							rbacRes, err := rbacService.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+							require.NoError(t, err)
+							if scope.uid == "" && !scope.all {
+								// RBAC can retain an unresolved scope literal in Items. It
+								// must not authorize any of the actual account UIDs.
+								require.False(t, rbacRes.GetAll())
+								require.Empty(t, rbacRes.GetFolders())
+								for _, account := range accounts {
+									require.NotContains(t, rbacRes.GetItems(), account.UID)
+								}
+							} else {
+								require.Equal(t, normalizeParityList(expected), toParityListResult(rbacRes), "RBAC answer changed")
+							}
+							res, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+							require.NoError(t, err)
+							if scope.unsupported {
+								expected = parityListResult{}
+							}
+							assert.Equal(t, normalizeParityList(expected), toParityListResult(res), "Zanzana must list UIDs, not database IDs")
+						})
+					})
+				}
+				t.Run("BatchCheck", func(t *testing.T) {
+					rbacRes, err := rbacService.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+					require.NoError(t, err)
+					res, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+					require.NoError(t, err)
+					for engine, response := range map[string]*authzv1.BatchCheckResponse{"RBAC": rbacRes, "Zanzana": res} {
+						require.Len(t, response.GetResults(), len(expectedBatch), engine)
+						for id, allowed := range expectedBatch {
+							if engine == "Zanzana" && scope.unsupported {
+								allowed = false
+							}
+							t.Run(engine+"/"+id, func(t *testing.T) {
+								require.Contains(t, response.GetResults(), id)
+								result := response.GetResults()[id]
+								require.Empty(t, result.GetError())
+								assert.Equal(t, allowed, result.GetAllowed())
+							})
+						}
+					}
+				})
+			})
+		}
+	}
+}
+
 // Exercise the production translators, not hand-built creation tuples. Both role
 // permissions and ResourcePermission grants must survive a reconciliation.
 func TestIntegrationRBACParityCreationGrants(t *testing.T) {
@@ -1439,9 +1696,9 @@ func writeParityTuples(t *testing.T, srv *Server, ns string, permissions []acces
 // into Zanzana: split the scope into kind + identifier and hand both to the
 // shared translation table.
 func permissionToTuples(subject string, perm accesscontrol.Permission) ([]*openfgav1.TupleKey, bool) {
-	kind, identifier := perm.Kind, perm.Identifier
+	kind, attribute, identifier := perm.Kind, perm.Attribute, perm.Identifier
 	if kind == "" && perm.Scope != "" {
-		kind, _, identifier = accesscontrol.SplitScope(perm.Scope)
+		kind, attribute, identifier = accesscontrol.SplitScope(perm.Scope)
 	}
 
 	// Grants with no scope (stack roles) or a bare "*" carry no kind, so recover
@@ -1457,7 +1714,7 @@ func permissionToTuples(subject string, perm accesscontrol.Permission) ([]*openf
 			common.KindUsers,
 			common.KindFolders,
 		} {
-			if tuple, ok := common.TranslateToResourceTuples(subject, perm.Action, candidate, "*"); ok {
+			if tuple, ok := common.TranslateToResourceTuples(subject, perm.Action, candidate, "*", "*"); ok {
 				return tuple, true
 			}
 		}
@@ -1467,7 +1724,7 @@ func permissionToTuples(subject string, perm accesscontrol.Permission) ([]*openf
 	if identifier == "" {
 		identifier = "*"
 	}
-	return common.TranslateToResourceTuples(subject, perm.Action, kind, identifier)
+	return common.TranslateToResourceTuples(subject, perm.Action, kind, attribute, identifier)
 }
 
 // ---------------------------------------------------------------------------
