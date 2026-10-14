@@ -55,7 +55,7 @@ it('excludes override-hidden columns while retaining ad-hoc-hidden columns and p
       ],
     };
     const props = getPanelProps<TableOptions>(
-      { showHeader: true, showColumnsSidebar: true },
+      { frameIndex: 0, showHeader: true, showColumnsSidebar: true },
       { fieldConfig, width: 800, replaceVariables: (value) => value }
     );
     props.data = {
