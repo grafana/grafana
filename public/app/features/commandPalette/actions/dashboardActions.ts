@@ -171,9 +171,8 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
     return getClassicSearchResultActions(searchQuery, ['dashboard']);
   }
 
-  // The hybrid endpoint returns the folder UID only; resolve display names
-  // through the searcher's cached folder lookup. The folder subtitle is just
-  // nice to have, so if the lookup fails show the results without it.
+  // Folder titles are best-effort; use the cached folder lookup when absent.
+  // If the lookup fails, the dashboard results should still be shown.
   let locationInfo: Record<string, LocationInfo> = {};
   try {
     locationInfo = await getGrafanaSearcher().getLocationInfo();
@@ -182,7 +181,7 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
   }
 
   return hits.map((hit) => {
-    const url = toURL(hit.resource, hit.name, hit.title);
+    const url = toURL(hit.resource.resource, hit.resource.name, hit.title);
     // Root-parented dashboards come back with an empty folder; collapse to the
     // synthetic "general" UID the location lookup uses for root items
     const location = isRootFolderUID(hit.folder) ? 'general' : hit.folder;
@@ -193,7 +192,7 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
       sectionId: SECTION_DASHBOARDS,
       priority: SEARCH_RESULTS_PRIORITY,
       url,
-      subtitle: locationInfo[location]?.name,
+      subtitle: hit.folderTitle || locationInfo[location]?.name,
       managedBy: extractManagerKind(hit.managedBy),
     };
   });

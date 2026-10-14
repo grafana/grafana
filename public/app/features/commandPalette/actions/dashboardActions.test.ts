@@ -287,25 +287,49 @@ describe('dashboardActions', () => {
         expect(dashboardResults).toHaveLength(20);
       });
 
-      it('falls back to the classic search for dashboards when the hybrid endpoint fails', async () => {
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-        server.use(http.get(hybridSearchRoute, () => HttpResponse.json({}, { status: 501 })));
+      it('uses the folder title returned by hybrid search', async () => {
+        server.use(
+          getHybridSearchHandler([
+            {
+              name: 'hybrid-dashboard-1',
+              title: 'Hybrid dashboard 1',
+              folder: 'my-folder-1',
+              folderTitle: 'Renamed folder',
+            },
+          ])
+        );
 
         const results = await getSearchResultActions('mySearchQuery', true);
 
-        expect(results).toEqual([
-          expect.objectContaining({
-            name: 'Lexical dashboard 1',
-            sectionId: 'dashboards',
-          }),
-          expect.objectContaining({
-            name: 'My folder 1',
-            sectionId: 'folders',
-          }),
-        ]);
-        expect(consoleErrorSpy).toHaveBeenCalled();
-        consoleErrorSpy.mockRestore();
+        expect(results[0]).toMatchObject({
+          name: 'Hybrid dashboard 1',
+          url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+          subtitle: 'Renamed folder',
+        });
       });
+
+      it.each([404, 501, 503])(
+        'falls back to the classic search when the hybrid endpoint returns %s',
+        async (status) => {
+          const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+          server.use(http.post(hybridSearchRoute, () => HttpResponse.json({}, { status })));
+
+          const results = await getSearchResultActions('mySearchQuery', true);
+
+          expect(results).toEqual([
+            expect.objectContaining({
+              name: 'Lexical dashboard 1',
+              sectionId: 'dashboards',
+            }),
+            expect.objectContaining({
+              name: 'My folder 1',
+              sectionId: 'folders',
+            }),
+          ]);
+          expect(consoleErrorSpy).toHaveBeenCalled();
+          consoleErrorSpy.mockRestore();
+        }
+      );
 
       it('shows hybrid results without the folder subtitle when the folder lookup fails', async () => {
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -473,9 +497,9 @@ describe('dashboardActions', () => {
       // relying only on the shape of the returned actions
       const hybridSearchSpy = jest.fn();
       server.use(
-        http.get(hybridSearchRoute, () => {
+        http.post(hybridSearchRoute, () => {
           hybridSearchSpy();
-          return HttpResponse.json({ hits: [{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }] });
+          return HttpResponse.json({ items: [] });
         })
       );
 
