@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -13,6 +14,32 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
+
+func TestHybridSearch_GlobalMetricLabels(t *testing.T) {
+	s, _ := newHybridResourcesTestServer(nil)
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(s.vectorMetrics.HybridSearchDuration)
+	for _, name := range []string{"widgets", "gadgets"} {
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Namespace: "ns", Query: "cpu", RequireHybridEnabled: true,
+			Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: name + ".example.com", Resource: name}},
+		})
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
+	}
+	metrics, err := registry.Gather()
+	require.NoError(t, err)
+	require.Len(t, metrics, 1)
+	require.Len(t, metrics[0].Metric, 1, "rejected resource names must not create separate metric series")
+	metric := metrics[0].Metric[0]
+	labels := make(map[string]string, len(metric.Label))
+	for _, label := range metric.Label {
+		labels[label.GetName()] = label.GetValue()
+	}
+	assert.Equal(t, map[string]string{
+		"group": GlobalSearchGroup, "resource": GlobalSearchResource, "status_code": codes.InvalidArgument.String(),
+	}, labels)
+	assert.Equal(t, uint64(2), metric.GetHistogram().GetSampleCount())
+}
 
 func TestHybridSearch_RequiresManifestOptIn(t *testing.T) {
 	for _, tc := range []struct {

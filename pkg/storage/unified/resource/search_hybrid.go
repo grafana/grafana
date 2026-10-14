@@ -71,7 +71,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, err
 	}
 	namespace := keys[0].Namespace
-	if len(keys) > 1 {
+	// Global callers can supply arbitrary resource names, including rejected targets.
+	if req.RequireHybridEnabled || len(keys) > 1 {
 		group, resource = GlobalSearchGroup, GlobalSearchResource
 	} else {
 		group, resource = keys[0].Group, keys[0].Resource
