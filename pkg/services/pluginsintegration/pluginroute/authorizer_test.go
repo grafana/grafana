@@ -86,9 +86,26 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 		},
 		{
 			name:     "a subresource the manifest does not declare is still refused",
-			attr:     authorizer.AttributesRecord{Resource: "settings", Subresource: "status", Verb: "update"},
+			attr:     authorizer.AttributesRecord{Resource: "settings", Subresource: "scale", Verb: "update"},
 			decision: authorizer.DecisionDeny,
 			reason:   "verb not permitted for cluster-scoped resource",
+		},
+		{
+			name:     "a user cannot update status",
+			attr:     authorizer.AttributesRecord{Resource: "testkinds", Subresource: "status", Verb: "update"},
+			decision: authorizer.DecisionDeny,
+			reason:   "Users may not directly modify status",
+		},
+		{
+			name:     "a user cannot patch status",
+			attr:     authorizer.AttributesRecord{Resource: "testkinds", Subresource: "status", Verb: "patch"},
+			decision: authorizer.DecisionDeny,
+			reason:   "Users may not directly modify status",
+		},
+		{
+			name:     "a user can read status",
+			attr:     authorizer.AttributesRecord{Resource: "testkinds", Subresource: "status", Verb: "get"},
+			decision: authorizer.DecisionAllow,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -128,6 +145,25 @@ func TestGetAuthorizerRequiresIdentity(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, authorizer.DecisionDeny, decision)
 	require.Equal(t, "valid user is required", reason)
+}
+
+// Status is written by the services that reconcile it, never by users.
+func TestGetAuthorizerStatusOnlyWritableByServices(t *testing.T) {
+	b := &manifestBuilder{
+		pluginID:      "test-app",
+		kindPolicies:  kindPolicies(testManifest(t)),
+		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+	}
+
+	for _, typ := range []claims.IdentityType{claims.TypeServiceAccount, claims.TypeAccessPolicy} {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: typ, UserUID: "svc", OrgID: 1})
+		for _, verb := range []string{"update", "patch"} {
+			decision, reason, err := b.GetAuthorizer().Authorize(ctx,
+				authorizer.AttributesRecord{Resource: "testkinds", Subresource: "status", Verb: verb})
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionAllow, decision, "%s %s: %s", typ, verb, reason)
+		}
+	}
 }
 
 // Service identities operate cluster-scoped kinds that users cannot read; their
