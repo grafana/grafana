@@ -200,6 +200,8 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Enables the new text panel */
   GrafanaNewTextPanel: "grafana.newTextPanel",
+  /** Enables Composer for editing notebooks with Grafana Assistant */
+  GrafanaNotebookComposer: "grafana.notebookComposer",
   /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
@@ -1399,6 +1401,17 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaNewTextPanel = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newTextPanel", false, options).value;
+};
+
+/**
+ * Enables Composer for editing notebooks with Grafana Assistant
+ *
+ * **Details:**
+ * - flag key: `grafana.notebookComposer`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNotebookComposer = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.notebookComposer", false, options).value;
 };
 
 /**

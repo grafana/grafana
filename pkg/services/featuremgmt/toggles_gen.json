@@ -2890,6 +2890,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.notebookComposer",
+        "resourceVersion": "1791988082572",
+        "creationTimestamp": "2026-10-14T14:28:02Z"
+      },
+      "spec": {
+        "description": "Enables Composer for editing notebooks with Grafana Assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.ofrepRootUrl",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-07T10:58:18Z"
