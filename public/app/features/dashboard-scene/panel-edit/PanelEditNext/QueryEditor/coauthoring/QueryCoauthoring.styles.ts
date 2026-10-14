@@ -48,7 +48,7 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       transformOrigin: 'top center',
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${surfaceEnter} 140ms ${theme.transitions.easing.easeOut}`,
-        transition: theme.transitions.create('max-height', {
+        transition: theme.transitions.create(['max-height', 'width'], {
           duration: theme.transitions.duration.short,
           easing: theme.transitions.easing.easeOut,
         }),
@@ -108,11 +108,10 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
     tinyExplanationCard: css({ padding: theme.spacing(0.5) }),
     actionsCard: css({ border: `1px solid ${theme.colors.border.weak}`, boxShadow: theme.shadows.z2 }),
     tinyActionsCard: css({
-      alignSelf: 'flex-end',
-      width: 'fit-content',
       minHeight: 0,
       padding: theme.spacing(0.5, 1.5),
     }),
+    proposalActions: css({ marginLeft: 'auto' }),
     tinyActionsRow: css({ gap: theme.spacing(1.5) }),
     tinyIconAction: css({
       width: theme.spacing(3.5),
@@ -121,7 +120,9 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0.75),
     }),
     dimmed: css({ opacity: 0.04, [theme.transitions.handleMotion('no-preference')]: { animation: 'none' } }),
-    frozenGroup: css({ [theme.transitions.handleMotion('no-preference')]: { animation: 'none' } }),
+    frozenGroup: css({
+      [theme.transitions.handleMotion('no-preference')]: { animation: 'none', transition: 'none' },
+    }),
     header: css({
       display: 'flex',
       flex: '0 0 auto',
@@ -331,6 +332,7 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
+      padding: theme.spacing(0.5, 1),
       whiteSpace: 'nowrap',
       '&[data-kind="error"]': { color: theme.colors.error.text },
       '&[data-kind="no-data"]': { color: theme.colors.warning.text },
@@ -366,6 +368,21 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       minHeight: 0,
       paddingTop: theme.spacing(1.5),
     }),
+    // Animating grid rows between 1fr and 0fr collapses content without measuring its height.
+    collapsible: css({
+      display: 'grid',
+      gridTemplateRows: '1fr',
+      opacity: 1,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['grid-template-rows', 'opacity', 'visibility'], {
+          duration: theme.transitions.duration.shorter,
+          easing: theme.transitions.easing.easeInOut,
+        }),
+      },
+    }),
+    collapsed: css({ gridTemplateRows: '0fr', opacity: 0, visibility: 'hidden' }),
+    collapsibleBody: css({ flex: '1 1 auto', minHeight: 0 }),
+    collapsibleContent: css({ minHeight: 0, overflow: 'hidden' }),
     compactProposalBody: css({ padding: 0, paddingTop: theme.spacing(1.5) }),
     footer: css({
       display: 'flex',

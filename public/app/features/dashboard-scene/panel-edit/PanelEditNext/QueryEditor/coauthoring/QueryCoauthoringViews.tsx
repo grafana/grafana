@@ -14,7 +14,7 @@ import {
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
@@ -498,8 +498,12 @@ export function QueryCoauthoringProposal({
   onAccept,
 }: ProposalProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
-  const narrow = width !== undefined && width < 420;
-  const tiny = width !== undefined && width < 280;
+  const theme = useTheme2();
+  // The group adds one grid unit of backdrop padding on each side; breakpoints apply to the cards.
+  const cardWidth = width === undefined ? undefined : width - theme.spacing.gridSize * 2;
+  const compact = cardWidth !== undefined && cardWidth < 560;
+  const narrow = cardWidth !== undefined && cardWidth < 420;
+  const tiny = cardWidth !== undefined && cardWidth < 280;
   const hasPreviewCallout =
     previewOutcome &&
     previewOutcome.kind !== 'loading' &&
@@ -607,43 +611,54 @@ export function QueryCoauthoringProposal({
           </QueryCoauthoringLiveStatus>
         </div>
         <div
-          className={styles.scrollBody}
-          style={narrow && !hasPreviewCallout && !unconfirmedValues?.length ? { display: 'none' } : undefined}
-          data-testid={selectors.components.QueryEditorCoauthoring.container}
-          role="region"
-          aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
+          className={cx(
+            styles.collapsible,
+            styles.collapsibleBody,
+            narrow && !hasPreviewCallout && !unconfirmedValues?.length && styles.collapsed
+          )}
         >
-          <div className={cx(styles.proposalBody, narrow && styles.compactProposalBody)}>
-            <div style={narrow ? { display: 'none' } : undefined}>
-              {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
-            </div>
-            <div role="region" aria-label={t('query-editor-coauthoring.preview-result', 'Preview result')}>
-              <QueryCoauthoringPreviewResult outcome={previewOutcome} tiny={tiny} />
-            </div>
-            <div style={narrow ? { display: 'none' } : undefined}>
-              {why.map((reason, index) => (
-                <Text variant="body" key={index}>
-                  {reason}
-                </Text>
+          <div
+            className={styles.scrollBody}
+            data-testid={selectors.components.QueryEditorCoauthoring.container}
+            role="region"
+            aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
+          >
+            <div className={cx(styles.proposalBody, narrow && styles.compactProposalBody)}>
+              <div className={cx(styles.collapsible, narrow && styles.collapsed)}>
+                <div className={styles.collapsibleContent}>
+                  {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
+                </div>
+              </div>
+              <div role="region" aria-label={t('query-editor-coauthoring.preview-result', 'Preview result')}>
+                <QueryCoauthoringPreviewResult outcome={previewOutcome} tiny={tiny} />
+              </div>
+              <div className={cx(styles.collapsible, narrow && styles.collapsed)}>
+                <div className={styles.collapsibleContent}>
+                  {why.map((reason, index) => (
+                    <Text variant="body" key={index}>
+                      {reason}
+                    </Text>
+                  ))}
+                </div>
+              </div>
+              {unconfirmedValues?.map((value, index) => (
+                <div key={index} className={styles.unconfirmedValue}>
+                  <Icon name="exclamation-triangle" size="sm" aria-hidden />{' '}
+                  <Text variant="bodySmall" color="secondary">
+                    {t('query-editor-coauthoring.unconfirmed-prefix', 'Unconfirmed:')}
+                  </Text>{' '}
+                  <Text variant="body">{value}</Text>
+                </div>
               ))}
             </div>
-            {unconfirmedValues?.map((value, index) => (
-              <div key={index} className={styles.unconfirmedValue}>
-                <Icon name="exclamation-triangle" size="sm" aria-hidden />{' '}
-                <Text variant="bodySmall" color="secondary">
-                  {t('query-editor-coauthoring.unconfirmed-prefix', 'Unconfirmed:')}
-                </Text>{' '}
-                <Text variant="body">{value}</Text>
-              </div>
-            ))}
           </div>
         </div>
       </div>
       <div className={cx(styles.footer, styles.actionsCard, tiny && styles.tinyActionsCard)}>
-        <div className={styles.footerActions} style={narrow ? { display: 'none' } : undefined}>
+        <div className={styles.footerActions} style={compact ? { display: 'none' } : undefined}>
           <FeedbackButtons outcome="proposal" onFeedback={onFeedback} />
         </div>
-        <div className={cx(styles.footerActions, tiny && styles.tinyActionsRow)}>
+        <div className={cx(styles.footerActions, styles.proposalActions, tiny && styles.tinyActionsRow)}>
           <Button
             className={tiny ? styles.tinyIconAction : undefined}
             size="sm"

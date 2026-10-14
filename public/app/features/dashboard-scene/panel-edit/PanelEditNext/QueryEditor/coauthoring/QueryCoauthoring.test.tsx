@@ -697,7 +697,9 @@ describe('QueryCoauthoring', () => {
     }
     expect(trio[0]).toHaveStyle({ backgroundColor: createTheme().colors.action.disabledBackground });
     expect(trio[2]).toHaveStyle({ backgroundColor: createTheme().colors.action.disabledBackground });
-    expect(actions).toHaveStyle({ alignSelf: 'flex-end', width: 'fit-content', minHeight: '0', padding: '4px 12px' });
+    expect(actions).toHaveStyle({ minHeight: '0', padding: '4px 12px' });
+    expect(actions).not.toHaveStyle({ alignSelf: 'flex-end' });
+    expect(screen.getByRole('button', { name: 'Accept' }).parentElement).toHaveStyle({ marginLeft: 'auto' });
     expect(screen.getByRole('button', { name: 'Accept' }).parentElement).toHaveStyle({ gap: '12px' });
     expect(proposal).toHaveStyle({ gap: '8px' });
     expect(screen.getAllByRole('separator')).toHaveLength(2);
@@ -795,6 +797,42 @@ describe('QueryCoauthoring', () => {
     expect(anchorElement.contains(dialog)).toBe(false);
   });
 
+  it('grows to the rest width and freezes only after the width transition settles', async () => {
+    await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveStyle({ width: '720px' });
+    let width = 500;
+    jest.spyOn(dialog, 'getBoundingClientRect').mockImplementation(() => ({
+      left: 200,
+      top: 300,
+      width,
+      height: 300,
+      bottom: 600,
+      right: 200 + width,
+      x: 200,
+      y: 300,
+      toJSON: () => undefined,
+    }));
+    fireEvent.animationEnd(dialog);
+    expect(dialog.style.position).not.toBe('fixed');
+    width = 720;
+    fireEvent(dialog, Object.assign(new Event('transitionend', { bubbles: true }), { propertyName: 'width' }));
+    expect(dialog).toHaveStyle({ position: 'fixed', left: '200px', top: '300px', width: '720px' });
+  });
+
+  it('hides feedback first and keeps the diff and why text in the compact range', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    expect(screen.getByRole('button', { name: 'Helpful' })).toBeVisible();
+    await resizeProposal(user, 500);
+    expect(screen.queryByRole('button', { name: 'Helpful' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Query diff')).toBeVisible();
+    expect(screen.getByText('Counts selected requests.')).toBeVisible();
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
+  });
+
   it('drags card backgrounds as a group, dims during drag, ignores controls, and reports adjustment once', async () => {
     const { user } = await setupPeek();
     const dialog = screen.getByRole('dialog');
@@ -837,15 +875,16 @@ describe('QueryCoauthoring', () => {
     expect(why).toBeVisible();
     expect(diff).toBeVisible();
     expect(screen.getByRole('button', { name: 'Helpful' })).toBeVisible();
+    expect(dialog).toHaveStyle({ width: '720px' });
     await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 640, y: 350 } });
-    await user.pointer({ target: document.body, coords: { x: 590, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 310, y: 350 } });
     await user.pointer({ keys: '[/MouseLeft]', target: document.body });
     expect(dialog).toHaveStyle({ width: '390px' });
     expect(why).not.toBeVisible();
     expect(diff).not.toBeVisible();
     expect(screen.queryByRole('button', { name: 'Helpful' })).not.toBeInTheDocument();
-    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 590, y: 350 } });
-    await user.pointer({ target: document.body, coords: { x: 450, y: 350 } });
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 310, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 170, y: 350 } });
     await user.pointer({ keys: '[/MouseLeft]', target: document.body });
     expect(dialog).toHaveStyle({ width: '250px' });
     expect(screen.getByText('Counts selected requests.')).toBe(why);
@@ -868,9 +907,11 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByRole('button', { name: 'Accept' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: 'Next option' }));
     expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
-    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 450, y: 350 } });
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 170, y: 350 } });
     await user.pointer({ target: document.body, coords: { x: 640, y: 350 } });
     await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).toHaveStyle({ width: '720px' });
+    expect(screen.getByRole('button', { name: 'Helpful' })).toBeVisible();
     await user.click(screen.getByRole('tab', { name: 'Option 1' }));
     expect(screen.getByText('Counts selected requests.')).toBeVisible();
     expect(screen.getByLabelText('Query diff')).toBeVisible();
@@ -891,10 +932,10 @@ describe('QueryCoauthoring', () => {
     await user.pointer({ target: document.body, coords: { x: 300, y: 350 } });
     await user.pointer({ keys: '[/MouseLeft]', target: document.body });
     expect(dialog.getBoundingClientRect().left).toBe(300);
-    expect(dialog.getBoundingClientRect().right).toBe(640);
-    expect(dialog).toHaveStyle({ width: '340px' });
+    expect(dialog.getBoundingClientRect().right).toBe(920);
+    expect(dialog).toHaveStyle({ width: '620px' });
     const right = screen.getByRole('separator', { name: 'Resize proposal from right' });
-    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 640, y: 350 } });
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 920, y: 350 } });
     await user.pointer({ target: document.body, coords: { x: 2000, y: 350 } });
     await user.pointer({ keys: '[/MouseLeft]', target: document.body });
     expect(dialog.getBoundingClientRect().right).toBe(window.innerWidth - 8);
