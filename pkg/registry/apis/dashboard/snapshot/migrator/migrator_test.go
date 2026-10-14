@@ -90,7 +90,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
 		insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
 			OrgID: 1, Name: "ext", Key: "ext-key", DeleteKey: "ext-del", UserID: 42,
-			External: true, ExternalURL: "https://example.com/s",
+			External: true, ExternalURL: "https://example.com/s", ExternalDeleteURL: "https://example.com/api/snapshots-delete/ext-del",
 			Expires: future, Created: now, Updated: now,
 		})
 
@@ -105,6 +105,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 		require.True(t, *snap.Spec.External)
 		require.NotNil(t, snap.Spec.ExternalUrl)
 		require.Equal(t, "https://example.com/s", *snap.Spec.ExternalUrl)
+		require.Equal(t, "https://example.com/api/snapshots-delete/ext-del", snap.GetExternalDeleteURL())
 		require.Nil(t, snap.Spec.Dashboard)
 		require.NotNil(t, snap.Spec.DeleteKey)
 		require.Equal(t, "ext-del", *snap.Spec.DeleteKey)

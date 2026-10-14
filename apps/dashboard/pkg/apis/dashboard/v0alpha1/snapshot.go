@@ -7,6 +7,25 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
+const externalDeleteURLAnnotation = "grafana.app/externalDeleteURL"
+
+// GetExternalDeleteURL returns the private endpoint used to delete an external snapshot.
+func (s *Snapshot) GetExternalDeleteURL() string {
+	return s.Annotations[externalDeleteURLAnnotation]
+}
+
+// SetExternalDeleteURL stores the private endpoint outside the public snapshot spec.
+func (s *Snapshot) SetExternalDeleteURL(value string) {
+	if value == "" {
+		delete(s.Annotations, externalDeleteURLAnnotation)
+		return
+	}
+	if s.Annotations == nil {
+		s.Annotations = make(map[string]string)
+	}
+	s.Annotations[externalDeleteURLAnnotation] = value
+}
+
 // This is returned from the POST command
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardSnapshotWithDeleteKey struct {
