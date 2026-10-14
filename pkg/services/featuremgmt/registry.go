@@ -3410,7 +3410,7 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:         "datasources.queryGatewayAuditPolicy",
+			Name:         "datasources.gatewayAuditPolicy",
 			Description:  "Enable support for the query gateway audit policies",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataSourcesPlugins,

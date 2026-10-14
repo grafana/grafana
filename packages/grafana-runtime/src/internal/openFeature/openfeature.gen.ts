@@ -120,14 +120,14 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Enable support for the query gateway audit policies */
+  DatasourcesGatewayAuditPolicy: "datasources.gatewayAuditPolicy",
   /** Data source query gateway guardrails */
   DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
   /** Data source query service, use the new name */
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
   DatasourcesQueryGateway: "datasources.queryGateway",
-  /** Enable support for the query gateway audit policies */
-  DatasourcesQueryGatewayAuditPolicy: "datasources.queryGatewayAuditPolicy",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** Enables tabular numerals for visualization legend values */
@@ -962,6 +962,17 @@ export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: Rea
 };
 
 /**
+ * Enable support for the query gateway audit policies
+ *
+ * **Details:**
+ * - flag key: `datasources.gatewayAuditPolicy`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesGatewayAuditPolicy = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.gatewayAuditPolicy", false, options).value;
+};
+
+/**
  * Data source query gateway guardrails
  *
  * **Details:**
@@ -992,17 +1003,6 @@ export const useFlagDatasourcesQuerierNewName = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDatasourcesQueryGateway = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.queryGateway", false, options).value;
-};
-
-/**
- * Enable support for the query gateway audit policies
- *
- * **Details:**
- * - flag key: `datasources.queryGatewayAuditPolicy`
- * - default value: `false`
- */
-export const useFlagDatasourcesQueryGatewayAuditPolicy = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasources.queryGatewayAuditPolicy", false, options).value;
 };
 
 /**
