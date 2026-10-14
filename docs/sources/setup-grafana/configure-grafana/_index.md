@@ -3022,9 +3022,11 @@ Properties described in this section are available for all plugins, but you must
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
-### `as_external`
+#### `as_external`
 
-Load an external version of a core plugin if it has been installed.
+If `true`, load the standalone (external) version of a core plugin instead of the core version.
+For most plugins this requires the standalone plugin to be installed. Some plugins, such as
+[canvas](../../visualizations/panels-visualizations/visualizations/canvas/), default to `true` and are bundled with Grafana.
 
 <hr>
 
