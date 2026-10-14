@@ -90,12 +90,19 @@ export const TableCellTooltip = memo(
 
     const show = !dismissed && (hovered || focused || pinned);
     const dismiss = useCallback(() => {
+      clearTimeout(hoverTimeout.current);
       setPinned(false);
       setHovered(false);
       setDismissed(true);
     }, []);
 
     useEffect(() => () => clearTimeout(hoverTimeout.current), []);
+
+    useEffect(() => {
+      if (pinned && hasFieldContent) {
+        tooltipContentRef.current?.focus();
+      }
+    }, [pinned, hasFieldContent]);
 
     useEffect(() => {
       if (!show) {
@@ -108,6 +115,9 @@ export const TableCellTooltip = memo(
             (tooltipCaretRef.current?.contains(event.target) || tooltipContentRef.current?.contains(event.target))
           ) {
             event.stopPropagation();
+            if (tooltipContentRef.current?.contains(event.target)) {
+              tooltipCaretRef.current?.focus();
+            }
           }
           dismiss();
         }
@@ -122,8 +132,8 @@ export const TableCellTooltip = memo(
 
         const windowListener = (ev: Event) => {
           if (
-            ev.target === tooltipCaretRef.current ||
-            (ev.target instanceof Node && tooltipContentRef.current?.closest('[role="tooltip"]')?.contains(ev.target))
+            ev.target instanceof Node &&
+            (tooltipCaretRef.current?.contains(ev.target) || tooltipContentRef.current?.contains(ev.target))
           ) {
             return;
           }
@@ -138,6 +148,9 @@ export const TableCellTooltip = memo(
         // where the tooltip bumps up against the edge of the scrollable container. we could try to
         // kill the tooltip when it hits these boundaries rather than when scrolling starts.
         const scrollListener = () => {
+          if (tooltipContentRef.current?.contains(document.activeElement)) {
+            tooltipCaretRef.current?.focus();
+          }
           dismiss();
         };
         gridRoot?.addEventListener('scroll', scrollListener, { once: true });
@@ -216,7 +229,7 @@ export const TableCellTooltip = memo(
         {cellElement && (
           <Popover
             content={
-              <div ref={tooltipContentRef}>
+              <div>
                 {hasWarnings && (
                   <div className={styles.warnings}>
                     <TableWarningContent warnings={warnings} />
@@ -224,7 +237,7 @@ export const TableCellTooltip = memo(
                 )}
                 {hasWarnings && hasFieldContent && <hr className={styles.divider} />}
                 {hasFieldContent && (
-                  <div className={className} style={style}>
+                  <div className={className} style={hasWarnings ? style : undefined}>
                     <CellRenderer {...rendererProps} />
                   </div>
                 )}
@@ -233,13 +246,28 @@ export const TableCellTooltip = memo(
             show={show}
             placement={placement}
             wrapperClassName={classes.tooltipWrapper}
-            style={{ width: hasWarnings ? Math.max(width, 300) : width }}
+            style={{ ...(!hasWarnings && style), width: hasWarnings ? Math.max(width, 300) : width }}
+            elementRef={tooltipContentRef}
             referenceElement={cellElement}
             onMouseLeave={onMouseLeave}
             onMouseEnter={onMouseEnter}
-            onClick={(ev) => ev.stopPropagation()} // prevent click from bubbling to the global click listener for un-pinning
+            onClick={(ev) => ev.stopPropagation()} // Keep preview clicks from activating the originating table cell.
             data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper}
-            role="tooltip"
+            role={hasFieldContent ? 'dialog' : 'tooltip'}
+            aria-label={hasFieldContent ? t('grafana-ui.table.cell-preview', 'Cell preview') : undefined}
+            tabIndex={hasFieldContent ? -1 : undefined}
+            onFocus={() => setFocused(true)}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) {
+                setFocused(false);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Tab' && event.shiftKey && event.target === event.currentTarget) {
+                event.preventDefault();
+                tooltipCaretRef.current?.focus();
+              }
+            }}
             id={tooltipId}
           />
         )}
@@ -255,9 +283,11 @@ export const TableCellTooltip = memo(
               : t('grafana-ui.table.tooltip.trigger', 'Toggle tooltip')
           }
           role="button"
-          aria-haspopup="true"
+          aria-haspopup={hasFieldContent ? 'dialog' : undefined}
           aria-pressed={pinned}
-          aria-describedby={show ? tooltipId : undefined}
+          aria-expanded={hasFieldContent ? show : undefined}
+          aria-controls={hasFieldContent && show ? tooltipId : undefined}
+          aria-describedby={!hasFieldContent && show ? tooltipId : undefined}
           tabIndex={0}
           onClick={(event) => {
             event.stopPropagation();

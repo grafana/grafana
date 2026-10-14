@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { type DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
+import { DataLinksCell } from '../Cells/DataLinksCell';
 import { JsonCell } from '../Cells/JsonCell';
 import { getTooltipStyles } from '../styles';
 import { type TableCellRenderer } from '../types';
@@ -65,6 +66,87 @@ function renderInRdgCell(overrides: Record<string, unknown> = {}) {
 const CARET_LABEL = 'Toggle tooltip';
 
 describe('TableCellTooltip', () => {
+  it.each(['{Enter}', ' '])('opens a field dialog with %s and reaches a data link by keyboard', async (key) => {
+    const user = userEvent.setup();
+    const onClick = jest.fn((event) => event.preventDefault());
+    const field = makeField();
+    field.getLinks = () => [{ title: 'Open details', href: '/details', target: '_self', origin: field, onClick }];
+    renderInRdgCell({ field, renderer: DataLinksCell });
+    await user.tab();
+    const trigger = screen.getByRole('button', { name: CARET_LABEL });
+    const dialog = screen.getByRole('dialog', { name: 'Cell preview' });
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(trigger).toHaveAttribute('aria-controls', dialog.id);
+    expect(trigger).not.toHaveAttribute('aria-describedby');
+    expect(dialog).not.toHaveAttribute('aria-modal');
+
+    await user.keyboard(key);
+    expect(dialog).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Open details' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(dialog).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(trigger).not.toHaveAttribute('aria-controls');
+  });
+
+  it('keeps focus outside on hover, accepts padding clicks, and preserves outside-click focus', async () => {
+    const user = userEvent.setup();
+    renderInRdgCell();
+    render(<button>Outside</button>);
+    const outside = screen.getByRole('button', { name: 'Outside' });
+    const trigger = screen.getByRole('button', { name: CARET_LABEL });
+    await user.click(outside);
+    await user.hover(trigger);
+    expect(screen.getByRole('dialog', { name: 'Cell preview' })).toHaveTextContent('hello');
+    expect(outside).toHaveFocus();
+    await user.click(trigger);
+    const dialog = screen.getByRole('dialog', { name: 'Cell preview' });
+    await user.click(dialog);
+    expect(dialog).toHaveFocus();
+    expect(trigger).toHaveAttribute('aria-pressed', 'true');
+    await user.click(outside);
+    expect(outside).toHaveFocus();
+    expect(screen.queryByRole('dialog', { name: 'Cell preview' })).not.toBeInTheDocument();
+  });
+
+  it('allows Tab to leave a pinned field preview', async () => {
+    const user = userEvent.setup();
+    renderInRdgCell();
+    const trigger = screen.getByRole('button', { name: CARET_LABEL });
+    await user.click(trigger);
+    render(<button>After preview</button>);
+    expect(screen.getByRole('dialog', { name: 'Cell preview' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'After preview' })).toHaveFocus();
+  });
+
+  it.each([false, true])('keeps field color on the correct surface (warnings: %s)', async (hasWarnings) => {
+    renderInRdgCell({
+      classes: getTooltipStyles(theme, 'left'),
+      style: { background: 'rgb(10, 20, 30)', color: 'rgb(240, 240, 240)' },
+      warnings: hasWarnings ? [{ id: 'size', message: 'Content is too long.' }] : [],
+    });
+    await userEvent.click(screen.getByRole('button', { name: hasWarnings ? 'Cell warnings' : CARET_LABEL }));
+    const dialog = screen.getByRole('dialog', { name: 'Cell preview' });
+    const fieldSurface = screen.getByTestId('tooltip-content').parentElement;
+    expect(hasWarnings ? fieldSurface : dialog).toHaveStyle({
+      background: 'rgb(10, 20, 30)',
+      color: 'rgb(240, 240, 240)',
+    });
+    if (hasWarnings) {
+      expect(dialog).toHaveStyle({ background: theme.colors.background.primary });
+      expect(screen.getByText('Content is too long.').parentElement).toHaveStyle({
+        color: theme.colors.text.primary,
+      });
+    }
+  });
+
   it('shows warnings before field content with one warning-colored indicator', async () => {
     renderInRdgCell({
       classes: getTooltipStyles(theme, 'left'),
@@ -79,7 +161,7 @@ describe('TableCellTooltip', () => {
       background: `linear-gradient(to top left, transparent 62.5%, ${theme.colors.warning.main} 50%)`,
     });
     await userEvent.hover(trigger);
-    const tooltip = screen.getByRole('tooltip');
+    const tooltip = screen.getByRole('dialog', { name: 'Cell preview' });
     expect(
       within(tooltip)
         .getAllByRole('listitem')
@@ -108,6 +190,7 @@ describe('TableCellTooltip', () => {
     const trigger = screen.getByRole('button', { name: 'Cell warnings' });
     expect(screen.getByRole('tooltip')).toHaveTextContent('Content is too long.');
     expect(trigger).toHaveAccessibleDescription('Content is too long.');
+    expect(trigger).not.toHaveAttribute('aria-haspopup');
     expect(screen.queryByTestId('tooltip-content')).not.toBeInTheDocument();
     expect(screen.queryByRole('separator')).not.toBeInTheDocument();
     await user.keyboard('{Enter}');
@@ -125,7 +208,7 @@ describe('TableCellTooltip', () => {
       background: `linear-gradient(to top left, transparent 62.5%, ${theme.colors.border.strong} 50%)`,
     });
     await userEvent.click(trigger);
-    expect(screen.getByRole('tooltip')).toHaveTextContent('hello');
+    expect(screen.getByRole('dialog', { name: 'Cell preview' })).toHaveTextContent('hello');
     expect(screen.queryByRole('separator')).not.toBeInTheDocument();
   });
 
@@ -147,6 +230,7 @@ describe('TableCellTooltip', () => {
       const trigger = screen.getByRole('button', { name: CARET_LABEL });
       if (mode === 'pinned') {
         await user.click(trigger);
+        await user.tab({ shift: true });
         await user.tab();
         expect(trigger).toHaveAttribute('aria-pressed', 'true');
       } else {
@@ -154,20 +238,21 @@ describe('TableCellTooltip', () => {
         await user.hover(trigger);
       }
       expect(screen.getByRole('button', { name: 'Other control' })).toHaveFocus();
-      expect(screen.getByRole('tooltip')).toHaveTextContent('hello');
+      expect(screen.getByRole('dialog', { name: 'Cell preview' })).toHaveTextContent('hello');
 
       await user.keyboard('{Escape}');
 
       expect(onEscape).toHaveBeenCalledTimes(1);
       expect(trigger).toHaveAttribute('aria-pressed', 'false');
-      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'Cell preview' })).not.toBeInTheDocument();
     }
   );
 
   it.each(['trigger', 'content'])('consumes Escape when focus is on the tooltip %s', async (target) => {
     const user = userEvent.setup();
     const onEscape = jest.fn();
-    const FocusableRenderer: TableCellRenderer = () => <button>Tooltip action</button>;
+    const onAction = jest.fn();
+    const FocusableRenderer: TableCellRenderer = () => <button onClick={onAction}>Tooltip action</button>;
     render(
       <div role="dialog" tabIndex={-1} onKeyDown={(event) => event.key === 'Escape' && onEscape()}>
         <div className="rdg-cell">
@@ -181,15 +266,22 @@ describe('TableCellTooltip', () => {
     await user.click(trigger);
     const focusTarget = target === 'trigger' ? trigger : screen.getByRole('button', { name: 'Tooltip action' });
     if (target === 'content') {
-      await user.click(focusTarget);
+      await user.tab();
+    } else {
+      await user.tab({ shift: true });
     }
     expect(focusTarget).toHaveFocus();
-    expect(screen.getByRole('tooltip')).toHaveTextContent('Tooltip action');
+    expect(screen.getByRole('dialog', { name: 'Cell preview' })).toHaveTextContent('Tooltip action');
+    if (target === 'content') {
+      await user.keyboard('{Enter}');
+      expect(onAction).toHaveBeenCalledTimes(1);
+    }
 
     await user.keyboard('{Escape}');
 
     expect(trigger).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Cell preview' })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
     expect(onEscape).not.toHaveBeenCalled();
   });
 
@@ -197,10 +289,10 @@ describe('TableCellTooltip', () => {
     const user = userEvent.setup();
     renderInRdgCell({ warnings: [{ id: 'size', message: 'Content is too long.' }] });
     await user.hover(screen.getByRole('button', { name: 'Cell warnings' }));
-    await user.hover(screen.getByRole('tooltip'));
-    expect(screen.getByRole('tooltip')).toHaveTextContent('Content is too long.');
-    await user.unhover(screen.getByRole('tooltip'));
-    await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+    await user.hover(screen.getByRole('dialog', { name: 'Cell preview' }));
+    expect(screen.getByRole('dialog', { name: 'Cell preview' })).toHaveTextContent('Content is too long.');
+    await user.unhover(screen.getByRole('dialog', { name: 'Cell preview' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Cell preview' })).not.toBeInTheDocument());
   });
 
   it('closes a pinned popover when another cell indicator is clicked', async () => {
@@ -212,7 +304,7 @@ describe('TableCellTooltip', () => {
     expect(first).toHaveAttribute('aria-pressed', 'true');
     await user.click(screen.getByRole('button', { name: CARET_LABEL }));
     expect(first).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+    expect(screen.getAllByRole('dialog', { name: 'Cell preview' })).toHaveLength(1);
   });
 
   it('passes JSON highlighting through to tooltip content', async () => {

@@ -113,4 +113,58 @@ export const MultipleWarnings: StoryFn = () => (
   </div>
 );
 
+export const FieldPreviews: StoryFn = () => {
+  const theme = useTheme2();
+  const data = useMemo(() => {
+    const values = ['Short content', 'Oversized content. '.repeat(2_000)];
+    const frame = prepDataForStorybook(
+      [
+        createDataFrame({
+          fields: [
+            {
+              name: 'Link preview',
+              type: FieldType.string,
+              values,
+              config: { custom: { tooltip: { field: 'Details' } } },
+            },
+            {
+              name: 'Color preview',
+              type: FieldType.string,
+              values,
+              config: { custom: { tooltip: { field: 'Status' } } },
+            },
+            {
+              name: 'Details',
+              type: FieldType.string,
+              values: ['Details', 'Details'],
+              config: { custom: { hideFrom: { viz: true }, cellOptions: { type: TableCellDisplayMode.DataLinks } } },
+            },
+            {
+              name: 'Status',
+              type: FieldType.string,
+              values: ['Healthy', 'Healthy'],
+              config: {
+                color: { mode: 'fixed', fixedColor: '#006400' },
+                custom: { hideFrom: { viz: true }, cellOptions: { type: TableCellDisplayMode.ColorBackground } },
+              },
+            },
+          ],
+        }),
+      ],
+      theme
+    )[0];
+    const details = frame.fields[2];
+    details.getLinks = () => [{ title: 'Open details', href: '#details', target: '_self', origin: details }];
+    return frame;
+  }, [theme]);
+
+  return (
+    <>
+      <button type="button">Before table</button>
+      <TableNG data={data} width={600} height={180} hoverOverflow tableRefreshEnabled />
+      <button type="button">After table</button>
+    </>
+  );
+};
+
 export default meta;
