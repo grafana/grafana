@@ -16,11 +16,11 @@ menuTitle: Rule sequences
 weight: 450
 ---
 
+{{< docs/public-preview product="Rule sequences" >}}
+
 # Configure rule sequences
 
 Use rule sequences in Grafana Alerting when a recording rule or alert rule depends on the results of another recording rule. A rule sequence references existing Grafana-managed rules and defines their evaluation order and shared evaluation interval.
-
-{{< docs/public-preview product="Rule sequences" >}}
 
 You can create and manage rule sequences through the Grafana Alerting API or Terraform. The API uses `v0alpha1` and is subject to change.
 
@@ -105,7 +105,7 @@ After Grafana picks up the change, rules removed from a sequence return to their
 
 If you manage the sequence with Terraform, update or remove it in your Terraform configuration instead.
 
-## Follow sequence constraints
+## Sequence constraints
 
 When you create or update a sequence, follow these constraints:
 
