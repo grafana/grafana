@@ -162,6 +162,9 @@ func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb
 				return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
 			}
 		}
+		if req.RequireHybridEnabled && !coll.IsExternal && !s.hybridSearchConfig.Enabled(key.Group, key.Resource) {
+			return nil, status.Errorf(codes.InvalidArgument, "hybrid search is not enabled for %s/%s", key.Group, key.Resource)
+		}
 		if err := validateHybridSearchFilters(req.Filters, key, coll.IsExternal); err != nil {
 			return nil, err
 		}

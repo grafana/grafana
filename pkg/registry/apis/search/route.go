@@ -230,7 +230,7 @@ func hybridSearchRouteSpec(kindName, version string) *spec3.PathProps {
 func globalHybridSearchRouteSpec() *spec3.PathProps {
 	s := routeSpec(routeSpecArgs{
 		operationID:  hybridSearchOperationID("Global", searchv0.VERSION),
-		description:  "Hybrid search across the requested resource types in one namespace. Internal resources must expose hybrid search; external groups ending in .ext.grafana.app use storage enrollment and authorization. Results are reranked together. Limit applies to the combined results; failure searching any resource fails the request. No pagination, totals, sorting or facets.",
+		description:  "Hybrid search across the requested resource types in one namespace. The search backend requires manifest hybrid opt-in for internal resources; externally pushed collections use existing enrollment and authorization. Results are reranked together. Limit applies to the combined results; failure searching any resource fails the request. No pagination, totals, sorting or facets.",
 		requestKind:  searchv0.KindHybridSearchQuery,
 		requestGo:    hybridSearchQueryGoName,
 		responseKind: searchv0.KindHybridSearchResults,

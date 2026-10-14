@@ -509,6 +509,7 @@ type searchServer struct {
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
 	searchFields         *SearchFieldsRegistry
+	hybridSearchConfig   *HybridSearchConfigRegistry
 	requiredFeatures     []IndexFeature
 
 	bgTaskWg     sync.WaitGroup
@@ -617,6 +618,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
 		searchFields:              searchFields,
+		hybridSearchConfig:        opts.HybridSearchConfig,
 		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		globalIndexEnabled:        opts.GlobalIndexEnabled,

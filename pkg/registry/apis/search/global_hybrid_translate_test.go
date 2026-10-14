@@ -46,6 +46,7 @@ func TestTranslateGlobalHybridSearchTargets(t *testing.T) {
 			require.NotNil(t, req)
 			assert.Nil(t, req.Key) //nolint:staticcheck // Global search must not use the legacy selector.
 			assert.Equal(t, "tenant-a", req.Namespace)
+			assert.True(t, req.RequireHybridEnabled)
 			require.Len(t, req.Resources, len(tc.resources))
 			for i, target := range tc.resources {
 				assert.Equal(t, target.Group, req.Resources[i].Group)

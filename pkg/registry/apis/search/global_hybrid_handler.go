@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// GlobalHybridSearchFor preserves internal resources' HTTP opt-in and authorization.
-// External groups use the storage service's existing allowlist and authorization.
+// GlobalHybridSearchFor retains known API authorization policies while the
+// backend checks manifest opt-in, collection enrollment, and result access.
 func (h *HybridHandler) GlobalHybridSearchFor(targets map[schema.GroupResource]schema.GroupVersionKind, auth authorizer.Authorizer) http.HandlerFunc {
 	kinds := make(map[schema.GroupResource]string, len(targets))
 	for gr, gvk := range targets {
@@ -30,26 +29,14 @@ func (h *HybridHandler) GlobalHybridSearchFor(targets map[schema.GroupResource]s
 		if len(errs) > 0 {
 			return nil, errs, nil
 		}
-		for i, target := range q.Resources {
-			if strings.HasSuffix(target.Group, ".ext.grafana.app") {
-				continue
-			}
-			gr := schema.GroupResource{Group: target.Group, Resource: target.Resource}
-			if _, ok := targets[gr]; !ok {
-				errs = append(errs, field.Invalid(field.NewPath("resources").Index(i), target, "resource does not expose hybrid search"))
-			}
-		}
-		if len(errs) > 0 {
-			return nil, errs, nil
-		}
 		user, _ := request.UserFrom(ctx)
 		for _, target := range q.Resources {
-			// Externally pushed collections use this suffix and need no app API route.
-			if strings.HasSuffix(target.Group, ".ext.grafana.app") {
+			gr := schema.GroupResource{Group: target.Group, Resource: target.Resource}
+			gvk, known := targets[gr]
+			if !known {
+				// Remote apps and pushed collections are validated by the backend.
 				continue
 			}
-			gr := schema.GroupResource{Group: target.Group, Resource: target.Resource}
-			gvk := targets[gr]
 			// Match the attributes of the resource's own hybrid route after the
 			// authorization chain translates POST into list.
 			decision, _, err := auth.Authorize(ctx, authorizer.AttributesRecord{

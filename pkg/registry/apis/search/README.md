@@ -563,10 +563,10 @@ query rate limit applies only when semantic search is enabled (429 when exceeded
 
 ### Search across resources
 
-Enable `[grafana-apiserver] enable_global_hybrid_api = true` after all search-api
-instances support multi-resource hybrid requests. Older servers reject these
-requests with HTTP 400. The existing `enable_hybrid_api` switch must also remain
-enabled. Send the same request envelope to
+Deploy hybrid eligibility checks to all search-api instances before setting
+`[grafana-apiserver] enable_global_hybrid_api = true`; older servers ignore the
+opt-in check. The existing `enable_hybrid_api` switch must also remain enabled.
+Send the same request envelope to
 `POST /apis/search.grafana.app/v0alpha1/namespaces/{namespace}/global/search/hybrid`,
 adding the resource types to search:
 
@@ -584,11 +584,17 @@ adding the resource types to search:
 }
 ```
 
-Groups ending in `.ext.grafana.app` use the existing external collection allowlist
-and storage authorization. Other resources must expose a hybrid endpoint and
-pass its API authorization. API versions are not needed in the resource list.
-Internal APIs served only remotely or registered dynamically are not discovered
-by this endpoint yet.
+The search backend requires `search.hybrid: true` in its built-in or watched
+manifest for each internal resource. Externally pushed collections, identified
+by the collection catalog rather than the group name, use existing enrollment
+and authorization rules. API versions are not needed in the resource list.
+
+Storage authorizes individual results; Grafana also checks API authorization for
+locally known resources. Global search cannot run custom authorization from a
+remote app handler. Resources needing it must keep hybrid disabled on all served
+versions unless storage enforces the same policy. Let the opt-out reach all search
+servers before relying on it. Existing direct RPC callers and custom handlers
+are unchanged.
 
 Results are reranked together, and `limit` applies to the combined response.
 Without reranking, resource types are interleaved in request order. Filters apply

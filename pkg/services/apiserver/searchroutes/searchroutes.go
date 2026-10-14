@@ -11,7 +11,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	serverstorage "k8s.io/apiserver/pkg/server/storage"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -214,14 +213,13 @@ func BuildGlobalSearch(
 	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalSearchRoute(kinds)}})
 }
 
-// BuildGlobalHybridSearch retains internal resources' HTTP opt-in and a served
-// version of each so the handler can reuse its API authorization policy.
+// BuildGlobalHybridSearch retains locally registered resource identities for API
+// authorization. The search backend owns hybrid eligibility.
 func BuildGlobalHybridSearch(
 	tracer tracing.Tracer,
 	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
-	apiResourceConfig *serverstorage.ResourceConfig,
 	auth authorizer.Authorizer,
 ) []builder.GroupVersionRoutes {
 	if index == nil {
@@ -232,25 +230,24 @@ func BuildGlobalHybridSearch(
 		manifests = append(manifests, installer.ManifestData())
 	}
 	manifests = append(manifests, builder.ManifestsFromBuilders(builders)...)
-	targets := globalHybridSearchTargets(manifests, builder.ServedGroupVersions(builders, installers), apiResourceConfig)
+	targets := globalHybridSearchTargets(manifests, builder.ServedGroupVersions(builders, installers))
 	handler := searchapi.NewHybridHandler(index, tracer)
 	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
 	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, auth)}})
 }
 
-func globalHybridSearchTargets(manifests []*app.ManifestData, served map[schema.GroupVersion]bool, apiResourceConfig *serverstorage.ResourceConfig) map[schema.GroupResource]schema.GroupVersionKind {
+// globalHybridSearchTargets selects a registered version for API authorization
+// and result kinds. Disabling an HTTP route must not bypass its authorization.
+func globalHybridSearchTargets(manifests []*app.ManifestData, registered map[schema.GroupVersion]bool) map[schema.GroupResource]schema.GroupVersionKind {
 	targets := map[schema.GroupResource]schema.GroupVersionKind{}
-	mounted := map[schema.GroupVersionResource]bool{}
+	seen := map[schema.GroupVersionResource]bool{}
 	for _, m := range manifests {
 		if m == nil {
 			continue
 		}
 		for _, version := range m.Versions {
 			gv := schema.GroupVersion{Group: m.Group, Version: version.Name}
-			if !version.Served || !served[gv] {
-				continue
-			}
-			if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gv.WithResource("")) {
+			if !registered[gv] {
 				continue
 			}
 			for _, kind := range version.Kinds {
@@ -258,15 +255,12 @@ func globalHybridSearchTargets(manifests []*app.ManifestData, served map[schema.
 					continue
 				}
 				gvr := gv.WithResource(resource.ManifestResourceName(kind))
-				if mounted[gvr] {
+				if seen[gvr] {
 					continue
 				}
-				mounted[gvr] = true
-				if !kind.HasHybridEndpoint() {
-					continue
-				}
+				seen[gvr] = true
 				gr := gvr.GroupResource()
-				// Select one served version for the API-level authorization check;
+				// Select one registered version for the API-level authorization check;
 				// the storage search itself is version-independent.
 				if _, ok := targets[gr]; !ok || version.Name == m.PreferredVersion {
 					targets[gr] = gv.WithKind(kind.Kind)

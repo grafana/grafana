@@ -69,6 +69,7 @@ func TranslateGlobalHybridSearchQuery(q *searchv0.HybridSearchQuery, namespace s
 
 	req := translateHybridSearchQuery(q)
 	req.Namespace = namespace
+	req.RequireHybridEnabled = true
 	req.Resources = make([]*resourcepb.HybridSearchRequest_Resource, 0, len(q.Resources))
 	for _, target := range q.Resources {
 		req.Resources = append(req.Resources, &resourcepb.HybridSearchRequest_Resource{
