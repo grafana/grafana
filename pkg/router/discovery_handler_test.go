@@ -79,17 +79,19 @@ func TestDiscoveryIncludesFallbackGroups(t *testing.T) {
 			if accept == "application/json" {
 				var list metav1.APIGroupList
 				require.NoError(t, json.Unmarshal(res.Body.Bytes(), &list))
-				require.Len(t, list.Groups, 2)
+				require.Len(t, list.Groups, 3)
 				require.Equal(t, "core.grafana.app", list.Groups[0].Name)
-				require.Equal(t, router.served[group].backend.Group(), list.Groups[1])
+				require.Equal(t, discoveryAPIGroup, list.Groups[1])
+				require.Equal(t, router.served[group].backend.Group(), list.Groups[2])
 			} else {
 				var list apidiscoveryv2.APIGroupDiscoveryList
 				_, _, err := discoveryCodecs.UniversalDeserializer().Decode(res.Body.Bytes(), nil, &list)
 				require.NoError(t, err)
-				require.Len(t, list.Items, 2)
+				require.Len(t, list.Items, 3)
 				require.Equal(t, "core.grafana.app", list.Items[0].Name)
-				require.Equal(t, group, list.Items[1].Name)
-				require.Equal(t, []apidiscoveryv2.APIVersionDiscovery{{Version: "v1", Freshness: apidiscoveryv2.DiscoveryFreshnessCurrent}}, list.Items[1].Versions)
+				require.Equal(t, discoveryGroup, list.Items[1].Name)
+				require.Equal(t, group, list.Items[2].Name)
+				require.Equal(t, []apidiscoveryv2.APIVersionDiscovery{{Version: "v1", Freshness: apidiscoveryv2.DiscoveryFreshnessCurrent}}, list.Items[2].Versions)
 			}
 
 			req.Header.Set("If-None-Match", res.Header().Get("ETag"))
@@ -131,7 +133,7 @@ func TestAggregatedDiscoverySupportsLegacyBackends(t *testing.T) {
 	require.Equal(t, http.StatusOK, res.Code)
 	var list apidiscoveryv2.APIGroupDiscoveryList
 	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &list))
-	require.Len(t, list.Items, 2)
+	require.Len(t, list.Items, 3) // with the discovery group
 	versions := map[string]apidiscoveryv2.APIVersionDiscovery{}
 	for _, item := range list.Items {
 		require.Len(t, item.Versions, 1)
@@ -168,8 +170,9 @@ func TestOpenAPIIndexIncludesFallbackAndTracksItsChanges(t *testing.T) {
 	require.Equal(t, http.StatusOK, res.Code)
 	var index handler3.OpenAPIV3Discovery
 	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &index))
-	require.Len(t, index.Paths, 2)
+	require.Len(t, index.Paths, 3)
 	require.Contains(t, index.Paths, "apis/core.grafana.app/v1")
+	require.Contains(t, index.Paths, discoveryOpenAPIPath)
 	require.Equal(t, "/openapi/v3/apis/"+group+"/v1?hash=plugin-revision", index.Paths["apis/"+group+"/v1"].ServerRelativeURL)
 	req.Header.Set("If-None-Match", res.Header().Get("ETag"))
 	req.Header.Set("If-Modified-Since", "Mon, 14 Sep 2026 00:00:00 GMT")

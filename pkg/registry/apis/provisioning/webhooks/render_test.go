@@ -54,7 +54,7 @@ func TestRenderErrorStatus(t *testing.T) {
 			require.NoError(t, err)
 			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/repo/render/123e4567-e89b-12d3-a456-426614174000", nil))
 			require.Error(t, responder.err)
-			require.Equal(t, responsewriters.ErrorToAPIStatus(resource.GetError(failure)), responsewriters.ErrorToAPIStatus(responder.err))
+			require.Equal(t, responsewriters.ErrorToAPIStatus(resource.StatusError(failure)), responsewriters.ErrorToAPIStatus(responder.err))
 		})
 	}
 }

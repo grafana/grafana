@@ -27,18 +27,13 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -1258,9 +1253,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -1580,9 +1573,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
 		UID: *recv2.Spec.Integrations[0].Uid,
 	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))

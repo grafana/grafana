@@ -283,7 +283,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 // (so paginating callers can detect a short final page).
 func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, int, error) {
 	out, err := ss.k8sclient.Search(ctx, orgID, req)
-	if err != nil {
+	if err := resource.ErrorFromResponse(out.GetError(), err); err != nil {
 		return nil, 0, err
 	}
 	res, err := dashboardsearch.ParseResults(out, 0)
@@ -606,7 +606,7 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 
 func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
 	resp, err := ss.k8sclient.GetStats(ctx, orgID)
-	if err != nil {
+	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
 		return 0, err
 	}
 

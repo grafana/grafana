@@ -10,10 +10,7 @@ import E2ESelectorsPlugin from './plugins/E2ESelectorsPlugin.ts';
 
 const require = createRequire(import.meta.url);
 const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-// The ini parser also returns booleans, which EnvironmentPlugin types as strings but
-// JSON.stringifies the same way.
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const envConfig = getEnvConfig(grafanaRoot) as Record<string, string>;
+const envConfig = getEnvConfig(grafanaRoot);
 
 export type Env = Record<string, string | true | undefined>;
 
@@ -27,6 +24,7 @@ export const PUBLIC_PATH = 'public/build/rspack/';
 export function createSwcRule({ reactRefresh = false } = {}): RuleSetRule {
   return {
     test: /\.tsx?$/,
+    resourceQuery: { not: [/text-panel-runtime/] },
     use: {
       loader: 'builtin:swc-loader',
       options: {
@@ -90,6 +88,12 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
     experiments: {
       // Required to load WASM modules.
       asyncWebAssembly: true,
+    },
+    // Webpack's default. Rspack defaults to 'warn-mock', which mocks the same way but warns, and
+    // the dev server overlay turns that warning into a full-page block.
+    node: {
+      __dirname: 'mock',
+      __filename: 'mock',
     },
     output: {
       // rspack.boot.ts writes boot.js into the build directory from its own compilation.
@@ -190,6 +194,11 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         },
       },
       rules: [
+        {
+          resourceQuery: /text-panel-runtime/,
+          type: 'javascript/auto',
+          use: path.resolve(grafanaRoot, 'scripts/webpack/loaders/textPanelRuntime.cjs'),
+        },
         createSwcRule({ reactRefresh: hmr }),
         cssRule,
         {

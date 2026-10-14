@@ -4,7 +4,6 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   AnnoKeyFolder,
   AnnoKeyManagerIdentity,
@@ -1275,15 +1274,6 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   describe('enforced branch name template', () => {
-    beforeEach(() => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-    });
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
     const enforcedRepo: NonNullable<Props['repository']> = {
       type: 'github',
       name: 'test-repo',
@@ -2167,17 +2157,6 @@ describe('SaveProvisionedDashboardForm', () => {
 });
 
 describe('SaveProvisionedDashboardForm commit message template', () => {
-  beforeEach(() => {
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   it('pre-fills Comment from the repository template', async () => {
     setup({
       repository: {
@@ -2197,17 +2176,6 @@ describe('SaveProvisionedDashboardForm commit message template', () => {
 });
 
 describe('SaveProvisionedDashboardForm branch name template', () => {
-  beforeEach(() => {
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   const branchDefaultValues = {
     ref: 'dashboard/2023-01-01-abcde',
     path: 'test-dashboard.json',
