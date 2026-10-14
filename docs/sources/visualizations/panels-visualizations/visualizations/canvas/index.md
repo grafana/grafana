@@ -41,18 +41,18 @@ We'd love your feedback on the canvas visualization. Please check out the [open 
 
 ## Plugin updates
 
-Starting with Grafana 14.0, the canvas visualization is a standalone plugin instead of a core plugin. This enables more frequent updates independent of Grafana releases. Existing dashboards that use canvas continue to work.
-
-To try the standalone plugin before Grafana 14.0, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/):
-
-```ini
-[plugin.canvas]
-as_external = true
-```
+Starting with Grafana 13.3, the canvas visualization loads as a standalone plugin by default, instead of as a core plugin. The standalone plugin can get updates between Grafana releases. Existing dashboards that use canvas continue to work.
 
 Grafana bundles the standalone plugin, so you don't need to install it. If you use a slim Docker image, install the plugin from **Administration > Plugins and data > Plugins** first.
 
-Restart Grafana to load the standalone plugin. To go back to the core plugin, remove `as_external = true` and restart Grafana.
+In Grafana 13.3 and later 13.x releases, you can go back to the core plugin. Add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) and restart Grafana:
+
+```ini
+[plugin.canvas]
+as_external = false
+```
+
+Grafana 14.0 removes the core plugin. After you upgrade to Grafana 14.0, the standalone plugin is the only canvas plugin, and the `as_external` setting has no effect.
 
 {{< admonition type="note" >}}
 On Grafana Cloud, the canvas plugin is managed by Grafana and updates automatically.
