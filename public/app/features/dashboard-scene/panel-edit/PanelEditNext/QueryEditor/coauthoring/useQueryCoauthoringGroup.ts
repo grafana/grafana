@@ -143,10 +143,8 @@ export function useQueryCoauthoringGroup({
         return;
       }
       const edge = event.target.closest('[data-proposal-resize]')?.getAttribute('data-proposal-resize');
-      if (
-        !edge &&
-        event.target.closest('button, a, input, textarea, select, [role="button"], [role="tab"], [data-no-drag]')
-      ) {
+      // Drag only from the handle so text in the cards stays selectable.
+      if (!edge && !event.target.closest('[data-proposal-drag-handle]')) {
         return;
       }
       event.preventDefault();
