@@ -107,6 +107,21 @@ it('keeps viewer order through a value-only refresh and clears stale order for a
   expect(result.current?.columnCatalog).toEqual(['X', 'Y', 'Z']);
 });
 
+it('preserves viewer order through an empty catalog, then still detects a replacement schema', () => {
+  const source = [sourceFrame(['A', 'B', 'C'])];
+  const { result, rerender, getConfigs } = renderColumnState(source, [orderedConfig]);
+
+  rerender({ source: [sourceFrame([])], index: 0 });
+  expect(getConfigs()[0].options?.indexByName).toEqual({ C: 0, A: 1, B: 2 });
+
+  rerender({ source: [sourceFrame(['A', 'B', 'C'])], index: 0 });
+  expect(result.current?.columnOrder).toEqual(['C', 'A', 'B']);
+
+  rerender({ source: [sourceFrame([])], index: 0 });
+  rerender({ source: [sourceFrame(['X', 'Y', 'Z'])], index: 0 });
+  expect(result.current?.columnOrder).toBeUndefined();
+});
+
 it('clears only the changed frame order after switching between frames', () => {
   const source = [sourceFrame(['A', 'B', 'C']), sourceFrame(['X', 'Y'], 'B')];
   const otherOrder: DataTransformerConfig = {

@@ -107,7 +107,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const runtimeTransformations = panel.getRuntimeTransformations();
     const tableTransformations = runtimeTransformations.get(TABLE_TRANSFORMATIONS_OWNER);
     const pluginId = panel.state.pluginId;
-    if (pluginId === 'table') {
+    if (pluginId === 'table' && tableTransformations.length > 0) {
       runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, []);
       dispatch(
         notifyApp(

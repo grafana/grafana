@@ -134,6 +134,8 @@ describe('PanelEditor', () => {
   });
 
   describe('Entering panel edit', () => {
+    beforeEach(() => jest.mocked(dispatch).mockClear());
+
     it('pauses ad hoc table transformations and restores them on exit', async () => {
       const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { indexByName: { B: 0, A: 1 } } }];
       const { panel } = await setup({ pluginId: 'table', initialTableTransformations: transformations });
@@ -150,6 +152,13 @@ describe('PanelEditor', () => {
       deactivate!();
       deactivate = undefined;
       expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(transformations);
+    });
+
+    it('does not notify when the table has no ad hoc transformations', async () => {
+      const { panel } = await setup({ pluginId: 'table' });
+
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
+      expect(dispatch).not.toHaveBeenCalled();
     });
 
     it('should clear sidebar selection', () => {

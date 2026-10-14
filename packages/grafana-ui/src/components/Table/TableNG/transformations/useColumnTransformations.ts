@@ -45,7 +45,7 @@ export function useColumnTransformations(
   );
   const previousCatalogs = useRef(new Map<string, string[]>());
   useEffect(() => {
-    if (!context) {
+    if (!context || context.catalog.length === 0) {
       return;
     }
 
