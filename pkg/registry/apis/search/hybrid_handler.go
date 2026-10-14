@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
@@ -43,6 +44,13 @@ var (
 
 // HybridSearchFor returns the POST handler for one resource's hybrid search.
 func (h *HybridHandler) HybridSearchFor(kind kindRef) http.HandlerFunc {
+	return h.hybridSearchFor(kind, func(_ context.Context, q *searchv0.HybridSearchQuery, namespace string) (*resourcepb.HybridSearchRequest, field.ErrorList, error) {
+		req, errs := TranslateHybridSearchQuery(q, kind.gvr(), namespace)
+		return req, errs, nil
+	})
+}
+
+func (h *HybridHandler) hybridSearchFor(kind kindRef, prepare func(context.Context, *searchv0.HybridSearchQuery, string) (*resourcepb.HybridSearchRequest, field.ErrorList, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, span := h.tracer.Start(r.Context(), "search.v1.hybrid", trace.WithAttributes(
 			attribute.String("search.group", kind.group),
@@ -61,7 +69,11 @@ func (h *HybridHandler) HybridSearchFor(kind kindRef) http.HandlerFunc {
 			errhttp.Write(ctx, err, w)
 			return
 		}
-		req, ferrs := TranslateHybridSearchQuery(&q, kind.gvr(), namespace)
+		req, ferrs, err := prepare(ctx, &q, namespace)
+		if err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
 		if len(ferrs) > 0 {
 			errhttp.Write(ctx, apierrors.NewInvalid(
 				schema.GroupKind{Group: searchv0.GROUP, Kind: searchv0.KindHybridSearchQuery}, "", ferrs), w)
@@ -103,9 +115,7 @@ func hybridSearchResults(res *resourcepb.HybridSearchResponse, kind kindRef) *se
 			})
 		}
 		item := searchv0.HybridSearchResultItem{
-			Resource: searchv0.ResourceRef{
-				Group: kind.group, Resource: kind.resource, Kind: kind.kind, Name: hit.GetKey().GetName(),
-			},
+			Resource:    resultItem(kind, hit.GetKey()).Resource,
 			Score:       hit.GetScore(),
 			Title:       hit.GetTitle(),
 			Folder:      hit.GetFolder(),

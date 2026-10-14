@@ -367,12 +367,13 @@ func (s *service) start(ctx context.Context) error {
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	hybridAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true)
 	globalSearchAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyGlobalSearch).MustBool(false)
+	globalHybridAPIEnabled := hybridAPIEnabled && apiserverSection.Key(searchapi.ConfigKeyGlobalHybrid).MustBool(false)
 	globalSearchGV := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
 
 	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
 	// add the builder group versions to the api resource config
 	apiResourceConfig.EnableVersions(groupVersions...)
-	if globalSearchAPIEnabled {
+	if globalSearchAPIEnabled || globalHybridAPIEnabled {
 		// No builder serves this group version, so nothing else enables it, and a
 		// group version that is not enabled has its custom routes skipped.
 		apiResourceConfig.EnableVersions(globalSearchGV)
@@ -448,14 +449,17 @@ func (s *service) start(ctx context.Context) error {
 	if globalSearchAPIEnabled {
 		searchAndStorageRoutes = append(searchAndStorageRoutes,
 			searchroutes.BuildGlobalSearch(s.tracing, s.unified, builders)...)
-		// The search that spans resource types has no resource of its own to hold a
-		// permission on, so the request itself carries no check. Every result is
-		// authorized against its own group, resource and folder before it is
-		// returned, and a search reveals nothing that listing the same objects would
-		// not. That relies on get and list being one permission for every covered
-		// type, as they are for dashboards and folders; a type where they differ
-		// needs a list check here. Only this one route is served under this group
-		// version.
+	}
+	if globalHybridAPIEnabled {
+		searchAndStorageRoutes = append(searchAndStorageRoutes,
+			searchroutes.BuildGlobalHybridSearch(s.tracing, s.unified, builders, s.appInstallers, apiResourceConfig, s.authorizer)...)
+	}
+	if globalSearchAPIEnabled || globalHybridAPIEnabled {
+		// Global search has no resource of its own to hold a permission on. The
+		// hybrid handler checks list access for selected internal resources before
+		// searching. Lexical search covers only dashboards and folders, whose get
+		// and list permissions are equivalent. Both authorize every result in
+		// storage against its own group, resource and folder.
 		s.authorizer.Register(globalSearchGV, authorizer.NewAllowAuthorizer())
 	}
 

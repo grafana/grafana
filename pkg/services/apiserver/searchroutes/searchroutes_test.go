@@ -1,6 +1,9 @@
 package searchroutes
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -11,12 +14,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/kube-openapi/pkg/common"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -744,6 +751,143 @@ func TestBuildGlobalSearch(t *testing.T) {
 		"only the one route, under the search group")
 
 	assert.Nil(t, BuildGlobalSearch(nil, nil, builders), "nothing to serve it with without a client")
+}
+
+func TestBuildGlobalHybridSearch(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	manifest := hybridManifest(gv)
+	b := &manifestBuilder{
+		resourceBuilder: &resourceBuilder{fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}}},
+		manifest:        manifest,
+	}
+	installer := hybridInstaller{gv: gv, manifest: manifest}
+	installers := []appsdkapiserver.AppInstaller{installer}
+
+	for _, tc := range []struct {
+		name       string
+		builders   []builder.APIGroupBuilder
+		installers []appsdkapiserver.AppInstaller
+	}{
+		{"builder", []builder.APIGroupBuilder{b}, nil},
+		{"installer", nil, installers},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			called := false
+			auth := authorizer.AuthorizerFunc(func(_ context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+				called = true
+				assert.Equal(t, gv.Group, attr.GetAPIGroup())
+				assert.Equal(t, gv.Version, attr.GetAPIVersion())
+				assert.Equal(t, "widgets", attr.GetResource())
+				return authorizer.DecisionDeny, "", nil
+			})
+			routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), fakeClient{}, tc.builders, tc.installers, nil, auth)
+			assert.Equal(t, map[string][]string{searchv0.APIVERSION: {"global/search/hybrid"}}, paths(routes))
+			require.Len(t, routes, 1)
+			require.Len(t, routes[0].Routes.Namespace, 1)
+			r := httptest.NewRequest(http.MethodPost, "/global/search/hybrid", strings.NewReader(`{"apiVersion":"search.grafana.app/v0alpha1","kind":"HybridSearchQuery","query":"cpu","resources":[{"group":"example.grafana.app","resource":"widgets"}]}`))
+			w := httptest.NewRecorder()
+			routes[0].Routes.Namespace[0].Handler(w, r.WithContext(request.WithNamespace(r.Context(), "default")))
+			assert.True(t, called, "the manifest target must reach API authorization")
+			assert.Equal(t, http.StatusForbidden, w.Code, w.Body.String())
+		})
+	}
+	assert.Nil(t, BuildGlobalHybridSearch(nil, nil, nil, installers, nil, nil))
+}
+
+func TestGlobalHybridSearchTargets_Eligibility(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	no := false
+	for _, tc := range []struct {
+		name       string
+		configure  func(*app.ManifestData)
+		registered bool
+		disabled   bool
+		want       bool
+	}{
+		{name: "eligible", registered: true, want: true},
+		{name: "hybrid only", registered: true, want: true, configure: func(m *app.ManifestData) {
+			m.Versions[0].Kinds[0].Search.Endpoint = &no
+			m.Versions[0].Kinds[0].Search.Trash = &no
+		}},
+		{name: "omitted opt in", registered: true, configure: func(m *app.ManifestData) {
+			m.Versions[0].Kinds[0].Search = nil
+		}},
+		{name: "explicit opt out", registered: true, configure: func(m *app.ManifestData) {
+			m.Versions[0].Kinds[0].Search.Hybrid = &no
+		}},
+		{name: "cluster scoped", registered: true, configure: func(m *app.ManifestData) {
+			m.Versions[0].Kinds[0].Scope = "Cluster"
+		}},
+		{name: "unserved version", registered: true, configure: func(m *app.ManifestData) {
+			m.Versions[0].Served = false
+		}},
+		{name: "unregistered group version"},
+		{name: "runtime disabled group version", registered: true, disabled: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			manifest := hybridManifest(gv)
+			if tc.configure != nil {
+				tc.configure(manifest)
+			}
+			config := serverstorage.NewResourceConfig()
+			config.EnableVersions(gv)
+			if tc.disabled {
+				config.DisableVersions(gv)
+			}
+			got := globalHybridSearchTargets([]*app.ManifestData{nil, manifest}, map[schema.GroupVersion]bool{gv: tc.registered}, config)
+			if tc.want {
+				assert.Equal(t, map[schema.GroupResource]schema.GroupVersionKind{
+					gv.WithResource("widgets").GroupResource(): gv.WithKind("Widget"),
+				}, got)
+			} else {
+				assert.Empty(t, got)
+			}
+		})
+	}
+}
+
+func TestGlobalHybridSearchTargets_SelectsEligibleVersion(t *testing.T) {
+	v1 := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	v2 := schema.GroupVersion{Group: v1.Group, Version: "v2"}
+	for _, tc := range []struct {
+		name       string
+		preferred  string
+		v2Hybrid   bool
+		v2Served   bool
+		v2Disabled bool
+		want       string
+	}{
+		{"preferred", "v2", true, true, false, "v2"},
+		{"first when no preferred version", "", true, true, false, "v1"},
+		{"unknown preferred version", "v3", true, true, false, "v1"},
+		{"preferred opted out", "v2", false, true, false, "v1"},
+		{"preferred not served here", "v2", true, false, false, "v1"},
+		{"preferred runtime disabled", "v2", true, true, true, "v1"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			manifest := hybridManifest(v1)
+			manifest.PreferredVersion = tc.preferred
+			second := hybridManifest(v2).Versions[0]
+			second.Kinds[0].Search.Hybrid = &tc.v2Hybrid
+			manifest.Versions = append(manifest.Versions, second)
+			config := serverstorage.NewResourceConfig()
+			config.EnableVersions(v1, v2)
+			if tc.v2Disabled {
+				config.DisableVersions(v2)
+			}
+			got := globalHybridSearchTargets([]*app.ManifestData{manifest}, map[schema.GroupVersion]bool{v1: true, v2: tc.v2Served}, config)
+			assert.Equal(t, map[schema.GroupResource]schema.GroupVersionKind{
+				v1.WithResource("widgets").GroupResource(): {Group: v1.Group, Version: tc.want, Kind: "Widget"},
+			}, got)
+		})
+	}
+}
+
+func TestGlobalHybridSearchTargets_DuplicateManifestCannotEnableOptedOutKind(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	first := hybridManifest(gv)
+	first.Versions[0].Kinds[0].Search = nil
+	assert.Empty(t, globalHybridSearchTargets([]*app.ManifestData{first, hybridManifest(gv)}, map[schema.GroupVersion]bool{gv: true}, nil))
 }
 
 // Every covered type is named, whichever API versions this process serves, and

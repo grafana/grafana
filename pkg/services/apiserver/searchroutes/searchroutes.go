@@ -10,6 +10,8 @@ import (
 	"slices"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -210,6 +212,69 @@ func BuildGlobalSearch(
 	handler := searchapi.NewHandler(index, nil, tracer)
 	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
 	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalSearchRoute(kinds)}})
+}
+
+// BuildGlobalHybridSearch retains internal resources' HTTP opt-in and a served
+// version of each so the handler can reuse its API authorization policy.
+func BuildGlobalHybridSearch(
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
+	builders []builder.APIGroupBuilder,
+	installers []appsdkapiserver.AppInstaller,
+	apiResourceConfig *serverstorage.ResourceConfig,
+	auth authorizer.Authorizer,
+) []builder.GroupVersionRoutes {
+	if index == nil {
+		return nil
+	}
+	manifests := slices.Clone(resource.AppManifests())
+	for _, installer := range installers {
+		manifests = append(manifests, installer.ManifestData())
+	}
+	manifests = append(manifests, builder.ManifestsFromBuilders(builders)...)
+	targets := globalHybridSearchTargets(manifests, builder.ServedGroupVersions(builders, installers), apiResourceConfig)
+	handler := searchapi.NewHybridHandler(index, tracer)
+	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
+	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, auth)}})
+}
+
+func globalHybridSearchTargets(manifests []*app.ManifestData, served map[schema.GroupVersion]bool, apiResourceConfig *serverstorage.ResourceConfig) map[schema.GroupResource]schema.GroupVersionKind {
+	targets := map[schema.GroupResource]schema.GroupVersionKind{}
+	mounted := map[schema.GroupVersionResource]bool{}
+	for _, m := range manifests {
+		if m == nil {
+			continue
+		}
+		for _, version := range m.Versions {
+			gv := schema.GroupVersion{Group: m.Group, Version: version.Name}
+			if !version.Served || !served[gv] {
+				continue
+			}
+			if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gv.WithResource("")) {
+				continue
+			}
+			for _, kind := range version.Kinds {
+				if kind.Scope != namespacedScope {
+					continue
+				}
+				gvr := gv.WithResource(resource.ManifestResourceName(kind))
+				if mounted[gvr] {
+					continue
+				}
+				mounted[gvr] = true
+				if !kind.HasHybridEndpoint() {
+					continue
+				}
+				gr := gvr.GroupResource()
+				// Select one served version for the API-level authorization check;
+				// the storage search itself is version-independent.
+				if _, ok := targets[gr]; !ok || version.Name == m.PreferredVersion {
+					targets[gr] = gv.WithKind(kind.Kind)
+				}
+			}
+		}
+	}
+	return targets
 }
 
 // globalSearchKinds names the Kubernetes kind of each resource type the global

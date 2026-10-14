@@ -561,6 +561,41 @@ errors instead of implementing a separate fallback.
 The storage service authorizes individual results in both modes. Its embedding
 query rate limit applies only when semantic search is enabled (429 when exceeded).
 
+### Search across resources
+
+Enable `[grafana-apiserver] enable_global_hybrid_api = true` after all search-api
+instances support multi-resource hybrid requests. Older servers reject these
+requests with HTTP 400. The existing `enable_hybrid_api` switch must also remain
+enabled. Send the same request envelope to
+`POST /apis/search.grafana.app/v0alpha1/namespaces/{namespace}/global/search/hybrid`,
+adding the resource types to search:
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchQuery",
+  "resources": [
+    { "group": "dashboard.grafana.app", "resource": "dashboards" },
+    { "group": "folder.grafana.app", "resource": "folders" },
+    { "group": "assistant.alertrules.ext.grafana.app", "resource": "alertrules" }
+  ],
+  "query": "production",
+  "limit": 10
+}
+```
+
+Groups ending in `.ext.grafana.app` use the existing external collection allowlist
+and storage authorization. Other resources must expose a hybrid endpoint and
+pass its API authorization. API versions are not needed in the resource list.
+Internal APIs served only remotely or registered dynamically are not discovered
+by this endpoint yet.
+
+Results are reranked together, and `limit` applies to the combined response.
+Without reranking, resource types are interleaved in request order. Filters apply
+to every requested type; multi-resource queries support only `uid` and `folder`.
+A failure searching any resource fails the request. Each result includes its own
+group and resource; `kind` is empty when no manifest supplies it.
+
 ## Where to look
 
 - `pkg/apis/search/v0alpha1/types.go` and `hybrid.go`: public request and response shapes
