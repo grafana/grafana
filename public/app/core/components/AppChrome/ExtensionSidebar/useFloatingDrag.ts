@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
+import { store } from '@grafana/data';
+
 /**
  * Put this attribute on an element inside the floating extension sidebar to make it the handle that moves
  * the floating container (pointer drag, arrow keys, Home or double-click to reset).
@@ -7,12 +9,16 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 export const FLOATING_DRAG_HANDLE_ATTRIBUTE = 'data-extension-floating-drag-handle';
 
 const HANDLE_SELECTOR = `[${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`;
-/** Space kept between the floating container and the edges of the page content. */
-const GUTTER = 24;
+/**
+ * Space kept between the floating container and the edges of the page content. Smaller than the default
+ * corner's inset, so the container can be lined up with the page's own panes.
+ */
+const GUTTER = 8;
 /** A press that moves less than this is a click on the handle, not a drag. */
 const DRAG_THRESHOLD = 4;
 const KEY_STEP = 16;
 const KEY_STEP_LARGE = 64;
+const OFFSET_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarFloatingOffset';
 
 interface Offset {
   x: number;
@@ -22,14 +28,25 @@ interface Offset {
 const ORIGIN: Offset = { x: 0, y: 0 };
 
 /**
- * Moves the floating extension sidebar away from its bottom-right corner, for the current floating session
- * only: it always starts in the corner. The offset is a translation of `element` from that corner, kept
- * fully inside the page content (with a gutter), and re-clamped when the window or the element resizes.
+ * Moves the floating extension sidebar away from its bottom-right corner. The offset is a translation of
+ * `element` from that corner, kept fully inside the page content (with a gutter), and re-clamped when the
+ * window or the element resizes. The user's chosen offset is remembered in local storage, so floating
+ * again, or a reload, puts it back; a re-clamp never overwrites it, so it returns once there is room.
  * Returns whether it is moved away from its default place.
  */
 export function useFloatingDrag(element: HTMLElement | null): { moved: boolean } {
   const offsetRef = useRef<Offset>(ORIGIN);
+  const chosenRef = useRef<Offset>(ORIGIN);
   const [moved, setMoved] = useState(false);
+
+  const remember = useCallback(() => {
+    chosenRef.current = offsetRef.current;
+    if (isOrigin(offsetRef.current)) {
+      store.delete(OFFSET_LOCAL_STORAGE_KEY);
+    } else {
+      store.setObject(OFFSET_LOCAL_STORAGE_KEY, offsetRef.current);
+    }
+  }, []);
 
   const apply = useCallback(
     (next: Offset) => {
@@ -44,12 +61,13 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
     [element]
   );
 
-  // Floating starts in the corner, and docking (the element going away) puts it back there.
+  // Floating starts where the user left it; docking (the element going away) only clears the transform.
   useLayoutEffect(() => {
     if (!element) {
       return;
     }
-    apply(ORIGIN);
+    chosenRef.current = readStoredOffset();
+    apply(chosenRef.current);
     return () => {
       offsetRef.current = ORIGIN;
       element.style.transform = '';
@@ -61,7 +79,7 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
     if (!element) {
       return;
     }
-    const reclamp = () => apply(offsetRef.current);
+    const reclamp = () => apply(chosenRef.current);
     window.addEventListener('resize', reclamp);
     // The container grows upward when it expands; keep it on screen.
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(reclamp);
@@ -105,6 +123,7 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
       if (drag.dragging) {
         // The handle's own click must not fire after a move.
         swallowClick = true;
+        remember();
       }
       drag = undefined;
       element.removeAttribute('data-dragging');
@@ -119,6 +138,7 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
     const onDoubleClick = (event: MouseEvent) => {
       if (event.target instanceof Element && event.target.closest(HANDLE_SELECTOR)) {
         apply(ORIGIN);
+        remember();
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
@@ -135,10 +155,12 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
       if (event.key === 'Home') {
         event.preventDefault();
         apply(ORIGIN);
+        remember();
       } else if (moves[event.key]) {
         event.preventDefault();
         const { x, y } = offsetRef.current;
         apply({ x: x + moves[event.key].x, y: y + moves[event.key].y });
+        remember();
       }
     };
 
@@ -160,9 +182,24 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
       element.removeEventListener('dblclick', onDoubleClick);
       element.removeEventListener('keydown', onKeyDown);
     };
-  }, [element, apply]);
+  }, [element, apply, remember]);
 
   return { moved };
+}
+
+function readStoredOffset(): Offset {
+  const stored: unknown = store.getObject(OFFSET_LOCAL_STORAGE_KEY, ORIGIN);
+  if (
+    typeof stored === 'object' &&
+    stored !== null &&
+    'x' in stored &&
+    'y' in stored &&
+    Number.isFinite(stored.x) &&
+    Number.isFinite(stored.y)
+  ) {
+    return { x: Number(stored.x), y: Number(stored.y) };
+  }
+  return ORIGIN;
 }
 
 /**

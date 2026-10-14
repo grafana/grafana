@@ -87,11 +87,12 @@ it('moves the floating box by dragging its handle, kept inside the page with a g
   expect(onHandleClick).not.toHaveBeenCalled();
 
   drag({ x: 500, y: 320 }, { x: -2000, y: -2000 });
-  // Left edge at 24 (600 - 576) and top edge at 24 (500 - 476).
-  expect(floating().style.transform).toBe('translate(-576px, -476px)');
+  // Left edge at 8 (600 - 592) and top edge at 8 (500 - 492).
+  expect(floating().style.transform).toBe('translate(-592px, -492px)');
 
+  // Past the default corner, down to the 8px gutter (the corner sits 24px in).
   drag({ x: 0, y: 0 }, { x: 5000, y: 5000 });
-  expect(floating().style.transform).toBe('');
+  expect(floating().style.transform).toBe('translate(16px, 16px)');
 });
 
 it('keeps a handle that sits outside the box on the page too, without moving the corner', () => {
@@ -101,8 +102,8 @@ it('keeps a handle that sits outside the box on the page too, without moving the
 
   drag({ x: 590, y: 520 }, { x: -2000, y: 520 });
 
-  // The flag's left edge (600 - 28 - 548 = 24) stops at the gutter, not the box's.
-  expect(floating().style.transform).toBe('translate(-548px, 0px)');
+  // The flag's left edge (600 - 28 - 564 = 8) stops at the gutter, not the box's.
+  expect(floating().style.transform).toBe('translate(-564px, 0px)');
 });
 
 it('treats a press that moves less than 4px as a click on the handle', () => {
@@ -129,9 +130,7 @@ it('moves with the arrow keys and resets with Home or a double-click', () => {
   expect(floating().style.transform).toBe('');
 });
 
-it('does not remember the position: floating again starts in the corner', () => {
-  const getItem = jest.spyOn(Storage.prototype, 'getItem');
-  const setItem = jest.spyOn(Storage.prototype, 'setItem');
+it('remembers the position: floating again starts where it was left', () => {
   const { unmount } = render(<Floating />);
   drag({ x: 700, y: 520 }, { x: 600, y: 420 });
   expect(floating().style.transform).toBe('translate(-100px, -100px)');
@@ -140,10 +139,27 @@ it('does not remember the position: floating again starts in the corner', () => 
   unmount();
   render(<Floating />);
 
+  expect(floating().style.transform).toBe('translate(-100px, -100px)');
+  expect(floating()).toHaveAttribute('data-moved', 'true');
+});
+
+it('forgets the position on reset, so floating again starts in the corner', () => {
+  const { unmount } = render(<Floating />);
+  drag({ x: 700, y: 520 }, { x: 600, y: 420 });
+  fireEvent.keyDown(handle(), { key: 'Home' });
+
+  unmount();
+  render(<Floating />);
+
   expect(floating().style.transform).toBe('');
   expect(floating()).toHaveAttribute('data-moved', 'false');
-  expect(getItem).not.toHaveBeenCalled();
-  expect(setItem).not.toHaveBeenCalled();
+});
+
+it('ignores a stored position that is not an offset', () => {
+  window.localStorage.setItem('grafana.navigation.extensionSidebarFloatingOffset', '{"x":"left"}');
+  render(<Floating />);
+
+  expect(floating().style.transform).toBe('');
 });
 
 it('re-clamps when the box grows upward or the window resizes', () => {
@@ -156,5 +172,12 @@ it('re-clamps when the box grows upward or the window resizes', () => {
   act(() => {
     window.dispatchEvent(new Event('resize'));
   });
-  expect(floating().style.transform).toBe('translate(0px, -120px)');
+  expect(floating().style.transform).toBe('translate(0px, -136px)');
+
+  // Collapsed again, it returns to the place the user chose, not the clamped one.
+  natural = { ...natural, top: 500, height: 244 };
+  act(() => {
+    window.dispatchEvent(new Event('resize'));
+  });
+  expect(floating().style.transform).toBe('translate(0px, -476px)');
 });
