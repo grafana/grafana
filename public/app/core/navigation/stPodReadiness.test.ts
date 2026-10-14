@@ -2,8 +2,8 @@ import {
   getStPodReadyPromise,
   getStPodStatus,
   invalidateStPodReadiness,
-  markStPodGaveUp,
   markStPodReady,
+  markStPodTimeout,
   markStPodWaiting,
   StPodStatus,
 } from './stPodReadiness';
@@ -46,12 +46,12 @@ describe('stPodReadiness', () => {
     await expect(pending).resolves.toBeUndefined();
   });
 
-  it('reports gaveUp and also resolves the pending promise when the wait is abandoned', async () => {
+  it('reports timeout and also resolves the pending promise when the wait is abandoned', async () => {
     const pending = getStPodReadyPromise();
 
-    markStPodGaveUp();
+    markStPodTimeout();
 
-    expect(getStPodStatus()).toBe(StPodStatus.GaveUp);
+    expect(getStPodStatus()).toBe(StPodStatus.Timeout);
     // Must resolve even though this is the failure path: a promise left pending keeps the
     // consumer suspended forever, so it never re-renders to reach its error branch.
     await expect(pending).resolves.toBeUndefined();
@@ -72,8 +72,8 @@ describe('stPodReadiness', () => {
     expect(getStPodReadyPromise()).not.toBe(before);
   });
 
-  it('can start waiting again after giving up', () => {
-    markStPodGaveUp();
+  it('can start waiting again after timing out', () => {
+    markStPodTimeout();
 
     invalidateStPodReadiness();
     markStPodWaiting();
@@ -92,14 +92,14 @@ describe('stPodReadiness', () => {
     await expect(Promise.race([getStPodReadyPromise(), Promise.resolve(stillPending)])).resolves.toBe(stillPending);
   });
 
-  it('hands out a fresh pending promise after markStPodWaiting recovers from gaveUp', async () => {
+  it('hands out a fresh pending promise after markStPodWaiting recovers from timeout', async () => {
     const before = getStPodReadyPromise();
-    markStPodGaveUp();
+    markStPodTimeout();
 
     markStPodWaiting();
 
     // A fresh waiting state must produce a fresh pending promise, otherwise a
-    // consumer that already saw the resolved gaveUp promise would never suspend
+    // consumer that already saw the resolved timeout promise would never suspend
     // again on the new attempt.
     const after = getStPodReadyPromise();
     expect(after).not.toBe(before);

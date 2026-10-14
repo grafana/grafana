@@ -9,7 +9,7 @@ export const STPodReadinessCheck = ({ isUrlAllowed }: { isUrlAllowed: boolean })
 
   const status = getStPodStatus();
 
-  if (status === StPodStatus.GaveUp) {
+  if (status === StPodStatus.Timeout) {
     throw createStPodTimeoutError();
   }
 

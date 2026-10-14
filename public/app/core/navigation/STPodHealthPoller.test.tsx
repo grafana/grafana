@@ -9,9 +9,9 @@ import { STPodHealthPoller } from './STPodHealthPoller';
 import {
   getStPodStatus,
   invalidateStPodReadiness,
-  markStPodGaveUp,
-  ST_POD_GIVE_UP_MS,
+  markStPodTimeout,
   ST_POD_POLL_INTERVAL_MS,
+  ST_POD_TIMEOUT_MS,
   StPodStatus,
 } from './stPodReadiness';
 
@@ -68,10 +68,10 @@ describe('STPodHealthPoller', () => {
     await waitFor(() => expect(getStPodStatus()).toBe(StPodStatus.Waiting));
   });
 
-  it('resets a stale gaveUp verdict when a fresh non-allow-listed route mounts the poller', async () => {
+  it('resets a stale timeout verdict when a fresh non-allow-listed route mounts the poller', async () => {
     mockHealth(podDown);
-    markStPodGaveUp();
-    expect(getStPodStatus()).toBe(StPodStatus.GaveUp);
+    markStPodTimeout();
+    expect(getStPodStatus()).toBe(StPodStatus.Timeout);
 
     render(<STPodHealthPoller skip={false} />);
 
@@ -104,20 +104,20 @@ describe('STPodHealthPoller', () => {
       expect(requested).toHaveBeenCalledTimes(2);
     });
 
-    it('gives up after the give-up window without the pod becoming ready', async () => {
+    it('times out after the timeout window without the pod becoming ready', async () => {
       mockHealth(podDown);
 
       render(<STPodHealthPoller skip={false} />);
       await waitFor(() => expect(getStPodStatus()).toBe(StPodStatus.Waiting));
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(ST_POD_GIVE_UP_MS);
+        await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
       });
 
-      expect(getStPodStatus()).toBe(StPodStatus.GaveUp);
+      expect(getStPodStatus()).toBe(StPodStatus.Timeout);
     });
 
-    it('does not give up after the poller has unmounted', async () => {
+    it('does not time out after the poller has unmounted', async () => {
       mockHealth(podDown);
 
       const { unmount } = render(<STPodHealthPoller skip={false} />);
@@ -126,7 +126,7 @@ describe('STPodHealthPoller', () => {
       unmount();
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(ST_POD_GIVE_UP_MS);
+        await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
       });
 
       expect(getStPodStatus()).toBe(StPodStatus.Waiting);

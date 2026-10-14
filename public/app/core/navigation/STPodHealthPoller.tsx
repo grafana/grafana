@@ -5,19 +5,19 @@ import { useGetHealthQuery } from 'app/api/clients/legacy';
 import {
   getStPodStatus,
   invalidateStPodReadiness,
-  markStPodGaveUp,
   markStPodReady,
+  markStPodTimeout,
   markStPodWaiting,
-  ST_POD_GIVE_UP_MS,
   ST_POD_POLL_INTERVAL_MS,
+  ST_POD_TIMEOUT_MS,
   StPodStatus,
 } from './stPodReadiness';
 
 export const STPodHealthPoller = ({ skip }: { skip: boolean }) => {
-  const didResetStaleGaveUp = useRef(false);
-  if (!skip && !didResetStaleGaveUp.current) {
-    didResetStaleGaveUp.current = true;
-    if (getStPodStatus() === StPodStatus.GaveUp) {
+  const didResetStaleTimeout = useRef(false);
+  if (!skip && !didResetStaleTimeout.current) {
+    didResetStaleTimeout.current = true;
+    if (getStPodStatus() === StPodStatus.Timeout) {
       invalidateStPodReadiness();
     }
   }
@@ -45,10 +45,10 @@ export const STPodHealthPoller = ({ skip }: { skip: boolean }) => {
     }
     const timer = setTimeout(() => {
       if (getStPodStatus() !== StPodStatus.Ready) {
-        markStPodGaveUp();
+        markStPodTimeout();
       }
       setFinished(true);
-    }, ST_POD_GIVE_UP_MS);
+    }, ST_POD_TIMEOUT_MS);
 
     return () => clearTimeout(timer);
   }, [skip, finished]);

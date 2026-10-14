@@ -2,10 +2,10 @@ export enum StPodStatus {
   Unknown = 'unknown',
   Waiting = 'waiting',
   Ready = 'ready',
-  GaveUp = 'gaveUp',
+  Timeout = 'timeout',
 }
 
-export const ST_POD_GIVE_UP_MS = 5 * 60 * 1000;
+export const ST_POD_TIMEOUT_MS = 5 * 60 * 1000;
 export const ST_POD_POLL_INTERVAL_MS = 10 * 1000;
 
 let status: StPodStatus = StPodStatus.Unknown;
@@ -36,7 +36,7 @@ export const getStPodReadyPromise = (): Promise<void> => {
 };
 
 export const markStPodWaiting = (): void => {
-  if (status === StPodStatus.Ready || status === StPodStatus.GaveUp) {
+  if (status === StPodStatus.Ready || status === StPodStatus.Timeout) {
     pending = null;
   }
   status = StPodStatus.Waiting;
@@ -47,8 +47,8 @@ export const markStPodReady = (): void => {
   pending?.resolve();
 };
 
-export const markStPodGaveUp = (): void => {
-  status = StPodStatus.GaveUp;
+export const markStPodTimeout = (): void => {
+  status = StPodStatus.Timeout;
   pending?.resolve();
 };
 

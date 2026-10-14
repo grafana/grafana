@@ -7,8 +7,8 @@ import { STPodReadinessCheck } from './STPodReadinessCheck';
 import {
   invalidateStPodReadiness,
   isStPodTimeoutError,
-  markStPodGaveUp,
   markStPodReady,
+  markStPodTimeout,
   markStPodWaiting,
 } from './stPodReadiness';
 
@@ -88,7 +88,7 @@ describe('STPodReadinessCheck', () => {
   it('throws an identifiable timeout error once the wait has been abandoned', async () => {
     // React logs every boundary-caught error, and jest-fail-on-console would fail the test.
     jest.spyOn(console, 'error').mockImplementation();
-    markStPodGaveUp();
+    markStPodTimeout();
 
     await renderGateWithBoundary();
 
