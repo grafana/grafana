@@ -240,3 +240,67 @@ test.describe('Alert rules: status icon', () => {
     }
   });
 });
+
+test.describe('Alert rules: instance totals', () => {
+  test.slow();
+
+  // Every count differs, and the zero is deliberate: a returned 0 is shown as 0, not hidden.
+  test('ALERT-10: the row shows every seeded instance count, labelled, including a zero', async ({
+    page,
+    request,
+    workerApi,
+    alertRules,
+  }) => {
+    const run = newRunMarker();
+    const rule: StatusRule = {
+      name: 'Rule with all totals',
+      status: {
+        state: 'Firing',
+        health: 'OK',
+        totals: { healthy: 7, firing: 0, pending: 2, recovering: 3, nodata: 4, error: 5 },
+      },
+    };
+    await seedStatusRules(alertRules.seedRule.bind(alertRules), request, workerApi.namespace, run, [rule]);
+
+    const list = new RuleListPage(page, 'alert');
+    await list.goto(runScope(run));
+
+    const row = list.ruleRow(titleOf(run, rule.name));
+    await expect(row.getByText('7 healthy')).toBeVisible({ timeout: 20_000 });
+    for (const count of ['0 firing', '2 pending', '3 recovering', '4 no data', '5 error']) {
+      await expect(row.getByText(count), `${count} is shown`).toBeVisible();
+    }
+  });
+
+  test('ALERT-10: a total the rule has no value for shows no count, and a rule without status shows none', async ({
+    page,
+    request,
+    workerApi,
+    alertRules,
+  }) => {
+    const run = newRunMarker();
+    const partial: StatusRule = {
+      name: 'Rule with some totals',
+      status: { state: 'Firing', health: 'OK', totals: { firing: 2, error: 1 } },
+    };
+    await seedStatusRules(alertRules.seedRule.bind(alertRules), request, workerApi.namespace, run, [
+      partial,
+      NO_STATUS_RULE,
+    ]);
+
+    const list = new RuleListPage(page, 'alert');
+    await list.goto(runScope(run));
+
+    const partialRow = list.ruleRow(titleOf(run, partial.name));
+    await expect(partialRow.getByText('2 firing')).toBeVisible({ timeout: 20_000 });
+    await expect(partialRow.getByText('1 error')).toBeVisible();
+    for (const label of ['healthy', 'pending', 'recovering', 'no data']) {
+      await expect(partialRow.getByText(new RegExp(`\\d+ ${label}`)), `no ${label} count`).toHaveCount(0);
+    }
+
+    // The list has rendered the rule above, so the one without status is on screen too.
+    const noStatusRow = list.ruleRow(titleOf(run, NO_STATUS_RULE.name));
+    await expect(noStatusRow).toBeVisible();
+    await expect(noStatusRow.getByText(/\d+ (healthy|firing|pending|recovering|no data|error)/)).toHaveCount(0);
+  });
+});

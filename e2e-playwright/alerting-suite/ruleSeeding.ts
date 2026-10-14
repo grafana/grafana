@@ -1,5 +1,11 @@
 import { type APIRequestContext, type APIResponse, type PlaywrightWorkerArgs } from '@playwright/test';
 
+import {
+  type AlertRuleAlertRuleHealth,
+  type AlertRuleAlertRuleInstanceTotals,
+  type AlertRuleAlertRuleState,
+  type RecordingRuleRecordingRuleHealth,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { expect } from '@grafana/plugin-e2e';
 
 // "empty" is the default contact point Grafana provisions on a fresh dev install.
@@ -58,14 +64,18 @@ export function postWithRetry(
   return sendWithRetry(request, 'post', url, { data }, timeout);
 }
 
-export type AlertRuleState = 'Inactive' | 'Healthy' | 'Firing' | 'Pending' | 'Recovering';
-export type AlertRuleHealth = 'Unknown' | 'OK' | 'Paused' | 'Error' | 'NoData';
-export type RecordingRuleHealth = 'Unknown' | 'Recording' | 'Paused' | 'Error' | 'NoData';
+// Taken from the generated API types so a change to the status schema fails type checking here
+// instead of surfacing as a status the server silently drops.
+export type AlertRuleState = AlertRuleAlertRuleState;
+export type AlertRuleHealth = AlertRuleAlertRuleHealth;
+export type RecordingRuleHealth = RecordingRuleRecordingRuleHealth;
+export type AlertRuleTotals = AlertRuleAlertRuleInstanceTotals;
 
 export interface RuleStatusSeed {
   state?: AlertRuleState;
   health?: AlertRuleHealth | RecordingRuleHealth;
-  totals?: Partial<Record<'healthy' | 'firing' | 'pending' | 'recovering' | 'nodata' | 'error', number>>;
+  /** Alert rules only: the server ignores totals on a recording rule. */
+  totals?: AlertRuleTotals;
 }
 
 // The E2E server runs with `execute_alerts = false`, so the status syncer never produces rule status.
@@ -88,6 +98,17 @@ export async function setRuleStatus(
   );
 }
 
+// The search response names each instance total `totals<State>`; a total the rule has no value for is absent.
+const TOTALS_SEARCH_FIELD: Record<keyof AlertRuleTotals, string> = {
+  healthy: 'totalsHealthy',
+  firing: 'totalsFiring',
+  pending: 'totalsPending',
+  recovering: 'totalsRecovering',
+  nodata: 'totalsNoData',
+  error: 'totalsError',
+};
+const TOTALS_FIELDS = Object.values(TOTALS_SEARCH_FIELD);
+
 // The search read path can lag the write, like the folder list does, and a status patch is a write
 // too. Poll the per-kind searchRules endpoint the UI reads until every seeded rule reports the status
 // it was given, so a browser assertion never races the patch.
@@ -107,16 +128,22 @@ export async function waitForRuleStatusVisible(
         where: { filter: { field: 'labels', operator: 'In', values: [`${RUN_LABEL}=${runMarker}`] } },
         sort: [{ field: 'title', direction: 'asc' }],
         // Recording rules have no state, and requesting an unknown field fails the whole search.
-        fields: kind === 'alertrules' ? ['title', 'state', 'health'] : ['title', 'health'],
+        fields: kind === 'alertrules' ? ['title', 'state', 'health', ...TOTALS_FIELDS] : ['title', 'health'],
         limit: 40,
       },
     });
     expect(response.ok(), `POST ${kind}/searchRules -> ${response.status()} ${await response.text()}`).toBeTruthy();
     const body = await response.json();
-    const hits = new Map<string, { state?: string; health?: string }>(
-      (body.items ?? []).map((item: { resource: { name: string }; fields?: Record<string, string> }) => [
+    const hits = new Map<string, { state?: string; health?: string; totals: Record<string, number | undefined> }>(
+      (body.items ?? []).map((item: { resource: { name: string }; fields?: Record<string, string | number> }) => [
         item.resource.name,
-        { state: item.fields?.state, health: item.fields?.health },
+        {
+          state: item.fields?.state,
+          health: item.fields?.health,
+          totals: Object.fromEntries(
+            Object.entries(TOTALS_SEARCH_FIELD).map(([total, field]) => [total, item.fields?.[field]])
+          ),
+        },
       ])
     );
     for (const [uid, status] of Object.entries(expected)) {
@@ -127,6 +154,9 @@ export async function waitForRuleStatusVisible(
       }
       if (status.health) {
         expect(hit?.health, `health of ${uid}`).toBe(status.health);
+      }
+      for (const [total, count] of Object.entries(status.totals ?? {})) {
+        expect(hit?.totals[total], `${total} total of ${uid}`).toBe(count);
       }
     }
   }).toPass({ intervals: [200, 500, 1000, 2000], timeout });
