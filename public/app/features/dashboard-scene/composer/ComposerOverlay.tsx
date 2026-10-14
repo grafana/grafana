@@ -199,13 +199,19 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
    * The rectangle between the press and the pointer, in viewport coordinates, clamped to the overlay (the
    * dashboard controls and body): core cannot draw or capture outside it.
    */
-  const toDraft = (start: { x: number; y: number }, x: number, y: number): Box => {
+  const toDraft = useCallback((start: { x: number; y: number }, x: number, y: number): Box => {
     const bounds = rootRef.current?.getBoundingClientRect();
     const clampX = (value: number) => (bounds ? clamp(value, bounds.left, bounds.left + bounds.width) : value);
     const clampY = (value: number) => (bounds ? clamp(value, bounds.top, bounds.top + bounds.height) : value);
     const [x1, x2, y1, y2] = [clampX(start.x), clampX(x), clampY(start.y), clampY(y)];
     return { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) };
-  };
+  }, []);
+
+  /** Shows a draft rectangle given in viewport coordinates. */
+  const showDraft = useCallback((rect: Box) => {
+    const rootRect = rootRef.current?.getBoundingClientRect();
+    setDraft(rootRect ? { ...rect, left: rect.left - rootRect.left, top: rect.top - rootRect.top } : null);
+  }, []);
 
   const hintAllowed = pickMode === 'element' && !paused && !capturing;
 
@@ -296,6 +302,109 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
     };
   }, [isOverControls, hideHint]);
 
+  /** A drag that started on the controls has ended: the click it would end in must not reach a control. */
+  const swallowControlsClickRef = useRef(false);
+
+  // Presses on the controls reach them, but one that moves 8px or more becomes a region drag from the
+  // press point, like a drag on the body. The controls receive the pointer here, not the blocking layer,
+  // so this listens on the window, in the capture phase to get there first.
+  useEffect(() => {
+    if (!picking || paused || capturing) {
+      return;
+    }
+    let press: { x: number; y: number; pointerId: number; dragged: boolean } | undefined;
+    const onDown = (event: PointerEvent) => {
+      const onOwnLayer = event.target instanceof Node && rootRef.current?.contains(event.target);
+      press =
+        event.button === 0 && !onOwnLayer && isOverControls(event.clientX, event.clientY)
+          ? { x: event.clientX, y: event.clientY, pointerId: event.pointerId, dragged: false }
+          : undefined;
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!press || event.pointerId !== press.pointerId) {
+        return;
+      }
+      if (!press.dragged) {
+        if (Math.max(Math.abs(event.clientX - press.x), Math.abs(event.clientY - press.y)) < MIN_REGION_SIZE) {
+          return;
+        }
+        press.dragged = true;
+        dragStartRef.current = { x: press.x, y: press.y, moved: true };
+        // Undo what the press began on the control it started on, such as focus or an open menu.
+        const focused = document.activeElement;
+        if (focused instanceof HTMLElement && rootRef.current?.parentElement?.contains(focused)) {
+          focused.blur();
+        }
+        hideHint();
+        setHovered(null);
+      }
+      window.getSelection()?.removeAllRanges();
+      if (dragStartRef.current) {
+        showDraft(toDraft(press, event.clientX, event.clientY));
+      }
+    };
+    const onUp = (event: PointerEvent) => {
+      if (!press || event.pointerId !== press.pointerId) {
+        return;
+      }
+      const { dragged } = press;
+      press = undefined;
+      if (!dragged) {
+        // A press that never moved 8px is the control's.
+        return;
+      }
+      event.stopPropagation();
+      swallowControlsClickRef.current = true;
+      const start = dragStartRef.current;
+      dragStartRef.current = null;
+      setDraft(null);
+      // Cancelled meanwhile (Escape, blur, scroll): nothing to draw, but the click is still swallowed.
+      if (!start) {
+        return;
+      }
+      const rect = toDraft(start, event.clientX, event.clientY);
+      const pick =
+        rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE ? null : session.createRegionPick(rect);
+      if (pick) {
+        session.completePick(pick);
+      }
+    };
+    const onCancel = () => {
+      press = undefined;
+    };
+    window.addEventListener('pointerdown', onDown, true);
+    window.addEventListener('pointermove', onMove, true);
+    window.addEventListener('pointerup', onUp, true);
+    window.addEventListener('pointercancel', onCancel, true);
+    return () => {
+      window.removeEventListener('pointerdown', onDown, true);
+      window.removeEventListener('pointermove', onMove, true);
+      window.removeEventListener('pointerup', onUp, true);
+      window.removeEventListener('pointercancel', onCancel, true);
+    };
+  }, [picking, paused, capturing, isOverControls, toDraft, showDraft, hideHint, session]);
+
+  // Outlives the pick the drag resolved, since its click arrives after the pick has ended.
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      if (swallowControlsClickRef.current) {
+        swallowControlsClickRef.current = false;
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    const onDown = () => {
+      // A release that produced no click must not swallow a later one.
+      swallowControlsClickRef.current = false;
+    };
+    window.addEventListener('click', onClick, true);
+    window.addEventListener('pointerdown', onDown, true);
+    return () => {
+      window.removeEventListener('click', onClick, true);
+      window.removeEventListener('pointerdown', onDown, true);
+    };
+  }, []);
+
   const onPointerDown = (event: React.PointerEvent) => {
     stop(event);
     hideHint();
@@ -341,14 +450,13 @@ export function ComposerOverlay({ session }: { session: ComposerSession }) {
   const onPointerMove = (event: React.PointerEvent) => {
     const start = dragStartRef.current;
     if (start) {
-      const rootRect = rootRef.current?.getBoundingClientRect();
       const rect = toDraft(start, event.clientX, event.clientY);
       // A jitter during a click is not a drag yet: keep showing the element under the pointer.
       if (rect.width >= MIN_REGION_SIZE || rect.height >= MIN_REGION_SIZE) {
         start.moved = true;
       }
       if (start.moved) {
-        setDraft(rootRect ? { ...rect, left: rect.left - rootRect.left, top: rect.top - rootRect.top } : null);
+        showDraft(rect);
         setHovered(null);
         hideHint();
         return;

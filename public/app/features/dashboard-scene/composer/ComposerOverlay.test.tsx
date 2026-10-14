@@ -1142,6 +1142,64 @@ describe('dashboard controls', () => {
     }
   });
 
+  it('draws a region from a drag that starts on the controls, and keeps its click from the control', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const { save } = mountControls();
+    const onSave = jest.fn();
+    save.addEventListener('click', onSave);
+
+    fireEvent.pointerDown(save, { clientX: 100, clientY: 30, button: 0 });
+    fireEvent.pointerMove(window, { clientX: 140, clientY: 120 });
+    expect(screen.getByTestId('composer-region-draft')).toHaveStyle({
+      left: '100px',
+      top: '30px',
+      width: '40px',
+      height: '90px',
+    });
+    fireEvent.pointerMove(window, { clientX: 400, clientY: 300 });
+    fireEvent.pointerUp(save, { clientX: 400, clientY: 300 });
+    fireEvent.click(save);
+
+    expect(onSave).not.toHaveBeenCalled();
+    await expect(pick).resolves.toMatchObject({
+      ref: { kind: 'region' },
+      rect: { x: 100 / 1024, y: 30 / 768, width: 300 / 1024, height: 270 / 768 },
+    });
+  });
+
+  it('leaves a press on the controls that moves less than 8px to the control', async () => {
+    const { startPick } = setup();
+    const settled = jest.fn();
+    startPick().then(settled);
+    const { save } = mountControls();
+    const onSave = jest.fn();
+    save.addEventListener('click', onSave);
+
+    fireEvent.pointerDown(save, { clientX: 100, clientY: 30, button: 0 });
+    fireEvent.pointerMove(window, { clientX: 104, clientY: 33 });
+    fireEvent.pointerUp(save, { clientX: 104, clientY: 33 });
+    fireEvent.click(save);
+    await act(async () => {});
+
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(settled).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+  });
+
+  it('blurs a control the drag started on', () => {
+    const { startPick } = setup();
+    startPick();
+    const { save } = mountControls();
+    save.focus();
+    expect(save).toHaveFocus();
+
+    fireEvent.pointerDown(save, { clientX: 100, clientY: 30, button: 0 });
+    fireEvent.pointerMove(window, { clientX: 200, clientY: 200 });
+
+    expect(save).not.toHaveFocus();
+  });
+
   it('keeps pins drawn over the controls clickable', async () => {
     const { session, startPick, annotate } = setup();
     const pick = startPick();
