@@ -46,18 +46,12 @@ function InspectErrorsAndNoticesTabRenderer({ model }: SceneComponentProps<Inspe
   const errors = panelData?.errors ?? (panelData?.error ? [panelData.error] : []);
 
   const CustomInspector = dataSource?.components?.ErrorsAndNoticesInspector;
+  if (CustomInspector) {
+    return panelData ? <CustomInspector datasource={dataSource} data={panelData.series} errors={errors} /> : null;
+  }
   const statusItems = snapshot.hostInitialized
     ? snapshot.items
     : [...getPanelDataStatusItems(panelData, panel.state._pluginLoadError), ...snapshot.items];
-  if (CustomInspector) {
-    const panelItems = statusItems.filter((item) => item.origin === 'panel' || item.origin === 'plugin-load');
-    return (
-      <PanelContextProvider value={context}>
-        {panelItems.length > 0 && <StandardErrorsAndNoticesInspector statusItems={panelItems} />}
-        {panelData && <CustomInspector datasource={dataSource} data={panelData.series} errors={errors} />}
-      </PanelContextProvider>
-    );
-  }
   if (context.notices || panel.state._pluginLoadError) {
     return (
       <PanelContextProvider value={context}>
