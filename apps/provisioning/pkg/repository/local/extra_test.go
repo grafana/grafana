@@ -14,13 +14,13 @@ import (
 func TestExtra_BuildOptions(t *testing.T) {
 	extra := Extra(t.TempDir(), nil, nil)
 	config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType}}
-	result, err := extra.Build(context.Background(), config, repository.WithTimeout(time.Second), repository.WithRetries(2))
+	result, err := extra.Build(context.Background(), config, repository.WithTimeout(time.Second))
 	require.NoError(t, err)
 	require.Same(t, config, result.Config())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	result, err = extra.Build(ctx, config, repository.WithTimeout(time.Second), repository.WithRetries(2))
+	result, err = extra.Build(ctx, config, repository.WithTimeout(time.Second))
 	require.ErrorIs(t, err, context.Canceled)
 	require.Nil(t, result)
 }

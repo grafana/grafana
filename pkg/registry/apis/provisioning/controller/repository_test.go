@@ -3218,11 +3218,11 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 		for _, opt := range opts {
 			opt(&options)
 		}
-		assert.Equal(t, repository.BuildOptions{Timeout: 10 * time.Second, Retries: 2}, options)
+		assert.Equal(t, repository.BuildOptions{Timeout: 10 * time.Second}, options)
 	}
-	repoFactory.EXPECT().Build(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(checkBuildOptions).
+	repoFactory.EXPECT().Build(mock.Anything, mock.Anything, mock.Anything).Run(checkBuildOptions).
 		Return(nil, fmt.Errorf("error creating git repository: %w", repository.ErrTokenNotFound)).Once()
-	repoFactory.EXPECT().Build(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(checkBuildOptions).
+	repoFactory.EXPECT().Build(mock.Anything, mock.Anything, mock.Anything).Run(checkBuildOptions).
 		Return(mockRepo, nil).Once()
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
@@ -3240,7 +3240,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 		1, 5*time.Minute, 0, 0,
 		quotas.NewFixedQuotaGetter(quotaStatus), NewRepositoryQuotaChecker(repoGetter),
 		repository.IncrementalSyncPolicy{}, 0, false,
-		repository.WithTimeout(10*time.Second), repository.WithRetries(2),
+		repository.WithTimeout(10*time.Second),
 	)
 	t.Cleanup(rc.queue.ShutDown)
 
