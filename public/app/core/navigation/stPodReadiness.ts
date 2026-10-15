@@ -1,20 +1,28 @@
-type StPodStatus = 'unknown' | 'waiting' | 'ready' | 'gaveUp';
+export enum StPodStatus {
+  Unknown = 'unknown',
+  Waiting = 'waiting',
+  Ready = 'ready',
+  Timeout = 'timeout',
+}
 
-let status: StPodStatus = 'unknown';
+export const ST_POD_TIMEOUT_MS = 5 * 60 * 1000;
+export const ST_POD_POLL_INTERVAL_MS = 10 * 1000;
+
+let status: StPodStatus = StPodStatus.Unknown;
 
 let pending: { promise: Promise<void>; resolve: () => void } | null = null;
 
-export const getStPodStatus = () => {
+export const getStPodStatus = (): StPodStatus => {
   return status;
 };
 
 export const invalidateStPodReadiness = (): void => {
-  status = 'unknown';
+  status = StPodStatus.Unknown;
   pending = null;
 };
 
 export const getStPodReadyPromise = (): Promise<void> => {
-  if (status === 'ready') {
+  if (status === StPodStatus.Ready) {
     return Promise.resolve();
   }
   if (!pending) {
@@ -28,19 +36,19 @@ export const getStPodReadyPromise = (): Promise<void> => {
 };
 
 export const markStPodWaiting = (): void => {
-  if (status === 'ready') {
+  if (status === StPodStatus.Ready || status === StPodStatus.Timeout) {
     pending = null;
   }
-  status = 'waiting';
+  status = StPodStatus.Waiting;
 };
 
 export const markStPodReady = (): void => {
-  status = 'ready';
+  status = StPodStatus.Ready;
   pending?.resolve();
 };
 
-export const markStPodGaveUp = (): void => {
-  status = 'gaveUp';
+export const markStPodTimeout = (): void => {
+  status = StPodStatus.Timeout;
   pending?.resolve();
 };
 
@@ -52,6 +60,3 @@ export const createStPodTimeoutError = (): StPodTimeoutError =>
   Object.assign(new Error('The single-tenant pod did not become ready in time'), {
     stPodTimeout: true as const,
   });
-
-export const isStPodTimeoutError = (error: unknown): error is StPodTimeoutError =>
-  error instanceof Error && 'stPodTimeout' in error;

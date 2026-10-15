@@ -1,6 +1,6 @@
 import { use } from 'react';
 
-import { createStPodTimeoutError, getStPodReadyPromise, getStPodStatus } from './stPodReadiness';
+import { createStPodTimeoutError, getStPodReadyPromise, getStPodStatus, StPodStatus } from './stPodReadiness';
 
 export const STPodReadinessCheck = ({ isUrlAllowed }: { isUrlAllowed: boolean }) => {
   if (isUrlAllowed) {
@@ -9,11 +9,11 @@ export const STPodReadinessCheck = ({ isUrlAllowed }: { isUrlAllowed: boolean })
 
   const status = getStPodStatus();
 
-  if (status === 'gaveUp') {
+  if (status === StPodStatus.Timeout) {
     throw createStPodTimeoutError();
   }
 
-  if (status !== 'ready') {
+  if (status !== StPodStatus.Ready) {
     use(getStPodReadyPromise());
   }
 
