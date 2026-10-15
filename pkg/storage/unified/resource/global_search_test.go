@@ -4,8 +4,10 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -154,4 +156,86 @@ func TestUpdateCopyFieldsSetsGroupResource(t *testing.T) {
 	}}).UpdateCopyFields()
 
 	assert.Equal(t, "dashboard.grafana.app/dashboards", doc.GroupResource)
+}
+
+// Dashboards and folders opt in through their manifests. Written out so that a
+// Grafana kind joining them is reviewed: its lists must not hide objects that a
+// get by name returns, including in storage wrappers the manifest says nothing
+// about.
+func TestGlobalSearchCoversTheKindsThatOptIn(t *testing.T) {
+	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	assert.Equal(t, []schema.GroupResource{dashboards, folders}, GlobalSearchResourceTypes())
+	assert.Equal(t, map[schema.GroupResource]string{dashboards: "Dashboard", folders: "Folder"}, GlobalSearchKinds())
+}
+
+// A kind opts in on every version it is served in, or on none: the global index
+// holds one document per object, whichever version it is read in.
+func TestGlobalSearchKindsOptInOnEveryVersion(t *testing.T) {
+	for _, m := range AppManifests() {
+		if m == nil {
+			continue
+		}
+		optedIn := map[string][]bool{}
+		for _, version := range m.Versions {
+			for _, kind := range version.Kinds {
+				optedIn[kind.Kind] = append(optedIn[kind.Kind], kind.InGlobalSearchIndex())
+			}
+		}
+		for kind, versions := range optedIn {
+			assert.Len(t, slices.Compact(versions), 1, "%s %s opts in to the global search index on some versions only", m.Group, kind)
+		}
+	}
+}
+
+// Otherwise the kind would be left out of the global index without a word.
+func TestGlobalSearchKindsServeGenericReads(t *testing.T) {
+	for _, m := range AppManifests() {
+		if m == nil {
+			continue
+		}
+		for _, version := range m.Versions {
+			for _, kind := range version.Kinds {
+				if !kind.InGlobalSearchIndex() {
+					continue
+				}
+				assert.True(t, kind.HasSearchEndpoint(), "%s %s %s opts in to the global search index without serving search", m.Group, version.Name, kind.Kind)
+				assert.True(t, kind.HasListKeysEndpoint(), "%s %s %s opts in to the global search index without serving list-keys", m.Group, version.Name, kind.Kind)
+			}
+		}
+	}
+}
+
+func TestGlobalSearchCoverageOf(t *testing.T) {
+	yes, no := true, false
+	kind := func(name, plural string, global *bool) app.ManifestVersionKind {
+		k := app.ManifestVersionKind{Kind: name, Plural: plural}
+		if global != nil {
+			k.Search = &app.ManifestVersionKindSearch{Global: global}
+		}
+		return k
+	}
+	withoutSearch := kind("Secret", "Secrets", &yes)
+	withoutSearch.Search.Endpoint = &no
+	withoutListKeys := kind("Private", "Privates", &yes)
+	withoutListKeys.Storage = &app.ManifestVersionKindStorage{ListKeys: &no}
+	got := globalSearchCoverageOf([]*app.ManifestData{
+		nil,
+		{Group: "b.grafana.app", Versions: []app.ManifestVersion{
+			{Name: "v1", Kinds: []app.ManifestVersionKind{kind("Widget", "", &yes), kind("Gadget", "Gadgets", &no)}},
+		}},
+		{Group: "a.grafana.app", Versions: []app.ManifestVersion{
+			{Name: "v1", Kinds: []app.ManifestVersionKind{kind("Thing", "Things", nil), kind("Secret", "Secrets", &yes)}},
+			{Name: "v2", Kinds: []app.ManifestVersionKind{kind("Thing", "Things", &yes), withoutSearch, withoutListKeys}},
+		}},
+	})
+	assert.Equal(t, []schema.GroupResource{
+		{Group: "a.grafana.app", Resource: "things"},
+		{Group: "b.grafana.app", Resource: "widgets"},
+	}, got.types, "sorted; opted in on one version is enough; the plural defaults to the kind plus s; "+
+		"a kind without search or list-keys on any version is left out")
+	assert.Equal(t, map[schema.GroupResource]string{
+		{Group: "a.grafana.app", Resource: "things"}:  "Thing",
+		{Group: "b.grafana.app", Resource: "widgets"}: "Widget",
+	}, got.kinds)
 }
