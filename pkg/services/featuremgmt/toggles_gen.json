@@ -1783,6 +1783,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.gatewayAuditPolicy",
+        "resourceVersion": "1791975503776",
+        "creationTimestamp": "2026-10-14T10:58:23Z"
+      },
+      "spec": {
+        "description": "Enable support for the query gateway audit policies",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.gatewayGuardrails",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-10T12:05:34Z"
