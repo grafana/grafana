@@ -64,6 +64,7 @@ export function PanelActionsPopoverWrapper({
   children: JSX.Element;
 }) {
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
   const { viewPanel, meta } = dashboard.useState();
   const { menu } = panel.useState();
@@ -102,6 +103,7 @@ export function PanelActionsPopoverWrapper({
         zIndex={theme.zIndex.dropdown}
         shiftPadding={getSidebarShiftPadding}
         ariaLabel={t('dashboard-scene.panel-actions-popover.aria-label', 'Panel actions')}
+        actionsClassName={styles.actions}
       >
         {children}
       </EditActionsPopover>
@@ -276,10 +278,16 @@ export function PanelActions({ panel, dashboard, menu, onHoverSlotChange, onMenu
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  actions: css({
+    gap: theme.spacing(1),
+    padding: theme.spacing(1),
+    // The popover offset alone sets the 8px overlap with the panel's top edge.
+    top: 0,
+  }),
   hoverSlot: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(0.75),
+    gap: theme.spacing(1),
     '&:empty': {
       display: 'none',
     },

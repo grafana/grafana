@@ -1,4 +1,4 @@
-import { css, keyframes } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import {
   autoUpdate,
   flip,
@@ -68,6 +68,8 @@ type EditActionsPopoverProps = {
   keyboardAccessible?: boolean;
   /** Exposes the actions as a labelled toolbar. */
   ariaLabel?: string;
+  /** Extra class for the actions container, e.g. to change its spacing. */
+  actionsClassName?: string;
 };
 
 /**
@@ -87,6 +89,7 @@ export function EditActionsPopover({
   keepOpen = false,
   keyboardAccessible = false,
   ariaLabel,
+  actionsClassName,
 }: EditActionsPopoverProps) {
   const theme = useTheme2();
   const styles = useStyles2(getPopoverStyles);
@@ -164,7 +167,7 @@ export function EditActionsPopover({
         {/* Stops pointerdown from all actions reaching ancestors, e.g. to prevent an element selection.
         It cannot live on the icon buttons because their wrapping Tooltip overrides their pointerdown handlers */}
         <div
-          className={styles.actions}
+          className={cx(styles.actions, actionsClassName)}
           onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
           role={ariaLabel ? 'toolbar' : undefined}
           aria-label={ariaLabel}
