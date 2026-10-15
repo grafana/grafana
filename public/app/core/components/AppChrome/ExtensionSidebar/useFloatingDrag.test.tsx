@@ -24,9 +24,9 @@ const onHandleClick = jest.fn();
 
 function Floating() {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
-  const { moved } = useFloatingDrag(element);
+  useFloatingDrag(element);
   return (
-    <div ref={setElement} data-testid="floating" data-moved={moved}>
+    <div ref={setElement} data-testid="floating">
       <button type="button" {...{ [FLOATING_DRAG_HANDLE_ATTRIBUTE]: '' }} onClick={onHandleClick}>
         Move
       </button>
@@ -114,7 +114,6 @@ it.each([
   drag({ x: 500, y: 520 }, { x: 500 + by.x, y: 520 + by.y });
 
   expect(floating().style.transform).toBe(transform);
-  expect(floating()).toHaveAttribute('data-moved', 'true');
   // The handle's click does not fire after a move.
   expect(onHandleClick).not.toHaveBeenCalled();
 });
@@ -125,7 +124,6 @@ it('snaps back to the default place at the bottom centre', () => {
   drag({ x: 500, y: 520 }, { x: 540, y: 460 });
 
   expect(floating().style.transform).toBe('');
-  expect(floating()).toHaveAttribute('data-moved', 'false');
   expect(onHandleClick).not.toHaveBeenCalled();
 });
 
@@ -198,7 +196,6 @@ it('moves with the arrow keys and resets with Home or a double-click', () => {
   expect(floating().style.transform).toBe('translate(-16px, -64px)');
   fireEvent.keyDown(handle(), { key: 'Home' });
   expect(floating().style.transform).toBe('');
-  expect(floating()).toHaveAttribute('data-moved', 'false');
 
   fireEvent.keyDown(handle(), { key: 'ArrowLeft', shiftKey: true });
   fireEvent.doubleClick(handle());
@@ -215,7 +212,6 @@ it('remembers the position: floating again starts where it was left', () => {
   render(<Floating />);
 
   expect(floating().style.transform).toBe('translate(-288px, 0px)');
-  expect(floating()).toHaveAttribute('data-moved', 'true');
 });
 
 it('forgets the position on reset, so floating again starts at the bottom centre', () => {
@@ -227,7 +223,6 @@ it('forgets the position on reset, so floating again starts at the bottom centre
   render(<Floating />);
 
   expect(floating().style.transform).toBe('');
-  expect(floating()).toHaveAttribute('data-moved', 'false');
 });
 
 it('ignores a stored position that is not an offset', () => {

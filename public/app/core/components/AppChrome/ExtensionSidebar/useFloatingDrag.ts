@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
 import { store } from '@grafana/data';
 
@@ -36,12 +36,10 @@ const ORIGIN: Offset = { x: 0, y: 0 };
  * on release to the nearest corner of the page content or its top or bottom centre; the arrow keys move in
  * steps without snapping. The user's chosen offset is remembered in local storage, so floating again, or a
  * reload, puts it back; a re-clamp never overwrites it, so it returns once there is room.
- * Returns whether it is moved away from its default place.
  */
-export function useFloatingDrag(element: HTMLElement | null): { moved: boolean } {
+export function useFloatingDrag(element: HTMLElement | null): void {
   const offsetRef = useRef<Offset>(ORIGIN);
   const chosenRef = useRef<Offset>(ORIGIN);
-  const [moved, setMoved] = useState(false);
 
   const remember = useCallback(() => {
     chosenRef.current = offsetRef.current;
@@ -60,7 +58,6 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
       const clamped = clampOffset(element, offsetRef.current, next);
       offsetRef.current = clamped;
       element.style.transform = isOrigin(clamped) ? '' : `translate(${clamped.x}px, ${clamped.y}px)`;
-      setMoved(!isOrigin(clamped));
     },
     [element]
   );
@@ -75,7 +72,6 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
     return () => {
       offsetRef.current = ORIGIN;
       element.style.transform = '';
-      setMoved(false);
     };
   }, [element, apply]);
 
@@ -201,8 +197,6 @@ export function useFloatingDrag(element: HTMLElement | null): { moved: boolean }
       element.removeEventListener('keydown', onKeyDown);
     };
   }, [element, apply, remember]);
-
-  return { moved };
 }
 
 function readStoredOffset(): Offset {
