@@ -132,8 +132,6 @@ func TestAMConfigDB_UnmarshalJSON_Validation(t *testing.T) {
 			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}], "inhibit_rules": [{"target_match_re": {"1bad": "x.*"}}]}}`,
 			wantErrSubstr: `invalid label name "1bad"`,
 		},
-
-
 		{
 			name:          "invalid inhibit rule equal label name",
 			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}], "inhibit_rules": [{"equal": [""]}]}}`,
