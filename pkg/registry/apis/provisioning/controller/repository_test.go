@@ -3239,9 +3239,17 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 
 	// First build fails because the token secret is missing; the rebuild after regeneration succeeds.
 	repoFactory := repository.NewMockFactory(t)
-	repoFactory.On("Build", mock.Anything, mock.Anything).
+	checkBuildOptions := func(_ context.Context, _ *provisioning.Repository, opts ...repository.BuildOption) {
+		var options repository.BuildOptions
+		for _, opt := range opts {
+			opt(&options)
+		}
+		assert.Equal(t, repository.BuildOptions{Timeout: 10 * time.Second, Retries: 2}, options)
+	}
+	repoFactory.EXPECT().Build(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(checkBuildOptions).
 		Return(nil, fmt.Errorf("error creating git repository: %w", repository.ErrTokenNotFound)).Once()
-	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Once()
+	repoFactory.EXPECT().Build(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(checkBuildOptions).
+		Return(mockRepo, nil).Once()
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
@@ -3250,19 +3258,17 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 	healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
-	rc := &RepositoryController{
-		repos:             repoGetter,
-		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
-		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
-		statusPatcher:     patcher,
-		connectionFactory: mockConnFactory,
-		client:            provClient,
-		repoFactory:       repoFactory,
-		healthChecker:     healthChecker,
-		resyncInterval:    5 * time.Minute,
-		logger:            logging.DefaultLogger.With("logger", loggerName),
-		tracer:            tracing.InitializeTracerForTest(),
-	}
+	rc := NewRepositoryController(
+		provClient, repoGetter, repoFactory, mockConnFactory,
+		nil, nil, nil,
+		healthChecker, patcher,
+		prometheus.NewRegistry(), tracing.InitializeTracerForTest(),
+		1, 5*time.Minute, 0, 0,
+		quotas.NewFixedQuotaGetter(quotaStatus), NewRepositoryQuotaChecker(repoGetter),
+		repository.IncrementalSyncPolicy{}, 0, false,
+		repository.WithTimeout(10*time.Second), repository.WithRetries(2),
+	)
+	t.Cleanup(rc.queue.ShutDown)
 
 	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)

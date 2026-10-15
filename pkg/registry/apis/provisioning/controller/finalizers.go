@@ -33,6 +33,7 @@ type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
 	repoFactory   repository.Factory
+	buildOptions  []repository.BuildOption
 	jobs          jobQueueCleaner
 	metrics       *finalizerMetrics
 	maxWorkers    int
@@ -95,7 +96,7 @@ func (f *finalizer) process(ctx context.Context,
 			// fails when credentials have expired. That failure blocks deletion —
 			// forcing it is done by removing this finalizer, not by tolerating the
 			// error.
-			repo, buildErr := f.repoFactory.Build(ctx, cfg)
+			repo, buildErr := f.repoFactory.Build(ctx, cfg, f.buildOptions...)
 			if buildErr != nil {
 				err = fmt.Errorf("create repository from configuration: %w", buildErr)
 			} else if webhookRepo, ok := repo.(repository.WebhookRepository); ok {

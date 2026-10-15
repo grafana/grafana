@@ -66,6 +66,7 @@ type RepositoryController struct {
 	statusPatcher StatusPatcher
 
 	repoFactory       repository.Factory
+	buildOptions      []repository.BuildOption
 	connectionFactory connection.Factory
 	healthChecker     *RepositoryHealthChecker
 	quotaChecker      *RepositoryQuotaChecker
@@ -125,6 +126,7 @@ func NewRepositoryController(
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	webhookSecretRotationInterval time.Duration,
 	natsBacked bool,
+	buildOptions ...repository.BuildOption,
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -146,6 +148,7 @@ func NewRepositoryController(
 			},
 		),
 		repoFactory:       repoFactory,
+		buildOptions:      buildOptions,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
 		quotaChecker:      quotaChecker,
@@ -154,6 +157,7 @@ func NewRepositoryController(
 			lister:        resourceLister,
 			clientFactory: clients,
 			repoFactory:   repoFactory,
+			buildOptions:  buildOptions,
 			jobs:          jobs,
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
@@ -1215,7 +1219,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	phase = reconcilePhaseBuild
 	buildCtx, buildSpan := rc.tracer.Start(ctx, "provisioning.controller.build", repoSpanAttrs(obj))
-	repo, err := rc.repoFactory.Build(buildCtx, obj)
+	repo, err := rc.repoFactory.Build(buildCtx, obj, rc.buildOptions...)
 	buildSpan.End()
 	if err != nil {
 		// The token references a stored secret that could not be decrypted (e.g. an
@@ -1263,7 +1267,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			obj = obj.DeepCopy()
 			obj.Secure.Token = common.InlineSecureValue{Create: token}
 
-			repo, err = rc.repoFactory.Build(ctx, obj)
+			repo, err = rc.repoFactory.Build(ctx, obj, rc.buildOptions...)
 		}
 		if err != nil {
 			buildHealthStatus := provisioning.HealthStatus{

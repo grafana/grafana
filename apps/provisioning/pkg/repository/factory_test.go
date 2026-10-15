@@ -3,7 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -11,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -892,4 +896,68 @@ func TestFactory_Validate(t *testing.T) {
 
 		localExtra.AssertNotCalled(t, "Validate")
 	})
+}
+
+func TestFactory_BuildOptionsSpan(t *testing.T) {
+	for _, succeeds := range []bool{true, false} {
+		t.Run(fmt.Sprintf("success=%t", succeeds), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				recorder := tracetest.NewSpanRecorder()
+				tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+				defer func() { require.NoError(t, tp.Shutdown(context.Background())) }()
+				var spanIDs []trace.SpanID
+				build := func(ctx context.Context, _ *provisioning.Repository) (Repository, error) {
+					spanIDs = append(spanIDs, trace.SpanContextFromContext(ctx).SpanID())
+					time.Sleep(100 * time.Millisecond)
+					if succeeds {
+						return &MockConfigRepository{}, nil
+					}
+					return nil, ErrSecretDecryptFailed
+				}
+				config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}}
+				extra := NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GitRepositoryType)
+				extra.EXPECT().Build(mock.Anything, config, mock.Anything).RunAndReturn(func(ctx context.Context, r *provisioning.Repository, opts ...BuildOption) (Repository, error) {
+					return build(ctx, r)
+				}).Once()
+				f, err := ProvideFactory(map[provisioning.RepositoryType]struct{}{provisioning.GitRepositoryType: {}}, []Extra{extra}, tp.Tracer("test"))
+				require.NoError(t, err)
+				_, err = f.Build(context.Background(), config, WithRetries(1))
+				spans := recorder.Ended()
+				require.Len(t, spans, 1)
+				require.Equal(t, "provisioning.repository.build", spans[0].Name())
+				require.Equal(t, 100*time.Millisecond, spans[0].EndTime().Sub(spans[0].StartTime()))
+				require.Equal(t, []trace.SpanID{spans[0].SpanContext().SpanID()}, spanIDs)
+				if succeeds {
+					require.NoError(t, err)
+					require.Empty(t, spans[0].Events())
+				} else {
+					require.ErrorIs(t, err, ErrSecretDecryptFailed)
+					require.Len(t, spans[0].Events(), 1)
+					require.Equal(t, "exception", spans[0].Events()[0].Name)
+				}
+			})
+		})
+	}
+}
+
+func TestFactory_BuildForwardsOptions(t *testing.T) {
+	config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}}
+	extra := NewMockExtra(t)
+	extra.EXPECT().Type().Return(provisioning.GitRepositoryType)
+	extra.EXPECT().Build(mock.Anything, config, mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, r *provisioning.Repository, opts ...BuildOption) (Repository, error) {
+			_, hasDeadline := ctx.Deadline()
+			require.False(t, hasDeadline, "the extra owns the build deadline")
+			var options BuildOptions
+			for _, opt := range opts {
+				opt(&options)
+			}
+			require.Equal(t, BuildOptions{Timeout: time.Second, Retries: 2}, options)
+			return nil, ErrSecretDecryptFailed
+		}).Once()
+	f, err := ProvideFactory(map[provisioning.RepositoryType]struct{}{provisioning.GitRepositoryType: {}}, []Extra{extra}, noopTracer)
+	require.NoError(t, err)
+	_, err = f.Build(context.Background(), config, WithTimeout(time.Minute), WithRetries(2), WithTimeout(time.Second))
+	require.ErrorIs(t, err, ErrSecretDecryptFailed)
 }

@@ -28,8 +28,25 @@ func (e *extra) Type() provisioning.RepositoryType {
 	return provisioning.LocalRepositoryType
 }
 
-func (e *extra) Build(_ context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	return NewRepository(r, e.resolver, e.metrics), nil
+func (e *extra) Build(ctx context.Context, r *provisioning.Repository, opts ...repository.BuildOption) (repository.Repository, error) {
+	var options repository.BuildOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+	if options.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, options.Timeout)
+		defer cancel()
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	repo := NewRepository(r, e.resolver, e.metrics)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	return repo, nil
 }
 
 func (e *extra) Mutate(_ context.Context, _ runtime.Object, _ runtime.Object) error {
