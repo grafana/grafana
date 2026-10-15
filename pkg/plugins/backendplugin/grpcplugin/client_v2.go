@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync/atomic"
+	"time"
 
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc/codes"
@@ -25,6 +26,29 @@ var (
 	logger = log.New("plugins.clientv2")
 )
 
+// QueryDataFormat is the data frame encoding a ClientV2 requests on the unary QueryData path.
+type QueryDataFormat int
+
+const (
+	// QueryDataFormatArrow is the zero value, so a ClientV2 built without setting QueryDataFormat requests one Arrow IPC file per frame.
+	QueryDataFormatArrow QueryDataFormat = iota
+	// QueryDataFormatJSON requests JSON-encoded frames.
+	QueryDataFormatJSON
+)
+
+type queryDataFormatKey struct{}
+
+// WithQueryDataFormat returns a context whose format takes precedence over ClientV2.QueryDataFormat for that request.
+func WithQueryDataFormat(ctx context.Context, format QueryDataFormat) context.Context {
+	return context.WithValue(ctx, queryDataFormatKey{}, format)
+}
+
+// QueryDataFormatFromContext returns the format set with WithQueryDataFormat, if any.
+func QueryDataFormatFromContext(ctx context.Context) (QueryDataFormat, bool) {
+	format, ok := ctx.Value(queryDataFormatKey{}).(QueryDataFormat)
+	return format, ok
+}
+
 type ClientV2 struct {
 	grpcplugin.DiagnosticsClient
 	grpcplugin.ResourceClient
@@ -32,6 +56,8 @@ type ClientV2 struct {
 	grpcplugin.StreamClient
 	grpcplugin.AdmissionClient
 	grpcplugin.ConversionClient
+
+	QueryDataFormat QueryDataFormat
 
 	// Chunking will fallback to DataQuery
 	chunkUnimplemented atomic.Bool
@@ -147,19 +173,62 @@ func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 }
 
 func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	protoResp, err := c.queryData(ctx, req)
+	protoResp, err := c.queryData(ctx, req, c.protoQueryDataFormat(ctx))
 	if err != nil {
 		return nil, err
 	}
-	return backend.FromProto().QueryDataResponse(protoResp)
+	resp, err := backend.FromProto().QueryDataResponse(protoResp)
+	if err != nil {
+		return nil, err
+	}
+	for refID, protoRes := range protoResp.Responses {
+		if protoRes.GetFormat() == pluginv2.DataFrameFormat_JSON {
+			setLocalTimes(resp.Responses[refID].Frames)
+		}
+	}
+	return resp, nil
 }
 
-func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
+// setLocalTimes moves every time value in frames to time.Local, the location the Arrow decoder sets.
+func setLocalTimes(frames data.Frames) {
+	for _, frame := range frames {
+		for _, field := range frame.Fields {
+			switch field.Type() {
+			case data.FieldTypeTime:
+				for i := range field.Len() {
+					t := field.PointerAt(i).(*time.Time)
+					*t = t.Local()
+				}
+			case data.FieldTypeNullableTime:
+				for i := range field.Len() {
+					if t := *field.PointerAt(i).(**time.Time); t != nil {
+						*t = t.Local()
+					}
+				}
+			default:
+			}
+		}
+	}
+}
+
+func (c *ClientV2) protoQueryDataFormat(ctx context.Context) pluginv2.DataFrameFormat {
+	format := c.QueryDataFormat
+	if ctxFormat, ok := QueryDataFormatFromContext(ctx); ok {
+		format = ctxFormat
+	}
+	if format == QueryDataFormatJSON {
+		return pluginv2.DataFrameFormat_JSON
+	}
+	return pluginv2.DataFrameFormat_ARROW
+}
+
+func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest, format pluginv2.DataFrameFormat) (*pluginv2.QueryDataResponse, error) {
 	if c.DataClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().QueryDataRequest(req)
+	protoReq.Format = format
 	protoResp, err := c.DataClient.QueryData(ctx, protoReq)
 
 	if err != nil {
@@ -252,8 +321,8 @@ func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.Quer
 			PluginContext: req.PluginContext,
 			Queries:       req.Queries,
 			Headers:       req.Headers,
-			Format:        req.Format,
-		})
+		},
+		pluginv2.DataFrameFormat(req.Format))
 	if err != nil {
 		return err
 	}
