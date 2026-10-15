@@ -255,6 +255,61 @@ test("The new page works", () => {
 });
 ```
 
+## Control a plugin's nav item availability with a flag
+
+`plugin.json`'s `includes[]` entries have an `available` field that makes it possible to make an
+include item unavailable. If you leave it out, it defaults to `true`, and the include is considered
+available. `available` accepts **any** flag key, including ones a plugin defines and owns itself, evaluated
+against whatever OpenFeature provider the Grafana instance is configured with (refer to
+[`pkg/services/ofrep`](../pkg/services/ofrep) for how that's served).
+
+- Field omitted entirely: always available.
+
+- A literal boolean: static override to false, to make it unavailble.
+ 
+  ```json
+  "available": false
+  ```
+
+- A bare flag key: shorthand for `{{ flag `my-plugin.myFlag` false }}` below.
+  Setting this field to a flag key explicitly controls availability, so unlike the
+  field being omitted, this fails CLOSED (unavailable) if the flag can't be resolved.
+
+  ```json
+  "available": "my-plugin.myFlag"
+  ```
+
+- A `{{ }}` Go template expression: full control, including the fallback.
+
+  ```json
+  "available": "{{ flag `my-plugin.myFlag` true }}"
+  ```
+
+  The expression form is a [`text/template`](https://pkg.go.dev/text/template) string evaluated
+  server-side when the nav tree is built. It exposes one custom function, plus the stdlib's
+  built-in `and`/`or`/`not` for combining multiple flags:
+
+  ```go
+  flag(key string, fallback bool) bool
+  ```
+
+  `fallback` is required, not optional — there's no implicit default inside the function itself,
+  only in the bare-key shorthand's expansion above. Combine multiple flags with `or`/`and`:
+
+  ```json
+  "available": "{{ or (flag `my-plugin.flagA` false) (flag `my-plugin.flagB` true) }}"
+  ```
+
+  Use backtick-quoted string literals for flag keys, not double quotes — `text/template` supports
+  both, but backticks pass through the surrounding JSON string with no escaping, whereas `"` would
+  need to be written as `\"`. This is the same trick used in Helm/Sprig templates for the same
+  reason (a Go template embedded inside another quoted format).
+
+  A malformed expression, or any internal evaluation error, fails **open** (the include stays
+  visible) — that's a difference from the author's own chosen `fallback`, which only covers the
+  flag genuinely not resolving (unknown key, provider unreachable), not bugs in the expression
+  itself.
+
 ## Enabling toggles in development
 
 Add the feature flag to the feature_toggle section in your custom.ini, for example:

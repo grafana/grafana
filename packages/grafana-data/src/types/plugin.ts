@@ -180,6 +180,14 @@ export interface PluginInclude {
   // Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
   addToNav?: boolean;
 
+  // This field makes it possible to make an include item unavailable. If left out, defaults to `true`,
+  // the include is considered available.
+  // `true`/`false` are static overrides; a bare string is a flag key (fails closed if
+  // unresolvable); a `{{ }}` string is a Go template expression, e.g.
+  // `{{ or (flag `a` false) (flag `b` false) }}`.
+  // See docs/sources/developers/plugins/plugin.schema.json.
+  available?: boolean | string;
+
   // Marks the app's default page: the one the app root URL resolves to. Serialized by the
   // plugin settings endpoints; at most one include should set it.
   defaultNav?: boolean;

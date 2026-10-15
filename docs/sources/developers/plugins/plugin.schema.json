@@ -313,6 +313,10 @@
             "type": "boolean",
             "description": "Add the include to the navigation menu."
           },
+          "available": {
+            "type": ["boolean", "string"],
+            "description": "This field makes it possible to make an include item unavailable. If left out, it defaults to `true`, and the include is considered available. `true`/`false` are static overrides. A plain string names a flag key directly and fails closed (hidden) if that flag can't be resolved. A string containing `{{ }}` is a Go template expression evaluated with a `flag(key string, fallback bool) bool` function plus the built-in `and`/`or`/`not`, e.g. `{{ or (flag `a` false) (flag `b` true) }}`; use backtick-quoted string literals inside the expression to avoid JSON-escaping. See [Feature toggles](https://github.com/grafana/grafana/blob/main/contribute/feature-toggles.md) for how flags are registered and evaluated."
+          },
           "defaultNav": {
             "type": "boolean",
             "description": "Page or dashboard when user clicks the icon in the side menu."

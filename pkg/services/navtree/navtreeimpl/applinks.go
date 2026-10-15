@@ -554,6 +554,12 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 		} else if !include.RequiresRBACAction() && !c.HasUserRole(include.Role) {
 			return false
 		}
+		if !evaluateAvailable(c.Req.Context(), include.Available) {
+			s.log.Debug("plugin include is gated by a feature flag, not currently available",
+				"plugin", pluginID,
+				"include", include.Name)
+			return false
+		}
 		return true
 	}
 }
