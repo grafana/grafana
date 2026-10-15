@@ -48,7 +48,7 @@ func NewKVSecureValueMetadataStorage(kv resource.KV, clock contracts.Clock, trac
 		kv:           kv,
 		clock:        clock,
 		tracer:       tracer,
-		leaseManager: lease.NewManager(kv, "secrets_kv_secure_value_metadata_storage", nil),
+		leaseManager: lease.NewManager(kv, "secrets_kv_secure_value_store", "storage", nil),
 		metrics:      metrics.NewStorageMetrics(reg),
 	}
 }
@@ -457,7 +457,7 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 			span.RecordError(err)
 		}
 
-		s.metrics.KVSecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.KVSecureValueLeaseInactiveDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	// TODO: make it configurable
@@ -793,6 +793,7 @@ func (s *kvSecureValueMetadataStorage) SetVersionToActive(ctx context.Context, n
 			return fmt.Errorf("parsing secure value: %w", err)
 		}
 
+		// If this is the version we're looking for, set it to active
 		if keyValue.Key == targetKey {
 			value.Active = true
 			buffer, err := json.Marshal(value)
@@ -805,6 +806,7 @@ func (s *kvSecureValueMetadataStorage) SetVersionToActive(ctx context.Context, n
 				Value: buffer,
 			})
 		} else if value.Active {
+			// Set other active versions to inactive
 			value.Active = false
 			buffer, err := json.Marshal(value)
 			if err != nil {

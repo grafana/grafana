@@ -41,6 +41,7 @@ type StorageMetrics struct {
 	SecureValueDeleteDuration                  *prometheus.HistogramVec
 	SecureValueIncGCAttemptCount               *prometheus.HistogramVec
 	SecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
+	SecureValueLeaseInactiveDuration           *prometheus.HistogramVec
 
 	KVSecureValueMetadataCreateDuration          *prometheus.HistogramVec
 	KVSecureValueMetadataGetDuration             *prometheus.HistogramVec
@@ -50,6 +51,7 @@ type StorageMetrics struct {
 	KVSecureValueDeleteDuration                  *prometheus.HistogramVec
 	KVSecureValueIncGCAttemptCount               *prometheus.HistogramVec
 	KVSecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
+	KVSecureValueLeaseInactiveDuration           *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
 }
@@ -189,6 +191,16 @@ func newStorageMetrics() *StorageMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
+		SecureValueLeaseInactiveDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_lease_inactive",
+			Help:                            "Duration of call to lease inactive secure valuers",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
 		SecureValueIncGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
@@ -263,6 +275,16 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "kv_secure_value_set_inactive_all_from_group_duration_seconds",
 			Help:                            "Duration of secure value set inactive all from group operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		KVSecureValueLeaseInactiveDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_lease_inactive",
+			Help:                            "Duration of call to lease inactive secure valuers",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
