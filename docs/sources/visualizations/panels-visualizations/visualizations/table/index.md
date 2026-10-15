@@ -170,7 +170,7 @@ The icon no longer displays.
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-### Apply filters from the table
+### Apply filters from table cells
 <!-- TODO: Make this more robust including updating the screenshot -->
 
 In tables, you can apply filters directly from the visualization with one click.
@@ -188,7 +188,7 @@ For more information about applying filters this way, refer to [Cross-filtering]
 ## Sort columns
 
 Click a column title to change the sort order from default to descending to ascending.
-Each time you click, the sort order changes to the next option in the cycle.
+Each time you click, the sort order changes to the next option in the cycle and then back to the default for the table.
 You can sort multiple columns by holding the `Cmd` or `Ctrl` key
 and clicking the column name.
 
@@ -239,7 +239,6 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana sizes columns to fit cell content relative to the width of the table. |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
-| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
 | Wrap text            | Enables text wrapping for cell content. |
 | Wrap header text     | Enables text wrapping for column headers. |
 <!-- prettier-ignore-end -->
