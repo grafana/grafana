@@ -157,7 +157,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovedOntoUnsupportedPath(
 			"parent/old-dir/dashboard.json": common.DashboardJSON("incr-folder-move-a", "Moved Dashboard", 1),
 			"parent/other.json":             common.DashboardJSON("incr-folder-move-b", "Other Dashboard", 1),
 		})
-		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 		helper.RequireRepoDashboardCount(t, repoName, 2)
 		require.Contains(t, repoFolderTitles(t, helper, repoName), "old-dir")
 

@@ -180,7 +180,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync: 2 dashboards + 1 implicit folder = 3/3 resources.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.RequireRepoFolderCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -233,7 +233,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync: folder1 + dash1 + dash2 = 3/3 resources.
-		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Warning())
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.RequireRepoFolderCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
