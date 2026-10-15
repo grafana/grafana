@@ -58,7 +58,7 @@ import {
   setPluginPage,
 } from '@grafana/runtime/internal';
 import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
-import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
+import { loadResources as loadScenesResources } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -101,7 +101,6 @@ import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
-import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
 import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
@@ -379,11 +378,6 @@ export class GrafanaApp {
 
       if (config.featureToggles.crashDetection) {
         initializeCrashDetection();
-      }
-
-      if (config.featureToggles.dashboardLevelTimeMacros) {
-        sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
-        sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }
 
       const root = createRoot(document.getElementById('reactRoot')!);
