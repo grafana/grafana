@@ -708,11 +708,29 @@ export const versionedComponents = {
           hideItem: {
             '13.3.0': 'data-testid tableng header column-menu-hide-item',
           },
+          pinItem: {
+            '13.3.0': 'data-testid tableng header column-menu-pin-item',
+          },
           manageColumnsItem: {
             '13.3.0': 'data-testid tableng header column-menu-manage-columns-item',
           },
         },
         columnsSidebar: {
+          settingsButton: { '13.3.0': 'data-testid tableng columns-sidebar settings-button' },
+          transposeSwitch: { '13.3.0': 'data-testid tableng columns-sidebar transpose-switch' },
+          fieldSettingsRadioGroup: { '13.3.0': 'data-testid tableng columns-sidebar field-settings-radio-group' },
+          transposeManageButton: { '13.3.0': 'data-testid tableng transpose manage-button' },
+          viewModeRadioGroup: { '13.3.0': 'data-testid tableng columns-sidebar view-mode-radio-group' },
+          pivot: {
+            dimension: { '13.3.0': (key: string) => `data-testid tableng pivot dimension ${key}` },
+            measure: { '13.3.0': (key: string) => `data-testid tableng pivot measure ${key}` },
+            applyButton: { '13.3.0': 'data-testid tableng pivot apply-button' },
+            rowsField: { '13.3.0': 'data-testid tableng pivot rows-field' },
+            columnsField: { '13.3.0': 'data-testid tableng pivot columns-field' },
+            valuesField: { '13.3.0': 'data-testid tableng pivot values-field' },
+            totalRowSwitch: { '13.3.0': 'data-testid tableng pivot total-row-switch' },
+            totalColumnsSwitch: { '13.3.0': 'data-testid tableng pivot total-columns-switch' },
+          },
           container: {
             '13.3.0': 'data-testid tableng columns-sidebar',
           },

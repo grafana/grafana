@@ -1,9 +1,10 @@
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo, type Dispatch, type SetStateAction } from 'react';
 
 import { type Field, type MatcherConfig } from '@grafana/data';
 import { type FilterByValueConfig } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { type SortColumn } from '@grafana/react-data-grid';
 
 import { Button } from '../../Button/Button';
 import { ErrorBoundary } from '../../ErrorBoundary/ErrorBoundary';
@@ -21,6 +22,8 @@ export interface TableRowTransformations {
 }
 interface ViewContext {
   filters: readonly FilterByValueConfig[];
+  sortColumns: SortColumn[];
+  setSortColumns: Dispatch<SetStateAction<SortColumn[]>>;
   getFilters: (field: Field, parentIndex?: number) => readonly FilterByValueConfig[];
   applyFilter: (field: Field, predicate: MatcherConfig, parentIndex?: number) => void;
   clearFilter: (field: Field, parentIndex?: number) => void;
@@ -43,7 +46,7 @@ export function useIsFieldFiltered() {
 
 export function TableViewProvider({ props, children }: { props: TableNGProps; children: React.ReactNode }) {
   const { configs, value } = useRowTransformations(props);
-  const { filters, clearFilters } = value;
+  const { filters, clearFilters, setSortColumns } = value;
   return (
     <TableViewContext.Provider value={value}>
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -67,7 +70,14 @@ export function TableViewProvider({ props, children }: { props: TableNGProps; ch
               error ? (
                 <div role="alert">
                   {t('grafana-ui.table.view.error', 'Unable to apply this table view.')}
-                  <Button onClick={clearFilters}>{t('grafana-ui.table.view.reset', 'Reset view')}</Button>
+                  <Button
+                    onClick={() => {
+                      clearFilters();
+                      setSortColumns([]);
+                    }}
+                  >
+                    {t('grafana-ui.table.view.reset', 'Reset view')}
+                  </Button>
                 </div>
               ) : (
                 children

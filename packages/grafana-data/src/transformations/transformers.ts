@@ -20,6 +20,7 @@ import { mergeTransformer } from './transformers/merge';
 import { noopTransformer } from './transformers/noop';
 import { orderFieldsTransformer } from './transformers/order';
 import { organizeFieldsTransformer } from './transformers/organize';
+import { pivotTransformer } from './transformers/pivot';
 import { reduceTransformer } from './transformers/reduce';
 import { renameFieldsTransformer } from './transformers/rename';
 import { renameByRegexTransformer } from './transformers/renameByRegex';
@@ -64,4 +65,5 @@ export const standardTransformers = {
   limitTransformer,
   groupToNestedTable,
   transposeTransformer,
+  pivotTransformer,
 };

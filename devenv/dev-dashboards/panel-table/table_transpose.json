@@ -1,0 +1,208 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "table-transpose"
+  },
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Transpose — field overrides",
+          "description": "Six fields and five records. Transpose with field settings applied to rows preserves gauges, pills, colors, JSON, and dates. Columns uses the transpose transformation.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Host\",\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"Load\",\n          \"type\": \"number\"\n        },\n        {\n          \"name\": \"Status\",\n          \"type\": \"string\"\n        },\n        {\n          \"name\": \"Errors\",\n          \"type\": \"number\"\n        },\n        {\n          \"name\": \"Details\",\n          \"type\": \"other\"\n        },\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\"\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"alpha\",\n          \"bravo\",\n          \"charlie\",\n          \"delta\",\n          \"echo\"\n        ],\n        [\n          20,\n          40,\n          60,\n          80,\n          100\n        ],\n        [\n          \"ok\",\n          \"ok\",\n          \"ok\",\n          \"ok\",\n          \"ok\"\n        ],\n        [\n          1,\n          2,\n          3,\n          4,\n          5\n        ],\n        [\n          {\n            \"zone\": \"a\"\n          },\n          {\n            \"zone\": \"b\"\n          },\n          {\n            \"zone\": \"c\"\n          },\n          {\n            \"zone\": \"d\"\n          },\n          {\n            \"zone\": \"e\"\n          }\n        ],\n        [\n          0,\n          1000,\n          2000,\n          3000,\n          4000\n        ]\n      ]\n    }\n  }\n]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 10
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.3.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "showColumnsSidebar": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "width": 150
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Load"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "gauge"
+                        }
+                      },
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "min",
+                        "value": 0
+                      },
+                      {
+                        "id": "max",
+                        "value": 100
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Status"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "pill"
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "ok": {
+                                "text": "Healthy",
+                                "color": "green"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Errors"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background",
+                          "mode": "basic"
+                        }
+                      },
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "red"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Details"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "json-view"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Time"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "dateTimeAsIso"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 16,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "panel-tests", "table"],
+    "timeSettings": {
+      "from": "2025-01-01T00:00:00.000Z",
+      "to": "2025-01-01T01:00:00.000Z",
+      "timezone": "utc",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel Tests - Table - Transpose",
+    "variables": []
+  }
+}

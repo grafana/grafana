@@ -6,6 +6,7 @@ import {
   applyFieldOverrides,
   CoreApp,
   createTheme,
+  DataTransformerID,
   EventBusSrv,
   FieldType,
   getDefaultTimeRange,
@@ -16,11 +17,12 @@ import {
   standardFieldConfigEditorRegistry,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, SceneObjectStateChangedEvent, VizPanel } from '@grafana/scenes';
 import { TableCellDisplayMode, TableCellHeight, type TableOptions } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockClientSize, mockComboboxRect } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
@@ -65,7 +67,10 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id) => (id === 'table' ? plugin : getPanelPlugin({ id })),
 });
 
-beforeAll(() => mockClientSize({ width: 800, height: 600 }));
+beforeAll(() => {
+  mockClientSize({ width: 800, height: 600 });
+  mockComboboxRect();
+});
 afterEach(() => setTestFlags({}));
 
 it.each(['defaults', 'override'])('preserves image cell %s when rebuilding ad-hoc source fields', (mode) => {
@@ -212,6 +217,132 @@ it('retains saved-sort callbacks with experimental features enabled', async () =
   expect(props.onOptionsChange).toHaveBeenCalledWith({ ...options, sortBy: [{ displayName: 'Value', desc: false }] });
 });
 
+it('writes viewer sorting to runtime transformations without changing panel options', async () => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+  const source = new SceneDataNode({
+    data: {
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      series: [toDataFrame({ refId: 'A', fields: [{ name: 'Value', type: FieldType.number, values: [3, 1, 2] }] })],
+    },
+  });
+  const transformer = new SceneDataTransformer({ $data: source, transformations: [] });
+  const panel = new VizPanel({ pluginId: 'table', $data: transformer });
+  const api = panel.getRuntimeTransformations();
+  const deactivate = transformer.activate();
+  const props = getPanelProps(options, { fieldConfig, width: 800, height: 600 });
+  function LiveTable() {
+    const { data } = transformer.useState();
+    if (!data) {
+      return null;
+    }
+    const series = applyFieldOverrides({
+      data: data.series,
+      fieldConfig,
+      fieldConfigRegistry: plugin.fieldConfigRegistry,
+      theme: createTheme(),
+      replaceVariables: (value) => value,
+    });
+    return <TablePanel {...props} data={{ ...data, series }} />;
+  }
+  const view = render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <PanelContextProvider value={{ eventsScope: 'global', eventBus: new EventBusSrv(), adHocTransformations: api }}>
+        <LiveTable />
+      </PanelContextProvider>
+    </OpenFeatureProvider>
+  );
+  try {
+    await userEvent.click(await screen.findByRole('button', { name: 'Value' }));
+    await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual([1, 2, 3]));
+    expect(api.get('grafana:table-view').map((config) => config.id)).toEqual([DataTransformerID.sortBy]);
+    expect(props.onOptionsChange).not.toHaveBeenCalled();
+  } finally {
+    view.unmount();
+    deactivate();
+  }
+});
+
+it('switches between viewer-local transpose and pivot views', async () => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+  const source = new SceneDataNode({
+    data: {
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      series: [
+        toDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'Host', type: FieldType.string, values: ['a', 'b'] },
+            { name: 'Load', type: FieldType.number, values: [2, 3] },
+          ],
+        }),
+      ],
+    },
+  });
+  const transformer = new SceneDataTransformer({ $data: source, transformations: [] });
+  const panel = new VizPanel({ pluginId: 'table', $data: transformer });
+  const api = panel.getRuntimeTransformations();
+  const deactivate = transformer.activate();
+  const panelOptions: TableOptions = { ...options, showColumnsSidebar: true };
+  const props = getPanelProps(panelOptions, { fieldConfig, width: 800, height: 600 });
+  function LiveTable() {
+    const { data } = transformer.useState();
+    if (!data) {
+      return null;
+    }
+    const series = applyFieldOverrides({
+      data: data.series,
+      fieldConfig,
+      fieldConfigRegistry: plugin.fieldConfigRegistry,
+      theme: createTheme(),
+      replaceVariables: (value) => value,
+    });
+    return <TablePanel {...props} data={{ ...data, series }} />;
+  }
+  const view = render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <PanelContextProvider value={{ eventsScope: 'global', eventBus: new EventBusSrv(), adHocTransformations: api }}>
+        <LiveTable />
+      </PanelContextProvider>
+    </OpenFeatureProvider>
+  );
+  const user = userEvent.setup();
+  try {
+    await user.click(await screen.findByRole('button', { name: 'Column settings' }));
+    await user.click(screen.getByRole('radio', { name: 'Transpose' }));
+    expect(api.get('grafana:table-view')).toEqual([]);
+    await user.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+    await user.click(screen.getByRole('button', { name: 'Manage columns' }));
+    await user.click(screen.getByRole('button', { name: 'Column settings' }));
+    await user.click(screen.getByRole('radio', { name: 'Columns' }));
+    await waitFor(() =>
+      expect(api.get('grafana:table-view').map((config) => config.id)).toEqual([DataTransformerID.transpose])
+    );
+    await waitFor(() => expect(transformer.state.data?.series[0].fields[0].name).toBe('Field'));
+
+    await user.click(screen.getByRole('radio', { name: 'Pivot' }));
+    expect(api.get('grafana:table-view')).toEqual([]);
+    await waitFor(() => expect(transformer.state.data?.series[0].fields[0].name).toBe('Host'));
+    expect(api.getSourceSeries('grafana:table-view')[0].fields.map((field) => field.name)).toEqual(['Host', 'Load']);
+    await user.click(screen.getByRole('combobox', { name: 'Add Rows field' }));
+    await user.click(await screen.findByRole('option', { name: 'Host' }));
+    await user.click(screen.getByRole('combobox', { name: 'Add Values field' }));
+    await user.click(await screen.findByRole('option', { name: 'Load' }));
+    await user.click(screen.getByRole('button', { name: 'Apply pivot' }));
+    await waitFor(() =>
+      expect(api.get('grafana:table-view').map((config) => config.id)).toEqual([DataTransformerID.pivot])
+    );
+    await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual([2, 3]));
+    expect(await screen.findByTestId(selectors.components.Panels.Visualization.TableNG.Footer.Value)).toHaveTextContent(
+      '5'
+    );
+  } finally {
+    view.unmount();
+    deactivate();
+  }
+});
+
 it('retains saved-sort callbacks with experimental features disabled', async () => {
   const props = setup();
   await userEvent.setup().click(screen.getByRole('columnheader', { name: 'Value' }));
@@ -319,3 +450,108 @@ it.each(['hide-first', 'filter-first'])(
     }
   }
 );
+
+it('restores pin-driven organize state in a fresh panel independently of frozen-column options', async () => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+  const mount = (serialized = '[]', frozenColumns = 0) => {
+    const source = new SceneDataNode({
+      data: {
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+        series: [
+          toDataFrame({
+            fields: [
+              { name: 'Label', type: FieldType.string, values: ['one'] },
+              { name: 'Value', type: FieldType.number, values: [1] },
+              { name: 'Extra', type: FieldType.string, values: ['a'] },
+            ],
+          }),
+        ],
+      },
+    });
+    const transformer = new SceneDataTransformer({ $data: source, transformations: [] });
+    const panel = new VizPanel({ pluginId: 'table', $data: transformer });
+    const api = panel.getRuntimeTransformations();
+    api.set('grafana:table-view', JSON.parse(serialized));
+    const deactivate = transformer.activate();
+    const props = getPanelProps<TableOptions>(
+      { ...options, showColumnsSidebar: true, frozenColumns: { left: frozenColumns } },
+      { fieldConfig, width: 800, height: 600 }
+    );
+    function LiveTable() {
+      const { data } = transformer.useState();
+      if (!data) {
+        return null;
+      }
+      const series = applyFieldOverrides({
+        data: data.series,
+        fieldConfig,
+        theme: createTheme(),
+        replaceVariables: (s) => s,
+      });
+      return <TablePanel {...props} data={{ ...data, series }} />;
+    }
+    const rendered = render(
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <PanelContextProvider value={{ eventsScope: 'global', eventBus: new EventBusSrv(), adHocTransformations: api }}>
+          <LiveTable />
+        </PanelContextProvider>
+      </OpenFeatureProvider>
+    );
+    let disposed = false;
+    return {
+      api,
+      transformer,
+      props,
+      dispose: () => {
+        if (disposed) {
+          return;
+        }
+        disposed = true;
+        rendered.unmount();
+        deactivate();
+      },
+    };
+  };
+  const user = userEvent.setup();
+  let view = mount();
+  try {
+    await user.click(await screen.findByRole('button', { name: 'Pin Value' }));
+    const serialized = JSON.stringify(view.api.get('grafana:table-view'));
+    expect(JSON.parse(serialized)).toEqual([
+      {
+        id: 'organize',
+        options: { indexByName: { Value: 0, Label: 1, Extra: 2 }, excludeByName: {}, renameByName: {} },
+      },
+    ]);
+    await waitFor(() =>
+      expect(view.transformer.state.data?.series[0].fields.map((field) => field.name)).toEqual([
+        'Value',
+        'Label',
+        'Extra',
+      ])
+    );
+    expect(view.props.onOptionsChange).not.toHaveBeenCalled();
+    view.dispose();
+
+    // Restore only transformations: order survives, but freezing belongs to a separate options layer.
+    view = mount(serialized);
+    await waitFor(() => expect(screen.getAllByRole('columnheader')[0]).toHaveTextContent('Value'));
+    expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen-start');
+    expect(view.api.getSourceSeries('grafana:table-view')[0].fields.map((field) => field.name)).toEqual([
+      'Label',
+      'Value',
+      'Extra',
+    ]);
+    view.dispose();
+
+    view = mount(serialized, 1);
+    await waitFor(() => expect(screen.getAllByRole('columnheader')[0]).toHaveClass('rdg-cell-frozen-start'));
+    await user.click(screen.getByRole('button', { name: 'Unpin Value' }));
+    expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen-start');
+    expect(JSON.stringify(view.api.get('grafana:table-view'))).toBe(serialized);
+    expect(view.props.onOptionsChange).not.toHaveBeenCalled();
+  } finally {
+    view.dispose();
+  }
+});

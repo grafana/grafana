@@ -10,6 +10,17 @@ Used for displaying metadata, for example to add more details to search results.
 
 <Canvas of={TagStories.Single} />
 
+## Closable tags
+
+Set `showCloseButton` and provide `onClose(name, event)` to request removal. The parent
+owns the selected tags and removes the corresponding item. Use `closeButtonLabel`
+to customize the accessible label when more context is needed.
+
+Tags can support both `onClick` and `onClose`; the close button does not activate
+the tag's click action. Without `onClose`, the close button is disabled.
+
+<Canvas of={TagStories.Closable} />
+
 ### Props
 
 <ArgTypes of={Tag} />

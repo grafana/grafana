@@ -766,6 +766,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     }),
     hiddenTransformer(DataTransformerID.ensureColumns, standardTransformers.ensureColumnsTransformer),
     hiddenTransformer(DataTransformerID.noop, standardTransformers.noopTransformer),
+    hiddenTransformer(DataTransformerID.pivot, standardTransformers.pivotTransformer),
     hiddenTransformer(DataTransformerID.order, standardTransformers.orderFieldsTransformer),
     hiddenTransformer(DataTransformerID.rename, standardTransformers.renameFieldsTransformer),
     hiddenTransformer(DataTransformerID.filterFields, standardTransformers.filterFieldsTransformer),

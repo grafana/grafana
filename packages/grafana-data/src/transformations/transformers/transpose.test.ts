@@ -14,6 +14,41 @@ describe('Transpose transformer', () => {
     mockTransformationsRegistry([transposeTransformer]);
   });
 
+  it.each([undefined, 'A'])('scopes transpose by index when frames share refId %s', async (refId) => {
+    const frames = [1, 2, 3].map((value) =>
+      toDataFrame({
+        refId,
+        fields: [
+          { name: 'Host', type: FieldType.string, values: ['alpha'] },
+          { name: 'Load', type: FieldType.number, values: [value] },
+        ],
+      })
+    );
+    await expect(
+      transformDataFrame([{ id: DataTransformerID.transpose, options: { frameIndex: 1 } }], frames)
+    ).toEmitValuesWith((received) => {
+      expect(received[0][0]).toBe(frames[0]);
+      expect(received[0][2]).toBe(frames[2]);
+      expect(received[0][1].fields.map((field) => field.values)).toEqual([['Load'], [2]]);
+    });
+  });
+
+  it('preserves empty frames and transposes empty fields without inventing values', async () => {
+    const empty = toDataFrame({ fields: [] });
+    const noRows = toDataFrame({
+      fields: [
+        { name: 'Host', type: FieldType.string, values: [] },
+        { name: 'Load', type: FieldType.number, values: [] },
+      ],
+    });
+    await expect(
+      transformDataFrame([{ id: DataTransformerID.transpose, options: {} }], [empty, noRows])
+    ).toEmitValuesWith((received) => {
+      expect(received[0][0]).toBe(empty);
+      expect(received[0][1].fields.map((field) => field.values)).toEqual([['Load']]);
+    });
+  });
+
   it('should transpose full numeric values and keep numeric type', async () => {
     const cfgA: DataTransformerConfig<TransposeTransformerOptions> = {
       id: DataTransformerID.transpose,

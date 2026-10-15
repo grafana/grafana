@@ -3,16 +3,20 @@ import memoize from 'micro-memoize';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { clamp } from '../../../utils/clamp';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
+import { IconButton } from '../../IconButton/IconButton';
 import { usePanelContext } from '../../PanelChrome';
 import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
+import { TableRowsAsFields } from './TableRowsAsFields';
 import { TableSidebar, type SidebarColumn } from './components/TableSidebar';
 import { COLUMN_SETTLE_MS, FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
 import {
@@ -49,6 +53,7 @@ import {
   type TableRow,
   type TableSummaryRow,
 } from './types';
+import { useColumnPinning } from './useColumnPinning';
 import {
   calculateFooterHeight,
   filterFieldsByHiddenColumns,
@@ -177,10 +182,37 @@ export function TableFlat(props: TableNGProps) {
     settleTimeoutRef.current = setTimeout(() => setSettlingColumnKeys(new Set()), COLUMN_SETTLE_MS);
   }, []);
 
+  const columnNames = useMemo(() => {
+    const catalog = columnCatalog ?? visibleFields.map(getDisplayName);
+    return [
+      ...(columnOrder ?? []).filter((name) => catalog.includes(name)),
+      ...catalog.filter((name) => !columnOrder?.includes(name)),
+    ];
+  }, [columnCatalog, columnOrder, visibleFields]);
+  const pinningEnabled = reorderable && new Set(columnNames).size === columnNames.length;
+  const pinning = useColumnPinning({
+    frameKey:
+      props.rowTransformations?.frameKey ??
+      JSON.stringify([data.refId, data.name, [...(columnCatalog ?? visibleFields.map(getDisplayName))].sort()]),
+    columns: columnNames,
+    hiddenColumns,
+    frozenColumns: _frozenColumns,
+    enabled: pinningEnabled,
+    onColumnOrderChange: setColumnOrder,
+  });
+  const { pinnedColumns, togglePin, reorder } = pinning;
+  const handleTogglePin = useCallback(
+    (name: string) => {
+      togglePin(name);
+      markColumnsSettling([name]);
+    },
+    [togglePin, markColumnsSettling]
+  );
+
   // A partial order cannot place unmentioned columns deterministically.
   const handleColumnsReorder = useCallback(
     (sourceColumnKey: string, targetColumnKey: string) => {
-      const next = [...(columnOrder ?? columnCatalog ?? visibleFields.map(getDisplayName))];
+      const next = [...columnNames];
       const sourceIndex = next.indexOf(sourceColumnKey);
       const targetIndex = next.indexOf(targetColumnKey);
 
@@ -189,10 +221,10 @@ export function TableFlat(props: TableNGProps) {
       }
 
       next.splice(targetIndex, 0, next.splice(sourceIndex, 1)[0]);
-      setColumnOrder(next);
+      reorder(next);
       markColumnsSettling([sourceColumnKey, targetColumnKey]);
     },
-    [columnOrder, columnCatalog, markColumnsSettling, setColumnOrder, visibleFields]
+    [columnNames, markColumnsSettling, reorder]
   );
 
   const orderedVisibleFields = useMemo(
@@ -275,7 +307,8 @@ export function TableFlat(props: TableNGProps) {
     }));
   }, [columnCatalog, orderedVisibleFields]);
   // The catalog includes restored columns before they return in the transformed data.
-  const hasColumnSidebar = reorderable || sidebarColumns.some((column) => column.hideable);
+  const hasColumnSidebar =
+    Boolean(props.viewSettings) || reorderable || sidebarColumns.some((column) => column.hideable);
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
   // Follow option changes without overriding local open/close actions on every render.
@@ -343,7 +376,7 @@ export function TableFlat(props: TableNGProps) {
   const typographyCtx = useTypographyCtx(theme);
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
-  const frozenColumns = _frozenColumns;
+  const frozenColumns = pinning.frozenColumns;
 
   // When a width override is removed from field config, the configured-width count drops. That
   // change to field.config.custom.width is a mutation on the existing field objects, so it doesn't
@@ -511,6 +544,7 @@ export function TableFlat(props: TableNGProps) {
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
       wrapFallback,
+      summaryReducer: props.summaryReducer,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -540,12 +574,15 @@ export function TableFlat(props: TableNGProps) {
       settlingColumnKeys,
       onHideColumn: handleHideColumn,
       canHideColumn: canHideAnotherColumn,
+      pinnedColumns,
+      onTogglePin: pinningEnabled ? handleTogglePin : undefined,
       onOpenColumnPanel: hasColumnSidebar ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
       wrapFallback,
+      props.summaryReducer,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -573,6 +610,9 @@ export function TableFlat(props: TableNGProps) {
       settlingColumnKeys,
       handleHideColumn,
       canHideAnotherColumn,
+      pinnedColumns,
+      pinningEnabled,
+      handleTogglePin,
       noPanelPadding,
     ]
   );
@@ -600,7 +640,7 @@ export function TableFlat(props: TableNGProps) {
     [zebraStriping, paginatedRows]
   );
 
-  const dataGrid = (
+  const normalGrid = (
     <TableDataGrid
       role="grid"
       gridRef={gridRef}
@@ -658,7 +698,35 @@ export function TableFlat(props: TableNGProps) {
     />
   );
 
-  if (!hasColumnSidebar || !hasHeader || !isColumnVisibilityPanelOpen) {
+  const dataGrid = props.transposeRows ? (
+    <TableRowsAsFields
+      {...props}
+      width={fullWidth}
+      height={hasColumnSidebar && !isColumnVisibilityPanelOpen ? Math.max(0, height - 32) : height}
+      fields={displayedFields}
+      rowIndices={sortedRows.map((row) => row.__index)}
+    />
+  ) : (
+    normalGrid
+  );
+
+  if (props.transposeRows && hasColumnSidebar && !isColumnVisibilityPanelOpen) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', height: 32 }}>
+          <IconButton
+            name="columns"
+            aria-label={t('grafana-ui.table.manage-columns', 'Manage columns')}
+            data-testid={selectors.components.Panels.Visualization.TableNG.columnsSidebar.transposeManageButton}
+            onClick={() => setIsColumnVisibilityPanelOpen(true)}
+          />
+        </div>
+        {dataGrid}
+      </div>
+    );
+  }
+
+  if (!hasColumnSidebar || (!hasHeader && !props.viewSettings) || !isColumnVisibilityPanelOpen) {
     return dataGrid;
   }
 
@@ -676,9 +744,14 @@ export function TableFlat(props: TableNGProps) {
         }}
       >
         <TableSidebar
+          settings={props.viewSettings}
+          settingsActive={props.viewSettingsActive}
+          columnsDisabled={props.viewColumnsDisabled}
           columns={sidebarColumns}
           reorderable={reorderable}
           hiddenColumns={hiddenColumns}
+          pinnedColumns={pinnedColumns}
+          onTogglePin={pinningEnabled ? handleTogglePin : undefined}
           onToggleColumn={handleToggleColumnVisibility}
           onColumnsReorder={handleColumnsReorder}
           onClose={() => setIsColumnVisibilityPanelOpen(false)}

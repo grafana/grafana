@@ -1,4 +1,4 @@
-import { type FC, type SyntheticEvent } from 'react';
+import { type FC, type ReactNode, type SyntheticEvent } from 'react';
 
 import {
   type DataFrame,
@@ -12,6 +12,8 @@ import {
   type DataFrameWithValue,
   type SelectableValue,
   type FieldState,
+  type FieldCalcs,
+  type DisplayProcessor,
 } from '@grafana/data';
 import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
 import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
@@ -110,6 +112,10 @@ export interface TableSortByFieldState {
 export type SortByBehavior = 'initial' | 'managed';
 
 interface BaseTableProps {
+  viewSettings?: ReactNode;
+  viewSettingsActive?: boolean;
+  viewColumnsDisabled?: boolean;
+  transposeRows?: boolean;
   /** Experimental transformation-backed table view, explicitly owned by its host. */
   rowTransformationsEnabled?: boolean;
   rowTransformations?: TableRowTransformations;
@@ -139,6 +145,11 @@ interface BaseTableProps {
   onCellFilterAdded?: TableFilterActionCallback;
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   footerValues?: FooterItem[];
+  summaryReducer?: (
+    field: Field,
+    rowIndices: number[],
+    reducers: string[]
+  ) => { calcs: FieldCalcs; display: (reducer: string) => DisplayProcessor | undefined };
   frozenColumns?: number;
   enablePagination?: boolean;
   /** When pagination is enabled, fixes the number of rows per page instead of deriving it from the panel height. */

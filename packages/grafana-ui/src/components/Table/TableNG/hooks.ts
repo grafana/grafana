@@ -53,6 +53,7 @@ import {
   type NestedRowEntry,
   type SortByBehavior,
   type TableRow,
+  type TableNGProps,
   type TableSortByFieldState,
   type TableSummaryRow,
   type TypographyCtx,
@@ -154,17 +155,20 @@ export function useSortedRows(
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
+  const view = useTableView();
+  const activeSortColumns = view?.sortColumns ?? sortColumns;
+  const updateSortColumns = view?.setSortColumns ?? setSortColumns;
   const columnTypes = useMemo(() => getColumnTypes(fields), [fields]);
 
   const sortedRows = useMemo(
-    () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
-    [rows, fields, sortColumns, columnTypes, hasNestedFrames]
+    () => applySort(rows, fields, activeSortColumns, columnTypes, hasNestedFrames),
+    [rows, fields, activeSortColumns, columnTypes, hasNestedFrames]
   );
 
   return {
     rows: sortedRows,
-    sortColumns,
-    setSortColumns,
+    sortColumns: activeSortColumns,
+    setSortColumns: updateSortColumns,
   };
 }
 
@@ -1347,14 +1351,17 @@ export const useReducerEntries = (
   field: Field,
   rows: TableRow[],
   displayName: string,
-  colIdx: number
+  colIdx: number,
+  summaryReducer?: TableNGProps['summaryReducer']
 ): Array<[string, string | null]> => {
   return useMemo(() => {
     const reducers: string[] = field.config.custom?.footer?.reducers ?? [];
 
     if (
       reducers.length === 0 ||
-      (field.type !== FieldType.number && reducers.every((reducerId) => !isNonMathReducer(reducerId)))
+      (!summaryReducer &&
+        field.type !== FieldType.number &&
+        reducers.every((reducerId) => !isNonMathReducer(reducerId)))
     ) {
       return [];
     }
@@ -1382,36 +1389,44 @@ export const useReducerEntries = (
     }
 
     // Calculate all specified reducers
-    const results: Record<string, number | null> = reduceField({
-      field: {
-        ...field,
-        values: rows.map((row) => row[displayName]),
-      },
-      reducers,
-    });
+    const summary = summaryReducer?.(
+      field,
+      rows.map((row) => row.__index),
+      reducers
+    );
+    const results =
+      summary?.calcs ??
+      reduceField({
+        field: {
+          ...field,
+          values: rows.map((row) => row[displayName]),
+        },
+        reducers,
+      });
 
     return reducers.map((reducerId) => {
       if (
         results[reducerId] === undefined ||
         // For non-number fields, only show special count reducers
-        (field.type !== FieldType.number && !isNonMathReducer(reducerId)) ||
+        (!summaryReducer && field.type !== FieldType.number && !isNonMathReducer(reducerId)) ||
         // for countAll, only show the reducer in the first column
-        (reducerId === ReducerID.countAll && colIdx !== 0)
+        (!summaryReducer && reducerId === ReducerID.countAll && colIdx !== 0)
       ) {
         return [reducerId, null];
       }
 
       const value = results[reducerId];
       let result = null;
-      if (!shouldReducerSkipFormatting(reducerId) && field.display) {
-        result = formattedValueToString(field.display(value));
+      const display = summary?.display(reducerId) ?? field.display;
+      if (!shouldReducerSkipFormatting(reducerId) && display) {
+        result = formattedValueToString(display(value));
       } else if (value != null) {
         result = String(value);
       }
 
       return [reducerId, result];
     });
-  }, [field, rows, displayName, colIdx]);
+  }, [field, rows, displayName, colIdx, summaryReducer]);
 };
 
 interface ColumnViewStateOptions {

@@ -12,7 +12,7 @@ const meta: Meta<typeof Tag> = {
       page: mdx,
     },
     controls: {
-      exclude: ['onClick'],
+      exclude: ['onClick', 'onClose'],
     },
   },
   args: {
@@ -22,7 +22,10 @@ const meta: Meta<typeof Tag> = {
 };
 
 export const Single: StoryFn<typeof Tag> = (args) => {
-  return <Tag name={args.name} colorIndex={args.colorIndex} onClick={action('Tag clicked')} icon={args.icon} />;
+  return <Tag {...args} onClick={action('Tag clicked')} onClose={action('Tag closed')} />;
 };
+
+export const Closable: StoryFn<typeof Tag> = (args) => <Tag {...args} onClose={action('Tag closed')} />;
+Closable.args = { showCloseButton: true };
 
 export default meta;

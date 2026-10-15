@@ -42,6 +42,8 @@ interface HeaderCellProps {
   hasColumnSidebar?: boolean;
   onHideColumn?: () => void;
   canHideColumn?: boolean;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
   onOpenColumnPanel?: () => void;
 }
 
@@ -66,6 +68,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   hasColumnSidebar,
   onHideColumn,
   canHideColumn,
+  isPinned,
+  onTogglePin,
   onOpenColumnPanel,
   onAddToAssistant,
 }) => {
@@ -84,6 +88,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const columnOptions = getColumnMenuOptions({
     filterable,
     hideable: hideable && Boolean(onHideColumn),
+    pinnable: Boolean(onTogglePin),
     hasColumnSidebar: Boolean(hasColumnSidebar && onOpenColumnPanel),
     hasAssistantAction: Boolean(onAddToAssistant),
   });
@@ -249,6 +254,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               hasActiveFilter={hasActiveFilter}
               onOpenFilter={openFilter}
               onHideColumn={hideable ? onHideColumn : undefined}
+              isPinned={isPinned}
+              onTogglePin={onTogglePin}
               canHideColumn={canHideColumn}
               onOpenColumnPanel={onOpenColumnPanel}
               onAddToAssistant={onAddToAssistant}
