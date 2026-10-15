@@ -6,15 +6,19 @@ import {
   type DataQueryError,
   type GrafanaTheme2,
   type QueryResultMetaNotice,
+  type PanelStatusItem,
   renderMarkdown,
   textUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, Icon, type IconName, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Icon, type IconName, Stack, TextLink, useStyles2, PanelStatusActions } from '@grafana/ui';
+import { groupPanelStatusItems } from '@grafana/ui/internal';
 
 export interface StandardErrorsAndNoticesInspectorProps {
   data?: DataFrame[];
   errors?: DataQueryError[];
+  statusItems?: readonly PanelStatusItem[];
+  onClose?: () => void;
 }
 
 type Severity = QueryResultMetaNotice['severity'];
@@ -26,6 +30,8 @@ export interface InspectableEntry {
   link?: string;
   // Errors are raw payloads shown verbatim in a code block; notices are rendered as markdown.
   isCode?: boolean;
+  statusItem?: PanelStatusItem;
+  members?: PanelStatusItem[];
 }
 
 // Higher number = higher priority, used to sort cards error > warning > info.
@@ -88,14 +94,34 @@ export function buildEntries(data: DataFrame[] | undefined, errors: DataQueryErr
   return entries.sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 }
 
-export function StandardErrorsAndNoticesInspector({ data, errors }: StandardErrorsAndNoticesInspectorProps) {
+export function StandardErrorsAndNoticesInspector({
+  data,
+  errors,
+  statusItems,
+  onClose,
+}: StandardErrorsAndNoticesInspectorProps) {
   const styles = useStyles2(getStyles);
-  const entries = buildEntries(data, errors);
+  const entries: InspectableEntry[] = statusItems
+    ? groupPanelStatusItems(statusItems).map((members) => {
+        const statusItem = members[0];
+        return {
+          severity: statusItem.severity,
+          title: statusItem.text,
+          content: statusItem.detail ?? statusItem.text,
+          isCode: statusItem.origin === 'query',
+          link: statusItem.link,
+          statusItem,
+          members,
+        };
+      })
+    : buildEntries(data, errors);
 
   if (entries.length === 0) {
     return (
       <div className={styles.empty}>
-        {t('dashboard-scene.errors-and-notices-inspector.no-issues', 'No errors or notices for this query.')}
+        {statusItems
+          ? t('dashboard-scene.errors-and-notices-inspector.no-panel-issues', 'No errors or notices for this panel.')
+          : t('dashboard-scene.errors-and-notices-inspector.no-issues', 'No errors or notices for this query.')}
       </div>
     );
   }
@@ -103,13 +129,13 @@ export function StandardErrorsAndNoticesInspector({ data, errors }: StandardErro
   return (
     <Stack direction="column" gap={1}>
       {entries.map((entry, index) => (
-        <EntryCard key={`${entry.severity}-${index}`} entry={entry} />
+        <EntryCard key={entry.statusItem?.id ?? `${entry.severity}-${index}`} entry={entry} onClose={onClose} />
       ))}
     </Stack>
   );
 }
 
-function EntryCard({ entry }: { entry: InspectableEntry }) {
+function EntryCard({ entry, onClose }: { entry: InspectableEntry; onClose?: () => void }) {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(true);
 
@@ -148,6 +174,17 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
               {t('dashboard-scene.errors-and-notices-inspector.learn-more', 'Learn more')}
             </TextLink>
           )}
+          {entry.members?.map((member) => (
+            <div key={member.id}>
+              {entry.members!.length > 1 && member.refId && (
+                <span>
+                  {member.datasourceUid ? `${member.datasourceUid}: ` : ''}
+                  {member.refId}
+                </span>
+              )}
+              <PanelStatusActions statusItem={member} onClose={onClose} />
+            </div>
+          ))}
         </div>
       )}
     </div>

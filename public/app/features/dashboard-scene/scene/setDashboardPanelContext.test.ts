@@ -12,6 +12,7 @@ import {
   type Scope,
   type VariableModel,
 } from '@grafana/data';
+import type { PanelStatusStore } from '@grafana/data/internal';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
@@ -918,6 +919,85 @@ describe('setDashboardPanelContext', () => {
       expect(forceRenderSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('sends a selected panel notice to Assistant and rejects hidden or removed entries', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { context } = buildTestScene({});
+      const source = context.notices!.createSource();
+      source.set([
+        { id: 'field', severity: 'warning', text: 'Choose a numeric field' },
+        { id: 'secret', severity: 'error', text: 'Manual repair required', assistant: 'hidden' },
+      ]);
+      const entries = context.notices!.getSnapshot().items;
+      const warning = entries.find((entry) => entry.severity === 'warning')!;
+      const hidden = entries.find((entry) => entry.severity === 'error')!;
+      context.onInvestigateStatusItem!(warning.id);
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: expect.objectContaining({
+          panelId: '4',
+          statusItem: {
+            severity: 'warning',
+            text: 'Choose a numeric field',
+            origin: 'panel',
+            refId: undefined,
+            datasourceUid: undefined,
+          },
+        }),
+      });
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: 'Explain the selected error or notice for this panel and what I should do about it.',
+        })
+      );
+      context.onInvestigateStatusItem!(hidden.id);
+      source.dispose();
+      context.onInvestigateStatusItem!(warning.id);
+      expect(mockOpenAssistant).toHaveBeenCalledTimes(1);
+    });
+
+    it('sends eligible panel notices through the aggregate action and excludes opted-out notices', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { context } = buildTestScene({});
+      const source = context.notices!.createSource();
+      source.set([
+        { id: 'field', severity: 'warning', text: 'Choose a numeric field' },
+        { id: 'secret', severity: 'error', text: 'Manual repair required', assistant: 'hidden' },
+      ]);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: expect.objectContaining({
+          statusItems: [
+            {
+              severity: 'warning',
+              text: 'Choose a numeric field',
+              origin: 'panel',
+              refId: undefined,
+              datasourceUid: undefined,
+            },
+          ],
+        }),
+      });
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt:
+            'Investigate the notices reported for this panel and explain what they mean and what I should do about them.',
+        })
+      );
+    });
+
+    it('does not run the aggregate action when every runtime notice opts out', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { context } = buildTestScene({});
+      context
+        .notices!.createSource()
+        .set([{ id: 'secret', severity: 'error', text: 'Manual repair required', assistant: 'hidden' }]);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+    });
+
     it('does nothing when the panel currently has no errors or notices', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
@@ -956,6 +1036,23 @@ describe('setDashboardPanelContext', () => {
       // context" picker) rather than a text snapshot of its errors.
       expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
         data: { name: 'Panel: CPU usage', panelId: '4', panelKey: 'panel-4' },
+      });
+    });
+
+    it('keeps the query-error prompt and live panel reference after host status initializes', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { context } = buildTestScene({});
+      (context.notices as PanelStatusStore).setExternal([
+        { id: 'query', origin: 'query', severity: 'error', text: 'Query failed' },
+      ]);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: 'Investigate and fix the query errors causing this panel to fail.' })
+      );
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: { name: 'Panel: Untitled', panelId: '4', panelKey: 'panel-4' },
       });
     });
 
