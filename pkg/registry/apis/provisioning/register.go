@@ -69,6 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -941,7 +942,15 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	bundleStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, bundlesStore)
 
-	bundleFilesStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.BundleFileResourceInfo, opts.OptsGetter)
+	// A bundle's files are placed in a folder named after the bundle, so the unified storage
+	// backend has to accept the grafana.app/folder annotation. Without this they default to
+	// EnableFolderSupport=false and every write is rejected with "folders are not supported".
+	// The folder is not required -- a file is still a file before its folder exists -- so
+	// RequireFolder stays false.
+	bundleFilesStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.BundleFileResourceInfo,
+		opts.StorageOptsGetterFor(provisioning.BundleFileResourceInfo, apistore.StorageOptions{
+			EnableFolderSupport: true,
+		}))
 	if err != nil {
 		return fmt.Errorf("failed to create bundle file storage: %w", err)
 	}
