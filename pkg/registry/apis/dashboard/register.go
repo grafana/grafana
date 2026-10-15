@@ -1269,6 +1269,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 	unified.AfterDelete = b.afterDelete
+	unified.UpdateStrategy = dashboardUpdateStrategy{RESTUpdateStrategy: unified.UpdateStrategy}
 
 	if b.isStandalone {
 		storage[dashboards.StoragePath()] = unified
