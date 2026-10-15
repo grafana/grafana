@@ -67,12 +67,7 @@ export function HoverWidget({
           ref={draggableRef}
           data-testid={selectors.dragIcon}
         >
-          {/* The rotated glyph reaches the corners of its box, so a smaller size matches 16px icons */}
-          <Icon
-            name="expand-arrows"
-            size={inline ? 'sm' : undefined}
-            className={inline ? styles.inlineDraggableIcon : styles.draggableIcon}
-          />
+          <Icon name="expand-arrows" className={inline ? styles.inlineDraggableIcon : styles.draggableIcon} />
         </div>
       )}
       {inline ? <HoverSlotItemsContext.Provider value={true}>{children}</HoverSlotItemsContext.Provider> : children}
@@ -116,7 +111,7 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'hover-container-widget-inline',
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(0.75),
+      gap: theme.spacing(1),
       color: theme.colors.text.primary,
     }),
     inlineSquare: css({
@@ -127,7 +122,9 @@ function getStyles(theme: GrafanaTheme2) {
       height: theme.spacing(2),
     }),
     inlineDraggableIcon: css({
-      transform: 'rotate(45deg)',
+      // Rotated, the corner-pointing arrows reach √2 further than the box edge; scaling by 1/√2 makes them span
+      // as much as the neighbouring 16px icons.
+      transform: 'rotate(45deg) scale(0.7071)',
       color: theme.colors.text.primary,
       '&:hover': {
         color: theme.colors.text.maxContrast,
