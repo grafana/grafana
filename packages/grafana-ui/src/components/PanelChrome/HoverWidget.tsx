@@ -8,6 +8,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 
+import { HoverSlotItemsContext } from './PanelChromeHeaderControlsContext';
 import { PanelMenu } from './PanelMenu';
 
 interface Props {
@@ -60,16 +61,21 @@ export function HoverWidget({
     >
       {dragClass && (
         <div
-          className={cx(styles.square, styles.draggable, dragClass)}
+          className={cx(inline ? styles.inlineSquare : styles.square, styles.draggable, dragClass)}
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
           ref={draggableRef}
           data-testid={selectors.dragIcon}
         >
-          <Icon name="expand-arrows" className={styles.draggableIcon} />
+          {/* The rotated glyph reaches the corners of its box, so a smaller size matches 16px icons */}
+          <Icon
+            name="expand-arrows"
+            size={inline ? 'sm' : undefined}
+            className={inline ? styles.inlineDraggableIcon : styles.draggableIcon}
+          />
         </div>
       )}
-      {children}
+      {inline ? <HoverSlotItemsContext.Provider value={true}>{children}</HoverSlotItemsContext.Provider> : children}
       {menu && (
         <PanelMenu
           menu={menu}
@@ -110,8 +116,22 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'hover-container-widget-inline',
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.75),
       color: theme.colors.text.primary,
+    }),
+    inlineSquare: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+    }),
+    inlineDraggableIcon: css({
+      transform: 'rotate(45deg)',
+      color: theme.colors.text.primary,
+      '&:hover': {
+        color: theme.colors.text.maxContrast,
+      },
     }),
     square: css({
       display: 'flex',

@@ -188,6 +188,7 @@ export function PanelChrome({
   const [subHeaderRef, { height: measuredSubHeaderHeight }] = useMeasure<HTMLDivElement>();
   const headerControls = usePanelChromeHeaderControls();
   const hasExternalControls = Boolean(headerControls?.external);
+  const isInHoverSlot = hasExternalControls && hoverHeader;
 
   const hasHeader = !hoverHeader;
 
@@ -345,7 +346,10 @@ export function PanelChrome({
       )}
 
       {(titleItems || descriptionTitleItem) && (
-        <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+        <div
+          className={cx(styles.titleItems, isInHoverSlot && styles.hoverSlotTitleItems, dragClassCancel)}
+          data-testid="title-items-container"
+        >
           {descriptionTitleItem}
           {titleItems}
         </div>
@@ -732,6 +736,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       height: '100%',
       alignItems: 'center',
+    }),
+    hoverSlotTitleItems: css({
+      gap: theme.spacing(0.75),
+      // Title items that are plain buttons (e.g. the panel links dropdown) sit next to the slot's icon buttons.
+      '& > button': {
+        padding: 0,
+        height: 'auto',
+        minWidth: 0,
+        border: 'none',
+        background: 'transparent',
+        color: theme.colors.text.primary,
+        '&:hover': {
+          background: 'transparent',
+          color: theme.colors.text.maxContrast,
+        },
+      },
     }),
     clearButtonStyles: css({
       alignItems: 'center',

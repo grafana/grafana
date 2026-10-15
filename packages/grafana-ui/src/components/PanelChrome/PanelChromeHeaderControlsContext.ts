@@ -25,3 +25,9 @@ export const PanelChromeHeaderControlsContext = createContext<PanelChromeHeaderC
 export function usePanelChromeHeaderControls() {
   return useContext(PanelChromeHeaderControlsContext);
 }
+
+/**
+ * True while header items render in the external hover slot, where they sit next to icon buttons
+ * and drop their own padding and secondary color to match them.
+ */
+export const HoverSlotItemsContext = createContext(false);
