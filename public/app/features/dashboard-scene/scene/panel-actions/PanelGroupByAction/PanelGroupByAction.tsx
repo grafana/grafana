@@ -13,6 +13,8 @@ import {
 } from '@grafana/scenes';
 import { Button, Icon, Popover } from '@grafana/ui';
 
+import { usePanelActionsOverlayOpenChange } from '../../edit-actions-popover/PanelActionsOverlayContext';
+
 import { PanelGroupByActionPopover } from './PanelGroupByActionPopover';
 
 interface Props {
@@ -27,6 +29,11 @@ export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, quer
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
+  const onPopoverOpenChange = usePanelActionsOverlayOpenChange();
+
+  useEffect(() => {
+    onPopoverOpenChange(isPopoverVisible);
+  }, [isPopoverVisible, onPopoverOpenChange]);
 
   const ref = useRef<HTMLButtonElement>(null);
 

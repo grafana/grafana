@@ -70,6 +70,50 @@ test.describe('Panel actions popover', { tag: ['@dashboards'] }, () => {
     await expect(page).toHaveURL((url) => !url.searchParams.has('viewPanel'));
   });
 
+  test.describe('on a panel without a title', () => {
+    let dashboardUID: string;
+
+    test.beforeAll(async ({ request }) => {
+      const response = await request.post('/api/dashboards/db', {
+        data: {
+          dashboard: {
+            title: 'Panel actions popover untitled panel',
+            panels: [
+              {
+                id: 1,
+                title: '',
+                type: 'timeseries',
+                gridPos: { x: 0, y: 4, w: 12, h: 8 },
+                links: [
+                  { title: 'Runbook', url: '/dashboards?panel-link=runbook' },
+                  { title: 'Docs', url: '/dashboards?panel-link=docs' },
+                ],
+              },
+            ],
+          },
+          overwrite: true,
+        },
+      });
+      dashboardUID = (await response.json()).uid;
+    });
+
+    test.afterAll(async ({ request }) => {
+      if (dashboardUID) {
+        await request.delete(`/api/dashboards/uid/${dashboardUID}`);
+      }
+    });
+
+    test('the panel links menu in the popover opens a link', async ({ gotoDashboardPage, panels, page }) => {
+      await gotoDashboardPage({ uid: dashboardUID });
+
+      await panels.openActionsPopover('');
+      await panels.getActionsPopover().getByRole('button', { name: 'Panel links' }).click();
+      await page.getByRole('menu').getByRole('menuitem', { name: 'Runbook' }).click();
+
+      await expect(page).toHaveURL((url) => url.searchParams.get('panel-link') === 'runbook');
+    });
+  });
+
   test('in edit mode, offers Settings, Copy, Duplicate and Remove', async ({
     gotoDashboardPage,
     controls,

@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { ElementSelectionContext } from '@grafana/ui';
+import { Dropdown, ElementSelectionContext, IconButton, Menu } from '@grafana/ui';
 import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -19,6 +19,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
+import { usePanelActionsOverlayOpenChange } from './PanelActionsOverlayContext';
 import { PanelActionsWrapper } from './PanelActionsPopover';
 
 jest.mock('app/core/app_events', () => ({
@@ -95,7 +96,34 @@ function HoverHeaderItem() {
   return headerControls?.hoverSlot ? createPortal(<span>Panel links</span>, headerControls.hoverSlot) : null;
 }
 
-function renderWrapper(panel: VizPanel, { isEditing = false }: { isEditing?: boolean } = {}) {
+/** Stands in for a hover header item with its own portalled menu, like the panel links dropdown. */
+function HoverHeaderLinksMenu({ onLinkClick }: { onLinkClick: () => void }) {
+  const headerControls = useContext(PanelChromeHeaderControlsContext);
+  const onMenuOpenChange = usePanelActionsOverlayOpenChange();
+
+  if (!headerControls?.hoverSlot) {
+    return null;
+  }
+
+  return createPortal(
+    <Dropdown
+      overlay={
+        <Menu>
+          <Menu.Item label="Runbook" onClick={onLinkClick} />
+        </Menu>
+      }
+      onVisibleChange={onMenuOpenChange}
+    >
+      <IconButton name="external-link-alt" aria-label="Open panel links" />
+    </Dropdown>,
+    headerControls.hoverSlot
+  );
+}
+
+function renderWrapper(
+  panel: VizPanel,
+  { isEditing = false, onLinkClick }: { isEditing?: boolean; onLinkClick?: () => void } = {}
+) {
   return render(
     <ElementSelectionContext.Provider
       value={{ enabled: isEditing, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
@@ -103,7 +131,7 @@ function renderWrapper(panel: VizPanel, { isEditing = false }: { isEditing?: boo
       <PanelActionsWrapper panel={panel}>
         <div data-testid="reference-child">
           panel
-          <HoverHeaderItem />
+          {onLinkClick ? <HoverHeaderLinksMenu onLinkClick={onLinkClick} /> : <HoverHeaderItem />}
         </div>
       </PanelActionsWrapper>
     </ElementSelectionContext.Provider>
@@ -229,9 +257,10 @@ describe('<PanelActionsWrapper />', () => {
       expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('restore', 1, 'actions_popover');
     });
 
-    test('clicking Edit opens the panel editor', async () => {
+    test('clicking Edit opens the panel editor and reports the panel type', async () => {
       const panel = createPanel();
       createDashboard(panel);
+      jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
       const user = userEvent.setup();
 
       renderWrapper(panel);
@@ -239,6 +268,7 @@ describe('<PanelActionsWrapper />', () => {
       await user.click(within(getToolbar()).getByRole('button', { name: 'Edit (e)' }));
 
       expect(mockLocationServicePartial).toHaveBeenCalledWith({ editPanel: 1, viewPanel: undefined });
+      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('edit', 1, 'actions_popover', 'timeseries');
     });
 
     test('clicking Explore opens the panel queries in Explore', async () => {
@@ -319,6 +349,37 @@ describe('<PanelActionsWrapper />', () => {
 
       // The open menu hides everything else from assistive technology, including the popover.
       expect(screen.getByRole('toolbar', { name: 'Panel actions', hidden: true })).toBeInTheDocument();
+    });
+
+    test('a menu opened from a hover header item keeps the popover open until its item is clicked', async () => {
+      const panel = createPanel({ title: '', hoverHeader: true });
+      createDashboard(panel);
+      const onLinkClick = jest.fn();
+      const user = userEvent.setup();
+
+      renderWrapper(panel, { onLinkClick });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+      await user.click(within(getToolbar()).getByRole('button', { name: 'Open panel links' }));
+      await user.unhover(screen.getByTestId('reference-child'));
+      await user.click(await screen.findByRole('menuitem', { name: 'Runbook' }));
+
+      expect(onLinkClick).toHaveBeenCalledTimes(1);
+    });
+
+    test('a menu opened from a hover header item can be used with the keyboard', async () => {
+      const panel = createPanel({ title: '', hoverHeader: true });
+      createDashboard(panel);
+      const onLinkClick = jest.fn();
+      const user = userEvent.setup();
+
+      renderWrapper(panel, { onLinkClick });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+      within(getToolbar()).getByRole('button', { name: 'Open panel links' }).focus();
+      await user.keyboard('{Enter}');
+      await screen.findByRole('menuitem', { name: 'Runbook' });
+      await user.keyboard('{ArrowDown}{Enter}');
+
+      expect(onLinkClick).toHaveBeenCalledTimes(1);
     });
 
     test('for a panel with a hover header, its header items are rendered first in the popover', async () => {

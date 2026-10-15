@@ -20,6 +20,11 @@ import { DashboardScene } from '../DashboardScene';
 import { CopyActionButton, DeleteActionButton, DuplicateActionButton, getActionStyles } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover } from './EditActionsPopover';
+import {
+  PanelActionsOverlayProvider,
+  usePanelActionsOverlayOpenChange,
+  usePanelActionsOverlays,
+} from './PanelActionsOverlayContext';
 import { PanelEditActionsWrapper } from './PanelEditActions';
 
 const POPOVER_OFFSET = { mainAxis: -8, alignmentAxis: 8 };
@@ -69,7 +74,7 @@ export function PanelActionsPopoverWrapper({
   const { viewPanel, meta } = dashboard.useState();
   const { menu } = panel.useState();
   const [hoverSlot, setHoverSlot] = useState<HTMLElement | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { hasOpenOverlay, setOverlayOpen } = usePanelActionsOverlays();
 
   const isExpanded = Boolean(viewPanel);
   const headerControls = useMemo(
@@ -83,31 +88,25 @@ export function PanelActionsPopoverWrapper({
   }
 
   return (
-    <PanelChromeHeaderControlsContext.Provider value={headerControls}>
-      <EditActionsPopover
-        content={
-          <PanelActions
-            panel={panel}
-            dashboard={dashboard}
-            menu={menu}
-            onHoverSlotChange={setHoverSlot}
-            onMenuOpenChange={setIsMenuOpen}
-          />
-        }
-        showOutsideEditMode
-        keyboardAccessible
-        keepOpen={isMenuOpen}
-        placement="top-end"
-        offset={POPOVER_OFFSET}
-        portalRoot={getPortalRoot}
-        zIndex={theme.zIndex.dropdown}
-        shiftPadding={getSidebarShiftPadding}
-        ariaLabel={t('dashboard-scene.panel-actions-popover.aria-label', 'Panel actions')}
-        actionsClassName={styles.actions}
-      >
-        {children}
-      </EditActionsPopover>
-    </PanelChromeHeaderControlsContext.Provider>
+    <PanelActionsOverlayProvider value={setOverlayOpen}>
+      <PanelChromeHeaderControlsContext.Provider value={headerControls}>
+        <EditActionsPopover
+          content={<PanelActions panel={panel} dashboard={dashboard} menu={menu} onHoverSlotChange={setHoverSlot} />}
+          showOutsideEditMode
+          keyboardAccessible
+          keepOpen={hasOpenOverlay}
+          placement="top-end"
+          offset={POPOVER_OFFSET}
+          portalRoot={getPortalRoot}
+          zIndex={theme.zIndex.dropdown}
+          shiftPadding={getSidebarShiftPadding}
+          ariaLabel={t('dashboard-scene.panel-actions-popover.aria-label', 'Panel actions')}
+          actionsClassName={styles.actions}
+        >
+          {children}
+        </EditActionsPopover>
+      </PanelChromeHeaderControlsContext.Provider>
+    </PanelActionsOverlayProvider>
   );
 }
 
@@ -116,10 +115,10 @@ interface PanelActionsProps {
   dashboard: DashboardScene;
   menu: VizPanelMenu;
   onHoverSlotChange: (element: HTMLElement | null) => void;
-  onMenuOpenChange: (isOpen: boolean) => void;
 }
 
-export function PanelActions({ panel, dashboard, menu, onHoverSlotChange, onMenuOpenChange }: PanelActionsProps) {
+export function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelActionsProps) {
+  const onMenuOpenChange = usePanelActionsOverlayOpenChange();
   const styles = useStyles2(getStyles);
   const actionStyles = useStyles2(getActionStyles);
   const { isEditing, viewPanel, editable } = dashboard.useState();
@@ -154,7 +153,7 @@ export function PanelActions({ panel, dashboard, menu, onHoverSlotChange, onMenu
   };
 
   const onEdit = () => {
-    report('edit');
+    DashboardInteractions.panelActionClicked('edit', panelId, 'actions_popover', panel.state.pluginId);
     locationService.partial({ editPanel: panelId, viewPanel: undefined });
   };
 
@@ -285,11 +284,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: 0,
   }),
   hoverSlot: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    '&:empty': {
-      display: 'none',
-    },
+    // Header items join the toolbar's flex layout and 8px gap; items that render nothing leave no gap.
+    display: 'contents',
   }),
 });
