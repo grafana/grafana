@@ -13232,6 +13232,11 @@
       "target-new": "New notebook",
       "title": "Add panel to notebook"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": "New panel"
+      }
+    },
     "autosave": {
       "conflict-cancel": "Cancel",
       "conflict-confirm": "Save and overwrite",
