@@ -641,11 +641,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
   }
 
-  /** What a save would send now, for a writer that builds a whole document on top of it. */
-  public specToSave(): NotebookSpec {
-    return this.buildSpecToSave();
-  }
-
   /**
    * The spec a save would send: the scene as it is, except for the parts a reader owns rather than the
    * notebook, which stay as they were saved. Time settings are one, panel viz configs are the other.

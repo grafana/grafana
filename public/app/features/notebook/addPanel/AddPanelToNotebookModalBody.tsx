@@ -99,15 +99,20 @@ async function buildCells(cells: AddNotebookCell[], lockTimeRange: boolean): Pro
         return { kind: 'markdown', text: cell.text };
       }
       const built = await cell.buildPanel();
-      return { kind: 'panel', panel: lockTimeRange ? withCapturedTimeRange(built, cell.capturedTimeRange) : built };
+      // Only absolute captures lock: a relative one has no window to keep and follows the notebook.
+      const lock = lockTimeRange && shouldLockCapturedTimeRange(cell.capturedTimeRange);
+      return { kind: 'panel', panel: lock ? withCapturedTimeRange(built, cell.capturedTimeRange) : built };
     })
   );
 }
 
 export function AddPanelToNotebookModalBody(props: Props) {
   const { onDismiss, entryPoint, defaultTitle, onAdded } = props;
+  // With several cells the checkbox offers only what it can lock; a single panel can be locked either way.
   const capturedTimeRanges = props.cells
-    ? props.cells.flatMap((cell) => (cell.kind === 'panel' ? [cell.capturedTimeRange] : []))
+    ? props.cells.flatMap((cell) =>
+        cell.kind === 'panel' && shouldLockCapturedTimeRange(cell.capturedTimeRange) ? [cell.capturedTimeRange] : []
+      )
     : [props.capturedTimeRange];
   const styles = useStyles2(getStyles);
   const canAddToExisting = canEditNotebooks();

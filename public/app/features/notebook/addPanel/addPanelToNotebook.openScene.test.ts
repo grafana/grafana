@@ -13,7 +13,7 @@ import {
   updateNotebook,
   updateNotebookSpec,
 } from '../api/notebookResource';
-import { NOTEBOOKS_FLAG, cellNamesOf, markdownCell, notebookSpec } from '../mutation-api/test-utils';
+import { NOTEBOOKS_FLAG, cellNamesOf, markdownCell, notebookSpec, panelCell } from '../mutation-api/test-utils';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
@@ -152,6 +152,47 @@ describe('adding to a notebook that is open', () => {
     const written = jest.mocked(updateNotebook).mock.calls[0][1];
     expect(written.timeSettings).toEqual(savedTimeSettings);
     expect(written.timeSettings.from).not.toBe('now-1h');
+  });
+
+  it("leaves a reader's own time range on screen", async () => {
+    const scene = openNotebook();
+    scene.state.$timeRange.onTimeRangeChange(rangeUtil.convertRawToRange({ from: 'now-1h', to: 'now' }));
+
+    await addCellsToExistingNotebook(
+      'nb-1',
+      [{ kind: 'markdown', text: 'Latency rose.' }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE,
+      'user'
+    );
+
+    expect(scene.state.$timeRange.state.from).toBe('now-1h');
+  });
+
+  it("keeps a reader's own panel changes on screen and out of the notebook it saves", async () => {
+    const scene = transformNotebookToScene(
+      notebookResourceFor(
+        'nb-1',
+        notebookSpec({ elements: { latency: panelCell(1, 'p95 latency') }, cells: ['latency'] })
+      )
+    );
+    deactivations.push(scene.activate());
+    const panel = scene.state.body.state.cells[0].state.body;
+    if (!panel) {
+      throw new Error('expected a panel cell');
+    }
+    const override = { matcher: { id: 'byName', options: 'up' }, properties: [{ id: 'color', value: 'red' }] };
+    panel.setState({ fieldConfig: { defaults: {}, overrides: [override] } });
+
+    await addCellsToExistingNotebook(
+      'nb-1',
+      [{ kind: 'markdown', text: 'Latency rose.' }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE,
+      'user'
+    );
+
+    expect(scene.state.body.state.cells[0].state.body?.state.fieldConfig.overrides).toEqual([override]);
+    const written = jest.mocked(updateNotebook).mock.calls[0][1].elements.latency;
+    expect(written.kind === 'Panel' && written.spec.vizConfig.spec.fieldConfig.overrides).toEqual([]);
   });
 
   it('lands as one undoable step named for the add', async () => {

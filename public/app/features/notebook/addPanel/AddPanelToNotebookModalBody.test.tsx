@@ -900,6 +900,32 @@ describe('AddPanelToNotebookModalBody', () => {
       ]);
     });
 
+    it('locks only the absolute captures and leaves relative ones following the notebook', async () => {
+      const { user } = renderCells([panelCell('pinned', ABSOLUTE_CAPTURE), panelCell('live', RELATIVE_CAPTURE)]);
+
+      // One lockable panel, so the checkbox names its window.
+      const lock = screen.getByRole('checkbox', { name: /^Lock to / });
+      expect(lock).toBeChecked();
+      await chooseExisting(user);
+      await user.click(selectNotebook('Checkout error spike'));
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(addCellsToExisting).toHaveBeenCalled());
+      const [, cells] = addCellsToExisting.mock.calls[0];
+      const ranges = cells.map((cell) =>
+        cell.kind === 'panel' && cell.panel.kind === 'Panel'
+          ? cell.panel.spec.data.spec.queryOptions.timeFrom
+          : undefined
+      );
+      expect(ranges).toEqual([ABSOLUTE_CAPTURE.from, undefined]);
+    });
+
+    it('offers no lock when every captured panel is relative', () => {
+      renderCells([panelCell('live', RELATIVE_CAPTURE)]);
+
+      expect(screen.queryByRole('checkbox', { name: /^Lock/ })).not.toBeInTheDocument();
+    });
+
     it('offers no lock for text-only content', () => {
       renderCells([{ kind: 'markdown', text: 'Only prose.' }]);
 

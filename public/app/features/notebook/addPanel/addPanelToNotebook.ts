@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 
 import { NotebookAnalytics } from '../analytics/main';
 import {
@@ -7,7 +8,12 @@ import {
   type NotebookAddFailedReason,
   type NotebookEntryPoint,
 } from '../analytics/types';
-import { createNotebook, NotebookConflictError, updateNotebookSpec } from '../api/notebookResource';
+import {
+  createNotebook,
+  NotebookConflictError,
+  notebookResourceFor,
+  updateNotebookSpec,
+} from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { findActiveNotebookScene } from '../scene/activeNotebookScenes';
 import { defaultSpec as defaultNotebookSpec, type PanelElement, type Spec as NotebookSpec } from '../types';
@@ -65,44 +71,35 @@ async function appendThroughScene(
   source: AppendedCellSource
 ): Promise<Appended> {
   // Lazy so a dashboard or Explore caller with no notebook open never loads the scene write path.
-  const { guardNotebookSceneWrite, writeNotebookSpecToScene } = await import(
-    '../mutation-api/commands/applyNotebookSpec'
-  );
+  const [{ refuseIfSavedElsewhere }, { transformNotebookToScene }, { transformNotebookSceneToSaveModel }] =
+    await Promise.all([
+      import('../mutation-api/commands/applyNotebookSpec'),
+      import('../serialization/transformNotebookToScene'),
+      import('../serialization/transformNotebookSceneToSaveModel'),
+    ]);
 
-  const refused = await guardNotebookSceneWrite(scene, { viewOnlyChanges: 'keep' });
-  if (refused) {
-    throw hasFlag(refused.data, 'conflict') ? new OpenNotebookConflictError() : new Error(refused.error);
+  if (await refuseIfSavedElsewhere(scene)) {
+    throw new OpenNotebookConflictError();
   }
 
-  let appended: Appended | undefined;
-  const result = await writeNotebookSpecToScene(
-    scene,
-    // Built from the scene at swap time, so concurrent edits and adds are kept.
-    (current) => {
-      const spec = appendElementsToNotebook(current, cells, source);
-      appended = { spec, firstPosition: current.layout.spec.cells.length };
-      return spec;
-    },
-    {
-      viewOnlyChanges: 'keep',
-      undoLabel: t('notebooks.add-panel.undo-label', 'Add to notebook'),
-      editSessionSource: NOTEBOOK_EDIT_SESSION_SOURCE.ADD_TO_NOTEBOOK,
-    }
-  );
-  // Applied but not saved: the cells are on screen and the notebook's own "Save failed" + Retry owns
-  // the save. Throwing would keep the form open, and adding again would duplicate them.
-  if (!result.success && !hasFlag(result.data, 'applied')) {
-    throw new Error(result.error);
-  }
-  if (!appended) {
-    throw new Error(result.error ?? 'The notebook could not be updated.');
-  }
+  // The transform below builds panel cells synchronously.
+  await getPanelPluginMetasMap();
 
-  return appended;
-}
+  // No await from here on, so an edit or another add that landed during the loads is built on. The new
+  // cells are built by the same transform as a saved notebook and inserted as copies; everything else in
+  // the scene, including a reader's own time ranges and panel tweaks, is left exactly as it is.
+  const current = transformNotebookSceneToSaveModel(scene);
+  const spec = appendElementsToNotebook(current, cells, source);
+  const built = transformNotebookToScene(notebookResourceFor(scene.state.uid, spec))
+    .state.body.state.cells.slice(current.layout.spec.cells.length, current.layout.spec.cells.length + cells.length)
+    .map((cell) => cell.clone());
 
-function hasFlag(data: unknown, flag: 'conflict' | 'applied'): boolean {
-  return typeof data === 'object' && data !== null && flag in data && Reflect.get(data, flag) === true;
+  scene.enterEditModeForDocumentWrite(NOTEBOOK_EDIT_SESSION_SOURCE.ADD_TO_NOTEBOOK);
+  const firstPosition = scene.state.body.appendCells(built, t('notebooks.add-panel.undo-label', 'Add to notebook'));
+  // Autosave writes it as any edit, which keeps view-only state out of the save; flushed so it goes now.
+  scene.autosave.flush();
+
+  return { spec, firstPosition };
 }
 
 export async function addPanelToExistingNotebook(

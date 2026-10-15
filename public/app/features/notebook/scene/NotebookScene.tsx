@@ -279,10 +279,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   };
 
   /**
-   * Enters edit mode for a write that is about to replace the whole document — the mutation API's
-   * own writes. Skips the prompt `onEnterEditMode` shows about a reader's own panel changes: those
-   * changes are about to be replaced by the incoming document anyway, same as
-   * `NotebookAutosave.saveDocumentChange` already treats them.
+   * Enters edit mode for a write that comes from outside the notebook's own editing: the mutation API's
+   * whole-document writes, and cells added from another surface. Skips the prompt `onEnterEditMode`
+   * shows about a reader's own panel changes: a document write replaces them anyway, same as
+   * `NotebookAutosave.saveDocumentChange` treats them, and an add leaves them out of what it saves.
    */
   public enterEditModeForDocumentWrite(source: NotebookEditSessionSource): void {
     if (this.state.isEditing || !canEditNotebooks()) {
