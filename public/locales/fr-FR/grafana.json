@@ -10762,13 +10762,21 @@
       "cell-filter-out": "Filtrer la valeur",
       "cell-inspect": "Inspecter la valeur",
       "cell-inspect-tooltip": "Inspecter la valeur",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filtrer les valeurs",
+      "column-menu-hide": "",
       "column-menu-label": "Options de colonne pour {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Mettre à jour le filtre",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Copier dans le presse-papier",
       "csv-counts": "Lignes :{{rows}}, colonnes :{{columns}}",
       "csv-placeholder": "Saisir le CSV ici…",
       "edit-column-filter": "Modifier le filtre sur {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Ajouter toutes les valeurs affichées au filtre",
         "blanks": "(Vides)",
@@ -10802,6 +10810,8 @@
           "count": "Nombre"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Inspecter la valeur",
       "loading": "Chargement du tableau",
       "nested-table": {
@@ -10811,6 +10821,7 @@
       "no-rows": "Aucune ligne",
       "no-values-label": "Aucune valeur",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes",
+      "show-column-label": "",
       "sort-by-column": "Trier par colonne {{column}}",
       "sort-by-column-ascending": "Trier par colonne {{column}}, en ordre croissant",
       "sort-by-column-descending": "Trier par colonne {{column}}, en ordre décroissant",
@@ -10820,7 +10831,8 @@
       },
       "tooltip": {
         "trigger": "Activer/désactiver l’infobulle"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Balises"
@@ -13871,6 +13883,9 @@
       "label-plugin-id": "ID du plugin",
       "label-severity": "Gravité"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Tous les plugins sont à jour"
     },
@@ -13892,6 +13907,10 @@
     "plugin-details-body": {
       "needs-service-account": "Le plugin {{pluginName}} a besoin d’un compte de service pour pouvoir interroger Grafana. La liste suivante contient les autorisations disponibles pour le compte de service :",
       "page-not-found": "Page introuvable."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Obsolète"
@@ -16526,6 +16545,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
     "description-page-size": "Nombre de lignes par page. Lorsque ce champ est vide, la taille de la page est basée sur la hauteur du panneau.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Un champ contenant des objets JSON avec des propriétés CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterner la couleur d’arrière-plan d’une ligne sur deux",
@@ -16564,6 +16584,7 @@
     "name-max-height": "",
     "name-min-column-width": "Largeur minimale de colonne",
     "name-page-size": "Taille de la page",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Afficher l’en-tête du tableau",
     "name-styling-from-field": "Style basé sur le champ",
     "name-tooltip-from-field": "",
@@ -16727,6 +16748,7 @@
     "editor": {
       "aria-label-content": "Contenu textuel",
       "aria-label-mode": "Mode texte : {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Numéros de ligne",
       "format-bold": "B",
       "format-heading": "H",
@@ -16772,6 +16794,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
