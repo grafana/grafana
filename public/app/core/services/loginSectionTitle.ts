@@ -56,6 +56,8 @@ export function getLoginSectionTitle(): string | undefined {
       config.appSubUrl && url.pathname.startsWith(config.appSubUrl + '/')
         ? url.pathname.slice(config.appSubUrl.length)
         : url.pathname;
+    // Section metadata is saved during navigation, independently of the login redirect.
+    // Only use it when the saved pathname matches the actual redirect destination.
     return pathname === saved.pathname ? getNavTitle(saved.navId) : undefined;
   } catch {
     return undefined;
