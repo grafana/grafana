@@ -4,6 +4,7 @@ import { behaviors, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { type DashboardMeta } from 'app/types/dashboard';
 
+import { edit } from '../actions/utils/edit';
 import * as utils from '../pages/utils';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -17,6 +18,49 @@ jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
 }));
 
 describe('GeneralSettingsEditView', () => {
+  it('clears undo and redo history on each entry without reverting dashboard changes', () => {
+    const dashboard = new DashboardScene({ title: 'Original', isEditing: true });
+    const deactivateDashboard = activateFullSceneTree(dashboard);
+    const settings = new GeneralSettingsEditView({});
+    dashboard.setState({ editview: settings });
+    const sidebar = dashboard.state.sidebar;
+
+    try {
+      for (const title of ['First visit', 'Second visit']) {
+        const previousTitle = dashboard.state.title;
+        edit({
+          source: dashboard,
+          description: 'Change title',
+          meta: { actionId: 'panel.changeTitle' },
+          perform: () => dashboard.setState({ title }),
+          undo: () => dashboard.setState({ title: previousTitle }),
+        });
+        edit({
+          source: dashboard,
+          description: 'Change description',
+          meta: { actionId: 'panel.changeDescription' },
+          perform: () => dashboard.setState({ description: 'Edited description' }),
+          undo: () => dashboard.setState({ description: undefined }),
+        });
+        sidebar.undoAction();
+        expect(sidebar.state.undoStack).toHaveLength(1);
+        expect(sidebar.state.redoStack).toHaveLength(1);
+
+        const deactivateSettings = settings.activate();
+        try {
+          expect(sidebar.state.undoStack).toHaveLength(0);
+          expect(sidebar.state.redoStack).toHaveLength(0);
+          expect(dashboard.state.title).toBe(title);
+          expect(dashboard.state.description).toBeUndefined();
+        } finally {
+          deactivateSettings();
+        }
+      }
+    } finally {
+      deactivateDashboard();
+    }
+  });
+
   describe('Dashboard state', () => {
     let dashboard: DashboardScene;
     let settings: GeneralSettingsEditView;

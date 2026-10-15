@@ -37,6 +37,15 @@ export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
 {
+  constructor(state: GeneralSettingsEditViewState) {
+    super(state);
+
+    this.addActivationHandler(() => {
+      // General settings are outside edit history, so earlier actions must not be replayed across this boundary.
+      this._dashboard.state.sidebar.setState({ undoStack: [], redoStack: [] });
+    });
+  }
+
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
   }
