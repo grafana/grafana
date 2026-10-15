@@ -158,8 +158,10 @@ To filter column values, follow these steps:
      - **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
      - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
 
-   - **Numeric ranges**: Use the slider to set exact boundaries for the range. You can also enter values in one or both of the **Minimum** and **Maximum** fields to constrain the range. Select **Include missing /non-finite values** to... <!--TODO: Explain this -->
-   - **Date ranges**: Enter values in one or both of the **Start** and **End** fields. Select **Include missing /non-finite values** to... <!--TODO: Explain this -->
+   - **Numeric ranges**: Use the slider to set exact boundaries for the range. You can also enter values in one or both of the **Minimum** and **Maximum** fields to constrain the range.
+   - **Date ranges**: Enter values in one or both of the **Start** and **End** fields.
+
+     For numeric and date ranges, select **Include missing / non-finite values** to retain empty results, `null`, `NaN`, and other special values.
 
 1. Click **Ok** or **Apply** to add the filters and close the dialog box.
 
@@ -173,31 +175,31 @@ Columns with filters applied have a filter icon displayed next to the title.
 To remove the filter, click the filter icon and then click **Clear** or **Clear filter**.
 The icon no longer displays.
 
-<!-- vale Grafana.WordList = NO -->
-<!-- vale Grafana.Spelling = NO -->
-
 ### Apply filters from table cells
 
-In tables, you can apply filters directly from the visualization with one click.
-With these filters, you can choose to filter values in or out.
+You can apply filters directly from table cells using a field override.
+These filters let you choose whether to filter values in or out.
 
-To enable cell filters, add the following override:
+To enable cell filters, follow these steps:
 
 1. Select override type **Fields with name**.
 1. Select the column you want to filter in the drop-down list.
+
+   {{< admonition type="tip" >}}
+   These directions use a basic override for demonstration purposes.
+   You can whichever override type best helps you in selecting the field you want to filter.
+   {{< /admonition >}}
+
 1. Click **Add override property**.
 1. Select **Standard options > Filterable**.
 1. Save the dashboard.
 1. Mouse over the cell to display the menu icon.
-1. Click the menu in the cell with the value you want to filter, and select either **Filter for value** or **Filter out value**:
+1. Click the menu and select either **Filter for value** or **Filter out value**:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
 <!-- TODO: Update screenshot -->
 
 For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
-
-<!-- vale Grafana.Spelling = YES -->
-<!-- vale Grafana.WordList = YES -->
 
 ## Sort columns
 
