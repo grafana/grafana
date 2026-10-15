@@ -4,7 +4,6 @@ import { RestrictedGrafanaApisContextProvider } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useFlagGrafanaDashboardComposer, useFlagGrafanaNotebookComposer } from '@grafana/runtime/internal';
 
-import { composerApi } from './composer/composerApi';
 import { createDashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
 import { getRestrictedGrafanaApis, restrictedApisEnabled } from './restrictedGrafanaApis';
 
@@ -24,10 +23,7 @@ export function RestrictedGrafanaApisProvider({
   const notebookComposerEnabled = useFlagGrafanaNotebookComposer();
   const composerEnabled = dashboardComposerEnabled || notebookComposerEnabled;
   const apis = useMemo(
-    () => ({
-      ...getRestrictedGrafanaApis({ dashboardMutationAPI: mutationApi }),
-      ...(restrictedApisEnabled && composerEnabled ? { composer: composerApi } : {}),
-    }),
+    () => getRestrictedGrafanaApis({ composerEnabled, dashboardMutationAPI: mutationApi }),
     [mutationApi, composerEnabled]
   );
   return (

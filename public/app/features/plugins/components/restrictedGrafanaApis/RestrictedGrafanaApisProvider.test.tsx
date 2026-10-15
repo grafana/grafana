@@ -6,7 +6,8 @@ import { config } from '@grafana/runtime';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { RestrictedGrafanaApisProvider } from './RestrictedGrafanaApisProvider';
-import { alertingAlertRuleFormSchemaApi } from './alerting/alertRuleFormSchema';
+import { composerApi } from './composer/composerApi';
+import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 import { getRestrictedGrafanaApisAtLoad } from './restrictedGrafanaApis';
 
 // Read once at module load by the provider.
@@ -77,7 +78,6 @@ describe('RestrictedGrafanaApisProvider composer', () => {
 
 // What an app plugin's module gets through AppPlugin.onRestrictedApis, before any of its roots mounts.
 describe('restricted APIs at plugin load', () => {
-  const PLUGIN = 'myorg-test-app';
   const settings = config.bootData.settings;
 
   function lists(allow: Record<string, string[]> | undefined, block: Record<string, string[]> | undefined = undefined) {
@@ -89,33 +89,47 @@ describe('restricted APIs at plugin load', () => {
   }
 
   afterEach(() => {
+    act(() => setTestFlags({}));
     jest.restoreAllMocks();
   });
 
   it('gives an allowlisted plugin the same objects its roots get from the provider', () => {
-    lists({ alertingAlertRuleFormSchema: [PLUGIN], dashboardMutationAPI: [PLUGIN] });
+    lists({ composer: ['grafana-assistant-app'], extensionSidebar: ['grafana-assistant-app'] });
+    setTestFlags({ [COMPOSER_FLAG]: true });
 
-    const atLoad = getRestrictedGrafanaApisAtLoad(PLUGIN);
-    const { result } = renderRestrictedApis(PLUGIN);
+    const atLoad = getRestrictedGrafanaApisAtLoad('grafana-assistant-app');
+    const { result } = renderRestrictedApis('grafana-assistant-app');
 
-    expect(atLoad.alertingAlertRuleFormSchema).toBe(alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema);
-    expect(atLoad.alertingAlertRuleFormSchema).toBe(result.current.alertingAlertRuleFormSchema);
+    expect(atLoad.composer).toBe(composerApi);
+    expect(atLoad.extensionSidebar).toBe(extensionSidebarApi);
+    expect(atLoad.composer).toBe(result.current.composer);
+    expect(atLoad.extensionSidebar).toBe(result.current.extensionSidebar);
     // Created per provider and bound to the plugin's mounted roots.
-    expect(result.current.dashboardMutationAPI).toBeDefined();
     expect(atLoad.dashboardMutationAPI).toBeUndefined();
   });
 
   it('gives a plugin that is not allowlisted none of them', () => {
-    lists({ alertingAlertRuleFormSchema: [PLUGIN] });
+    lists({ composer: ['grafana-assistant-app'], extensionSidebar: ['grafana-assistant-app'] });
+    setTestFlags({ [COMPOSER_FLAG]: true });
 
     expect(getRestrictedGrafanaApisAtLoad('another-app')).toEqual({});
   });
 
   it('respects the block list when there is no allow list', () => {
-    lists(undefined, { alertingAlertRuleFormSchema: [PLUGIN] });
+    lists(undefined, { composer: ['grafana-assistant-app'], extensionSidebar: ['another-app'] });
+    setTestFlags({ [COMPOSER_FLAG]: true });
 
-    expect(getRestrictedGrafanaApisAtLoad(PLUGIN).alertingAlertRuleFormSchema).toBeUndefined();
-    expect(getRestrictedGrafanaApisAtLoad('another-app').alertingAlertRuleFormSchema).toBeDefined();
+    const atLoad = getRestrictedGrafanaApisAtLoad('grafana-assistant-app');
+
+    expect(atLoad.composer).toBeUndefined();
+    expect(atLoad.extensionSidebar).toBe(extensionSidebarApi);
+    expect(getRestrictedGrafanaApisAtLoad('another-app').extensionSidebar).toBeUndefined();
+  });
+
+  it('leaves Composer out while its flags are off at load', () => {
+    lists({ composer: ['grafana-assistant-app'] });
+
+    expect(getRestrictedGrafanaApisAtLoad('grafana-assistant-app').composer).toBeUndefined();
   });
 });
 
