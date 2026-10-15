@@ -241,7 +241,7 @@ function dashboardSchemaCompletion(initialSchema: Record<string, unknown>) {
         options.push({
           label: key,
           type: 'property',
-          apply: JSON.stringify(key) + (node.parent?.getChild(':') ? '' : ': '),
+          apply: JSON.stringify(key) + (node.name === 'PropertyName' && colon ? '' : ': '),
           info: resolved?.description,
         });
       }

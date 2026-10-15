@@ -219,6 +219,19 @@ describe('Dashboard schema extensions', () => {
     expect(valueResult?.options.map((option) => option.label)).toEqual(['light', 'dark']);
   });
 
+  it('inserts a colon when completing a property inside a nested empty object', async () => {
+    const state = EditorState.create({
+      doc: '{"kind":"Dashboard","spec":{ }}',
+      extensions: createDashboardSchemaExtensions(schema),
+    });
+    const result = await complete(state, state.doc.length - 2);
+    const title = result!.options.find((option) => option.label === 'title')!;
+    const edited = state.update({
+      changes: { from: result!.from, to: result!.to, insert: title.apply as string },
+    }).state;
+    expect(edited.doc.toString()).toBe('{"kind":"Dashboard","spec":{ "title": }}');
+  });
+
   it.each([
     [{ type: 'boolean' }, ['false', 'true']],
     [{ type: 'null' }, ['null']],
