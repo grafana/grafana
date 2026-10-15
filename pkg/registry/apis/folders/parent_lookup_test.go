@@ -52,7 +52,7 @@ func TestCreateParentLookupErrors(t *testing.T) {
 					Return(folderWithParent("parent", "ancestor"), nil).Once()
 				storage.On("Get", mock.Anything, "ancestor", &metav1.GetOptions{}).Return(nil, lookupErr).Once()
 				b := &FolderAPIBuilder{
-					parents:              newParentsGetter(storage, 5),
+					parents:              newParentsGetter(storage),
 					maxNestedFolderDepth: 5,
 				}
 				obj := folderWithParent("child", "parent")
@@ -111,7 +111,7 @@ func TestCreateParentLookupTransportStatuses(t *testing.T) {
 					Return(folderWithParent(parent, "ancestor"), nil).Once()
 			}
 			store.On("Get", mock.Anything, "ancestor", &metav1.GetOptions{}).Return(nil, tc.err).Once()
-			err := validateOnCreate(context.Background(), folderWithParent("child", parent), newParentsGetter(store, 5), 5, tc.dryRun)
+			err := validateOnCreate(context.Background(), folderWithParent("child", parent), newParentsGetter(store), 5, tc.dryRun)
 			require.IsType(t, &apierrors.StatusError{}, err)
 			apiStatus := responsewriters.ErrorToAPIStatus(err)
 			require.Equal(t, tc.code, apiStatus.Code)
@@ -131,7 +131,7 @@ func TestCreateParentLookupWrongType(t *testing.T) {
 			storage := grafanarest.NewMockStorage(t)
 			storage.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).
 				Return(&unstructured.Unstructured{}, nil).Once()
-			err := validateOnCreate(context.Background(), folderWithParent("child", "parent"), newParentsGetter(storage, 5), 5, dryRun)
+			err := validateOnCreate(context.Background(), folderWithParent("child", "parent"), newParentsGetter(storage), 5, dryRun)
 			require.ErrorContains(t, err, "expected folder, found: *unstructured.Unstructured")
 			require.Equal(t, int32(http.StatusInternalServerError), responsewriters.ErrorToAPIStatus(err).Code)
 		})
@@ -148,7 +148,7 @@ func TestParentsReadLookupErrors(t *testing.T) {
 				Return(folderWithParent("parent", "ancestor"), nil).Once()
 			storage.On("Get", mock.Anything, "ancestor", &metav1.GetOptions{}).Return(nil, lookupErr).Once()
 			responder := &recordingResponder{}
-			r := &subParentsREST{getter: storage, parents: newParentsGetter(storage, 5)}
+			r := &subParentsREST{getter: storage, parents: newParentsGetter(storage)}
 			handler, err := r.Connect(context.Background(), "child", nil, responder)
 			require.NoError(t, err)
 			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/child/parents", nil))
@@ -170,7 +170,7 @@ func TestParentsReadCycle(t *testing.T) {
 	storage.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).
 		Return(folderWithParent("parent", "child"), nil).Once()
 	responder := &recordingResponder{}
-	r := &subParentsREST{getter: storage, parents: newParentsGetter(storage, 5)}
+	r := &subParentsREST{getter: storage, parents: newParentsGetter(storage)}
 	handler, err := r.Connect(context.Background(), "child", nil, responder)
 	require.NoError(t, err)
 	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/child/parents", nil))
@@ -182,7 +182,7 @@ func TestCreateDryRunCycle(t *testing.T) {
 	storage := grafanarest.NewMockStorage(t)
 	storage.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).
 		Return(folderWithParent("parent", "child"), nil).Once()
-	err := validateOnCreate(context.Background(), folderWithParent("child", "parent"), newParentsGetter(storage, 5), 5, true)
+	err := validateOnCreate(context.Background(), folderWithParent("child", "parent"), newParentsGetter(storage), 5, true)
 	require.ErrorContains(t, err, "cyclic folder references found")
 }
 
@@ -200,6 +200,6 @@ func TestMoveKeepsPartialParentLookupBehavior(t *testing.T) {
 	// The old partial chain is deeper than the new one, so the existing
 	// canSkipChildrenCheck optimization should still avoid a search.
 	err := validateOnUpdate(context.Background(), folderWithParent("child", "target"),
-		folderWithParent("child", "old-parent"), storage, newParentsGetter(storage, 5), nil, nil, 5)
+		folderWithParent("child", "old-parent"), storage, newParentsGetter(storage), nil, nil, 5)
 	require.NoError(t, err)
 }

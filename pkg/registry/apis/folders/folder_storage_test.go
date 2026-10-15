@@ -37,13 +37,21 @@ import (
 
 func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 	storageErr := status.Error(codes.Aborted, "private storage details")
-	for name, original := range map[string]error{
-		"grpc": storageErr,
-		"kubernetes after retries": apierrors.NewConflict(schema.GroupResource{
+	for _, tc := range []struct {
+		name    string
+		err     error
+		code    int32
+		reason  metav1.StatusReason
+		message string
+	}{
+		{"unexpected transport error", storageErr, http.StatusInternalServerError, metav1.StatusReasonInternalError, "Folder API error"},
+		{"unexpected Go error", fmt.Errorf("private storage details"), http.StatusInternalServerError, metav1.StatusReasonInternalError, "Folder API error"},
+		{"kubernetes after retries", apierrors.NewConflict(schema.GroupResource{
 			Group: "folder.grafana.app", Resource: "folders",
-		}, "foobar", storageErr),
+		}, "foobar", storageErr), http.StatusConflict, metav1.StatusReasonConflict, "the folder operation conflicted with another request; please retry"},
 	} {
-		t.Run(name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
+			original := tc.err
 			var logs bytes.Buffer
 			ctx := logging.Context(context.Background(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
 			store := grafanarest.NewMockStorage(t)
@@ -54,9 +62,9 @@ func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 			require.Nil(t, out)
 			var publicErr *apierrors.StatusError
 			require.ErrorAs(t, err, &publicErr)
-			require.Equal(t, int32(http.StatusConflict), publicErr.ErrStatus.Code)
-			require.Equal(t, metav1.StatusReasonConflict, publicErr.ErrStatus.Reason)
-			require.Equal(t, "the folder operation conflicted with another request; please retry", publicErr.ErrStatus.Message)
+			require.Equal(t, tc.code, publicErr.ErrStatus.Code)
+			require.Equal(t, tc.reason, publicErr.ErrStatus.Reason)
+			require.Equal(t, tc.message, publicErr.ErrStatus.Message)
 			require.NotContains(t, err.Error(), "private storage details")
 
 			var record map[string]interface{}
@@ -79,7 +87,7 @@ func TestFolderStorageCreatePreservesParentLookupStatus(t *testing.T) {
 		}).Once()
 	fs := folderStorage{store: store}
 	out, err := fs.Create(context.Background(), folderWithParent("child", "ancestor"), func(ctx context.Context, obj runtime.Object) error {
-		return validateOnCreate(ctx, obj.(*folders.Folder), newParentsGetter(store, 5), 5, false)
+		return validateOnCreate(ctx, obj.(*folders.Folder), newParentsGetter(store), 5, false)
 	}, &metav1.CreateOptions{})
 	require.Nil(t, out)
 	require.Equal(t, expected, err)

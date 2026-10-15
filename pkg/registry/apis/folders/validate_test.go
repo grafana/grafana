@@ -481,7 +481,7 @@ func TestValidateCreate(t *testing.T) {
 				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
-			getter := newParentsGetter(mockStorage, maxDepth)
+			getter := newParentsGetter(mockStorage)
 
 			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
@@ -520,7 +520,7 @@ func TestValidateCreateDetachedParent(t *testing.T) {
 					},
 					Spec: folders.FolderSpec{Title: "orphan"},
 				}
-				err := validateOnCreate(context.Background(), obj, newParentsGetter(storage, 5), 5, dryRun)
+				err := validateOnCreate(context.Background(), obj, newParentsGetter(storage), 5, dryRun)
 				if dryRun {
 					require.NoError(t, err)
 					return

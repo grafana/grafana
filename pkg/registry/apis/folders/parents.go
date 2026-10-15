@@ -25,7 +25,7 @@ type parentsResult struct {
 // for cycles. Otherwise Hierarchy is non-nil, even when LookupError is set.
 type parentsGetter = func(ctx context.Context, folder *folders.Folder) (parentsResult, error)
 
-func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
+func newParentsGetter(getter rest.Getter) parentsGetter {
 	return func(ctx context.Context, folder *folders.Folder) (parentsResult, error) {
 		ctx, span := tracer.Start(ctx, "folders.getParents")
 		defer span.End()

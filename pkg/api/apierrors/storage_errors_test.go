@@ -178,14 +178,24 @@ func TestFolderStorageAlreadyExistsResponse(t *testing.T) {
 		"wrapped kubernetes":           fmt.Errorf("save folder: %w", kubernetesErr),
 		"operation-wrapped kubernetes": folder.ErrInternal.Errorf("operation failed: %w", kubernetesErr),
 		"embedded":                     resource.StatusError(result),
-		"grpc":                         st.Err(),
-		"wrapped grpc":                 folder.ErrInternal.Errorf("operation failed: %w", st.Err()),
+		"reason-only": resource.StatusError(&resourcepb.ErrorResult{
+			Reason: string(metav1.StatusReasonAlreadyExists), Message: "private storage details",
+		}),
+		"grpc":         st.Err(),
+		"wrapped grpc": folder.ErrInternal.Errorf("operation failed: %w", st.Err()),
 	} {
 		t.Run(name, func(t *testing.T) {
 			want := expectedErrorResponse(http.StatusConflict, "a folder with the same UID already exists")
 			assertLegacyHTTPResponse(t, ToFolderErrorResponse, input, want)
 			require.Equal(t, input, ToFolderErrorResponse(input).(*response.NormalResponse).Err())
-			mapped := ToFolderStatusError(input)
+			storageErr := input
+			if _, isGRPC := status.FromError(input); isGRPC {
+				// apistore translates transport errors before folderStorage sees them.
+				storageErr = resource.StatusErrorFromResponse(nil, input)
+			}
+			mapped := ToFolderStatusError(storageErr)
+			require.Equal(t, int32(http.StatusConflict), mapped.ErrStatus.Code)
+			require.Equal(t, "a folder with the same UID already exists", mapped.ErrStatus.Message)
 			require.True(t, k8sErrors.IsAlreadyExists(&mapped))
 			assertLegacyHTTPResponse(t, ToFolderErrorResponse, &mapped, want)
 		})
@@ -218,7 +228,14 @@ func TestFolderStorageConflictResponse(t *testing.T) {
 			want := expectedErrorResponse(http.StatusConflict, "the folder operation conflicted with another request; please retry")
 			assertLegacyHTTPResponse(t, ToFolderErrorResponse, input, want)
 			require.Equal(t, input, ToFolderErrorResponse(input).(*response.NormalResponse).Err())
-			mapped := ToFolderStatusError(input)
+			storageErr := input
+			if _, isGRPC := status.FromError(input); isGRPC {
+				// apistore translates transport errors before folderStorage sees them.
+				storageErr = resource.StatusErrorFromResponse(nil, input)
+			}
+			mapped := ToFolderStatusError(storageErr)
+			require.Equal(t, int32(http.StatusConflict), mapped.ErrStatus.Code)
+			require.Equal(t, "the folder operation conflicted with another request; please retry", mapped.ErrStatus.Message)
 			require.True(t, k8sErrors.IsConflict(&mapped))
 			assertLegacyHTTPResponse(t, ToFolderErrorResponse, &mapped, want)
 		})

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -252,6 +253,67 @@ func TestToFolderErrorResponse(t *testing.T) {
 	}
 }
 
+func TestToFolderStatusErrorPreservesKubernetesStatus(t *testing.T) {
+	for name, original := range map[string]*k8sErrors.StatusError{
+		"invalid":     k8sErrors.NewInvalid(folderv1.FolderResourceInfo.GroupVersionKind().GroupKind(), "child", nil),
+		"missing":     k8sErrors.NewNotFound(folderv1.FolderResourceInfo.GroupResource(), "parent"),
+		"throttled":   k8sErrors.NewTooManyRequests("retry later", 7),
+		"timeout":     k8sErrors.NewTimeoutError("storage timeout", 7),
+		"unavailable": k8sErrors.NewServiceUnavailable("storage unavailable"),
+	} {
+		for wrapper, input := range map[string]error{
+			"direct":          original,
+			"wrapped":         fmt.Errorf("create failed: %w", original),
+			"Grafana wrapper": folder.ErrInternal.Errorf("create failed: %w", original),
+		} {
+			t.Run(name+"/"+wrapper, func(t *testing.T) {
+				before := original.ErrStatus.DeepCopy()
+				converted := apierrors.ToFolderStatusError(input)
+				require.Equal(t, *before, converted.ErrStatus)
+				require.Equal(t, *before, original.ErrStatus)
+			})
+		}
+	}
+}
+
+func TestToFolderStatusErrorPreservesValidationCompatibility(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		err     error
+		id      string
+		message string
+	}{
+		{"title", folder.ErrAPITitleEmpty, "folder.title-empty", "folder title cannot be empty"},
+		{"UID", folders.ErrAPIInvalidUID, "folder.invalid-uid-chars", "uid contains illegal characters"},
+		{"self parent", folder.ErrAPIFolderCannotBeParentOfItself, "folder.cannot-be-parent-of-itself", "folder cannot be parent of itself"},
+		{"missing ancestor", folder.ErrBadRequest.Errorf("cannot create folder under missing ancestor parent"), "folder.bad-request", "BadRequest"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			converted := apierrors.ToFolderStatusError(fmt.Errorf("create failed: %w", tc.err))
+			require.Equal(t, int32(http.StatusBadRequest), converted.ErrStatus.Code)
+			require.Equal(t, tc.message, converted.ErrStatus.Message)
+			require.NotNil(t, converted.ErrStatus.Details)
+			require.Equal(t, tc.id, string(converted.ErrStatus.Details.UID))
+		})
+	}
+}
+
+func TestToFolderStatusErrorSanitizesUnexpectedErrors(t *testing.T) {
+	for name, input := range map[string]error{
+		"plain":   errors.New("private database details"),
+		"wrapped": fmt.Errorf("create failed: %w", errors.New("private database details")),
+	} {
+		t.Run(name, func(t *testing.T) {
+			converted := apierrors.ToFolderStatusError(input)
+			require.Equal(t, int32(http.StatusInternalServerError), converted.ErrStatus.Code)
+			require.Equal(t, metav1.StatusReasonInternalError, converted.ErrStatus.Reason)
+			require.Equal(t, metav1.StatusFailure, converted.ErrStatus.Status)
+			require.Equal(t, "Folder API error", converted.ErrStatus.Message)
+			require.Nil(t, converted.ErrStatus.Details)
+		})
+	}
+}
+
 func TestToFolderStatusErrorDefaultsEmptyMessage(t *testing.T) {
 	original := &k8sErrors.StatusError{ErrStatus: metav1.Status{
 		Code:    http.StatusForbidden,
@@ -263,6 +325,26 @@ func TestToFolderStatusErrorDefaultsEmptyMessage(t *testing.T) {
 	expected.Message = "Access denied"
 	require.Equal(t, expected, converted.ErrStatus)
 	require.Empty(t, original.ErrStatus.Message)
+}
+
+func TestToFolderStatusErrorPreservesDetailsDuringNormalization(t *testing.T) {
+	original := &k8sErrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusInternalServerError,
+		Reason:  metav1.StatusReasonConflict,
+		Message: "private storage details",
+		Details: &metav1.StatusDetails{
+			Group: "folder.grafana.app", Kind: "folders", Name: "parent",
+			RetryAfterSeconds: 7,
+		},
+	}}
+	before := original.ErrStatus.DeepCopy()
+	converted := apierrors.ToFolderStatusError(folder.ErrInternal.Errorf("create failed: %w", original))
+	expected := *before
+	expected.Code = http.StatusConflict
+	expected.Message = "the folder operation conflicted with another request; please retry"
+	require.Equal(t, expected, converted.ErrStatus)
+	require.Equal(t, *before, original.ErrStatus)
 }
 
 // TestErrorsIs_UnwrapsAPIWrappers tests that errors.Is matches the legacy sentinel via
