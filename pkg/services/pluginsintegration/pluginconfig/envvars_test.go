@@ -146,22 +146,28 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 	app := func(skipHostEnvVars bool) *plugins.Plugin {
 		return &plugins.Plugin{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}, SkipHostEnvVars: skipHostEnvVars}
 	}
-	capToken, err := v3.LocalAccessPolicyToken("example-app")
-	require.NoError(t, err)
-	want := []string{
-		"API_ACCESS_ROUTER_URL=http://localhost:3000",
-		"API_ACCESS_TOKEN_EXCHANGE_URL=http://localhost:3000" + pluginauth.TokenExchangePath,
-		"API_ACCESS_CAP_TOKEN=" + capToken,
-	}
 	hasAPIAccess := func(env []string) bool {
 		return slices.ContainsFunc(env, func(v string) bool { return strings.HasPrefix(v, "API_ACCESS_") })
+	}
+	capToken := func(env []string) string {
+		for _, v := range env {
+			if token, ok := strings.CutPrefix(v, "API_ACCESS_CAP_TOKEN="); ok {
+				return token
+			}
+		}
+		return ""
 	}
 
 	t.Run("passed to app plugins when Grafana signs tokens itself", func(t *testing.T) {
 		env := envVars(true, app(false))
-		for _, v := range want {
-			assert.Contains(t, env, v)
-		}
+		assert.Contains(t, env, "API_ACCESS_ROUTER_URL=http://localhost:3000")
+		assert.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=http://localhost:3000"+pluginauth.TokenExchangePath)
+		pluginID, ok := v3.LocalAccessPolicyPluginID(capToken(env))
+		require.True(t, ok)
+		assert.Equal(t, "example-app", pluginID)
+	})
+	t.Run("each process start gets its own access policy token", func(t *testing.T) {
+		assert.NotEqual(t, capToken(envVars(true, app(false))), capToken(envVars(true, app(false))))
 	})
 	t.Run("not passed on with a token exchange or real signing keys", func(t *testing.T) {
 		assert.False(t, hasAPIAccess(envVars(false, app(false))))
@@ -172,7 +178,7 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 	t.Run("host API access takes precedence", func(t *testing.T) {
 		t.Setenv("API_ACCESS_ROUTER_URL", "https://grafana.example.com")
 		assert.False(t, hasAPIAccess(envVars(true, app(false))), "the host environment is forwarded")
-		assert.Contains(t, envVars(true, app(true)), want[2], "the host environment is not forwarded")
+		assert.NotEmpty(t, capToken(envVars(true, app(true))), "the host environment is not forwarded")
 	})
 }
 

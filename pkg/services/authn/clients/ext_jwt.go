@@ -56,7 +56,9 @@ func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
 	// Without a real signer, the plugins Grafana starts call its API with
 	// tokens from the local token exchange, which only this process can sign.
 	localKeys := false
-	if pluginauth.LocalTokens(cfg) {
+	// Without audiences the verifier skips the audience check, and would then
+	// accept the tokens Grafana sends to plugins.
+	if pluginauth.LocalTokens(cfg) && len(cfg.ExtJWTAuth.Audiences) > 0 {
 		local, err := v3.LocalKeyRetriever()
 		if err != nil {
 			logger.Error("Failed to get the local plugin signing key", "error", err)

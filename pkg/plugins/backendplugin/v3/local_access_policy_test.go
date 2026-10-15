@@ -11,26 +11,34 @@ import (
 )
 
 func TestLocalAccessPolicyToken(t *testing.T) {
-	first, err := LocalAccessPolicyToken("first-app")
+	first, err := IssueLocalAccessPolicyToken("first-app")
 	require.NoError(t, err)
-	again, err := LocalAccessPolicyToken("first-app")
-	require.NoError(t, err)
-	require.Equal(t, first, again, "a plugin keeps its token")
 	require.False(t, strings.HasPrefix(first, "glsa_"), "the API key client must not look it up")
-
-	second, err := LocalAccessPolicyToken("second-app")
-	require.NoError(t, err)
-	require.NotEqual(t, first, second)
-
 	pluginID, ok := LocalAccessPolicyPluginID(first)
 	require.True(t, ok)
 	require.Equal(t, "first-app", pluginID)
-	_, ok = LocalAccessPolicyPluginID(first + "x")
+
+	// Each process of a plugin gets its own token.
+	second, err := IssueLocalAccessPolicyToken("first-app")
+	require.NoError(t, err)
+	require.NotEqual(t, first, second)
+
+	// Revoking one process's token leaves the others working.
+	RevokeLocalAccessPolicyToken(first)
+	_, ok = LocalAccessPolicyPluginID(first)
+	require.False(t, ok)
+	_, ok = LocalAccessPolicyPluginID(second)
+	require.True(t, ok)
+	RevokeLocalAccessPolicyToken("")
+
+	require.Equal(t, second, LocalAccessPolicyTokenFromEnv([]string{"GF_VERSION=1", EnvVarAccessPolicyToken + "=" + second}))
+	require.Empty(t, LocalAccessPolicyTokenFromEnv([]string{"GF_VERSION=1"}))
+
+	_, ok = LocalAccessPolicyPluginID(second + "x")
 	require.False(t, ok)
 	_, ok = LocalAccessPolicyPluginID("")
 	require.False(t, ok)
-
-	_, err = LocalAccessPolicyToken("")
+	_, err = IssueLocalAccessPolicyToken("")
 	require.Error(t, err)
 }
 

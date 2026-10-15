@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,34 +40,55 @@ const localAccessPolicyTokenPrefix = "gl_local_plugin_"
 
 var localAccessPolicyTokens = struct {
 	sync.Mutex
-	byPlugin map[string]string
-	byToken  map[string]string
-}{byPlugin: map[string]string{}, byToken: map[string]string{}}
+	byToken map[string]string
+}{byToken: map[string]string{}}
 
-// LocalAccessPolicyToken returns the secret that authenticates pluginID to the
-// local token exchange: the local stand-in for a cloud access policy token.
-// It is random, held only in memory, and the same for the life of the process.
-func LocalAccessPolicyToken(pluginID string) (string, error) {
+// EnvVarAccessPolicyToken names the environment variable that passes a
+// plugin process its access policy token for the local token exchange.
+const EnvVarAccessPolicyToken = "API_ACCESS_CAP_TOKEN"
+
+// IssueLocalAccessPolicyToken returns a new secret that authenticates pluginID
+// to the local token exchange: the local stand-in for a cloud access policy
+// token. It is random and held only in memory. Grafana issues one each time it
+// starts the plugin's process, passes it only to that process, and revokes it
+// when the process stops or is replaced (see RevokeLocalAccessPolicyToken).
+func IssueLocalAccessPolicyToken(pluginID string) (string, error) {
 	if pluginID == "" {
 		return "", errors.New("local plugin token exchange: a plugin ID is required")
-	}
-	localAccessPolicyTokens.Lock()
-	defer localAccessPolicyTokens.Unlock()
-	if token, ok := localAccessPolicyTokens.byPlugin[pluginID]; ok {
-		return token, nil
 	}
 	secret := make([]byte, 32)
 	if _, err := rand.Read(secret); err != nil {
 		return "", fmt.Errorf("local plugin token exchange: %w", err)
 	}
 	token := localAccessPolicyTokenPrefix + base64.RawURLEncoding.EncodeToString(secret)
-	localAccessPolicyTokens.byPlugin[pluginID] = token
+
+	localAccessPolicyTokens.Lock()
+	defer localAccessPolicyTokens.Unlock()
 	localAccessPolicyTokens.byToken[token] = pluginID
 	return token, nil
 }
 
+// RevokeLocalAccessPolicyToken revokes token, issued by
+// IssueLocalAccessPolicyToken, for when the process it was issued to stops.
+func RevokeLocalAccessPolicyToken(token string) {
+	localAccessPolicyTokens.Lock()
+	defer localAccessPolicyTokens.Unlock()
+	delete(localAccessPolicyTokens.byToken, token)
+}
+
+// LocalAccessPolicyTokenFromEnv returns the access policy token in a plugin
+// process environment, if Grafana set one.
+func LocalAccessPolicyTokenFromEnv(env []string) string {
+	for _, v := range env {
+		if token, ok := strings.CutPrefix(v, EnvVarAccessPolicyToken+"="); ok {
+			return token
+		}
+	}
+	return ""
+}
+
 // LocalAccessPolicyPluginID returns the plugin that token authenticates, as
-// issued by LocalAccessPolicyToken.
+// issued by IssueLocalAccessPolicyToken and not since revoked.
 func LocalAccessPolicyPluginID(token string) (string, bool) {
 	localAccessPolicyTokens.Lock()
 	defer localAccessPolicyTokens.Unlock()

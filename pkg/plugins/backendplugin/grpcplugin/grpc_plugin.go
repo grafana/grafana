@@ -13,12 +13,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	localv3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type grpcPlugin struct {
 	descriptor     PluginDescriptor
-	clientFactory  func() (*plugin.Client, error)
+	clientFactory  func() (*plugin.Client, string, error)
 	client         *plugin.Client
 	pluginClient   *ClientV2
 	clientV3       v3.Client
@@ -26,6 +27,10 @@ type grpcPlugin struct {
 	mutex          sync.RWMutex
 	decommissioned bool
 	state          pluginState
+
+	// accessPolicyToken is the local access policy token passed to the
+	// current process, revoked when the process stops or is replaced.
+	accessPolicyToken string
 }
 
 type pluginState int
@@ -49,12 +54,15 @@ func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.
 	return &grpcPlugin{
 		descriptor: descriptor,
 		logger:     logger,
-		clientFactory: func() (*plugin.Client, error) {
-			clientConfig, err := newClientConfig(descriptor, env(), logger, tracer)
+		clientFactory: func() (*plugin.Client, string, error) {
+			processEnv := env()
+			accessPolicyToken := localv3.LocalAccessPolicyTokenFromEnv(processEnv)
+			clientConfig, err := newClientConfig(descriptor, processEnv, logger, tracer)
 			if err != nil {
-				return nil, err
+				localv3.RevokeLocalAccessPolicyToken(accessPolicyToken)
+				return nil, "", err
 			}
-			return plugin.NewClient(clientConfig), nil
+			return plugin.NewClient(clientConfig), accessPolicyToken, nil
 		},
 		state: pluginStateNotStarted,
 	}, nil
@@ -74,8 +82,12 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 
 	p.state = pluginStateStartInit
 
+	// A restart replaces the process, so the previous one's token must stop working.
+	localv3.RevokeLocalAccessPolicyToken(p.accessPolicyToken)
+	p.accessPolicyToken = ""
+
 	var err error
-	p.client, err = p.clientFactory()
+	p.client, p.accessPolicyToken, err = p.clientFactory()
 	if err != nil {
 		p.state = pluginStateStartFail
 		return err
@@ -126,6 +138,9 @@ func (p *grpcPlugin) Stop(_ context.Context) error {
 	if p.client != nil {
 		p.client.Kill()
 	}
+	// The process's access policy token must not outlive it.
+	localv3.RevokeLocalAccessPolicyToken(p.accessPolicyToken)
+	p.accessPolicyToken = ""
 	p.state = pluginStateStopped
 	return nil
 }

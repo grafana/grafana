@@ -82,6 +82,13 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 			"the caller's permissions are limited to what the plugin may do")
 	})
 
+	t.Run("not trusted without audiences", func(t *testing.T) {
+		cfg := cfgWith("")
+		cfg.ExtJWTAuth.Audiences = nil
+		client := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
+		require.False(t, client.IsEnabled(context.Background()))
+	})
+
 	t.Run("not trusted with a real signer", func(t *testing.T) {
 		client := ProvideExtendedJWT(cfgWith("https://auth.example.com/jwks"), tracing.InitializeTracerForTest())
 		require.False(t, client.IsEnabled(context.Background()))

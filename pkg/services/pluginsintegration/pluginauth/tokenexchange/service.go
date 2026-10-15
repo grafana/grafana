@@ -28,6 +28,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// pluginGroupSuffix is the suffix of the API groups plugins serve.
+const pluginGroupSuffix = ".ext.grafana.app"
+
 // maxRequestBytes bounds the request body, which holds at most a subject token.
 const maxRequestBytes = 64 << 10
 
@@ -152,7 +155,11 @@ func policyFor(pluginID string, grafanaAudiences []string, manifests []*app.Mani
 			continue
 		}
 		add(&policy.Audiences, manifest.Group)
-		add(&policy.Permissions, manifest.Group+":*")
+		// Only a plugin group is the plugin's own. A manifest naming another
+		// group, such as a core one, must request it as an access kind.
+		if name, ok := strings.CutSuffix(manifest.Group, pluginGroupSuffix); ok && name != "" {
+			add(&policy.Permissions, manifest.Group+":*")
+		}
 		if manifest.ExtraPermissions == nil {
 			continue
 		}

@@ -43,6 +43,9 @@ func TestPolicyFor(t *testing.T) {
 	}, policy)
 
 	require.Empty(t, policyFor("example-app", []string{"grafana"}, nil).Permissions, "a plugin without a manifest may do nothing")
+
+	core := policyFor("example-app", []string{"grafana"}, []*app.ManifestData{{Group: "dashboard.grafana.app"}})
+	require.NotContains(t, core.Permissions, "dashboard.grafana.app:*", "a manifest does not own a core group")
 }
 
 // newTestServer serves the token exchange as Grafana's HTTP server would.
@@ -71,7 +74,7 @@ func TestSignAccessToken(t *testing.T) {
 		}
 		return nil, nil
 	})
-	capToken, err := v3.LocalAccessPolicyToken("example-app")
+	capToken, err := v3.IssueLocalAccessPolicyToken("example-app")
 	require.NoError(t, err)
 	// The client the app SDK uses for API_ACCESS_TOKEN_EXCHANGE_URL and API_ACCESS_CAP_TOKEN.
 	exchange := func(token string, req authnlib.TokenExchangeRequest) (string, error) {
@@ -101,13 +104,21 @@ func TestSignAccessToken(t *testing.T) {
 		require.ErrorContains(t, err, "invalid access policy token")
 	})
 
+	t.Run("rejects the token of a stopped plugin process", func(t *testing.T) {
+		stopped, err := v3.IssueLocalAccessPolicyToken("stopped-app")
+		require.NoError(t, err)
+		v3.RevokeLocalAccessPolicyToken(stopped)
+		_, err = exchange(stopped, authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
+		require.ErrorContains(t, err, "invalid access policy token")
+	})
+
 	t.Run("rejects audiences outside the manifest", func(t *testing.T) {
 		_, err := exchange(capToken, authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana", "other.ext.grafana.app"}})
 		require.ErrorContains(t, err, "audience \"other.ext.grafana.app\" is not allowed")
 	})
 
 	t.Run("a plugin without a manifest gets no permissions", func(t *testing.T) {
-		otherCAP, err := v3.LocalAccessPolicyToken("other-app")
+		otherCAP, err := v3.IssueLocalAccessPolicyToken("other-app")
 		require.NoError(t, err)
 		token, err := exchange(otherCAP, authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
 		require.NoError(t, err)
@@ -122,7 +133,7 @@ func TestSignAccessTokenRequests(t *testing.T) {
 	failing := newTestServer(t, func(context.Context, string) ([]*app.ManifestData, error) {
 		return nil, errors.New("disk error")
 	})
-	capToken, err := v3.LocalAccessPolicyToken("example-app")
+	capToken, err := v3.IssueLocalAccessPolicyToken("example-app")
 	require.NoError(t, err)
 
 	for _, tc := range []struct {
