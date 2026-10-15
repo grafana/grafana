@@ -251,11 +251,18 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) (tree []repo
 			return err
 		}
 		entry := repository.FileTreeEntry{
-			Path: strings.TrimLeft(path[rootlen:], "/"),
+			Path: strings.TrimLeft(filepath.ToSlash(path[rootlen:]), "/"),
 			Size: info.Size(),
 		}
 		if entry.Path == "" {
 			return nil // skip the root file
+		}
+
+		if repository.IsIgnoredPath(entry.Path, info.IsDir()) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
 		if !info.IsDir() {

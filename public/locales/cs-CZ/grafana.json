@@ -3068,7 +3068,7 @@
       },
       "toggle": {
         "use-new-experience": "Použít nové prostředí",
-        "view-previous-experience": "Vrátit se k předchozímu prostředí"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Neznámý typ pravidla",
       "checking-data-sources_one": "",
@@ -3098,6 +3098,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Sbalit vše",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Rozbalit vše"
     },
     "rule-list-v2": {
@@ -9104,8 +9109,8 @@
     },
     "show-all-spans": "Zobrazit všechny rozsahy",
     "signal-card": {
-      "collapse-aria-label": "Sbalit průzkumníka zdroje dat pro dotaz {{refId}}",
-      "expand-aria-label": "Rozbalit průzkumníka zdroje dat pro dotaz {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Přejít na dotaz {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -10897,13 +10902,21 @@
       "cell-filter-out": "Odfiltrovat hodnotu",
       "cell-inspect": "Zkontrolovat hodnotu",
       "cell-inspect-tooltip": "Zkontrolovat hodnotu",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filtrovat hodnoty",
+      "column-menu-hide": "",
       "column-menu-label": "Možnosti sloupce pro {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Aktualizovat filtr",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Kopírovat do schránky",
       "csv-counts": "Řádky: {{rows}}, sloupce: {{columns}}",
       "csv-placeholder": "Zadej CSV tady…",
       "edit-column-filter": "Upravit filtr pro {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Přidat všechny zobrazené hodnoty do filtru",
         "blanks": "(prázdné)",
@@ -10937,6 +10950,8 @@
           "count": "Počet"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Zkontrolovat hodnotu",
       "loading": "Načítání tabulky",
       "nested-table": {
@@ -10946,6 +10961,7 @@
       "no-rows": "Žádné řádky",
       "no-values-label": "Žádné hodnoty",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků",
+      "show-column-label": "",
       "sort-by-column": "Seřadit podle sloupce {{column}}",
       "sort-by-column-ascending": "Seřadit podle sloupce {{column}}, vzestupně",
       "sort-by-column-descending": "Seřadit podle sloupce {{column}}, sestupně",
@@ -10955,7 +10971,8 @@
       },
       "tooltip": {
         "trigger": "Přepnout popisek"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Tagy"
@@ -13352,6 +13369,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Zrušit",
       "confirm-discard": "Zahodit",
@@ -13433,6 +13455,7 @@
       "redo-action": "Opakovat: {{action}}",
       "remove-query": "Odebrat dotaz",
       "remove-tag": "Odebrat tag",
+      "rename": "",
       "reset-cell-time-range": "Použít časový rozsah zápisníku",
       "select-query": "Vybrat dotaz",
       "set-cell-time-range": "Nastavit časový rozsah panelu",
@@ -14060,6 +14083,9 @@
       "label-plugin-id": "ID pluginu",
       "label-severity": "Závažnost"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Všechny pluginy jsou aktuální"
     },
@@ -14081,6 +14107,10 @@
     "plugin-details-body": {
       "needs-service-account": "Plugin {{pluginName}} vyžaduje účet služby, aby mohl posílat dotazy Grafaně. Následující seznam obsahuje oprávnění dostupná pro účet služby:",
       "page-not-found": "Stránka nebyla nalezena."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Zastaralé"
@@ -16775,6 +16805,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
     "description-page-size": "Počet řádků na stránku. Pokud je prázdné, velikost stránky vychází z výšky panelu.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Pole obsahující objekty JSON s vlastnostmi CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Střídat barvu pozadí každého druhého řádku",
@@ -16813,6 +16844,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimální šířka sloupce",
     "name-page-size": "Velikost stránky",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
     "name-styling-from-field": "Styling z pole",
     "name-tooltip-from-field": "",
@@ -16976,6 +17008,7 @@
     "editor": {
       "aria-label-content": "Obsah textu",
       "aria-label-mode": "Textový režim: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Čísla řádků",
       "format-bold": "B",
       "format-heading": "H",
@@ -17021,6 +17054,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -17990,15 +18027,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Seřadit pole v rámci."
       },
+      "drag-handle-label": "",
       "label-field": "Pole",
       "label-reverse": "Dozadu",
       "name": {
         "sort-by": "Řadit podle"
       },
-      "placeholder-select-field": "Vyberte pole"
+      "placeholder-select-field": "Vyberte pole",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

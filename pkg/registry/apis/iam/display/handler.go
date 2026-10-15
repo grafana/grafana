@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 
+	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	authlib "github.com/grafana/authlib/types"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -30,10 +30,19 @@ type DisplayHandler struct {
 // NewDisplayHandler creates a new DisplayHandler with the given resolvers.
 // We have multiple resolvers to allow the transition from SQL to search
 func NewDisplayHandler(resolvers ...Resolver) *DisplayHandler {
-	return &DisplayHandler{resolvers}
+	return &DisplayHandler{
+		resolvers: resolvers,
+	}
 }
 
 func (r *DisplayHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+	whoamiSpec := r.selfRouteSpec()
+	whoamiSpec.Get.OperationId = "getWhoAmI"
+	whoamiSpec.Get.Parameters = nil
+	currentUserSpec := r.selfRouteSpec()
+	currentUserSpec.Get.Deprecated = true
+	currentUserSpec.Get.Description += ". Deprecated: use /apis/iam.grafana.app/v0alpha1/whoami instead."
+
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -96,10 +105,16 @@ func (r *DisplayHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 			},
 			{
 				Path:    currentUserPath,
-				Spec:    r.selfRouteSpec(),
+				Spec:    currentUserSpec,
 				Handler: r.handleSelf,
 			},
 		},
+		// Clients use this cluster-scoped endpoint to discover their namespace.
+		Root: []builder.APIRouteHandler{{
+			Path:    "whoami",
+			Spec:    whoamiSpec,
+			Handler: r.handleSelf,
+		}},
 	}
 }
 

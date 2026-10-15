@@ -218,14 +218,6 @@ describe('PanelEditor', () => {
   });
 
   describe('When the scene is rebuilt underneath the editor', () => {
-    beforeAll(() => {
-      setTestFlags({ dashboardNewLayouts: true });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
-    });
-
     /** Replace the layout tree wholesale, as APPLY_SPEC and the json/code editors do. */
     function swapBody(dashboard: DashboardScene) {
       dashboard.setState({

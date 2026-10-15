@@ -109,7 +109,7 @@ func TestBuildOpenAPIVersionSelection(t *testing.T) {
 
 	t.Run("an invalid manifest is refused", func(t *testing.T) {
 		manifest := offlineManifest(t)
-		manifest.Group = "example.com"
+		manifest.Group = "Bad_Group.example.com"
 		_, err := BuildOpenAPI("example-app", manifest, "", OpenAPIOptions{})
 		require.ErrorContains(t, err, "invalid manifest group")
 	})

@@ -2,6 +2,7 @@ import type { RenderDiagrams } from './sandboxMermaid';
 import { RESOURCE_DIRECTIVES, resourceOrigin, type BlockedResource } from './sandboxPolicy';
 import {
   CSP_CHECK_URL,
+  randomId,
   TEXT_FRAME_PROTOCOL,
   type FrameNotification,
   type RenderCommand,
@@ -16,6 +17,7 @@ const channel = bootstrap.dataset.channel!;
 const parentOrigin = bootstrap.dataset.parentOrigin!;
 const policy = bootstrap.dataset.policy;
 const nonce = bootstrap.nonce;
+const documentId = randomId();
 bootstrap.remove();
 
 // srcdoc inherits Trusted Types enforcement, but not the parent's policies. Match Grafana's
@@ -57,7 +59,7 @@ function onViolation(event: SecurityPolicyViolationEvent) {
       verificationTimer = window.setTimeout(() => {
         verified = true;
         check.remove();
-        send({ type: 'ready' });
+        send({ type: 'ready', document: documentId });
       }, 0);
     }
     return;
@@ -195,7 +197,7 @@ document.addEventListener('securitypolicyviolation', onViolation);
 window.addEventListener('message', onMessage);
 window.addEventListener('pagehide', dispose, { once: true });
 if (verified) {
-  send({ type: 'ready' });
+  send({ type: 'ready', document: documentId });
 } else {
   check.src = CSP_CHECK_URL;
   document.body.append(check);

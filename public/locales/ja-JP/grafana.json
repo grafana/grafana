@@ -2999,7 +2999,7 @@
       },
       "toggle": {
         "use-new-experience": "新しいエクスペリエンスを使用",
-        "view-previous-experience": "前のエクスペリエンスに戻す"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "不明なルールタイプ",
       "checking-data-sources_other": "",
@@ -3017,6 +3017,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "すべて閉じる",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "すべて展開"
     },
     "rule-list-v2": {
@@ -8930,8 +8935,8 @@
     },
     "show-all-spans": "すべてのスパンを表示",
     "signal-card": {
-      "collapse-aria-label": "クエリ{{refId}}のデータソースエクスプローラーを折りたたむ",
-      "expand-aria-label": "クエリ{{refId}}のデータソースエクスプローラーを展開",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "クエリ{{refId}}（{{datasourceName}}）に移動"
     },
     "signal-explorer": {
@@ -10687,13 +10692,21 @@
       "cell-filter-out": "値を除外してフィルタリング",
       "cell-inspect": "値を検査",
       "cell-inspect-tooltip": "値を検査",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "値で絞り込む",
+      "column-menu-hide": "",
       "column-menu-label": "{{name}}の列オプション",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "フィルターを更新",
+      "column-visibility": "",
+      "columns": "",
       "copy": "クリップボードにコピー",
       "csv-counts": "行：{{rows}}、列：{{columns}}",
       "csv-placeholder": "ここにCSVを入力...",
       "edit-column-filter": "{{name}}のフィルターを編集",
+      "field-warnings": "",
       "filter": {
         "add-all": "表示されたすべての値をフィルターに追加",
         "blanks": "（空白）",
@@ -10727,6 +10740,8 @@
           "count": "カウント"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "値を検査",
       "loading": "テーブルを読み込んでいます",
       "nested-table": {
@@ -10736,6 +10751,7 @@
       "no-rows": "行なし",
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
+      "show-column-label": "",
       "sort-by-column": "「{{column}}」列で並べ替え",
       "sort-by-column-ascending": "「{{column}}」列で並べ替え（昇順）",
       "sort-by-column-descending": "「{{column}}」列で並べ替え（降順）",
@@ -10745,7 +10761,8 @@
       },
       "tooltip": {
         "trigger": "ツールチップを切り替え"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "タグ"
@@ -13055,6 +13072,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "キャンセル",
       "confirm-discard": "破棄",
@@ -13136,6 +13158,7 @@
       "redo-action": "やり直し：{{action}}",
       "remove-query": "クエリを削除",
       "remove-tag": "タグを削除",
+      "rename": "",
       "reset-cell-time-range": "ノートブックの時間範囲を使用",
       "select-query": "クエリを選択",
       "set-cell-time-range": "パネルの時間範囲を設定",
@@ -13760,6 +13783,9 @@
       "label-plugin-id": "プラグインID",
       "label-severity": "重要度"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "すべてのプラグインが最新です"
     },
@@ -13781,6 +13807,10 @@
     "plugin-details-body": {
       "needs-service-account": "{{pluginName}}プラグインでGrafanaへのクエリを実行するには、サービスアカウントが必要です。次のリストはサービスアカウントで利用可能な権限を示しています。",
       "page-not-found": "ページが見つかりません。"
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "非推奨"
@@ -16385,6 +16415,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
     "description-page-size": "1ページあたりの行数。空の場合、ページサイズはパネルの高さに基づいています。",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "1行おきに背景色を交互に切り替えます",
@@ -16423,6 +16454,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小列幅",
     "name-page-size": "ページサイズ",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-styling-from-field": "フィールドからのスタイリング",
     "name-tooltip-from-field": "",
@@ -16586,6 +16618,7 @@
     "editor": {
       "aria-label-content": "テキストの内容",
       "aria-label-mode": "テキストモード：{{mode}}",
+      "feedback": "",
       "footer-line-numbers": "行番号",
       "format-bold": "B",
       "format-heading": "H",
@@ -16631,6 +16664,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -17600,15 +17637,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "フレーム内のフィールドを並べ替えます。"
       },
+      "drag-handle-label": "",
       "label-field": "フィールド",
       "label-reverse": "反転",
       "name": {
         "sort-by": "並べ替え"
       },
-      "placeholder-select-field": "フィールドを選択"
+      "placeholder-select-field": "フィールドを選択",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

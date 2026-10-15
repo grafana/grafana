@@ -2999,7 +2999,7 @@
       },
       "toggle": {
         "use-new-experience": "새로운 환경 사용",
-        "view-previous-experience": "이전 환경으로 되돌리기"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "알 수 없는 규칙 유형",
       "checking-data-sources_other": "",
@@ -3017,6 +3017,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "모두 접기",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "모두 펼치기"
     },
     "rule-list-v2": {
@@ -8930,8 +8935,8 @@
     },
     "show-all-spans": "모든 범위 표시",
     "signal-card": {
-      "collapse-aria-label": "쿼리 {{refId}}에 대한 데이터 소스 탐색기 접기 ",
-      "expand-aria-label": "쿼리 {{refId}}에 대한 데이터 소스 탐색기 펼치기",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "쿼리 {{refId}}({{datasourceName}})(오)로 이동"
     },
     "signal-explorer": {
@@ -10687,13 +10692,21 @@
       "cell-filter-out": "값 필터링하여 제외",
       "cell-inspect": "값 검사",
       "cell-inspect-tooltip": "값 검사",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "값 필터링",
+      "column-menu-hide": "",
       "column-menu-label": "{{name}}의 열 옵션",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "필터 업데이트",
+      "column-visibility": "",
+      "columns": "",
       "copy": "클립보드로 복사",
       "csv-counts": "행:{{rows}}, 열:{{columns}}",
       "csv-placeholder": "여기에 CSV를 입력하세요...",
       "edit-column-filter": "{{name}}의 필터 편집",
+      "field-warnings": "",
       "filter": {
         "add-all": "표시된 모든 값을 필터에 추가",
         "blanks": "(공백)",
@@ -10727,6 +10740,8 @@
           "count": "개수"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "값 검사",
       "loading": "테이블 로딩",
       "nested-table": {
@@ -10736,6 +10751,7 @@
       "no-rows": "행 없음",
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
+      "show-column-label": "",
       "sort-by-column": "{{column}} 열 기준으로 정렬",
       "sort-by-column-ascending": "{{column}} 열 기준으로 오름차순 정렬",
       "sort-by-column-descending": "{{column}} 열 기준으로 내림차순 정렬",
@@ -10745,7 +10761,8 @@
       },
       "tooltip": {
         "trigger": "툴팁 토글"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "태그"
@@ -13055,6 +13072,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "취소",
       "confirm-discard": "무시",
@@ -13136,6 +13158,7 @@
       "redo-action": "다시 실행: {{action}}",
       "remove-query": "쿼리 제거",
       "remove-tag": "태그 제거",
+      "rename": "",
       "reset-cell-time-range": "노트북 시간 범위 사용",
       "select-query": "쿼리 선택",
       "set-cell-time-range": "패널 시간 범위 설정",
@@ -13760,6 +13783,9 @@
       "label-plugin-id": "플러그인 ID",
       "label-severity": "심각도"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "모든 플러그인이 최신 상태입니다."
     },
@@ -13781,6 +13807,10 @@
     "plugin-details-body": {
       "needs-service-account": "{{pluginName}} 플러그인을 사용하려면 Grafana에 쿼리를 실행하기 위한 서비스 계정이 필요합니다. 다음 목록에는 서비스 계정에서 사용할 수 있는 권한이 포함되어 있습니다.",
       "page-not-found": "페이지를 찾을 수 없습니다."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "사용 중단됨"
@@ -16385,6 +16415,7 @@
     "description-frozen-columns": "테이블의 왼쪽부터 열이 고정되어 있습니다.",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
     "description-page-size": "페이지당 행 수. 비어 있는 경우 페이지 크기는 패널 높이를 기준으로 합니다.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "CSS 속성이 있는 JSON 객체가 포함된 필드",
     "description-tooltip-from-field": "툴팁에서 (숨겨져 있거나 표시된) 필드의 셀을 렌더링합니다.",
     "description-zebra-striping": "한 행씩 번갈아 배경색 적용",
@@ -16423,6 +16454,7 @@
     "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
     "name-page-size": "페이지 크기",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "테이블 머리말 표시",
     "name-styling-from-field": "필드에서 스타일링",
     "name-tooltip-from-field": "필드 툴팁",
@@ -16586,6 +16618,7 @@
     "editor": {
       "aria-label-content": "텍스트 내용",
       "aria-label-mode": "텍스트 모드: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "라인 번호",
       "format-bold": "B",
       "format-heading": "H",
@@ -16631,6 +16664,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -17600,15 +17637,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "프레임에서 필드를 정렬합니다."
       },
+      "drag-handle-label": "",
       "label-field": "필드",
       "label-reverse": "되돌리기",
       "name": {
         "sort-by": "정렬 기준"
       },
-      "placeholder-select-field": "필드 선택"
+      "placeholder-select-field": "필드 선택",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

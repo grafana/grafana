@@ -78,10 +78,6 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(async () => ({
     ...defaultDatasource,
     variables: {
@@ -93,7 +89,6 @@ jest.mock('@grafana/runtime/unstable', () => ({
     getGroupByKeys: getGroupByKeysMock,
   })),
 }));
-
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({
     state: LoadingState.Done,
