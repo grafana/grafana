@@ -379,9 +379,8 @@ func TestBuild_SkipsGroupVersionsNotServed(t *testing.T) {
 	assert.NotContains(t, got, "dashboard.grafana.app/v2", "v2 is a served version, but not served by this builder")
 }
 
-// Every namespaced kind in a served group gets the endpoint, whether or not it
-// declares search fields. Cluster-scoped kinds still get nothing: IAM serves
-// GlobalRole next to the namespaced kinds below.
+// Every namespaced kind in a served group gets the endpoint unless it opts out,
+// whether or not it declares search fields. Cluster-scoped kinds get nothing.
 func TestBuild_MountsEveryNamespacedKindInAServedGroup(t *testing.T) {
 	gvs := []schema.GroupVersion{
 		{Group: "iam.grafana.app", Version: "v0alpha1"},
@@ -399,7 +398,6 @@ func TestBuild_MountsEveryNamespacedKindInAServedGroup(t *testing.T) {
 		"authinfos/search",
 		// Declare none.
 		"globalrolebindings/search",
-		"resourcepermissions/search",
 		"rolebindings/search",
 		"roles/search",
 		"serviceaccounts/search",
@@ -508,7 +506,8 @@ func allBuilders(t *testing.T) []builder.APIGroupBuilder {
 // Listing the set makes that a failing test rather than a silent change.
 //
 // Kinds that opt out in their own manifest are absent: secure values, keepers,
-// channels, plugins, plugin metas, checks, check types, preferences and stars.
+// channels, plugins, plugin metas, checks, check types, preferences, stars,
+// snapshots and resource permissions.
 func TestBuild_MountedKindsAreListedHere(t *testing.T) {
 	got := paths(Build(true, true, nil, fakeClient{}, allBuilders(t), nil, Options{}))
 
@@ -548,7 +547,6 @@ func TestBuild_MountedKindsAreListedHere(t *testing.T) {
 		"receivers",
 		"recordingrules",
 		"repositories",
-		"resourcepermissions",
 		"rolebindings",
 		"roles",
 		"routingtrees",
@@ -570,6 +568,7 @@ func TestBuild_PrivateResourceManifestsDisableSearch(t *testing.T) {
 		{Group: "preferences.grafana.app", Version: "v1"},
 		{Group: "preferences.grafana.app", Version: "v1alpha1"},
 		{Group: "collections.grafana.app", Version: "v1alpha1"},
+		{Group: "iam.grafana.app", Version: "v0alpha1"},
 		{Group: "dashboard.grafana.app", Version: "v1"},
 	}}
 
@@ -578,6 +577,7 @@ func TestBuild_PrivateResourceManifestsDisableSearch(t *testing.T) {
 	assert.NotContains(t, got, "preferences.grafana.app/v1")
 	assert.NotContains(t, got, "preferences.grafana.app/v1alpha1")
 	assert.NotContains(t, got, "collections.grafana.app/v1alpha1")
+	assert.NotContains(t, got["iam.grafana.app/v0alpha1"], "resourcepermissions/search")
 	assert.Contains(t, got["dashboard.grafana.app/v1"], "dashboards/search")
 }
 

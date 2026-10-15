@@ -18,6 +18,7 @@ type BlobGarbageCollector struct {
 	store     BlobGCStore
 	batchSize int
 	batchWait time.Duration
+	uidAges   *blobUIDAgeStore // retained across runs for legacy-UID tracking
 }
 
 type BlobGCStore interface {
@@ -49,10 +50,14 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 	if grace <= 0 {
 		return 0, fmt.Errorf("blob GC grace period must be positive")
 	}
-	// SQL and bucket stores use upload time.
+	// SQL and bucket stores use upload time; any other KV (e.g. remote) uses the
+	// UUIDv7 embedded in the blob UID.
 	ages, ok := g.store.(blobGCAgeStore)
 	if !ok {
-		return 0, fmt.Errorf("blob GC store does not support durable age tracking")
+		if g.uidAges == nil {
+			g.uidAges = newBlobUIDAgeStore(g.store)
+		}
+		ages = g.uidAges
 	}
 	keys := g.store.Keys(ctx, kv.BlobDataSection, kv.ListOptions{})
 	if store, ok := g.store.(interface {

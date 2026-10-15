@@ -62,6 +62,12 @@ var appManifestData = app.ManifestData{
 					Plural:     "ResourcePermissions",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Storage: &app.ManifestVersionKindStorage{
+						ListKeys: func(b bool) *bool { return &b }(false),
+					},
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
 				},
 
 				{
