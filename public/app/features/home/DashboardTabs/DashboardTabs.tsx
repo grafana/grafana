@@ -5,12 +5,13 @@ import { useAsyncRetry } from 'react-use';
 import { type ComponentTypeWithExtensionMeta, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
+import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
+import { FooterAction, FooterActions } from '../FooterActions';
 import { HomeSection } from '../HomeSection';
 import { tabChanged } from '../analytics/main';
 
@@ -155,7 +156,6 @@ export function DashboardTabs({ extensionComponents }: Props) {
     {
       id: RECENT_TAB_ID,
       label: t('home.dashboard-tabs.recent', 'Recent'),
-      activeLabel: t('home.dashboard-tabs.recent-activity-active', 'Recent activity'),
       counter: recent.total,
     },
     ...(mostUsedAvailable
@@ -163,7 +163,6 @@ export function DashboardTabs({ extensionComponents }: Props) {
           {
             id: MOST_USED_TAB_ID,
             label: t('home.dashboard-tabs.most-used', 'Most used'),
-            activeLabel: t('home.dashboard-tabs.most-used-active', 'Most used dashboards'),
             counter: mostUsedDashboards?.length,
           },
         ]
@@ -171,7 +170,6 @@ export function DashboardTabs({ extensionComponents }: Props) {
     {
       id: STARRED_TAB_ID,
       label: t('home.dashboard-tabs.starred', 'Starred'),
-      activeLabel: t('home.dashboard-tabs.starred-active', 'Starred dashboards'),
       counter: starredDashboards?.length,
     },
   ];
@@ -183,23 +181,18 @@ export function DashboardTabs({ extensionComponents }: Props) {
   const renderContent = () => (
     <>
       <TabsBar>
-        {contentTabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          // Keep a consistent tab bar width when on a custom tab by forcing the active label for recent dashboards
-          const forceActiveLabel = !DEFAULT_TAB_IDS.includes(activeTab) && tab.id === RECENT_TAB_ID;
-          return (
-            <Tab
-              key={tab.id}
-              label={isActive || forceActiveLabel ? (tab.activeLabel ?? tab.label) : tab.label}
-              active={isActive}
-              counter={tab.counter}
-              onChangeTab={() => {
-                setActiveTab(tab.id);
-                tabChanged({ tab: tab.id });
-              }}
-            />
-          );
-        })}
+        {contentTabs.map((tab) => (
+          <Tab
+            key={tab.id}
+            label={tab.label}
+            active={activeTab === tab.id}
+            counter={tab.counter}
+            onChangeTab={() => {
+              setActiveTab(tab.id);
+              tabChanged({ tab: tab.id });
+            }}
+          />
+        ))}
         {linkTabs.length > 0 && <div className={styles.linkTabsSpacer} />}
         {linkTabs.map((tab) => (
           <Tab key={tab.id} label={tab.label} icon={tab.icon} href={tab.href!} />
@@ -214,15 +207,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
             minHeight={`${redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT}px`}
           >
             {activeTab === RECENT_TAB_ID && (
-              <RecentActivityTab
-                items={recent.items}
-                counts={recent.counts}
-                loading={recent.loading}
-                error={recent.error}
-                retry={recent.retry}
-                foldersByUid={foldersByUid}
-                density={listDensity}
-              />
+              <RecentActivityTab recent={recent} foldersByUid={foldersByUid} density={listDensity} />
             )}
             {activeTab === MOST_USED_TAB_ID && (
               <MostUsedDashboardsTab
@@ -246,14 +231,15 @@ export function DashboardTabs({ extensionComponents }: Props) {
             )}
           </ScrollContainer>
           {/* Pinned below the scroll area so it stays visible however long the list is. */}
-          {activeTab === RECENT_TAB_ID && hasRecent && !recent.error && (
-            <RecentActivityFooter
-              counts={recent.counts}
-              total={recent.total}
-              filter={recent.filter}
-              onFilterChange={recent.setFilter}
-              onClear={recent.clear}
-            />
+          {activeTab === RECENT_TAB_ID && recent.hasRows && <RecentActivityFooter recent={recent} />}
+          {(activeTab === MOST_USED_TAB_ID || activeTab === STARRED_TAB_ID) && (
+            <Box padding={1} paddingTop={1.5}>
+              <FooterActions>
+                <FooterAction href="/dashboards">
+                  <Trans i18nKey="home.dashboard-tabs.view-all-dashboards">View all dashboards</Trans>
+                </FooterAction>
+              </FooterActions>
+            </Box>
           )}
         </TabContent>
       )}
@@ -274,11 +260,8 @@ export function DashboardTabs({ extensionComponents }: Props) {
         <>
           <Stack justifyContent="space-between" alignItems="center" minHeight={4}>
             <Text element="h2" variant="h5">
-              <Trans i18nKey="home.dashboards.title">Dashboards</Trans>
+              <Trans i18nKey="home.dashboard-tabs.title">Jump back in</Trans>
             </Text>
-            <TextLink inline={false} color="secondary" href="/dashboards" icon="angle-right">
-              <Trans i18nKey="home.dashboards.view-all">View all</Trans>
-            </TextLink>
           </Stack>
 
           <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>

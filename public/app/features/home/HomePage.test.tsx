@@ -364,13 +364,13 @@ describe('HomePage', () => {
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
   });
 
-  it('renders the dashboards grid above the stack overview on the redesigned homepage', async () => {
+  it('renders the jump-back-in grid above the stack overview on the redesigned homepage', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
     jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stubSolution('metrics')], signals: jest.fn() });
 
     render(<HomePage />);
 
-    const dashboards = await screen.findByRole('heading', { name: 'Dashboards' });
+    const dashboards = await screen.findByRole('heading', { name: 'Jump back in' });
     const overview = await screen.findByRole('heading', { name: 'Your observability stack overview' });
     expect(dashboards.compareDocumentPosition(overview)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });

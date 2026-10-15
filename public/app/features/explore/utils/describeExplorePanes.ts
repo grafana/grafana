@@ -1,5 +1,5 @@
 import { type ExploreUrlState, urlUtil } from '@grafana/data';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { isRecord } from 'app/core/utils/isRecord';
 
 import { parseURL } from '../hooks/useStateSync/parseURL';
@@ -13,8 +13,29 @@ import { parseURL } from '../hooks/useStateSync/parseURL';
  */
 const QUERY_TEXT_FIELDS = ['expr', 'query', 'rawSql', 'target', 'expression'] as const;
 
+/** What a row needs to know about a datasource, by uid and by name: Explore URLs have carried either. */
+export type ExploreDataSources = ReadonlyMap<string, { name: string; mixed: boolean }>;
+
+/**
+ * One snapshot of the datasource list, shared by every Explore row. Never throws: names are a nicety, so without
+ * the list the rows show the refs from the URL as they are.
+ */
+export async function getExploreDataSources(): Promise<ExploreDataSources> {
+  const dataSources = new Map<string, { name: string; mixed: boolean }>();
+  try {
+    for (const item of await getDataSourceInstanceList({ all: true, mixed: true })) {
+      const dataSource = { name: item.name, mixed: item.meta.mixed === true };
+      dataSources.set(item.uid, dataSource);
+      dataSources.set(item.name, dataSource);
+    }
+  } catch (error) {
+    console.error('Failed to load datasources for recent Explore pages', error);
+  }
+  return dataSources;
+}
+
 export interface ExplorePaneDescription {
-  /** Datasource name, or the raw ref from the URL when it no longer resolves; `undefined` when the pane has none. */
+  /** Datasource name, or the ref from the URL when it no longer resolves; `undefined` when the pane has none. */
   datasource: string | undefined;
   /** Text of each query that has any. */
   queries: string[];
@@ -33,44 +54,43 @@ function getQueryText(query: unknown): string {
   return '';
 }
 
-/**
- * `<datasource name>: <text>`; the raw ref when the datasource no longer resolves; text alone when the query
- * has no ref; `''` when it has no text.
- */
-async function describeMixedQuery(query: unknown): Promise<string> {
-  const text = getQueryText(query);
-  if (!text) {
-    return '';
-  }
+/** The uid (or legacy name) a query's own `datasource` points at, in either shape Explore has written. */
+function getQueryRef(query: unknown): string | undefined {
   const ref = isRecord(query) ? query.datasource : undefined;
-  const refString = typeof ref === 'string' ? ref : isRecord(ref) && typeof ref.uid === 'string' ? ref.uid : undefined;
-  if (!refString) {
-    return text;
+  if (typeof ref === 'string') {
+    return ref;
   }
-  const name = (await getDataSourceInstanceSettings(typeof ref === 'string' ? ref : { uid: refString }))?.name;
-  return `${name ?? refString}: ${text}`;
+  return isRecord(ref) && typeof ref.uid === 'string' ? ref.uid : undefined;
 }
 
-async function describePane(pane: ExploreUrlState): Promise<ExplorePaneDescription> {
-  const settings = pane.datasource ? await getDataSourceInstanceSettings(pane.datasource) : undefined;
+function describePane(pane: ExploreUrlState, dataSources: ExploreDataSources): ExplorePaneDescription {
+  const ref = pane.datasource || undefined;
+  const dataSource = ref ? dataSources.get(ref) : undefined;
   // The v1 migrator keeps `null` query elements and the v0 parser can keep a non-array `queries`.
   const queries: unknown[] = Array.isArray(pane.queries) ? pane.queries : [];
-  // In a mixed pane each query names its own datasource; the pane's name alone would not say which.
-  const texts = settings?.meta.mixed ? await Promise.all(queries.map(describeMixedQuery)) : queries.map(getQueryText);
-  return { datasource: settings?.name ?? (pane.datasource || undefined), queries: texts.filter(Boolean) };
+  const texts = queries.map((query) => {
+    const text = getQueryText(query);
+    // In a mixed pane each query names its own datasource; the pane's name alone would not say which.
+    const queryRef = dataSource?.mixed && text ? getQueryRef(query) : undefined;
+    return queryRef ? `${dataSources.get(queryRef)?.name ?? queryRef}: ${text}` : text;
+  });
+  return { datasource: dataSource?.name ?? ref, queries: texts.filter(Boolean) };
 }
 
 /**
- * What an Explore URL's `search` would restore, per pane; panes with neither datasource nor query text
- * are omitted. Never throws: stored URLs are runtime input, and an unknown `schemaVersion` makes
- * `parseURL` index past its migrators.
+ * What an Explore URL's `search` would restore, per pane; panes with neither datasource nor query text are
+ * omitted. Never throws: stored URLs are runtime input, and an unknown `schemaVersion` makes `parseURL` index
+ * past its migrators.
  */
-export async function describeExplorePanes(search: string): Promise<ExplorePaneDescription[]> {
+export function describeExplorePanes(search: string, dataSources: ExploreDataSources): ExplorePaneDescription[] {
+  let panes: ExploreUrlState[];
   try {
     const [url] = parseURL(urlUtil.parseKeyValue(search.replace(/^\?/, '')));
-    const panes = await Promise.all(Object.values(url.panes).map(describePane));
-    return panes.filter((pane) => pane.datasource || pane.queries.length > 0);
+    panes = Object.values(url.panes);
   } catch {
     return [];
   }
+  return panes
+    .map((pane) => describePane(pane, dataSources))
+    .filter((pane) => pane.datasource || pane.queries.length > 0);
 }

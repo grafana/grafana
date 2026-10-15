@@ -5,22 +5,19 @@ import { Box, RadioButtonGroup, Stack } from '@grafana/ui';
 import { FooterAction, FooterActions } from '../FooterActions';
 import { clearHistoryClicked, recentActivityFilterChanged } from '../analytics/main';
 
-import { PAGE_KINDS, type PageKindCounts, getPageKindMeta } from './recentActivityRows';
-import { type RecentActivityFilter } from './useRecentActivity';
+import { PAGE_KINDS, getPageKindMeta } from './recentActivityRows';
+import { type RecentActivity, type RecentActivityFilter } from './useRecentActivity';
 
 interface Props {
-  counts: PageKindCounts;
-  total: number;
-  filter: RecentActivityFilter;
-  onFilterChange: (filter: RecentActivityFilter) => void;
-  onClear: () => void;
+  recent: RecentActivity;
 }
 
 /**
  * The clear action on the right and, when the history holds more than one kind of page, a filter over
  * those kinds on the left; wraps when the card is too narrow for both.
  */
-export function RecentActivityFooter({ counts, total, filter, onFilterChange, onClear }: Props) {
+export function RecentActivityFooter({ recent }: Props) {
+  const { counts, total, filter, setFilter, clear } = recent;
   const kinds = PAGE_KINDS.filter((kind) => counts[kind] > 0);
   const options: Array<SelectableValue<RecentActivityFilter>> = [
     { value: '', label: t('home.recent-activity-tab.filter-all', 'All') },
@@ -29,12 +26,12 @@ export function RecentActivityFooter({ counts, total, filter, onFilterChange, on
 
   const handleClear = () => {
     clearHistoryClicked({ dashboard_count: counts.dashboard, page_count: total });
-    onClear();
+    clear();
   };
 
   const handleFilterChange = (filter: RecentActivityFilter) => {
     recentActivityFilterChanged({ filter: filter || 'all' });
-    onFilterChange(filter);
+    setFilter(filter);
   };
 
   return (

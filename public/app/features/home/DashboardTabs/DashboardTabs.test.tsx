@@ -174,6 +174,21 @@ describe('DashboardTabs', () => {
     expect(screen.getByText('Starred Dashboard 3')).toBeInTheDocument();
   });
 
+  it('offers the full dashboard list from the dashboard tabs only', async () => {
+    setMockStarredDashboards(['starred-1']);
+    server.use(getCustomSearchHandler(starredHits));
+
+    const { user } = render(<DashboardTabs extensionComponents={[]} />);
+
+    // Recent is empty, so the card lands on Starred.
+    await screen.findByRole('tab', { name: /starred/i, selected: true });
+    expect(screen.getByRole('link', { name: /view all dashboards/i })).toHaveAttribute('href', '/dashboards');
+
+    await user.click(screen.getByRole('tab', { name: /recent/i }));
+
+    expect(screen.queryByRole('link', { name: /view all dashboards/i })).not.toBeInTheDocument();
+  });
+
   describe('empty Recent activity tab', () => {
     // LinkButton renders a plain <a href>; clicking it would trigger a real jsdom navigation
     // (console.error -> jest-fail-on-console). Route anchor clicks through the SPA history the
@@ -447,7 +462,7 @@ describe('DashboardTabs', () => {
 
       render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
 
-      expect(await screen.findByRole('tab', { name: /recent activity.*4/i, selected: true })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /recent.*4/i, selected: true })).toBeInTheDocument();
 
       const links = within(screen.getByRole('list')).getAllByRole('link');
       expect(links.map((link) => link.getAttribute('href'))).toEqual([
@@ -513,7 +528,7 @@ describe('DashboardTabs', () => {
       expect(jest.mocked(recentActivityFilterChanged)).toHaveBeenCalledWith({ filter: 'explore' });
       expect(jest.mocked(pageHistorySrv.getEntries)).toHaveBeenCalledTimes(1);
       // The counter and the options follow the whole history, not the filtered rows.
-      expect(screen.getByRole('tab', { name: /recent activity.*2/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /recent.*2/i })).toBeInTheDocument();
       expect(filter.getByRole('radio', { name: 'Dashboards' })).toBeInTheDocument();
     });
 
@@ -551,7 +566,7 @@ describe('DashboardTabs', () => {
 
       render(<DashboardTabs extensionComponents={[]} />);
 
-      expect(await screen.findByRole('tab', { name: /recent activity.*1/i, selected: true })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /recent.*1/i, selected: true })).toBeInTheDocument();
       const rows = within(screen.getByRole('list'));
       expect(rows.getByRole('link', { name: /^Ops Logs/ })).toBeInTheDocument();
       expect(rows.getAllByRole('link')).toHaveLength(1);
@@ -626,7 +641,7 @@ describe('DashboardTabs', () => {
       await user.click(screen.getByRole('button', { name: /retry/i }));
 
       expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /recent activity/i })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
     });
   });
 });
