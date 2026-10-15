@@ -151,9 +151,7 @@ To filter column values, follow these steps:
    {{< figure src="/media/docs/grafana/panels-visualizations/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" >}}
 
 1. Do one of the following, depending on the type of data in that column:
-
    - **Values**: Click the checkboxes next to the values you want to include or click **Select all**. To narrow the set of values, enter text in the search field and then choose an operator:
-
      - **Contains** - Matches a regex pattern (operator by default).
      - **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
      - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
@@ -170,6 +168,7 @@ To filter column values, follow these steps:
 Columns with filters applied have a filter icon displayed next to the title.
 
 {{< figure src="/static/img/docs/tables/filtered-column.png" max-width="100px" alt="Filtered column" class="docs-image--no-shadow" >}}
+
 <!-- TODO: Update screenshot -->
 
 To remove the filter, click the filter icon and then click **Clear** or **Clear filter**.
@@ -197,6 +196,7 @@ To enable cell filters, follow these steps:
 1. Click the menu and select either **Filter for value** or **Filter out value**:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
+
 <!-- TODO: Update screenshot -->
 
 For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
