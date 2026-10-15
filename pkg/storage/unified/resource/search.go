@@ -2319,6 +2319,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	var builderMu sync.Mutex
 	builders := map[NamespacedResource]DocumentBuilder{}
 	getBuilder := func(ctx context.Context, src NamespacedResource) (DocumentBuilder, error) {
+		if nsr.IsGlobal() {
+			return &globalDocumentBuilder{blob: s.builders.blob}, nil
+		}
 		builderMu.Lock()
 		defer builderMu.Unlock()
 		if b, ok := builders[src]; ok {
@@ -2336,7 +2339,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// draws from its own. Documents of a namespace-wide index keep the standard
 	// fields only, because it declares no others.
 	sources := indexSources(nsr)
-	standardFieldsOnly := nsr.IsGlobal()
 
 	builderFn := func(index ResourceIndex) (int64, error) {
 		span := trace.SpanFromContext(ctx)
@@ -2372,7 +2374,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			if err != nil {
 				return indexRV, err
 			}
-			listRV, docs, err := s.indexResourceType(ctx, index, src, builder, standardFieldsOnly, phases, logger)
+			listRV, docs, err := s.indexResourceType(ctx, index, src, builder, phases, logger)
 			indexedDocs[src.GroupResource()] += docs
 			if indexRV == 0 || (listRV > 0 && listRV < indexRV) {
 				indexRV = listRV
@@ -2498,7 +2500,6 @@ func (s *searchServer) indexResourceType(
 	index ResourceIndex,
 	src NamespacedResource,
 	builder DocumentBuilder,
-	standardFieldsOnly bool,
 	phases *buildPhaseRecorder,
 	logger log.Logger,
 ) (int64, int, error) {
@@ -2554,10 +2555,6 @@ func (s *searchServer) indexResourceType(
 				logger.Error("error building search document", "key", SearchID(key), "err", err)
 				continue
 			}
-			if standardFieldsOnly {
-				doc = keepStandardFieldsOnly(doc)
-			}
-
 			if err := batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 				return err
 			}
