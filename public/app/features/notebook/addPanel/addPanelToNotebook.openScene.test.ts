@@ -98,6 +98,16 @@ describe('adding to a notebook that is open', () => {
     expect(updateNotebook).toHaveBeenCalledTimes(1);
   });
 
+  // Someone reading the notebook when content lands in it can carry on editing what arrived.
+  it('switches a notebook being read into edit mode', async () => {
+    const scene = openNotebook();
+    expect(scene.state.isEditing).toBeFalsy();
+
+    await addCellsToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'Hi.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user');
+
+    expect(scene.state.isEditing).toBe(true);
+  });
+
   it('keeps both of two adds made at once, in the order they were made', async () => {
     const scene = openNotebook();
 

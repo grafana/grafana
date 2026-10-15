@@ -187,6 +187,63 @@ describe('NotebookView', () => {
     expect(instances[0].state.scene).toBeUndefined();
   });
 
+  // The assistant opens a notebook right after adding to it; what was added should be editable there.
+  describe('enterEditMode', () => {
+    async function renderLoaded(scene: NotebookScene, enterEditMode?: boolean) {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const view = render(<NotebookView uid="nb-1" enterEditMode={enterEditMode} />);
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene });
+      });
+      return view;
+    }
+
+    it('opens the notebook in edit mode', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = aNotebookScene();
+
+      await renderLoaded(scene, true);
+
+      expect(scene.state.isEditing).toBe(true);
+    });
+
+    it('enters edit mode when it turns on after the notebook is shown', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = aNotebookScene();
+      const { rerender } = await renderLoaded(scene);
+      expect(scene.state.isEditing).toBeFalsy();
+
+      await act(async () => {
+        rerender(<NotebookView uid="nb-1" enterEditMode />);
+      });
+
+      expect(scene.state.isEditing).toBe(true);
+    });
+
+    it('leaves a reader without write permission in view mode', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      const scene = aNotebookScene();
+
+      await renderLoaded(scene, true);
+
+      expect(scene.state.isEditing).toBeFalsy();
+    });
+
+    // An add through the open scene already started editing; starting again would reset its session.
+    it('does not restart a session that is already open', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = aNotebookScene();
+      scene.onEnterEditMode();
+      const start = jest.spyOn(scene.editSession, 'start');
+
+      await renderLoaded(scene, true);
+
+      expect(scene.state.isEditing).toBe(true);
+      expect(start).not.toHaveBeenCalled();
+    });
+  });
+
   // A host holding a document nobody has chosen to save: the assistant's canvas, where a notebook is
   // edited against the conversation and only becomes a resource when someone publishes it.
   describe('a draft', () => {
