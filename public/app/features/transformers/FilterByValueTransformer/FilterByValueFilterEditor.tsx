@@ -26,11 +26,11 @@ export const FilterByValueFilterEditor = (props: Props) => {
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
   const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
   const field = fieldByDisplayName[fieldName];
-  const matcherOptions = field ? getMatcherOptions(field) : [];
-  const matcherId = getSelectedMatcherId(filter, matcherOptions);
-  const editor = valueMatchersUI.getIfExists(matcherId);
   const readOnlyMatcher =
     filter.config.id === ValueMatcherID.inSet ? valueMatchers.get(ValueMatcherID.inSet) : undefined;
+  const matcherOptions = field && !readOnlyMatcher ? getMatcherOptions(field) : [];
+  const matcherId = readOnlyMatcher ? undefined : getSelectedMatcherId(filter, matcherOptions);
+  const editor = matcherId ? valueMatchersUI.getIfExists(matcherId) : undefined;
 
   const onChangeField = useCallback(
     (selectable?: SelectableValue<string>) => {

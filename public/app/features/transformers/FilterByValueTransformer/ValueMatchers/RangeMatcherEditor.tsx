@@ -49,7 +49,7 @@ export function rangeMatcherEditor<T = string | number>(
     return (
       <>
         <SuggestionsInput
-          value={options.allowOpenBounds && options.from === undefined ? '' : String(options.from)}
+          value={options.from === undefined ? '' : String(options.from)}
           invalid={isInvalid.from}
           error={'Value needs to be a number or a variable'}
           placeholder={t('transformers.range-matcher-editor.placeholder-from', 'From')}
@@ -62,7 +62,7 @@ export function rangeMatcherEditor<T = string | number>(
         <SuggestionsInput
           invalid={isInvalid.to}
           error={'Value needs to be a number or a variable'}
-          value={options.allowOpenBounds && options.to === undefined ? '' : String(options.to)}
+          value={options.to === undefined ? '' : String(options.to)}
           placeholder={t('transformers.range-matcher-editor.placeholder-to', 'To')}
           suggestions={suggestions}
           onChange={(val) => onChangeOptionsSuggestions(val, 'to')}

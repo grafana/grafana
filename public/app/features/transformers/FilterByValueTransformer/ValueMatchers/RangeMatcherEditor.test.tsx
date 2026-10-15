@@ -34,6 +34,22 @@ describe('RangeMatcherEditor', () => {
     expect(screen.getByPlaceholderText(bound === 'from' ? 'To' : 'From')).toHaveValue(bound === 'from' ? '10' : '1');
   });
 
+  it.each(['from', 'to'] as const)('renders a missing %s bound as empty and invalid without opt-in', (bound) => {
+    const Editor = rangeMatcherEditor({ validator: numberOrVariableValidator });
+    render(
+      <Editor
+        options={bound === 'from' ? { to: 10 } : { from: 1 }}
+        field={{ name: 'Value', type: FieldType.number, config: {}, values: [] }}
+        onChange={jest.fn()}
+      />
+    );
+
+    const missingInput = screen.getByPlaceholderText(bound === 'from' ? 'From' : 'To');
+    expect(missingInput).toHaveValue('');
+    expect(missingInput).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByPlaceholderText(bound === 'from' ? 'To' : 'From')).toHaveValue(bound === 'from' ? '10' : '1');
+  });
+
   it.each(['from', 'to'] as const)('clears the opted-in %s bound to undefined', async (bound) => {
     const Editor = rangeMatcherEditor({ validator: numberOrVariableValidator });
     const onChange = jest.fn();
