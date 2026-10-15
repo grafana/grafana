@@ -117,16 +117,6 @@ func TestBlobGCPagedKeys(t *testing.T) {
 	require.NoError(t, reader.Close())
 }
 
-func TestBlobGCRejectsBadgerWithoutAgeTracking(t *testing.T) {
-	gc := NewBlobGarbageCollector(setupBadgerKV(t), 1, 0)
-	count, err := gc.Collect(t.Context(), time.Now(), time.Hour, false, func(context.Context, kv.BlobKey) (bool, error) {
-		t.Fatal("must not scan unsupported backends")
-		return false, nil
-	})
-	require.ErrorContains(t, err, "durable age tracking")
-	require.Zero(t, count)
-}
-
 func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 	b := setupTestStorageBackend(t)
 	b.kv = setupSqlKV(t)

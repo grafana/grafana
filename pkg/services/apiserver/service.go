@@ -448,7 +448,7 @@ func (s *service) start(ctx context.Context) error {
 	)
 	if globalSearchAPIEnabled {
 		searchAndStorageRoutes = append(searchAndStorageRoutes,
-			searchroutes.BuildGlobalSearch(s.tracing, s.unified, builders)...)
+			searchroutes.BuildGlobalSearch(s.tracing, s.unified)...)
 	}
 	if globalHybridAPIEnabled {
 		searchAndStorageRoutes = append(searchAndStorageRoutes,
@@ -457,8 +457,8 @@ func (s *service) start(ctx context.Context) error {
 	if globalSearchAPIEnabled || globalHybridAPIEnabled {
 		// Global search has no resource of its own to hold a permission on. The
 		// hybrid handler checks locally registered API policies; storage checks
-		// manifest opt-in. Lexical search covers dashboards and folders, whose get
-		// and list permissions are equivalent. Both authorize every result in
+		// manifest opt-in. Lexical search relies on get and list permissions being
+		// equivalent for every covered type. Both authorize every result in
 		// storage against its own group, resource and folder.
 		s.authorizer.Register(globalSearchGV, authorizer.NewAllowAuthorizer())
 	}
