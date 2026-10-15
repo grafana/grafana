@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { RuleListItem, RuleListItemDescription } from './RuleListItem';
 
 describe('RuleListItem', () => {
-  it('VIS-1: renders title, description, actions and separates only truthy meta entries with a pipe', () => {
+  it('VIS-1: renders title, description, actions and renders only truthy meta entries', () => {
     render(
       <ul>
         <RuleListItem
@@ -18,7 +18,11 @@ describe('RuleListItem', () => {
     expect(screen.getByRole('listitem')).toBeInTheDocument();
     expect(screen.getByText('My rule')).toBeInTheDocument();
     expect(screen.getByText('desc')).toBeInTheDocument();
-    expect(screen.getAllByText('|')).toHaveLength(2);
+    expect(screen.getAllByTestId('rule-meta-item').map((item) => item.textContent)).toEqual([
+      'first',
+      'second',
+      'third',
+    ]);
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
 

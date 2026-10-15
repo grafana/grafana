@@ -103,7 +103,7 @@ describe('RecordingRuleRow', () => {
 
     const row = screen.getByRole('listitem');
     expect(row.querySelectorAll('p')).toHaveLength(0);
-    expect(screen.getAllByText('|')).toHaveLength(1);
+    expect(screen.getAllByTestId('rule-meta-item')).toHaveLength(2);
   });
 
   it('shows the last error as the description', () => {
@@ -167,7 +167,7 @@ describe('RecordingRuleRow', () => {
       render(<RecordingRuleRow hit={baseHit({ targetDataSourceUid: 'gone' })} fullRule={LOADING} />);
 
       expect(screen.queryByText(/Records/)).not.toBeInTheDocument();
-      expect(screen.queryByText('|')).not.toBeInTheDocument();
+      expect(screen.queryAllByTestId('rule-meta-item').map((item) => item.textContent)).not.toContain('');
     });
   });
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type AriaAttributes, Fragment, type ReactNode } from 'react';
+import { type AriaAttributes, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -40,18 +40,16 @@ export function RuleListItem({
           </Stack>
 
           {metaItems.length > 0 && (
-            <Stack direction="row" gap={1} alignItems="center">
-              {metaItems.map((item, index) => (
-                <Fragment key={index}>
-                  {index > 0 && (
-                    <Text color="secondary" variant="bodySmall">
-                      {'|'}
-                    </Text>
-                  )}
-                  {item}
-                </Fragment>
-              ))}
-            </Stack>
+            // Whole items wrap; each line's leading separator falls into the clipped margin.
+            <div className={styles.metaClip}>
+              <Stack direction="row" gap={1} alignItems="center" wrap>
+                {metaItems.map((item, index) => (
+                  <div key={index} className={styles.metaItem} data-testid="rule-meta-item">
+                    {item}
+                  </div>
+                ))}
+              </Stack>
+            </div>
           )}
         </Stack>
 
@@ -108,6 +106,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // Aligns the icon with the title text.
   icon: css({
     marginTop: theme.spacing(0.5),
+  }),
+  metaClip: css({
+    overflow: 'hidden',
+    '& > *': { marginLeft: `calc(-1 * (${theme.spacing(1)} + 1px))` },
+  }),
+  metaItem: css({
+    borderLeft: `1px solid ${theme.colors.border.strong}`,
+    paddingLeft: theme.spacing(1),
   }),
   overflow: css({
     overflow: 'hidden',

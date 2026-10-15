@@ -141,20 +141,19 @@ describe('AlertRuleRow', () => {
     expect(screen.queryByText(/data source/)).not.toBeInTheDocument();
   });
 
-  it('renders one separator fewer than metadata items when labels and data sources are absent', async () => {
+  it('renders only the folder path and routing when labels and data sources are absent', async () => {
     render(<AlertRuleRow hit={baseHit()} fullRule={LOADING} folderPath={FOLDER_PATH} />);
 
-    // Two items, so one separator.
     expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
     expect(screen.getByText('Default policy')).toBeInTheDocument();
-    expect(screen.getAllByText('|')).toHaveLength(1);
+    expect(screen.getAllByTestId('rule-meta-item')).toHaveLength(2);
   });
 
-  it('renders no separator when routing is the only metadata item', async () => {
+  it('renders routing as the only metadata item when nothing else is known', async () => {
     render(<AlertRuleRow hit={baseHit()} fullRule={LOADING} />);
 
     expect(await screen.findByText('Default policy')).toBeInTheDocument();
-    expect(screen.queryByText('|')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('rule-meta-item')).toHaveLength(1);
   });
 
   it('keeps routing visible on a paused rule, because routing is part of the rule definition', () => {
@@ -187,12 +186,12 @@ describe('AlertRuleRow', () => {
       expect(screen.queryByText(/healthy|pending|recovering|no data/)).not.toBeInTheDocument();
     });
 
-    it('shows no instance count and no stray separator for a rule without stored status', async () => {
+    it('shows no instance count and no empty metadata item for a rule without stored status', async () => {
       render(<AlertRuleRow hit={baseHit()} fullRule={LOADING} />);
 
       expect(await screen.findByText('Default policy')).toBeInTheDocument();
       expect(screen.queryByText(/healthy|firing|pending|recovering|no data|error/)).not.toBeInTheDocument();
-      expect(screen.queryByText('|')).not.toBeInTheDocument();
+      expect(screen.getAllByTestId('rule-meta-item')).toHaveLength(1);
     });
   });
 
