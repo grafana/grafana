@@ -419,7 +419,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // Inert on screen: only a print/PDF layout reads it, where a split panel is a chart cut in half.
     breakInside: 'avoid',
     pageBreakInside: 'avoid',
-    '&:hover, &:has(:focus-visible)': {
+    '&:hover, &:focus-within': {
       '[data-notebook-panel-actions], [data-notebook-title-action]': {
         opacity: 1,
         pointerEvents: 'auto',
