@@ -23,6 +23,11 @@ export interface ApplyNotebookSpecOptions<Refusal> {
    */
   viewOnlyChanges?: 'keep' | 'discard';
   /**
+   * The caller already refused a notebook with unresolved view-only changes, before awaiting anything of
+   * its own (the mutation API checks before its conflict read), so they are not checked again here.
+   */
+  viewOnlyChangesChecked?: boolean;
+  /**
    * Checked synchronously after everything awaited, immediately before the swap: nothing can change the
    * notebook between it and the write. A refusal leaves the notebook untouched.
    */
@@ -53,12 +58,12 @@ export type ApplyNotebookSpecResult<Refusal> =
 export async function applyNotebookSpec<Refusal = never>(
   scene: NotebookScene,
   rawSpec: unknown,
-  { validate, viewOnlyChanges, gate, enterEditMode }: ApplyNotebookSpecOptions<Refusal>
+  { validate, viewOnlyChanges, viewOnlyChangesChecked = false, gate, enterEditMode }: ApplyNotebookSpecOptions<Refusal>
 ): Promise<ApplyNotebookSpecResult<Refusal>> {
   // 1. Prepare. Checked first and before anything else touches the scene: a caller that has not yet asked
   // the person reading what to do with their changes gets nothing done, rather than a half-applied write it
   // would then have to explain.
-  const pendingViewOnlyChanges = scene.autosave.viewOnlyVizChanges();
+  const pendingViewOnlyChanges = viewOnlyChangesChecked ? [] : scene.autosave.viewOnlyVizChanges();
   if (pendingViewOnlyChanges.length > 0 && !viewOnlyChanges) {
     return { status: 'view_only_changes', elements: pendingViewOnlyChanges };
   }

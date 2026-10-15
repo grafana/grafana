@@ -8,6 +8,17 @@ import { type NotebookScene } from '../../scene/NotebookScene';
 
 import { requiresNotebookEdit } from './permissions';
 
+function viewOnlyChangesRefusal(elements: string[]) {
+  return {
+    success: false,
+    error:
+      `This notebook has unsaved view-only changes to: ${elements.join(', ')}. Ask ` +
+      'the person reading whether to keep or discard them, then retry with viewOnlyChanges set to ' +
+      '"keep" or "discard".',
+    changes: [],
+  };
+}
+
 const applyNotebookSpecPayloadSchema = z
   .object({
     spec: z
@@ -65,6 +76,14 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         };
       }
 
+      // Checked first and before anything else touches the scene: a caller that has not yet asked the
+      // person reading what to do with their changes gets nothing done, rather than a half-applied write it
+      // would then have to explain. Before the conflict check too, which reads the server.
+      const pendingViewOnlyChanges = scene.autosave.viewOnlyVizChanges();
+      if (pendingViewOnlyChanges.length > 0 && !payload.viewOnlyChanges) {
+        return viewOnlyChangesRefusal(pendingViewOnlyChanges);
+      }
+
       // Refused before the scene is touched, for the same reason as unresolved view-only changes: whoever
       // asked for this write is in a conversation and chooses there, rather than facing the overwrite modal
       // afterwards over a change that is already on screen.
@@ -98,17 +117,12 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       const result = await applyNotebookSpec(scene, payload.spec, {
         validate: payload.validate,
         viewOnlyChanges: payload.viewOnlyChanges,
+        // Checked above, before the conflict check, as the write did before Composer shared it.
+        viewOnlyChangesChecked: true,
         enterEditMode: true,
       });
       if (result.status === 'view_only_changes') {
-        return {
-          success: false,
-          error:
-            `This notebook has unsaved view-only changes to: ${result.elements.join(', ')}. Ask ` +
-            'the person reading whether to keep or discard them, then retry with viewOnlyChanges set to ' +
-            '"keep" or "discard".',
-          changes: [],
-        };
+        return viewOnlyChangesRefusal(result.elements);
       }
       if (result.status !== 'applied') {
         return { success: false, error: result.status === 'invalid' ? result.error : 'Refused.', changes: [] };

@@ -7,6 +7,7 @@ import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box, useStyles2 } from '@grafana/ui';
+import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -89,6 +90,10 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   // Varies with the mega menu, and this page is what knows there is an app header at all.
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles);
+  // Only while the extension sidebar floats over the page (the floating flag, or a Composer session):
+  // docked, it sits beside the page and the controls row keeps ranking above it, as it always has.
+  const { isOpen: sidebarOpen, presentation } = useExtensionSidebarContext();
+  const sidebarFloats = sidebarOpen && presentation === 'floating';
 
   useEffect(() => scene.activate(), [scene]);
   // Composer starts only on the notebook its route draws: see canEnterNotebookComposer.
@@ -108,7 +113,12 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const pageNav = { text: title };
 
   return (
-    <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom} className={styles.page}>
+    <Page
+      navId="notebooks"
+      pageNav={pageNav}
+      layout={PageLayoutType.Custom}
+      className={sidebarFloats ? styles.belowFloatingSidebar : undefined}
+    >
       {/* Composed here rather than by the scene: whether a surface shows the controls row is a
           property of the surface. Page's own wrapper is already a flex column, so this and the
           document below sit in it as siblings. The toolbar rides inside the row. */}
@@ -125,8 +135,8 @@ const getStyles = () => ({
   // A stacking context, as the dashboard's container makes one (DashboardSidebarSplitter): above the mega
   // menu (z-index 2), so the time picker's inline popover opens over it, and below app chrome. The sticky
   // controls row (z-index sidemenu) and the Composer overlay then rank within the notebook only, under the
-  // app header and the extension sidebar (navbarFixed + 1), docked or floating.
-  page: css({
+  // app header and the floating extension sidebar (navbarFixed + 1).
+  belowFloatingSidebar: css({
     position: 'relative',
     zIndex: 3,
   }),
