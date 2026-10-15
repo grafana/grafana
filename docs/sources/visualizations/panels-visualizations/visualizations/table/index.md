@@ -140,26 +140,31 @@ To filter column values, follow these steps:
 
 1. Click the menu icon on the right side of the column header and select **Filter values**.
 
-   Grafana displays the filter options for that column.
+   The dialog box with the filter options for the column opens.
 
    {{< figure src="/media/docs/grafana/panels-visualizations/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" >}}
 
-1. Click the checkbox next to the values that you want to display or click **Select all**.
-1. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
-1. Choose from several operators to display column values:
-   - **Contains** - Matches a regex pattern (operator by default).
-   - **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
-   - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
+1. Do one of the following, depending on the type of data in that column:
 
-1. Click the checkbox above the **Ok** and **Cancel** buttons to add or remove all displayed values to and from the filter.
+   - **Values**: Click the checkboxes next to the values you want to include or click **Select all**. To narrow the set of values, enter text in the search field and then choose an operator:
+
+     - **Contains** - Matches a regex pattern (operator by default).
+     - **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
+     - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
+
+   - **Numeric ranges**: Use the slider to set exact boundaries for the range. You can also enter values in one or both of the **Minimum** and **Maximum** fields to constrain the range. Select **Include missing /non-finite values** to... <!--TODO: Explain this -->
+   - **Date ranges**: Enter values in one or both of the **Start** and **End** fields. Select **Include missing /non-finite values** to... <!--TODO: Explain this -->
+
+1. Click **Ok** or **Apply** to add the filters and close the dialog box.
 
 ### Clear column filters
 
 Columns with filters applied have a filter icon displayed next to the title.
 
 {{< figure src="/static/img/docs/tables/filtered-column.png" max-width="100px" alt="Filtered column" class="docs-image--no-shadow" >}}
+<!-- TODO: Update screenshot -->
 
-To remove the filter, click the filter icon and then click **Clear filter**.
+To remove the filter, click the filter icon and then click **Clear** or **Clear filter**.
 The icon no longer displays.
 
 <!-- vale Grafana.WordList = NO -->
