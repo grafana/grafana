@@ -11,7 +11,6 @@ import (
 
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
-
 	authlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
@@ -105,4 +104,71 @@ func signIDToken(t *testing.T, subject string, idClaims authlib.IDTokenClaims) s
 	token, err := jwt.Signed(signer).Claims(jwt.Claims{Subject: subject, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}).Claims(idClaims).Serialize()
 	require.NoError(t, err)
 	return token
+}
+
+func TestExtendedJWT_localPluginOrganizations(t *testing.T) {
+	cfg := &setting.Cfg{
+		Raw:        ini.Empty(),
+		ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}},
+	}
+	exchanger, err := v3.LocalTokenExchanger()
+	require.NoError(t, err)
+	policy := v3.LocalAccessPolicy{
+		PluginID: "example-app", Audiences: []string{"grafana"},
+		Permissions: []string{"dashboard.grafana.app/dashboards:get"},
+	}
+	for _, tc := range []struct {
+		name       string
+		stackID    string
+		namespace  string
+		requestOrg int64
+		wantOrg    int64
+		obo        bool
+		denied     bool
+	}{
+		{name: "plugin in default org", namespace: "*", wantOrg: 1},
+		{name: "plugin in another org", namespace: "*", requestOrg: 2, wantOrg: 2},
+		{name: "plugin scoped to another org", namespace: "org-2", requestOrg: 2, wantOrg: 2},
+		{name: "caller in another org", namespace: "org-2", requestOrg: 2, wantOrg: 2, obo: true},
+		{name: "caller without org override", namespace: "org-2", wantOrg: 2, obo: true},
+		{name: "cannot switch caller org", namespace: "org-2", requestOrg: 3, obo: true, denied: true},
+		{name: "cannot switch plugin org", namespace: "default", requestOrg: 2, denied: true},
+		{name: "cannot use cloud namespace locally", namespace: "stacks-123", denied: true},
+		{name: "unknown namespace", namespace: "other", denied: true},
+		{name: "invalid organization", namespace: "org-0", denied: true},
+		{name: "configured stack", stackID: "123", namespace: "stacks-123", wantOrg: 1, obo: true},
+		{name: "other stack", stackID: "123", namespace: "stacks-456", denied: true},
+		{name: "local namespace in stack", stackID: "123", namespace: "default", denied: true},
+		{name: "wildcard token in stack", stackID: "123", namespace: "*", wantOrg: 1},
+		{name: "cannot switch stack organization", stackID: "123", namespace: "*", requestOrg: 2, denied: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testCfg := *cfg
+			testCfg.StackID = tc.stackID
+			client := ProvideExtendedJWT(&testCfg, tracing.InitializeTracerForTest())
+			req := authlib.TokenExchangeRequest{Namespace: tc.namespace, Audiences: []string{"grafana"}}
+			if tc.obo {
+				id := signIDToken(t, "user:42", authlib.IDTokenClaims{Identifier: "u42", Type: claims.TypeUser, Namespace: tc.namespace})
+				inbound, err := exchanger.Exchange(context.Background(), authlib.TokenExchangeRequest{Namespace: tc.namespace, Audiences: []string{"example-app"}, SubjectToken: id})
+				require.NoError(t, err)
+				req.SubjectToken = inbound.Token
+			}
+			token, err := v3.SignLocalAccessToken(context.Background(), policy, req)
+			require.NoError(t, err)
+			r := &authn.Request{OrgID: tc.requestOrg, HTTPRequest: &http.Request{Header: http.Header{"X-Access-Token": {token}}}}
+			identity, err := client.Authenticate(context.Background(), r)
+			if tc.denied {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.wantOrg, identity.OrgID)
+			require.Equal(t, tc.wantOrg, r.OrgID, "user sync must resolve permissions in the token's organization")
+			if tc.obo {
+				require.Equal(t, "42", identity.ID)
+				require.Equal(t, "u42", identity.UID)
+				require.Equal(t, policy.Permissions, identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions)
+			}
+		})
+	}
 }

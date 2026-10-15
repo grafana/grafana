@@ -827,7 +827,7 @@ func TestExtendedJWT_authenticateAsUserViaOBO_defensive(t *testing.T) {
 			},
 		}
 
-		id, err := env.s.authenticateAsUserViaOBO(token, "signed-token")
+		id, err := env.s.authenticateAsUserViaOBO(token, "signed-token", env.s.cfg.DefaultOrgID())
 		assert.ErrorIs(t, err, errExtJWTInvalidSubject)
 		assert.Nil(t, id)
 	})

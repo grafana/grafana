@@ -124,6 +124,34 @@ declares GET but not HEAD is sent to the plugin as the GET it declared, with the
 response body dropped. A route that declares a check is refused when no access
 client is configured.
 
+## Local plugin authentication
+
+Without an external token signer, Grafana signs v3 requests with an in-memory
+key and passes its public key to the plugin as `GRAFANA_JWKS`. App plugins also
+receive `API_ACCESS_ROUTER_URL`, `API_ACCESS_TOKEN_EXCHANGE_URL`, and a
+process-specific `API_ACCESS_CAP_TOKEN`. The app SDK's `BuildKubeConfig` uses
+these to call Grafana through the same token-exchange transport used in Cloud.
+Pass the handler's context to the SDK client to act on behalf of the caller;
+background requests act as the plugin. No `insecure_skip_authentication` setting
+is needed.
+
+The local policy grants app access, the plugin's own `*.ext.grafana.app` groups,
+and the manifest's `extraPermissions.accessKinds`. Delegated requests are also
+limited by the caller's permissions and organization. Cloud deployment policy
+overrides are not imported into this local policy.
+
+Setting either `[plugins] v3_cap_token` or `v3_token_exchange_url`,
+`[auth.extended_jwt] jwks_url`, or the `GRAFANA_JWKS` or `GRAFANA_JWKS_URL`
+environment variable disables local signing. Inherited
+`API_ACCESS_*` URL or credential overrides prevent automatic local API
+credentials from being injected. Use an app SDK version that supports the JWKS
+and token-exchange environment variables, and keep the `grafana` audience in
+`[auth.extended_jwt] audiences` (the default).
+
+The key and credentials belong to one Grafana process. Restarting Grafana
+invalidates them; stopping, replacing, or failing to start a plugin revokes that
+plugin process's exchange credential. This local signer does not provide shared
+credentials across Grafana replicas.
 
 ## Admission hooks
 

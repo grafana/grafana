@@ -81,6 +81,17 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	defer p.mutex.Unlock()
 
 	p.state = pluginStateStartInit
+	defer func() {
+		if p.state == pluginStateStartFail {
+			if p.client != nil {
+				p.client.Kill()
+			}
+			localv3.RevokeLocalAccessPolicyToken(p.accessPolicyToken)
+			p.accessPolicyToken = ""
+			p.pluginClient = nil
+			p.clientV3 = nil
+		}
+	}()
 
 	// A restart replaces the process, so the previous one's token must stop working.
 	localv3.RevokeLocalAccessPolicyToken(p.accessPolicyToken)
