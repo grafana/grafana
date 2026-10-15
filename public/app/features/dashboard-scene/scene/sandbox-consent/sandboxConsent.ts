@@ -5,7 +5,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 export type ConsentScope = 'dashboard' | 'always';
 
-export interface BlockedUrl {
+interface BlockedUrl {
   url: string;
   count: number;
 }
