@@ -267,29 +267,6 @@ func TestStoreUsesProviderTables(t *testing.T) {
 
 	require.Equal(t, 4, calls)
 	require.Equal(t, []string{"user_auth", "user", "user_auth", "user_auth", "user_auth", "user_auth", "user_auth"}, tables)
-	t.Run("batch auth modules", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta("FROM `test_schema`.`user_auth` WHERE `user_id` IN (?,?) ORDER BY `created` DESC")).
-			WithArgs(int64(42), int64(43)).
-			WillReturnRows(sqlmock.NewRows([]string{"user_id", "auth_module"}).
-				AddRow(42, "ldap").AddRow(43, "oauth_github").AddRow(42, "ldap").AddRow(42, "oauth_generic_oauth"))
-		modules, err := store.GetUsersAuthModules(ctx, []int64{42, 43})
-		require.NoError(t, err)
-		require.Equal(t, map[int64][]string{42: {"ldap", "oauth_generic_oauth"}, 43: {"oauth_github"}}, modules)
-	})
-	t.Run("empty batch skips database", func(t *testing.T) {
-		before := calls
-		modules, err := store.GetUsersAuthModules(ctx, nil)
-		require.NoError(t, err)
-		require.Empty(t, modules)
-		require.Equal(t, before, calls)
-	})
-	t.Run("batch query error", func(t *testing.T) {
-		wantErr := errors.New("auth query failed")
-		mock.ExpectQuery(regexp.QuoteMeta("FROM `test_schema`.`user_auth`")).WithArgs(int64(42)).WillReturnError(wantErr)
-		modules, err := store.GetUsersAuthModules(ctx, []int64{42})
-		require.ErrorIs(t, err, wantErr)
-		require.Nil(t, modules)
-	})
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -382,4 +359,70 @@ func countEntries(t *testing.T, sql db.DB, authModule, authID string, userID int
 
 	require.NoError(t, err)
 	return result
+}
+
+func TestStore_GetUsersAuthModules(t *testing.T) {
+	registerAuthInfoSQLMockXormDriverOnce.Do(func() {
+		if core.QueryDriver("sqlmock") == nil {
+			core.RegisterDriver("sqlmock", authInfoSQLMockXormDriver{})
+		}
+	})
+	for _, tt := range []struct {
+		name       string
+		userIDs    []int64
+		queryError bool
+	}{
+		{name: "groups and deduplicates modules", userIDs: []int64{42, 43, 44}},
+		{name: "empty input"},
+		{name: "query error", userIDs: []int64{42, 43, 44}, queryError: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			mockDB, mock, err := sqlmock.NewWithDSN(t.Name())
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = mockDB.Close() })
+			engine, err := xorm.NewEngine("sqlmock", t.Name())
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = engine.Close() })
+			calls, tableCalls := 0, 0
+			ctx := t.Context()
+			store := &Store{sql: func(gotCtx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				require.Equal(t, ctx, gotCtx)
+				calls++
+				return &legacysql.LegacyDatabaseHelper{DB: &sqlmockAuthInfoDB{engine: engine}, Table: func(name string) string {
+					require.Equal(t, "user_auth", name)
+					tableCalls++
+					return "test_schema." + name
+				}}, nil
+			}}
+			wantErr := errors.New("auth query failed")
+			if len(tt.userIDs) > 0 {
+				query := mock.ExpectQuery("^"+regexp.QuoteMeta("SELECT `user_id`, `auth_module` FROM `test_schema`.`user_auth` WHERE `user_id` IN (?,?,?) ORDER BY `created` DESC")+"$").WithArgs(int64(42), int64(43), int64(44))
+				if tt.queryError {
+					query.WillReturnError(wantErr)
+				} else {
+					query.WillReturnRows(sqlmock.NewRows([]string{"user_id", "auth_module"}).AddRow(42, "ldap").AddRow(43, "oauth_github").AddRow(42, "ldap").AddRow(42, "oauth_generic_oauth"))
+				}
+			}
+			modules, err := store.GetUsersAuthModules(ctx, tt.userIDs)
+			if tt.queryError {
+				require.ErrorIs(t, err, wantErr)
+				require.Nil(t, modules)
+			} else {
+				require.NoError(t, err)
+				if len(tt.userIDs) == 0 {
+					require.Empty(t, modules)
+				} else {
+					require.Equal(t, map[int64][]string{42: {"ldap", "oauth_generic_oauth"}, 43: {"oauth_github"}}, modules)
+					require.NotContains(t, modules, int64(44))
+				}
+			}
+			wantCalls := 0
+			if len(tt.userIDs) > 0 {
+				wantCalls = 1
+			}
+			require.Equal(t, wantCalls, calls)
+			require.Equal(t, wantCalls, tableCalls)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }

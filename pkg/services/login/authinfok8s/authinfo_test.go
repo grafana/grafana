@@ -30,9 +30,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type testDirectRestConfigProvider struct{ serverURL string }
+type testDirectRestConfigProvider struct {
+	serverURL string
+	calls     int
+}
 
 func (p *testDirectRestConfigProvider) GetDirectRestConfig(*contextmodel.ReqContext) *clientrest.Config {
+	p.calls++
 	return &clientrest.Config{Host: p.serverURL}
 }
 func (*testDirectRestConfigProvider) DirectlyServeHTTP(http.ResponseWriter, *http.Request) {}
@@ -890,13 +894,15 @@ func TestStore_DeleteAuthInfo(t *testing.T) {
 
 func TestStore_GetUsersAuthModules(t *testing.T) {
 	for _, tt := range []struct {
-		name       string
-		userIDs    []int64
-		failSecond bool
-		want       map[int64][]string
+		name         string
+		userIDs      []int64
+		failSecond   bool
+		wantRequests int
+		want         map[int64][]string
 	}{
-		{name: "groups modules by user", userIDs: []int64{1, 2}, want: map[int64][]string{1: {"ldap"}, 2: {"oauth_github"}}},
-		{name: "returns later lookup error without partial results", userIDs: []int64{1, 2}, failSecond: true},
+		{name: "groups modules by user", userIDs: []int64{1, 2}, wantRequests: 4, want: map[int64][]string{1: {"ldap"}, 2: {"oauth_github"}}},
+		{name: "returns later lookup error without partial results", userIDs: []int64{1, 2}, wantRequests: 4, failSecond: true},
+		{name: "omits missing users and users without modules", userIDs: []int64{3, 4}, wantRequests: 3, want: map[int64][]string{}},
 		{name: "empty input makes no requests", want: map[int64][]string{}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -910,11 +916,19 @@ func TestStore_GetUsersAuthModules(t *testing.T) {
 						usersResponse(t, w, "first")
 					case utils.LabelKeyDeprecatedInternalID + "=2":
 						usersResponse(t, w, "second")
+					case utils.LabelKeyDeprecatedInternalID + "=3":
+						noUsersResponse(t, w)
+					case utils.LabelKeyDeprecatedInternalID + "=4":
+						usersResponse(t, w, "no-modules")
 					default:
 						t.Errorf("unexpected user selector: %s", r.URL.RawQuery)
 						http.Error(w, "unexpected selector", http.StatusBadRequest)
 					}
 				case strings.HasSuffix(r.URL.Path, "/authinfos"):
+					if r.URL.Query().Get("fieldSelector") == "spec.userRef.name=no-modules" {
+						writeJSON(t, w, iamv0alpha1.AuthInfoList{})
+						return
+					}
 					uid, module := "first", "ldap"
 					if r.URL.Query().Get("fieldSelector") == "spec.userRef.name=second" {
 						if tt.failSecond {
@@ -940,7 +954,12 @@ func TestStore_GetUsersAuthModules(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tt.want, modules)
 			}
-			require.Equal(t, len(tt.userIDs)*2, requests)
+			require.Equal(t, tt.wantRequests, requests)
+			wantClientCalls := 0
+			if len(tt.userIDs) > 0 {
+				wantClientCalls = 1
+			}
+			require.Equal(t, wantClientCalls, store.configProvider.(*testDirectRestConfigProvider).calls)
 		})
 	}
 }

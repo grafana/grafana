@@ -167,13 +167,25 @@ func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string,
 
 // GetUsersAuthModules preserves the per-user API lookup until AuthInfo supports batch reads.
 func (s *Store) GetUsersAuthModules(ctx context.Context, userIDs []int64) (map[int64][]string, error) {
+	ctx, span := s.tracer.Start(ctx, "authinfo.k8s.GetUsersAuthModules")
+	defer span.End()
+
 	modules := make(map[int64][]string, len(userIDs))
+	if len(userIDs) == 0 {
+		return modules, nil
+	}
+	authClient, userClient, namespace, err := s.clients(ctx)
+	if err != nil {
+		return nil, err
+	}
 	for _, userID := range userIDs {
-		values, err := s.GetUserAuthModules(ctx, userID)
+		items, err := s.modulesForUser(ctx, authClient, userClient, namespace, userID)
 		if err != nil {
 			return nil, err
 		}
-		modules[userID] = values
+		for _, item := range items {
+			modules[userID] = append(modules[userID], item.Spec.AuthModule)
+		}
 	}
 	return modules, nil
 }
