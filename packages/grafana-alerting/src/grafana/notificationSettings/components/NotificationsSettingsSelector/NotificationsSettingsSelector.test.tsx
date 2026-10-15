@@ -679,3 +679,59 @@ describe('allowEmpty', () => {
     expect(onValidityChange).toHaveBeenLastCalledWith(false);
   });
 });
+
+describe('disabled', () => {
+  it('disables the contact point selector and the timing fields', async () => {
+    const { user } = renderPicker({
+      disabled: true,
+      value: { type: 'SimplifiedRouting', receiver: 'slack-oncall' },
+    });
+
+    expect(await screen.findByRole('combobox', { name: /contact point/i })).toBeDisabled();
+
+    await user.click(screen.getByText(/muting, grouping and timings/i));
+    expect(screen.getByRole('switch', { name: /override grouping/i })).toBeDisabled();
+    expect(screen.getByLabelText(/mute timings/i)).toBeDisabled();
+  });
+
+  it('does not let the contact point be cleared', async () => {
+    renderPicker({ disabled: true, value: { type: 'SimplifiedRouting', receiver: 'slack-oncall' } });
+
+    await screen.findByDisplayValue('slack-oncall');
+
+    expect(screen.queryByTitle(/clear value/i)).not.toBeInTheDocument();
+  });
+
+  it('lets an enabled selector clear the contact point', async () => {
+    const onChange = jest.fn();
+    const { user } = renderPicker({ onChange, value: { type: 'SimplifiedRouting', receiver: 'slack-oncall' } });
+
+    await screen.findByDisplayValue('slack-oncall');
+    await user.click(screen.getByTitle(/clear value/i));
+
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('disables the policy picker', async () => {
+    renderPicker({ mode: 'notificationPolicy', disabled: true });
+
+    expect(await screen.findByRole('button', { name: /change notification policy/i })).toBeDisabled();
+  });
+
+  it('disables the fallback to the default policy for a missing tree', async () => {
+    renderPicker({
+      mode: 'notificationPolicy',
+      disabled: true,
+      value: { type: 'NamedRoutingTree', routingTree: 'deleted-tree' },
+    });
+
+    expect(await screen.findByRole('button', { name: /use the default policy/i })).toBeDisabled();
+  });
+
+  it('disables the mode toggle', async () => {
+    renderPicker({ mode: undefined, disabled: true });
+
+    expect(await screen.findByRole('radio', { name: /contact point/i })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: /notification policy/i })).toBeDisabled();
+  });
+});
