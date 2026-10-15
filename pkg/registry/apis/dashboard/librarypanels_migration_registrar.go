@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 )
 
-func LibraryPanelsMigration(migrator migrator.LibraryPanelsMigrator) migrations.MigrationDefinition {
+func LibraryPanelsMigration(migrator migrator.FoldersDashboardsMigrator) migrations.MigrationDefinition {
 	libraryPanelGR := schema.GroupResource{
 		Group:    dashV0.GROUP,
 		Resource: dashV0.LIBRARY_PANEL_RESOURCE,

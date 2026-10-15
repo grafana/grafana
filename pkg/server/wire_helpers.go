@@ -32,7 +32,6 @@ func OtelTracer() trace.Tracer {
 // the registry here.
 func ProvideMigrationRegistry(
 	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
-	libraryPanelsMigrator dashboardmigrator.LibraryPanelsMigrator,
 	playlistMigrator playlistmigrator.PlaylistMigrator,
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
 	snapshotMigrator snapshotmigrator.SnapshotMigrator,
@@ -43,7 +42,7 @@ func ProvideMigrationRegistry(
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
-	r.Register(dashboardmigration.LibraryPanelsMigration(libraryPanelsMigrator))
+	r.Register(dashboardmigration.LibraryPanelsMigration(dashMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
 	r.Register(snapshotmigration.SnapshotMigration(snapshotMigrator))
