@@ -58,7 +58,7 @@ func TestIntegrationRepository_HiddenPathContract(t *testing.T) {
 				Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType},
 			}, git.RepositoryConfig{
 				URL: remote.URL, Branch: "main", Path: prefix, TokenUser: user.Username, Token: apicommon.RawSecureValue(user.Password),
-			}, nil, nil)
+			})
 			require.NoError(t, err)
 			githubRepo, err := github.NewRepository(t.Context(), &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
@@ -72,7 +72,7 @@ func TestIntegrationRepository_HiddenPathContract(t *testing.T) {
 					Type:  provisioning.LocalRepositoryType,
 					Local: &provisioning.LocalRepositoryConfig{Path: filepath.Join(checkout.Path, prefix)},
 				},
-			}, &local.LocalFolderResolver{PermittedPrefixes: []string{checkout.Path}}, nil)
+			}, &local.LocalFolderResolver{PermittedPrefixes: []string{checkout.Path}})
 
 			want := []repository.FileTreeEntry{
 				{Path: "dashboard.json", Blob: true},
