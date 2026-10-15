@@ -42,14 +42,18 @@ export function isTrustedSVGSource(src: unknown): boolean {
 
 let cache = new Map<string, string>();
 
+// Untrusted SVGs never keep <style>, so cleanStyle only applies to trusted ones.
 function getCleanSVG(code: string, trusted: boolean, cleanStyle: boolean): string {
-  const key = `${trusted ? 't' : 'u'}${cleanStyle ? 's' : ''}:${code}`;
+  const key = trusted ? `t${cleanStyle ? 's' : ''}:${code}` : `u:${code}`;
   let clean = cache.get(key);
   if (!clean) {
-    clean = trusted ? textUtil.sanitizeSVGContent(code) : textUtil.sanitizeUntrustedSVGContent(code);
-
-    if (cleanStyle && clean.indexOf('<style type="text/css">') > -1) {
-      clean = svgStyleCleanup(clean);
+    if (trusted) {
+      clean = textUtil.sanitizeSVGContent(code);
+      if (cleanStyle && clean.indexOf('<style type="text/css">') > -1) {
+        clean = svgStyleCleanup(clean);
+      }
+    } else {
+      clean = textUtil.sanitizeUntrustedSVGContent(code);
     }
 
     cache.set(key, clean);
