@@ -10902,13 +10902,21 @@
       "cell-filter-out": "Odfiltruj wartość",
       "cell-inspect": "Sprawdź wartość",
       "cell-inspect-tooltip": "Sprawdź wartość",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filtruj wartości",
+      "column-menu-hide": "",
       "column-menu-label": "Opcje kolumn dla {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Zaktualizuj filtr",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Kopiuj do schowka",
       "csv-counts": "Wiersze: {{rows}}, Kolumny: {{columns}}",
       "csv-placeholder": "Wprowadź plik CSV tutaj…",
       "edit-column-filter": "Edytuj filtr w kolumnie {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Dodaj wszystkie wyświetlane wartości do filtra",
         "blanks": "(Puste)",
@@ -10942,6 +10950,8 @@
           "count": "Liczba"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Sprawdź wartość",
       "loading": "Wczytywanie tabeli",
       "nested-table": {
@@ -10951,6 +10961,7 @@
       "no-rows": "Brak wierszy",
       "no-values-label": "Brak wartości",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} z {{numRows}} wierszy",
+      "show-column-label": "",
       "sort-by-column": "Sortuj według kolumny {{column}}",
       "sort-by-column-ascending": "Sortuj według kolumny {{column}} rosnąco",
       "sort-by-column-descending": "Sortuj według kolumny {{column}} malejąco",
@@ -10960,7 +10971,8 @@
       },
       "tooltip": {
         "trigger": "Przełącz podpowiedź"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Znaczniki"
@@ -14071,6 +14083,9 @@
       "label-plugin-id": "Identyfikator wtyczki",
       "label-severity": "Istotność"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Wszystkie wtyczki są aktualne"
     },
@@ -14092,6 +14107,10 @@
     "plugin-details-body": {
       "needs-service-account": "Wtyczka {{pluginName}} wymaga konta usługi, aby móc wysyłać zapytania do usługi Grafana. Poniższa lista zawiera uprawnienia dostępne dla konta usługi:",
       "page-not-found": "Nie znaleziono strony."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Wycofane"
@@ -16786,6 +16805,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
     "description-page-size": "Liczba wierszy na stronie. Gdy pole jest puste, rozmiar strony jest oparty na wysokości panelu.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Pole zawierające obiekty JSON z właściwościami CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Naprzemiennie zmieniaj kolor tła co drugi wiersz",
@@ -16824,6 +16844,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimalna szerokość kolumny",
     "name-page-size": "Rozmiar strony",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Pokaż nagłówek tabeli",
     "name-styling-from-field": "Styl z pola",
     "name-tooltip-from-field": "",
@@ -16987,6 +17008,7 @@
     "editor": {
       "aria-label-content": "Zawartość tekstowa",
       "aria-label-mode": "Tryb tekstowy: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Numery wierszy",
       "format-bold": "B",
       "format-heading": "H",
@@ -17032,6 +17054,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

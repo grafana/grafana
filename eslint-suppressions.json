@@ -1710,9 +1710,6 @@
   "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 11
-    },
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
@@ -1735,9 +1732,6 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    },
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -1944,11 +1938,6 @@
   },
   "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/services/DashboardLoaderSrv.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
