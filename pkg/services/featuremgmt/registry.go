@@ -653,6 +653,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboards.libraryPanelHorizontalRepeatFullWidth",
+			Description: "Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "disableScriptedDashboards",
 			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
 			Stage:       FeatureStageDeprecated,
@@ -1312,14 +1320,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:        "pluginsSriChecks",
-			Description: "Enables SRI checks for plugin assets",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false", // disabled by default
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1892,15 +1892,6 @@ var (
 			Description:  "Set this to true to enable all app chrome extensions registered by plugins.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaCatalogSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			Expression:   "false", // extensions will be disabled by default
-		},
-		{
-			Name:         "enableDashboardEmptyExtensions",
-			Description:  "Set this to true to enable all dashboard empty state extensions registered by plugins.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Generate:     Generate{LegacyFrontend: true, React: true},
 			Expression:   "false", // extensions will be disabled by default
@@ -3409,7 +3400,14 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true},
 		},
-
+		{
+			Name:        "grafana.otelLogDetails",
+			Description: "Enables a new version of log details optimized for displaying OTel logs",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

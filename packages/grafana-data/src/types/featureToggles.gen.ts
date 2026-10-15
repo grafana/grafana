@@ -616,11 +616,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Enables SRI checks for plugin assets
-  * @default false
-  */
-  pluginsSriChecks?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -925,11 +920,6 @@ export interface FeatureToggles {
   * @default false
   */
   enableAppChromeExtensions?: boolean;
-  /**
-  * Set this to true to enable all dashboard empty state extensions registered by plugins.
-  * @default false
-  */
-  enableDashboardEmptyExtensions?: boolean;
   /**
   * Enables use of app platform API for folders
   * @default true

@@ -35,6 +35,7 @@ import {
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -636,6 +637,43 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
 
       expect(adhocVariable.state.defaultKeys).toBeUndefined();
+    });
+  });
+
+  describe('when the perPanelNonApplicableDrilldowns flag is on', () => {
+    beforeEach(() => {
+      setTestFlags({ perPanelNonApplicableDrilldowns: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    // The standalone GroupByVariable in defaultDashboard is migrated away on load, so only the adhoc variable is checked
+    it('should enable applicability on adhoc variables', () => {
+      const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+      const variables = scene.state.$variables?.state.variables ?? [];
+
+      const adhocVariable = variables.find((v) => v instanceof AdHocFiltersVariable);
+
+      expect(adhocVariable?.state).toMatchObject({ applicabilityEnabled: true });
+    });
+
+    it('should enable applicability on adhoc variables in snapshots', () => {
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      expect(scene.state.$variables?.getByName('adhocVar')?.state).toMatchObject({ applicabilityEnabled: true });
     });
   });
 
