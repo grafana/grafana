@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, FilterPill, Grid, IconButton, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
-import config from 'app/core/config';
 import { TransformationCard } from 'app/features/dashboard/components/TransformationsEditor/TransformationCard';
 import { TransformationSearchStatus } from 'app/features/dashboard/components/TransformationsEditor/TransformationSearchStatus';
 import { useHasBackendDatasource } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/utils';
@@ -40,7 +39,7 @@ export function TransformationTypePicker() {
   } = useTransformationSearchAndFilter(finalizePendingTransformation);
 
   const hasBackendDs = useHasBackendDatasource({ datasourceUid: dsSettings?.uid, queries });
-  const showSqlCTA = config.featureToggles.sqlExpressions && hasBackendDs;
+  const showSqlCTA = hasBackendDs;
 
   const handleAddSqlExpression = useCallback(() => {
     reportInteraction('dashboards_expression_interaction', {

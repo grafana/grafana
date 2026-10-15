@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Drawer, EmptyState, FilterPill, Grid, InlineLabel, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
-import config from 'app/core/config';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
 
 import { SqlExpressionsBanner } from './SqlExpressions/SqlExpressionsBanner';
@@ -69,7 +68,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
       title={t('dashboard.transformation-picker-ng.title-add-another-transformation', 'Add another transformation')}
     >
       <Stack direction="column" gap={2}>
-        {config?.featureToggles?.sqlExpressions && <SqlExpressionsBanner />}
+        <SqlExpressionsBanner />
         <div className={styles.searchWrapper}>
           <Input
             data-testid={selectors.components.Transforms.searchInput}

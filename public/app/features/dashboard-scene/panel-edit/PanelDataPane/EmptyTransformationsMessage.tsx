@@ -116,7 +116,7 @@ function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   });
 
   // Show the SQL Expression card if any datasource in the query set is a backend datasource.
-  const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions && hasBackendDs;
+  const showSqlCard = hasGoToQueries && hasBackendDs;
 
   return (
     <Box padding={2}>

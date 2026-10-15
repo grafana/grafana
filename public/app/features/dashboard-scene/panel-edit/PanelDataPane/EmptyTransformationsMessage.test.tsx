@@ -33,7 +33,6 @@ describe('EmptyTransformationsMessage', () => {
     // Set up feature toggles
     config.featureToggles = config.featureToggles || {};
     config.featureToggles.transformationsEmptyPlaceholder = false;
-    config.featureToggles.sqlExpressions = true;
   });
 
   describe('LegacyEmptyTransformationsMessage', () => {
@@ -69,9 +68,7 @@ describe('EmptyTransformationsMessage', () => {
       } as DataSourceInstanceSettings);
     });
 
-    it('should render SQL expression card and transformation cards when sqlExpressions toggle is enabled', async () => {
-      config.featureToggles.sqlExpressions = true;
-
+    it('should render SQL expression and transformation cards for a backend datasource', async () => {
       render(
         <EmptyTransformationsMessage
           onShowPicker={onShowPicker}
@@ -91,29 +88,7 @@ describe('EmptyTransformationsMessage', () => {
       expect(screen.getByText('Filter data by values')).toBeInTheDocument();
     });
 
-    it('should not show SQL expression card when sqlExpressions toggle is disabled', async () => {
-      config.featureToggles.sqlExpressions = false;
-
-      render(
-        <EmptyTransformationsMessage
-          onShowPicker={onShowPicker}
-          onGoToQueries={onGoToQueries}
-          onAddTransformation={onAddTransformation}
-          data={[]}
-        />
-      );
-
-      await act(async () => {
-        await Promise.resolve();
-      });
-
-      expect(screen.queryByText('Transform with SQL')).not.toBeInTheDocument();
-      // But should still show transformation cards
-      expect(screen.getByText('Organize fields by name')).toBeInTheDocument();
-    });
-
     it('should call onGoToQueries when SQL expression card is clicked', async () => {
-      config.featureToggles.sqlExpressions = true;
       const user = userEvent.setup();
 
       render(

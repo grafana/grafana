@@ -170,7 +170,7 @@ func TestQueryAPI(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			builder := &QueryAPIBuilder{
 				converter: &expr.ResultConverter{
-					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
+					Features: featuremgmt.WithFeatures(),
 					Tracer:   tracing.InitializeTracerForTest(),
 				},
 				instanceProvider: mockInstanceProvider{
@@ -303,7 +303,7 @@ func (m mockClient) QueryData(ctx context.Context, req dataapi.QueryDataRequest)
 func (m mockInstance) GetSettings() clientapi.InstanceConfigurationSettings {
 	return clientapi.InstanceConfigurationSettings{
 		ExpressionsEnabled: true,
-		FeatureToggles:     featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
+		FeatureToggles:     featuremgmt.WithFeatures(),
 	}
 }
 

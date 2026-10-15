@@ -5414,7 +5414,8 @@
       "metadata": {
         "name": "sqlExpressions",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "deletionTimestamp": "2026-10-14T14:55:32Z"
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",

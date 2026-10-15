@@ -210,7 +210,7 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 			cfg.ExpressionsEnabled = true
 			cfg.SQLExpressionCellLimit = tt.configCellLimit
 
-			features := featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+			features := featuremgmt.WithFeatures()
 
 			// Create service with our configured limit
 			s := &Service{
