@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
@@ -301,7 +302,7 @@ var Basic = wire.NewSet(
 	github.ProvideFactory,
 	ghconnection.ProvideFactory,
 	tracing.ProvideService,
-	tracing.ProvideTracingConfig,
+	tracingsetting.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	infranats.ProvideNATSConfig,
 	infranats.ProvideServer,
