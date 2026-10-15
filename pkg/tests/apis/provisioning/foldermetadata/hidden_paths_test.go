@@ -150,10 +150,9 @@ func TestIntegrationProvisioning_HiddenPaths_KeepTypeChange(t *testing.T) {
 
 	for _, tc := range []struct {
 		name, path string
-		outcome    common.SyncOption
 	}{
-		{"file to directory", "empty/.keep/dashboard.json", common.Succeeded()},
-		{"directory to file", "empty/.keep", common.Warning()},
+		{"file to directory", "empty/.keep/dashboard.json"},
+		{"directory to file", "empty/.keep"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := local.Git("rm", "-r", "empty/.keep")
@@ -161,7 +160,7 @@ func TestIntegrationProvisioning_HiddenPaths_KeepTypeChange(t *testing.T) {
 			require.NoError(t, local.CreateFile(tc.path, string(common.DashboardJSON("hidden-dashboard", "Hidden", 1))))
 			commitHiddenPathChanges(t, local)
 
-			common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, tc.outcome)
+			common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 			helper.RequireRepoDashboardCount(t, repoName, 1)
 			common.RequireRepoFolders(t, helper.Folders, repoName, []string{"empty"})
 			common.RequireRepoFolderUID(t, helper.Folders, repoName, folderUID)

@@ -179,7 +179,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-in-001": {Title: "Dashboard One", SourcePath: "team-a/dashboard1.json"},
 	})
@@ -202,7 +202,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 		"folder-b/.keep":           {},
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-a/dashboard1.json"},
 	})
@@ -219,7 +219,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-b/dashboard1.json"},
 	})
@@ -241,7 +241,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 		"team-x/dashboard1.json": common.DashboardJSON("move-root-001", "Dashboard Root", 1),
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "team-x/dashboard1.json"},
 	})
@@ -282,7 +282,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 		"old-team/dashboard2.json": common.DashboardJSON("ren-fold-002", "Folder Dash Two", 1),
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-fold-001": {Title: "Folder Dash One", SourcePath: "old-team/dashboard1.json"},
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "old-team/dashboard2.json"},
@@ -304,7 +304,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-fold-001": {Title: "Folder Dash One", SourcePath: "new-team/dashboard1.json"},
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "new-team/dashboard2.json"},
@@ -332,7 +332,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 		"parent/child-b/.keep":           {},
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-a/dashboard1.json"},
 	})
@@ -349,7 +349,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-b/dashboard1.json"},
 	})
@@ -372,7 +372,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 		"parent/sibling/dashboard2.json":   common.DashboardJSON("ren-nest-002", "Sibling Dash", 1),
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/old-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
@@ -390,7 +390,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/new-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
@@ -420,7 +420,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent(
 		"old/dashboard.json": dashJSON,
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Pure Rename Dash", SourcePath: "old/dashboard.json"},
 	})
@@ -437,7 +437,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent(
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Pure Rename Dash", SourcePath: "new/dashboard.json"},
 	})
@@ -465,7 +465,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewCon
 		"old/dashboard.json": common.DashboardJSON(uid, "Original Title", 1),
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Original Title", SourcePath: "old/dashboard.json"},
 	})
@@ -486,7 +486,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewCon
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Edited Title", SourcePath: "new/dashboard.json"},
 	})
@@ -521,7 +521,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFromInvalidOldPath_Rec
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Recovered Dashboard", SourcePath: "good-path/dashboard.json"},
 	})
@@ -555,7 +555,7 @@ func TestIntegrationProvisioning_FullGitSync_RenameFromInvalidOldPath_Recovers(t
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Recovered Dashboard", SourcePath: "good-path/dashboard.json"},
 	})
