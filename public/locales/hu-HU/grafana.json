@@ -10762,13 +10762,21 @@
       "cell-filter-out": "Érték kiszűrése",
       "cell-inspect": "Érték ellenőrzése",
       "cell-inspect-tooltip": "Érték ellenőrzése",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Értékek szűrése",
+      "column-menu-hide": "",
       "column-menu-label": "Oszlopbeállítások a következőhöz: {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Szűrő frissítése",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Másolás a vágólapra",
       "csv-counts": "Sorok:{{rows}}, Oszlopok:{{columns}}",
       "csv-placeholder": "Itt adja meg a CSV-t...",
       "edit-column-filter": "Szűrő szerkesztése itt: {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Az összes megjelenített érték hozzáadása a szűrőhöz",
         "blanks": "(Üresek)",
@@ -10802,6 +10810,8 @@
           "count": "Szám"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Érték ellenőrzése",
       "loading": "Táblázat betöltése",
       "nested-table": {
@@ -10811,6 +10821,7 @@
       "no-rows": "Nincsenek sorok",
       "no-values-label": "Nincsenek értékek",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
+      "show-column-label": "",
       "sort-by-column": "Rendezés a(z) {{column}} oszlop szerint",
       "sort-by-column-ascending": "Rendezés a(z) {{column}} oszlop szerint, növekvő sorrendben",
       "sort-by-column-descending": "Rendezés a(z) {{column}} oszlop szerint, csökkenő sorrendben",
@@ -10820,7 +10831,8 @@
       },
       "tooltip": {
         "trigger": "Elemleírás ki- és bekapcsolása"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Címkék"
@@ -13871,6 +13883,9 @@
       "label-plugin-id": "Bővítményazonosító",
       "label-severity": "Súlyosság"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Minden bővítmény naprakész"
     },
@@ -13892,6 +13907,10 @@
     "plugin-details-body": {
       "needs-service-account": "A(z) {{pluginName}} bővítménynek szolgáltatási fiókra van szüksége a Grafana lekérdezéséhez. A következő lista tartalmazza a szolgáltatási fiókhoz elérhető engedélyeket:",
       "page-not-found": "Az oldal nem található."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Elavult"
@@ -16526,6 +16545,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
     "description-page-size": "Sorok száma oldalanként. Ha üres, az oldalméret a panel magasságán alapul.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Minden második sor háttérszínének váltogatása",
@@ -16564,6 +16584,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-page-size": "Lapméret",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
     "name-styling-from-field": "Stílus a mezőből",
     "name-tooltip-from-field": "",
@@ -16727,6 +16748,7 @@
     "editor": {
       "aria-label-content": "Szövegtartalom",
       "aria-label-mode": "Szöveges mód: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Sorok számozása",
       "format-bold": "B",
       "format-heading": "H",
@@ -16772,6 +16794,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

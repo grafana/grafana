@@ -1435,6 +1435,17 @@
             }
           },
           {
+            "name": "name",
+            "in": "query",
+            "description": "only include resources with these names (UIDs)",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
             "name": "facet",
             "in": "query",
             "description": "count distinct terms for selected fields",
@@ -3537,7 +3548,7 @@
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -3585,13 +3596,13 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
           }
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search.",
+        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
         "type": "object",
         "required": [
           "metadata",

@@ -427,7 +427,7 @@ func renamedFromResourceFile(change repository.VersionedFileChange) bool {
 }
 
 // splitRenamesOntoNonResources rewrites the rename of a resource file onto a path that is not a
-// resource (README.md, another extension, a hidden file or folder) into the deletion of the old
+// resource (README.md or another extension) into the deletion of the old
 // path and the creation of the new one. That is what a full sync of the same commit sees, and the
 // deletion removes the resource like any other (or, for a _folder.json, reverts the folder).
 func splitRenamesOntoNonResources(diff []repository.VersionedFileChange, folderMetadataEnabled bool) []repository.VersionedFileChange {
@@ -466,8 +466,7 @@ func splitsRename(change repository.VersionedFileChange, folderMetadataEnabled b
 		// file moved onto another _folder.json is the metadata builder's own case).
 		return folderMetadataEnabled && !resources.IsFolderMetadataFile(change.Path)
 	}
-	return resources.IsPathSupported(change.Path) != nil &&
-		(safepath.IsHidden(change.Path) || !resources.HasResourceExtension(change.Path))
+	return !resources.HasResourceExtension(change.Path)
 }
 
 // reserveQuota is the hook RenameResourceFile calls before it creates a resource

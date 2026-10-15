@@ -255,17 +255,13 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.maxPerRow).toBe(4);
     });
 
-    it('skips the migration when dashboardNewLayouts is enabled', async () => {
-      setTestFlags({ dashboardNewLayouts: true });
-
+    it('skips the migration for dynamic dashboards', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
 
       expect(gridItem.state.variableName).toBeUndefined();
     });
 
-    it('still migrates for a public dashboard when dashboardNewLayouts is enabled', async () => {
-      setTestFlags({ dashboardNewLayouts: true });
-
+    it('still migrates for a public dashboard', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
         meta: { publicDashboardEnabled: true },
@@ -274,9 +270,7 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.variableName).toBe('server');
     });
 
-    it('still migrates for a scripted dashboard when dashboardNewLayouts is enabled', async () => {
-      setTestFlags({ dashboardNewLayouts: true });
-
+    it('still migrates for a scripted dashboard', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
         meta: { fromScript: true },
@@ -331,7 +325,6 @@ describe('LibraryPanelBehavior', () => {
     });
 
     afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = false;
       setTestFlags({});
     });
 
@@ -371,9 +364,7 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.maxPerRow).toBe(2);
     });
 
-    it('migrates when dashboardNewLayouts is enabled but the server did not resolve it', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
-
+    it('migrates when the server did not resolve it', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
         // only a spec that reached the browser unresolved carries the marker
@@ -384,9 +375,7 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.maxPerRow).toBe(4);
     });
 
-    it('skips the migration when dashboardNewLayouts is enabled but the server resolved it', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
-
+    it('skips the migration when the server resolved it', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
         // apiserver resolved repeat options onto the grid item during the v1->v2 conversion

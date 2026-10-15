@@ -5,6 +5,12 @@ import type { BlockedResource } from './sandboxPolicy';
 export const TEXT_FRAME_PROTOCOL = 'grafana-text-frame-v1';
 export const CSP_CHECK_URL = 'https://grafana-csp-check.invalid/';
 
+export function randomId() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (value) => value.toString(16).padStart(2, '0')).join(
+    ''
+  );
+}
+
 export interface RenderCommand {
   protocol: typeof TEXT_FRAME_PROTOCOL;
   channel: string;
@@ -23,7 +29,8 @@ export interface MermaidCommand {
 }
 
 export type FrameNotification =
-  | { type: 'ready' | 'rendered' | 'error' | 'mermaid-needed' }
+  | { type: 'ready'; document: string }
+  | { type: 'rendered' | 'error' | 'mermaid-needed' }
   | { type: 'resize'; height: number; contentHeight: number }
   | { type: 'blocked'; resources: BlockedResource[] };
 
@@ -43,6 +50,7 @@ export function isFrameNotification(
   }
   switch (value.type) {
     case 'ready':
+      return 'document' in value && typeof value.document === 'string';
     case 'rendered':
     case 'error':
     case 'mermaid-needed':

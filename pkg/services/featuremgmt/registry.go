@@ -504,7 +504,7 @@ var (
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // Adds a route at startup
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:            "useNewAPIsForDatasourceCRUD",
@@ -523,14 +523,6 @@ var (
 			RequiresRestart: true, // changes the API routing
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "queryServiceFromUI",
-			Description: "Routes requests to the new query service",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // and can change at startup
-			Expression:  "false",
 		},
 		{
 			Name:            "datasourcesRerouteLegacyCRUDAPIs",
@@ -1071,6 +1063,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.smtpSettingsPage",
+			Description: "Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaBackendServicesSquad,
+			Generate:    Generate{Go: true, React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardTemplatesAssistantButton",
 			Description: "Enables the Assistant button in the dashboard templates card",
 			Stage:       FeatureStageExperimental,
@@ -1318,14 +1318,6 @@ var (
 			Owner:       grafanaCatalogSquad,
 			Expression:  "false", // disabled by default
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "timeRangeProvider",
-			Description: "Enables time pickers sync",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
@@ -1991,7 +1983,7 @@ var (
 		{
 			Name:        "grafana.newTextPanel",
 			Description: "Enables the new text panel",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDatavizSquad,
 			Generate:    Generate{React: true},
 			Expression:  "false",
@@ -3166,6 +3158,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:        "grafana.navigationInfoArchRefresh",
+			Description: "Enables the refreshed information architecture for Grafana's navigation",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:        "grafana.exploreMetricsSidebar",

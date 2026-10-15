@@ -978,7 +978,7 @@ describe('instanceSettings', () => {
     it('populates the cache from a prefetched payload without fetching', async () => {
       initDataSourceInstanceSettings({ Bravo: fixtures.Bravo }, 'Bravo');
 
-      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+      await syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
 
       expect(backendGet).not.toHaveBeenCalled();
       const list = await getDataSourceInstanceList({ all: true });
@@ -991,7 +991,7 @@ describe('instanceSettings', () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
       // Sync a payload that does not include the expression datasource.
-      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+      await syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
 
       expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
       const items = await getDataSourceInstanceList({ all: true });
@@ -1002,7 +1002,7 @@ describe('instanceSettings', () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       upsertRuntimeDataSourceInstanceSettings(ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' }));
 
-      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+      await syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
 
       expect((await getDataSourceInstanceSettings('runtime-ds'))?.name).toBe('Runtime');
     });
@@ -1013,7 +1013,7 @@ describe('instanceSettings', () => {
       const unsubscribe = subscribeToDataSourceCache(listener);
       unsubscribe();
 
-      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+      await syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
 
       expect((await getDataSourceInstanceSettings(null))?.name).toBe('Alpha');
       expect(listener).not.toHaveBeenCalled();
