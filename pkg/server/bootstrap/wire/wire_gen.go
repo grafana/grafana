@@ -605,7 +605,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	legacyMigrator := legacy.ProvideMigrator(legacyDatabaseProvider, stubProvisioningService, accessControl)
 	foldersDashboardsMigrator := migrator2.ProvideFoldersDashboardsMigrator(legacyMigrator)
-	libraryPanelsMigrator := migrator2.ProvideLibraryPanelsMigrator(legacyMigrator)
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
 	snapshotMigrator := migrator4.ProvideSnapshotMigrator(legacyDatabaseProvider, secretsService)
@@ -644,7 +643,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	starsMigrator := legacy2.ProvideStarsMigrator(legacyDatabaseProvider)
 	preferencesMigrator := legacy3.ProvidePreferencesMigrator(legacyDatabaseProvider)
 	queryCacheConfigMigrator := migrator6.ProvideQueryCacheConfigMigrator(legacyDatabaseProvider)
-	migrationRegistry := server.ProvideMigrationRegistry(foldersDashboardsMigrator, libraryPanelsMigrator, playlistMigrator, shortURLMigrator, snapshotMigrator, dataSourceMigrator, starsMigrator, preferencesMigrator, queryCacheConfigMigrator)
+	migrationRegistry := server.ProvideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, snapshotMigrator, dataSourceMigrator, starsMigrator, preferencesMigrator, queryCacheConfigMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(v5, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, v5, migrationRegistry, gcGate)
 	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
@@ -1402,7 +1401,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	legacyMigrator := legacy.ProvideMigrator(legacyDatabaseProvider, stubProvisioningService, accessControl)
 	foldersDashboardsMigrator := migrator2.ProvideFoldersDashboardsMigrator(legacyMigrator)
-	libraryPanelsMigrator := migrator2.ProvideLibraryPanelsMigrator(legacyMigrator)
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
 	snapshotMigrator := migrator4.ProvideSnapshotMigrator(legacyDatabaseProvider, secretsService)
@@ -1429,7 +1427,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	starsMigrator := legacy2.ProvideStarsMigrator(legacyDatabaseProvider)
 	preferencesMigrator := legacy3.ProvidePreferencesMigrator(legacyDatabaseProvider)
 	queryCacheConfigMigrator := migrator6.ProvideQueryCacheConfigMigrator(legacyDatabaseProvider)
-	migrationRegistry := server.ProvideMigrationRegistry(foldersDashboardsMigrator, libraryPanelsMigrator, playlistMigrator, shortURLMigrator, snapshotMigrator, dataSourceMigrator, starsMigrator, preferencesMigrator, queryCacheConfigMigrator)
+	migrationRegistry := server.ProvideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, snapshotMigrator, dataSourceMigrator, starsMigrator, preferencesMigrator, queryCacheConfigMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(v5, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, v5, migrationRegistry, gcGate)
 	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
