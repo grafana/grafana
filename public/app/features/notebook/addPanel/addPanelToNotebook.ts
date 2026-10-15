@@ -16,7 +16,12 @@ import {
 } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { findActiveNotebookScene } from '../scene/activeNotebookScenes';
-import { defaultSpec as defaultNotebookSpec, type PanelElement, type Spec as NotebookSpec } from '../types';
+import {
+  defaultSpec as defaultNotebookSpec,
+  type NotebookElement,
+  type PanelElement,
+  type Spec as NotebookSpec,
+} from '../types';
 
 import {
   appendElementsToNotebook,
@@ -34,6 +39,11 @@ export interface AddedToNotebook {
 interface CreateNotebookFields {
   title: string;
 }
+
+const RESERVED_ELEMENT: NotebookElement = {
+  kind: 'Cell',
+  spec: { content: { kind: 'Markdown', spec: { text: '' } } },
+};
 
 /** The open notebook moved on under its own scene, so retrying from here would conflict again. */
 export class OpenNotebookConflictError extends NotebookConflictError {}
@@ -89,7 +99,15 @@ async function appendThroughScene(
   // cells are built by the same transform as a saved notebook and inserted as copies; everything else in
   // the scene, including a reader's own time ranges and panel tweaks, is left exactly as it is.
   const current = transformNotebookSceneToSaveModel(scene);
-  const spec = appendElementsToNotebook(current, cells, source);
+  // The save model leaves out the trailing empty block, whose name the scene still holds; reserve it so
+  // a new cell can't take it. The placeholder is unreferenced, so the transform ignores it.
+  const elements = { ...current.elements };
+  for (const cell of scene.state.body.state.cells) {
+    if (!Object.hasOwn(elements, cell.state.elementName)) {
+      elements[cell.state.elementName] = RESERVED_ELEMENT;
+    }
+  }
+  const spec = appendElementsToNotebook({ ...current, elements }, cells, source);
   const built = transformNotebookToScene(notebookResourceFor(scene.state.uid, spec))
     .state.body.state.cells.slice(current.layout.spec.cells.length, current.layout.spec.cells.length + cells.length)
     .map((cell) => cell.clone());

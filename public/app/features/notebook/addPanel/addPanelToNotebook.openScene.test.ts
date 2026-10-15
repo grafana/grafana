@@ -195,6 +195,26 @@ describe('adding to a notebook that is open', () => {
     expect(written.kind === 'Panel' && written.spec.vizConfig.spec.fieldConfig.overrides).toEqual([]);
   });
 
+  it("never reuses the trailing empty block's name for an added cell", async () => {
+    const scene = openNotebook();
+    const slot = scene.state.body.appendSystemCell(scene.state.body.state.cells.length);
+    if (!slot) {
+      throw new Error('expected the trailing empty block');
+    }
+    const panel = defaultPanelKind();
+
+    await addPanelToExistingNotebook(
+      'nb-1',
+      { ...panel, spec: { ...panel.spec, title: slot.state.elementName } },
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
+      false
+    );
+
+    const names = cellNamesOf(scene);
+    expect(new Set(names).size).toBe(names.length);
+    expect(names.at(-1)).toBe(slot.state.elementName);
+  });
+
   it('lands as one undoable step named for the add', async () => {
     const scene = openNotebook();
 
