@@ -49,6 +49,32 @@ describe('allowed origins', () => {
     expect(store.getAllowedOrigins('dash-b', 1)).toEqual([]);
   });
 
+  it('carries "Allow" over to the uid a new dashboard gets when first saved', () => {
+    const store = loadStore();
+    store.allowOrigins(grant(users, 1), 'dashboard');
+    store.allowOrigins(grant(avatars, 1), 'dashboard', 'dash-a');
+
+    store.copyDashboardConsent('', 'dash-a');
+
+    expect(store.getAllowedOrigins('dash-a', 1)).toEqual([avatars, users]);
+    expect(store.getAllowedOrigins('dash-a', 2)).toEqual([]);
+    // Panels keep the old uid until their queries run again.
+    expect(store.getAllowedOrigins('', 1)).toEqual([users]);
+    expect(loadStore().getAllowedOrigins('dash-a', 1)).toEqual([avatars, users]);
+  });
+
+  it('does not let a new dashboard inherit "Allow" from an earlier unsaved one', () => {
+    const store = loadStore();
+    store.allowOrigins(grant(users, 1), 'dashboard');
+    store.allowOrigins(grant(users, 1), 'dashboard', 'dash-a');
+
+    store.clearUnsavedDashboardConsent();
+
+    expect(store.getAllowedOrigins('', 1)).toEqual([]);
+    expect(store.getAllowedOrigins('dash-a', 1)).toEqual([users]);
+    expect(loadStore().getAllowedOrigins('', 1)).toEqual([]);
+  });
+
   it('keeps "Allow" across a reload, in session storage', () => {
     loadStore().allowOrigins(grant(users, 1), 'dashboard', 'dash-a');
     window.localStorage.clear();

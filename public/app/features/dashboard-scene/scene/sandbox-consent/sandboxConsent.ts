@@ -178,10 +178,47 @@ export function allowOrigins(grants: ConsentGrant[], scope: ConsentScope, dashbo
         byPanel.set(panel, (byPanel.get(panel) ?? new Set()).add(origin));
       }
     }
-    const stored = Object.fromEntries(Array.from(byPanel, ([panel, set]) => [panel, [...set]]));
-    tryStorage(() => window.sessionStorage.setItem(key, JSON.stringify(stored)), undefined);
+    storeByPanel(allowed);
   }
   emit(true);
+}
+
+function storeByPanel({ key, byPanel }: AllowedOrigins) {
+  const stored = Object.fromEntries(Array.from(byPanel, ([panel, set]) => [panel, [...set]]));
+  tryStorage(() => window.sessionStorage.setItem(key, JSON.stringify(stored)), undefined);
+}
+
+/**
+ * Carries "Allow" over when a new dashboard is first saved and gets its uid. Copied, not moved, as panels
+ * keep the old uid until their queries run again.
+ */
+export function copyDashboardConsent(fromUid: string, toUid: string) {
+  const allowed = allowedForUser();
+  const prefix = panelKey(fromUid);
+  let copied = false;
+  for (const [panel, origins] of [...allowed.byPanel]) {
+    if (panel.startsWith(prefix)) {
+      const target = panelKey(toUid) + panel.slice(prefix.length);
+      allowed.byPanel.set(target, new Set([...(allowed.byPanel.get(target) ?? []), ...origins]));
+      copied = true;
+    }
+  }
+  if (copied) {
+    storeByPanel(allowed);
+    emit(true);
+  }
+}
+
+/** A new dashboard has no uid, so it would otherwise inherit "Allow" from the last unsaved one. */
+export function clearUnsavedDashboardConsent() {
+  const allowed = allowedForUser();
+  const prefix = panelKey('');
+  const unsaved = [...allowed.byPanel.keys()].filter((panel) => panel.startsWith(prefix));
+  if (unsaved.length > 0) {
+    unsaved.forEach((panel) => allowed.byPanel.delete(panel));
+    storeByPanel(allowed);
+    emit(true);
+  }
 }
 
 export function reportBlocked(key: string, report: PanelBlockedReport) {
