@@ -5495,3 +5495,27 @@ func TestRepositoryController_recordReconcileError(t *testing.T) {
 	// A system failure must not be miscounted as user-caused (which an SLO would ignore).
 	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseUser))
 }
+
+func TestRepositoryController_determineSyncStatusOps_IntervalNoopDoesNotRefreshFinished(t *testing.T) {
+	finished := time.Now().Add(-10 * time.Minute).UnixMilli()
+	obj := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Generation: 1},
+		Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: true}},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Sync: provisioning.SyncStatus{Finished: finished, LastRef: "same-ref"},
+		},
+	}
+
+	ops := (&RepositoryController{}).determineSyncStatusOps(obj, nil, provisioning.HealthStatus{Healthy: true}, true)
+
+	foundLastChecked := false
+	for _, op := range ops {
+		path, _ := op["path"].(string)
+		require.NotEqual(t, "/status/sync/finished", path, "an interval no-op must not rewrite the last completed sync time")
+		if path == "/status/sync/lastChecked" {
+			foundLastChecked = true
+		}
+	}
+	require.True(t, foundLastChecked, "an interval no-op must refresh lastChecked")
+}
