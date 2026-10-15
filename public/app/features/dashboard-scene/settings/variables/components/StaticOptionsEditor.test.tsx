@@ -31,3 +31,34 @@ it('keeps CSV edits local until blur or Mod-S', async () => {
   expect(onCommit).toHaveBeenLastCalledWith('');
   expect(onCommit).toHaveBeenCalledTimes(2);
 });
+
+it('replaces the draft when options change outside of the editor', async () => {
+  mockBoundingClientRect();
+  const onCommit = jest.fn();
+  const { rerender } = render(<StaticOptionsEditor options={[{ text: 'Host', value: 'host' }]} onCommit={onCommit} />);
+  const editor = await screen.findByRole('textbox', { name: 'Static dimensions CSV' });
+
+  rerender(<StaticOptionsEditor options={[{ text: 'Region', value: 'region' }]} onCommit={onCommit} />);
+
+  expect(editor).toHaveTextContent('Region,region');
+});
+
+it('keeps the draft as typed when committing it changes the options', async () => {
+  mockBoundingClientRect();
+  const user = userEvent.setup();
+  let options = [{ text: 'Host', value: 'host' }];
+  const onCommit = jest.fn(() => {
+    options = [{ text: 'Region, name', value: 'region' }];
+    rerender(<StaticOptionsEditor options={options} onCommit={onCommit} />);
+  });
+  const { rerender } = render(<StaticOptionsEditor options={options} onCommit={onCommit} />);
+  const editor = await screen.findByRole('textbox', { name: 'Static dimensions CSV' });
+
+  await user.click(editor);
+  await user.keyboard('{Control>}a{/Control}{Backspace}');
+  await user.paste('"Region, name",region');
+  await user.click(document.body);
+
+  expect(onCommit).toHaveBeenCalledWith('"Region, name",region');
+  expect(editor).toHaveTextContent('"Region, name",region');
+});
