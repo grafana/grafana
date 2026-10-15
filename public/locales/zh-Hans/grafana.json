@@ -10692,13 +10692,21 @@
       "cell-filter-out": "筛除值",
       "cell-inspect": "检查值",
       "cell-inspect-tooltip": "检查值",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "筛选值",
+      "column-menu-hide": "",
       "column-menu-label": "{{name}} 的列选项",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "更新筛选条件",
+      "column-visibility": "",
+      "columns": "",
       "copy": "复制到剪贴板",
       "csv-counts": "行：{{rows}}，列：{{columns}}",
       "csv-placeholder": "在此处输入 CSV...",
       "edit-column-filter": "编辑 {{name}} 的筛选条件",
+      "field-warnings": "",
       "filter": {
         "add-all": "将所有显示的值添加到筛选条件",
         "blanks": "（空白）",
@@ -10732,6 +10740,8 @@
           "count": "数量"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "检查值",
       "loading": "正在加载表格",
       "nested-table": {
@@ -10741,6 +10751,7 @@
       "no-rows": "没有行",
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
+      "show-column-label": "",
       "sort-by-column": "按列 {{column}} 排序",
       "sort-by-column-ascending": "按列 {{column}} 升序排序",
       "sort-by-column-descending": "按列 {{column}} 降序排序",
@@ -10750,7 +10761,8 @@
       },
       "tooltip": {
         "trigger": "切换工具提示"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "标签"
@@ -13771,6 +13783,9 @@
       "label-plugin-id": "插件 Id",
       "label-severity": "严重程度"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "所有插件都是最新的"
     },
@@ -13792,6 +13807,10 @@
     "plugin-details-body": {
       "needs-service-account": "{{pluginName}} 插件需要一个服务账户才能查询 Grafana。以下列表包含服务账户可用的权限：",
       "page-not-found": "无法找到页面。"
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "已弃用"
@@ -16396,6 +16415,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-page-size": "每页行数。为空时，页面大小基于面板高度。",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "包含具有 CSS 属性的 JSON 对象的字段",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "每隔一行交替背景颜色",
@@ -16434,6 +16454,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小列宽",
     "name-page-size": "页面大小",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "显示表格表头",
     "name-styling-from-field": "字段中的样式",
     "name-tooltip-from-field": "",
@@ -16597,6 +16618,7 @@
     "editor": {
       "aria-label-content": "文本内容",
       "aria-label-mode": "文本模式：{{mode}}",
+      "feedback": "",
       "footer-line-numbers": "行号",
       "format-bold": "B",
       "format-heading": "H",
@@ -16642,6 +16664,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

@@ -172,6 +172,7 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "assistant.dashboardPlanning"
     | "grafana.multiTenantNavTree"
+    | "grafana.navigationInfoArchRefresh"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"

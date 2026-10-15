@@ -192,6 +192,8 @@ export const FlagKeys = {
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
   GrafanaMultiTenantUserPermissions: "grafana.multiTenantUserPermissions",
+  /** Enables the refreshed information architecture for Grafana's navigation */
+  GrafanaNavigationInfoArchRefresh: "grafana.navigationInfoArchRefresh",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Enables the new text panel */
@@ -1351,6 +1353,17 @@ export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.multiTenantUserPermissions", false, options).value;
+};
+
+/**
+ * Enables the refreshed information architecture for Grafana's navigation
+ *
+ * **Details:**
+ * - flag key: `grafana.navigationInfoArchRefresh`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNavigationInfoArchRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.navigationInfoArchRefresh", false, options).value;
 };
 
 /**
