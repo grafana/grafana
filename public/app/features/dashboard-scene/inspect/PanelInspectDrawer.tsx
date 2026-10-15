@@ -49,9 +49,11 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
-    let provider = sceneGraph.getData(panel);
+    const context = panel.getPanelContext();
+    const deactivate = context.activateNotices?.();
     let discoveryVersion = 0;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let provider = sceneGraph.getData(panel);
     const reconcile = () => this.reconcileTabs();
     const discoverInspectors = async () => {
       const version = ++discoveryVersion;
@@ -67,8 +69,8 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
       if (this.metadataTab?.state.dataSource !== metadata) {
         this.metadataTab = metadata ? new InspectMetaDataTab({ panelRef, dataSource: metadata }) : undefined;
       }
-      if (this.noticesTab?.state.dataSource !== notices) {
-        this.noticesTab = notices ? new InspectErrorsAndNoticesTab({ panelRef, dataSource: notices }) : undefined;
+      if (!this.noticesTab || this.noticesTab.state.dataSource !== notices) {
+        this.noticesTab = new InspectErrorsAndNoticesTab({ panelRef, dataSource: notices, onClose: this.onClose });
       }
       reconcile();
     };
@@ -82,7 +84,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
           updateData();
         }
       });
-    // Plugin availability has no awaitable API; data updates must not restart this timeout.
+    // Plugin availability has no awaitable API; notice updates must not restart this timeout.
     const checkPlugin = (elapsed = 0) => {
       clearTimeout(retryTimer);
       this.setState({ pluginNotLoaded: !panel.getPlugin() && elapsed >= 2000 });
@@ -92,6 +94,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
       }
     };
     let dataSubscription = subscribeToData();
+    const unsubscribe = context.notices?.subscribe(reconcile);
     const panelSubscription = panel.subscribeToState((state, previous) => {
       if (state.$data !== previous.$data) {
         dataSubscription.unsubscribe();
@@ -101,6 +104,8 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
       }
       if (state.pluginId !== previous.pluginId) {
         checkPlugin();
+      } else if (state._pluginLoadError !== previous._pluginLoadError) {
+        reconcile();
       }
     });
     checkPlugin();
@@ -108,8 +113,10 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
     return () => {
       discoveryVersion++;
       clearTimeout(retryTimer);
+      unsubscribe?.();
       dataSubscription.unsubscribe();
       panelSubscription.unsubscribe();
+      deactivate?.();
     };
   }
 
@@ -127,10 +134,15 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
       if (this.metadataTab) {
         tabs.push(this.metadataTab);
       }
-      if (hasErrorsOrNotices(sceneGraph.getData(panel).state.data)) {
-        this.noticesTab ??= new InspectErrorsAndNoticesTab({ panelRef });
-        tabs.push(this.noticesTab);
-      }
+    }
+    const panelData = sceneGraph.getData(panel).state.data;
+    const snapshot = panel.getPanelContext().notices?.getSnapshot();
+    const hasNotices = snapshot?.hostInitialized
+      ? snapshot.items.length > 0
+      : hasErrorsOrNotices(panelData) || Boolean(panel.state._pluginLoadError) || Boolean(snapshot?.items.length);
+    if (hasNotices) {
+      this.noticesTab ??= new InspectErrorsAndNoticesTab({ panelRef, onClose: this.onClose });
+      tabs.push(this.noticesTab);
     }
     this.jsonTab ??= new InspectJsonTab({ panelRef, onClose: this.onClose });
     tabs.push(this.jsonTab);
