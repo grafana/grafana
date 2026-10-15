@@ -95,7 +95,7 @@ func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(&repository.FileInfo{Data: validData, Hash: "metadata-hash-123"}, nil)
 
-		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", true)
+		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "")
 		require.NoError(t, err)
 		assert.Equal(t, stableUID, f.ID)
 		assert.Equal(t, "My Folder", f.Title)
@@ -108,7 +108,7 @@ func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(nil, repository.ErrFileNotFound)
 
-		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", true)
+		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "")
 		require.NoError(t, err)
 		assert.Empty(t, f.MetadataHash)
 	})
@@ -561,7 +561,7 @@ func TestParseFolderResource(t *testing.T) {
 			reader := repository.NewMockReader(t)
 			tt.setupMock(reader)
 
-			result, err := ParseFolderResource(ctx, reader, tt.path, testRef, false, FolderKind)
+			result, err := ParseFolderResource(ctx, reader, tt.path, testRef, FolderKind)
 
 			if tt.expectedErr {
 				assert.Error(t, err, tt.description)
@@ -901,7 +901,7 @@ func TestGetFolderID(t *testing.T) {
 			reader := repository.NewMockReader(t)
 			tt.setupMock(reader)
 
-			result, err := GetFolderID(ctx, reader, testPath, testRef, false)
+			result, err := GetFolderID(ctx, reader, testPath, testRef)
 
 			if tt.expectedErr {
 				assert.Error(t, err, tt.description)
