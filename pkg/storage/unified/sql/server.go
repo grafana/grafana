@@ -192,16 +192,20 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	if resourceOpts.Blob.URL == "" {
 		resourceOpts.Blob.Backend = opts.BlobBackend
 	}
-	// Support local file blob
-	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
-		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
-		if err != nil {
-			return err
+	var err error
+	resourceOpts.Blob.URL, err = resolvedBlobURL(resourceOpts.Blob.URL, opts.Cfg.DataPath)
+	return err
+}
+
+func resolvedBlobURL(url, dataPath string) (string, error) {
+	if strings.HasPrefix(url, "./data/") {
+		dir := strings.Replace(url, "./data", dataPath, 1)
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			return "", err
 		}
-		resourceOpts.Blob.URL = "file:///" + dir
+		return "file:///" + dir, nil
 	}
-	return nil
+	return url, nil
 }
 
 func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {

@@ -856,41 +856,13 @@ func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
 // watchWrittenKeys watches written keys straight from the bus when the backend
 // can, and otherwise takes them from the watch stream, which is a few seconds
 // slower but needs no bus.
-func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *resourcepb.ResourceKey, error) {
+func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *WrittenEvent, error) {
 	keys, err := s.storage.WatchWrittenKeys(ctx, GlobalSearchResourceTypes(), s.queueReconcileAfterLostKeys)
 	if !errors.Is(err, ErrWrittenKeysUnsupported) {
 		return keys, err
 	}
 	s.log.Info("global search indexes follow the watch stream, which is slower than watching written keys", "reason", err)
-	events, err := s.storage.WatchWriteEvents(ctx)
-	if err != nil {
-		return nil, err
-	}
-	out := make(chan *resourcepb.ResourceKey, maxWatchBatch)
-	go func() {
-		defer close(out)
-		for {
-			var event *WrittenEvent
-			select {
-			case <-ctx.Done():
-				return
-			case e, ok := <-events:
-				if !ok {
-					return
-				}
-				event = e
-			}
-			if event == nil || event.Key == nil {
-				continue
-			}
-			select {
-			case out <- event.Key:
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-	return out, nil
+	return s.storage.WatchWriteEvents(ctx)
 }
 
 // queueReconcileAfterLostKeys queues a reconcile of the open global index this
@@ -916,8 +888,8 @@ func (s *searchServer) queueReconcileAfterLostKeys(namespace string) {
 // nextWrittenKeysBatch blocks for one key, then takes what else arrives within
 // globalWatchBatchWait. It reports false once ctx is cancelled or the stream
 // ends.
-func nextWrittenKeysBatch(ctx context.Context, keys <-chan *resourcepb.ResourceKey) ([]*resourcepb.ResourceKey, bool) {
-	var first *resourcepb.ResourceKey
+func nextWrittenKeysBatch(ctx context.Context, keys <-chan *WrittenEvent) ([]*WrittenEvent, bool) {
+	var first *WrittenEvent
 	select {
 	case <-ctx.Done():
 		return nil, false
@@ -927,7 +899,7 @@ func nextWrittenKeysBatch(ctx context.Context, keys <-chan *resourcepb.ResourceK
 		}
 		first = key
 	}
-	batch := make([]*resourcepb.ResourceKey, 0, maxWatchBatch)
+	batch := make([]*WrittenEvent, 0, maxWatchBatch)
 	batch = append(batch, first)
 	wait := time.NewTimer(globalWatchBatchWait)
 	defer wait.Stop()
@@ -956,13 +928,14 @@ func nextWrittenKeysBatch(ctx context.Context, keys <-chan *resourcepb.ResourceK
 // state again, so it cannot put back an older version or a deleted object. That
 // relies on a read after a write is announced seeing that write, which holds
 // while storage reads from the database the writes go to.
-func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*resourcepb.ResourceKey) {
+func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*WrittenEvent) {
 	changed := map[NamespacedResource][]string{}
 	var sources []NamespacedResource
-	for _, key := range batch {
-		if key == nil {
+	for _, written := range batch {
+		if written == nil || written.Key == nil {
 			continue
 		}
+		key := written.Key
 		src := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
 		if !GlobalIndexCoversType(groupResourceOf(src)) {
 			continue

@@ -1983,7 +1983,7 @@ var (
 		{
 			Name:        "grafana.newTextPanel",
 			Description: "Enables the new text panel",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDatavizSquad,
 			Generate:    Generate{React: true},
 			Expression:  "false",
@@ -3158,6 +3158,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:        "grafana.navigationInfoArchRefresh",
+			Description: "Enables the refreshed information architecture for Grafana's navigation",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:        "grafana.exploreMetricsSidebar",

@@ -2831,6 +2831,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.navigationInfoArchRefresh",
+        "resourceVersion": "1791988590221",
+        "creationTimestamp": "2026-10-14T14:36:30Z"
+      },
+      "spec": {
+        "description": "Enables the refreshed information architecture for Grafana's navigation",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1791798499805",
         "creationTimestamp": "2026-06-19T08:30:47Z",
@@ -2849,12 +2862,15 @@
     {
       "metadata": {
         "name": "grafana.newTextPanel",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-20T21:57:11Z"
+        "resourceVersion": "1792001973031",
+        "creationTimestamp": "2026-07-20T21:57:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-14 18:19:33.031329 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new text panel",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"

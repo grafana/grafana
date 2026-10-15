@@ -871,6 +871,8 @@ type Cfg struct {
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
+	BlobGarbageCollectionEnabled      bool
+	BlobGarbageCollectionDryRun       bool
 	GarbageCollectionInterval         time.Duration
 	GarbageCollectionBatchSize        int
 	GarbageCollectionBatchWait        time.Duration

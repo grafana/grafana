@@ -229,7 +229,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,favoriteDatasources,experimental,@grafana/grafana-catalog,false,false,true
 2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
 2026-06-24,grafana.starredFolders,experimental,@grafana/grafana-frontend-navigation,false,false,true
-2026-07-20,grafana.newTextPanel,experimental,@grafana/dataviz-squad,false,false,true
+2026-07-20,grafana.newTextPanel,preview,@grafana/dataviz-squad,false,false,true
 2026-08-12,text.newFeatures,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
 2025-07-31,alertingTriage,experimental,@grafana/alerting-squad,false,false,false
@@ -365,6 +365,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-17,features.bulkFlagEvalFiltering,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-09-16,features.legacyOverrideLookupBypass,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-07-15,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,false
+2026-10-14,grafana.navigationInfoArchRefresh,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-07-20,grafana.exploreMetricsSidebar,experimental,@grafana/datapro,false,false,true
 2026-07-24,grafana.dynamicTraceToLogs,preview,@grafana/observability-logs,false,false,true
 2026-07-28,grafana.thresholdsInterpolation,GA,@grafana/dashboards-squad,false,false,true
