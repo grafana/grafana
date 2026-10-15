@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { RuleListPage, type RuleListKind, folderScope } from './pages/RuleListPage';
+import { RuleListPage, type RuleListKind, expectHref, folderScope, linkTarget } from './pages/RuleListPage';
 
 // Where each page sends the user: the row's own links, the header's New rule link and the row menu's
 // Copy link. Every destination is checked as an exact path, which also proves that none of them
@@ -44,7 +44,7 @@ for (const { kind, ids, ruleTitle, newRuleLabel, newRulePath } of listPages) {
       // An empty folder keeps the page's own header controls the only ones on it.
       await list.goto(folderScope(folder.uid));
 
-      await expect(list.newRuleLink).toHaveAttribute('href', newRulePath);
+      await expectHref(list.newRuleLink, newRulePath);
       await list.newRuleLink.click();
       await expect(page).toHaveURL(new RegExp(`${newRulePath}(\\?.*)?$`));
     });
@@ -58,8 +58,8 @@ for (const { kind, ids, ruleTitle, newRuleLabel, newRulePath } of listPages) {
       if (kind === 'alert') {
         await headerMenu.click();
         await expect(page.getByRole('menuitem')).toHaveText(['Design rule for provisioning']);
-        await expect(page.getByRole('menuitem', { name: 'Design rule for provisioning' })).toHaveAttribute(
-          'href',
+        await expectHref(
+          page.getByRole('menuitem', { name: 'Design rule for provisioning' }),
           '/alerting/export-new-rule'
         );
         await page.keyboard.press('Escape');
@@ -84,13 +84,14 @@ for (const { kind, ids, ruleTitle, newRuleLabel, newRulePath } of listPages) {
       const list = new RuleListPage(page, kind);
       await list.goto(folderScope(folder.uid));
 
-      await expect(list.ruleLink(ruleTitle)).toHaveAttribute('href', `/alerting/grafana/${uid}/view`);
-      await expect(list.editLink(ruleTitle)).toHaveAttribute('href', `/alerting/${uid}/edit`);
+      await expectHref(list.ruleLink(ruleTitle), `/alerting/grafana/${uid}/view`);
+      await expectHref(list.editLink(ruleTitle), `/alerting/${uid}/edit`);
 
       await list.openRowMenu(ruleTitle);
-      await expect(page.getByRole('menuitem', { name: 'Duplicate', exact: true })).toHaveAttribute(
-        'href',
-        new RegExp(`^/alerting/new(/grafana-recording)?\\?copyFrom=${uid}$`)
+      await expectHref(
+        page.getByRole('menuitem', { name: 'Duplicate', exact: true }),
+        kind === 'alert' ? '/alerting/new' : '/alerting/new/grafana-recording',
+        { copyFrom: uid }
       );
     });
 
@@ -114,11 +115,13 @@ for (const { kind, ids, ruleTitle, newRuleLabel, newRulePath } of listPages) {
       await expect(page.getByText('URL copied to clipboard')).toBeVisible();
 
       const copied = new URL(await page.evaluate(() => navigator.clipboard.readText()));
-      expect(copied.pathname).toBe(`/alerting/grafana/${uid}/view`);
-      expect(copied.search).toBe('');
+      expect(linkTarget(copied.pathname + copied.search)).toEqual({
+        path: `/alerting/grafana/${uid}/view`,
+        params: {},
+      });
 
       await list.editLink(ruleTitle).click();
-      await expect(page).toHaveURL(new RegExp(`/alerting/${uid}/edit$`));
+      await expect(page).toHaveURL(new RegExp(`/alerting/${uid}/edit(\\?orgId=\\d+)?$`));
     });
   });
 }

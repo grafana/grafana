@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { expectHref } from './pages/RuleListPage';
+
 test.describe('Navigation', () => {
   test('NAV-2: Alert rules and Recording rules are separate main-menu entries, each with its own tabs', async ({
     page,
@@ -7,11 +9,8 @@ test.describe('Navigation', () => {
     await page.goto('/alerting/rules/alert');
 
     const nav = page.getByRole('navigation', { name: 'Navigation' });
-    await expect(nav.getByRole('link', { name: 'Alert rules' })).toHaveAttribute('href', '/alerting/rules/alert');
-    await expect(nav.getByRole('link', { name: 'Recording rules' })).toHaveAttribute(
-      'href',
-      '/alerting/rules/recording'
-    );
+    await expectHref(nav.getByRole('link', { name: 'Alert rules' }), '/alerting/rules/alert');
+    await expectHref(nav.getByRole('link', { name: 'Recording rules' }), '/alerting/rules/recording');
     // No leftover combined-list or evaluation-group entry in the new experience.
     await expect(nav.getByRole('link', { name: 'Alert rules', exact: true })).toHaveCount(1);
 

@@ -11,12 +11,14 @@ test.describe('Alert rules: Recently deleted', () => {
     page,
     folder,
     alertRules,
+    workerApi,
   }) => {
     const title = `Node load average ${crypto.randomUUID().slice(0, 8)}`;
     const uid = await alertRules.seedRule({ title, interval: '1m' });
-    await page.request.delete(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules/${encodeURIComponent(uid)}`
+    const deleted = await page.request.delete(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/alertrules/${encodeURIComponent(uid)}`
     );
+    expect(deleted.ok(), `DELETE alertrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
 
     await page.goto('/alerting/rules/alert/deleted');
     await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
@@ -47,12 +49,14 @@ test.describe('Alert rules: Recently deleted', () => {
   test('ADEL-1: a deleted Alert rule never appears on the Recording rules deleted tab', async ({
     page,
     alertRules,
+    workerApi,
   }) => {
     const title = `Pod restart rate ${crypto.randomUUID().slice(0, 8)}`;
     const uid = await alertRules.seedRule({ title, interval: '1m' });
-    await page.request.delete(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules/${encodeURIComponent(uid)}`
+    const deleted = await page.request.delete(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/alertrules/${encodeURIComponent(uid)}`
     );
+    expect(deleted.ok(), `DELETE alertrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
 
     await page.goto('/alerting/rules/alert/deleted');
     await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();

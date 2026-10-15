@@ -1,6 +1,7 @@
 import { type Page, test, expect } from './fixtures';
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
 import { RuleListPage, type RuleListKind } from './pages/RuleListPage';
+import { ruleResourceUrl } from './ruleSeeding';
 
 // ALERT-6/REC-5: Duplicate opens the existing creation flow prefilled from the source rule
 // (`copyFrom=<uid>`); the editor itself is responsible for stripping identity/status/ownership
@@ -26,28 +27,20 @@ async function gotoRecordingFolderList(page: Page, folderUid: string): Promise<v
 }
 
 async function markProvisioned(page: Page, kind: 'alertrules' | 'recordingrules', uid: string) {
-  const response = await page.request.patch(
-    `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/${kind}/${encodeURIComponent(uid)}`,
-    {
-      headers: { 'Content-Type': 'application/merge-patch+json' },
-      data: { metadata: { annotations: { 'grafana.com/provenance': 'api' } } },
-    }
-  );
+  const response = await page.request.patch(await ruleResourceUrl(page.request, kind, uid), {
+    headers: { 'Content-Type': 'application/merge-patch+json' },
+    data: { metadata: { annotations: { 'grafana.com/provenance': 'api' } } },
+  });
   expect(response.ok(), `mark provisioned -> ${response.status()}`).toBeTruthy();
 }
 
-async function duplicateThroughMenu(page: Page, kind: RuleListKind, title: string, isProvisioned: boolean) {
+// Duplicate is a plain link to the editor's copy route on every rule, provisioned or not: the list
+// shows no confirmation of its own, and it stays enabled on a provisioned rule.
+async function duplicateThroughMenu(page: Page, kind: RuleListKind, title: string) {
   await new RuleListPage(page, kind).rowMoreButton(title).click();
-  // Duplicate stays available on a provisioned rule, so an enabled item is what must be found.
   await page.getByRole('menuitem', { name: 'Duplicate', exact: true }).click();
 
-  if (isProvisioned) {
-    const dialog = page.getByRole('dialog', { name: 'Copy provisioned rule' });
-    await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', { name: 'Copy' }).click();
-  }
-
-  await expect(page).toHaveURL(/\/alerting\/new/);
+  await expect(page).toHaveURL(/\/alerting\/new(\/grafana-recording)?\?.*copyFrom=/);
 }
 
 test.describe('Duplicate (ALERT-6/REC-5)', () => {
@@ -62,7 +55,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoAlertFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
-    await duplicateThroughMenu(page, 'alert', title, false);
+    await duplicateThroughMenu(page, 'alert', title);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
@@ -71,9 +64,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
 
     expect(copyUid).not.toBe(originalUid);
 
-    const copyResponse = await page.request.get(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules/${encodeURIComponent(copyUid)}`
-    );
+    const copyResponse = await page.request.get(await ruleResourceUrl(page.request, 'alertrules', copyUid));
     expect(copyResponse.ok(), `GET copy -> ${copyResponse.status()}`).toBeTruthy();
     const copy = await copyResponse.json();
     expect(copy.metadata.annotations?.['grafana.com/provenance']).toBeFalsy();
@@ -82,15 +73,13 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     expect(copy.metadata.labels?.['grafana.com/group']).toBeUndefined();
     expect(copy.metadata.labels?.['grafana.com/group-index']).toBeUndefined();
 
-    const originalResponse = await page.request.get(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules/${encodeURIComponent(originalUid)}`
-    );
+    const originalResponse = await page.request.get(await ruleResourceUrl(page.request, 'alertrules', originalUid));
     expect(originalResponse.ok(), `GET original -> ${originalResponse.status()}`).toBeTruthy();
     const original = await originalResponse.json();
     expect(original.spec.title).toBe(title);
   });
 
-  test('ALERT-6: duplicating a provisioned-looking Alert rule warns first, then creates an unprovisioned copy', async ({
+  test('ALERT-6: duplicating a provisioned-looking Alert rule opens the copy route and creates an unprovisioned copy', async ({
     page,
     folder,
     alertRules,
@@ -102,23 +91,19 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoAlertFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
-    await duplicateThroughMenu(page, 'alert', title, true);
+    await duplicateThroughMenu(page, 'alert', title);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
     const copyUid = new URL(page.url()).pathname.split('/')[3];
     alertRules.trackRule(copyUid);
 
-    const copyResponse = await page.request.get(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules/${encodeURIComponent(copyUid)}`
-    );
+    const copyResponse = await page.request.get(await ruleResourceUrl(page.request, 'alertrules', copyUid));
     const copy = await copyResponse.json();
     expect(copy.metadata.annotations?.['grafana.com/provenance']).toBeFalsy();
     expect(copy.metadata.annotations?.['grafana.app/managedBy']).toBeUndefined();
 
-    const originalResponse = await page.request.get(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules/${encodeURIComponent(originalUid)}`
-    );
+    const originalResponse = await page.request.get(await ruleResourceUrl(page.request, 'alertrules', originalUid));
     const original = await originalResponse.json();
     expect(original.metadata.annotations?.['grafana.com/provenance']).toBe('api');
   });
@@ -135,7 +120,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoRecordingFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
-    await duplicateThroughMenu(page, 'recording', title, false);
+    await duplicateThroughMenu(page, 'recording', title);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
@@ -144,23 +129,19 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
 
     expect(copyUid).not.toBe(originalUid);
 
-    const copyResponse = await page.request.get(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(copyUid)}`
-    );
+    const copyResponse = await page.request.get(await ruleResourceUrl(page.request, 'recordingrules', copyUid));
     expect(copyResponse.ok(), `GET copy -> ${copyResponse.status()}`).toBeTruthy();
     const copy = await copyResponse.json();
     expect(copy.metadata.annotations?.['grafana.com/provenance']).toBeFalsy();
     expect(copy.metadata.annotations?.['grafana.app/managedBy']).toBeUndefined();
     expect(copy.metadata.labels?.['grafana.com/group']).toBeUndefined();
 
-    const originalResponse = await page.request.get(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(originalUid)}`
-    );
+    const originalResponse = await page.request.get(await ruleResourceUrl(page.request, 'recordingrules', originalUid));
     const original = await originalResponse.json();
     expect(original.spec.title).toBe(title);
   });
 
-  test('REC-5: duplicating a provisioned-looking Recording rule warns first, then creates an unprovisioned copy', async ({
+  test('REC-5: duplicating a provisioned-looking Recording rule opens the copy route and creates an unprovisioned copy', async ({
     page,
     folder,
     recordingRules,
@@ -173,23 +154,19 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoRecordingFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
-    await duplicateThroughMenu(page, 'recording', title, true);
+    await duplicateThroughMenu(page, 'recording', title);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
     const copyUid = new URL(page.url()).pathname.split('/')[3];
     recordingRules.trackRule(copyUid);
 
-    const copyResponse = await page.request.get(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(copyUid)}`
-    );
+    const copyResponse = await page.request.get(await ruleResourceUrl(page.request, 'recordingrules', copyUid));
     const copy = await copyResponse.json();
     expect(copy.metadata.annotations?.['grafana.com/provenance']).toBeFalsy();
     expect(copy.metadata.annotations?.['grafana.app/managedBy']).toBeUndefined();
 
-    const originalResponse = await page.request.get(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(originalUid)}`
-    );
+    const originalResponse = await page.request.get(await ruleResourceUrl(page.request, 'recordingrules', originalUid));
     const original = await originalResponse.json();
     expect(original.metadata.annotations?.['grafana.com/provenance']).toBe('api');
   });

@@ -61,11 +61,7 @@ export function FolderListRow({ folderUid, title, kind, count, expanded, onToggl
           <FolderCount kind={kind} count={count} title={title} />
         </Stack>
       </div>
-      {expanded && (
-        <ul role="group" className={styles.group}>
-          {children}
-        </ul>
-      )}
+      {expanded && <ul className={styles.group}>{children}</ul>}
     </li>
   );
 }
@@ -130,8 +126,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css({
     padding: theme.spacing(1, 1.5),
 
+    // Not action.hover: it drops secondary text below 4.5:1 contrast in the dark theme.
     '&:hover': {
-      background: theme.colors.action.hover,
+      background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
     },
   }),

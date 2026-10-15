@@ -1,5 +1,7 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 export type RuleListKind = 'alert' | 'recording';
 
 export type SearchLeaf = Record<string, unknown>;
@@ -32,6 +34,26 @@ export function filterLeaf(field: string, operator: 'In' | 'NotIn', values: stri
 /** The search that limits a list to these folders; Folders mode supports no other filter. */
 export function folderScope(...folderUids: string[]): string {
   return folderUids.map((uid) => `namespace:${uid}`).join(' ');
+}
+
+/**
+ * A link's path and query without `orgId`, which Grafana adds to every link once the user belongs to more
+ * than one organization (other specs create organizations, so the suite cannot assume it is absent).
+ * Everything else stays in the result, so a `returnTo` still shows.
+ */
+export function linkTarget(href: string): { path: string; params: Record<string, string> } {
+  const url = new URL(href, 'http://grafana.invalid');
+  url.searchParams.delete('orgId');
+  return { path: url.pathname, params: Object.fromEntries(url.searchParams) };
+}
+
+export async function expectHref(link: Locator, path: string, params: Record<string, string> = {}): Promise<void> {
+  await expect
+    .poll(async () => {
+      const href = await link.getAttribute('href');
+      return href === null ? null : linkTarget(href);
+    })
+    .toEqual({ path, params });
 }
 
 type LabelOperator = '=' | '!=' | '=~' | '!~' | 'exists' | 'absent';
@@ -131,9 +153,11 @@ export class RuleListPage {
     await expect(this.page.getByRole('radio', { name: 'Folders' })).toBeChecked();
   }
 
-  // Folder rows are the list items that carry an expand or collapse control.
+  // Folder rows are the list items that carry an expand or collapse control. The navigation menu's sections
+  // carry one too, so the search stays inside the page content.
   get folderRows(): Locator {
     return this.page
+      .getByRole('main')
       .getByRole('listitem')
       .filter({ has: this.page.getByRole('button', { name: /^(Expand|Collapse) / }) });
   }
@@ -234,8 +258,12 @@ export class RuleListPage {
   }
 
   async addDataSource(name: string, fieldLabel = 'Query data source'): Promise<void> {
-    await this.sidebarField(fieldLabel).getByRole('combobox', { name: 'Select a data source' }).click();
-    await this.page.getByRole('option', { name, exact: true }).click();
+    const picker = this.sidebarField(fieldLabel).getByRole('combobox', { name: 'Select a data source' });
+    await picker.click();
+    // The picker lists data sources as cards (not listbox options), and its list is virtualized, so the
+    // name is typed to bring the card into view before picking it by its test id.
+    await picker.fill(name);
+    await this.page.getByTestId(selectors.components.DataSourcePicker.dataSourceCard(name)).click();
   }
 
   async removeSelectedValue(label: string): Promise<void> {

@@ -1,5 +1,6 @@
 import { type Page, test, expect } from './fixtures';
 import { RuleListPage } from './pages/RuleListPage';
+import { ruleResourceUrl } from './ruleSeeding';
 
 // RBAC-A: this file runs under the Admin-authenticated `alerting-gma` project (see
 // playwright.config.ts), unlike the `.editor.spec.ts`/`.viewer.spec.ts` role-specific projects
@@ -9,13 +10,10 @@ import { RuleListPage } from './pages/RuleListPage';
 // their reason for a provisioned rule even for an Admin, while leaving Duplicate available on it.
 
 async function markProvisioned(page: Page, kind: 'alertrules' | 'recordingrules', uid: string) {
-  const response = await page.request.patch(
-    `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/${kind}/${encodeURIComponent(uid)}`,
-    {
-      headers: { 'Content-Type': 'application/merge-patch+json' },
-      data: { metadata: { annotations: { 'grafana.com/provenance': 'api' } } },
-    }
-  );
+  const response = await page.request.patch(await ruleResourceUrl(page.request, kind, uid), {
+    headers: { 'Content-Type': 'application/merge-patch+json' },
+    data: { metadata: { annotations: { 'grafana.com/provenance': 'api' } } },
+  });
   expect(response.ok(), `mark provisioned -> ${response.status()}`).toBeTruthy();
 }
 

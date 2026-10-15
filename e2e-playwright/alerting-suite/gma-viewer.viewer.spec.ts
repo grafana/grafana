@@ -14,6 +14,8 @@ import {
   runScope,
 } from './ruleSeeding';
 
+const VIEWER_VISIBILITY_TIMEOUT = 60_000;
+
 // Uses the `alerting-viewer` project (playwright.config.ts) — a Viewer-role user dedicated to
 // this suite, distinct from the org-wide `viewer` project which belongs to plugin API tests.
 test.describe('Viewer', () => {
@@ -42,6 +44,7 @@ test.describe('Viewer', () => {
     page,
     playwright,
   }, testInfo) => {
+    test.setTimeout(VIEWER_VISIBILITY_TIMEOUT * 2 + 30_000);
     const run = newRunMarker();
     const folderUid = `e2e-viewer-${run}`;
     const alertTitle = `Checkout latency high ${run}`;
@@ -57,8 +60,18 @@ test.describe('Viewer', () => {
         metric: `checkout_latency_p99_${run}`,
         labels: { [RUN_LABEL]: run },
       });
-      await waitForRuleSearchVisible(admin, namespace, 'alertrules', folderUid, 1);
-      await waitForRuleSearchVisible(admin, namespace, 'recordingrules', folderUid, 1);
+      // A new folder reaches the Viewer's search later than the Admin's: until then the Viewer's folder-scoped
+      // search answers with an error or with hits from outside the folder. So wait on the Viewer's own
+      // request, whose result is what the page is about to read.
+      await waitForRuleSearchVisible(page.request, namespace, 'alertrules', folderUid, 1, VIEWER_VISIBILITY_TIMEOUT);
+      await waitForRuleSearchVisible(
+        page.request,
+        namespace,
+        'recordingrules',
+        folderUid,
+        1,
+        VIEWER_VISIBILITY_TIMEOUT
+      );
 
       for (const { kind, title, newRuleButton } of [
         { kind: 'alert', title: alertTitle, newRuleButton: 'New alert rule' },

@@ -442,3 +442,9 @@ export async function getNamespace(request: APIRequestContext): Promise<string> 
   const settings = await (await request.get('/api/frontend/settings')).json();
   return settings.namespace ?? 'default';
 }
+
+// The URL of one rule resource. The namespace is the instance's own (`default` or `stacks-<id>`),
+// and a request to any other namespace is rejected with a 403 "invalid namespace".
+export async function ruleResourceUrl(request: APIRequestContext, kind: RuleKind, uid: string): Promise<string> {
+  return `${rulesApiBase(await getNamespace(request))}/${kind}/${encodeURIComponent(uid)}`;
+}

@@ -88,12 +88,18 @@ test.describe(
       await runA11yScan(page, scanForA11yViolations);
     });
 
-    test('Alert rules: Recently deleted has no violations', async ({ page, alertRules, scanForA11yViolations }) => {
+    test('Alert rules: Recently deleted has no violations', async ({
+      page,
+      alertRules,
+      workerApi,
+      scanForA11yViolations,
+    }) => {
       const title = `Node load average ${crypto.randomUUID().slice(0, 8)}`;
       const uid = await alertRules.seedRule({ title, interval: '1m' });
-      await page.request.delete(
-        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules/${encodeURIComponent(uid)}`
+      const deleted = await page.request.delete(
+        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/alertrules/${encodeURIComponent(uid)}`
       );
+      expect(deleted.ok(), `DELETE alertrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
 
       await page.goto('/alerting/rules/alert/deleted');
       await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
@@ -104,13 +110,15 @@ test.describe(
     test('Recording rules: Recently deleted has no violations', async ({
       page,
       recordingRules,
+      workerApi,
       scanForA11yViolations,
     }) => {
       const title = `Pod restart rate ${crypto.randomUUID().slice(0, 8)}`;
       const uid = await recordingRules.seedRule({ title, interval: '1m', metric: 'pod_restart:rate' });
-      await page.request.delete(
-        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(uid)}`
+      const deleted = await page.request.delete(
+        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/recordingrules/${encodeURIComponent(uid)}`
       );
+      expect(deleted.ok(), `DELETE recordingrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
 
       await page.goto('/alerting/rules/recording/deleted');
       await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();

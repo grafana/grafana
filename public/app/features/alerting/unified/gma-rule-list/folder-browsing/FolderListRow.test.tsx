@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { setupMswServer } from '../../mockApi';
 
@@ -139,6 +139,8 @@ describe('FolderListRow', () => {
       </ul>
     );
     expect(screen.getByRole('button', { name: 'Collapse Root' })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('group')).toHaveTextContent('child rule');
+    // The child rules form a list of their own inside the folder's row, not a role-overridden one.
+    const folderRow = screen.getAllByRole('listitem')[0];
+    expect(within(folderRow).getByRole('list')).toHaveTextContent('child rule');
   });
 });

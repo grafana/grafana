@@ -41,7 +41,6 @@ function RoutingMeta({ hit }: { hit: AlertRuleSearchHit }) {
           href={createContactPointSearchLink(hit.receiver, GRAFANA_RULES_SOURCE_NAME)}
           variant="bodySmall"
           color="primary"
-          inline={false}
         >
           {hit.receiver}
         </TextLink>

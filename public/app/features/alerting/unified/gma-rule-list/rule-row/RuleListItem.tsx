@@ -103,8 +103,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     padding: theme.spacing(1),
 
+    // Not action.hover: it drops secondary text below 4.5:1 contrast in the dark theme.
     '&:hover': {
-      background: theme.colors.action.hover,
+      background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
     },
   }),

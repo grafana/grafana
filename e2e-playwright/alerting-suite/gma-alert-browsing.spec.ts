@@ -33,7 +33,11 @@ test.describe('Alert rules: Folders and List browsing', () => {
     await expect(list.folderRow(untouched.title)).toContainText('1 alert rule');
 
     await list.toggleFolder(dense.title);
-    const denseLinks = page.getByRole('link', { name: new RegExp(manifest.runMarker) });
+    // Folder titles carry the run marker too, so the rule links are told apart by the `f<folder>r<rule>` part of
+    // a rule title and counted within the expanded folder.
+    const denseLinks = list
+      .folderRow(dense.title)
+      .getByRole('link', { name: new RegExp(`f\\d+r\\d+ ${manifest.runMarker}`) });
     await expect(denseLinks).toHaveCount(40);
 
     await page.getByRole('button', { name: 'Load more' }).click();

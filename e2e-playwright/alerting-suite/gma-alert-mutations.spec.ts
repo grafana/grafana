@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures';
 import { RuleListPage, folderScope } from './pages/RuleListPage';
+import { ruleResourceUrl } from './ruleSeeding';
 
 // Each test seeds exactly one rule into its own worker folder and filters the list down to
 // that folder (`namespace:<uid>`) - see fixtures.ts and AGENTS.md for the isolation/cascade
@@ -50,9 +51,7 @@ test.describe('Alert rule mutations', () => {
     await expect(list.ruleLink(title)).not.toBeVisible();
 
     // Confirm it's really gone server-side, not just filtered out of a stale client cache.
-    const response = await page.request.get(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/alertrules/${encodeURIComponent(uid)}`
-    );
+    const response = await page.request.get(await ruleResourceUrl(page.request, 'alertrules', uid));
     expect(response.status()).toBe(404);
   });
 

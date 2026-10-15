@@ -11,14 +11,16 @@ test.describe('Recording rules: Recently deleted', () => {
     page,
     folder,
     recordingRules,
+    workerApi,
   }) => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const title = `HTTP error rate ${suffix}`;
     const metric = `http_errors:rate5m_${suffix}`;
     const uid = await recordingRules.seedRule({ title, interval: '1m', metric });
-    await page.request.delete(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(uid)}`
+    const deleted = await page.request.delete(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/recordingrules/${encodeURIComponent(uid)}`
     );
+    expect(deleted.ok(), `DELETE recordingrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
 
     await page.goto('/alerting/rules/recording/deleted');
     await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
@@ -48,13 +50,15 @@ test.describe('Recording rules: Recently deleted', () => {
   test('RDEL-1: a deleted Recording rule never appears on the Alert rules deleted tab', async ({
     page,
     recordingRules,
+    workerApi,
   }) => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const title = `Queue depth trend ${suffix}`;
     const uid = await recordingRules.seedRule({ title, interval: '1m', metric: `queue_depth:trend_${suffix}` });
-    await page.request.delete(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/default/recordingrules/${encodeURIComponent(uid)}`
+    const deleted = await page.request.delete(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/recordingrules/${encodeURIComponent(uid)}`
     );
+    expect(deleted.ok(), `DELETE recordingrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
 
     await page.goto('/alerting/rules/recording/deleted');
     await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
