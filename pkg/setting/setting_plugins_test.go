@@ -199,6 +199,7 @@ func Test_readPluginSettings(t *testing.T) {
 			expectedSync      []InstallPlugin
 			disableAsync      bool
 			disablePlugins    string
+			canvasAsExternal  string
 		}{
 			{
 				name:     "should add the default preinstalled plugin",
@@ -285,6 +286,28 @@ func Test_readPluginSettings(t *testing.T) {
 				expected:     defaultPreinstallPluginsList,
 				expectedSync: []InstallPlugin{{ID: "plugin1"}},
 			},
+			{
+				name:             "should add canvas when it is loaded as external",
+				canvasAsExternal: "true",
+				expected:         append(defaultPreinstallPluginsList, InstallPlugin{ID: "canvas"}),
+			},
+			{
+				name:             "should not add canvas when the core panel is used",
+				canvasAsExternal: "false",
+				expected:         defaultPreinstallPluginsList,
+			},
+			{
+				name:             "should not add canvas when it is disabled",
+				canvasAsExternal: "true",
+				disablePlugins:   "canvas",
+				expected:         defaultPreinstallPluginsList,
+			},
+			{
+				name:             "should honor a pinned canvas version",
+				rawInput:         "canvas@1.2.3",
+				canvasAsExternal: "true",
+				expected:         append(defaultPreinstallPluginsList, InstallPlugin{ID: "canvas", Version: "1.2.3"}),
+			},
 		}
 		for _, tc := range tests {
 			t.Run(tc.name, func(t *testing.T) {
@@ -307,6 +330,12 @@ func Test_readPluginSettings(t *testing.T) {
 				}
 				if tc.disablePlugins != "" {
 					_, err = sec.NewKey("disable_plugins", tc.disablePlugins)
+					require.NoError(t, err)
+				}
+				if tc.canvasAsExternal != "" {
+					canvasSec, err := cfg.Raw.NewSection("plugin.canvas")
+					require.NoError(t, err)
+					_, err = canvasSec.NewKey("as_external", tc.canvasAsExternal)
 					require.NoError(t, err)
 				}
 
