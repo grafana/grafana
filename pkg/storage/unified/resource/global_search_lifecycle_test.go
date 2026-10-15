@@ -1160,7 +1160,7 @@ func TestImportedTypeRebuildDoesNotUpdateTheIndex(t *testing.T) {
 type watchStorage struct {
 	reconcileStorage
 
-	keys chan *resourcepb.ResourceKey
+	keys chan *WrittenEvent
 	// The watch stream, for a backend that cannot report written keys.
 	events chan *WrittenEvent
 	// Types asked for, and the reconnect callback, so a test can check them,
@@ -1171,7 +1171,7 @@ type watchStorage struct {
 	err    error
 }
 
-func (m *watchStorage) WatchWrittenKeys(_ context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error) {
+func (m *watchStorage) WatchWrittenKeys(_ context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *WrittenEvent, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -1205,8 +1205,8 @@ func (m *watchStorage) reconnect() {
 	onLost("")
 }
 
-func writtenKey(key NamespacedResource, name string) *resourcepb.ResourceKey {
-	return &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name}
+func writtenKey(key NamespacedResource, name string) *WrittenEvent {
+	return &WrittenEvent{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name}}
 }
 
 // A written key names an object; its current state is read from storage and
@@ -1218,7 +1218,7 @@ func TestWatchWritesTheCurrentStateOfNotifiedObjects(t *testing.T) {
 	}}
 	server, idx := repairServer(t, storage, nil)
 
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(dashboardType("ns"), "dash-a"),
 		writtenKey(folderType("ns"), "folder-a"),
 	})
@@ -1237,7 +1237,7 @@ func TestWatchWritesTheCurrentStateOfNotifiedObjects(t *testing.T) {
 func TestWatchLateCreateOfADeletedObjectRemovesIt(t *testing.T) {
 	server, idx := repairServer(t, &reconcileStorage{}, nil)
 
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(dashboardType("ns"), "dash-gone"),
 	})
 
@@ -1253,7 +1253,7 @@ func TestWatchReadsEachObjectOnce(t *testing.T) {
 	}}
 	server, idx := repairServer(t, storage, nil)
 
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(dashboardType("ns"), "dash-a"),
 		writtenKey(dashboardType("ns"), "dash-a"),
 	})
@@ -1270,7 +1270,7 @@ func TestWatchRemovesWhatFailsToBuild(t *testing.T) {
 	storage.broken = map[string]bool{"dash-a": true}
 	server, idx := repairServer(t, storage, nil)
 
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(dashboardType("ns"), "dash-a"),
 	})
 
@@ -1285,7 +1285,7 @@ func TestWatchWritesNothingWhenStorageFails(t *testing.T) {
 	storage := &reconcileStorage{readErr: errors.New("storage unavailable")}
 	server, idx := repairServer(t, storage, nil)
 
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(dashboardType("ns"), "dash-a"),
 	})
 
@@ -1297,7 +1297,7 @@ func TestWatchIgnoresWhatTheIndexDoesNotCover(t *testing.T) {
 	server, idx := repairServer(t, storage, nil)
 
 	playlists := NamespacedResource{Namespace: "ns", Group: "playlist.grafana.app", Resource: "playlists"}
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(playlists, "my-playlist"),
 		// Another namespace, which this instance holds no index for.
 		writtenKey(dashboardType("other"), "not-mine"),
@@ -1309,7 +1309,7 @@ func TestWatchIgnoresWhatTheIndexDoesNotCover(t *testing.T) {
 
 // Keys are taken until the watch is cancelled; the stream itself never ends.
 func TestWatchAppliesKeysUntilCancelled(t *testing.T) {
-	storage := &watchStorage{keys: make(chan *resourcepb.ResourceKey, 4)}
+	storage := &watchStorage{keys: make(chan *WrittenEvent, 4)}
 	storage.live = map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}}
 	server, idx := repairServer(t, storage, nil)
 	ctx, cancel := context.WithCancel(t.Context())
@@ -1333,7 +1333,7 @@ func TestWatchAppliesKeysUntilCancelled(t *testing.T) {
 // starts the next batch.
 func TestWatchBatchesKeysArrivingTogether(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		keys := make(chan *resourcepb.ResourceKey, 3)
+		keys := make(chan *WrittenEvent, 3)
 		keys <- writtenKey(dashboardType("ns"), "dash-a")
 		go func() {
 			time.Sleep(globalWatchBatchWait / 2)
@@ -1355,7 +1355,7 @@ func TestWatchBatchesKeysArrivingTogether(t *testing.T) {
 // and while it is disconnected, so every open global index this instance owns is
 // reconciled once the watch is ready and again after a reconnect.
 func TestWatchReconcilesOwnedIndexesWhenReadyAndOnReconnect(t *testing.T) {
-	storage := &watchStorage{keys: make(chan *resourcepb.ResourceKey)}
+	storage := &watchStorage{keys: make(chan *WrittenEvent)}
 	server, _ := repairServer(t, storage, nil)
 	server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns"), dashboardType("ns")}
 	ctx, cancel := context.WithCancel(t.Context())
@@ -1390,7 +1390,7 @@ func TestWatchFallsBackToTheWatchStream(t *testing.T) {
 		server.runGlobalIndexWatch(ctx)
 	}()
 
-	storage.events <- &WrittenEvent{Type: resourcepb.WatchEvent_MODIFIED, Key: writtenKey(dashboardType("ns"), "dash-a")}
+	storage.events <- &WrittenEvent{Type: resourcepb.WatchEvent_MODIFIED, Key: writtenKey(dashboardType("ns"), "dash-a").Key}
 	require.Eventually(t, func() bool { return len(idx.indexedItems()) == 1 }, 5*time.Second, 10*time.Millisecond)
 	cancel()
 	<-done
@@ -1437,7 +1437,7 @@ func TestWatchSkipsAGlobalIndexOwnedElsewhere(t *testing.T) {
 	server, idx := repairServer(t, storage, nil)
 	server.ownsIndexFn = func(NamespacedResource) (bool, error) { return false, nil }
 
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(dashboardType("ns"), "dash-a"),
 	})
 
@@ -1504,7 +1504,7 @@ func TestWatchToleratesAnExtraReadResponse(t *testing.T) {
 	storage.extraBatchResponse = true
 	server, idx := repairServer(t, storage, nil)
 
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(dashboardType("ns"), "dash-a"),
 	})
 
@@ -1513,7 +1513,7 @@ func TestWatchToleratesAnExtraReadResponse(t *testing.T) {
 
 // A stream that never sends does not hold up shutdown.
 func TestWatchStopsOnAnIdleStreamWhenCancelled(t *testing.T) {
-	storage := &watchStorage{keys: make(chan *resourcepb.ResourceKey)}
+	storage := &watchStorage{keys: make(chan *WrittenEvent)}
 	server := globalTestServer(t, storage, &mockSearchBackend{})
 	ctx, cancel := context.WithCancel(t.Context())
 	done := make(chan struct{})
@@ -1802,12 +1802,12 @@ func TestWatchWritesToAReplacedIndex(t *testing.T) {
 	}}
 	server, old := repairServer(t, storage, nil)
 
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(dashboardType("ns"), "dash-a"),
 	})
 	replacement := &MockResourceIndex{}
 	server.search.(*mockSearchBackend).cache[GlobalSearchKey("ns")] = replacement
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{
 		writtenKey(dashboardType("ns"), "dash-b"),
 	})
 
@@ -1826,7 +1826,7 @@ func TestWatchWritesWhatAnImportRestored(t *testing.T) {
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 50}},
 	})
-	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{writtenKey(dashboardType("ns"), "dash-a")})
+	server.applyWrittenKeys(t.Context(), []*WrittenEvent{writtenKey(dashboardType("ns"), "dash-a")})
 
 	items := idx.indexedItems()
 	require.Len(t, items, 1)

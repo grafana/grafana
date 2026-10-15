@@ -270,17 +270,18 @@ type StorageBackend interface {
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
-	// WatchWrittenKeys delivers the key of each write to the given resource
-	// types, straight from the bus: without its body and in no particular order,
-	// so without the delay WatchWriteEvents holds events for to put them in
-	// order. It suits a consumer that re-reads what it is told about. Delivery is
+	// WatchWrittenKeys delivers the key and resource version of each write to
+	// the given resource types, straight from the bus: only Key and
+	// ResourceVersion are set, without the body, and in no particular order, so
+	// without the delay WatchWriteEvents holds events for to put them in order.
+	// It suits a consumer that re-reads what it is told about. Delivery is
 	// at-most-once, so onLost is called when keys may have been lost: with the
 	// namespace of a key dropped because the consumer was not keeping up, or with
 	// an empty namespace, meaning any, once a lost connection is restored. It must
 	// not block. The channel is never closed; cancel ctx to stop.
 	// ErrWrittenKeysUnsupported means the backend, or its configuration, cannot
 	// do this at all.
-	WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error)
+	WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *WrittenEvent, error)
 
 	// ListModifiedSince will return all resources that have changed since the given resource version.
 	// If a resource has changes, only the latest change will be returned.
@@ -565,11 +566,9 @@ type ResourceServerOptions struct {
 	// HybridSearch then returns RRF ordering and min_relevance is a no-op.
 	Reranker *rerank.Reranker
 
-	// VectorReconciler, when non-nil, is launched after Init; the server
-	// attaches its own broadcaster to it before starting Run so the
-	// reconciler's watch path lights up. The reconciler owns the
-	// backfiller and runs it. nil = reconciler feature off.
-	VectorReconciler BroadcasterConsumer
+	// VectorReconciler, when non-nil, is launched after Init. The reconciler
+	// owns the backfiller and runs it. nil = reconciler feature off.
+	VectorReconciler Runnable
 
 	// UsageStatsEnabled turns on the usage stats ingestion path (RecordEvent /
 	// GetResourceDailyStats). It requires a KV-backed StorageBackend so the
@@ -583,14 +582,6 @@ type ResourceServerOptions struct {
 // would cycle.
 type Runnable interface {
 	Run(ctx context.Context) error
-}
-
-// BroadcasterConsumer is a Runnable that wants the server's write-events
-// broadcaster attached before Run. The server sets this up once
-// initWatcher has populated its broadcaster.
-type BroadcasterConsumer interface {
-	Runnable
-	UseBroadcaster(b Broadcaster[*WrittenEvent])
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -886,7 +877,7 @@ type server struct {
 
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
-	vectorWriteReconciler BroadcasterConsumer
+	vectorWriteReconciler Runnable
 	embeddingBuilders     embed.BuilderProvider
 	indexersWG            sync.WaitGroup
 
@@ -937,14 +928,9 @@ func (s *server) Init(ctx context.Context) error {
 }
 
 // startVectorIndexers launches the vector reconciler (which owns and runs
-// the backfiller). Optional: nil = feature off. The reconciler gets the
-// server's broadcaster via UseBroadcaster before Run so its watch path
-// lights up.
+// the backfiller). Optional: nil = feature off.
 func (s *server) startVectorIndexers() {
 	if s.vectorWriteReconciler != nil {
-		if s.broadcaster != nil {
-			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
-		}
 		s.indexersWG.Go(func() {
 			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
 				s.log.Error("vector reconciler stopped", "err", err)

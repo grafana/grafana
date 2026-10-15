@@ -196,42 +196,19 @@ func BuildForServedGroupVersions(
 // It is mounted under the search group itself, because it belongs to no kind's
 // group. Nothing serves kinds there, so the route is in no discovery document
 // and a caller has to know the path.
-func BuildGlobalSearch(
-	tracer tracing.Tracer,
-	index resourcepb.ResourceIndexClient,
-	builders []builder.APIGroupBuilder,
-) []builder.GroupVersionRoutes {
+func BuildGlobalSearch(tracer tracing.Tracer, index resourcepb.ResourceIndexClient) []builder.GroupVersionRoutes {
 	if index == nil {
 		return nil
 	}
-	kinds := globalSearchKinds(slices.Concat(resource.AppManifests(), builder.ManifestsFromBuilders(builders)))
+	// From the manifests compiled in here, which may be a different release than
+	// the search server's. A type it covers that these do not name is returned
+	// with no kind.
+	kinds := resource.GlobalSearchKinds()
 	// No field provider: the global index has a fixed field set, which the
 	// manifests do not declare.
 	handler := searchapi.NewHandler(index, nil, tracer)
 	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
 	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalSearchRoute(kinds)}})
-}
-
-// globalSearchKinds names the Kubernetes kind of each resource type the global
-// index covers, which a result reports and which cannot be derived from its
-// group and resource. Taken from every manifest, served here or not: the index
-// covers its types whichever API versions this process serves.
-func globalSearchKinds(manifests []*app.ManifestData) map[schema.GroupResource]string {
-	kinds := map[schema.GroupResource]string{}
-	for _, m := range manifests {
-		if m == nil {
-			continue
-		}
-		for _, version := range m.Versions {
-			for _, kind := range version.Kinds {
-				gr := schema.GroupResource{Group: m.Group, Resource: resource.ManifestResourceName(kind)}
-				if resource.GlobalIndexCoversType(gr) {
-					kinds[gr] = kind.Kind
-				}
-			}
-		}
-	}
-	return kinds
 }
 
 func toGroupVersionRoutes(byGroupVersion map[schema.GroupVersion][]searchapi.Route) []builder.GroupVersionRoutes {
