@@ -457,9 +457,13 @@ describe('Tree', () => {
       const selectedItem = screen.getByRole('treeitem', { selected: true });
       expect(selectedItem).toBeTruthy();
 
-      // The first Escape dismisses the highlighted item's metadata tooltip, the second one resets the highlight
+      // The first Escape only dismisses the highlighted item's metadata tooltip. The highlight and the selector stay.
       await user.keyboard('{Escape}');
       expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Search Applications' })).toBeInTheDocument();
+      expect(screen.getByRole('treeitem', { selected: true })).toBeInTheDocument();
+
+      // The second Escape resets the highlight
       await user.keyboard('{Escape}');
       expect(screen.queryByRole('treeitem', { selected: true })).toBeFalsy();
     });

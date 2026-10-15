@@ -114,6 +114,31 @@ describe('ScopesTreeItem metadata tooltip', () => {
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
+  it('does not let Escape reach ancestors while it dismisses the tooltip', async () => {
+    const onKeyDown = jest.fn();
+    const { user } = renderWithScopesServices(
+      <div onKeyDown={onKeyDown}>
+        <ScopesTreeItem
+          anyChildExpanded={false}
+          loadingNodeName={undefined}
+          treeNode={{ scopeNodeId: 'full', expanded: false, query: '' }}
+          scopeNodes={scopeNodes}
+          selected={false}
+          selectedScopes={[]}
+          highlighted={false}
+        />
+      </div>,
+      { scopes, nodes }
+    );
+    await user.tab();
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    expect(onKeyDown).not.toHaveBeenCalled();
+  });
+
   it('does not add a tab stop for the tooltip anchor', () => {
     const { container } = renderItem('full');
 

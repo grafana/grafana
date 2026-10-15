@@ -152,14 +152,21 @@ export function ScopeMetadataTooltip({ sources, highlighted, className, children
   const metadata = loaded.filter(hasScopeMetadata);
   const open = interacted && !dismissed && metadata.length > 0;
 
-  // The pointer can hover without focus being inside the anchor, so listen on the document while the tooltip is open
+  // The pointer can hover without focus being inside the anchor, so listen on the window while the tooltip is open.
+  // Capturing and stopping the event means Escape only dismisses the tooltip, and does not also reach the drawer that
+  // contains the tree (which would close it) or the tree's own Escape handling.
   useEffect(() => {
     if (!open) {
       return;
     }
-    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && setDismissed(true);
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setDismissed(true);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [open]);
 
   const onActiveChange = (value: boolean) => {
