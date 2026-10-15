@@ -81,8 +81,42 @@ export function subscribeToExtensionSidebarPresentation(listener: () => void): (
   };
 }
 
+/**
+ * Holds on the floating sidebar: while any is held, a floating sidebar stays mounted but hidden. A page that
+ * offers its own Assistant prompt holds it until the prompt is submitted, so the page does not show two inputs
+ * for the same thing. Any request to open the sidebar releases every hold, so the user opening it, or the page
+ * handing its prompt over, shows it. Module state for the same reason as the layout: one sidebar per page.
+ */
+const floatingHolds = new Set<symbol>();
+
+/** Holds the floating sidebar hidden; returns the release. */
+export function holdFloatingExtensionSidebar(): () => void {
+  const hold = Symbol('floating-extension-sidebar-hold');
+  floatingHolds.add(hold);
+  listeners.forEach((listener) => listener());
+  return () => {
+    if (floatingHolds.delete(hold)) {
+      listeners.forEach((listener) => listener());
+    }
+  };
+}
+
+/** Releases every hold, when something asks to open the sidebar. */
+export function releaseFloatingExtensionSidebarHolds(): void {
+  if (floatingHolds.size > 0) {
+    floatingHolds.clear();
+    listeners.forEach((listener) => listener());
+  }
+}
+
+/** Whether a floating sidebar is held hidden. Subscribe with `subscribeToExtensionSidebarPresentation`. */
+export function isFloatingExtensionSidebarHeld(): boolean {
+  return floatingHolds.size > 0;
+}
+
 /** @internal Resets the layout between tests. */
 export function resetExtensionSidebarPresentationForTests(): void {
   requested = {};
+  floatingHolds.clear();
   listeners.clear();
 }

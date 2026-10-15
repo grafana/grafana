@@ -48,6 +48,7 @@ export function AppChrome({ children }: Props) {
     extensionSidebarWidth,
     setExtensionSidebarWidth,
     presentation: extensionSidebarPresentation,
+    floatingHidden: isExtensionSidebarFloatingHidden,
   } = useExtensionSidebarContext();
   const isExtensionSidebarFloating = isExtensionSidebarOpen && extensionSidebarPresentation === 'floating';
   const state = chrome.useState();
@@ -211,7 +212,8 @@ export function AppChrome({ children }: Props) {
               <div
                 className={cx(
                   styles.sidebarContainerFloating,
-                  isExtensionSidebarFloating && styles.sidebarContainerFloatingBar
+                  isExtensionSidebarFloating && styles.sidebarContainerFloatingBar,
+                  isExtensionSidebarFloatingHidden && styles.sidebarContainerHidden
                 )}
                 data-testid={EXTENSION_SIDEBAR_FLOATING_TESTID}
               >
@@ -223,6 +225,7 @@ export function AppChrome({ children }: Props) {
               <Resizable
                 className={cx(styles.sidebarContainer, {
                   [styles.sidebarContainerFloatingBar]: isExtensionSidebarFloating,
+                  [styles.sidebarContainerHidden]: isExtensionSidebarFloatingHidden,
                 })}
                 defaultSize={{ width: extensionSidebarWidth }}
                 enable={isExtensionSidebarFloating ? false : { left: true }}
@@ -411,6 +414,10 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       background: 'transparent',
       // The sidebar inside can be moved off this box; the box itself must not block the page.
       pointerEvents: 'none',
+    }),
+    // A page holds the floating sidebar hidden: it stays mounted, so it takes over the page's prompt at once.
+    sidebarContainerHidden: css({
+      display: 'none',
     }),
     sidebarContainerFloating: css({
       position: 'fixed',

@@ -52,6 +52,7 @@ const extensionSidebarContextMock: ExtensionSidebarContextType = {
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
   presentation: 'docked',
+  floatingHidden: false,
 };
 
 const addedComponentRegistryItemMock: AddedComponentRegistryItem = {

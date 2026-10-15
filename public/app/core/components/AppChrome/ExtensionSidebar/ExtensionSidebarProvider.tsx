@@ -21,6 +21,9 @@ import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTEN
 import {
   type ExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
+  holdFloatingExtensionSidebar,
+  isFloatingExtensionSidebarHeld,
+  releaseFloatingExtensionSidebarHolds,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
@@ -67,6 +70,11 @@ export type ExtensionSidebarContextType = {
    * extension component stay mounted when this changes.
    */
   presentation: ExtensionSidebarPresentation;
+  /**
+   * The open sidebar floats but a page holds it hidden (see `useHoldFloatingExtensionSidebar`): it stays mounted,
+   * not shown, and reads as closed to the toolbar, so opening it shows it.
+   */
+  floatingHidden: boolean;
 
   props?: Record<string, unknown>;
 };
@@ -79,10 +87,19 @@ const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
   extensionSidebarWidth: DEFAULT_EXTENSION_SIDEBAR_WIDTH,
   setExtensionSidebarWidth: () => {},
   presentation: 'docked',
+  floatingHidden: false,
 });
 
 export function useExtensionSidebarContext() {
   return useContext(ExtensionSidebarContext);
+}
+
+/**
+ * While `active`, holds a floating sidebar hidden: for a page whose own Assistant prompt stands in for it. Opening
+ * the sidebar, including the page handing its prompt to the Assistant, releases the hold and shows it.
+ */
+export function useHoldFloatingExtensionSidebar(active: boolean): void {
+  useEffect(() => (active ? holdFloatingExtensionSidebar() : undefined), [active]);
 }
 
 interface ExtensionSidebarContextProps {
@@ -99,6 +116,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   const canFloat = useFlagGrafanaExtensionSidebarFloating();
   const presentation: ExtensionSidebarPresentation =
     canFloat && requestedPresentation === 'floating' ? 'floating' : 'docked';
+  const floatingHeld = useSyncExternalStore(subscribeToExtensionSidebarPresentation, isFloatingExtensionSidebarHeld);
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
     EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
@@ -164,6 +182,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     }
   }
   const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
+  const floatingHidden = dockedComponentId !== undefined && presentation === 'floating' && floatingHeld;
 
   useEffect(() => {
     if (isLoading) {
@@ -186,6 +205,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
 
   const setDockedComponentWithProps = useCallback(
     (componentId: string | undefined, props?: Record<string, unknown>) => {
+      // Any request to open it shows a floating sidebar a page holds hidden.
+      if (componentId !== undefined) {
+        releaseFloatingExtensionSidebarHolds();
+      }
       setProps(props);
       setDockedComponentId(componentId);
     },
@@ -220,7 +243,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         currentComponentMeta?.pluginId === event.payload.pluginId &&
         currentComponentMeta?.componentTitle === event.payload.componentTitle;
 
-      if (isCurrentlyOpen) {
+      // Open but held hidden, it reads as closed, so a toggle shows it.
+      if (isCurrentlyOpen && !floatingHidden) {
         closeSidebarHandler();
       } else {
         openSidebarHandler(event);
@@ -235,7 +259,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       closeSubscription.unsubscribe();
       toggleSubscription.unsubscribe();
     };
-  }, [setDockedComponentWithProps, availableComponents, dockedComponentId]);
+  }, [setDockedComponentWithProps, availableComponents, dockedComponentId, floatingHidden]);
 
   // update the stored docked component id when it changes
   useEffect(() => {
@@ -276,6 +300,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         ),
         setExtensionSidebarWidth,
         presentation,
+        floatingHidden,
         props,
       }}
     >

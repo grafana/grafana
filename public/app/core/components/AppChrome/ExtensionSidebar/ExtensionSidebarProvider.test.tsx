@@ -9,7 +9,11 @@ import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unst
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
-import { resetExtensionSidebarPresentationForTests, setExtensionSidebarPresentation } from './extensionSidebarLayout';
+import {
+  holdFloatingExtensionSidebar,
+  resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarPresentation,
+} from './extensionSidebarLayout';
 import {
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentIdFromComponentMeta,
@@ -514,6 +518,81 @@ describe('ExtensionSidebarProvider', () => {
       resetExtensionSidebarPresentationForTests();
       await act(async () => {
         setTestFlags({});
+      });
+    });
+
+    describe('held hidden by a page', () => {
+      const componentId = () => getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
+      const HiddenComponent = () => {
+        const context = useExtensionSidebarContext();
+        return (
+          <>
+            <div data-testid="is-open">{context.isOpen.toString()}</div>
+            <div data-testid="floating-hidden">{context.floatingHidden.toString()}</div>
+          </>
+        );
+      };
+      const renderOpen = async () => {
+        await act(async () => {
+          setTestFlags({ [FLOATING_FLAG]: true });
+        });
+        (store.get as jest.Mock).mockReturnValue(componentId());
+        render(
+          <ExtensionSidebarContextProvider>
+            <HiddenComponent />
+          </ExtensionSidebarContextProvider>
+        );
+      };
+      const latestSubscriber = (eventType: unknown) =>
+        subscribeSpy.mock.calls.filter(([type]) => type === eventType).at(-1)![1];
+      const payload = { pluginId: mockPluginMeta.pluginId, componentTitle: mockComponent.title };
+
+      it('hides an open floating sidebar while held, and shows it again when released', async () => {
+        await renderOpen();
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+
+        let release = () => {};
+        act(() => {
+          release = holdFloatingExtensionSidebar();
+        });
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('true');
+        expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+
+        act(() => release());
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('shows it on any request to open it', async () => {
+        await renderOpen();
+        act(() => {
+          holdFloatingExtensionSidebar();
+        });
+
+        act(() => latestSubscriber(OpenExtensionSidebarEvent)(new OpenExtensionSidebarEvent(payload)));
+
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('shows it on a toggle, instead of closing it unseen', async () => {
+        await renderOpen();
+        act(() => {
+          holdFloatingExtensionSidebar();
+        });
+
+        act(() => latestSubscriber(ToggleExtensionSidebarEvent)(new ToggleExtensionSidebarEvent(payload)));
+
+        expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('never hides a docked sidebar', async () => {
+        await renderOpen();
+        act(() => setExtensionSidebarPresentation('docked'));
+        act(() => {
+          holdFloatingExtensionSidebar();
+        });
+
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
       });
     });
 

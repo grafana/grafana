@@ -3,6 +3,9 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   canFloatExtensionSidebar,
   getRequestedExtensionSidebarPresentation,
+  holdFloatingExtensionSidebar,
+  isFloatingExtensionSidebarHeld,
+  releaseFloatingExtensionSidebarHolds,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
@@ -57,6 +60,30 @@ describe('extensionSidebarLayout', () => {
     setExtensionSidebarPresentation('floating', '/d/abc');
     expect(getRequestedExtensionSidebarPresentation('/d/abc')).toBe('floating');
     expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('docked');
+  });
+
+  it('holds the floating sidebar hidden until every hold is released, or all are released at once', () => {
+    const listener = jest.fn();
+    subscribeToExtensionSidebarPresentation(listener);
+    expect(isFloatingExtensionSidebarHeld()).toBe(false);
+
+    const releaseA = holdFloatingExtensionSidebar();
+    const releaseB = holdFloatingExtensionSidebar();
+    expect(isFloatingExtensionSidebarHeld()).toBe(true);
+    releaseA();
+    releaseA();
+    expect(isFloatingExtensionSidebarHeld()).toBe(true);
+    releaseB();
+    expect(isFloatingExtensionSidebarHeld()).toBe(false);
+    // Two holds and two releases; a repeated release notifies nothing.
+    expect(listener).toHaveBeenCalledTimes(4);
+
+    const releaseC = holdFloatingExtensionSidebar();
+    releaseFloatingExtensionSidebarHolds();
+    expect(isFloatingExtensionSidebarHeld()).toBe(false);
+    // Released already, its own release is harmless.
+    releaseC();
+    expect(isFloatingExtensionSidebarHeld()).toBe(false);
   });
 
   it('notifies subscribers only when the layout changes', () => {
