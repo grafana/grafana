@@ -159,13 +159,10 @@ func TestDebouncer(t *testing.T) {
 
 		wg.Wait()
 
-		select {
-		case err := <-errs:
-			require.Equal(t, expectedErr, err)
-		default:
-			t.Fatal("expected error")
-		}
+		require.Equal(t, expectedErr, <-errs)
 
+		// Stop waits for the processing goroutine, which increments the counter after the error handler returns.
+		group.Stop()
 		require.Equal(t, float64(1), testutil.ToFloat64(group.metrics.processingErrorsCounter))
 	})
 

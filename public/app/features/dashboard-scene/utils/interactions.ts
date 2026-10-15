@@ -1,5 +1,6 @@
 import { type VariableType } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
 import {
@@ -395,6 +396,22 @@ export const DashboardInteractions = {
     reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
   },
 
+  // dashboards_code_pane_opened
+  // when a user opens the "Edit as code" sidebar pane from the sidebar button
+  codePaneOpened: () => {
+    reportDashboardInteraction('code_pane_opened');
+  },
+
+  // dashboards_code_pane_action_clicked
+  // when a user clicks an action in the "Edit as code" sidebar pane
+  codePaneActionClicked: (properties: {
+    action: 'apply' | 'copy_as_resource' | 'show_diff' | 'hide_diff' | 'expand';
+    format: 'json' | 'yaml';
+    success?: boolean;
+  }) => {
+    reportDashboardInteraction('code_pane_action_clicked', properties);
+  },
+
   viewPanelAction: (properties: { action?: string; value: string }) => {
     reportDashboardInteraction('view_panel_action', properties);
   },
@@ -425,7 +442,7 @@ const reportDashboardInteraction = (
   interactionPrefix = 'dashboards'
 ) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
-  const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
+  const isDynamicDashboard = isDashboardNewLayoutsEnabled();
 
   if (properties) {
     reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });

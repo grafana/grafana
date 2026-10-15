@@ -79,7 +79,7 @@ func TestStorageSearchForwardAuth(t *testing.T) {
 	// This exercises both delegated grants and filtering of individual search hits.
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
-		AccessClient: resource.NewAuthzLimitedClient(denyFolderAccess{denied: "denied"}, resource.AuthzOptions{
+		AccessClient: resource.NewAuthzLimitedClient(&denyFolderAccess{denied: "denied"}, resource.AuthzOptions{
 			Registry: prometheus.NewRegistry(),
 		}),
 		Search: resource.SearchOptions{

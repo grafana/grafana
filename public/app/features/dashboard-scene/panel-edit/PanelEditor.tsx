@@ -20,6 +20,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
@@ -153,7 +154,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const originalState = this._layoutItemState!;
 
     // Temp fix for old edit mode
-    if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
+    if (this._layoutItem instanceof DashboardGridItem && !isDashboardNewLayoutsEnabled()) {
       this._layoutItem.handleEditChange();
       return;
     }

@@ -149,7 +149,6 @@ func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRo
 	treeRoot.RemoveSectionByID(mwNode.Id)
 
 	mwNode.Id = "standalone-plugin-page-" + mwPluginID
-	mwNode.IsNew = true
 	// Reset the standalone app's plugin SortWeight so it falls back to its
 	// appended position and sorts last among SLO's child pages.
 	mwNode.SortWeight = 0
@@ -217,14 +216,17 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 			// Register standalone plugin pages to certain sections using the Grafana config
 			if pathConfig, ok := s.navigationAppPathConfig[include.Path]; ok {
-				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
-					link.Id = "standalone-plugin-page-" + include.Path
-					link.SortWeight = pathConfig.SortWeight
+				link.Id = "standalone-plugin-page-" + include.Path
+				link.SortWeight = pathConfig.SortWeight
+				link.IsNew = pathConfig.IsNew
+				link.SubTitle = pathConfig.SubTitle
+				if pathConfig.Icon != "" {
+					link.Icon = pathConfig.Icon
+				}
 
-					if len(pathConfig.SubTitle) > 0 {
-						link.SubTitle = pathConfig.SubTitle
-					}
-
+				if pathConfig.SectionID == navtree.NavIDRoot {
+					treeRoot.AddSection(link)
+				} else if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					// Check if the section already has a page with the same URL, and in that case override it
 					// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
 					isOverridingCorePage := false
@@ -581,6 +583,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 6, Text: "Incident"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7, Text: "OnCall"},
 		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "AI", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
+		"grafana-workflows-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightWorkflows, Text: "Workflows", SubTitle: "Create and manage automated workflows", Icon: "workflows"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
@@ -593,6 +596,12 @@ func (s *ServiceImpl) readNavigationSettings() {
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
+		"/a/grafana-assistant-app/pages": {
+			SectionID:  navtree.NavIDRoot,
+			SortWeight: navtree.WeightDashboard + 1,
+			Icon:       "pages",
+			IsNew:      true,
+		},
 		"/a/grafana-auth-app": {
 			SectionID:  navtree.NavIDCfgAccess,
 			SortWeight: 2,

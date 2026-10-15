@@ -13,6 +13,7 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-backend-services-squad
+/AI_POLICY.md @grafana/grafana-community-support
 /CHANGELOG.md @grafana/grafana-backend-services-squad
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
@@ -149,6 +150,7 @@
 /pkg/infra/localcache/ @grafana/grafana-backend-services-squad
 /pkg/infra/log/ @grafana/grafana-backend-services-squad
 /pkg/infra/metrics/ @grafana/grafana-backend-services-squad
+/pkg/infra/metricsservice/ @grafana/grafana-backend-services-squad
 /pkg/infra/nats/ @grafana/grafana-search-and-storage
 /pkg/infra/network/ @grafana/identity-squad
 /pkg/infra/process/ @grafana/grafana-backend-services-squad
@@ -492,6 +494,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
 /e2e-playwright/panels-suite/ @grafana/dataviz-squad
+/e2e-playwright/text-sandbox.config.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/panels-suite/frontend-sandbox-panel.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/panels-suite/panelEdit_base.spec.ts @grafana/dashboards-squad
@@ -751,6 +754,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/RadialGauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/PluginSignatureBadge/ @grafana/grafana-catalog
+/packages/grafana-ui/src/components/SanitizedSVG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Sparkline/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Table/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Table/Cells/SparklineCell.tsx @grafana/dataviz-squad
@@ -904,7 +908,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/Signup/ @grafana/grafana-frontend-navigation
 /public/app/core/components/SplashScreenModal/ @grafana/grafana-frontend-platform
 /public/app/core/components/SplitPaneWrapper/ @grafana/datapro
-/public/app/core/components/SVG/ @grafana/dataviz-squad
 /public/app/core/components/TagFilter/ @grafana/grafana-frontend-platform
 /public/app/core/components/Theme/ @grafana/grafana-frontend-platform
 /public/app/core/components/ThemeSelector/ @grafana/grafana-frontend-platform
@@ -961,6 +964,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/mocks/subscribeTester.ts @grafana/grafana-frontend-platform
 /public/app/core/services/mousetrap/ @grafana/grafana-frontend-platform
 /public/app/core/services/NewFrontendAssetsChecker* @grafana/grafana-frontend-platform
+/public/app/core/services/pageHistory/ @grafana/grafana-frontend-navigation
 /public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
 /public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform
@@ -1002,6 +1006,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/mermaid* @grafana/grafana-frontend-navigation @grafana/dataviz-squad
 /public/app/core/utils/navBarItem-translations* @grafana/grafana-frontend-navigation
 /public/app/core/utils/object* @grafana/grafana-frontend-platform
+/public/app/core/utils/parseJsonWithSchema.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/query* @grafana/grafana-datasources-core-services
 /public/app/core/utils/richHistory* @grafana/datapro
 /public/app/core/utils/set.ts @grafana/grafana-frontend-platform

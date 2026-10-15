@@ -1,6 +1,7 @@
 import { uniqueId } from 'lodash';
 
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   type AdHocFilterWithLabels,
@@ -57,7 +58,7 @@ import {
   AnnoKeyEmbedded,
   AnnoReloadOnParamsChange,
 } from 'app/features/apiserver/types';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithLoadInfo } from 'app/features/dashboard/api/types';
 import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
@@ -78,6 +79,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { applySupportsMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
@@ -109,7 +111,7 @@ export type TypedVariableModelV2 =
   | SwitchVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(
-  dto: DashboardWithAccessInfo<DashboardV2Spec>,
+  dto: DashboardWithLoadInfo<DashboardV2Spec>,
   options?: LoadDashboardOptions
 ): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
@@ -175,6 +177,7 @@ export function transformSaveModelSchemaV2ToScene(
     isSnapshot,
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
+    libraryPanelRepeatUnresolved: dto.libraryPanelRepeatUnresolved,
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),
@@ -380,12 +383,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
       drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
       $behaviors: [new ReportInteractionBehavior({})],
-      supportsMultiValueOperators: Boolean(
-        getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
-      ),
+      supportsMultiValueOperators: false,
       collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
         ? (variable.spec.enableGroupBy ?? false)
@@ -394,7 +395,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
     }
-    return new AdHocFiltersVariable(adhocVariableState);
+    const adhocVariable = new AdHocFiltersVariable(adhocVariableState);
+    applySupportsMultiValueOperators(adhocVariable, ds?.type);
+    return adhocVariable;
   }
 
   if (variable.kind === defaultCustomVariableKind().kind) {
@@ -528,7 +531,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
       drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
       // @ts-expect-error
       defaultOptions: variable.options,
@@ -599,7 +602,7 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             v.group
           );
 
-          return new AdHocFiltersVariable({
+          const adhocVariable = new AdHocFiltersVariable({
             name: v.spec.name,
             label: v.spec.label,
             readOnly: true,
@@ -612,15 +615,18 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             baseFilters: v.spec.baseFilters ?? [],
             defaultKeys: v.spec.defaultKeys?.length ? v.spec.defaultKeys : undefined,
             useQueriesAsFilterForOptions: true,
-            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-            supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
+            applicabilityEnabled: getFeatureFlagClient().getBooleanValue(
+              FlagKeys.PerPanelNonApplicableDrilldowns,
+              false
             ),
+            supportsMultiValueOperators: false,
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
               ? (v.spec.enableGroupBy ?? false)
               : false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
+          applySupportsMultiValueOperators(adhocVariable, ds?.type);
+          return adhocVariable;
         }
         // for other variable types we are using the SnapshotVariable
         return createSnapshotVariable(v);

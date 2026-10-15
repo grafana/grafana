@@ -1,6 +1,6 @@
 import { locationService, reportInteraction } from '@grafana/runtime';
 
-import { AppChromeService } from './AppChromeService';
+import { AppChromeService, getPageTitle } from './AppChromeService';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -46,6 +46,24 @@ describe('AppChromeService', () => {
       pageNav: { text: 'test', url: 'A', children: [{ text: 'child', active: true }] },
     });
     expect(stateChanges).toBe(4);
+  });
+
+  describe('getPageTitle', () => {
+    it('is the pageNav text, else the section text, and undefined until a page sets its nav after a route change', () => {
+      const chromeService = new AppChromeService();
+      expect(getPageTitle(chromeService.state.getValue())).toBeUndefined();
+
+      chromeService.update({ sectionNav: { node: { text: 'Alert rules' }, main: { text: 'Alerting' } } });
+      expect(getPageTitle(chromeService.state.getValue())).toBe('Alert rules');
+
+      chromeService.update({ pageNav: { text: 'High CPU' } });
+      expect(getPageTitle(chromeService.state.getValue())).toBe('High CPU');
+
+      // A non-nav update after a route change clears the previous page's nav; no title until the new page sets one.
+      chromeService.setMatchedRoute({ path: '/other', component: () => null });
+      chromeService.update({ actions: null });
+      expect(getPageTitle(chromeService.state.getValue())).toBeUndefined();
+    });
   });
 
   describe('fullscreen workspace', () => {
