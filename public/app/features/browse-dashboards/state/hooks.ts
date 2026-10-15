@@ -3,7 +3,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
-import { useGetEditableFolderNamesQuery } from 'app/api/clients/dashboard/v0alpha1';
+import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
@@ -157,9 +157,12 @@ export function useIsReadOnlyFolder({ item, parentUID }: DashboardsTreeItem): bo
     isFolderEditAccessEnabled && isFoldersAppPlatformAPIEnabled && siblings && item.kind === 'folder'
       ? getFolderPageNames(siblings, item.uid)
       : undefined;
-  const { currentData: editableNames } = useGetEditableFolderNamesQuery(names ? { names } : skipToken);
+  const { currentData: editableFolders } = useSearchDashboardsAndFoldersQuery(
+    names ? { type: 'folder', permission: 'edit', name: names, limit: names.length } : skipToken
+  );
 
-  return editableNames !== undefined && !editableNames.includes(stripVirtualFolderPrefix(item.uid));
+  const uid = stripVirtualFolderPrefix(item.uid);
+  return editableFolders !== undefined && !editableFolders.hits.some((hit) => hit.name === uid);
 }
 
 export function useActionSelectionState() {
