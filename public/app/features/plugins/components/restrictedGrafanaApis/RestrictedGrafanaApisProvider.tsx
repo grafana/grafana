@@ -1,8 +1,9 @@
-import { useMemo, type PropsWithChildren, type ReactElement } from 'react';
+import { ProviderEvents } from '@openfeature/react-sdk';
+import { useMemo, useSyncExternalStore, type PropsWithChildren, type ReactElement } from 'react';
 
 import { RestrictedGrafanaApisContextProvider, type RestrictedGrafanaApisContextType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useFlagGrafanaDashboardComposer } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
 import { composerApi } from './composer/composerApi';
@@ -32,7 +33,7 @@ export function RestrictedGrafanaApisProvider({
     [pluginId]
   );
   // Composer exists only while its flag is on; flipping it off removes the API (and ends open sessions).
-  const composerEnabled = useFlagGrafanaDashboardComposer();
+  const composerEnabled = useComposerEnabled();
   const apis = useMemo(
     () => ({
       ...restrictedGrafanaApis,
@@ -51,4 +52,25 @@ export function RestrictedGrafanaApisProvider({
       {children}
     </RestrictedGrafanaApisContextProvider>
   );
+}
+
+/**
+ * Whether Composer's flag is on, kept current. Read from the flag client rather than the React OpenFeature
+ * hooks: extension components get this provider wherever they render, and not every place they render has an
+ * OpenFeatureProvider above it.
+ */
+function useComposerEnabled(): boolean {
+  return useSyncExternalStore(subscribeToFlagChanges, isComposerEnabled);
+}
+
+function isComposerEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardComposer, false);
+}
+
+const FLAG_CHANGE_EVENTS = [ProviderEvents.Ready, ProviderEvents.ConfigurationChanged] as const;
+
+function subscribeToFlagChanges(onChange: () => void): () => void {
+  const client = getFeatureFlagClient();
+  FLAG_CHANGE_EVENTS.forEach((event) => client.addHandler(event, onChange));
+  return () => FLAG_CHANGE_EVENTS.forEach((event) => client.removeHandler(event, onChange));
 }
