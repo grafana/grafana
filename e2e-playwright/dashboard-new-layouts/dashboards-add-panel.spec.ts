@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { expectRowToBeVisible, expectTabToBeVisible, undockMegaMenu } from './helpers';
+import { expectRowVisibility, expectTabVisibility, undockMegaMenu } from './helpers';
 import { type Sidebar } from './page-objects';
 
 test.use({
@@ -71,40 +71,40 @@ test.describe(
 
       // group the new panel into a tab
       await canvas.groupPanels('tab');
-      const tab1 = await expectTabToBeVisible('New tab', tabs);
+      const tab1 = await expectTabVisibility('New tab', tabs, 'visible');
 
       // add a new panel to this tab
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getPanels('New panel', tab1)).toHaveCount(2);
+      await expect(panels.getPanels('New panel', tab1.content)).toHaveCount(2);
 
       // add another tab and a new panel inside
       await canvas.addTab();
-      const tab2 = await expectTabToBeVisible('New tab 1', tabs);
+      const tab2 = await expectTabVisibility('New tab 1', tabs, 'visible');
 
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getPanels('New panel', tab2)).toHaveCount(1);
+      await expect(panels.getPanels('New panel', tab2.content)).toHaveCount(1);
 
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getPanels('New panel', tab2)).toHaveCount(2);
+      await expect(panels.getPanels('New panel', tab2.content)).toHaveCount(2);
 
       // group into row
-      await canvas.groupPanels('row', tab2);
-      const row1 = await expectRowToBeVisible('New row', rows);
+      await canvas.groupPanels('row', tab2.content);
+      const row1 = await expectRowVisibility('New row', rows, 'visible');
 
       // add a panel to the row
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getPanels('New panel', row1)).toHaveCount(3);
+      await expect(panels.getPanels('New panel', row1.content)).toHaveCount(3);
 
       // add another row and a couple of panels to it
       await canvas.addRow();
-      const row2 = await expectRowToBeVisible('New row 1', rows);
+      const row2 = await expectRowVisibility('New row 1', rows, 'visible');
 
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getPanels('New panel', row2)).toHaveCount(1);
+      await expect(panels.getPanels('New panel', row2.content)).toHaveCount(1);
 
       // use the canvas
-      await canvas.addPanel(row2);
-      await expect(panels.getPanels('New panel', row2)).toHaveCount(2);
+      await canvas.addPanel(row2.content);
+      await expect(panels.getPanels('New panel', row2.content)).toHaveCount(2);
     });
   }
 );

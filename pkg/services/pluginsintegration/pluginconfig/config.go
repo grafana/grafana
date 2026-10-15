@@ -30,7 +30,6 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.AppURL,
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		config.Features{
-			SriChecksEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
 			TempoAlertingEnabled: features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
 		},
 		cfg.GrafanaComAPIURL,
@@ -50,6 +49,8 @@ type PluginInstanceCfg struct {
 	Tracing config.Tracing
 
 	PluginSettings config.PluginSettings
+	// DevMode is set when Grafana runs with app_mode = development.
+	DevMode bool
 
 	AWSAllowedAuthProviders          []string
 	AWSAssumeRoleEnabled             bool
@@ -63,6 +64,8 @@ type PluginInstanceCfg struct {
 	AzureAuthEnabled bool
 
 	ProxySettings setting.SecureSocksDSProxySettings
+
+	OpenFeature setting.OpenFeatureSettings
 
 	GrafanaVersion string
 
@@ -110,6 +113,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Features:                            features,
 		Tracing:                             tracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),
+		DevMode:                             cfg.Env == setting.Dev,
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
 		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),
@@ -120,6 +124,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Azure:                               cfg.Azure,
 		AzureAuthEnabled:                    cfg.Azure.AzureAuthEnabled,
 		ProxySettings:                       cfg.SecureSocksDSProxy,
+		OpenFeature:                         cfg.OpenFeature,
 		GrafanaVersion:                      cfg.BuildVersion,
 		ConcurrentQueryCount:                cfg.ConcurrentQueryCount,
 		UserFacingDefaultError:              cfg.UserFacingDefaultError,

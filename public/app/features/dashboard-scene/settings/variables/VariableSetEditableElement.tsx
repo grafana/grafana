@@ -7,9 +7,9 @@ import {
   type EditableDashboardElementInfo,
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
-import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
+import { partitionVariablesByDisplay } from './partitionVariables';
 import { isVariableEditable } from './utils';
 
 export class VariableSetEditableElement implements EditableDashboardElement {

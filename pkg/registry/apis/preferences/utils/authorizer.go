@@ -117,3 +117,13 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 	// the owner was not explicitly allowed
 	return authorizer.DecisionDeny, "", nil
 }
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (a *AuthorizeFromName) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(a.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (a *AuthorizeFromName) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
+}

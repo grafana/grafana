@@ -15,6 +15,7 @@ export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 
+export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
 export { ExpressionDatasourceRef } from '../utils/expressionRef';
 export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';
 
@@ -85,4 +86,11 @@ export {
   syncDataSourceInstanceSettings,
 } from '../services/dataSource/settings';
 export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
+// Exported so test helpers can assert a suite never resolved through the legacy fallback.
+// Delete along with the fallbacks themselves once `DataSourceSrv` is gone.
+export {
+  FALLBACK_TO_LEGACY_INSTANCE_WARNING,
+  FALLBACK_TO_LEGACY_LIST_WARNING,
+  FALLBACK_TO_LEGACY_SETTINGS_WARNING,
+} from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';

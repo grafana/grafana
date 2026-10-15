@@ -7,6 +7,12 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/middleware"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,13 +23,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/rest"
-
-	authnlib "github.com/grafana/authlib/authn"
-	authzlib "github.com/grafana/authlib/authz"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/cache"
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/middleware"
 
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -112,6 +111,7 @@ func ProvideAuthZClients(
 		}
 		return newAuthZClients(accessClient, rbacClient), nil
 	default:
+		serverCfg := readEmbeddedRBACServerSettings(cfg)
 		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
 		if !ok {
 			return nil, errors.New("access control service does not support local user permission evaluation")
@@ -140,7 +140,7 @@ func ProvideAuthZClients(
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
-				store.NewSQLPermissionStore(sql, tracer),
+				store.NewSQLPermissionStore(sql, tracer, serverCfg.ForcePermissionRoleActionIndex),
 			),
 			userPermissionsEvaluator,
 			nil,
@@ -399,7 +399,7 @@ func RegisterRBACAuthZService(
 		db,
 		folderStore,
 		legacy.NewLegacySQLStores(db),
-		store.NewSQLPermissionStore(db, tracer),
+		store.NewSQLPermissionStore(db, tracer, cfg.ForcePermissionRoleActionIndex),
 		nil,
 		userPermissionsResolver,
 		actionResolver,
@@ -436,8 +436,8 @@ func (lc *NoopCache) Delete(ctx context.Context, key string) error {
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}, []grpc.StreamClientInterceptor{
-			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}
+		middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}, []grpc.StreamClientInterceptor{
+		middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}
 }

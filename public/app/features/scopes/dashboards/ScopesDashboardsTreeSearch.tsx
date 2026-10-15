@@ -39,7 +39,8 @@ export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: Scopes
     <div className={styles.container}>
       <FilterInput
         disabled={disabled}
-        placeholder={t('scopes.dashboards.search', 'Search')}
+        placeholder={t('scopes.dashboards.filter', 'Filter...')}
+        variant="filter"
         value={inputState.value}
         data-testid="scopes-dashboards-search"
         onChange={(value) => setInputState({ value, dirty: true })}

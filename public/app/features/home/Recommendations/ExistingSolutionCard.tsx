@@ -9,6 +9,7 @@ import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } fro
 import { ctaClicked } from '../analytics/main';
 import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
 import { type Solution, type SolutionId } from '../solutions/types';
+import { useFact } from '../solutions/useFact';
 
 interface ExistingSolutionCardProps {
   existing: Solution[];
@@ -19,10 +20,15 @@ interface ExistingSolutionCardProps {
 export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingSolutionCardProps) {
   const styles = useStyles2(getStyles);
 
-  const { value: alert = null } = useAsync(() => selected.alert(), [selected]);
+  const { value: alert } = useFact(selected.alert);
   const { value: cta = null, loading: ctaLoading } = useAsync(() => selected.cta(), [selected]);
   const { value: datasource = null } = useAsync(() => selected.datasource(), [selected]);
-  const subtitle = datasource && t('home.solutions.via-datasource', 'via {{name}}', { name: datasource.name });
+  const subtitle =
+    datasource &&
+    t('home.solutions.via-datasource', 'via {{name}}', {
+      name: datasource.name,
+      interpolation: { escapeValue: false },
+    });
   const isAttentionCta = cta?.action === 'view_alerts';
 
   return (
@@ -225,7 +231,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.warning.text,
 
     '&:hover, &:focus': {
-      background: theme.colors.warning.background,
+      background: theme.colors.warning.subtleBackground,
       color: theme.colors.warning.textEmphasis,
     },
   }),

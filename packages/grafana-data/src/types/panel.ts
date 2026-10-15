@@ -189,10 +189,10 @@ export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
 export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TValue> {}
 
 export interface PanelOptionsEditorItem<TOptions = any, TValue = any, TSettings = any>
-  extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue> {}
+  extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue, TOptions> {}
 
 export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any>
-  extends OptionEditorConfig<TOptions, TSettings, TValue> {}
+  extends OptionEditorConfig<TOptions, TSettings, TValue, TOptions> {}
 
 /**
  * @internal

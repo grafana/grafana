@@ -32,6 +32,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
       variant = ColorSwatchVariant.Small,
       isSelected,
       'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledBy,
       'aria-describedby': ariaDescribedBy,
       id,
       ...otherProps
@@ -51,10 +52,13 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
           className={styles.swatch}
           {...focusProps}
           aria-label={
-            colorLabel
-              ? t('grafana-ui.color-swatch.aria-label-selected-color', '{{colorLabel}} color', { colorLabel })
-              : t('grafana-ui.color-swatch.aria-label-default', 'Pick a color')
+            ariaLabelledBy
+              ? undefined
+              : colorLabel
+                ? t('grafana-ui.color-swatch.aria-label-selected-color', '{{colorLabel}} color', { colorLabel })
+                : t('grafana-ui.color-swatch.aria-label-default', 'Pick a color')
           }
+          aria-labelledby={ariaLabelledBy}
           aria-describedby={ariaDescribedBy}
           type="button"
         />

@@ -6,10 +6,16 @@ import { t } from '@grafana/i18n';
 import { Stack, ToolbarButton } from '@grafana/ui';
 
 import { TextMode } from '../../panelcfg.gen';
+import { isTextNewFeaturesEnabled } from '../utils';
 
 import { insertAtCursor, toggleLinePrefix, toggleOrderedList, toggleSurround } from './editorCommands';
 
-const TABLE_SNIPPET = '\n| Column | Column |\n| ------ | ------ |\n| Value  | Value  |\n';
+const MARKDOWN_TABLE_SNIPPET = '\n| Column | Column |\n| ------ | ------ |\n| Value  | Value  |\n';
+const HTML_TABLE_SNIPPET =
+  '\n<table>\n  <tr>\n    <th>Column</th>\n    <th>Column</th>\n  </tr>\n  <tr>\n    <td>Value</td>\n    <td>Value</td>\n  </tr>\n</table>\n';
+const DIAGRAM_BODY = 'graph TD\n  A[Start] --> B[End]\n';
+const MARKDOWN_DIAGRAM_SNIPPET = `\n\`\`\`mermaid\n${DIAGRAM_BODY}\`\`\`\n`;
+const HTML_DIAGRAM_SNIPPET = `\n<pre class="mermaid">\n${DIAGRAM_BODY}</pre>\n`;
 
 export const FORMAT_TOOLBAR_TEST_ID = 'TextNGEditor-format-toolbar';
 
@@ -50,6 +56,13 @@ function getFormatActions(mode: TextMode): FormatAction[] {
   const isHtml = mode === TextMode.HTML;
   const markers = isHtml ? HTML_MARKERS : MARKDOWN_MARKERS;
 
+  const heading: FormatAction = {
+    key: 'heading',
+    tooltip: t('textng.editor.tooltip-heading', 'Heading'),
+    label: t('textng.editor.format-heading', 'H'),
+    run: (view) => (isHtml ? toggleSurround(view, '<h1>', '</h1>') : toggleLinePrefix(view, '# ')),
+  };
+
   const inlineActions: FormatAction[] = [
     {
       key: 'bold',
@@ -71,6 +84,24 @@ function getFormatActions(mode: TextMode): FormatAction[] {
     },
   ];
 
+  const table: FormatAction = {
+    key: 'table',
+    tooltip: t('textng.editor.tooltip-table', 'Table'),
+    icon: 'table',
+    run: (view) => insertAtCursor(view, isHtml ? HTML_TABLE_SNIPPET : MARKDOWN_TABLE_SNIPPET),
+  };
+
+  const diagramAction: FormatAction[] = isTextNewFeaturesEnabled()
+    ? [
+        {
+          key: 'diagram',
+          tooltip: t('textng.editor.tooltip-diagram', 'Mermaid diagram'),
+          icon: 'code-branch',
+          run: (view) => insertAtCursor(view, isHtml ? HTML_DIAGRAM_SNIPPET : MARKDOWN_DIAGRAM_SNIPPET),
+        },
+      ]
+    : [];
+
   const insertVariable: FormatAction = {
     key: 'variable',
     tooltip: t('textng.editor.tooltip-insert-variable', 'Insert variable'),
@@ -79,17 +110,12 @@ function getFormatActions(mode: TextMode): FormatAction[] {
   };
 
   if (isHtml) {
-    return [...inlineActions, insertVariable];
+    return [heading, ...inlineActions, table, ...diagramAction, insertVariable];
   }
 
   // Markdown only
   return [
-    {
-      key: 'heading',
-      tooltip: t('textng.editor.tooltip-heading', 'Heading'),
-      label: t('textng.editor.format-heading', 'H'),
-      run: (view) => toggleLinePrefix(view, '# '),
-    },
+    heading,
     ...inlineActions,
     {
       key: 'bullet-list',
@@ -109,12 +135,8 @@ function getFormatActions(mode: TextMode): FormatAction[] {
       icon: 'check-square',
       run: (view) => toggleLinePrefix(view, '- [ ] '),
     },
-    {
-      key: 'table',
-      tooltip: t('textng.editor.tooltip-table', 'Table'),
-      icon: 'table',
-      run: (view) => insertAtCursor(view, TABLE_SNIPPET),
-    },
+    table,
+    ...diagramAction,
     insertVariable,
   ];
 }

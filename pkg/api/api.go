@@ -575,18 +575,18 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
 		userIDScope := ac.Scope("global.users", "id", ac.Parameter(":id"))
 
-		adminUserRoute.Post("/", authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
-		adminUserRoute.Put("/:id/password", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))
-		adminUserRoute.Put("/:id/permissions", userUIDResolver, reqGrafanaAdmin, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersPermissionsUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPermissions))
-		adminUserRoute.Delete("/:id", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(hs.AdminDeleteUser))
-		adminUserRoute.Post("/:id/disable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersDisable, userIDScope)), routing.Wrap(hs.AdminDisableUser))
-		adminUserRoute.Post("/:id/enable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(hs.AdminEnableUser))
-		adminUserRoute.Get("/:id/quotas", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(hs.GetUserQuotas))
-		adminUserRoute.Put("/:id/quotas/:target", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(hs.UpdateUserQuota))
+		adminUserRoute.Post("/", authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
+		adminUserRoute.Put("/:id/password", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))
+		adminUserRoute.Put("/:id/permissions", userUIDResolver, reqGrafanaAdmin, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersPermissionsUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPermissions))
+		adminUserRoute.Delete("/:id", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(hs.AdminDeleteUser))
+		adminUserRoute.Post("/:id/disable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersDisable, userIDScope)), routing.Wrap(hs.AdminDisableUser))
+		adminUserRoute.Post("/:id/enable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(hs.AdminEnableUser))
+		adminUserRoute.Get("/:id/quotas", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(hs.GetUserQuotas))
+		adminUserRoute.Put("/:id/quotas/:target", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(hs.UpdateUserQuota))
 
-		adminUserRoute.Post("/:id/logout", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersLogout, userIDScope)), routing.Wrap(hs.AdminLogoutUser))
-		adminUserRoute.Get("/:id/auth-tokens", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersAuthTokenList, userIDScope)), routing.Wrap(hs.AdminGetUserAuthTokens))
-		adminUserRoute.Post("/:id/revoke-auth-token", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersAuthTokenUpdate, userIDScope)), routing.Wrap(hs.AdminRevokeUserAuthToken))
+		adminUserRoute.Post("/:id/logout", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersLogout, userIDScope)), routing.Wrap(hs.AdminLogoutUser))
+		adminUserRoute.Get("/:id/auth-tokens", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersAuthTokenList, userIDScope)), routing.Wrap(hs.AdminGetUserAuthTokens))
+		adminUserRoute.Post("/:id/revoke-auth-token", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersAuthTokenUpdate, userIDScope)), routing.Wrap(hs.AdminRevokeUserAuthToken))
 	}, reqSignedIn)
 
 	// rendering

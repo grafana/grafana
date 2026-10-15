@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"net/http"
@@ -10,7 +11,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker/v2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
+	genericfilters "k8s.io/apiserver/pkg/server/filters"
 )
 
 func TestIsBackendFailure(t *testing.T) {
@@ -66,18 +72,48 @@ func TestStatusRecorderDefaultsToOKWithoutExplicitWriteHeader(t *testing.T) {
 	}
 }
 
+// TestStatusRecorderFlushesThroughAPIServerFilters is a regression test for
+// plugin backends, which serve through an embedded apiserver handler chain. Its
+// logging and timeout filters disagree about whether the writer can flush when
+// it lacks http.Flusher or http.CloseNotifier, and a flush then panics.
+func TestStatusRecorderFlushesThroughAPIServerFilters(t *testing.T) {
+	flushing := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("data: one\n\n"))
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+	})
+	notLongRunning := func(req *http.Request) (*http.Request, bool, func(), *apierrors.StatusError) {
+		return req, false, func() {}, apierrors.NewTimeoutError("timed out", 0)
+	}
+	backend := genericfilters.WithHTTPLogging(genericfilters.WithTimeout(flushing, notLongRunning))
+	s := withGroupHandler("demo.grafana.app", backend)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	rw := httptest.NewRecorder()
+	s.HandleFunc(rw, httptest.NewRequest(http.MethodGet, "/apis/demo.grafana.app/v1", nil).WithContext(authenticatedTestContext(ctx)), nil)
+
+	if !rw.Flushed {
+		t.Error("the flush did not reach the client's writer")
+	}
+	if rw.Body.String() != "data: one\n\n" {
+		t.Errorf("body = %q", rw.Body.String())
+	}
+}
+
 // withGroupHandler builds a router serving one group whose handler is h,
 // with a fresh circuit breaker -- for tests exercising breaker behavior
 // through HandleFunc, where withGroups' fixed "write group name" handler
 // isn't useful.
 func withGroupHandler(group string, h http.Handler) *GrafanaRouter {
-	s := NewGrafanaRouter(stubLoader{})
+	s := NewGrafanaRouter(stubLoader{}, nil)
 	s.served[group] = &handlerEntry{
 		handler: h,
-		lastRV:  "1",
+		lastKey: "1",
 		breaker: newGroupBreaker(group),
 	}
-	s.publish()
+	s.publish(context.Background())
 	return s
 }
 
@@ -96,7 +132,7 @@ func TestHandleFuncClosedBreakerPassesThrough(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 
 	rec := httptest.NewRecorder()
-	s.HandleFunc(rec, httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
+	s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("got code %d, want 200", rec.Code)
@@ -118,7 +154,7 @@ func TestHandleFuncBreakerTripsOpenAfterConsecutiveFailures(t *testing.T) {
 
 	for i := 1; i <= 6; i++ {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
 		if rec.Code != http.StatusBadGateway {
 			t.Fatalf("request %d: got code %d, want 502 (still dialed while closed)", i, rec.Code)
 		}
@@ -128,7 +164,7 @@ func TestHandleFuncBreakerTripsOpenAfterConsecutiveFailures(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	s.HandleFunc(rec, httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
+	s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("7th request: got code %d, want 503 (breaker open, fail fast)", rec.Code)
 	}
@@ -147,7 +183,7 @@ func TestHandleFuncBreakerIgnoresPlain500(t *testing.T) {
 
 	for i := 1; i <= 20; i++ {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
 		if rec.Code != http.StatusInternalServerError {
 			t.Fatalf("request %d: got code %d, want 500 (breaker must never open on plain 500s)", i, rec.Code)
 		}
@@ -157,10 +193,10 @@ func TestHandleFuncBreakerIgnoresPlain500(t *testing.T) {
 	}
 }
 
-func withGroupHandlerAndBreaker(group string, h http.Handler, cb *gobreaker.CircuitBreaker[struct{}]) *GrafanaRouter {
-	s := NewGrafanaRouter(stubLoader{})
-	s.served[group] = &handlerEntry{handler: h, lastRV: "1", breaker: cb}
-	s.publish()
+func withGroupHandlerAndBreaker(group string, h http.Handler, cb *groupBreaker) *GrafanaRouter {
+	s := NewGrafanaRouter(stubLoader{}, nil)
+	s.served[group] = &handlerEntry{handler: h, lastKey: "1", breaker: cb}
+	s.publish(context.Background())
 	return s
 }
 
@@ -178,7 +214,7 @@ func TestHandleFuncBreakerHalfOpenRecovers(t *testing.T) {
 		}
 	})
 
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        "test",
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 		Timeout:     timeout,
@@ -187,7 +223,7 @@ func TestHandleFuncBreakerHalfOpenRecovers(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	req := func() *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil), next)
 		return rec
 	}
 
@@ -242,7 +278,7 @@ func TestHandleFuncBreakerHalfOpenCapRejectsConcurrentTrial(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        "test",
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 		Timeout:     timeout,
@@ -251,7 +287,7 @@ func TestHandleFuncBreakerHalfOpenCapRejectsConcurrentTrial(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	doReq := func() *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil), next)
 		return rec
 	}
 
@@ -291,17 +327,19 @@ func (l staticLoader) Notify(context.Context) (<-chan struct{}, error) {
 // a ReadyToTrip that opens on the first one, independent of production
 // thresholds -- these lifecycle tests care about whether trip *state*
 // survives reconcile, not how many failures it takes to get there.
-func tripBreaker(cb *gobreaker.CircuitBreaker[struct{}]) {
-	_, _ = cb.Execute(func() (struct{}, error) { return struct{}{}, errors.New("forced failure") })
+func tripBreaker(cb *groupBreaker) {
+	if done, err := cb.Allow(); err == nil {
+		done(errors.New("forced failure"))
+	}
 }
 
-// TestReconcileUnchangedRVPreservesBreakerState pins that a group whose RV
+// TestReconcileUnchangedKeyPreservesBreakerState pins that a group whose key
 // hasn't changed is left completely untouched by reconcile -- including an
 // already-tripped breaker -- same as the existing backend/handler/pool
 // preservation.
-func TestReconcileUnchangedRVPreservesBreakerState(t *testing.T) {
+func TestReconcileUnchangedKeyPreservesBreakerState(t *testing.T) {
 	group := "dashboard.grafana.app"
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})
@@ -311,9 +349,9 @@ func TestReconcileUnchangedRVPreservesBreakerState(t *testing.T) {
 	}
 
 	r := NewGrafanaRouter(staticLoader{backends: []Backend{
-		&fakeBackend{group: group, rv: "5"},
-	}})
-	r.served[group] = &handlerEntry{handler: http.NotFoundHandler(), lastRV: "5", breaker: cb}
+		&fakeBackend{group: metav1.APIGroup{Name: group}, key: "5"},
+	}}, nil)
+	r.served[group] = &handlerEntry{handler: http.NotFoundHandler(), lastKey: "5", breaker: cb}
 
 	if err := r.reconcile(context.Background()); err != nil {
 		t.Fatalf("reconcile: %v", err)
@@ -321,19 +359,19 @@ func TestReconcileUnchangedRVPreservesBreakerState(t *testing.T) {
 
 	got := r.served[group]
 	if got.breaker != cb {
-		t.Errorf("breaker instance replaced on unchanged-RV reconcile; want the same pointer preserved")
+		t.Errorf("breaker instance replaced on unchanged-key reconcile; want the same pointer preserved")
 	}
 	if got.breaker.State() != gobreaker.StateOpen {
-		t.Errorf("breaker state = %v after unchanged-RV reconcile, want still open", got.breaker.State())
+		t.Errorf("breaker state = %v after unchanged-key reconcile, want still open", got.breaker.State())
 	}
 }
 
-// TestReconcileChangedRVResetsBreaker pins the opposite: an RV change rebuilds
+// TestReconcileChangedKeyResetsBreaker pins the opposite: a key change rebuilds
 // the group, and the breaker is reset to a fresh, closed instance -- even if
 // the old one was open -- because the target may have moved.
-func TestReconcileChangedRVResetsBreaker(t *testing.T) {
+func TestReconcileChangedKeyResetsBreaker(t *testing.T) {
 	group := "dashboard.grafana.app"
-	oldCB := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	oldCB := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})
@@ -343,9 +381,9 @@ func TestReconcileChangedRVResetsBreaker(t *testing.T) {
 	}
 
 	r := NewGrafanaRouter(staticLoader{backends: []Backend{
-		&fakeBackend{group: group, rv: "6"}, // changed from "5"
-	}})
-	r.served[group] = &handlerEntry{handler: http.NotFoundHandler(), lastRV: "5", breaker: oldCB}
+		&fakeBackend{group: metav1.APIGroup{Name: group}, key: "6"}, // changed from "5"
+	}}, nil)
+	r.served[group] = &handlerEntry{handler: http.NotFoundHandler(), lastKey: "5", breaker: oldCB}
 
 	if err := r.reconcile(context.Background()); err != nil {
 		t.Fatalf("reconcile: %v", err)
@@ -353,10 +391,10 @@ func TestReconcileChangedRVResetsBreaker(t *testing.T) {
 
 	got := r.served[group]
 	if got.breaker == oldCB {
-		t.Fatalf("breaker instance not replaced on changed-RV reconcile")
+		t.Fatalf("breaker instance not replaced on changed-key reconcile")
 	}
 	if got.breaker.State() != gobreaker.StateClosed {
-		t.Errorf("breaker state = %v after changed-RV rebuild, want closed (fresh instance)", got.breaker.State())
+		t.Errorf("breaker state = %v after changed-key rebuild, want closed (fresh instance)", got.breaker.State())
 	}
 }
 
@@ -372,7 +410,7 @@ func TestOpenAPIGroupVersionRoutesThroughBreaker(t *testing.T) {
 
 	for i := 1; i <= 6; i++ {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, httptest.NewRequest(http.MethodGet, path, nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil), next)
 		if rec.Code != http.StatusBadGateway {
 			t.Fatalf("request %d: got code %d, want 502 (still dialed while closed)", i, rec.Code)
 		}
@@ -382,7 +420,7 @@ func TestOpenAPIGroupVersionRoutesThroughBreaker(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	s.HandleFunc(rec, httptest.NewRequest(http.MethodGet, path, nil), next)
+	s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil), next)
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("7th request: got code %d, want 503 (breaker open, fail fast)", rec.Code)
 	}
@@ -394,11 +432,11 @@ func TestOpenAPIGroupVersionRoutesThroughBreaker(t *testing.T) {
 // TestOpenAPIGroupVersionCacheHitBypassesBreaker pins that a cache hit never
 // touches the breaker at all -- it never calls the backend, so there's
 // nothing to protect. Even with the breaker forced open, a cached doc at the
-// matching RV must still be served successfully from cache.
+// matching key must still be served successfully from cache.
 func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 	group := "dashboard.grafana.app"
 	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
-	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})
@@ -408,7 +446,7 @@ func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 
 	// First request: cache miss, proxies through, populates the cache.
 	rec1 := httptest.NewRecorder()
-	s.HandleFunc(rec1, httptest.NewRequest(http.MethodGet, path, nil), next)
+	s.HandleFunc(rec1, newAuthenticatedRequest(http.MethodGet, path, nil), next)
 	if rec1.Code != http.StatusOK {
 		t.Fatalf("first request: got code %d, want 200", rec1.Code)
 	}
@@ -420,10 +458,10 @@ func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 		t.Fatalf("precondition: breaker state = %v, want open", cb.State())
 	}
 
-	// Second request, same RV: must still be served from cache, untouched by
+	// Second request, same key: must still be served from cache, untouched by
 	// the open breaker.
 	rec2 := httptest.NewRecorder()
-	s.HandleFunc(rec2, httptest.NewRequest(http.MethodGet, path, nil), next)
+	s.HandleFunc(rec2, newAuthenticatedRequest(http.MethodGet, path, nil), next)
 	if rec2.Code != http.StatusOK {
 		t.Errorf("cache-hit request with breaker open: got code %d, want 200 (cache hit must bypass the breaker)", rec2.Code)
 	}
@@ -448,6 +486,56 @@ func TestStatusRecorderUnwrapsForFlush(t *testing.T) {
 	}
 }
 
+// watchLikeDecorator stands in for the apiserver's own ResponseWriter wrappers
+// (filters.watchResponseWriter, metrics.ResponseWriterDelegator), which are
+// applied with responsewriter.WrapForHTTP1Or2.
+type watchLikeDecorator struct{ http.ResponseWriter }
+
+func (d *watchLikeDecorator) Unwrap() http.ResponseWriter { return d.ResponseWriter }
+
+// TestRouterPreservesFlusherForWatches pins that a handler served through the
+// router can start a watch. In-process plugin apiservers wrap the writer with
+// responsewriter.WrapForHTTP1Or2 and the watch handler then type-asserts
+// http.Flusher; if a router wrapper hides Flush or CloseNotify, every watch
+// fails with "unable to start watch - can't get http.Flusher" and a 500.
+func TestRouterPreservesFlusherForWatches(t *testing.T) {
+	const group = "watch.example.com"
+	release := make(chan struct{})
+	backend := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w = responsewriter.WrapForHTTP1Or2(&watchLikeDecorator{ResponseWriter: w})
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "can't get http.Flusher", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("event\n"))
+		flusher.Flush()
+		<-release
+	})
+	gr := withGroupHandler(group, backend)
+	m := newRouterMetrics(prometheus.NewRegistry())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		m.instrument(gr, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+	}))
+	defer srv.Close()
+	defer close(release)
+
+	resp, err := srv.Client().Get(srv.URL + "/apis/" + group + "/v1/things?watch=1")
+	if err != nil {
+		t.Fatalf("GET: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want %d (the backend could not get an http.Flusher)", resp.StatusCode, http.StatusOK)
+	}
+	// The handler is still blocked, so this line only arrives if Flush reached the connection.
+	line, err := bufio.NewReader(resp.Body).ReadString('\n')
+	if err != nil || line != "event\n" {
+		t.Fatalf("first streamed line = %q, %v; want %q before the handler returns", line, err, "event\n")
+	}
+}
+
 // TestCaptureWriterSupportsFlush pins that captureWriter exposes a Flush so
 // ReverseProxy's flush machinery doesn't treat it as unsupported. Unlike
 // statusRecorder, captureWriter owns its own in-memory buffer (nothing real
@@ -455,7 +543,7 @@ func TestStatusRecorderUnwrapsForFlush(t *testing.T) {
 // ResponseWriter only after ServeHTTP returns), so a no-op Flush is correct
 // here, not Unwrap.
 func TestCaptureWriterSupportsFlush(t *testing.T) {
-	rec := newCaptureWriter()
+	rec := newCaptureWriter(maxCachedOpenAPIDocBytes, nil)
 	if err := http.NewResponseController(rec).Flush(); err != nil {
 		t.Errorf("Flush() via ResponseController = %v, want nil (captureWriter must expose a no-op Flush)", err)
 	}
@@ -477,7 +565,7 @@ func TestHandleFuncBreakerIgnoresCanceledRequests(t *testing.T) {
 
 	for i := 1; i <= 20; i++ {
 		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil).WithContext(ctx)
+		req := httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil).WithContext(authenticatedTestContext(ctx))
 		s.HandleFunc(rec, req, next)
 	}
 	if got := calls.Load(); got != 20 {

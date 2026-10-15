@@ -25,7 +25,9 @@ import {
   TestVariable,
 } from '@grafana/scenes';
 import { defaultDashboard, defaultTimePickerConfig, type VariableType } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { adHocBuilder } from 'app/features/variables/shared/testing/builders';
 
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
@@ -33,12 +35,10 @@ import { NEW_LINK } from '../settings/links/utils';
 
 import { createSceneVariableFromVariableModel, createVariablesForSnapshot, getUserDefinedVariables } from './variables';
 
-// mock getDataSourceSrv.getInstanceSettings()
+// mock getDataSourceInstanceSettings()
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn(),
-  }),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('when creating variables objects', () => {
@@ -559,6 +559,27 @@ describe('when creating variables objects', () => {
       supportsMultiValueOperators: false,
       enableGroupBy: false,
       layout: 'combobox',
+    });
+  });
+
+  describe('when the perPanelNonApplicableDrilldowns flag is on', () => {
+    beforeEach(() => {
+      setTestFlags({ perPanelNonApplicableDrilldowns: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('should enable applicability on adhoc variables', () => {
+      const variable = adHocBuilder()
+        .withName('adhoc')
+        .withDatasource({ uid: 'gdev-prometheus', type: 'prometheus' })
+        .build();
+
+      const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
+
+      expect(migrated.state.applicabilityEnabled).toBe(true);
     });
   });
 

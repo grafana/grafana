@@ -112,7 +112,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           let sizes = opts.disp.size.values(u, seriesIdx);
           // let pointColors = opts.disp.color.values(u, seriesIdx);
           let pointColors = dispColors[seriesIdx - 1].values; // idxs
-          let pointPalette = dispColors[seriesIdx - 1].index as Array<CanvasRenderingContext2D['fillStyle']>;
+          let pointPalette = dispColors[seriesIdx - 1].index;
           let paletteHasAlpha = dispColors[seriesIdx - 1].hasAlpha;
 
           let isSquare = scatterInfo.pointShape === PointShape.Square;
@@ -140,8 +140,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
                     curColorIdx = pointColors[i];
                     let c =
                       curColorIdx === undefined || curColorIdx === -1 ? FALLBACK_COLOR : pointPalette[curColorIdx];
-                    u.ctx.fillStyle = paletteHasAlpha ? c : colorManipulator.alpha(c as string, pointAlpha);
-                    u.ctx.strokeStyle = colorManipulator.alpha(c as string, 1);
+                    u.ctx.fillStyle = paletteHasAlpha ? c : colorManipulator.alpha(c, pointAlpha);
+                    u.ctx.strokeStyle = colorManipulator.alpha(c, 1);
                   }
                 }
 
@@ -447,7 +447,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
     if (f != null) {
       Object.assign(cfg, fieldValueColors(f, theme));
-      cfg.hasAlpha = cfg.index.some((v) => !(v as string).endsWith('ff'));
+      cfg.hasAlpha = cfg.index.some((v) => !v.endsWith('ff'));
     }
 
     return cfg;
@@ -485,14 +485,20 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           let maxVal = sizeRange.max;
           let valRange = maxVal - minVal;
 
-          diams = Array(len);
+          // Equal size values make valRange 0, which would produce NaN diameters.
+          // Point size is the configured fixed size. It is hidden when show is lines.
+          if (valRange === 0) {
+            diams = Array(len).fill(s.y.field.config.custom.pointSize.fixed);
+          } else {
+            diams = Array(len);
 
-          for (let i = 0; i < vals.length; i++) {
-            let val = vals[i];
+            for (let i = 0; i < vals.length; i++) {
+              let val = vals[i];
 
-            let valPct = (val - minVal) / valRange;
-            let pxArea = minPx + valPct * pxRange;
-            diams[i] = pxArea ** 0.5;
+              let valPct = (val - minVal) / valRange;
+              let pxArea = minPx + valPct * pxRange;
+              diams[i] = pxArea ** 0.5;
+            }
           }
         } else {
           diams = Array(len).fill(s.size.fixed!);
@@ -557,7 +563,7 @@ function getHex8Color(color: string, theme: GrafanaTheme2) {
 }
 
 export interface FieldColorValues {
-  index: unknown[];
+  index: string[];
   getOne: GetOneValue;
   getAll: GetAllValues;
 }
@@ -572,7 +578,7 @@ type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 // exported for golden tests that freeze its palette+index output ahead of the
 // field.display.colors() migration
 export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
-  let index: unknown[] = [];
+  let index: string[] = [];
   let getAll: GetAllValues = () => [];
   let getOne: GetOneValue = () => -1;
 
@@ -669,7 +675,7 @@ export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValu
       index[i] = getHex8Color(calc(pct, pct), theme);
     }
 
-    getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);
+    getAll = (vals, min, max) => valuesToFills(vals as number[], index, min!, max!);
   }
 
   if (conds !== '') {

@@ -28,7 +28,8 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	if b.schemas != nil {
 		schema = b.schemas[version]
 		if schema.IsZero() {
-			schema = b.schemas[apppluginV0.VERSION] // v0 is always configured
+			// The settings kind uses the same schema in every version.
+			schema = b.schemas[apppluginV0.VERSION]
 		}
 	}
 
@@ -48,7 +49,11 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	oas.Info.AddExtension("x-grafana-plugin", info)
 
 	// The root api URL
-	root := fmt.Sprintf("/apis/%s/%s/", b.pluginJSON.ID, version)
+	root := fmt.Sprintf("/apis/%s/%s/", b.group, version)
+
+	if !b.includeSettings() {
+		return oas, nil
+	}
 
 	// Hide the resource+proxy routes -- explicit ones will be added if defined below
 	for _, v := range []string{"resources", "proxy"} {
@@ -71,7 +76,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	if !ok {
 		return nil, fmt.Errorf("missing settings type")
 	}
-	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.pluginJSON.ID, version))
+	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.group, version))
 	ps.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
 
 	// Always transform results
@@ -91,13 +96,14 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	})
 }
 
-// specVersion returns the version of the group-version spec being processed.
-// The builder framework stamps every per-version spec with
-// Info.Title = "<group>/<version>" before post-processing runs, and for app
-// plugins the group is the plugin id.
+func (b *AppPluginAPIBuilder) includeSettings() bool {
+	return b.client != nil && b.contextProvider != nil
+}
+
+// specVersion reads the group version from the title set by the API builder.
 func (b *AppPluginAPIBuilder) specVersion(oas *spec3.OpenAPI) string {
 	if oas.Info != nil {
-		if version, ok := strings.CutPrefix(oas.Info.Title, b.pluginJSON.ID+"/"); ok && version != "" {
+		if version, ok := strings.CutPrefix(oas.Info.Title, b.group+"/"); ok && version != "" {
 			return version
 		}
 	}

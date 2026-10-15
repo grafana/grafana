@@ -20,6 +20,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
@@ -33,7 +34,8 @@ import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
-import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
+import { findVizPanelByKey } from '../utils/findVizPanel';
+import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
@@ -152,12 +154,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const originalState = this._layoutItemState!;
 
     // Temp fix for old edit mode
-    if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
+    if (this._layoutItem instanceof DashboardGridItem && !isDashboardNewLayoutsEnabled()) {
       this._layoutItem.handleEditChange();
       return;
     }
 
     const editAction = new DashboardEditActionEvent({
+      meta: { actionId: 'panel.edit' },
       description: t('dashboard.edit-actions.panel-edit', 'Panel changes'),
       source: this._layoutItem,
       perform: () => {

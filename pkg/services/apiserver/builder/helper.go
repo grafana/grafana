@@ -320,23 +320,17 @@ func servedVersionsForResource(scheme *runtime.Scheme, gr schema.GroupResource, 
 	return scheme.PrioritizedVersionsForGroup(gr.Group)
 }
 
-func InstallAPIs(
+// NewDualWriteBuilder shares the storage migration policy with handlers that
+// install API groups independently of the embedded server.
+func NewDualWriteBuilder(
 	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
-	server *genericapiserver.GenericAPIServer,
-	optsGetter generic.RESTOptionsGetter,
-	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
-	reg prometheus.Registerer,
 	dualWriteService dualwrite.Service,
-	optsregister apistore.StorageOptionsRegister,
-	features featuremgmt.FeatureToggles,
 	builderMetrics *BuilderMetrics,
-	apiResourceConfig *serverstorage.ResourceConfig,
-) error {
-	dualWrite := func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+) grafanarest.DualWriteBuilder {
+	return func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
 		key := gr.String()
-		if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
+		if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok && builderMetrics != nil {
 			builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 		}
 		// unified must never serve an apiVersion the scheme never registered; with no
@@ -351,6 +345,23 @@ func InstallAPIs(
 		}
 		return dualWriteService.NewStorage(gr, legacy, storage)
 	}
+}
+
+func InstallAPIs(
+	scheme *runtime.Scheme,
+	codecs serializer.CodecFactory,
+	server *genericapiserver.GenericAPIServer,
+	optsGetter generic.RESTOptionsGetter,
+	builders []APIGroupBuilder,
+	storageOpts *options.StorageOptions,
+	reg prometheus.Registerer,
+	dualWriteService dualwrite.Service,
+	optsregister apistore.StorageOptionsRegister,
+	features featuremgmt.FeatureToggles,
+	builderMetrics *BuilderMetrics,
+	apiResourceConfig *serverstorage.ResourceConfig,
+) error {
+	dualWrite := NewDualWriteBuilder(scheme, storageOpts, dualWriteService, builderMetrics)
 
 	// NOTE: we build a map structure by version only for the purposes of InstallAPIGroup
 	// in other places, working with a flat []APIGroupBuilder list is much nicer

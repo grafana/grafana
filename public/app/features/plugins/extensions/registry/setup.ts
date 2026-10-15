@@ -6,6 +6,8 @@ import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
+import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
+import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -15,7 +17,7 @@ import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
 import { type PluginExtensionRegistries } from './types';
 
-function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
+export function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   const addedComponentsRegistry = new AddedComponentsRegistry(apps);
   const exposedComponentsRegistry = new ExposedComponentsRegistry(apps);
   const addedLinksRegistry = new AddedLinksRegistry(apps);
@@ -63,6 +65,18 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Access to the Query Library',
         description: 'Access to the Query Library',
         component: OpenQueryLibraryExposedComponent,
+      },
+      {
+        id: PluginExtensionExposedComponents.NotebookViewV1,
+        title: 'Notebook',
+        description: 'An editable notebook, for a host rendering one outside the notebooks route',
+        component: NotebookViewLazy,
+      },
+      {
+        id: PluginExtensionExposedComponents.AddToNotebookFormV1,
+        title: 'Add to notebook form',
+        description: 'Add to notebook form',
+        component: AddToNotebookFormExposedComponent,
       },
     ],
   });

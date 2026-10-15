@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build !windows && !nacl && !plan9
-// +build !windows,!nacl,!plan9
 
 package xorm
 
@@ -14,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
-var _ core.ILogger = &SyslogLogger{}
+var _ core.ILogger = (*SyslogLogger)(nil)
 
 // SyslogLogger will be depricated
 type SyslogLogger struct {

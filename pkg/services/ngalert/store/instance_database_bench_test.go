@@ -13,17 +13,17 @@ func BenchmarkSaveAlertInstances(b *testing.B) {
 	ctx := context.Background()
 
 	benchmarkRun := func(b *testing.B, instanceCount, labelCount int) {
-		ng, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds)
+		ng, _, ruleStore := tests.SetupTestEnv(b, baseIntervalSeconds)
 
 		const mainOrgID int64 = 1
 
-		alertRule := tests.CreateTestAlertRule(b, ctx, dbstore, 60, mainOrgID)
+		alertRule := tests.CreateTestAlertRule(b, ctx, ruleStore, 60, mainOrgID)
 
 		// Create some instances to write down and then delete.
 		instances := make([]models.AlertInstance, 0, instanceCount)
-		for i := 0; i < instanceCount; i++ {
+		for i := range instanceCount {
 			labels := models.InstanceLabels{"instance": fmt.Sprintf("instance-%d", i)}
-			for li := 0; li < labelCount; li++ {
+			for li := range labelCount {
 				labels[fmt.Sprintf("label-%d", li)] = fmt.Sprintf("value-%d", li)
 			}
 			_, labelsHash, _ := labels.StringAndHash()

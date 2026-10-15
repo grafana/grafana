@@ -269,9 +269,10 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 
 	req := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Fields: fields},
-		Limit:   q.Limit,
-		Offset:  q.Limit * (q.Page - 1),
+		Options:      &resourcepb.ListOptions{Fields: fields},
+		Limit:        q.Limit,
+		Offset:       q.Limit * (q.Page - 1),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	hits, _, err := ss.doSearchPage(ctx, q.OrgID, req)
 	return hits, err
@@ -282,7 +283,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 // (so paginating callers can detect a short final page).
 func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, int, error) {
 	out, err := ss.k8sclient.Search(ctx, orgID, req)
-	if err != nil {
+	if err := resource.ErrorFromResponse(out.GetError(), err); err != nil {
 		return nil, 0, err
 	}
 	res, err := dashboardsearch.ParseResults(out, 0)
@@ -292,7 +293,7 @@ func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64,
 	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
 		hits = append(hits, &folder.FolderReference{
-			ID:    item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			ID:    item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID), //nolint:staticcheck // Preserve legacy field compatibility.
 			UID:   item.Name,
 			Title: item.Title,
 			// Legacy responses convey root with an empty ParentUID; the apistore
@@ -459,9 +460,10 @@ func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID in
 	var all []*folder.FolderReference
 	for offset := int64(0); ; {
 		req := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{},
-			Limit:   searchPageSize,
-			Offset:  offset,
+			Options:      &resourcepb.ListOptions{},
+			Limit:        searchPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
@@ -500,9 +502,10 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, orgID int6
 	var all []*folder.FolderReference
 	for offset := int64(0); ; {
 		req := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{Fields: fields},
-			Limit:   searchPageSize,
-			Offset:  offset,
+			Options:      &resourcepb.ListOptions{Fields: fields},
+			Limit:        searchPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
@@ -603,7 +606,7 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 
 func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
 	resp, err := ss.k8sclient.GetStats(ctx, orgID)
-	if err != nil {
+	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
 		return 0, err
 	}
 

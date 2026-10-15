@@ -11,7 +11,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana-testdata-datasource",
             "version": "v0",
             "spec": {}
           },
@@ -30,7 +30,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana-testdata-datasource",
             "version": "v0",
             "spec": {}
           },
@@ -52,7 +52,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana-testdata-datasource",
             "version": "v0",
             "spec": {}
           },
@@ -74,7 +74,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana-testdata-datasource",
             "version": "v0",
             "spec": {}
           },
@@ -96,7 +96,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana-testdata-datasource",
             "version": "v0",
             "spec": {}
           },
@@ -4144,7 +4144,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana-testdata-datasource",
             "version": "v0",
             "datasource": {
               "name": "gdev-mssql-ds-tests"

@@ -1,3 +1,75 @@
+<!-- 13.2.4 START -->
+
+# 13.2.4 (2026-10-13)
+
+### Security
+
+- Security: Fix CVE-2026-15577
+- Security: Fix CVE-2026-33374
+- Security: Fix CVE-2026-93294
+- Security: Fix CVE-2026-95502
+
+### Features and enhancements
+
+- **Alerting:** Strip sensitive headers from oauth2 cross-host redirects [#134433](https://github.com/grafana/grafana/pull/134433), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Dashboard:** Fall back when collection deletion is unsupported [#134224](https://github.com/grafana/grafana/pull/134224), [@bestend](https://github.com/bestend)
+- **Git Sync:** Clarify repository links for pure Git [#134253](https://github.com/grafana/grafana/pull/134253), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** Allow resource previews in unsynced folders [#134391](https://github.com/grafana/grafana/pull/134391), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** Reject invalid resource names before API calls [#133776](https://github.com/grafana/grafana/pull/133776), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** Show last checked time in Pull status [#134483](https://github.com/grafana/grafana/pull/134483), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** Skip previews for pull requests from forks [#133799](https://github.com/grafana/grafana/pull/133799), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** Stop PR previews when refs disappear [#133855](https://github.com/grafana/grafana/pull/133855), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** Support legacy paths and diagnose missing source annotations [#133779](https://github.com/grafana/grafana/pull/133779), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** write terminal sync status back to repository on early sync-job failures and Respect Git Sync polling intervals after unchanged refs [#134478](https://github.com/grafana/grafana/pull/134478), [@mustafasencer](https://github.com/mustafasencer)
+
+### Bug fixes
+
+- **CVE-2026-92539:** IAM: Fix: SCIM (Enterprise)
+
+<!-- 13.2.4 END -->
+<!-- 13.2.3 START -->
+
+# 13.2.3 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+
+<!-- 13.2.3 END -->
+<!-- 13.2.2 START -->
+
+# 13.2.2 (2026-09-15)
+
+### Security
+
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
+### Bug fixes
+
+- **Dashboards:** Preserve query variable refresh setting on v2 dashboard import [#132089](https://github.com/grafana/grafana/pull/132089), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** Fix folder rename UID collision during full sync [#132157](https://github.com/grafana/grafana/pull/132157), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.2.2 END -->
+<!-- 13.2.1 START -->
+
+# 13.2.1 (2026-09-02)
+
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-14199
+
+### Bug fixes
+
+- **Dashboards:** Fix adhoc and groupby variable datasource on UI import [#131819](https://github.com/grafana/grafana/pull/131819), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Packaging:** Fix issue with bundled plugins not being moved properly [#131037](https://github.com/grafana/grafana/pull/131037), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **PanelEditor:** Fix options pane not resizable beyond the preview's content width [#131608](https://github.com/grafana/grafana/pull/131608), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.2.1 END -->
 <!-- 13.2.0 START -->
 
 # 13.2.0 (2026-08-18)
@@ -179,6 +251,65 @@
 - **Tag:** Fix crash when picking an out of bounds `colorIndex` [#129579](https://github.com/grafana/grafana/pull/129579), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.2.0 END -->
+<!-- 13.1.8 START -->
+
+# 13.1.8 (2026-10-13)
+
+### Security
+
+- Security: Fix CVE-2026-15577
+- Security: Fix CVE-2026-33374
+- Security: Fix CVE-2026-93294
+- Security: Fix CVE-2026-95502
+
+### Features and enhancements
+
+- **Alerting:** Strip sensitive headers from oauth2 cross-host redirects [#134428](https://github.com/grafana/grafana/pull/134428), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Dashboard:** Fall back when collection deletion is unsupported [#134225](https://github.com/grafana/grafana/pull/134225), [@bestend](https://github.com/bestend)
+
+### Bug fixes
+
+- **CVE-2026-92539:** IAM: Fix: SCIM (Enterprise)
+
+<!-- 13.1.8 END -->
+<!-- 13.1.7 START -->
+
+# 13.1.7 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+
+<!-- 13.1.7 END -->
+<!-- 13.1.6 START -->
+
+# 13.1.6 (2026-09-15)
+
+### Security
+
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
+### Bug fixes
+
+- **Dashboards:** Preserve query variable refresh setting on v2 dashboard import [#132090](https://github.com/grafana/grafana/pull/132090), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** Fix folder rename UID collision during full sync [#132164](https://github.com/grafana/grafana/pull/132164), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.1.6 END -->
+<!-- 13.1.5 START -->
+
+# 13.1.5 (2026-09-02)
+
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-14199
+- Security: Fix CVE-2026-19475
+
+<!-- 13.1.5 END -->
 <!-- 13.1.4 START -->
 
 # 13.1.4 (2026-08-18)
@@ -456,6 +587,69 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.11 START -->
+
+# 13.0.11 (2026-10-13)
+
+### Security
+
+- Security: Fix CVE-2026-15577
+- Security: Fix CVE-2026-33374
+- Security: Fix CVE-2026-93294
+- Security: Fix CVE-2026-95502
+
+### Features and enhancements
+
+- **Alerting:** Strip sensitive headers from oauth2 cross-host redirects [#134426](https://github.com/grafana/grafana/pull/134426), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Dashboard:** Fall back when collection deletion is unsupported [#134228](https://github.com/grafana/grafana/pull/134228), [@bestend](https://github.com/bestend)
+
+### Bug fixes
+
+- **CVE-2026-92539:** IAM: Fix: Scim endpoints (Enterprise)
+
+<!-- 13.0.11 END -->
+<!-- 13.0.10 START -->
+
+# 13.0.10 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+- Security: Fix CVE-2026-81842
+
+<!-- 13.0.10 END -->
+<!-- 13.0.9 START -->
+
+# 13.0.9 (2026-09-15)
+
+### Security
+
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
+### Bug fixes
+
+- **Dashboards:** Preserve query variable refresh setting on v2 dashboard import [#132088](https://github.com/grafana/grafana/pull/132088), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.0.9 END -->
+<!-- 13.0.8 START -->
+
+# 13.0.8 (2026-09-02)
+
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-14199
+- Security: Fix CVE-2026-19475
+
+### Bug fixes
+
+- **Dashboards:** Fix version dates and user display names in the legacy version history page [#131809](https://github.com/grafana/grafana/pull/131809), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+<!-- 13.0.8 END -->
 <!-- 13.0.7 START -->
 
 # 13.0.7 (2026-08-18)
@@ -916,6 +1110,69 @@
 - **TextLink:** Fix icon positioning if text wraps [#118233](https://github.com/grafana/grafana/pull/118233), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.0.0 END -->
+<!-- 12.4.13 START -->
+
+# 12.4.13 (2026-10-13)
+
+### Security
+
+- Security: Fix CVE-2026-15577
+- Security: Fix CVE-2026-33374
+- Security: Fix CVE-2026-93294
+
+### Features and enhancements
+
+- **Alerting:** Strip sensitive headers from oauth2 cross-host redirects [#134424](https://github.com/grafana/grafana/pull/134424), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Dashboard:** Fall back when collection deletion is unsupported (#128259) [#134229](https://github.com/grafana/grafana/pull/134229), [@bestend](https://github.com/bestend)
+
+### Bug fixes
+
+- **CVE-2026-92539:** IAM: Fix CVE-2026-92539: Scim endpoints (Enterprise)
+
+<!-- 12.4.13 END -->
+<!-- 12.4.12 START -->
+
+# 12.4.12 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+- Security: Fix CVE-2026-81842
+
+### Bug fixes
+
+- **Unified Storage:** Return 403 instead of 500 on namespace mismatch [#133595](https://github.com/grafana/grafana/pull/133595), [@pstibrany](https://github.com/pstibrany)
+
+<!-- 12.4.12 END -->
+<!-- 12.4.11 START -->
+
+# 12.4.11 (2026-09-15)
+
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
+<!-- 12.4.11 END -->
+<!-- 12.4.10 START -->
+
+# 12.4.10 (2026-09-02)
+
+### Security
+
+- Security: Fix CVE-2026-14199
+- Security: Fix CVE-2026-19475
+
+### Bug fixes
+
+- **Dashboards:** Fix adhoc and groupby variable datasource on UI import [#131821](https://github.com/grafana/grafana/pull/131821), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Dashboards:** Fix version dates and user display names in the legacy version history page [#131808](https://github.com/grafana/grafana/pull/131808), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+<!-- 12.4.10 END -->
 <!-- 12.4.9 START -->
 
 # 12.4.9 (2026-08-18)

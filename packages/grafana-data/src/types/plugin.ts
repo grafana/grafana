@@ -184,6 +184,10 @@ export interface PluginInclude {
   // plugin settings endpoints; at most one include should set it.
   defaultNav?: boolean;
 
+  // Unique identifier of the included resource. Currently only consumed for
+  // "dashboard" includes, where it builds the /d/<uid> navigation link.
+  uid?: string;
+
   // Angular app pages
   component?: string;
 

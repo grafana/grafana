@@ -279,7 +279,7 @@ function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<
   const isExpression = isExpressionQuery(item);
   const isInstant = isExpression ? false : getInstantFromDataQuery(item);
 
-  const newQuery: Omit<AlertQuery, 'datasource'> = {
+  const newQuery: Omit<AlertQuery<AlertDataQuery>, 'datasource'> = {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
     queryType: '',
@@ -292,7 +292,7 @@ function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<
   };
 
   if (isInstant && !isExpressionQuery(item)) {
-    (newQuery as AlertQuery<AlertDataQuery>).model.instant = isInstant;
+    newQuery.model.instant = isInstant;
   }
 
   return newQuery;

@@ -21,7 +21,7 @@ import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folde
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
-import { isItemManagedByRepository } from '../provisioning/utils/managedResource';
+import { getSourcePath, isItemManagedByRepository } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -32,7 +32,7 @@ import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDe
 import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
-import { getFolderPermissions } from './permissions';
+import { canEditItemType, getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
 
@@ -54,9 +54,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     status: repoViewStatus,
     orphanedRepoName,
     repository,
+    folder: folderResource,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
-  const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
@@ -93,22 +93,17 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     }
   }, [isSearching, searchState.result, stateManager]);
 
-  // Emit exposure event for A/A test once when page loads
-  const hasEmittedExposureEvent = useRef(false);
+  // Report once per page load when the recently viewed section is shown
+  const hasReportedListViewed = useRef(false);
 
   useEffect(() => {
-    if (!isRecentlyViewedEnabled || hasEmittedExposureEvent.current) {
+    if (!isRecentlyViewedEnabled || hasReportedListViewed.current) {
       return;
     }
 
-    hasEmittedExposureEvent.current = true;
-    const isExperimentTreatment = isExperimentRecentlyViewedDashboards;
-
-    reportInteraction('dashboards_browse_list_viewed', {
-      experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
-      has_recently_viewed_component: isExperimentTreatment,
-    });
-  }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
+    hasReportedListViewed.current = true;
+    reportInteraction('dashboards_browse_list_viewed');
+  }, [isRecentlyViewedEnabled]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const navModel = useNavModel(folderDTO, 'dashboards');
@@ -163,7 +158,12 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             onClick={() => setShowRenameDrawer(true)}
           />
         )}
-        <FolderRepo folder={folder} enableRepositoryLink />
+        <FolderRepo
+          folder={folder}
+          enableRepositoryLink
+          sourcePath={folderResource ? getSourcePath(folderResource) : undefined}
+          canEdit={canEditItemType('folder', permissions)}
+        />
       </Stack>
     );
   };

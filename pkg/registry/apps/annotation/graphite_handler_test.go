@@ -30,7 +30,7 @@ func TestGraphiteHandler(t *testing.T) {
 	// (the created Annotation) when the call succeeds.
 	run := func(t *testing.T, adapter *k8sRESTAdapter, body string) (annotationV0.Annotation, error) {
 		t.Helper()
-		handler := newGraphiteHandler(adapter, ProvideMetrics(nil), log.NewNopLogger())
+		handler := newGraphiteHandler(adapter, testTracer, ProvideMetrics(nil), log.NewNopLogger())
 		writer := &mockResponseWriter{header: make(http.Header), body: &bytes.Buffer{}}
 		err := handler(ctx, writer, newGraphiteRequest(body))
 		var resp annotationV0.Annotation

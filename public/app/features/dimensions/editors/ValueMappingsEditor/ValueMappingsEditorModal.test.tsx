@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { ValueMappingsEditorModal, type Props } from './ValueMappingsEditorModal';
 
-const setup = (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
+const setup = async (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
   const props: Props = {
     onClose: jest.fn(),
     onChange: (mappings) => {
@@ -41,18 +41,31 @@ const setup = (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  render(<ValueMappingsEditorModal {...props} />);
+  const view = render(<ValueMappingsEditorModal {...props} />);
+  await screen.findAllByTestId('remove-value-mapping');
+  return view;
 };
 
 describe('ValueMappingsEditorModal', () => {
-  it('should render component', () => {
-    setup();
+  it('renders the existing value and range mappings with drag handles', async () => {
+    const { baseElement } = await setup();
+
+    await waitFor(() => {
+      expect(baseElement.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(2);
+    });
+
+    expect(screen.getByPlaceholderText('Exact value to match')).toHaveValue('20');
+    expect(screen.getByPlaceholderText('From')).toHaveValue('21');
+    expect(screen.getByPlaceholderText('To')).toHaveValue('30');
+    const displayTextInputs = screen.getAllByPlaceholderText('Optional display text');
+    expect(displayTextInputs[0]).toHaveValue('Ok');
+    expect(displayTextInputs[1]).toHaveValue('Meh');
   });
 
   describe('On remove mapping', () => {
     it('Should remove mapping at index 0', async () => {
       const onChangeSpy = jest.fn();
-      setup(onChangeSpy);
+      await setup(onChangeSpy);
 
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
       await userEvent.click(screen.getByText('Update'));
@@ -76,7 +89,7 @@ describe('ValueMappingsEditorModal', () => {
   describe('When adding and updating value map', () => {
     it('should be 3', async () => {
       const onChangeSpy = jest.fn();
-      setup(onChangeSpy);
+      await setup(onChangeSpy);
 
       await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
       const selectComponent = await screen.findByTestId(selectors.components.ValuePicker.select('Add a new mapping'));
@@ -123,7 +136,7 @@ describe('ValueMappingsEditorModal', () => {
   describe('When adding and updating range map', () => {
     it('should add new range map', async () => {
       const onChangeSpy = jest.fn();
-      setup(onChangeSpy, { value: [] });
+      await setup(onChangeSpy, { value: [] });
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
       await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
@@ -158,7 +171,7 @@ describe('ValueMappingsEditorModal', () => {
 
     it('should allow editing negative bounds on existing range mapping', async () => {
       const onChangeSpy = jest.fn();
-      setup(onChangeSpy, {
+      await setup(onChangeSpy, {
         value: [
           {
             type: MappingType.RangeToText,
@@ -207,7 +220,7 @@ describe('ValueMappingsEditorModal', () => {
   describe('When adding and updating regex map', () => {
     it('should add new regex map', async () => {
       const onChangeSpy = jest.fn();
-      setup(onChangeSpy, { value: [] });
+      await setup(onChangeSpy, { value: [] });
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
       await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));

@@ -2,7 +2,15 @@ import { createBrowserHistory, createMemoryHistory } from 'history';
 
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
 
-import { notebookEditHref, notebookEditUrl, notebookShareUrl, notebookViewHref, notebookViewUrl } from './urls';
+import {
+  isNotebookEditUrl,
+  notebookRenderUrl,
+  notebookEditHref,
+  notebookEditUrl,
+  notebookShareUrl,
+  notebookViewHref,
+  notebookViewUrl,
+} from './urls';
 
 describe('notebook urls', () => {
   const originalLocationService = locationService;
@@ -58,6 +66,26 @@ describe('notebook urls', () => {
     setHistory(1);
 
     expect(notebookEditUrl('nb1')).toBe('/notebooks/nb1?edit=true');
+  });
+
+  // Exactly 'true'. A link with any other value opens the notebook as a read.
+  it.each([
+    ['?edit=true', true],
+    ['?edit=false', false],
+    ['?edit=1', false],
+    ['', false],
+  ])('reads "%s" as edit mode %s', (search, expected) => {
+    setHistory(1);
+    locationService.push(`/notebooks/nb1${search}`);
+
+    expect(isNotebookEditUrl()).toBe(expected);
+  });
+
+  it('nests the render route under the notebook it renders', () => {
+    setHistory(1);
+
+    expect(notebookRenderUrl('nb1')).toBe('/notebooks/nb1/render');
+    expect(notebookRenderUrl('nb1').startsWith(`${notebookViewUrl('nb1')}/`)).toBe(true);
   });
 
   it('builds an absolute share url', () => {

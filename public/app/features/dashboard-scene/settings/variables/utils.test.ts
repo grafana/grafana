@@ -19,6 +19,7 @@ import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plug
 
 import { toControlSourceRef } from '../../utils/predefinedVariables';
 
+import { getEditableVariables, getVariableEditor } from './editableVariablesRegistry';
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
@@ -30,10 +31,8 @@ import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 import {
   isEditableVariableType,
   EDITABLE_VARIABLES_SELECT_ORDER,
-  getEditableVariables,
   getVariableTypeLabel,
   getVariableTypeSelectOptions,
-  getVariableEditor,
   getVariableScene,
   hasVariableOptions,
   type EditableVariableType,
@@ -85,15 +84,10 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: (ref: string | null) => (ref === null ? defaultDsSettings : undefined),
     getList: () => [defaultDsSettings],
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(async () => dsMock),
   getDataSourceInstanceSettings: jest.fn(async (ref: string | null) => (ref === null ? defaultDsSettings : undefined)),
   getDataSourceInstanceList: jest.fn(async () => [defaultDsSettings]),
 }));
-
 describe('isEditableVariableType', () => {
   it('should return true for editable variable types', () => {
     const editableTypes: VariableType[] = [

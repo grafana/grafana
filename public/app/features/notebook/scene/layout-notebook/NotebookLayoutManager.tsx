@@ -21,7 +21,7 @@ import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/
 import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -33,15 +33,21 @@ import {
   type NotebookLayoutItemKind,
   type NotebookLayoutKind,
 } from '../../types';
-import { type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
 import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
-import { NotebookAddBlockDivider } from './edit/NotebookAddBlockDivider';
+import { isDiscardableContent, isEmptyMarkdown } from './cellEmptiness';
+import { buildCellSceneTimeRange, type CellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
-import { isEmptyMarkdown } from './isEmptyMarkdown';
+import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
+import {
+  NOTEBOOK_CELL_CONTROLS_CLASS,
+  NOTEBOOK_CELL_CONTROLS_PINNED_CLASS,
+  NOTEBOOK_CELL_FRAME_CLASS,
+} from './edit/cellClassNames';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
@@ -57,10 +63,23 @@ interface NotebookLayoutManagerState extends SceneObjectState {
    * reintroduces the dependency cycle.
    */
   isEditing?: boolean;
+  /**
+   * Set only by NotebookRenderPage. On screen the time picker already shows the range; a PDF has no
+   * picker, so the header carries it instead.
+   */
+  showTimeRange?: boolean;
 }
 
 // Keep typing useful to undo without storing every keystroke as a separate action.
 const CONTENT_EDIT_COALESCE_MS = 800;
+
+/**
+ * Stable class on the document column, alongside its generated one. Hand-written so the PDF export
+ * can reach it from a global rule (see NotebookScene): the column's reading-width padding is there
+ * to keep prose comfortable on a wide screen, and on a page it only double-counts the page's own
+ * margin, leaving the document needlessly narrow.
+ */
+export const NOTEBOOK_DOCUMENT_CLASS = 'notebook-document';
 
 interface PendingContentEdit {
   elementName: string;
@@ -303,6 +322,7 @@ export class NotebookLayoutManager
       after,
       action: {
         label: t('notebooks.history.edit-block', 'Edit block'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
         perform: () => {
           this.finishContentEdit(edit);
           this.applyCellContent(edit.elementName, edit.after);
@@ -399,6 +419,7 @@ export class NotebookLayoutManager
       after: queries,
       action: {
         label: t('notebooks.history.edit-query', 'Edit query'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
         perform: () => {
           this.finishQueriesEdit(edit);
           setQueryRunnerQueries(edit.runner, edit.after);
@@ -444,8 +465,38 @@ export class NotebookLayoutManager
     const before = runner.state.queries;
     this.executeEdit({
       label,
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => setQueryRunnerQueries(runner, queries),
       undo: () => setQueryRunnerQueries(runner, before),
+    });
+  }
+
+  public setCellTimeRange(cell: NotebookCellItem, spec: CellTimeRangeSpec | undefined): void {
+    const panel = cell.state.body;
+    const before = { $timeRange: cell.state.$timeRange, panelTimeRange: panel?.state.$timeRange };
+    const after = {
+      $timeRange: spec ? buildCellSceneTimeRange(spec.from, spec.to) : undefined,
+      panelTimeRange: undefined,
+    };
+
+    const apply = (state: typeof before) => {
+      cell.setState({ $timeRange: state.$timeRange });
+      panel?.setState({ $timeRange: state.panelTimeRange });
+      getQueryRunnerFor(panel)?.runQueries();
+    };
+
+    if (!this.state.isEditing) {
+      apply(after);
+      return;
+    }
+
+    this.executeEdit({
+      label: spec
+        ? t('notebooks.history.set-cell-time-range', 'Set panel time range')
+        : t('notebooks.history.reset-cell-time-range', 'Use notebook time range'),
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: () => apply(after),
+      undo: () => apply(before),
     });
   }
 
@@ -501,6 +552,9 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.add-block', 'Add block'),
+      // Not ADD_CELL: this turns a cell that is already there into a panel, it inserts nothing. The
+      // label describes what undo does, which is to put the markdown back.
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => cell.setElementBody(panel, elementName),
       undo: () => cell.setState({ body: undefined, content: previousContent, elementName: previousElementName }),
     });
@@ -524,6 +578,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.move-block', 'Move block'),
+      kind: NOTEBOOK_EDIT_KIND.MOVE_CELL,
       perform: () => this.moveCellTo(cell, toIndex),
       undo: () => this.moveCellTo(cell, fromIndex),
     });
@@ -570,7 +625,7 @@ export class NotebookLayoutManager
   }
 
   /**
-   * Inserts a new cell at `index`, the position the add-block affordance was offering.
+   * Inserts a new cell at `index`, the position the add-block button was offering.
    *
    * Visualization stays inert rather than inserting a cell with no content kind behind it, which the
    * renderer would draw as a blank gap — the menu's "Coming soon" submenu is the only thing it offers.
@@ -578,7 +633,7 @@ export class NotebookLayoutManager
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
   public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
-    // The divider below the trailing empty slot offers index === cells.length. Inserting *after*
+    // An insert past the trailing empty slot offers index === cells.length. Inserting *after*
     // that slot would leave it stranded mid-document once the invariant appends a replacement after
     // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
     // executeEdit as "Add block" — convertCell would skip the undo stack for Paragraph (identical
@@ -595,6 +650,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.add-block', 'Add block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
       perform: () => this.insertCell(built.cell, built.index),
       undo: () => this.removeCellInstance(built.cell),
     });
@@ -639,10 +695,13 @@ export class NotebookLayoutManager
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
       body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
+      // A bare .clone() would reuse the same $timeRange instance across both cells.
+      ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),
     });
 
     this.executeEdit({
       label: t('notebooks.history.duplicate-block', 'Duplicate block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
       perform: () => this.insertCell(copy, index + 1),
       undo: () => this.removeCellInstance(copy),
     });
@@ -672,6 +731,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.split-block', 'Split block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
       perform: () => this.insertCell(cell, index + 1),
       undo: () => this.removeCellInstance(cell),
     });
@@ -687,6 +747,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.delete-block', 'Delete block'),
+      kind: NOTEBOOK_EDIT_KIND.REMOVE_CELL,
       perform: () => this.removeCellInstance(cell),
       undo: () => this.insertCell(cell, index),
     });
@@ -694,6 +755,8 @@ export class NotebookLayoutManager
 
   private executeEdit(action: NotebookEditAction): void {
     this.commitPendingEdits();
+    // The title's own pending edit lives on the parent scene, not here.
+    this.notebookScene?.commitTitleEdit();
     const history = this.editHistory;
     if (history) {
       history.execute(action);
@@ -770,6 +833,7 @@ export class NotebookLayoutManager
         key: undefined,
         body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
         ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
+        ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),
       })
     );
 
@@ -791,9 +855,10 @@ export class NotebookLayoutManager
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { cells, title, tags, isEditing, key } = model.useState();
+  const { cells, title, tags, isEditing, showTimeRange, key } = model.useState();
 
-  const timeRange = sceneGraph.getTimeRange(model).useState();
+  const sceneTimeRange = sceneGraph.getTimeRange(model);
+  const { value: timeRange } = sceneTimeRange.useState();
 
   const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
   const onTitleChange = useCallback((nextTitle: string) => model.setTitleFromHeader(nextTitle), [model]);
@@ -882,13 +947,13 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   );
 
   return (
-    <div className={styles.document}>
+    <div className={cx(NOTEBOOK_DOCUMENT_CLASS, styles.document)}>
       <header className={styles.header}>
         <NotebookDocumentHeader
           title={title}
           tags={tags}
-          timeFrom={timeRange.from}
-          timeTo={timeRange.to}
+          timeRange={showTimeRange ? timeRange : undefined}
+          timeZone={sceneTimeRange.getTimeZone()}
           isEditing={isEditing}
           onTagsChange={onTagsChange}
           onTitleChange={onTitleChange}
@@ -896,8 +961,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       </header>
 
       <div className={styles.column}>
-        {isEditing && cells.length > 0 && <NotebookAddBlockDivider index={0} onAdd={onAdd} />}
-
         <DragDropContext onDragStart={onDragStart} onDragUpdate={onDragUpdate} onDragEnd={onDragEnd}>
           <Droppable droppableId={key!} direction="vertical">
             {(dropProvided) => (
@@ -907,13 +970,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                 {...dropProvided.droppableProps}
               >
                 {cells.map((cell, index) => (
-                  // Each frame is one Draggable and owns the divider below it, so a reorder moves a cell
-                  // together with its insertion point and nothing has to be re-indexed. The trailing
-                  // slot's own placeholder/"/" menu (see NotebookCellRenderer) key off whether a cell's
-                  // own content is empty, not its position — the invariant above just guarantees the
-                  // last cell always qualifies, with the same drag handle, hover actions, and
-                  // "Add block" divider spacing every other cell already has, since it's a real cell
-                  // rendered through the exact same path.
                   <NotebookCellFrame
                     key={cell.state.key}
                     cell={cell}
@@ -929,8 +985,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
-                    // Bound here rather than resolved inside the frame: the cells list belongs to the
-                    // manager, so the frame never needs to reach back up for its own position.
                     onAdd={onAdd}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
@@ -947,7 +1001,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                       requestFocus(created?.state.key, caretOffset);
                     }}
                     onFocusRequest={() => requestFocus(cell.state.key)}
-                    // Undefined outside edit mode, same as every other affordance here — a read-only
+                    // Undefined outside edit mode, same as every other cell control here. A read-only
                     // Code cell still mounts a (readOnly) CodeMirror instance, so without this its own
                     // ArrowUp/Down keymap would happily fire while just reading the notebook.
                     onNavigate={isEditing ? (direction) => onNavigate(index, direction) : undefined}
@@ -958,6 +1012,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
             )}
           </Droppable>
         </DragDropContext>
+
+        {isEditing && <NotebookFooterAddCell onAdd={(type) => onAdd(type, cells.length)} />}
       </div>
     </div>
   );
@@ -1016,6 +1072,12 @@ export function splitSeed(
 }
 
 function confirmRemoveCell(model: NotebookLayoutManager, cell: NotebookCellItem) {
+  // Nothing to lose, nothing to confirm — see isDiscardableContent for what that means per block type.
+  if (isDiscardableContent(cell.state.content)) {
+    model.removeCell(cell);
+    return;
+  }
+
   appEvents.publish(
     new ShowConfirmModalEvent({
       title: t('notebook.cell.delete-confirm-title', 'Delete block?'),
@@ -1045,7 +1107,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingBottom: theme.spacing(2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
-  // Wraps the leading insertion point and the droppable list; the per-cell rhythm belongs to the list.
+  // Wraps the droppable cell list and the footer add-row; the per-cell rhythm belongs to the list.
   column: css({
     display: 'flex',
     flexDirection: 'column',
@@ -1059,5 +1121,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   listEditing: css({
     gap: 0,
+    // Without this, the cell you type in and the cell under the pointer both show their controls. So
+    // the pointer wins: this hides the controls on every cell the pointer is not over. Whatever holds
+    // focus stays visible, because a tab stop at opacity 0 is a focus trap. A control that pinned
+    // itself stays too, which is how a control with an open menu keeps the menu anchored.
+    [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within):not(.${NOTEBOOK_CELL_CONTROLS_PINNED_CLASS})`]:
+      {
+        opacity: 0,
+        pointerEvents: 'none',
+      },
   }),
 });

@@ -178,7 +178,11 @@ jobs:
         uses: ./.grafana-main/.github/actions/changelog
         with:
           previous: ${{inputs.previous_version}}
-          target: v${{ env.VERSION }}
+          # The release tag doesn't exist yet at this point; diff against the release branch instead.
+          target: ${{ env.RELEASE_BRANCH }}
+          # target is a branch name now, not semver-parseable; give the action a real version
+          # string to look up the previous release tag from when previous_version isn't set.
+          version: v${{ env.VERSION }}
           output_file: changelog_items.md
           github_token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Patch CHANGELOG.md
@@ -231,8 +235,12 @@ jobs:
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         run: |
           yarn install
-          npm version patch --no-git-tag-version
-          yarn run lerna version patch --no-push --no-git-tag-version --force-publish --exact --yes
+          # Target VERSION explicitly and skip if already there; a relative bump isn't safe to re-run.
+          current_version=$(node -p "require('./package.json').version")
+          if [ "$current_version" != "$VERSION" ]; then
+            npm version "$VERSION" --no-git-tag-version
+            yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+          fi
           yarn install
           yarn prettier:write
       - name: make gen-cue
@@ -283,3 +291,14 @@ jobs:
             -H "${WORK_BRANCH}" \
             --title "Release: $VERSION" \
             --body "These code changes must be merged after a release is complete"
+      # Publishes the branch name so external callers don't have to reconstruct it themselves.
+      - name: Publish release PR branch name
+        run: |
+          mkdir -p .release-pr-artifact
+          printf '%s' "$WORK_BRANCH" > .release-pr-artifact/branch.txt
+      - name: Upload release PR branch artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-pr-branch
+          path: .release-pr-artifact/branch.txt
+          retention-days: 14

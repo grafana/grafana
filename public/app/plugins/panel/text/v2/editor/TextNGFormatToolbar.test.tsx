@@ -4,6 +4,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useRef } from 'react';
 
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
 import { TextMode } from '../../panelcfg.gen';
 
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
@@ -43,8 +46,13 @@ const setup = (mode: TextMode, doc = '', selection?: { anchor: number; head?: nu
 
 const clickButton = (name: string) => userEvent.click(screen.getByRole('button', { name }));
 
+beforeEach(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
 afterEach(() => {
   view = undefined;
+  setTestFlags({});
 });
 
 describe('TextNGFormatToolbar', () => {
@@ -58,16 +66,24 @@ describe('TextNGFormatToolbar', () => {
       expect(screen.getByRole('button', { name: 'Insert variable' })).toBeInTheDocument();
     });
 
-    it('offers only the tag-based actions in HTML mode', () => {
+    it('offers the tag-based actions in HTML mode', () => {
       setup(TextMode.HTML);
 
+      for (const name of ['Heading', 'Bold', 'Italic', 'Link', 'Table', 'Insert variable']) {
+        expect(screen.getByRole('button', { name })).toBeInTheDocument();
+      }
+      // Line-based list toggles have no HTML equivalent worth a one-click insert.
+      expect(screen.queryByRole('button', { name: 'Bullet list' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Checklist' })).not.toBeInTheDocument();
+    });
+
+    it('hides the diagram action when the text.newFeatures flag is off', () => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+
+      setup(TextMode.Markdown);
+
       expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Italic' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Link' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Insert variable' })).toBeInTheDocument();
-      // Markdown-only syntax has no HTML equivalent worth a one-click insert.
-      expect(screen.queryByRole('button', { name: 'Heading' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Table' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Mermaid diagram' })).not.toBeInTheDocument();
     });
 
     it('renders nothing in code mode', () => {
@@ -129,6 +145,14 @@ describe('TextNGFormatToolbar', () => {
       expect(view!.state.doc.toString()).toContain('| Column | Column |');
     });
 
+    it('inserts a mermaid fence the renderer will pick up', async () => {
+      setup(TextMode.Markdown, '');
+
+      await clickButton('Mermaid diagram');
+
+      expect(view!.state.doc.toString()).toBe('\n```mermaid\ngraph TD\n  A[Start] --> B[End]\n```\n');
+    });
+
     it('inserts a variable placeholder', async () => {
       setup(TextMode.Markdown, '');
 
@@ -139,12 +163,38 @@ describe('TextNGFormatToolbar', () => {
   });
 
   describe('HTML actions', () => {
+    it('inserts a mermaid block the renderer will pick up', async () => {
+      setup(TextMode.HTML);
+
+      await clickButton('Mermaid diagram');
+
+      expect(view!.state.doc.toString()).toBe('\n<pre class="mermaid">\ngraph TD\n  A[Start] --> B[End]\n</pre>\n');
+    });
+
     it('wraps the selection in tags', async () => {
       setup(TextMode.HTML, 'hello', { anchor: 0, head: 5 });
 
       await clickButton('Bold');
 
       expect(view!.state.doc.toString()).toBe('<b>hello</b>');
+    });
+
+    it('wraps the selection in a heading', async () => {
+      setup(TextMode.HTML, 'Title', { anchor: 0, head: 5 });
+
+      await clickButton('Heading');
+
+      expect(view!.state.doc.toString()).toBe('<h1>Title</h1>');
+    });
+
+    it('inserts a table skeleton', async () => {
+      setup(TextMode.HTML);
+
+      await clickButton('Table');
+
+      expect(view!.state.doc.toString()).toBe(
+        '\n<table>\n  <tr>\n    <th>Column</th>\n    <th>Column</th>\n  </tr>\n  <tr>\n    <td>Value</td>\n    <td>Value</td>\n  </tr>\n</table>\n'
+      );
     });
 
     it('turns the selection into an anchor', async () => {

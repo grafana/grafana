@@ -17,9 +17,12 @@ export class Tabs extends PageObject {
     return (scope ?? this.page).getByTestId(this.selectors.components.Tab.title(tabTitle));
   }
 
-  /** Returns the layout container holding the tab's content */
-  getContent(tabTitle: string): Locator {
-    return this.getByGrafanaSelector(this.selectors.components.LayoutContainer(`tab ${tabTitle}`));
+  /**
+   * Returns the layout container holding the tab's content
+   * @param scope container to search within, defaults to the whole page
+   */
+  getContent(tabTitle: string, scope?: Locator): Locator {
+    return (scope ?? this.page).getByTestId(this.selectors.components.LayoutContainer(`tab ${tabTitle}`));
   }
 
   /**

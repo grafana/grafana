@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -45,7 +43,7 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRe
 	}
 
 	info := &utils.BlobInfo{
-		UID:  uuid.New().String(),
+		UID:  resource.NewBlobUID(),
 		Size: int64(len(req.Value)),
 		Hash: hex.EncodeToString(hasher.Sum(nil)),
 	}

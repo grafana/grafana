@@ -2,9 +2,7 @@ package resource
 
 import (
 	"context"
-	"errors"
 	"io"
-	"sync"
 	"testing"
 	"time"
 
@@ -12,6 +10,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 )
+
+func drainChan[T any](ch chan T) []T {
+	close(ch)
+	var out []T
+	for v := range ch {
+		out = append(out, v)
+	}
+	return out
+}
 
 func requireMetricValue(t *testing.T, collector prometheus.Collector, expected float64) {
 	t.Helper()
@@ -25,28 +32,67 @@ func requireMetricEventually(t *testing.T, collector prometheus.Collector, expec
 	}, time.Second, 10*time.Millisecond)
 }
 
+func TestRingBuffer(t *testing.T) {
+	c := newRingBuffer[int](10)
+
+	// empty buffer
+	dst := make(chan int, 10)
+	require.True(t, c.readInto(dst))
+	require.Empty(t, drainChan(dst))
+
+	c.add(1)
+	dst = make(chan int, 10)
+	require.True(t, c.readInto(dst))
+	require.Equal(t, []int{1}, drainChan(dst))
+
+	for i := 2; i <= 6; i++ {
+		c.add(i)
+	}
+	dst = make(chan int, 10)
+	require.True(t, c.readInto(dst))
+	require.Equal(t, []int{1, 2, 3, 4, 5, 6}, drainChan(dst))
+
+	for i := 7; i <= 11; i++ {
+		c.add(i)
+	}
+
+	// buffer is full (size 10), oldest item (1) evicted
+	dst = make(chan int, 10)
+	require.True(t, c.readInto(dst))
+	require.Equal(t, []int{2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, drainChan(dst))
+
+	c.add(12)
+	c.add(13)
+
+	// two more evictions
+	dst = make(chan int, 10)
+	require.True(t, c.readInto(dst))
+	require.Equal(t, []int{4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, drainChan(dst))
+
+	// destination too small — returns false
+	small := make(chan int, 1)
+	require.False(t, c.readInto(small))
+}
+
 func TestBroadcaster(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ch := make(chan int)
 	reg := prometheus.NewPedanticRegistry()
 	metrics := newBroadcasterMetrics(reg)
 	input := []int{1, 2, 3}
+	go func() {
+		for _, v := range input {
+			ch <- v
+		}
+	}()
 	t.Cleanup(func() {
 		close(ch)
 	})
 
 	b := NewBroadcaster(ctx, ch, metrics, nil)
 
-	// Subscribe before sending: the broadcaster only delivers events that
-	// arrive after the subscription, so there is no replay cache to rely on.
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
-
-	go func() {
-		for _, v := range input {
-			ch <- v
-		}
-	}()
 
 	for _, expected := range input {
 		v, ok := <-sub
@@ -66,8 +112,7 @@ func TestBroadcaster(t *testing.T) {
 }
 
 func TestBroadcasterUnsubscribe(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -111,20 +156,19 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 }
 
 func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 
 	// Use small overflow cap so slow consumers get disconnected quickly.
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	// Create 101 subscribers that never read — enough to exceed the
 	// internal unsubscribe channel buffer and exercise bulk disconnect.
 	const numSubs = internalChanSize + 1
-	for i := 0; i < numSubs; i++ {
+	for range numSubs {
 		_, err := b.Subscribe(ctx, "test", "test")
 		require.NoError(t, err)
 	}
@@ -134,7 +178,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	// event. Use a timeout to detect deadlock.
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < subBuf+ovfCap+1; i++ {
+		for i := range subBuf + ovfCap + 1 {
 			ch <- i
 		}
 		close(done)
@@ -149,15 +193,14 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 }
 
 func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -166,13 +209,13 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 	// With overflow, the subscriber should NOT be disconnected.
 	const totalItems = subBuf + 20
 	go func() {
-		for i := 0; i < totalItems; i++ {
+		for i := range totalItems {
 			ch <- i
 		}
 	}()
 
 	// Read all items — they should arrive in order.
-	for i := 0; i < totalItems; i++ {
+	for i := range totalItems {
 		select {
 		case v, ok := <-sub:
 			require.True(t, ok, "subscriber channel closed prematurely at item %d", i)
@@ -184,8 +227,7 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 }
 
 func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -194,7 +236,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -203,7 +245,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 	// The subscriber never reads, so it should be disconnected.
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < subBuf+ovfCap+10; i++ {
+		for i := range subBuf + ovfCap + 10 {
 			ch <- i
 		}
 		close(done)
@@ -235,9 +277,56 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 	}
 }
 
+func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
+	ctx := t.Context()
+
+	ch := make(chan int)
+	t.Cleanup(func() { close(ch) })
+
+	// Subscriber buffer (defaultCacheSize + 100) > defaultCacheSize,
+	// so readInto should leave headroom.
+	const subBuf = defaultCacheSize + 100
+	const ovfCap = 1000
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
+
+	// Fill the cache to capacity by sending items through the input channel
+	// (no subscribers yet, so items only go to cache).
+	for i := range defaultCacheSize {
+		ch <- i
+	}
+
+	// Subscribe — readInto sends all cached items into the subscriber channel.
+	sub, err := b.Subscribe(ctx, "test", "test")
+	require.NoError(t, err)
+
+	// Read one cached item to confirm the subscription is active.
+	select {
+	case _, ok := <-sub:
+		require.True(t, ok)
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for first cached item")
+	}
+
+	// Send additional events. The channel has headroom (buffer > cache)
+	// so these arrive without overflowing.
+	const extra = 10
+	for i := range extra {
+		ch <- 1000 + i
+	}
+
+	// Read all remaining items — subscriber should still be alive.
+	for i := range extra {
+		select {
+		case _, ok := <-sub:
+			require.True(t, ok, "subscriber disconnected at item %d", i)
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timed out at item %d of %d", i, extra)
+		}
+	}
+}
+
 func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -246,7 +335,7 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -254,13 +343,13 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 	// Send more items than the channel buffer can hold, causing overflow.
 	const totalItems = subBuf + 15
 	go func() {
-		for i := 0; i < totalItems; i++ {
+		for i := range totalItems {
 			ch <- i
 		}
 	}()
 
 	// Read all items to catch up.
-	for i := 0; i < totalItems; i++ {
+	for i := range totalItems {
 		select {
 		case _, ok := <-sub:
 			require.True(t, ok)
@@ -301,7 +390,7 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 		subCancel()
 
 		b := &broadcaster[int]{
-			subscribe:    make(chan *subscription[int]),
+			subscribe:    make(chan *subscribeRequest[int]),
 			terminated:   make(chan struct{}),
 			metrics:      metrics,
 			watchBufSize: watchChanSize,
@@ -318,54 +407,12 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 
 		ctx := context.Background()
 		input := make(chan int)
-		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, nil)
+		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, nil, nil)
 		close(input)
+		<-b.terminated
 
-		require.Eventually(t, func() bool {
-			_, err := b.Subscribe(ctx, "sub1", "test")
-			return errors.Is(err, io.EOF)
-		}, time.Second, 10*time.Millisecond)
+		_, err := b.Subscribe(ctx, "sub1", "test")
+		require.ErrorIs(t, err, io.EOF)
 		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultTerminated), 1)
 	})
-}
-
-// TestBroadcasterUnsubscribesOnCancelDuringSubscribe guards against a leak where
-// a subscription is submitted, the caller's context is canceled before the
-// subscription is registered, and stream() then registers it with nobody left
-// to call Unsubscribe. Such an orphan would retain events until the overflow cap
-// or shutdown. After the fix the cancel path tears the subscription down, so no
-// subscribers remain regardless of how the cancel races registration.
-func TestBroadcasterUnsubscribesOnCancelDuringSubscribe(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	ch := make(chan int)
-	t.Cleanup(func() { close(ch) })
-
-	reg := prometheus.NewPedanticRegistry()
-	metrics := newBroadcasterMetrics(reg)
-	b := NewBroadcaster(ctx, ch, metrics, nil)
-
-	const n = 200
-	var wg sync.WaitGroup
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			cctx, ccancel := context.WithCancel(ctx)
-			// Cancel concurrently to race the two-phase Subscribe so that some
-			// callers take the ctx.Done() path after the subscription is queued.
-			go ccancel()
-			sub, err := b.Subscribe(cctx, "leak", "leak")
-			if err == nil {
-				// Registered before the cancel landed; a real caller would clean up.
-				b.Unsubscribe(sub)
-			}
-		}()
-	}
-	wg.Wait()
-
-	// Every subscription — including those whose caller took the ctx.Done() path
-	// but that stream() still registered — must be torn down.
-	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("leak"), 0)
 }

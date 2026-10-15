@@ -142,7 +142,7 @@ FROM "test_schema"."team_member" AS team_member`)).
 WHERE org_id = ?
   AND id = ?`)).
 		WithArgs(int64(7), int64(11)).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+		WillReturnRows(sqlmock.NewRows([]string{"uid"}).AddRow("team-a"))
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."team_member"`)).
 		WithArgs(int64(7), int64(11)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -155,7 +155,9 @@ WHERE org_id = ?
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."team_group"`)).
 		WithArgs(int64(7), int64(11)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	require.NoError(t, store.Delete(ctx, &team.DeleteTeamCommand{OrgID: 7, ID: 11}))
+	uid, err := store.Delete(ctx, &team.DeleteTeamCommand{OrgID: 7, ID: 11})
+	require.NoError(t, err)
+	require.Equal(t, "team-a", uid)
 
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."team_member"
 WHERE user_id = ?`)).

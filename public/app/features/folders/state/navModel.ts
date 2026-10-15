@@ -18,7 +18,7 @@ export const getVariablesTabID = (folderUID: string) => `folder-variables-${fold
 export function buildNavModel(
   folder: FolderDTO | FolderParent,
   parentsArg?: FolderParent[],
-  counts?: { panels: number; rules: number }
+  counts?: { panels: number; rules: number; variables: number }
 ): NavModelItem {
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
   const isProvisioned = 'managedBy' in folder && isItemManagedByRepository(folder);
@@ -79,6 +79,7 @@ export function buildNavModel(
       id: getVariablesTabID(folder.uid),
       text: t('browse-dashboards.manage-folder-nav.variables', 'Variables'),
       url: `${folder.url}/variables`,
+      tabCounter: counts ? counts.variables : undefined,
     });
   }
 

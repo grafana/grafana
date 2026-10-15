@@ -48,6 +48,7 @@ func TestAuth_Middleware(t *testing.T) {
 		authMiddleware web.Handler
 		expecedReached bool
 		expectedCode   int
+		expectedBody   string
 	}
 
 	tests := []testCase{
@@ -72,6 +73,14 @@ func TestAuth_Middleware(t *testing.T) {
 			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
+		},
+		{
+			desc:           "ReqSignedIn should preserve the token rotation error",
+			path:           "/api/secure",
+			authMiddleware: ReqSignedIn,
+			authErr:        authn.NewTokenNeedsRotationError(1),
+			expectedCode:   http.StatusUnauthorized,
+			expectedBody:   `{"message":"Unauthorized","messageId":"session.token.rotate","statusCode":401,"traceID":"","extra":null}`,
 		},
 		{
 			desc:           "ReqSignedIn should return redirect anonymous user with forceLogin query string",
@@ -213,6 +222,9 @@ func TestAuth_Middleware(t *testing.T) {
 			res := recorder.Result()
 			assert.Equal(t, tt.expecedReached, reached)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			if tt.expectedBody != "" {
+				assert.JSONEq(t, tt.expectedBody, recorder.Body.String())
+			}
 			require.NoError(t, res.Body.Close())
 		})
 	}

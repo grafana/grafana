@@ -2,14 +2,16 @@ import { createMemoryHistory } from 'history';
 import { BehaviorSubject } from 'rxjs';
 import { act, render, screen } from 'test/test-utils';
 
-import { CoreApp, type Scope } from '@grafana/data';
+import { CoreApp, type Scope, dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import {
   config,
   HistoryWrapper,
   locationService,
+  onInteraction,
   ScopesContext,
   type ScopesContextValue,
+  setEchoSrv,
   setLocationService,
   setPluginImportUtils,
 } from '@grafana/runtime';
@@ -23,13 +25,16 @@ import {
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import { Echo } from 'app/core/services/echo/Echo';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 
+import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 
 import { NotebookScene } from './NotebookScene';
+import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
@@ -58,9 +63,10 @@ jest.mock('@grafana/ui/unstable', () => ({
   ),
 }));
 
-function buildScene(hideTimeControls: boolean) {
+function buildScene(hideTimeControls: boolean, uid?: string) {
   return new NotebookScene({
     title: 'My notebook',
+    uid,
     body: new NotebookLayoutManager({
       cells: [
         new NotebookCellItem({
@@ -104,12 +110,8 @@ describe('NotebookScene', () => {
     deactivators.splice(0).forEach((deactivate) => deactivate());
   });
 
-  // activate() only propagates to $timeRange/$variables/$data/$behaviors; the pickers are plain
-  // state and are otherwise activated by their renderers. With the controls row hidden nothing
-  // renders the refresh picker, so without an explicit activation its interval never starts and the
-  // spec's autoRefresh silently does nothing.
-  it('activates the refresh picker when the time controls are hidden', () => {
-    const scene = buildScene(true);
+  it.each([true, false])('activates the refresh picker regardless of hideTimeControls (%s)', (hideTimeControls) => {
+    const scene = buildScene(hideTimeControls);
 
     const deactivate = scene.activate();
 
@@ -119,12 +121,16 @@ describe('NotebookScene', () => {
     expect(scene.state.refreshPicker.isActive).toBe(false);
   });
 
-  it('leaves the refresh picker to its renderer when the time controls are shown', () => {
+  it('renders the document only, with no controls row', () => {
     const scene = buildScene(false);
-
     activate(scene);
 
-    expect(scene.state.refreshPicker.isActive).toBe(false);
+    render(<scene.Component model={scene} />);
+
+    expect(screen.getByText('Hello')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Time range selected/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Edit')).not.toBeInTheDocument();
   });
 
   describe('edit mode', () => {
@@ -218,61 +224,254 @@ describe('NotebookScene', () => {
       expect(runner.state.queries).toEqual(before);
     });
 
-    it('clears history when the notebook body is replaced', () => {
-      const scene = buildScene(false);
-      activate(scene);
-      scene.state.body.addCell('code', 1);
-      const replacement = new NotebookLayoutManager({ cells: [] });
+    describe('edit session analytics', () => {
+      let started: Array<Record<string, unknown>>;
+      let unsubscribe: () => void;
 
-      scene.setState({ body: replacement });
+      beforeEach(() => {
+        setEchoSrv(new Echo());
+        started = [];
+        unsubscribe = onInteraction('grafana_notebook_edit_session_started', (properties) => started.push(properties));
+      });
 
-      expect(scene.editHistory.state.canUndo).toBe(false);
-      replacement.addCell('code', 0);
-      expect(scene.editHistory.state.canUndo).toBe(true);
+      afterEach(() => {
+        unsubscribe();
+      });
+
+      it('reports a toggle when the Edit control turns edit mode on', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onEnterEditMode();
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+      });
+
+      it('reports a navigation when the url brought the reader into edit mode', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onEnterEditMode(NOTEBOOK_EDIT_SESSION_SOURCE.NAVIGATION);
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+      });
+
+      // The blank route opens in edit mode before autosave creates the notebook, so there is no uid yet.
+      it('reports a new notebook while it has no uid, whichever control opened it', () => {
+        const scene = buildScene(false);
+
+        scene.onEnterEditMode();
+
+        expect(started).toEqual([{ notebookUid: '', source: 'new' }]);
+      });
+
+      it('reports one session when edit mode is entered again while already editing', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onEnterEditMode();
+        scene.onEnterEditMode();
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+      });
+
+      it('counts nothing from the previous session when edit mode is entered again', () => {
+        const scene = buildScene(false, 'nb1');
+        const cell = scene.state.body.state.cells[0];
+        scene.onEnterEditMode();
+        scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
+        scene.onExitEditMode();
+
+        scene.onEnterEditMode();
+
+        expect(scene.editSession.end().editCount).toBe(0);
+      });
     });
 
-    // Awaited because entering edit mode also mounts the header's tag picker, whose dropdown measures
-    // itself once mounted. That lands after the act above, so a synchronous assertion here leaves an
-    // unwrapped update behind and the console guard fails the test.
-    it('offers the history controls only in edit mode', async () => {
-      const scene = buildScene(false);
-      activate(scene);
-      render(<scene.Component model={scene} />);
+    describe('edit session ended', () => {
+      let ended: Array<Record<string, unknown>>;
+      let unsubscribe: () => void;
 
-      expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
+      beforeEach(() => {
+        setEchoSrv(new Echo());
+        ended = [];
+        unsubscribe = onInteraction('grafana_notebook_edit_session_ended', (properties) => ended.push(properties));
+      });
 
-      act(() => scene.onEnterEditMode());
+      afterEach(() => {
+        unsubscribe();
+      });
 
-      expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument();
+      it('reports the session totals and the notebook shape when the toggle turns edit mode off', () => {
+        const scene = buildScene(false, 'nb1');
+        const cell = scene.state.body.state.cells[0];
+        scene.onEnterEditMode();
+        scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
+
+        scene.onExitEditMode();
+
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({
+          notebookUid: 'nb1',
+          editCount: 1,
+          endReason: 'toggle',
+          cellCount: 1,
+          nonEmptyCellCount: 1,
+        });
+        expect(typeof ended[0].durationMs).toBe('number');
+      });
+
+      it('reports what the session did to the cells', () => {
+        const scene = buildScene(false, 'nb1');
+        const body = scene.state.body;
+        scene.onEnterEditMode();
+
+        body.addCell('code', 1);
+        body.addCell('paragraph', 2);
+        body.removeCell(body.state.cells[0]);
+        body.moveCell(0, 1);
+
+        scene.onExitEditMode();
+
+        expect(ended[0]).toMatchObject({ cellsAdded: 2, cellsRemoved: 1, cellsMoved: 1 });
+      });
+
+      it('reports a time range moved during the session', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        scene.state.$timeRange.onTimeRangeChange({
+          from: dateTime('2026-09-01T00:00:00Z'),
+          to: dateTime('2026-09-02T00:00:00Z'),
+          raw: { from: 'now-24h', to: 'now' },
+        });
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended[0]).toMatchObject({ timeRangeChanged: true });
+      });
+
+      // The time picker belongs to whoever is reading, and the notebook does not keep what they set.
+      // Between two sessions is where this matters: `start()` clears the flag on the way in, so only
+      // the isEditing guard stops a reader's change landing on the session that comes after it.
+      it('does not report a time range a reader moved between two sessions', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        scene.onExitEditMode();
+
+        scene.state.$timeRange.onTimeRangeChange({
+          from: dateTime('2026-09-01T00:00:00Z'),
+          to: dateTime('2026-09-02T00:00:00Z'),
+          raw: { from: 'now-24h', to: 'now' },
+        });
+
+        scene.onEnterEditMode();
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended).toHaveLength(2);
+        expect(ended[1]).toMatchObject({ timeRangeChanged: false });
+      });
+
+      it('does not fire when the notebook was already in view mode', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onExitEditMode();
+
+        expect(ended).toEqual([]);
+      });
+
+      it('reports a navigation end reason when the notebook deactivates mid-edit', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        deactivate();
+
+        expect(ended).toEqual([expect.objectContaining({ notebookUid: 'nb1', endReason: 'navigation' })]);
+      });
+
+      // Typing is one coalescing undo step that stays open until it is committed, and only
+      // onExitEditMode commits it. Leaving the page mid-word has to count that typing anyway.
+      it('counts typing that was still open when the notebook deactivated', () => {
+        const scene = buildScene(false, 'nb1');
+        const cell = scene.state.body.state.cells[0];
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Half a sen' } });
+
+        deactivate();
+
+        expect(ended).toEqual([expect.objectContaining({ endReason: 'navigation', editCount: 1 })]);
+      });
+
+      // The page keeps its scenes in a module-level cache, so this same scene comes back on the next
+      // visit. A scene left mid-session reported a second end for a visit that only read it.
+      it('leaves edit mode with the session, so reopening to read reports nothing more', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        deactivate();
+        // Reopened by its title, so the url carries no edit param.
+        new NotebookSceneUrlSync(scene).updateFromUrl({ edit: null });
+
+        expect(ended).toEqual([expect.objectContaining({ endReason: 'navigation' })]);
+      });
+
+      it('reports a fresh session when a cached notebook is reopened in edit mode', () => {
+        const started: Array<Record<string, unknown>> = [];
+        const unsubscribeStarted = onInteraction('grafana_notebook_edit_session_started', (properties) =>
+          started.push(properties)
+        );
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        deactivate();
+        started.length = 0;
+
+        // The list's Edit action again, on a scene the previous visit left behind.
+        new NotebookSceneUrlSync(scene).updateFromUrl({ edit: 'true' });
+        unsubscribeStarted();
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('does not fire on deactivation when the notebook was never editing', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+
+        deactivate();
+
+        expect(ended).toEqual([]);
+      });
+
+      it('does not double-fire when a toggle-off is followed by a deactivation', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({ endReason: 'toggle' });
+      });
     });
 
-    // The assistant writes without entering edit mode, so gating the status on `isEditing` would hide a
-    // failed save from the only person who could retry it.
-    it('reports a save outside edit mode, where the assistant writes', () => {
-      const scene = buildScene(false);
-      activate(scene);
-      render(<scene.Component model={scene} />);
+    // A different notebook is never the same scene instance swapping its body under itself — it's a
+    // distinct NotebookScene, built fresh by transformNotebookToScene, with its own editHistory that
+    // was never going to know about the first one's stack in the first place.
+    it('gives a different notebook scene its own independent edit history', () => {
+      const first = buildScene(false, 'nb1');
+      activate(first);
+      first.state.body.addCell('code', 1);
+      expect(first.editHistory.state.canUndo).toBe(true);
 
-      expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
+      const second = buildScene(false, 'nb2');
+      activate(second);
 
-      act(() =>
-        scene.autosave.setState({ status: 'error', errorMessage: 'The notebook was changed by someone else.' })
-      );
-
-      expect(scene.state.isEditing).toBeUndefined();
-      expect(screen.getByText('Save failed')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
-    });
-
-    it('records history for a body replaced before activation', () => {
-      const scene = buildScene(false);
-      const replacement = new NotebookLayoutManager({ cells: [] });
-      scene.setState({ body: replacement });
-
-      activate(scene);
-      replacement.addCell('code', 0);
-
-      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(second.editHistory.state.canUndo).toBe(false);
     });
 
     it('keeps history across a deactivation and activation', () => {
@@ -457,6 +656,66 @@ describe('NotebookScene', () => {
 
       expect(scene.state.body.state.tags).toEqual(['rebuilt']);
     });
+
+    it('records a tag change so it can be undone', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Add tag');
+
+      act(() => scene.editHistory.undo());
+
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.state.body.state.tags).toEqual([]);
+    });
+
+    it('labels removing a tag distinctly, and supports redo', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTagsChange(['latency', 'slo']));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.undoLabel).toBe('Remove tag');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual(['latency', 'slo']);
+
+      act(() => scene.editHistory.redo());
+      expect(scene.state.tags).toEqual(['latency']);
+    });
+
+    it('does not record a no-op tag change', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTagsChange(['latency']));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      // A single undo should clear the one real change, not a second no-op entry.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits an active content edit first, so it lands as its own undo step under the tag change', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      act(() => scene.activate());
+      act(() => scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } }));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+
+      act(() => scene.editHistory.undo());
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
   });
 
   describe('title', () => {
@@ -495,6 +754,157 @@ describe('NotebookScene', () => {
       );
 
       expect(scene.state.body.state.title).toBe('Rebuilt');
+    });
+
+    it('records a title change so it can be undone', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.state.body.state.title).toBe('My notebook');
+    });
+
+    it('coalesces rapid title changes into one undo action', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q'));
+      act(() => scene.onTitleChange('Q3'));
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+
+      // One undo reverts the whole rename, not just the last keystroke.
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('drops a title edit that returns to its starting value', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onTitleChange('My notebook'));
+
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('starts a new undo step after the coalescing window', () => {
+      jest.useFakeTimers();
+      try {
+        const scene = buildScene(false);
+        act(() => scene.activate());
+
+        act(() => scene.onTitleChange('Q3 latency regression'));
+        act(() => jest.advanceTimersByTime(801));
+        act(() => scene.onTitleChange('Q4 latency regression'));
+
+        act(() => scene.editHistory.undo());
+        expect(scene.state.title).toBe('Q3 latency regression');
+
+        act(() => scene.editHistory.undo());
+        expect(scene.state.title).toBe('My notebook');
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('does not record a no-op title change', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      // A single undo should clear the one real change, not a second no-op entry.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits an active content edit first, so it lands as its own undo step under the title change', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      act(() => scene.activate());
+      act(() => scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } }));
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+
+      act(() => scene.editHistory.undo());
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
+
+    it('starts a fresh pending edit after a tag change, instead of extending the buried one', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onTagsChange(['incident']));
+      // Without the commit above, this would extend the buried rename and silently discard it instead
+      // of recording a new step, since editHistory.discard only acts on the top of the stack.
+      act(() => scene.onTitleChange('My notebook'));
+
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.state.title).toBe('Q3 latency regression');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits a pending title edit before leaving edit mode', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onEnterEditMode());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onExitEditMode());
+      act(() => scene.onEnterEditMode());
+      act(() => scene.onTitleChange('Q4 latency regression'));
+
+      // Two renames, not one coalesced step: the first was sealed by onExitEditMode.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits a pending title edit on deactivation', () => {
+      const scene = buildScene(false);
+      const deactivate = scene.activate();
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => deactivate());
+      act(() => scene.activate());
+      act(() => scene.onTitleChange('Q4 latency regression'));
+
+      // Two renames, not one coalesced step: the first was sealed on deactivation.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
     });
   });
 });

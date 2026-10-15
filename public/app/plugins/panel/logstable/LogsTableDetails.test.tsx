@@ -15,7 +15,9 @@ import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 
 jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
+  useFlag: jest.fn().mockReturnValue({ value: false }),
 }));
 
 jest.mock('../../../features/logs/components/fieldSelector/FieldSelector');

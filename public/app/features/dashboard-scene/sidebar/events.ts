@@ -2,10 +2,25 @@
 import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { type SceneObject } from '@grafana/scenes';
 
+export interface DashboardActionMeta {
+  /**
+   * Reported with undo/redo interactions. Format: `<element>.<action>`, describing the action as the user
+   * perceives it: the main UI element involved and what is done to it (e.g. `panel.remove`, `row.changeTitle`).
+   */
+  actionId: `${string}.${string}`;
+  /**
+   * Free-text narrowing of the actionId, set only when several places report the same actionId
+   * (e.g. `panel.remove` from `auto-grid` vs `custom-grid`).
+   */
+  scope?: string;
+}
+
 export interface DashboardEditActionEventPayload {
+  meta: DashboardActionMeta;
   removedObject?: SceneObject;
   addedObject?: SceneObject;
   movedObject?: SceneObject;
+  selectOnMove?: boolean;
   source: SceneObject;
   description?: string;
   perform: () => void;
@@ -14,6 +29,20 @@ export interface DashboardEditActionEventPayload {
 
 export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditActionEventPayload> {
   static type = 'dashboard-edit-action';
+}
+
+export interface DashboardBatchEditActionEventPayload {
+  meta: DashboardActionMeta;
+  source: SceneObject;
+  description?: string;
+}
+
+export class DashboardBatchEditActionStartEvent extends BusEventWithPayload<DashboardBatchEditActionEventPayload> {
+  static type = 'dashboard-batch-edit-action-start';
+}
+
+export class DashboardBatchEditActionEndEvent extends BusEventBase {
+  static type = 'dashboard-batch-edit-action-end';
 }
 
 /**

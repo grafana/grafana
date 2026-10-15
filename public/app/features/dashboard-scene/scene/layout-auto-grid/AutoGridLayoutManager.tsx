@@ -1,6 +1,6 @@
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
@@ -13,6 +13,7 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
@@ -24,7 +25,7 @@ import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { forceRenderChildren, getDashboardSceneFor, useDashboard } from '../../utils/utils';
-import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
@@ -126,7 +127,12 @@ export class AutoGridLayoutManager
         new AutoGridLayout({
           isDraggable: true,
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
-          autoRows: getAutoRowsTemplate(rowHeight, fillScreen, fitContent && isAutoHeightPanelsEnabled()),
+          autoRows: getAutoRowsTemplate(
+            rowHeight,
+            fillScreen,
+            fitContent && isAutoHeightPanelsEnabled(),
+            state.minHeight
+          ),
         }),
     });
 
@@ -166,6 +172,7 @@ export class AutoGridLayoutManager
     const newGridItem = new AutoGridItem({ body: vizPanel });
 
     addElement({
+      meta: { actionId: 'panel.add', scope: 'auto-grid' },
       addedObject: vizPanel,
       source: this,
       perform: () => {
@@ -192,8 +199,9 @@ export class AutoGridLayoutManager
       return;
     }
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       edit({
+        meta: { actionId: 'panel.paste', scope: 'auto-grid' },
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: panel.state.body,
         source: this,
@@ -223,6 +231,7 @@ export class AutoGridLayoutManager
     const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
 
     removeElement({
+      meta: { actionId: 'panel.remove', scope: 'auto-grid' },
       removedObject: panel,
       source: this,
       perform: () => {
@@ -284,36 +293,6 @@ export class AutoGridLayoutManager
       child.clearParent();
     });
     this.state.layout.setState({ children: [...this.state.layout.state.children, ...movedChildren] });
-  }
-
-  public duplicatePanel(panel: VizPanel) {
-    const gridItem = panel.parent;
-    if (!(gridItem instanceof AutoGridItem)) {
-      console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
-      return;
-    }
-
-    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
-    const grid = this.state.layout;
-
-    const newPanel = panel.clone({
-      key: getVizPanelKeyForPanelId(newPanelId),
-    });
-
-    const newGridItem = gridItem.clone({
-      key: getGridItemKeyForPanelId(newPanelId),
-      body: newPanel,
-    });
-
-    const sourceIndex = grid.state.children.indexOf(gridItem);
-    const newChildren = [...grid.state.children];
-
-    // insert after
-    newChildren.splice(sourceIndex + 1, 0, newGridItem);
-
-    grid.setState({ children: newChildren });
-
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 
   public getVizPanels(): VizPanel[] {
@@ -383,6 +362,7 @@ export class AutoGridLayoutManager
       );
     }
     this.setState({ minHeight });
+    this.updateAutoRows();
   }
 
   public onMaxHeightModeChanged(maxHeightMode: AutoGridMaxHeightMode | undefined) {
@@ -432,7 +412,12 @@ export class AutoGridLayoutManager
   /** Recomputes the grid's `autoRows` from the current state. Call after a per-panel fit change. */
   public updateAutoRows() {
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(this.state.rowHeight, this.state.fillScreen, this.hasFitContent()),
+      autoRows: getAutoRowsTemplate(
+        this.state.rowHeight,
+        this.state.fillScreen,
+        this.hasFitContent(),
+        this.state.minHeight
+      ),
     });
   }
 
@@ -623,12 +608,26 @@ export function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
   }
 }
 
-export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean, hasFitContent?: boolean) {
+export function getAutoRowsTemplate(
+  rowHeight: AutoGridRowHeight,
+  fillScreen: boolean,
+  hasFitContent?: boolean,
+  minHeight?: AutoGridMinHeight
+) {
   const rowHeightPixels = getNamedHeightInPixels(rowHeight);
-  // Row tracks always floor at the configured row height. The max grows when:
+  // A smaller content-fit floor must also lower the shared row track, otherwise
+  // the panel shrinks inside a row that still reserves the configured row height.
+  // Clamp larger fit minimums to the row height: the fit panel itself contributes
+  // its minimum, without inflating rows that contain only non-fit panels.
+  const minRowHeightPixels =
+    hasFitContent && !fillScreen
+      ? Math.min(rowHeightPixels, getFitMinHeightInPixels(minHeight, rowHeight))
+      : rowHeightPixels;
+
+  // The max grows when:
   //  - fill screen: stretch to fill the viewport (`auto`)
   //  - content-fit present: grow to the tallest panel's content (`max-content`)
   //  - otherwise: fixed at the row height
   const maxRowHeightValue = fillScreen ? 'auto' : hasFitContent ? 'max-content' : `${rowHeightPixels}px`;
-  return `minmax(${rowHeightPixels}px, ${maxRowHeightValue})`;
+  return `minmax(${minRowHeightPixels}px, ${maxRowHeightValue})`;
 }

@@ -1,4 +1,5 @@
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
+import { dispatch } from 'app/types/store';
 
 /**
  * Client for `POST .../notebooks/search`, the per-kind search endpoint mounted by
@@ -170,8 +171,9 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
      * The search provides the `Notebook` type because it is a list that writes must refresh; the
      * generated notebook mutations invalidate that type in bulk, so sharing it would have every write
      * refetch this. A caller holding this open for the length of an editing session would then re-ask
-     * on every autosave, for options it may never show. Fetched once per mount instead, which for a
-     * dropdown of suggestions is the right staleness.
+     * on every autosave, for options it may never show. Its callers decide when to ask instead — the
+     * header's tag editor once per mount, the list's tag filter each time the picker is opened —
+     * which for a dropdown of suggestions is the right staleness.
      */
     notebookFieldFacet: build.query<SearchResults, { field: string; limit: number }>({
       query: ({ field, limit }) => ({
@@ -186,7 +188,46 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
         },
       }),
     }),
+
+    /**
+     * Title matches for the command palette.
+     *
+     * Provides the `Notebook` tag that the generated notebook mutations invalidate, so a notebook
+     * deleted between two identical searches stops being offered — untagged, the cached entry would
+     * answer the repeat. Sharing that tag is free here because the only caller dispatches with
+     * `subscribe: false`: an invalidated entry with no subscribers is dropped rather than refetched.
+     */
+    searchNotebookTitles: build.query<SearchResults, { query: string; limit: number }>({
+      query: ({ query, limit }) => ({
+        url: '/notebooks/search',
+        method: 'POST',
+        body: {
+          apiVersion: SEARCH_API_VERSION,
+          kind: SEARCH_QUERY_KIND,
+          where: { text: { value: query, fields: ['title'] } },
+          fields: ['title'],
+          limit,
+        },
+      }),
+      providesTags: [notebookListTag],
+    }),
   }),
 });
 
-export const { useSearchNotebooksInfiniteQuery, useNotebookFieldFacetQuery } = notebookSearchAPI;
+/**
+ * Imperative rather than a hook: the caller is a debounced module-level function, not a component.
+ */
+export async function searchNotebookTitles(query: string, limit: number): Promise<ResultItem[]> {
+  const { data, error } = await dispatch(
+    notebookSearchAPI.endpoints.searchNotebookTitles.initiate({ query, limit }, { subscribe: false })
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  // An invalidation mid-flight drops the entry, leaving neither data nor error.
+  return data?.items ?? [];
+}
+
+export const { useSearchNotebooksInfiniteQuery, useLazyNotebookFieldFacetQuery } = notebookSearchAPI;

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,6 +39,8 @@ func ProvideProvisioningOSSRepositoryExtras(
 ) []repository.Extra {
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(reg))
 	operationMetrics := repository.RegisterOperationMetrics(reg)
+	clientMetrics := git.RegisterClientMetrics(reg)
+	resources.RegisterFolderMetadataMetrics(reg)
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
 	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure
@@ -46,19 +50,20 @@ func ProvideProvisioningOSSRepositoryExtras(
 			cfg.PermittedProvisioningPaths,
 			operationMetrics,
 		),
-		git.Extra(decrypter, allowInsecure, operationMetrics),
+		git.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics),
 		github.Extra(
 			decrypter,
 			ghFactory,
 			webhooksBuilder,
 			allowInsecure,
 			operationMetrics,
+			clientMetrics,
 		),
 	}
 }
 
 func ProvideProvisioningOSSConnectionExtras(
-	_ *setting.Cfg,
+	cfg *setting.Cfg,
 	decryptSvc decrypt.DecryptService,
 	ghFactory ghconnection.GithubFactory,
 	ghRepoFactory *github.Factory,
@@ -68,6 +73,9 @@ func ProvideProvisioningOSSConnectionExtras(
 	return []connection.Extra{
 		ghconnection.Extra(decrypter, ghFactory),
 		githuboauth.Extra(decrypter, ghRepoFactory),
+		// http:// OAuth endpoints are only allowed in development or when explicitly opted in,
+		// since the client secret and tokens would otherwise travel in cleartext.
+		gitoauth.Extra(decrypter, cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure),
 	}
 }
 

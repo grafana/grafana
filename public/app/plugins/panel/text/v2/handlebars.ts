@@ -31,10 +31,11 @@ export type CompiledTemplate = (context: TemplateContext) => string;
 
 // Values stay raw so the numeric helpers can compare them; `fmt` holds the
 // display strings. Fields are assigned last so a field named `fmt` wins.
-export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infinity): TemplateRow[] {
+export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infinity, startRow = 0): TemplateRow[] {
   const names = frame.fields.map((field) => getFieldDisplayName(field, frame, series));
 
-  return Array.from({ length: Math.max(Math.min(frame.length, maxRows), 0) }, (_, rowIndex) => {
+  return Array.from({ length: Math.max(Math.min(frame.length - startRow, maxRows), 0) }, (_, offset) => {
+    const rowIndex = startRow + offset;
     const formatted: TemplateRow = {};
     const row: TemplateRow = { fmt: formatted };
 
@@ -48,20 +49,36 @@ export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infin
   });
 }
 
-// `maxRows` is a budget shared across frames, not a cap per frame.
-export function buildAllRowsContext(series: DataFrame[], maxRows = Infinity): AllRowsContext {
+// `maxRows` is a budget shared across frames, not a cap per frame. `onRowsRead` fires when the
+// template first reaches for a row collection, separating a budget that trimmed rows the template
+// went on to read from one that trimmed rows nothing ever looked at. Both `data` properties are
+// getters because every path to a row goes through one of them.
+export function buildAllRowsContext(series: DataFrame[], maxRows = Infinity, onRowsRead?: () => void): AllRowsContext {
   let remaining = maxRows;
 
-  const frames = series.map((frame) => {
+  const built = series.map((frame) => {
     const data = buildRows(frame, series, remaining);
     remaining -= data.length;
 
     return { name: frame.name, refId: frame.refId, data };
   });
 
+  // Resolved before the getters are attached, so building the context reads no rows itself.
+  const rootData = built.find((frame) => frame.data.length > 0)?.data ?? [];
+
   return {
-    data: frames.find((frame) => frame.data.length > 0)?.data ?? [],
-    frames,
+    get data() {
+      onRowsRead?.();
+      return rootData;
+    },
+    frames: built.map(({ name, refId, data }) => ({
+      name,
+      refId,
+      get data() {
+        onRowsRead?.();
+        return data;
+      },
+    })),
   };
 }
 
