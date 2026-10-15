@@ -124,6 +124,12 @@ func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, opts Options) (PluginDefi
 	return info, nil
 }
 
+// LoadManifest returns the app-sdk manifest a plugin ships at the root of its
+// files as app-sdk-manifest.json, or nil if it has none.
+func LoadManifest(rootfs fs.FS) (*app.ManifestData, error) {
+	return loadManifest(rootfs)
+}
+
 func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
 	f, err := rootfs.Open(appSDKManifestFile)
 	if err != nil {

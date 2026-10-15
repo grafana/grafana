@@ -2,7 +2,6 @@ package tokenexchange
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -51,12 +50,11 @@ func TestPolicyFor(t *testing.T) {
 }
 
 // newTestServer serves the token exchange as Grafana's HTTP server would.
-func newTestServer(t *testing.T, manifests func(context.Context, string) ([]*app.ManifestData, error)) *httptest.Server {
+func newTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	s := &Service{
-		cfg:       &setting.Cfg{ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}}},
-		log:       log.NewNopLogger(),
-		manifests: manifests,
+		cfg: &setting.Cfg{ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}}},
+		log: log.NewNopLogger(),
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c := &contextmodel.ReqContext{
@@ -70,13 +68,8 @@ func newTestServer(t *testing.T, manifests func(context.Context, string) ([]*app
 }
 
 func TestSignAccessToken(t *testing.T) {
-	srv := newTestServer(t, func(_ context.Context, pluginID string) ([]*app.ManifestData, error) {
-		if pluginID == "example-app" {
-			return []*app.ManifestData{testManifest}, nil
-		}
-		return nil, nil
-	})
-	capToken, err := v3.IssueLocalAccessPolicyToken("example-app")
+	srv := newTestServer(t)
+	capToken, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
 	require.NoError(t, err)
 	// The client the app SDK uses for API_ACCESS_TOKEN_EXCHANGE_URL and API_ACCESS_CAP_TOKEN.
 	exchange := func(token string, req authnlib.TokenExchangeRequest) (string, error) {
@@ -119,6 +112,24 @@ func TestSignAccessToken(t *testing.T) {
 		require.ErrorContains(t, err, "audience \"other.ext.grafana.app\" is not allowed")
 	})
 
+	t.Run("uses the manifest of the process the token was issued to", func(t *testing.T) {
+		// Another copy of the same plugin, with a manifest granting more, must
+		// not widen the running process's policy.
+		other := &app.ManifestData{Group: "example.ext.grafana.app", ExtraPermissions: &app.Permissions{AccessKinds: []app.KindPermission{
+			{Group: "iam.grafana.app", Resource: "users", Actions: []app.KindPermissionAction{"list"}},
+		}}}
+		otherCAP, err := v3.IssueLocalAccessPolicyToken("example-app", other)
+		require.NoError(t, err)
+		t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(otherCAP) })
+
+		token, err := exchange(capToken, authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
+		require.NoError(t, err)
+		claims, err := grafana.Verify(context.Background(), token)
+		require.NoError(t, err)
+		require.NotContains(t, claims.Rest.Permissions, "iam.grafana.app/users:list")
+		require.Contains(t, claims.Rest.Permissions, "dashboard.grafana.app/dashboards:list")
+	})
+
 	t.Run("a plugin without a manifest gets no permissions", func(t *testing.T) {
 		otherCAP, err := v3.IssueLocalAccessPolicyToken("other-app")
 		require.NoError(t, err)
@@ -132,10 +143,8 @@ func TestSignAccessToken(t *testing.T) {
 }
 
 func TestSignAccessTokenRequests(t *testing.T) {
-	failing := newTestServer(t, func(context.Context, string) ([]*app.ManifestData, error) {
-		return nil, errors.New("disk error")
-	})
-	capToken, err := v3.IssueLocalAccessPolicyToken("example-app")
+	srv := newTestServer(t)
+	capToken, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
 	require.NoError(t, err)
 
 	for _, tc := range []struct {
@@ -147,10 +156,10 @@ func TestSignAccessTokenRequests(t *testing.T) {
 		{name: "no access policy token", body: `{}`, want: http.StatusUnauthorized},
 		{name: "not a bearer token", authorization: capToken, body: `{}`, want: http.StatusUnauthorized},
 		{name: "invalid body", authorization: "Bearer " + capToken, body: `{`, want: http.StatusBadRequest},
-		{name: "manifests fail to load", authorization: "Bearer " + capToken, body: `{"namespace":"*","audiences":["grafana"]}`, want: http.StatusInternalServerError},
+		{name: "valid request", authorization: "Bearer " + capToken, body: `{"namespace":"*","audiences":["grafana"]}`, want: http.StatusOK},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			req, err := http.NewRequest(http.MethodPost, failing.URL, strings.NewReader(tc.body))
+			req, err := http.NewRequest(http.MethodPost, srv.URL, strings.NewReader(tc.body))
 			require.NoError(t, err)
 			if tc.authorization != "" {
 				req.Header.Set("Authorization", tc.authorization)
@@ -164,16 +173,13 @@ func TestSignAccessTokenRequests(t *testing.T) {
 }
 
 func TestSignAccessTokenLoopbackOnly(t *testing.T) {
-	capToken, err := v3.IssueLocalAccessPolicyToken("example-app")
+	capToken, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
 	require.NoError(t, err)
 	t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(capToken) })
 	s := &Service{
 		cfg:          &setting.Cfg{ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}}},
 		log:          log.NewNopLogger(),
 		loopbackOnly: true,
-		manifests: func(context.Context, string) ([]*app.ManifestData, error) {
-			return []*app.ManifestData{testManifest}, nil
-		},
 	}
 	call := func(remoteAddr, forwardedFor string) int {
 		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"namespace":"*","audiences":["grafana"]}`))
@@ -212,15 +218,12 @@ func TestProvideServiceLocalAPIURL(t *testing.T) {
 			cfg := &setting.Cfg{Raw: ini.Empty(), Protocol: setting.HTTPScheme, HTTPPort: "4321", ExtJWTAuth: setting.ExtJWTSettings{JWKSUrl: tc.jwksURL, Audiences: []string{"grafana"}}}
 			cfg.Raw.Section("plugins").Key("local_api_url").SetValue(tc.override)
 			routes := &exchangeRoutes{}
-			s := ProvideService(cfg, routes, nil)
+			s := ProvideService(cfg, routes)
 			require.Equal(t, tc.registered, routes.registered)
 			if !tc.registered {
 				return
 			}
-			s.manifests = func(context.Context, string) ([]*app.ManifestData, error) {
-				return []*app.ManifestData{testManifest}, nil
-			}
-			token, err := v3.IssueLocalAccessPolicyToken("example-app")
+			token, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
 			require.NoError(t, err)
 			t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(token) })
 			for _, credential := range []string{token, "invalid"} {

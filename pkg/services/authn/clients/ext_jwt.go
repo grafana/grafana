@@ -396,6 +396,13 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
+	// With only the local key trusted, other tokens can never verify, so leave
+	// them to other clients rather than fail them here.
+	if s.localKeys && !s.cfg.ExtJWTAuth.Enabled &&
+		(len(parsedToken.Headers) == 0 || parsedToken.Headers[0].KeyID != v3.LocalKeyID) {
+		return false
+	}
+
 	var claims jwt.Claims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
 		return false

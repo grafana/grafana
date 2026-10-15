@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
@@ -351,7 +353,18 @@ func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
 	if !plugin.SkipHostEnvVars && slices.ContainsFunc(apiAccessHostEnvVars, func(key string) bool { return os.Getenv(key) != "" }) {
 		return nil
 	}
-	token, err := v3.IssueLocalAccessPolicyToken(plugin.ID)
+	// The policy comes from the manifest of the plugin being started, not from
+	// other copies of it on disk.
+	var manifests []*app.ManifestData
+	if plugin.FS != nil {
+		manifest, err := definition.LoadManifest(plugin.FS)
+		if err != nil {
+			p.logger.Error("Failed to load the plugin's app manifest; its access policy grants nothing", "pluginId", plugin.ID, "error", err)
+		} else if manifest != nil {
+			manifests = append(manifests, manifest)
+		}
+	}
+	token, err := v3.IssueLocalAccessPolicyToken(plugin.ID, manifests...)
 	if err != nil {
 		p.logger.Error("Failed to create the local plugin access policy token", "pluginId", plugin.ID, "error", err)
 		return nil

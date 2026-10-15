@@ -28,8 +28,8 @@ const (
 	EnvVarSigningKeysURL = "GRAFANA_JWKS_URL"
 )
 
-// localKeyID identifies the local signing key in tokens and in LocalSigningKeys.
-const localKeyID = "grafana-local"
+// LocalKeyID identifies the local signing key in tokens and in LocalSigningKeys.
+const LocalKeyID = "grafana-local"
 
 // RealSigningKeysConfigured reports whether a real token signer is configured,
 // either as jwksURL (Grafana's [auth.extended_jwt] jwks_url) or as plugin
@@ -99,13 +99,13 @@ func newLocalExchanger() (*localExchanger, error) {
 		return nil, fmt.Errorf("local plugin token exchange: %w", err)
 	}
 	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
-		(&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", localKeyID))
+		(&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", LocalKeyID))
 	if err != nil {
 		return nil, fmt.Errorf("local plugin token exchange: %w", err)
 	}
 	public := jose.JSONWebKey{
 		Key:       &key.PublicKey,
-		KeyID:     localKeyID,
+		KeyID:     LocalKeyID,
 		Algorithm: string(jose.ES256),
 		Use:       "sig",
 	}

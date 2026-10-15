@@ -59,7 +59,7 @@ func TestLocalSigningKeys(t *testing.T) {
 	key := set.Keys[0]
 	require.True(t, key.IsPublic(), "plugins must not receive the private key")
 	require.True(t, key.Valid())
-	require.Equal(t, localKeyID, key.KeyID)
+	require.Equal(t, LocalKeyID, key.KeyID)
 	require.Equal(t, "sig", key.Use)
 
 	rsp, err := exchanger.Exchange(context.Background(), authnlib.TokenExchangeRequest{Namespace: "default", Audiences: []string{"example-app"}})

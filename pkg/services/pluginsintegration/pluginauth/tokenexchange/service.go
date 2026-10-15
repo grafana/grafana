@@ -4,7 +4,6 @@
 package tokenexchange
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,10 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
-	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
@@ -42,19 +38,14 @@ type Service struct {
 	// Restrict peers for loopback URLs. Explicit non-loopback endpoints still
 	// require a process-specific access policy token.
 	loopbackOnly bool
-	// manifests returns the app manifests of a plugin.
-	manifests func(ctx context.Context, pluginID string) ([]*app.ManifestData, error)
 }
 
 // ProvideService registers the token exchange at pluginauth.TokenExchangePath
 // when Grafana signs plugin access tokens itself.
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, pluginSources sources.Registry) *Service {
+func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) *Service {
 	s := &Service{
 		cfg: cfg,
 		log: log.New("plugins.tokenexchange"),
-		manifests: func(ctx context.Context, pluginID string) ([]*app.ManifestData, error) {
-			return loadManifests(ctx, pluginSources, pluginID)
-		},
 	}
 	if pluginauth.LocalTokens(cfg) {
 		endpoint, err := pluginauth.LocalAPIURL(cfg)
@@ -95,7 +86,8 @@ func (s *Service) signAccessToken(c *contextmodel.ReqContext) response.Response 
 	if !ok {
 		return errorResponse(http.StatusUnauthorized, "an access policy token is required")
 	}
-	pluginID, ok := v3.LocalAccessPolicyPluginID(bearer)
+	// The token carries the manifests of the plugin process it was issued to.
+	pluginID, manifests, ok := v3.LookupLocalAccessPolicyToken(bearer)
 	if !ok {
 		return errorResponse(http.StatusUnauthorized, "invalid access policy token")
 	}
@@ -103,12 +95,6 @@ func (s *Service) signAccessToken(c *contextmodel.ReqContext) response.Response 
 	var req authnlib.TokenExchangeRequest
 	if err := json.NewDecoder(http.MaxBytesReader(c.Resp, c.Req.Body, maxRequestBytes)).Decode(&req); err != nil {
 		return errorResponse(http.StatusBadRequest, "invalid request body")
-	}
-
-	manifests, err := s.manifests(c.Req.Context(), pluginID)
-	if err != nil {
-		s.log.Error("Failed to load the plugin access policy", "pluginId", pluginID, "error", err)
-		return errorResponse(http.StatusInternalServerError, "failed to load the plugin access policy")
 	}
 
 	policy := policyFor(pluginID, s.cfg.ExtJWTAuth.Audiences, manifests)
@@ -133,26 +119,6 @@ func isLoopback(remoteAddr string) bool {
 	}
 	ip := net.ParseIP(host)
 	return ip != nil && ip.IsLoopback()
-}
-
-// loadManifests returns the app manifests of pluginID. They are read on each
-// exchange, so a rebuilt plugin's manifest applies without restarting Grafana.
-// Exchanges are infrequent, as clients cache tokens until they expire.
-func loadManifests(ctx context.Context, pluginSources sources.Registry, pluginID string) ([]*app.ManifestData, error) {
-	defs, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
-		Filter: func(j plugins.JSONData) bool {
-			return j.ID == pluginID && j.Type == plugins.TypeApp
-		},
-		AppManifest: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-	var manifests []*app.ManifestData
-	for _, def := range defs {
-		manifests = append(manifests, def.Manifests...)
-	}
-	return manifests, nil
 }
 
 // policyFor returns what pluginID may sign, from its app manifests: everything

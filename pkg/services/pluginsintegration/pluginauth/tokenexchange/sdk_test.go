@@ -15,7 +15,6 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/app"
 	appplugin "github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
@@ -41,10 +40,8 @@ func TestSDKLocalTokenRoundTrip(t *testing.T) {
 	}
 	cfg := &setting.Cfg{Raw: ini.Empty(), ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}}}
 	grafana := clients.ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
-	signer := newTestServer(t, func(context.Context, string) ([]*app.ManifestData, error) {
-		return []*app.ManifestData{testManifest}, nil
-	})
-	capToken, err := v3.IssueLocalAccessPolicyToken("example-app")
+	signer := newTestServer(t)
+	capToken, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
 	require.NoError(t, err)
 	t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(capToken) })
 

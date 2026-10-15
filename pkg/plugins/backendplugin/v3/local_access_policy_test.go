@@ -7,6 +7,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,6 +34,18 @@ func TestLocalAccessPolicyToken(t *testing.T) {
 
 	require.Equal(t, second, LocalAccessPolicyTokenFromEnv([]string{"GF_VERSION=1", EnvVarAccessPolicyToken + "=" + second}))
 	require.Empty(t, LocalAccessPolicyTokenFromEnv([]string{"GF_VERSION=1"}))
+
+	manifest := &app.ManifestData{Group: "first.ext.grafana.app"}
+	withManifest, err := IssueLocalAccessPolicyToken("first-app", manifest)
+	require.NoError(t, err)
+	pluginID, manifests, ok := LookupLocalAccessPolicyToken(withManifest)
+	require.True(t, ok)
+	require.Equal(t, "first-app", pluginID)
+	require.Equal(t, []*app.ManifestData{manifest}, manifests, "the token carries its process's manifests")
+	RevokeLocalAccessPolicyToken(withManifest)
+	_, manifests, ok = LookupLocalAccessPolicyToken(withManifest)
+	require.False(t, ok)
+	require.Empty(t, manifests)
 
 	_, ok = LocalAccessPolicyPluginID(second + "x")
 	require.False(t, ok)

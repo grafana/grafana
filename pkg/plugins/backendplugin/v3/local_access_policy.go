@@ -14,6 +14,7 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/app"
 )
 
 // LocalAccessPolicy is what a plugin started by this Grafana process may sign
@@ -38,10 +39,16 @@ var ErrLocalAccessDenied = errors.New("local plugin token exchange: access denie
 // account tokens (glsa_), which the API key client would look up.
 const localAccessPolicyTokenPrefix = "gl_local_plugin_"
 
+// localAccessPolicyHolder is what a local access policy token was issued to.
+type localAccessPolicyHolder struct {
+	pluginID  string
+	manifests []*app.ManifestData
+}
+
 var localAccessPolicyTokens = struct {
 	sync.Mutex
-	byToken map[string]string
-}{byToken: map[string]string{}}
+	byToken map[string]localAccessPolicyHolder
+}{byToken: map[string]localAccessPolicyHolder{}}
 
 // EnvVarAccessPolicyToken names the environment variable that passes a
 // plugin process its access policy token for the local token exchange.
@@ -52,7 +59,10 @@ const EnvVarAccessPolicyToken = "API_ACCESS_CAP_TOKEN"
 // token. It is random and held only in memory. Grafana issues one each time it
 // starts the plugin's process, passes it only to that process, and revokes it
 // when the process stops or is replaced (see RevokeLocalAccessPolicyToken).
-func IssueLocalAccessPolicyToken(pluginID string) (string, error) {
+//
+// manifests are the app manifests of that process's plugin. The exchange builds
+// the token's policy from them, not from other copies of the plugin on disk.
+func IssueLocalAccessPolicyToken(pluginID string, manifests ...*app.ManifestData) (string, error) {
 	if pluginID == "" {
 		return "", errors.New("local plugin token exchange: a plugin ID is required")
 	}
@@ -64,7 +74,7 @@ func IssueLocalAccessPolicyToken(pluginID string) (string, error) {
 
 	localAccessPolicyTokens.Lock()
 	defer localAccessPolicyTokens.Unlock()
-	localAccessPolicyTokens.byToken[token] = pluginID
+	localAccessPolicyTokens.byToken[token] = localAccessPolicyHolder{pluginID: pluginID, manifests: slices.Clone(manifests)}
 	return token, nil
 }
 
@@ -90,10 +100,17 @@ func LocalAccessPolicyTokenFromEnv(env []string) string {
 // LocalAccessPolicyPluginID returns the plugin that token authenticates, as
 // issued by IssueLocalAccessPolicyToken and not since revoked.
 func LocalAccessPolicyPluginID(token string) (string, bool) {
+	pluginID, _, ok := LookupLocalAccessPolicyToken(token)
+	return pluginID, ok
+}
+
+// LookupLocalAccessPolicyToken returns the plugin and app manifests token was
+// issued with by IssueLocalAccessPolicyToken, if it has not since been revoked.
+func LookupLocalAccessPolicyToken(token string) (pluginID string, manifests []*app.ManifestData, ok bool) {
 	localAccessPolicyTokens.Lock()
 	defer localAccessPolicyTokens.Unlock()
-	pluginID, ok := localAccessPolicyTokens.byToken[token]
-	return pluginID, ok
+	holder, ok := localAccessPolicyTokens.byToken[token]
+	return holder.pluginID, holder.manifests, ok
 }
 
 // SignLocalAccessToken signs an access token for the plugin of policy, as a

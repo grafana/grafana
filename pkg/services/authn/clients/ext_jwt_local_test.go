@@ -81,6 +81,21 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 			"the caller's permissions are limited to what the plugin may do")
 	})
 
+	t.Run("leaves other ES256 tokens to other clients", func(t *testing.T) {
+		client := ProvideExtendedJWT(cfgWith(""), tracing.InitializeTracerForTest())
+		local := sign(t, authlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
+		require.True(t, client.Test(context.Background(), request(local)))
+
+		key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		require.NoError(t, err)
+		signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
+			(&jose.SignerOptions{}).WithType(jose.ContentType(authlib.TokenTypeAccess)).WithHeader("kid", "other"))
+		require.NoError(t, err)
+		other, err := jwt.Signed(signer).Claims(jwt.Claims{Subject: "access-policy:other", Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}).Serialize()
+		require.NoError(t, err)
+		require.False(t, client.Test(context.Background(), request(other)), "a token the local key cannot verify must not stop a session from authenticating")
+	})
+
 	t.Run("not trusted without audiences", func(t *testing.T) {
 		cfg := cfgWith("")
 		cfg.ExtJWTAuth.Audiences = nil
