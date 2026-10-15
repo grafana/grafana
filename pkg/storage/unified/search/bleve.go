@@ -3090,9 +3090,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		if sortsByDeletedResourceVersion(req) && !slices.Contains(b.features, resource.IndexFeatureSortableTrashResourceVersion) {
 			return nil, resource.NewServiceUnavailableError("sorting trash by resource version is not available for this resource until its search index has been rebuilt")
 		}
-		if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, time.Now()); ok {
-			expirationThreshold = t
-		}
+		expirationThreshold = b.trashExpirationThreshold(time.Now())
 	}
 	searchrequest.Query = scopeQuery(wrapInFolderSets(filters, textQuery), req.IsDeleted, expirationThreshold)
 
@@ -3162,6 +3160,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+// trashExpirationThreshold is the oldest deletion time trash still shows, or 0
+// when trash keeps everything.
+func (b *bleveIndex) trashExpirationThreshold(now time.Time) int64 {
+	if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, now); ok {
+		return t
+	}
+	return 0
 }
 
 // scopeQuery restricts q to live documents, or to deleted ones for trash. Every

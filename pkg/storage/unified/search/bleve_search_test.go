@@ -1788,6 +1788,11 @@ func newTestDashboardsIndexPostRank(t testing.TB, size int64) resource.ResourceI
 // the bleve defaults).
 func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
 	t.Helper()
+	return newTestDashboardsIndexAuthz(t, size, true, cfg)
+}
+
+func newTestDashboardsIndexAuthz(t testing.TB, size int64, postRank bool, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
+	t.Helper()
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -1796,7 +1801,7 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:                 t.TempDir(),
 		FileThreshold:        threshold, // use in-memory for tests
-		PostRankAuthzEnabled: true,
+		PostRankAuthzEnabled: postRank,
 		PostRankAuthz:        cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
@@ -3107,6 +3112,122 @@ func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAu
 	}, size, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
+}
+
+// changingAccessClient runs change once, during the first authorization call,
+// to stand for a write landing while a search is being authorized.
+type changingAccessClient struct {
+	countingAccessClient
+	change func()
+}
+
+func (c *changingAccessClient) BatchCheck(ctx context.Context, user authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	res, err := c.countingAccessClient.BatchCheck(ctx, user, req)
+	if c.change != nil {
+		change := c.change
+		c.change = nil
+		change()
+	}
+	return res, err
+}
+
+// A result may only show an object as it was when it was authorized, and only
+// if it is still in the search's scope. Post-rank loads a page's stored fields
+// after authorizing it, so a change in between must not come back: an object
+// moved into a folder the caller cannot see, or a live object deleted (which the
+// index keeps, as trash). The next authorized hit takes its place.
+func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T) {
+	changes := map[string]func(*resource.BulkIndexItem){
+		"moved to a denied folder": func(doc *resource.BulkIndexItem) {
+			doc.Doc.Folder = "denied"
+			doc.Doc.Title = "private title"
+		},
+		"deleted": func(doc *resource.BulkIndexItem) {
+			doc.Doc.IsDeleted = new(true)
+		},
+	}
+	for name, postRank := range map[string]bool{"in-searcher": false, "post-rank": true} {
+		for change, apply := range changes {
+			t.Run(name+"/"+change, func(t *testing.T) {
+				index := newTestDashboardsIndexAuthz(t, 3, postRank, search.PostRankAuthzConfig{})
+				indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("next", "allowed")})
+				ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
+				ac.change = func() {
+					changed := newDoc("doc", "allowed")
+					changed.Doc.RV = 2
+					apply(changed)
+					indexDocs(t, index, []*resource.BulkIndexItem{changed})
+				}
+
+				names, res := searchNames(t, index, ac, listQuery(1))
+				if postRank {
+					require.Equal(t, []string{"next"}, names, "the changed object is left out and the page refilled")
+				}
+				// The in-searcher path authorizes and loads from one snapshot, so
+				// it may return the object as it was; never as it became.
+				for _, row := range res.Results.GetRows() {
+					for i, col := range res.Results.GetColumns() {
+						switch col.Name {
+						case resource.SEARCH_FIELD_FOLDER:
+							require.Equal(t, "allowed", string(row.Cells[i]))
+						case resource.SEARCH_FIELD_TITLE:
+							require.NotEqual(t, "private title", string(row.Cells[i]))
+						}
+					}
+				}
+			})
+		}
+	}
+}
+
+// Post-rank windows read what authorization needs from doc values and load
+// stored fields only for the returned page. The rows have to come out exactly as
+// on the in-searcher path, which loads fields for the hits it returns.
+func TestSearchPostRankAuthzReturnsTheSameRowsAsInSearcherAuthz(t *testing.T) {
+	docs := make([]*resource.BulkIndexItem, 0, 40)
+	for i := range 40 {
+		d := newDocWithTags(fmt.Sprintf("doc-%02d", i), fmt.Sprintf("folder-%d", i%4), []string{"prod", fmt.Sprintf("svc-%d", i%3)})
+		d.Doc.Description = fmt.Sprintf("dashboard number %d", i)
+		docs = append(docs, d)
+	}
+	postRank := newTestDashboardsIndexAuthz(t, 2, true, search.PostRankAuthzConfig{})
+	inSearcher := newTestDashboardsIndexAuthz(t, 2, false, search.PostRankAuthzConfig{})
+	indexDocs(t, postRank, docs)
+	indexDocs(t, inSearcher, docs)
+
+	withFields := listQuery(5)
+	withFields.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_FOLDER, resource.SEARCH_FIELD_TAGS}
+	relevance := listQuery(5)
+	relevance.Query = "doc"
+	offset := listQuery(5)
+	offset.Offset = 7
+
+	for name, q := range map[string]*resourcepb.ResourceSearchRequest{
+		"all columns":       listQuery(5),
+		"requested columns": withFields,
+		"relevance query":   relevance,
+		"offset":            offset,
+	} {
+		for access, ac := range map[string]func() *countingAccessClient{
+			"all folders": func() *countingAccessClient { return &countingAccessClient{allowAll: true} },
+			"some folders": func() *countingAccessClient {
+				return &countingAccessClient{allowedFolders: map[string]bool{"folder-1": true, "folder-3": true}}
+			},
+		} {
+			t.Run(name+"/"+access, func(t *testing.T) {
+				_, want := searchNames(t, inSearcher, ac(), q)
+				_, got := searchNames(t, postRank, ac(), q)
+				require.NotEmpty(t, want.Results.GetRows())
+				require.Equal(t, want.Results.GetColumns(), got.Results.GetColumns())
+				// Post-rank sorts on the document ID last as a tie-breaker, so its
+				// cursors carry one more value; everything else must match.
+				for _, row := range append(want.Results.GetRows(), got.Results.GetRows()...) {
+					row.SortFields = nil
+				}
+				require.Equal(t, want.Results.GetRows(), got.Results.GetRows())
+			})
+		}
+	}
 }
 
 func TestSearchPostRankAuthzFederated(t *testing.T) {
