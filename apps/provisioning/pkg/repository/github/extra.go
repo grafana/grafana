@@ -44,7 +44,17 @@ func (e *extra) Type() provisioning.RepositoryType {
 	return provisioning.GitHubRepositoryType
 }
 
-func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+func (e *extra) Build(ctx context.Context, r *provisioning.Repository, opts ...repository.BuildOption) (repository.Repository, error) {
+	var options repository.BuildOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+	if options.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, options.Timeout)
+		defer cancel()
+	}
+
 	if r == nil || r.Spec.GitHub == nil {
 		return nil, fmt.Errorf("github configuration is required")
 	}

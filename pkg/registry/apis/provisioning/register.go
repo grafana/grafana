@@ -153,6 +153,8 @@ type APIBuilder struct {
 	folderMetadataEnabled         bool
 	maxFileSize                   int64
 	syncResourceTimeout           time.Duration
+	repositoryBuildTimeout        time.Duration
+	repositoryBuildRetries        int
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
 	// controllerResyncInterval is the informer re-list interval for the
@@ -412,6 +414,8 @@ func RegisterAPIService(
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
+	builder.repositoryBuildTimeout = cfg.ProvisioningRepositoryBuildTimeout
+	builder.repositoryBuildRetries = cfg.ProvisioningRepositoryBuildRetries
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
@@ -459,6 +463,8 @@ func RegisterAPIService(
 	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
+	v1beta1Builder.repositoryBuildTimeout = cfg.ProvisioningRepositoryBuildTimeout
+	v1beta1Builder.repositoryBuildRetries = cfg.ProvisioningRepositoryBuildRetries
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
@@ -1221,6 +1227,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.incrementalPolicy,
 				webhookSecretRotationInterval,
 				nats.Enabled(b.natsSubscriber),
+				repository.WithTimeout(b.repositoryBuildTimeout),
+				repository.WithRetries(b.repositoryBuildRetries),
 			)
 			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
 			if err != nil {

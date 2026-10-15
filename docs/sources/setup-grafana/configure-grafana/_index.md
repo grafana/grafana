@@ -3011,6 +3011,18 @@ List of enabled repository types, separated by `|`. When empty, defaults are app
 
 Supported types: `local`, `git`, `github`. Grafana Enterprise additionally supports `bitbucket` and `gitlab`.
 
+#### `repository_build_timeout`
+
+Timeout for constructing repositories in the repository controller, including secret decryption. Accepts a duration such as `10s`. Applies during reconciliation, token recovery, and cleanup, including when you run the standalone repository operator.
+
+Default is `0s`. Set a non-positive value to disable the additional timeout. An earlier caller deadline takes precedence, and the existing 30-second limit for each secret decryption still applies. This setting doesn't limit subsequent repository operations.
+
+#### `repository_build_retries`
+
+Number of additional construction attempts requested by the repository controller for repository implementations that support retries. For example, `2` permits up to three attempts in implementations that honor this option. Default is `0`. Non-positive values disable retries.
+
+The built-in `git`, `github`, and `local` implementations currently build once regardless of this setting.
+
 #### `connection_types`
 
 List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
