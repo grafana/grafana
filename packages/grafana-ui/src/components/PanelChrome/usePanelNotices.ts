@@ -19,7 +19,7 @@ export function usePanelStatusSnapshot(controller?: PanelNotices) {
   return useSyncExternalStore(controller?.subscribe ?? subscribeEmpty, controller?.getSnapshot ?? getEmpty, getEmpty);
 }
 
-/** Publishes notices and optional action contributions for this component's lifetime. @alpha */
+/** Publishes notices and optional action contributions for this component's lifetime. Returns the host controller when supported. @alpha */
 export function usePanelNotices(items: readonly PanelNotice[], resolver?: PanelStatusActionResolver) {
   const { notices } = usePanelContext();
   const generation = useSyncExternalStore(
@@ -41,5 +41,5 @@ export function usePanelNotices(items: readonly PanelNotice[], resolver?: PanelS
   useEffect(() => {
     source.current?.setActionResolver(resolver);
   }, [notices, generation, resolver]);
-  return Boolean(notices);
+  return notices;
 }

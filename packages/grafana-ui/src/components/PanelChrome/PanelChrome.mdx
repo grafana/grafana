@@ -19,16 +19,17 @@ Component used for rendering content wrapped in the same style as Grafana panels
 
 ## Panel notices (alpha)
 
-Panel plugins can publish errors, warnings, and informational notices with `usePanelNotices`.
+Grafana core panels can publish errors, warnings, and informational notices with `usePanelNotices`.
 The hook owns a source for the component's lifetime and removes its entries on unmount.
 Memoize the items and resolver to avoid republishing unchanged notices.
-The hook returns `false` when the host does not support notices; retain an inline fallback in that case.
+The hook returns the panel notices controller, or `undefined` when the host does not support notices;
+retain an inline fallback in that case. This unstable API is for Grafana core use only for now.
 In dashboards, this capability requires `grafana.newPanelQueryErrorsUI`.
 
 ```tsx
 import { useMemo } from 'react';
 import { type PanelNotice } from '@grafana/data';
-import { usePanelNotices } from '@grafana/ui';
+import { usePanelNotices } from '@grafana/ui/unstable';
 
 function ConfigurationNotice({ valid, fix }: { valid: boolean; fix: () => void }) {
   const notices = useMemo<PanelNotice[]>(
@@ -45,8 +46,8 @@ function ConfigurationNotice({ valid, fix }: { valid: boolean; fix: () => void }
           ],
     [valid, fix]
   );
-  const supported = usePanelNotices(notices);
-  return !supported && !valid ? <div>Choose a numeric field.</div> : null;
+  const panelNotices = usePanelNotices(notices);
+  return !panelNotices && !valid ? <div>Choose a numeric field.</div> : null;
 }
 ```
 
