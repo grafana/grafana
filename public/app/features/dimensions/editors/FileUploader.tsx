@@ -3,7 +3,8 @@ import { type Dispatch, type SetStateAction, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { FileDropzone, SanitizedSVG, useStyles2, Button, type DropzoneFile, Field } from '@grafana/ui';
+import { FileDropzone, useStyles2, Button, type DropzoneFile, Field } from '@grafana/ui';
+import { SanitizedSVG } from '@grafana/ui/unstable';
 
 import { MediaType } from '../types';
 

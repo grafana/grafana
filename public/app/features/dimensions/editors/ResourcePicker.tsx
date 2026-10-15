@@ -12,11 +12,11 @@ import {
   LinkButton,
   Popover,
   PopoverController,
-  SanitizedSVG,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
 import { closePopover } from '@grafana/ui/internal';
+import { SanitizedSVG } from '@grafana/ui/unstable';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { type MediaType, type ResourceFolderName, ResourcePickerSize } from '../types';
