@@ -80,6 +80,9 @@ func TestMigrateLibraryPanelPages(t *testing.T) {
 	})
 	for _, req := range stream.requests {
 		require.Equal(t, "org-7", req.Key.Namespace)
+		var panel dashboardV0.LibraryPanel
+		require.NoError(t, json.Unmarshal(req.Value, &panel))
+		require.Equal(t, "org-7", panel.Namespace)
 	}
 	require.Equal(t, resourcepb.BulkRequest_MODIFIED, stream.requests[1].Action)
 }
