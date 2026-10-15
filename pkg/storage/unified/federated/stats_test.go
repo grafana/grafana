@@ -330,19 +330,22 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
 		require.NoError(t, err)
 		s := &LegacyStatsGetter{Cfg: cfgWithMode(libraryPanelResource, grafanarest.Mode1)}
+		insertLog := "INSERT INTO " + helper.Table(migrationLogTable) + " (" + helper.DB.Quote("migration_id") + ", " +
+			helper.DB.Quote("sql") + ", " + helper.DB.Quote("success") + ", " + helper.DB.Quote("error") + ", " +
+			helper.DB.Quote("timestamp") + ") VALUES (?, ?, ?, ?, ?)"
 		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			stale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
 			require.NoError(t, err)
 			require.False(t, stale)
 
-			_, err = sess.Exec("INSERT INTO "+helper.Table(migrationLogTable)+" (migration_id, sql, success, error, timestamp) VALUES (?, ?, ?, ?, ?)",
+			_, err = sess.Exec(insertLog,
 				libraryPanelMigration, "test", false, "test failure", time.Now())
 			require.NoError(t, err)
 			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
 			require.NoError(t, err)
 			require.False(t, stale)
 
-			_, err = sess.Exec("INSERT INTO "+helper.Table(migrationLogTable)+" (migration_id, sql, success, error, timestamp) VALUES (?, ?, ?, ?, ?)",
+			_, err = sess.Exec(insertLog,
 				libraryPanelMigration, "test", true, "", time.Now())
 			require.NoError(t, err)
 			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
