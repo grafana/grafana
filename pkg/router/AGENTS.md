@@ -1,7 +1,8 @@
 # AGENTS.md — Grafana Router
 
 `pkg/router` is Grafana's replacement for kube-aggregator and apiextensions-apiserver: a reverse
-proxy that serves `/apis` and `/openapi/v3` by API group. A `RoutesLoader` supplies routes as
+proxy that serves `/apis` and `/openapi/v3` by API group, and publishes the served groups' app
+manifests under `/apis/discovery`. A `RoutesLoader` supplies routes as
 `[]Backend`. Routes change rarely, as apps and plugins are rolled out or get new versions.
 
 This file holds the current rules. For the reasoning and history behind them, see `specs/`,
@@ -39,7 +40,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   real `http.Flusher` (plus `CloseNotify`) to serve watches. Two exceptions to "one per group":
   plugin backends break only on plugin client calls, where only reachability errors count
   (`plugin_breaker.go`), and the ST fallback keeps one breaker per destination host and group. A
-  rejected backend redirect is not a breaker failure.
+  rejected backend redirect is not a breaker failure. Read a group breaker's state from its
+  `breakerView` (`servingEntry.breakerState`), never `breaker.State()`: gobreaker's `State` moves an
+  open breaker whose timeout passed to half-open, so a metrics scrape or status read would change
+  it. Only requests may move a breaker. `Counts()` is a pure read.
 - **Each poll loop has exactly one pacing source**: its `cooldown`. Don't add a second ticker. A
   failed poll changes nothing; the previous snapshot keeps serving.
 - **Proxy hygiene:**
@@ -97,6 +101,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Engine: reconcile loop, dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
 | Root discovery (`/apis`, `/openapi/v3`) | `discovery.go`, `discovery_handler.go` |
 | Per-group-version OpenAPI cache | `openapi_cache.go` |
+| App manifest discovery (`/apis/discovery`) | `discovery_manifests.go`, `discovery_openapi.go`, `discovery_status.go` |
 | Circuit breaker, status recorder | `breaker.go`, `plugin_breaker.go` |
 | dskit service, middleware entry point | `service.go` |
 | Watch handling, upgrade rejection, verb classification | `watch.go` |
@@ -144,6 +149,14 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis` | Synthesized: `APIGroupList`, or `APIGroupDiscoveryList` when the aggregated format is negotiated. |
 | `/openapi/v3` | Synthesized index; per-version URLs are cache-busted with the backend key. |
 | `/openapi/v3/apis/{group}/{version}` | GET and HEAD only (405 otherwise). Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`, or larger than `maxCachedOpenAPIDocBytes`. |
+| `/apis/discovery` | Synthesized `APIGroup` for the router's own `discovery` group. |
+| `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
+| `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served `ManifestProvider` backend. |
+| `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
+| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status and shadowed groups. |
+| `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
+| `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
+| `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
 
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
@@ -189,6 +202,46 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
+- **App manifest discovery** (`/apis/discovery`) is published in `publish` with the root documents, from
+  the `ManifestProvider` backends (plugin backends from every source). Nothing is fetched per request.
+  - Keep it cheap, since `publish` runs on every reconcile: `publishManifestDocs` does nothing when
+    the served group/key set is unchanged, and converts only manifests whose backend key is new
+    (`manifestCache`), relying on a manifest changing only with its key.
+  - Each manifest's JSON is held once. The list is streamed from the group documents, with an ETag
+    hashed from theirs, never copied into its own buffer. The markdown and HTML index are rendered
+    on their first request.
+  - `discovery` is a real API group that the router serves itself, with no backend. `/apis` lists it
+    in both formats, so Kubernetes clients find it like any other group (`kubectl get
+    manifests.discovery`). Each `AppManifest` is named by its group.
+  - Errors are Kubernetes `Status` objects; watch and writes are refused with 405.
+  - The list applies `labelSelector` (manifests have no labels) and `fieldSelector` (only
+    `metadata.name`), and rejects others with a 400. It ignores `limit` and returns the whole list
+    without a `continue` token, which clients accept.
+  - The status page (`discovery_status.go`) is readable by any authenticated caller, so it holds
+    only names, states and counts: never credentials, addresses, URLs or error text, which carry
+    internal hosts. A backend that serves a plugin's APIs reports the plugin through the optional
+    `PluginStatusProvider` interface, under the same rule. Breaker thresholds are the constants `breakerOpenAfter` and `breakerOpenFor`,
+    which the page reports, so change them there.
+  - Its OpenAPI document (`/openapi/v3/apis/discovery/v1alpha2`, also in the `/openapi/v3` index) is
+    built once at startup in `discovery_openapi.go`, from the `AppManifest` schema in the app-sdk's own
+    manifest (`app/manifestdata`). Its schemas carry `x-kubernetes-group-version-kind` for both
+    `discovery` and `apps.grafana.app`, because `kubectl explain` looks a schema up by the kind
+    discovery reports.
+  - The version segment is the `AppManifest` kind version the documents use (`v1alpha2`). A new
+    manifest format gets a new tree; don't change the shape of an existing one.
+  - `Operator` and `ExtraPermissions` are dropped: they describe how the app's backend is deployed
+    and authorized, not the API.
+  - `discovery` is reserved. A target that is itself a router lists it, so `discoverGroupResources`
+    drops it for the aggregate and single-tenant sources, quietly and without counting a skip.
+    Plugin groups need a dot, so plugin sources can't report it. `reconcile` skips, with a warning,
+    any backend for it that a loader still returns, and the tree is matched before group dispatch.
+    Its requests have no `group` metric label.
+  - Manifest text is plugin-controlled. `mdText` and `mdCode` keep it to one line, unable to break
+    tables or code spans, and bounded in length. The HTML page renders the markdown with raw HTML
+    dropped, and keeps only links to paths on this server (`isRelativePath`); any other keeps
+    just its text. Link text drops `[` and `]`, which a code span cannot escape.
+  - It needs authentication like `/apis`, GET and HEAD only. In middleware mode it covers only
+    the router's groups; the embedded server's groups are listed in `/apis` only.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
 - **Size limits:** nothing the router buffers or decodes can grow without bound.
   - `captureWriter` buffers OpenAPI documents up to `maxCachedOpenAPIDocBytes` (32 MiB). A larger
@@ -248,6 +301,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
+| `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure` | TLS settings for polling an `https` `plugins_url` or `core_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
@@ -258,16 +312,15 @@ priority order. Repeating a section name merges its keys; it does not create ano
 Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
 the corresponding section must contain at least one nonempty setting (for example `audience`)
 in the INI configuration, because Grafana's config loader drops empty sections.
-The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` settings
-remain supported during rollout, including environment overrides. New sections take priority; a
-section with the same target name replaces the entire legacy target (an empty URL disables it).
-Legacy targets keep their previous relative priority: cloud app platform before BaaS.
+The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys are no
+longer read. A deployment that still sets them gets no aggregate target, so configure
+`[router.aggregate.<name>]` sections instead.
 
 | Key | Meaning |
 | --- | --- |
 | `url` | Target base URL. Unset skips the target. |
 | `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
-| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. Not read from the legacy `[cloud_router]` keys. |
+| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
 | `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
 | `ca_file`, `insecure` | Per-target TLS settings. |
@@ -305,6 +358,12 @@ work without the section in the INI configuration.
 | `connect_base_delay`, `connect_max_delay` | Backoff between connection attempts, growing from the base delay up to the max delay. Default `1s` and `10s`. |
 | `keepalive_time`, `keepalive_timeout` | Idle time before the client pings, and how long it waits for a reply before closing the connection. Default `20s` and `10s`; a `keepalive_time` of `0` disables pings. Pings are sent on connections without active calls too, so the plugin server must allow pings at least this often and without active calls; by default, gRPC servers allow one every 5 minutes and close connections that ping more often. |
 | `max_recv_msg_size`, `max_send_msg_size` | Largest message the router accepts from and sends to a plugin, in bytes. Default 100 MiB each. The plugin server's own limits still apply. |
+| `tls_enabled` | Connect to every plugin backend over TLS. Default `false` (plaintext). Applies to both `plugins_url` and `core_url` backends, since a manifest's `host` has no scheme to choose per plugin. |
+| `tls_ca_file`, `tls_insecure` | Same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. |
+| `tls_server_name` | Name to verify the backend's certificate against, instead of the manifest's `host`. |
+
+`tls_ca_file`, `tls_insecure` and `tls_server_name` are a startup error without `tls_enabled`, so
+a config that expects TLS can't silently fall back to plaintext.
 
 ## Security
 
@@ -312,7 +371,7 @@ Before landing, scan with semgrep. The sensitive surface:
 
 - the headers that proxies forward to backends;
 - the `InsecureSkipVerify` path in `buildAggregateTLSConfig`, which is deliberately enabled by
-  config;
+  config, for aggregate targets, plugin manifests sources and plugin gRPC connections;
 - the CAP token exchange and credential handling in `cloud_router.go`;
 - the OBO exchange for plugin storage clients (`storage.go`, which delegates to unified storage);
 - the ST fallback's stack lookup and host selection.

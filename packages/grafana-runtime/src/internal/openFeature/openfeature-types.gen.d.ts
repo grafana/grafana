@@ -36,13 +36,13 @@ declare module "@openfeature/core" {
     | "kubernetesCorrelations"
     | "queryService"
     | "queryServiceWithConnections"
-    | "queryServiceFromUI"
     | "alertingUIUseBackendFilters"
     | "alertingUIUseFullyCompatBackendFilters"
     | "createAlertRuleFromPanel"
     | "dashboardNewLayouts"
     | "dashboards.libraryPanelRepeatFromServerResolution"
     | "dashboards.publicDashboardBadgeFromApi"
+    | "dashboards.libraryPanelHorizontalRepeatFullWidth"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
     | "dashboardUndoRedo"
@@ -173,6 +173,7 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "assistant.dashboardPlanning"
     | "grafana.multiTenantNavTree"
+    | "grafana.navigationInfoArchRefresh"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
@@ -188,7 +189,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.logDetailsDisplayedFieldControls"
-    | "grafana.globalHomePreference";
+    | "grafana.globalHomePreference"
+    | "grafana.otelLogDetails";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
