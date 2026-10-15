@@ -156,6 +156,12 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 				return !slices.Contains(req.RestrictedDelegatedPermissions, p)
 			})
 		}
+		// Empty delegated permissions remove the caller's RBAC permissions, but
+		// the identity would still carry the caller's org role, which some APIs
+		// check instead. Delegating nothing must not produce a usable token.
+		if len(permissions) == 0 {
+			return "", fmt.Errorf("%w: no permissions to delegate", ErrLocalAccessDenied)
+		}
 		verifier := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: []string{policy.PluginID}}, e.keys)
 		subject, err := verifier.Verify(ctx, req.SubjectToken)
 		if err != nil {

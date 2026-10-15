@@ -111,6 +111,25 @@ func TestSignLocalAccessToken(t *testing.T) {
 		require.Equal(t, []string{"dashboard.grafana.app/dashboards:get"}, claims.Rest.DelegatedPermissions)
 	})
 
+	t.Run("refuses to delegate nothing", func(t *testing.T) {
+		// The caller's org role would survive empty delegated permissions.
+		empty := LocalAccessPolicy{PluginID: "example-app", Audiences: []string{"grafana"}}
+		_, err := exchanger.signForPolicy(context.Background(), empty, authnlib.TokenExchangeRequest{
+			Namespace: "default", Audiences: []string{"grafana"}, SubjectToken: inbound("example-app", "default"),
+		})
+		require.ErrorIs(t, err, ErrLocalAccessDenied)
+
+		_, err = sign(authnlib.TokenExchangeRequest{
+			Namespace: "default", Audiences: []string{"grafana"}, SubjectToken: inbound("example-app", "default"),
+			RestrictedDelegatedPermissions: []string{"folder.grafana.app/folders:get"},
+		})
+		require.ErrorIs(t, err, ErrLocalAccessDenied, "a restriction that leaves nothing is refused too")
+
+		// The plugin's own token with no permissions has no caller to carry a role.
+		_, err = exchanger.signForPolicy(context.Background(), empty, authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
+		require.NoError(t, err)
+	})
+
 	t.Run("restricted delegated permissions leave the plugin's own token alone", func(t *testing.T) {
 		claims, err := sign(authnlib.TokenExchangeRequest{
 			Namespace: "*", Audiences: []string{"grafana"},

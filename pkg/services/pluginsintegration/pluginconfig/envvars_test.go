@@ -143,8 +143,14 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
 		return provider.PluginEnvVars(context.Background(), plugin)
 	}
+	// An app plugin's files, with an app-sdk manifest.
+	pluginDir := t.TempDir()
+	manifest := `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example"},
+		"spec":{"appName":"example-app","group":"example.ext.grafana.app","versions":[],
+		"extraPermissions":{"accessKinds":[{"group":"dashboard.grafana.app","resource":"dashboards","actions":["list"]}]}}}`
+	require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "app-sdk-manifest.json"), []byte(manifest), 0o600))
 	app := func(skipHostEnvVars bool) *plugins.Plugin {
-		return &plugins.Plugin{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}, SkipHostEnvVars: skipHostEnvVars}
+		return &plugins.Plugin{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}, SkipHostEnvVars: skipHostEnvVars, FS: plugins.NewLocalFS(pluginDir)}
 	}
 	hasAPIAccess := func(env []string) bool {
 		return slices.ContainsFunc(env, func(v string) bool { return strings.HasPrefix(v, "API_ACCESS_") })
@@ -186,26 +192,28 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 		require.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=https://grafana.internal:8443/grafana"+pluginauth.TokenExchangePath)
 	})
 	t.Run("binds the started plugin's own manifest to its token", func(t *testing.T) {
-		dir := t.TempDir()
-		manifest := `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example"},
-			"spec":{"appName":"example-app","group":"example.ext.grafana.app","versions":[],
-			"extraPermissions":{"accessKinds":[{"group":"dashboard.grafana.app","resource":"dashboards","actions":["list"]}]}}}`
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "app-sdk-manifest.json"), []byte(manifest), 0o600))
-		started := app(false)
-		started.FS = plugins.NewLocalFS(dir)
-
-		pluginID, manifests, ok := v3.LookupLocalAccessPolicyToken(capToken(envVars(true, started)))
+		pluginID, manifests, ok := v3.LookupLocalAccessPolicyToken(capToken(envVars(true, app(false))))
 		require.True(t, ok)
 		require.Equal(t, "example-app", pluginID)
 		require.Len(t, manifests, 1)
 		require.Equal(t, "example.ext.grafana.app", manifests[0].Group)
 		require.Equal(t, "dashboards", manifests[0].ExtraPermissions.AccessKinds[0].Resource)
-
+	})
+	t.Run("not passed to app plugins without a manifest", func(t *testing.T) {
+		// A token on behalf of its caller would still carry the caller's org role.
 		empty := app(false)
 		empty.FS = plugins.NewLocalFS(t.TempDir())
-		_, manifests, ok = v3.LookupLocalAccessPolicyToken(capToken(envVars(true, empty)))
-		require.True(t, ok)
-		require.Empty(t, manifests, "a plugin without a manifest gets a token that grants nothing")
+		assert.False(t, hasAPIAccess(envVars(true, empty)))
+
+		invalid := app(false)
+		invalidDir := t.TempDir()
+		require.NoError(t, os.WriteFile(filepath.Join(invalidDir, "app-sdk-manifest.json"), []byte(`{`), 0o600))
+		invalid.FS = plugins.NewLocalFS(invalidDir)
+		assert.False(t, hasAPIAccess(envVars(true, invalid)))
+
+		noFiles := app(false)
+		noFiles.FS = nil
+		assert.False(t, hasAPIAccess(envVars(true, noFiles)))
 	})
 	t.Run("each process start gets its own access policy token", func(t *testing.T) {
 		assert.NotEqual(t, capToken(envVars(true, app(false))), capToken(envVars(true, app(false))))

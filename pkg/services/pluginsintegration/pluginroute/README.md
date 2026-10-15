@@ -127,9 +127,9 @@ client is configured.
 ## Local plugin authentication
 
 Without an external token signer, Grafana signs v3 requests with an in-memory
-key and passes its public key to the plugin as `GRAFANA_JWKS`. App plugins also
-receive `API_ACCESS_ROUTER_URL`, `API_ACCESS_TOKEN_EXCHANGE_URL`, and a
-process-specific `API_ACCESS_CAP_TOKEN`. The app SDK's `BuildKubeConfig` uses
+key and passes its public key to the plugin as `GRAFANA_JWKS`. App plugins that
+ship an `app-sdk-manifest.json` also receive `API_ACCESS_ROUTER_URL`,
+`API_ACCESS_TOKEN_EXCHANGE_URL`, and a process-specific `API_ACCESS_CAP_TOKEN`. The app SDK's `BuildKubeConfig` uses
 these to call Grafana through the same token-exchange transport used in Cloud.
 Pass the handler's context to the SDK client to act on behalf of the caller;
 background requests act as the plugin. No `insecure_skip_authentication` setting
