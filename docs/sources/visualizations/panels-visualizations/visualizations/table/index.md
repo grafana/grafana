@@ -234,8 +234,11 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Show table header    | Show or hide column names imported from your data source. |
 | Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
+| Zebra striping       | Alternate the background color of every other row. |
+| Show columns sidebar | Open the column management sidebar by default. In the sidebar, you can hide, show, and reorder columns. You can also reset all filters.<!--TODO: Doublecheck this --> |
 | Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
-| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries. |
+| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the panel. This option doesn't affect queries. |
+| Page size            | Define the number of rows per page when the **Enable pagination** switch is toggled on. When this field is empty, the page size automatically adjusts to the height of the panel. |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana sizes columns to fit cell content relative to the width of the table. |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
