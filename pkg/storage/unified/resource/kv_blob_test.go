@@ -2,6 +2,7 @@ package resource
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -108,4 +109,12 @@ func TestKVBlobSupportMintsTimeOrderedUID(t *testing.T) {
 	created, ok := uuidV7Time(uid)
 	require.True(t, ok, "uid %q must be a UUIDv7", uid)
 	require.WithinDuration(t, time.Now(), created, 5*time.Second)
+}
+
+func TestKVBlobSupportStreamMintsTimeOrderedUID(t *testing.T) {
+	rsp, err := NewKVBlobSupport(setupSqlKV(t)).(*kvBlobSupport).PutResourceBlobStream(t.Context(),
+		&resourcepb.PutBlobRequest{Resource: testBlobResourceKey, ContentType: "text/plain"}, strings.NewReader("payload"))
+	require.NoError(t, err)
+	_, ok := uuidV7Time(rsp.Uid)
+	require.True(t, ok, "uid %q must be a UUIDv7", rsp.Uid)
 }
