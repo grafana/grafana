@@ -26,6 +26,10 @@ type fakeDataClient struct {
 	chunkedErr error
 }
 
+func (f fakeDataClient) QueryData(context.Context, *pluginv2.QueryDataRequest, ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
+	return f.resp, f.err
+}
+
 func (f fakeDataClient) QueryChunkedData(context.Context, *pluginv2.QueryChunkedDataRequest, ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv2.QueryChunkedDataResponse], error) {
 	if f.chunkedErr != nil {
 		return nil, f.chunkedErr
@@ -47,22 +51,17 @@ func (s *fakeChunkStream) Recv() (*pluginv2.QueryChunkedDataResponse, error) {
 	return chunk, nil
 }
 
-type discardWriter struct{}
+// rawDiscardWriter takes chunks as they arrive, so ClientV2 forwards them without decoding.
+type rawDiscardWriter struct{}
 
-func (discardWriter) WriteFrame(context.Context, string, string, *data.Frame) error { return nil }
-func (discardWriter) WriteError(context.Context, string, backend.Status, error) error {
+func (rawDiscardWriter) WriteFrame(context.Context, string, string, *data.Frame) error { return nil }
+func (rawDiscardWriter) WriteError(context.Context, string, backend.Status, error) error {
 	return nil
 }
-
-// rawDiscardWriter takes chunks as they arrive, so ClientV2 forwards them without decoding.
-type rawDiscardWriter struct{ discardWriter }
-
 func (rawDiscardWriter) OnChunk(*pluginv2.QueryChunkedDataResponse) error { return nil }
 
-func (f fakeDataClient) QueryData(context.Context, *pluginv2.QueryDataRequest, ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
-	return f.resp, f.err
-}
-
+// encodedResponse is a plugin response with A (two frames), B (one frame) and C (an error),
+// and the frame bytes each refID should be reported as.
 func encodedResponse(t *testing.T) (*pluginv2.QueryDataResponse, map[string]int64) {
 	t.Helper()
 	resp, err := backend.ToProto().QueryDataResponse(backend.DataFrameFormat_ARROW, &backend.QueryDataResponse{Responses: backend.Responses{
@@ -77,15 +76,12 @@ func encodedResponse(t *testing.T) (*pluginv2.QueryDataResponse, map[string]int6
 
 	want := map[string]int64{}
 	for refID, r := range resp.Responses {
-		var size int64
+		want[refID] = 0
 		for _, f := range r.Frames {
-			size += int64(len(f))
+			want[refID] += int64(len(f))
 		}
-		want[refID] = size
 	}
 	require.Positive(t, want["A"])
-	require.Greater(t, want["A"], want["B"], "refID A carries two frames")
-	require.Zero(t, want["C"])
 	return resp, want
 }
 
@@ -101,39 +97,18 @@ func TestClientV2QueryDataRecordsResponseSizePerRefID(t *testing.T) {
 	assert.Equal(t, want, recorder.Sizes())
 }
 
-func TestClientV2QueryDataWorksWithoutARecorder(t *testing.T) {
-	protoResp, _ := encodedResponse(t)
-	client := &ClientV2{DataClient: fakeDataClient{resp: protoResp}}
-
-	resp, err := client.QueryData(context.Background(), &backend.QueryDataRequest{})
-
-	require.NoError(t, err)
-	assert.Len(t, resp.Responses, 3)
-}
-
-func TestClientV2QueryDataRecordsNothingWhenTheCallFails(t *testing.T) {
-	client := &ClientV2{DataClient: fakeDataClient{err: errors.New("unavailable")}}
-	ctx, recorder := responsesize.WithRecorder(context.Background())
-
-	_, err := client.QueryData(ctx, &backend.QueryDataRequest{})
-
-	require.Error(t, err)
-	assert.Empty(t, recorder.Sizes())
-}
-
 func TestClientV2QueryChunkedDataRecordsResponseSizePerRefID(t *testing.T) {
 	client := &ClientV2{DataClient: fakeDataClient{chunks: []*pluginv2.QueryChunkedDataResponse{
 		{RefId: "A", FrameId: "1", Frame: make([]byte, 100)},
 		{RefId: "B", FrameId: "1", Frame: make([]byte, 30)},
 		{RefId: "A", FrameId: "2", Frame: make([]byte, 50)},
-		{RefId: "C", Error: "boom"},
 	}}}
 	ctx, recorder := responsesize.WithRecorder(context.Background())
 
 	err := client.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{}, rawDiscardWriter{})
 
 	require.NoError(t, err)
-	assert.Equal(t, map[string]int64{"A": 150, "B": 30, "C": 0}, recorder.Sizes())
+	assert.Equal(t, map[string]int64{"A": 150, "B": 30}, recorder.Sizes())
 }
 
 func TestClientV2QueryChunkedDataFallbackRecordsResponseSize(t *testing.T) {

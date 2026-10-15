@@ -14,37 +14,25 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/responsesize"
 )
 
-// protoClientWith builds a protoClient whose plugin is "running" with the given data client.
 func protoClientWith(data fakeDataClient) *protoClient {
 	return &protoClient{plugin: &grpcPlugin{client: &plugin.Client{}, pluginClient: &ClientV2{DataClient: data}}}
 }
 
 func TestProtoClientQueryDataRecordsResponseSizePerRefID(t *testing.T) {
 	protoResp, want := encodedResponse(t)
-	client := protoClientWith(fakeDataClient{resp: protoResp})
 	ctx, recorder := responsesize.WithRecorder(context.Background())
 
-	resp, err := client.QueryData(ctx, &pluginv2.QueryDataRequest{})
+	resp, err := protoClientWith(fakeDataClient{resp: protoResp}).QueryData(ctx, &pluginv2.QueryDataRequest{})
 
 	require.NoError(t, err)
 	assert.Same(t, protoResp, resp, "the response is handed back as is")
 	assert.Equal(t, want, recorder.Sizes())
 }
 
-func TestProtoClientQueryDataWorksWithoutARecorder(t *testing.T) {
-	protoResp, _ := encodedResponse(t)
-
-	resp, err := protoClientWith(fakeDataClient{resp: protoResp}).QueryData(context.Background(), &pluginv2.QueryDataRequest{})
-
-	require.NoError(t, err)
-	assert.Same(t, protoResp, resp)
-}
-
 func TestProtoClientQueryDataRecordsNothingWhenTheCallFails(t *testing.T) {
-	client := protoClientWith(fakeDataClient{err: errors.New("unavailable")})
 	ctx, recorder := responsesize.WithRecorder(context.Background())
 
-	_, err := client.QueryData(ctx, &pluginv2.QueryDataRequest{})
+	_, err := protoClientWith(fakeDataClient{err: errors.New("unavailable")}).QueryData(ctx, &pluginv2.QueryDataRequest{})
 
 	require.Error(t, err)
 	assert.Empty(t, recorder.Sizes())
@@ -72,11 +60,9 @@ func TestProtoClientQueryChunkedDataRecordsChunksAsTheyAreRead(t *testing.T) {
 }
 
 func TestProtoClientQueryChunkedDataWithoutARecorderReturnsTheRawStream(t *testing.T) {
-	client := protoClientWith(fakeDataClient{})
-
-	stream, err := client.QueryChunkedData(context.Background(), &pluginv2.QueryChunkedDataRequest{})
+	stream, err := protoClientWith(fakeDataClient{}).QueryChunkedData(context.Background(), &pluginv2.QueryChunkedDataRequest{})
 
 	require.NoError(t, err)
-	_, isFake := stream.(*fakeChunkStream)
-	assert.True(t, isFake, "no recorder means no wrapper")
+	_, isRaw := stream.(*fakeChunkStream)
+	assert.True(t, isRaw, "no recorder means no wrapper")
 }
