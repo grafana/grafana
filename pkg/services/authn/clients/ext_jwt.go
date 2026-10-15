@@ -15,10 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -47,9 +49,22 @@ var (
 )
 
 func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
-	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
+	logger := log.New(authn.ClientExtendedJWT)
+	var keys authlib.KeyRetriever = authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 	})
+	// Without a real signer, the plugins Grafana starts call its API with
+	// tokens from the local token exchange, which only this process can sign.
+	localKeys := false
+	if pluginauth.LocalTokens(cfg) {
+		local, err := v3.LocalKeyRetriever()
+		if err != nil {
+			logger.Error("Failed to get the local plugin signing key", "error", err)
+		} else {
+			keys = local
+			localKeys = true
+		}
+	}
 
 	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
 		AllowedAudiences: cfg.ExtJWTAuth.Audiences,
@@ -61,7 +76,8 @@ func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
 
 	return &ExtendedJWT{
 		cfg:                 cfg,
-		log:                 log.New(authn.ClientExtendedJWT),
+		localKeys:           localKeys,
+		log:                 logger,
 		namespaceMapper:     request.GetNamespaceMapper(cfg),
 		accessTokenVerifier: accessTokenVerifier,
 		idTokenVerifier:     idTokenVerifier,
@@ -70,7 +86,10 @@ func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
 }
 
 type ExtendedJWT struct {
-	cfg                 *setting.Cfg
+	cfg *setting.Cfg
+	// localKeys is set when tokens are verified with the local plugin signing
+	// key, which enables the client without [auth.extended_jwt] enabled.
+	localKeys           bool
 	log                 log.Logger
 	accessTokenVerifier authlib.Verifier[authlib.AccessTokenClaims]
 	idTokenVerifier     authlib.Verifier[authlib.IDTokenClaims]
@@ -110,7 +129,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 }
 
 func (s *ExtendedJWT) IsEnabled(context.Context) bool {
-	return s.cfg.ExtJWTAuth.Enabled
+	return s.cfg.ExtJWTAuth.Enabled || s.localKeys
 }
 
 func (s *ExtendedJWT) authenticateAsUserViaIDToken(
@@ -328,7 +347,7 @@ func (s *ExtendedJWT) authenticateAsUserViaOBO(
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
-	if !s.cfg.ExtJWTAuth.Enabled {
+	if !s.IsEnabled(ctx) {
 		return false
 	}
 

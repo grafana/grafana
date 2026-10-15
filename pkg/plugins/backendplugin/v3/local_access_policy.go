@@ -1,0 +1,151 @@
+package v3
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"slices"
+	"sync"
+	"time"
+
+	"github.com/go-jose/go-jose/v4/jwt"
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+)
+
+// LocalAccessPolicy is what a plugin started by this Grafana process may sign
+// with SignLocalAccessToken. It stands in for the access policy behind a cloud
+// access policy token, for when no token exchange is configured.
+type LocalAccessPolicy struct {
+	// PluginID identifies the plugin: its tokens have access-policy:<PluginID>
+	// as the subject.
+	PluginID string
+	// Audiences are the audiences the plugin may request.
+	Audiences []string
+	// Permissions are granted to the plugin's own tokens, and delegated to its
+	// tokens on behalf of a caller.
+	Permissions []string
+}
+
+// ErrLocalAccessDenied is returned by SignLocalAccessToken for a request that
+// the policy does not allow.
+var ErrLocalAccessDenied = errors.New("local plugin token exchange: access denied")
+
+// localAccessPolicyTokenPrefix keeps the tokens apart from Grafana's service
+// account tokens (glsa_), which the API key client would look up.
+const localAccessPolicyTokenPrefix = "gl_local_plugin_"
+
+var localAccessPolicyTokens = struct {
+	sync.Mutex
+	byPlugin map[string]string
+	byToken  map[string]string
+}{byPlugin: map[string]string{}, byToken: map[string]string{}}
+
+// LocalAccessPolicyToken returns the secret that authenticates pluginID to the
+// local token exchange: the local stand-in for a cloud access policy token.
+// It is random, held only in memory, and the same for the life of the process.
+func LocalAccessPolicyToken(pluginID string) (string, error) {
+	if pluginID == "" {
+		return "", errors.New("local plugin token exchange: a plugin ID is required")
+	}
+	localAccessPolicyTokens.Lock()
+	defer localAccessPolicyTokens.Unlock()
+	if token, ok := localAccessPolicyTokens.byPlugin[pluginID]; ok {
+		return token, nil
+	}
+	secret := make([]byte, 32)
+	if _, err := rand.Read(secret); err != nil {
+		return "", fmt.Errorf("local plugin token exchange: %w", err)
+	}
+	token := localAccessPolicyTokenPrefix + base64.RawURLEncoding.EncodeToString(secret)
+	localAccessPolicyTokens.byPlugin[pluginID] = token
+	localAccessPolicyTokens.byToken[token] = pluginID
+	return token, nil
+}
+
+// LocalAccessPolicyPluginID returns the plugin that token authenticates, as
+// issued by LocalAccessPolicyToken.
+func LocalAccessPolicyPluginID(token string) (string, bool) {
+	localAccessPolicyTokens.Lock()
+	defer localAccessPolicyTokens.Unlock()
+	pluginID, ok := localAccessPolicyTokens.byToken[token]
+	return pluginID, ok
+}
+
+// SignLocalAccessToken signs an access token for the plugin of policy, as a
+// token exchange does for an access policy. Grafana's API trusts these tokens
+// when it trusts LocalKeyRetriever.
+//
+// Without a subject token, the token acts as the plugin, with the policy's
+// permissions. With one, it acts on behalf of the subject's caller, with the
+// policy's permissions as delegated permissions. The subject token must be a
+// local access token issued to the plugin, which is what Grafana sends with
+// each plugin request, so a plugin can only act for callers that called it.
+func SignLocalAccessToken(ctx context.Context, policy LocalAccessPolicy, req authnlib.TokenExchangeRequest) (string, error) {
+	e, err := sharedLocalExchanger()
+	if err != nil {
+		return "", err
+	}
+	return e.signForPolicy(ctx, policy, req)
+}
+
+func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPolicy, req authnlib.TokenExchangeRequest) (string, error) {
+	if policy.PluginID == "" {
+		return "", errors.New("local plugin token exchange: a plugin ID is required")
+	}
+	if req.Namespace == "" || len(req.Audiences) == 0 {
+		return "", errors.New("local plugin token exchange: namespace and audiences are required")
+	}
+	if req.Subject != nil {
+		return "", fmt.Errorf("%w: signing for an asserted subject is not supported", ErrLocalAccessDenied)
+	}
+	for _, audience := range req.Audiences {
+		if !slices.Contains(policy.Audiences, audience) {
+			return "", fmt.Errorf("%w: audience %q is not allowed", ErrLocalAccessDenied, audience)
+		}
+	}
+	permissions := policy.Permissions
+	if len(req.RestrictedDelegatedPermissions) > 0 {
+		permissions = slices.DeleteFunc(slices.Clone(permissions), func(p string) bool {
+			return !slices.Contains(req.RestrictedDelegatedPermissions, p)
+		})
+	}
+
+	claims := authnlib.AccessTokenClaims{Namespace: req.Namespace}
+	if req.SubjectToken == "" {
+		claims.Permissions = permissions
+	} else {
+		verifier := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: []string{policy.PluginID}}, e.keys)
+		subject, err := verifier.Verify(ctx, req.SubjectToken)
+		if err != nil {
+			return "", fmt.Errorf("%w: invalid subject token: %w", ErrLocalAccessDenied, err)
+		}
+		if !types.NamespaceMatches(subject.Rest.Namespace, req.Namespace) {
+			return "", fmt.Errorf("%w: namespace %q does not match the subject token", ErrLocalAccessDenied, req.Namespace)
+		}
+		claims.Actor = &authnlib.ActorClaims{
+			Subject:         subject.Subject,
+			ServiceIdentity: subject.Rest.ServiceIdentity,
+			Actor:           subject.Rest.Actor,
+		}
+		claims.DelegatedPermissions = permissions
+	}
+	return e.sign(types.NewTypeID(types.TypeAccessPolicy, policy.PluginID), req.Audiences, claims)
+}
+
+func (e *localExchanger) sign(subject string, audiences []string, claims authnlib.AccessTokenClaims) (string, error) {
+	now := time.Now()
+	token, err := jwt.Signed(e.signer).Claims(jwt.Claims{
+		Subject:   subject,
+		Audience:  jwt.Audience(audiences),
+		IssuedAt:  jwt.NewNumericDate(now),
+		NotBefore: jwt.NewNumericDate(now),
+		Expiry:    jwt.NewNumericDate(now.Add(localTokenTTL)),
+	}).Claims(claims).Serialize()
+	if err != nil {
+		return "", fmt.Errorf("local plugin token exchange: %w", err)
+	}
+	return token, nil
+}

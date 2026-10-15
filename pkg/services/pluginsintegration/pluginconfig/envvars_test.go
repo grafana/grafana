@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -133,6 +135,45 @@ func TestPluginEnvVarsProvider_signingKeysEnvVars(t *testing.T) {
 
 	assert.Contains(t, envVars(true), want, "passed on when Grafana signs tokens itself")
 	assert.NotContains(t, envVars(false), want, "not passed on with a token exchange or real signing keys")
+}
+
+func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
+	envVars := func(localTokens bool, plugin *plugins.Plugin) []string {
+		cfg := &PluginInstanceCfg{LocalPluginTokens: localTokens, GrafanaAppURL: "http://localhost:3000/", Features: featuremgmt.WithFeatures()}
+		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+		return provider.PluginEnvVars(context.Background(), plugin)
+	}
+	app := func(skipHostEnvVars bool) *plugins.Plugin {
+		return &plugins.Plugin{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}, SkipHostEnvVars: skipHostEnvVars}
+	}
+	capToken, err := v3.LocalAccessPolicyToken("example-app")
+	require.NoError(t, err)
+	want := []string{
+		"API_ACCESS_ROUTER_URL=http://localhost:3000",
+		"API_ACCESS_TOKEN_EXCHANGE_URL=http://localhost:3000" + pluginauth.TokenExchangePath,
+		"API_ACCESS_CAP_TOKEN=" + capToken,
+	}
+	hasAPIAccess := func(env []string) bool {
+		return slices.ContainsFunc(env, func(v string) bool { return strings.HasPrefix(v, "API_ACCESS_") })
+	}
+
+	t.Run("passed to app plugins when Grafana signs tokens itself", func(t *testing.T) {
+		env := envVars(true, app(false))
+		for _, v := range want {
+			assert.Contains(t, env, v)
+		}
+	})
+	t.Run("not passed on with a token exchange or real signing keys", func(t *testing.T) {
+		assert.False(t, hasAPIAccess(envVars(false, app(false))))
+	})
+	t.Run("not passed to other plugins", func(t *testing.T) {
+		assert.False(t, hasAPIAccess(envVars(true, &plugins.Plugin{JSONData: plugins.JSONData{ID: "example-datasource", Type: plugins.TypeDataSource}})))
+	})
+	t.Run("host API access takes precedence", func(t *testing.T) {
+		t.Setenv("API_ACCESS_ROUTER_URL", "https://grafana.example.com")
+		assert.False(t, hasAPIAccess(envVars(true, app(false))), "the host environment is forwarded")
+		assert.Contains(t, envVars(true, app(true)), want[2], "the host environment is not forwarded")
+	})
 }
 
 func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {

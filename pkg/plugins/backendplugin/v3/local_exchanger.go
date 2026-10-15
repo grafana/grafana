@@ -63,11 +63,32 @@ func LocalSigningKeys() (string, error) {
 
 var sharedLocalExchanger = sync.OnceValues(newLocalExchanger)
 
+// LocalKeyRetriever returns the key retriever that verifies the tokens of
+// LocalTokenExchanger and SignLocalAccessToken, for Grafana's own API.
+func LocalKeyRetriever() (authnlib.KeyRetriever, error) {
+	e, err := sharedLocalExchanger()
+	if err != nil {
+		return nil, err
+	}
+	return e.keys, nil
+}
+
 // localExchanger mints access tokens shaped like exchanged ones, carrying the
 // subject token's identity as the actor.
 type localExchanger struct {
 	signer jose.Signer
 	jwks   string
+	keys   localKey
+}
+
+// localKey is the KeyRetriever for the local signing key.
+type localKey struct{ key *jose.JSONWebKey }
+
+func (k localKey) Get(_ context.Context, keyID string) (*jose.JSONWebKey, error) {
+	if keyID != k.key.KeyID {
+		return nil, authnlib.ErrInvalidSigningKey
+	}
+	return k.key, nil
 }
 
 var _ authnlib.TokenExchanger = (*localExchanger)(nil)
@@ -82,16 +103,17 @@ func newLocalExchanger() (*localExchanger, error) {
 	if err != nil {
 		return nil, fmt.Errorf("local plugin token exchange: %w", err)
 	}
-	jwks, err := json.Marshal(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{{
+	public := jose.JSONWebKey{
 		Key:       &key.PublicKey,
 		KeyID:     localKeyID,
 		Algorithm: string(jose.ES256),
 		Use:       "sig",
-	}}})
+	}
+	jwks, err := json.Marshal(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{public}})
 	if err != nil {
 		return nil, fmt.Errorf("local plugin token exchange: %w", err)
 	}
-	return &localExchanger{signer: signer, jwks: string(jwks)}, nil
+	return &localExchanger{signer: signer, jwks: string(jwks), keys: localKey{key: &public}}, nil
 }
 
 // Exchange implements [authnlib.TokenExchanger].
@@ -107,16 +129,9 @@ func (e *localExchanger) Exchange(_ context.Context, req authnlib.TokenExchangeR
 		}
 		claims.Actor = actor
 	}
-	now := time.Now()
-	token, err := jwt.Signed(e.signer).Claims(jwt.Claims{
-		Subject:   "access-policy:grafana",
-		Audience:  jwt.Audience(req.Audiences),
-		IssuedAt:  jwt.NewNumericDate(now),
-		NotBefore: jwt.NewNumericDate(now),
-		Expiry:    jwt.NewNumericDate(now.Add(localTokenTTL)),
-	}).Claims(claims).Serialize()
+	token, err := e.sign("access-policy:grafana", req.Audiences, claims)
 	if err != nil {
-		return nil, fmt.Errorf("local plugin token exchange: %w", err)
+		return nil, err
 	}
 	return &authnlib.TokenExchangeResponse{Token: token}, nil
 }

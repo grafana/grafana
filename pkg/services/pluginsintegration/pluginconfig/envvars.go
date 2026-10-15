@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
@@ -84,6 +85,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.signingKeysEnvVars(plugin)...)
+	hostEnv = append(hostEnv, p.apiAccessEnvVars(plugin)...)
 
 	// If SkipHostEnvVars is enabled, get some allowed variables from the current process and pass
 	// them down to the plugin. If the flag is not set, do not add anything else because ALL env vars
@@ -315,6 +317,46 @@ func (p *EnvVarsProvider) signingKeysEnvVars(plugin *plugins.Plugin) []string {
 		return nil
 	}
 	return []string{p.envVar(v3.EnvVarSigningKeys, jwks)}
+}
+
+// apiAccessHostEnvVars are the API_ACCESS_* variables that configure where and
+// how the app SDK calls Grafana's API. go-plugin forwards the host environment
+// after the variables Grafana sets, so host values would win over them.
+var apiAccessHostEnvVars = []string{
+	"API_ACCESS_ROUTER_URL",
+	"API_ACCESS_TOKEN_EXCHANGE_URL",
+	"API_ACCESS_CAP_TOKEN",
+	"API_ACCESS_BEARER_TOKEN",
+	"API_ACCESS_USERNAME",
+	"API_ACCESS_PASSWORD",
+}
+
+// apiAccessEnvVars passes an app plugin the credentials for Grafana's API when
+// Grafana signs plugin access tokens itself: Grafana's URL, the local token
+// exchange, and the plugin's access policy token for it (see
+// v3.LocalAccessPolicyToken). The app SDK then exchanges tokens to act as the
+// plugin or on behalf of its caller, as with a cloud access policy.
+func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
+	if !p.cfg.LocalPluginTokens || plugin.Type != plugins.TypeApp {
+		return nil
+	}
+	appURL := strings.TrimSuffix(p.cfg.GrafanaAppURL, "/")
+	if appURL == "" {
+		return nil
+	}
+	if !plugin.SkipHostEnvVars && slices.ContainsFunc(apiAccessHostEnvVars, func(key string) bool { return os.Getenv(key) != "" }) {
+		return nil
+	}
+	token, err := v3.LocalAccessPolicyToken(plugin.ID)
+	if err != nil {
+		p.logger.Error("Failed to create the local plugin access policy token", "pluginId", plugin.ID, "error", err)
+		return nil
+	}
+	return []string{
+		p.envVar("API_ACCESS_ROUTER_URL", appURL),
+		p.envVar("API_ACCESS_TOKEN_EXCHANGE_URL", appURL+pluginauth.TokenExchangePath),
+		p.envVar("API_ACCESS_CAP_TOKEN", token),
+	}
 }
 
 // insecureSkipAuthenticationSetting makes a plugin serve plugin protocol v3

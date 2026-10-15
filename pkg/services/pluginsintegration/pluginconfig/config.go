@@ -6,9 +6,9 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -92,17 +92,6 @@ type PluginInstanceCfg struct {
 	LiveClientQueueMaxSize int
 }
 
-// localPluginTokens reports whether the API layer uses v3.LocalTokenExchanger:
-// neither [plugins] v3_cap_token nor v3_token_exchange_url is set, and no real
-// signing keys are configured. With only one of the exchange settings, the
-// exchange is misconfigured and no tokens are signed at all.
-func localPluginTokens(cfg *setting.Cfg) bool {
-	section := cfg.SectionWithEnvOverrides("plugins")
-	return strings.TrimSpace(section.Key("v3_cap_token").MustString("")) == "" &&
-		strings.TrimSpace(section.Key("v3_token_exchange_url").MustString("")) == "" &&
-		!v3.RealSigningKeysConfigured(cfg.ExtJWTAuth.JWKSUrl)
-}
-
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
 func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
 	aws := settingProvider.Section("aws")
@@ -131,7 +120,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Tracing:                             tracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),
 		DevMode:                             cfg.Env == setting.Dev,
-		LocalPluginTokens:                   localPluginTokens(cfg),
+		LocalPluginTokens:                   pluginauth.LocalTokens(cfg),
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
 		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),
