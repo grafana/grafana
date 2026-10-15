@@ -1190,26 +1190,24 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
-	primaryKey, federated := key, []*resourcepb.ResourceKey{folderKey}
-	if requestedPermission == dashboardaccess.PERMISSION_CREATE {
-		// Federated folders are always authorized as read, which would drop create-only folders.
-		primaryKey, federated = folderKey, nil
-	}
-
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Federated:    federated,
+		Federated:    []*resourcepb.ResourceKey{folderKey},
 		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
 		Limit:        int64(len(dashboardUids)),
 		Permission:   int64(requestedPermission),
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
-			Key: primaryKey,
+			Key: key,
 			Fields: []*resourcepb.Requirement{{
 				Key:      "name",
 				Operator: "in",
 				Values:   dashboardUids,
 			}},
 		},
+	}
+	if requestedPermission == dashboardaccess.PERMISSION_CREATE {
+		// Federated folders are authorized as read, which would drop create-only folders.
+		dashboardSearchRequest = nameLookupRequest(folderKey, dashboardUids, requestedPermission)
 	}
 	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
@@ -1235,20 +1233,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 
-	folderSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
-		Limit:        int64(len(allFolders)),
-		Permission:   int64(requestedPermission),
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-		Options: &resourcepb.ListOptions{
-			Key: folderKey,
-			Fields: []*resourcepb.Requirement{{
-				Key:      "name",
-				Operator: "in",
-				Values:   allFolders,
-			}},
-		},
-	}
+	folderSearchRequest := nameLookupRequest(folderKey, allFolders, requestedPermission)
 	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
 	if err := resource.StatusErrorFromResponse(foldersResult.GetError(), err); err != nil {
@@ -1272,6 +1257,24 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 	return sharedDashboards, nil
+}
+
+// nameLookupRequest finds resources of one type by name, returning their parent folder.
+func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission dashboardaccess.PermissionType) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(names)),
+		Permission:   int64(permission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Options: &resourcepb.ListOptions{
+			Key: key,
+			Fields: []*resourcepb.Requirement{{
+				Key:      "name",
+				Operator: "in",
+				Values:   names,
+			}},
+		},
+	}
 }
 
 func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
