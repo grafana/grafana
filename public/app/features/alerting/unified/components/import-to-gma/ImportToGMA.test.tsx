@@ -485,6 +485,56 @@ describe('dry-run wiring (wizard-level)', () => {
     expect(identifiersSeen.at(-1)).toBe('prometheus-prod2');
   });
 
+  it('disables the step 1 inputs while the click-time check runs, then re-enables them on failure', async () => {
+    let previewDone = false;
+    let failCheck: (() => void) | undefined;
+    server.use(
+      http.post(CONVERT_URL, async () => {
+        if (!previewDone) {
+          previewDone = true;
+          return HttpResponse.json({ status: 'success' });
+        }
+        await new Promise<void>((resolve) => {
+          failCheck = resolve;
+        });
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(() => expect(previewDone).toBe(true));
+
+    const input = screen.getByPlaceholderText(/prometheus-prod/i);
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    await waitFor(() => expect(input).toBeDisabled());
+    failCheck?.();
+    await waitFor(() => expect(input).toBeEnabled());
+  });
+
+  it('tracks the dry-run outcome once per Next click, not for each debounced preview', async () => {
+    let requestCount = 0;
+    server.use(
+      http.post(CONVERT_URL, () => {
+        requestCount += 1;
+        return HttpResponse.json({ status: 'success' });
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(() => expect(requestCount).toBe(1));
+
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+
+    expect(requestCount).toBe(2);
+    expect(
+      mockReportInteraction.mock.calls.filter(([name]) => name === 'grafana_alerting_import_to_gma_dryrun_success')
+    ).toHaveLength(1);
+  });
+
   it('does not disable Next when navigating back to a Step 1 that is already valid', async () => {
     server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
     const { user } = render(<ImportWizardGate />);

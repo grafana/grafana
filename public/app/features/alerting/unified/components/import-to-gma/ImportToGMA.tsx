@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useDebounce } from 'react-use';
 
@@ -111,6 +111,49 @@ export interface ImportFormValues {
   targetDatasourceUID?: string;
 }
 
+type Step1Values = Pick<
+  ImportFormValues,
+  | 'policyTreeName'
+  | 'notificationsSource'
+  | 'notificationsDatasourceUID'
+  | 'notificationsDatasourceName'
+  | 'notificationsYamlFile'
+  | 'notificationsTemplateFiles'
+  | 'autoSyncNotificationsEnabled'
+>;
+
+function pickStep1Values(values: ImportFormValues): Step1Values {
+  return {
+    policyTreeName: values.policyTreeName,
+    notificationsSource: values.notificationsSource,
+    notificationsDatasourceUID: values.notificationsDatasourceUID,
+    notificationsDatasourceName: values.notificationsDatasourceName,
+    notificationsYamlFile: values.notificationsYamlFile,
+    notificationsTemplateFiles: values.notificationsTemplateFiles,
+    autoSyncNotificationsEnabled: values.autoSyncNotificationsEnabled,
+  };
+}
+
+function buildDryRunArgs(values: Step1Values): ValidateAlertmanagerConfigImportArgs | typeof skipToken {
+  const canRun = canRunDryRun({
+    policyTreeName: values.policyTreeName,
+    notificationsSource: values.notificationsSource,
+    notificationsYamlFile: values.notificationsYamlFile,
+    notificationsDatasourceUID: values.notificationsDatasourceUID,
+    notificationsTemplateFiles: values.notificationsTemplateFiles,
+    autoSyncNotificationsEnabled: values.autoSyncNotificationsEnabled ?? false,
+  });
+  return canRun
+    ? {
+        source: values.notificationsSource,
+        yamlFile: values.notificationsYamlFile,
+        templateFiles: values.notificationsTemplateFiles,
+        datasourceName: values.notificationsDatasourceName ?? undefined,
+        configIdentifier: values.policyTreeName,
+      }
+    : skipToken;
+}
+
 const ImportToGMA = () => {
   return (
     <AlertingPageWrapper
@@ -206,6 +249,8 @@ function ImportWizardContent() {
   }, []);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [step1Snapshot, setStep1Snapshot] = useState<Step1Values>();
+  const [isStep1Checking, setIsStep1Checking] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error' | 'partial-error'>(
     'idle'
   );
@@ -269,47 +314,32 @@ function ImportWizardContent() {
     'autoSyncNotificationsEnabled',
   ]);
 
-  const canRunDryRunNow = canRunDryRun({
-    policyTreeName,
-    notificationsSource,
-    notificationsYamlFile,
-    notificationsDatasourceUID,
-    notificationsTemplateFiles,
-    autoSyncNotificationsEnabled: autoSyncNotificationsEnabled ?? false,
-  });
-
-  const liveDryRunArgs: ValidateAlertmanagerConfigImportArgs | typeof skipToken = useMemo(
+  const liveDryRunArgs = useMemo(
     () =>
-      canRunDryRunNow
-        ? {
-            source: notificationsSource,
-            yamlFile: notificationsYamlFile,
-            templateFiles: notificationsTemplateFiles,
-            datasourceName: notificationsDatasourceName ?? undefined,
-            configIdentifier: policyTreeName,
-          }
-        : skipToken,
+      buildDryRunArgs({
+        notificationsSource,
+        policyTreeName,
+        notificationsDatasourceUID,
+        notificationsDatasourceName,
+        notificationsYamlFile,
+        notificationsTemplateFiles,
+        autoSyncNotificationsEnabled,
+      }),
     [
-      canRunDryRunNow,
       notificationsSource,
+      policyTreeName,
+      notificationsDatasourceUID,
+      notificationsDatasourceName,
       notificationsYamlFile,
       notificationsTemplateFiles,
-      notificationsDatasourceName,
-      policyTreeName,
+      autoSyncNotificationsEnabled,
     ]
   );
 
   // Debounces args into the query hook to avoid a call per keystroke. Early feedback only — it
   // never gates Next (handleStep1Next runs its own fresh check), so lagging live inputs is fine.
   const [dryRunArgs, setDryRunArgs] = useState<ValidateAlertmanagerConfigImportArgs | typeof skipToken>(skipToken);
-  useDebounce(() => setDryRunArgs(liveDryRunArgs), 500, [
-    canRunDryRunNow,
-    notificationsSource,
-    notificationsYamlFile,
-    notificationsTemplateFiles,
-    notificationsDatasourceName,
-    policyTreeName,
-  ]);
+  useDebounce(() => setDryRunArgs(liveDryRunArgs), 500, [liveDryRunArgs]);
 
   const {
     currentData: dryRunRawData,
@@ -342,55 +372,54 @@ function ImportWizardContent() {
     }
   }, [dryRunState, setStepErrors]);
 
-  // Track dry-run outcomes only when a real fetch just completed
-  const wasDryRunFetchingRef = useRef(false);
-  useEffect(() => {
-    const justFinishedFetching = wasDryRunFetchingRef.current && !isDryRunFetching;
-    wasDryRunFetchingRef.current = isDryRunFetching;
-    if (!justFinishedFetching) {
-      return;
-    }
-    if (dryRunState === 'error') {
-      trackImportToGMADryrunError();
-    } else if (dryRunState === 'success') {
-      trackImportToGMADryrunSuccess();
-    } else if (dryRunState === 'warning') {
-      trackImportToGMADryrunWarning({
-        renamedReceiversCount: dryRunResult?.renamedReceivers.length ?? 0,
-        renamedTimeIntervalsCount: dryRunResult?.renamedTimeIntervals.length ?? 0,
-      });
-    }
-  }, [isDryRunFetching, dryRunState, dryRunResult]);
-
   // Step 1 handlers
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
-  // These handlers only need to update form values and control whether to proceed
-  // Runs its own fresh, awaited check rather than trusting the debounced preview above, which
-  // can lag the live inputs by design.
+  // These handlers only need to update form values and control whether to proceed.
+  // Runs its own fresh, awaited check rather than trusting the debounced preview above, which can
+  // lag the live inputs by design. The values it checks are snapshotted and are what the review and
+  // import steps use, so what we validate is what we import.
   const handleStep1Next = useCallback(async (): Promise<boolean> => {
-    if (liveDryRunArgs !== skipToken) {
+    const snapshot = pickStep1Values(getValues());
+    const args = buildDryRunArgs(snapshot);
+    if (args !== skipToken) {
       // Keep the preview in sync with what we're about to check, instead of waiting on the debounce.
-      setDryRunArgs(liveDryRunArgs);
+      setDryRunArgs(args);
+      setIsStep1Checking(true);
       try {
-        await triggerDryRunCheck(liveDryRunArgs).unwrap();
+        const result = parseDryRunResponse(await triggerDryRunCheck(args).unwrap());
+        const state = deriveDryRunState(false, result, undefined);
+        if (state === 'warning') {
+          trackImportToGMADryrunWarning({
+            renamedReceiversCount: result.renamedReceivers.length,
+            renamedTimeIntervalsCount: result.renamedTimeIntervals.length,
+          });
+        } else if (state === 'success') {
+          trackImportToGMADryrunSuccess();
+        } else {
+          trackImportToGMADryrunError();
+          return false;
+        }
       } catch {
+        trackImportToGMADryrunError();
         return false;
+      } finally {
+        setIsStep1Checking(false);
       }
     }
+    setStep1Snapshot(snapshot);
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
-    const currentPolicyTreeName = getValues('policyTreeName');
-    const currentRoutingTree = getValues('selectedRoutingTree');
-    if (currentPolicyTreeName && !currentRoutingTree) {
-      setValue('selectedRoutingTree', currentPolicyTreeName);
+    if (snapshot.policyTreeName && !getValues('selectedRoutingTree')) {
+      setValue('selectedRoutingTree', snapshot.policyTreeName);
     }
     return true;
-  }, [liveDryRunArgs, triggerDryRunCheck, setValue, getValues]);
+  }, [triggerDryRunCheck, setValue, getValues]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
     setValue('step1Skipped', true);
     setValue('selectedRoutingTree', '');
+    setStep1Snapshot(undefined);
     trackImportToGMAWizardStepSkipped({ step: 'notifications' });
   }, [setValue]);
 
@@ -407,8 +436,11 @@ function ImportWizardContent() {
     trackImportToGMAWizardStepSkipped({ step: 'rules' });
   }, [setValue]);
 
+  // Step 1 values come from the snapshot validated on Next; the rest is read live.
+  const getImportValues = useCallback(() => ({ ...getValues(), ...step1Snapshot }), [getValues, step1Snapshot]);
+
   // Get ruler rules for rules import (needed when importing from datasource)
-  const formValues = getValues();
+  const formValues = getImportValues();
   const willEnableAutoSync = isAutoSyncCommitted(
     formValues.autoSyncNotificationsEnabled ?? false,
     formValues.notificationsSource,
@@ -427,7 +459,7 @@ function ImportWizardContent() {
   const handleConfirmImport = useCallback(async () => {
     setImportStatus('importing');
 
-    const values = getValues();
+    const values = getImportValues();
     const willEnableAutoSync = isAutoSyncCommitted(
       values.autoSyncNotificationsEnabled ?? false,
       values.notificationsSource,
@@ -554,7 +586,7 @@ function ImportWizardContent() {
         stringifyErrorLike(err)
       );
     }
-  }, [getValues, importNotifications, importRules, rulesFromDatasource, saveAutoSync, notifyApp]);
+  }, [getImportValues, importNotifications, importRules, rulesFromDatasource, saveAutoSync, notifyApp]);
 
   const handleCancelConfirm = useCallback(() => {
     // Only allow closing if not importing
@@ -598,6 +630,7 @@ function ImportWizardContent() {
               onCancel={handleWizardCancel}
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
+              isChecking={isStep1Checking}
             />
           )}
 
@@ -616,7 +649,7 @@ function ImportWizardContent() {
           {/* Step 3: Review */}
           {activeStep === StepKey.Review && (
             <ReviewStep
-              formData={getValues()}
+              formData={formValues}
               onStartImport={handleStartImport}
               onCancel={handleWizardCancel}
               dryRunResult={dryRunResult}
@@ -649,9 +682,21 @@ interface Step1WrapperProps {
   onCancel: () => void;
   dryRunState: DryRunState;
   dryRunResult?: DryRunValidationResult;
+  /** Locks the inputs so they can't change while Next's check is validating them. */
+  isChecking: boolean;
 }
 
-function Step1Wrapper({ canImport, onNext, onSkip, onCancel, dryRunState, dryRunResult }: Step1WrapperProps) {
+const step1FieldsetStyle = css({ border: 0, margin: 0, padding: 0, minWidth: 0 });
+
+function Step1Wrapper({
+  canImport,
+  onNext,
+  onSkip,
+  onCancel,
+  dryRunState,
+  dryRunResult,
+  isChecking,
+}: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
 
   return (
@@ -674,7 +719,9 @@ function Step1Wrapper({ canImport, onNext, onSkip, onCancel, dryRunState, dryRun
         'Complete the required fields before continuing.'
       )}
     >
-      <Step1Content canImport={canImport} dryRunState={dryRunState} dryRunResult={dryRunResult} />
+      <fieldset disabled={isChecking} className={step1FieldsetStyle}>
+        <Step1Content canImport={canImport} dryRunState={dryRunState} dryRunResult={dryRunResult} />
+      </fieldset>
     </WizardStep>
   );
 }

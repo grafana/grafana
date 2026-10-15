@@ -1,8 +1,8 @@
-import { useState } from 'react';
-
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
+
+import { isLoading, useAsync } from '../../../hooks/useAsync';
 
 import { useStepperState } from './StepperState';
 import { getNextStep, isLastStep } from './steps';
@@ -30,19 +30,13 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disab
   const { activeStep, setActiveStep } = useStepperState();
   const nextStep = getNextStep(activeStep);
   const isLast = isLastStep(activeStep);
-  const [isPending, setIsPending] = useState(false);
-
-  const handleClick = async () => {
-    setIsPending(true);
-    try {
-      const shouldProceed = await onNext();
-      if (shouldProceed && nextStep) {
-        setActiveStep(nextStep.id);
-      }
-    } finally {
-      setIsPending(false);
+  const [{ execute: handleClick }, nextState] = useAsync(async () => {
+    const shouldProceed = await onNext();
+    if (shouldProceed && nextStep) {
+      setActiveStep(nextStep.id);
     }
-  };
+  });
+  const isPending = isLoading(nextState);
 
   const handleSkip = () => {
     if (onSkip) {
