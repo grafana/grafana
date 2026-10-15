@@ -176,23 +176,11 @@ func TestPullRequestJobRejected(t *testing.T) {
 	})
 }
 
-func TestFixFolderMetadataFeatureGate(t *testing.T) {
+func TestFixFolderMetadataJobAllowed(t *testing.T) {
 	cfg := newTestRepo("my-repo", "default")
 
-	t.Run("rejected when flag is disabled", func(t *testing.T) {
-		c := &jobsConnector{folderMetadataEnabled: false}
-		spec := provisioning.JobSpec{
-			Action: provisioning.JobActionFixFolderMetadata,
-		}
-
-		err := c.authorizeJob(context.Background(), nil, cfg, spec)
-		require.Error(t, err)
-		assert.True(t, apierrors.IsBadRequest(err))
-		assert.Contains(t, err.Error(), "provisioningFolderMetadata feature flag")
-	})
-
-	t.Run("allowed when flag is enabled", func(t *testing.T) {
-		c := &jobsConnector{folderMetadataEnabled: true}
+	t.Run("allowed without feature configuration", func(t *testing.T) {
+		c := &jobsConnector{}
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
 		}
