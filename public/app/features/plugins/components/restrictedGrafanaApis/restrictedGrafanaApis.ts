@@ -19,6 +19,15 @@ const sharedApis: RestrictedGrafanaApisContextType = restrictedApisEnabled
     }
   : {};
 
+/** Whether one of Composer's flags is on now: Composer exists while it is. */
+export function isComposerEnabled(): boolean {
+  const flags = getFeatureFlagClient();
+  return (
+    flags.getBooleanValue(FlagKeys.GrafanaDashboardComposer, false) ||
+    flags.getBooleanValue(FlagKeys.GrafanaNotebookComposer, false)
+  );
+}
+
 /**
  * Every restricted API Grafana offers, before the allow and block lists pick a plugin's share. Composer exists
  * only while one of its flags is on; each resource still checks its own flag.
@@ -44,13 +53,9 @@ export function getRestrictedGrafanaApis({
  * created per provider and bound to the plugin's mounted roots.
  */
 export function getRestrictedGrafanaApisAtLoad(pluginId: string): RestrictedGrafanaApisContextType {
-  const flags = getFeatureFlagClient();
-  const composerEnabled =
-    flags.getBooleanValue(FlagKeys.GrafanaDashboardComposer, false) ||
-    flags.getBooleanValue(FlagKeys.GrafanaNotebookComposer, false);
   return getAllowedRestrictedGrafanaApis({
     pluginId,
-    apis: getRestrictedGrafanaApis({ composerEnabled }),
+    apis: getRestrictedGrafanaApis({ composerEnabled: isComposerEnabled() }),
     apiAllowList: config.bootData.settings.pluginRestrictedAPIsAllowList,
     apiBlockList: config.bootData.settings.pluginRestrictedAPIsBlockList,
   });

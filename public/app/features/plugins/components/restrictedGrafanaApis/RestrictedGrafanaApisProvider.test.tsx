@@ -133,6 +133,37 @@ describe('restricted APIs at plugin load', () => {
   });
 });
 
+describe('RestrictedGrafanaApisProvider without an OpenFeatureProvider above it', () => {
+  beforeEach(() => {
+    jest.replaceProperty(config.bootData, 'settings', {
+      ...config.bootData.settings,
+      pluginRestrictedAPIsAllowList: { composer: ['grafana-assistant-app'] },
+    });
+  });
+
+  afterEach(() => {
+    act(() => setTestFlags({}));
+    jest.restoreAllMocks();
+  });
+
+  // Extension components get this provider wherever they render.
+  it("renders, and still follows Composer's flag", async () => {
+    setTestFlags({ [COMPOSER_FLAG]: true });
+    const { result } = renderHook(() => useRestrictedGrafanaApis(), {
+      wrapper: ({ children }) => (
+        <RestrictedGrafanaApisProvider pluginId="grafana-assistant-app">{children}</RestrictedGrafanaApisProvider>
+      ),
+    });
+    expect(result.current.composer).toBeDefined();
+
+    act(() => setTestFlags({ [COMPOSER_FLAG]: false }));
+    await waitFor(() => expect(result.current.composer).toBeUndefined());
+
+    act(() => setTestFlags({ [COMPOSER_FLAG]: true }));
+    await waitFor(() => expect(result.current.composer).toBeDefined());
+  });
+});
+
 function renderRestrictedApis(pluginId: string) {
   return renderHook(() => useRestrictedGrafanaApis(), {
     wrapper: ({ children }) => (
