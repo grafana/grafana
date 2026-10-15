@@ -1,8 +1,9 @@
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -230,11 +231,15 @@ export function TableFlat(props: TableNGProps) {
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
   const [focusSidebarOnOpen, setFocusSidebarOnOpen] = useState(false);
-  const openColumnSidebar = useCallback(() => {
+  const columnSidebarOpener = useRef<string | null>(null);
+  const restoreFocusOnSidebarClose = useRef(false);
+  const openColumnSidebar = useCallback((columnKey: string) => {
+    columnSidebarOpener.current = columnKey;
     setFocusSidebarOnOpen(true);
     setIsColumnVisibilityPanelOpen(true);
   }, []);
-  const closeColumnSidebar = useCallback(() => {
+  const closeColumnSidebar = useCallback((restoreFocus = false) => {
+    restoreFocusOnSidebarClose.current = restoreFocus;
     setFocusSidebarOnOpen(false);
     setIsColumnVisibilityPanelOpen(false);
   }, []);
@@ -543,6 +548,29 @@ export function TableFlat(props: TableNGProps) {
     markEdgeColumns(result);
     return result;
   }, [fromFields, displayedRawFields, widths, data, rows, sortedRows]);
+
+  useEffect(() => {
+    if (isColumnVisibilityPanelOpen) {
+      return;
+    }
+
+    const shouldRestoreFocus = restoreFocusOnSidebarClose.current;
+    const openerKey = columnSidebarOpener.current;
+    restoreFocusOnSidebarClose.current = false;
+    columnSidebarOpener.current = null;
+    if (!shouldRestoreFocus) {
+      return;
+    }
+
+    const grid = gridRef.current?.element;
+    const openerIndex = columns.findIndex((column) => column.key === openerKey);
+    const header =
+      openerIndex >= 0 ? grid?.querySelector(`[role="columnheader"][aria-colindex="${openerIndex + 1}"]`) : null;
+    const opener = header?.querySelector<HTMLButtonElement>(
+      `[data-testid="${selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button}"]`
+    );
+    (opener ?? grid)?.focus();
+  }, [columns, isColumnVisibilityPanelOpen]);
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps

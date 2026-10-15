@@ -26,7 +26,7 @@ interface TableSidebarProps {
   columns: SidebarColumn[];
   hiddenColumns: ReadonlySet<string>;
   onToggleColumn: (displayName: string, visible: boolean) => void;
-  onClose: () => void;
+  onClose: (restoreFocus: boolean) => void;
   headerHeight?: number;
   transparent?: boolean;
   /** Whether releasing the splitter will close the panel. */
@@ -74,7 +74,7 @@ export function TableSidebar({
             name="times"
             size="sm"
             aria-label={t('grafana-ui.table.close-column-visibility', 'Close column visibility panel')}
-            onClick={onClose}
+            onClick={() => onClose(sidebarRef.current?.contains(document.activeElement) ?? false)}
             data-testid={sidebarSelectors.closeButton}
           />
         </Stack>

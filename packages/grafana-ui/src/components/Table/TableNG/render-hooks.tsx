@@ -179,7 +179,7 @@ export interface ColumnBuildConfig {
   onCellFilterAdded?: TableFilterActionCallback;
   onHideColumn?: (displayName: string) => void;
   canHideColumn?: boolean;
-  onOpenColumnPanel?: () => void;
+  onOpenColumnPanel?: (columnKey: string) => void;
   onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);

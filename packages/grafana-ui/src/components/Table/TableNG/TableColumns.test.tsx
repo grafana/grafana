@@ -38,12 +38,79 @@ it('focuses the sidebar after keyboard opening, then tabs to its controls', asyn
   expect(screen.getByRole('group', { name: 'Column visibility' })).toHaveFocus();
   await user.tab();
   expect(screen.getByRole('button', { name: 'Close column visibility panel' })).toHaveFocus();
+  await user.keyboard('{Enter}');
+
+  expect(screen.queryByRole('group', { name: 'Column visibility' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Column options for A' })).toHaveFocus();
 });
 
-it('does not move focus into a sidebar already open from panel configuration', () => {
+it('focuses the grid when closing a sidebar opened from panel configuration', async () => {
+  const user = userEvent.setup();
   render(<TableNG data={sidebarFocusData} width={800} height={400} tableRefreshEnabled showColumnsSidebar />);
 
   expect(screen.getByRole('group', { name: 'Column visibility' })).not.toHaveFocus();
+  await user.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+
+  expect(screen.getByRole('grid')).toHaveFocus();
+});
+
+it('focuses the grid when the opening column was hidden', async () => {
+  const data = createDataFrame({
+    fields: [
+      {
+        name: 'A',
+        type: FieldType.string,
+        values: ['a'],
+        config: { custom: { hideable: true } },
+        display: () => ({ text: 'a', numeric: NaN }),
+      },
+      {
+        name: 'B',
+        type: FieldType.string,
+        values: ['b'],
+        config: { custom: { hideable: true } },
+        display: () => ({ text: 'b', numeric: NaN }),
+      },
+    ],
+  });
+  function Harness() {
+    const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(new Set());
+    return (
+      <TableNG
+        data={data}
+        width={800}
+        height={400}
+        tableRefreshEnabled
+        hiddenColumns={hiddenColumns}
+        onHiddenColumnsChange={setHiddenColumns}
+      />
+    );
+  }
+
+  const user = userEvent.setup();
+  render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Column options for A' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Manage columns' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Hide A' }));
+  await user.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+
+  expect(screen.queryByRole('button', { name: 'Column options for A' })).not.toBeInTheDocument();
+  expect(screen.getByRole('grid')).toHaveFocus();
+});
+
+it('does not steal focus on sidebar close when focus is elsewhere', () => {
+  render(
+    <>
+      <button>Outside table</button>
+      <TableNG data={sidebarFocusData} width={800} height={400} tableRefreshEnabled showColumnsSidebar />
+    </>
+  );
+
+  const outsideButton = screen.getByRole('button', { name: 'Outside table' });
+  act(() => outsideButton.focus());
+  act(() => screen.getByRole('button', { name: 'Close column visibility panel' }).click());
+
+  expect(outsideButton).toHaveFocus();
 });
 
 it('sizes the grid from the clamped sidebar width when the panel shrinks, grows, and is dragged', async () => {
