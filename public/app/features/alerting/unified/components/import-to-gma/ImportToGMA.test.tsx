@@ -535,6 +535,27 @@ describe('dry-run wiring (wizard-level)', () => {
     ).toHaveLength(1);
   });
 
+  it('blocks jumping to Review after editing a completed Step 1 until Next re-validates it', async () => {
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+
+    await user.click(screen.getByRole('button', { name: /notification resources/i }));
+    await screen.findByRole('group', { name: /import notification resources/i });
+    // Untouched, the completed steps still allow jumping straight to Review.
+    expect(screen.getByRole('button', { name: /review & import/i })).toBeEnabled();
+
+    await user.type(screen.getByPlaceholderText(/prometheus-prod/i), '2');
+    expect(screen.getByRole('button', { name: /review & import/i })).toBeDisabled();
+
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+  });
+
   it('does not disable Next when navigating back to a Step 1 that is already valid', async () => {
     server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
     const { user } = render(<ImportWizardGate />);

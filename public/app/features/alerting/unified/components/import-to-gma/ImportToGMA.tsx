@@ -3,6 +3,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { shallowEqual } from 'react-redux';
 import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2, OrgRole } from '@grafana/data';
@@ -242,7 +243,7 @@ function AutoSyncActiveBlock() {
  * Inner content component that uses the stepper state
  */
 function ImportWizardContent() {
-  const { activeStep, setStepErrors } = useStepperState();
+  const { activeStep, setStepErrors, setStepCompleted } = useStepperState();
 
   useEffect(() => {
     trackImportToGMAWizardStarted();
@@ -314,17 +315,16 @@ function ImportWizardContent() {
     'autoSyncNotificationsEnabled',
   ]);
 
-  const liveDryRunArgs = useMemo(
-    () =>
-      buildDryRunArgs({
-        notificationsSource,
-        policyTreeName,
-        notificationsDatasourceUID,
-        notificationsDatasourceName,
-        notificationsYamlFile,
-        notificationsTemplateFiles,
-        autoSyncNotificationsEnabled,
-      }),
+  const liveStep1Values: Step1Values = useMemo(
+    () => ({
+      notificationsSource,
+      policyTreeName,
+      notificationsDatasourceUID,
+      notificationsDatasourceName,
+      notificationsYamlFile,
+      notificationsTemplateFiles,
+      autoSyncNotificationsEnabled,
+    }),
     [
       notificationsSource,
       policyTreeName,
@@ -335,6 +335,7 @@ function ImportWizardContent() {
       autoSyncNotificationsEnabled,
     ]
   );
+  const liveDryRunArgs = useMemo(() => buildDryRunArgs(liveStep1Values), [liveStep1Values]);
 
   // Debounces args into the query hook to avoid a call per keystroke. Early feedback only — it
   // never gates Next (handleStep1Next runs its own fresh check), so lagging live inputs is fine.
@@ -414,6 +415,20 @@ function ImportWizardContent() {
     }
     return true;
   }, [triggerDryRunCheck, setValue, getValues]);
+
+  // An edit after Next makes the snapshot stale. Un-complete the step so the stepper can't jump
+  // ahead to Review on values that were never validated.
+  useEffect(() => {
+    if (!step1Snapshot) {
+      return;
+    }
+    const edited = !shallowEqual(step1Snapshot, liveStep1Values);
+    if (edited) {
+      setStep1Snapshot(undefined);
+      setValue('step1Completed', false);
+      setStepCompleted(StepKey.Notifications, false);
+    }
+  }, [step1Snapshot, liveStep1Values, setValue, setStepCompleted]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
