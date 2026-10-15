@@ -1577,6 +1577,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
+			setCreateToggle(t, true)
 			queryParams, err := url.ParseQuery(tt.queryString)
 			require.NoError(t, err)
 
@@ -1587,7 +1588,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				return tt.sharedDashboards, nil
 			}
 
-			result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, getDashboardsFunc)
+			result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, getDashboardsFunc)
 
 			if tt.expectedError != nil {
 				assert.ErrorIs(t, err, tt.expectedError)
@@ -1614,7 +1615,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 			queryParams, err := url.ParseQuery(qs)
 			require.NoError(t, err)
 
-			_, err = convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+			_, err = convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 				return nil, nil
 			})
 			assert.True(t, apierrors.IsBadRequest(err), qs)
@@ -1625,7 +1626,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("query=cpu")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 			return nil, nil
 		})
 
@@ -1642,7 +1643,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("query=cpu&panelTitleSearch=true")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 			return nil, nil
 		})
 
@@ -1659,7 +1660,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("facet=folder")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 			return nil, nil
 		})
 
@@ -1673,7 +1674,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, &user.SignedInUser{
 			Namespace: "test-namespace",
 			OrgID:     1,
 		}, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
@@ -1692,7 +1693,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, &user.SignedInUser{
 			Namespace:        "test-namespace",
 			OrgID:            1,
 			IsServiceAccount: true,

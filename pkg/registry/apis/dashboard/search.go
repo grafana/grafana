@@ -592,12 +592,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
-		return s.getDashboardsUIDsSharedWithUser(ctx, user, effectivePermission(ctx, requestedPermission))
+	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(ctx, queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
-	if err == nil {
-		searchRequest.Permission = int64(effectivePermission(ctx, dashboardaccess.PermissionType(searchRequest.Permission)))
-	}
 	if err != nil {
 		if errors.Is(err, errEmptyResults) {
 			s.write(w, dashboardv0alpha1.SearchResults{
@@ -881,7 +878,7 @@ func isDashboardSearchResponseField(field string) bool {
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
 // nolint:gocyclo
-func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
+func convertHttpSearchRequestToResourceSearchRequest(ctx context.Context, queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
 	facetLimit := 50
@@ -918,7 +915,8 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 	searchRequest.Fields = fields
-	accessPermission := permissionFromQueryParams(queryParams)
+	requestedPermission := permissionFromQueryParams(queryParams)
+	accessPermission := effectivePermission(ctx, requestedPermission)
 	if accessPermission > 0 {
 		searchRequest.Permission = int64(accessPermission)
 	}
@@ -927,7 +925,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	types := queryParams["type"]
 	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
 	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
-	if accessPermission == dashboardaccess.PERMISSION_CREATE && (hasDash || !hasFolder) {
+	if requestedPermission == dashboardaccess.PERMISSION_CREATE && (hasDash || !hasFolder) {
 		return nil, apierrors.NewBadRequest("permission=create is only supported with type=folder")
 	}
 	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
