@@ -6114,6 +6114,9 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": "Ad hoc transformations are disabled in edit mode"
+    },
     "plan-placeholder-badge": {
       "text": "Sample data",
       "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
@@ -10826,6 +10829,7 @@
       "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "reorder-column-label": "Reorder {{columnName}}",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
       "sort-by-column-ascending": "Sort by column {{column}}, ascending",
