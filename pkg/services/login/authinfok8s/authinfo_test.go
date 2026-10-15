@@ -422,6 +422,10 @@ func TestStore_GetUserAuthModules(t *testing.T) {
 			modules, err := store.GetUserAuthModules(contextWithReqContext(7), 42)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, tc.want, modules)
+			batch, err := store.GetUsersAuthModules(contextWithReqContext(7), []int64{42})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, tc.want, batch[42])
+
 		})
 	}
 }

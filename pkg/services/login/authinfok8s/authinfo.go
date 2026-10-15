@@ -165,6 +165,19 @@ func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string,
 	return modules, nil
 }
 
+// GetUsersAuthModules preserves the per-user API lookup until AuthInfo supports batch reads.
+func (s *Store) GetUsersAuthModules(ctx context.Context, userIDs []int64) (map[int64][]string, error) {
+	modules := make(map[int64][]string, len(userIDs))
+	for _, userID := range userIDs {
+		values, err := s.GetUserAuthModules(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+		modules[userID] = values
+	}
+	return modules, nil
+}
+
 // GetUsersRecentlyUsedLabel implements login.Store.
 func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	ctx, span := s.tracer.Start(ctx, "authinfo.k8s.GetUsersRecentlyUsedLabel")
