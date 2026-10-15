@@ -151,7 +151,7 @@ func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *r
 	for _, resource := range resources {
 		group, name, resourceVerb := resource.Group, resource.Resource, verb
 		// Mirrors the folder check in search's batchCheckItem, which authorizes by dashboards:create.
-		if req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && group == "folder.grafana.app" && name == "folders" {
+		if !req.IsDeleted && req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && group == "folder.grafana.app" && name == "folders" {
 			group, name, resourceVerb = "dashboard.grafana.app", "dashboards", utils.VerbCreate
 		}
 		if err := s.checkSearchServicePermission(ctx, id, group, name, resourceVerb); err != nil {

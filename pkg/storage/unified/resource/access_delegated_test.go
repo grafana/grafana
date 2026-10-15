@@ -282,6 +282,15 @@ func TestSearchServicePermissions(t *testing.T) {
 				req.Permission = int64(dashboardaccess.PERMISSION_CREATE)
 			},
 		},
+		"create on deleted folders keeps set_permissions": {
+			permissions: []string{"dashboard.grafana.app:create"},
+			mutate: func(req *resourcepb.ResourceSearchRequest) {
+				req.Options.Key.Group, req.Options.Key.Resource = "folder.grafana.app", "folders"
+				req.Permission = int64(dashboardaccess.PERMISSION_CREATE)
+				req.IsDeleted = true
+			},
+			wantPermission: "folder.grafana.app/folders:set_permissions",
+		},
 		"create on dashboards stays read": {
 			permissions: []string{"dashboard.grafana.app:get"},
 			mutate:      func(req *resourcepb.ResourceSearchRequest) { req.Permission = int64(dashboardaccess.PERMISSION_CREATE) },
