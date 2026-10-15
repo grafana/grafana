@@ -221,7 +221,7 @@ describe('PanelStatus', () => {
       expect(onInvestigateErrors).toHaveBeenCalledTimes(1);
     });
 
-    it('shows runtime notices with panel-level Assistant and Inspect actions', async () => {
+    it('shows panel-owned notices with Inspect but without query investigation', async () => {
       const notices = new PanelStatusStore();
       notices.createSource().set([
         {
@@ -237,7 +237,6 @@ describe('PanelStatus', () => {
       renderWithPanelContext(<PanelStatus />, {
         notices,
         onOpenInspector,
-        onInvestigateStatusItem: jest.fn(),
         onInvestigateErrors,
       });
 
@@ -246,32 +245,29 @@ describe('PanelStatus', () => {
       expect(await screen.findByText('Choose a field')).toBeVisible();
       expect(screen.getByText('Partial data')).toBeVisible();
       expect(screen.queryByRole('button', { name: 'Choose field' })).not.toBeInTheDocument();
-      await userEvent.click(screen.getByRole('button', { name: 'Fix with Assistant' }));
-      expect(onInvestigateErrors).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
       const inspectButton = screen.getByRole('button', { name: 'Inspect' });
       await userEvent.click(inspectButton);
       expect(onOpenInspector).toHaveBeenCalledTimes(1);
     });
 
-    it('hides the panel-level Assistant action when every runtime item opts out', async () => {
+    it('does not show query investigation for plugin-load errors', async () => {
       const notices = new PanelStatusStore();
-      notices
-        .createSource()
-        .set([{ id: 'manual', severity: 'error', text: 'Manual repair required', assistant: 'hidden' }]);
+      notices.setExternal([{ id: 'plugin-load', origin: 'plugin-load', severity: 'error', text: 'Plugin failed' }]);
       renderWithPanelContext(<PanelStatus />, { notices, onInvestigateErrors: jest.fn() });
 
       await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
 
-      expect(await screen.findByText('Manual repair required')).toBeVisible();
+      expect(await screen.findByText('Plugin failed')).toBeVisible();
       expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
     });
 
     it('labels the panel-level Assistant action from eligible runtime items', async () => {
       const notices = new PanelStatusStore();
-      notices.createSource().set([
-        { id: 'manual', severity: 'error', text: 'Manual repair required', assistant: 'hidden' },
-        { id: 'slow', severity: 'warning', text: 'Slow query' },
-      ]);
+      notices
+        .createSource()
+        .set([{ id: 'manual', severity: 'error', text: 'Manual repair required', assistant: 'hidden' }]);
+      notices.setExternal([{ id: 'slow', origin: 'notice', severity: 'warning', text: 'Slow query' }]);
       renderWithPanelContext(<PanelStatus />, { notices, onInvestigateErrors: jest.fn() });
 
       await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));

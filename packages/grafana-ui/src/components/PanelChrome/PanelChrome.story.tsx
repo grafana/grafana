@@ -2,7 +2,6 @@ import { type Meta, type StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 import { type CSSProperties, useMemo, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
-import { action } from 'storybook/actions';
 
 import { EventBusSrv, LoadingState, type PanelNotice } from '@grafana/data';
 // Storybook-only host setup exercises Grafana's internal status store without exposing it as plugin API.
@@ -37,7 +36,6 @@ function NoticeDemo() {
               id: 'field',
               severity: 'error',
               text: 'Choose a numeric field for this visualization.',
-              assistant: 'hidden',
               actions: [{ id: 'choose', label: 'Use first numeric field', onClick: () => setResolved(true) }],
             },
             { id: 'partial', severity: 'warning', text: 'Only the first 100 series are shown.' },
@@ -70,7 +68,6 @@ export const PanelNotices: StoryFn<typeof PanelChrome> = () => {
     notices: new PanelStatusStore(),
     eventBus: new EventBusSrv(),
     eventsScope: 'story',
-    onInvestigateStatusItem: action('investigate-status-item'),
     onOpenInspector: () => setShowInspector(true),
   }));
   return (

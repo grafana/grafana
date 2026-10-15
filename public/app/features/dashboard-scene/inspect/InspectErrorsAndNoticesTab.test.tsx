@@ -51,7 +51,7 @@ it('shows query errors before host initialization and respects an initialized em
   expect(screen.queryByText('Query failed')).not.toBeInTheDocument();
 });
 
-it('shows Assistant in an open inspector when availability arrives after its notice', () => {
+it('does not show a per-item Assistant action in the inspector', () => {
   const store = new PanelStatusStore();
   store.createSource().set([{ id: 'late', severity: 'error', text: 'Query failed' }]);
   const context: PanelContext = { notices: store, eventsScope: 'panel', eventBus: new EventBusSrv() };
@@ -64,15 +64,14 @@ it('shows Assistant in an open inspector when availability arrives after its not
   expect(screen.getByText('Query failed')).toBeVisible();
   expect(screen.queryByRole('button', { name: 'Fix with Assistant' })).not.toBeInTheDocument();
 
-  const investigate = jest.fn();
   act(() => {
-    panel.getPanelContext().onInvestigateStatusItem = investigate;
+    panel.getPanelContext().onInvestigateErrors = jest.fn();
     store.refresh();
   });
-  expect(screen.getByRole('button', { name: 'Fix with Assistant' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Fix with Assistant' })).not.toBeInTheDocument();
 });
 
-it('shows panel notices alongside the custom datasource inspector and closes only for Assistant', async () => {
+it('shows panel notices alongside the custom datasource inspector', async () => {
   const store = new PanelStatusStore();
   const source = store.createSource();
   const onClick = jest.fn();
@@ -84,15 +83,10 @@ it('shows panel notices alongside the custom datasource inspector and closes onl
       actions: [{ id: 'choose', label: 'Choose field', onClick }],
     },
   ]);
-  const onInvestigateStatusItem = jest.fn(() =>
-    expect(store.getSnapshot().items[0].text).toBe('Choose a numeric field')
-  );
-  const onClose = jest.fn(() => store.clear());
   const context: PanelContext = {
     notices: store,
     eventsScope: 'panel',
     eventBus: new EventBusSrv(),
-    onInvestigateStatusItem,
   };
   const panel = new VizPanel({
     $data: new SceneDataNode({
@@ -115,43 +109,35 @@ it('shows panel notices alongside the custom datasource inspector and closes onl
     meta: {} as DataSourceApi['meta'],
     jsonData: {},
   });
-  const tab = new InspectErrorsAndNoticesTab({ panelRef: panel.getRef(), dataSource: datasource, onClose });
+  const tab = new InspectErrorsAndNoticesTab({ panelRef: panel.getRef(), dataSource: datasource });
   render(<tab.Component model={tab} />);
   expect(screen.getByText('Datasource details')).toBeVisible();
   expect(screen.queryByText('Custom query error')).not.toBeInTheDocument();
   expect(screen.getByText('Choose a numeric field')).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Choose field' }));
   expect(onClick).toHaveBeenCalledTimes(1);
-  expect(onClose).not.toHaveBeenCalled();
-  const id = store.getSnapshot().items[0].id;
-  await userEvent.click(screen.getByRole('button', { name: 'Explain with Assistant' }));
-  expect(onInvestigateStatusItem).toHaveBeenCalledWith(id);
-  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole('button', { name: 'Explain with Assistant' })).not.toBeInTheDocument();
 });
 
-it('groups notice text while retaining per-query Assistant eligibility and custom actions', async () => {
+it('groups notice text while retaining custom actions', async () => {
   const store = new PanelStatusStore();
-  const onInvestigateStatusItem = jest.fn();
   const onClick = jest.fn();
   const notice = { origin: 'notice' as const, severity: 'warning' as const, text: 'Partial result' };
   store.setExternal([
     { ...notice, id: 'A', refId: 'A' },
-    { ...notice, id: 'B', refId: 'B', assistant: 'hidden' },
+    { ...notice, id: 'B', refId: 'B' },
     { ...notice, id: 'C', refId: 'C', actions: [{ id: 'retry', label: 'Retry C', onClick }] },
   ]);
   const panel = new VizPanel({
     $data: new SceneDataNode({ data: { series: [], state: LoadingState.Done, timeRange: getDefaultTimeRange() } }),
-    extendPanelContext: (_, context) => Object.assign(context, { notices: store, onInvestigateStatusItem }),
+    extendPanelContext: (_, context) => Object.assign(context, { notices: store }),
   });
   const tab = new InspectErrorsAndNoticesTab({ panelRef: panel.getRef() });
   render(<tab.Component model={tab} />);
   expect(screen.getAllByText('Partial result')).toHaveLength(2);
   expect(screen.getByText('A')).toBeVisible();
   expect(screen.getByText('B')).toBeVisible();
-  const assistantButtons = screen.getAllByRole('button', { name: 'Explain with Assistant' });
-  expect(assistantButtons).toHaveLength(2);
-  await userEvent.click(assistantButtons[0]);
-  expect(onInvestigateStatusItem).toHaveBeenCalledWith('external:A');
+  expect(screen.queryByRole('button', { name: 'Explain with Assistant' })).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Retry C' }));
   expect(onClick).toHaveBeenCalledTimes(1);
 });

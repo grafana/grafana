@@ -21,7 +21,6 @@ export interface InspectErrorsAndNoticesTabState extends SceneObjectState {
   // The data source is only set when it provides a custom ErrorsAndNoticesInspector. Otherwise
   // the standard inspector is used, which works for any data source (including mixed).
   dataSource?: DataSourceApi;
-  onClose?: () => void;
 }
 
 export class InspectErrorsAndNoticesTab extends SceneObjectBase<InspectErrorsAndNoticesTabState> {
@@ -37,7 +36,7 @@ export class InspectErrorsAndNoticesTab extends SceneObjectBase<InspectErrorsAnd
 }
 
 function InspectErrorsAndNoticesTabRenderer({ model }: SceneComponentProps<InspectErrorsAndNoticesTab>) {
-  const { panelRef, dataSource, onClose } = model.useState();
+  const { panelRef, dataSource } = model.useState();
   const panel = panelRef.resolve();
   const context = panel.getPanelContext();
   const { activateNotices } = context;
@@ -54,7 +53,7 @@ function InspectErrorsAndNoticesTabRenderer({ model }: SceneComponentProps<Inspe
     const panelItems = statusItems.filter((item) => item.origin === 'panel' || item.origin === 'plugin-load');
     return (
       <PanelContextProvider value={context}>
-        {panelItems.length > 0 && <StandardErrorsAndNoticesInspector statusItems={panelItems} onClose={onClose} />}
+        {panelItems.length > 0 && <StandardErrorsAndNoticesInspector statusItems={panelItems} />}
         {panelData && <CustomInspector datasource={dataSource} data={panelData.series} errors={errors} />}
       </PanelContextProvider>
     );
@@ -62,7 +61,7 @@ function InspectErrorsAndNoticesTabRenderer({ model }: SceneComponentProps<Inspe
   if (context.notices || panel.state._pluginLoadError) {
     return (
       <PanelContextProvider value={context}>
-        <StandardErrorsAndNoticesInspector statusItems={statusItems} onClose={onClose} />
+        <StandardErrorsAndNoticesInspector statusItems={statusItems} />
       </PanelContextProvider>
     );
   }

@@ -81,6 +81,17 @@ function setup() {
   return { store, data, panel, drawer, tabs: () => drawer.state.tabs?.map((tab) => tab.getTabValue()) };
 }
 
+it('shows an existing panel notice on a non-query panel', async () => {
+  plugin.meta.skipDataQuery = true;
+  const { store, drawer, tabs } = setup();
+  store.createSource().set([{ id: 'panel', severity: 'warning', text: 'Choose field' }]);
+
+  const deactivate = drawer.activate();
+  await waitFor(() => expect(tabs()).toEqual([InspectTab.ErrorsAndNotices, InspectTab.JSON]));
+  expect(drawer.state.tabs?.[0]).toBeInstanceOf(InspectErrorsAndNoticesTab);
+  deactivate();
+});
+
 it('shows only JSON for an empty panel and reacts to notices appearing and clearing', async () => {
   plugin.meta.skipDataQuery = true;
   const { store, drawer, tabs } = setup();

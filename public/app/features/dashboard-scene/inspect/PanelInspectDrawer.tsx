@@ -71,7 +71,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
         this.metadataTab = metadata ? new InspectMetaDataTab({ panelRef, dataSource: metadata }) : undefined;
       }
       if (!this.noticesTab || this.noticesTab.state.dataSource !== notices) {
-        this.noticesTab = new InspectErrorsAndNoticesTab({ panelRef, dataSource: notices, onClose: this.onClose });
+        this.noticesTab = new InspectErrorsAndNoticesTab({ panelRef, dataSource: notices });
       }
       reconcile();
     };
@@ -145,7 +145,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
       panelData?.state === LoadingState.Loading &&
       Boolean(this.noticesTab && this.state.tabs?.includes(this.noticesTab));
     if (hasNotices || retainNoticesWhileLoading) {
-      this.noticesTab ??= new InspectErrorsAndNoticesTab({ panelRef, onClose: this.onClose });
+      this.noticesTab ??= new InspectErrorsAndNoticesTab({ panelRef });
       tabs.push(this.noticesTab);
     }
     this.jsonTab ??= new InspectJsonTab({ panelRef, onClose: this.onClose });

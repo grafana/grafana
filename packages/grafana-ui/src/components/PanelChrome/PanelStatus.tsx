@@ -52,7 +52,9 @@ export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: P
     const fallback = assistantItems;
     assistantItems = [
       ...(!snapshot.hostInitialized ? fallback : []),
-      ...snapshot.items.filter((item) => item.assistant !== 'hidden'),
+      ...snapshot.items.filter(
+        (item) => (item.origin === 'query' || item.origin === 'notice') && item.assistant !== 'hidden'
+      ),
     ];
     items = snapshot.hostInitialized ? [...snapshot.items] : [...fallback, ...snapshot.items];
     if (snapshot.hostInitialized) {
