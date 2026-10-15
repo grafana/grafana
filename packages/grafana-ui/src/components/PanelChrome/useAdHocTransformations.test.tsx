@@ -3,12 +3,8 @@ import { type PropsWithChildren } from 'react';
 
 import { type DataTransformerConfig, EventBusSrv, toDataFrame } from '@grafana/data';
 
-import {
-  type PanelContext,
-  PanelContextProvider,
-  type PanelRuntimeTransformations,
-  useAdHocTransformations,
-} from './PanelContext';
+import { type PanelContext, PanelContextProvider, type PanelRuntimeTransformations } from './PanelContext';
+import { useAdHocTransformations } from './useAdHocTransformations';
 
 function createRuntimeTransformations() {
   let transformations: readonly DataTransformerConfig[] = [];

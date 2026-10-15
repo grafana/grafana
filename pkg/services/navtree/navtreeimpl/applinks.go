@@ -21,9 +21,6 @@ import (
 
 // The Knowledge Graph's version of the "Application" page.
 const assertsServicesPath = "/a/grafana-asserts-app/services"
-
-// The Knowledge Graph's fleet-wide "Operations" page, shown under "Application".
-const assertsOperationsPath = "/a/grafana-asserts-app/operations"
 const appObservabilityAppID = "grafana-app-observability-app"
 const assistantAppID = "grafana-assistant-app"
 const assistantOnboardingAppID = "grafana-assistant-onboarding-app"
@@ -135,59 +132,8 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	s.nestMaintenanceWindowsUnderSLO(treeRoot)
-	// Must run after the App Observability de-duplication above, so the final
-	// "Application" entry is already decided.
-	s.nestOperationsUnderApplication(treeRoot)
 
 	return nil
-}
-
-// nestOperationsUnderApplication moves the Knowledge Graph "Operations" page from
-// the top level of the Observability section to be a child of whichever
-// "Application" entry is shown: App Observability's when present, otherwise the
-// Knowledge Graph's. If there is no Operations page or no Application entry, the
-// tree is left unchanged.
-func (s *ServiceImpl) nestOperationsUnderApplication(treeRoot *navtree.NavTreeRoot) {
-	obsSection := treeRoot.FindById(navtree.NavIDObservability)
-	if obsSection == nil {
-		return
-	}
-
-	operationsURL := s.cfg.AppSubURL + assertsOperationsPath
-	assertsApplicationURL := s.cfg.AppSubURL + assertsServicesPath
-	appObservabilityID := "plugin-page-" + appObservabilityAppID
-
-	var operations, appObservability, assertsApplication *navtree.NavLink
-	for _, child := range obsSection.Children {
-		switch {
-		case child.Url == operationsURL:
-			operations = child
-		case child.Id == appObservabilityID:
-			appObservability = child
-		case child.Url == assertsApplicationURL:
-			assertsApplication = child
-		}
-	}
-
-	parent := appObservability
-	if parent == nil {
-		parent = assertsApplication
-	}
-	if operations == nil || parent == nil {
-		return
-	}
-
-	children := make([]*navtree.NavLink, 0, len(obsSection.Children)-1)
-	for _, child := range obsSection.Children {
-		if child != operations {
-			children = append(children, child)
-		}
-	}
-	obsSection.Children = children
-
-	// Reset the weight so Operations sorts after the Application's existing children.
-	operations.SortWeight = 0
-	parent.Children = append(parent.Children, operations)
 }
 
 func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRoot) {
@@ -203,7 +149,6 @@ func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRo
 	treeRoot.RemoveSectionByID(mwNode.Id)
 
 	mwNode.Id = "standalone-plugin-page-" + mwPluginID
-	mwNode.IsNew = true
 	// Reset the standalone app's plugin SortWeight so it falls back to its
 	// appended position and sorts last among SLO's child pages.
 	mwNode.SortWeight = 0
@@ -638,7 +583,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 6, Text: "Incident"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7, Text: "OnCall"},
 		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "AI", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
-		"grafana-workflows-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightWorkflows, Text: "Workflows", SubTitle: "Create and manage automated workflows"},
+		"grafana-workflows-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightWorkflows, Text: "Workflows", SubTitle: "Create and manage automated workflows", Icon: "workflows"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
