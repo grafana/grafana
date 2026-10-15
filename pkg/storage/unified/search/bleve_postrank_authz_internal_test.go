@@ -5,7 +5,6 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
-	"github.com/blevesearch/bleve/v2/search/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -63,13 +62,14 @@ func TestReadAuthzMetadata(t *testing.T) {
 	dashboards := newIndex(t, map[string]string{"a": "folder-1", "root": ""})
 	folders := newIndex(t, map[string]string{"f": "folder-2"})
 
-	byID := func(ids []string) query.Query { return bleve.NewDocIDQuery(ids) }
+	page := &postRankPage{index: bleve.NewIndexAlias(dashboards, folders), query: bleve.NewMatchAllQuery()}
 	hits := search.DocumentMatchCollection{{ID: "a"}, {ID: "deleted"}, {ID: "f"}, {ID: "root"}}
-	metadata, err := readAuthzMetadata(t.Context(), bleve.NewIndexAlias(dashboards, folders), byID, hits, authzLoadFields(false))
+	metadata, err := page.readAuthzMetadata(t.Context(), hits)
 	require.NoError(t, err)
 	require.Equal(t, map[string]authzMetadata{
 		"a":    {folder: "folder-1"},
 		"f":    {folder: "folder-2"},
 		"root": {},
 	}, metadata)
+	require.NotZero(t, page.cost, "the lookup's reads count towards the search's cost")
 }

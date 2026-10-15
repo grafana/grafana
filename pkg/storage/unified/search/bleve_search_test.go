@@ -3140,12 +3140,17 @@ func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T
 	changes := map[string]func(*resource.BulkIndexItem){
 		"moved to a denied folder": func(doc *resource.BulkIndexItem) {
 			doc.Doc.Folder = "denied"
-			doc.Doc.Title = "private title"
 		},
 		"deleted": func(doc *resource.BulkIndexItem) {
 			doc.Doc.IsDeleted = new(true)
 		},
+		// Sorts after "next", so returning it would contradict its place and cursor.
+		"retitled in the same folder": func(doc *resource.BulkIndexItem) {
+			doc.Doc.Title = "private title"
+		},
 	}
+	byTitle := listQuery(1)
+	byTitle.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
 	for name, postRank := range map[string]bool{"in-searcher": false, "post-rank": true} {
 		for change, apply := range changes {
 			t.Run(name+"/"+change, func(t *testing.T) {
@@ -3159,7 +3164,7 @@ func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T
 					indexDocs(t, index, []*resource.BulkIndexItem{changed})
 				}
 
-				names, res := searchNames(t, index, ac, listQuery(1))
+				names, res := searchNames(t, index, ac, byTitle)
 				if postRank {
 					require.Equal(t, []string{"next"}, names, "the changed object is left out and the page refilled")
 				}
@@ -3178,6 +3183,26 @@ func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T
 			})
 		}
 	}
+}
+
+// Past the candidate budget a sparse user's scan goes on until the page has a
+// row. A row validation drops does not count, or the page could come back empty
+// with authorized matches still unseen.
+func TestSearchPostRankAuthzScansPastTheBudgetForARowThatSurvivesValidation(t *testing.T) {
+	index := newTestDashboardsIndexAuthz(t, 3, true, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxCandidates: 1})
+	// By title: "doc" and "e" make the first window of two, "next" the second.
+	indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("e", "denied"), newDoc("next", "allowed")})
+	ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
+	ac.change = func() {
+		moved := newDoc("doc", "denied")
+		moved.Doc.RV = 2
+		indexDocs(t, index, []*resource.BulkIndexItem{moved})
+	}
+	q := listQuery(2)
+	q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
+
+	names, _ := searchNames(t, index, ac, q)
+	require.Equal(t, []string{"next"}, names)
 }
 
 // Post-rank windows read what authorization needs from doc values and load
