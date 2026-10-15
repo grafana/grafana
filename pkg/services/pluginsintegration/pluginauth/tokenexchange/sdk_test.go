@@ -73,7 +73,12 @@ func TestSDKLocalTokenRoundTrip(t *testing.T) {
 					http.Error(w, err.Error(), http.StatusUnauthorized)
 					return
 				}
-				_ = json.NewEncoder(w).Encode(id)
+				_ = json.NewEncoder(w).Encode(sdkTestIdentity{
+					OrgID: id.OrgID, Type: id.Type, ID: id.ID, UID: id.UID, Namespace: id.Namespace,
+					K8s:                  id.ClientParams.FetchPermissionsParams.K8s,
+					K8sRestrictedActions: id.ClientParams.FetchPermissionsParams.K8sRestrictedActions,
+					Permissions:          id.AccessTokenClaims.Rest.Permissions,
+				})
 			}))
 			defer api.Close()
 			t.Setenv("API_ACCESS_ROUTER_URL", api.URL)
@@ -101,7 +106,7 @@ func TestSDKLocalTokenRoundTrip(t *testing.T) {
 			require.NoError(t, err)
 			defer func() { _ = rsp.Body.Close() }()
 			require.Equal(t, http.StatusOK, rsp.StatusCode)
-			var id authn.Identity
+			var id sdkTestIdentity
 			require.NoError(t, json.NewDecoder(rsp.Body).Decode(&id))
 			require.Equal(t, tc.orgID, id.OrgID)
 			if tc.obo {
@@ -109,15 +114,28 @@ func TestSDKLocalTokenRoundTrip(t *testing.T) {
 				require.Equal(t, "42", id.ID)
 				require.Equal(t, "u42", id.UID)
 				require.Equal(t, tc.namespace, id.Namespace)
-				require.Contains(t, id.ClientParams.FetchPermissionsParams.K8sRestrictedActions, "dashboard.grafana.app/dashboards:list")
-				require.Empty(t, id.AccessTokenClaims.Rest.Permissions)
+				require.Contains(t, id.K8sRestrictedActions, "dashboard.grafana.app/dashboards:list")
+				require.Empty(t, id.Permissions)
 			} else {
 				require.Equal(t, types.TypeAccessPolicy, id.Type)
 				require.Equal(t, "example-app", id.ID)
-				require.Contains(t, id.ClientParams.FetchPermissionsParams.K8s, "dashboard.grafana.app/dashboards:list")
+				require.Contains(t, id.K8s, "dashboard.grafana.app/dashboards:list")
 			}
 		})
 	}
+}
+
+// sdkTestIdentity is what the test API returns about the authenticated identity:
+// only the fields the test checks, and never the access token itself.
+type sdkTestIdentity struct {
+	OrgID                int64
+	Type                 types.IdentityType
+	ID                   string
+	UID                  string
+	Namespace            string
+	K8s                  []string
+	K8sRestrictedActions []string
+	Permissions          []string
 }
 
 func sdkTestIDToken(t *testing.T, namespace string) string {
