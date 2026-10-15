@@ -15,6 +15,7 @@ export const testIds = {
     reusableComponent: 'b-app-configure-extension-component',
     reusableAddedComponent: 'b-app-add-component',
     exposedComponent: 'b-app-exposed-component',
+    commandPaletteOwner: 'b-app-command-palette-owner',
   },
   appC: {
     container: 'c-app-body',
