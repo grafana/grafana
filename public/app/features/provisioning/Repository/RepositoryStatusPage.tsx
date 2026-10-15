@@ -13,6 +13,7 @@ import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 import { RepoIcon } from '../Shared/RepoIcon';
 import { PROVISIONING_URL } from '../constants';
 
+import { BundlesView } from './BundlesView';
 import { RepositoryActions } from './RepositoryActions';
 import { RepositoryOverview } from './RepositoryOverview';
 import { ResourceTreeView } from './ResourceTreeView';
@@ -20,6 +21,7 @@ import { ResourceTreeView } from './ResourceTreeView';
 enum TabSelection {
   Overview = 'overview',
   Resources = 'resources',
+  Bundles = 'bundles',
 }
 
 export default function RepositoryStatusPage() {
@@ -49,6 +51,11 @@ export default function RepositoryStatusPage() {
         value: TabSelection.Resources,
         label: t('provisioning.repository-status-page.tab-resources', 'Resources'),
         title: t('provisioning.repository-status-page.tab-resources-title', 'Repository files and resources'),
+      },
+      {
+        value: TabSelection.Bundles,
+        label: t('provisioning.repository-status-page.tab-bundles', 'Bundles'),
+        title: t('provisioning.repository-status-page.tab-bundles-title', 'File bundles attached to resources'),
       },
     ],
     []
@@ -117,6 +124,7 @@ export default function RepositoryStatusPage() {
                 )}
                 {tab === TabSelection.Overview && <RepositoryOverview repo={data} />}
                 {tab === TabSelection.Resources && <ResourceTreeView repo={data} />}
+                {tab === TabSelection.Bundles && <BundlesView repo={data} />}
               </TabContent>
             </Stack>
           )

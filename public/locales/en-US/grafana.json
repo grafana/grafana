@@ -14132,6 +14132,14 @@
     "bulk-action": {
       "success-title-branch": "Requested changes were pushed to a branch"
     },
+    "bundles-view": {
+      "column-name": "Name",
+      "column-path": "Path",
+      "column-synced": "Last synced",
+      "description": "Bundles group the files a resource needs alongside it. A bundle's files are stored under a folder named after the bundle.",
+      "empty-description": "A bundle groups the files a resource needs alongside it — documentation, scripts or queries the resource pipeline cannot parse. Commit a Bundle manifest to this repository to see it here.",
+      "empty-message": "No bundles in this repository"
+    },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
       "title": "You can also use Git Sync on Grafana Cloud"
@@ -14859,6 +14867,8 @@
       "cleaning-up-resources": "Cleaning up repository resources",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
+      "tab-bundles": "Bundles",
+      "tab-bundles-title": "File bundles attached to resources",
       "tab-overview": "Overview",
       "tab-overview-title": "Repository overview",
       "tab-resources": "Resources",
@@ -14893,6 +14903,8 @@
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-kind": {
+      "bundle": "bundle",
+      "bundles": "Bundles",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "folder": "folder",
