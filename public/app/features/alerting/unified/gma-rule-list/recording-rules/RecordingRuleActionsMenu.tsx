@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { type ComponentSize, Dropdown, Menu } from '@grafana/ui';
 
 import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleButton';
+import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
 import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
@@ -13,6 +14,7 @@ import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteRecordingRule } from '../rule-actions/useDeleteRule';
 import { useRecordingRulePauseResume } from '../rule-actions/usePauseResumeRule';
 import { useRuleActionAbilities } from '../rule-actions/useRuleActionAbilities';
+import { isProvisionedOrManaged } from '../rule-data/ruleOwnership';
 import { type RuleResourceState } from '../rule-data/ruleResourceState';
 import { MoreButton } from '../shared/MoreButton';
 
@@ -32,10 +34,12 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, buttonSize }:
   const { setPaused, isPending: pausePending } = useRecordingRulePauseResume(ruleUid);
   const { deleteRule, isPending: deletePending } = useDeleteRecordingRule(ruleUid);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
 
   const rule = resourceState.status === 'loaded' ? resourceState.rule : undefined;
   const ruleTitle = rule?.spec.title ?? ruleUid;
   const isPaused = Boolean(rule?.spec.paused);
+  const confirmBeforeCopy = rule !== undefined && isProvisionedOrManaged(rule);
 
   const menuItems = (
     <>
@@ -51,7 +55,12 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, buttonSize }:
         onClick={() => setPaused(!isPaused)}
       />
       {rule && <AnalyzeK8sRuleButton kind="recording" rule={rule} />}
-      <DuplicateRuleMenuItem kind="recording" uid={ruleUid} availability={abilities.duplicate} />
+      <DuplicateRuleMenuItem
+        kind="recording"
+        uid={ruleUid}
+        availability={abilities.duplicate}
+        onConfirmFirst={confirmBeforeCopy ? () => setShowCopyModal(true) : undefined}
+      />
       <Menu.Divider />
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
@@ -74,6 +83,12 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, buttonSize }:
       <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom-end">
         <MoreButton fill="text" size={buttonSize} />
       </Dropdown>
+      <CopyProvisionedRuleModal
+        kind="recording"
+        uid={ruleUid}
+        isOpen={showCopyModal}
+        onDismiss={() => setShowCopyModal(false)}
+      />
       <DeleteRuleConfirmModal
         isOpen={showDeleteModal}
         ruleTitle={ruleTitle}

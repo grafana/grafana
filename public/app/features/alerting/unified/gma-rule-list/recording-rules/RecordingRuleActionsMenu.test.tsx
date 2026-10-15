@@ -1,10 +1,10 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { getAPIBaseURL } from '@grafana/api-clients';
 import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { useAssistant } from '@grafana/assistant';
-import { setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { appEvents } from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -53,6 +53,7 @@ const WRITABLE_ANNOTATIONS = {
   'grafana.com/access/canWrite': 'true',
   'grafana.com/access/canDelete': 'true',
 };
+const PROVISIONED_ANNOTATIONS = { ...WRITABLE_ANNOTATIONS, 'grafana.com/provenance': 'api' };
 
 function buildRule({
   annotations = WRITABLE_ANNOTATIONS,
@@ -296,6 +297,74 @@ describe('RecordingRuleActionsMenu', () => {
       'href',
       '/alerting/new/grafana-recording?copyFrom=rule-uid-1'
     );
+  });
+
+  describe('REC-5: Duplicate of a provisioned or managed rule confirms first', () => {
+    const MANAGED_ANNOTATIONS = { ...WRITABLE_ANNOTATIONS, 'grafana.app/managedBy': 'terraform' };
+
+    const LIST_ENTRY = { historyOptions: { initialEntries: ['/alerting/rules/recording'] } };
+
+    it.each([
+      ['provisioned', PROVISIONED_ANNOTATIONS],
+      ['managed', MANAGED_ANNOTATIONS],
+    ])('asks before copying a %s rule and navigates to the copy route on Copy', async (_kind, annotations) => {
+      render(
+        <RecordingRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{ status: 'loaded', rule: buildRule({ annotations }) }}
+        />,
+        LIST_ENTRY
+      );
+      const user = await openMenu();
+      const item = screen.getByRole('menuitem', { name: 'Duplicate' });
+      expect(item).not.toHaveAttribute('href');
+      await user.click(item);
+
+      const dialog = await screen.findByRole('dialog', { name: 'Copy provisioned recording rule' });
+      expect(dialog).toHaveTextContent('The new rule will not be marked as a provisioned rule.');
+      expect(dialog).toHaveTextContent(
+        'You will need to set a new evaluation group for the copied rule because the original one has been provisioned and cannot be used for rules created in the UI.'
+      );
+      expect(locationService.getLocation().pathname).toBe('/alerting/rules/recording');
+
+      await user.click(within(dialog).getByRole('button', { name: 'Copy' }));
+
+      expect(locationService.getLocation().pathname).toBe('/alerting/new/grafana-recording');
+      expect(locationService.getLocation().search).toBe('?copyFrom=rule-uid-1');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('stays on the list when the confirmation is cancelled', async () => {
+      render(
+        <RecordingRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{ status: 'loaded', rule: buildRule({ annotations: PROVISIONED_ANNOTATIONS }) }}
+        />,
+        LIST_ENTRY
+      );
+      const user = await openMenu();
+      await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Copy provisioned recording rule' });
+
+      await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(locationService.getLocation().pathname).toBe('/alerting/rules/recording');
+    });
+
+    it('opens no confirmation for a rule nothing outside the UI owns', async () => {
+      render(
+        <RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />,
+        LIST_ENTRY
+      );
+      await openMenu();
+
+      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toHaveAttribute(
+        'href',
+        '/alerting/new/grafana-recording?copyFrom=rule-uid-1'
+      );
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 
   it('does not show Silence or Manage enrichments, which are Alert-only', async () => {

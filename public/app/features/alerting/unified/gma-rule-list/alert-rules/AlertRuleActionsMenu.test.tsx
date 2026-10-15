@@ -1,11 +1,11 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { getAPIBaseURL } from '@grafana/api-clients';
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { useAssistant } from '@grafana/assistant';
 import { OrgRole } from '@grafana/data';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { appEvents } from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -406,6 +406,74 @@ describe('AlertRuleActionsMenu', () => {
 
     const href = screen.getByRole('menuitem', { name: 'Duplicate' }).getAttribute('href');
     expect(href).toBe('/alerting/new?copyFrom=rule-uid-1');
+  });
+
+  describe('ALERT-6: Duplicate of a provisioned or managed rule confirms first', () => {
+    const MANAGED_ANNOTATIONS = { ...WRITABLE_ANNOTATIONS, 'grafana.app/managedBy': 'terraform' };
+
+    const LIST_ENTRY = { historyOptions: { initialEntries: ['/alerting/rules/alert'] } };
+
+    it.each([
+      ['provisioned', PROVISIONED_ANNOTATIONS],
+      ['managed', MANAGED_ANNOTATIONS],
+    ])('asks before copying a %s rule and navigates to the copy route on Copy', async (_kind, annotations) => {
+      render(
+        <AlertRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{ status: 'loaded', rule: buildRule({ annotations }) }}
+        />,
+        LIST_ENTRY
+      );
+      const user = await openMenu();
+      const item = screen.getByRole('menuitem', { name: 'Duplicate' });
+      expect(item).not.toHaveAttribute('href');
+      await user.click(item);
+
+      const dialog = await screen.findByRole('dialog', { name: 'Copy provisioned alert rule' });
+      expect(dialog).toHaveTextContent('The new rule will not be marked as a provisioned rule.');
+      expect(dialog).toHaveTextContent(
+        'You will need to set a new evaluation group for the copied rule because the original one has been provisioned and cannot be used for rules created in the UI.'
+      );
+      expect(locationService.getLocation().pathname).toBe('/alerting/rules/alert');
+
+      await user.click(within(dialog).getByRole('button', { name: 'Copy' }));
+
+      expect(locationService.getLocation().pathname).toBe('/alerting/new');
+      expect(locationService.getLocation().search).toBe('?copyFrom=rule-uid-1');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('stays on the list when the confirmation is cancelled', async () => {
+      render(
+        <AlertRuleActionsMenu
+          ruleUid="rule-uid-1"
+          resourceState={{ status: 'loaded', rule: buildRule({ annotations: PROVISIONED_ANNOTATIONS }) }}
+        />,
+        LIST_ENTRY
+      );
+      const user = await openMenu();
+      await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Copy provisioned alert rule' });
+
+      await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(locationService.getLocation().pathname).toBe('/alerting/rules/alert');
+    });
+
+    it('opens no confirmation for a rule nothing outside the UI owns', async () => {
+      render(
+        <AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />,
+        LIST_ENTRY
+      );
+      await openMenu();
+
+      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toHaveAttribute(
+        'href',
+        '/alerting/new?copyFrom=rule-uid-1'
+      );
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 
   it('never issues a rule search request', async () => {

@@ -13,6 +13,7 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import { EnrichmentAction } from '../../hooks/abilities/types';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
 import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
@@ -22,6 +23,7 @@ import { useDeleteAlertRule } from '../rule-actions/useDeleteRule';
 import { useAlertRulePauseResume } from '../rule-actions/usePauseResumeRule';
 import { useRuleActionAbilities } from '../rule-actions/useRuleActionAbilities';
 import { useSilenceAvailability } from '../rule-actions/useSilenceAvailability';
+import { isProvisionedOrManaged } from '../rule-data/ruleOwnership';
 import { type RuleResourceState } from '../rule-data/ruleResourceState';
 import { MoreButton } from '../shared/MoreButton';
 
@@ -43,12 +45,14 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: Ale
   const [showSilenceDrawer, setShowSilenceDrawer] = useState(false);
   const [showEnrichmentDrawer, setShowEnrichmentDrawer] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
 
   const rule = resourceState.status === 'loaded' ? resourceState.rule : undefined;
   const ruleTitle = rule?.spec.title ?? ruleUid;
   const folderUid = rule?.metadata.annotations?.[AnnoKeyFolder];
   const isPaused = Boolean(rule?.spec.paused);
   const silence = useSilenceAvailability(resourceState);
+  const confirmBeforeCopy = rule !== undefined && isProvisionedOrManaged(rule);
 
   const canReadEnrichments = isGranted(useEnrichmentAbility(EnrichmentAction.Read));
   // alertingEnrichmentPerRule has no OpenFeature migration yet; this mirrors the same gate
@@ -76,7 +80,12 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: Ale
         onClick={() => setShowSilenceDrawer(true)}
       />
       {rule && <AnalyzeK8sRuleButton kind="alert" rule={rule} />}
-      <DuplicateRuleMenuItem kind="alert" uid={ruleUid} availability={abilities.duplicate} />
+      <DuplicateRuleMenuItem
+        kind="alert"
+        uid={ruleUid}
+        availability={abilities.duplicate}
+        onConfirmFirst={confirmBeforeCopy ? () => setShowCopyModal(true) : undefined}
+      />
       <Menu.Divider />
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
@@ -117,6 +126,12 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: Ale
       {showEnrichmentDrawer && (
         <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />
       )}
+      <CopyProvisionedRuleModal
+        kind="alert"
+        uid={ruleUid}
+        isOpen={showCopyModal}
+        onDismiss={() => setShowCopyModal(false)}
+      />
       <DeleteRuleConfirmModal
         isOpen={showDeleteModal}
         ruleTitle={ruleTitle}

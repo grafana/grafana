@@ -34,11 +34,26 @@ async function markProvisioned(page: Page, kind: 'alertrules' | 'recordingrules'
   expect(response.ok(), `mark provisioned -> ${response.status()}`).toBeTruthy();
 }
 
-// Duplicate is a plain link to the editor's copy route on every rule, provisioned or not: the list
-// shows no confirmation of its own, and it stays enabled on a provisioned rule.
+// Duplicate is a plain link to the editor's copy route on a normal rule. A provisioned rule asks first:
+// the modal explains the copy will not be provisioned, and Copy then follows the same route.
 async function duplicateThroughMenu(page: Page, kind: RuleListKind, title: string) {
   await new RuleListPage(page, kind).rowMoreButton(title).click();
   await page.getByRole('menuitem', { name: 'Duplicate', exact: true }).click();
+
+  await expect(page).toHaveURL(/\/alerting\/new(\/grafana-recording)?\?.*copyFrom=/);
+}
+
+async function confirmCopyOfProvisionedRule(page: Page, kind: RuleListKind, title: string) {
+  await new RuleListPage(page, kind).rowMoreButton(title).click();
+  await page.getByRole('menuitem', { name: 'Duplicate', exact: true }).click();
+
+  const dialog = page.getByRole('dialog', {
+    name: kind === 'alert' ? 'Copy provisioned alert rule' : 'Copy provisioned recording rule',
+  });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('The new rule will not be marked as a provisioned rule.');
+  await expect(dialog).toContainText('You will need to set a new evaluation group for the copied rule');
+  await dialog.getByRole('button', { name: 'Copy' }).click();
 
   await expect(page).toHaveURL(/\/alerting\/new(\/grafana-recording)?\?.*copyFrom=/);
 }
@@ -79,7 +94,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     expect(original.spec.title).toBe(title);
   });
 
-  test('ALERT-6: duplicating a provisioned-looking Alert rule opens the copy route and creates an unprovisioned copy', async ({
+  test('ALERT-6: duplicating a provisioned-looking Alert rule warns first, then creates an unprovisioned copy', async ({
     page,
     folder,
     alertRules,
@@ -91,7 +106,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoAlertFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
-    await duplicateThroughMenu(page, 'alert', title);
+    await confirmCopyOfProvisionedRule(page, 'alert', title);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
@@ -141,7 +156,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     expect(original.spec.title).toBe(title);
   });
 
-  test('REC-5: duplicating a provisioned-looking Recording rule opens the copy route and creates an unprovisioned copy', async ({
+  test('REC-5: duplicating a provisioned-looking Recording rule warns first, then creates an unprovisioned copy', async ({
     page,
     folder,
     recordingRules,
@@ -154,7 +169,7 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     await gotoRecordingFolderList(page, folder.uid);
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
-    await duplicateThroughMenu(page, 'recording', title);
+    await confirmCopyOfProvisionedRule(page, 'recording', title);
 
     await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
     await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
