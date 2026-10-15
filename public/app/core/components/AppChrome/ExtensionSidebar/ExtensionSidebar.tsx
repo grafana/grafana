@@ -9,7 +9,7 @@ import { useTheme2 } from '@grafana/ui';
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { type ExtensionSidebarPresentation } from './extensionSidebarLayout';
 import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
-import { FLOATING_DRAG_HANDLE_ATTRIBUTE, useFloatingDrag } from './useFloatingDrag';
+import { FLOATING_DRAG_HANDLE_ATTRIBUTE, FLOATING_SNAP_DURATION_MS, useFloatingDrag } from './useFloatingDrag';
 
 type ExtensionSidebarComponentProps = {
   props?: Record<string, unknown>;
@@ -97,6 +97,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       pointerEvents: 'auto',
       [`& [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grab', touchAction: 'none' },
       [`&[data-dragging], &[data-dragging] [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grabbing' },
+      // Only the glide to a snap point after a drag animates; the drag itself follows the pointer.
+      [theme.transitions.handleMotion('no-preference')]: {
+        '&[data-snapping]': {
+          transition: theme.transitions.create('transform', {
+            duration: FLOATING_SNAP_DURATION_MS,
+            easing: theme.transitions.easing.easeOut,
+          }),
+        },
+      },
       backgroundColor: 'transparent',
       border: 'none',
       borderRadius: 'unset',

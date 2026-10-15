@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 
-import { FLOATING_DRAG_HANDLE_ATTRIBUTE, useFloatingDrag } from './useFloatingDrag';
+import { FLOATING_DRAG_HANDLE_ATTRIBUTE, FLOATING_SNAP_DURATION_MS, useFloatingDrag } from './useFloatingDrag';
 
 // jsdom has no PointerEvent, so fireEvent would drop clientX and button from pointer events.
 if (typeof window.PointerEvent === 'undefined') {
@@ -16,8 +16,8 @@ if (typeof window.PointerEvent === 'undefined') {
   window.PointerEvent = PointerEventPolyfill as unknown as typeof PointerEvent;
 }
 
-/** The floating box at rest in its corner: 24px from the right and bottom of a 1024x768 viewport. */
-let natural = { left: 600, top: 500, width: 400, height: 244 };
+/** The floating box at rest at the bottom centre of a 1024x768 viewport, 24px from the bottom. */
+let natural = { left: 312, top: 500, width: 400, height: 244 };
 /** How far the handle sticks out past the box's left edge (0: inside the box). */
 let handleOutset = 0;
 const onHandleClick = jest.fn();
@@ -35,11 +35,15 @@ function Floating() {
 }
 
 beforeEach(() => {
-  natural = { left: 600, top: 500, width: 400, height: 244 };
+  natural = { left: 312, top: 500, width: 400, height: 244 };
   handleOutset = 0;
   onHandleClick.mockClear();
   window.localStorage.clear();
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    if (this.id === 'pageContent') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured box without toJSON
+      return { left: 0, top: 0, width: 1024, height: 768, right: 1024, bottom: 768, x: 0, y: 0 } as DOMRect;
+    }
     // Reports the translated box, like a browser would.
     const box = this.closest('[data-testid="floating"]') ?? this;
     const match = /translate\((-?\d+)px, (-?\d+)px\)/.exec(box instanceof HTMLElement ? box.style.transform : '');
@@ -65,7 +69,10 @@ beforeEach(() => {
   });
 });
 
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+  jest.restoreAllMocks();
+  document.getElementById('pageContent')?.remove();
+});
 
 const handle = () => screen.getByRole('button', { name: 'Move' });
 const floating = () => screen.getByTestId('floating');
@@ -77,38 +84,106 @@ function drag(from: { x: number; y: number }, to: { x: number; y: number }) {
   fireEvent.click(handle());
 }
 
-it('moves the floating box by dragging its handle, kept inside the page with a gutter', () => {
+it('follows the pointer while dragging, kept inside the page with a gutter', () => {
   render(<Floating />);
 
-  drag({ x: 700, y: 520 }, { x: 500, y: 320 });
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+  fireEvent.pointerMove(handle(), { clientX: 300, clientY: 320 });
   expect(floating().style.transform).toBe('translate(-200px, -200px)');
+  expect(floating()).toHaveAttribute('data-dragging');
+
+  fireEvent.pointerMove(handle(), { clientX: -2000, clientY: -2000 });
+  // Left edge at 8 (312 - 304) and top edge at 8 (500 - 492).
+  expect(floating().style.transform).toBe('translate(-304px, -492px)');
+
+  // Past the default place, down to the 8px gutter (the default sits 24px in).
+  fireEvent.pointerMove(handle(), { clientX: 5000, clientY: 5000 });
+  expect(floating().style.transform).toBe('translate(304px, 16px)');
+});
+
+// The anchors keep the default's 24px inset: left edge 24 (x -288), right edge 1000 (x 288), top edge 24 (y -476).
+it.each([
+  ['top left', { x: -250, y: -400 }, 'translate(-288px, -476px)'],
+  ['top centre', { x: 30, y: -400 }, 'translate(0px, -476px)'],
+  ['top right', { x: 250, y: -400 }, 'translate(288px, -476px)'],
+  ['bottom left', { x: -250, y: -50 }, 'translate(-288px, 0px)'],
+  ['bottom right', { x: 250, y: -50 }, 'translate(288px, 0px)'],
+])('snaps on release to the nearest snap point: %s', (_, by, transform) => {
+  render(<Floating />);
+
+  drag({ x: 500, y: 520 }, { x: 500 + by.x, y: 520 + by.y });
+
+  expect(floating().style.transform).toBe(transform);
   expect(floating()).toHaveAttribute('data-moved', 'true');
   // The handle's click does not fire after a move.
   expect(onHandleClick).not.toHaveBeenCalled();
-
-  drag({ x: 500, y: 320 }, { x: -2000, y: -2000 });
-  // Left edge at 8 (600 - 592) and top edge at 8 (500 - 492).
-  expect(floating().style.transform).toBe('translate(-592px, -492px)');
-
-  // Past the default corner, down to the 8px gutter (the corner sits 24px in).
-  drag({ x: 0, y: 0 }, { x: 5000, y: 5000 });
-  expect(floating().style.transform).toBe('translate(16px, 16px)');
 });
 
-it('keeps a handle that sits outside the box on the page too, without moving the corner', () => {
+it('snaps back to the default place at the bottom centre', () => {
+  render(<Floating />);
+
+  drag({ x: 500, y: 520 }, { x: 540, y: 460 });
+
+  expect(floating().style.transform).toBe('');
+  expect(floating()).toHaveAttribute('data-moved', 'false');
+  expect(onHandleClick).not.toHaveBeenCalled();
+});
+
+it('marks the glide to the snap point, and only that', () => {
+  jest.useFakeTimers();
+  render(<Floating />);
+
+  drag({ x: 500, y: 520 }, { x: 250, y: 120 });
+  expect(floating()).not.toHaveAttribute('data-dragging');
+  expect(floating()).toHaveAttribute('data-snapping');
+
+  act(() => {
+    jest.advanceTimersByTime(FLOATING_SNAP_DURATION_MS);
+  });
+  expect(floating()).not.toHaveAttribute('data-snapping');
+
+  // The arrow keys move in steps, without snapping or gliding.
+  fireEvent.keyDown(handle(), { key: 'ArrowRight' });
+  expect(floating().style.transform).toBe('translate(-272px, -476px)');
+  expect(floating()).not.toHaveAttribute('data-snapping');
+  jest.useRealTimers();
+});
+
+it('keeps a handle that sits outside the box on the page too, and snaps by it', () => {
   handleOutset = 28;
   render(<Floating />);
   expect(floating().style.transform).toBe('');
 
-  drag({ x: 590, y: 520 }, { x: -2000, y: 520 });
+  fireEvent.pointerDown(handle(), { clientX: 302, clientY: 520, button: 0 });
+  fireEvent.pointerMove(handle(), { clientX: -2000, clientY: 520 });
+  // The flag's left edge (312 - 28 - 276 = 8) stops at the gutter, not the box's.
+  expect(floating().style.transform).toBe('translate(-276px, 0px)');
 
-  // The flag's left edge (600 - 28 - 564 = 8) stops at the gutter, not the box's.
-  expect(floating().style.transform).toBe('translate(-564px, 0px)');
+  fireEvent.pointerUp(handle(), { clientX: -2000, clientY: 520 });
+  // The bottom-left point puts the flag's edge 24px in (312 - 28 - 260 = 24).
+  expect(floating().style.transform).toBe('translate(-260px, 0px)');
+});
+
+it('keeps off the docked menu, which the page content reserves as padding', () => {
+  const pageContent = document.createElement('div');
+  pageContent.id = 'pageContent';
+  pageContent.style.paddingLeft = '100px';
+  document.body.appendChild(pageContent);
+  render(<Floating />);
+
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0 });
+  fireEvent.pointerMove(handle(), { clientX: -2000, clientY: 520 });
+  // Left edge at 108: the menu's 100px plus the gutter.
+  expect(floating().style.transform).toBe('translate(-204px, 0px)');
+
+  fireEvent.pointerUp(handle(), { clientX: -2000, clientY: 520 });
+  // The bottom-left point is 24px past the menu, at 124.
+  expect(floating().style.transform).toBe('translate(-188px, 0px)');
 });
 
 it('treats a press that moves less than 4px as a click on the handle', () => {
   render(<Floating />);
-  drag({ x: 700, y: 520 }, { x: 702, y: 523 });
+  drag({ x: 500, y: 520 }, { x: 502, y: 523 });
   expect(floating().style.transform).toBe('');
   expect(onHandleClick).toHaveBeenCalledTimes(1);
 });
@@ -132,20 +207,20 @@ it('moves with the arrow keys and resets with Home or a double-click', () => {
 
 it('remembers the position: floating again starts where it was left', () => {
   const { unmount } = render(<Floating />);
-  drag({ x: 700, y: 520 }, { x: 600, y: 420 });
-  expect(floating().style.transform).toBe('translate(-100px, -100px)');
+  drag({ x: 500, y: 520 }, { x: 200, y: 420 });
+  expect(floating().style.transform).toBe('translate(-288px, 0px)');
 
   // Docking unmounts the floating element; floating again mounts a fresh one.
   unmount();
   render(<Floating />);
 
-  expect(floating().style.transform).toBe('translate(-100px, -100px)');
+  expect(floating().style.transform).toBe('translate(-288px, 0px)');
   expect(floating()).toHaveAttribute('data-moved', 'true');
 });
 
-it('forgets the position on reset, so floating again starts in the corner', () => {
+it('forgets the position on reset, so floating again starts at the bottom centre', () => {
   const { unmount } = render(<Floating />);
-  drag({ x: 700, y: 520 }, { x: 600, y: 420 });
+  drag({ x: 500, y: 520 }, { x: 200, y: 420 });
   fireEvent.keyDown(handle(), { key: 'Home' });
 
   unmount();
