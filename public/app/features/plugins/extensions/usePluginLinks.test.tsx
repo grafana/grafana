@@ -11,6 +11,7 @@ import {
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
+import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
@@ -21,7 +22,6 @@ import { type PluginExtensionRegistries } from './registry/types';
 import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginLinks } from './usePluginLinks';
-import { isGrafanaDevMode } from './utils';
 
 jest.mock('./useLoadAppPlugins');
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -36,11 +36,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
   }),
 }));
 
-jest.mock('./utils', () => ({
-  ...jest.requireActual('./utils'),
-
-  // Manually set the dev mode to false
-  // (to make sure that by default we are testing a production scenario)
+jest.mock('./isGrafanaDevMode', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
 

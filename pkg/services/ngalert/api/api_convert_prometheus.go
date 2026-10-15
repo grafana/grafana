@@ -860,10 +860,10 @@ func successfulResponse() response.Response {
 // if present. Otherwise, it returns the UID of the root folder.
 func getWorkingFolderUID(c *contextmodel.ReqContext) string {
 	folderUID := strings.TrimSpace(c.Req.Header.Get(folderUIDHeader))
-	if folderUID != "" {
-		return folderUID
+	if folder.IsRootFolderUID(folderUID) {
+		return folder.LegacyRootFolderUID // nolint:staticcheck // ""
 	}
-	return folder.LegacyRootFolderUID //nolint:staticcheck
+	return folderUID
 }
 
 func namespaceErrorResponse(err error) response.Response {
@@ -974,7 +974,7 @@ func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
 func convertPrometheusResponse(c *contextmodel.ReqContext, status int, body interface{}) *response.NormalResponse {
 	acceptHeader := c.Req.Header.Get("Accept")
 
-	for _, accept := range strings.Split(acceptHeader, ",") {
+	for accept := range strings.SplitSeq(acceptHeader, ",") {
 		mediaType, _, err := mime.ParseMediaType(accept)
 		if err != nil {
 			continue

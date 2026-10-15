@@ -23,7 +23,7 @@ func applyPreferredAPIVersions(logger log.Logger, cfg *setting.Cfg, scheme *runt
 		return nil
 	}
 
-	for _, part := range strings.Split(raw, ",") {
+	for part := range strings.SplitSeq(raw, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
@@ -126,7 +126,7 @@ func ReorderGroupVersionsForLegacyCodec(logger log.Logger, cfg *setting.Cfg, sch
 	}
 
 	out := slices.Clone(groupVersions)
-	for _, part := range strings.Split(raw, ",") {
+	for part := range strings.SplitSeq(raw, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

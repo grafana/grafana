@@ -1,10 +1,11 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, useMemo, type ReactNode } from 'react';
 
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaGlobalHomePreference } from '@grafana/runtime/internal';
 import {
   Alert,
   Box,
@@ -30,15 +31,35 @@ import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { homeDashboardChanged, languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
-import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
+import {
+  getGlobalHomeOption,
+  getLanguageOptions,
+  getStyles,
+  getTranslatedThemeName,
+  GLOBAL_HOME_DASHBOARD_UID,
+  type PrefsState,
+} from './utils';
 
-export const SharedPreferences = memo((props: Props) => {
-  const { resourceUri, preferenceType } = props;
+interface SharedPreferencesProps {
+  resourceUri: string;
+  disabled?: boolean;
+  preferenceType: 'org' | 'team' | 'user';
+  onConfirm?: () => Promise<boolean>;
+  legend: ReactNode;
+}
+
+export const SharedPreferences = memo((props: SharedPreferencesProps) => {
+  const { resourceUri, preferenceType, legend } = props;
 
   const [updatePreferences, { preferences: prefs, isLoading, isError, isUpdating, isUpdateError }] =
     useSharedPreferences(resourceUri);
 
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const includeGlobalHomeOption = useFlagGrafanaGlobalHomePreference();
+  const homeDashboardStaticOptions = useMemo(
+    () => (includeGlobalHomeOption ? [getGlobalHomeOption()] : undefined),
+    [includeGlobalHomeOption]
+  );
   const [state, setState] = useState<PrefsState>({
     theme: undefined,
     timezone: '',
@@ -107,7 +128,12 @@ export const SharedPreferences = memo((props: Props) => {
     if (nextHomeDashboardUID !== previousHomeDashboardUID) {
       homeDashboardChanged({
         preferenceType,
-        action: nextHomeDashboardUID ? 'set' : 'cleared',
+        action:
+          nextHomeDashboardUID === GLOBAL_HOME_DASHBOARD_UID
+            ? 'set_global_home'
+            : nextHomeDashboardUID
+              ? 'set'
+              : 'cleared',
       });
     }
 
@@ -177,7 +203,7 @@ export const SharedPreferences = memo((props: Props) => {
           title={t('shared-preferences.error.update-preferences', 'Error updating preferences')}
         />
       )}
-      <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
+      <FieldSet label={legend} disabled={props.disabled}>
         <Stack direction="column" gap={2}>
           {preferenceType === 'user' && <VisualRefreshInfo />}
           <Field
@@ -211,6 +237,7 @@ export const SharedPreferences = memo((props: Props) => {
               value={state.homeDashboardUID}
               onChange={(v) => handleDashboardChanged(v?.uid ?? '')}
               defaultOptions={true}
+              staticOptions={homeDashboardStaticOptions}
               isClearable={true}
               showUnknown={true}
               placeholder={t('shared-preferences.fields.home-dashboard-placeholder', 'Default dashboard')}

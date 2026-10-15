@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useEffect, useId, useState } from 'react';
 import { action } from 'storybook/actions';
 

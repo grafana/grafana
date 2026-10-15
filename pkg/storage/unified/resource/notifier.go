@@ -7,13 +7,12 @@ import (
 	"fmt"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"time"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 const (
@@ -33,18 +32,25 @@ type notifier interface {
 	Publish(Event)
 }
 
+var (
+	_ notifier = (*pollingNotifier)(nil)
+	_ notifier = (*channelNotifier)(nil)
+	_ notifier = (*natsNotifier)(nil)
+)
+
 type pollingNotifier struct {
 	eventStore *eventStore
-	log        log.Logger
+	log        logging.Logger
 }
 
 type notifierOptions struct {
-	log                log.Logger
+	log                logging.Logger
 	useChannelNotifier bool
 
 	enableNatsNotifier bool
 	eventSubscriber    EventSubscriber
 	natsDropped        *prometheus.CounterVec
+	invalidator        Invalidator
 }
 
 type WatchOptions struct {
@@ -52,6 +58,15 @@ type WatchOptions struct {
 	BufferSize  int           // How many events to buffer
 	MinBackoff  time.Duration // Minimum interval between polling requests
 	MaxBackoff  time.Duration // Maximum interval between polling requests
+
+	// captureReady is a buffered, one-shot startup acknowledgment, not a timer.
+	captureReady chan<- error
+}
+
+func (opts WatchOptions) captured(err error) {
+	if opts.captureReady != nil {
+		opts.captureReady <- err
+	}
 }
 
 func (opts WatchOptions) normalize() WatchOptions {
@@ -73,25 +88,25 @@ func (opts WatchOptions) normalize() WatchOptions {
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	if opts.enableNatsNotifier {
 		if opts.eventSubscriber != nil && opts.eventSubscriber.Enabled() {
-			return newNatsNotifier(opts.eventSubscriber, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
+			return newNatsNotifier(opts.eventSubscriber, opts.invalidator, opts.natsDropped, opts.log.With("notifier", "natsNotifier"))
 		}
 		opts.log.Warn("nats notifier requested but subscriber unavailable, falling back to polling")
 	}
 
 	if opts.useChannelNotifier {
-		return newChannelNotifier(opts.log.New("notifier", "channelNotifier"))
+		return newChannelNotifier(opts.log.With("notifier", "channelNotifier"))
 	}
 
-	return &pollingNotifier{eventStore: eventStore, log: opts.log.New("notifier", "pollingNotifier")}
+	return &pollingNotifier{eventStore: eventStore, log: opts.log.With("notifier", "pollingNotifier")}
 }
 
 type channelNotifier struct {
-	log         log.Logger
+	log         logging.Logger
 	subscribers map[chan Event]struct{}
 	mu          sync.Mutex
 }
 
-func newChannelNotifier(log log.Logger) *channelNotifier {
+func newChannelNotifier(log logging.Logger) *channelNotifier {
 	return &channelNotifier{
 		log:         log,
 		subscribers: make(map[chan Event]struct{}),
@@ -112,6 +127,7 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 	cn.mu.Lock()
 	cn.subscribers[raw] = struct{}{}
 	cn.mu.Unlock()
+	opts.captured(nil)
 
 	// Output channel with settled, sorted events, returned to the watcher.
 	out := make(chan Event, opts.BufferSize)
@@ -211,7 +227,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 		lastEmittedRV = 0 // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
+		if opts.captureReady != nil {
+			opts.captured(err)
+			close(events)
+			return events
+		}
 	}
+	opts.captured(nil)
 
 	go func() {
 		defer close(events)
@@ -239,10 +261,12 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 			case <-time.After(currentInterval):
 				// Poll for new events since lastEmittedRV.
 				// ListSince is inclusive, so skip events at or below lastEmittedRV.
-				for evt, err := range n.eventStore.ListSince(ctx, lastEmittedRV, SortOrderAsc) {
+				listFailed := false
+				for evt, err := range n.eventStore.ListSince(ctx, lastEmittedRV) {
 					if err != nil {
 						n.log.Error("Failed to list events since", "error", err)
-						continue
+						listFailed = true
+						break
 					}
 					if evt.ResourceVersion <= lastEmittedRV {
 						continue
@@ -253,6 +277,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 					}
 					seen[key] = true
 					buffer = append(buffer, evt)
+				}
+
+				// A partial scan may end within a shared RV. Retain the buffer, but
+				// do not advance lastEmittedRV past unread events until a scan succeeds.
+				if listFailed {
+					currentInterval = bo.NextDelay()
+					continue
 				}
 
 				// Sort buffer by RV

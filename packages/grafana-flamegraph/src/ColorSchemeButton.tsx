@@ -89,8 +89,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: 300,
     justifyContent: 'space-between',
     padding: '0 2px',
-    // eslint-disable-next-line @grafana/no-border-radius-literal
-    borderRadius: '2px',
+    borderRadius: theme.shape.radius.sm,
   }),
   colorDotByValue: css({
     label: 'colorDotByValue',

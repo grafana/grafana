@@ -1,5 +1,6 @@
+import { type AdHocVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceInstance } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type VariableModel, defaultDashboard } from '@grafana/schema';
 import {
@@ -16,7 +17,6 @@ import {
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type DashboardDTO } from 'app/types/dashboard';
 
 import { contextSrv } from '../../../core/services/context_srv';
@@ -26,7 +26,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
 
   if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
     // Add filter and group by variables if the datasource supports it
-    const defaultDs = await getDatasourceSrv().get();
+    const defaultDs = await getDataSourceInstance();
 
     const datasourceRef = {
       type: defaultDs.meta.id,
@@ -34,14 +34,14 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
     };
 
     if (defaultDs.getTagKeys) {
-      const filterVariable = {
+      const filterVariable: VariableModel & Pick<AdHocVariableModel, 'filters' | 'type'> = {
         datasource: datasourceRef,
         filters: [],
         name: 'Filter',
         type: 'adhoc',
       };
 
-      variablesList = (variablesList || []).concat([filterVariable as VariableModel]);
+      variablesList = (variablesList || []).concat([filterVariable]);
     }
 
     if (defaultDs.getGroupByKeys) {
@@ -98,7 +98,7 @@ export async function buildNewDashboardSaveModelV2(
 
   if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
     // Add filter and group by variables if the datasource supports it
-    const defaultDs = await getDatasourceSrv().get();
+    const defaultDs = await getDataSourceInstance();
 
     const datasourceRef = {
       type: defaultDs.meta.id,

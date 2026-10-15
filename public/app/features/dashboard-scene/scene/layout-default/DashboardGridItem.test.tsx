@@ -23,8 +23,8 @@ setPluginImportUtils({
 });
 
 const mockGetQueryRunnerFor = jest.fn();
-jest.mock('../../utils/utils', () => ({
-  ...jest.requireActual('../../utils/utils'),
+jest.mock('../../utils/getQueryRunnerFor', () => ({
+  ...jest.requireActual('../../utils/getQueryRunnerFor'),
   getQueryRunnerFor: jest.fn().mockImplementation(() => mockGetQueryRunnerFor()),
 }));
 
@@ -138,7 +138,15 @@ describe('PanelRepeaterGridItem', () => {
     // mimic returning to dashboard
     activateFullSceneTree(scene);
 
-    panel.publishEvent(new DashboardEditActionEvent({ source: panel, perform: () => {}, undo: () => {} }), true);
+    panel.publishEvent(
+      new DashboardEditActionEvent({
+        source: panel,
+        meta: { actionId: 'test.edit' },
+        perform: () => {},
+        undo: () => {},
+      }),
+      true
+    );
 
     await waitFor(() => {
       expect(panel.state.repeatedPanels?.length).toBe(4);

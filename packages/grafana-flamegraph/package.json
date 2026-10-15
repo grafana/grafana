@@ -65,10 +65,9 @@
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
     "@rollup/plugin-node-resolve": "16.0.1",
-    "@storybook/addon-webpack5-compiler-swc": "^4.0.2",
-    "@storybook/preset-scss": "1.0.3",
+    "@rsbuild/core": "^2.1.9",
+    "@rsbuild/plugin-react": "^2.1.0",
     "@storybook/react": "10.3.6",
-    "@storybook/react-webpack5": "10.3.6",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "^6.1.2",
     "@testing-library/react": "16.3.0",
@@ -76,7 +75,7 @@
     "@types/d3-scale": "^4",
     "@types/fs-extra": "^11",
     "@types/jest": "^29.5.4",
-    "@types/lodash": "4.17.20",
+    "@types/lodash": "^4.17.25",
     "@types/node": "24.10.1",
     "@types/react": "19.2.18",
     "@types/react-table": "^7.7.20",
@@ -90,6 +89,7 @@
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "storybook": "10.3.6",
+    "storybook-react-rsbuild": "3.3.4",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {

@@ -18,7 +18,7 @@ func TestIPRateLimiterAllow(t *testing.T) {
 	t.Run("allows up to burst then rejects within the same instant", func(t *testing.T) {
 		l := newIPRateLimiter(10, 20, "")
 
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			assert.True(t, l.Allow("1.2.3.4", now), "request %d should be allowed within burst", i)
 		}
 		assert.False(t, l.Allow("1.2.3.4", now), "request beyond burst should be rejected")
@@ -37,14 +37,14 @@ func TestIPRateLimiterAllow(t *testing.T) {
 	t.Run("refills at the configured rps over time", func(t *testing.T) {
 		l := newIPRateLimiter(10, 10, "")
 
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			require.True(t, l.Allow("1.2.3.4", now))
 		}
 		assert.False(t, l.Allow("1.2.3.4", now))
 
 		// After 1s at 10 rps, 10 tokens have refilled (capped at burst).
 		later := now.Add(time.Second)
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			assert.True(t, l.Allow("1.2.3.4", later), "request %d should be allowed after refill", i)
 		}
 		assert.False(t, l.Allow("1.2.3.4", later))

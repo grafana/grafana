@@ -5,7 +5,6 @@ package connection
 import (
 	context "context"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -23,22 +22,24 @@ func (_m *MockOAuthConnection) EXPECT() *MockOAuthConnection_Expecter {
 }
 
 // ExchangeAuthorizationCode provides a mock function with given fields: ctx, code, redirectURI
-func (_m *MockOAuthConnection) ExchangeAuthorizationCode(ctx context.Context, code string, redirectURI string) (v0alpha1.RawSecureValue, error) {
+func (_m *MockOAuthConnection) ExchangeAuthorizationCode(ctx context.Context, code string, redirectURI string) (*ExpirableSecureValue, error) {
 	ret := _m.Called(ctx, code, redirectURI)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ExchangeAuthorizationCode")
 	}
 
-	var r0 v0alpha1.RawSecureValue
+	var r0 *ExpirableSecureValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (v0alpha1.RawSecureValue, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*ExpirableSecureValue, error)); ok {
 		return rf(ctx, code, redirectURI)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) v0alpha1.RawSecureValue); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *ExpirableSecureValue); ok {
 		r0 = rf(ctx, code, redirectURI)
 	} else {
-		r0 = ret.Get(0).(v0alpha1.RawSecureValue)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ExpirableSecureValue)
+		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
@@ -70,12 +71,12 @@ func (_c *MockOAuthConnection_ExchangeAuthorizationCode_Call) Run(run func(ctx c
 	return _c
 }
 
-func (_c *MockOAuthConnection_ExchangeAuthorizationCode_Call) Return(_a0 v0alpha1.RawSecureValue, _a1 error) *MockOAuthConnection_ExchangeAuthorizationCode_Call {
+func (_c *MockOAuthConnection_ExchangeAuthorizationCode_Call) Return(_a0 *ExpirableSecureValue, _a1 error) *MockOAuthConnection_ExchangeAuthorizationCode_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockOAuthConnection_ExchangeAuthorizationCode_Call) RunAndReturn(run func(context.Context, string, string) (v0alpha1.RawSecureValue, error)) *MockOAuthConnection_ExchangeAuthorizationCode_Call {
+func (_c *MockOAuthConnection_ExchangeAuthorizationCode_Call) RunAndReturn(run func(context.Context, string, string) (*ExpirableSecureValue, error)) *MockOAuthConnection_ExchangeAuthorizationCode_Call {
 	_c.Call.Return(run)
 	return _c
 }

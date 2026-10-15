@@ -3,8 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { CoreApp, type DataSourceApi, type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, reportInteraction, getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
   type SceneComponentProps,
@@ -40,7 +39,8 @@ import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { trackAddQuery } from '../PanelEditNext/tracking';
 
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';

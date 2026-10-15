@@ -254,6 +254,11 @@ inhibit_rules:
 		return strings.Compare(a.Name, b.Name)
 	})
 
+	// Receivers are now a top-level map keyed by name, so they serialize sorted by name too.
+	slices.SortFunc(originalDB.AlertmanagerConfig.Receivers, func(a, b *definition.PostableApiReceiver) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+
 	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {
 		t.Errorf("Unexpected change in converted DB: %v", diff)

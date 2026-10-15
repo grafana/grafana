@@ -8,12 +8,13 @@ import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Stack } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { PanelQueryEditorRow } from './PanelQueryEditorRow';
 import { applyQueries } from './applyQueries';
+import { NotebookCellTimeRangeControl } from './edit/NotebookCellTimeRangeControl';
 
 interface Props {
   panel: VizPanel;
@@ -62,7 +63,8 @@ export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
 
   return (
     <Stack direction="column" gap={1}>
-      <Stack justifyContent="flex-end">
+      <Stack justifyContent="flex-end" alignItems="center">
+        {cell && <NotebookCellTimeRangeControl cell={cell} />}
         <Button
           icon="plus"
           variant="secondary"

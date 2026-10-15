@@ -10,6 +10,7 @@ import { type Role } from 'app/types/accessControl';
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';
 import { MENU_MAX_HEIGHT } from './constants';
+import { getRoleGroupOverride } from './roleGroupExtension';
 import { getStyles } from './styles';
 
 enum GroupType {
@@ -295,9 +296,9 @@ export const RolePickerMenu = ({
   );
 };
 
-const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:') && !option.name.startsWith('plugins:');
-const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
-const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:');
+const filterCustomRoles = (option: Role) => !filterFixedRoles(option) && !filterPluginsRoles(option);
+const filterFixedRoles = (option: Role) => getRolePrefix(option) === 'fixed';
+const filterPluginsRoles = (option: Role) => getRolePrefix(option) === 'plugins';
 
 interface GroupsMap {
   [key: string]: { roles: Role[]; name: string };
@@ -330,10 +331,14 @@ const getRoleGroup = (role: Role) => {
 };
 
 const getRoleGroupName = (role: Role) => {
-  return role.group || 'Other';
+  return getRoleGroupOverride(role)?.name ?? (role.group || 'Other');
 };
 
 const getRolePrefix = (role: Role) => {
+  const override = getRoleGroupOverride(role);
+  if (override) {
+    return override.prefix;
+  }
   const prefixEnd = role.name.indexOf(':');
   if (prefixEnd < 0) {
     return 'unknown';

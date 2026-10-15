@@ -2409,7 +2409,7 @@ func TestEvaluate_RecordsEveryFileForJobSummary(t *testing.T) {
 	recorded := recordPreviewedResults(progress)
 
 	changes := make([]repository.VersionedFileChange, 0, 12)
-	for i := 0; i < 12; i++ {
+	for i := range 12 {
 		changes = append(changes, repository.VersionedFileChange{
 			Action:      repository.FileActionDeleted,
 			Path:        fmt.Sprintf("dashboards/%d.json", i),

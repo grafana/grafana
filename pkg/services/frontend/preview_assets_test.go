@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -18,7 +19,7 @@ import (
 // previewTestNamespace is allowlisted in setupPreviewTestMux.
 const previewTestNamespace = "stacks-123456"
 
-// previewTestManifest is served by the mock bucket server in preview assets tests.
+// The mock bucket serves distinct webpack and Rspack manifests at the CI upload paths.
 const previewTestManifest = `{
 	"entrypoints": {
 		"app": {
@@ -29,20 +30,42 @@ const previewTestManifest = `{
 		},
 		"dark": { "assets": { "css": ["public/build/grafana.dark.preview.css"] } },
 		"light": { "assets": { "css": ["public/build/grafana.light.preview.css"] } }
-	}
+	},
+	"runtime.js": { "src": "public/build/runtime.preview.js", "integrity": "sha256-webpack-runtime" },
+	"app.js": { "src": "public/build/app.preview.js", "integrity": "sha256-webpack-app" }
 }`
 
-// newPreviewBucketServer returns a server that serves previewTestManifest for
-// the given folder, mimicking the GCS bucket layout the CI workflow uploads.
+const rspackPreviewTestManifest = `{
+	"entrypoints": {
+		"esModule": true,
+		"app": {
+			"assets": {
+				"js": ["public/build/rspack/runtime.preview.js", "public/build/rspack/app.preview.js"],
+				"css": ["public/build/rspack/grafana.app.preview.css"]
+			}
+		},
+		"dark": { "assets": { "css": ["public/build/rspack/grafana.dark.preview.css"] } },
+		"light": { "assets": { "css": ["public/build/rspack/grafana.light.preview.css"] } }
+	},
+	"runtime.js": { "src": "public/build/rspack/runtime.preview.js", "integrity": "sha256-rspack-runtime" },
+	"app.js": { "src": "public/build/rspack/app.preview.js", "integrity": "sha256-rspack-app" }
+}`
+
 func newPreviewBucketServer(t *testing.T, folder string) *httptest.Server {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/"+folder+"/public/build/assets-manifest.json" {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(previewTestManifest))
+		var manifest string
+		switch r.URL.Path {
+		case "/" + folder + "/public/build/assets-manifest.json":
+			manifest = previewTestManifest
+		case "/" + folder + "/public/build/rspack/assets-manifest.json":
+			manifest = rspackPreviewTestManifest
+		default:
+			http.NotFound(w, r)
 			return
 		}
-		http.NotFound(w, r)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(manifest))
 	}))
 	t.Cleanup(server.Close)
 	return server
@@ -57,10 +80,11 @@ func setupPreviewTestMux(t *testing.T, previewBaseURL string) *web.Mux {
 	raw.Section("frontend_service").Key("preview_assets_allowed_namespaces").SetValue(previewTestNamespace)
 
 	cfg := &setting.Cfg{
-		Raw:            raw,
-		HTTPPort:       "3000",
-		StaticRootPath: setupTestWebAssets(t),
-		Env:            setting.Dev,
+		Raw:                   raw,
+		HTTPPort:              "3000",
+		StaticRootPath:        setupTestWebAssetsWithRspack(t),
+		Env:                   setting.Dev,
+		AssetSriChecksEnabled: true,
 	}
 	service := createTestService(t, cfg)
 
@@ -200,6 +224,48 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 		csrfCookie := getCookie(t, recorder.Result(), previewCSRFCookieName)
 		require.NotNil(t, csrfCookie)
 		assert.Equal(t, -1, csrfCookie.MaxAge, "CSRF cookie should be cleared")
+	})
+
+	t.Run("should set the cookie when the selected rspack preview exists", func(t *testing.T) {
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+		mux, token := setup(t)
+
+		req := newPreviewRequest(confirmURL(token))
+		req.AddCookie(&http.Cookie{Name: previewCSRFCookieName, Value: token})
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusSeeOther, recorder.Code)
+		previewCookie := getCookie(t, recorder.Result(), previewAssetsCookieName)
+		require.NotNil(t, previewCookie)
+		assert.Equal(t, folder, previewCookie.Value)
+	})
+
+	t.Run("should reject confirmation when webpack exists but selected rspack preview is missing", func(t *testing.T) {
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+		bucket := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/"+folder+"/public/build/assets-manifest.json" {
+				http.NotFound(w, r)
+				return
+			}
+			_, _ = w.Write([]byte(previewTestManifest))
+		}))
+		t.Cleanup(bucket.Close)
+		mux := setupPreviewTestMux(t, bucket.URL+"/")
+
+		req := newPreviewRequest("/-/set-preview-assets?assets=" + folder)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+		require.Equal(t, http.StatusOK, recorder.Code)
+		token := getCookie(t, recorder.Result(), previewCSRFCookieName).Value
+
+		req = newPreviewRequest(confirmURL(token))
+		req.AddCookie(&http.Cookie{Name: previewCSRFCookieName, Value: token})
+		recorder = httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusBadGateway, recorder.Code)
+		assert.Nil(t, getCookie(t, recorder.Result(), previewAssetsCookieName))
 	})
 
 	t.Run("should reject a confirmation without the CSRF cookie", func(t *testing.T) {

@@ -5,7 +5,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
-import { getQueryRunnerFor } from './utils';
+import { getQueryRunnerFor } from './getQueryRunnerFor';
 
 function deduplicateDatasourceRefsByType(refs: Array<DataSourceRef | null | undefined>): DataSourceRef[] {
   const dsByType: Record<string, DataSourceRef> = {};

@@ -67,3 +67,26 @@ export function notebookEditHref(uid: string): string {
 export function notebookShareUrl(uid: string): string {
   return new URL(notebookViewHref(uid), config.appUrl).href;
 }
+
+/**
+ * Whether the url asks for edit mode, for callers that run before the scene syncs with it.
+ * `NotebookSceneUrlSync` answers the same question from the values the sync manager hands it.
+ *
+ * `getSearchObject` turns 'true' into a boolean, so it cannot tell `?edit=true` from `?edit=1`.
+ * This reads the raw string instead.
+ */
+export function isNotebookEditUrl(): boolean {
+  const search = new URLSearchParams(locationService.getLocation().search);
+
+  return search.get(NOTEBOOK_EDIT_PARAM) === NOTEBOOK_EDIT_PARAM_ON;
+}
+
+/**
+ * The chromeless route the PDF export points the headless browser at (see export/openNotebookPdf).
+ *
+ * `render` is a static segment, which a v6 `<Routes>` ranks above the view route's `:slug?`, so it
+ * cannot be swallowed as one. Raw, with no sub-path applied, like `notebookViewUrl`.
+ */
+export function notebookRenderUrl(uid: string): string {
+  return `${notebookViewUrl(uid)}/render`;
+}

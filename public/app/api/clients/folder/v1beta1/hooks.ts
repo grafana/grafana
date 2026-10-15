@@ -5,6 +5,7 @@ import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1'
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
 import {
   API_GROUP as IAM_API_GROUP,
   API_VERSION as IAM_API_VERSION,
@@ -29,7 +30,7 @@ import {
   browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
+import { getSelectedUIDs, getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
@@ -38,6 +39,7 @@ import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
   AnnoKeyGrantPermissions,
+  AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
@@ -138,7 +140,7 @@ export async function getFolderByUidFacade(uid: string) {
   // folder for either rather than fetching a folder resource that doesn't exist.
   const isRoot = isRootFolderUID(uid);
   const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
-  const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
+  const shouldUseAppPlatformAPI = getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true);
 
   if (shouldUseAppPlatformAPI) {
     // Virtual folders aren't real resources, so the folder object comes from a
@@ -204,7 +206,7 @@ export async function getFolderByUidFacade(uid: string) {
  * @param uid
  */
 export function useGetFolderQueryFacade(uid?: string) {
-  const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
   // "" / undefined and "general" both mean the synthetic root folder —
   // neither is a real folder resource.
   const isRoot = isRootFolderUID(uid);
@@ -235,7 +237,9 @@ export function useGetFolderQueryFacade(uid?: string) {
   }, [needsUserData, resultFolder, triggerGetUserDisplayMapping]);
 
   if (!shouldUseAppPlatformAPI) {
-    return legacyFolderResult;
+    // RTK keeps `data` from the last fetched folder once the arg flips to skipToken; a caller that
+    // cleared its uid must not keep seeing that folder
+    return uid ? legacyFolderResult : { ...legacyFolderResult, data: undefined };
   }
 
   // For virtual folders the folder object is hardcoded and there are no parents, but access
@@ -257,7 +261,14 @@ export function useGetFolderQueryFacade(uid?: string) {
     // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
     // api client.
     let newData: CombinedFolder | undefined;
-    if (resultFolder.data && resultParents.data && resultAccess.data && (!needsUserData || resultUserDisplay.data)) {
+    // Guarded on `uid` for the same reason as the legacy branch: a cleared uid must not keep the last folder
+    if (
+      uid &&
+      resultFolder.data &&
+      resultParents.data &&
+      resultAccess.data &&
+      (!needsUserData || resultUserDisplay.data)
+    ) {
       newData = combineFolderResponses(
         resultFolder.data,
         resultAccess.data,
@@ -283,10 +294,11 @@ export function useDeleteFolderMutationFacade() {
   const [deleteFolderLegacy] = useDeleteFolderMutationLegacy();
   const refresh = useRefreshFolders();
   const notify = useAppNotification();
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
   const isBackendSupport = false;
-  if (!(config.featureToggles.foldersAppPlatformAPI && isBackendSupport)) {
+  if (!(shouldUseAppPlatformAPI && isBackendSupport)) {
     return deleteFolderLegacy;
   }
 
@@ -310,10 +322,11 @@ export function useDeleteMultipleFoldersMutationFacade() {
   const [deleteFolder] = useDeleteFolderMutation();
   const dispatch = useDispatch();
   const refresh = useRefreshFolders();
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
   const isBackendSupport = false;
-  if (!(config.featureToggles.foldersAppPlatformAPI && isBackendSupport)) {
+  if (!(shouldUseAppPlatformAPI && isBackendSupport)) {
     return deleteFoldersLegacy;
   }
 
@@ -350,8 +363,9 @@ export function useMoveMultipleFoldersMutationFacade() {
   const [updateFolder, updateFolderData] = useUpdateFolderMutation();
   const dispatch = useDispatch();
   const refetch = useRefreshFolders();
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
-  if (!config.featureToggles.foldersAppPlatformAPI) {
+  if (!shouldUseAppPlatformAPI) {
     return moveFoldersLegacyResult;
   }
 
@@ -392,8 +406,9 @@ export function useCreateFolder() {
   const [createFolder, result] = useCreateFolderMutation();
   const legacyHook = useLegacyNewFolderMutation();
   const refresh = useRefreshFolders();
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
-  if (!config.featureToggles.foldersAppPlatformAPI) {
+  if (!shouldUseAppPlatformAPI) {
     return legacyHook;
   }
 
@@ -464,8 +479,9 @@ export function useUpdateFolder() {
   const [updateFolder, result] = useUpdateFolderMutation();
   const legacyHook = useLegacySaveFolderMutation();
   const refresh = useRefreshFolders();
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
-  if (!config.featureToggles.foldersAppPlatformAPI) {
+  if (!shouldUseAppPlatformAPI) {
     return legacyHook;
   }
 
@@ -504,8 +520,9 @@ export function useMoveFolderMutationFacade() {
   const moveFolderResult = useMoveFolderMutationLegacy();
   const refresh = useRefreshFolders();
   const notify = useAppNotification();
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
-  if (!config.featureToggles.foldersAppPlatformAPI) {
+  if (!shouldUseAppPlatformAPI) {
     return moveFolderResult;
   }
 
@@ -535,7 +552,7 @@ function useRefreshFolders() {
 
   return (options: { parentsOf?: string[]; childrenOf?: string }) => {
     if (options.parentsOf) {
-      dispatch(refreshParents(options.parentsOf));
+      dispatch(refreshParents({ kind: 'folder', uids: options.parentsOf }));
     }
     // Refetch children even if we passed in `childrenOf: undefined`, as this corresponds to the root folder
     if (options.childrenOf || 'childrenOf' in options) {
@@ -549,13 +566,13 @@ function useRefreshFolders() {
   };
 }
 
-export function useGetAffectedItems({ folder, dashboard }: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>) {
-  const folderUIDs = Object.keys(folder).filter((uid) => folder[uid]);
-  const dashboardUIDs = Object.keys(dashboard).filter((uid) => dashboard[uid]);
+export function useGetAffectedItems(selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>) {
+  const folderUIDs = getSelectedUIDs(selectedItems, 'folder');
+  const dashboardUIDs = getSelectedUIDs(selectedItems, 'dashboard');
 
   // Note the app platform counts are not calculated recursively, so the two APIs don't report the same numbers for
   // nested folders but both are good enough to report whether folder is empty or not.
-  const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
   const hookParams:
     | Parameters<typeof useLegacyGetAffectedItemsQuery>[0]
     | Parameters<typeof useGetAffectedItemsQuery>[0] = {
@@ -614,6 +631,7 @@ const appPlatformFolderToLegacyFolder = (
     updated: annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     managedBy: annotations?.[AnnoKeyManagerKind] as ManagerKind,
+    managerId: annotations?.[AnnoKeyManagerIdentity],
     parentUid: annotations?.[AnnoKeyFolder],
     version: generation || 1,
     hasAcl: false,

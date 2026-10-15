@@ -119,7 +119,6 @@ export function getRawDashboardChanges(
     diffCount,
     hasChanges: diffCount > 0,
     hasTimeChanges: hasTimeChanged,
-    isNew: changedSaveModel.version === 0,
     hasVariableValueChanges,
     hasRefreshChange: hasRefreshChanged,
   };

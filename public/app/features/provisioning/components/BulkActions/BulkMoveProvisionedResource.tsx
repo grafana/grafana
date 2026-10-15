@@ -8,10 +8,8 @@ import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
-import { getSelectedFolderUIDs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
-import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
+import { collectSelectedItems, getSelectedUIDs } from 'app/features/browse-dashboards/utils/dashboards';
 import { getCanPushToConfiguredBranch } from 'app/features/provisioning/components/defaults';
 import {
   RepoViewStatus,
@@ -20,6 +18,7 @@ import {
 import { isRootFolderUID } from 'app/features/search/constants';
 
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useSelectedItemParentUIDs } from '../../hooks/useSelectedItemParentUIDs';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -36,24 +35,16 @@ import {
   getBulkActionInitialValues,
   getSelectedResourceCountSummary,
   getTargetFolderPathInRepo,
-  isSameFolderPath,
+  isSelectionAlreadyInFolder,
 } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
   repository: RepositoryView;
   canPushToConfiguredBranch: boolean;
-  folderPath?: string;
 }
 
-function FormContent({
-  initialValues,
-  selectedItems,
-  repository,
-  canPushToConfiguredBranch,
-  folderPath,
-  onDismiss,
-}: FormProps) {
+function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
@@ -63,6 +54,7 @@ function FormContent({
 
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
+  const selectedItemParentUIDs = useSelectedItemParentUIDs(selectedItems);
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const {
     handleSubmit,
@@ -111,7 +103,7 @@ function FormContent({
     // 1. Setup
     const { targetFolderPathInRepo, resources } = setupMoveOperation();
 
-    if (!targetFolderPathInRepo) {
+    if (targetFolderUID === undefined || !targetFolderPathInRepo) {
       setError('targetFolderUID', {
         type: 'manual',
         message: t(
@@ -123,7 +115,7 @@ function FormContent({
       return;
     }
 
-    if (isSameFolderPath(folderPath, targetFolderPathInRepo)) {
+    if (isSelectionAlreadyInFolder(selectedItemParentUIDs, targetFolderUID)) {
       setError('targetFolderUID', {
         type: 'manual',
         message: t(
@@ -190,7 +182,7 @@ function FormContent({
               <AffectedFolderContents
                 selectedItems={selectedItems}
                 nonEmptyMessage={t('browse-dashboards.bulk-move-resources-form.folder-not-empty', '', {
-                  count: getSelectedFolderUIDs(selectedItems).length,
+                  count: getSelectedUIDs(selectedItems, 'folder').length,
                   defaultValue_one: 'Selected folder contains resources that will be moved with it',
                   defaultValue_other: 'Selected folders contain resources that will be moved with them',
                 })}
@@ -211,7 +203,7 @@ function FormContent({
                   repositoryName={repository.name}
                   // selectedItems.folder contains false entries from deselect ancestor propagation
                   // in setItemSelectionState reducer - filter to only truly-selected UIDs
-                  excludeUIDs={getSelectedFolderUIDs(selectedItems)}
+                  excludeUIDs={getSelectedUIDs(selectedItems, 'folder')}
                 />
               </Field>
               <ResourceEditFormSharedFields
@@ -256,12 +248,11 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     resolvedRepoUID.current = selectedItemsRepoUID;
   }
 
-  const { repository, folder, isReadOnlyRepo, isMissingRepo, isLoading, status } = useGetResourceRepositoryView({
+  const { repository, isReadOnlyRepo, isMissingRepo, isLoading, status } = useGetResourceRepositoryView({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
-  const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
 
   const initialValues = getBulkActionInitialValues(repository, 'bulk-move');
 
@@ -279,7 +270,6 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
           initialValues={initialValues}
           repository={repository}
           canPushToConfiguredBranch={canPushToConfiguredBranch}
-          folderPath={isRootPage ? '/' : folderPath}
         />
       )}
     </ProvisionedFormGate>

@@ -29,5 +29,6 @@ export interface HomepageTabExtensionProps {
 
 // Fixed scroll-area heights for the tab content. Shared with DashboardTabs so the
 // skeleton matches the real card and loading doesn't shift neighboring content.
+// The redesign height fits three compact rows so the two grid cards stay above the fold.
 export const DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT = 256;
-export const DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN = 350;
+export const DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN = 180;

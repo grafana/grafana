@@ -15,7 +15,8 @@ import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
-import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
+import { type DataQuery, LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
+import { shouldShowLegend } from '@grafana/ui/internal';
 import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -33,13 +34,14 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
-import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { openPanelInspector } from '../inspect/panelInspectorOpener';
+import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getDashboardSceneFor, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
@@ -112,12 +114,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           shareResource: getTrackingSource(panel?.getRef()),
         });
 
-        const drawer = new ShareDrawer({
+        openShareDrawer(dashboard, {
           shareView: shareDashboardType.link,
           panelRef: panel.getRef(),
         });
-
-        dashboard.showModal(drawer);
       },
     });
     subMenu.push({
@@ -130,12 +130,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           shareResource: getTrackingSource(panel.getRef()),
         });
 
-        const drawer = new ShareDrawer({
+        openShareDrawer(dashboard, {
           shareView: shareDashboardType.embed,
           panelRef: panel.getRef(),
         });
-
-        dashboard.showModal(drawer);
       },
     });
 
@@ -154,12 +152,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
             shareResource: getTrackingSource(panel.getRef()),
           });
 
-          const drawer = new ShareDrawer({
+          openShareDrawer(dashboard, {
             shareView: shareDashboardType.snapshot,
             panelRef: panel.getRef(),
           });
-
-          dashboard.showModal(drawer);
         },
       });
     }
@@ -224,12 +220,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
           iconClassName: 'plus-square',
           onClick: () => {
-            const drawer = new ShareDrawer({
+            openShareDrawer(dashboard, {
               shareView: shareDashboardType.libraryPanel,
               panelRef: panel.getRef(),
             });
-
-            dashboard.showModal(drawer);
           },
         });
       }
@@ -250,10 +244,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
-        text: panel.state.options.legend.showLegend
+        text: shouldShowLegend(panel.state.options.legend)
           ? t('panel.header-menu.hide-legend', 'Hide legend')
           : t('panel.header-menu.show-legend', 'Show legend'),
-        iconClassName: panel.state.options.legend.showLegend ? 'legend-hide' : 'legend-show',
+        iconClassName: shouldShowLegend(panel.state.options.legend) ? 'legend-hide' : 'legend-show',
         onClick: (e) => {
           e.preventDefault();
           toggleVizPanelLegend(panel);
@@ -268,7 +262,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'question-circle',
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
-          dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Help }));
+          openPanelInspector(panel, InspectTab.Help);
         },
       });
     }
@@ -286,9 +280,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'download-alt',
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
-          dashboard.showModal(
-            new ShareDrawer({ shareView: shareDashboardType.downloadDiagnostics, panelRef: panel.getRef() })
-          );
+          openShareDrawer(dashboard, {
+            shareView: shareDashboardType.downloadDiagnostics,
+            panelRef: panel.getRef(),
+          });
         },
       });
     }
@@ -398,7 +393,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
       items.push({
         text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
-        iconClassName: 'search',
+        iconClassName: 'book',
         onClick: () => {
           dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
@@ -454,7 +449,7 @@ function getInspectMenuItem(
       text: t('panel.header-menu.inspect-data', `Data`),
       onClick: (e) => {
         e.preventDefault();
-        dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Data }));
+        openPanelInspector(panel, InspectTab.Data);
       },
     });
 
@@ -463,7 +458,7 @@ function getInspectMenuItem(
         text: t('panel.header-menu.query', `Query`),
         onClick: (e) => {
           e.preventDefault();
-          dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
+          openPanelInspector(panel, InspectTab.Query);
         },
       });
     }
@@ -473,7 +468,7 @@ function getInspectMenuItem(
     text: t('panel.header-menu.inspect-json', `Panel JSON`),
     onClick: (e) => {
       e.preventDefault();
-      dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.JSON }));
+      openPanelInspector(panel, InspectTab.JSON);
     },
   });
 
@@ -483,7 +478,7 @@ function getInspectMenuItem(
     shortcut: 'i',
     onClick: (e) => {
       if (!e.isDefaultPrevented()) {
-        dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Data }));
+        openPanelInspector(panel, InspectTab.Data);
       }
     },
     subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
@@ -642,9 +637,16 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
+    if (shouldShowLegend(options.legend)) {
+      vizPanel.onOptionsChange({ legend: { showLegend: false } });
+      return;
+    }
+
+    // The deprecated hidden mode renders no legend at all, so showing it also needs a real display mode.
     vizPanel.onOptionsChange({
       legend: {
-        showLegend: options.legend.showLegend ? false : true,
+        showLegend: true,
+        ...(options.legend.displayMode === LegendDisplayMode.Hidden && { displayMode: LegendDisplayMode.List }),
       },
     });
   }

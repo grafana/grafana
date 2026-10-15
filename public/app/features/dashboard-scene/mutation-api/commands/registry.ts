@@ -11,9 +11,12 @@ import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
 import { applySpecCommand } from './applySpec';
+import { endPlanningCommand } from './endPlanning';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
+import { getMetadataAnnotationsCommand } from './getMetadataAnnotations';
+import { getPanelErrorsCommand } from './getPanelErrors';
 import { getSpecCommand } from './getSpec';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
@@ -26,10 +29,12 @@ import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
 import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
+import { renderPlanCommand } from './renderPlan';
 import type { MutationCommand } from './types';
 import { updateAnnotationCommand } from './updateAnnotation';
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 import { updateLayoutCommand } from './updateLayout';
+import { updateMetadataAnnotationsCommand } from './updateMetadataAnnotations';
 import { updatePanelCommand } from './updatePanel';
 import { updateRowCommand } from './updateRow';
 import { updateTabCommand } from './updateTab';
@@ -61,8 +66,13 @@ export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   updatePanelCommand,
   removePanelCommand,
   listPanelsCommand,
+  getPanelErrorsCommand,
   getDashboardInfoCommand,
+  getMetadataAnnotationsCommand,
+  updateMetadataAnnotationsCommand,
   updateDashboardSettingsCommand,
   getSpecCommand,
   applySpecCommand,
+  renderPlanCommand,
+  endPlanningCommand,
 ];

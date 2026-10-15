@@ -2,6 +2,7 @@ package federated
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -37,15 +38,34 @@ type LegacyStatsGetter struct {
 	Cfg *setting.Cfg
 }
 
-// From mode 4 on nothing writes the legacy table, so its rows are leftovers and
-// counting them would warn about resources that no longer exist. Config is enough
-// because these two resources have no migration registered; if that changes, read
-// the migration status like dualwrite.Service.ReadFromUnified does.
-func (s *LegacyStatsGetter) legacyTableIsStale(resource string) bool {
-	if s.Cfg == nil {
-		return false
+// kv_store convention used to mark a resource as fully migrated for one stack: namespace
+// "unified_storage.is_migrated", key "<resource>.<group>" (the same string shape as our own
+// alertRuleResource-style constants), org_id always 0 for this entry specifically (unlike
+// every other row in these stack databases, which use 1).
+const (
+	migratedKVNamespace = "unified_storage.is_migrated"
+	migratedKVValue     = "true"
+)
+
+// From mode 4 on nothing writes the legacy table, so its rows are leftovers and counting
+// them would warn about resources that no longer exist. When Cfg is set, config is enough
+// because these resources have no migration registered there; if that changes, read the
+// migration status like dualwrite.Service.ReadFromUnified does.
+//
+// A caller with no DualWriterMode config at all (nil Cfg) falls back to a per-stack kv_store
+// marker instead -- the only signal that exists there today.
+func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, resource string) (bool, error) {
+	if s.Cfg != nil {
+		return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4, nil
 	}
-	return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4
+
+	count, err := sess.Table(helper.Table("kv_store")).
+		Where("org_id = 0 AND namespace = ? AND "+helper.DB.Quote("key")+" = ? AND value = ?", migratedKVNamespace, resource, migratedKVValue).
+		Count()
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
@@ -58,6 +78,14 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	}
 
 	helper, err := s.SQL(ctx)
+	if errors.Is(err, legacysql.ErrNamespaceDeleted) {
+		// The stack was deleted or migrated away and its namespace is being torn down. Fall back
+		// to the unified storage counts alone, as when legacy counts are disabled; failing here
+		// turns every folder delete in that namespace into a 500. Any other lookup failure,
+		// including a stack that is only unavailable (e.g. archived or suspended), still fails:
+		// its legacy rows can come back, so it must not be treated as empty.
+		return &resourcepb.ResourceStatsResponse{}, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -125,14 +153,22 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// NULL has to count as "not a recording rule". Comparing NULL with = or != yields
 		// NULL rather than true, which would drop those rows from both counts and let a
 		// folder that still holds alert rules look empty.
-		if !s.legacyTableIsStale(alertRuleResource) {
+		alertRulesStale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+		if err != nil {
+			return err
+		}
+		if !alertRulesStale {
 			err = fn("alert_rule", "namespace_uid", group, "alertrules", false, "(record IS NULL OR record = '')")
 			if err != nil {
 				return err
 			}
 		}
 
-		if !s.legacyTableIsStale(recordingRuleResource) {
+		recordingRulesStale, err := s.legacyTableIsStale(sess, helper, recordingRuleResource)
+		if err != nil {
+			return err
+		}
+		if !recordingRulesStale {
 			err = fn("alert_rule", "namespace_uid", group, "recordingrules", false, "(record IS NOT NULL AND record != '')")
 			if err != nil {
 				return err
@@ -140,7 +176,11 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		}
 
 		// Legacy library_elements table
-		if !s.legacyTableIsStale(libraryPanelResource) {
+		libraryPanelsStale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
+		if err != nil {
+			return err
+		}
+		if !libraryPanelsStale {
 			err = fn("library_element", "folder_uid", group, "library_elements", false, "")
 			if err != nil {
 				return err

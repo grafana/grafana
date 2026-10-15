@@ -111,19 +111,27 @@ func (c *connectionAuthorizeConnector) Connect(ctx context.Context, name string,
 			return
 		}
 
+		// Persist the expiration alongside the token so an OAuth token's very first
+		// lifetime is observable from status (matching the controller refresh path);
+		// a zero ExpiresAt means the provider issued a non-expiring token.
+		tokenStatus := provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+		if !token.ExpiresAt.IsZero() {
+			tokenStatus.Expiration = token.ExpiresAt.UnixMilli()
+		}
+
 		patcher := appcontroller.NewConnectionStatusPatcher(c.access.GetClient())
 		patchOps := []map[string]any{
 			{
 				"op":   "add",
 				"path": "/secure/token",
 				"value": map[string]string{
-					"create": string(token),
+					"create": string(token.Token),
 				},
 			},
 			{
 				"op":    "add",
 				"path":  "/status/token",
-				"value": provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()},
+				"value": tokenStatus,
 			},
 		}
 		if err := patcher.Patch(ctx, conn, patchOps...); err != nil {

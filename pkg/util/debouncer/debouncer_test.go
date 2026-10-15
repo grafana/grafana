@@ -31,8 +31,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -68,14 +67,13 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
 		start := clockMock.Now()
 
-		for counter := 0; counter < 25; counter++ {
+		for range 25 {
 			_ = group.Add("key1")
 			clockMock.Add(time.Millisecond * 40)
 			if processed["key1"] == 1 {
@@ -117,8 +115,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -153,8 +150,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -163,13 +159,10 @@ func TestDebouncer(t *testing.T) {
 
 		wg.Wait()
 
-		select {
-		case err := <-errs:
-			require.Equal(t, expectedErr, err)
-		default:
-			t.Fatal("expected error")
-		}
+		require.Equal(t, expectedErr, <-errs)
 
+		// Stop waits for the processing goroutine, which increments the counter after the error handler returns.
+		group.Stop()
 		require.Equal(t, float64(1), testutil.ToFloat64(group.metrics.processingErrorsCounter))
 	})
 
@@ -193,8 +186,7 @@ func TestDebouncer(t *testing.T) {
 		require.NoError(t, err)
 
 		// Start the group with a context
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 

@@ -1,8 +1,7 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getBackendSrv, isFetchError, locationService, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, getPanelPluginMetasMap, UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -24,12 +23,12 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
-  AnnoKeyIgnorePredefinedVariables,
 } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { ensureV2Response } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
+  isDashboardNewLayoutsEnabled,
   isDashboardResource,
   isDashboardV1Resource,
   isDashboardV2Resource,
@@ -50,6 +49,7 @@ import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-sce
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { isRefNotFoundError } from 'app/features/provisioning/components/utils/errors';
 import { type ProvisioningPreview } from 'app/features/provisioning/types';
 import { dispatch } from 'app/store/store';
 import {
@@ -63,6 +63,7 @@ import {
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
+import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import {
   createV2RowsLayout,
@@ -70,15 +71,15 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
-import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
-import { DashboardInteractions } from '../utils/interactions';
 import {
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
   mayInjectAnyPredefinedVariables,
-  parseIgnorePredefinedVariables,
+  parseUseCrossDashboardVariables,
   resolvePredefinedVariablesForDashboard,
-} from '../utils/predefinedVariableDenyList';
+} from '../utils/crossDashboardVariablesSelection';
+import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import { DashboardInteractions } from '../utils/interactions';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -255,6 +256,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       return transformSaveModelSchemaV2ToScene(rsp);
     }
     if (isDashboardV1Resource(rsp)) {
+      await resolveLegacyDatasourceNames(rsp.spec);
       return transformSaveModelToScene(
         {
           dashboard: rsp.spec,
@@ -274,11 +276,14 @@ abstract class DashboardScenePageStateManagerBase<T>
     }
 
     // Neither v1 nor v2 k8s resource - must be the classic DashboardDTO shape.
+    await resolveLegacyDatasourceNames(rsp.dashboard);
     return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
   }
 
   public async loadSnapshot(slug: string) {
     try {
+      // Snapshot panels are built synchronously below.
+      await getPanelPluginMetasMap();
       const dashboard = await this.loadSnapshotScene(slug);
 
       this.setState({ dashboard: dashboard, isLoading: false });
@@ -374,7 +379,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       return await loadWithRef(ref);
     } catch (err) {
       // If ref is not found (404), retry without ref to default to the main branch
-      if (ref && isFetchError(err) && err.status === 404) {
+      if (isRefNotFoundError(err, ref)) {
         return await loadWithRef(undefined);
       }
       throw err;
@@ -484,7 +489,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       if (renderTarget) {
         // Register the report render readiness observer so the image renderer can detect
         // when the dashboard has fully rendered (queries + transforms + fieldConfig + render)
-        initializeReportRenderReadinessObserver(queryController);
+        initializeReportRenderReadinessObserver();
       }
 
       // Start dashboard_view profiling (both services are now guaranteed to be listening)
@@ -503,6 +508,8 @@ abstract class DashboardScenePageStateManagerBase<T>
       const messageId = getMessageIdFromError(err);
 
       this.setState({
+        // do not leave the previous dashboard mounted if fetch fails
+        dashboard: undefined,
         isLoading: false,
         loadError: {
           status,
@@ -526,8 +533,8 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
 
-    // Resolve API versions before synchronous getV1()/getV2() calls downstream.
-    await dashboardAPIVersionResolver.resolve();
+    // Scene building downstream is synchronous: it needs the resolved API version and the panel metas map.
+    await Promise.all([dashboardAPIVersionResolver.resolve(), getPanelPluginMetasMap()]);
 
     // Home dashboard is not handled through legacy API and is not versioned.
     // Handling home dashboard flow separately from regular dashboard flow.
@@ -548,6 +555,7 @@ abstract class DashboardScenePageStateManagerBase<T>
 
     recordDashboardFetchTiming(options.uid || undefined, performance.now() - fetchStart);
 
+    await this.prepareResponse(rsp);
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
 
@@ -562,6 +570,12 @@ abstract class DashboardScenePageStateManagerBase<T>
   async enrichLoadOptions(_rsp: T, options: LoadDashboardOptions): Promise<LoadDashboardOptions> {
     return options;
   }
+
+  /**
+   * Post-fetch hook that lets managers asynchronously prepare the response before the scene is
+   * created from it. Public for the same reason as enrichLoadOptions.
+   */
+  async prepareResponse(_rsp: T): Promise<void> {}
 
   public getDashboardFromCache(cacheKey: string): T | null {
     const cachedDashboard = this.dashboardCache;
@@ -614,6 +628,12 @@ abstract class DashboardScenePageStateManagerBase<T>
 }
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
+  async prepareResponse(rsp: DashboardDTO): Promise<void> {
+    if (rsp.dashboard) {
+      await resolveLegacyDatasourceNames(rsp.dashboard);
+    }
+  }
+
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
     // Public dashboards are not part of a session and therefore should not use the cache.
     // Provisioning previews are cached under the file path (options.uid for this route), which
@@ -950,6 +970,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     try {
       this.setState({ isLoading: true });
 
+      // A reload rebuilds the scene outside loadScene, so the metas map has to be in place here too.
+      await getPanelPluginMetasMap();
+
       const fetchStart = performance.now();
       const rsp = await dashboardLoaderSrv.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
       recordDashboardFetchTiming(uid, performance.now() - fetchStart);
@@ -987,6 +1010,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         return;
       }
 
+      await resolveLegacyDatasourceNames(rsp.dashboard);
       const sceneCreationOptions = getSceneCreationOptions(undefined, rsp.meta);
       const scene = transformSaveModelToScene(rsp, undefined, sceneCreationOptions);
 
@@ -1050,14 +1074,16 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     // New dashboards carry the target folder in the URL; existing ones in the folder annotation.
     const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] || options.urlFolderUid || undefined;
-    // k8s annotations can include non-string values; resolution only needs the denylist string.
-    const denylistAnnotation = rsp.metadata.annotations?.[AnnoKeyIgnorePredefinedVariables];
-    const resolutionInput = {
-      annotations:
-        typeof denylistAnnotation === 'string' ? { [AnnoKeyIgnorePredefinedVariables]: denylistAnnotation } : undefined,
-    };
+    // k8s annotations can include non-string values; resolution only needs string entries.
+    const annotations: Record<string, string> = {};
+    for (const [key, value] of Object.entries(rsp.metadata.annotations ?? {})) {
+      if (typeof value === 'string') {
+        annotations[key] = value;
+      }
+    }
+    const resolutionInput = { annotations };
 
-    const mode = getGlobalVariablesMode(parseIgnorePredefinedVariables(resolutionInput.annotations));
+    const mode = getGlobalVariablesMode(parseUseCrossDashboardVariables(resolutionInput.annotations));
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
       DashboardInteractions.globalVariablesLoaded({
@@ -1320,6 +1346,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     try {
       this.setState({ isLoading: true });
 
+      // A reload rebuilds the scene outside loadScene, so the metas map has to be in place here too.
+      await getPanelPluginMetasMap();
+
       const fetchStart = performance.now();
       const rsp = await this.dashboardLoader.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
       recordDashboardFetchTiming(uid, performance.now() - fetchStart);
@@ -1378,7 +1407,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 }
 
 function shouldForceV2API(): boolean {
-  return Boolean(config.featureToggles.dashboardNewLayouts);
+  return isDashboardNewLayoutsEnabled();
 }
 
 export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<
@@ -1457,6 +1486,12 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
 
     return options;
+  }
+
+  async prepareResponse(rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>): Promise<void> {
+    if (!isDashboardV2Resource(rsp)) {
+      await this.v1Manager.prepareResponse(rsp);
+    }
   }
 
   transformResponseToScene(

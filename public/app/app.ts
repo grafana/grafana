@@ -42,7 +42,8 @@ import {
   logError,
 } from '@grafana/runtime';
 import {
-  getPanelPluginMetas,
+  getFeatureFlagClient,
+  FlagKeys,
   initDataSourceInstanceSettings,
   initOpenFeature,
   setExpressionDataSourceInstance,
@@ -83,6 +84,8 @@ import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { navTreeInitialized } from './core/reducers/navBarTree';
+import { navIndexInitialized } from './core/reducers/navModel';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
@@ -92,6 +95,8 @@ import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl
 import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { pageHistorySrv } from './core/services/pageHistory/pageHistorySrv';
+import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -100,7 +105,7 @@ import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/Dashbo
 import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
-import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
+import { LazyPanelDataErrorView } from './features/panel/components/LazyPanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
@@ -108,7 +113,6 @@ import {
   getObservablePluginComponents,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
-import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
@@ -135,6 +139,7 @@ import { createSwitchVariableAdapter } from './features/variables/switch/adapter
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
+import { dispatch } from './store/store';
 
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
@@ -226,7 +231,7 @@ export class GrafanaApp {
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
       setDataSourcePicker(RuntimeDataSourcePickerShim);
-      setPanelDataErrorView(PanelDataErrorView);
+      setPanelDataErrorView(LazyPanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
@@ -244,6 +249,20 @@ export class GrafanaApp {
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
+
+      // The multi-tenant frontend service ships a reduced boot with no user
+      // permissions, so fetch them before anything permission-gated renders. The
+      // nav tree needs rebuilding either way: configureStore built it with an
+      // empty permission set, and its sections are permission-gated.
+      if (
+        isFrontendService() &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)
+      ) {
+        await contextSrv.fetchUserPermissions();
+        dispatch(navTreeInitialized());
+        dispatch(navIndexInitialized());
+      }
+
       initExtensions();
 
       initAlerting();
@@ -317,10 +336,7 @@ export class GrafanaApp {
 
       if (contextSrv.user.orgRole !== '') {
         preloadPlugins(await getAppPluginsToPreload());
-        getPluginExtensionRegistries();
       }
-
-      await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
@@ -336,6 +352,7 @@ export class GrafanaApp {
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
+      pageHistorySrv.start(chromeService);
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);
@@ -364,7 +381,7 @@ export class GrafanaApp {
         initializeCrashDetection();
       }
 
-      if (config.featureToggles.dashboardLevelTimeMacros) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardLevelTimeMacros, false)) {
         sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
         sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }

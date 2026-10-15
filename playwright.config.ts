@@ -157,6 +157,10 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/dashboards-suite'),
     }),
     withAuth({
+      name: 'notebooks',
+      testDir: path.join(testDirRoot, '/notebooks-suite'),
+    }),
+    withAuth({
       name: 'diagnostics',
       testDir: path.join(testDirRoot, '/diagnostics-suite'),
     }),

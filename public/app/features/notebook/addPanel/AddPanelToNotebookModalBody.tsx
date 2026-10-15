@@ -13,7 +13,6 @@ import {
   Field,
   FilterInput,
   Modal,
-  MultiCombobox,
   RadioButtonGroup,
   Stack,
   TextLink,
@@ -23,19 +22,27 @@ import { createSuccessNotification, createErrorNotification } from 'app/core/cop
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { dispatch } from 'app/store/store';
 
+import { NotebookTagsField } from '../NotebookTagsField';
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ADD_TARGET, type NotebookEntryPoint } from '../analytics/types';
 import { canCreateNotebooks, canEditNotebooks } from '../permissions';
-import { useNotebookTagOptions } from '../scene/layout-notebook/useNotebookTagOptions';
 import { type PanelElement } from '../types';
 import { notebookViewHref } from '../urls';
 
 import { CreateNotebookFields } from './CreateNotebookFields';
+import { LockTimeRangeField } from './LockTimeRangeField';
 import { NotebookPickerList } from './NotebookPickerList';
 import { type AddPanelFormValues } from './addPanelForm';
-import { addPanelErrorMessage, addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
+import {
+  addPanelErrorMessage,
+  addPanelFailureReason,
+  addPanelToExistingNotebook,
+  createNotebookWithPanel,
+} from './addPanelToNotebook';
+import { shouldLockCapturedTimeRange, withCapturedTimeRange, type CapturedTimeRange } from './capturedTimeRange';
 import { getSortOptions, useNotebookPicker } from './useNotebookPicker';
 
 const FORM_ID = 'add-panel-to-notebook';
-const TAG_FILTER_LABEL_ID = 'add-panel-tag-filter-label';
 
 interface Props {
   /**
@@ -44,9 +51,24 @@ interface Props {
    */
   buildPanel: () => Promise<PanelElement>;
   onDismiss: () => void;
+  /** Which surface opened this modal, for the notebook_created analytics event when it creates one. */
+  entryPoint: NotebookEntryPoint;
+  /**
+   * Whether the panel is a library panel, for the same analytics. The caller passes it in, because a
+   * loaded library panel is inlined on the way here and the built element cannot say.
+   */
+  isLibraryPanel: boolean;
+  /** The window the source was showing, offered as a lock on the capture. */
+  capturedTimeRange: CapturedTimeRange;
 }
 
-export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
+export function AddPanelToNotebookModalBody({
+  buildPanel,
+  onDismiss,
+  entryPoint,
+  isLibraryPanel,
+  capturedTimeRange,
+}: Props) {
   const styles = useStyles2(getStyles);
   const canAddToExisting = canEditNotebooks();
   const canCreate = canCreateNotebooks();
@@ -67,7 +89,11 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
     watch,
     formState: { errors },
   } = useForm<AddPanelFormValues>({
-    defaultValues: { saveTarget: saveTargets[0]?.value, title: '', description: '', tags: [] },
+    defaultValues: {
+      saveTarget: saveTargets[0]?.value,
+      title: '',
+      lockTimeRange: shouldLockCapturedTimeRange(capturedTimeRange),
+    },
   });
 
   // With only one route open to this user there is nothing to choose, so the control is not rendered
@@ -75,10 +101,6 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
   const saveTarget = saveTargets.length > 1 ? watch('saveTarget') : saveTargets[0]?.value;
 
   const picker = useNotebookPicker();
-  // Every tag in the library, not only the ones the current results carry: this is what narrows the
-  // results, so offering only co-occurring tags would let the filter talk itself into a corner. The
-  // selected ones are unioned in so a tag cannot vanish from the list while it is doing the filtering.
-  const tagOptions = useNotebookTagOptions(picker.tagFilter);
   const [selectedUid, setSelectedUid] = useState<string>();
 
   // A selection the filters have since hidden is derived away rather than cleared in an effect: the
@@ -109,14 +131,21 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
 
       isSubmittingRef.current = true;
 
+      // A failed serialize and a failed write both land in the catch below, as plain Errors. This
+      // tells them apart.
+      let panelWasBuilt = false;
+
       try {
-        const panel = await buildPanel();
+        const built = await buildPanel();
+        panelWasBuilt = true;
+
+        // Applied here rather than in either builder: both entry points capture the same way, and
+        // the builders serialize what the source has without deciding what the notebook keeps.
+        const panel = values.lockTimeRange ? withCapturedTimeRange(built, capturedTimeRange) : built;
+
         const added = existingUid
-          ? await addPanelToExistingNotebook(existingUid, panel)
-          : await createNotebookWithPanel(
-              { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
-              panel
-            );
+          ? await addPanelToExistingNotebook(existingUid, panel, entryPoint, isLibraryPanel)
+          : await createNotebookWithPanel({ title: values.title.trim() }, panel, entryPoint, isLibraryPanel);
 
         dispatch(
           notifyApp(
@@ -132,6 +161,15 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
         );
         onDismiss();
       } catch (error) {
+        // Reported here, not beside the successes in addPanelToNotebook. Only this place sees both
+        // routes, and the panel build that runs before them.
+        NotebookAnalytics.addToNotebookFailed(
+          existingUid ?? '',
+          entryPoint,
+          existingUid ? NOTEBOOK_ADD_TARGET.EXISTING : NOTEBOOK_ADD_TARGET.NEW,
+          addPanelFailureReason(error, panelWasBuilt)
+        );
+
         dispatch(notifyApp(createErrorNotification(addPanelErrorMessage(error))));
         // Deliberately left open: a conflict is worth retrying, and retyping a new notebook's details
         // because the request failed would be its own small insult.
@@ -139,7 +177,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
         throw error;
       }
     },
-    [buildPanel, onDismiss, selected]
+    [buildPanel, onDismiss, selected, entryPoint, isLibraryPanel, capturedTimeRange]
   );
 
   const isSubmitting = submitState.loading;
@@ -201,20 +239,11 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
                   </Stack>
 
                   <Stack gap={1} alignItems="center">
-                    {/* MultiCombobox forwards aria-labelledby but not aria-label, so it is labelled
-                        by a hidden element - the same workaround the provisioning resource tree
-                        uses. The sort control above is a single Combobox, which does forward
-                        aria-label. */}
-                    <span id={TAG_FILTER_LABEL_ID} className="sr-only">
-                      {t('notebooks.add-panel.tag-label', 'Filter by tag')}
-                    </span>
-                    <MultiCombobox
-                      aria-labelledby={TAG_FILTER_LABEL_ID}
-                      options={tagOptions}
+                    <NotebookTagsField
                       value={picker.tagFilter}
-                      onChange={(selected) => picker.setTagFilter(selected.map((option) => option.value))}
+                      onChange={picker.setTagFilter}
+                      disabled={picker.isLoading}
                       placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
-                      width={30}
                     />
                     {/* Not a picker of authors: filtering by one is supported server-side, but
                         listing them is not - createdBy is filterable and not facetable - and
@@ -246,13 +275,19 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
               </Stack>
             ) : (
               <CreateNotebookFields
-                control={control}
                 register={register}
                 errors={errors}
                 existingTitles={picker.rows.map((row) => row.title)}
                 disabled={isSubmitting}
               />
             )}
+
+            {/* Wrapped so the column Stack stretches the div rather than the Checkbox inside. Checkbox is
+                an inline-grid with no column sizes, so stretching it hands the spare width to the
+                checkbox column and pushes the label away from its box. */}
+            <div>
+              <LockTimeRangeField control={control} capturedTimeRange={capturedTimeRange} disabled={isSubmitting} />
+            </div>
           </Stack>
         </form>
       </Box>

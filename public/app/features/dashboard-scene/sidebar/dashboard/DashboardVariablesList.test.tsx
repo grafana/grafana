@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
@@ -8,6 +8,7 @@ import {
   AdHocFiltersVariable,
   ConstantVariable,
   CustomVariable,
+  GroupByVariable,
   SceneVariableSet,
   type SceneVariable,
 } from '@grafana/scenes';
@@ -16,14 +17,11 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
+import { partitionVariablesByDisplay } from '../../settings/variables/partitionVariables';
 import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import {
-  DashboardVariablesList,
-  partitionVariablesByDisplay,
-  partitionVariablesByEditability,
-} from './DashboardVariablesList';
+import { DashboardVariablesList, partitionVariablesByEditability } from './DashboardVariablesList';
 
 jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
   openAddVariablePane: jest.fn(),
@@ -46,7 +44,7 @@ jest.mock('react-use', () => ({
 
 function renderVariablesList(
   variables: SceneVariable[] = [],
-  options?: { includeAdHoc?: boolean; topPlacementLabel?: string }
+  options?: { includeAdHoc?: boolean; topPlacementLabel?: string; showPredefinedGroups?: boolean }
 ) {
   const user = userEvent.setup();
 
@@ -63,6 +61,7 @@ function renderVariablesList(
       sourceVariableSet={variableSet}
       topPlacementLabel={options?.topPlacementLabel}
       includeAdHoc={options?.includeAdHoc}
+      showPredefinedGroups={options?.showPredefinedGroups}
     />
   );
 
@@ -92,6 +91,21 @@ function buildTestVariables() {
       query: 'a,b',
       origin: toControlSourceRef({ type: 'global' }),
     }),
+    folderVar: new CustomVariable({
+      name: 'folderVar',
+      query: 'c,d',
+      origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+    }),
+    globalFilter: new AdHocFiltersVariable({
+      name: 'globalFilter',
+      type: 'adhoc',
+      origin: toControlSourceRef({ type: 'global' }),
+    }),
+    folderGroupBy: new GroupByVariable({
+      name: 'folderGroupBy',
+      datasource: null,
+      origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+    }),
   };
 }
 
@@ -100,9 +114,18 @@ afterEach(() => {
 });
 
 describe('<DashboardVariablesList />', () => {
-  test('renders 3 sections (one per variable display type)', () => {
+  test('renders 3 sections (one per variable display type)', async () => {
     const { visibleVar1, visibleVar2, controlsMenuVar1, hiddenVar1 } = buildTestVariables();
-    const { getByRole, elements } = renderVariablesList([hiddenVar1, controlsMenuVar1, visibleVar2, visibleVar1]);
+    const { container, getByRole, elements } = renderVariablesList([
+      hiddenVar1,
+      controlsMenuVar1,
+      visibleVar2,
+      visibleVar1,
+    ]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(4);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -118,16 +141,24 @@ describe('<DashboardVariablesList />', () => {
     expect(hiddenNames).toEqual(['ninjaVar1']);
   });
 
-  test('uses custom top placement label when provided', () => {
+  test('uses custom top placement label when provided', async () => {
     const { visibleVar1 } = buildTestVariables();
-    const { getByRole } = renderVariablesList([visibleVar1], { topPlacementLabel: 'Top of row' });
+    const { container, getByRole } = renderVariablesList([visibleVar1], { topPlacementLabel: 'Top of row' });
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     expect(getByRole('heading', { name: /top of row/i })).toBeInTheDocument();
   });
 
-  test('always renders all 3 section titles even when some are empty', () => {
+  test('always renders all 3 section titles even when some are empty', async () => {
     const { hiddenVar1 } = buildTestVariables();
-    const { getByRole } = renderVariablesList([hiddenVar1]);
+    const { container, getByRole } = renderVariablesList([hiddenVar1]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -182,6 +213,9 @@ describe('<DashboardVariablesList />', () => {
         direction: 'up' | 'down',
         positions = 1
       ) {
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[itemIndex] as HTMLElement;
         handle.focus();
@@ -338,11 +372,80 @@ describe('partitionVariablesByEditability()', () => {
 });
 
 describe('predefined variables in the sidebar list', () => {
-  test('does not render a predefined variables section', () => {
+  afterEach(() => {
+    config.featureToggles.dashboardUnifiedDrilldownControls = false;
+  });
+
+  test('does not render opted-in variables unless the dashboard options list asks for them', () => {
     const { visibleVar1, predefinedVar1 } = buildTestVariables();
     const { queryByText } = renderVariablesList([visibleVar1, predefinedVar1]);
 
-    expect(queryByText('Predefined variables')).not.toBeInTheDocument();
     expect(queryByText('globalVar')).not.toBeInTheDocument();
+    expect(queryByText('visibleVar1')).toBeInTheDocument();
+  });
+
+  test('places global and folder variables in the display bucket their hide setting selects', async () => {
+    const { visibleVar1, predefinedVar1, folderVar } = buildTestVariables();
+    folderVar.setState({ hide: VariableHide.inControlsMenu });
+    const { getByText, queryByRole, user, findByText } = renderVariablesList([visibleVar1, folderVar, predefinedVar1], {
+      showPredefinedGroups: true,
+    });
+
+    expect(queryByRole('heading', { name: /^global/i })).not.toBeInTheDocument();
+    expect(queryByRole('heading', { name: /^folder/i })).not.toBeInTheDocument();
+
+    const aboveNames = within(getByText('globalVar').closest('ul')!)
+      .getAllByTestId('variable-name')
+      .map((item) => item.textContent);
+    expect(aboveNames).toEqual(['globalVar', 'visibleVar1']);
+    expect(getByText('folderVar').closest('ul')).toHaveAttribute('data-testid', 'variables-list-controls-menu');
+    expect(getByText('globalVar').closest('[data-rfd-drag-handle-draggable-id]')).toBeNull();
+
+    await user.hover(getByText('globalVar'));
+    expect(await findByText('This variable is defined on the global level')).toBeInTheDocument();
+  });
+
+  test('keeps filter and group-by variables out of the variables list when drilldown controls are on', () => {
+    config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    const { visibleVar1, predefinedVar1, globalFilter, folderGroupBy } = buildTestVariables();
+    const { getByText, queryByText } = renderVariablesList([visibleVar1, predefinedVar1, globalFilter, folderGroupBy], {
+      showPredefinedGroups: true,
+    });
+
+    expect(getByText('globalVar')).toBeInTheDocument();
+    expect(getByText('visibleVar1')).toBeInTheDocument();
+    expect(queryByText('globalFilter')).not.toBeInTheDocument();
+    expect(queryByText('folderGroupBy')).not.toBeInTheDocument();
+  });
+
+  test('selects a global variable when its row is clicked', async () => {
+    const { predefinedVar1 } = buildTestVariables();
+    const { getByText, user, elements } = renderVariablesList([predefinedVar1], { showPredefinedGroups: true });
+
+    await user.click(getByText('globalVar'));
+
+    expect(elements.dashboardScene.state.sidebar.selectObject).toHaveBeenCalledWith(predefinedVar1);
+  });
+
+  test('remove on a global variable row asks to opt it out', async () => {
+    const publishSpy = jest.spyOn(appEvents, 'publish');
+    const { predefinedVar1 } = buildTestVariables();
+    const { getByText, getByTestId, user } = renderVariablesList([predefinedVar1], { showPredefinedGroups: true });
+    const key = predefinedVar1.state.key ?? predefinedVar1.state.name;
+
+    await user.hover(getByText('globalVar'));
+    const removeButton = getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(key));
+    expect(removeButton).toHaveAttribute('aria-label', 'Remove');
+    await user.click(removeButton);
+
+    expect(publishSpy).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+    const event = publishSpy.mock.calls.find(([published]) => published instanceof ShowConfirmModalEvent)?.[0];
+    expect(event).toMatchObject({
+      payload: {
+        title: 'Remove variable',
+        yesText: 'Remove',
+        text: 'Are you sure you want to remove: globalVar?',
+      },
+    });
   });
 });

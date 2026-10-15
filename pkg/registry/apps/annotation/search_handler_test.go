@@ -192,7 +192,7 @@ func TestSearchHandler(t *testing.T) {
 			for _, name := range tt.deleteFirst {
 				require.NoError(t, store.Delete(ctx, metav1.NamespaceDefault, name))
 			}
-			handler := newSearchHandler(store, accessClient, dashClient, ProvideMetrics(nil), log.NewNopLogger())
+			handler := newSearchHandler(store, testTracer, accessClient, dashClient, ProvideMetrics(nil), log.NewNopLogger())
 
 			u := &url.URL{
 				Scheme:   "http",

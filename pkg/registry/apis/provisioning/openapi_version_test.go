@@ -8,10 +8,40 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
+
+func TestAPIBuilderAdvertisesItsResources(t *testing.T) {
+	provider, ok := any(&APIBuilder{}).(builder.APIGroupResourceProvider)
+	if !assert.True(t, ok) {
+		return
+	}
+
+	t.Run("storage-backed history", func(t *testing.T) {
+		infos := provider.GetResourceInfos(schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v1beta1"})
+		names := make([]string, 0, len(infos))
+		for i := range infos {
+			names = append(names, infos[i].GetName())
+		}
+		assert.ElementsMatch(t, []string{"repositories", "connections", "jobs", "historicjobs"}, names)
+	})
+
+	t.Run("Loki-backed history", func(t *testing.T) {
+		provider := &APIBuilder{jobHistoryConfig: &JobHistoryConfig{Loki: &loki.Config{}}}
+		infos := provider.GetResourceInfos(schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v1beta1"})
+		names := make([]string, 0, len(infos))
+		for i := range infos {
+			names = append(names, infos[i].GetName())
+		}
+		assert.ElementsMatch(t, []string{"repositories", "connections", "jobs"}, names)
+	})
+}
 
 func TestReplaceOpenAPIVersion(t *testing.T) {
 	tests := []struct {
@@ -431,6 +461,25 @@ func TestReplaceOpenAPIVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHideHistoricJobPaths(t *testing.T) {
+	root := "/apis/provisioning.grafana.app/v0alpha1/"
+	paths := map[string]*spec3.Path{
+		root + "historicjobs/list-keys":                                  {},
+		root + "namespaces/{namespace}/historicjobs":                     {},
+		root + "namespaces/{namespace}/historicjobs/search":              {},
+		root + "namespaces/{namespace}/connections/list-keys":            {},
+		root + "namespaces/{namespace}/repositories/{name}/historicjobs": {},
+	}
+
+	hideHistoricJobPaths(paths, root)
+
+	assert.NotContains(t, paths, root+"historicjobs/list-keys")
+	assert.NotContains(t, paths, root+"namespaces/{namespace}/historicjobs")
+	assert.NotContains(t, paths, root+"namespaces/{namespace}/historicjobs/search")
+	assert.Contains(t, paths, root+"namespaces/{namespace}/connections/list-keys")
+	assert.Contains(t, paths, root+"namespaces/{namespace}/repositories/{name}/historicjobs")
 }
 
 func TestReplaceInStringSlice(t *testing.T) {

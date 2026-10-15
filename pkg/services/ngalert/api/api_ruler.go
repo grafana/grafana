@@ -30,11 +30,10 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type ConditionValidator interface {
@@ -76,7 +75,9 @@ var ignoreFieldsForValidate = [...]string{"RuleGroupIndex", "FolderFullpath"}
 // RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace.
 // Returns http.StatusForbidden if user does not have access to any of the rules that match the filter.
-// Returns http.StatusBadRequest if all rules that match the filter and the user is authorized to delete are provisioned.
+// Returns http.StatusBadRequest if group is non-empty and all rules in that group are provisioned.
+// If group is empty (bulk delete of all groups in the namespace) and all groups are provisioned, returns
+// http.StatusAccepted with a response reporting 0 deleted and the number of rules skipped, instead of an error.
 func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceUID string, group string) response.Response {
 	var permanently bool
 	if c.QueryBool("deletePermanently") {
@@ -106,6 +107,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
+	isBulkDelete := finalGroup == ""
 
 	if finalGroup != "" {
 		loggerCtx = append(loggerCtx, "group", finalGroup)
@@ -117,7 +119,11 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 		return ErrResp(http.StatusInternalServerError, err, "failed to fetch provenances of alert rules")
 	}
 
+	var deletedCount, skippedCount int
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		// Reset on every invocation: InTransaction may retry this callback (e.g. on a SQLite busy
+		// error), and these counters must reflect only the attempt that actually committed.
+		deletedCount, skippedCount = 0, 0
 		deletionCandidates := map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup{}
 		if finalGroup != "" {
 			key := ngmodels.AlertRuleGroupKey{
@@ -149,6 +155,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 			if containsProvisionedAlerts(provenances, rules) {
 				logger.Debug("Alert group cannot be deleted because it is provisioned", "group", groupKey.RuleGroup)
 				provisioned = true
+				skippedCount += len(rules)
 				continue
 			}
 			uid := make([]string, 0, len(rules))
@@ -163,14 +170,18 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 				return err
 			}
 			logger.Info("Alert rules were deleted", "ruleUid", strings.Join(rulesToDelete, ","))
+			deletedCount = len(rulesToDelete)
 			return nil
 		}
 		// if none rules were deleted return an error.
 		// Check whether provisioned check failed first because if it is true, then all rules that the user can access (actually read via GET API) are provisioned.
-		if provisioned {
+		// For a bulk (folder-wide) delete, an all-provisioned result is reported as a successful no-op (deleted: 0, skipped: N)
+		// rather than an error, since the user did not target a specific group.
+		if provisioned && !isBulkDelete {
 			return errProvisionedResource
 		}
 		logger.Info("No alert rules were deleted")
+		deletedCount = len(rulesToDelete)
 		return nil
 	})
 
@@ -183,7 +194,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
+	return response.JSON(http.StatusAccepted, apimodels.DeleteRuleGroupResponse{Message: "rules deleted", Deleted: deletedCount, Skipped: skippedCount})
 }
 
 // RouteGetNamespaceRulesConfig returns all rules in a specific folder that user has access to
@@ -300,7 +311,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		return response.JSON(http.StatusOK, result)
 	}
 
-	namespaceUIDs := make([]string, len(namespaceMap))
+	namespaceUIDs := make([]string, 0, len(namespaceMap))
 	for k := range namespaceMap {
 		namespaceUIDs = append(namespaceUIDs, k)
 	}
@@ -483,7 +494,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
-		} else if errors.Is(err, store.ErrOptimisticLock) {
+		} else if errors.Is(err, rulestore.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
@@ -500,8 +511,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	return changesToResponse(finalChanges)
 }
 
-func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) (*store.GroupDelta, *ngmodels.AlertConfiguration, error) {
-	var finalChanges *store.GroupDelta
+func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) (*rulestore.GroupDelta, *ngmodels.AlertConfiguration, error) {
+	var finalChanges *rulestore.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
 	err := srv.xactManager.InTransaction(ctx, func(tranCtx context.Context) error {
 		id, _ := c.GetInternalID()
@@ -509,7 +520,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group",
 			groupKey.RuleGroup, "org_id", groupKey.OrgID, "user_id", id, "userNamespace", userNamespace)
-		groupChanges, err := store.CalculateChanges(tranCtx, srv.store, groupKey, rules)
+		groupChanges, err := rulestore.CalculateChanges(tranCtx, srv.store, groupKey, rules)
 		if err != nil {
 			return err
 		}
@@ -559,7 +570,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			return err
 		}
 
-		finalChanges = store.UpdateCalculatedRuleFields(groupChanges)
+		finalChanges = rulestore.UpdateCalculatedRuleFields(groupChanges)
 		logger.Debug("Updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
 		// Delete first as this could prevent future unique constraint violations.
@@ -634,7 +645,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 	return finalChanges, dbConfig, nil
 }
 
-func changesToResponse(finalChanges *store.GroupDelta) response.Response {
+func changesToResponse(finalChanges *rulestore.GroupDelta) response.Response {
 	body := apimodels.UpdateRuleGroupResponse{
 		Message: "rule group updated successfully",
 		Created: make([]string, 0, len(finalChanges.New)),
@@ -726,7 +737,7 @@ func toNamespaceErrorResponse(err error) response.Response {
 
 // verifyProvisionedRulesNotAffected check that neither of provisioned alerts are affected by changes.
 // Returns errProvisionedResource if there is at least one rule in groups affected by changes that was provisioned.
-func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore provisioning.ProvisioningStore, orgID int64, ch *store.GroupDelta) error {
+func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore provisioning.ProvisioningStore, orgID int64, ch *rulestore.GroupDelta) error {
 	provenances, err := provenanceStore.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
 		return err
@@ -747,7 +758,7 @@ func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore prov
 	return fmt.Errorf("%w: alert rule group [%s]", errProvisionedResource, errorMsg.String())
 }
 
-func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, validator ConditionValidator, user identity.Requester) error {
+func validateQueries(ctx context.Context, groupChanges *rulestore.GroupDelta, validator ConditionValidator, user identity.Requester) error {
 	if len(groupChanges.New) > 0 {
 		for _, rule := range groupChanges.New {
 			err := validator.Validate(eval.NewContext(ctx, user), rule.GetEvalCondition())
@@ -771,7 +782,7 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 }
 
 // shouldValidate returns true if the rule is not paused and there are changes in the rule that are not ignored
-func shouldValidate(delta store.RuleDelta) bool {
+func shouldValidate(delta rulestore.RuleDelta) bool {
 	for _, diff := range delta.Diff {
 		if !slices.Contains(ignoreFieldsForValidate[:], diff.Path) {
 			return true
@@ -881,8 +892,26 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 		})
 	}
 
+	provenances, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to fetch provenances of alert rules")
+	}
+
+	var updated, skipped int
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		// Reset on every invocation: InTransaction may retry this callback (e.g. on a SQLite busy
+		// error), and these counters must reflect only the attempt that actually committed.
+		updated, skipped = 0, 0
 		for groupKey, rules := range ruleGroups {
+			// Check provenance directly instead of relying on performUpdateAlertRules to reject provisioned
+			// groups: if the requested change is a no-op (e.g. resuming a rule that was never paused because
+			// pausing it was previously skipped), CalculateChanges reports an empty diff and the provisioning
+			// guard inside performUpdateAlertRules never runs, so it would otherwise be miscounted as updated.
+			if containsProvisionedAlerts(provenances, rules) {
+				skipped += len(rules)
+				continue
+			}
+
 			rulesToUpdate := make([]*ngmodels.AlertRuleWithOptionals, 0, len(rules))
 
 			for _, rule := range rules {
@@ -900,11 +929,14 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 			}
 			_, _, err := srv.performUpdateAlertRules(ctx, c, groupKey, rulesToUpdate, false)
 			if errors.Is(err, errProvisionedResource) {
+				// Defensive fallback; shouldn't normally happen since provisioned groups are filtered above.
+				skipped += len(rules)
 				continue
 			}
 			if err != nil {
 				return err
 			}
+			updated += len(rules)
 		}
 
 		return nil
@@ -916,6 +948,8 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 
 	return response.JSON(http.StatusAccepted, apimodels.UpdateNamespaceRulesResponse{
 		Message: "rules updated successfully",
+		Updated: updated,
+		Skipped: skipped,
 	})
 }
 

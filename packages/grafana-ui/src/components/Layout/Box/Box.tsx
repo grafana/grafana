@@ -167,7 +167,7 @@ const customBorderColor = (color: BorderColor, theme: GrafanaTheme2) => {
     case 'success':
     case 'info':
     case 'warning':
-      return visualRefreshEnabled ? theme.colors[color].border : theme.colors[color].borderTransparent;
+      return visualRefreshEnabled ? theme.colors[color].subtleBorder : theme.colors[color].borderTransparent;
     default:
       return color ? theme.colors.border[color] : undefined;
   }
@@ -180,7 +180,7 @@ const customBackgroundColor = (color: BackgroundColor, theme: GrafanaTheme2) => 
     case 'success':
     case 'info':
     case 'warning':
-      return visualRefreshEnabled ? theme.colors[color].background : theme.colors[color].transparent;
+      return visualRefreshEnabled ? theme.colors[color].subtleBackground : theme.colors[color].transparent;
     default:
       return color ? theme.colors.background[color] : undefined;
   }

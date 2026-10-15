@@ -430,6 +430,231 @@ func TestProcessJob_NormalAction_RepoPendingDelete_SkipsJob(t *testing.T) {
 	worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
+// TestProcessJob_AuthFailureRepo_SkipsJob covers a repository already known to
+// be unreachable due to an auth failure (e.g. revoked credentials). Running
+// the job would only produce a failure the user can't act on from the job
+// itself -- and one that counts against the job success rate -- so it is
+// skipped with a warning result instead, leaving the repository status as the
+// place the reason is surfaced.
+func TestProcessJob_AuthFailureRepo_SkipsJob(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	repoCfg.Status.Health = provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{"authentication failed"},
+	}
+	repoCfg.Status.Conditions = []metav1.Condition{{
+		Type:   provisioning.ConditionTypeReady,
+		Status: metav1.ConditionFalse,
+		Reason: provisioning.ReasonAuthenticationFailed,
+	}}
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	recorder.EXPECT().Record(mock.Anything, mock.Anything)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err, "an unreachable repository must not fail the job")
+
+	worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+// TestProcessJob_AuthFailureRepo_TestActionStillRuns covers the synthetic test
+// action, whose worker does no repository work and exists to exercise the queue.
+// It must run even against an authentication-failed repository -- otherwise a
+// performance test targeting an unhealthy repo would finish immediately as a
+// warning instead of generating load.
+func TestProcessJob_AuthFailureRepo_TestActionStillRuns(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+	driver.currentJob.Spec.Action = provisioning.JobActionTest
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	repoCfg.Status.Health = provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{"authentication failed"},
+	}
+	repoCfg.Status.Conditions = []metav1.Condition{{
+		Type:   provisioning.ConditionTypeReady,
+		Status: metav1.ConditionFalse,
+		Reason: provisioning.ReasonAuthenticationFailed,
+	}}
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
+
+	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
+}
+
+// TestProcessJob_StaleAuthFailureCondition_CallsWorker covers the race where a
+// spec edit that repairs credentials bumps Generation immediately, but the
+// Ready condition still reflects the pre-fix reconcile until the controller
+// catches up (ready.ObservedGeneration lags behind). Skipping on that stale
+// condition would silently drop a webhook-triggered job with no retry, so the
+// job must run once the generations disagree.
+func TestProcessJob_StaleAuthFailureCondition_CallsWorker(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	repoCfg.Generation = 2 // spec was just edited to repair credentials
+	repoCfg.Status.Health = provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{"authentication failed"},
+	}
+	repoCfg.Status.Conditions = []metav1.Condition{{
+		Type:               provisioning.ConditionTypeReady,
+		Status:             metav1.ConditionFalse,
+		Reason:             provisioning.ReasonAuthenticationFailed,
+		ObservedGeneration: 1, // stale -- controller hasn't reconciled generation 2 yet
+	}}
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
+
+	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
+}
+
+// TestProcessJob_UnhealthyButReachableRepo_CallsWorker covers a repository
+// that's unhealthy for a reason that doesn't mean it's unreachable -- e.g. a
+// write blocked by branch protection or write-only permissions. Reads (and
+// other writes) still work against a repository like this, so the job must
+// still run rather than being skipped as if credentials were broken.
+// classifyTestResultReason classifies this as InvalidSpec rather than
+// AuthenticationFailed precisely so the skip below can't trigger on it.
+func TestProcessJob_UnhealthyButReachableRepo_CallsWorker(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	repoCfg.Status.Health = provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{repository.WritePermissionDeniedDetail},
+	}
+	repoCfg.Status.Conditions = []metav1.Condition{{
+		Type:   provisioning.ConditionTypeReady,
+		Status: metav1.ConditionFalse,
+		Reason: provisioning.ReasonInvalidSpec,
+	}}
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
+
+	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
+}
+
+// TestProcessJob_HookPermissionFailure_CallsWorker covers a repository whose
+// webhook management failed with a permission error (e.g. the token lacks
+// webhook-admin scope) while its content check still passes. That's recorded
+// as HealthFailureHook, not HealthFailureHealth, and its Ready condition
+// carries the same AuthenticationFailed reason an auth failure would -- but
+// repo reads/writes still work fine, so the job must still run. The skip is
+// gated on HealthFailureHealth specifically to exclude this case.
+func TestProcessJob_HookPermissionFailure_CallsWorker(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	repoCfg.Status.Health = provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHook,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{"execute webhook create: " + repository.ErrPermissionDenied.Error()},
+	}
+	repoCfg.Status.Conditions = []metav1.Condition{{
+		Type:   provisioning.ConditionTypeReady,
+		Status: metav1.ConditionFalse,
+		Reason: provisioning.ReasonAuthenticationFailed,
+	}}
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
+
+	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
+}
+
+// TestProcessJob_UncheckedHealth_CallsWorker guards the skip above against
+// blocking a repository that simply hasn't had its first health check yet:
+// unhealthy is only trusted once Checked is set.
+func TestProcessJob_UncheckedHealth_CallsWorker(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	repoCfg.Status.Health = provisioning.HealthStatus{Healthy: false}
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
+
+	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
+}
+
 func TestProcessJob_HealthyRepo_CallsWorker(t *testing.T) {
 	worker := &MockWorker{}
 	repoGetter := &MockRepoGetter{}

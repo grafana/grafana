@@ -51,6 +51,7 @@ func fixupTransformations_V2beta1_to_V2(in *dashv2beta1.Dashboard, out *dashv2.D
 				Kind:  "Transformation",
 				Group: t.Kind, // v2beta1 kind is the transformation ID
 				Spec: dashv2.DashboardTransformationSpec{
+					RefId:    t.Spec.RefId,
 					Disabled: t.Spec.Disabled,
 					Filter:   convertMatcherConfigToV2(t.Spec.Filter),
 					Topic:    (*dashv2.DashboardDataTopic)(t.Spec.Topic),

@@ -144,7 +144,7 @@ func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 	// create some test annotations
 	a := annotations.Item{
-		DashboardID: 1,
+		DashboardID: 1, //nolint:staticcheck // Exercise legacy field compatibility.
 		OrgID:       1,
 		UserID:      1,
 		PanelID:     1,
@@ -215,10 +215,10 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 
 	newAnnotations := make([]*annotations.Item, 0, expectedCount)
 	newAnnotationTags := make([]*annotationTag, 0, 2*expectedCount)
-	for i := 0; i < expectedCount; i++ {
+	for i := range expectedCount {
 		a := &annotations.Item{
 			ID:           int64(i + 1),
-			DashboardID:  1,
+			DashboardID:  1, //nolint:staticcheck // Exercise legacy field compatibility.
 			DashboardUID: "uid" + strconv.Itoa(i),
 			OrgID:        1,
 			UserID:       1,

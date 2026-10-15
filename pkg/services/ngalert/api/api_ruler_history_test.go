@@ -2,6 +2,9 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,14 +18,53 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type mockHistorian struct{}
+type mockHistorian struct {
+	err error
+}
 
 func (m *mockHistorian) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
-	return &data.Frame{Name: "history"}, nil
+	return &data.Frame{Name: "history"}, m.err
+}
+
+func TestRouteQueryStateHistoryBackendErrors(t *testing.T) {
+	annotations := historian.NewAnnotationBackend(log.NewNopLogger(), nil, nil, nil, nil, 500)
+	for _, tc := range []struct {
+		name    string
+		hist    Historian
+		query   string
+		status  int
+		message string
+	}{
+		{"annotations requires rule UID", annotations, "", http.StatusBadRequest, "ruleUID is required when using the annotations state-history backend. Querying history across rules requires Loki."},
+		{"annotations rejects empty rule UID", annotations, "?ruleUID=", http.StatusBadRequest, "ruleUID is required when using the annotations state-history backend. Querying history across rules requires Loki."},
+		{"annotations primary requires rule UID", historian.NewMultipleBackend(annotations), "", http.StatusBadRequest, "ruleUID is required when using the annotations state-history backend. Querying history across rules requires Loki."},
+		{"unscoped queries reach supporting backends", &mockHistorian{}, "", http.StatusOK, ""},
+		{"wrapped Loki validation error remains bad request", &mockHistorian{err: fmt.Errorf("history query: %w", historian.NewErrLokiQueryTooLong("private query", 10))}, "", http.StatusBadRequest, "Query for Loki exceeded the configured limit of 10 bytes. Remove some filters and try again."},
+		{"backend failure remains internal server error", &mockHistorian{err: errors.New("failed to query history")}, "?ruleUID=my-rule", http.StatusInternalServerError, "failed to query history"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/rules/history"+tc.query, nil)
+			c := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{OrgID: 1},
+			}
+			srv := &HistorySrv{logger: log.NewNopLogger(), hist: tc.hist}
+			resp := srv.RouteQueryStateHistory(c)
+			require.Equal(t, tc.status, resp.Status())
+			if tc.message != "" {
+				var body struct {
+					Message string `json:"message"`
+				}
+				require.NoError(t, json.Unmarshal(resp.Body(), &body))
+				assert.Equal(t, tc.message, body.Message)
+			}
+		})
+	}
 }
 
 func TestRouteQueryStateHistory(t *testing.T) {

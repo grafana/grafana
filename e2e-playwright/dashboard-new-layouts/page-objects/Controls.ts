@@ -70,6 +70,12 @@ export class Controls extends PageObject {
     });
   }
 
+  async refresh() {
+    await test.step('Refresh', async () => {
+      await this.getByGrafanaSelector(this.selectors.components.RefreshPicker.runButtonV2).click();
+    });
+  }
+
   readonly timeRange = {
     /** Sets an absolute time range through the timepicker's from/to fields */
     set: async (from: string, to: string) => {
@@ -108,6 +114,19 @@ export class Controls extends PageObject {
     getInput: (variableLabel: string): Locator => {
       // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
       return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
+    },
+    /** Returns an ad hoc variable's applied filter pill; its text is "<key> <operator> <value>" */
+    getFilter: (variableLabel: string, key: string): Locator =>
+      this.variables
+        .getDropdownTrigger(variableLabel)
+        .getByRole('button', { name: `Edit filter with key ${key}`, exact: true }),
+    getGroupBy: (variableLabel: string, key: string): Locator =>
+      this.variables.getDropdownTrigger(variableLabel).getByRole('button', { name: `Group by ${key}`, exact: true }),
+    addGroupBy: async (variableLabel: string, key: string) => {
+      await test.step(`Group variable "${variableLabel}" by "${key}"`, async () => {
+        await this.variables.getDropdownTrigger(variableLabel).getByPlaceholder('+ key', { exact: true }).click();
+        await this.page.getByRole('listbox').getByRole('option', { name: key, exact: true }).click();
+      });
     },
     /** Returns the dropdown option with the given label (the dropdown must be open) */
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
@@ -167,11 +186,15 @@ export class Controls extends PageObject {
      */
     addFilter: async (variableLabel: string, filter: [string, string, string]) => {
       await test.step(`Add filter "${filter[0]}${filter[1]}\"${filter[2]}\"" to variable "${variableLabel}"`, async () => {
-        await this.variables.openDropdown(variableLabel);
+        await this.variables
+          .getDropdownTrigger(variableLabel)
+          .getByRole('combobox', { name: variableLabel, exact: true })
+          .click();
 
-        await this.page.getByRole('option', { name: filter[0], exact: true }).click();
-        await this.page.getByRole('option', { name: new RegExp(`^${filter[1]} `) }).click();
-        await this.page.getByRole('option', { name: filter[2], exact: true }).click();
+        const listbox = this.page.getByRole('listbox');
+        await listbox.getByRole('option', { name: filter[0], exact: true }).click();
+        await listbox.getByRole('option', { name: new RegExp(`^${filter[1]} `) }).click();
+        await listbox.getByRole('option', { name: filter[2], exact: true }).click();
       });
     },
   };

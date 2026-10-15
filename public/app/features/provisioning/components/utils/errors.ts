@@ -4,6 +4,11 @@ import { extractErrorMessage } from 'app/api/utils';
 
 const API_FILE_NOT_FOUND = 'file not found'; // from apps/provisioning/pkg/repository/repository.go
 
+/** A 404 while loading a file at an explicit ref means that branch/commit no longer exists. */
+export function isRefNotFoundError(error: unknown, ref: string | undefined): boolean {
+  return Boolean(ref) && isFetchError(error) && error.status === 404;
+}
+
 export function getProvisionedRequestError(error: unknown, fallbackMessage: string): string {
   if (isFetchError(error) && error.status === 404) {
     const apiMessage = typeof error.data?.message === 'string' ? error.data.message : '';

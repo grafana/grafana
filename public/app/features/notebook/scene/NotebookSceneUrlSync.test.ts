@@ -1,8 +1,9 @@
 import { createMemoryHistory } from 'history';
 
-import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
+import { HistoryWrapper, locationService, onInteraction, setEchoSrv, setLocationService } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
+import { Echo } from 'app/core/services/echo/Echo';
 
 import { NotebookScene } from './NotebookScene';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
@@ -11,6 +12,7 @@ import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 function buildScene() {
   return new NotebookScene({
     title: 'My notebook',
+    uid: 'nb1',
     body: new NotebookLayoutManager({ cells: [] }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
@@ -57,6 +59,22 @@ describe('NotebookSceneUrlSync', () => {
       new NotebookSceneUrlSync(scene).updateFromUrl({ edit: 'true' });
 
       expect(scene.state.isEditing).toBe(true);
+    });
+
+    // The source separates this from the Edit control inside an open notebook. A query can then tell
+    // the two ways into editing apart.
+    it('starts the edit session as a navigation', () => {
+      setEchoSrv(new Echo());
+      const started: Array<Record<string, unknown>> = [];
+      const unsubscribe = onInteraction('grafana_notebook_edit_session_started', (properties) =>
+        started.push(properties)
+      );
+      const scene = buildScene();
+
+      new NotebookSceneUrlSync(scene).updateFromUrl({ edit: 'true' });
+      unsubscribe();
+
+      expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
     });
 
     it('leaves edit mode when the param goes away', () => {

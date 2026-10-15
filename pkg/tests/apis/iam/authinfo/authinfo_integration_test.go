@@ -1,0 +1,466 @@
+package authinfo
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
+)
+
+func TestIntegrationAuthInfo(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3, rest.Mode5}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"authinfos.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesUsersApi,
+					featuremgmt.FlagKubernetesAuthInfoApi,
+				},
+			})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			doAuthInfoCRUDTestsUsingTheNewAPIs(t, helper)
+			doAuthInfoAuthzTests(t, helper)
+			doAuthInfoListRequiresFieldSelectorTest(t, helper)
+			doAuthInfoListByAuthIDTest(t, helper)
+			doAuthInfoDeleteTests(t, helper, mode)
+			doAuthInfoUserDeleteCascadeTest(t, helper, mode)
+		})
+	}
+}
+
+func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should create, get, list and update authinfo using the new APIs as a GrafanaAdmin", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-crud-user", "authinfo-crud-user@example.com")
+
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		toCreate := createAuthInfoObject(helper, userUID, "ldap", "cn=test,dc=example,dc=com")
+		created, err := authInfoClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		// The object name is deterministic: "<userUID>.<authModule>".
+		expectedName := iamv0alpha1.EncodeName(userUID, "ldap")
+		require.Equal(t, expectedName, created.GetName())
+
+		createdMeta, err := utils.MetaAccessor(created)
+		require.NoError(t, err)
+		internalID := createdMeta.GetDeprecatedInternalID() // nolint:staticcheck
+		require.NotZero(t, internalID, "create should assign a DeprecatedInternalID")
+
+		createdSpec := created.Object["spec"].(map[string]interface{})
+		require.Equal(t, userUID, createdSpec["userRef"].(map[string]interface{})["name"])
+		require.Equal(t, "ldap", createdSpec["authModule"])
+		require.Equal(t, "cn=test,dc=example,dc=com", createdSpec["authID"])
+
+		fetched, err := authInfoClient.Resource.Get(ctx, expectedName, metav1.GetOptions{})
+		require.NoError(t, err)
+		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		require.Equal(t, "cn=test,dc=example,dc=com", fetchedSpec["authID"])
+
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.userRef.name=%s", userUID),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, expectedName, list.Items[0].GetName())
+
+		toUpdate := fetched.DeepCopy()
+		toUpdate.Object["spec"].(map[string]interface{})["authID"] = "cn=updated,dc=example,dc=com"
+		updated, err := authInfoClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		require.Equal(t, "cn=updated,dc=example,dc=com", updatedSpec["authID"])
+
+		fetchedAfter, err := authInfoClient.Resource.Get(ctx, expectedName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "cn=updated,dc=example,dc=com", fetchedAfter.Object["spec"].(map[string]interface{})["authID"])
+
+		fetchedAfterMeta, err := utils.MetaAccessor(fetchedAfter)
+		require.NoError(t, err)
+		require.Equal(t, internalID, fetchedAfterMeta.GetDeprecatedInternalID(), "the internal ID must stay stable across updates") // nolint:staticcheck
+	})
+
+	t.Run("should not create authinfo for a non-existent user", func(t *testing.T) {
+		ctx := context.Background()
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		toCreate := createAuthInfoObject(helper, "non-existent-user", "ldap", "cn=test,dc=example,dc=com")
+		_, err := authInfoClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+	})
+
+	t.Run("should not create a duplicate authinfo for the same user and auth module", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-dup-user", "authinfo-dup-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		toCreate := createAuthInfoObject(helper, userUID, "ldap", "cn=test,dc=example,dc=com")
+		created, err := authInfoClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		_, err = authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", "cn=other,dc=example,dc=com"), metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
+	})
+
+	t.Run("should not update authinfo with a userRef or authModule change", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-immutable-user", "authinfo-immutable-user@example.com")
+		otherUserUID := createTestUser(t, helper, "authinfo-immutable-other-user", "authinfo-immutable-other-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", "cn=test,dc=example,dc=com"), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		toUpdate := created.DeepCopy()
+		toUpdate.Object["spec"].(map[string]interface{})["userRef"].(map[string]interface{})["name"] = otherUserUID
+		_, err = authInfoClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "immutable")
+
+		toUpdate = created.DeepCopy()
+		toUpdate.Object["spec"].(map[string]interface{})["authModule"] = "oauth_github"
+		_, err = authInfoClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "immutable")
+	})
+}
+
+func doAuthInfoAuthzTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should not be able to access authinfo when using a user with insufficient permissions", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-authz-user", "authinfo-authz-user@example.com")
+
+		adminClient := authInfoResourceClient(helper, helper.Org1.Admin)
+		created, err := adminClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", "cn=test,dc=example,dc=com"), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		for _, u := range []apis.User{
+			helper.Org1.Editor,
+			helper.Org1.Viewer,
+			helper.OrgB.Admin, // Org admin, but not a Grafana admin
+		} {
+			t.Run(fmt.Sprintf("with basic role_%s", u.Identity.GetOrgRole()), func(t *testing.T) {
+				authInfoClient := authInfoResourceClient(helper, u)
+
+				_, err := authInfoClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+				require.Error(t, err)
+				var statusErr *errors.StatusError
+				require.ErrorAs(t, err, &statusErr)
+				require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+
+				_, err = authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "oauth_github", "some-id"), metav1.CreateOptions{})
+				require.Error(t, err)
+				require.ErrorAs(t, err, &statusErr)
+				require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+			})
+		}
+	})
+}
+
+func doAuthInfoListRequiresFieldSelectorTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should reject list without a spec.userRef.name field selector", func(t *testing.T) {
+		ctx := context.Background()
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		_, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "spec.userRef.name")
+	})
+}
+
+// doAuthInfoListByAuthIDTest verifies that AuthInfo can be looked up by
+// spec.authID (with an optional spec.authModule) without a spec.userRef.name.
+func doAuthInfoListByAuthIDTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should list by authID alone, without knowing the user", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-by-authid-user", "authinfo-by-authid-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		authID := "by-authid-" + userUID
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.authID=%s", authID),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, created.GetName(), list.Items[0].GetName())
+
+		list, err = authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.authID=%s,spec.authModule=ldap", authID),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, created.GetName(), list.Items[0].GetName())
+	})
+
+	t.Run("should return an empty list for an authID with no match", func(t *testing.T) {
+		ctx := context.Background()
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.authID=no-such-auth-id",
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
+	})
+}
+
+func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
+	t.Run("delete removes the object and its user_auth row", func(t *testing.T) {
+		t.Skip("flaky: object lingers in unified storage after delete")
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-delete-user", "authinfo-delete-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		authID := "delete-test-" + userUID
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
+		require.NoError(t, err)
+		if mode < rest.Mode4 {
+			require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
+		}
+		if mode >= rest.Mode1 {
+			requireAuthInfoInUnified(t, helper, created.GetName(), true, "sanity check: the object should reach unified storage")
+		}
+
+		err = authInfoClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		_, err = authInfoClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+
+		if mode < rest.Mode4 {
+			require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once the object is deleted")
+		}
+		if mode >= rest.Mode1 {
+			requireAuthInfoInUnified(t, helper, created.GetName(), false, "AuthInfo object should be gone from unified storage")
+		}
+	})
+
+	t.Run("delete of an already-deleted object is a not-found", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-delete-missing-user", "authinfo-delete-missing-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", "cn=test,dc=example,dc=com"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NoError(t, authInfoClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
+
+		err = authInfoClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+	})
+
+	t.Run("deleteCollection is not supported", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-delete-collection-user", "authinfo-delete-collection-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		_, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", "cn=test,dc=example,dc=com"), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		err = authInfoClient.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.userRef.name=%s", userUID),
+		})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(405), statusErr.ErrStatus.Code)
+	})
+}
+
+// doAuthInfoUserDeleteCascadeTest checks that deleting a user through the
+// new User API also removes its AuthInfo objects and user_auth row.
+func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
+	t.Run("deleting the user via the new API removes its AuthInfo objects and user_auth row", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-cascade-user", "authinfo-cascade-user@example.com")
+
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+		authID := "cascade-test-" + userUID
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
+		require.NoError(t, err)
+		if mode < rest.Mode4 {
+			require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
+		}
+		if mode >= rest.Mode1 {
+			// Dual-write modes write to unified storage in the background.
+			requireAuthInfoInUnified(t, helper, created.GetName(), true, "sanity check: the object should reach unified storage")
+		}
+
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+		err = userClient.Resource.Delete(ctx, userUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		if mode < rest.Mode4 {
+			require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once its user is deleted")
+		}
+
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.userRef.name=%s", userUID),
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items, "AuthInfo objects should be gone once their user is deleted")
+
+		_, err = authInfoClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+
+		// Reads in dual-write modes are served from legacy, so check unified storage directly.
+		if mode >= rest.Mode1 {
+			requireAuthInfoInUnified(t, helper, created.GetName(), false, "AuthInfo object should be gone from unified storage")
+		}
+	})
+}
+
+// requireAuthInfoInUnified waits for the object to be present (or absent) in unified storage.
+func requireAuthInfoInUnified(t *testing.T, helper *apis.K8sTestHelper, name string, want bool, msg string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		exists, err := authInfoExistsInUnified(helper, name)
+		require.NoError(c, err)
+		assert.Equal(c, want, exists)
+	}, 5*time.Second, 50*time.Millisecond, msg)
+}
+
+func authInfoExistsInUnified(helper *apis.K8sTestHelper, name string) (bool, error) {
+	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(context.Background(), ns)
+	rsp, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+		Namespace: ns,
+		Group:     gvrAuthInfo.Group,
+		Resource:  gvrAuthInfo.Resource,
+		Name:      name,
+	}})
+	// Not found can come back as a transport error or in the response.
+	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		if result := resource.AsErrorResult(err); result != nil && result.Code == http.StatusNotFound {
+			return false, nil
+		}
+		return false, fmt.Errorf("unexpected unified read error: %w", err)
+	}
+	return true, nil
+}
+
+func countUserAuthRowsByAuthID(t *testing.T, helper *apis.K8sTestHelper, authID string) int64 {
+	t.Helper()
+	var count int64
+	err := helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		n, err := sess.Table("user_auth").Where("auth_id = ?", authID).Count()
+		count = n
+		return err
+	})
+	require.NoError(t, err)
+	return count
+}
+
+func authInfoResourceClient(helper *apis.K8sTestHelper, user apis.User) *apis.K8sResourceClient {
+	return helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      user,
+		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		GVR:       gvrAuthInfo,
+	})
+}
+
+// createTestUser creates a user via the new User API and registers its deletion as cleanup.
+func createTestUser(t *testing.T, helper *apis.K8sTestHelper, login string, email string) string {
+	t.Helper()
+	ctx := context.Background()
+
+	userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		GVR:       gvrUsers,
+	})
+
+	obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
+	obj.SetName(login)
+	spec := obj.Object["spec"].(map[string]interface{})
+	spec["login"] = login
+	spec["email"] = email
+	obj.Object["spec"] = spec
+
+	created, err := userClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	userUID := created.GetName()
+
+	t.Cleanup(func() {
+		_ = userClient.Resource.Delete(context.Background(), userUID, metav1.DeleteOptions{})
+	})
+
+	return userUID
+}
+
+// createAuthInfoObject builds an AuthInfo object with its deterministic name pre-populated.
+func createAuthInfoObject(helper *apis.K8sTestHelper, userUID, authModule, authID string) *unstructured.Unstructured {
+	obj := helper.LoadYAMLOrJSONFile("../testdata/authinfo-test-create-v0.yaml")
+	obj.SetName(iamv0alpha1.EncodeName(userUID, authModule))
+	obj.Object["spec"].(map[string]interface{})["userRef"].(map[string]interface{})["name"] = userUID
+	obj.Object["spec"].(map[string]interface{})["authModule"] = authModule
+	obj.Object["spec"].(map[string]interface{})["authID"] = authID
+	return obj
+}

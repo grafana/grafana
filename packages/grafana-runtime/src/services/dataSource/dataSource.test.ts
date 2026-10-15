@@ -12,7 +12,11 @@ import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setLogger } from '../logging/registry';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { FALLBACK_TO_LEGACY_INSTANCE_WARNING, PLUGIN_CACHE_UID_MISMATCH_WARNING } from './constants';
+import {
+  FALLBACK_TO_LEGACY_INSTANCE_WARNING,
+  NUMERIC_ID_REF_WARNING,
+  PLUGIN_CACHE_UID_MISMATCH_WARNING,
+} from './constants';
 import {
   _resetForTests as resetPlugin,
   getDataSourceInstance,
@@ -116,6 +120,23 @@ describe('plugin', () => {
       expect(first).toBe(second);
     });
 
+    it('names getDataSourceInstance in the warning stack when it resolves a numeric id', async () => {
+      const settings = ds({ id: 42 });
+      setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      setDataSourcePluginImporter(
+        jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
+      );
+
+      const result = await getDataSourceInstance('42');
+
+      expect(result).toBe(instance);
+      expect(logWarning).toHaveBeenCalledWith(
+        NUMERIC_ID_REF_WARNING,
+        expect.objectContaining({ id: '42', stack: expect.stringMatching(/at (async )?getDataSourceInstance \(/) })
+      );
+    });
+
     it('throws when the datasource is not found', async () => {
       setDataSourceInstanceSettings({}, '');
       setDataSourcePluginImporter(jest.fn());
@@ -209,6 +230,28 @@ describe('plugin', () => {
 
       const result = await getDataSourceInstance('${dsVar}');
       expect(result).toBe(instance);
+    });
+
+    it('resolves a template variable that interpolates to a numeric datasource id', async () => {
+      // ds() carries id: 1. Legacy DatasourceSrv.get() reaches the id map because it interpolates
+      // itself and then re-enters getInstanceSettings through its plain branch; the new path
+      // resolves settings once and must find it on the first attempt.
+      const settings = ds();
+      setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+      setTemplateSrv({
+        getVariables: () => [],
+        replace: (v?: string) => (v === '${dsById}' ? String(settings.id) : (v ?? '')),
+      } as unknown as TemplateSrv);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      setDataSourcePluginImporter(
+        jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
+      );
+
+      const result = await getDataSourceInstance('${dsById}');
+
+      expect(result).toBe(instance);
+      expect(logWarning).not.toHaveBeenCalledWith(FALLBACK_TO_LEGACY_INSTANCE_WARNING, expect.anything());
     });
 
     it('resolves a template variable that is not at the start of the ref', async () => {
@@ -523,7 +566,7 @@ describe('plugin', () => {
       expect(mockImport).toHaveBeenCalledTimes(1);
 
       // Sync from an already-fetched payload — no network round trip.
-      syncDataSourceInstanceSettings({
+      await syncDataSourceInstanceSettings({
         datasources: { [settings.name]: settings },
         defaultDatasource: settings.name,
       });

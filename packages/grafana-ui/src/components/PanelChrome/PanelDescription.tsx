@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import type { JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
@@ -32,7 +33,7 @@ export function PanelDescription({ description, className, inSubHeader }: Props)
 
   if (inSubHeader) {
     return (
-      <Text variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary" data-testid={selectors.components.Panels.Panel.subtitle}>
         {getDescriptionContent()}
       </Text>
     );

@@ -115,8 +115,7 @@ func (s *Service) BuildPipeline(ctx context.Context, req *Request) (DataPipeline
 		if nodeErr := node.DisabledErr(); nodeErr != nil {
 			// Record SQL metrics before returning, matching the behavior of
 			// the non-degraded path where instrumentSQLError fires on failure.
-			var sqlErr *sql.ErrorWithCategory
-			if errors.As(nodeErr, &sqlErr) {
+			if sqlErr, ok := errors.AsType[*sql.ErrorWithCategory](nodeErr); ok {
 				s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
 			}
 			return nil, nodeErr

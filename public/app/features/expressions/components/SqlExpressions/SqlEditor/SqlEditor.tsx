@@ -78,6 +78,7 @@ export const SqlEditor = ({
           height={typeof height === 'number' ? `${height}px` : height}
           aria-label={ariaLabel}
           completionSources={completionSources}
+          completeOnSpace
           extensions={extensions}
         />
       </div>

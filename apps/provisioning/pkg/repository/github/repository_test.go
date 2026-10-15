@@ -597,8 +597,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				var statusErr *apierrors.StatusError
-				if errors.As(tt.expectedError, &statusErr) {
+				if statusErr, ok := errors.AsType[*apierrors.StatusError](tt.expectedError); ok {
 					var actualStatusErr *apierrors.StatusError
 					require.True(t, errors.As(err, &actualStatusErr))
 					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)

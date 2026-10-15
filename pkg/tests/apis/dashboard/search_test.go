@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -25,6 +24,7 @@ import (
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -32,6 +32,22 @@ import (
 )
 
 func TestIntegrationSearchDevDashboards(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchDevDashboards)
+}
+
+func TestIntegrationSearchOwnerReferences(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchOwnerReferences)
+}
+
+func TestIntegrationSearchCreatedBy(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchCreatedBy)
+}
+
+func TestIntegrationSearchPermissionFiltering(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchPermissionFiltering)
+}
+
+func testIntegrationSearchDevDashboards(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -100,7 +116,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 
 		var statusCode int
 		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
-			//Param("explain", "true") // helpful to understand which field made things match
 			Param("limit", "1000").
 			Param("type", "dashboard") // Only search dashboards
 
@@ -120,9 +135,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		sr.MaxScore = roundTo(sr.MaxScore, 3)
 		for i := range sr.Hits {
 			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
-			if sr.Hits[i].Explain != nil {
-				roundExplainValues(sr.Hits[i].Explain.Object, 3)
-			}
 		}
 		return sr
 	}
@@ -182,7 +194,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			params: map[string]string{
 				"query":            "orange",
 				"panelTitleSearch": "true",
-				"explain":          "true",
 			},
 		},
 		{
@@ -231,7 +242,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	}
 }
 
-func TestIntegrationSearchOwnerReferences(t *testing.T) {
+func testIntegrationSearchOwnerReferences(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -327,7 +338,7 @@ func TestIntegrationSearchOwnerReferences(t *testing.T) {
 	assert.Contains(t, foundHit.OwnerReferences, "iam.grafana.app/User/test-user")
 }
 
-func TestIntegrationSearchCreatedBy(t *testing.T) {
+func testIntegrationSearchCreatedBy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -427,7 +438,7 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 	}
 }
 
-func TestIntegrationSearchPermissionFiltering(t *testing.T) {
+func testIntegrationSearchPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Only run for Unified Storage modes that support search (Mode4+)
@@ -496,7 +507,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 				Param("limit", "1000").
 				Param("type", "folder") // Only search folders
 
-			for _, kv := range strings.Split(params, "&") {
+			for kv := range strings.SplitSeq(params, "&") {
 				if kv == "" {
 					continue
 				}
@@ -687,37 +698,6 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	}, &struct{}{})
 
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
-}
-
-// bleveInternalDocIDRegex matches the 8-byte internal segment doc ID that bleve
-// includes in explain messages (e.g. "in \x00\x00\x00\x00\x00\x00\x00\r)").
-// The value depends on segment layout and is not stable across runs.
-var bleveInternalDocIDRegex = regexp.MustCompile(` in \x00[^)]*\)`)
-
-func roundExplainValues(obj map[string]any, decimals uint32) {
-	for k, val := range obj {
-		switch k {
-		case "value":
-			v, ok := val.(float64)
-			if ok {
-				obj[k] = roundTo(v, decimals)
-			}
-		case "message":
-			s, ok := val.(string)
-			if ok {
-				obj[k] = bleveInternalDocIDRegex.ReplaceAllString(s, " in <docID>)")
-			}
-		case "children":
-			children, ok := val.([]any)
-			if ok {
-				for _, child := range children {
-					if v, ok := child.(map[string]any); ok {
-						roundExplainValues(v, decimals)
-					}
-				}
-			}
-		}
-	}
 }
 
 // roundTo rounds a float64 to a specified number of decimal places.

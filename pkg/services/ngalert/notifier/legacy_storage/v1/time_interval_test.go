@@ -262,7 +262,7 @@ func TestTimeIntervalFingerprint(t *testing.T) {
 	t.Run("stable across metadata modification", func(t *testing.T) {
 		fingerprint := TimeIntervalFingerprint(baseInterval())
 
-		metadataType := reflect.TypeOf(ResourceMetadata{})
+		metadataType := reflect.TypeFor[ResourceMetadata]()
 		otherMetadata := reflect.ValueOf(ResourceMetadata{
 			UID:        "some-other-uid",
 			Version:    "some-other-version",
@@ -302,7 +302,7 @@ func TestTimeIntervalFingerprint(t *testing.T) {
 		}
 		otherValue := reflect.ValueOf(other)
 
-		intervalType := reflect.TypeOf(timeinterval.TimeInterval{})
+		intervalType := reflect.TypeFor[timeinterval.TimeInterval]()
 		for i := 0; i < intervalType.NumField(); i++ {
 			field := intervalType.Field(i).Name
 			cp := baseInterval()
