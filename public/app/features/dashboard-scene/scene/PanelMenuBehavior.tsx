@@ -200,7 +200,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     if (!isEditingPanel && !popoverHasLayoutActions) {
       moreSubMenu.push({
-        text: t('panel.header-menu.copy', `Copy`),
+        // Copying a repeated panel copies its source panel together with the repeat options.
+        text:
+          hasActionsPopover && isReadOnlyRepeat
+            ? t('panel.header-menu.copy-repeated-panel', 'Copy repeated panel')
+            : t('panel.header-menu.copy', `Copy`),
         iconClassName: 'copy',
         onClick: () => {
           DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel');

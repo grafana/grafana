@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { testWithFeatureToggles } from 'test/test-utils';
+import { testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import {
   FieldType,
@@ -139,13 +139,13 @@ describe('panelMenuBehavior', () => {
       setTestFlags({});
     });
 
-    async function getMenuItems(setup?: (scene: DashboardScene) => void) {
+    async function getMenuItems(setup?: (scene: DashboardScene, panel: VizPanel) => void) {
       const { scene, menu, panel } = await buildTestScene({});
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-      setup?.(scene);
+      setup?.(scene, panel);
 
       menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
+      await waitFor(() => expect(menu.state.items?.length).toBeGreaterThan(0));
 
       const items = menu.state.items ?? [];
       const moreItems = items.find((i) => i.text === 'More...')?.subMenu ?? [];
@@ -174,6 +174,19 @@ describe('panelMenuBehavior', () => {
       expect(moreItemTexts).not.toContain('Duplicate');
       expect(moreItemTexts).toContain('New library panel');
     });
+
+    it.each([false, true])(
+      'for a repeated panel, labels Copy as "Copy repeated panel" (edit mode: %s)',
+      async (isEditing) => {
+        const { moreItemTexts } = await getMenuItems((scene, panel) => {
+          scene.setState({ isEditing });
+          panel.setState({ repeatSourceKey: 'panel-1' });
+        });
+
+        expect(moreItemTexts).toContain('Copy repeated panel');
+        expect(moreItemTexts).not.toContain('Copy');
+      }
+    );
 
     it('while searching panels, keeps all items because panels are shown without the popover', async () => {
       const { itemTexts } = await getMenuItems((scene) => scene.setState({ panelSearch: 'cpu' }));
