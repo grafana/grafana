@@ -5011,7 +5011,8 @@
       "metadata": {
         "name": "provisioningFolderMetadata",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-02-23T11:22:50Z"
+        "creationTimestamp": "2026-02-23T11:22:50Z",
+        "deletionTimestamp": "2026-10-12T08:12:36Z"
       },
       "spec": {
         "description": "Allow setting folder metadata for provisioned folders",
