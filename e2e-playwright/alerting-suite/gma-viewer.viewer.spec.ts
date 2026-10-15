@@ -1,20 +1,8 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { waitForRuleSearchVisible } from './fixtures';
 import { RuleListPage } from './pages/RuleListPage';
-import {
-  RUN_LABEL,
-  createAlertRule,
-  createFolderAndWait,
-  createRecordingRule,
-  deleteFolder,
-  getNamespace,
-  newAdminRequest,
-  newRunMarker,
-  runScope,
-} from './ruleSeeding';
-
-const VIEWER_VISIBILITY_TIMEOUT = 60_000;
+import { runScope } from './ruleSeeding';
+import { requireViewerFixtures } from './viewer-fixtures/viewerFixtureState';
 
 // Uses the `alerting-viewer` project (playwright.config.ts) — a Viewer-role user dedicated to
 // this suite, distinct from the org-wide `viewer` project which belongs to plugin API tests.
@@ -38,65 +26,32 @@ test.describe('Viewer', () => {
     await expect(page.getByRole('table')).toHaveCount(0);
   });
 
-  // The Viewer's own `request` and `page` are authenticated as the Viewer, so the rules it reads are
-  // seeded through a separate Admin context and removed with their folder afterwards.
-  test('RBAC-V: sees readable rules without New rule buttons or any usable row mutation', async ({
-    page,
-    playwright,
-  }, testInfo) => {
-    test.setTimeout(VIEWER_VISIBILITY_TIMEOUT * 2 + 30_000);
-    const run = newRunMarker();
-    const folderUid = `e2e-viewer-${run}`;
-    const alertTitle = `Checkout latency high ${run}`;
-    const recordingTitle = `Checkout latency p99 ${run}`;
-    const admin = await newAdminRequest(playwright, testInfo.project.use.baseURL as string);
+  // The folder and rules come from the `alerting-viewer-fixtures-setup` project, which seeds them as Admin
+  // before the Viewer logs in: a folder created after the Viewer's first request is invisible to the
+  // Viewer until Grafana's 60 s basic-role permission cache refreshes.
+  test('RBAC-V: sees readable rules without New rule buttons or any usable row mutation', async ({ page }) => {
+    const { runMarker, alertRule, recordingRule } = requireViewerFixtures();
 
-    try {
-      const namespace = await getNamespace(admin);
-      await createFolderAndWait(admin, namespace, folderUid, `Viewer visible ${run}`);
-      await createAlertRule(admin, namespace, folderUid, { title: alertTitle, labels: { [RUN_LABEL]: run } });
-      await createRecordingRule(admin, namespace, folderUid, {
-        title: recordingTitle,
-        metric: `checkout_latency_p99_${run}`,
-        labels: { [RUN_LABEL]: run },
-      });
-      // A new folder reaches the Viewer's search later than the Admin's: until then the Viewer's folder-scoped
-      // search answers with an error or with hits from outside the folder. So wait on the Viewer's own
-      // request, whose result is what the page is about to read.
-      await waitForRuleSearchVisible(page.request, namespace, 'alertrules', folderUid, 1, VIEWER_VISIBILITY_TIMEOUT);
-      await waitForRuleSearchVisible(
-        page.request,
-        namespace,
-        'recordingrules',
-        folderUid,
-        1,
-        VIEWER_VISIBILITY_TIMEOUT
-      );
+    for (const { kind, title, newRuleButton } of [
+      { kind: 'alert', title: alertRule.title, newRuleButton: 'New alert rule' },
+      { kind: 'recording', title: recordingRule.title, newRuleButton: 'New recording rule' },
+    ] as const) {
+      const list = new RuleListPage(page, kind);
+      await list.goto(runScope(runMarker));
 
-      for (const { kind, title, newRuleButton } of [
-        { kind: 'alert', title: alertTitle, newRuleButton: 'New alert rule' },
-        { kind: 'recording', title: recordingTitle, newRuleButton: 'New recording rule' },
-      ] as const) {
-        const list = new RuleListPage(page, kind);
-        await list.goto(runScope(run));
+      const row = list.ruleRow(title);
+      await expect(row).toBeVisible();
+      await expect(page.getByRole('link', { name: newRuleButton })).toHaveCount(0);
+      // Unavailable actions are shown disabled with their reason in the name, never usable.
+      await expect(row.getByRole('link', { name: 'Edit' })).toHaveCount(0);
+      await expect(row.getByRole('button', { name: /^Edit: /, disabled: true })).toBeVisible();
 
-        const row = list.ruleRow(title);
-        await expect(row).toBeVisible();
-        await expect(page.getByRole('link', { name: newRuleButton })).toHaveCount(0);
-        // Unavailable actions are shown disabled with their reason in the name, never usable.
-        await expect(row.getByRole('link', { name: 'Edit' })).toHaveCount(0);
-        await expect(row.getByRole('button', { name: /^Edit: /, disabled: true })).toBeVisible();
-
-        await row.getByRole('button', { name: 'More', exact: true }).click();
-        await expect(page.getByRole('menuitem', { name: 'Copy link' })).toBeVisible();
-        await expect(page.getByRole('menuitem', { name: /^(Pause|Resume|Delete)$/ })).toHaveCount(0);
-        await expect(page.getByRole('menuitem', { name: /^(Pause|Resume): /, disabled: true })).toBeVisible();
-        await expect(page.getByRole('menuitem', { name: /^Delete: /, disabled: true })).toBeVisible();
-        await page.keyboard.press('Escape');
-      }
-    } finally {
-      await deleteFolder(admin, folderUid);
-      await admin.dispose();
+      await row.getByRole('button', { name: 'More', exact: true }).click();
+      await expect(page.getByRole('menuitem', { name: 'Copy link' })).toBeVisible();
+      await expect(page.getByRole('menuitem', { name: /^(Pause|Resume|Delete)$/ })).toHaveCount(0);
+      await expect(page.getByRole('menuitem', { name: /^(Pause|Resume): /, disabled: true })).toBeVisible();
+      await expect(page.getByRole('menuitem', { name: /^Delete: /, disabled: true })).toBeVisible();
+      await page.keyboard.press('Escape');
     }
   });
 });

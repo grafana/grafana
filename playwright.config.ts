@@ -81,18 +81,51 @@ const gmaRuleListProjects: Project[] = [
       'gma-recording-browsing.spec.ts',
     ],
   }),
-  // Dedicated Viewer/Editor role journeys for the alerting suite: the org-wide `viewer`
-  // project belongs to plugin API tests, not alerting, so RBAC-V/RBAC-E use their own.
+  // Folder and rules the Viewer journey reads (see alerting-suite/viewer-fixtures/). They are seeded
+  // by an Admin setup project that the Viewer's login depends on: a basic role's permissions are
+  // cached for 60 s across all its users, so a folder created after the Viewer's first request
+  // would stay invisible to it until the cache refreshes.
+  withAuth({
+    name: 'alerting-viewer-fixtures-setup',
+    testDir: path.join(testDirRoot, '/alerting-suite/viewer-fixtures'),
+    testMatch: ['viewer-fixtures-setup.spec.ts'],
+    timeout: 60_000,
+  }),
+  // Logs in a Viewer dedicated to the alerting suite (the org-wide `viewer` project belongs to
+  // plugin API tests), after the fixtures exist. Its storage state is `playwright/.auth/alerting-viewer.json`.
+  {
+    name: 'alerting-viewer-login',
+    testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
+    testMatch: [/.*\.js/],
+    use: {
+      user: {
+        user: 'alerting-viewer',
+        password: 'password',
+        role: 'Viewer',
+      },
+    },
+    dependencies: ['alerting-viewer-fixtures-setup'],
+  },
+  // Dedicated Viewer/Editor role journeys for the alerting suite: RBAC-V/RBAC-E use their own
+  // users and projects.
   {
     name: 'alerting-viewer',
     testDir: path.join(testDirRoot, '/alerting-suite'),
     testMatch: [/\.viewer\.spec\.ts$/],
     use: {
       ...devices['Desktop Chrome'],
-      storageState: 'playwright/.auth/viewer.json',
+      storageState: 'playwright/.auth/alerting-viewer.json',
     },
-    dependencies: ['createUserAndAuthenticate'],
+    dependencies: ['alerting-viewer-login'],
   },
+  // Teardown depends on the Viewer project, like the corpus's, so running it gives the full
+  // setup, login, tests, teardown chain.
+  withAuth({
+    name: 'alerting-viewer-fixtures-teardown',
+    testDir: path.join(testDirRoot, '/alerting-suite/viewer-fixtures'),
+    testMatch: ['viewer-fixtures-teardown.spec.ts'],
+    dependencies: ['alerting-viewer'],
+  }),
   {
     name: 'alerting-editor',
     testDir: path.join(testDirRoot, '/alerting-suite'),
@@ -279,7 +312,7 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/alerting-suite'),
       // The new-list specs (`gma-*` and the corpus setup/teardown) need the second server and run
       // under the `alerting-gma` family of projects when GMA_RULE_LIST_SERVER is set.
-      testIgnore: [/\/gma-[^/]*\.spec\.ts$/, 'corpus/**'],
+      testIgnore: [/\/gma-[^/]*\.spec\.ts$/, 'corpus/**', 'viewer-fixtures/**'],
     }),
     withAuth({
       name: 'dashboard-new-layouts',

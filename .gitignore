@@ -13,6 +13,7 @@ awsconfig
 /e2e/tmp
 /scripts/grafana-server/tmp*
 /e2e-playwright/alerting-suite/corpus/.gma-corpus-manifest.json
+/e2e-playwright/alerting-suite/viewer-fixtures/.gma-viewer-fixtures-manifest.json
 vendor/
 /docs/menu.yaml
 /requests
