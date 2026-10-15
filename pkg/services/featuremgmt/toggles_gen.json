@@ -2159,7 +2159,8 @@
       "metadata": {
         "name": "enableDashboardEmptyExtensions",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-10-13T07:03:13Z"
+        "creationTimestamp": "2025-10-13T07:03:13Z",
+        "deletionTimestamp": "2026-10-15T11:19:04Z"
       },
       "spec": {
         "description": "Set this to true to enable all dashboard empty state extensions registered by plugins.",
