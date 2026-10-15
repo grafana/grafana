@@ -38,10 +38,10 @@ function captureStateManager() {
   return { instances, loadedUids };
 }
 
-function aNotebookScene(title = 'Checkout latency investigation') {
+function aNotebookScene(title = 'Checkout latency investigation', uid = 'nb-1') {
   return new NotebookScene({
     title,
-    uid: 'nb-1',
+    uid,
     body: new NotebookLayoutManager({ cells: [] }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
@@ -235,6 +235,48 @@ describe('NotebookView', () => {
       });
 
       expect(scene.state.isEditing).toBe(true);
+    });
+
+    it('edits only the notebook it was asked for when the host switches notebooks', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const previous = aNotebookScene('Previous', 'nb-1');
+      const next = aNotebookScene('Next', 'nb-2');
+      const { rerender } = render(<NotebookView uid="nb-1" />);
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene: previous });
+      });
+      // Spied rather than read back: leaving the view deactivates the scene, which ends edit mode anyway.
+      const enterPrevious = jest.spyOn(previous, 'onEnterEditMode');
+
+      await act(async () => {
+        rerender(<NotebookView uid="nb-2" enterEditMode />);
+      });
+      expect(enterPrevious).not.toHaveBeenCalled();
+
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene: next });
+      });
+      expect(next.state.isEditing).toBe(true);
+    });
+
+    it('drops a request still waiting on its notebook when the host moves to another one', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const next = aNotebookScene('Next', 'nb-2');
+      const { rerender } = render(<NotebookView uid="nb-1" enterEditMode />);
+      rerender(<NotebookView uid="nb-1" enterEditMode={false} />);
+
+      await act(async () => {
+        rerender(<NotebookView uid="nb-2" />);
+      });
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene: next });
+      });
+
+      expect(next.state.isEditing).toBeFalsy();
     });
 
     it('leaves a reader without write permission in view mode', async () => {

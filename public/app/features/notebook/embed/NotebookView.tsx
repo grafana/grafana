@@ -130,21 +130,24 @@ function SavedNotebookView({ uid, enterEditMode, onTitleChange }: SavedNotebookV
     };
   }, [stateManager, uid]);
 
-  // Held until the notebook has loaded: a host may turn the prop back off before then.
-  const editRequested = useRef(false);
+  // Held, per notebook, until it has loaded: a host may turn the prop back off before then.
+  const editRequestedFor = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (enterEditMode) {
-      editRequested.current = true;
+      editRequestedFor.current = uid;
+    } else if (editRequestedFor.current !== uid) {
+      editRequestedFor.current = undefined;
     }
-    if (!scene || !editRequested.current) {
+    // Right after a uid change, `scene` is still the previous notebook's.
+    if (!scene || scene.state.uid !== uid || editRequestedFor.current !== uid) {
       return;
     }
-    editRequested.current = false;
+    editRequestedFor.current = undefined;
     // Guarded: re-entering would reset what autosave counts as edited while an add is still saving.
     if (!scene.state.isEditing) {
       scene.onEnterEditMode(NOTEBOOK_EDIT_SESSION_SOURCE.ADD_TO_NOTEBOOK);
     }
-  }, [scene, enterEditMode]);
+  }, [scene, uid, enterEditMode]);
 
   if (!scene) {
     return loadError ? <NotebookViewError error={loadError} /> : <Centered>{isLoading && <PageLoader />}</Centered>;
