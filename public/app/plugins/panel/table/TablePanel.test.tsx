@@ -6,6 +6,7 @@ import {
   applyFieldOverrides,
   CoreApp,
   createTheme,
+  DataTransformerID,
   EventBusSrv,
   FieldType,
   getDefaultTimeRange,
@@ -210,6 +211,42 @@ it('retains saved-sort callbacks with experimental features enabled', async () =
   await userEvent.setup().click(screen.getByRole('button', { name: 'Value' }));
   expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['1', '2', '3']);
   expect(props.onOptionsChange).toHaveBeenCalledWith({ ...options, sortBy: [{ displayName: 'Value', desc: false }] });
+});
+
+it('writes viewer sorting to runtime transformations without changing panel options', async () => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+  const source = new SceneDataNode({
+    data: {
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      series: [toDataFrame({ refId: 'A', fields: [{ name: 'Value', type: FieldType.number, values: [3, 1, 2] }] })],
+    },
+  });
+  const transformer = new SceneDataTransformer({ $data: source, transformations: [] });
+  const panel = new VizPanel({ pluginId: 'table', $data: transformer });
+  const api = panel.getRuntimeTransformations();
+  const deactivate = transformer.activate();
+  const props = getPanelProps(options, { fieldConfig, width: 800, height: 600 });
+  function LiveTable() {
+    const { data } = transformer.useState();
+    return data ? <TablePanel {...props} data={data} /> : null;
+  }
+  const view = render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <PanelContextProvider value={{ eventsScope: 'global', eventBus: new EventBusSrv(), adHocTransformations: api }}>
+        <LiveTable />
+      </PanelContextProvider>
+    </OpenFeatureProvider>
+  );
+  try {
+    await userEvent.click(await screen.findByRole('button', { name: 'Value' }));
+    await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual([1, 2, 3]));
+    expect(api.get('grafana:table-view').map((config) => config.id)).toEqual([DataTransformerID.sortBy]);
+    expect(props.onOptionsChange).not.toHaveBeenCalled();
+  } finally {
+    view.unmount();
+    deactivate();
+  }
 });
 
 it('retains saved-sort callbacks with experimental features disabled', async () => {

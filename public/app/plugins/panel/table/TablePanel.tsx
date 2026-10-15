@@ -181,7 +181,11 @@ export function TablePanel(props: Props) {
       width={width}
       data={main}
       sortByBehavior={sortByBehavior}
-      onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
+      onSortByChange={
+        adHocTransformationsEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
+          ? undefined
+          : (sortBy) => onSortByChange(sortBy, props)
+      }
       onColumnResize={(displayName, resizedWidth, fieldScope) =>
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }

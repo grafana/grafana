@@ -1,7 +1,8 @@
 import { isEqual } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 
 import { type Field, type MatcherConfig } from '@grafana/data';
+import { type SortColumn } from '@grafana/react-data-grid';
 
 import { type TableNGProps } from '../types';
 
@@ -14,6 +15,7 @@ import {
   writeTableFilter,
 } from './filterByValue';
 import { editableTableFilter, filterTransformations } from './registry';
+import { readTableSort, writeTableSort } from './sortBy';
 import { useTableTransformations } from './useTableTransformations';
 
 export function useRowTransformations(props: TableNGProps) {
@@ -30,6 +32,21 @@ export function useRowTransformations(props: TableNGProps) {
     ]);
 
   const { transformations: configs, update } = useTableTransformations(api, owner, true);
+  const initialSort = useRef(props.sortBy);
+  const sortContext = useMemo(
+    () => ({ source, frameKey, frameIndex, initialSort: initialSort.current }),
+    [source, frameKey, frameIndex]
+  );
+  const sortColumns = useMemo(() => readTableSort(configs, sortContext), [configs, sortContext]);
+  const setSortColumns = useCallback<Dispatch<SetStateAction<SortColumn[]>>>(
+    (action) =>
+      update((current) => {
+        const previous = readTableSort(current, sortContext);
+        const next = typeof action === 'function' ? action(previous) : action;
+        return isEqual(previous, next) ? current : writeTableSort(current, next, sortContext);
+      }),
+    [update, sortContext]
+  );
   const filters = useMemo(() => activeFilters(configs, frameKey, source), [configs, frameKey, source]);
   const getFilters = useCallback(
     (field: Field, parentIndex?: number) => filters.filter((config) => matchesTableFilter(config, field, parentIndex)),
@@ -58,8 +75,17 @@ export function useRowTransformations(props: TableNGProps) {
   );
   const clearFilters = useCallback(() => update((current) => clearFrameFilters(current, frameKey)), [update, frameKey]);
   const value = useMemo(
-    () => ({ filters, getFilters, applyFilter, clearFilter, clearFilters, timeZone: props.timeZone }),
-    [filters, getFilters, applyFilter, clearFilter, clearFilters, props.timeZone]
+    () => ({
+      filters,
+      getFilters,
+      applyFilter,
+      clearFilter,
+      clearFilters,
+      sortColumns,
+      setSortColumns,
+      timeZone: props.timeZone,
+    }),
+    [filters, getFilters, applyFilter, clearFilter, clearFilters, sortColumns, setSortColumns, props.timeZone]
   );
   return { configs, value };
 }

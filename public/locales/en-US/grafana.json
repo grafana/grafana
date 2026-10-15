@@ -10767,6 +10767,8 @@
       "column-menu-hide": "Hide column",
       "column-menu-label": "Column options for {{name}}",
       "column-menu-manage-columns": "Manage columns",
+      "column-menu-pin": "Pin column left",
+      "column-menu-unpin": "Unpin column",
       "column-menu-update-filter": "Update filter",
       "column-visibility": "Column visibility",
       "columns": "Columns",
@@ -10838,6 +10840,7 @@
         "unbounded": "No limit",
         "units": "Exact bounds use raw values (field unit: {{unit}})."
       },
+      "pin-column-label": "Pin {{columnName}}",
       "reorder-column-label": "Reorder {{columnName}}",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
@@ -10850,6 +10853,7 @@
       "tooltip": {
         "trigger": "Toggle tooltip"
       },
+      "unpin-column-label": "Unpin {{columnName}}",
       "view": {
         "clear": "Clear filters ({{total}})",
         "error": "Unable to apply this table view.",

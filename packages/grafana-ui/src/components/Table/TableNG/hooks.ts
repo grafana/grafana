@@ -154,17 +154,20 @@ export function useSortedRows(
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
+  const view = useTableView();
+  const activeSortColumns = view?.sortColumns ?? sortColumns;
+  const updateSortColumns = view?.setSortColumns ?? setSortColumns;
   const columnTypes = useMemo(() => getColumnTypes(fields), [fields]);
 
   const sortedRows = useMemo(
-    () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
-    [rows, fields, sortColumns, columnTypes, hasNestedFrames]
+    () => applySort(rows, fields, activeSortColumns, columnTypes, hasNestedFrames),
+    [rows, fields, activeSortColumns, columnTypes, hasNestedFrames]
   );
 
   return {
     rows: sortedRows,
-    sortColumns,
-    setSortColumns,
+    sortColumns: activeSortColumns,
+    setSortColumns: updateSortColumns,
   };
 }
 

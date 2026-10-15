@@ -94,6 +94,34 @@ describe('SortBy transformer', () => {
     });
   });
 
+  it('sorts only the selected frame for a table view', () => {
+    const frames = [
+      toDataFrame({ refId: 'A', fields: [{ name: 'value', type: FieldType.number, values: [2, 1] }] }),
+      toDataFrame({ refId: 'B', fields: [{ name: 'value', type: FieldType.number, values: [4, 3] }] }),
+    ];
+    const result = sortByTransformer.transformer(
+      { sort: [{ field: 'value' }], table: true, target: { frameIndex: 1, refId: 'B', frameKey: 'B' } },
+      { interpolate: (value) => value }
+    )(frames);
+    expect(result[0]).toBe(frames[0]);
+    expect(result[1].fields[0].values).toEqual([3, 4]);
+  });
+
+  it('uses natural comparison and field identity for table views', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'name', type: FieldType.string, values: ['item10', 'item2', 'item1'] },
+        { name: 'value', type: FieldType.number, values: [10, 2, 1] },
+      ],
+    });
+    const result = sortByTransformer.transformer(
+      { sort: [{ field: 'name', fieldLabels: undefined, displayName: 'Renamed' }], table: true },
+      { interpolate: (value) => value }
+    )([frame]);
+    expect(result[0].fields[0].values).toEqual(['item1', 'item2', 'item10']);
+    expect(result[0].fields[1].values).toEqual([1, 2, 10]);
+  });
+
   describe('multiple fields', () => {
     const teamsFrame = toDataFrame({
       name: 'teams',

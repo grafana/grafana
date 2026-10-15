@@ -283,7 +283,7 @@ it.each([false, true])(
     expect(output.fields[0].values).toEqual(['gamma', 'beta']);
   }
 );
-it('keeps header sorting out of the ad-hoc stage', async () => {
+it('writes header sorting before column organization in the ad-hoc stage', async () => {
   const data = makeFrame();
   const frameKey = '[null,0,1]';
   let configs: readonly DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { hidden: true } } }];
@@ -312,7 +312,8 @@ it('keeps header sorting out of the ad-hoc stage', async () => {
     />
   );
   await userEvent.setup().click(screen.getByRole('columnheader', { name: /Name/ }));
-  expect(api.set).not.toHaveBeenCalled();
-  expect(api.get('table')[0]).toEqual({ id: 'organize', options: { excludeByName: { hidden: true } } });
+  expect(api.set).toHaveBeenCalledTimes(1);
+  expect(api.get('table').map((config) => config.id)).toEqual(['sortBy', 'organize']);
+  expect(api.get('table')[0].options.target).toEqual({ frameKey, frameIndex: 0, refId: undefined });
   expect(displayedNames()).toEqual(['alpha', 'beta', 'gamma', 'outlier']);
 });
