@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,8 +10,11 @@ import (
 	"github.com/go-openapi/loads"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestAuthorize(t *testing.T) {
@@ -46,20 +50,32 @@ func TestAuthorize(t *testing.T) {
 	ac := acmock.New()
 	api := &API{AccessControl: ac, FeatureManager: featuremgmt.WithFeatures()}
 
-	t.Run("should not panic on known routes", func(t *testing.T) {
+	t.Run("should have an authorization entry for known routes", func(t *testing.T) {
 		for path, methods := range paths {
 			path := swaggerSpec.Spec().BasePath + path
 			for _, method := range methods {
-				require.NotPanics(t, func() {
-					api.authorize(method, path)
-				})
+				_, ok := api.authorizeHandler(method, path)
+				require.Truef(t, ok, "no authorization entry for method [%s] of endpoint [%s]", method, path)
 			}
 		}
 	})
 
-	t.Run("should panic if route is unknown", func(t *testing.T) {
-		require.Panics(t, func() {
-			api.authorize("test", "test")
-		})
+	t.Run("should return 500 if route is unknown", func(t *testing.T) {
+		_, ok := api.authorizeHandler("test", "test")
+		require.False(t, ok)
+
+		rec := invokeHandler(t, api.authorize("test", "test"))
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+		require.Contains(t, rec.Body.String(), "Authorization is not configured for this endpoint")
 	})
+}
+
+func invokeHandler(t *testing.T, h web.Handler) *httptest.ResponseRecorder {
+	t.Helper()
+	fn, ok := h.(func(*contextmodel.ReqContext))
+	require.True(t, ok, "unexpected handler type %T", h)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	fn(&contextmodel.ReqContext{Context: &web.Context{Req: req, Resp: web.NewResponseWriter(http.MethodGet, rec)}, Logger: log.NewNopLogger()})
+	return rec
 }

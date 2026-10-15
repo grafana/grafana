@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -14,8 +16,24 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-//nolint:gocyclo
+// authorize returns the authorization handler for the route. A route without an authorization
+// entry fails closed with a 500 and is logged at registration time.
 func (api *API) authorize(method, path string) web.Handler {
+	h, ok := api.authorizeHandler(method, path)
+	if ok {
+		return h
+	}
+	err := fmt.Errorf("no authorization handler for method [%s] of endpoint [%s]", method, path)
+	log.New("ngalert.api.authorization").Error("Authorization is not configured for endpoint", "error", err)
+	return func(c *contextmodel.ReqContext) {
+		response.Error(http.StatusInternalServerError, "Authorization is not configured for this endpoint", err).WriteTo(c)
+	}
+}
+
+// authorizeHandler looks up the authorization handler for the route and reports whether an entry exists.
+//
+//nolint:gocyclo
+func (api *API) authorizeHandler(method, path string) (web.Handler, bool) {
 	authorize := ac.Middleware(api.AccessControl)
 	var eval ac.Evaluator = nil
 
@@ -69,7 +87,7 @@ func (api *API) authorize(method, path string) web.Handler {
 			),
 		)
 	case http.MethodDelete + "/api/ruler/grafana/api/v1/trash/rule/guid/{RuleGUID}":
-		return middleware.ReqOrgAdmin
+		return middleware.ReqOrgAdmin, true
 
 	// Grafana rule state history paths
 	case http.MethodGet + "/api/v1/rules/history":
@@ -166,7 +184,7 @@ func (api *API) authorize(method, path string) web.Handler {
 					models.ScopeAlertmanagerImportsProvider.GetResourceScopeUID(readConfigIdentifierHeader(c)),
 				),
 			)).(func(*contextmodel.ReqContext))(c)
-		}
+		}, true
 	case http.MethodDelete + "/api/convert/api/v1/alerts":
 		return func(c *contextmodel.ReqContext) {
 			authorize(ac.EvalAny(
@@ -176,7 +194,7 @@ func (api *API) authorize(method, path string) web.Handler {
 					models.ScopeAlertmanagerImportsProvider.GetResourceScopeUID(readConfigIdentifierHeader(c)),
 				),
 			)).(func(*contextmodel.ReqContext))(c)
-		}
+		}, true
 	case http.MethodGet + "/api/convert/api/v1/alerts":
 		return func(c *contextmodel.ReqContext) {
 			authorize(ac.EvalAny(
@@ -186,7 +204,7 @@ func (api *API) authorize(method, path string) web.Handler {
 					models.ScopeAlertmanagerImportsProvider.GetResourceScopeUID(readConfigIdentifierHeader(c)),
 				),
 			)).(func(*contextmodel.ReqContext))(c)
-		}
+		}, true
 
 	case http.MethodPost + "/api/convert/api/v1/alerts/{Identifier}/promote":
 		// Always-required permissions (routes and receivers exist in every imported config).
@@ -329,7 +347,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/ngalert/admin_config",
 		http.MethodPost + "/api/v1/ngalert/admin_config",
 		http.MethodGet + "/api/v1/ngalert/alertmanagers":
-		return middleware.ReqOrgAdmin
+		return middleware.ReqOrgAdmin, true
 
 	// Grafana-only Provisioning Export Paths for everything except contact points.
 	case http.MethodGet + "/api/v1/provisioning/policies/export":
@@ -609,8 +627,8 @@ func (api *API) authorize(method, path string) web.Handler {
 	}
 
 	if eval != nil {
-		return authorize(eval)
+		return authorize(eval), true
 	}
 
-	panic(fmt.Sprintf("no authorization handler for method [%s] of endpoint [%s]", method, path))
+	return nil, false
 }
