@@ -5,13 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const alertBroadcastKey = "alerts:broadcast"
+const (
+	alertBroadcastKey = "alerts:broadcast"
+	alertBroadcastDropLogInterval = 10 * time.Second
+)
 
 type AlertBroadcastPayload struct {
 	OrgID  int64                    `json:"orgId"`
@@ -22,9 +26,11 @@ type alertBroadcast struct {
 	logger log.Logger
 	moa    *MultiOrgAlertmanager
 
-	mu      sync.Mutex
-	queue   chan AlertBroadcastPayload
-	running bool
+	mu                sync.Mutex
+	queue             chan AlertBroadcastPayload
+	running           bool
+	lastDropWarning   time.Time
+	dropsSinceWarning int64
 }
 
 func newAlertBroadcastState(logger log.Logger, moa *MultiOrgAlertmanager) *alertBroadcast {
@@ -69,7 +75,9 @@ func (s *alertBroadcast) Merge(b []byte) error {
 		// Alert broadcasts are best-effort state replication. Dropping here is
 		// preferable to blocking the cluster receive path; the next evaluation
 		// will broadcast the current alert state again.
-		s.logger.Warn("Dropping broadcast alerts because local processing queue is full", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts))
+		if dropped, ok := s.shouldLogQueueDrop(time.Now()); ok {
+			s.logger.Warn("Dropping broadcast alerts because local processing queue is full", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts), "droppedSinceLastWarning", dropped)
+		}
 		return nil
 	}
 
@@ -81,6 +89,21 @@ func (s *alertBroadcast) Merge(b []byte) error {
 	go s.processQueue()
 	return nil
 }
+
+
+ // shouldLogQueueDrop coalesces queue-overflow warnings on the gossip receive
+ // path. Every dropped payload is counted, but warning I/O is limited to one
+ // message per interval so sustained overload cannot stall gossip processing.
+ func (s *alertBroadcast) shouldLogQueueDrop(now time.Time) (int64, bool) {
+ 	s.dropsSinceWarning++
+ 	if !s.lastDropWarning.IsZero() && now.Sub(s.lastDropWarning) < alertBroadcastDropLogInterval {
+ 		return 0, false
+ 	}
+ 	dropped := s.dropsSinceWarning
+ 	s.dropsSinceWarning = 0
+ 	s.lastDropWarning = now
+ 	return dropped, true
+ }
 
 func (s *alertBroadcast) processQueue() {
 	for {
