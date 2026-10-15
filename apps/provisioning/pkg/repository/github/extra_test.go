@@ -565,7 +565,7 @@ func TestExtra_BuildErrors(t *testing.T) {
 		wantErr error
 	}{
 		{name: "decrypt failure", wantErr: repository.ErrSecretDecryptFailed},
-		{name: "retry option does not repeat construction", opts: []repository.BuildOption{repository.WithRetries(3), repository.WithTimeout(time.Second)}, wantErr: repository.ErrSecretDecryptFailed},
+		{name: "decrypt failure with timeout", opts: []repository.BuildOption{repository.WithTimeout(time.Second)}, wantErr: repository.ErrSecretDecryptFailed},
 		{name: "missing token", opts: []repository.BuildOption{repository.WithTimeout(time.Second)}, missing: true, wantErr: repository.ErrTokenNotFound},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

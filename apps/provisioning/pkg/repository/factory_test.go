@@ -922,7 +922,7 @@ func TestFactory_BuildOptionsSpan(t *testing.T) {
 				}).Once()
 				f, err := ProvideFactory(map[provisioning.RepositoryType]struct{}{provisioning.GitRepositoryType: {}}, []Extra{extra}, tp.Tracer("test"))
 				require.NoError(t, err)
-				_, err = f.Build(context.Background(), config, WithRetries(1))
+				_, err = f.Build(context.Background(), config, WithTimeout(time.Second))
 				spans := recorder.Ended()
 				require.Len(t, spans, 1)
 				require.Equal(t, "provisioning.repository.build", spans[0].Name())
@@ -945,7 +945,7 @@ func TestFactory_BuildForwardsOptions(t *testing.T) {
 	config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}}
 	extra := NewMockExtra(t)
 	extra.EXPECT().Type().Return(provisioning.GitRepositoryType)
-	extra.EXPECT().Build(mock.Anything, config, mock.Anything, mock.Anything, mock.Anything).
+	extra.EXPECT().Build(mock.Anything, config, mock.Anything, mock.Anything).
 		RunAndReturn(func(ctx context.Context, r *provisioning.Repository, opts ...BuildOption) (Repository, error) {
 			_, hasDeadline := ctx.Deadline()
 			require.False(t, hasDeadline, "the extra owns the build deadline")
@@ -953,11 +953,11 @@ func TestFactory_BuildForwardsOptions(t *testing.T) {
 			for _, opt := range opts {
 				opt(&options)
 			}
-			require.Equal(t, BuildOptions{Timeout: time.Second, Retries: 2}, options)
+			require.Equal(t, BuildOptions{Timeout: time.Second}, options)
 			return nil, ErrSecretDecryptFailed
 		}).Once()
 	f, err := ProvideFactory(map[provisioning.RepositoryType]struct{}{provisioning.GitRepositoryType: {}}, []Extra{extra}, noopTracer)
 	require.NoError(t, err)
-	_, err = f.Build(context.Background(), config, WithTimeout(time.Minute), WithRetries(2), WithTimeout(time.Second))
+	_, err = f.Build(context.Background(), config, WithTimeout(time.Minute), WithTimeout(time.Second))
 	require.ErrorIs(t, err, ErrSecretDecryptFailed)
 }

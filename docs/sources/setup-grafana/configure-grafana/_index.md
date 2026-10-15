@@ -3017,12 +3017,6 @@ Timeout for constructing repositories in the repository controller, including se
 
 Default is `0s`. Set a non-positive value to disable the additional timeout. An earlier caller deadline takes precedence, and the existing 30-second limit for each secret decryption still applies. This setting doesn't limit subsequent repository operations.
 
-#### `repository_build_retries`
-
-Number of additional construction attempts requested by the repository controller for repository implementations that support retries. For example, `2` permits up to three attempts in implementations that honor this option. Default is `0`. Non-positive values disable retries.
-
-The built-in `git`, `github`, and `local` implementations currently build once regardless of this setting.
-
 #### `connection_types`
 
 List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
