@@ -149,6 +149,11 @@ func (r *Runner) runInitialCleanupParallelMT(ctx context.Context, logger logging
 		if lastCreated[namespace].IsZero() {
 			continue
 		}
+		// Stop scheduling once ctx is done (shutdown or lost leader lease)
+		// instead of failing, and logging, once per remaining namespace.
+		if ctx.Err() != nil {
+			break
+		}
 		g.Go(func() error {
 			nsLogger := logger.With("namespace", namespace)
 			nsLogger.Debug("checkscheduler MT initial cleanup namespace", "step", "begin")
@@ -181,6 +186,9 @@ func (r *Runner) runTickParallelMT(ctx context.Context, logger logging.Logger, n
 	var g errgroup.Group
 	g.SetLimit(maxConcurrency)
 	for _, namespace := range namespaces {
+		if ctx.Err() != nil {
+			break
+		}
 		last := lastCreatedMap[namespace]
 		g.Go(func() error {
 			nsLogger := logger.With("namespace", namespace)

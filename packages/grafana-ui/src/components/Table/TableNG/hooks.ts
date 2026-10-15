@@ -42,6 +42,7 @@ import {
   SCROLL_SHADOW_THRESHOLD,
   TABLE,
 } from './constants';
+import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -436,6 +437,7 @@ interface UseHeaderHeightOptions {
   tableRefreshEnabled?: boolean;
   /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
 }
 
 export function useHeaderHeight({
@@ -448,6 +450,7 @@ export function useHeaderHeight({
   tableRefreshEnabled = false,
   filter,
   lastColumnExtraPadding = 0,
+  hasColumnSidebar = false,
   hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
@@ -472,7 +475,13 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
-          hasAssistantAction,
+          hasColumnOptions:
+            getColumnMenuOptions({
+              filterable: field.config.custom?.filterable,
+              hideable: field.config.custom?.hideable,
+              hasColumnSidebar,
+              hasAssistantAction,
+            }).length > 0,
         });
         return Math.floor(width);
       }),
@@ -484,6 +493,7 @@ export function useHeaderHeight({
       tableRefreshEnabled,
       filteredKeys,
       lastColumnExtraPadding,
+      hasColumnSidebar,
       hasAssistantAction,
     ]
   );
@@ -507,33 +517,37 @@ export function useHeaderHeight({
   return headerHeight;
 }
 
-export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
-  // A new result may contain only short values despite having the same schema or value buffers.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const epoch = useMemo(() => ({ disabled: new Set<string>(), pending: new Set<string>() }), [data]);
-  const [version, setVersion] = useState(0);
+function createTextWrapFallbackEpoch(data: DataFrame) {
+  return { data, disabledFields: new Set<string>(), pending: new Set<string>() };
+}
 
-  // Height callbacks run inside the grid's render, after columns have already been built. Collect
-  // discoveries without updating another component during render, then repair all heights and
-  // column styles together before paint. Finishing the scan batches discoveries across columns.
-  // Check every commit: pagination and expansion can expose new values without changing fields.
+export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
+  let [epoch, setEpoch] = useState(() => createTextWrapFallbackEpoch(data));
+  // New results can reuse the schema and value buffers while containing only short values.
+  if (epoch.data !== data) {
+    epoch = createTextWrapFallbackEpoch(data);
+    setEpoch(epoch);
+  }
+
+  // Grid height callbacks discover values during child render. Publish their batch before paint,
+  // including commits caused only by pagination or expansion, then invalidate dependent caches.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     if (epoch.pending.size > 0) {
-      for (const name of epoch.pending) {
-        epoch.disabled.add(name);
-      }
-      epoch.pending.clear();
-      setVersion((value) => value + 1);
+      setEpoch({
+        data: epoch.data,
+        disabledFields: new Set([...epoch.disabledFields, ...epoch.pending]),
+        pending: new Set<string>(),
+      });
     }
   });
 
   return useMemo(
     () => ({
-      disabledFields: new Set(epoch.disabled),
+      disabledFields: epoch.disabledFields,
       shouldDisable: (field: Field, value: unknown) => {
         const name = getDisplayName(field);
-        if (epoch.disabled.has(name) || epoch.pending.has(name)) {
+        if (epoch.disabledFields.has(name) || epoch.pending.has(name)) {
           return true;
         }
         if (value != null && String(value).length > TABLE.MAX_WRAP_TEXT_LENGTH) {
@@ -543,9 +557,7 @@ export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
         return false;
       },
     }),
-    // version publishes discoveries as a new immutable snapshot and invalidates height caches.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [epoch, version]
+    [epoch]
   );
 }
 
@@ -939,24 +951,35 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
  * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
  * scrolls, so nothing otherwise tells them more rows exist.
  *
- * React state updates only when shadow visibility or horizontal scrollbar height changes.
+ * React state updates only when shadow visibility or geometry changes.
  */
 export function useScrollShadows(
   ref: RefObject<DataGridHandle | null>,
   enabled: boolean,
   { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
 ) {
-  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0 });
+  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0, width: 0 });
   const visibilityRef = useRef(visibility);
   const styles = useStyles2(getScrollShadowStyles);
-  const offsetStyles = useStyles2(getScrollShadowOffsetStyles, topOffset, bottomOffset + visibility.scrollbarHeight);
+  const offsetStyles = useStyles2(
+    getScrollShadowOffsetStyles,
+    topOffset,
+    bottomOffset + visibility.scrollbarHeight,
+    visibility.width
+  );
 
   const sync = useCallback(() => {
     const el = ref.current?.element;
     if (!enabled || !el) {
       return;
     }
-    const { scrollTop, scrollHeight, clientHeight, offsetHeight } = el;
+    const { scrollTop, scrollHeight, clientHeight, offsetHeight, clientWidth } = el;
+    // The grid fills the panel even when its columns don't. Read resolved tracks so resized and
+    // auto-sized columns, including virtualized ones, bound the shadows rather than the panel.
+    const columnWidth = getComputedStyle(el)
+      .gridTemplateColumns.split(' ')
+      .reduce((total, track) => total + (parseFloat(track) || 0), 0);
+    const width = Math.min(columnWidth, clientWidth);
     // A horizontal scrollbar takes its space out of the bottom of the grid's padding box, below
     // both the rows and the sticky footer, so the bottom shadow has to clear it or it sits on the
     // scrollbar instead of on the last visible row. The grid draws no border (see `getGridStyles`),
@@ -968,9 +991,10 @@ export function useScrollShadows(
     if (
       visibilityRef.current.top !== top ||
       visibilityRef.current.bottom !== bottom ||
-      visibilityRef.current.scrollbarHeight !== scrollbarHeight
+      visibilityRef.current.scrollbarHeight !== scrollbarHeight ||
+      visibilityRef.current.width !== width
     ) {
-      const nextVisibility = { top, bottom, scrollbarHeight };
+      const nextVisibility = { top, bottom, scrollbarHeight, width };
       visibilityRef.current = nextVisibility;
       setVisibility(nextVisibility);
     }
@@ -990,7 +1014,14 @@ export function useScrollShadows(
     // Panel resizing changes what fits without moving the scroll position.
     const resizeObserver = new ResizeObserver(sync);
     resizeObserver.observe(el);
-    return () => resizeObserver.disconnect();
+    // Column resizing inside react-data-grid changes its tracks without resizing the viewport
+    // or necessarily rendering this hook's owner.
+    const mutationObserver = new MutationObserver(sync);
+    mutationObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
+    return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
   }, [ref, enabled, sync]);
 
   return {
@@ -1024,6 +1055,7 @@ export interface ContentAwareWidths {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1074,6 +1106,7 @@ interface UseContentAwareWidthsOptions {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1091,6 +1124,7 @@ export function useContentAwareWidths({
   getActions,
   tableRefreshEnabled = false,
   filter,
+  hasColumnSidebar = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
@@ -1110,6 +1144,7 @@ export function useContentAwareWidths({
             getActions,
             tableRefreshEnabled,
             filter,
+            hasColumnSidebar,
             noPanelPadding,
             preventHorizontalOverflow,
           }
@@ -1125,6 +1160,7 @@ export function useContentAwareWidths({
       filter,
       tableRefreshEnabled,
       theme,
+      hasColumnSidebar,
       noPanelPadding,
       preventHorizontalOverflow,
     ]
@@ -1335,3 +1371,42 @@ export const useReducerEntries = (
     });
   }, [field, rows, displayName, colIdx]);
 };
+
+interface ColumnViewStateOptions {
+  hiddenColumns?: ReadonlySet<string>;
+  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
+  structureRev?: number;
+}
+
+interface ColumnViewState {
+  hiddenColumns: ReadonlySet<string>;
+  setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
+}
+
+const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
+
+// Change handlers select controlled mode because controlled values may initially be empty.
+export function useColumnViewState({
+  hiddenColumns,
+  onHiddenColumnsChange,
+  structureRev,
+}: ColumnViewStateOptions): ColumnViewState {
+  const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
+
+  useEffect(() => {
+    if (!onHiddenColumnsChange) {
+      setLocalHiddenColumns(NO_HIDDEN_COLUMNS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structureRev]);
+
+  const setHiddenColumns = useCallback(
+    (next: ReadonlySet<string>) => (onHiddenColumnsChange ? onHiddenColumnsChange(next) : setLocalHiddenColumns(next)),
+    [onHiddenColumnsChange]
+  );
+
+  return {
+    hiddenColumns: (onHiddenColumnsChange ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
+    setHiddenColumns,
+  };
+}

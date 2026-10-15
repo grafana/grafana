@@ -2,8 +2,10 @@ package snapshot
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -29,6 +31,9 @@ func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO,
 		Spec: dashV0.SnapshotSpec{
 			Title: &v.Name,
 		},
+	}
+	if v.UserID > 0 {
+		snap.SetCreatedBy(authlib.NewTypeID(authlib.TypeUser, strconv.FormatInt(v.UserID, 10)))
 	}
 
 	// Only show external settings when it is external
@@ -63,6 +68,10 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 			Title:     &v.Name,
 			Dashboard: v.Dashboard.MustMap(),
 		},
+	}
+
+	if v.UserID > 0 {
+		snap.SetCreatedBy(authlib.NewTypeID(authlib.TypeUser, strconv.FormatInt(v.UserID, 10)))
 	}
 
 	if v.DeleteKey != "" {

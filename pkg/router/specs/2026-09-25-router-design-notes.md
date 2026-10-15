@@ -1,6 +1,6 @@
 # Router: Design notes
 
-Status: reference
+Status: reference (updated 2026-10-10 for #134652)
 Package: `pkg/router`
 
 Rationale moved out of `pkg/router/AGENTS.md` during the 2026-09-25 cleanup. AGENTS.md keeps the
@@ -63,9 +63,10 @@ Revisit only if a concrete client is confirmed to read the field.
   to nil, since a nil channel is never selected. This was found in PR review and is covered by
   `TestRunDoesNotBusyLoopOnClosedNotifyChannel`, which asserts that `Load` stays bounded after the
   close, not just that the process doesn't hang.
-- When a backend is removed, ideally drain its in-flight requests before tearing down its transport,
-  and never close a transport eagerly on swap. Transports are currently shared per `tlsCacheKey` and
-  never closed; revisit this when per-backend teardown is added.
+- When a backend is removed, drain its in-flight requests before tearing down what it holds, and
+  never close anything eagerly on swap. Today nothing is torn down per backend: each aggregate target
+  owns one proxy transport for its lifetime, and plugin gRPC connections (keyed by host and plugin
+  ID) close only at shutdown. Per-backend teardown is R1 and R2 in `2026-10-10-router-review-plan.md`.
 
 ## Readiness: why a partial reconcile error doesn't fail `Ready`
 
@@ -82,27 +83,14 @@ The current rule: `routerState.served` records whether anything is being served.
 when there is an error **and** nothing is served. A partial error is still logged by `storeServing`.
 Both cases were found in PR review, in two passes.
 
-## Core groups without an AppManifest CR
+## Removed: the RouteBackend and AppManifest source
 
-Some groups (folder, dashboard, secret and other core apps built into Grafana) have a `RouteBackend`
-but no `AppManifest` CR, because they aren't managed through the App Platform manifest flow.
-`combineByName` falls back to `coreGroupsWithoutManifests`. That map is built once, at construction,
-from `pkg/storage/unified/resource.AppManifests()`: the same embedded `ManifestData` the apiserver
-uses, indexed by `AppName`.
-
-The fallback's key component is the constant `embeddedManifestKey` (`"embedded"`), because there is
-no CR to version; it only changes on redeploy. CR-sourced manifests are always tried first. A backend
-is skipped with a warning only when both lookups miss.
-
-## Why `Load` re-reads everything and ignores informer payloads
-
-The RouteBackend and AppManifest informers exist only to detect changes: every add, update and
-delete pushes the same payload-free wake. The signal carries no resource version for two reasons:
-
-- Resource versions from different kinds can't be compared.
-- A group's `Key()` is only known after `combineByName` has correlated the two objects.
-
-So the edge carries no information by design, and `Load` re-reads the full state.
+Until #134652, the cloud loader also read `RouteBackend` and `AppManifest` resources from a
+control-plane API server, correlated them by name (`combineByName`, with a fallback to the embedded
+manifests for core groups), and watched both kinds with informers. Core APIs now come from
+`core_url` in the plugin manifests format, limited to `routableCoreGroups`. Every cloud source is
+polled, and each poll loop signals a payload-free wake only when its key set changes, so the
+level-triggered `Load` described above still applies.
 
 ## Two transports per aggregate target
 
@@ -113,22 +101,23 @@ target:
   `aggregateTokenWrapper`. This client is used only for the router's own discovery poll, and it
   signs requests with the exchanged CAP token.
 - **The proxy transport.** The other clone stays plain and backs every `aggregateBackend` proxy.
-  It forwards the caller's own credentials, the same contract as `forwardBackend`.
+  It forwards the caller's own credentials, never the CAP token.
 
 Each clone owns its connection pool instead of sharing the process-wide `http.DefaultTransport`,
 which allows only 2 idle connections per host.
 
-## Legacy `apiserver_url` is a hard error
+## Removed `appmanifest_apiserver_url` and `apiserver_url` are startup errors
 
-`apiserver_url` was renamed to `appmanifest_apiserver_url`. If the old key were ignored, a deployment
-still using it would look like "nothing configured", fall through to the dummy loader, and report
-ready while serving no routes. `ProvideCloudRoutesLoaderFactory` therefore fails when the old key is
-set and the new one isn't. Setting both is fine; the new key wins.
+Both keys configured the removed AppManifest source (`apiserver_url` was its earlier name). If
+either were ignored, a deployment still relying on it would look like "nothing configured", fall
+through to the dummy loader, and report ready while serving no routes.
+`ProvideCloudRoutesLoaderFactory` therefore fails when either is set and no other cloud source is
+configured. With another source configured, they are ignored.
 
 ## Why `group_regex` patterns are globs
 
 `*` is the only special character, and everything else goes through `regexp.QuoteMeta`. An earlier
 version escaped only `.`, which left `+`, `(`, `[` and the rest live. That *widened* matches: for
 example, `foo+.grafana.app` matched `foooo.grafana.app`. `group_regex` is a narrowing allowlist, so
-over-matching is the wrong way to fail. A side effect is that pattern compilation can no longer
-fail.
+over-matching is the wrong way to fail. A side effect is that pattern compilation can't fail in
+practice, although `compileGroupPatterns` still returns an error.

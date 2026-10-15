@@ -23,8 +23,8 @@ import {
   getTemplateSrv,
   locationService,
   type StreamingFrameOptions,
+  getDataSourceInstance,
 } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataSourceRef } from '@grafana/schema';
 import { annotationServer } from 'app/features/annotations/api';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';

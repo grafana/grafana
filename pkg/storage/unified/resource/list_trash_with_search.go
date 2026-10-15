@@ -19,6 +19,7 @@ var errSearchCannotAnswerTrash = errors.New("search cannot answer this trash lis
 func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListTrashFromSearch")
 	defer span.End()
+	s.reportSearchListBodies(ctx)
 	minResourceVersion := ToSnowflakeRV(req.ResourceVersion)
 
 	srq := &resourcepb.ResourceSearchRequest{
@@ -123,7 +124,8 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
 				Value: item.value.Value, ResourceVersion: item.value.ResourceVersion,
 			})
-			if s.listPageFull(req, rsp, pageBytes) {
+			if reason := s.listLimitStopReason(req, rsp, pageBytes); reason != "" {
+				setListStopReason(ctx, reason)
 				token, err := newSearchContinueToken(item.row.sortFields, page.resourceVersion, sortAscending)
 				if err != nil {
 					return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}, nil
@@ -147,12 +149,13 @@ var trashSearchAllowlist = map[string]bool{
 // TrashSearchAllowed reports whether a kind's authorization model has been
 // approved for search-backed trash.
 func TrashSearchAllowed(group, resource string) bool {
-	return resourceAllowed(trashSearchAllowlist, group, resource)
+	return trashSearchAllowlist[group+"/"+resource]
 }
 
+// shouldUseSearchForTrash selects Search for supported trash resources: a store trash
+// list scans the whole history, so search is the default for approved kinds.
 func (s *server) shouldUseSearchForTrash(req *resourcepb.ListRequest) bool {
 	if req.Source != resourcepb.ListRequest_TRASH ||
-		!s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) ||
 		!TrashSearchAllowed(req.Options.Key.Group, req.Options.Key.Resource) ||
 		!supportsDeletedBatchReads(s.backend) ||
 		(s.searchClient == nil && s.search == nil) ||

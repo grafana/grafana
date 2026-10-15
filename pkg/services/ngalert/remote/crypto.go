@@ -41,7 +41,7 @@ func encryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, enc
 
 		err = rcv.Encrypt(encryptFn)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
+			return nil, fmt.Errorf("failed to encrypt receiver %q: %w", rcv.Name, err)
 		}
 
 		postable, err := ReceiverToPostableApiReceiver(rcv)

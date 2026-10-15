@@ -1,7 +1,15 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import {
+  CoreApp,
+  createTheme,
+  type GrafanaTheme2,
+  type InterpolateFunction,
+  ThemeContext,
+  toDataFrame,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -9,12 +17,16 @@ import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
+import { SandboxFrame } from './SandboxFrame';
 import { FOOTER_TEST_ID } from './TextNGFooter';
 import { type Props, TextNGPanel } from './TextNGPanel';
+import { TRUNCATION_NOTICE_TEST_ID } from './TextNGTruncationNotice';
 import { PREVIEW_TEST_ID } from './editor/TextNGEditor';
+import { MAX_RENDERED_CHARS } from './renderContent';
 import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
+jest.mock('./SandboxFrame');
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -51,19 +63,6 @@ jest.mock('@grafana/ui/unstable', () => ({
   ),
 }));
 
-const mermaidRender = jest
-  .fn()
-  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
-
-jest.mock('mermaid', () => ({
-  __esModule: true,
-  default: {
-    initialize: jest.fn(),
-    parse: jest.fn().mockResolvedValue(true),
-    render: (...args: unknown[]) => mermaidRender(...args),
-  },
-}));
-
 const replaceVariablesMock = jest.fn();
 const defaultProps = createProps(replaceVariablesMock);
 
@@ -81,7 +80,9 @@ describe('TextNGPanel', () => {
 
     setup();
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
+    expect(
+      screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML.trim()
+    ).toBe('');
   });
 
   it('renders empty content when interpolating variables results in an empty string', () => {
@@ -93,7 +94,9 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
+    expect(
+      screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML.trim()
+    ).toBe('');
   });
 
   // Markdown renders these to '', which DangerouslySetHtmlContent throws on.
@@ -107,7 +110,9 @@ describe('TextNGPanel', () => {
 
       setup(props);
 
-      expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
+      expect(
+        screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML.trim()
+      ).toBe('');
     }
   );
 
@@ -120,7 +125,7 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toEqual(
+    expect(screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML).toEqual(
       '&lt;form&gt;<p>Form tags are sanitized.</p>&lt;/form&gt;\n&lt;script&gt;Script tags are sanitized.&lt;/script&gt;'
     );
   });
@@ -135,7 +140,7 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toEqual(
+    expect(screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML).toEqual(
       '&lt;form&gt;<p>Form tags are sanitized.</p>&lt;/form&gt;\n&lt;script&gt;Script tags are sanitized.&lt;/script&gt;'
     );
   });
@@ -151,7 +156,9 @@ describe('TextNGPanel', () => {
     setup(props);
 
     const rendered = await screen.findByTestId('TextNGPanel-converted-content');
-    expect(rendered.innerHTML).toEqual('<p>We begin by a simple sentence.\n<code>code block</code></p>\n');
+    expect(rendered.querySelector('[data-text-blocks]')!.innerHTML).toEqual(
+      '<p>We begin by a simple sentence.\n<code>code block</code></p>\n'
+    );
   });
 
   it('interpolates variables before content is converted to markdown', async () => {
@@ -167,7 +174,7 @@ describe('TextNGPanel', () => {
     setup(props);
 
     const rendered = await screen.findByTestId('TextNGPanel-converted-content');
-    expect(rendered.innerHTML).toEqual('<p><em>hello</em></p>\n');
+    expect(rendered.querySelector('[data-text-blocks]')!.innerHTML).toEqual('<p><em>hello</em></p>\n');
   });
 
   it('interpolates variables correctly so they can be used in markdown urls', async () => {
@@ -183,7 +190,7 @@ describe('TextNGPanel', () => {
     setup(props);
 
     const rendered = await screen.findByTestId('TextNGPanel-converted-content');
-    expect(rendered.innerHTML).toEqual(
+    expect(rendered.querySelector('[data-text-blocks]')!.innerHTML).toEqual(
       '<p><a href="https://example.com/?from=now-6h&amp;to=now">Example: from=now-6h&amp;to=now</a></p>\n'
     );
   });
@@ -197,7 +204,7 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toEqual(
+    expect(screen.getByTestId('TextNGPanel-converted-content').querySelector('[data-text-blocks]')!.innerHTML).toEqual(
       'We begin by a simple sentence.\n```This is a code block\n```'
     );
   });
@@ -842,6 +849,27 @@ describe('TextNGPanel', () => {
       expect(html()).toContain('second');
     });
 
+    // Both passes cut on the ceiling, so the output is byte-identical and only the flag moves.
+    it('shows the truncation notice when a refresh crosses the ceiling without changing the output', () => {
+      const dataOf = (length: number) =>
+        createData([toDataFrame({ fields: [{ name: 'n', values: ['x'.repeat(length)] }] })]);
+      const props = createProps((target) => target, {
+        data: dataOf(MAX_RENDERED_CHARS),
+        options: { content: '{{#each data}}{{n}}{{/each}}', mode: TextMode.HTML },
+      });
+
+      const { rerender } = render(viewing(props));
+      settle();
+      const before = html();
+      expect(screen.queryByTestId(TRUNCATION_NOTICE_TEST_ID)).not.toBeInTheDocument();
+
+      rerender(viewing(Object.assign({}, props, { data: dataOf(MAX_RENDERED_CHARS + 1) })));
+      settle();
+
+      expect(html()).toBe(before);
+      expect(screen.getByTestId(TRUNCATION_NOTICE_TEST_ID)).toBeInTheDocument();
+    });
+
     it('re-renders the content when a referenced variable changes', () => {
       let value = 'first';
       const props = createProps((target) => target.replace('${host}', value), {
@@ -859,6 +887,40 @@ describe('TextNGPanel', () => {
       expect(html()).toContain('second');
       expect(html()).not.toContain('first');
     });
+
+    describe('with a ${__theme} macro', () => {
+      const originalTheme = config.theme2;
+      const dark = createTheme({ colors: { mode: 'dark' } });
+      const light = createTheme({ colors: { mode: 'light' } });
+
+      // The app's ThemeProvider updates config.theme2 before its children render.
+      const themed = (theme: GrafanaTheme2, props: Props) => {
+        config.theme2 = theme;
+        return <ThemeContext.Provider value={theme}>{viewing(props)}</ThemeContext.Provider>;
+      };
+
+      afterEach(() => {
+        config.theme2 = originalTheme;
+      });
+
+      it('re-renders the content with the new theme tokens when the theme changes', () => {
+        const props = createProps(
+          (target) => target.replace('${__theme.colors.text.primary}', () => config.theme2.colors.text.primary),
+          {
+            options: { content: '<span style="color: ${__theme.colors.text.primary}">hi</span>', mode: TextMode.HTML },
+          }
+        );
+
+        const { rerender } = render(themed(dark, props));
+        settle();
+        expect(screen.getByText('hi')).toHaveStyle({ color: dark.colors.text.primary });
+
+        rerender(themed(light, props));
+        settle();
+
+        expect(screen.getByText('hi')).toHaveStyle({ color: light.colors.text.primary });
+      });
+    });
   });
 
   describe('mermaid', () => {
@@ -868,7 +930,7 @@ describe('TextNGPanel', () => {
       setTestFlags({ [FlagKeys.TextNewFeatures]: true });
     });
 
-    it('renders a mermaid fence as a diagram', async () => {
+    it('sends a Mermaid fence and its rendering configuration to the iframe', async () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       setup(
         Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
@@ -876,9 +938,11 @@ describe('TextNGPanel', () => {
       );
 
       const content = screen.getByTestId('TextNGPanel-converted-content');
-      await screen.findByText('A');
-      expect(content.querySelector('.mermaid-diagram svg')).not.toBeNull();
-      expect(content.querySelector('code.language-mermaid')).toBeNull();
+      expect(content.querySelector('code.language-mermaid')).toHaveTextContent('graph TD; A-->B;');
+      expect(jest.mocked(SandboxFrame).mock.calls.at(-1)![0].mermaid).toMatchObject({
+        securityLevel: 'strict',
+        htmlLabels: false,
+      });
     });
 
     it('leaves the fence as code when the text.newFeatures flag is off', async () => {
@@ -886,7 +950,6 @@ describe('TextNGPanel', () => {
         setTestFlags({ [FlagKeys.TextNewFeatures]: false });
       });
       replaceVariablesMock.mockImplementation((str: string) => str);
-      mermaidRender.mockClear();
       setup(
         Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
         CoreApp.Dashboard
@@ -896,7 +959,7 @@ describe('TextNGPanel', () => {
       // Let any pending lazy import settle before asserting nothing rendered.
       await act(async () => {});
       expect(content.querySelector('code.language-mermaid')).not.toBeNull();
-      expect(mermaidRender).not.toHaveBeenCalled();
+      expect(jest.mocked(SandboxFrame).mock.calls.at(-1)![0].mermaid).toBeUndefined();
     });
   });
 
@@ -923,5 +986,33 @@ describe('TextNGPanel', () => {
 
     expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+  });
+
+  describe('truncation notice', () => {
+    /** A row wide enough to pass the character ceiling, if the template emits it. */
+    function setupWide(content: string) {
+      const wide = toDataFrame({ fields: [{ name: 'n', values: ['x'.repeat(MAX_RENDERED_CHARS * 2)] }] });
+      const props = createProps((target) => target, {
+        data: createData([wide]),
+        options: { content, mode: TextMode.HTML, renderMode: RenderMode.Once },
+      });
+
+      setup(props, CoreApp.Dashboard);
+    }
+
+    it('says the render was cut short, and still shows what fit', async () => {
+      setupWide('<b>kept</b>\n{{#each data}}{{n}}{{/each}}');
+      const footer = await screen.findByTestId(FOOTER_TEST_ID);
+
+      expect(screen.getByText('kept')).toBeInTheDocument();
+      expect(within(footer).getByTestId(TRUNCATION_NOTICE_TEST_ID)).toHaveTextContent('Content truncated');
+    });
+
+    it('stays quiet when the render fit under the ceiling', () => {
+      setupWide('<b>kept</b>');
+
+      expect(screen.getByText('kept')).toBeInTheDocument();
+      expect(screen.queryByTestId(TRUNCATION_NOTICE_TEST_ID)).not.toBeInTheDocument();
+    });
   });
 });

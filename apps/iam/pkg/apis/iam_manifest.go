@@ -62,6 +62,12 @@ var appManifestData = app.ManifestData{
 					Plural:     "ResourcePermissions",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Storage: &app.ManifestVersionKindStorage{
+						ListKeys: func(b bool) *bool { return &b }(false),
+					},
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
 				},
 
 				{
@@ -1058,6 +1064,7 @@ var appManifestData = app.ManifestData{
 					},
 				},
 			},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/searchExternalGroupMappings": {

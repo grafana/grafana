@@ -75,7 +75,7 @@ func (h *HybridHandler) search(ctx context.Context, req *http.Request) (*resourc
 	}
 	searchReq := &resourcepb.HybridSearchRequest{
 		// Assistant embeddings use a separate collection from the native alert-rule resource.
-		Key: &resourcepb.ResourceKey{
+		Key: &resourcepb.ResourceKey{ //nolint:staticcheck // Older search servers require key.
 			Namespace: namespace,
 			Group:     "assistant.alertrules.ext.grafana.app",
 			Resource:  "alertrules",

@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Zresetuj"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Logi pomocnicze",
+      "description-auxiliary-logs": "Włączenie tej funkcji wiąże się z opłatami Azure Monitor za każde zapytanie w przypadku paneli pulpitu, które wysyłają zapytania do tabel skonfigurowanych dla <2>logów pomocniczych</2>. Logi pomocnicze nie podlegają pod umowy SLA dotyczące czasu reakcji, są przeznaczone wyłącznie do zapytań ad hoc i przeglądania danych oraz nie powinny być używane w przypadku pulpitów wymagających danych w czasie rzeczywistym ani do generowania alertów.",
+      "label-enable-auxiliary-logs": "Włącz logi pomocnicze"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Nieprzetworzone zapytanie {{queryDisplayName}}",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Ogranicz liczbę zwracanych wierszy (domyślnie 1000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "Czy na pewno chcesz przełączyć się na logi pomocnicze?",
       "body-basic-logs-queries": "Czy na pewno chcesz przełączyć się na logi podstawowe?",
       "confirmText-confirm": "Potwierdź",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "Zapytania dotyczące logów pomocniczych wiążą się z kosztami w zależności od ilości przeskanowanych danych. Logi pomocnicze nie podlegają pod umowy SLA dotyczące czasu reakcji i nie powinny być używane w przypadku pulpitów wymagających danych w czasie rzeczywistym ani do generowania alertów.",
       "description-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników wiążą się z kosztami w zależności od ilości przeskanowanych danych.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "Analityka",
+      "label-auxiliary": "Pomocnicze",
+      "label-basic": "Podstawowe",
       "label-logs": "Logi",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Zapytania dotyczące logów pomocniczych",
       "title-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników",
       "tooltip-logs": "Określa, czy uruchomić zapytanie dotyczące dzienników podstawowych, czy analitycznych.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Określa, czy uruchomić zapytanie dotyczące logów analitycznych, podstawowych, czy pomocniczych.",
+      "tooltip-logs-aux": "Określa, czy uruchomić zapytanie dotyczące logów analitycznych, czy pomocniczych."
     },
     "logs-query-builder": {
       "title-no-tables": "Zasób został załadowany, ale bez tabel"
     },
     "logs-query-editor": {
       "learn-more": "Dowiedz się więcej",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "Korzystając z logów pomocniczych, możesz wybrać tylko jeden zasób naraz.",
+      "notice-basic-single-resource": "Korzystając z logów podstawowych, możesz wybrać tylko jeden zasób naraz.",
+      "notice-same-resource-type": "Możesz wybrać tylko elementy z tym samym typem zasobu.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> jest tabelą analityczną.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> jest tabelą logów pomocniczych – wiąże się z kosztami za każdy przeskanowany GiB, nie podlega pod umowę SLA dotyczącą czasu reakcji i nie nadaje się do scenariuszy obsługiwanych w czasie rzeczywistym ani do generowania alertów.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> jest tabelą logów podstawowych – wiąże się z kosztami za każdy przeskanowany GiB.",
+      "tier-switch-revert": "Przywróć do {{fromTier}}",
+      "tier-switch-title": "Poziom zapytania ustawiony na {{toTier}}",
       "view-query": "Wyświetl zapytanie w Portalu Azure",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "To zapytanie dotyczące logów pomocniczych przetwarza w trakcie wykonywania {{dataIngested}} GiB. Logi pomocnicze nie podlegają pod umowę SLA dotyczącą czasu reakcji i nie nadają się do scenariuszy obsługiwanych w czasie rzeczywistym ani do generowania alertów. ",
+      "warning-auxiliary-raw": "To jest zapytanie do logów pomocniczych – wykorzystuje punkt końcowy wyszukiwania, wiąże się z kosztami za każdy przeskanowany GiB, nie podlega pod umowę SLA dotyczącą czasu reakcji i nie nadaje się do scenariuszy obsługiwanych w czasie rzeczywistym ani do generowania alertów. W tym trybie nie można wysyłać zapytań do tabel planu analitycznego (w tym celu należy użyć poziomu analitycznego). ",
+      "warning-basic-raw": "To jest zapytanie do logów podstawowych – wykorzystuje punkt końcowy wyszukiwania i wiąże się z kosztami za każdy przeskanowany GiB. W tym trybie nie można wysyłać zapytań do tabel planu analitycznego (w tym celu należy użyć poziomu analitycznego). ",
+      "warning-data-ingested": "To zapytanie przetwarza w trakcie wykonywania {{dataIngested}} GiB. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Ta tabela jest objęta planem logów pomocniczych. Aby wysyłać do niej zapytania, włącz opcję „Logi pomocnicze” w ustawieniach źródła danych.",
+      "description-auxiliary-enabled": "Wybranie tej tabeli spowoduje przełączenie trybu zapytania na logi pomocnicze",
+      "description-basic-disabled": "Ta tabela jest objęta planem logów podstawowych. Aby wysyłać do niej zapytania, włącz opcję „Logi podstawowe” w ustawieniach źródła danych.",
+      "description-basic-enabled": "Wybranie tej tabeli spowoduje przełączenie trybu zapytania na logi podstawowe",
+      "description-plan-unavailable": "Nie można wybrać tej tabeli, ponieważ nie udało się określić jej planu logów.",
+      "label-all-columns": "Wszystkie kolumny"
     },
     "metric-name-field": {
       "label-metric": "Metryka"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Wybierz niestandardową przestrzeń nazw",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Wybierz nazwę wymiaru",
+      "aria-label-select-metric-name": "Wybierz nazwę wskaźnika",
       "aria-label-select-namespace": "Wybierz przestrzeń nazw",
       "aria-label-select-query-type": "Wybierz typ zapytania",
       "aria-label-select-region": "Wybierz region",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Wybierz grupę zasobów",
       "aria-label-select-subscription": "Wybierz subskrypcję",
       "label-custom-namespace": "Niestandardowa przestrzeń nazw",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Nazwa wymiaru",
+      "label-metric-name": "Nazwa wskaźnika",
       "label-namespace": "Przestrzeń nazw",
       "label-query-type": "Typ zapytania",
       "label-region": "Region",

@@ -1,5 +1,5 @@
 import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -227,14 +227,6 @@ function buildSceneWithLayoutParent(
 }
 
 describe('Layout mutation commands', () => {
-  beforeEach(() => {
-    setTestFlags({ dashboardNewLayouts: true });
-  });
-
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   describe('ADD_ROW', () => {
     it('adds a row to a RowsLayout', async () => {
       const scene = buildRowsScene(['Existing']);
@@ -744,17 +736,6 @@ describe('Layout mutation commands', () => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
       const data = result.data as { layout: any; elements: Record<string, unknown> };
       expect(data.elements).toEqual({});
-    });
-
-    it('is rejected when feature toggle is disabled', async () => {
-      setTestFlags({ dashboardNewLayouts: false });
-      const scene = buildRowsScene(['Row']);
-      const executor = new DashboardMutationClient(scene);
-
-      const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('dashboardNewLayouts');
     });
   });
 
@@ -2422,8 +2403,19 @@ describe('Layout mutation commands', () => {
   });
 
   describe('feature toggle gate', () => {
+    testWithFlags({ dashboardNewLayouts: false });
+
+    it('rejects GET_LAYOUT when dashboardNewLayouts is disabled', async () => {
+      const scene = buildRowsScene(['Row']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('dashboardNewLayouts');
+    });
+
     it('rejects layout commands when dashboardNewLayouts is disabled', async () => {
-      setTestFlags({ dashboardNewLayouts: false });
       const scene = buildRowsScene(['A']);
       const executor = new DashboardMutationClient(scene);
 
