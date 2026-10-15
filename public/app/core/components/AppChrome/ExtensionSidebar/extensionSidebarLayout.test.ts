@@ -18,6 +18,7 @@ describe('extensionSidebarLayout', () => {
 
   it('floats only while the flag is on', () => {
     expect(canFloatExtensionSidebar()).toBe(false);
+    setExtensionSidebarPresentation('docked');
     setExtensionSidebarPresentation('floating');
     expect(getRequestedExtensionSidebarPresentation()).toBe('docked');
 
@@ -37,11 +38,11 @@ describe('extensionSidebarLayout', () => {
     expect(getRequestedExtensionSidebarPresentation()).toBe('docked');
   });
 
-  it('floats dashboards and notebooks by default, and docks other pages', () => {
+  it('floats every page by default', () => {
     expect(getRequestedExtensionSidebarPresentation('/d/abc/my-dashboard')).toBe('floating');
     expect(getRequestedExtensionSidebarPresentation('/dashboard/new')).toBe('floating');
     expect(getRequestedExtensionSidebarPresentation('/notebooks/xyz')).toBe('floating');
-    expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('docked');
+    expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('floating');
   });
 
   it('remembers the layout for dashboards and notebooks apart from other pages', () => {
@@ -49,11 +50,13 @@ describe('extensionSidebarLayout', () => {
 
     setExtensionSidebarPresentation('docked', '/d/abc');
     expect(getRequestedExtensionSidebarPresentation('/notebooks/xyz')).toBe('docked');
-    expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('docked');
+    expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('floating');
 
-    setExtensionSidebarPresentation('floating', '/explore');
-    expect(getRequestedExtensionSidebarPresentation('/alerting/list')).toBe('floating');
-    expect(getRequestedExtensionSidebarPresentation('/d/abc')).toBe('docked');
+    setExtensionSidebarPresentation('docked', '/explore');
+    expect(getRequestedExtensionSidebarPresentation('/alerting/list')).toBe('docked');
+    setExtensionSidebarPresentation('floating', '/d/abc');
+    expect(getRequestedExtensionSidebarPresentation('/d/abc')).toBe('floating');
+    expect(getRequestedExtensionSidebarPresentation('/explore')).toBe('docked');
   });
 
   it('notifies subscribers only when the layout changes', () => {
@@ -61,12 +64,12 @@ describe('extensionSidebarLayout', () => {
     const listener = jest.fn();
     const unsubscribe = subscribeToExtensionSidebarPresentation(listener);
 
-    setExtensionSidebarPresentation('floating');
-    setExtensionSidebarPresentation('floating');
+    setExtensionSidebarPresentation('docked');
+    setExtensionSidebarPresentation('docked');
     expect(listener).toHaveBeenCalledTimes(1);
 
     unsubscribe();
-    setExtensionSidebarPresentation('docked');
+    setExtensionSidebarPresentation('floating');
     expect(listener).toHaveBeenCalledTimes(1);
   });
 });

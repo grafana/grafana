@@ -517,18 +517,18 @@ describe('ExtensionSidebarProvider', () => {
       });
     });
 
-    it('starts docked and follows setExtensionSidebarPresentation while floating is allowed', async () => {
+    it('starts floating and follows setExtensionSidebarPresentation while floating is allowed', async () => {
       await act(async () => {
         setTestFlags({ [FLOATING_FLAG]: true });
       });
       renderPresentation();
-      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
-
-      act(() => setExtensionSidebarPresentation('floating'));
       expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
 
       act(() => setExtensionSidebarPresentation('docked'));
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+
+      act(() => setExtensionSidebarPresentation('floating'));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
     });
 
     it('stays docked when floating is requested with the flag off', () => {

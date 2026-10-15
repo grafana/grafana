@@ -13,9 +13,10 @@ export type ExtensionSidebarPresentation = 'docked' | 'floating';
 /** Dashboards and notebooks favour the page, so the layout is remembered for them apart from other pages. */
 type LayoutSurface = 'dashboardOrNotebook' | 'other';
 
+/** Every page floats until the user picks a layout for its surface; the pick is remembered per surface. */
 const DEFAULT_PRESENTATION: Record<LayoutSurface, ExtensionSidebarPresentation> = {
   dashboardOrNotebook: 'floating',
-  other: 'docked',
+  other: 'floating',
 };
 
 const PRESENTATION_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarPresentationBySurface';
