@@ -69,6 +69,12 @@ refs:
 
 # Table
 
+{{< admonition type="note" >}}
+The updated table panel is currently in public preview and is being gradually rolled out to Cloud instances. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+For information about the generally available experience, refer to the [latest OSS documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/table/).
+{{< /admonition >}}
+
 Tables are a highly flexible visualization designed to display data in columns and rows.
 The table visualization can take multiple datasets and provide the option to switch between them.
 With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
