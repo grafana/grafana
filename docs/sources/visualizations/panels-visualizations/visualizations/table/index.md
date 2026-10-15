@@ -171,10 +171,12 @@ The icon no longer displays.
 <!-- vale Grafana.Spelling = NO -->
 
 ### Apply filters from the table
+<!-- TODO: Make this more robust including updating the screenshot -->
 
 In tables, you can apply filters directly from the visualization with one click.
+With these filters, you can choose to filter values in or out.
 
-To display the filter icons, hover your cursor over the cell that has the value for which you want to filter:
+Click the menu for cell with the value you want to filter, and select either **Filter for value** or **Filter out value**:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
 
