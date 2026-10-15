@@ -1,9 +1,5 @@
 import { t } from '@grafana/i18n';
 
-import { type Criteria } from './criteria';
-
-export type TokenAvailability = { status: 'supported' } | { status: 'unavailable'; reason: () => string };
-
 /**
  * One filter, described once. The search input's parser and help and the filter sidebar are all
  * derived from these definitions, and the sidebar lists its fields in the order the page's
@@ -19,9 +15,7 @@ export interface TokenDefinition {
   example: string;
   /** Whether the token may repeat (e.g. multiple `label:` or `datasource:` tokens). */
   multiValue?: boolean;
-  /** Whether the search can apply this filter at all. */
-  availability: TokenAvailability;
-  /** Values of an otherwise available filter that the search cannot apply yet. */
+  /** Values of this filter that the search cannot apply yet. */
   unavailableValues?: Array<{ value: string; reason: () => string }>;
 }
 
@@ -35,18 +29,6 @@ export interface RawToken {
   closed: boolean;
   start: number;
   end: number;
-}
-
-export interface ParsedToken extends RawToken {
-  /** Whether `key` is declared in the registry passed to parse(). */
-  known: boolean;
-  /** Empty value (`label:`) or an unterminated quote — still being typed, not yet a filter. */
-  incomplete: boolean;
-}
-
-export interface ParseResult {
-  tokens: ParsedToken[];
-  criteria: Criteria;
 }
 
 /**
@@ -71,8 +53,6 @@ export const TOKEN_KEYS = {
   targetDatasource: 'targetDatasource',
 } as const;
 
-const SUPPORTED: TokenAvailability = { status: 'supported' };
-
 export const sharedDefinitions = {
   rule: {
     key: TOKEN_KEYS.rule,
@@ -81,7 +61,6 @@ export const sharedDefinitions = {
       t('alerting.gma-rule-list.search.help.rule', 'Rule title text search (equivalent to free text).'),
     example: 'rule:cpu-high',
     multiValue: true,
-    availability: SUPPORTED,
   },
   namespace: {
     key: TOKEN_KEYS.namespace,
@@ -89,7 +68,6 @@ export const sharedDefinitions = {
     description: () => t('alerting.gma-rule-list.search.help.namespace', 'Folder (canonical value is the folder UID).'),
     example: 'namespace:folder-uid',
     multiValue: true,
-    availability: SUPPORTED,
   },
   datasource: {
     key: TOKEN_KEYS.datasource,
@@ -101,7 +79,6 @@ export const sharedDefinitions = {
       ),
     example: 'datasource:ds-uid',
     multiValue: true,
-    availability: SUPPORTED,
   },
   label: {
     key: TOKEN_KEYS.label,
@@ -113,7 +90,6 @@ export const sharedDefinitions = {
       ),
     example: 'label:team=api',
     multiValue: true,
-    availability: SUPPORTED,
   },
   plugins: {
     key: TOKEN_KEYS.plugins,
@@ -121,14 +97,12 @@ export const sharedDefinitions = {
     description: () =>
       t('alerting.gma-rule-list.search.help.plugins', 'plugins:hide excludes rules created by plugins.'),
     example: 'plugins:hide',
-    availability: SUPPORTED,
   },
   health: {
     key: TOKEN_KEYS.health,
     label: () => t('alerting.gma-rule-list.search.property.health', 'Health'),
     description: () => t('alerting.gma-rule-list.search.help.health', 'Rule health: ok, nodata, error or unknown.'),
     example: 'health:error',
-    availability: SUPPORTED,
   },
 } satisfies Record<string, TokenDefinition>;
 

@@ -56,6 +56,18 @@ describe('resolveMigratedNames', () => {
     expect(result.droppedKeys).toEqual(['namespace']);
   });
 
+  it('NAV-4: keeps a key the sync stage dropped in droppedKeys alongside resolver drops', async () => {
+    const dropped = sync({ namespaces: ['Missing Folder'] });
+    dropped.diagnostics.droppedKeys = ['group'];
+
+    const result = await resolveMigratedNames(
+      dropped,
+      resolvers({ resolveFolderUidByName: jest.fn(async () => undefined) })
+    );
+
+    expect(result.droppedKeys).toEqual(['group', 'namespace']);
+  });
+
   it('NAV-4: a failing lookup is removed like an unresolved name and does not reject', async () => {
     const result = await resolveMigratedNames(
       sync({ namespaces: ['My Folder'], dataSourceUids: ['My DS'] }),

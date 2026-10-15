@@ -83,6 +83,19 @@ async function openMenu() {
   return user;
 }
 
+function renderLoaded(rule = buildRule(), options?: Parameters<typeof render>[1]) {
+  return render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />, options);
+}
+
+function renderWithFolderCountProbe() {
+  return render(
+    <>
+      <FolderCountProbe />
+      <RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
+    </>
+  );
+}
+
 describe('RecordingRuleActionsMenu', () => {
   beforeEach(() => {
     grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
@@ -99,12 +112,7 @@ describe('RecordingRuleActionsMenu', () => {
     );
     const counts = mockFolderCounts();
 
-    render(
-      <>
-        <FolderCountProbe />
-        <RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
-      </>
-    );
+    renderWithFolderCountProbe();
     await screen.findByText('Folder holds 3 rules');
     counts.count = 4;
     const user = await openMenu();
@@ -117,7 +125,7 @@ describe('RecordingRuleActionsMenu', () => {
   it('reports Copy link failure when the clipboard write rejects', async () => {
     const emitSpy = jest.spyOn(appEvents, 'emit');
 
-    render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     const user = await openMenu();
     jest.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
     await user.click(screen.getByRole('menuitem', { name: /copy link/i }));
@@ -128,7 +136,7 @@ describe('RecordingRuleActionsMenu', () => {
   it('reports Copy link failure when the clipboard is unavailable', async () => {
     const emitSpy = jest.spyOn(appEvents, 'emit');
 
-    render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     const user = await openMenu();
     const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
     Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
@@ -149,12 +157,7 @@ describe('RecordingRuleActionsMenu', () => {
     );
     const counts = mockFolderCounts();
 
-    render(
-      <>
-        <FolderCountProbe />
-        <RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
-      </>
-    );
+    renderWithFolderCountProbe();
     await screen.findByText('Folder holds 3 rules');
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /delete/i }));
@@ -168,12 +171,7 @@ describe('RecordingRuleActionsMenu', () => {
     server.use(http.delete(`${RECORDING_RULES_URL}/rule-uid-1`, () => HttpResponse.json({})));
     const counts = mockFolderCounts();
 
-    render(
-      <>
-        <FolderCountProbe />
-        <RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
-      </>
-    );
+    renderWithFolderCountProbe();
     await screen.findByText('Folder holds 3 rules');
     counts.count = 2;
     const user = await openMenu();
@@ -280,7 +278,7 @@ describe('RecordingRuleActionsMenu', () => {
 
     it('does not restrict a rule whose origin label is not a plugin', async () => {
       const rule = buildRule({ labels: { __grafana_origin: 'my-script' } });
-      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      renderLoaded(rule);
       await openMenu();
 
       for (const name of ['Pause', 'Delete', 'Duplicate']) {
@@ -290,13 +288,14 @@ describe('RecordingRuleActionsMenu', () => {
   });
 
   it('REC-5: Duplicate is a plain link to the recording copy route with no returnTo', async () => {
-    render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     await openMenu();
 
     expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toHaveAttribute(
       'href',
       '/alerting/new/grafana-recording?copyFrom=rule-uid-1'
     );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   describe('REC-5: Duplicate of a provisioned or managed rule confirms first', () => {
@@ -308,13 +307,7 @@ describe('RecordingRuleActionsMenu', () => {
       ['provisioned', PROVISIONED_ANNOTATIONS],
       ['managed', MANAGED_ANNOTATIONS],
     ])('asks before copying a %s rule and navigates to the copy route on Copy', async (_kind, annotations) => {
-      render(
-        <RecordingRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule({ annotations }) }}
-        />,
-        LIST_ENTRY
-      );
+      renderLoaded(buildRule({ annotations }), LIST_ENTRY);
       const user = await openMenu();
       const item = screen.getByRole('menuitem', { name: 'Duplicate' });
       expect(item).not.toHaveAttribute('href');
@@ -335,13 +328,7 @@ describe('RecordingRuleActionsMenu', () => {
     });
 
     it('stays on the list when the confirmation is cancelled', async () => {
-      render(
-        <RecordingRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule({ annotations: PROVISIONED_ANNOTATIONS }) }}
-        />,
-        LIST_ENTRY
-      );
+      renderLoaded(buildRule({ annotations: PROVISIONED_ANNOTATIONS }), LIST_ENTRY);
       const user = await openMenu();
       await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
       const dialog = await screen.findByRole('dialog', { name: 'Copy provisioned recording rule' });
@@ -351,24 +338,10 @@ describe('RecordingRuleActionsMenu', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       expect(locationService.getLocation().pathname).toBe('/alerting/rules/recording');
     });
-
-    it('opens no confirmation for a rule nothing outside the UI owns', async () => {
-      render(
-        <RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />,
-        LIST_ENTRY
-      );
-      await openMenu();
-
-      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toHaveAttribute(
-        'href',
-        '/alerting/new/grafana-recording?copyFrom=rule-uid-1'
-      );
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
   });
 
   it('does not show Silence or Manage enrichments, which are Alert-only', async () => {
-    render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     await openMenu();
 
     expect(screen.queryByRole('menuitem', { name: /silence/i })).not.toBeInTheDocument();
@@ -392,7 +365,7 @@ describe('RecordingRuleActionsMenu', () => {
 
     it('hides Analyze when the Assistant is unavailable', async () => {
       mockAssistant(false);
-      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       await openMenu();
 
       expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeInTheDocument();
@@ -410,7 +383,7 @@ describe('RecordingRuleActionsMenu', () => {
 
     it('shows Analyze when the Assistant is available', async () => {
       mockAssistant(true);
-      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       await openMenu();
 
       expect(screen.getByRole('menuitem', { name: 'Analyze rule' })).toBeInTheDocument();
@@ -420,7 +393,7 @@ describe('RecordingRuleActionsMenu', () => {
       const openAssistant = mockAssistant(true);
       const rule = buildRule({ labels: { team: 'infra' } });
       rule.spec.expressions = { A: { model: { expr: 'avg(cpu)' } } as RecordingRule['spec']['expressions'][string] };
-      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      renderLoaded(rule);
       const user = await openMenu();
 
       await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
@@ -458,7 +431,7 @@ describe('RecordingRuleActionsMenu', () => {
         lastError: 'boom',
         lastEvaluationTime: '2026-01-01T00:00:00Z',
       };
-      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      renderLoaded(rule);
       const user = await openMenu();
 
       await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));

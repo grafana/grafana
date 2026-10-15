@@ -25,31 +25,11 @@ export interface UseRuleListSearchStateResult {
   reset: () => void;
 }
 
-function registryFor(kind: RuleListKind) {
-  return kind === 'alert' ? alertTokens : recordingTokens;
-}
-
 /** Folders mode supports only the folder filter, so any other criterion, including a token the
- * page cannot apply, makes the list a List. */
+ * page cannot apply, makes the list a List. Serializing keeps a filter added later from being
+ * forgotten here. */
 function hasNonFolderCriteria(criteria: Criteria): boolean {
-  return (
-    criteria.text.length > 0 ||
-    criteria.dataSourceUids.length > 0 ||
-    criteria.labels.length > 0 ||
-    criteria.hidePluginRules ||
-    criteria.invalid.length > 0 ||
-    Boolean(
-      criteria.dashboardUid ||
-        criteria.panelId ||
-        criteria.contactPoint ||
-        criteria.policy ||
-        criteria.paused ||
-        criteria.state ||
-        criteria.health ||
-        criteria.metric ||
-        criteria.targetDataSourceUid
-    )
-  );
+  return serialize({ ...criteria, namespaces: [] }).length > 0;
 }
 
 /**
@@ -60,12 +40,12 @@ function hasNonFolderCriteria(criteria: Criteria): boolean {
  */
 export function useRuleListSearchState(kind: RuleListKind): UseRuleListSearchStateResult {
   const [queryParams, updateQueryParams] = useURLSearchParams();
-  const registry = useMemo(() => registryFor(kind), [kind]);
+  const registry = kind === 'alert' ? alertTokens : recordingTokens;
 
   const search = queryParams.get('search') ?? '';
   const viewParam = queryParams.get('view');
 
-  const criteria = useMemo(() => parse(search, registry).criteria, [search, registry]);
+  const criteria = useMemo(() => parse(search, registry), [search, registry]);
   const issues = useMemo(() => getCriteriaIssues(criteria, kind), [criteria, kind]);
 
   // Folders is unavailable while non-folder criteria are active, regardless of what `view`

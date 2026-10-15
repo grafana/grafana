@@ -15,7 +15,7 @@ function PageLikeInput({ initialQuery = '' }: { initialQuery?: string }) {
     <>
       <RuleSearchInput
         query={query}
-        onApply={(raw) => setQuery(serialize(parse(raw, alertTokens).criteria))}
+        onApply={(raw) => setQuery(serialize(parse(raw, alertTokens)))}
         tokens={alertTokens}
         debounceMs={0}
       />
@@ -164,7 +164,7 @@ describe('RuleSearchInput', () => {
     }
   });
 
-  it('SEARCH-6: the help popover names each filter and says which ones are available', async () => {
+  it('SEARCH-6: the help popover names each filter and any values it cannot search yet', async () => {
     const user = userEvent.setup();
     const tokens: TokenDefinition[] = [
       {
@@ -172,14 +172,13 @@ describe('RuleSearchInput', () => {
         label: () => 'Folder',
         description: () => 'Folder to search in.',
         example: 'folder:uid',
-        availability: { status: 'supported' },
       },
       {
         key: 'later',
         label: () => 'Later filter',
         description: () => 'Not built yet.',
         example: 'later:value',
-        availability: { status: 'unavailable', reason: () => 'Needs a backend change.' },
+        unavailableValues: [{ value: 'soon', reason: () => 'Needs a backend change.' }],
       },
     ];
     render(<RuleSearchInput query="" onApply={jest.fn()} tokens={tokens} />);
@@ -188,8 +187,7 @@ describe('RuleSearchInput', () => {
 
     expect(screen.getByText('Folder')).toBeInTheDocument();
     expect(screen.getByText('Later filter')).toBeInTheDocument();
-    expect(screen.getByText('Available')).toBeInTheDocument();
-    expect(screen.getByText('Not available yet')).toBeInTheDocument();
+    expect(screen.getAllByText('Available')).toHaveLength(2);
     expect(screen.getByText('Needs a backend change.')).toBeInTheDocument();
   });
 

@@ -10,7 +10,6 @@ import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { alertTokens } from '../rule-search/alertTokens';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
-import { getCriteriaIssues } from '../rule-search/criteriaIssues';
 import { parse } from '../rule-search/parser';
 import { serialize } from '../rule-search/serializer';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
@@ -58,11 +57,8 @@ function AlertRulesBody({
 }
 
 function AlertRulesPage() {
-  const { criteria, mode, hasNonFolderFilters, hasSearchQuery, setCriteria, setMode, reset } =
+  const { criteria, issues, mode, hasNonFolderFilters, hasSearchQuery, setCriteria, setMode, reset } =
     useRuleListSearchState('alert');
-  // getCriteriaIssues is cheap and pure; recomputed here rather than trusting a slot in the
-  // hook's own return so this page never has to know its internal caching.
-  const issues = getCriteriaIssues(criteria, 'alert');
   const savedSearchesReady = useLegacySavedSearchesCopied(legacyRuleListNameResolvers);
   const defaultSearch = useDefaultSavedSearchGate(hasSearchQuery);
 
@@ -80,11 +76,7 @@ function AlertRulesPage() {
   const hasActiveFilters = query !== serialize(createEmptyCriteria());
 
   const onApplyQuery = (raw: string) => {
-    setCriteria(parse(raw, alertTokens).criteria);
-  };
-
-  const onClear = () => {
-    reset();
+    setCriteria(parse(raw, alertTokens));
   };
 
   // The search/filter UI only ever produces criteria; it never fetches. Skip the request and
@@ -111,9 +103,8 @@ function AlertRulesPage() {
               {savedSearchesReady ? (
                 <ConnectedSavedSearches
                   useSavedSearches={useAlertRulesSavedSearches}
-                  kind="alert"
                   query={query}
-                  parseForKind={(q) => parse(q, alertTokens).criteria}
+                  parseForKind={(q) => parse(q, alertTokens)}
                   resolvers={legacyRuleListNameResolvers}
                   setCriteria={setCriteria}
                   applyDefault={defaultSearch.applyDefault}
@@ -132,7 +123,7 @@ function AlertRulesPage() {
             <AlertRulesFilterSidebar
               criteria={criteria}
               onChange={setCriteria}
-              onClear={onClear}
+              onClear={reset}
               hasActiveFilters={hasActiveFilters}
               issues={issues}
             />

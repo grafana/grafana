@@ -23,7 +23,7 @@ export function AlertRuleActions({ ruleUid, resourceState }: AlertRuleActionsPro
   return (
     <Stack direction="row" gap={0} wrap="nowrap">
       <EditRuleButton uid={ruleUid} availability={abilities.edit} />
-      <AlertRuleActionsMenu ruleUid={ruleUid} resourceState={resourceState} buttonSize="sm" />
+      <AlertRuleActionsMenu ruleUid={ruleUid} resourceState={resourceState} />
     </Stack>
   );
 }

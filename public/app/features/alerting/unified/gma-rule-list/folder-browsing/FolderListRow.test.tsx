@@ -1,4 +1,5 @@
 import { HttpResponse, http } from 'msw';
+import { type ComponentProps } from 'react';
 import { render, screen, within } from 'test/test-utils';
 
 import { setupMswServer } from '../../mockApi';
@@ -17,21 +18,34 @@ function mockParents(titles: string[]) {
   );
 }
 
+type RowProps = ComponentProps<typeof FolderListRow>;
+
+function rowUi(overrides: Partial<RowProps> = {}) {
+  const props: RowProps = {
+    folderUid: 'root',
+    title: 'Root',
+    kind: 'alert',
+    count: { status: 'loaded', count: 2 },
+    expanded: false,
+    onToggle: jest.fn(),
+    ...overrides,
+  };
+
+  return (
+    <ul>
+      <FolderListRow {...props} />
+    </ul>
+  );
+}
+
+function renderRow(overrides: Partial<RowProps> = {}) {
+  return render(rowUi(overrides));
+}
+
 describe('FolderListRow', () => {
   it('VIS-2: shows the own title as a link, the parent path for a nested folder, and the pluralized count', async () => {
     mockParents(['Platform', 'Infra', 'Kubernetes']);
-    render(
-      <ul>
-        <FolderListRow
-          folderUid="k8s"
-          title="Kubernetes"
-          kind="alert"
-          count={{ status: 'loaded', count: 21 }}
-          expanded={false}
-          onToggle={jest.fn()}
-        />
-      </ul>
-    );
+    renderRow({ folderUid: 'k8s', title: 'Kubernetes', count: { status: 'loaded', count: 21 } });
 
     expect(screen.getByRole('link', { name: 'Kubernetes' })).toHaveAttribute(
       'href',
@@ -45,18 +59,7 @@ describe('FolderListRow', () => {
 
   it('shows no path for a top-level folder and singular recording count', async () => {
     mockParents(['Root']);
-    render(
-      <ul>
-        <FolderListRow
-          folderUid="root"
-          title="Root"
-          kind="recording"
-          count={{ status: 'loaded', count: 1 }}
-          expanded={false}
-          onToggle={jest.fn()}
-        />
-      </ul>
-    );
+    renderRow({ kind: 'recording', count: { status: 'loaded', count: 1 } });
 
     expect(screen.getByText('1 recording rule')).toBeInTheDocument();
     expect(screen.getAllByText('Root')).toHaveLength(1);
@@ -64,18 +67,7 @@ describe('FolderListRow', () => {
 
   it('shows no count text while the count is loading', () => {
     mockParents(['Root']);
-    render(
-      <ul>
-        <FolderListRow
-          folderUid="root"
-          title="Root"
-          kind="alert"
-          count={{ status: 'loading' }}
-          expanded={false}
-          onToggle={jest.fn()}
-        />
-      </ul>
-    );
+    renderRow({ count: { status: 'loading' } });
 
     expect(screen.queryByText(/alert rule/)).not.toBeInTheDocument();
     expect(screen.queryByText('–')).not.toBeInTheDocument();
@@ -84,18 +76,7 @@ describe('FolderListRow', () => {
   it('shows an unavailable message with a Retry that calls the lookup retry when the count failed', async () => {
     mockParents(['Root']);
     const retry = jest.fn();
-    const { user } = render(
-      <ul>
-        <FolderListRow
-          folderUid="root"
-          title="Root"
-          kind="alert"
-          count={{ status: 'error', retry }}
-          expanded={false}
-          onToggle={jest.fn()}
-        />
-      </ul>
-    );
+    const { user } = renderRow({ count: { status: 'error', retry } });
 
     expect(screen.getByText('Count unavailable')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Retry loading the rule count of Root' }));
@@ -105,39 +86,14 @@ describe('FolderListRow', () => {
   it('toggles through the chevron button only and renders children only while expanded', async () => {
     mockParents(['Root']);
     const onToggle = jest.fn();
-    const { user, rerender } = render(
-      <ul>
-        <FolderListRow
-          folderUid="root"
-          title="Root"
-          kind="alert"
-          count={{ status: 'loaded', count: 2 }}
-          expanded={false}
-          onToggle={onToggle}
-        >
-          <li>child rule</li>
-        </FolderListRow>
-      </ul>
-    );
+    const children = <li>child rule</li>;
+    const { user, rerender } = renderRow({ onToggle, children });
 
     expect(screen.queryByText('child rule')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Expand Root' }));
     expect(onToggle).toHaveBeenCalledTimes(1);
 
-    rerender(
-      <ul>
-        <FolderListRow
-          folderUid="root"
-          title="Root"
-          kind="alert"
-          count={{ status: 'loaded', count: 2 }}
-          expanded
-          onToggle={onToggle}
-        >
-          <li>child rule</li>
-        </FolderListRow>
-      </ul>
-    );
+    rerender(rowUi({ onToggle, children, expanded: true }));
     expect(screen.getByRole('button', { name: 'Collapse Root' })).toHaveAttribute('aria-expanded', 'true');
     // The child rules form a list of their own inside the folder's row, not a role-overridden one.
     const folderRow = screen.getAllByRole('listitem')[0];

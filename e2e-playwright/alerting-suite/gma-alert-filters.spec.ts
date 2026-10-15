@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { test } from './fixtures';
 import { LABEL_RULES, labelFilterCases } from './labelFilterCases';
 import { RuleListPage, filterLeaf } from './pages/RuleListPage';
 import {
@@ -7,6 +7,7 @@ import {
   newRunMarker,
   prometheusDataSourceUid,
   runScope,
+  runTitle,
   testDataSourceUid,
 } from './ruleSeeding';
 
@@ -15,11 +16,7 @@ import {
 // Each filter is applied the way a user does, through the search input token or the sidebar control,
 // and checks both the request body sent to /alertrules/searchRules and the rules shown.
 function rule(run: string, name: string, extra: Partial<AlertRuleSeed> = {}): AlertRuleSeed {
-  return { ...extra, title: titleOf(run, name), labels: { [RUN_LABEL]: run, ...extra.labels } };
-}
-
-function titleOf(run: string, name: string): string {
-  return `${name} ${run}`;
+  return { ...extra, title: runTitle(run, name), labels: { [RUN_LABEL]: run, ...extra.labels } };
 }
 
 test.describe('Alert rules: token filters', () => {
@@ -35,8 +32,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf({ text: { value: 'latency' } });
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -52,8 +49,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf({ text: { value: 'space' } });
     await list.expectRules({
-      shown: [titleOf(run, 'Disk space low')],
-      hidden: [titleOf(run, 'Checkout latency high')],
+      shown: [runTitle(run, 'Disk space low')],
+      hidden: [runTitle(run, 'Checkout latency high')],
     });
   });
 
@@ -70,8 +67,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('folder', 'In', [folder.uid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -88,8 +85,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('datasourceUIDs', 'In', [testDataSourceUid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low'), titleOf(run, 'Memory pressure')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low'), runTitle(run, 'Memory pressure')],
     });
   });
 
@@ -107,8 +104,8 @@ test.describe('Alert rules: token filters', () => {
 
       await list.expectRequestLeaf(leaf);
       await list.expectRules({
-        shown: shown.map((name) => titleOf(run, name)),
-        hidden: hidden.map((name) => titleOf(run, name)),
+        shown: shown.map((name) => runTitle(run, name)),
+        hidden: hidden.map((name) => runTitle(run, name)),
       });
     });
   }
@@ -126,14 +123,14 @@ test.describe('Alert rules: token filters', () => {
 
     const list = new RuleListPage(page, 'alert');
     await list.goto(runScope(run));
-    await list.expectRules({ shown: [titleOf(run, 'Synthetic probe failing')] });
+    await list.expectRules({ shown: [runTitle(run, 'Synthetic probe failing')] });
     list.forgetRequests();
     await list.search(`${runScope(run)} plugins:hide`);
 
     await list.expectRequestLeaf({ regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true } });
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high'), titleOf(run, 'Imported rule')],
-      hidden: [titleOf(run, 'Synthetic probe failing')],
+      shown: [runTitle(run, 'Checkout latency high'), runTitle(run, 'Imported rule')],
+      hidden: [runTitle(run, 'Synthetic probe failing')],
     });
   });
 
@@ -150,8 +147,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('dashboardUID', 'In', [dashboardUid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -168,8 +165,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('panelID', 'In', ['4']));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Checkout error rate')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Checkout error rate')],
     });
   });
 
@@ -190,8 +187,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('receiver', 'In', [contactPointName]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -209,8 +206,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('routingTree', 'In', [policyName]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -226,8 +223,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('paused', 'In', ['true']));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -243,8 +240,8 @@ test.describe('Alert rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('paused', 'In', ['false']));
     await list.expectRules({
-      shown: [titleOf(run, 'Disk space low')],
-      hidden: [titleOf(run, 'Checkout latency high')],
+      shown: [runTitle(run, 'Disk space low')],
+      hidden: [runTitle(run, 'Checkout latency high')],
     });
   });
 });
@@ -263,8 +260,8 @@ test.describe('Alert rules: sidebar filters', () => {
     await list.expectRequestLeaf({ text: { value: 'latency' } });
     await list.expectSearchParam('latency');
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -280,8 +277,8 @@ test.describe('Alert rules: sidebar filters', () => {
     await list.expectRequestLeaf(filterLeaf('labels', 'In', ['team=payments']));
     await list.expectSearchParam('label:team=payments');
     await list.expectRules({
-      shown: [titleOf(run, 'Payments rule')],
-      hidden: [titleOf(run, 'Checkout rule')],
+      shown: [runTitle(run, 'Payments rule')],
+      hidden: [runTitle(run, 'Checkout rule')],
     });
   });
 
@@ -296,8 +293,8 @@ test.describe('Alert rules: sidebar filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('labels', 'In', ['team']));
     await list.expectRules({
-      shown: [titleOf(run, 'Payments rule')],
-      hidden: [titleOf(run, 'Unowned rule')],
+      shown: [runTitle(run, 'Payments rule')],
+      hidden: [runTitle(run, 'Unowned rule')],
     });
   });
 
@@ -313,21 +310,21 @@ test.describe('Alert rules: sidebar filters', () => {
     await list.addFolder(folder.title);
     await list.expectRequestLeaf(filterLeaf('folder', 'In', [folder.uid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
 
     list.forgetRequests();
     await list.addFolder(otherFolder.title);
     await list.expectRequestLeaf(filterLeaf('folder', 'In', [folder.uid, otherFolder.uid]));
-    await list.expectRules({ shown: [titleOf(run, 'Checkout latency high'), titleOf(run, 'Disk space low')] });
+    await list.expectRules({ shown: [runTitle(run, 'Checkout latency high'), runTitle(run, 'Disk space low')] });
 
     list.forgetRequests();
     await list.removeSelectedValue(folder.title);
     await list.expectRequestLeaf(filterLeaf('folder', 'In', [otherFolder.uid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Disk space low')],
-      hidden: [titleOf(run, 'Checkout latency high')],
+      shown: [runTitle(run, 'Disk space low')],
+      hidden: [runTitle(run, 'Checkout latency high')],
     });
   });
 
@@ -345,21 +342,21 @@ test.describe('Alert rules: sidebar filters', () => {
     await list.addDataSource('gdev-testdata');
     await list.expectRequestLeaf(filterLeaf('datasourceUIDs', 'In', [testDataSourceUid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
 
     list.forgetRequests();
     await list.addDataSource('gdev-prometheus');
     await list.expectRequestLeaf(filterLeaf('datasourceUIDs', 'In', [testDataSourceUid, prometheusDataSourceUid]));
-    await list.expectRules({ shown: [titleOf(run, 'Checkout latency high'), titleOf(run, 'Disk space low')] });
+    await list.expectRules({ shown: [runTitle(run, 'Checkout latency high'), runTitle(run, 'Disk space low')] });
 
     list.forgetRequests();
     await list.removeSelectedValue('gdev-testdata');
     await list.expectRequestLeaf(filterLeaf('datasourceUIDs', 'In', [prometheusDataSourceUid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Disk space low')],
-      hidden: [titleOf(run, 'Checkout latency high')],
+      shown: [runTitle(run, 'Disk space low')],
+      hidden: [runTitle(run, 'Checkout latency high')],
     });
   });
 
@@ -372,15 +369,15 @@ test.describe('Alert rules: sidebar filters', () => {
 
     const list = new RuleListPage(page, 'alert');
     await list.goto(runScope(run));
-    await list.expectRules({ shown: [titleOf(run, 'Synthetic probe failing')] });
+    await list.expectRules({ shown: [runTitle(run, 'Synthetic probe failing')] });
     list.forgetRequests();
     await list.toggleHidePluginRules();
 
     await list.expectRequestLeaf({ regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true } });
     await list.expectSearchParam('plugins:hide');
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Synthetic probe failing')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Synthetic probe failing')],
     });
   });
 
@@ -399,8 +396,8 @@ test.describe('Alert rules: sidebar filters', () => {
     await list.expectRequestLeaf(filterLeaf('dashboardUID', 'In', [dashboardUid]));
     await list.expectSearchParam(`dashboard:${dashboardUid}`);
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -418,8 +415,8 @@ test.describe('Alert rules: sidebar filters', () => {
     await list.expectRequestLeaf(filterLeaf('panelID', 'In', ['4']));
     await list.expectSearchParam('panelId:4');
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Checkout error rate')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Checkout error rate')],
     });
   });
 
@@ -441,8 +438,8 @@ test.describe('Alert rules: sidebar filters', () => {
     await list.expectRequestLeaf(filterLeaf('receiver', 'In', [contactPointName]));
     await list.expectSearchParam(`contactPoint:${contactPointName}`);
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -464,8 +461,8 @@ test.describe('Alert rules: sidebar filters', () => {
     await list.expectRequestLeaf(filterLeaf('routingTree', 'In', [policyName]));
     await list.expectSearchParam(`policy:${policyName}`);
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
   });
 
@@ -480,27 +477,16 @@ test.describe('Alert rules: sidebar filters', () => {
     await list.chooseOption('Paused', 'Paused');
     await list.expectRequestLeaf(filterLeaf('paused', 'In', ['true']));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency high')],
-      hidden: [titleOf(run, 'Disk space low')],
+      shown: [runTitle(run, 'Checkout latency high')],
+      hidden: [runTitle(run, 'Disk space low')],
     });
 
     list.forgetRequests();
     await list.chooseOption('Paused', 'Not paused');
     await list.expectRequestLeaf(filterLeaf('paused', 'In', ['false']));
     await list.expectRules({
-      shown: [titleOf(run, 'Disk space low')],
-      hidden: [titleOf(run, 'Checkout latency high')],
+      shown: [runTitle(run, 'Disk space low')],
+      hidden: [runTitle(run, 'Checkout latency high')],
     });
-  });
-
-  test('SEARCH-2: Clear filters empties the search input and the search in the URL', async ({ page }) => {
-    const list = new RuleListPage(page, 'alert');
-    await list.goto('latency');
-    await expect(list.searchInput).toHaveValue('latency');
-
-    await list.clearFiltersButton.click();
-
-    await expect(list.searchInput).toHaveValue('');
-    await expect.poll(() => new URL(page.url()).searchParams.get('search')).toBeNull();
   });
 });

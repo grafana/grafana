@@ -8,7 +8,9 @@ import {
   type RecordingRuleSeed,
   type RuleStatusSeed,
   newRunMarker,
+  recordingMetricFor,
   runScope,
+  runTitle,
   waitForRuleStatusVisible,
 } from './ruleSeeding';
 
@@ -18,10 +20,6 @@ import {
 interface StatusRule {
   name: string;
   health?: RecordingRuleHealth;
-}
-
-function titleOf(run: string, name: string): string {
-  return `${name} ${run}`;
 }
 
 async function seedStatusRules(
@@ -35,8 +33,8 @@ async function seedStatusRules(
   for (const { name, health } of rules) {
     const status = health ? { health } : undefined;
     const uid = await seedRule({
-      title: titleOf(run, name),
-      metric: `${name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${run}`,
+      title: runTitle(run, name),
+      metric: recordingMetricFor(run, name),
       paused: false,
       labels: { [RUN_LABEL]: run },
       status,
@@ -88,8 +86,8 @@ test.describe('Recording rules: health filter', () => {
 
       await list.expectRequestLeaf(filterLeaf('health', 'In', apiValues));
       await list.expectRules({
-        shown: [titleOf(run, matchingRule.name)],
-        hidden: [titleOf(run, otherRule.name), titleOf(run, NO_STATUS_RULE.name)],
+        shown: [runTitle(run, matchingRule.name)],
+        hidden: [runTitle(run, otherRule.name), runTitle(run, NO_STATUS_RULE.name)],
       });
     });
   }
@@ -116,16 +114,16 @@ test.describe('Recording rules: health filter', () => {
     await list.expectRequestLeaf(filterLeaf('health', 'In', ['Error']));
     await list.expectSearchParam('health:error');
     await list.expectRules({
-      shown: [titleOf(run, failing.name)],
-      hidden: [titleOf(run, recording.name), titleOf(run, NO_STATUS_RULE.name)],
+      shown: [runTitle(run, failing.name)],
+      hidden: [runTitle(run, recording.name), runTitle(run, NO_STATUS_RULE.name)],
     });
 
     list.forgetRequests();
     await list.chooseOption('Health', 'OK');
     await list.expectRequestLeaf(filterLeaf('health', 'In', ['Recording']));
     await list.expectRules({
-      shown: [titleOf(run, recording.name)],
-      hidden: [titleOf(run, failing.name), titleOf(run, NO_STATUS_RULE.name)],
+      shown: [runTitle(run, recording.name)],
+      hidden: [runTitle(run, failing.name), runTitle(run, NO_STATUS_RULE.name)],
     });
   });
 });
@@ -150,7 +148,7 @@ test.describe('Recording rules: status icon', () => {
     await list.goto(runScope(run));
 
     for (const { name, icon } of rules) {
-      await expect(list.statusIcon(titleOf(run, name), icon), `${name} shows ${icon}`).toBeVisible();
+      await expect(list.statusIcon(runTitle(run, name), icon), `${name} shows ${icon}`).toBeVisible();
     }
   });
 });

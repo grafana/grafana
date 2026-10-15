@@ -109,7 +109,7 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
   const reserialized = working
     .map((t) => (t.key ? `${t.key}:${quoteIfNeeded(t.value)}` : quoteIfNeeded(t.value)))
     .join(' ');
-  const { criteria } = parse(reserialized, destinationRegistry(destination));
+  const criteria = parse(reserialized, destinationRegistry(destination));
 
   // 5. Whatever the destination cannot apply is removed rather than carried into the new URL:
   // a filter that belongs to the other page (dashboard: on Recording), an unknown token, or a

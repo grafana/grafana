@@ -18,13 +18,6 @@ test.describe('Alert rules: Folders and List browsing', () => {
     const dense = getCorpusFolder(manifest, manifest.denseFolderUid);
     const untouched = getPlainCorpusFolder(manifest);
 
-    const searchRequestBodies: string[] = [];
-    page.on('request', (request) => {
-      if (request.url().includes('/alertrules/searchRules')) {
-        searchRequestBodies.push(request.postData() ?? '');
-      }
-    });
-
     // Scoping Folders mode to these two folders keeps the untouched one on the page, collapsed.
     const list = new RuleListPage(page, 'alert');
     await list.gotoFolders(folderScope(dense.uid, untouched.uid));
@@ -43,8 +36,8 @@ test.describe('Alert rules: Folders and List browsing', () => {
     await page.getByRole('button', { name: 'Load more' }).click();
     await expect(denseLinks).toHaveCount(dense.alertRules.length);
 
-    expect(searchRequestBodies.length).toBeGreaterThan(0);
-    expect(searchRequestBodies.some((body) => body.includes(untouched.uid))).toBe(false);
+    expect(list.recordedSearches.length).toBeGreaterThan(0);
+    expect(list.recordedSearches.some((body) => JSON.stringify(body).includes(untouched.uid))).toBe(false);
   });
 
   test('ALERT-1: a nested folder shows the path of its parents', async ({ page }) => {

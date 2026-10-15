@@ -20,10 +20,10 @@ export interface RuleSearchInputProps {
   /** Filters that could not be applied, to describe accessibly — from getCriteriaIssues(). */
   issues?: CriteriaIssue[];
   debounceMs?: number;
-  id?: string;
 }
 
 const DEFAULT_DEBOUNCE_MS = 400;
+const INPUT_ID = 'rule-search-input';
 const ISSUES_DESCRIPTION_ID = 'rule-search-input-issues';
 
 /**
@@ -39,16 +39,14 @@ export function RuleSearchInput({
   tokens,
   issues = [],
   debounceMs = DEFAULT_DEBOUNCE_MS,
-  id = 'rule-search-input',
 }: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
-  const draftRef = useRef(query);
   // The last text this component applied. A `query` that is its canonical form is an echo of
   // our own apply, not an outside change.
   const lastAppliedRef = useRef(query);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const canonicalize = useCallback((text: string) => serialize(parse(text, tokens).criteria), [tokens]);
+  const canonicalize = useCallback((text: string) => serialize(parse(text, tokens)), [tokens]);
 
   useEffect(() => {
     if (query === canonicalize(lastAppliedRef.current)) {
@@ -58,7 +56,6 @@ export function RuleSearchInput({
       clearTimeout(timeoutRef.current);
     }
     lastAppliedRef.current = query;
-    draftRef.current = query;
     setDraft(query);
   }, [query, canonicalize]);
 
@@ -82,14 +79,13 @@ export function RuleSearchInput({
   );
 
   const handleChange = (value: string) => {
-    draftRef.current = value;
     setDraft(value);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     // A half-typed filter would only flash an invalid-filter state, so only complete text is
     // applied while typing; Enter and blur apply whatever is there.
-    if (parse(value, tokens).criteria.invalid.length === 0) {
+    if (parse(value, tokens).invalid.length === 0) {
       timeoutRef.current = setTimeout(() => apply(value), debounceMs);
     }
   };
@@ -99,7 +95,7 @@ export function RuleSearchInput({
 
   return (
     <Stack direction="column" gap={0.5} width="100%">
-      <Label htmlFor={id}>
+      <Label htmlFor={INPUT_ID}>
         <Stack gap={0.5} alignItems="center">
           <span>
             <Trans i18nKey="alerting.gma-rule-list.search.label">Search</Trans>
@@ -115,7 +111,7 @@ export function RuleSearchInput({
         </Stack>
       </Label>
       <FilterInput
-        id={id}
+        id={INPUT_ID}
         value={draft}
         escapeRegex={false}
         placeholder={t('alerting.gma-rule-list.search.placeholder', 'Search by name or enter filter query...')}
@@ -188,20 +184,7 @@ function HelpRow({ definition }: { definition: TokenDefinition }) {
 }
 
 function HelpAvailability({ definition }: { definition: TokenDefinition }) {
-  const { availability, unavailableValues = [] } = definition;
-
-  if (availability.status === 'unavailable') {
-    return (
-      <Stack direction="column" gap={0.25}>
-        <Text element="span" color="warning">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-unavailable">Not available yet</Trans>
-        </Text>
-        <Text element="span" variant="bodySmall" color="secondary">
-          {availability.reason()}
-        </Text>
-      </Stack>
-    );
-  }
+  const { unavailableValues = [] } = definition;
 
   return (
     <Stack direction="column" gap={0.25}>

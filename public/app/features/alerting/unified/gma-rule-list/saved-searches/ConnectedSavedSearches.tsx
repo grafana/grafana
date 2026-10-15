@@ -7,7 +7,7 @@ import { type NameResolvers } from '../legacy-migration/migrationResolve';
 import { useDroppedFiltersWarning } from '../legacy-migration/useDroppedFiltersWarning';
 import { type Criteria } from '../rule-search/criteria';
 
-import { type SavedSearchKind, applySavedSearch } from './savedSearchesMigration';
+import { applySavedSearch } from './savedSearchesMigration';
 
 const trackDefaultSearchApplied = createAutoApplyTracker();
 
@@ -16,7 +16,6 @@ interface ConnectedSavedSearchesProps {
    * storage read only starts once the caller has decided it's safe to mount this (see
    * useLegacySavedSearchesCopied). */
   useSavedSearches: () => UseGenericSavedSearchesResult;
-  kind: SavedSearchKind;
   query: string;
   parseForKind: (query: string) => Criteria;
   resolvers: NameResolvers;
@@ -35,7 +34,6 @@ interface ConnectedSavedSearchesProps {
  */
 export function ConnectedSavedSearches({
   useSavedSearches,
-  kind,
   query,
   parseForKind,
   resolvers,
@@ -49,7 +47,7 @@ export function ConnectedSavedSearches({
   const defaultHandledRef = useRef(false);
 
   const applyAndSetCriteria = async (search: SavedSearch, options?: { replace?: boolean }) => {
-    const { criteria, droppedKeys } = await applySavedSearch(search.query, kind, resolvers, parseForKind, (canonical) =>
+    const { criteria, droppedKeys } = await applySavedSearch(search.query, resolvers, parseForKind, (canonical) =>
       savedSearches.updateSearch(search.id, canonical)
     );
     warnAboutDroppedFilters(droppedKeys);

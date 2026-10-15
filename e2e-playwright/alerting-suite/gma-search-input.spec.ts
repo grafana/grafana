@@ -71,4 +71,17 @@ test.describe('Search input draft text', () => {
       await expect(list.searchInput).toHaveValue(typed);
     });
   }
+
+  for (const kind of ['alert', 'recording'] as const) {
+    test(`SEARCH-2 (${kind}): Clear filters empties the search input and the search in the URL`, async ({ page }) => {
+      const list = new RuleListPage(page, kind);
+      await list.goto('latency');
+      await expect(list.searchInput).toHaveValue('latency');
+
+      await list.clearFiltersButton.click();
+
+      await expect(list.searchInput).toHaveValue('');
+      await expect.poll(() => new URL(page.url()).searchParams.get('search')).toBeNull();
+    });
+  }
 });

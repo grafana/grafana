@@ -68,6 +68,17 @@ function mockRecordingRuleSearch(fn: (body: unknown) => object) {
   );
 }
 
+// Fails the first request to `url` and answers every later one with `ok`.
+function failFirstCall(url: string, ok: object) {
+  let calls = 0;
+  server.use(
+    http.post(url, () => {
+      calls += 1;
+      return calls === 1 ? HttpResponse.json({ message: 'boom' }, { status: 500 }) : HttpResponse.json(ok);
+    })
+  );
+}
+
 function mockFolderParents(titleByUid: Record<string, string>) {
   server.use(
     http.get(FOLDER_PARENTS_URL, ({ params }) => {
@@ -198,15 +209,7 @@ describe('RecordingRulesPage', () => {
 
   // STATE-1
   it('retries a failed first List page and then shows its rules', async () => {
-    let call = 0;
-    server.use(
-      http.post(RECORDING_SEARCH_URL, () => {
-        call += 1;
-        return call === 1
-          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
-          : HttpResponse.json({ items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')], metadata: {} });
-      })
-    );
+    failFirstCall(RECORDING_SEARCH_URL, { items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')], metadata: {} });
 
     render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
 
@@ -257,15 +260,7 @@ describe('RecordingRulesPage', () => {
 
   it('shows a retryable error inside an expanded folder whose rule search failed', async () => {
     mockFolderSearch(() => ({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} }));
-    let call = 0;
-    server.use(
-      http.post(RECORDING_SEARCH_URL, () => {
-        call += 1;
-        return call === 1
-          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
-          : HttpResponse.json({ items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')], metadata: {} });
-      })
-    );
+    failFirstCall(RECORDING_SEARCH_URL, { items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')], metadata: {} });
 
     render(<RecordingRulesPage />);
     await userEvent.click(await screen.findByRole('button', { name: 'Expand Team Alerts', expanded: false }));
@@ -424,15 +419,7 @@ describe('RecordingRulesPage', () => {
 
   // STATE-1
   it('shows a retryable error instead of the empty state when the first folder page fails', async () => {
-    let call = 0;
-    server.use(
-      http.post(FOLDER_SEARCH_URL, () => {
-        call += 1;
-        return call === 1
-          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
-          : HttpResponse.json({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} });
-      })
-    );
+    failFirstCall(FOLDER_SEARCH_URL, { items: [folderItem('folder-1', 'Team Alerts')], metadata: {} });
 
     render(<RecordingRulesPage />);
 

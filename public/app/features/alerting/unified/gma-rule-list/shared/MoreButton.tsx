@@ -3,24 +3,21 @@ import { type Ref, forwardRef } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Button, type ButtonProps, Icon, Stack } from '@grafana/ui';
 
-type MoreButtonProps = Omit<ButtonProps, 'children' | 'variant'> & { title?: string };
+type MoreButtonProps = Omit<ButtonProps, 'children' | 'variant'>;
 
 /** Dropdown trigger labelled "More" with a chevron; forwards its ref so `Dropdown` can anchor to it. */
-export const MoreButton = forwardRef(function MoreButton(
-  { title, ...rest }: MoreButtonProps,
-  ref: Ref<HTMLButtonElement>
-) {
+export const MoreButton = forwardRef(function MoreButton(props: MoreButtonProps, ref: Ref<HTMLButtonElement>) {
   return (
     <Button
       variant="secondary"
       size="sm"
       type="button"
-      aria-label={title ?? t('alerting.gma-rule-list.shared.more-button-aria-label', 'More')}
+      aria-label={t('alerting.gma-rule-list.shared.more-button-aria-label', 'More')}
       ref={ref}
-      {...rest}
+      {...props}
     >
       <Stack direction="row" alignItems="center" gap={0}>
-        {title ?? <Trans i18nKey="alerting.gma-rule-list.shared.more-button-text">More</Trans>}
+        <Trans i18nKey="alerting.gma-rule-list.shared.more-button-text">More</Trans>
         <Icon name="angle-down" />
       </Stack>
     </Button>

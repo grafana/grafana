@@ -45,19 +45,9 @@ async function migrateQuery(
   query: string,
   resolvers: NameResolvers
 ): Promise<{ query: string; droppedKeys: string[] }> {
-  const sync = migrateLegacyRuleListUrlSync({
-    search: query,
-    view: null,
-    dataSource: null,
-    alertState: null,
-    ruleType: null,
-    queryString: null,
-  });
+  const sync = migrateLegacyRuleListUrlSync({ search: query });
   const resolved = await resolveMigratedNames(sync, resolvers);
-  return {
-    query: serialize(resolved.criteria),
-    droppedKeys: [...new Set([...sync.diagnostics.droppedKeys, ...resolved.droppedKeys])].sort(),
-  };
+  return { query: serialize(resolved.criteria), droppedKeys: resolved.droppedKeys };
 }
 
 /**
@@ -157,7 +147,6 @@ function needsMigration(query: string): boolean {
  */
 export async function applySavedSearch(
   query: string,
-  kind: SavedSearchKind,
   resolvers: NameResolvers,
   parseForKind: (query: string) => Criteria,
   persist: (canonicalQuery: string) => Promise<void>

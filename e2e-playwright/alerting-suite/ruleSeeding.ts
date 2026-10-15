@@ -175,6 +175,15 @@ export function runScope(runMarker: string): string {
   return `label:${RUN_LABEL}=${runMarker}`;
 }
 
+export function runTitle(runMarker: string, name: string): string {
+  return `${name} ${runMarker}`;
+}
+
+// Metric names allow only letters, digits, underscores and colons.
+export function recordingMetricFor(runMarker: string, name: string): string {
+  return `${name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${runMarker}`;
+}
+
 export interface AlertRuleSeed {
   title: string;
   interval?: string;
@@ -447,4 +456,22 @@ export async function getNamespace(request: APIRequestContext): Promise<string> 
 // and a request to any other namespace is rejected with a 403 "invalid namespace".
 export async function ruleResourceUrl(request: APIRequestContext, kind: RuleKind, uid: string): Promise<string> {
   return `${rulesApiBase(await getNamespace(request))}/${kind}/${encodeURIComponent(uid)}`;
+}
+
+export async function deleteRule(
+  request: APIRequestContext,
+  namespace: string,
+  kind: RuleKind,
+  uid: string
+): Promise<void> {
+  const deleted = await request.delete(`${rulesApiBase(namespace)}/${kind}/${encodeURIComponent(uid)}`);
+  expect(deleted.ok(), `DELETE ${kind}/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
+}
+
+export async function markProvisioned(request: APIRequestContext, kind: RuleKind, uid: string): Promise<void> {
+  const response = await request.patch(await ruleResourceUrl(request, kind, uid), {
+    headers: { 'Content-Type': 'application/merge-patch+json' },
+    data: { metadata: { annotations: { 'grafana.com/provenance': 'api' } } },
+  });
+  expect(response.ok(), `mark provisioned -> ${response.status()}`).toBeTruthy();
 }

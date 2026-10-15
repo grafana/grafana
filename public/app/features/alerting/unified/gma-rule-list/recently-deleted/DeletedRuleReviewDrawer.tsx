@@ -7,11 +7,9 @@ import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { CollapsableSection, Drawer, JSONFormatter, Stack } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
 
-import { useFolderPath } from '../folder-browsing/folderLookups';
-import { FolderPath } from '../rule-row/FolderPath';
-
 import { DeletedRuleDashboardReference } from './DeletedRuleDashboardReference';
 import { DeletedRuleExpressions } from './DeletedRuleExpressions';
+import { DeletedRuleFolderPath } from './DeletedRuleFolderPath';
 import { DeletedRuleNotificationSettings } from './DeletedRuleNotificationSettings';
 import { DeletedRuleReviewField as ReviewField } from './DeletedRuleReviewField';
 import { trackDeletedRuleAdvancedJsonOpened, trackDeletedRuleReviewOpened } from './analytics';
@@ -36,7 +34,6 @@ export function DeletedRuleReviewDrawer(props: DeletedRuleReviewDrawerProps) {
   const folderUid = rule.metadata.annotations?.[AnnoKeyFolder];
   const updatedBy = rule.metadata.annotations?.[AnnoKeyUpdatedBy];
 
-  const folderPath = useFolderPath(folderUid);
   const { resolve: resolveDeletedBy } = useDeletedByDisplayNames([updatedBy]);
   const { settings: targetDataSourceSettings } = useDataSourceInstanceSettings(
     kind === 'recording' ? props.rule.spec.targetDatasourceUID : undefined
@@ -67,11 +64,10 @@ export function DeletedRuleReviewDrawer(props: DeletedRuleReviewDrawerProps) {
         <ReviewField
           label={t('alerting.deleted-rules.review.folder', 'Folder')}
           value={
-            folderPath && folderPath.length > 0 ? (
-              <FolderPath segments={folderPath} />
-            ) : (
-              (folderUid ?? t('alerting.deleted-rules.review.unknown', 'Unknown'))
-            )
+            <DeletedRuleFolderPath
+              folderUid={folderUid}
+              fallback={t('alerting.deleted-rules.review.unknown', 'Unknown')}
+            />
           }
         />
         <ReviewField

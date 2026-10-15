@@ -9,7 +9,6 @@ function definition(key: string, label: string): TokenDefinition {
     label: () => label,
     description: () => `${label} description`,
     example: `${key}:value`,
-    availability: { status: 'supported' },
   };
 }
 

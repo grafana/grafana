@@ -19,7 +19,6 @@ export const alertTokens: TokenDefinition[] = [
         'Dashboard the rule is linked to (canonical value is the dashboard UID).'
       ),
     example: 'dashboard:dash-uid',
-    availability: { status: 'supported' },
   },
   {
     key: TOKEN_KEYS.panelId,
@@ -30,7 +29,6 @@ export const alertTokens: TokenDefinition[] = [
         'Panel the rule is linked to. Panel IDs are dashboard-local; pair with dashboard:.'
       ),
     example: 'panelId:4',
-    availability: { status: 'supported' },
   },
   {
     key: TOKEN_KEYS.contactPoint,
@@ -38,7 +36,6 @@ export const alertTokens: TokenDefinition[] = [
     description: () =>
       t('alerting.gma-rule-list.search.help.contact-point', 'Direct contact point (mutually exclusive with policy:).'),
     example: 'contactPoint:on-call',
-    availability: { status: 'supported' },
   },
   {
     key: TOKEN_KEYS.policy,
@@ -49,7 +46,6 @@ export const alertTokens: TokenDefinition[] = [
         'Named notification policy (mutually exclusive with contactPoint:).'
       ),
     example: 'policy:team-platform',
-    availability: { status: 'supported' },
     unavailableValues: [
       {
         value: DEFAULT_POLICY,
@@ -66,7 +62,6 @@ export const alertTokens: TokenDefinition[] = [
     label: () => t('alerting.gma-rule-list.search.property.paused', 'Paused'),
     description: () => t('alerting.gma-rule-list.search.help.paused', 'Whether the rule is paused (true/false).'),
     example: 'paused:true',
-    availability: { status: 'supported' },
   },
   {
     key: TOKEN_KEYS.state,
@@ -74,7 +69,6 @@ export const alertTokens: TokenDefinition[] = [
     description: () =>
       t('alerting.gma-rule-list.search.help.state', 'Alert state: firing, pending, recovering or normal.'),
     example: 'state:firing',
-    availability: { status: 'supported' },
   },
   sharedDefinitions.health,
 ];

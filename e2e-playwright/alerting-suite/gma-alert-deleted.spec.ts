@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures';
+import { deleteRule } from './ruleSeeding';
 
 // Recently deleted has no search/filter controls (by design - the trash selector can't be
 // combined with ordinary ones), so unlike the mutation specs there's no folder-scoped view to
@@ -15,10 +16,7 @@ test.describe('Alert rules: Recently deleted', () => {
   }) => {
     const title = `Node load average ${crypto.randomUUID().slice(0, 8)}`;
     const uid = await alertRules.seedRule({ title, interval: '1m' });
-    const deleted = await page.request.delete(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/alertrules/${encodeURIComponent(uid)}`
-    );
-    expect(deleted.ok(), `DELETE alertrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
+    await deleteRule(page.request, workerApi.namespace, 'alertrules', uid);
 
     await page.goto('/alerting/rules/alert/deleted');
     await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
@@ -53,10 +51,7 @@ test.describe('Alert rules: Recently deleted', () => {
   }) => {
     const title = `Pod restart rate ${crypto.randomUUID().slice(0, 8)}`;
     const uid = await alertRules.seedRule({ title, interval: '1m' });
-    const deleted = await page.request.delete(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/alertrules/${encodeURIComponent(uid)}`
-    );
-    expect(deleted.ok(), `DELETE alertrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
+    await deleteRule(page.request, workerApi.namespace, 'alertrules', uid);
 
     await page.goto('/alerting/rules/alert/deleted');
     await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();

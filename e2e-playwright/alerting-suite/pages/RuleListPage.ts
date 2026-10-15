@@ -102,6 +102,11 @@ export class RuleListPage {
     this.searchBodies.length = 0;
   }
 
+  /** The `/searchRules` bodies this page has sent, in order, since it was created. */
+  get recordedSearches(): SearchRequestBody[] {
+    return this.searchBodies;
+  }
+
   async expectRequestLeaf(leaf: SearchLeaf): Promise<void> {
     await expect
       .poll(() => this.searchBodies.flatMap(searchLeaves), {

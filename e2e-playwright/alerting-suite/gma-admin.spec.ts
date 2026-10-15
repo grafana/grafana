@@ -1,6 +1,6 @@
-import { type Page, test, expect } from './fixtures';
-import { RuleListPage } from './pages/RuleListPage';
-import { ruleResourceUrl } from './ruleSeeding';
+import { test, expect } from './fixtures';
+import { RuleListPage, folderScope } from './pages/RuleListPage';
+import { markProvisioned } from './ruleSeeding';
 
 // RBAC-A: this file runs under the Admin-authenticated `alerting-gma` project (see
 // playwright.config.ts), unlike the `.editor.spec.ts`/`.viewer.spec.ts` role-specific projects
@@ -8,14 +8,6 @@ import { ruleResourceUrl } from './ruleSeeding';
 // under test is that the two active pages and both Recently deleted tabs are all reachable, and
 // that the action menu's own gates (useRuleActionAbilities.ts) still disable Resume/Delete with
 // their reason for a provisioned rule even for an Admin, while leaving Duplicate available on it.
-
-async function markProvisioned(page: Page, kind: 'alertrules' | 'recordingrules', uid: string) {
-  const response = await page.request.patch(await ruleResourceUrl(page.request, kind, uid), {
-    headers: { 'Content-Type': 'application/merge-patch+json' },
-    data: { metadata: { annotations: { 'grafana.com/provenance': 'api' } } },
-  });
-  expect(response.ok(), `mark provisioned -> ${response.status()}`).toBeTruthy();
-}
 
 test.describe('Admin (RBAC-A)', () => {
   test('RBAC-A: Admin can reach both active rule pages and both Recently deleted tabs', async ({ page }) => {
@@ -43,10 +35,10 @@ test.describe('Admin (RBAC-A)', () => {
     const provisionedTitle = `Admin provisioned alert ${crypto.randomUUID().slice(0, 8)}`;
     await alertRules.seedRule({ title: normalTitle, interval: '1m' });
     const provisionedUid = await alertRules.seedRule({ title: provisionedTitle, interval: '1m' });
-    await markProvisioned(page, 'alertrules', provisionedUid);
+    await markProvisioned(page.request, 'alertrules', provisionedUid);
     const list = new RuleListPage(page, 'alert');
 
-    await page.goto(`/alerting/rules/alert?search=${encodeURIComponent(`namespace:${folder.uid}`)}&view=list`);
+    await list.goto(folderScope(folder.uid));
 
     await expect(page.getByRole('link', { name: normalTitle })).toBeVisible();
     await list.rowMoreButton(normalTitle).click();
@@ -81,10 +73,10 @@ test.describe('Admin (RBAC-A)', () => {
       interval: '1m',
       metric: `admin_provisioned_${crypto.randomUUID().slice(0, 8)}`,
     });
-    await markProvisioned(page, 'recordingrules', provisionedUid);
+    await markProvisioned(page.request, 'recordingrules', provisionedUid);
     const list = new RuleListPage(page, 'recording');
 
-    await page.goto(`/alerting/rules/recording?search=${encodeURIComponent(`namespace:${folder.uid}`)}&view=list`);
+    await list.goto(folderScope(folder.uid));
 
     await expect(page.getByRole('link', { name: normalTitle })).toBeVisible();
     await list.rowMoreButton(normalTitle).click();

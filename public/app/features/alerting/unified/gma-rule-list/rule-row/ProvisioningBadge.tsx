@@ -20,10 +20,11 @@ export function ProvisioningBadge({ managerKind }: ProvisioningBadgeProps) {
 }
 
 function getTooltip(managerKind?: string): string {
+  if (!managerKind) {
+    return t('alerting.gma-rule-list.shared.provisioned-tooltip', 'Provisioned');
+  }
+
   switch (managerKind) {
-    case undefined:
-    case '':
-      return t('alerting.gma-rule-list.shared.provisioned-tooltip', 'Provisioned');
     case 'classic-file-provisioning':
       return t('alerting.gma-rule-list.shared.provisioned-tooltip-file', 'Provisioned via file provisioning');
     case 'classic-api-provisioning':

@@ -1,4 +1,5 @@
 import { type InstanceTotals } from '../rule-row/InstanceTotalsMeta';
+import { asBoolean, asLabels, asString, asStringArray } from '../rule-search/searchHitFields';
 import { type RuleSearchResultItem } from '../rule-search/searchQueryLeaves';
 
 /**
@@ -29,6 +30,36 @@ export interface AlertRuleSearchHit {
   routingTree?: string;
 }
 
+export function toAlertRuleSearchHit(item: RuleSearchResultItem): AlertRuleSearchHit {
+  const fields: Record<string, unknown> = item.fields ?? {};
+  const annotations = asRecord(fields.annotations);
+
+  return {
+    uid: item.resource.name,
+    title: asString(fields.title) ?? item.resource.name,
+    folderUid: asString(fields.folder),
+    paused: asBoolean(fields.paused),
+    interval: asString(fields.interval),
+    state: asString(fields.state),
+    health: asString(fields.health),
+    lastError: asString(fields.lastError),
+    totals: {
+      healthy: asCount(fields.totalsHealthy),
+      firing: asCount(fields.totalsFiring),
+      pending: asCount(fields.totalsPending),
+      recovering: asCount(fields.totalsRecovering),
+      noData: asCount(fields.totalsNoData),
+      error: asCount(fields.totalsError),
+    },
+    summary: annotations.summary,
+    labels: asLabels(fields.labels),
+    dataSourceUids: asStringArray(fields.datasourceUIDs),
+    notificationType: asString(fields.notificationType),
+    receiver: asString(fields.receiver),
+    routingTree: asString(fields.routingTree),
+  };
+}
+
 function asRecord(value: unknown): Record<string, string> {
   if (!value || typeof value !== 'object') {
     return {};
@@ -44,59 +75,4 @@ function asRecord(value: unknown): Record<string, string> {
 
 function asCount(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function asStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
-}
-
-/** Labels are indexed (and so returned) as `key=value` strings, not an object - see the
- * `In: ["key=value"]` filter shape in searchQueryLeaves.ts. Falls back to object form defensively. */
-function asLabels(value: unknown): Record<string, string> {
-  if (Array.isArray(value)) {
-    const result: Record<string, string> = {};
-    for (const entry of value) {
-      if (typeof entry !== 'string') {
-        continue;
-      }
-      const separatorIndex = entry.indexOf('=');
-      if (separatorIndex === -1) {
-        result[entry] = '';
-      } else {
-        result[entry.slice(0, separatorIndex)] = entry.slice(separatorIndex + 1);
-      }
-    }
-    return result;
-  }
-  return asRecord(value);
-}
-
-export function toAlertRuleSearchHit(item: RuleSearchResultItem): AlertRuleSearchHit {
-  const fields: Record<string, unknown> = item.fields ?? {};
-  const annotations = asRecord(fields.annotations);
-
-  return {
-    uid: item.resource.name,
-    title: typeof fields.title === 'string' ? fields.title : item.resource.name,
-    folderUid: typeof fields.folder === 'string' ? fields.folder : undefined,
-    paused: typeof fields.paused === 'boolean' ? fields.paused : undefined,
-    interval: typeof fields.interval === 'string' ? fields.interval : undefined,
-    state: typeof fields.state === 'string' ? fields.state : undefined,
-    health: typeof fields.health === 'string' ? fields.health : undefined,
-    lastError: typeof fields.lastError === 'string' ? fields.lastError : undefined,
-    totals: {
-      healthy: asCount(fields.totalsHealthy),
-      firing: asCount(fields.totalsFiring),
-      pending: asCount(fields.totalsPending),
-      recovering: asCount(fields.totalsRecovering),
-      noData: asCount(fields.totalsNoData),
-      error: asCount(fields.totalsError),
-    },
-    summary: annotations.summary,
-    labels: asLabels(fields.labels),
-    dataSourceUids: asStringArray(fields.datasourceUIDs),
-    notificationType: typeof fields.notificationType === 'string' ? fields.notificationType : undefined,
-    receiver: typeof fields.receiver === 'string' ? fields.receiver : undefined,
-    routingTree: typeof fields.routingTree === 'string' ? fields.routingTree : undefined,
-  };
 }

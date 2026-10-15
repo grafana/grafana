@@ -69,7 +69,7 @@ export async function migrateLegacyRuleListUrl(
 
   const diagnostics: MigrationDiagnostics = {
     migratedKeys: sync.diagnostics.migratedKeys,
-    droppedKeys: [...new Set([...sync.diagnostics.droppedKeys, ...resolved.droppedKeys])].sort(),
+    droppedKeys: resolved.droppedKeys,
   };
 
   reportMigrationDiagnostics(diagnostics);

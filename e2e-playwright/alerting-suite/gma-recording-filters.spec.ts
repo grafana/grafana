@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { test } from './fixtures';
 import { LABEL_RULES, labelFilterCases } from './labelFilterCases';
 import { RuleListPage, filterLeaf } from './pages/RuleListPage';
 import {
@@ -6,7 +6,9 @@ import {
   type RecordingRuleSeed,
   newRunMarker,
   prometheusDataSourceUid,
+  recordingMetricFor,
   runScope,
+  runTitle,
   testDataSourceUid,
 } from './ruleSeeding';
 
@@ -15,20 +17,11 @@ import {
 // request body and the rules shown.
 function rule(run: string, name: string, extra: Partial<RecordingRuleSeed> = {}): RecordingRuleSeed {
   return {
-    metric: metricOf(run, name),
+    metric: recordingMetricFor(run, name),
     ...extra,
-    title: titleOf(run, name),
+    title: runTitle(run, name),
     labels: { [RUN_LABEL]: run, ...extra.labels },
   };
-}
-
-function titleOf(run: string, name: string): string {
-  return `${name} ${run}`;
-}
-
-// Metric names allow only letters, digits, underscores and colons.
-function metricOf(run: string, name: string): string {
-  return `${name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${run}`;
 }
 
 test.describe('Recording rules: token filters', () => {
@@ -44,8 +37,8 @@ test.describe('Recording rules: token filters', () => {
 
     await list.expectRequestLeaf({ text: { value: 'latency' } });
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio')],
     });
   });
 
@@ -62,8 +55,8 @@ test.describe('Recording rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('folder', 'In', [folder.uid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio')],
     });
   });
 
@@ -80,8 +73,8 @@ test.describe('Recording rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('datasourceUIDs', 'In', [testDataSourceUid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio'), titleOf(run, 'Memory usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio'), runTitle(run, 'Memory usage ratio')],
     });
   });
 
@@ -99,8 +92,8 @@ test.describe('Recording rules: token filters', () => {
 
       await list.expectRequestLeaf(leaf);
       await list.expectRules({
-        shown: shown.map((name) => titleOf(run, name)),
-        hidden: hidden.map((name) => titleOf(run, name)),
+        shown: shown.map((name) => runTitle(run, name)),
+        hidden: hidden.map((name) => runTitle(run, name)),
       });
     });
   }
@@ -118,20 +111,20 @@ test.describe('Recording rules: token filters', () => {
 
     const list = new RuleListPage(page, 'recording');
     await list.goto(runScope(run));
-    await list.expectRules({ shown: [titleOf(run, 'Synthetic probe duration')] });
+    await list.expectRules({ shown: [runTitle(run, 'Synthetic probe duration')] });
     list.forgetRequests();
     await list.search(`${runScope(run)} plugins:hide`);
 
     await list.expectRequestLeaf({ regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true } });
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99'), titleOf(run, 'Imported usage ratio')],
-      hidden: [titleOf(run, 'Synthetic probe duration')],
+      shown: [runTitle(run, 'Checkout latency p99'), runTitle(run, 'Imported usage ratio')],
+      hidden: [runTitle(run, 'Synthetic probe duration')],
     });
   });
 
   test('SEARCH-4: metric: limits rules to the exact recorded metric', async ({ page, recordingRules }) => {
     const run = newRunMarker();
-    const metric = metricOf(run, 'Checkout latency p99');
+    const metric = recordingMetricFor(run, 'Checkout latency p99');
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
     await recordingRules.seedRule(rule(run, 'Disk usage ratio'));
 
@@ -142,8 +135,8 @@ test.describe('Recording rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('metric', 'In', [metric]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio')],
     });
   });
 
@@ -162,8 +155,8 @@ test.describe('Recording rules: token filters', () => {
 
     await list.expectRequestLeaf(filterLeaf('targetDatasourceUID', 'In', [prometheusDataSourceUid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio')],
     });
   });
 });
@@ -182,8 +175,8 @@ test.describe('Recording rules: sidebar filters', () => {
     await list.expectRequestLeaf({ text: { value: 'latency' } });
     await list.expectSearchParam('latency');
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio')],
     });
   });
 
@@ -199,8 +192,8 @@ test.describe('Recording rules: sidebar filters', () => {
     await list.expectRequestLeaf(filterLeaf('labels', 'In', ['team=payments']));
     await list.expectSearchParam('label:team=payments');
     await list.expectRules({
-      shown: [titleOf(run, LABEL_RULES.payments)],
-      hidden: [titleOf(run, LABEL_RULES.checkout)],
+      shown: [runTitle(run, LABEL_RULES.payments)],
+      hidden: [runTitle(run, LABEL_RULES.checkout)],
     });
   });
 
@@ -216,21 +209,21 @@ test.describe('Recording rules: sidebar filters', () => {
     await list.addFolder(folder.title);
     await list.expectRequestLeaf(filterLeaf('folder', 'In', [folder.uid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio')],
     });
 
     list.forgetRequests();
     await list.addFolder(otherFolder.title);
     await list.expectRequestLeaf(filterLeaf('folder', 'In', [folder.uid, otherFolder.uid]));
-    await list.expectRules({ shown: [titleOf(run, 'Checkout latency p99'), titleOf(run, 'Disk usage ratio')] });
+    await list.expectRules({ shown: [runTitle(run, 'Checkout latency p99'), runTitle(run, 'Disk usage ratio')] });
 
     list.forgetRequests();
     await list.removeSelectedValue(folder.title);
     await list.expectRequestLeaf(filterLeaf('folder', 'In', [otherFolder.uid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Disk usage ratio')],
-      hidden: [titleOf(run, 'Checkout latency p99')],
+      shown: [runTitle(run, 'Disk usage ratio')],
+      hidden: [runTitle(run, 'Checkout latency p99')],
     });
   });
 
@@ -248,21 +241,21 @@ test.describe('Recording rules: sidebar filters', () => {
     await list.addDataSource('gdev-testdata');
     await list.expectRequestLeaf(filterLeaf('datasourceUIDs', 'In', [testDataSourceUid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio')],
     });
 
     list.forgetRequests();
     await list.addDataSource('gdev-prometheus');
     await list.expectRequestLeaf(filterLeaf('datasourceUIDs', 'In', [testDataSourceUid, prometheusDataSourceUid]));
-    await list.expectRules({ shown: [titleOf(run, 'Checkout latency p99'), titleOf(run, 'Disk usage ratio')] });
+    await list.expectRules({ shown: [runTitle(run, 'Checkout latency p99'), runTitle(run, 'Disk usage ratio')] });
 
     list.forgetRequests();
     await list.removeSelectedValue('gdev-testdata');
     await list.expectRequestLeaf(filterLeaf('datasourceUIDs', 'In', [prometheusDataSourceUid]));
     await list.expectRules({
-      shown: [titleOf(run, 'Disk usage ratio')],
-      hidden: [titleOf(run, 'Checkout latency p99')],
+      shown: [runTitle(run, 'Disk usage ratio')],
+      hidden: [runTitle(run, 'Checkout latency p99')],
     });
   });
 
@@ -275,21 +268,21 @@ test.describe('Recording rules: sidebar filters', () => {
 
     const list = new RuleListPage(page, 'recording');
     await list.goto(runScope(run));
-    await list.expectRules({ shown: [titleOf(run, 'Synthetic probe duration')] });
+    await list.expectRules({ shown: [runTitle(run, 'Synthetic probe duration')] });
     list.forgetRequests();
     await list.toggleHidePluginRules();
 
     await list.expectRequestLeaf({ regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true } });
     await list.expectSearchParam('plugins:hide');
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Synthetic probe duration')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Synthetic probe duration')],
     });
   });
 
   test('SEARCH-4: Recorded metric limits rules to the exact metric', async ({ page, recordingRules }) => {
     const run = newRunMarker();
-    const metric = metricOf(run, 'Checkout latency p99');
+    const metric = recordingMetricFor(run, 'Checkout latency p99');
     await recordingRules.seedRule(rule(run, 'Checkout latency p99'));
     await recordingRules.seedRule(rule(run, 'Disk usage ratio'));
 
@@ -301,8 +294,8 @@ test.describe('Recording rules: sidebar filters', () => {
     await list.expectRequestLeaf(filterLeaf('metric', 'In', [metric]));
     await list.expectSearchParam(`metric:${metric}`);
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio')],
     });
   });
 
@@ -322,19 +315,8 @@ test.describe('Recording rules: sidebar filters', () => {
     await list.expectRequestLeaf(filterLeaf('targetDatasourceUID', 'In', [prometheusDataSourceUid]));
     await list.expectSearchParam(`targetDatasource:${prometheusDataSourceUid}`);
     await list.expectRules({
-      shown: [titleOf(run, 'Checkout latency p99')],
-      hidden: [titleOf(run, 'Disk usage ratio')],
+      shown: [runTitle(run, 'Checkout latency p99')],
+      hidden: [runTitle(run, 'Disk usage ratio')],
     });
-  });
-
-  test('SEARCH-2: Clear filters empties the search input and the search in the URL', async ({ page }) => {
-    const list = new RuleListPage(page, 'recording');
-    await list.goto('latency');
-    await expect(list.searchInput).toHaveValue('latency');
-
-    await list.clearFiltersButton.click();
-
-    await expect(list.searchInput).toHaveValue('');
-    await expect.poll(() => new URL(page.url()).searchParams.get('search')).toBeNull();
   });
 });

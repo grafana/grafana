@@ -84,15 +84,15 @@ export function RuleListItemDescription({ error, summary }: RuleListItemDescript
 
   return (
     <Tooltip content={text}>
-      {error ? (
-        <Text variant="bodySmall" color="error" weight="light" truncate element="p">
-          {text}
-        </Text>
-      ) : (
-        <Text variant="bodySmall" color="secondary" truncate element="p">
-          {text}
-        </Text>
-      )}
+      <Text
+        variant="bodySmall"
+        color={error ? 'error' : 'secondary'}
+        weight={error ? 'light' : undefined}
+        truncate
+        element="p"
+      >
+        {text}
+      </Text>
     </Tooltip>
   );
 }

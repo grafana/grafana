@@ -17,17 +17,8 @@ test.describe('Recording rules: Folders and List browsing', () => {
     const dense = getCorpusFolder(manifest, manifest.denseFolderUid);
     const untouched = getPlainCorpusFolder(manifest);
 
-    let sawAlertRuleSearch = false;
-    const recordingSearchBodies: string[] = [];
-    page.on('request', (request) => {
-      if (request.url().includes('/alertrules/searchRules')) {
-        sawAlertRuleSearch = true;
-      }
-      if (request.url().includes('/recordingrules/searchRules')) {
-        recordingSearchBodies.push(request.postData() ?? '');
-      }
-    });
-
+    // Recording the Alert endpoint too, so a stray Alert search fails the test.
+    const alertSearches = new RuleListPage(page, 'alert');
     // Scoping Folders mode to these two folders keeps the untouched one on the page, collapsed.
     const list = new RuleListPage(page, 'recording');
     await list.gotoFolders(folderScope(dense.uid, untouched.uid));
@@ -46,8 +37,8 @@ test.describe('Recording rules: Folders and List browsing', () => {
     await page.getByRole('button', { name: 'Load more' }).click();
     await expect(denseLinks).toHaveCount(dense.recordingRules.length);
 
-    expect(sawAlertRuleSearch).toBe(false);
-    expect(recordingSearchBodies.some((body) => body.includes(untouched.uid))).toBe(false);
+    expect(alertSearches.recordedSearches).toHaveLength(0);
+    expect(list.recordedSearches.some((body) => JSON.stringify(body).includes(untouched.uid))).toBe(false);
   });
 
   test('REC-1: a nested folder shows the path of its parents', async ({ page }) => {

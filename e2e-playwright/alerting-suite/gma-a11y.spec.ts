@@ -3,20 +3,8 @@ import { type AxeResults } from 'axe-core';
 import { type AxeScanContext, DEFAULT_A11Y_TAGS } from '@grafana/plugin-e2e';
 
 import { type Page, test, expect } from './fixtures';
-import { RuleListPage } from './pages/RuleListPage';
-
-// Scoped to this test's own folder (namespace:<uid>) so Folders mode shows exactly one row
-// regardless of whatever else exists in the dev instance - same technique the mutation specs
-// use, and needed here so "one folder expanded" is deterministic rather than whichever folder
-// happens to sort first.
-function foldersModeUrl(kind: 'alert' | 'recording', folderUid: string): string {
-  const path = kind === 'alert' ? '/alerting/rules/alert' : '/alerting/rules/recording';
-  return `${path}?search=${encodeURIComponent(`namespace:${folderUid}`)}`;
-}
-
-function listModeUrl(kind: 'alert' | 'recording', folderUid: string): string {
-  return `${foldersModeUrl(kind, folderUid)}&view=list`;
-}
+import { RuleListPage, folderScope } from './pages/RuleListPage';
+import { deleteRule } from './ruleSeeding';
 
 async function runA11yScan(page: Page, scanForA11yViolations: (context?: AxeScanContext) => Promise<AxeResults>) {
   const results = await scanForA11yViolations({
@@ -40,8 +28,9 @@ test.describe(
       const title = 'High CPU usage';
       await alertRules.seedRule({ title, interval: '1m' });
 
-      await page.goto(foldersModeUrl('alert', folder.uid));
-      await new RuleListPage(page, 'alert').toggleFolder(folder.title);
+      const list = new RuleListPage(page, 'alert');
+      await list.gotoFolders(folderScope(folder.uid));
+      await list.toggleFolder(folder.title);
       await expect(page.getByRole('link', { name: title })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
@@ -51,7 +40,7 @@ test.describe(
       const title = 'Memory pressure';
       await alertRules.seedRule({ title, interval: '1m' });
 
-      await page.goto(listModeUrl('alert', folder.uid));
+      await new RuleListPage(page, 'alert').goto(folderScope(folder.uid));
       await expect(page.getByRole('link', { name: title })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
@@ -66,8 +55,9 @@ test.describe(
       const title = 'cpu_usage:avg';
       await recordingRules.seedRule({ title, interval: '1m', metric: 'cpu_usage:avg' });
 
-      await page.goto(foldersModeUrl('recording', folder.uid));
-      await new RuleListPage(page, 'recording').toggleFolder(folder.title);
+      const list = new RuleListPage(page, 'recording');
+      await list.gotoFolders(folderScope(folder.uid));
+      await list.toggleFolder(folder.title);
       await expect(page.getByRole('link', { name: title })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
@@ -82,7 +72,7 @@ test.describe(
       const title = 'mem_usage:avg';
       await recordingRules.seedRule({ title, interval: '1m', metric: 'mem_usage:avg' });
 
-      await page.goto(listModeUrl('recording', folder.uid));
+      await new RuleListPage(page, 'recording').goto(folderScope(folder.uid));
       await expect(page.getByRole('link', { name: title })).toBeVisible();
 
       await runA11yScan(page, scanForA11yViolations);
@@ -96,10 +86,7 @@ test.describe(
     }) => {
       const title = `Node load average ${crypto.randomUUID().slice(0, 8)}`;
       const uid = await alertRules.seedRule({ title, interval: '1m' });
-      const deleted = await page.request.delete(
-        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/alertrules/${encodeURIComponent(uid)}`
-      );
-      expect(deleted.ok(), `DELETE alertrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
+      await deleteRule(page.request, workerApi.namespace, 'alertrules', uid);
 
       await page.goto('/alerting/rules/alert/deleted');
       await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
@@ -115,10 +102,7 @@ test.describe(
     }) => {
       const title = `Pod restart rate ${crypto.randomUUID().slice(0, 8)}`;
       const uid = await recordingRules.seedRule({ title, interval: '1m', metric: 'pod_restart:rate' });
-      const deleted = await page.request.delete(
-        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/recordingrules/${encodeURIComponent(uid)}`
-      );
-      expect(deleted.ok(), `DELETE recordingrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
+      await deleteRule(page.request, workerApi.namespace, 'recordingrules', uid);
 
       await page.goto('/alerting/rules/recording/deleted');
       await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
@@ -134,7 +118,8 @@ test.describe(
       const title = 'Disk space low';
       await alertRules.seedRule({ title, interval: '1m' });
 
-      await page.goto(foldersModeUrl('alert', folder.uid));
+      const list = new RuleListPage(page, 'alert');
+      await list.gotoFolders(folderScope(folder.uid));
 
       const searchInput = page.getByRole('textbox', { name: 'Search' });
       await expect(searchInput).toBeVisible();
@@ -163,7 +148,6 @@ test.describe(
       // Folder expand control: Enter toggles aria-expanded, Space toggles it back. Matched through
       // the folder's row, by a name that fits both states, since neither `expanded` nor "Expand ..."
       // would keep matching once the value flips.
-      const list = new RuleListPage(page, 'alert');
       const expandButton = list.folderRow(folder.title).getByRole('button', { name: /^(Expand|Collapse) / });
       await expect(expandButton).toBeVisible();
       await expandButton.focus();

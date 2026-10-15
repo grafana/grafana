@@ -14,7 +14,6 @@ export const recordingTokens: TokenDefinition[] = [
     label: () => t('alerting.gma-rule-list.search.property.metric', 'Recorded metric'),
     description: () => t('alerting.gma-rule-list.search.help.metric', 'Recorded metric name (exact match).'),
     example: 'metric:cpu_usage',
-    availability: { status: 'supported' },
   },
   {
     key: TOKEN_KEYS.targetDatasource,
@@ -25,7 +24,6 @@ export const recordingTokens: TokenDefinition[] = [
         'Data source the recorded metric is written to (canonical value is the UID).'
       ),
     example: 'targetDatasource:ds-uid',
-    availability: { status: 'supported' },
   },
   sharedDefinitions.health,
 ];

@@ -1,7 +1,7 @@
-import { type Page, test, expect } from './fixtures';
+import { type Page, ruleUidFromUrl, test, expect } from './fixtures';
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
-import { RuleListPage, type RuleListKind } from './pages/RuleListPage';
-import { ruleResourceUrl } from './ruleSeeding';
+import { RuleListPage, type RuleListKind, folderScope } from './pages/RuleListPage';
+import { markProvisioned, ruleResourceUrl } from './ruleSeeding';
 
 // ALERT-6/REC-5: Duplicate opens the existing creation flow prefilled from the source rule
 // (`copyFrom=<uid>`); the editor itself is responsible for stripping identity/status/ownership
@@ -18,20 +18,13 @@ test.use({
   },
 });
 
-async function gotoAlertFolderList(page: Page, folderUid: string): Promise<void> {
-  await page.goto(`/alerting/rules/alert?search=${encodeURIComponent(`namespace:${folderUid}`)}&view=list`);
-}
-
-async function gotoRecordingFolderList(page: Page, folderUid: string): Promise<void> {
-  await page.goto(`/alerting/rules/recording?search=${encodeURIComponent(`namespace:${folderUid}`)}&view=list`);
-}
-
-async function markProvisioned(page: Page, kind: 'alertrules' | 'recordingrules', uid: string) {
-  const response = await page.request.patch(await ruleResourceUrl(page.request, kind, uid), {
-    headers: { 'Content-Type': 'application/merge-patch+json' },
-    data: { metadata: { annotations: { 'grafana.com/provenance': 'api' } } },
-  });
-  expect(response.ok(), `mark provisioned -> ${response.status()}`).toBeTruthy();
+// Saves the copy the editor just created and tracks it for cleanup.
+async function saveCopyAndTrack(page: Page, fixture: { trackRule(uid: string): void }): Promise<string> {
+  await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
+  await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
+  const copyUid = ruleUidFromUrl(page.url());
+  fixture.trackRule(copyUid);
+  return copyUid;
 }
 
 // Duplicate is a plain link to the editor's copy route on a normal rule. A provisioned rule asks first:
@@ -67,15 +60,12 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     const title = `High CPU usage ${crypto.randomUUID().slice(0, 8)}`;
     const originalUid = await alertRules.seedRule({ title, interval: '1m' });
 
-    await gotoAlertFolderList(page, folder.uid);
+    await new RuleListPage(page, 'alert').goto(folderScope(folder.uid));
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
     await duplicateThroughMenu(page, 'alert', title);
 
-    await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
-    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
-    const copyUid = new URL(page.url()).pathname.split('/')[3];
-    alertRules.trackRule(copyUid);
+    const copyUid = await saveCopyAndTrack(page, alertRules);
 
     expect(copyUid).not.toBe(originalUid);
 
@@ -101,17 +91,14 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
   }) => {
     const title = `Disk space low ${crypto.randomUUID().slice(0, 8)}`;
     const originalUid = await alertRules.seedRule({ title, interval: '1m' });
-    await markProvisioned(page, 'alertrules', originalUid);
+    await markProvisioned(page.request, 'alertrules', originalUid);
 
-    await gotoAlertFolderList(page, folder.uid);
+    await new RuleListPage(page, 'alert').goto(folderScope(folder.uid));
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
     await confirmCopyOfProvisionedRule(page, 'alert', title);
 
-    await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
-    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
-    const copyUid = new URL(page.url()).pathname.split('/')[3];
-    alertRules.trackRule(copyUid);
+    const copyUid = await saveCopyAndTrack(page, alertRules);
 
     const copyResponse = await page.request.get(await ruleResourceUrl(page.request, 'alertrules', copyUid));
     const copy = await copyResponse.json();
@@ -132,15 +119,12 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     const metric = `cpu_usage_avg_${crypto.randomUUID().slice(0, 8)}`;
     const originalUid = await recordingRules.seedRule({ title, interval: '1m', metric });
 
-    await gotoRecordingFolderList(page, folder.uid);
+    await new RuleListPage(page, 'recording').goto(folderScope(folder.uid));
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
     await duplicateThroughMenu(page, 'recording', title);
 
-    await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
-    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
-    const copyUid = new URL(page.url()).pathname.split('/')[3];
-    recordingRules.trackRule(copyUid);
+    const copyUid = await saveCopyAndTrack(page, recordingRules);
 
     expect(copyUid).not.toBe(originalUid);
 
@@ -164,17 +148,14 @@ test.describe('Duplicate (ALERT-6/REC-5)', () => {
     const title = `Disk usage forecast ${crypto.randomUUID().slice(0, 8)}`;
     const metric = `disk_usage_forecast_${crypto.randomUUID().slice(0, 8)}`;
     const originalUid = await recordingRules.seedRule({ title, interval: '1m', metric });
-    await markProvisioned(page, 'recordingrules', originalUid);
+    await markProvisioned(page.request, 'recordingrules', originalUid);
 
-    await gotoRecordingFolderList(page, folder.uid);
+    await new RuleListPage(page, 'recording').goto(folderScope(folder.uid));
     await expect(page.getByRole('link', { name: title })).toBeVisible();
 
     await confirmCopyOfProvisionedRule(page, 'recording', title);
 
-    await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
-    await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
-    const copyUid = new URL(page.url()).pathname.split('/')[3];
-    recordingRules.trackRule(copyUid);
+    const copyUid = await saveCopyAndTrack(page, recordingRules);
 
     const copyResponse = await page.request.get(await ruleResourceUrl(page.request, 'recordingrules', copyUid));
     const copy = await copyResponse.json();

@@ -6,7 +6,7 @@ import { serialize } from './serializer';
 
 describe('parse', () => {
   it('SEARCH-1: builds criteria from free text, rule:, and known filter tokens', () => {
-    const { criteria } = parse('cpu rule:high-load namespace:folder-1 datasource:ds-1 plugins:hide', alertTokens);
+    const criteria = parse('cpu rule:high-load namespace:folder-1 datasource:ds-1 plugins:hide', alertTokens);
 
     expect(criteria.text).toEqual(['cpu', 'high-load']);
     expect(criteria.namespaces).toEqual(['folder-1']);
@@ -15,7 +15,7 @@ describe('parse', () => {
   });
 
   it('SEARCH-3: parses every label operator into a matcher', () => {
-    const { criteria } = parse(
+    const criteria = parse(
       'label:team label:!env label:app=api label:app!=web label:host=~api.* label:host!~web.*',
       alertTokens
     );
@@ -30,23 +30,19 @@ describe('parse', () => {
     ]);
   });
 
-  it('NAV-5: records an unknown key:value token as invalid, exactly as written, and keeps it in the token list', () => {
-    const { criteria, tokens } = parse('foo:bar namespace:folder-1', alertTokens);
+  it('NAV-5: records an unknown key:value token as invalid, exactly as written', () => {
+    const criteria = parse('foo:bar namespace:folder-1', alertTokens);
 
     expect(criteria.namespaces).toEqual(['folder-1']);
     expect(criteria.invalid).toEqual([{ key: 'foo', raw: 'foo:bar' }]);
-    const fooToken = tokens.find((t) => t.key === 'foo');
-    expect(fooToken).toMatchObject({ key: 'foo', value: 'bar', known: false, incomplete: false });
   });
 
-  it('NAV-5: records an incomplete token (empty value) as invalid and keeps it in the token list', () => {
-    const { criteria, tokens } = parse('label: namespace:folder-1', alertTokens);
+  it('NAV-5: records an incomplete token (empty value) as invalid', () => {
+    const criteria = parse('label: namespace:folder-1', alertTokens);
 
     expect(criteria.labels).toEqual([]);
     expect(criteria.namespaces).toEqual(['folder-1']);
     expect(criteria.invalid).toEqual([{ key: 'label', raw: 'label:' }]);
-    const labelToken = tokens.find((t) => t.key === 'label');
-    expect(labelToken).toMatchObject({ key: 'label', value: '', known: true, incomplete: true });
   });
 
   it.each([
@@ -56,13 +52,13 @@ describe('parse', () => {
     ['an unknown state value', 'state:bogus', 'state'],
     ['an unknown health value', 'health:great', 'health'],
   ])('NAV-5: records %s as invalid instead of ignoring it', (_name, input, key) => {
-    const { criteria } = parse(input, alertTokens);
+    const criteria = parse(input, alertTokens);
 
     expect(criteria.invalid).toEqual([{ key, raw: input }]);
   });
 
   it('NAV-5: records a repeat of a single-value token as invalid and keeps the first value', () => {
-    const { criteria } = parse('dashboard:one dashboard:two namespace:a namespace:b', alertTokens);
+    const criteria = parse('dashboard:one dashboard:two namespace:a namespace:b', alertTokens);
 
     expect(criteria.dashboardUid).toBe('one');
     expect(criteria.namespaces).toEqual(['a', 'b']);
@@ -74,44 +70,42 @@ describe('parse', () => {
     ['state:NORMAL', 'normal'],
     ['state:inactive', 'inactive'],
   ])('SEARCH-5: accepts %s in any letter case', (input, state) => {
-    const { criteria } = parse(input, alertTokens);
+    const criteria = parse(input, alertTokens);
 
     expect(criteria.state).toBe(state);
     expect(criteria.invalid).toEqual([]);
   });
 
   it('SEARCH-5: accepts the legacy health spellings err and nodata', () => {
-    expect(parse('health:err', alertTokens).criteria.health).toBe('err');
-    expect(parse('health:nodata', recordingTokens).criteria.health).toBe('nodata');
+    expect(parse('health:err', alertTokens).health).toBe('err');
+    expect(parse('health:nodata', recordingTokens).health).toBe('nodata');
   });
 
   it('NAV-5: records state: as invalid on the Recording registry', () => {
-    const { criteria } = parse('state:firing', recordingTokens);
+    const criteria = parse('state:firing', recordingTokens);
 
     expect(criteria.state).toBeUndefined();
     expect(criteria.invalid).toEqual([{ key: 'state', raw: 'state:firing' }]);
   });
 
   it('SEARCH-1: keeps an unterminated quoted value as typed', () => {
-    const { criteria } = parse('label:"team cpu', alertTokens);
+    const criteria = parse('label:"team cpu', alertTokens);
 
     expect(criteria.invalid).toEqual([{ key: 'label', raw: 'label:"team cpu' }]);
   });
 
   it('NAV-5: recording-only tokens are unknown on the Alert registry', () => {
-    const { criteria, tokens } = parse('metric:cpu_usage', alertTokens);
+    const criteria = parse('metric:cpu_usage', alertTokens);
 
     expect(criteria.metric).toBeUndefined();
     expect(criteria.invalid).toEqual([{ key: 'metric', raw: 'metric:cpu_usage' }]);
-    expect(tokens[0]).toMatchObject({ key: 'metric', known: false });
   });
 
   it('NAV-5: alert-only tokens are unknown on the Recording registry', () => {
-    const { criteria, tokens } = parse('dashboard:dash-1', recordingTokens);
+    const criteria = parse('dashboard:dash-1', recordingTokens);
 
     expect(criteria.dashboardUid).toBeUndefined();
     expect(criteria.invalid).toEqual([{ key: 'dashboard', raw: 'dashboard:dash-1' }]);
-    expect(tokens[0]).toMatchObject({ key: 'dashboard', known: false });
   });
 });
 
@@ -138,7 +132,7 @@ describe('parse(serialize(criteria)) round-trip', () => {
       health: 'error',
     };
 
-    const { criteria: roundTripped } = parse(serialize(criteria), alertTokens);
+    const roundTripped = parse(serialize(criteria), alertTokens);
     expect(roundTripped).toEqual(criteria);
   });
 
@@ -155,15 +149,15 @@ describe('parse(serialize(criteria)) round-trip', () => {
       health: 'ok',
     };
 
-    const { criteria: roundTripped } = parse(serialize(criteria), recordingTokens);
+    const roundTripped = parse(serialize(criteria), recordingTokens);
     expect(roundTripped).toEqual(criteria);
   });
 
   it('NAV-5: round-trips invalid tokens, so a URL the page cannot apply keeps showing them', () => {
     const input = 'namespace:folder-1 foo:bar label: paused:maybe';
-    const { criteria } = parse(input, alertTokens);
+    const criteria = parse(input, alertTokens);
 
-    expect(parse(serialize(criteria), alertTokens).criteria).toEqual(criteria);
+    expect(parse(serialize(criteria), alertTokens)).toEqual(criteria);
     expect(serialize(criteria)).toBe('namespace:folder-1 foo:bar label: paused:maybe');
   });
 });

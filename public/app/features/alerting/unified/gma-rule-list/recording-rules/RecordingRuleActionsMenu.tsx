@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
-import { type ComponentSize, Dropdown, Menu } from '@grafana/ui';
+import { Dropdown, Menu } from '@grafana/ui';
 
 import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleButton';
 import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
@@ -21,7 +21,6 @@ import { MoreButton } from '../shared/MoreButton';
 interface RecordingRuleActionsMenuProps {
   ruleUid: string;
   resourceState: RuleResourceState<RecordingRule>;
-  buttonSize?: ComponentSize;
 }
 
 /**
@@ -29,7 +28,7 @@ interface RecordingRuleActionsMenuProps {
  * Declare incident, or enrichment items - Recording rules have no alert state, instances, or
  * notification routing to attach any of those to.
  */
-export function RecordingRuleActionsMenu({ ruleUid, resourceState, buttonSize }: RecordingRuleActionsMenuProps) {
+export function RecordingRuleActionsMenu({ ruleUid, resourceState }: RecordingRuleActionsMenuProps) {
   const abilities = useRuleActionAbilities(resourceState);
   const { setPaused, isPending: pausePending } = useRecordingRulePauseResume(ruleUid);
   const { deleteRule, isPending: deletePending } = useDeleteRecordingRule(ruleUid);
@@ -81,7 +80,7 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, buttonSize }:
   return (
     <>
       <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom-end">
-        <MoreButton fill="text" size={buttonSize} />
+        <MoreButton fill="text" size="sm" />
       </Dropdown>
       <CopyProvisionedRuleModal
         kind="recording"

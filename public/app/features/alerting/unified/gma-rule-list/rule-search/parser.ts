@@ -1,24 +1,21 @@
 import { type Criteria, HEALTH_VALUES, STATE_VALUES, createEmptyCriteria } from './criteria';
 import { parseLabelValue } from './labelMatcher';
 import { tokenize } from './tokenizer';
-import { type ParseResult, type ParsedToken, TOKEN_KEYS, type TokenDefinition, buildTokenRegistry } from './tokens';
+import { TOKEN_KEYS, type TokenDefinition, buildTokenRegistry } from './tokens';
 
 /**
- * Parses a flat search string into an ordered token list (for later caret-based editing)
- * and a canonical Criteria object. A token the page cannot apply (a key outside `registry`, an
- * incomplete or malformed value, a repeat of a single-value token) stays in the token list and
+ * Parses a flat search string into a canonical Criteria object. A token the page cannot apply
+ * (a key outside `registry`, an incomplete or malformed value, a repeat of a single-value token)
  * is recorded in `criteria.invalid` exactly as written, so it is shown as invalid rather than
  * silently ignored — see README.md.
  */
-export function parse(input: string, registry: TokenDefinition[]): ParseResult {
+export function parse(input: string, registry: TokenDefinition[]): Criteria {
   const byKey = buildTokenRegistry(registry);
   const criteria = createEmptyCriteria();
-  const tokens: ParsedToken[] = [];
   const appliedSingleValueKeys = new Set<string>();
 
   for (const raw of tokenize(input)) {
     if (raw.key === null) {
-      tokens.push({ ...raw, known: true, incomplete: false });
       if (raw.value.length > 0) {
         criteria.text.push(raw.value);
       }
@@ -27,7 +24,6 @@ export function parse(input: string, registry: TokenDefinition[]): ParseResult {
 
     const definition = byKey.get(raw.key);
     const incomplete = raw.value.length === 0 || (raw.quoted && !raw.closed);
-    tokens.push({ ...raw, known: Boolean(definition), incomplete });
 
     const isRepeat = !definition?.multiValue && appliedSingleValueKeys.has(raw.key);
     const applied = definition && !incomplete && !isRepeat && applyToken(criteria, raw.key, raw.value);
@@ -39,7 +35,7 @@ export function parse(input: string, registry: TokenDefinition[]): ParseResult {
     }
   }
 
-  return { tokens, criteria };
+  return criteria;
 }
 
 /** Returns false when `value` is not one this token accepts, leaving `criteria` untouched. */

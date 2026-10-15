@@ -88,6 +88,19 @@ async function openMenu() {
   return user;
 }
 
+function renderLoaded(rule = buildRule(), options?: Parameters<typeof render>[1]) {
+  return render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />, options);
+}
+
+function renderWithFolderCountProbe() {
+  return render(
+    <>
+      <FolderCountProbe />
+      <AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
+    </>
+  );
+}
+
 describe('AlertRuleActionsMenu', () => {
   beforeEach(() => {
     grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
@@ -98,7 +111,7 @@ describe('AlertRuleActionsMenu', () => {
   it('ALERT-7: Pause patches only spec.paused to true', async () => {
     const requests = captureRequests((request) => request.method === 'PATCH' && request.url.includes(ALERT_RULES_URL));
 
-    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /pause/i }));
 
@@ -110,12 +123,7 @@ describe('AlertRuleActionsMenu', () => {
   it('STATE-3: a successful Pause refetches the folder counts', async () => {
     const counts = mockFolderCounts();
 
-    render(
-      <>
-        <FolderCountProbe />
-        <AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
-      </>
-    );
+    renderWithFolderCountProbe();
     expect(await screen.findByText('Folder holds 3 rules')).toBeInTheDocument();
     counts.count = 4;
 
@@ -132,12 +140,7 @@ describe('AlertRuleActionsMenu', () => {
     );
     const counts = mockFolderCounts();
 
-    render(
-      <>
-        <FolderCountProbe />
-        <AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
-      </>
-    );
+    renderWithFolderCountProbe();
     await screen.findByText('Folder holds 3 rules');
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /delete/i }));
@@ -159,7 +162,7 @@ describe('AlertRuleActionsMenu', () => {
       )
     );
 
-    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /delete/i }));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
@@ -172,12 +175,7 @@ describe('AlertRuleActionsMenu', () => {
     server.use(http.delete(`${ALERT_RULES_URL}/rule-uid-1`, () => HttpResponse.json({})));
     const counts = mockFolderCounts();
 
-    render(
-      <>
-        <FolderCountProbe />
-        <AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />
-      </>
-    );
+    renderWithFolderCountProbe();
     await screen.findByText('Folder holds 3 rules');
     counts.count = 2;
     const user = await openMenu();
@@ -191,7 +189,7 @@ describe('AlertRuleActionsMenu', () => {
     jest.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
     const emitSpy = jest.spyOn(appEvents, 'emit');
 
-    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     const user = await openMenu();
     await user.click(screen.getByRole('menuitem', { name: /copy link/i }));
 
@@ -201,7 +199,7 @@ describe('AlertRuleActionsMenu', () => {
   it('reports Copy link failure when the clipboard is unavailable', async () => {
     const emitSpy = jest.spyOn(appEvents, 'emit');
 
-    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     const user = await openMenu();
     const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
     Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
@@ -220,7 +218,7 @@ describe('AlertRuleActionsMenu', () => {
   it('confirms Copy link when the clipboard write succeeds', async () => {
     const emitSpy = jest.spyOn(appEvents, 'emit');
 
-    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     const user = await openMenu();
     jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
     await user.click(screen.getByRole('menuitem', { name: /copy link/i }));
@@ -268,29 +266,6 @@ describe('AlertRuleActionsMenu', () => {
       expect(screen.getByRole('menuitem', { name: 'Copy link' })).toHaveFocus();
     });
 
-    it('ACT-2: shows every action disabled as unknown when the full rule failed to load', async () => {
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'error' }} />);
-      const user = await openMenu();
-
-      for (const name of [...MUTATING_ACTIONS, 'Duplicate']) {
-        await expectDisabledWithReason(user, name, 'Permission unknown');
-      }
-    });
-
-    it('ACT-2: treats a missing capability annotation as unknown, not as permission', async () => {
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule({ annotations: {} }) }}
-        />
-      );
-      const user = await openMenu();
-
-      for (const name of MUTATING_ACTIONS) {
-        await expectDisabledWithReason(user, name, 'Permission unknown');
-      }
-    });
-
     it('ACT-3: disables Pause and Delete as denied when the capabilities are false, and Duplicate without create permission', async () => {
       grantUserPermissions([]);
       render(
@@ -315,97 +290,85 @@ describe('AlertRuleActionsMenu', () => {
       }
     });
 
-    it('ACT-4: disables Pause and Delete for a provisioned rule and keeps Duplicate enabled', async () => {
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule({ annotations: PROVISIONED_ANNOTATIONS }) }}
-        />
-      );
+    it.each([
+      {
+        id: 'ACT-2',
+        name: 'the full rule failed to load',
+        state: { status: 'error' } as const,
+        reason: 'Permission unknown',
+        duplicateDisabled: true,
+      },
+      {
+        id: 'ACT-2',
+        name: 'the capability annotations are missing',
+        state: { status: 'loaded', rule: buildRule({ annotations: {} }) } as const,
+        reason: 'Permission unknown',
+        duplicateDisabled: false,
+      },
+      {
+        id: 'ACT-4',
+        name: 'the rule is provisioned',
+        state: { status: 'loaded', rule: buildRule({ annotations: PROVISIONED_ANNOTATIONS }) } as const,
+        reason: 'Provisioned',
+        duplicateDisabled: false,
+      },
+      {
+        id: 'ACT-5',
+        name: 'the origin label starts with plugin/',
+        state: { status: 'loaded', rule: buildRule({ labels: { __grafana_origin: 'plugin/my-app' } }) } as const,
+        reason: 'This rule is managed by a plugin and cannot be edited through the UI',
+        duplicateDisabled: true,
+      },
+      {
+        id: 'ACT-7',
+        name: 'the rule is managed by Terraform',
+        state: {
+          status: 'loaded',
+          rule: buildRule({ annotations: { ...PROVISIONED_ANNOTATIONS, 'grafana.app/managedBy': 'terraform' } }),
+        } as const,
+        reason: 'Managed by Terraform',
+        duplicateDisabled: false,
+      },
+    ])('$id: disables Pause and Delete with their reason when $name', async ({ state, reason, duplicateDisabled }) => {
+      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={state} />);
       const user = await openMenu();
 
-      for (const name of MUTATING_ACTIONS) {
-        await expectDisabledWithReason(user, name, 'Provisioned');
+      for (const name of duplicateDisabled ? [...MUTATING_ACTIONS, 'Duplicate'] : MUTATING_ACTIONS) {
+        await expectDisabledWithReason(user, name, reason);
       }
-      expect(isDisabled(screen.getByRole('menuitem', { name: 'Duplicate' }))).toBe(false);
+      expect(isDisabled(screen.getByRole('menuitem', { name: /^Duplicate/ }))).toBe(duplicateDisabled);
     });
 
-    it('ACT-5: disables Pause, Delete and Duplicate for a rule whose origin label starts with plugin/', async () => {
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule({ labels: { __grafana_origin: 'plugin/my-app' } }) }}
-        />
-      );
-      const user = await openMenu();
-
-      for (const name of [...MUTATING_ACTIONS, 'Duplicate']) {
-        await expectDisabledWithReason(
-          user,
-          name,
-          'This rule is managed by a plugin and cannot be edited through the UI'
-        );
-      }
-    });
-
-    it('ACT-5: applies no plugin restriction to any other __grafana_origin value', async () => {
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule({ labels: { __grafana_origin: 'my-script' } }) }}
-        />
-      );
+    it.each([
+      {
+        id: 'ACT-5',
+        name: 'the origin label is not plugin/',
+        rule: buildRule({ labels: { __grafana_origin: 'my-script' } }),
+        names: [...MUTATING_ACTIONS, 'Duplicate'],
+      },
+      {
+        id: 'ACT-7',
+        name: 'the manager is the Grafana UI',
+        rule: buildRule({ annotations: { ...WRITABLE_ANNOTATIONS, 'grafana.app/managedBy': 'grafana' } }),
+        names: MUTATING_ACTIONS,
+      },
+    ])('$id: applies no restriction when $name', async ({ rule, names }) => {
+      renderLoaded(rule);
       await openMenu();
 
-      for (const name of [...MUTATING_ACTIONS, 'Duplicate']) {
-        expect(isDisabled(screen.getByRole('menuitem', { name }))).toBe(false);
-      }
-    });
-
-    it('ACT-7: names the manager in the reason for a managed rule and keeps Duplicate enabled', async () => {
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{
-            status: 'loaded',
-            rule: buildRule({ annotations: { ...PROVISIONED_ANNOTATIONS, 'grafana.app/managedBy': 'terraform' } }),
-          }}
-        />
-      );
-      const user = await openMenu();
-
-      for (const name of MUTATING_ACTIONS) {
-        await expectDisabledWithReason(user, name, 'Managed by Terraform');
-      }
-      expect(isDisabled(screen.getByRole('menuitem', { name: 'Duplicate' }))).toBe(false);
-    });
-
-    it('ACT-7: treats the Grafana UI as no manager', async () => {
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{
-            status: 'loaded',
-            rule: buildRule({
-              annotations: { ...WRITABLE_ANNOTATIONS, 'grafana.app/managedBy': 'grafana' },
-            }),
-          }}
-        />
-      );
-      await openMenu();
-
-      for (const name of MUTATING_ACTIONS) {
+      for (const name of names) {
         expect(isDisabled(screen.getByRole('menuitem', { name }))).toBe(false);
       }
     });
   });
 
   it('ALERT-6: Duplicate is a plain link to the editor copy route with no returnTo', async () => {
-    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     await openMenu();
 
     const href = screen.getByRole('menuitem', { name: 'Duplicate' }).getAttribute('href');
     expect(href).toBe('/alerting/new?copyFrom=rule-uid-1');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   describe('ALERT-6: Duplicate of a provisioned or managed rule confirms first', () => {
@@ -417,13 +380,7 @@ describe('AlertRuleActionsMenu', () => {
       ['provisioned', PROVISIONED_ANNOTATIONS],
       ['managed', MANAGED_ANNOTATIONS],
     ])('asks before copying a %s rule and navigates to the copy route on Copy', async (_kind, annotations) => {
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule({ annotations }) }}
-        />,
-        LIST_ENTRY
-      );
+      renderLoaded(buildRule({ annotations }), LIST_ENTRY);
       const user = await openMenu();
       const item = screen.getByRole('menuitem', { name: 'Duplicate' });
       expect(item).not.toHaveAttribute('href');
@@ -444,13 +401,7 @@ describe('AlertRuleActionsMenu', () => {
     });
 
     it('stays on the list when the confirmation is cancelled', async () => {
-      render(
-        <AlertRuleActionsMenu
-          ruleUid="rule-uid-1"
-          resourceState={{ status: 'loaded', rule: buildRule({ annotations: PROVISIONED_ANNOTATIONS }) }}
-        />,
-        LIST_ENTRY
-      );
+      renderLoaded(buildRule({ annotations: PROVISIONED_ANNOTATIONS }), LIST_ENTRY);
       const user = await openMenu();
       await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
       const dialog = await screen.findByRole('dialog', { name: 'Copy provisioned alert rule' });
@@ -460,20 +411,6 @@ describe('AlertRuleActionsMenu', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       expect(locationService.getLocation().pathname).toBe('/alerting/rules/alert');
     });
-
-    it('opens no confirmation for a rule nothing outside the UI owns', async () => {
-      render(
-        <AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />,
-        LIST_ENTRY
-      );
-      await openMenu();
-
-      expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toHaveAttribute(
-        'href',
-        '/alerting/new?copyFrom=rule-uid-1'
-      );
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
   });
 
   it('never issues a rule search request', async () => {
@@ -481,7 +418,7 @@ describe('AlertRuleActionsMenu', () => {
       (request) => request.url.includes('searchRules') || request.url.includes('/search')
     );
 
-    render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+    renderLoaded();
     await openMenu();
 
     expect((await requests).length).toBe(0);
@@ -491,7 +428,7 @@ describe('AlertRuleActionsMenu', () => {
     it('shows Silence when Grafana AM is supported and the user has org-wide alert.instances:create, and opens the drawer for this rule', async () => {
       grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingInstanceCreate]);
 
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       const user = await openMenu();
       const silenceItem = await screen.findByRole('menuitem', { name: /silence notifications/i });
       await waitFor(() => expect(silenceItem).toBeEnabled());
@@ -509,14 +446,14 @@ describe('AlertRuleActionsMenu', () => {
         mockFolder({ uid: 'folder-uid-1', accessControl: { [AccessControlAction.AlertingSilenceCreate]: true } })
       );
 
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       await openMenu();
 
       await waitFor(() => expect(screen.getByRole('menuitem', { name: /silence notifications/i })).toBeEnabled());
     });
 
     it('ACT-3: disables Silence as denied when the user has neither org-wide nor folder-scoped silence permission', async () => {
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       const user = await openMenu();
 
       const silence = await screen.findByRole('menuitem', {
@@ -535,7 +472,7 @@ describe('AlertRuleActionsMenu', () => {
         )
       );
 
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       const user = await openMenu();
 
       const silence = await screen.findByRole('menuitem', { name: /^Silence notifications: .*external Alertmanagers/ });
@@ -564,7 +501,7 @@ describe('AlertRuleActionsMenu', () => {
         })
       );
 
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       const user = await openMenu();
       const silence = screen.getByRole('menuitem', { name: 'Silence notifications: Checking permissions...' });
 
@@ -597,7 +534,7 @@ describe('AlertRuleActionsMenu', () => {
       config.featureToggles.alertingEnrichmentPerRule = true;
       contextSrv.user.orgRole = OrgRole.Admin;
 
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       const user = await openMenu();
       const enrichmentItem = await screen.findByRole('menuitem', { name: /manage enrichments/i });
       await user.click(enrichmentItem);
@@ -605,49 +542,56 @@ describe('AlertRuleActionsMenu', () => {
       expect(await screen.findByTestId('enrichment-drawer-stub')).toHaveTextContent('enrichment for rule-uid-1');
     });
 
-    it('shows Manage enrichments when both toggles are on and the user has alert.enrichments:read (non-admin)', async () => {
-      config.featureToggles.alertEnrichment = true;
-      config.featureToggles.alertingEnrichmentPerRule = true;
-      contextSrv.user.orgRole = OrgRole.Editor;
-      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingEnrichmentsRead]);
+    it.each([
+      {
+        title: 'shows Manage enrichments when both toggles are on and the user has alert.enrichments:read (non-admin)',
+        alertEnrichment: true,
+        alertingEnrichmentPerRule: true,
+        orgRole: OrgRole.Editor,
+        grantEnrichmentsRead: true,
+        shown: true,
+      },
+      {
+        title: 'hides Manage enrichments when alertEnrichment is off, even with the per-rule toggle on and admin',
+        alertEnrichment: false,
+        alertingEnrichmentPerRule: true,
+        orgRole: OrgRole.Admin,
+        grantEnrichmentsRead: false,
+        shown: false,
+      },
+      {
+        title: 'hides Manage enrichments when alertingEnrichmentPerRule is off, even with alertEnrichment on and admin',
+        alertEnrichment: true,
+        alertingEnrichmentPerRule: false,
+        orgRole: OrgRole.Admin,
+        grantEnrichmentsRead: false,
+        shown: false,
+      },
+      {
+        title: 'hides Manage enrichments without admin role or alert.enrichments:read, even with both toggles on',
+        alertEnrichment: true,
+        alertingEnrichmentPerRule: true,
+        orgRole: OrgRole.Editor,
+        grantEnrichmentsRead: false,
+        shown: false,
+      },
+    ])('$title', async ({ alertEnrichment, alertingEnrichmentPerRule, orgRole, grantEnrichmentsRead, shown }) => {
+      config.featureToggles.alertEnrichment = alertEnrichment;
+      config.featureToggles.alertingEnrichmentPerRule = alertingEnrichmentPerRule;
+      contextSrv.user.orgRole = orgRole;
+      if (grantEnrichmentsRead) {
+        grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingEnrichmentsRead]);
+      }
 
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       await openMenu();
 
-      expect(screen.getByRole('menuitem', { name: /manage enrichments/i })).toBeInTheDocument();
-    });
-
-    it('hides Manage enrichments when alertEnrichment is off, even with the per-rule toggle on and admin', async () => {
-      config.featureToggles.alertEnrichment = false;
-      config.featureToggles.alertingEnrichmentPerRule = true;
-      contextSrv.user.orgRole = OrgRole.Admin;
-
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
-      await openMenu();
-
-      expect(screen.queryByRole('menuitem', { name: /manage enrichments/i })).not.toBeInTheDocument();
-    });
-
-    it('hides Manage enrichments when alertingEnrichmentPerRule is off, even with alertEnrichment on and admin', async () => {
-      config.featureToggles.alertEnrichment = true;
-      config.featureToggles.alertingEnrichmentPerRule = false;
-      contextSrv.user.orgRole = OrgRole.Admin;
-
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
-      await openMenu();
-
-      expect(screen.queryByRole('menuitem', { name: /manage enrichments/i })).not.toBeInTheDocument();
-    });
-
-    it('hides Manage enrichments without admin role or alert.enrichments:read, even with both toggles on', async () => {
-      config.featureToggles.alertEnrichment = true;
-      config.featureToggles.alertingEnrichmentPerRule = true;
-      contextSrv.user.orgRole = OrgRole.Editor;
-
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
-      await openMenu();
-
-      expect(screen.queryByRole('menuitem', { name: /manage enrichments/i })).not.toBeInTheDocument();
+      const enrichmentItem = screen.queryByRole('menuitem', { name: /manage enrichments/i });
+      if (shown) {
+        expect(enrichmentItem).toBeInTheDocument();
+      } else {
+        expect(enrichmentItem).not.toBeInTheDocument();
+      }
     });
   });
 
@@ -668,7 +612,7 @@ describe('AlertRuleActionsMenu', () => {
 
     it('hides Analyze when the Assistant is unavailable', async () => {
       mockAssistant(false);
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       await openMenu();
 
       expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeInTheDocument();
@@ -686,7 +630,7 @@ describe('AlertRuleActionsMenu', () => {
 
     it('shows Analyze when the Assistant is available', async () => {
       mockAssistant(true);
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule: buildRule() }} />);
+      renderLoaded();
       await openMenu();
 
       expect(screen.getByRole('menuitem', { name: 'Analyze rule' })).toBeInTheDocument();
@@ -697,7 +641,7 @@ describe('AlertRuleActionsMenu', () => {
       const rule = buildRule({ labels: { team: 'infra' } });
       rule.spec.annotations = { summary: 'CPU is high' };
       rule.spec.expressions = { A: { model: { expr: 'avg(cpu)' } } as AlertRule['spec']['expressions'][string] };
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      renderLoaded(rule);
       const user = await openMenu();
 
       await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));
@@ -730,7 +674,7 @@ describe('AlertRuleActionsMenu', () => {
       const openAssistant = mockAssistant(true);
       const rule = buildRule();
       rule.status = { state: 'Healthy' };
-      render(<AlertRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loaded', rule }} />);
+      renderLoaded(rule);
       const user = await openMenu();
 
       await user.click(screen.getByRole('menuitem', { name: 'Analyze rule' }));

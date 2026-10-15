@@ -9,7 +9,6 @@ import { RulesPageShell } from '../page-shell/RulesPageShell';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
-import { getCriteriaIssues } from '../rule-search/criteriaIssues';
 import { parse } from '../rule-search/parser';
 import { recordingTokens } from '../rule-search/recordingTokens';
 import { serialize } from '../rule-search/serializer';
@@ -58,9 +57,8 @@ function RecordingRulesBody({
 }
 
 function RecordingRulesPage() {
-  const { criteria, mode, hasNonFolderFilters, hasSearchQuery, setCriteria, setMode, reset } =
+  const { criteria, issues, mode, hasNonFolderFilters, hasSearchQuery, setCriteria, setMode, reset } =
     useRuleListSearchState('recording');
-  const issues = getCriteriaIssues(criteria, 'recording');
   const savedSearchesReady = useLegacySavedSearchesCopied(legacyRuleListNameResolvers);
   const defaultSearch = useDefaultSavedSearchGate(hasSearchQuery);
 
@@ -78,11 +76,7 @@ function RecordingRulesPage() {
   const hasActiveFilters = query !== serialize(createEmptyCriteria());
 
   const onApplyQuery = (raw: string) => {
-    setCriteria(parse(raw, recordingTokens).criteria);
-  };
-
-  const onClear = () => {
-    reset();
+    setCriteria(parse(raw, recordingTokens));
   };
 
   const canSearch = issues.length === 0;
@@ -106,9 +100,8 @@ function RecordingRulesPage() {
               {savedSearchesReady ? (
                 <ConnectedSavedSearches
                   useSavedSearches={useRecordingRulesSavedSearches}
-                  kind="recording"
                   query={query}
-                  parseForKind={(q) => parse(q, recordingTokens).criteria}
+                  parseForKind={(q) => parse(q, recordingTokens)}
                   resolvers={legacyRuleListNameResolvers}
                   setCriteria={setCriteria}
                   applyDefault={defaultSearch.applyDefault}
@@ -127,7 +120,7 @@ function RecordingRulesPage() {
             <RecordingRulesFilterSidebar
               criteria={criteria}
               onChange={setCriteria}
-              onClear={onClear}
+              onClear={reset}
               hasActiveFilters={hasActiveFilters}
               issues={issues}
             />

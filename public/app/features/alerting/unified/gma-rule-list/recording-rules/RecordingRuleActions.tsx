@@ -18,7 +18,7 @@ export function RecordingRuleActions({ ruleUid, resourceState }: RecordingRuleAc
   return (
     <Stack direction="row" gap={0} wrap="nowrap">
       <EditRuleButton uid={ruleUid} availability={abilities.edit} />
-      <RecordingRuleActionsMenu ruleUid={ruleUid} resourceState={resourceState} buttonSize="sm" />
+      <RecordingRuleActionsMenu ruleUid={ruleUid} resourceState={resourceState} />
     </Stack>
   );
 }

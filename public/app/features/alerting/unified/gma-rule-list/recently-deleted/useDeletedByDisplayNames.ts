@@ -13,12 +13,9 @@ import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
  * raw UID, then "Unknown".
  */
 export function useDeletedByDisplayNames(updatedByKeys: Array<string | undefined>) {
-  const uniqueKeys = useMemo(
-    () => Array.from(new Set(updatedByKeys.filter((key): key is string => Boolean(key)))),
-    [updatedByKeys]
-  );
+  const uniqueKeys = Array.from(new Set(updatedByKeys.filter((key): key is string => Boolean(key))));
 
-  const { data, isError } = useGetDisplayMappingQuery(uniqueKeys.length > 0 ? { key: uniqueKeys } : skipToken);
+  const { data } = useGetDisplayMappingQuery(uniqueKeys.length > 0 ? { key: uniqueKeys } : skipToken);
 
   return useMemo(() => {
     const displayNameByKey = new Map<string, string>();
@@ -32,8 +29,7 @@ export function useDeletedByDisplayNames(updatedByKeys: Array<string | undefined
     }
 
     return {
-      isError,
       resolve: (updatedBy: string | undefined) => displayNameByKey.get(updatedBy ?? ''),
     };
-  }, [data, isError]);
+  }, [data]);
 }

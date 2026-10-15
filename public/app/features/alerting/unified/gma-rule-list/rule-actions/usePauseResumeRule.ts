@@ -1,5 +1,3 @@
-import { useCallback } from 'react';
-
 import {
   useUpdateAlertRuleMutation,
   useUpdateRecordingRuleMutation,
@@ -19,12 +17,12 @@ import { trackRulePauseResume } from './analytics';
  */
 async function performPauseResume(
   kind: 'alert' | 'recording',
-  triggerPatch: (paused: boolean) => Promise<unknown>,
+  triggerPatch: () => Promise<unknown>,
   paused: boolean,
   invalidateFolderData: () => void
 ): Promise<boolean> {
   try {
-    await triggerPatch(paused);
+    await triggerPatch();
     trackRulePauseResume(kind, 'success', paused);
     appEvents.emit(AppEvents.alertSuccess.name, [
       paused
@@ -49,16 +47,13 @@ export function useAlertRulePauseResume(uid: string) {
   const [updateAlertRule, { isLoading }] = useUpdateAlertRuleMutation();
   const invalidateFolderData = useInvalidateFolderData();
 
-  const setPaused = useCallback(
-    (paused: boolean) =>
-      performPauseResume(
-        'alert',
-        (nextPaused) => updateAlertRule({ name: uid, patch: { spec: { paused: nextPaused } } }).unwrap(),
-        paused,
-        invalidateFolderData
-      ),
-    [updateAlertRule, invalidateFolderData, uid]
-  );
+  const setPaused = (paused: boolean) =>
+    performPauseResume(
+      'alert',
+      () => updateAlertRule({ name: uid, patch: { spec: { paused } } }).unwrap(),
+      paused,
+      invalidateFolderData
+    );
 
   return { setPaused, isPending: isLoading };
 }
@@ -67,16 +62,13 @@ export function useRecordingRulePauseResume(uid: string) {
   const [updateRecordingRule, { isLoading }] = useUpdateRecordingRuleMutation();
   const invalidateFolderData = useInvalidateFolderData();
 
-  const setPaused = useCallback(
-    (paused: boolean) =>
-      performPauseResume(
-        'recording',
-        (nextPaused) => updateRecordingRule({ name: uid, patch: { spec: { paused: nextPaused } } }).unwrap(),
-        paused,
-        invalidateFolderData
-      ),
-    [updateRecordingRule, invalidateFolderData, uid]
-  );
+  const setPaused = (paused: boolean) =>
+    performPauseResume(
+      'recording',
+      () => updateRecordingRule({ name: uid, patch: { spec: { paused } } }).unwrap(),
+      paused,
+      invalidateFolderData
+    );
 
   return { setPaused, isPending: isLoading };
 }

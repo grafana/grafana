@@ -1,5 +1,7 @@
 import { test } from '@playwright/test';
 
+import { getNamespace } from '../ruleSeeding';
+
 import { writeCorpusManifest } from './corpusState';
 import { seedCorpus } from './seedCorpus';
 
@@ -8,9 +10,7 @@ import { seedCorpus } from './seedCorpus';
 // the corpus multiple times. Read-only browsing/filter/pagination specs depend on this project
 // and read the manifest it writes; `corpus-teardown.spec.ts` deletes everything afterwards.
 test('seed the shared Alert/Recording rule corpus', async ({ request }) => {
-  const settings = await (await request.get('/api/frontend/settings')).json();
-  const namespace = settings.namespace ?? 'default';
-
+  const namespace = await getNamespace(request);
   const manifest = await seedCorpus(request, namespace);
   writeCorpusManifest(manifest);
 

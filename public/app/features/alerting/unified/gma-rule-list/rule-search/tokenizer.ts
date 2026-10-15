@@ -1,6 +1,6 @@
 import { type RawToken } from './tokens';
 
-const KEY_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
+const KEY_PATTERN = /^([A-Za-z][A-Za-z0-9_-]*):/;
 
 function isWhitespace(ch: string): boolean {
   return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
@@ -27,65 +27,33 @@ function readQuoted(input: string, openIndex: number): { text: string; closed: b
  */
 export function tokenize(input: string): RawToken[] {
   const tokens: RawToken[] = [];
-  const len = input.length;
   let i = 0;
 
-  while (i < len) {
-    while (i < len && isWhitespace(input[i])) {
+  while (i < input.length) {
+    if (isWhitespace(input[i])) {
       i++;
-    }
-    if (i >= len) {
-      break;
+      continue;
     }
 
     const start = i;
+    // A colon with no valid key before it just becomes part of a free-text word, e.g. "1:2:3".
+    const key = KEY_PATTERN.exec(input.slice(i))?.[1] ?? null;
+    if (key !== null) {
+      i += key.length + 1;
+    }
 
     if (input[i] === '"') {
       const { text, closed, next } = readQuoted(input, i);
-      tokens.push({ key: null, value: text, quoted: true, closed, start, end: next });
+      tokens.push({ key, value: text, quoted: true, closed, start, end: next });
       i = next;
-      continue;
-    }
-
-    // Look ahead for `key:` before the next whitespace.
-    let j = i;
-    while (j < len && input[j] !== ':' && !isWhitespace(input[j])) {
-      j++;
-    }
-
-    let key: string | null = null;
-    if (j < len && input[j] === ':') {
-      const candidate = input.slice(i, j);
-      if (KEY_PATTERN.test(candidate)) {
-        key = candidate;
+    } else {
+      let end = i;
+      while (end < input.length && !isWhitespace(input[end])) {
+        end++;
       }
+      tokens.push({ key, value: input.slice(i, end), quoted: false, closed: true, start, end });
+      i = end;
     }
-
-    if (key !== null) {
-      i = j + 1;
-      if (i < len && input[i] === '"') {
-        const { text, closed, next } = readQuoted(input, i);
-        tokens.push({ key, value: text, quoted: true, closed, start, end: next });
-        i = next;
-      } else {
-        let k = i;
-        while (k < len && !isWhitespace(input[k])) {
-          k++;
-        }
-        tokens.push({ key, value: input.slice(i, k), quoted: false, closed: true, start, end: k });
-        i = k;
-      }
-      continue;
-    }
-
-    // Free-text word: read to the next whitespace (a colon with no valid key just becomes
-    // part of the word, e.g. "1:2:3").
-    let k = i;
-    while (k < len && !isWhitespace(input[k])) {
-      k++;
-    }
-    tokens.push({ key: null, value: input.slice(i, k), quoted: false, closed: true, start, end: k });
-    i = k;
   }
 
   return tokens;

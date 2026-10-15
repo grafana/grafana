@@ -89,6 +89,14 @@ function mockDataSourceNames(nameByUid: Record<string, string>) {
   } as unknown as DataSourceSrv);
 }
 
+function renderSidebar(criteria = createEmptyCriteria()) {
+  const onChange = jest.fn();
+  const view = render(
+    <AlertRulesFilterSidebar criteria={criteria} onChange={onChange} onClear={jest.fn()} hasActiveFilters={false} />
+  );
+  return { ...view, onChange };
+}
+
 function mockFolderTitles(titleByUid: Record<string, string>) {
   server.use(
     http.get(FOLDER_PARENTS_URL, ({ params }) => {
@@ -114,16 +122,7 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('SEARCH-3: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('button', { name: 'Folder' }));
     await user.click(await screen.findByLabelText('Alerting-folder'));
@@ -132,16 +131,7 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('SEARCH-3: selecting a query data source calls onChange with that data source UID', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    const { user, onChange } = renderSidebar();
 
     await user.selectOptions(screen.getByRole('combobox', { name: 'Query data source' }), 'ds-1');
 
@@ -149,16 +139,7 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('SEARCH-3: toggling "Hide plugin rules" calls onChange with hidePluginRules true', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('switch', { name: 'Hide plugin rules' }));
 
@@ -166,56 +147,31 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('the panel ID field is disabled until a dashboard is selected', () => {
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={jest.fn()}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    renderSidebar();
 
     expect(screen.getByRole('spinbutton', { name: 'Panel ID' })).toBeDisabled();
   });
 
   it('the panel ID field is enabled once a dashboard is selected', () => {
-    const criteria = { ...createEmptyCriteria(), dashboardUid: 'dash-1' };
-    render(
-      <AlertRulesFilterSidebar criteria={criteria} onChange={jest.fn()} onClear={jest.fn()} hasActiveFilters={false} />
-    );
+    renderSidebar({ ...createEmptyCriteria(), dashboardUid: 'dash-1' });
 
     expect(screen.getByRole('spinbutton', { name: 'Panel ID' })).toBeEnabled();
   });
 
   it('SEARCH-4: choosing a contact point disables and clears the notification policy field', () => {
-    const criteria = { ...createEmptyCriteria(), contactPoint: 'on-call' };
-    render(
-      <AlertRulesFilterSidebar criteria={criteria} onChange={jest.fn()} onClear={jest.fn()} hasActiveFilters={false} />
-    );
+    renderSidebar({ ...createEmptyCriteria(), contactPoint: 'on-call' });
 
     expect(screen.getByRole('combobox', { name: 'Notification policy' })).toBeDisabled();
   });
 
   it('SEARCH-4: choosing a notification policy disables the contact point field', () => {
-    const criteria = { ...createEmptyCriteria(), policy: 'escalation' };
-    render(
-      <AlertRulesFilterSidebar criteria={criteria} onChange={jest.fn()} onClear={jest.fn()} hasActiveFilters={false} />
-    );
+    renderSidebar({ ...createEmptyCriteria(), policy: 'escalation' });
 
     expect(screen.getByRole('combobox', { name: 'Contact point' })).toBeDisabled();
   });
 
   it('SEARCH-4: selecting Paused calls onChange with paused "true"', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('combobox', { name: 'Paused' }));
     await user.click(await screen.findByRole('option', { name: 'Paused' }));
@@ -224,30 +180,14 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('the Default policy switch is disabled and explains it is not available yet when it is off', () => {
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={jest.fn()}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    renderSidebar();
 
     expect(screen.getByRole('switch', { name: 'Default policy' })).toBeDisabled();
     expect(screen.getAllByText("Filtering by the default policy isn't available yet.")).toHaveLength(1);
   });
 
   it('a default policy that arrived through the URL can still be cleared from the switch', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={{ ...createEmptyCriteria(), policy: 'default' }}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters
-      />
-    );
+    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), policy: 'default' });
 
     const toggle = screen.getByRole('switch', { name: 'Default policy' });
     expect(toggle).toBeChecked();
@@ -259,24 +199,18 @@ describe('AlertRulesFilterSidebar', () => {
   it('Clear filters is disabled with no active filters and calls onClear when active', async () => {
     const user = userEvent.setup();
     const onClear = jest.fn();
-    const { rerender } = render(
+    const sidebar = (hasActiveFilters: boolean) => (
       <AlertRulesFilterSidebar
         criteria={createEmptyCriteria()}
         onChange={jest.fn()}
         onClear={onClear}
-        hasActiveFilters={false}
+        hasActiveFilters={hasActiveFilters}
       />
     );
+    const { rerender } = render(sidebar(false));
     expect(screen.getByRole('button', { name: 'Clear filters' })).toBeDisabled();
 
-    rerender(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={jest.fn()}
-        onClear={onClear}
-        hasActiveFilters={true}
-      />
-    );
+    rerender(sidebar(true));
     await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
     expect(onClear).toHaveBeenCalledTimes(1);
@@ -297,30 +231,14 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('the query data source picker never preselects the org default (noDefault)', () => {
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={jest.fn()}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    renderSidebar();
 
     expect(screen.getByText('noDefault')).toBeInTheDocument();
   });
 
   it('SEARCH-3: shows every selected folder by title and removes only the one chosen', async () => {
     mockFolderTitles({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={{ ...createEmptyCriteria(), namespaces: ['folder-1', 'folder-2'] }}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters
-      />
-    );
+    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), namespaces: ['folder-1', 'folder-2'] });
 
     expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
     expect(await screen.findByText('Infra')).toBeInTheDocument();
@@ -332,16 +250,7 @@ describe('AlertRulesFilterSidebar', () => {
 
   it('SEARCH-3: picking a folder adds it to the selected ones', async () => {
     mockFolderTitles({ 'folder-2': 'Infra' });
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={{ ...createEmptyCriteria(), namespaces: ['folder-2'] }}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters
-      />
-    );
+    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), namespaces: ['folder-2'] });
 
     await user.click(screen.getByRole('button', { name: 'Folder' }));
     await user.click(await screen.findByLabelText('Alerting-folder'));
@@ -351,16 +260,7 @@ describe('AlertRulesFilterSidebar', () => {
 
   it('SEARCH-3: shows every selected query data source by name and removes only the one chosen', async () => {
     mockDataSourceNames({ 'ds-1': 'Prometheus', 'ds-2': 'Loki' });
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={{ ...createEmptyCriteria(), dataSourceUids: ['ds-1', 'ds-2'] }}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters
-      />
-    );
+    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), dataSourceUids: ['ds-1', 'ds-2'] });
 
     expect(await screen.findByText('Prometheus')).toBeInTheDocument();
     expect(await screen.findByText('Loki')).toBeInTheDocument();
@@ -371,16 +271,7 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('SEARCH-3: picking a query data source adds it to the selected ones', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={{ ...createEmptyCriteria(), dataSourceUids: ['ds-2'] }}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters
-      />
-    );
+    const { user, onChange } = renderSidebar({ ...createEmptyCriteria(), dataSourceUids: ['ds-2'] });
 
     await user.selectOptions(screen.getByRole('combobox', { name: 'Query data source' }), 'ds-1');
 
@@ -388,16 +279,7 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('SEARCH-5: selecting a state calls onChange with that state', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('combobox', { name: 'Alert state' }));
     await user.click(await screen.findByRole('option', { name: 'Firing' }));
@@ -406,29 +288,13 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('SEARCH-5: shows the legacy inactive state as Normal', () => {
-    render(
-      <AlertRulesFilterSidebar
-        criteria={{ ...createEmptyCriteria(), state: 'inactive' }}
-        onChange={jest.fn()}
-        onClear={jest.fn()}
-        hasActiveFilters
-      />
-    );
+    renderSidebar({ ...createEmptyCriteria(), state: 'inactive' });
 
     expect(screen.getByRole('combobox', { name: 'Alert state' })).toHaveValue('Normal');
   });
 
   it('SEARCH-5: selecting a health calls onChange with that health', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('combobox', { name: 'Health' }));
     await user.click(await screen.findByRole('option', { name: 'No data' }));
@@ -437,16 +303,7 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('SEARCH-3: a label row added with Add label filter is not applied until it has a key', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('button', { name: 'Add label filter' }));
     await user.click(screen.getByRole('radio', { name: '!=' }));
@@ -458,16 +315,7 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('SEARCH-3: entering the key of a new label row applies it with the chosen operator and value', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('button', { name: 'Add label filter' }));
     await user.click(screen.getByRole('radio', { name: '!=' }));
@@ -481,16 +329,7 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('SEARCH-3: removing the new label row before it has a key leaves the criteria untouched', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={onChange}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('button', { name: 'Add label filter' }));
     await user.click(screen.getByRole('button', { name: 'Remove label filter' }));
@@ -500,14 +339,7 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   it('the contact point and notification policy fields show a selection placeholder', () => {
-    render(
-      <AlertRulesFilterSidebar
-        criteria={createEmptyCriteria()}
-        onChange={jest.fn()}
-        onClear={jest.fn()}
-        hasActiveFilters={false}
-      />
-    );
+    renderSidebar();
 
     expect(screen.getByRole('combobox', { name: 'Contact point' })).toHaveAttribute(
       'placeholder',
@@ -520,13 +352,6 @@ describe('AlertRulesFilterSidebar', () => {
   });
 
   describe('accessible names and keyboard use', () => {
-    function renderSidebar(criteria = createEmptyCriteria(), onChange = jest.fn()) {
-      const view = render(
-        <AlertRulesFilterSidebar criteria={criteria} onChange={onChange} onClear={jest.fn()} hasActiveFilters={false} />
-      );
-      return { ...view, onChange };
-    }
-
     it('ACC-1: the rule name input is found by role and name and applies on Enter', async () => {
       const { user, onChange } = renderSidebar();
 

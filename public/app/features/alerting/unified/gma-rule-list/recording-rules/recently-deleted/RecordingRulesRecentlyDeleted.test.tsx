@@ -23,7 +23,10 @@ const RECORDING_RULES_URL = `${getAPIBaseURL('rules.alerting.grafana.app', 'v0al
 const FOLDER_PARENTS_URL = `${getAPIBaseURL('folder.grafana.app', 'v1beta1')}/folders/:name/parents`;
 const DISPLAY_MAPPING_URL = `${getAPIBaseURL('iam.grafana.app', 'v0alpha1')}/display`;
 
-function buildRecordingRule(overrides: Partial<RecordingRule> = {}): RecordingRule {
+function buildRecordingRule(
+  overrides: Partial<RecordingRule> = {},
+  specOverrides: Partial<RecordingRule['spec']> = {}
+): RecordingRule {
   return {
     apiVersion: 'v0alpha1',
     kind: 'RecordingRule',
@@ -41,6 +44,7 @@ function buildRecordingRule(overrides: Partial<RecordingRule> = {}): RecordingRu
       targetDatasourceUID: 'prometheus-uid',
       trigger: { interval: '1m' },
       expressions: {},
+      ...specOverrides,
     },
     ...overrides,
   };
@@ -123,52 +127,12 @@ describe('RecordingRulesRecentlyDeleted', () => {
     expect(screen.queryByText(/firing|instances|notification routing/i)).not.toBeInTheDocument();
   });
 
-  it('RDEL-4: an initial failure shows an error rather than the empty state', async () => {
-    server.use(http.get(RECORDING_RULES_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-
-    render(<RecordingRulesRecentlyDeleted />);
-
-    expect(await screen.findByText(/unable to load recently deleted rules/i)).toBeInTheDocument();
-    expect(screen.queryByText(/no recently deleted rules found/i)).not.toBeInTheDocument();
-  });
-
   it('RDEL-4: shows the empty state only after a successful empty response', async () => {
     mockRecordingRulesResponse({ items: [], metadata: {} });
 
     render(<RecordingRulesRecentlyDeleted />);
 
     expect(await screen.findByText(/no recently deleted rules found/i)).toBeInTheDocument();
-  });
-
-  it('RDEL-4: a later Load more failure keeps the loaded rows visible and offers Retry', async () => {
-    // An exact 40-item first page with a continue token empties the local buffer, so the next
-    // Load more click must hit the network (unlike an oversized first response) - that's the
-    // request this test makes fail.
-    const rules = Array.from({ length: 40 }, (_, i) =>
-      buildRecordingRule({
-        metadata: { name: `rule-${i}`, annotations: { 'grafana.app/folder': 'folder-uid-1' } },
-        spec: { ...buildRecordingRule().spec, title: `Rule ${i}` },
-      })
-    );
-    server.use(
-      http.get(RECORDING_RULES_URL, ({ request }) => {
-        const continueToken = new URL(request.url).searchParams.get('continue');
-        if (!continueToken) {
-          return HttpResponse.json({ items: rules, metadata: { continue: 'next-page-token' } });
-        }
-        return HttpResponse.json({ message: 'boom' }, { status: 500 });
-      })
-    );
-
-    const { user } = render(<RecordingRulesRecentlyDeleted />);
-
-    await screen.findByText('Rule 0');
-    await user.click(screen.getByRole('button', { name: /load more/i }));
-
-    expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
-    expect(screen.getByText('Rule 0')).toBeInTheDocument();
-    expect(screen.getByText('Rule 39')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('RDEL-4: falls back to the folder UID when the folder lookup fails, without disabling Review', async () => {
@@ -184,7 +148,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
 
   it('RDEL-4: falls back to the target data source UID when it does not resolve to a known data source', async () => {
     mockRecordingRulesResponse({
-      items: [buildRecordingRule({ spec: { ...buildRecordingRule().spec, targetDatasourceUID: 'unknown-ds-uid' } })],
+      items: [buildRecordingRule({}, { targetDatasourceUID: 'unknown-ds-uid' })],
       metadata: {},
     });
 
@@ -209,14 +173,14 @@ describe('RecordingRulesRecentlyDeleted', () => {
     const rule = buildRecordingRule();
     mockRecordingRulesResponse({
       items: [
-        buildRecordingRule({
-          metadata: { ...rule.metadata, name: 'oldest', deletionTimestamp: '2024-01-01T00:00:00Z' },
-          spec: { ...rule.spec, title: 'Deleted first' },
-        }),
-        buildRecordingRule({
-          metadata: { ...rule.metadata, name: 'newest', deletionTimestamp: '2024-06-01T00:00:00Z' },
-          spec: { ...rule.spec, title: 'Deleted last' },
-        }),
+        buildRecordingRule(
+          { metadata: { ...rule.metadata, name: 'oldest', deletionTimestamp: '2024-01-01T00:00:00Z' } },
+          { title: 'Deleted first' }
+        ),
+        buildRecordingRule(
+          { metadata: { ...rule.metadata, name: 'newest', deletionTimestamp: '2024-06-01T00:00:00Z' } },
+          { title: 'Deleted last' }
+        ),
       ],
       metadata: {},
     });
@@ -233,10 +197,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
 
   it('RDEL-2: reports the number of items the API returned, not the rows revealed', async () => {
     const rules = Array.from({ length: 65 }, (_, i) =>
-      buildRecordingRule({
-        metadata: { name: `rule-${i}` },
-        spec: { ...buildRecordingRule().spec, title: `Rule ${i}` },
-      })
+      buildRecordingRule({ metadata: { name: `rule-${i}` } }, { title: `Rule ${i}` })
     );
     mockRecordingRulesResponse({ items: rules, metadata: {} });
 
@@ -249,7 +210,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
     );
   });
 
-  it('RDEL-4: a failed first load offers Retry, which loads the rules', async () => {
+  it('RDEL-4: a failed first load shows an error (not the empty state) and offers Retry, which loads the rules', async () => {
     let call = 0;
     server.use(
       http.get(RECORDING_RULES_URL, () => {
@@ -263,6 +224,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
     const { user } = render(<RecordingRulesRecentlyDeleted />);
 
     expect(await screen.findByText(/unable to load recently deleted rules/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no recently deleted rules found/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(await screen.findByText('CPU usage average')).toBeInTheDocument();
@@ -271,10 +233,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
   it('RDEL-2: reveals more than 40 rows from an oversized response in a 40-row chunk via Load more, without duplicate requests', async () => {
     let requestCount = 0;
     const rules = Array.from({ length: 65 }, (_, i) =>
-      buildRecordingRule({
-        metadata: { name: `rule-${i}` },
-        spec: { ...buildRecordingRule().spec, title: `Rule ${i}` },
-      })
+      buildRecordingRule({ metadata: { name: `rule-${i}` } }, { title: `Rule ${i}` })
     );
     mockRecordingRulesResponse({ items: rules, metadata: {} }, () => {
       requestCount += 1;
@@ -304,22 +263,12 @@ describe('RecordingRulesRecentlyDeleted', () => {
         requestedTokens.push(continueToken);
         if (!continueToken) {
           return HttpResponse.json({
-            items: [
-              buildRecordingRule({
-                metadata: { name: 'rule-page1' },
-                spec: { ...buildRecordingRule().spec, title: 'Page 1 rule' },
-              }),
-            ],
+            items: [buildRecordingRule({ metadata: { name: 'rule-page1' } }, { title: 'Page 1 rule' })],
             metadata: { continue: 'next-page-token' },
           });
         }
         return HttpResponse.json({
-          items: [
-            buildRecordingRule({
-              metadata: { name: 'rule-page2' },
-              spec: { ...buildRecordingRule().spec, title: 'Page 2 rule' },
-            }),
-          ],
+          items: [buildRecordingRule({ metadata: { name: 'rule-page2' } }, { title: 'Page 2 rule' })],
           metadata: {},
         });
       })
@@ -343,10 +292,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
       releasePage = resolve;
     });
     const rules = Array.from({ length: 40 }, (_, i) =>
-      buildRecordingRule({
-        metadata: { name: `rule-${i}` },
-        spec: { ...buildRecordingRule().spec, title: `Rule ${i}` },
-      })
+      buildRecordingRule({ metadata: { name: `rule-${i}` } }, { title: `Rule ${i}` })
     );
     server.use(
       http.get(RECORDING_RULES_URL, async ({ request }) => {
@@ -357,12 +303,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
         }
         await pageGate;
         return HttpResponse.json({
-          items: [
-            buildRecordingRule({
-              metadata: { name: 'rule-last' },
-              spec: { ...buildRecordingRule().spec, title: 'Last rule' },
-            }),
-          ],
+          items: [buildRecordingRule({ metadata: { name: 'rule-last' } }, { title: 'Last rule' })],
           metadata: {},
         });
       })
@@ -383,10 +324,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
     const tokens: Array<string | null> = [];
     let failNext = true;
     const rules = Array.from({ length: 40 }, (_, i) =>
-      buildRecordingRule({
-        metadata: { name: `rule-${i}` },
-        spec: { ...buildRecordingRule().spec, title: `Rule ${i}` },
-      })
+      buildRecordingRule({ metadata: { name: `rule-${i}` } }, { title: `Rule ${i}` })
     );
     server.use(
       http.get(RECORDING_RULES_URL, ({ request }) => {
@@ -400,12 +338,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
           return HttpResponse.json({ message: 'boom' }, { status: 500 });
         }
         return HttpResponse.json({
-          items: [
-            buildRecordingRule({
-              metadata: { name: 'rule-last' },
-              spec: { ...buildRecordingRule().spec, title: 'Last rule' },
-            }),
-          ],
+          items: [buildRecordingRule({ metadata: { name: 'rule-last' } }, { title: 'Last rule' })],
           metadata: {},
         });
       })
@@ -415,6 +348,7 @@ describe('RecordingRulesRecentlyDeleted', () => {
     await screen.findByText('Rule 0');
     await user.click(screen.getByRole('button', { name: /load more/i }));
     expect(await screen.findByText('Failed to load more results')).toBeInTheDocument();
+    expect(screen.getByText('Rule 39')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Retry' }));
 

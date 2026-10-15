@@ -1,4 +1,5 @@
 import { test, expect, recordingTargetDataSource } from './fixtures';
+import { deleteRule } from './ruleSeeding';
 
 // Recently deleted has no search/filter controls (by design - the trash selector can't be
 // combined with ordinary ones), so unlike the mutation specs there's no folder-scoped view to
@@ -17,10 +18,7 @@ test.describe('Recording rules: Recently deleted', () => {
     const title = `HTTP error rate ${suffix}`;
     const metric = `http_errors:rate5m_${suffix}`;
     const uid = await recordingRules.seedRule({ title, interval: '1m', metric });
-    const deleted = await page.request.delete(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/recordingrules/${encodeURIComponent(uid)}`
-    );
-    expect(deleted.ok(), `DELETE recordingrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
+    await deleteRule(page.request, workerApi.namespace, 'recordingrules', uid);
 
     await page.goto('/alerting/rules/recording/deleted');
     await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
@@ -55,10 +53,7 @@ test.describe('Recording rules: Recently deleted', () => {
     const suffix = crypto.randomUUID().slice(0, 8);
     const title = `Queue depth trend ${suffix}`;
     const uid = await recordingRules.seedRule({ title, interval: '1m', metric: `queue_depth:trend_${suffix}` });
-    const deleted = await page.request.delete(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${workerApi.namespace}/recordingrules/${encodeURIComponent(uid)}`
-    );
-    expect(deleted.ok(), `DELETE recordingrules/${uid} -> ${deleted.status()} ${await deleted.text()}`).toBeTruthy();
+    await deleteRule(page.request, workerApi.namespace, 'recordingrules', uid);
 
     await page.goto('/alerting/rules/recording/deleted');
     await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();

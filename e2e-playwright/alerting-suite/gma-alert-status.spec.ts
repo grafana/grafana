@@ -10,6 +10,7 @@ import {
   type RuleStatusSeed,
   newRunMarker,
   runScope,
+  runTitle,
   waitForRuleStatusVisible,
 } from './ruleSeeding';
 
@@ -19,10 +20,6 @@ import {
 interface StatusRule {
   name: string;
   status?: RuleStatusSeed;
-}
-
-function titleOf(run: string, name: string): string {
-  return `${name} ${run}`;
 }
 
 async function seedStatusRules(
@@ -35,7 +32,7 @@ async function seedStatusRules(
   const expected: Record<string, RuleStatusSeed> = {};
   for (const { name, status } of rules) {
     const uid = await seedRule({
-      title: titleOf(run, name),
+      title: runTitle(run, name),
       paused: false,
       labels: { [RUN_LABEL]: run },
       status,
@@ -92,8 +89,8 @@ test.describe('Alert rules: state and health filters', () => {
 
       await list.expectRequestLeaf(filterLeaf('state', 'In', apiValues));
       await list.expectRules({
-        shown: matchingRules.map((matchingRule) => titleOf(run, matchingRule.name)),
-        hidden: [titleOf(run, otherRule.name), titleOf(run, NO_STATUS_RULE.name)],
+        shown: matchingRules.map((matchingRule) => runTitle(run, matchingRule.name)),
+        hidden: [runTitle(run, otherRule.name), runTitle(run, NO_STATUS_RULE.name)],
       });
     });
   }
@@ -127,8 +124,8 @@ test.describe('Alert rules: state and health filters', () => {
 
       await list.expectRequestLeaf(filterLeaf('health', 'In', apiValues));
       await list.expectRules({
-        shown: [titleOf(run, matchingRule.name)],
-        hidden: [titleOf(run, otherRule.name), titleOf(run, NO_STATUS_RULE.name)],
+        shown: [runTitle(run, matchingRule.name)],
+        hidden: [runTitle(run, otherRule.name), runTitle(run, NO_STATUS_RULE.name)],
       });
     });
   }
@@ -155,16 +152,16 @@ test.describe('Alert rules: state and health filters', () => {
     await list.expectRequestLeaf(filterLeaf('state', 'In', ['Firing']));
     await list.expectSearchParam('state:firing');
     await list.expectRules({
-      shown: [titleOf(run, firing.name)],
-      hidden: [titleOf(run, healthy.name), titleOf(run, NO_STATUS_RULE.name)],
+      shown: [runTitle(run, firing.name)],
+      hidden: [runTitle(run, healthy.name), runTitle(run, NO_STATUS_RULE.name)],
     });
 
     list.forgetRequests();
     await list.chooseOption('Alert state', 'Normal');
     await list.expectRequestLeaf(filterLeaf('state', 'In', ['Healthy', 'Inactive']));
     await list.expectRules({
-      shown: [titleOf(run, healthy.name)],
-      hidden: [titleOf(run, firing.name), titleOf(run, NO_STATUS_RULE.name)],
+      shown: [runTitle(run, healthy.name)],
+      hidden: [runTitle(run, firing.name), runTitle(run, NO_STATUS_RULE.name)],
     });
   });
 
@@ -191,16 +188,16 @@ test.describe('Alert rules: state and health filters', () => {
     await list.expectRequestLeaf(filterLeaf('health', 'In', ['Error']));
     await list.expectSearchParam('health:error');
     await list.expectRules({
-      shown: [titleOf(run, failing.name)],
-      hidden: [titleOf(run, noData.name), titleOf(run, NO_STATUS_RULE.name)],
+      shown: [runTitle(run, failing.name)],
+      hidden: [runTitle(run, noData.name), runTitle(run, NO_STATUS_RULE.name)],
     });
 
     list.forgetRequests();
     await list.chooseOption('Health', 'No data');
     await list.expectRequestLeaf(filterLeaf('health', 'In', ['NoData']));
     await list.expectRules({
-      shown: [titleOf(run, noData.name)],
-      hidden: [titleOf(run, failing.name), titleOf(run, NO_STATUS_RULE.name)],
+      shown: [runTitle(run, noData.name)],
+      hidden: [runTitle(run, failing.name), runTitle(run, NO_STATUS_RULE.name)],
     });
   });
 });
@@ -232,7 +229,7 @@ test.describe('Alert rules: status icon', () => {
     await list.goto(runScope(run));
 
     for (const { name, icon } of rules) {
-      await expect(list.statusIcon(titleOf(run, name), icon), `${name} shows ${icon}`).toBeVisible();
+      await expect(list.statusIcon(runTitle(run, name), icon), `${name} shows ${icon}`).toBeVisible();
     }
   });
 });
@@ -259,7 +256,7 @@ test.describe('Alert rules: instance totals', () => {
     const list = new RuleListPage(page, 'alert');
     await list.goto(runScope(run));
 
-    const row = list.ruleRow(titleOf(run, rule.name));
+    const row = list.ruleRow(runTitle(run, rule.name));
     await expect(row.getByText('7 healthy')).toBeVisible();
     for (const count of ['0 firing', '2 pending', '3 recovering', '4 no data', '5 error']) {
       await expect(row.getByText(count), `${count} is shown`).toBeVisible();
@@ -285,7 +282,7 @@ test.describe('Alert rules: instance totals', () => {
     const list = new RuleListPage(page, 'alert');
     await list.goto(runScope(run));
 
-    const partialRow = list.ruleRow(titleOf(run, partial.name));
+    const partialRow = list.ruleRow(runTitle(run, partial.name));
     await expect(partialRow.getByText('2 firing')).toBeVisible();
     await expect(partialRow.getByText('1 error')).toBeVisible();
     for (const label of ['healthy', 'pending', 'recovering', 'no data']) {
@@ -293,7 +290,7 @@ test.describe('Alert rules: instance totals', () => {
     }
 
     // The list has rendered the rule above, so the one without status is on screen too.
-    const noStatusRow = list.ruleRow(titleOf(run, NO_STATUS_RULE.name));
+    const noStatusRow = list.ruleRow(runTitle(run, NO_STATUS_RULE.name));
     await expect(noStatusRow).toBeVisible();
     await expect(noStatusRow.getByText(/\d+ (healthy|firing|pending|recovering|no data|error)/)).toHaveCount(0);
   });

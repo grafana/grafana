@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type ComponentSize, Dropdown, Menu } from '@grafana/ui';
+import { Dropdown, Menu } from '@grafana/ui';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
 import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleButton';
@@ -30,14 +30,13 @@ import { MoreButton } from '../shared/MoreButton';
 interface AlertRuleActionsMenuProps {
   ruleUid: string;
   resourceState: RuleResourceState<AlertRule>;
-  buttonSize?: ComponentSize;
 }
 
 /**
  * Action menu for a single Grafana-managed Alert rule row in the GMA-only list. Takes only the
  * rule UID and its full-resource fetch state - never a legacy rule/group identifier.
  */
-export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: AlertRuleActionsMenuProps) {
+export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleActionsMenuProps) {
   const abilities = useRuleActionAbilities(resourceState);
   const { setPaused, isPending: pausePending } = useAlertRulePauseResume(ruleUid);
   const { deleteRule, isPending: deletePending } = useDeleteAlertRule(ruleUid);
@@ -113,7 +112,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, buttonSize }: Ale
   return (
     <>
       <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom-end">
-        <MoreButton fill="text" size={buttonSize} />
+        <MoreButton fill="text" size="sm" />
       </Dropdown>
       {showSilenceDrawer && (
         <AlertmanagerProvider accessType="instance">

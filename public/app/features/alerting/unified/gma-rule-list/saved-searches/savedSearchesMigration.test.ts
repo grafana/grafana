@@ -43,7 +43,7 @@ import {
 } from './savedSearchesMigration';
 
 function parseAlertQuery(query: string): Criteria {
-  return parse(query, alertTokens).criteria;
+  return parse(query, alertTokens);
 }
 
 function resolvers(overrides: Partial<NameResolvers> = {}): NameResolvers {
@@ -220,7 +220,7 @@ describe('applySavedSearch', () => {
     const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn();
 
-    const result = await applySavedSearch('cpu', 'alert', resolvers(), parseForKind, persist);
+    const result = await applySavedSearch('cpu', resolvers(), parseForKind, persist);
 
     expect(result.query).toBe('cpu');
     expect(persist).not.toHaveBeenCalled();
@@ -231,7 +231,7 @@ describe('applySavedSearch', () => {
     const parseForKind = jest.fn(parseAlertQuery);
     const persist = jest.fn(async () => {});
 
-    const result = await applySavedSearch('type:alerting cpu', 'alert', resolvers(), parseForKind, persist);
+    const result = await applySavedSearch('type:alerting cpu', resolvers(), parseForKind, persist);
 
     expect(result.query).toBe('cpu');
     expect(persist).toHaveBeenCalledWith('cpu');
@@ -243,7 +243,7 @@ describe('applySavedSearch', () => {
       throw new Error('storage unavailable');
     });
 
-    const result = await applySavedSearch('type:alerting cpu', 'alert', resolvers(), parseForKind, persist);
+    const result = await applySavedSearch('type:alerting cpu', resolvers(), parseForKind, persist);
 
     expect(result.query).toBe('cpu');
     expect(result.criteria.text).toEqual(['cpu']);
@@ -252,7 +252,6 @@ describe('applySavedSearch', () => {
   it('SAVE-2: names the filters the conversion removed, without their values', async () => {
     const result = await applySavedSearch(
       'type:alerting namespace:Gone group:g1 cpu',
-      'alert',
       resolvers({ resolveFolderUidByName: jest.fn(async () => undefined) }),
       parseAlertQuery,
       jest.fn(async () => {})

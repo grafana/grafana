@@ -168,15 +168,6 @@ describe('AlertRulesRecentlyDeleted', () => {
     expect(screen.getAllByText('High CPU usage').length).toBeGreaterThan(0);
   });
 
-  it('ADEL-4: shows an error (not the empty state) when the initial request fails', async () => {
-    server.use(http.get(ALERT_RULES_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-
-    render(<AlertRulesRecentlyDeleted />);
-
-    expect(await screen.findByText(/unable to load recently deleted rules/i)).toBeInTheDocument();
-    expect(screen.queryByText(/no recently deleted rules found/i)).not.toBeInTheDocument();
-  });
-
   it('ADEL-4: shows the empty state only after a successful empty response', async () => {
     mockAlertRulesResponse({ items: [], metadata: {} });
 
@@ -275,7 +266,7 @@ describe('AlertRulesRecentlyDeleted', () => {
     expect(tokens).toEqual([null, 'next-page-token']);
   });
 
-  it('STATE-1: a failed first load shows an error with Retry, and Retry loads the rules', async () => {
+  it('STATE-1: a failed first load shows an error (not the empty state) with Retry, and Retry loads the rules', async () => {
     let call = 0;
     server.use(
       http.get(ALERT_RULES_URL, () => {
@@ -289,6 +280,7 @@ describe('AlertRulesRecentlyDeleted', () => {
     const { user } = render(<AlertRulesRecentlyDeleted />);
 
     expect(await screen.findByText(/unable to load recently deleted rules/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no recently deleted rules found/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(await screen.findByText('High CPU usage')).toBeInTheDocument();

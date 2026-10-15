@@ -36,6 +36,8 @@ const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespa
 const FOLDER_COUNTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/counts';
 const ALERT_RULE_GET_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/alertrules/:name';
 
+const PAUSED_FALSE = { filter: { field: 'paused', operator: 'In', values: ['false'] } };
+
 setDataSourceSrv({
   getList: () => [],
   getInstanceSettings: () => undefined,
@@ -76,6 +78,33 @@ function mockAlertRuleSearch(fn: (body: unknown, requestCount: number) => object
   );
 }
 
+// Every visible row's action menu loads the full rule for provenance/abilities - a row
+// component detail these page-level tests don't otherwise care about.
+function mockAlertRuleGet() {
+  server.use(
+    http.get(ALERT_RULE_GET_URL, ({ params }) =>
+      HttpResponse.json({
+        apiVersion: 'v0alpha1',
+        kind: 'AlertRule',
+        metadata: { name: params.name },
+        spec: { title: 'rule', paused: false },
+      })
+    )
+  );
+}
+
+// Fails the first request to `url` and answers every later one with `ok`; returns a counter of the requests seen.
+function failFirstCall(url: string, ok: object) {
+  let calls = 0;
+  server.use(
+    http.post(url, () => {
+      calls += 1;
+      return calls === 1 ? HttpResponse.json({ message: 'boom' }, { status: 500 }) : HttpResponse.json(ok);
+    })
+  );
+  return () => calls;
+}
+
 function mockFolderParents(titleByUid: Record<string, string>) {
   server.use(
     http.get(FOLDER_PARENTS_URL, ({ params }) => {
@@ -104,18 +133,7 @@ describe('AlertRulesPage', () => {
     contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
     mockFolderParents({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
     mockFolderCounts({ 'folder-1': 3, 'folder-2': 0 });
-    // Every visible row's action menu loads the full rule for provenance/abilities - a row
-    // component detail these page-level tests don't otherwise care about.
-    server.use(
-      http.get(ALERT_RULE_GET_URL, ({ params }) =>
-        HttpResponse.json({
-          apiVersion: 'v0alpha1',
-          kind: 'AlertRule',
-          metadata: { name: params.name },
-          spec: { title: 'rule', paused: false },
-        })
-      )
-    );
+    mockAlertRuleGet();
   });
 
   afterEach(() => {
@@ -220,28 +238,6 @@ describe('AlertRulesPage', () => {
     expect(await screen.findByText('No Alert rules found')).toBeInTheDocument();
   });
 
-  it('shows a distinct error state when the initial List request fails', async () => {
-    server.use(http.post(ALERT_SEARCH_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
-  });
-
-  it('does not search and names the filter when the URL asks for the default notification policy', async () => {
-    const requests: unknown[] = [];
-    mockAlertRuleSearch((body) => {
-      requests.push(body);
-      return { items: [], metadata: {} };
-    });
-
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=policy%3Adefault&view=list'] } });
-
-    expect(await screen.findByText('Fix the invalid filter to see results')).toBeInTheDocument();
-    expect(screen.getByText(/Some filters could not be applied: policy/)).toBeInTheDocument();
-    expect(requests).toEqual([]);
-  });
-
   it('sends the List search to the per-kind searchRules endpoint with the criteria as the request body', async () => {
     let body: unknown;
     mockAlertRuleSearch((received) => {
@@ -254,21 +250,16 @@ describe('AlertRulesPage', () => {
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
     expect(body).toMatchObject({
       kind: 'SearchQuery',
-      where: { filter: { field: 'paused', operator: 'In', values: ['false'] } },
+      where: PAUSED_FALSE,
     });
   });
 
   // STATE-1: a failed first page shows an error with Retry instead of the empty state.
   it('retries a failed first List page and then shows its rules', async () => {
-    let call = 0;
-    server.use(
-      http.post(ALERT_SEARCH_URL, () => {
-        call += 1;
-        return call === 1
-          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
-          : HttpResponse.json({ items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} });
-      })
-    );
+    const callCount = failFirstCall(ALERT_SEARCH_URL, {
+      items: [ruleItem('rule-1', 'CPU high', 'folder-1')],
+      metadata: {},
+    });
 
     render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
 
@@ -278,7 +269,7 @@ describe('AlertRulesPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
-    expect(call).toBe(2);
+    expect(callCount()).toBe(2);
   });
 
   // STATE-1: a Load more failure keeps the already-loaded rows visible; Retry repeats that request.
@@ -385,15 +376,7 @@ describe('AlertRulesPage', () => {
   // STATE-1: a failed expanded folder shows its own error and keeps the folder row.
   it('shows a retryable error inside an expanded folder whose rule search failed', async () => {
     mockFolderSearch(() => ({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} }));
-    let call = 0;
-    server.use(
-      http.post(ALERT_SEARCH_URL, () => {
-        call += 1;
-        return call === 1
-          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
-          : HttpResponse.json({ items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} });
-      })
-    );
+    failFirstCall(ALERT_SEARCH_URL, { items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} });
 
     render(<AlertRulesPage />);
     await userEvent.click(await screen.findByRole('button', { name: 'Expand Team Alerts', expanded: false }));
@@ -499,15 +482,7 @@ describe('AlertRulesPage', () => {
   });
 
   it('shows a retryable error instead of the empty state when the first folder page fails', async () => {
-    let call = 0;
-    server.use(
-      http.post(FOLDER_SEARCH_URL, () => {
-        call += 1;
-        return call === 1
-          ? HttpResponse.json({ message: 'boom' }, { status: 500 })
-          : HttpResponse.json({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} });
-      })
-    );
+    failFirstCall(FOLDER_SEARCH_URL, { items: [folderItem('folder-1', 'Team Alerts')], metadata: {} });
 
     render(<AlertRulesPage />);
 
@@ -643,16 +618,7 @@ describe('AlertRulesPage search and filters', () => {
       ruleSearchBodies.push(body as { where?: unknown });
       return { items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} };
     });
-    server.use(
-      http.get(ALERT_RULE_GET_URL, ({ params }) =>
-        HttpResponse.json({
-          apiVersion: 'v0alpha1',
-          kind: 'AlertRule',
-          metadata: { name: params.name },
-          spec: { title: 'rule', paused: false },
-        })
-      )
-    );
+    mockAlertRuleGet();
   });
 
   afterEach(() => {
@@ -677,7 +643,7 @@ describe('AlertRulesPage search and filters', () => {
         { text: { value: 'cpu' } },
         { filter: { field: 'folder', operator: 'In', values: ['folder-1'] } },
         { filter: { field: 'labels', operator: 'In', values: ['team=api'] } },
-        { filter: { field: 'paused', operator: 'In', values: ['false'] } },
+        PAUSED_FALSE,
       ],
     });
   });
@@ -694,20 +660,22 @@ describe('AlertRulesPage search and filters', () => {
   });
 
   // NAV-5
-  it('shows an unsupported token as an invalid filter, keeps it in the input and sends no request', async () => {
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=foo%3Abar%20cpu&view=list'] } });
+  it.each([
+    { search: 'policy%3Adefault', key: 'policy' },
+    { search: 'foo%3Abar%20cpu', key: 'foo' },
+    { search: 'metric%3Acpu_usage', key: 'metric' },
+  ])('NAV-5: names the invalid $key filter and sends no request', async ({ search, key }) => {
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: [`/?search=${search}&view=list`] } });
 
     expect(await screen.findByText('Fix the invalid filter to see results')).toBeInTheDocument();
-    expect(screen.getByText('Some filters could not be applied: foo')).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('foo:bar cpu');
+    expect(screen.getByText(`Some filters could not be applied: ${key}`)).toBeInTheDocument();
     expect(ruleSearchBodies).toEqual([]);
   });
 
-  it('shows a Recording-only token as invalid on the Alert page', async () => {
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=metric%3Acpu_usage&view=list'] } });
+  it('keeps an unsupported token in the input as typed', async () => {
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=foo%3Abar%20cpu&view=list'] } });
 
-    expect(await screen.findByText('Some filters could not be applied: metric')).toBeInTheDocument();
-    expect(ruleSearchBodies).toEqual([]);
+    expect(await screen.findByRole('textbox', { name: 'Search' })).toHaveValue('foo:bar cpu');
   });
 
   // SEARCH-5
@@ -903,7 +871,7 @@ describe('AlertRulesPage search and filters', () => {
         { text: { value: 'cpu' } },
         { filter: { field: 'folder', operator: 'In', values: ['folder-1'] } },
         { filter: { field: 'labels', operator: 'In', values: ['team=api'] } },
-        { filter: { field: 'paused', operator: 'In', values: ['false'] } },
+        PAUSED_FALSE,
       ],
     });
   });
@@ -997,7 +965,7 @@ describe('AlertRulesPage search and filters', () => {
       expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('paused:false cpu');
       expect(screen.getByRole('combobox', { name: 'Paused' })).toHaveValue('Not paused');
       expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
-        and: [{ text: { value: 'cpu' } }, { filter: { field: 'paused', operator: 'In', values: ['false'] } }],
+        and: [{ text: { value: 'cpu' } }, PAUSED_FALSE],
       });
     });
   });
@@ -1019,9 +987,7 @@ describe('AlertRulesPage search and filters', () => {
       expect(await screen.findByText('CPU high')).toBeInTheDocument();
       expect(urlSearchParams().get('search')).toBe('paused:false cpu');
       expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('paused:false cpu');
-      expect(ruleSearchBodies.map(whereOf)).toEqual([
-        { and: [{ text: { value: 'cpu' } }, { filter: { field: 'paused', operator: 'In', values: ['false'] } }] },
-      ]);
+      expect(ruleSearchBodies.map(whereOf)).toEqual([{ and: [{ text: { value: 'cpu' } }, PAUSED_FALSE] }]);
     });
 
     it('does not apply the default saved search when the URL already has a query', async () => {

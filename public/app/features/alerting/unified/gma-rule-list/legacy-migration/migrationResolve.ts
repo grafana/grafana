@@ -12,9 +12,9 @@ export interface NameResolvers {
 export interface ResolvedMigration {
   /** `namespaces` and `dataSourceUids` hold only the UIDs that resolved. */
   criteria: Criteria;
-  /** Distinct token keys (namespace/datasource) that had at least one name that was removed
-   * because it matched no single folder or data source, or its lookup failed. */
-  droppedKeys: Array<'namespace' | 'datasource'>;
+  /** Sorted, distinct keys dropped by either stage: the sync stage's dropped keys plus
+   * namespace/datasource when a name matched no single folder or data source, or its lookup failed. */
+  droppedKeys: string[];
 }
 
 async function resolveNames(
@@ -53,16 +53,16 @@ export async function resolveMigratedNames(
     resolveNames(sync.criteria.dataSourceUids, resolvers.resolveDataSourceUidByName),
   ]);
 
-  const droppedKeys: ResolvedMigration['droppedKeys'] = [];
+  const droppedKeys = new Set(sync.diagnostics.droppedKeys);
   if (namespaces.hasUnresolved) {
-    droppedKeys.push('namespace');
+    droppedKeys.add('namespace');
   }
   if (dataSourceUids.hasUnresolved) {
-    droppedKeys.push('datasource');
+    droppedKeys.add('datasource');
   }
 
   return {
     criteria: { ...sync.criteria, namespaces: namespaces.uids, dataSourceUids: dataSourceUids.uids },
-    droppedKeys,
+    droppedKeys: [...droppedKeys].sort(),
   };
 }

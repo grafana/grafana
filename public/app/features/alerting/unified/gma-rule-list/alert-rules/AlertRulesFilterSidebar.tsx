@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { RoutingTreeSelector } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { t } from '@grafana/i18n';
@@ -8,17 +6,10 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 
 import { FilterSidebar, type SidebarControl } from '../rule-search/FilterSidebar';
 import { alertTokens } from '../rule-search/alertTokens';
+import { useCommonFilterControls } from '../rule-search/commonFilterControls';
 import { type Criteria, DEFAULT_POLICY, type StateValue } from '../rule-search/criteria';
 import { type CriteriaIssue } from '../rule-search/criteriaIssues';
-import {
-  HealthField,
-  InvalidTokenNote,
-  LabelMatchersEditor,
-  RuleTitleField,
-  SwitchField,
-  UnavailableFilterNote,
-} from '../rule-search/filterSidebarPrimitives';
-import { DataSourceMultiFilter, FolderMultiFilter } from '../rule-search/multiValueFilters';
+import { InvalidTokenNote, SwitchField, UnavailableFilterNote } from '../rule-search/filterSidebarPrimitives';
 import { TOKEN_KEYS } from '../rule-search/tokens';
 
 import { AlertContactPointFilter } from './AlertContactPointFilter';
@@ -43,9 +34,7 @@ export function AlertRulesFilterSidebar({
   hasActiveFilters,
   issues = [],
 }: AlertRulesFilterSidebarProps) {
-  const folderPickerId = useId();
-  const invalidNamespace = hasIssue(issues, 'namespace');
-  const invalidDataSource = hasIssue(issues, 'datasource');
+  const commonControls = useCommonFilterControls(criteria, onChange, issues);
   const panelRequiresDashboard = issues.some(
     (issue) => issue.key === 'panelId' && issue.reason === 'requiresDashboard'
   );
@@ -54,43 +43,7 @@ export function AlertRulesFilterSidebar({
     ?.unavailableValues?.find((unavailable) => unavailable.value === DEFAULT_POLICY);
 
   const controls: Record<string, SidebarControl> = {
-    [TOKEN_KEYS.rule]: { render: () => <RuleTitleField criteria={criteria} onChange={onChange} /> },
-    [TOKEN_KEYS.label]: {
-      render: () => (
-        <LabelMatchersEditor labels={criteria.labels} onChange={(labels) => onChange({ ...criteria, labels })} />
-      ),
-    },
-    [TOKEN_KEYS.namespace]: {
-      controlId: folderPickerId,
-      note: invalidNamespace && <InvalidTokenNote />,
-      render: () => (
-        <FolderMultiFilter
-          id={folderPickerId}
-          values={criteria.namespaces}
-          invalid={invalidNamespace}
-          onChange={(namespaces) => onChange({ ...criteria, namespaces })}
-        />
-      ),
-    },
-    [TOKEN_KEYS.datasource]: {
-      note: invalidDataSource && <InvalidTokenNote />,
-      render: () => (
-        <DataSourceMultiFilter
-          values={criteria.dataSourceUids}
-          invalid={invalidDataSource}
-          onChange={(dataSourceUids) => onChange({ ...criteria, dataSourceUids })}
-        />
-      ),
-    },
-    [TOKEN_KEYS.plugins]: {
-      render: () => (
-        <SwitchField
-          label={t('alerting.gma-rule-list.search.property.hide-plugin-rules', 'Hide plugin rules')}
-          value={criteria.hidePluginRules}
-          onChange={(hidePluginRules) => onChange({ ...criteria, hidePluginRules })}
-        />
-      ),
-    },
+    ...commonControls,
     [TOKEN_KEYS.dashboard]: {
       render: () => (
         <DashboardPicker
@@ -194,9 +147,6 @@ export function AlertRulesFilterSidebar({
         />
       ),
     },
-    [TOKEN_KEYS.health]: {
-      render: () => <HealthField value={criteria.health} onChange={(health) => onChange({ ...criteria, health })} />,
-    },
   };
 
   return (
@@ -207,10 +157,6 @@ export function AlertRulesFilterSidebar({
       hasActiveFilters={hasActiveFilters}
     />
   );
-}
-
-function hasIssue(issues: CriteriaIssue[], key: string): boolean {
-  return issues.some((issue) => issue.key === key);
 }
 
 type PausedValue = 'any' | 'true' | 'false';

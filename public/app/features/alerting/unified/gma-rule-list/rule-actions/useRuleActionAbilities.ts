@@ -53,22 +53,19 @@ function duplicateGate(rule: AlertRule | RecordingRule): ActionAvailability {
  * resource-fetch state rather than a rule alone, so loading/error states produce a real
  * "unavailable" answer instead of a caller having to remember to check first.
  */
-export function useRuleActionAbilities<T extends AlertRule | RecordingRule>(
-  resourceState: RuleResourceState<T>
+export function useRuleActionAbilities(
+  resourceState: RuleResourceState<AlertRule | RecordingRule>
 ): RuleActionAbilities {
-  if (resourceState.status === 'loading') {
-    const reason = checking();
-    return { edit: reason, pause: reason, delete: reason, duplicate: reason };
-  }
-  if (resourceState.status === 'error') {
-    const reason = unknown();
+  if (resourceState.status !== 'loaded') {
+    const reason = resourceState.status === 'loading' ? checking() : unknown();
     return { edit: reason, pause: reason, delete: reason, duplicate: reason };
   }
 
   const { rule } = resourceState;
+  const write = capabilityGate(rule, K8sAnnotations.AccessWrite);
   return {
-    edit: capabilityGate(rule, K8sAnnotations.AccessWrite),
-    pause: capabilityGate(rule, K8sAnnotations.AccessWrite),
+    edit: write,
+    pause: write,
     delete: capabilityGate(rule, K8sAnnotations.AccessDelete),
     duplicate: duplicateGate(rule),
   };

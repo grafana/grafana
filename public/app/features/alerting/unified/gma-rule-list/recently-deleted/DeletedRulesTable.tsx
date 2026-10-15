@@ -6,11 +6,10 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, type Column, EmptyState, InteractiveTable, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
 
-import { useFolderPath } from '../folder-browsing/folderLookups';
-import { FolderPath } from '../rule-row/FolderPath';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 
+import { DeletedRuleFolderPath } from './DeletedRuleFolderPath';
 import { useDeletedByDisplayNames } from './useDeletedByDisplayNames';
 import { type UseDeletedRulesResult } from './useDeletedRules';
 
@@ -22,28 +21,6 @@ interface DeletedRulesTableProps<T extends DeletedRule> {
   extraColumns?: Array<Column<T>>;
   /** Each page renders the Review drawer for its own rule kind. */
   renderReview: (rule: T, onClose: () => void) => ReactNode;
-}
-
-function FolderPathCell({ folderUid }: { folderUid: string | undefined }) {
-  const path = useFolderPath(folderUid);
-  if (!folderUid) {
-    return <>{t('alerting.deleted-rules.unknown', 'Unknown')}</>;
-  }
-  // A folder that cannot be resolved keeps its UID rather than disabling the row.
-  return path && path.length > 0 ? <FolderPath segments={path} /> : <>{folderUid}</>;
-}
-
-function DeletedByCell({
-  updatedBy,
-  resolve,
-}: {
-  updatedBy: string | undefined;
-  resolve: (uid?: string) => string | undefined;
-}) {
-  if (!updatedBy) {
-    return <>{t('alerting.deleted-rules.unknown', 'Unknown')}</>;
-  }
-  return <>{resolve(updatedBy) ?? updatedBy}</>;
 }
 
 export function DeletedRulesTable<T extends DeletedRule>({
@@ -89,7 +66,12 @@ export function DeletedRulesTable<T extends DeletedRule>({
     {
       id: 'folder',
       header: t('alerting.deleted-rules.table.folder', 'Folder'),
-      cell: ({ row }) => <FolderPathCell folderUid={row.original.metadata.annotations?.[AnnoKeyFolder]} />,
+      cell: ({ row }) => (
+        <DeletedRuleFolderPath
+          folderUid={row.original.metadata.annotations?.[AnnoKeyFolder]}
+          fallback={t('alerting.deleted-rules.unknown', 'Unknown')}
+        />
+      ),
     },
     {
       id: 'deleted',
@@ -105,9 +87,13 @@ export function DeletedRulesTable<T extends DeletedRule>({
     {
       id: 'deletedBy',
       header: t('alerting.deleted-rules.table.deleted-by', 'Deleted by'),
-      cell: ({ row }) => (
-        <DeletedByCell updatedBy={row.original.metadata.annotations?.[AnnoKeyUpdatedBy]} resolve={resolveDeletedBy} />
-      ),
+      cell: ({ row }) => {
+        const updatedBy = row.original.metadata.annotations?.[AnnoKeyUpdatedBy];
+        if (!updatedBy) {
+          return t('alerting.deleted-rules.unknown', 'Unknown');
+        }
+        return resolveDeletedBy(updatedBy) ?? updatedBy;
+      },
     },
     {
       id: 'actions',

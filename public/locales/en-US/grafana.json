@@ -1594,7 +1594,6 @@
         "help-filter-type": "Filter type",
         "help-intro": "Search syntax allows you to query rules by the filters below.",
         "help-title": "Search help",
-        "help-unavailable": "Not available yet",
         "invalid-tokens": "Some filters could not be applied: {{tokens}}",
         "label": "Search",
         "label-add": "Add label filter",
