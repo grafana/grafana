@@ -1,7 +1,7 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService, getDataSourceInstanceSettings } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, getPanelPluginMetasMap, UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -69,6 +69,7 @@ import {
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
+import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import {
   createV2RowsLayout,
@@ -269,6 +270,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       return transformSaveModelSchemaV2ToScene(rsp);
     }
     if (isDashboardV1Resource(rsp)) {
+      await resolveLegacyDatasourceNames(rsp.spec);
       return transformSaveModelToScene(
         {
           dashboard: rsp.spec,
@@ -288,11 +290,14 @@ abstract class DashboardScenePageStateManagerBase<T>
     }
 
     // Neither v1 nor v2 k8s resource - must be the classic DashboardDTO shape.
+    await resolveLegacyDatasourceNames(rsp.dashboard);
     return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
   }
 
   public async loadSnapshot(slug: string) {
     try {
+      // Snapshot panels are built synchronously below.
+      await getPanelPluginMetasMap();
       const dashboard = await this.loadSnapshotScene(slug);
 
       this.setState({ dashboard: dashboard, isLoading: false });
@@ -542,8 +547,8 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
 
-    // Resolve API versions before synchronous getV1()/getV2() calls downstream.
-    await dashboardAPIVersionResolver.resolve();
+    // Scene building downstream is synchronous: it needs the resolved API version and the panel metas map.
+    await Promise.all([dashboardAPIVersionResolver.resolve(), getPanelPluginMetasMap()]);
 
     // Home dashboard is not handled through legacy API and is not versioned.
     // Handling home dashboard flow separately from regular dashboard flow.
@@ -564,6 +569,7 @@ abstract class DashboardScenePageStateManagerBase<T>
 
     recordDashboardFetchTiming(options.uid || undefined, performance.now() - fetchStart);
 
+    await this.prepareResponse(rsp);
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
 
@@ -578,6 +584,12 @@ abstract class DashboardScenePageStateManagerBase<T>
   async enrichLoadOptions(_rsp: T, options: LoadDashboardOptions): Promise<LoadDashboardOptions> {
     return options;
   }
+
+  /**
+   * Post-fetch hook that lets managers asynchronously prepare the response before the scene is
+   * created from it. Public for the same reason as enrichLoadOptions.
+   */
+  async prepareResponse(_rsp: T): Promise<void> {}
 
   public getDashboardFromCache(cacheKey: string): T | null {
     const cachedDashboard = this.dashboardCache;
@@ -630,6 +642,12 @@ abstract class DashboardScenePageStateManagerBase<T>
 }
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
+  async prepareResponse(rsp: DashboardDTO): Promise<void> {
+    if (rsp.dashboard) {
+      await resolveLegacyDatasourceNames(rsp.dashboard);
+    }
+  }
+
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
     // Public dashboards are not part of a session and therefore should not use the cache.
     // Provisioning previews are cached under the file path (options.uid for this route), which
@@ -969,6 +987,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     try {
       this.setState({ isLoading: true });
 
+      // A reload rebuilds the scene outside loadScene, so the metas map has to be in place here too.
+      await getPanelPluginMetasMap();
+
       const fetchStart = performance.now();
       const rsp = await dashboardLoaderSrv.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
       recordDashboardFetchTiming(uid, performance.now() - fetchStart);
@@ -1006,6 +1027,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         return;
       }
 
+      await resolveLegacyDatasourceNames(rsp.dashboard);
       const sceneCreationOptions = getSceneCreationOptions(undefined, rsp.meta);
       const scene = transformSaveModelToScene(rsp, undefined, sceneCreationOptions);
 
@@ -1349,6 +1371,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     try {
       this.setState({ isLoading: true });
 
+      // A reload rebuilds the scene outside loadScene, so the metas map has to be in place here too.
+      await getPanelPluginMetasMap();
+
       const fetchStart = performance.now();
       const rsp = await this.dashboardLoader.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
       recordDashboardFetchTiming(uid, performance.now() - fetchStart);
@@ -1533,6 +1558,12 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
 
     return options;
+  }
+
+  async prepareResponse(rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>): Promise<void> {
+    if (!isDashboardV2Resource(rsp)) {
+      await this.v1Manager.prepareResponse(rsp);
+    }
   }
 
   transformResponseToScene(

@@ -301,6 +301,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
+| `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure` | TLS settings for polling an `https` `plugins_url` or `core_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
@@ -311,16 +312,15 @@ priority order. Repeating a section name merges its keys; it does not create ano
 Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
 the corresponding section must contain at least one nonempty setting (for example `audience`)
 in the INI configuration, because Grafana's config loader drops empty sections.
-The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` settings
-remain supported during rollout, including environment overrides. New sections take priority; a
-section with the same target name replaces the entire legacy target (an empty URL disables it).
-Legacy targets keep their previous relative priority: cloud app platform before BaaS.
+The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys are no
+longer read. A deployment that still sets them gets no aggregate target, so configure
+`[router.aggregate.<name>]` sections instead.
 
 | Key | Meaning |
 | --- | --- |
 | `url` | Target base URL. Unset skips the target. |
 | `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
-| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. Not read from the legacy `[cloud_router]` keys. |
+| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
 | `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
 | `ca_file`, `insecure` | Per-target TLS settings. |
@@ -358,6 +358,12 @@ work without the section in the INI configuration.
 | `connect_base_delay`, `connect_max_delay` | Backoff between connection attempts, growing from the base delay up to the max delay. Default `1s` and `10s`. |
 | `keepalive_time`, `keepalive_timeout` | Idle time before the client pings, and how long it waits for a reply before closing the connection. Default `20s` and `10s`; a `keepalive_time` of `0` disables pings. Pings are sent on connections without active calls too, so the plugin server must allow pings at least this often and without active calls; by default, gRPC servers allow one every 5 minutes and close connections that ping more often. |
 | `max_recv_msg_size`, `max_send_msg_size` | Largest message the router accepts from and sends to a plugin, in bytes. Default 100 MiB each. The plugin server's own limits still apply. |
+| `tls_enabled` | Connect to every plugin backend over TLS. Default `false` (plaintext). Applies to both `plugins_url` and `core_url` backends, since a manifest's `host` has no scheme to choose per plugin. |
+| `tls_ca_file`, `tls_insecure` | Same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. |
+| `tls_server_name` | Name to verify the backend's certificate against, instead of the manifest's `host`. |
+
+`tls_ca_file`, `tls_insecure` and `tls_server_name` are a startup error without `tls_enabled`, so
+a config that expects TLS can't silently fall back to plaintext.
 
 ## Security
 
@@ -365,7 +371,7 @@ Before landing, scan with semgrep. The sensitive surface:
 
 - the headers that proxies forward to backends;
 - the `InsecureSkipVerify` path in `buildAggregateTLSConfig`, which is deliberately enabled by
-  config;
+  config, for aggregate targets, plugin manifests sources and plugin gRPC connections;
 - the CAP token exchange and credential handling in `cloud_router.go`;
 - the OBO exchange for plugin storage clients (`storage.go`, which delegates to unified storage);
 - the ST fallback's stack lookup and host selection.

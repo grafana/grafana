@@ -8,6 +8,7 @@ import { DashboardViewLazy } from 'app/features/dashboard-scene/embedding/Dashbo
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
+import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -71,6 +72,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Notebook',
         description: 'An editable notebook, for a host rendering one outside the notebooks route',
         component: NotebookViewLazy,
+      },
+      {
+        id: PluginExtensionExposedComponents.AddToNotebookFormV1,
+        title: 'Add to notebook form',
+        description: 'Add to notebook form',
+        component: AddToNotebookFormExposedComponent,
       },
       {
         id: PluginExtensionExposedComponents.DashboardViewV1,

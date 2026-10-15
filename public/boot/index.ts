@@ -1,4 +1,4 @@
-import { type Display } from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import { type CurrentUserInfo } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { type OrgRole, type CurrentUserDTO, type GrafanaConfig, type NavLinkDTO } from '@grafana/data';
 
 const publicDashboardAccessToken = window.__grafanaPublicDashboardAccessToken;
@@ -212,7 +212,7 @@ function loadBootData(): Promise<{ redirect: string } | BootApiResponse> {
   });
 }
 
-async function fetchUser(): Promise<Display | undefined> {
+async function fetchUser(): Promise<CurrentUserInfo | undefined> {
   // Without a namespace we can't target the endpoint, so treat as anonymous
   // and let the app render its unauthenticated flow.
   const namespace = window.grafanaBootData?.settings?.namespace;
@@ -220,6 +220,7 @@ async function fetchUser(): Promise<Display | undefined> {
     return undefined;
   }
 
+  // TODO... once it is widely deployed, this should be replaced with /apis/iam.grafana.app/v0alpha1/whoami
   const resp = await fetch(`/apis/iam.grafana.app/v0alpha1/namespaces/${namespace}/users/~`);
   if (resp.status === 401) {
     return undefined;

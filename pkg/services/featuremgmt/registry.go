@@ -525,14 +525,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "queryServiceFromUI",
-			Description: "Routes requests to the new query service",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // and can change at startup
-			Expression:  "false",
-		},
-		{
 			Name:            "datasourcesRerouteLegacyCRUDAPIs",
 			Description:     "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
 			Stage:           FeatureStageExperimental,
@@ -655,6 +647,14 @@ var (
 		{
 			Name:        "dashboards.publicDashboardBadgeFromApi",
 			Description: "Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "dashboards.libraryPanelHorizontalRepeatFullWidth",
+			Description: "Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
@@ -1320,14 +1320,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:        "pluginsSriChecks",
-			Description: "Enables SRI checks for plugin assets",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false", // disabled by default
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1991,7 +1983,7 @@ var (
 		{
 			Name:        "grafana.newTextPanel",
 			Description: "Enables the new text panel",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDatavizSquad,
 			Generate:    Generate{React: true},
 			Expression:  "false",
@@ -3174,6 +3166,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:        "grafana.navigationInfoArchRefresh",
+			Description: "Enables the refreshed information architecture for Grafana's navigation",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:        "grafana.exploreMetricsSidebar",

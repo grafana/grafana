@@ -13,6 +13,8 @@ import { NUMERIC_ID_REF_WARNING } from './constants';
 import { findByType } from './listFilters';
 import { logDataSourceWarning } from './logging';
 
+const NUMERIC_ID = /^-?\d+$/;
+
 export interface ResolvedRef {
   item: DataSourceInstanceListItem;
   /** The raw template variable string, when the ref was one. */
@@ -64,7 +66,9 @@ function lookupKey(key: string): DataSourceInstanceListItem | undefined {
     return item;
   }
   const byId = getListItemById(key);
-  if (byId) {
+  // The MT list has no ids, so a numeric id misses there and the caller falls back to the
+  // legacy DataSourceSrv; it is still a caller to move to uids.
+  if (byId || (NUMERIC_ID.test(key) && getDataSourceCacheSource()?.kind === 'mt')) {
     warnNumericIdRef(key);
   }
   return byId;
