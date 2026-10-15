@@ -136,8 +136,6 @@ export const FlagKeys = {
   EnableAppChromeExtensions: "enableAppChromeExtensions",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
-  /** Set this to true to enable all dashboard empty state extensions registered by plugins. */
-  EnableDashboardEmptyExtensions: "enableDashboardEmptyExtensions",
   /** Enables the extension admin page regardless of development mode */
   EnableExtensionsAdminPage: "enableExtensionsAdminPage",
   /** Automatic service account and token setup for plugins */
@@ -1045,17 +1043,6 @@ export const useFlagEnableAppChromeExtensions = (options?: ReactFlagEvaluationOp
  */
 export const useFlagEnableColorblindSafePanelOptions = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("enableColorblindSafePanelOptions", false, options).value;
-};
-
-/**
- * Set this to true to enable all dashboard empty state extensions registered by plugins.
- *
- * **Details:**
- * - flag key: `enableDashboardEmptyExtensions`
- * - default value: `false`
- */
-export const useFlagEnableDashboardEmptyExtensions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("enableDashboardEmptyExtensions", false, options).value;
 };
 
 /**

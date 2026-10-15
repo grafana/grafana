@@ -107,7 +107,6 @@ declare module "@openfeature/core" {
     | "alertEnrichment"
     | "preferLibraryPanelTitle"
     | "enableAppChromeExtensions"
-    | "enableDashboardEmptyExtensions"
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
