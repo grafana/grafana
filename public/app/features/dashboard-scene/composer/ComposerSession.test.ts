@@ -1,6 +1,7 @@
 import { act } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
+import { sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   getExtensionSidebarPresentation,
@@ -25,6 +26,8 @@ import { canEnterComposer } from './composerAccess';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  // Ad hoc variables look their data source up after the scene is built (#133913).
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ meta: { multiValueFilterOperators: true } }),
 }));
 
 jest.mock('../saving/createDetectChangesWorker', () => ({
@@ -321,6 +324,48 @@ describe('checked apply', () => {
     const outcome = await session.applySpec(spec, { signal: live(), baseRevision: revision });
     expect(outcome.status).toBe('stale');
     expect(scene.state.title).toBe('Theirs');
+  });
+
+  // Since #133913 a rebuilt ad hoc variable resolves its data source after the build, outside the write. The
+  // result must reach the live variable, and must not count as a change, or every write would make the next
+  // one stale.
+  it('keeps its revision through the lookups a rebuilt spec finishes later', async () => {
+    const scene = setup();
+    const session = enter(scene);
+    const { spec, revision } = await session.readSpec();
+    const withAdhoc = {
+      ...spec,
+      variables: [
+        ...spec.variables,
+        {
+          kind: 'AdhocVariable' as const,
+          group: 'prometheus',
+          datasource: { name: 'gdev-prometheus' },
+          spec: {
+            name: 'filters',
+            baseFilters: [],
+            filters: [],
+            defaultKeys: [],
+            hide: 'dontHide' as const,
+            skipUrlSync: false,
+            allowCustomValue: true,
+          },
+        },
+      ],
+    };
+
+    const applied = await session.applySpec(withAdhoc, { signal: live(), baseRevision: revision });
+    expect(applied).toMatchObject({ status: 'applied', revision: revision + 1 });
+    // Let the data source lookup land.
+    await act(async () => {});
+
+    expect(sceneGraph.lookupVariable('filters', scene)?.state).toMatchObject({ supportsMultiValueOperators: true });
+    expect((await session.readSpec()).revision).toBe(revision + 1);
+    const next = await session.applySpec(
+      { ...withAdhoc, title: 'Next' },
+      { signal: live(), baseRevision: revision + 1 }
+    );
+    expect(next.status).toBe('applied');
   });
 
   it('refuses a second write from the same base revision', async () => {
