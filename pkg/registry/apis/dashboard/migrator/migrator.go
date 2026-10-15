@@ -13,7 +13,11 @@ type FoldersDashboardsMigrator interface {
 	MigrateFolders(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 }
 
-// foldersDashboardsMigrator handles migrating dashboards, folders, and library panels
+type LibraryPanelsMigrator interface {
+	MigrateLibraryPanels(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
+}
+
+// foldersDashboardsMigrator handles migrating dashboards and folders
 // from legacy SQL storage.
 type foldersDashboardsMigrator struct {
 	migrator legacy.Migrator
@@ -40,8 +44,22 @@ func (m *foldersDashboardsMigrator) MigrateFolders(ctx context.Context, orgId in
 	return m.migrator.MigrateFolders(ctx, orgId, opts, stream)
 }
 
+// libraryPanelsMigrator handles migrating library panels from legacy SQL storage.
+type libraryPanelsMigrator struct {
+	migrator legacy.Migrator
+}
+
+// ProvideLibraryPanelsMigrator creates a libraryPanelsMigrator for use in wire DI.
+func ProvideLibraryPanelsMigrator(
+	migrator legacy.Migrator,
+) LibraryPanelsMigrator {
+	return &libraryPanelsMigrator{
+		migrator: migrator,
+	}
+}
+
 // MigrateLibraryPanels reads library panels from legacy SQL storage and streams them
 // to the unified storage bulk process API.
-func (m *foldersDashboardsMigrator) MigrateLibraryPanels(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+func (m *libraryPanelsMigrator) MigrateLibraryPanels(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	return m.migrator.MigrateLibraryPanels(ctx, orgId, opts, stream)
 }
