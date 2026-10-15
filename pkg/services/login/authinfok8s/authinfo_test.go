@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	clientrest "k8s.io/client-go/rest"
@@ -884,6 +885,63 @@ func TestStore_DeleteAuthInfo(t *testing.T) {
 			if tc.check != nil {
 				tc.check(t)
 			}
+		})
+	}
+}
+
+func TestStore_GetUsersAuthModules(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		userIDs    []int64
+		failSecond bool
+		want       map[int64][]string
+	}{
+		{name: "groups modules by user", userIDs: []int64{1, 2}, want: map[int64][]string{1: {"ldap"}, 2: {"oauth_github"}}},
+		{name: "returns later lookup error without partial results", userIDs: []int64{1, 2}, failSecond: true},
+		{name: "empty input makes no requests", want: map[int64][]string{}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			requests := 0
+			store := newTestStore(t, func(w http.ResponseWriter, r *http.Request) {
+				requests++
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/users"):
+					switch r.URL.Query().Get("labelSelector") {
+					case utils.LabelKeyDeprecatedInternalID + "=1":
+						usersResponse(t, w, "first")
+					case utils.LabelKeyDeprecatedInternalID + "=2":
+						usersResponse(t, w, "second")
+					default:
+						t.Errorf("unexpected user selector: %s", r.URL.RawQuery)
+						http.Error(w, "unexpected selector", http.StatusBadRequest)
+					}
+				case strings.HasSuffix(r.URL.Path, "/authinfos"):
+					uid, module := "first", "ldap"
+					if r.URL.Query().Get("fieldSelector") == "spec.userRef.name=second" {
+						if tt.failSecond {
+							http.Error(w, "second user lookup failed", http.StatusBadRequest)
+							return
+						}
+						uid, module = "second", "oauth_github"
+					} else {
+						assert.Equal(t, "spec.userRef.name=first", r.URL.Query().Get("fieldSelector"))
+					}
+					writeJSON(t, w, iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{authInfoItem(uid+"."+module, uid, module, "auth-id", time.Now())}})
+				default:
+					t.Errorf("unexpected request: %s", r.URL.Path)
+					http.NotFound(w, r)
+				}
+			})
+			modules, err := store.GetUsersAuthModules(contextWithReqContext(7), tt.userIDs)
+			if tt.failSecond {
+				require.Error(t, err)
+				require.True(t, apierrors.IsBadRequest(err))
+				require.Nil(t, modules)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, modules)
+			}
+			require.Equal(t, len(tt.userIDs)*2, requests)
 		})
 	}
 }
