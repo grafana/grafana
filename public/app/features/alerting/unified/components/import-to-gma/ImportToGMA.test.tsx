@@ -688,7 +688,7 @@ describe('ImportToGMA wizard — reveal/hide secrets toggle', () => {
     expect(revealButton).toBeDisabled();
 
     await user.hover(revealButton);
-    expect(await screen.findByText(/no secrets were found in this configuration/i)).toBeInTheDocument();
+    expect(await screen.findByText(/nothing was redacted in this configuration/i)).toBeInTheDocument();
   });
 
   it('reopens the preview hidden after being closed while revealed', async () => {

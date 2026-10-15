@@ -1,6 +1,6 @@
 import { dump, load } from 'js-yaml';
 
-import type { NotificationChannelOption, NotifierDTO } from '../../types/alerting';
+import type { NotificationChannelOption, NotifierDTO } from '../../../types/alerting';
 
 export class PreviewRedactionError extends Error {}
 
@@ -59,10 +59,6 @@ export function reformatPreviewContent(rawContent: string, format: 'yaml' | 'jso
   }
 
   return format === 'json' ? JSON.stringify(parsed, null, 2) : dump(parsed);
-}
-
-export function containsRedactedValue(content: string): boolean {
-  return content.includes(REDACTED_VALUE);
 }
 
 // Maps ${schema.type}:${version.version} to the legacy Alertmanager receiver YAML key.
@@ -224,7 +220,7 @@ function looksLikeCredentialUrl(value: string): boolean {
     return false;
   }
   // A non-empty userinfo password is unambiguously a credential by construction, unlike a path
-  // segment or query param, so it doesn't need the high-entropy heuristic below.
+  // segment or query param, so it doesn't need the token-shape heuristic below.
   if (url.password) {
     return true;
   }
@@ -240,6 +236,15 @@ function looksLikeCredentialUrl(value: string): boolean {
 
 function looksLikeSecretValue(value: string): boolean {
   return looksLikeCredentialUrl(value) || looksLikeRandomToken(value);
+}
+
+// The value heuristics only run where credentials can hide without a schema field to name them,
+// and never on `name` keys: receiver names are often long and mixed-case, and hiding one in
+// both route.receiver and receivers[].name makes the routing impossible to follow.
+const HEURISTIC_SCOPES = new Set(['receivers', 'global']);
+
+function shouldApplyValueHeuristics(keyName: string | undefined, path: readonly string[]): boolean {
+  return HEURISTIC_SCOPES.has(path[0]) && keyName !== 'name';
 }
 
 function redactNode(
@@ -259,7 +264,7 @@ function redactNode(
       Object.entries(node).map(([key, value]) => [key, redactNode(value, key, [...path, key], secretFieldMap)])
     );
   }
-  if (typeof node === 'string' && looksLikeSecretValue(node)) {
+  if (typeof node === 'string' && shouldApplyValueHeuristics(keyName, path) && looksLikeSecretValue(node)) {
     return REDACTED_VALUE;
   }
   return node;

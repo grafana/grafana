@@ -3,12 +3,11 @@ import {
   type NotifierDTO,
   type NotifierType,
   type NotifierVersion,
-} from '../../types/alerting';
+} from '../../../types/alerting';
 
 import {
   PreviewRedactionError,
   buildSecretFieldMap,
-  containsRedactedValue,
   redactPreviewSecrets,
   reformatPreviewContent,
 } from './redactPreviewSecrets';
@@ -410,6 +409,40 @@ global:
     expect(result).toContain('resolve_timeout: 5m');
   });
 
+  it('keeps receiver names visible in both route.receiver and receivers[].name', () => {
+    const yaml = `
+route:
+  receiver: PlatformTeamPagerDuty
+  routes:
+    - receiver: team-payments-oncall-2024
+      matchers:
+        - alertname = KubePodCrashLoopingWarn
+receivers:
+  - name: PlatformTeamPagerDuty
+  - name: team-payments-oncall-2024
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
+
+    expect(result).not.toContain('<redacted>');
+    expect(result).toContain('receiver: PlatformTeamPagerDuty');
+    expect(result).toContain('name: team-payments-oncall-2024');
+  });
+
+  it('still applies the token heuristic to unnamed values under receivers', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - send_resolved: true
+        custom_field: Zk3jX9qLm2Vb8Nc4Rt7Yw1Qa
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
+
+    expect(result).not.toContain('Zk3jX9qLm2Vb8Nc4Rt7Yw1Qa');
+  });
+
   it('redacts a low-entropy global.wechat_api_secret', () => {
     const yaml = `
 global:
@@ -663,21 +696,6 @@ describe('buildSecretFieldMap', () => {
     expect(result.pagerduty_configs.has('service_key')).toBe(true);
     expect(result.pagerduty_configs.has('description')).toBe(false);
     expect(result.pagerduty_configs.size).toBe(2);
-  });
-});
-
-describe('containsRedactedValue', () => {
-  it('returns true when the content contains the redaction marker', () => {
-    expect(containsRedactedValue('api_url: <redacted>\nchannel: "#alerts"')).toBe(true);
-  });
-
-  it('returns false for content with no redaction marker', () => {
-    expect(containsRedactedValue('api_url: https://example.com\nchannel: "#alerts"')).toBe(false);
-  });
-
-  it('is an exact match, not a loose one', () => {
-    expect(containsRedactedValue('api_url: <REDACTED>')).toBe(false);
-    expect(containsRedactedValue('api_url: < redacted >')).toBe(false);
   });
 });
 
