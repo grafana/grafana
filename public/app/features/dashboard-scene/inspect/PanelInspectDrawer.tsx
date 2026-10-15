@@ -37,6 +37,10 @@ interface PanelInspectDrawerState extends SceneObjectState {
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
   static Component = PanelInspectRenderer;
+  private queryTabs?: SceneInspectTab[];
+  private jsonTab?: InspectJsonTab;
+  private metadataTab?: InspectMetaDataTab;
+  private noticesTab?: InspectErrorsAndNoticesTab;
 
   constructor(state: PanelInspectDrawerState) {
     super(state);
@@ -44,49 +48,95 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   }
 
   private _activationHandler() {
-    this.buildTabs(0);
+    const panel = this.state.panelRef.resolve();
+    let provider = sceneGraph.getData(panel);
+    let discoveryVersion = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    const reconcile = () => this.reconcileTabs();
+    const discoverInspectors = async () => {
+      const version = ++discoveryVersion;
+      const data = provider.state.data;
+      const [metadata, notices] = await Promise.all([
+        getDataSourceWithInspector(data).catch(() => undefined),
+        getDataSourceWithErrorsAndNoticesInspector(data).catch(() => undefined),
+      ]);
+      if (version !== discoveryVersion) {
+        return;
+      }
+      const { panelRef } = this.state;
+      if (this.metadataTab?.state.dataSource !== metadata) {
+        this.metadataTab = metadata ? new InspectMetaDataTab({ panelRef, dataSource: metadata }) : undefined;
+      }
+      if (this.noticesTab?.state.dataSource !== notices) {
+        this.noticesTab = notices ? new InspectErrorsAndNoticesTab({ panelRef, dataSource: notices }) : undefined;
+      }
+      reconcile();
+    };
+    const updateData = () => {
+      reconcile();
+      void discoverInspectors();
+    };
+    const subscribeToData = () =>
+      provider.subscribeToState((state, previous) => {
+        if (state.data !== previous.data) {
+          updateData();
+        }
+      });
+    // Plugin availability has no awaitable API; data updates must not restart this timeout.
+    const checkPlugin = (elapsed = 0) => {
+      clearTimeout(retryTimer);
+      this.setState({ pluginNotLoaded: !panel.getPlugin() && elapsed >= 2000 });
+      reconcile();
+      if (!panel.getPlugin() && elapsed < 2000) {
+        retryTimer = setTimeout(() => checkPlugin(elapsed + 100), 100);
+      }
+    };
+    let dataSubscription = subscribeToData();
+    const panelSubscription = panel.subscribeToState((state, previous) => {
+      if (state.$data !== previous.$data) {
+        dataSubscription.unsubscribe();
+        provider = sceneGraph.getData(panel);
+        dataSubscription = subscribeToData();
+        updateData();
+      }
+      if (state.pluginId !== previous.pluginId) {
+        checkPlugin();
+      }
+    });
+    checkPlugin();
+    void discoverInspectors();
+    return () => {
+      discoveryVersion++;
+      clearTimeout(retryTimer);
+      dataSubscription.unsubscribe();
+      panelSubscription.unsubscribe();
+    };
   }
 
-  /**
-   * We currently have no async await to get the panel plugin from the VizPanel.
-   * That is why there is a retry argument here and a setTimeout, to try again a bit later.
-   */
-  async buildTabs(retry: number) {
-    const panelRef = this.state.panelRef;
-    const plugin = panelRef.resolve()?.getPlugin();
+  private reconcileTabs() {
+    const { panelRef } = this.state;
+    const panel = panelRef.resolve();
     const tabs: SceneInspectTab[] = [];
-
-    if (!plugin) {
-      if (retry < 2000) {
-        setTimeout(() => this.buildTabs(retry + 100), 100);
-      } else {
-        this.setState({ pluginNotLoaded: true });
+    if (supportsDataQuery(panel.getPlugin())) {
+      this.queryTabs ??= [
+        new InspectDataTab({ panelRef }),
+        new InspectStatsTab({ panelRef }),
+        new InspectQueryTab({ panelRef }),
+      ];
+      tabs.push(...this.queryTabs);
+      if (this.metadataTab) {
+        tabs.push(this.metadataTab);
+      }
+      if (hasErrorsOrNotices(sceneGraph.getData(panel).state.data)) {
+        this.noticesTab ??= new InspectErrorsAndNoticesTab({ panelRef });
+        tabs.push(this.noticesTab);
       }
     }
-
-    if (panelRef) {
-      if (supportsDataQuery(plugin)) {
-        const data = sceneGraph.getData(panelRef.resolve());
-
-        tabs.push(new InspectDataTab({ panelRef }));
-        tabs.push(new InspectStatsTab({ panelRef }));
-        tabs.push(new InspectQueryTab({ panelRef }));
-
-        const dsWithInspector = await getDataSourceWithInspector(data.state.data);
-        if (dsWithInspector) {
-          tabs.push(new InspectMetaDataTab({ panelRef, dataSource: dsWithInspector }));
-        }
-
-        if (hasErrorsOrNotices(data.state.data)) {
-          const dsWithErrorsAndNotices = await getDataSourceWithErrorsAndNoticesInspector(data.state.data);
-          tabs.push(new InspectErrorsAndNoticesTab({ panelRef, dataSource: dsWithErrorsAndNotices }));
-        }
-      }
-
-      tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));
+    this.jsonTab ??= new InspectJsonTab({ panelRef, onClose: this.onClose });
+    tabs.push(this.jsonTab);
+    if (tabs.length !== this.state.tabs?.length || tabs.some((tab, index) => tab !== this.state.tabs?.[index])) {
+      this.setState({ tabs });
     }
-
-    this.setState({ tabs });
   }
 
   getDrawerTitle() {
