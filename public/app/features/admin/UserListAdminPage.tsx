@@ -76,30 +76,33 @@ const UserListAdminPageUnConnected = ({
     <Page.Contents>
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
-          <FilterInput
-            placeholder={t(
-              'admin.user-list-admin-page-un-connected.placeholder-search-login-email',
-              'Search user by login, email, or name.'
-            )}
-            autoFocus={true}
-            value={query}
-            onChange={changeQuery}
-            escapeRegex={false}
-          />
-          <RadioButtonGroup
-            options={[
-              { label: t('admin.user-list-admin-page-un-connected.label.all-users', 'All users'), value: false },
-              {
-                label: t('admin.user-list-admin-page-un-connected.label.active-last-days', 'Active last 30 days'),
-                value: true,
-              },
-            ]}
-            onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
-            value={filters.find((f) => f.name === 'activeLast30Days')?.value}
-            className={styles.filter}
-          />
+          <div className={styles.search}>
+            <FilterInput
+              placeholder={t(
+                'admin.user-list-admin-page-un-connected.placeholder-search-login-email',
+                'Search user by login, email, or name.'
+              )}
+              autoFocus={true}
+              value={query}
+              onChange={changeQuery}
+              escapeRegex={false}
+            />
+          </div>
+          <div className={styles.filter}>
+            <RadioButtonGroup
+              options={[
+                { label: t('admin.user-list-admin-page-un-connected.label.all-users', 'All users'), value: false },
+                {
+                  label: t('admin.user-list-admin-page-un-connected.label.active-last-days', 'Active last 30 days'),
+                  value: true,
+                },
+              ]}
+              onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
+              value={filters.find((f) => f.name === 'activeLast30Days')?.value}
+            />
+          </div>
           {extraFilters.map((FilterComponent, index) => (
-            <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
+            <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.extraFilter} />
           ))}
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
             <LinkButton href="admin/users/create" variant="primary">
@@ -129,11 +132,19 @@ export const UserListAdminPageContent = connector(UserListAdminPageUnConnected);
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    // FilterInput is width 100%, so as a flex item its base size is the whole row.
+    // Give that growth to a wrapper that can shrink, and keep the status filter at
+    // its content width. RadioButtonGroup ellipsizes when it is allowed to shrink.
+    search: css({
+      flex: '1 1 240px',
+      minWidth: theme.spacing(20),
+    }),
     filter: css({
-      margin: theme.spacing(0, 1),
-      [theme.breakpoints.down('sm')]: {
-        margin: 0,
-      },
+      flex: '0 0 auto',
+      minWidth: 'max-content',
+    }),
+    extraFilter: css({
+      flex: '0 0 auto',
     }),
     actionBar: css({
       marginBottom: theme.spacing(2),
@@ -146,16 +157,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     row: css({
       display: 'flex',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       textAlign: 'left',
       marginBottom: theme.spacing(0.5),
       flexGrow: 1,
-
-      [theme.breakpoints.down('sm')]: {
-        flexWrap: 'wrap',
-        gap: theme.spacing(2),
-        width: '100%',
-      },
+      minWidth: 0,
+      width: '100%',
+      gap: theme.spacing(1),
+      flexWrap: 'wrap',
     }),
   };
 };

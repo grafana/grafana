@@ -58,29 +58,32 @@ const UserListAnonymousDevicesPageUnConnected = ({
     <Page.Contents>
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
-          <FilterInput
-            placeholder={t(
-              'admin.user-list-anonymous-devices-page-un-connected.placeholder-search-devices-by-ip-address',
-              'Search devices by IP address.'
-            )}
-            autoFocus={true}
-            value={query}
-            onChange={changeAnonQuery}
-          />
-          <RadioButtonGroup
-            options={[
-              {
-                label: t(
-                  'admin.user-list-anonymous-devices-page-un-connected.label.active-last-days',
-                  'Active last 30 days'
-                ),
-                value: true,
-              },
-            ]}
-            // onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
-            value={filters.find((f) => f.name === 'activeLast30Days')?.value}
-            className={styles.filter}
-          />
+          <div className={styles.search}>
+            <FilterInput
+              placeholder={t(
+                'admin.user-list-anonymous-devices-page-un-connected.placeholder-search-devices-by-ip-address',
+                'Search devices by IP address.'
+              )}
+              autoFocus={true}
+              value={query}
+              onChange={changeAnonQuery}
+            />
+          </div>
+          <div className={styles.filter}>
+            <RadioButtonGroup
+              options={[
+                {
+                  label: t(
+                    'admin.user-list-anonymous-devices-page-un-connected.label.active-last-days',
+                    'Active last 30 days'
+                  ),
+                  value: true,
+                },
+              ]}
+              // onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
+              value={filters.find((f) => f.name === 'activeLast30Days')?.value}
+            />
+          </div>
         </div>
       </div>
       <AnonUsersDevicesTable
@@ -99,11 +102,13 @@ export const UserListAnonymousDevicesPageContent = connector(UserListAnonymousDe
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    search: css({
+      flex: '1 1 240px',
+      minWidth: theme.spacing(20),
+    }),
     filter: css({
-      margin: theme.spacing(0, 1),
-      [theme.breakpoints.down('sm')]: {
-        margin: 0,
-      },
+      flex: '0 0 auto',
+      minWidth: 'max-content',
     }),
     actionBar: css({
       marginBottom: theme.spacing(2),
@@ -116,16 +121,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     row: css({
       display: 'flex',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       textAlign: 'left',
       marginBottom: theme.spacing(0.5),
       flexGrow: 1,
-
-      [theme.breakpoints.down('sm')]: {
-        flexWrap: 'wrap',
-        gap: theme.spacing(2),
-        width: '100%',
-      },
+      minWidth: 0,
+      width: '100%',
+      gap: theme.spacing(1),
+      flexWrap: 'wrap',
     }),
   };
 };
