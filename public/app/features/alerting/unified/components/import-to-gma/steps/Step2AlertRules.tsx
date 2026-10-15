@@ -280,7 +280,6 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                       <DataSourcePicker
                         {...field}
                         alerting
-                        // Selecting a source also picks the recording rules target, so wait until the valid targets are known.
                         disabled={recordingTargets.isLoading}
                         filter={(ds) =>
                           isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) &&

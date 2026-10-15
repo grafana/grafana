@@ -323,7 +323,6 @@ function YamlTargetDataSourceField({
             noDefault
             inputId="yaml-target-data-source"
             alerting
-            // Selecting a source also picks the recording rules target, so wait until the valid targets are known.
             disabled={recordingTargets.isLoading}
             filter={(ds) => isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type)}
             onChange={(ds) => {
@@ -490,7 +489,6 @@ function DataSourceField({ recordingTargets }: { recordingTargets: DataSourcesWi
             {...field}
             width={50}
             inputId="datasource-picker"
-            // Selecting a source also picks the recording rules target, so wait until the valid targets are known.
             disabled={recordingTargets.isLoading}
             onChange={(ds) => {
               setValue('selectedDatasourceUID', ds.uid);
