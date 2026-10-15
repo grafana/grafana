@@ -256,6 +256,28 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 	})
 }
 
+
+func TestAlertBroadcast_ShouldLogQueueDrop(t *testing.T) {
+	state := newAlertBroadcastState(log.NewNopLogger(), nil)
+	start := time.Now()
+
+	dropped, ok := state.shouldLogQueueDrop(start)
+	require.True(t, ok)
+	require.EqualValues(t, 1, dropped)
+
+	for i := 0; i < 100; i++ {
+		dropped, ok = state.shouldLogQueueDrop(start.Add(time.Second))
+		require.False(t, ok)
+		require.Zero(t, dropped)
+	}
+	require.EqualValues(t, 100, state.dropsSinceWarning)
+
+	dropped, ok = state.shouldLogQueueDrop(start.Add(alertBroadcastDropLogInterval))
+	require.True(t, ok)
+	require.EqualValues(t, 101, dropped)
+	require.Zero(t, state.dropsSinceWarning)
+}
+
 func TestInitAlertBroadcast(t *testing.T) {
 	testCases := []struct {
 		name            string
