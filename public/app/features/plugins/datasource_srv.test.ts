@@ -817,6 +817,21 @@ describe('datasource_srv', () => {
     it.each([
       ['legacy', viaLegacy],
       ['async', viaAsync],
+    ])('lists a datasource variable pointing at a %s registration', (_api, register) => {
+      const variableSrv = {
+        getVariables: () => [{ type: 'datasource', name: 'runtimeVar', current: { value: 'uid-runtime' } }],
+        replace: (v: string) => v,
+      } as unknown as TemplateSrv;
+      srv = new DatasourceSrv(variableSrv);
+      srv.init(bootData(), 'Regular');
+      register(srv, new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime'));
+
+      expect(srv.getList({ all: true, variables: true }).map((ds) => ds.uid)).toContain('${runtimeVar}');
+    });
+
+    it.each([
+      ['legacy', viaLegacy],
+      ['async', viaAsync],
     ])('keeps a %s registration visible to both APIs across reload and init', async (_api, register) => {
       const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
       register(srv, runtime);

@@ -340,7 +340,7 @@ export class DatasourceSrv implements DataSourceService {
           dsValue = dsValue[0];
         }
         const dsSettings =
-          !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.settingsMapByUid[dsValue]);
+          !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.getDataSourceSettingsByUid(dsValue));
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;
