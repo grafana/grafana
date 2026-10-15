@@ -134,21 +134,6 @@ If you need to hide columns, you can do so using [data transformations](ref:data
 You can temporarily change how column data is displayed using column filtering.
 For example, you can show or hide specific values.
 
-### Turn on column filtering
-
-To turn on column filtering, follow these steps:
-
-1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
-1. Hover over any part of the panel to which you want to add the link to display the actions menu on the top right corner.
-1. Click the menu and select **Edit**.
-1. In the panel editor pane, expand the **Table** options section.
-1. Toggle on the [**Column filter** switch](#table-options).
-
-A menu icon appears on the right side of the column header.
-Click the icon to access filtering options.
-
-{{< figure src="/static/img/docs/tables/column-filter-with-icon.png" max-width="350px" alt="Column filtering turned on" class="docs-image--no-shadow" >}}
-
 ### Filter column values
 
 To filter column values, follow these steps:
