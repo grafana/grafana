@@ -797,7 +797,7 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 	if err != nil {
 		b.log.Error("blob garbage collection failed", "error", err)
 	}
-	b.log.Info("blob garbage collection finished", "blobs", count, "dryRun", dryRun)
+	b.log.Info("blob garbage collection finished", "blobs", count, "dryRun", dryRun, "skippedWithoutAge", b.blobGC.SkippedWithoutAge())
 }
 
 // runGarbageCollection identifies deleted resources that are safe
