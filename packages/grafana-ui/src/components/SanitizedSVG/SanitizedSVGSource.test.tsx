@@ -46,6 +46,18 @@ describe('sanitizeUntrustedSVGContent', () => {
     expect(clean).not.toMatch(/<style|<image|<feImage|evil\.example/i);
     expect(clean).toContain('<rect');
   });
+
+  it('removes attributes that let the root svg paint outside its box', () => {
+    const overlay =
+      '<svg xmlns="http://www.w3.org/2000/svg" style="position:fixed;inset:0;z-index:9999" transform="scale(100)" overflow="visible"><rect style="fill:red" width="10" height="10"/></svg>';
+    const root = new DOMParser()
+      .parseFromString(textUtil.sanitizeUntrustedSVGContent(overlay), 'text/html')
+      .querySelector('svg');
+    expect(root?.hasAttribute('style')).toBe(false);
+    expect(root?.hasAttribute('transform')).toBe(false);
+    expect(root?.hasAttribute('overflow')).toBe(false);
+    expect(root?.querySelector('rect')?.getAttribute('style')).toBe('fill:red');
+  });
 });
 
 describe('SanitizedSVG', () => {
