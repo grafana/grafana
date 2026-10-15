@@ -519,6 +519,11 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     return this.document.resolveVariablePick?.(key) ?? null;
   }
 
+  /** @internal Resolves an annotation or data layer whose control has `key`; null on other documents. */
+  public resolveAnnotationPick(key: string): ElementPick | null {
+    return this.document.resolveAnnotationPick?.(key) ?? null;
+  }
+
   /** @internal Resolves the element rendered under a DOM root whose `elementKeyAttribute` is `key`. */
   public resolveElementPick(key: string, point: ElementPoint = ORIGIN): ElementPick | null {
     return this.document.resolveElementPick(key, point);

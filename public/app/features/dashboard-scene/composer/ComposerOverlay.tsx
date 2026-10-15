@@ -9,14 +9,16 @@ import { getFocusStyles } from '@grafana/ui/internal';
 import { FLOATING_DRAG_HANDLE_ATTRIBUTE } from 'app/core/components/AppChrome/ExtensionSidebar/useFloatingDrag';
 
 import { type ComposerSession } from './ComposerSession';
-import { type Box, VARIABLE_CONTROL_SELECTOR } from './composerGeometry';
-import { type ComposerAnnotation } from './types';
+import { type Box, PICKABLE_CONTROL_SELECTOR, VARIABLE_CONTROL_SELECTOR } from './composerGeometry';
+import { type ComposerAnnotation, type ElementPick, type RegionPick } from './types';
 
 const TAB_SELECTOR = '[role="tab"]';
 /** The dashboard controls (time picker, refresh, save, share, variables) stay usable in Composer. */
 const CONTROLS_SELECTOR = `[data-testid="${selectors.pages.Dashboard.Controls}"]`;
 /** The extension sidebar, docked or floating: never part of the document Composer annotates. */
 const EXTENSION_SIDEBAR_SELECTOR = '[data-extension-sidebar]';
+/** What keeps its own cursor in Composer: the dashboard controls, and the pins and anchors on the overlay. */
+const OWN_CURSORS = [CONTROLS_SELECTOR, `${CONTROLS_SELECTOR} *`, '[data-composer-capture-exclude] *'].join(', ');
 /** A drawn rectangle smaller than this, in CSS pixels on either side, is ignored. */
 const MIN_REGION_SIZE = 8;
 /** How far from the pointer the pick hint sits. */
@@ -36,10 +38,14 @@ const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, width: 0, height: 0 }
 /**
  * A layer over the dashboard controls and body while Composer is active.
  *
- * The blocking layer takes every pointer event, so clicks, menus, drag and resize, and links underneath
- * never fire, while wheel events still scroll the page. While a pick is pending it hit-tests the panel
- * under the pointer. Above it sit the annotation pins and the anchors the plugin portals its editor into.
- * All positions are relative to this layer and re-measured on scroll, resize and layout changes.
+ * The layer itself takes no pointer events: outlines, the hover outline, the region draft and the hint are
+ * drawn on it, so pointer moves and the wheel reach the document underneath (tooltips, crosshairs and hover
+ * states keep working). Presses, clicks and drags on the document body are Composer's instead: taken on the
+ * window in the capture phase before anything underneath sees them, so panel drag, graph drag-to-zoom,
+ * menus and links never start. With Select on, a click picks the element under it and a press that moves
+ * 8px draws a region. Tab headers and the dashboard controls stay usable. Above the layer sit the
+ * annotation pins and the anchors the plugin portals its editor into. All positions are relative to this
+ * layer and re-measured on scroll, resize and layout changes.
  */
 export function ComposerOverlay({
   session,
@@ -56,9 +62,6 @@ export function ComposerOverlay({
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
   const { picking, pickMode, paused, capturing, annotations } = overlayState;
   const rootRef = useRef<HTMLDivElement>(null);
-  const blockerRef = useRef<HTMLDivElement>(null);
-  /** The pointer is over the dashboard controls, which then receive it instead of the blocking layer. */
-  const overControlsRef = useRef(false);
   const anchorHostRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
   const [hovered, setHovered] = useState<{ key: string; box: Box } | null>(null);
@@ -276,7 +279,7 @@ export function ComposerOverlay({
   }, []);
 
   const followHint = (x: number, y: number) => {
-    if (!hintAllowed || dragStartRef.current?.moved || overControlsRef.current) {
+    if (!hintAllowed || dragStartRef.current?.moved) {
       hideHint();
       return;
     }
@@ -303,37 +306,6 @@ export function ComposerOverlay({
     const rect = rootRef.current?.parentElement?.querySelector(CONTROLS_SELECTOR)?.getBoundingClientRect();
     return Boolean(rect && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom);
   }, []);
-
-  // Over the controls band the blocking layer lets the pointer through to the real controls; pins and
-  // anchors drawn there sit above it and stay clickable. Tracked on the window, since the layer gets no
-  // events while it is transparent to them.
-  useEffect(() => {
-    const blocker = blockerRef.current;
-    if (!blocker) {
-      return;
-    }
-    const onMove = (event: PointerEvent) => {
-      if (dragStartRef.current) {
-        return;
-      }
-      const over = isOverControls(event.clientX, event.clientY);
-      if (over === overControlsRef.current) {
-        return;
-      }
-      overControlsRef.current = over;
-      blocker.style.pointerEvents = over ? 'none' : '';
-      if (over) {
-        hideHint();
-        setHovered(null);
-      }
-    };
-    window.addEventListener('pointermove', onMove, { capture: true, passive: true });
-    return () => {
-      window.removeEventListener('pointermove', onMove, { capture: true });
-      blocker.style.pointerEvents = '';
-      overControlsRef.current = false;
-    };
-  }, [isOverControls, hideHint]);
 
   /** A drag that started on the controls has ended: the click it would end in must not reach a control. */
   const swallowControlsClickRef = useRef(false);
@@ -396,10 +368,10 @@ export function ComposerOverlay({
         return;
       }
       const rect = toDraft(start, event.clientX, event.clientY);
-      const pick =
+      const region =
         rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE ? null : session.createRegionPick(rect);
-      if (pick) {
-        session.completePick(pick);
+      if (region) {
+        session.completePick(withModifier(region, event));
       }
     };
     const onCancel = () => {
@@ -439,7 +411,8 @@ export function ComposerOverlay({
     };
   }, []);
 
-  // With Select, a click on a variable's label picks the variable; its value picker still works as usual.
+  // With Select, a click on a variable's or an annotation's label picks it; its value picker or toggle still
+  // works as usual.
   useEffect(() => {
     if (pickMode !== 'element' || paused || capturing) {
       return;
@@ -447,13 +420,16 @@ export function ComposerOverlay({
     const onClick = (event: MouseEvent) => {
       const container = rootRef.current?.parentElement;
       const target = event.target instanceof Element ? event.target : null;
-      const control = target?.closest<HTMLElement>(VARIABLE_CONTROL_SELECTOR);
+      const control = target?.closest<HTMLElement>(PICKABLE_CONTROL_SELECTOR);
       const label = target?.closest('label');
       const key = control?.getAttribute('data-dashboard-element-key');
       if (!container?.contains(control ?? null) || !label || !control?.contains(label) || !key) {
         return;
       }
-      const pick = session.resolveVariablePick(key);
+      const resolved = control.matches(VARIABLE_CONTROL_SELECTOR)
+        ? session.resolveVariablePick(key)
+        : session.resolveAnnotationPick(key);
+      const pick = resolved && withModifier(resolved, event);
       if (pick) {
         // The label would otherwise focus the value picker.
         event.preventDefault();
@@ -465,123 +441,209 @@ export function ComposerOverlay({
     return () => window.removeEventListener('click', onClick, true);
   }, [pickMode, paused, capturing, session]);
 
-  const onPointerDown = (event: React.PointerEvent) => {
-    stop(event);
-    hideHint();
-    swallowClickRef.current = false;
-    // Any primary-button press may become a region: a click picks an element, a drag draws a region.
-    if (event.button !== 0 || !picking || paused || capturing) {
-      return;
+  /**
+   * Whether an event on `target` is on the document body, which Composer takes presses and clicks from: inside
+   * the container the overlay covers (or on the overlay's own drawn layer), but not on the dashboard controls,
+   * a pin or an anchor the plugin draws into. A portalled menu or the extension sidebar is outside it.
+   */
+  const isOnDocumentBody = useCallback((target: EventTarget | null): target is Element => {
+    const root = rootRef.current;
+    const container = root?.parentElement;
+    if (!(target instanceof Element) || !root || !container) {
+      return false;
     }
-    // A press on a tab header is a tab switch, never the start of a region: its click passes through.
-    // A press on the controls is theirs too (it lands here only before the pointer has moved onto them).
-    // So is a press inside the extension sidebar, which only reaches this layer if a host stacks it wrong.
-    if (
-      elementAt(event.clientX, event.clientY, TAB_SELECTOR) ||
-      isOverControls(event.clientX, event.clientY) ||
-      isOverExtensionSidebar(event.clientX, event.clientY)
-    ) {
-      return;
+    if (anchorHostRef.current?.contains(target) || target.closest('[data-composer-annotation-pin]')) {
+      return false;
     }
-    dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
+    if (root.contains(target)) {
+      return true;
+    }
+    return container.contains(target) && !target.closest(CONTROLS_SELECTOR);
+  }, []);
 
-  const onPointerUp = (event: React.PointerEvent) => {
-    const start = dragStartRef.current;
-    if (!start) {
-      return;
-    }
-    dragStartRef.current = null;
-    setDraft(null);
-    const rect = toDraft(start, event.clientX, event.clientY);
-    if (!start.moved && rect.width < MIN_REGION_SIZE && rect.height < MIN_REGION_SIZE) {
-      // Never moved far enough to be a drag: with Select it is a click on the element; the Region tool
-      // ignores it.
-      swallowClickRef.current = pickMode === 'region';
-      return;
-    }
-    // A drag never turns back into a click; one too thin for a region is dropped and the pick stays pending.
-    swallowClickRef.current = true;
-    if (rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE) {
-      return;
-    }
-    const pick = session.createRegionPick(rect);
-    if (pick) {
-      session.completePick(pick);
-    }
-  };
+  // Presses, clicks and drags on the document body are Composer's; pointer moves and the wheel pass through.
+  // On the window in the capture phase, so nothing underneath sees a press it would start a drag from.
+  useEffect(() => {
+    /** A tab header keeps switching tabs, except while a capture renders the current one. */
+    const isUsableTab = (target: Element) => !capturing && Boolean(target.closest(TAB_SELECTOR));
+    /**
+     * On the body, and not where the sticky controls band is: content scrolled under it is covered by it.
+     * The point check covers a target the band does not contain, such as the overlay's own layer.
+     */
+    const onBody = (event: MouseEvent): event is MouseEvent & { target: Element } =>
+      isOnDocumentBody(event.target) && !isOverControls(event.clientX, event.clientY);
 
-  const onPointerMove = (event: React.PointerEvent) => {
-    const start = dragStartRef.current;
-    if (start) {
-      const rect = toDraft(start, event.clientX, event.clientY);
-      // A jitter during a click is not a drag yet: keep showing the element under the pointer.
-      if (rect.width >= MIN_REGION_SIZE || rect.height >= MIN_REGION_SIZE) {
-        start.moved = true;
+    const block = (event: MouseEvent) => {
+      if (onBody(event) && !isUsableTab(event.target)) {
+        event.preventDefault();
+        event.stopPropagation();
       }
-      if (start.moved) {
-        showDraft(rect);
-        setHovered(null);
-        hideHint();
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!onBody(event) || isUsableTab(event.target)) {
         return;
       }
-    }
-    if (isOverExtensionSidebar(event.clientX, event.clientY)) {
+      // Blocked before anything underneath sees it: no panel drag, no graph drag-to-zoom, no focus or
+      // selection, no menu.
+      event.preventDefault();
+      event.stopPropagation();
       hideHint();
-      setHovered(null);
-      return;
-    }
-    followHint(event.clientX, event.clientY);
-    if (pickMode !== 'element') {
-      return;
-    }
-    const root = elementAt(event.clientX, event.clientY, session.elementSelector);
-    const key = root?.getAttribute(session.elementKeyAttribute);
-    const box = root ? boxFor(root) : null;
-    setHovered(key && box ? { key, box } : null);
-  };
-
-  const onClick = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (swallowClickRef.current) {
       swallowClickRef.current = false;
-      return;
-    }
-    // A capture renders the current tab: nothing changes under it until it settles.
-    if (capturing || isOverExtensionSidebar(event.clientX, event.clientY)) {
-      return;
-    }
-    // Tab headers stay usable: switching tabs is how regions on other tabs get drawn.
-    const tab = elementAt(event.clientX, event.clientY, TAB_SELECTOR);
-    if (tab) {
-      tab.click();
-      return;
-    }
-    if (pickMode !== 'element') {
-      return;
-    }
-    const root = elementAt(event.clientX, event.clientY, session.elementSelector);
-    const key = root?.getAttribute(session.elementKeyAttribute);
-    if (!root || !key) {
-      return;
-    }
-    const rect = root.getBoundingClientRect();
-    const point = {
-      x: rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0,
-      y: rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0,
+      // Any primary-button press may become a region: a click picks an element, a drag draws a region. Inside
+      // the extension sidebar nothing starts, should a host stack the sidebar under the document.
+      if (
+        event.button !== 0 ||
+        !picking ||
+        paused ||
+        capturing ||
+        isOverExtensionSidebar(event.clientX, event.clientY)
+      ) {
+        return;
+      }
+      dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false };
     };
-    const pick = session.resolveElementPick(key, point);
-    if (pick) {
-      session.completePick(pick);
-    }
-  };
 
-  const stop = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
+    const onPointerMove = (event: PointerEvent) => {
+      const start = dragStartRef.current;
+      if (start) {
+        const rect = toDraft(start, event.clientX, event.clientY);
+        // A jitter during a click is not a drag yet: keep showing the element under the pointer.
+        if (rect.width >= MIN_REGION_SIZE || rect.height >= MIN_REGION_SIZE) {
+          start.moved = true;
+        }
+        if (start.moved) {
+          window.getSelection()?.removeAllRanges();
+          showDraft(rect);
+          setHovered(null);
+          hideHint();
+          return;
+        }
+      }
+      if (!picking || paused || capturing) {
+        return;
+      }
+      if (!onBody(event) || isOverExtensionSidebar(event.clientX, event.clientY)) {
+        hideHint();
+        setHovered(null);
+        return;
+      }
+      followHint(event.clientX, event.clientY);
+      if (pickMode !== 'element') {
+        return;
+      }
+      const elementRoot = elementAt(event.clientX, event.clientY, session.elementSelector);
+      const key = elementRoot?.getAttribute(session.elementKeyAttribute);
+      const box = elementRoot ? boxFor(elementRoot) : null;
+      setHovered(key && box ? { key, box } : null);
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      const start = dragStartRef.current;
+      if (!start) {
+        return;
+      }
+      event.stopPropagation();
+      dragStartRef.current = null;
+      setDraft(null);
+      const rect = toDraft(start, event.clientX, event.clientY);
+      if (!start.moved && rect.width < MIN_REGION_SIZE && rect.height < MIN_REGION_SIZE) {
+        // Never moved far enough to be a drag: with Select it is a click on the element; the Region tool
+        // ignores it.
+        swallowClickRef.current = pickMode === 'region';
+        return;
+      }
+      // A drag never turns back into a click; one too thin for a region is dropped and the pick stays pending.
+      swallowClickRef.current = true;
+      if (rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE) {
+        return;
+      }
+      const region = session.createRegionPick(rect);
+      if (region) {
+        session.completePick(withModifier(region, event));
+      }
+    };
+
+    const onClick = (event: MouseEvent) => {
+      if (!onBody(event) || isUsableTab(event.target)) {
+        return;
+      }
+      // Legends, links and panel menus never respond to a click while Composer is open.
+      event.preventDefault();
+      event.stopPropagation();
+      if (swallowClickRef.current) {
+        swallowClickRef.current = false;
+        return;
+      }
+      // A capture renders the current tab: nothing changes under it until it settles.
+      if (
+        !picking ||
+        paused ||
+        capturing ||
+        pickMode !== 'element' ||
+        isOverExtensionSidebar(event.clientX, event.clientY)
+      ) {
+        return;
+      }
+      const elementRoot = elementAt(event.clientX, event.clientY, session.elementSelector);
+      const key = elementRoot?.getAttribute(session.elementKeyAttribute);
+      if (!elementRoot || !key) {
+        return;
+      }
+      const rect = elementRoot.getBoundingClientRect();
+      const point = {
+        x: rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0,
+        y: rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0,
+      };
+      const pick = session.resolveElementPick(key, point);
+      if (pick) {
+        session.completePick(withModifier(pick, event));
+      }
+    };
+
+    const blocked = ['mousedown', 'dblclick', 'auxclick', 'contextmenu', 'dragstart'] as const;
+    window.addEventListener('pointerdown', onPointerDown, true);
+    window.addEventListener('pointermove', onPointerMove, { capture: true, passive: true });
+    window.addEventListener('pointerup', onPointerUp, true);
+    window.addEventListener('pointercancel', cancelDrag, true);
+    window.addEventListener('click', onClick, true);
+    blocked.forEach((type) => window.addEventListener(type, block, true));
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown, true);
+      window.removeEventListener('pointermove', onPointerMove, { capture: true });
+      window.removeEventListener('pointerup', onPointerUp, true);
+      window.removeEventListener('pointercancel', cancelDrag, true);
+      window.removeEventListener('click', onClick, true);
+      blocked.forEach((type) => window.removeEventListener(type, block, true));
+    };
+    // `elementAt` and `followHint` read refs and session only; they are recreated every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    picking,
+    pickMode,
+    paused,
+    capturing,
+    session,
+    isOnDocumentBody,
+    isOverControls,
+    toDraft,
+    showDraft,
+    hideHint,
+    cancelDrag,
+    boxFor,
+  ]);
+
+  // The cursor says what a press does: a crosshair while Select is on, the arrow otherwise, since nothing in
+  // the document body responds to a click. Set on the container, so the dashboard controls keep theirs.
+  useEffect(() => {
+    const container = rootRef.current?.parentElement;
+    if (!container) {
+      return;
+    }
+    const className = picking && !paused && !capturing ? styles.cursorPicking : styles.cursorInert;
+    container.classList.add(className);
+    return () => container.classList.remove(className);
+  }, [picking, paused, capturing, styles.cursorPicking, styles.cursorInert]);
 
   return (
     <div
@@ -590,25 +652,11 @@ export function ComposerOverlay({
       data-composer-capture-exclude
     >
       <div
-        ref={blockerRef}
-        className={cx(styles.blocker, picking && !paused && !capturing && styles.picking)}
+        className={styles.drawn}
         data-testid="dashboard-composer-overlay"
-        // Pointer-only layer: keyboard users select through the navigator (M3); Escape is handled on window.
+        // A drawn layer only: the pointer goes through it to the document, Escape is handled on window.
         role="presentation"
         aria-hidden
-        onPointerMove={onPointerMove}
-        onPointerLeave={() => {
-          setHovered(null);
-          hideHint();
-        }}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        onPointerCancel={cancelDrag}
-        onMouseDown={stop}
-        onClick={onClick}
-        onDoubleClick={stop}
-        onContextMenu={stop}
-        onDragStart={stop}
       >
         {layout.highlight && <div className={cx(styles.box, styles.highlight)} style={layout.highlight} />}
         {annotations.map(({ id, ref, state }) => {
@@ -648,6 +696,7 @@ export function ComposerOverlay({
             aria-label={t('dashboard.composer.annotation-pin', 'Comment {{label}}', { label })}
             aria-disabled={paused || undefined}
             data-testid={`composer-annotation-pin-${id}`}
+            data-composer-annotation-pin=""
             onPointerDown={(event) => event.stopPropagation()}
             onPointerEnter={() => session.hoverAnnotation(id)}
             onPointerLeave={() => session.hoverAnnotation(null)}
@@ -771,6 +820,11 @@ function containsPoint(box: Box, x: number, y: number): boolean {
   return x >= box.left && x <= box.left + box.width && y >= box.top && y <= box.top + box.height;
 }
 
+/** `pick` with whether ⌘ (macOS) or Ctrl was held: such a pick adds to the open comment. */
+function withModifier<P extends ElementPick | RegionPick>(pick: P, event: { metaKey: boolean; ctrlKey: boolean }): P {
+  return { ...pick, additive: event.metaKey || event.ctrlKey };
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -798,15 +852,18 @@ function getStyles(theme: GrafanaTheme2) {
     rootBelowControls: css({
       zIndex: theme.zIndex.sidemenu - 1,
     }),
-    blocker: css({
+    drawn: css({
       position: 'absolute',
       inset: 0,
       background: 'transparent',
-      cursor: 'default',
-      pointerEvents: 'auto',
+      pointerEvents: 'none',
     }),
-    picking: css({
-      cursor: 'crosshair',
+    // On the container the overlay covers, outside the dashboard controls, which keep their own cursors.
+    cursorPicking: css({
+      [`& *:not(${OWN_CURSORS})`]: { cursor: 'crosshair' },
+    }),
+    cursorInert: css({
+      [`& *:not(${OWN_CURSORS})`]: { cursor: 'default' },
     }),
     box: css({
       position: 'absolute',

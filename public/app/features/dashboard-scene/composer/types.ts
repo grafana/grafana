@@ -86,6 +86,11 @@ export type ElementRef =
   | { kind: 'region'; regionId: string }
   /** A dashboard variable, by its name in the spec. */
   | { kind: 'variable'; name: string }
+  /**
+   * An annotation or another data layer shown in the dashboard controls, by its name. `layerKind` tells an
+   * annotation (in the spec's `annotations`) from a data layer Grafana adds itself, such as alert states.
+   */
+  | { kind: 'annotation'; name: string; layerKind: 'annotation' | 'data-layer' }
   /** A notebook cell, by the `elementName` its layout cell references. */
   | { kind: 'cell'; name: string };
 
@@ -101,10 +106,15 @@ export interface ElementPick {
   /** Titles of the tabs containing the element, outermost first. */
   tabPath: string[];
   /**
-   * Where the element was clicked; `{ x: 0, y: 0 }` for picks without a pointer. A variable's pick points
-   * at its control's top-right corner, where its pin goes.
+   * Where the element was clicked; `{ x: 0, y: 0 }` for picks without a pointer. A variable's or an
+   * annotation's pick points at its control's top-right corner, where its pin goes.
    */
   point: ElementPoint;
+  /**
+   * Whether ⌘ (macOS) or Ctrl was held when the pick was made, for adding the element to the comment that
+   * is open instead of starting a new one. Optional, so older handles may leave it out.
+   */
+  additive?: boolean;
 }
 
 /**
@@ -133,6 +143,8 @@ export interface RegionPick {
   /** Panels and variable controls (on a notebook, cells) the region overlaps with a positive area, at most 20. */
   intersects: Array<{ ref: ElementRef; label: string }>;
   timeRange: { from: string; to: string; timezone: string };
+  /** Whether ⌘ (macOS) or Ctrl was held when the drag ended: see `ElementPick.additive`. */
+  additive?: boolean;
 }
 
 export type RegionCapture =

@@ -1,5 +1,13 @@
 import { t } from '@grafana/i18n';
-import { sceneGraph, SceneObjectStateChangedEvent, VizPanel, type SceneObject } from '@grafana/scenes';
+import {
+  dataLayers,
+  sceneGraph,
+  SceneDataLayerBase,
+  SceneObjectStateChangedEvent,
+  VizPanel,
+  type SceneDataLayerProviderState,
+  type SceneObject,
+} from '@grafana/scenes';
 
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import type { DashboardScene } from '../scene/DashboardScene';
@@ -15,7 +23,14 @@ import { dashboardV2SpecSchema } from '../v2schema/dashboardV2Schema';
 import { type ComposerDocument, type ComposerDocumentEvents } from './ComposerDocument';
 import type { ComposerSession } from './ComposerSession';
 import { canStillEdit } from './composerAccess';
-import { type Box, clamp01, findCaptureRoot, PANEL_ROOT_SELECTOR, VARIABLE_CONTROL_SELECTOR } from './composerGeometry';
+import {
+  type Box,
+  clamp01,
+  DATA_LAYER_CONTROL_SELECTOR,
+  findCaptureRoot,
+  PANEL_ROOT_SELECTOR,
+  VARIABLE_CONTROL_SELECTOR,
+} from './composerGeometry';
 import {
   type ApplyOutcome,
   type ComposerApplyOptions,
@@ -189,8 +204,42 @@ export class DashboardComposerDocument implements ComposerDocument<ComposerDashb
           )
         : null;
     }
+    if (ref.kind === 'annotation') {
+      const key = this.findDataLayer(ref.name)?.state.key;
+      return key ? controlRoot(DATA_LAYER_CONTROL_SELECTOR, key) : null;
+    }
     const key = this.getPanelKey(ref);
     return key ? document.querySelector<HTMLElement>(`[data-viz-panel-key="${CSS.escape(key)}"]`) : null;
+  }
+
+  /**
+   * Resolves the annotation or data layer whose control has `key`, by its name, pointing at the control's
+   * top-right corner as a variable's pick does.
+   */
+  public resolveAnnotationPick(key: string): ElementPick | null {
+    const found = sceneGraph.findObject(this.scene, (obj) => obj.state.key === key);
+    if (!(found instanceof SceneDataLayerBase) || !found.state.name || this.findDataLayer(found.state.name) !== found) {
+      return null;
+    }
+    return {
+      ref: {
+        kind: 'annotation',
+        name: found.state.name,
+        layerKind: found instanceof dataLayers.AnnotationsDataLayer ? 'annotation' : 'data-layer',
+      },
+      label: found.state.name,
+      tabPath: [],
+      point: { x: 1, y: 0 },
+    };
+  }
+
+  /** The data layer named `name`: the first of that name, as the spec's annotations are listed. */
+  private findDataLayer(name: string): SceneDataLayerBase<SceneDataLayerProviderState> | undefined {
+    const found = sceneGraph.findObject(
+      this.scene,
+      (obj) => obj instanceof SceneDataLayerBase && obj.state.name === name
+    );
+    return found instanceof SceneDataLayerBase ? found : undefined;
   }
 
   public isHidden(ref: ElementRef): boolean {
@@ -363,4 +412,10 @@ function getTabPath(obj: SceneObject): string[] {
     }
   }
   return path;
+}
+
+function controlRoot(selector: string, key: string): HTMLElement | null {
+  const escaped = CSS.escape(key);
+  const candidates = selector.split(',').map((part) => `${part.trim()}[data-dashboard-element-key="${escaped}"]`);
+  return document.querySelector<HTMLElement>(candidates.join(', '));
 }

@@ -53,6 +53,8 @@ export interface ComposerDocument<Spec, Session = unknown> {
   /** The element whose DOM root carries `key` in `elementKeyAttribute`, at `point` inside it. */
   resolveElementPick(key: string, point: ElementPoint): ElementPick | null;
   resolveVariablePick?(key: string): ElementPick | null;
+  /** The annotation or data layer whose control has `key`, for documents that show them. */
+  resolveAnnotationPick?(key: string): ElementPick | null;
   /** The rendered root of `ref`. `container` is what the overlay covers, null before it mounts. */
   findElementRoot(ref: ElementRef, container: HTMLElement | null): HTMLElement | null;
   /** Whether `ref` is in a part of the document not shown now (a tab not selected), or gone. */

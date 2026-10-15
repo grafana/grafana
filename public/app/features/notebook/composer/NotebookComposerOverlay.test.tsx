@@ -122,6 +122,41 @@ function setup(session = enterNotebookComposer(buildNotebook())) {
 
 const live = () => new AbortController().signal;
 
+// D6 on notebooks: pointer moves reach the cells; presses and clicks are Composer's.
+describe('notebook Composer overlay pass-through', () => {
+  function listenOnCell() {
+    const content = screen.getByTestId('cell-content');
+    const seen = { pointermove: jest.fn(), pointerdown: jest.fn(), mousedown: jest.fn(), click: jest.fn() };
+    for (const [type, listener] of Object.entries(seen)) {
+      content.addEventListener(type, listener);
+    }
+    return { content, seen };
+  }
+
+  it('lets pointer moves reach the cell, and picks it on a click that never reaches it', async () => {
+    const { session } = setup();
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickElement(live());
+    });
+    const { content, seen } = listenOnCell();
+
+    fireEvent.pointerMove(content, { clientX: 400, clientY: 350 });
+    const pressed = fireEvent.pointerDown(content, { clientX: 400, clientY: 350, button: 0 });
+    const moused = fireEvent.mouseDown(content, { clientX: 400, clientY: 350, button: 0 });
+    fireEvent.pointerUp(content, { clientX: 400, clientY: 350 });
+    fireEvent.click(content, { clientX: 400, clientY: 350, metaKey: true });
+
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'cell', name: 'summary' }, additive: true });
+    expect(seen.pointermove).toHaveBeenCalledTimes(1);
+    expect(pressed).toBe(false);
+    expect(moused).toBe(false);
+    expect(seen.pointerdown).not.toHaveBeenCalled();
+    expect(seen.mousedown).not.toHaveBeenCalled();
+    expect(seen.click).not.toHaveBeenCalled();
+  });
+});
+
 describe('notebook Composer overlay', () => {
   it('picks the cell under the pointer by its element name and label', async () => {
     const { session, overlay } = setup();
@@ -136,6 +171,7 @@ describe('notebook Composer overlay', () => {
 
     await expect(pick).resolves.toEqual({
       ref: { kind: 'cell', name: 'summary' },
+      additive: false,
       label: 'Checkout is slow',
       tabPath: [],
       point: { x: 0.5, y: 0.5 },

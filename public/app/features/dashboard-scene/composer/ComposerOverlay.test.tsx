@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { CustomVariable, SceneVariableSet, sceneGraph } from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet, dataLayers, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -131,7 +131,7 @@ function setup(configure?: (scene: DashboardScene) => void) {
     return pick;
   };
   const annotate = (items: ComposerAnnotation[]) => act(() => session.setAnnotations(items));
-  return { session, startPick, annotate };
+  return { scene, session, startPick, annotate };
 }
 
 const nextFrame = () => act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
@@ -156,6 +156,7 @@ describe('picking', () => {
 
     await expect(pick).resolves.toEqual({
       ref: { kind: 'panel', panelId: 3 },
+      additive: false,
       label: 'Latency',
       tabPath: [],
       point: { x: 0.25, y: 0.5 },
@@ -629,14 +630,18 @@ describe('regions', () => {
   it('switches tabs on a press during an element pick instead of starting a drag', async () => {
     const { startPick } = setup();
     const settled = track(startPick());
+    // A tab header in the dashboard container: the overlay lets the pointer through to it.
     const tab = document.createElement('button');
     tab.setAttribute('role', 'tab');
     const onTabClick = jest.fn();
     tab.addEventListener('click', onTabClick);
-    document.body.appendChild(tab);
-    document.elementsFromPoint = () => [screen.getByTestId('dashboard-composer-overlay'), tab];
+    screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!.appendChild(tab);
+    document.elementsFromPoint = () => [tab];
 
-    drag({ x: 10, y: 10 }, { x: 60, y: 60 });
+    fireEvent.pointerDown(tab, { clientX: 10, clientY: 10, button: 0 });
+    fireEvent.pointerMove(tab, { clientX: 60, clientY: 60 });
+    fireEvent.pointerUp(tab, { clientX: 60, clientY: 60 });
+    fireEvent.click(tab, { clientX: 60, clientY: 60 });
     await act(async () => {});
 
     expect(onTabClick).toHaveBeenCalledTimes(1);
@@ -731,14 +736,15 @@ describe('regions', () => {
 
   it('passes clicks on tab headers through, so other tabs can be annotated', () => {
     setup();
+    // A tab header in the dashboard container: the overlay lets the pointer through to it.
     const tab = document.createElement('button');
     tab.setAttribute('role', 'tab');
     const onTabClick = jest.fn();
     tab.addEventListener('click', onTabClick);
-    document.body.appendChild(tab);
-    document.elementsFromPoint = () => [screen.getByTestId('dashboard-composer-overlay'), tab];
+    screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!.appendChild(tab);
+    document.elementsFromPoint = () => [tab];
 
-    fireEvent.click(screen.getByTestId('dashboard-composer-overlay'), { clientX: 10, clientY: 10 });
+    fireEvent.click(tab, { clientX: 10, clientY: 10 });
 
     expect(onTabClick).toHaveBeenCalledTimes(1);
     tab.remove();
@@ -839,18 +845,18 @@ describe('regions', () => {
       pick = session.pickRegion(new AbortController().signal);
     });
     const settled = track(pick);
+    // A tab header in the dashboard container: the overlay lets the pointer through to it.
     const tab = document.createElement('button');
     tab.setAttribute('role', 'tab');
     const onTabClick = jest.fn();
     tab.addEventListener('click', onTabClick);
-    document.body.appendChild(tab);
-    document.elementsFromPoint = () => [screen.getByTestId('dashboard-composer-overlay'), tab];
+    screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!.appendChild(tab);
+    document.elementsFromPoint = () => [tab];
 
-    const overlay = screen.getByTestId('dashboard-composer-overlay');
-    fireEvent.pointerDown(overlay, { clientX: 10, clientY: 10, button: 0 });
-    fireEvent.pointerMove(overlay, { clientX: 12, clientY: 11 });
-    fireEvent.pointerUp(overlay, { clientX: 12, clientY: 11 });
-    fireEvent.click(overlay, { clientX: 12, clientY: 11 });
+    fireEvent.pointerDown(tab, { clientX: 10, clientY: 10, button: 0 });
+    fireEvent.pointerMove(tab, { clientX: 12, clientY: 11 });
+    fireEvent.pointerUp(tab, { clientX: 12, clientY: 11 });
+    fireEvent.click(tab, { clientX: 12, clientY: 11 });
     await act(async () => {});
 
     expect(onTabClick).toHaveBeenCalledTimes(1);
@@ -1316,6 +1322,221 @@ describe('with the extension sidebar floating', () => {
   });
 });
 
+// D6: with Select on, pointer moves and the wheel reach the dashboard; presses, clicks and drags are Composer's.
+describe('hover pass-through', () => {
+  /** A panel root inside the dashboard container, as the grid renders it, with listeners on it. */
+  function panelInContainer() {
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    const panel = document.createElement('div');
+    panel.setAttribute('data-viz-panel-key', 'panel-3');
+    const plot = document.createElement('canvas');
+    panel.appendChild(plot);
+    container.appendChild(panel);
+    document.elementsFromPoint = () => [plot, panel];
+    const seen = {
+      pointermove: jest.fn(),
+      pointerdown: jest.fn(),
+      mousedown: jest.fn(),
+      click: jest.fn(),
+      wheel: jest.fn(),
+    };
+    for (const [type, listener] of Object.entries(seen)) {
+      plot.addEventListener(type, listener);
+    }
+    return { plot, seen };
+  }
+
+  it('lets pointer moves reach the panel, for its tooltip, and outlines it', () => {
+    const { startPick } = setup();
+    startPick();
+    const { plot, seen } = panelInContainer();
+
+    fireEvent.pointerMove(plot, { clientX: 200, clientY: 350 });
+
+    expect(seen.pointermove).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[data-testid="dashboard-composer-overlay"] > div')).toBeInTheDocument();
+  });
+
+  it('picks the panel on a click, which never reaches the panel', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const { plot, seen } = panelInContainer();
+
+    fireEvent.pointerDown(plot, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.pointerUp(plot, { clientX: 200, clientY: 350 });
+    fireEvent.click(plot, { clientX: 200, clientY: 350 });
+
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'panel', panelId: 3 }, additive: false });
+    expect(seen.click).not.toHaveBeenCalled();
+  });
+
+  it('blocks the press, so neither panel drag nor graph drag-to-zoom starts', () => {
+    const { startPick } = setup();
+    startPick();
+    const { plot, seen } = panelInContainer();
+
+    const pressed = fireEvent.pointerDown(plot, { clientX: 200, clientY: 350, button: 0 });
+    const moused = fireEvent.mouseDown(plot, { clientX: 200, clientY: 350, button: 0 });
+
+    // fireEvent returns false when the default was prevented.
+    expect(pressed).toBe(false);
+    expect(moused).toBe(false);
+    expect(seen.pointerdown).not.toHaveBeenCalled();
+    expect(seen.mousedown).not.toHaveBeenCalled();
+  });
+
+  it('keeps blocking presses and clicks while Select is off, and still passes moves', () => {
+    setup();
+    const { plot, seen } = panelInContainer();
+
+    fireEvent.pointerDown(plot, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.click(plot, { clientX: 200, clientY: 350 });
+    fireEvent.pointerMove(plot, { clientX: 210, clientY: 360 });
+
+    expect(seen.pointerdown).not.toHaveBeenCalled();
+    expect(seen.click).not.toHaveBeenCalled();
+    expect(seen.pointermove).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the wheel scroll', () => {
+    const { startPick } = setup();
+    startPick();
+    const { plot, seen } = panelInContainer();
+
+    const scrolled = fireEvent.wheel(plot, { deltaY: 120 });
+
+    expect(scrolled).toBe(true);
+    expect(seen.wheel).toHaveBeenCalledTimes(1);
+  });
+
+  it('still turns a press that moves 8px into a region drag', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const { plot } = panelInContainer();
+
+    fireEvent.pointerDown(plot, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerMove(plot, { clientX: 350, clientY: 450 });
+    expect(screen.getByTestId('composer-region-draft')).toBeInTheDocument();
+    fireEvent.pointerUp(plot, { clientX: 350, clientY: 450 });
+
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'region' }, additive: false });
+  });
+
+  it('leaves clicks inside the extension sidebar alone', () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const settled = jest.fn();
+    void pick.then(settled);
+    const sidebar = document.createElement('div');
+    sidebar.setAttribute('data-extension-sidebar', '');
+    const button = document.createElement('button');
+    const onClick = jest.fn();
+    button.addEventListener('click', onClick);
+    sidebar.appendChild(button);
+    document.body.appendChild(sidebar);
+
+    const pressed = fireEvent.pointerDown(button, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.click(button, { clientX: 200, clientY: 350 });
+
+    expect(pressed).toBe(true);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    sidebar.remove();
+  });
+});
+
+// D7: ⌘/Ctrl adds the picked element to the open comment; core reports the modifier on every pick.
+describe('the additive modifier', () => {
+  it.each([
+    ['⌘', { metaKey: true }],
+    ['Ctrl', { ctrlKey: true }],
+  ])('reports %s on an element pick', async (_, modifier) => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.click(overlay, { clientX: 200, clientY: 350, ...modifier });
+
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'panel', panelId: 3 }, additive: true });
+  });
+
+  it('reports it on a region pick, as held when the drag ends', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450, metaKey: true });
+
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'region' }, additive: true });
+  });
+});
+
+describe('annotations and data layers', () => {
+  /** The built-in annotation's control, as DataLayerControl renders it, in the dashboard container. */
+  function annotationControl(scene: DashboardScene) {
+    const layer = sceneGraph.findObject(scene, (obj) => obj instanceof dataLayers.AnnotationsDataLayer)!;
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    const control = document.createElement('div');
+    control.setAttribute('data-dashboard-element-key', layer.state.key!);
+    control.setAttribute('data-dashboard-element-type', 'annotation');
+    const label = document.createElement('label');
+    label.textContent = 'Annotations & Alerts';
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    control.append(label, toggle);
+    container.appendChild(control);
+    return { control, label, toggle };
+  }
+
+  it('picks an annotation from a click on its label, pointing at its control', async () => {
+    const { scene, startPick } = setup();
+    const pick = startPick();
+    const { label } = annotationControl(scene);
+
+    fireEvent.click(label, { clientX: 30, clientY: 20, ctrlKey: true });
+
+    await expect(pick).resolves.toEqual({
+      ref: { kind: 'annotation', name: 'Annotations & Alerts', layerKind: 'annotation' },
+      label: 'Annotations & Alerts',
+      tabPath: [],
+      point: { x: 1, y: 0 },
+      additive: true,
+    });
+  });
+
+  it('outlines and pins an annotation from its control', () => {
+    const { scene, session, annotate } = setup();
+    const { control } = annotationControl(scene);
+    const ref = { kind: 'annotation', name: 'Annotations & Alerts', layerKind: 'annotation' } as const;
+
+    expect(session.findElementRoot(ref)).toBe(control);
+    annotate([item({ id: 'n', ref, point: { x: 1, y: 0 } })]);
+
+    expect(screen.getByTestId('composer-annotation-outline-n')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toBeInTheDocument();
+  });
+
+  it('does not pick rows or tabs yet', async () => {
+    const { startPick } = setup();
+    const pick = startPick();
+    const settled = jest.fn();
+    void pick.then(settled);
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    const row = document.createElement('div');
+    row.setAttribute('data-dashboard-element-key', 'row-1');
+    row.setAttribute('data-dashboard-element-type', 'row');
+    container.appendChild(row);
+    document.elementsFromPoint = () => [row];
+
+    fireEvent.click(row, { clientX: 30, clientY: 20 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+  });
+});
+
 describe('dashboard controls', () => {
   function mountControls() {
     const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
@@ -1497,6 +1718,7 @@ describe('variables', () => {
     expect(clicked).toBe(false); // the label does not go on to focus the value picker
     await expect(pick).resolves.toEqual({
       ref: { kind: 'variable', name: 'env' },
+      additive: false,
       label: 'Environment',
       tabPath: [],
       point: { x: 1, y: 0 },
@@ -1620,7 +1842,7 @@ describe('pick hint', () => {
     expect(hint()!.style.transform).toBe('translate(738px, 714px)');
   });
 
-  it('hides while dragging and when the pointer leaves the overlay for a pin, then comes back', () => {
+  it('hides while dragging and when the pointer leaves the dashboard, then comes back', () => {
     const { startPick } = setup();
     startPick();
     const overlay = screen.getByTestId('dashboard-composer-overlay');
@@ -1638,7 +1860,8 @@ describe('pick hint', () => {
     frame();
     expect(hint()).toBeInTheDocument();
 
-    fireEvent.pointerLeave(overlay);
+    // Off the dashboard, such as onto a pin or into a portalled menu.
+    fireEvent.pointerMove(document.body, { clientX: 210, clientY: 360 });
     expect(hint()).not.toBeInTheDocument();
     move(210, 360);
     frame();
