@@ -2,9 +2,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { RuleListPage, type RuleListKind, type SearchLeaf, filterLeaf } from './pages/RuleListPage';
 
-// SEARCH-1: what the user types is a draft. Applying it writes the canonical query to the URL and
-// sends the matching request, but the input keeps the text exactly as typed, with no reordering
-// and no dropped tokens. No rules are seeded: the journey is about the input, not the results.
+// SEARCH-1: the input keeps text exactly as typed after applying.
 const journeys: Array<{
   kind: RuleListKind;
   typed: string;

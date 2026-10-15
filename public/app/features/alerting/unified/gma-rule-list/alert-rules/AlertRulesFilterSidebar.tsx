@@ -22,11 +22,6 @@ export interface AlertRulesFilterSidebarProps {
   issues?: CriteriaIssue[];
 }
 
-/**
- * Persistent filter sidebar for the Alert rules page. Every control applies immediately
- * (matching the current search input's rule-title-on-blur/Enter exception) and edits the
- * same criteria/URL as the search input — there is no separate sidebar state.
- */
 export function AlertRulesFilterSidebar({
   criteria,
   onChange,
@@ -111,8 +106,7 @@ export function AlertRulesFilterSidebar({
           <SwitchField
             label={t('alerting.gma-rule-list.search.property.default-policy', 'Default policy')}
             value={criteria.policy === DEFAULT_POLICY}
-            // While the default policy is unavailable, the switch stays usable only to clear a
-            // value that arrived through the URL or a saved search.
+            // Usable only to clear a URL or saved-search value while the default policy is unavailable.
             disabled={Boolean(defaultPolicyUnavailable) && criteria.policy !== DEFAULT_POLICY}
             onChange={(isDefault) =>
               onChange({ ...criteria, policy: isDefault ? DEFAULT_POLICY : undefined, contactPoint: undefined })

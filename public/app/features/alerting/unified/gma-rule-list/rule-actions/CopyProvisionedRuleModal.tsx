@@ -15,11 +15,7 @@ interface CopyProvisionedRuleModalProps {
   onDismiss: () => void;
 }
 
-/**
- * Warns before Duplicate of a provisioned or managed rule that the copy will not be provisioned, and that
- * it needs an evaluation group of its own. Rendered by the actions menu beside its dropdown, because the
- * dropdown unmounts its overlay on any click and would take the modal with it.
- */
+/** Rendered beside the dropdown, which unmounts its overlay on any click and would take the modal with it. */
 export function CopyProvisionedRuleModal({ kind, uid, isOpen, onDismiss }: CopyProvisionedRuleModalProps) {
   const title =
     kind === 'alert'
@@ -29,7 +25,7 @@ export function CopyProvisionedRuleModal({ kind, uid, isOpen, onDismiss }: CopyP
   const copy = () => {
     onDismiss();
     trackRuleDuplicateStarted(kind);
-    // The history is mounted at the sub path, so the sub path the link builder adds must come off again.
+    // History is mounted at the sub path; strip what the link builder adds.
     locationService.push(locationUtil.stripBaseFromUrl(ruleDuplicateUrl(kind, uid)));
   };
 

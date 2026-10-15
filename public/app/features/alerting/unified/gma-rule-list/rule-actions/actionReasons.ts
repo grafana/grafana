@@ -4,8 +4,6 @@ import { managerKindName } from '../rule-data/managerKindName';
 
 import { type ActionAvailability } from './ruleActionTypes';
 
-/** The reasons an action is shown disabled, as ready-made availabilities. */
-
 export function checking(): ActionAvailability {
   return { available: false, reason: t('alerting.rule-actions.reason-checking', 'Checking permissions...') };
 }
@@ -45,10 +43,7 @@ export function managed(kind: string): ActionAvailability {
   };
 }
 
-/**
- * Accessible name of a disabled action. A disabled control is skipped by keyboard navigation and its
- * tooltip only opens on hover or focus, so the reason has to be part of the name to reach assistive tech.
- */
+/** The reason is part of the name: disabled controls skip keyboard focus and tooltips need hover/focus. */
 export function unavailableActionLabel(label: string, reason: string | undefined): string {
   return reason
     ? t('alerting.gma-rule-list.actions.unavailable-label', '{{action}}: {{reason}}', { action: label, reason })

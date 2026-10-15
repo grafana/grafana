@@ -5,8 +5,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { RulesPageShell } from './RulesPageShell';
 
-// NAV-2: each rule experience shows its own active/Recently deleted tabs, and the Recently
-// deleted tab matches the organization Admin role.
+// NAV-2
 describe('RulesPageShell', () => {
   const previousRole = contextSrv.user.orgRole;
 

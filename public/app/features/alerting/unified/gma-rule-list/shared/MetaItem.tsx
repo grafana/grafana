@@ -7,7 +7,6 @@ interface MetaItemProps {
   children: NonNullable<ReactNode>;
 }
 
-/** One entry of a rule row's metadata line: an optional leading icon followed by small secondary text. */
 export function MetaItem({ icon, children }: MetaItemProps) {
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>

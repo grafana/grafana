@@ -16,12 +16,7 @@ export interface AlertRuleSearchPage {
   continueToken?: string;
 }
 
-/**
- * The single place that chooses which API endpoint serves Alert rule search. The generated
- * operation is a mutation (it is a POST), so it provides no tags and has no page state; this
- * injects the same request as an infinite query keyed by the criteria, with continuation tokens as
- * the page parameters. It provides the `AlertRule` tag, so every rule mutation refetches it.
- */
+/** Infinite query keyed by criteria; the generated search is a POST mutation with no tags or page state. */
 const alertRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
     searchAlertRules: build.infiniteQuery<AlertRuleSearchPage, Criteria, string | undefined>({
@@ -47,7 +42,6 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchAlertRulesInfiniteQuery } = alertRuleSearchAPI;
 
-/** Alert rules matching the criteria, one page at a time, in the order the API returns them. */
 export function useAlertRuleSearch(criteria: Criteria): PagedResult<AlertRuleSearchHit> {
   const dispatch = useDispatch();
   const query = useSearchAlertRulesInfiniteQuery(criteria, { refetchOnMountOrArgChange: true });

@@ -19,8 +19,7 @@ const RECORDING_RULE_FIELDS = [
   'interval',
   'metric',
   'targetDatasourceUID',
-  // status fields — see apps/alerting/rules/kinds/recordingRule.cue searchFields (recording
-  // rules have no "state": they have no firing/pending notion, only health)
+  // Recording rules have no "state", only health (see recordingRule.cue searchFields).
   'health',
   'lastEvaluationTime',
   'evaluationDuration',

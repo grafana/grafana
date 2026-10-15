@@ -5,11 +5,7 @@ import { dispatch } from 'app/store/store';
 
 import { type NameResolvers } from './migrationResolve';
 
-/**
- * Resolves a legacy folder display name to its UID via the folder search subresource. Returns
- * undefined - never a guess - when no folder or more than one folder shares that exact title, so
- * the caller keeps the token unresolved rather than searching unfiltered.
- */
+/** Undefined, never a guess, when zero or several folders share that exact title. */
 export async function resolveFolderUidByName(name: string): Promise<string | undefined> {
   const title = name.trim();
   if (!title) {
@@ -32,11 +28,7 @@ export async function resolveFolderUidByName(name: string): Promise<string | und
   return exactMatches.length === 1 ? exactMatches[0].resource.name : undefined;
 }
 
-/**
- * Resolves a legacy data source display name to its UID from the already-loaded instance
- * settings cache. Rejects a match where the resolved settings' own name doesn't equal the
- * input, since `getDataSourceInstanceSettings` also accepts a UID or the literal "default".
- */
+/** `getDataSourceInstanceSettings` also accepts a UID or "default", so require an exact name match. */
 export async function resolveDataSourceUidByName(name: string): Promise<string | undefined> {
   const trimmed = name.trim();
   if (!trimmed) {

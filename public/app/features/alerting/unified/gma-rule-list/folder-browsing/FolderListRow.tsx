@@ -13,24 +13,15 @@ import { type FolderRuleCount, useFolderPath } from './folderLookups';
 
 interface FolderListRowProps {
   folderUid: string;
-  /** Folder's own title from the folder search hit, so the row is readable before `/parents` resolves. */
   title: string;
-  /** Which rule kind the count refers to; only used for the count label. */
   kind: 'alert' | 'recording';
-  /** The rule kind's direct count for this folder (e.g. Alert rules only, never descendant/Recording counts). */
+  /** Direct count for this rule kind only, never descendants. */
   count: FolderRuleCount;
   expanded: boolean;
   onToggle: () => void;
-  /** Rendered only while expanded - the folder's own rule-search results. */
   children?: ReactNode;
 }
 
-/**
- * Shared Folders-mode row (renders its own `<li>`): chevron, folder title linking to the folder's
- * alert view, the parent path for nested folders, and the rule-kind-specific direct count.
- * Expandable to show that folder's rules. Only the count and the expanded content are
- * rule-kind-specific, which is why both pages share it.
- */
 export function FolderListRow({ folderUid, title, kind, count, expanded, onToggle, children }: FolderListRowProps) {
   const styles = useStyles2(getStyles);
   const path = useFolderPath(folderUid);

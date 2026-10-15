@@ -9,10 +9,7 @@ import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGen
 import { createRelativeUrl } from '../../utils/url';
 import { MoreButton } from '../shared/MoreButton';
 
-/**
- * Page-header actions for the GMA-only Alert rules page. Import/export-all/bulk/group actions,
- * and Recording/data-source-managed rule creation, are intentionally absent from this page.
- */
+/** Import/export-all/bulk/group actions are intentionally absent. */
 export function AlertRulesHeaderActions() {
   const canCreate = ctx.hasPermission(AccessControlAction.AlertingRuleCreate);
 

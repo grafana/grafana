@@ -18,10 +18,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
 
 const server = setupMswServer();
 
-// resolveFolderUidByName dispatches through the global app store singleton (app/store/store),
-// which test/test-utils's render() does not populate for plain function calls outside a
-// component tree - only rendering a Provider around this API's reducer would. Wire it up
-// directly, mirroring the pattern in browseDashboardsAPI.test.ts.
+// Wire the global app store directly; render() doesn't populate it for plain calls (see browseDashboardsAPI.test.ts).
 beforeEach(() => {
   const store = configureStore({
     reducer: { [folderSearchAPI.reducerPath]: folderSearchAPI.reducer },

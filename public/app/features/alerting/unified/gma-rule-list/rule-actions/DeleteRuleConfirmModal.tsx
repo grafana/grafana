@@ -13,11 +13,7 @@ interface DeleteRuleConfirmModalProps {
   onDismiss: () => void;
 }
 
-/**
- * Shared between the Alert and Recording delete flows. Keeps the last failure visible in the
- * modal (rather than only as a toast) so the sequence-restriction explanation has somewhere to
- * live next to the confirm button the user just used.
- */
+/** Keeps the last failure in the modal so the sequence-restriction explanation sits by the confirm button. */
 export function DeleteRuleConfirmModal({
   isOpen,
   ruleTitle,

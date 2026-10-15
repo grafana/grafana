@@ -3,22 +3,13 @@ import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
 import { RuleListPage, type RuleListKind, folderScope } from './pages/RuleListPage';
 import { markProvisioned, ruleResourceUrl } from './ruleSeeding';
 
-// ALERT-6/REC-5: Duplicate opens the existing creation flow prefilled from the source rule
-// (`copyFrom=<uid>`); the editor itself is responsible for stripping identity/status/ownership
-// when it saves. This spec proves that end-to-end against the real editor rather than assuming
-// it - if the editor doesn't strip something the new rule-list code promises, that's a finding
-// about the editor, not a bug in the menu that opened it.
-//
-// Requires alerting.rulesAPIV2 so the ungrouped ("rule-based") evaluation mode is available -
-// these rules have no Ruler group to begin with (see create-grafana-rule.spec.ts for the same
-// convention).
+// ALERT-6/REC-5: requires alerting.rulesAPIV2 for ungrouped rules; proves the editor strips identity on save.
 test.use({
   featureToggles: {
     'alerting.rulesAPIV2': true,
   },
 });
 
-// Saves the copy the editor just created and tracks it for cleanup.
 async function saveCopyAndTrack(page: Page, fixture: { trackRule(uid: string): void }): Promise<string> {
   await new AlertRuleEditPage(page).saveAndWaitForSuccess('created');
   await expect(page).toHaveURL(/\/alerting\/grafana\/[^/]+\/view/);
@@ -27,8 +18,6 @@ async function saveCopyAndTrack(page: Page, fixture: { trackRule(uid: string): v
   return copyUid;
 }
 
-// Duplicate is a plain link to the editor's copy route on a normal rule. A provisioned rule asks first:
-// the modal explains the copy will not be provisioned, and Copy then follows the same route.
 async function duplicateThroughMenu(page: Page, kind: RuleListKind, title: string) {
   await new RuleListPage(page, kind).rowMoreButton(title).click();
   await page.getByRole('menuitem', { name: 'Duplicate', exact: true }).click();

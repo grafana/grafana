@@ -3,15 +3,7 @@ import { useMemo } from 'react';
 
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 
-/**
- * Resolves `grafana.app/updatedBy` identity keys (the deleting user, on a trash tombstone) to a
- * display name, the same API-independent lookup the folder API uses for `createdBy`/`updatedBy`
- * (see `app/api/clients/folder/v1beta1/hooks.ts`'s `resolveDisplayName`). Batched across every
- * currently loaded row into a single request rather than one per row.
- *
- * A failed or partial lookup must not disable the row it belongs to - callers fall back to the
- * raw UID, then "Unknown".
- */
+/** One batched lookup; a failed one must not disable the row - callers fall back to the UID, then "Unknown". */
 export function useDeletedByDisplayNames(updatedByKeys: Array<string | undefined>) {
   const uniqueKeys = Array.from(new Set(updatedByKeys.filter((key): key is string => Boolean(key))));
 

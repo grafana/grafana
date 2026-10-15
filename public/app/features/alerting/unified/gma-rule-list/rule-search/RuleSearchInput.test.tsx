@@ -8,7 +8,6 @@ import { parse } from './parser';
 import { serialize } from './serializer';
 import { type TokenDefinition } from './tokens';
 
-/** Owns the applied query the way a page does: the canonical form of whatever was applied. */
 function PageLikeInput({ initialQuery = '' }: { initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
   return (
@@ -27,10 +26,8 @@ function PageLikeInput({ initialQuery = '' }: { initialQuery?: string }) {
 
 describe('RuleSearchInput', () => {
   it('SEARCH-1: applies a valid edit after the debounce, not on every keystroke', async () => {
-    // Fake timers make the debounce deterministic: with real timers, userEvent's own
-    // per-keystroke delay can exceed a short debounce under load, firing onApply early on a
-    // partial value instead of waiting for the full "cpu". advanceTimers ties userEvent's
-    // internal waits to the same fake clock so typing still resolves.
+    // Fake timers: with real ones, userEvent's per-keystroke delay can exceed the debounce under
+    // load and apply a partial value. advanceTimers keeps userEvent on the fake clock.
     jest.useFakeTimers();
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     const onApply = jest.fn();
@@ -105,7 +102,7 @@ describe('RuleSearchInput', () => {
     await user.type(screen.getByRole('textbox', { name: /search/i }), `${typed}{Enter}`);
 
     expect(screen.getByRole('textbox', { name: /search/i })).toHaveValue(typed);
-    // The applied query is the canonical form, which orders tokens differently and is what the URL gets.
+    // Applied query is the canonical form, which reorders tokens.
     expect(screen.getByLabelText('applied query')).toHaveTextContent(
       'namespace:folder-1 label:team=api foo:bar label: cpu'
     );

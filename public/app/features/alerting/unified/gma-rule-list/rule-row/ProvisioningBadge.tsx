@@ -4,11 +4,10 @@ import { Badge } from '@grafana/ui';
 import { managerKindName } from '../rule-data/managerKindName';
 
 interface ProvisioningBadgeProps {
-  /** Manager kind from the full rule's manager properties; without it the tooltip only says "Provisioned". */
+  /** Without it the tooltip only says "Provisioned". */
   managerKind?: string;
 }
 
-/** Marks a rule that was created by config and cannot be edited in the UI, naming who manages it. */
 export function ProvisioningBadge({ managerKind }: ProvisioningBadgeProps) {
   return (
     <Badge

@@ -6,10 +6,7 @@ import { mapBounded } from './corpus/seedCorpus';
 import { RuleListPage, type RuleListKind, folderScope } from './pages/RuleListPage';
 import { createAlertRule, createFolderAndWait, createRecordingRule, deleteFolder, getNamespace } from './ruleSeeding';
 
-// Folders mode lists every folder with rules, and a folder page cannot be scoped by a rule label. These
-// journeys seed more folders than one page holds and scope the list to exactly those folders, which makes
-// the folders on each page predictable while other tests' folders share the instance. An organization of
-// their own would not isolate them: with a stack ID configured, every organization maps to the same namespace.
+// Folders mode can't be scoped by label, so seed more folders than a page holds and filter to exactly them.
 const PAGE_SIZE = 40;
 const FOLDER_COUNT = PAGE_SIZE + 5;
 
@@ -26,8 +23,7 @@ function ruleTitle(folderIndex: number): string {
 const test = base.extend<{ ruleKind: RuleListKind; pagedFolders: PagedFolders }>({
   ruleKind: ['alert', { option: true }],
 
-  // One folder per title and one rule of the page's kind in each, so every folder is listed. The rule writes
-  // are what label a folder as holding rules. A run id keeps the UIDs and titles of parallel tests apart.
+  // Rule writes are what label a folder as holding rules.
   pagedFolders: [
     async ({ request, ruleKind }, use) => {
       const namespace = await getNamespace(request);
@@ -60,15 +56,12 @@ const test = base.extend<{ ruleKind: RuleListKind; pagedFolders: PagedFolders }>
         await mapBounded(folderUids, (folderUid) => deleteFolder(request, folderUid).catch(() => undefined));
       }
     },
-    // Seeding a few hundred writes takes longer than a test's own budget, so it gets its own.
+    // Seeding outlasts the default test budget.
     { timeout: 120_000 },
   ],
 });
 
-/**
- * Waits until the folder search the Folders mode reads lists every given folder. Rule writes label their
- * folder asynchronously, and a folder without the label is not listed.
- */
+/** Rule writes label folders asynchronously. */
 async function waitForListedFolders(request: APIRequestContext, namespace: string, folderUids: string[]) {
   await expect(async () => {
     const response = await request.post(`/apis/folder.grafana.app/v1beta1/namespaces/${namespace}/folders/search`, {

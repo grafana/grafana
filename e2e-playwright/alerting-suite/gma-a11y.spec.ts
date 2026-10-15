@@ -126,10 +126,7 @@ test.describe(
       await searchInput.focus();
       await expect(searchInput).toBeFocused();
 
-      // Folders/List toggle: both options keyboard-reachable with clear labels. It's a native
-      // radio group, so ArrowRight moves between options - Tab moves past the whole group,
-      // same as any other radiogroup - and getByRole with `name` already requires a real
-      // accessible name, so a match here is itself the assertion.
+      // Native radio group: ArrowRight moves between options; Tab skips the group.
       const foldersRadio = page.getByRole('radio', { name: 'Folders' });
       const listRadio = page.getByRole('radio', { name: 'List' });
       await expect(foldersRadio).toBeVisible();
@@ -138,16 +135,12 @@ test.describe(
       await expect(foldersRadio).toBeFocused();
       await page.keyboard.press('ArrowRight');
       await expect(listRadio).toBeFocused();
-      // A native radio group also selects on arrow-key movement, which just switched the page
-      // to List mode - switch back so the folder-expand assertions below have something to
-      // expand.
+      // Arrow key selected List mode; switch back to have folders to expand.
       await page.keyboard.press('ArrowLeft');
       await expect(foldersRadio).toBeFocused();
       await expect(foldersRadio).toBeChecked();
 
-      // Folder expand control: Enter toggles aria-expanded, Space toggles it back. Matched through
-      // the folder's row, by a name that fits both states, since neither `expanded` nor "Expand ..."
-      // would keep matching once the value flips.
+      // Name valid in both states.
       const expandButton = list.folderRow(folder.title).getByRole('button', { name: /^(Expand|Collapse) / });
       await expect(expandButton).toBeVisible();
       await expandButton.focus();
@@ -159,9 +152,6 @@ test.describe(
       await page.keyboard.press('Enter');
       await expect(expandButton).toHaveAttribute('aria-expanded', 'true');
 
-      // The rule title link and the row's Edit link and More button are all keyboard-operable, and
-      // Shift+Tab from More lands on the Edit link next to it (confirms real DOM/tab order, not just
-      // that the elements exist somewhere on the page).
       await expect(list.ruleLink(title)).toBeVisible();
       await list.ruleLink(title).focus();
       await expect(list.ruleLink(title)).toBeFocused();
@@ -177,8 +167,7 @@ test.describe(
       await page.keyboard.press('Enter');
       await expect(page.getByRole('menu')).toBeVisible();
 
-      // Escape must close the menu and return focus to the button that opened it, not drop
-      // focus to <body> - that's the part a screen-reader user actually depends on.
+      // Focus must return to the opener, not <body>.
       await page.keyboard.press('Escape');
       await expect(page.getByRole('menu')).not.toBeVisible();
       await expect(moreButton).toBeFocused();

@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
 
-/** The part of an RTK Query infinite query hook result that paging UI reads. */
 export interface InfiniteQueryResult<TPage> {
   currentData?: { pages: TPage[] };
   isError: boolean;
@@ -15,19 +14,14 @@ export interface InfiniteQueryResult<TPage> {
   refetch: () => unknown;
 }
 
-/** A request that failed while data was already loaded, which stays on screen. */
 export interface PagedFailure {
-  /** The next page failed, or refetching the pages already loaded did. */
   kind: 'load-more' | 'refresh';
   error: unknown;
 }
 
 export interface PagedResult<T> {
-  /** Every loaded page's items, in the order the server returned them. */
   items: T[];
-  /** The first page is still loading and nothing has loaded yet. */
   isLoading: boolean;
-  /** The first request failed, so there is nothing to show. */
   error?: unknown;
   failure?: PagedFailure;
   hasMore: boolean;
@@ -36,11 +30,7 @@ export interface PagedResult<T> {
   retry: () => void;
 }
 
-/**
- * Adapts an infinite query result to what a "Load more" list renders. `restartFromFirstPage` drops
- * every page but the first from the cache, for the case where a continuation token can no longer
- * be used.
- */
+/** `restartFromFirstPage` drops later pages, for when a continuation token can no longer be used. */
 export function usePagedResult<TPage, T>(
   query: InfiniteQueryResult<TPage>,
   getItems: (page: TPage) => T[],
@@ -74,11 +64,7 @@ export function toPagedFailure(
   return { kind: query.isFetchNextPageError ? 'load-more' : 'refresh', error: query.error };
 }
 
-/**
- * Repeats the request that failed. A failed continuation request is repeated with the same token,
- * unless the server rejected the token: it can never succeed, so the chain starts again from the
- * first page instead.
- */
+/** Retries with the same token, unless the server rejected it: then restarts from the first page. */
 export function retryPagedQuery(
   query: Pick<InfiniteQueryResult<unknown>, 'isFetchNextPageError' | 'error' | 'fetchNextPage' | 'refetch'>,
   restartFromFirstPage: () => void
@@ -95,7 +81,6 @@ export function retryPagedQuery(
   void query.fetchNextPage();
 }
 
-/** Cache recipe for `updateQueryData` that keeps only the first page of an infinite query. */
 export function keepFirstPage(draft: { pages: unknown[]; pageParams: unknown[] }) {
   draft.pages.splice(1);
   draft.pageParams.splice(1);

@@ -32,10 +32,7 @@ type Folder = {
   title: string;
 };
 
-// A write is durable as soon as the POST resolves, but the rule search may read an index that
-// updates asynchronously — the same visibility gap `workerFolder` already works around for the
-// folders list. Poll the per-kind searchRules endpoint the UI reads, filtered to one folder, until
-// the expected count appears, instead of a fixed sleep or trusting the write response alone.
+// Search index lags writes; poll searchRules for one folder until the expected count appears.
 export async function waitForRuleSearchVisible(
   request: APIRequestContext,
   namespace: string,
@@ -64,8 +61,7 @@ export async function waitForRuleSearchVisible(
   }).toPass({ intervals: [200, 500, 1000, 2000], timeout });
 }
 
-// Everything a test creates is tracked and deleted (LIFO) at test end, so a resource that others
-// depend on (a folder, a contact point) goes away after the rules that use it.
+// Deleted LIFO so a folder or contact point outlives the rules using it.
 class DisposableFixture {
   protected readonly disposers: Array<() => Promise<void>> = [];
 
@@ -75,8 +71,6 @@ class DisposableFixture {
     protected readonly folder: Folder
   ) {}
 
-  // A second folder for tests that need a rule outside the worker's folder, e.g. to prove a folder
-  // filter excludes it.
   async createFolder(title: string): Promise<Folder> {
     const uid = `e2e-alerting-extra-${crypto.randomUUID().slice(0, 8)}`;
     await createFolderAndWait(this.request, this.api.namespace, uid, title);
@@ -84,14 +78,13 @@ class DisposableFixture {
     return { uid, title };
   }
 
-  // Register a rule for deletion on teardown. Used by seedRule and by tests for UI-created rules.
   trackRule(uid: string): void {
     this.disposers.push(async () => {
       await this.request.delete(`${rulesApiBase(this.api.namespace)}/${this.ruleKind}/${encodeURIComponent(uid)}`);
     });
   }
 
-  // LIFO, best-effort: a resource may already be gone, and the worker folder delete is the backstop.
+  // Best-effort: a resource may be gone; the worker folder delete is the backstop.
   async dispose(): Promise<void> {
     for (const disposer of this.disposers.reverse()) {
       try {
@@ -107,15 +100,12 @@ class DisposableFixture {
   }
 }
 
-// Disposable rule fixture: every group/rule a test creates is tracked and deleted (LIFO) at test end.
 class AlertRulesFixture extends DisposableFixture {
   protected get ruleKind(): RuleKind {
     return 'alertrules';
   }
 
-  // Seed a named evaluation group via the ruler API (the only API with named groups). A group needs
-  // at least one rule; we use a paused constant `math` expression so seeding does no datasource or
-  // scheduler work — only the group name + interval matter to the tests that pick it.
+  // Ruler API is the only one with named groups; paused `math` rule avoids datasource work.
   async seedGroup(groupName: string, interval: string, ruleTitle: string): Promise<void> {
     await postWithRetry(
       this.request,
@@ -154,8 +144,7 @@ class AlertRulesFixture extends DisposableFixture {
     });
   }
 
-  // Seed a single Grafana-managed rule via the k8s alertrule API (independent of the UI form).
-  // Returns the rule UID. Paused constant math expression unless the seed says otherwise — see seedGroup.
+  // Paused constant math expression unless the seed says otherwise.
   async seedRule(seed: AlertRuleSeed): Promise<string> {
     const uid = await createAlertRule(this.request, this.api.namespace, this.folder.uid, seed);
     this.trackRule(uid);
@@ -188,16 +177,12 @@ class AlertRulesFixture extends DisposableFixture {
   }
 }
 
-// Disposable Recording rule fixture, mirroring AlertRulesFixture — no Ruler/group API exists
-// for Recording rules, so every rule is created and torn down directly through the k8s API.
+// No Ruler API for Recording rules; use the k8s API.
 class RecordingRulesFixture extends DisposableFixture {
   protected get ruleKind(): RuleKind {
     return 'recordingrules';
   }
 
-  // Seed a single Recording rule via the k8s recordingrule API. Paused constant math
-  // expression unless the seed says otherwise, same reasoning as AlertRulesFixture.seedRule:
-  // no datasource/scheduler work.
   async seedRule(seed: RecordingRuleSeed): Promise<string> {
     const uid = await createRecordingRule(this.request, this.api.namespace, this.folder.uid, seed);
     this.trackRule(uid);
@@ -209,9 +194,7 @@ export const test = base.extend<
   { folder: Folder; alertRules: AlertRulesFixture; recordingRules: RecordingRulesFixture },
   { workerApi: WorkerApi; workerFolder: Folder }
 >({
-  // Worker-scoped authenticated API context + namespace lookup, built from the project's saved auth
-  // state (the built-in request/namespace fixtures are test-scoped). Seeds run against the built-in
-  // __expr__ engine, so no datasource lookup is needed.
+  // Worker-scoped, since built-in fixtures are test-scoped.
   workerApi: [
     async ({ playwright }, use, workerInfo) => {
       const { baseURL, storageState } = workerInfo.project.use;
@@ -223,11 +206,7 @@ export const test = base.extend<
     { scope: 'worker' },
   ],
 
-  // One folder per worker, reused across its tests. A per-invocation unique name avoids cross-worker
-  // collisions and orphan accumulation. Reusing it (vs. one per test) keeps folder writes — the main
-  // SQLITE_BUSY contention source — to one per worker. Created via the App Platform (k8s) folders API.
-  // `timeout: 35_000` on the fixture itself raises Playwright's own fixture-setup ceiling (normally
-  // the 10s test timeout) to cover the 15s retry budget and the visibility poll in createFolderAndWait.
+  // One folder per worker limits folder writes (SQLITE_BUSY); the timeout covers the retry plus visibility poll.
   workerFolder: [
     async ({ workerApi }, use, workerInfo) => {
       const suffix = crypto.randomUUID().slice(0, 8);
@@ -237,8 +216,7 @@ export const test = base.extend<
 
       await use({ uid, title });
 
-      // Per-test disposers already removed the rules/groups, so a plain delete normally suffices;
-      // fall back to the cascade only if a test left something behind.
+      // Cascade only if a test left something behind.
       await deleteFolder(workerApi.request, uid);
     },
     { scope: 'worker', timeout: 35_000 },
@@ -251,7 +229,6 @@ export const test = base.extend<
     { scope: 'test' },
   ],
 
-  // Not `auto`: only tests that create rules inject it, and its teardown disposes whatever they made.
   alertRules: [
     async ({ request, workerApi, folder }, use) => {
       const fixture = new AlertRulesFixture(request, workerApi, folder);
@@ -271,7 +248,6 @@ export const test = base.extend<
   ],
 });
 
-// Rule UID is the path segment between `/alerting/grafana/` and `/view`.
 export function ruleUidFromUrl(url: string): string {
   const match = url.match(/\/alerting\/grafana\/([^/]+)\/view/);
   if (!match) {

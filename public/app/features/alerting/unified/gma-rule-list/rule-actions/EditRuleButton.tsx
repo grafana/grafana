@@ -10,10 +10,7 @@ interface EditRuleButtonProps {
   availability: ActionAvailability;
 }
 
-/**
- * Edit is a plain link to the existing editor. When it is unavailable it becomes a disabled button
- * with the reason, because a disabled link ignores pointer events and so could not show a tooltip.
- */
+/** Unavailable Edit is a disabled button: a disabled link ignores pointer events, so no tooltip. */
 export function EditRuleButton({ uid, availability }: EditRuleButtonProps) {
   const label = t('alerting.gma-rule-list.actions.edit', 'Edit');
 

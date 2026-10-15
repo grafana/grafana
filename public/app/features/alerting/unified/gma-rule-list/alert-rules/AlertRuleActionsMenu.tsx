@@ -32,10 +32,6 @@ interface AlertRuleActionsMenuProps {
   resourceState: RuleResourceState<AlertRule>;
 }
 
-/**
- * Action menu for a single Grafana-managed Alert rule row in the GMA-only list. Takes only the
- * rule UID and its full-resource fetch state - never a legacy rule/group identifier.
- */
 export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleActionsMenuProps) {
   const abilities = useRuleActionAbilities(resourceState);
   const { setPaused, isPending: pausePending } = useAlertRulePauseResume(ruleUid);
@@ -54,8 +50,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleAction
   const confirmBeforeCopy = rule !== undefined && isProvisionedOrManaged(rule);
 
   const canReadEnrichments = isGranted(useEnrichmentAbility(EnrichmentAction.Read));
-  // alertingEnrichmentPerRule has no OpenFeature migration yet; this mirrors the same gate
-  // AlertRuleMenu.tsx already uses for the legacy list's "Manage enrichments" item.
+  // No OpenFeature migration yet; mirrors the gate in AlertRuleMenu.tsx.
   // eslint-disable-next-line @grafana/no-config-feature-toggles
   const canManageEnrichments = Boolean(config.featureToggles.alertingEnrichmentPerRule) && canReadEnrichments;
 

@@ -2,12 +2,7 @@ import { test, expect } from './fixtures';
 import { RuleListPage, folderScope } from './pages/RuleListPage';
 import { markProvisioned } from './ruleSeeding';
 
-// RBAC-A: this file runs under the Admin-authenticated `alerting-gma` project (see
-// playwright.config.ts), unlike the `.editor.spec.ts`/`.viewer.spec.ts` role-specific projects
-// used for RBAC-E/RBAC-V. Admin has no capability restrictions of its own, so what's actually
-// under test is that the two active pages and both Recently deleted tabs are all reachable, and
-// that the action menu's own gates (useRuleActionAbilities.ts) still disable Resume/Delete with
-// their reason for a provisioned rule even for an Admin, while leaving Duplicate available on it.
+// RBAC-A: provisioned rules still disable Resume/Delete (with reason) but keep Duplicate, even for Admin.
 
 test.describe('Admin (RBAC-A)', () => {
   test('RBAC-A: Admin can reach both active rule pages and both Recently deleted tabs', async ({ page }) => {
@@ -50,7 +45,6 @@ test.describe('Admin (RBAC-A)', () => {
     await expect(page.getByRole('link', { name: provisionedTitle })).toBeVisible();
     await list.rowMoreButton(provisionedTitle).click();
     await expect(page.getByRole('menuitem', { name: 'Duplicate', exact: true })).toBeEnabled();
-    // Unavailable actions stay in the menu, disabled, with the reason as part of their name.
     await expect(page.getByRole('menuitem', { name: /^(Pause|Resume): Provisioned$/ })).toBeDisabled();
     await expect(page.getByRole('menuitem', { name: 'Delete: Provisioned', exact: true })).toBeDisabled();
     await page.keyboard.press('Escape');
@@ -88,7 +82,6 @@ test.describe('Admin (RBAC-A)', () => {
     await expect(page.getByRole('link', { name: provisionedTitle })).toBeVisible();
     await list.rowMoreButton(provisionedTitle).click();
     await expect(page.getByRole('menuitem', { name: 'Duplicate', exact: true })).toBeEnabled();
-    // Unavailable actions stay in the menu, disabled, with the reason as part of their name.
     await expect(page.getByRole('menuitem', { name: /^(Pause|Resume): Provisioned$/ })).toBeDisabled();
     await expect(page.getByRole('menuitem', { name: 'Delete: Provisioned', exact: true })).toBeDisabled();
     await page.keyboard.press('Escape');

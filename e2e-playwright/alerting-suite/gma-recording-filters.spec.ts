@@ -12,9 +12,6 @@ import {
   testDataSourceUid,
 } from './ruleSeeding';
 
-// Same approach as gma-alert-filters.spec.ts: each journey seeds its own run-labelled rules, scopes
-// the list to them, applies one filter as a user does, and checks the /recordingrules/searchRules
-// request body and the rules shown.
 function rule(run: string, name: string, extra: Partial<RecordingRuleSeed> = {}): RecordingRuleSeed {
   return {
     metric: recordingMetricFor(run, name),

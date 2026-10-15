@@ -4,9 +4,7 @@ import { alertTokens } from '../rule-search/alertTokens';
 import { type Criteria } from '../rule-search/criteria';
 import { parse } from '../rule-search/parser';
 
-// In-memory store keyed by storage key, shared across the mocked UserStorage instances that
-// createStorageLoader/UserStorage construct internally — mirrors the module-level cache the
-// real implementation replaces, without touching real browser storage.
+// In-memory store shared across mocked UserStorage instances, replacing the module-level cache.
 let store: Record<string, string | undefined> = {};
 
 const mockUserStorage = {
@@ -133,7 +131,6 @@ describe('copyLegacySavedSearchesOnce', () => {
     await copyLegacySavedSearchesOnce(resolvers());
     expect(await readCollection(ALERT_SAVED_SEARCHES_STORAGE_KEY)).toHaveLength(1);
 
-    // User deletes the copied entry from the new collection.
     store[ALERT_SAVED_SEARCHES_STORAGE_KEY] = JSON.stringify([]);
     mockUserStorage.setItem.mockClear();
 
@@ -149,7 +146,6 @@ describe('copyLegacySavedSearchesOnce', () => {
     const [copied] = await readCollection(ALERT_SAVED_SEARCHES_STORAGE_KEY);
     expect(copied.isDefault).toBe(true);
 
-    // User unsets the default in the new collection.
     store[ALERT_SAVED_SEARCHES_STORAGE_KEY] = JSON.stringify([{ ...copied, isDefault: false }]);
     mockUserStorage.setItem.mockClear();
 

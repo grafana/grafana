@@ -5,19 +5,16 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 interface RuleListItemProps extends AriaAttributes {
-  /** Status icon; aligned with the title line. */
   icon?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
-  /** Metadata entries; falsy ones are dropped and the rest are separated by `|`. */
+  /** Falsy entries are dropped. */
   meta?: ReactNode[];
-  /** Shown before the actions, e.g. the evaluation interval. */
   metaRight?: ReactNode;
   actions?: ReactNode;
   'data-testid'?: string;
 }
 
-/** Shared `<li>` shell for Alert and Recording rule rows. Callers fill the slots, this owns layout. */
 export function RuleListItem({
   icon,
   title,
@@ -74,7 +71,6 @@ interface RuleListItemDescriptionProps {
   summary?: string;
 }
 
-/** One truncated line: the last evaluation error in red if present, otherwise the summary. Full text on hover. */
 export function RuleListItemDescription({ error, summary }: RuleListItemDescriptionProps) {
   const text = error || summary;
 
@@ -109,7 +105,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderRadius: theme.shape.radius.default,
     },
   }),
-  // Lines the icon up with the title text rather than the top of the row.
+  // Aligns the icon with the title text.
   icon: css({
     marginTop: theme.spacing(0.5),
   }),

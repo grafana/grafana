@@ -5,11 +5,10 @@ import { getDataSourceByUid } from '../../utils/datasource';
 import { makeDataSourceLink } from '../../utils/misc';
 
 interface DataSourcesMetaProps {
-  /** Data source UIDs queried by the rule. Unknown UIDs (deleted or not visible) are skipped. */
+  /** Unknown UIDs (deleted or not visible) are skipped. */
   uids: string[];
 }
 
-/** One data source shows its logo and a link; several show logos with name tooltips and a count. */
 export function DataSourcesMeta({ uids }: DataSourcesMetaProps) {
   const dataSources = Array.from(new Set(uids))
     .map(getDataSourceByUid)

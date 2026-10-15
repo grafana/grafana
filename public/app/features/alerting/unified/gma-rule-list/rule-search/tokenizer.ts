@@ -6,9 +6,7 @@ function isWhitespace(ch: string): boolean {
   return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
 }
 
-/** Reads a `"..."` value starting at `openIndex` (which must be a `"`). Returns the
- * unquoted text and whether the closing quote was found, so an unterminated quote (still
- * being typed) can be preserved as a draft rather than silently swallowed. */
+/** `closed` is false for an unterminated quote, which is kept as a draft. */
 function readQuoted(input: string, openIndex: number): { text: string; closed: boolean; next: number } {
   let i = openIndex + 1;
   while (i < input.length && input[i] !== '"') {
@@ -21,10 +19,6 @@ function readQuoted(input: string, openIndex: number): { text: string; closed: b
   return { text, closed: false, next: i };
 }
 
-/**
- * Splits a flat search string into free-text and `key:value` tokens, preserving source
- * spans and never dropping malformed/unfinished input — see README.md for the exact syntax.
- */
 export function tokenize(input: string): RawToken[] {
   const tokens: RawToken[] = [];
   let i = 0;
@@ -36,7 +30,7 @@ export function tokenize(input: string): RawToken[] {
     }
 
     const start = i;
-    // A colon with no valid key before it just becomes part of a free-text word, e.g. "1:2:3".
+    // A colon with no valid key before it stays in the free-text word, e.g. "1:2:3".
     const key = KEY_PATTERN.exec(input.slice(i))?.[1] ?? null;
     if (key !== null) {
       i += key.length + 1;

@@ -23,12 +23,9 @@ import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
 interface AlertRuleRowProps {
   hit: AlertRuleSearchHit;
-  /** The full rule, for provenance and manager properties the search hit does not carry. */
   fullRule: RuleResourceState<AlertRule>;
-  /** Root-to-folder titles. Only List mode passes one - Folders mode already shows the folder
-   * on the folder row, so repeating it on every rule row would be redundant. */
+  /** List mode only. */
   folderPath?: string[];
-  /** Rendered at the right edge of the row - the Edit button and actions menu. */
   actions?: ReactNode;
 }
 
@@ -57,12 +54,7 @@ function RoutingMeta({ hit }: { hit: AlertRuleSearchHit }) {
   return <MetaItem icon="at">{t('alerting.gma-rule-list.alert-rules.routing-default', 'Default policy')}</MetaItem>;
 }
 
-/**
- * GMA-only Alert rule row for both Folders and List mode. Presentation-only: everything shown
- * comes from the search hit and the lookups its container passes in, so the row fetches nothing.
- * Missing runtime state/health renders a neutral "status unavailable" icon, never a healthy
- * default (alerting.ruleStatusSync may not have populated them yet).
- */
+/** Presentation-only; missing state/health renders "unavailable", never healthy. */
 export function AlertRuleRow({ hit, fullRule, folderPath, actions }: AlertRuleRowProps) {
   const titleId = useId();
 
@@ -70,8 +62,7 @@ export function AlertRuleRow({ hit, fullRule, folderPath, actions }: AlertRuleRo
   // Managed rules get the provisioning badge too: they are owned by something outside the UI.
   const managerKind = fullRule.status === 'loaded' ? getManagerKind(fullRule.rule) : undefined;
   const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
-  // Each meta entry is gated on its data here because the separator is added per truthy entry,
-  // so a component that renders null would still leave a stray `|`.
+  // Gate each entry: a null-rendering component would leave a stray separator.
   const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
   const hasTotals = Object.values(hit.totals).some((total) => total !== undefined);
   const hasDisplayLabels = Object.keys(getDisplayLabels(hit.labels)).length > 0;

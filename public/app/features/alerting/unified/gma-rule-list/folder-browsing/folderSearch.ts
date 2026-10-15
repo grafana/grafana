@@ -16,15 +16,10 @@ export interface FolderSearchPage {
   continueToken?: string;
 }
 
-// Same tag the folder API's own list and delete endpoints use, so deleting a folder elsewhere
-// refreshes this listing too.
+// Same tag as the folder API's list and delete, so deleting a folder elsewhere refreshes this listing.
 const folderListTag = { type: 'Folder' as const, id: 'LIST' };
 
-/**
- * The single place that names the folder search endpoint. The generated operation is a mutation
- * (it is a POST), so it provides no tags and has no page state; this injects the same request as
- * an infinite query keyed by the folder filter, with continuation tokens as the page parameters.
- */
+/** The generated POST mutation has no tags or page state; injected as an infinite query keyed by folder filter. */
 export const folderSearchAPI = folderAPI.injectEndpoints({
   endpoints: (build) => ({
     searchRuleFolders: build.infiniteQuery<FolderSearchPage, { folderUids: string[] }, string | undefined>({

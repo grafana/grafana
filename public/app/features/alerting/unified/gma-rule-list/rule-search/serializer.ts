@@ -2,8 +2,6 @@ import { type Criteria } from './criteria';
 import { serializeLabelValue } from './labelMatcher';
 import { TOKEN_KEYS } from './tokens';
 
-/** Quotes a value if it contains whitespace, so it round-trips through the tokenizer as a
- * single token. */
 export function quoteIfNeeded(value: string): string {
   return /\s/.test(value) ? `"${value}"` : value;
 }
@@ -12,11 +10,7 @@ function formatToken(key: string, value: string): string {
   return `${key}:${quoteIfNeeded(value)}`;
 }
 
-/**
- * Produces the canonical string form of a Criteria object. Token order is fixed (not the
- * order the user originally typed them in) so that repeated serialize() calls, and
- * parse(serialize(c)), are stable. See README.md for the exact syntax.
- */
+/** Token order is fixed, not as typed, so serialize and parse(serialize(c)) are stable. */
 export function serialize(criteria: Criteria): string {
   const parts: string[] = [];
 

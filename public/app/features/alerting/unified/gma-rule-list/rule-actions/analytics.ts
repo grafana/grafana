@@ -2,10 +2,7 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { type RuleKind } from '../shared/analytics';
 
-/**
- * Analytics for the GMA-only rule action menus and page headers. Never pass rule titles, UIDs,
- * folder paths, labels, or query content here - only the rule kind and coarse outcome.
- */
+/** Never pass titles, UIDs, folder paths, labels or queries - only rule kind and coarse outcome. */
 
 export function trackRulePauseResume(kind: RuleKind, outcome: 'success' | 'error', targetPaused: boolean) {
   reportInteraction('grafana_alerting_gma_rule_pause_resume', { kind, outcome, targetPaused });

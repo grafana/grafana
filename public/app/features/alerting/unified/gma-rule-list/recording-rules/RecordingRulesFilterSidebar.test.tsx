@@ -9,17 +9,15 @@ import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 
-// Combobox (used for Health) measures its own floating-element size to render option rows;
-// jsdom reports zero for every element, so without this the option list never renders.
+// jsdom reports zero size, so Combobox renders no option rows.
 mockComboboxRect();
 
-// The folder picker scrolls the focused row into view, which jsdom does not implement.
+// jsdom lacks scrollIntoView, which the folder picker calls.
 window.HTMLElement.prototype.scrollIntoView = function () {};
 
 setupMswServer();
 
-/** Feeds onChange back into criteria, so typing/selecting across multiple keystrokes behaves
- * like it does when a real page owns the criteria state. */
+/** Feeds onChange back into criteria like a real page. */
 function ControlledSidebar() {
   const [criteria, setCriteria] = useState<Criteria>(createEmptyCriteria());
   return (

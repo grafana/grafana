@@ -14,9 +14,7 @@ import {
   waitForRuleStatusVisible,
 } from './ruleSeeding';
 
-// The E2E server never evaluates rules, so rule status is seeded through the status subresource
-// (see setRuleStatus). `NotIn` and an unset status are different things, so every journey also seeds a
-// rule with no status and expects the state and health filters to leave it out.
+// Status is seeded via the status subresource (see setRuleStatus); a rule with no status must be left out.
 interface StatusRule {
   name: string;
   status?: RuleStatusSeed;
@@ -235,7 +233,6 @@ test.describe('Alert rules: status icon', () => {
 });
 
 test.describe('Alert rules: instance totals', () => {
-  // Every count differs, and the zero is deliberate: a returned 0 is shown as 0, not hidden.
   test('ALERT-10: the row shows every seeded instance count, labelled, including a zero', async ({
     page,
     request,
@@ -289,7 +286,6 @@ test.describe('Alert rules: instance totals', () => {
       await expect(partialRow.getByText(new RegExp(`\\d+ ${label}`)), `no ${label} count`).toHaveCount(0);
     }
 
-    // The list has rendered the rule above, so the one without status is on screen too.
     const noStatusRow = list.ruleRow(runTitle(run, NO_STATUS_RULE.name));
     await expect(noStatusRow).toBeVisible();
     await expect(noStatusRow.getByText(/\d+ (healthy|firing|pending|recovering|no data|error)/)).toHaveCount(0);

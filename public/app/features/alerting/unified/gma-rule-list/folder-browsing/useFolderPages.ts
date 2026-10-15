@@ -7,13 +7,9 @@ import { type PagedFailure, keepFirstPage, retryPagedQuery, toPagedFailure } fro
 import { type FolderHit, folderSearchAPI, useSearchRuleFoldersInfiniteQuery } from './folderSearch';
 
 export interface UseFolderPagesResult {
-  /** The folders of the page being shown. */
   folders: FolderHit[];
-  /** The first page is still loading and nothing has loaded yet. */
   isLoading: boolean;
-  /** The first request failed, so there is nothing to show. */
   error?: unknown;
-  /** A request failed while a page is already shown; that page stays visible. */
   failure?: PagedFailure;
   isLoadingPage: boolean;
   hasNext: boolean;
@@ -23,12 +19,7 @@ export interface UseFolderPagesResult {
   retry: () => void;
 }
 
-/**
- * Folders mode's Previous/Next pagination over the folder search. The API has no page numbers, so
- * the query keeps every page visited so far (their start tokens live in the query, in memory only)
- * and this hook only tracks which of them is shown. Going back is therefore free, and a refetch
- * after a rule change refreshes the pages already visited without moving the user.
- */
+/** The query keeps every visited page (tokens in memory), so going back is free and refetches do not move the user. */
 export function useFolderPages(folderUids: string[]): UseFolderPagesResult {
   const dispatch = useDispatch();
   const filterKey = JSON.stringify(folderUids);

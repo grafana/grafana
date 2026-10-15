@@ -8,7 +8,6 @@ import { DeletedRuleReviewField } from './DeletedRuleReviewField';
 
 type NotificationSettings = NonNullable<AlertRule['spec']['notificationSettings']>;
 
-/** The notification configuration a deleted Alert rule had: its contact point or named policy tree, plus overrides. */
 export function DeletedRuleNotificationSettings({ settings }: { settings: NotificationSettings }) {
   return (
     <Stack direction="column" gap={1}>

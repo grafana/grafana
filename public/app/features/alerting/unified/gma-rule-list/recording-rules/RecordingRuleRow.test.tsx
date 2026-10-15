@@ -45,8 +45,6 @@ interface ManagerCase {
   tooltip: string;
 }
 
-// The same rule shows the same fields in both modes; only List mode adds the folder path.
-// Recording rules have no state, instances, routing, or summary, so none of that renders.
 describe('RecordingRuleRow', () => {
   beforeEach(() => {
     setupDataSources(
@@ -104,7 +102,6 @@ describe('RecordingRuleRow', () => {
     );
 
     const row = screen.getByRole('listitem');
-    // Folder path and "Records ... to" are the two metadata items, so one separator and no description.
     expect(row.querySelectorAll('p')).toHaveLength(0);
     expect(screen.getAllByText('|')).toHaveLength(1);
   });
@@ -276,7 +273,7 @@ describe('RecordingRuleRow', () => {
       expect(screen.queryByText('my-app')).not.toBeInTheDocument();
     });
 
-    // The plugin settings are cached per plugin id, so each fallback case uses an id of its own.
+    // Plugin settings are cached per id, so each case needs its own id.
     it('shows the plugin id badge while the plugin settings are loading', async () => {
       server.use(http.get('/api/plugins/slow-app/settings', () => new Promise(() => {})));
 

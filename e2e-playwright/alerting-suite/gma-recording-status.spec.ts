@@ -14,9 +14,7 @@ import {
   waitForRuleStatusVisible,
 } from './ruleSeeding';
 
-// The E2E server never evaluates rules, so rule health is seeded through the status subresource
-// (see setRuleStatus). Every journey also seeds a rule with no status and expects the health filter
-// to leave it out, since `In` never matches a rule that has no stored status.
+// Status is seeded via the status subresource (see setRuleStatus); a rule with no status must be left out.
 interface StatusRule {
   name: string;
   health?: RecordingRuleHealth;
@@ -48,7 +46,6 @@ async function seedStatusRules(
 
 const NO_STATUS_RULE: StatusRule = { name: 'Rule without status' };
 
-// `health:ok` is `Recording` for a Recording rule, where an Alert rule reports `OK`.
 const healthCases: Array<{
   token: string;
   apiValues: string[];

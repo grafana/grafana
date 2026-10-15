@@ -29,7 +29,7 @@ jest.mocked(useAssistant).mockReturnValue({
 const RECORDING_RULES_URL = `${getAPIBaseURL('rules.alerting.grafana.app', 'v0alpha1')}/recordingrules`;
 const FOLDER_COUNTS_URL = `${getAPIBaseURL('folder.grafana.app', 'v1beta1')}/folders/:name/counts`;
 
-/** Stands in for a Folders-mode row, so a mutation's effect on folder counts is observable. */
+/** Stands in for a Folders-mode row so folder counts are observable. */
 function FolderCountProbe() {
   const count = useFolderRecordingRuleCount('folder-uid-1');
   return <div>{`Folder holds ${count.status === 'loaded' ? count.count : 'unknown'} rules`}</div>;

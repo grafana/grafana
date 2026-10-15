@@ -10,7 +10,6 @@ interface DeletedRulesLoadState {
   returnedCount?: number;
 }
 
-/** Reports the page view on mount, and the first load's outcome once it settles. */
 export function useTrackDeletedRulesPage(kind: RuleKind, { isLoading, error, returnedCount }: DeletedRulesLoadState) {
   const loadStartedAt = useRef(performance.now());
   const reportedLoad = useRef(false);

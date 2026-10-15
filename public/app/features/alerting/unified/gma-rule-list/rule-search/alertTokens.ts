@@ -3,7 +3,6 @@ import { t } from '@grafana/i18n';
 import { DEFAULT_POLICY } from './criteria';
 import { TOKEN_KEYS, type TokenDefinition, sharedDefinitions } from './tokens';
 
-/** The Alert rules filters in the order the sidebar lists them. */
 export const alertTokens: TokenDefinition[] = [
   sharedDefinitions.rule,
   sharedDefinitions.label,

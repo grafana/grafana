@@ -1,12 +1,7 @@
 import { test, expect } from './fixtures';
 import { deleteRule } from './ruleSeeding';
 
-// Recently deleted has no search/filter controls (by design - the trash selector can't be
-// combined with ordinary ones), so unlike the mutation specs there's no folder-scoped view to
-// narrow the table to this test's row. A per-invocation suffix keeps the title unique against
-// both other runs and the shared seeded corpus, which reuses these same realistic-sounding
-// titles (see AGENTS.md) - `exact: true` alone isn't enough since a corpus rule could
-// coincidentally share the exact title otherwise.
+// No filters here, so a per-run title suffix keeps the row unique against the corpus.
 test.describe('Alert rules: Recently deleted', () => {
   test('ADEL-3: Review shows a sanitized human-readable preview and advanced JSON with no server/group data', async ({
     page,
@@ -31,16 +26,13 @@ test.describe('Alert rules: Recently deleted', () => {
 
     await drawer.getByRole('button', { name: 'Advanced: Kubernetes JSON' }).click();
     const jsonText = await drawer.textContent();
-    // Sanitized: the tombstone's own resourceVersion/deletionTimestamp/access/provenance/group
-    // fields (all present on the raw resource - see fixtures.ts's seedRule/the trash response)
-    // must not leak into the advanced view.
+    // Tombstone fields must not leak into the advanced view.
     expect(jsonText).not.toContain('resourceVersion');
     expect(jsonText).not.toContain('deletionTimestamp');
     expect(jsonText).not.toContain('grafana.com/access');
     expect(jsonText).not.toContain('grafana.com/provenance');
     expect(jsonText).not.toContain('managedFields');
     expect(jsonText).not.toContain('"status"');
-    // The preview must still contain the rule's own definition.
     expect(jsonText).toContain(title);
   });
 
@@ -57,8 +49,7 @@ test.describe('Alert rules: Recently deleted', () => {
     await expect(page.getByRole('cell', { name: title, exact: true })).toBeVisible();
 
     await page.goto('/alerting/rules/recording/deleted');
-    // The other tab has finished loading once it shows either its table or its empty state; asserting
-    // absence earlier would pass while the request is still in flight.
+    // Loaded once a table or empty state shows; earlier absence checks pass mid-request.
     await expect(
       page.getByRole('columnheader', { name: 'Title' }).or(page.getByText('No recently deleted rules found'))
     ).toBeVisible();

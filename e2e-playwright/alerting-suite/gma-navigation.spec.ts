@@ -11,7 +11,6 @@ test.describe('Navigation', () => {
     const nav = page.getByRole('navigation', { name: 'Navigation' });
     await expectHref(nav.getByRole('link', { name: 'Alert rules' }), '/alerting/rules/alert');
     await expectHref(nav.getByRole('link', { name: 'Recording rules' }), '/alerting/rules/recording');
-    // No leftover combined-list or evaluation-group entry in the new experience.
     await expect(nav.getByRole('link', { name: 'Alert rules', exact: true })).toHaveCount(1);
 
     await expect(page.getByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'true');

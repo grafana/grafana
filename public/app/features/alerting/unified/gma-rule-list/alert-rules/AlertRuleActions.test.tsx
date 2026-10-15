@@ -88,7 +88,7 @@ describe('AlertRuleActions', () => {
   ])('ACT: shows a disabled Edit button that explains why when the rule $name', async ({ reason, state }) => {
     const { user } = render(<AlertRuleActions ruleUid="rule-1" resourceState={state} />);
 
-    // ACC-7: the reason is part of the disabled button's accessible name, not only a hover tooltip.
+    // ACC-7: reason is in the accessible name, not only a tooltip.
     const edit = await screen.findByRole('button', { name: `Edit: ${reason}` });
     expect(edit).toHaveAttribute('aria-disabled', 'true');
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();

@@ -1,11 +1,7 @@
 import { test, expect } from './fixtures';
 import { RuleListPage, type RuleListKind, expectHref, folderScope, linkTarget } from './pages/RuleListPage';
 
-// Where each page sends the user: the row's own links, the header's New rule link and the row menu's
-// Copy link. Every destination is checked as an exact path, which also proves that none of them
-// carries `returnTo` - going back uses the browser's history instead.
-//
-// Requires alerting.rulesAPIV2 so the editor the links lead to opens ungrouped rules, like gma-duplicate.spec.ts.
+// Requires alerting.rulesAPIV2 so the editor opens ungrouped rules; exact paths prove no `returnTo`.
 test.use({
   featureToggles: {
     'alerting.rulesAPIV2': true,
@@ -41,7 +37,6 @@ for (const { kind, ids, ruleTitle, newRuleLabel, newRulePath } of listPages) {
   test.describe(`${kind === 'alert' ? 'Alert' : 'Recording'} rule links`, () => {
     test(`${ids.navigation}: ${newRuleLabel} opens the creation form without returnTo`, async ({ page, folder }) => {
       const list = new RuleListPage(page, kind);
-      // An empty folder keeps the page's own header controls the only ones on it.
       await list.goto(folderScope(folder.uid));
 
       await expectHref(list.newRuleLink, newRulePath);

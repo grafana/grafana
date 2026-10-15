@@ -7,9 +7,8 @@ type StateIconHealth = 'ok' | 'nodata' | 'error';
 
 interface RuleStatusIconProps {
   kind: 'alert' | 'recording';
-  /** Kubernetes alert state, e.g. `Firing`. Ignored for recording rules. */
+  /** Ignored for recording rules. */
   state?: string;
-  /** Kubernetes health, e.g. `OK`, `Error`, `NoData`, `Recording`, `Paused`, `Unknown`. */
   health?: string;
   paused?: boolean;
 }
@@ -30,10 +29,7 @@ const HEALTH_MAP: Record<string, StateIconHealth> = {
   recording: 'ok',
 };
 
-/**
- * Maps the Kubernetes rule status fields onto `StateIcon`'s Prometheus-style values. Unknown or
- * absent status gets a neutral circle instead of StateIcon's default, whose tooltip says "unknown".
- */
+/** Unknown status gets a neutral circle, since StateIcon's default tooltip says "unknown". */
 export function RuleStatusIcon({ kind, state, health, paused }: RuleStatusIconProps) {
   const normalizedHealth = health?.toLowerCase();
   const normalizedState = state?.toLowerCase();

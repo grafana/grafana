@@ -36,10 +36,7 @@ export class AlertRuleEditPage {
     await this.page.getByRole('button', { name: /new evaluation group/i }).click();
 
     const dialog = this.page.getByRole('dialog');
-    // The Field labels' description text bleeds into the accessible name, so
-    // getByLabel(/evaluation interval/i) double-matches with the name input.
-    // Grafana's testid convention prefixes attribute values with the literal
-    // "data-testid " — query through the prefix or pick a stable alternative.
+    // Label descriptions leak into the accessible name; testid values carry a literal "data-testid " prefix.
     await dialog.getByTestId('data-testid alert-rule new-evaluation-group-name').fill(name);
     await dialog.getByTestId('data-testid alert-rule new-evaluation-group-interval').fill(interval);
     await dialog.getByRole('button', { name: 'Create' }).click();
@@ -60,14 +57,10 @@ export class AlertRuleEditPage {
   }
 
   async selectQueryDataSource(dataSourceName: string): Promise<void> {
-    // The DataSourcePicker in QueryEditorRowHeader exposes itself by aria-label
-    // "Select a data source". Multiple may exist on the page (one per query row),
-    // so use the first.
+    // One picker per query row.
     const picker = this.page.getByLabel('Select a data source').first();
     await picker.click();
-    // DataSourcePicker renders each candidate as a `button` (not a `role=option`)
-    // whose accessible name combines the DS name with badges/tags
-    // (e.g. "gdev-testdata Tags TestData") — match by prefix.
+    // Buttons whose name includes badges: match by prefix.
     await this.page
       .getByRole('option', { name: new RegExp(`^${dataSourceName}\\b`, 'i') })
       .first()
@@ -75,19 +68,14 @@ export class AlertRuleEditPage {
   }
 
   async setManualRouting(contactPointName: string): Promise<void> {
-    // Pre-v2 the form has a routing-mode radio (`Select contact point` vs.
-    // `Use notification policy`); v2 drops it and renders the contact-point
-    // combobox directly. Check the radio only if it's actually present.
+    // Pre-v2 has a routing-mode radio; v2 doesn't.
     const routingRadio = this.page.getByRole('radio', { name: /select contact point/i });
     if (await routingRadio.isVisible()) {
       await routingRadio.check();
     }
-    // v2 renames "Contact point" to "Recipient" — match either label.
     const combobox = this.page.getByRole('combobox', { name: /^(contact point|recipient)$/i });
     await combobox.click();
-    // Don't type-to-filter: Combobox.fill skips the keystroke events that update
-    // its internal search state, so the option list stays unfiltered. Just click
-    // the matching option directly from the open dropdown.
+    // fill skips keystroke events, leaving options unfiltered; click the option.
     await this.page.getByRole('option', { name: new RegExp(`^${contactPointName}\\b`) }).click();
   }
 
@@ -95,13 +83,9 @@ export class AlertRuleEditPage {
     await this.page.getByTestId(selectors.components.AlertRules.addLabelsButton).click();
 
     const dialog = this.page.getByRole('dialog');
-    // The dialog opens with a pre-existing empty row. "Add more" appends a new row at the end;
-    // target it via prefix selector + .last() rather than a hardcoded index.
     await dialog.getByRole('button', { name: /add more/i }).click();
 
-    // Each combobox is an `AlertLabelDropdown` (grafana-ui Combobox) with `createCustomValue=true`.
-    // Press-and-Enter races with async option loading and silently drops the keystrokes —
-    // clicking the explicit custom-value option in the dropdown is the deterministic path.
+    // Enter races async option loading; click the custom-value option.
     await this.fillLabelCombobox(dialog.locator('[data-testid^="labelsInSubform-key-"]').last(), key);
     await this.fillLabelCombobox(dialog.locator('[data-testid^="labelsInSubform-value-"]').last(), value);
 
@@ -112,9 +96,7 @@ export class AlertRuleEditPage {
   private async fillLabelCombobox(field: Locator, text: string): Promise<void> {
     await field.getByRole('combobox').click();
     await this.page.keyboard.type(text);
-    // The custom-value option's accessible name combines the typed text with the
-    // "Use custom value" description (e.g. `"team Use custom value"`), so we anchor
-    // a regex to the start of the option name with a word boundary.
+    // Name is the typed text plus "Use custom value".
     const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     await this.page.getByRole('option', { name: new RegExp(`^${escaped}\\b`) }).click();
   }
@@ -147,8 +129,7 @@ export class AlertRuleEditPage {
     return this.page.getByRole('button', { name: /select folder/i });
   }
 
-  // Group `<Select>` rendered as a combobox with inputId="group"; targeted via the
-  // form `<label htmlFor="group">` because the Field label text varies with folder state.
+  // Via the label: its text varies with folder state.
   get groupSelect(): Locator {
     return this.page.locator('#group');
   }
@@ -161,8 +142,7 @@ export class AlertRuleEditPage {
     return this.page.locator('#eval-for-input');
   }
 
-  // Form-side helper text "All rules in the selected group are evaluated every X".
-  // Distinct from the viewer's metadata-strip "Every X" (AlertRuleViewPage.evaluationIntervalText).
+  // Distinct from the viewer's "Every X".
   groupIntervalHelperText(every: string): Locator {
     return this.page.getByText(new RegExp(`evaluated every ${every}\\.`, 'i'));
   }
@@ -181,8 +161,7 @@ export class AlertRuleEditPage {
   }
 
   private async ensureEvaluationMode(mode: 'rule-based' | 'group-based'): Promise<void> {
-    // The radio only renders when v2 API is on (shouldUseRulesAPIV2()). When hidden,
-    // the form is implicitly group-based; 'rule-based' requires v2 and fails loudly.
+    // Radio renders only with v2 API; 'rule-based' otherwise fails loudly.
     const radio = this.evaluationModeRadio(mode);
     if (await radio.isVisible()) {
       await radio.check();

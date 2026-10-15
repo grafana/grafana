@@ -2,11 +2,7 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { type RuleKind } from '../shared/analytics';
 
-/**
- * Analytics for the Recently deleted (trash) pages. Never pass rule titles, UIDs, folder paths,
- * labels, annotations, or query content here - only the rule kind and coarse outcome/count/timing
- * data.
- */
+/** Only rule kind and coarse outcome, count or timing. Never titles, UIDs, labels or queries. */
 
 export function trackDeletedRulesPageView(kind: RuleKind) {
   reportInteraction('grafana_alerting_deleted_rules_page_view', { kind });

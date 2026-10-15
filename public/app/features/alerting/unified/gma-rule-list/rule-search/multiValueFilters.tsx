@@ -10,22 +10,16 @@ import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/Neste
 import { useFolderPath } from '../folder-browsing/folderLookups';
 
 interface MultiValueFilterProps {
-  /** Every selected UID, in the order the criteria hold them. */
   values: string[];
   onChange: (values: string[]) => void;
   invalid?: boolean;
 }
 
 interface FolderMultiFilterProps extends MultiValueFilterProps {
-  /** Id for the picker's own control, so a field label can name it. */
   id?: string;
 }
 
-/**
- * Folder filter that shows and edits every selected folder. The picker only ever adds one more
- * folder; each selected folder is listed with its own remove button, so a URL or saved search
- * carrying several folders never hides all but the first.
- */
+/** Lists every selected folder with its own remove button; the picker only adds one more. */
 export function FolderMultiFilter({ id, values, onChange, invalid }: FolderMultiFilterProps) {
   return (
     <Stack direction="column" gap={0.5}>
@@ -48,9 +42,8 @@ export function FolderMultiFilter({ id, values, onChange, invalid }: FolderMulti
   );
 }
 
-/** Query data source filter with the same list-plus-picker shape as the folder filter. */
 export function DataSourceMultiFilter({ values, onChange, invalid }: MultiValueFilterProps) {
-  // The picker's default input id would repeat on a page with a second data source picker.
+  // The default input id would repeat with a second data source picker.
   const pickerId = useId();
   return (
     <Stack direction="column" gap={0.5}>
@@ -60,8 +53,7 @@ export function DataSourceMultiFilter({ values, onChange, invalid }: MultiValueF
       <DataSourcePicker
         inputId={pickerId}
         current={undefined}
-        // Without noDefault, an empty `current` preselects the org default data source instead of
-        // showing no selection, which here means "do not filter by data source".
+        // Without noDefault, an empty `current` preselects the org default data source.
         noDefault
         invalid={invalid}
         onChange={(ds: DataSourceInstanceSettings) => {

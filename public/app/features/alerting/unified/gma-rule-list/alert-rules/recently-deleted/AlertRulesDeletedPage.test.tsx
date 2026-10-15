@@ -31,8 +31,7 @@ describe('AlertRulesDeletedPage', () => {
 
     expect(screen.getByText('Alert rules')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Recently deleted' })).toHaveAttribute('aria-selected', 'true');
-    // Let the mounted AlertRulesRecentlyDeleted body settle so its state update lands
-    // inside this test's act() scope rather than leaking into the next test.
+    // Let the body settle so its state update lands inside this act().
     expect(await screen.findByText('No recently deleted rules found')).toBeInTheDocument();
   });
 });

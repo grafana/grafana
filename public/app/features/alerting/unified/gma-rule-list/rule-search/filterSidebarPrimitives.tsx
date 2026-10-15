@@ -34,19 +34,12 @@ export interface LabelMatchersEditorProps {
   onChange: (labels: LabelMatcher[]) => void;
 }
 
-/**
- * Manual key/operator/value editor for label matchers. No suggestion fetch: complete label
- * suggestions need a bounded, authorized backend source that doesn't exist yet, so this only
- * ever accepts what the user types.
- *
- * A row added with "Add label filter" lives only here until it has a key; applying it earlier
- * would put an empty-key matcher in the URL and the request.
- */
+/** No suggestions yet (no bounded, authorized backend source). A new row stays local until it has a key. */
 export function LabelMatchersEditor({ labels, onChange }: LabelMatchersEditorProps) {
   const [newRow, setNewRow] = useState<LabelMatcher>();
 
   const updateRow = (index: number, next: LabelMatcher) => {
-    // An applied row cannot lose its key; the row resets to it instead.
+    // An applied row cannot lose its key.
     if (next.key) {
       onChange(labels.map((row, i) => (i === index ? next : row)));
     }
@@ -71,7 +64,7 @@ export function LabelMatchersEditor({ labels, onChange }: LabelMatchersEditorPro
           onRemove={() => onChange(labels.filter((_, i) => i !== index))}
         />
       ))}
-      {/* Keyed like the applied row it becomes, so entering its key does not remount the inputs and drop focus. */}
+      {/* Keyed like the applied row it becomes, so entering a key keeps focus. */}
       {newRow && (
         <LabelMatcherRow
           key={labels.length}
@@ -100,8 +93,7 @@ interface LabelMatcherRowProps {
   onRemove: () => void;
 }
 
-/** Key and value apply on blur or Enter, like the rule title field, so typing a label does not
- * change the URL and the request on every keystroke. The operator applies immediately. */
+/** Key and value apply on blur or Enter, not per keystroke; the operator applies immediately. */
 function LabelMatcherRow({ matcher, onChange, onRemove }: LabelMatcherRowProps) {
   const [key, setKey] = useState(matcher.key);
   const [value, setValue] = useState(matcher.value ?? '');
@@ -169,9 +161,7 @@ function LabelMatcherRow({ matcher, onChange, onRemove }: LabelMatcherRowProps) 
 }
 
 export function RuleTitleField({ criteria, onChange }: { criteria: Criteria; onChange: (criteria: Criteria) => void }) {
-  // The title field is a single free-text value even though `criteria.text` is an array
-  // (it also carries any free words typed into the main search input) — both end up in the
-  // same request text leaf, so collapsing them into one editable string here is safe.
+  // `criteria.text` is an array, but all entries share one request text leaf, so one string is safe.
   const appliedValue = criteria.text.join(' ');
   const [draft, setDraft] = useState(appliedValue);
 
@@ -216,20 +206,13 @@ export interface SwitchFieldProps {
   disabled?: boolean;
 }
 
-/**
- * A Switch with the label actually visible on screen. Switch's own `label` prop only sets
- * `aria-label` on an empty `<label>` — sighted users see no text at all — so this pairs it
- * with a clickable, visible text node wired to the same control.
- */
+/** Switch's own `label` prop is not visible text, so this adds a visible, clickable label. */
 export function SwitchField({ label, value, onChange, disabled }: SwitchFieldProps) {
   const id = useId();
   return (
     <Stack gap={1} alignItems="center">
-      {/* No `label` prop here: it would only set aria-label on top of the visible <label>
-       * below, doubling the computed accessible name. */}
+      {/* No `label` prop: it would double the accessible name. */}
       <Switch id={id} value={value} disabled={disabled} onChange={(e) => onChange(e.currentTarget.checked)} />
-      {/* A native <label htmlFor> toggles the switch on click without extra handlers, and
-       * gives the switch its accessible name via label association instead of aria-label. */}
       <label htmlFor={id}>
         <Text element="span" color={disabled ? 'disabled' : 'primary'}>
           {label}
@@ -267,13 +250,12 @@ export interface HealthFieldProps {
   onChange: (value: HealthValue | undefined) => void;
 }
 
-/** Health control shared by both pages; a rule with no stored status matches none of its values. */
 export function HealthField({ value, onChange }: HealthFieldProps) {
   return (
     <Combobox<HealthOption>
       aria-label={t('alerting.gma-rule-list.search.property.health', 'Health')}
       options={getHealthOptions()}
-      // `err` is an accepted spelling of `error`; both select the same option.
+      // `err` is an alias of `error`.
       value={value === 'err' ? 'error' : (value ?? 'any')}
       onChange={(option) => onChange(!option || option.value === 'any' ? undefined : option.value)}
     />

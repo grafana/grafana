@@ -12,8 +12,7 @@ import { setupMswServer } from '../../mockApi';
 
 import AlertRulesPage from './AlertRulesPage';
 
-// test-utils replaces the runtime's locationService for every render. A plain spread would freeze
-// the first one here, and the page would then write URL changes to a history its router never sees.
+// test-utils replaces locationService per render; a spread would freeze the first one.
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return Object.defineProperty({ ...actual, reportInteraction: jest.fn() }, 'locationService', {
@@ -24,8 +23,7 @@ jest.mock('@grafana/runtime', () => {
 
 const reportInteractionMock = jest.mocked(reportInteraction);
 
-// Combobox (state and health filters) measures its own floating element to render option rows, which
-// jsdom reports as zero.
+// Combobox measures its floating element; jsdom reports zero.
 mockComboboxRect();
 
 const server = setupMswServer();
@@ -78,8 +76,7 @@ function mockAlertRuleSearch(fn: (body: unknown, requestCount: number) => object
   );
 }
 
-// Every visible row's action menu loads the full rule for provenance/abilities - a row
-// component detail these page-level tests don't otherwise care about.
+// Row action menus load the full rule; irrelevant to these tests.
 function mockAlertRuleGet() {
   server.use(
     http.get(ALERT_RULE_GET_URL, ({ params }) =>
@@ -93,7 +90,7 @@ function mockAlertRuleGet() {
   );
 }
 
-// Fails the first request to `url` and answers every later one with `ok`; returns a counter of the requests seen.
+// Fails the first request to `url`, then answers with `ok`; returns a request counter.
 function failFirstCall(url: string, ok: object) {
   let calls = 0;
   server.use(
@@ -152,7 +149,6 @@ describe('AlertRulesPage', () => {
     expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
     expect(screen.getByText('Infra')).toBeInTheDocument();
     expect(await screen.findByText('3 alert rules')).toBeInTheDocument();
-    // Collapsed: no rule rows or per-folder rule requests have happened yet.
     expect(screen.getByRole('link', { name: 'Team Alerts' })).toHaveAttribute(
       'href',
       '/dashboards/f/folder-1/team-alerts/alerting'
@@ -160,8 +156,7 @@ describe('AlertRulesPage', () => {
     expect(screen.queryByText('CPU high')).not.toBeInTheDocument();
   });
 
-  // SEARCH-7: the folder filter is the one filter Folders mode supports, and it scopes the
-  // folder listing itself (not just what's shown once a folder is expanded).
+  // SEARCH-7: the folder filter scopes the folder listing itself.
   it('a folder criterion in Folders mode scopes the folder listing to just that folder', async () => {
     let lastWhere: unknown;
     server.use(
@@ -532,8 +527,7 @@ describe('AlertRulesPage', () => {
 
     const ruleRow = await screen.findByRole('listitem', { name: 'CPU high' });
     await userEvent.click(await within(ruleRow).findByRole('button', { name: /more/i }));
-    // Until the full rule has loaded the item is disabled and named "Pause: Checking permissions...",
-    // so waiting for the plain name waits for it to become usable; clicking it earlier does nothing.
+    // Disabled as "Pause: Checking permissions..." until the full rule loads; waiting for the plain name waits for that.
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Pause' }));
 
     expect(await screen.findByText('2 alert rules')).toBeInTheDocument();
@@ -574,8 +568,7 @@ describe('AlertRulesPage', () => {
     expect(pageViewCalls).toHaveLength(1);
   });
 
-  // Saved searches: the control stays disabled until the one-time legacy copy settles, then
-  // becomes interactive - never reads the page's own collection before that copy finishes.
+  // Saved searches stay disabled until the one-time legacy copy settles.
   it('shows a disabled Saved searches control until the legacy copy settles, then an interactive one', async () => {
     mockFolderSearch(() => ({ items: [], metadata: {} }));
 

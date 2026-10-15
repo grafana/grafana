@@ -9,11 +9,7 @@ import { type RuleResourceState } from '../rule-data/ruleResourceState';
 import { checking, denied, unknown } from './actionReasons';
 import { type ActionAvailability } from './ruleActionTypes';
 
-/**
- * Silence needs the rule's folder (for folder-scoped permission) and the Alertmanager configuration
- * (for whether Grafana's own Alertmanager takes part), so it stays "checking" until the full rule,
- * the folder and the configuration have all loaded rather than flashing from enabled to disabled.
- */
+/** Stays "checking" until rule, folder and Alertmanager config load, to avoid flashing enabled to disabled. */
 export function useSilenceAvailability(resourceState: RuleResourceState<AlertRule>): ActionAvailability {
   const folderUid = resourceState.rule?.metadata.annotations?.[AnnoKeyFolder];
   const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();

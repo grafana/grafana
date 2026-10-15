@@ -11,7 +11,6 @@ interface DeletedRuleDashboardReferenceProps {
   panelId: number;
 }
 
-/** Link to the dashboard panel a deleted rule was attached to, so Review shows where it pointed. */
 export function DeletedRuleDashboardReference({ dashboardUid, panelId }: DeletedRuleDashboardReferenceProps) {
   const { dashboard } = useDashboardQuery(dashboardUid);
   // The hook keeps the previous dashboard while a new uid loads, so a mismatched result must not be shown.

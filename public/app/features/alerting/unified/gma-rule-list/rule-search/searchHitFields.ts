@@ -10,8 +10,7 @@ export function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 }
 
-/** Labels are indexed (and so returned) as `key=value` strings, not an object - see the
- * `In: ["key=value"]` filter shape in searchQueryLeaves.ts. */
+/** Labels are indexed and returned as `key=value` strings, not an object. */
 export function asLabels(value: unknown): Record<string, string> {
   const result: Record<string, string> = {};
   for (const entry of asStringArray(value)) {

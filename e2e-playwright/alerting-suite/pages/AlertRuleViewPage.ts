@@ -23,8 +23,6 @@ export class AlertRuleViewPage {
       .getByText(/^Every /);
   }
 
-  // DetailText renders the value as `<Text aria-labelledby="pending-period">`;
-  // getByLabel matches via the aria-labelledby association.
   get pendingPeriodValue(): Locator {
     return this.page.getByLabel('Pending period');
   }
@@ -38,7 +36,6 @@ export class AlertRuleViewPage {
     return this.page.getByRole('list', { name: 'Labels' }).getByRole('listitem', { name: `${key}: ${value}` });
   }
 
-  // Requires DetailGroup to expose role="group" aria-label="Annotations" (Details.tsx).
   annotationValue(key: string): Locator {
     return this.page.getByRole('group', { name: 'Annotations' }).getByLabel(key);
   }

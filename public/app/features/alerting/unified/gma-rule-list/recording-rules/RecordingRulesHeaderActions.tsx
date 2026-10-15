@@ -7,11 +7,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { LogMessages } from '../../Analytics';
 import { createRelativeUrl } from '../../utils/url';
 
-/**
- * Page-header actions for the GMA-only Recording rules page: New recording rule only. No More
- * menu, Export all, Generate with AI, import, or Design-rule-for-provisioning action - those are
- * Alert-rule-specific or undecided for Recording rules.
- */
 export function RecordingRulesHeaderActions() {
   const canCreate = ctx.hasPermission(AccessControlAction.AlertingRuleCreate);
 

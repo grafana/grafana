@@ -38,8 +38,7 @@ const ALERT_RULE_FIELDS = [
   'totalsError',
 ];
 
-/** `normal` and `inactive` both meant "no firing, pending or recovering instance": `Healthy` is an
- * evaluated Normal state and `Inactive` is a paused rule or one with no instance states. */
+/** `normal` and `inactive` both mean no firing, pending or recovering instance. */
 const STATE_API_VALUES: Record<StateValue, string[]> = {
   firing: ['Firing'],
   pending: ['Pending'],
@@ -62,15 +61,13 @@ function buildRoutingLeaves(criteria: Criteria): SearchQueryLeaf[] {
     leaves.push({ filter: { field: 'dashboardUID', operator: 'In', values: [criteria.dashboardUid] } });
   }
 
-  // Panel IDs are dashboard-local: only filter by panel when a dashboard is also selected,
-  // otherwise the ID is ambiguous.
+  // Panel IDs are dashboard-local: only filter by panel when a dashboard is selected.
   if (criteria.panelId && criteria.dashboardUid) {
     leaves.push({ filter: { field: 'panelID', operator: 'In', values: [criteria.panelId] } });
   }
 
-  // policy: and contactPoint: are mutually exclusive in the UI; policy wins if a query
-  // somehow carries both. The reserved value 'default' has no accepted request form (it would
-  // need a NotIn on notificationType), so it is reported by getCriteriaIssues and never sent.
+  // policy wins over contactPoint. 'default' has no request form (needs NotIn on
+  // notificationType), so getCriteriaIssues reports it and it is never sent.
   if (criteria.policy && criteria.policy !== DEFAULT_POLICY) {
     leaves.push({ filter: { field: 'routingTree', operator: 'In', values: [criteria.policy] } });
   } else if (!criteria.policy && criteria.contactPoint) {
@@ -78,8 +75,7 @@ function buildRoutingLeaves(criteria: Criteria): SearchQueryLeaf[] {
   }
 
   if (criteria.paused) {
-    // NotIn is only accepted on labels, state and health, so "not paused" is an explicit
-    // paused=false rather than the complement of paused=true.
+    // NotIn is only accepted on labels, state and health, so "not paused" is paused=false.
     leaves.push({ filter: { field: 'paused', operator: 'In', values: [criteria.paused] } });
   }
 

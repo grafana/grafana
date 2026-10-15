@@ -9,10 +9,7 @@ type RuleActionMenuItemProps = ComponentProps<typeof Menu.Item> & {
   availability: ActionAvailability;
 };
 
-/**
- * A menu item that stays in the menu when the user cannot use it right now, disabled and
- * explaining why on hover and to assistive tech, so every user sees the same actions and only their state differs.
- */
+/** Stays in the menu when unusable, disabled with the reason on hover and for assistive tech. */
 export function RuleActionMenuItem({ availability, ...itemProps }: RuleActionMenuItemProps) {
   if (availability.available) {
     return <Menu.Item {...itemProps} />;

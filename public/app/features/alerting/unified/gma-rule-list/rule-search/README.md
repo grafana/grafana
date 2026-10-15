@@ -32,8 +32,7 @@ single-value token. `parse` records each in `criteria.invalid` exactly as writte
 writes it back unchanged, and `getCriteriaIssues` reports it, so the page shows it as an invalid
 filter and sends no request until it is fixed.
 
-The search input keeps the typed text as a draft: applying it writes the canonical criteria to the
-URL, but the input never takes the canonical form back, so typing does not reorder or drop tokens.
+The search input keeps the typed text as a draft and never takes the canonical form back.
 
 ## Modules
 
@@ -65,8 +64,7 @@ URL, but the input never takes the canonical form back, so typing does not reord
 
 ## New tokens (no legacy equivalent)
 
-Chosen for filters that didn't exist in the old combined list — not yet used anywhere else,
-so flagging the exact names here for review:
+Filters that didn't exist in the old combined list:
 
 | Token                           | Page      | Search field                                        |
 | ------------------------------- | --------- | --------------------------------------------------- |

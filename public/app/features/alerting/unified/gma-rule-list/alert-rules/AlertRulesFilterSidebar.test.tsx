@@ -17,11 +17,10 @@ import { createEmptyCriteria } from '../rule-search/criteria';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 
-// Combobox (used for Paused) measures its own floating-element size to render option rows;
-// jsdom reports zero for every element, so without this the option list never renders.
+// Combobox measures its floating element; jsdom reports zero.
 mockComboboxRect();
 
-// The folder picker scrolls the focused row into view, which jsdom does not implement.
+// jsdom lacks scrollIntoView, which the folder picker uses.
 window.HTMLElement.prototype.scrollIntoView = function () {};
 
 jest.mock('app/core/components/Select/DashboardPicker', () => ({
@@ -43,9 +42,7 @@ jest.mock('app/core/components/Select/DashboardPicker', () => ({
   ),
 }));
 
-// Renders whether `noDefault` was passed as visible text, and exposes `onClear` via a
-// button — the point of these two tests is that AlertRulesFilterSidebar passes both, not
-// re-testing DataSourcePicker's own default-preselection behavior (that's its own test suite).
+// Exposes `noDefault` as text and `onClear` as a button to assert the sidebar passes both.
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   DataSourcePicker: ({
@@ -76,7 +73,6 @@ jest.mock('@grafana/runtime', () => ({
 
 const server = setupMswServer();
 
-// The folder the default folder handlers list as "Alerting-folder".
 const FOLDER_UID = 'e3d1f4fd-9e7c-4f63-9a9e-2b5a1d2e6a9c';
 
 const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/parents';

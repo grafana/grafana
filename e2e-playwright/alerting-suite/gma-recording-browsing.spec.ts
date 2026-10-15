@@ -3,11 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 import { getCorpusFolder, getPlainCorpusFolder, requireCorpusManifest } from './corpus/corpusState';
 import { RuleListPage, folderScope } from './pages/RuleListPage';
 
-// Same shared corpus as gma-alert-browsing.spec.ts: the dense folder holds 80 Recording rules too,
-// and the corpus has a folder with a single Recording rule and no Alert rule. Assertions stay scoped
-// to the run marker, the manifest's own folders or a folder filter on them, never an
-// organization-wide total or an unfiltered folder page. Folder Previous/Next has its own
-// organization (gma-folder-pagination.spec.ts).
+// Same corpus as gma-alert-browsing.spec.ts.
 
 test.describe('Recording rules: Folders and List browsing', () => {
   test('REC-1/2: the dense folder shows its direct Recording count, Load more reveals the rest, and searches are Recording-only', async ({
@@ -17,9 +13,8 @@ test.describe('Recording rules: Folders and List browsing', () => {
     const dense = getCorpusFolder(manifest, manifest.denseFolderUid);
     const untouched = getPlainCorpusFolder(manifest);
 
-    // Recording the Alert endpoint too, so a stray Alert search fails the test.
+    // Also record the Alert endpoint so a stray Alert search fails the test.
     const alertSearches = new RuleListPage(page, 'alert');
-    // Scoping Folders mode to these two folders keeps the untouched one on the page, collapsed.
     const list = new RuleListPage(page, 'recording');
     await list.gotoFolders(folderScope(dense.uid, untouched.uid));
 
@@ -27,8 +22,7 @@ test.describe('Recording rules: Folders and List browsing', () => {
     await expect(list.folderRow(untouched.title)).toContainText('1 recording rule');
 
     await list.toggleFolder(dense.title);
-    // Folder titles carry the run marker too, so the rule links are told apart by the `f<folder>r<rule>` part of
-    // a rule title and counted within the expanded folder.
+    // Rule links are told apart by the `f<folder>r<rule>` part of the title.
     const denseLinks = list
       .folderRow(dense.title)
       .getByRole('link', { name: new RegExp(`f\\d+r\\d+ ${manifest.runMarker}`) });

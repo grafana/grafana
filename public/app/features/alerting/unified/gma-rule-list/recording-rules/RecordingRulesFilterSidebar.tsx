@@ -20,9 +20,6 @@ export interface RecordingRulesFilterSidebarProps {
   issues?: CriteriaIssue[];
 }
 
-/** Persistent filter sidebar for the Recording rules page — same mechanics as the Alert
- * sidebar, with recorded-metric/target-data-source in place of the Alert-only routing and
- * paused controls (Recording-rule paused isn't exposed, per the New filter scope). */
 export function RecordingRulesFilterSidebar({
   criteria,
   onChange,

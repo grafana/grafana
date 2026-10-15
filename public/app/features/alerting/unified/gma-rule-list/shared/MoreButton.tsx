@@ -5,7 +5,6 @@ import { Button, type ButtonProps, Icon, Stack } from '@grafana/ui';
 
 type MoreButtonProps = Omit<ButtonProps, 'children' | 'variant'>;
 
-/** Dropdown trigger labelled "More" with a chevron; forwards its ref so `Dropdown` can anchor to it. */
 export const MoreButton = forwardRef(function MoreButton(props: MoreButtonProps, ref: Ref<HTMLButtonElement>) {
   return (
     <Button

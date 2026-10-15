@@ -9,13 +9,7 @@ import { migrateLegacyRuleListUrl } from './legacyUrlMigration';
 import { legacyRuleListNameResolvers } from './nameResolvers';
 import { useDroppedFiltersWarning } from './useDroppedFiltersWarning';
 
-/**
- * Redirect for the legacy combined rule list, active only while `alerting.gmaOnlyListView` is
- * on. Runs the full query migration (type-based destination choice, legacy-param translation,
- * and folder/data-source name resolution) before navigating, so a resolvable legacy link lands
- * on an equivalent canonical URL rather than an unfiltered one. The redirect always completes:
- * a filter that cannot be migrated is removed and named in a warning, never its value.
- */
+/** Unmigratable filters are dropped and reported by name, never by value. */
 export function LegacyRuleListRedirect(): JSX.Element {
   const location = useLocation();
   const warnAboutDroppedFilters = useDroppedFiltersWarning();
@@ -39,13 +33,7 @@ export function LegacyRuleListRedirect(): JSX.Element {
   return <Navigate replace to={`${destination.pathname}${destination.search}`} />;
 }
 
-/**
- * Redirect for the legacy combined Recently deleted page, active only while
- * `alerting.gmaOnlyListView` is on. Always lands on Alert rules' Recently deleted tab; deleted
- * Recording rules are reachable only from Recording rules' own Recently deleted tab, since each
- * rule type keeps its own trash rather than sharing a combined one. No query migration runs here
- * because the combined trash page never accepted filter parameters.
- */
+/** Each rule type has its own trash, so this lands on Alert rules'. The old page took no filters. */
 export function LegacyRecentlyDeletedRedirect(): JSX.Element {
   const location = useLocation();
 

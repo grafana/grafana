@@ -2,8 +2,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { newAdminRequest } from './ruleSeeding';
 
-// SAVE-1: save/apply, and proof that Alert and Recording keep separate collections. Cleans
-// up the search it creates so this stack's persisted state doesn't grow across runs.
+// SAVE-1
 test.describe('Saved search', () => {
   test('SAVE-1: a saved Alert search applies correctly and is invisible from the Recording page', async ({ page }) => {
     const suffix = crypto.randomUUID().slice(0, 8);
@@ -26,14 +25,11 @@ test.describe('Saved search', () => {
     await expect(savedLink).toBeVisible();
 
     try {
-      // Separate collections: the Recording page's own Saved searches never sees an Alert
-      // entry, proving the two are not sharing storage.
       await page.goto('/alerting/rules/recording');
       await page.getByRole('button', { name: 'Saved searches' }).click();
       await expect(page.getByRole('link', { name })).toHaveCount(0);
       await page.keyboard.press('Escape');
 
-      // Applying it from a fresh visit restores the search and its URL.
       await page.goto('/alerting/rules/alert');
       await page.getByRole('button', { name: 'Saved searches' }).click();
       await page.getByRole('link', { name }).click();
@@ -50,9 +46,7 @@ test.describe('Saved search', () => {
     }
   });
 
-  // A default saved search applies to every visit that has no query, so setting one for the shared
-  // Admin user would filter the pages other parallel tests open. The journey runs as its own user
-  // instead, created and removed here.
+  // A default saved search would filter parallel tests' pages for the shared Admin, so use a dedicated user.
   for (const kind of ['alert', 'recording'] as const) {
     test(`SAVE-3 (${kind}): the default saved search applies when the page opens with no search and not when the URL has one`, async ({
       browser,
@@ -90,14 +84,12 @@ test.describe('Saved search', () => {
         await page.getByRole('menuitem', { name: /set as default/i }).click();
         await expect(dialog.getByRole('img', { name: /default search/i })).toBeVisible();
 
-        // A visit with no query lands on the default search.
         await page.goto(path);
         const search = page.getByRole('textbox', { name: /^search/i });
         await expect(search).toHaveValue('latency');
         await expect(page).toHaveURL(/search=latency/);
 
-        // A visit with its own query keeps it. The saved search only shows once its collection has
-        // loaded, which is when the default would have been applied.
+        // Shows only once the collection has loaded, when a default would have applied.
         await page.goto(`${path}?search=cpu`);
         await page.getByRole('button', { name: 'Saved searches' }).click();
         await expect(page.getByRole('link', { name })).toBeVisible();

@@ -9,7 +9,7 @@ interface LabelsMetaProps {
   labels: Record<string, string>;
 }
 
-/** Label count whose tooltip lists the labels. A plugin origin label is shown as a badge instead, so it is not counted. */
+/** The plugin origin label is shown as a badge instead, so it is not counted. */
 export function LabelsMeta({ labels }: LabelsMetaProps) {
   const displayLabels = getDisplayLabels(labels);
   const count = Object.keys(displayLabels).length;

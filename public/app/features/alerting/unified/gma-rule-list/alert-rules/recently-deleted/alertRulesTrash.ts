@@ -6,12 +6,7 @@ import { TRASH_SELECTOR } from '../../recently-deleted/trashSelector';
 import { type UseDeletedRulesResult, useDeletedRules } from '../../recently-deleted/useDeletedRules';
 import { keepFirstPage } from '../../shared/pagedQuery';
 
-/**
- * The deleted Alert rules, from the same collection request as the generated `listAlertRule`
- * with the trash selector. That operation is a plain query that cannot follow continuation
- * tokens, so this injects it as an infinite query. It provides the `AlertRule` tag, so rule
- * mutations refetch it.
- */
+/** Infinite query, since the generated one cannot follow continuation tokens. */
 const alertRulesTrashAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
     listDeletedAlertRules: build.infiniteQuery<AlertRuleList, void, string | undefined>({

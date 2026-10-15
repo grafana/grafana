@@ -20,27 +20,19 @@ import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
 interface RecordingRuleRowProps {
   hit: RecordingRuleSearchHit;
-  /** The full rule, for provenance and manager properties the search hit does not carry. */
   fullRule: RuleResourceState<RecordingRule>;
-  /** Root-to-folder titles. Only List mode passes one - Folders mode already shows the folder on the folder row. */
+  /** List mode only; Folders mode shows the folder on the folder row. */
   folderPath?: string[];
   actions?: ReactNode;
 }
 
-/**
- * GMA-only Recording rule row for both Folders and List mode. Presentation-only, fed by its
- * container like AlertRuleRow. No alert state, instances, notification routing,
- * summary, Silence, or Declare-incident information - Recording rules have none of those.
- */
 export function RecordingRuleRow({ hit, fullRule, folderPath, actions }: RecordingRuleRowProps) {
   const pluginId = getPluginId(hit.labels);
-  // Managed rules get the provisioning badge too: they are owned by something outside the UI.
   const managerKind = fullRule.status === 'loaded' ? getManagerKind(fullRule.rule) : undefined;
   const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
   const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
   const hasDisplayLabels = Object.keys(getDisplayLabels(hit.labels)).length > 0;
   const titleId = `recording-rule-title-${hit.uid}`;
-  // An unresolvable target UID leaves nothing to say when the metric is also missing.
   const target = hit.targetDataSourceUid ? getDataSourceByUid(hit.targetDataSourceUid) : undefined;
   const hasRecordsTo = Boolean(hit.metric) || target !== undefined;
 
@@ -66,8 +58,7 @@ export function RecordingRuleRow({ hit, fullRule, folderPath, actions }: Recordi
         </Stack>
       }
       description={<RuleListItemDescription error={hit.lastError} />}
-      // Items are gated here on their data because the list item only drops falsy entries, so an
-      // element that renders nothing would still leave a stray separator.
+      // Gate on data: the list item only drops falsy entries, so an empty element leaves a stray separator.
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
         hasRecordsTo && <RecordsTo key="records-to" metric={hit.metric} target={target} />,

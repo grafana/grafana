@@ -114,7 +114,7 @@ describe('AlertRulesRecentlyDeleted', () => {
 
     await screen.findByText('Rule 40');
     expect(screen.getByText('Rule 64')).toBeInTheDocument();
-    // The remaining rows came from the local buffer - no second network request was needed.
+    // Served from the local buffer, no second request.
     expect(requestCount).toBe(1);
     expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
   });
@@ -157,8 +157,7 @@ describe('AlertRulesRecentlyDeleted', () => {
     await screen.findByText('High CPU usage');
     await screen.findByText('Production');
     await screen.findByText(/Display of user:1/);
-    // Query the row fresh, now that its async folder/deleted-by lookups have settled - otherwise
-    // the click below can target a node that gets replaced mid-flight.
+    // Re-query: the click could otherwise hit a node replaced after the async lookups settle.
     const row = screen.getByText('High CPU usage').closest('tr');
     expect(row).not.toBeNull();
 

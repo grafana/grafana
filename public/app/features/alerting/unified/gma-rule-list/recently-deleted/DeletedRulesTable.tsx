@@ -17,9 +17,7 @@ type DeletedRule = AlertRule | RecordingRule;
 
 interface DeletedRulesTableProps<T extends DeletedRule> {
   deleted: UseDeletedRulesResult<T>;
-  /** Kind-specific columns (Recorded metric, Target data source) inserted between Title and Folder. */
   extraColumns?: Array<Column<T>>;
-  /** Each page renders the Review drawer for its own rule kind. */
   renderReview: (rule: T, onClose: () => void) => ReactNode;
 }
 

@@ -31,16 +31,11 @@ export function filterLeaf(field: string, operator: 'In' | 'NotIn', values: stri
   return { filter: { field, operator, values } };
 }
 
-/** The search that limits a list to these folders; Folders mode supports no other filter. */
 export function folderScope(...folderUids: string[]): string {
   return folderUids.map((uid) => `namespace:${uid}`).join(' ');
 }
 
-/**
- * A link's path and query without `orgId`, which Grafana adds to every link once the user belongs to more
- * than one organization (other specs create organizations, so the suite cannot assume it is absent).
- * Everything else stays in the result, so a `returnTo` still shows.
- */
+/** Path and query without `orgId`, which Grafana adds in multi-org setups. */
 export function linkTarget(href: string): { path: string; params: Record<string, string> } {
   const url = new URL(href, 'http://grafana.invalid');
   url.searchParams.delete('orgId');
@@ -58,11 +53,7 @@ export async function expectHref(link: Locator, path: string, params: Record<str
 
 type LabelOperator = '=' | '!=' | '=~' | '!~' | 'exists' | 'absent';
 
-/**
- * The Alert and Recording rule pages: search input, filter sidebar and result rows, plus a record
- * of the `/searchRules` bodies the page sent, so a journey can prove a control produced the request
- * it should have and not only that the right rows appear.
- */
+/** Records `/searchRules` bodies so journeys can prove the request, not only the rows. */
 export class RuleListPage {
   private readonly searchBodies: SearchRequestBody[] = [];
 
@@ -82,7 +73,6 @@ export class RuleListPage {
     return this.page.getByRole('textbox', { name: /^search/i });
   }
 
-  // Opens the List view with an optional applied search, e.g. a run-scoping label token.
   async goto(search?: string): Promise<void> {
     const params = new URLSearchParams({ view: 'list' });
     if (search) {
@@ -97,12 +87,10 @@ export class RuleListPage {
     await this.searchInput.press('Enter');
   }
 
-  /** Forget the requests sent so far, so the next assertion can only be satisfied by what the next action sends. */
   forgetRequests(): void {
     this.searchBodies.length = 0;
   }
 
-  /** The `/searchRules` bodies this page has sent, in order, since it was created. */
   get recordedSearches(): SearchRequestBody[] {
     return this.searchBodies;
   }
@@ -129,8 +117,7 @@ export class RuleListPage {
     return this.page.getByRole('link', { name: title, exact: true });
   }
 
-  // A rule row is a list item named by its title. Filtering list items by the title link instead would
-  // also match an expanded folder's own row in Folders mode.
+  // Not the title link: it also matches an expanded folder's own row.
   ruleRow(title: string): Locator {
     return this.page.getByRole('listitem', { name: title, exact: true });
   }
@@ -147,7 +134,6 @@ export class RuleListPage {
     await this.rowMoreButton(title).click();
   }
 
-  // Opens Folders mode, which is the page's default view, with an optional applied search.
   async gotoFolders(search?: string): Promise<void> {
     const params = new URLSearchParams();
     if (search) {
@@ -158,8 +144,7 @@ export class RuleListPage {
     await expect(this.page.getByRole('radio', { name: 'Folders' })).toBeChecked();
   }
 
-  // Folder rows are the list items that carry an expand or collapse control. The navigation menu's sections
-  // carry one too, so the search stays inside the page content.
+  // Nav sections have expand controls too; stay inside page content.
   get folderRows(): Locator {
     return this.page
       .getByRole('main')
@@ -177,8 +162,6 @@ export class RuleListPage {
       .click();
   }
 
-  // The titles of the folders on the shown page, in order. Meant for a page whose folders are all collapsed,
-  // since an expanded folder adds its rules' links.
   async expectFolders(titles: string[]): Promise<void> {
     await expect(this.folderRows.getByRole('link')).toHaveText(titles);
   }
@@ -191,8 +174,7 @@ export class RuleListPage {
     return this.page.getByRole('button', { name: 'Next', exact: true });
   }
 
-  // Shown rules are awaited first: the list loads asynchronously, so a rule's absence only means
-  // something once the matching ones have rendered.
+  // Absence only means something once the list has rendered.
   async expectRules({ shown, hidden = [] }: { shown: string[]; hidden?: string[] }): Promise<void> {
     for (const title of shown) {
       await expect(this.ruleLink(title)).toBeVisible();
@@ -206,12 +188,11 @@ export class RuleListPage {
     return this.page.getByRole('button', { name: 'Clear filters' });
   }
 
-  // A row's own More button: the page header has one too, so it is scoped to the row.
+  // The page header has a More button too.
   rowMoreButton(title: string): Locator {
     return this.ruleRow(title).getByRole('button', { name: 'More', exact: true });
   }
 
-  // Each sidebar field is a group named by its label, for the controls that do not name themselves.
   sidebarField(label: string): Locator {
     return this.page.getByRole('group', { name: label, exact: true });
   }
@@ -226,9 +207,7 @@ export class RuleListPage {
     await this.page.getByRole('textbox', { name: 'Recorded metric', exact: true }).fill(metric);
   }
 
-  // Adds a row and applies it: the row stays a local draft until it has a key, then key and value
-  // apply on Enter (the operator applies at once). Requests are recorded from the step after the
-  // key, so an assertion is satisfied by the finished matcher and not by the `key=` the key alone applies.
+  // A row is a draft until it has a key; requests are recorded after the key step so `key=` alone doesn't satisfy assertions.
   async addLabelFilter({ key, operator = '=', value }: { key: string; operator?: LabelOperator; value?: string }) {
     const labels = this.sidebarField('Labels');
     const rowCount = await labels.getByRole('textbox', { name: 'Label key' }).count();
@@ -256,8 +235,7 @@ export class RuleListPage {
   async addFolder(title: string): Promise<void> {
     const field = this.sidebarField('Folder');
     await field.getByRole('button', { name: 'Folder', exact: true }).click();
-    // The opened picker's search box has no accessible name of its own (only a placeholder), so it
-    // is found as the field group's one combobox.
+    // Search box has only a placeholder.
     await field.getByRole('combobox').fill(title);
     await this.page.getByRole('treeitem', { name: title }).click();
   }
@@ -265,8 +243,7 @@ export class RuleListPage {
   async addDataSource(name: string, fieldLabel = 'Query data source'): Promise<void> {
     const picker = this.sidebarField(fieldLabel).getByRole('combobox', { name: 'Select a data source' });
     await picker.click();
-    // The picker lists data sources as cards (not listbox options), and its list is virtualized, so the
-    // name is typed to bring the card into view before picking it by its test id.
+    // Virtualized cards: type the name to bring one into view.
     await picker.fill(name);
     await this.page.getByTestId(selectors.components.DataSourcePicker.dataSourceCard(name)).click();
   }
@@ -275,7 +252,6 @@ export class RuleListPage {
     await this.page.getByRole('button', { name: `Remove ${label}` }).click();
   }
 
-  // The switch's own input is hidden behind its label, so the visible label text is what a user clicks.
   async toggleHidePluginRules(): Promise<void> {
     await this.page.getByText('Hide plugin rules', { exact: true }).click();
   }
@@ -289,8 +265,7 @@ export class RuleListPage {
     await this.page.getByRole('spinbutton', { name: 'Panel ID', exact: true }).fill(String(panelId));
   }
 
-  // Contact point and policy options carry a description, which becomes part of their accessible
-  // name, so they are matched by the unique name they start with rather than exactly.
+  // Descriptions join the accessible name: match by prefix.
   async pickContactPoint(name: string): Promise<void> {
     await this.pickFromCombobox(this.page.getByRole('combobox', { name: 'Contact point', exact: true }), name);
   }
@@ -305,13 +280,11 @@ export class RuleListPage {
     await this.page.getByRole('option', { name }).click();
   }
 
-  // The Paused, Alert state and Health selects are named by their field label.
   async chooseOption(select: 'Paused' | 'Alert state' | 'Health', option: string): Promise<void> {
     await this.page.getByRole('combobox', { name: select, exact: true }).click();
     await this.page.getByRole('option', { name: option, exact: true }).click();
   }
 
-  // The icon's accessible name carries the status the row shows.
   statusIcon(title: string, name: string): Locator {
     return this.ruleRow(title).getByLabel(name, { exact: true });
   }

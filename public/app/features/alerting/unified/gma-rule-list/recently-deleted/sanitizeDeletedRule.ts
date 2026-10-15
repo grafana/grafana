@@ -12,17 +12,7 @@ const PROVENANCE_ANNOTATION_KEYS: string[] = [
 const ACCESS_ANNOTATION_PREFIX = 'grafana.com/access/';
 const GROUP_LABEL_PREFIX = 'grafana.com/group';
 
-/**
- * Strips fields from a deleted `AlertRule`/`RecordingRule` that are either internal to this
- * tombstone (deletion metadata, resourceVersion, managedFields, finalizers), not useful to a
- * reader of the "Advanced: Kubernetes JSON" preview (status), or would carry stale ownership
- * into a future Restore (provenance/manager annotations, access annotations, and the legacy
- * `grafana.com/group`/`grafana.com/group-index` labels the group-free create API rejects).
- *
- * This is a pure function so Restore can reuse it later without depending on this page's UI.
- * Overloaded (rather than generic) so a caller passing an `AlertRule` gets an `AlertRule` back,
- * without needing a type assertion to reconstruct the sanitized object.
- */
+/** Strips tombstone internals and stale labels the create API rejects. */
 export function sanitizeDeletedRule(rule: AlertRule): AlertRule;
 export function sanitizeDeletedRule(rule: RecordingRule): RecordingRule;
 export function sanitizeDeletedRule(rule: AlertRule | RecordingRule): AlertRule | RecordingRule;

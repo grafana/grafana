@@ -9,11 +9,6 @@ import { useTrackDeletedRulesPage } from '../../recently-deleted/useTrackDeleted
 
 import { useDeletedRecordingRules } from './recordingRulesTrash';
 
-/**
- * Recently deleted page body for Grafana-managed Recording rules.
- * FE-platform mounts this inside the routed page/tab shell - this component owns only the data
- * fetch, table, and Review drawer.
- */
 export function RecordingRulesRecentlyDeleted() {
   const deleted = useDeletedRecordingRules();
   const extraColumns = useExtraColumns();

@@ -8,11 +8,7 @@ interface PluginOriginBadgeProps {
   size?: IconSize;
 }
 
-/**
- * Plugin logo for rules created by a plugin. While the plugin settings load, or when they are
- * missing or fail, the badge falls back to the plugin id: the origin label already proves the
- * rule is plugin-managed, so the marker must not disappear.
- */
+/** Falls back to the plugin id while settings load or fail, so the plugin-managed marker never disappears. */
 export function PluginOriginBadge({ pluginId, size = 'md' }: PluginOriginBadgeProps) {
   const { value: pluginMeta, loading } = usePluginSettings(pluginId);
 

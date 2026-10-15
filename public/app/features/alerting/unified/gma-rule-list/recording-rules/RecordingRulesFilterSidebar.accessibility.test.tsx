@@ -12,8 +12,7 @@ import { getInteractiveControls, tabSequence } from '../rule-search/filterSideba
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 
-// The pickers here are the real ones, not stand-ins: this file is about the names and keyboard
-// behavior they give the sidebar, which a stand-in would hide.
+// Real pickers on purpose: stand-ins would hide their names and keyboard behavior.
 mockComboboxRect();
 
 window.HTMLElement.prototype.scrollIntoView = function () {};

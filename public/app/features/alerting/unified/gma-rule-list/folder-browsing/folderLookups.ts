@@ -10,7 +10,6 @@ import {
 import { getParsedCounts } from 'app/api/clients/folder/v1beta1/utils';
 import { useDispatch } from 'app/types/store';
 
-/** Root-to-folder titles from `/folders/{uid}/parents`, including the requested folder. */
 export function useFolderPath(folderUid: string | undefined): string[] | undefined {
   const { data } = useGetFolderParentsQuery(folderUid ? { name: folderUid } : skipToken);
   return data?.items.map((folder: FolderInfo) => folder.title);
@@ -30,11 +29,7 @@ export function useFolderRecordingRuleCount(folderUid: string | undefined): Fold
   return useFolderRuleCount(folderUid, 'recordingrules');
 }
 
-/**
- * Re-reads folder counts and the folder listing after a rule was created, deleted or paused: a
- * rule change moves both the counts and which folders hold rules. The folder API is a separate
- * RTK Query API from the rules one, so the rule mutations' own invalidation does not reach it.
- */
+/** The folder API is a separate RTK Query API, so the rule mutations' invalidation does not reach it. */
 export function useInvalidateFolderData() {
   const dispatch = useDispatch();
   return useCallback(() => {

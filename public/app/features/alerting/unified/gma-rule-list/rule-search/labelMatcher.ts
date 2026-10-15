@@ -1,8 +1,6 @@
 import { type LabelMatcher } from './criteria';
 
-/** Ordered so two-character operators are matched before the single-character `=` they
- * contain, and so the earliest-occurring operator in the raw value wins (mirrors the
- * legacy `parseMatcher` behavior in unified/utils/matchers.ts). */
+/** Two-character operators first, and the earliest operator in the value wins (as legacy `parseMatcher`). */
 const OPERATORS: Array<{ token: string; operator: LabelMatcher['operator'] }> = [
   { token: '=~', operator: 'regex' },
   { token: '!~', operator: 'notRegex' },
@@ -10,17 +8,13 @@ const OPERATORS: Array<{ token: string; operator: LabelMatcher['operator'] }> = 
   { token: '=', operator: 'equal' },
 ];
 
-/**
- * Parses the value half of a `label:` token, e.g. `team=api`, `team!=api`, `team=~api.*`,
- * `team!~x`, `team` (exists), `!team` (absent). Returns undefined for empty/unparseable
- * input so callers can treat it as an incomplete draft rather than a matcher.
- */
+/** Returns undefined for empty/unparseable input, which callers treat as an incomplete draft. */
 export function parseLabelValue(raw: string): LabelMatcher | undefined {
   if (raw.length === 0) {
     return undefined;
   }
 
-  // A leading `!` not already part of `!=`/`!~` denotes absence, e.g. `!team`.
+  // A leading `!` not part of `!=`/`!~` means absence.
   if (raw[0] === '!' && raw[1] !== '=' && raw[1] !== '~') {
     const key = raw.slice(1);
     return key.length > 0 ? { key, operator: 'absent' } : undefined;
@@ -42,7 +36,6 @@ export function parseLabelValue(raw: string): LabelMatcher | undefined {
   return { key, operator: found.operator, value };
 }
 
-/** Reverse of parseLabelValue: rebuilds the value half of a `label:` token from a matcher. */
 export function serializeLabelValue(matcher: LabelMatcher): string {
   switch (matcher.operator) {
     case 'exists':

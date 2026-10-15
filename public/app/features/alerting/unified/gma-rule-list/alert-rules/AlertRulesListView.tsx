@@ -13,10 +13,6 @@ interface ListViewProps {
   criteria: Criteria;
 }
 
-/**
- * List mode: a single flat, title-sorted Alert-rule search with Load more. Every row shows
- * its folder path - no folder-count requests happen here.
- */
 export function ListView({ criteria }: ListViewProps) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useAlertRuleSearch(criteria);
 

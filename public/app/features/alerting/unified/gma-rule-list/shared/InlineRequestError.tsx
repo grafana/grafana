@@ -9,10 +9,7 @@ interface InlineRequestErrorProps {
   onRetry: () => void;
 }
 
-/**
- * Error shown in place of the content that failed to load, next to whatever already loaded, so a
- * failed request never hides data and never reads as an empty result.
- */
+/** Shown beside loaded data, so a failure never hides data or reads as empty. */
 export function InlineRequestError({ title, error, onRetry }: InlineRequestErrorProps) {
   return (
     <Alert severity="error" title={title}>

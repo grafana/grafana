@@ -40,8 +40,7 @@ function loadedRule(annotations: Record<string, string> = {}): RuleResourceState
   };
 }
 
-// ALERT-4: the same rule shows the same fields in both modes; only List mode adds the folder
-// path. Missing runtime state/health reads Unavailable, never a healthy default.
+// ALERT-4: same fields in both modes, List adds the folder path; missing status reads Unavailable.
 describe('AlertRuleRow', () => {
   it.each([
     { name: 'firing', props: { state: 'Firing', health: 'OK' }, label: 'Firing' },
@@ -145,7 +144,7 @@ describe('AlertRuleRow', () => {
   it('renders one separator fewer than metadata items when labels and data sources are absent', async () => {
     render(<AlertRuleRow hit={baseHit()} fullRule={LOADING} folderPath={FOLDER_PATH} />);
 
-    // Folder path and routing remain: two items, so exactly one separator.
+    // Two items, so one separator.
     expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
     expect(screen.getByText('Default policy')).toBeInTheDocument();
     expect(screen.getAllByText('|')).toHaveLength(1);

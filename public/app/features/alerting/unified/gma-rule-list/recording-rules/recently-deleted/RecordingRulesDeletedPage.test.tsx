@@ -31,8 +31,7 @@ describe('RecordingRulesDeletedPage', () => {
 
     expect(screen.getByText('Recording rules')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Recently deleted' })).toHaveAttribute('aria-selected', 'true');
-    // Let the mounted RecordingRulesRecentlyDeleted body settle so its state update lands
-    // inside this test's act() scope rather than leaking into the next test.
+    // Settle the body so its state update stays inside this test's act().
     expect(await screen.findByText('No recently deleted rules found')).toBeInTheDocument();
   });
 });

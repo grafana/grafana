@@ -7,15 +7,11 @@ import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
 interface AlertRuleListEntryProps {
   hit: AlertRuleSearchHit;
-  /** List mode only: Folders mode already shows the folder on the folder row. */
+  /** List mode only; Folders mode shows the folder on the folder row. */
   showFolderPath: boolean;
 }
 
-/**
- * Performs the per-rule lookups once and hands the results to the row and its actions, which stay
- * presentation-only. Both lookups are deduplicated RTK Query queries; any future limit on how many
- * rows fetch at once belongs here.
- */
+/** Runs the per-rule lookups once so the row and its actions stay presentation-only. */
 export function AlertRuleListEntry({ hit, showFolderPath }: AlertRuleListEntryProps) {
   const fullRule = useFullAlertRuleState(hit.uid);
   const folderPath = useFolderPath(showFolderPath ? hit.folderUid : undefined);

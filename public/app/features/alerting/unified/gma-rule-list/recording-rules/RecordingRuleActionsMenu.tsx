@@ -23,11 +23,6 @@ interface RecordingRuleActionsMenuProps {
   resourceState: RuleResourceState<RecordingRule>;
 }
 
-/**
- * Action menu for a single Grafana-managed Recording rule row. No Silence, Analyze-with-state,
- * Declare incident, or enrichment items - Recording rules have no alert state, instances, or
- * notification routing to attach any of those to.
- */
 export function RecordingRuleActionsMenu({ ruleUid, resourceState }: RecordingRuleActionsMenuProps) {
   const abilities = useRuleActionAbilities(resourceState);
   const { setPaused, isPending: pausePending } = useRecordingRulePauseResume(ruleUid);

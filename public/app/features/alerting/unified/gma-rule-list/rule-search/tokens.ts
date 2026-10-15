@@ -1,41 +1,26 @@
 import { t } from '@grafana/i18n';
 
-/**
- * One filter, described once. The search input's parser and help and the filter sidebar are all
- * derived from these definitions, and the sidebar lists its fields in the order the page's
- * definitions are listed. Text is produced lazily so it is translated when shown, not when the
- * module loads.
- */
+/** One filter, described once: parser, help and sidebar derive from it. Text is lazy so it translates when shown. */
 export interface TokenDefinition {
-  /** The `key` in `key:value`, e.g. `label`, `namespace`. */
   key: string;
-  /** Name of the filter, shared by the help and the sidebar field. */
   label: () => string;
   description: () => string;
   example: string;
-  /** Whether the token may repeat (e.g. multiple `label:` or `datasource:` tokens). */
   multiValue?: boolean;
-  /** Values of this filter that the search cannot apply yet. */
   unavailableValues?: Array<{ value: string; reason: () => string }>;
 }
 
-/** A single token as produced by the tokenizer, with its source span for later caret-based
- * editing (Stage 2 suggestions). `key === null` marks free text. */
+/** `key === null` marks free text. The span is for later caret-based editing. */
 export interface RawToken {
   key: string | null;
   value: string;
   quoted: boolean;
-  /** False for an unterminated quoted value, e.g. `label:"team` while still typing. */
+  /** False for an unterminated quoted value. */
   closed: boolean;
   start: number;
   end: number;
 }
 
-/**
- * New token names chosen for filters that had no equivalent in the legacy search syntax.
- * Listed here (rather than scattered as literals) because they are new user-facing surface
- * area — see the FE-search agent report for the rationale.
- */
 export const TOKEN_KEYS = {
   rule: 'rule',
   namespace: 'namespace',

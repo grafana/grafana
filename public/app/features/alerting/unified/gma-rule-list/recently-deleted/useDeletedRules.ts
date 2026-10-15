@@ -5,28 +5,19 @@ import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { type InfiniteQueryResult, type PagedFailure, retryPagedQuery, toPagedFailure } from '../shared/pagedQuery';
 
 export interface UseDeletedRulesResult<T> {
-  /** The rules revealed so far, in the order the API returned them (newest deletion first). */
   rows: T[];
   isLoading: boolean;
-  /** The first request failed, so there is nothing to show. */
   error?: unknown;
-  /** A request failed while rows are already shown; they stay visible. */
   failure?: PagedFailure;
   hasMore: boolean;
   isLoadingMore: boolean;
-  /** How many rules the API returned for the first request, which can exceed the rows revealed. */
+  /** Count from the first response, which can exceed the rows revealed. */
   returnedCount?: number;
   loadMore: () => void;
   retry: () => void;
 }
 
-/**
- * Reveals a trash collection in chunks. The legacy trash ignores `limit` and returns every
- * tombstone in one response, while Unified Storage pages with continuation tokens, so each
- * response is cut into chunks locally and a request is only made once all of them are shown.
- * Neither path is detected: an oversized response and a continuation token both just mean more
- * rows to reveal. The order is never changed.
- */
+/** Legacy trash ignores `limit`; both backends are revealed in local chunks, fetching more only once all are shown. */
 export function useDeletedRules<T>(
   query: InfiniteQueryResult<{ items: T[] }>,
   restartFromFirstPage: () => void
@@ -52,7 +43,6 @@ export function useDeletedRules<T>(
     returnedCount: pages?.[0]?.items.length,
     loadMore: () => {
       setRevealed(revealed + DEFAULT_PER_PAGE_PAGINATION);
-      // Rows already fetched are shown before asking the server for more.
       if (loaded.length <= revealed) {
         void query.fetchNextPage();
       }

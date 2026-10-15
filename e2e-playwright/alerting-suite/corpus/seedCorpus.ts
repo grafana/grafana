@@ -4,8 +4,6 @@ import { postWithRetry, recordingTargetDataSource } from '../fixtures';
 
 import { type CorpusFolder, type CorpusManifest } from './corpusState';
 
-// Realistic-looking team names to build folder titles from (see alerting-suite/AGENTS.md
-// "Realistic test data" — avoid "E2E ..."/"e2e-seed-..." prefixes that bleed into the UI).
 const TEAMS = [
   'API gateway',
   'Checkout',
@@ -34,13 +32,10 @@ const SUBJECTS = [
 
 const DENSE_RULE_COUNT = 80;
 const ONE_EACH_FOLDER_COUNT = 39;
-// The dense folder, the one-of-each folders, plus one folder holding a single rule of only that kind.
 const RULES_PER_KIND = DENSE_RULE_COUNT + ONE_EACH_FOLDER_COUNT + 1;
 const CONCURRENCY = 6;
 
-/** Runs `items` through `worker` with at most `CONCURRENCY` in flight at once — the shared
- * dev server's SQLite connection pool is small enough that full parallelism just trades write
- * latency for SQLITE_BUSY retries instead of finishing faster. */
+/** Bounded concurrency: full parallelism only adds SQLITE_BUSY retries. */
 export async function mapBounded<T, R>(items: T[], worker: (item: T, index: number) => Promise<R>): Promise<R[]> {
   const results = new Array<R>(items.length);
   let next = 0;
@@ -157,17 +152,10 @@ function ruleTitle(subjectIndex: number, folderIndex: number, ruleIndex: number,
 }
 
 function metricName(folderIndex: number, ruleIndex: number, runSuffix: string): string {
-  // #MetricName only allows [a-zA-Z_:][a-zA-Z0-9_:]* — no spaces/hyphens.
   return `corpus_${runSuffix.replace(/-/g, '_')}_f${folderIndex}_r${ruleIndex}`;
 }
 
-/**
- * Seeds the shared read-only corpus: 43 folders — one dense folder (80 Alert + 80 Recording
- * rules), 39 with one of each (one of them nested under another), one with a single Alert rule,
- * one with a single Recording rule, and one empty folder. That is 120 rules of each kind, every
- * one labeled with a unique run marker so read-only tests can assert against that marker instead
- * of an organization-wide total.
- */
+/** Seeds the read-only corpus: 43 folders, 120 rules of each kind, all labeled with a run marker. */
 export async function seedCorpus(request: APIRequestContext, namespace: string): Promise<CorpusManifest> {
   const startedAt = Date.now();
   const runMarker = crypto.randomUUID().slice(0, 8);
@@ -177,8 +165,6 @@ export async function seedCorpus(request: APIRequestContext, namespace: string):
   const [denseFolderUid, ...restFolderUids] = folderUids;
   const oneEachFolderUids = restFolderUids.slice(0, ONE_EACH_FOLDER_COUNT);
   const [alertOnlyFolderUid, recordingOnlyFolderUid, emptyFolderUid] = restFolderUids.slice(ONE_EACH_FOLDER_COUNT);
-  // Nest the second one-each folder under the first, so folder-path assertions have a real
-  // multi-level path to check, distinct from every flat top-level folder.
   const nestedFolderUid = oneEachFolderUids[1];
   const nestedParentUid = oneEachFolderUids[0];
 
@@ -187,9 +173,7 @@ export async function seedCorpus(request: APIRequestContext, namespace: string):
     await createFolder(request, namespace, uid, folderTitle(index, runSuffix), parentUid);
   });
 
-  // The folder list read is served off an async search index (see fixtures.ts workerFolder) —
-  // wait for every folder to be visible there before seeding rules into them, otherwise the
-  // rule's folder-annotation lookup can 403 as if the folder didn't exist.
+  // Folder list reads an async index; wait for it before seeding rules or the folder lookup can 403.
   await expect(async () => {
     const res = await request.get(`/apis/folder.grafana.app/v1/namespaces/${namespace}/folders`);
     expect(res.ok(), `GET folders -> ${res.status()}`).toBeTruthy();
@@ -208,8 +192,6 @@ export async function seedCorpus(request: APIRequestContext, namespace: string):
   }));
   const folderByUid = new Map(folders.map((f) => [f.uid, f]));
 
-  // One (folderUid, ruleIndex) task per rule of each kind: the dense folder gets 80, every
-  // one-of-each folder gets 1, and the single-kind folders get 1 of their own kind only.
   type RuleTask = { folderUid: string; folderIndex: number; ruleIndex: number };
   const alertTasks: RuleTask[] = [];
   const recordingTasks: RuleTask[] = [];
@@ -238,8 +220,7 @@ export async function seedCorpus(request: APIRequestContext, namespace: string):
     folderByUid.get(folderUid)!.recordingRules.push({ uid, title });
   });
 
-  // A single marker-scoped readiness check covers the whole corpus cheaply, instead of one
-  // rule-search poll per folder — search visibility, not the write, is what may lag here.
+  // One marker-scoped check; search visibility, not the write, may lag.
   await waitForMarkerCount(request, namespace, 'alertrules', runMarker, RULES_PER_KIND);
   await waitForMarkerCount(request, namespace, 'recordingrules', runMarker, RULES_PER_KIND);
 
@@ -282,12 +263,10 @@ async function waitForMarkerCount(
   }).toPass({ intervals: [300, 700, 1500, 3000], timeout: 60_000 });
 }
 
-/** Deletes every folder created by seedCorpus (cascade-deletes the rules inside each), bounded
- * the same way the seed is. Best-effort per folder so one failure doesn't block the rest. */
+/** Best-effort per folder; cascades to rules. */
 export async function teardownCorpus(request: APIRequestContext, manifest: CorpusManifest): Promise<void> {
   const folderUids = manifest.folders.map((f) => f.uid);
-  // Delete the nested folder before its parent, in case cascade delete on a folder with a
-  // still-existing child folder behaves differently than deleting a genuinely empty one.
+  // Nested folder first in case cascade with a live child differs.
   const ordered = [
     ...folderUids.filter((uid) => uid === manifest.nestedFolderUid),
     ...folderUids.filter((uid) => uid !== manifest.nestedFolderUid),

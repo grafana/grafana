@@ -21,9 +21,7 @@ export function storageKeyForKind(kind: SavedSearchKind): string {
   return kind === 'alert' ? ALERT_SAVED_SEARCHES_STORAGE_KEY : RECORDING_SAVED_SEARCHES_STORAGE_KEY;
 }
 
-/** Once this is set, the collection is never touched by the migration again — a copied
- * entry the user deletes stays deleted, and a default they change stays changed. Keyed off
- * the destination storage key so it can't collide with an unrelated marker. */
+/** Once set, the copy never reruns, so user deletions and edits stick. */
 export function migratedMarkerKeyForKind(kind: SavedSearchKind): string {
   return `${storageKeyForKind(kind)}Migrated`;
 }
@@ -33,9 +31,7 @@ async function isKindMigrated(userStorage: UserStorage, kind: SavedSearchKind): 
   return marker === MIGRATED_MARKER_VALUE;
 }
 
-/** An untyped legacy collection has no reliable GMA/DMA distinction, so only an explicit
- * `type:recording` token routes a legacy entry to Recording; everything else (including no
- * type at all) defaults to Alert. */
+/** Untyped legacy entries default to Alert; only an explicit `type:recording` routes to Recording. */
 function destinationForLegacyQuery(query: string): SavedSearchKind {
   const typeToken = tokenize(query).find((t) => t.key === 'type');
   return typeToken?.value === 'recording' ? 'recording' : 'alert';
@@ -50,14 +46,7 @@ async function migrateQuery(
   return { query: serialize(resolved.criteria), droppedKeys: resolved.droppedKeys };
 }
 
-/**
- * Copies every legacy entry destined for one kind into that kind's collection, then marks
- * the kind migrated so it is never processed again. The id-based dedupe guards a retry after
- * a failed write (nothing persisted yet, so nothing to skip); once the marker is set, this
- * function is never called again for that kind, so it does not need to guard against a
- * *successful* previous copy — the marker check in the caller already prevents that, which is
- * what makes a deleted copy stay deleted and a changed default stay changed.
- */
+/** Id dedupe only covers a retry after a failed write; the marker prevents re-copying. */
 async function migrateKind(
   kind: SavedSearchKind,
   legacySearches: SavedSearch[],
@@ -69,8 +58,7 @@ async function migrateKind(
   const loadDestination = createStorageLoader({ storageKey, serviceNamespace });
   const destinationSearches = await loadDestination();
   const destinationIds = new Set(destinationSearches.map((s) => s.id));
-  // Only carry a legacy default into an empty destination default slot — never create two
-  // defaults in the same collection by copying in a second one.
+  // Never create two defaults: copy the legacy default only into an empty slot.
   let hasDefault = destinationSearches.some((s) => s.isDefault);
 
   const newSearches: SavedSearch[] = [];
@@ -89,22 +77,10 @@ async function migrateKind(
     await userStorage.setItem(storageKey, JSON.stringify([...destinationSearches, ...newSearches]));
   }
 
-  // Reached only if nothing above threw — persist the marker so this kind's collection is
-  // never touched by the migration again, regardless of what the user does to it afterwards.
   await userStorage.setItem(migratedMarkerKeyForKind(kind), MIGRATED_MARKER_VALUE);
 }
 
-/**
- * One-time, idempotent copy of the legacy combined `savedSearches` collection into the
- * separate Alert/Recording collections, gated by a persistent per-kind migration marker
- * (`<storageKey>Migrated`) written only after that kind's copy succeeds. Once set, the
- * marker is authoritative: this never re-reads or re-writes that kind's collection again, so
- * a copied entry the user deletes stays deleted and a default they change stays changed — the
- * id-based dedupe below only has to cover a retry after a write that failed partway. Each
- * kind is migrated independently, so one kind's storage failure doesn't block the other kind
- * from completing (and its marker) on the same run. The legacy collection itself is never
- * modified.
- */
+/** One-time copy per kind, marked done (`<storageKey>Migrated`) only after success. The legacy collection is never modified. */
 export async function copyLegacySavedSearchesOnce(
   resolvers: NameResolvers,
   serviceNamespace = 'alerting'
@@ -124,27 +100,18 @@ export async function copyLegacySavedSearchesOnce(
     try {
       await migrateKind(kind, legacySearches, resolvers, userStorage, serviceNamespace);
     } catch {
-      // Leave this kind's marker unset so a later run retries it; don't let its failure
-      // block the other kind from finishing (and being marked) on this same run.
+      // Leave the marker unset to retry later; don't block the other kind.
       logWarning('Failed to copy legacy saved searches into a rule-list collection', { kind });
     }
   }
 }
 
-/** A copied-but-not-yet-canonicalized entry still carries one of the legacy-only tokens
- * that migration always strips (`type:`/`group:`/`source:`) — a canonical query for either
- * new page can never contain them. */
+/** Still carries legacy-only tokens (`type:`/`group:`/`source:`) that canonical queries never contain. */
 function needsMigration(query: string): boolean {
   return tokenize(query).some((t) => t.key === 'type' || t.key === 'group' || t.key === 'source');
 }
 
-/**
- * Applies a saved search: if its stored query still needs migration, runs the same query
- * conversion used for URL migration and persists the canonical form before returning
- * criteria to search with. A persistence failure never blocks applying — the caller still
- * gets criteria to search with even if the canonical form couldn't be saved back.
- * `droppedKeys` names the filters the conversion removed, so the caller can say so.
- */
+/** A persistence failure never blocks applying the migrated query. */
 export async function applySavedSearch(
   query: string,
   resolvers: NameResolvers,
@@ -159,7 +126,7 @@ export async function applySavedSearch(
   try {
     await persist(migrated.query);
   } catch {
-    // Swallow: the user should still see results even if storage is unavailable.
+    // Swallow: results still show if storage is unavailable.
   }
   return { criteria: parseForKind(migrated.query), query: migrated.query, droppedKeys: migrated.droppedKeys };
 }

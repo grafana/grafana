@@ -112,16 +112,13 @@ describe('RecordingRulesRecentlyDeleted', () => {
     const { user } = render(<RecordingRulesRecentlyDeleted />);
 
     await screen.findByText('CPU usage average');
-    // Wait for the async folder/deleted-by lookups to settle so the table stops re-rendering the
-    // row before we grab and click its Review button - otherwise the click can target a node that
-    // gets replaced mid-flight.
+    // Wait for the lookups to settle, or the click can hit a node that gets replaced.
     await screen.findByText('Production');
     const row = screen.getByText('CPU usage average').closest('tr');
     await user.click(within(row!).getByRole('button', { name: /review/i }));
 
     expect(await screen.findByText('Deleted recording rule')).toBeInTheDocument();
-    // The row behind the drawer also shows these values, so the drawer having opened means a
-    // second match appears - not that these fields are drawer-exclusive.
+    // The row behind the drawer shows these values too, so a second match means the drawer opened.
     expect(screen.getAllByText('cpu_usage:avg').length).toBe(2);
     expect(screen.getAllByText('Prometheus').length).toBe(2);
     expect(screen.queryByText(/firing|instances|notification routing/i)).not.toBeInTheDocument();
@@ -250,7 +247,6 @@ describe('RecordingRulesRecentlyDeleted', () => {
 
     await screen.findByText('Rule 40');
     expect(screen.getByText('Rule 64')).toBeInTheDocument();
-    // The remaining rows came from the local buffer, so no second request was needed.
     expect(requestCount).toBe(1);
     expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
   });

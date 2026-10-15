@@ -14,7 +14,6 @@ interface DeletedRuleExpressionsProps {
   expressions: Record<string, DeletedRuleExpression>;
 }
 
-/** The queries and expressions of a deleted rule, one entry per ref ID. */
 export function DeletedRuleExpressions({ expressions }: DeletedRuleExpressionsProps) {
   const entries = Object.entries(expressions);
   if (entries.length === 0) {
@@ -98,7 +97,6 @@ function Code({ text }: { text: string }) {
   );
 }
 
-// Queries are long single lines; wrapping them keeps the drawer from scrolling sideways.
 const getStyles = () => ({
   code: css({ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }),
 });

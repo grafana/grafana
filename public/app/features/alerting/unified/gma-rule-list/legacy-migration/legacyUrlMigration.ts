@@ -12,7 +12,7 @@ import {
   migrateLegacyRuleListUrlSync,
 } from './migrationSync';
 
-// Event payloads carry names from this fixed list only; a user-typed token name is reported as `other`.
+// Event payloads carry only these names; user-typed tokens are reported as `other`.
 const ANALYTICS_FILTER_KEYS = new Set<string>([
   ...Object.values(TOKEN_KEYS),
   'type',
@@ -39,8 +39,6 @@ function toAnalyticsKey(key: string): string {
   return ANALYTICS_FILTER_KEYS.has(key) ? key : 'other';
 }
 
-/** Reads the legacy combined-list URL parameters this migration understands out of a
- * `location.search`-style string. */
 export function parseLegacyRuleListParams(search: string): LegacyRuleListParams {
   const params = new URLSearchParams(search);
   return {
@@ -53,12 +51,7 @@ export function parseLegacyRuleListParams(search: string): LegacyRuleListParams 
   };
 }
 
-/**
- * One asynchronous migration pipeline for old-route redirects, directly opened URLs, and
- * applied saved searches, so all three go through the same translation instead of drifting.
- * Runs the pure sync stage, then resolves any legacy folder/data-source names, then emits
- * diagnostics.
- */
+/** Single pipeline for redirects, direct URLs and applied saved searches so they cannot drift. */
 export async function migrateLegacyRuleListUrl(
   location: { search: string },
   resolvers: NameResolvers
@@ -96,12 +89,7 @@ export async function migrateLegacyRuleListUrl(
   };
 }
 
-/**
- * Emits `grafana_alerting_gma_list_query_migration` once per migration, called from the
- * orchestrator rather than render logic so it can't fire repeatedly on every re-render.
- * Never include filter values, queries, UIDs, or resource names — only sorted, allowlisted
- * token names.
- */
+/** Called from the orchestrator, not render, so it fires once. Never include values, UIDs or resource names. */
 function reportMigrationDiagnostics(diagnostics: MigrationDiagnostics): void {
   if (diagnostics.migratedKeys.length === 0 && diagnostics.droppedKeys.length === 0) {
     return;

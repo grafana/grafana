@@ -29,7 +29,7 @@ function ruleItem(uid: string, title: string) {
   };
 }
 
-/** Stands in for the page, which owns the criteria and re-renders the list when they change. */
+/** Stands in for the page, which owns the criteria. */
 function ListWithFilter() {
   const [criteria, setCriteria] = useState(createEmptyCriteria());
   return (

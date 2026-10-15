@@ -2,7 +2,6 @@ import { t } from '@grafana/i18n';
 
 import { TOKEN_KEYS, type TokenDefinition, sharedDefinitions } from './tokens';
 
-/** The Recording rules filters in the order the sidebar lists them. */
 export const recordingTokens: TokenDefinition[] = [
   sharedDefinitions.rule,
   sharedDefinitions.label,

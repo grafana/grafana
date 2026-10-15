@@ -3,12 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 import { getCorpusFolder, getPlainCorpusFolder, requireCorpusManifest } from './corpus/corpusState';
 import { RuleListPage, folderScope } from './pages/RuleListPage';
 
-// Depends on the shared corpus (see playwright.config.ts `alerting-corpus-setup`/`-teardown`): run
-// this spec's project with `alerting-corpus-setup` as a dependency so the manifest exists before
-// these run. Every assertion is scoped to the run marker, to the manifest's own folders, or to a
-// folder filter on them - never an organization-wide total or an unfiltered folder page, since other
-// tests and pre-existing data share this instance. Folder Previous/Next has its own organization
-// (gma-folder-pagination.spec.ts) for the same reason.
+// Needs `alerting-corpus-setup`; assertions are scoped to the run marker.
 
 test.describe('Alert rules: Folders and List browsing', () => {
   test('ALERT-1/2: the dense folder shows its direct Alert count, Load more reveals the rest, and a still-collapsed folder is never fetched', async ({
@@ -18,7 +13,6 @@ test.describe('Alert rules: Folders and List browsing', () => {
     const dense = getCorpusFolder(manifest, manifest.denseFolderUid);
     const untouched = getPlainCorpusFolder(manifest);
 
-    // Scoping Folders mode to these two folders keeps the untouched one on the page, collapsed.
     const list = new RuleListPage(page, 'alert');
     await list.gotoFolders(folderScope(dense.uid, untouched.uid));
 
@@ -26,8 +20,7 @@ test.describe('Alert rules: Folders and List browsing', () => {
     await expect(list.folderRow(untouched.title)).toContainText('1 alert rule');
 
     await list.toggleFolder(dense.title);
-    // Folder titles carry the run marker too, so the rule links are told apart by the `f<folder>r<rule>` part of
-    // a rule title and counted within the expanded folder.
+    // Rule links are told apart by the `f<folder>r<rule>` part of the title.
     const denseLinks = list
       .folderRow(dense.title)
       .getByRole('link', { name: new RegExp(`f\\d+r\\d+ ${manifest.runMarker}`) });

@@ -8,8 +8,6 @@ import { tokenize } from '../rule-search/tokenizer';
 export type Destination = 'alert' | 'recording';
 export type ViewMode = 'list' | 'folders';
 
-/** The legacy combined-list URL parameters this migration understands, read from
- * `location.search` by the caller (legacyUrlMigration.ts). */
 export interface LegacyRuleListParams {
   search?: string | null;
   view?: string | null;
@@ -20,20 +18,15 @@ export interface LegacyRuleListParams {
 }
 
 export interface MigrationDiagnostics {
-  /** Sorted, allowlisted legacy param/token names that were translated into their canonical
-   * equivalent. */
   migratedKeys: string[];
-  /** Sorted token names removed because the destination page cannot apply them: they do not
-   * apply to it, no longer exist, are unknown, or are malformed. Names only, never values. */
+  /** Sorted token names removed as inapplicable, unknown or malformed. Names only, never values. */
   droppedKeys: string[];
 }
 
 export interface SyncMigrationResult {
   destination: Destination;
   mode: ViewMode;
-  /** Criteria with namespace/data-source entries still possibly holding legacy display
-   * names rather than UIDs — resolved by the async stage (migrationResolve.ts). Never holds an
-   * invalid token: those are dropped here. */
+  /** May still hold legacy display names instead of UIDs; resolved by the async stage. */
   criteria: Criteria;
   diagnostics: MigrationDiagnostics;
 }
@@ -47,18 +40,12 @@ function destinationRegistry(destination: Destination) {
   return destination === 'recording' ? recordingTokens : alertTokens;
 }
 
-/**
- * Pure synchronous stage of query migration: parses the legacy `search` string, normalizes
- * the separate legacy params, resolves `type:`/`ruleType` routing, and drops tokens that
- * don't apply to the chosen destination. Name-to-UID resolution (namespace/datasource) is
- * a separate async stage (migrationResolve.ts) since it needs authorized lookups.
- */
+/** Pure sync stage; name-to-UID resolution is a separate async stage because it needs authorized lookups. */
 export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): SyncMigrationResult {
   const migratedKeys = new Set<string>();
   const droppedKeys = new Set<string>();
 
-  // An unterminated quote swallows the rest of the query into one value, so a keyed token that
-  // has one is malformed: it is removed rather than reinterpreted as a different filter.
+  // An unterminated quote swallows the rest of the query, so the token is removed as malformed.
   let working: WorkingToken[] = [];
   for (const token of tokenize(params.search ?? '')) {
     if (token.key !== null && token.quoted && !token.closed) {
@@ -68,15 +55,12 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
     }
   }
 
-  // 1. Destination: an explicit `type:` token wins over the legacy `ruleType` param, which
-  // wins over defaulting to Alert. `type:` only ever selects a page — it's not a filter, so
-  // it never appears in the diagnostics.
+  // 1. `type:` beats legacy `ruleType`, which beats the Alert default; it only picks a page, so it is never reported.
   const typeToken = working.find((t) => t.key === 'type');
   const typeValue = typeToken?.value ?? params.ruleType ?? undefined;
   const destination: Destination = typeValue === 'recording' ? 'recording' : 'alert';
   working = working.filter((t) => t.key !== 'type');
 
-  // 2. Normalize legacy params whose canonical equivalent isn't already present.
   if (!working.some((t) => t.key === 'datasource') && params.dataSource) {
     working.push({ key: 'datasource', value: params.dataSource });
     migratedKeys.add('dataSource');
@@ -90,14 +74,13 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
     migratedKeys.add('queryString');
   }
 
-  // 3. `group:` never applies to the migrated UI — evaluation groups don't exist.
+  // 3. `group:` never applies; evaluation groups do not exist.
   if (working.some((t) => t.key === 'group')) {
     droppedKeys.add('group');
     working = working.filter((t) => t.key !== 'group');
   }
 
-  // 4. `source:grafana` is redundant (everything here is Grafana-managed) and is removed
-  // silently; `source:datasource` is unsupported and is removed with a warning.
+  // 4. `source:grafana` is redundant and removed silently; `source:datasource` is removed with a warning.
   const sourceToken = working.find((t) => t.key === 'source');
   if (sourceToken) {
     if (sourceToken.value === 'datasource') {
@@ -111,17 +94,13 @@ export function migrateLegacyRuleListUrlSync(params: LegacyRuleListParams): Sync
     .join(' ');
   const criteria = parse(reserialized, destinationRegistry(destination));
 
-  // 5. Whatever the destination cannot apply is removed rather than carried into the new URL:
-  // a filter that belongs to the other page (dashboard: on Recording), an unknown token, or a
-  // malformed or repeated one.
+  // 5. Remove what the destination cannot apply: other page's filters, unknown, malformed or repeated tokens.
   for (const token of criteria.invalid) {
     droppedKeys.add(token.key);
   }
   criteria.invalid = [];
 
-  // 6. View mode: keep `view=list`; `view=grouped`, the unsupported legacy `view=state`, and
-  // no `view` at all all become Folders (evaluation groups don't exist in the migrated UI,
-  // so there's nothing left for the legacy "grouped" distinction to mean besides Folders).
+  // 6. `view=list` stays; grouped, legacy `state` or missing become Folders (no evaluation groups).
   const mode: ViewMode = params.view === 'list' ? 'list' : 'folders';
 
   return {

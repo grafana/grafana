@@ -16,8 +16,7 @@ import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 import { useRecordingRuleSearch } from './recordingRuleSearch';
 
 interface FoldersViewProps {
-  /** Folder UIDs from the active criterion - the only filter Folders mode supports. Scopes
-   * the folder listing itself, not just what's shown once expanded. */
+  /** The only filter Folders mode supports; scopes the folder listing itself. */
   folderUids: string[];
 }
 

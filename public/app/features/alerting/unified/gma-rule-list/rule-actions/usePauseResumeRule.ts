@@ -11,10 +11,6 @@ import { useInvalidateFolderData } from '../folder-browsing/folderLookups';
 
 import { trackRulePauseResume } from './analytics';
 
-/**
- * Shared pause/resume logic between the Alert and Recording menus - only the generated mutation
- * hook differs, so this is the one piece genuinely identical between the two.
- */
 async function performPauseResume(
   kind: 'alert' | 'recording',
   triggerPatch: () => Promise<unknown>,

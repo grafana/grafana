@@ -1,10 +1,6 @@
 import { type SearchQuery } from './searchQueryLeaves';
 
-/**
- * Test-only mirror of the per-kind rule search validation: returns a message for every way
- * `query` would be rejected, so builder tests can assert a request is accepted instead of
- * re-deriving the rules in each test.
- */
+/** Test-only mirror of the per-kind rule search validation: a message per rejection. */
 export function getRuleSearchQueryViolations(query: SearchQuery, kind: 'alert' | 'recording'): string[] {
   const violations: string[] = [];
   const filterable = FILTERABLE_FIELDS[kind];
@@ -106,7 +102,7 @@ const RETURNABLE_FIELDS = {
 };
 const MULTI_VALUE_FIELDS = new Set(['name', 'folder', 'datasourceUIDs', 'state', 'health']);
 const NEGATABLE_FIELDS = new Set(['labels', 'state', 'health']);
-// The store compares these exactly and case-sensitively, so only the capitalised spellings match.
+// The store compares these case-sensitively.
 const ALERT_STATE_API_VALUES = new Set(['Inactive', 'Healthy', 'Firing', 'Pending', 'Recovering']);
 const HEALTH_API_VALUES = {
   alert: new Set(['Unknown', 'OK', 'Paused', 'Error', 'NoData']),

@@ -7,13 +7,11 @@ import { type PagedFailure } from './pagedQuery';
 interface LoadMoreFooterProps {
   hasMore: boolean;
   isLoadingMore: boolean;
-  /** Replaces the button while a request failed. */
   failure?: PagedFailure;
   onLoadMore: () => void;
   onRetry: () => void;
 }
 
-/** The "Load more" button under a list, or the failure of the request it made. */
 export function LoadMoreFooter({ hasMore, isLoadingMore, failure, onLoadMore, onRetry }: LoadMoreFooterProps) {
   if (failure) {
     return <PagedFailureAlert failure={failure} onRetry={onRetry} />;

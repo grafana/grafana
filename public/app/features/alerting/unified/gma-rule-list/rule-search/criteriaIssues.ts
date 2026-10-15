@@ -1,32 +1,18 @@
 import { type Criteria, DEFAULT_POLICY, type LabelMatcher } from './criteria';
 
-/**
- * - `unsupported`: a token this page cannot apply: an unknown key, an incomplete or malformed
- *   value, or a repeat of a single-value token.
- * - `requiresDashboard`: a panel ID with no dashboard to scope it to.
- * - `unavailable`: a criterion the rule search cannot express yet.
- * - `invalid`: a value the rule search rejects outright.
- */
 export type CriteriaIssueReason = 'unsupported' | 'requiresDashboard' | 'unavailable' | 'invalid';
 
 export interface CriteriaIssue {
-  /** The token key the user typed, so the input can name the offending filters. */
+  /** The token key as typed. */
   key: string;
   reason: CriteriaIssueReason;
 }
 
 const DATASOURCE_UID_PATTERN = /^[a-zA-Z0-9_-]+$/;
-// Datasource UIDs of server-side expression nodes are never indexed, so filtering on one is rejected.
+// Server-side expression node datasource UIDs are never indexed, so filtering on one is rejected.
 const EXPRESSION_DATASOURCE_UIDS = new Set(['__expr__', '-100', '__ml__']);
 
-/**
- * Reports problems with `criteria` that the page layer must act on before issuing a search
- * request: a token the page cannot apply, a panel ID with no dashboard to scope it to (panel IDs
- * are dashboard-local), a criterion the rule search cannot express, or a value it would reject. The request builders never fix these up on
- * their own: silently sending a narrower or wider request than the user asked for would be
- * worse than not searching at all. When this returns any issues, the caller should show the
- * offending token(s) as invalid and skip the request rather than send one.
- */
+/** Callers must show these tokens as invalid and skip the request; builders never fix them up silently. */
 export function getCriteriaIssues(criteria: Criteria, kind: 'alert' | 'recording'): CriteriaIssue[] {
   const issues: CriteriaIssue[] = criteria.invalid.map((token) => ({ key: token.key, reason: 'unsupported' }));
 

@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 
 import { MetaItem } from '../shared/MetaItem';
 
-/** Instance counts per state; a state the API did not return is absent, which is not the same as 0. */
+/** A state the API did not return is absent, not 0. */
 export interface InstanceTotals {
   healthy?: number;
   firing?: number;
@@ -40,7 +40,6 @@ function describeTotals({ healthy, firing, pending, recovering, noData, error }:
   return entries.filter((entry): entry is string => entry !== undefined);
 }
 
-/** Every instance count the API returned, each labelled with its state; nothing when it returned none. */
 export function InstanceTotalsMeta({ totals }: InstanceTotalsMetaProps) {
   const parts = describeTotals(totals);
 

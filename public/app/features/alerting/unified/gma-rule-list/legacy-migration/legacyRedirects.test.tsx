@@ -38,10 +38,7 @@ async function waitForNavigateTarget() {
   return calls[calls.length - 1][0].to;
 }
 
-// NAV-1: `/alerting/list` and `/alerting/recently-deleted` redirect to the GMA-only pages once
-// the stack flag is on. The full migration (type-based destination choice and legacy-param
-// translation) runs before navigating, so a `type:` token is consumed rather than carried
-// through to the destination's canonical search.
+// NAV-1: a `type:` token is consumed by the migration, not carried to the destination.
 describe('LegacyRuleListRedirect', () => {
   beforeEach(() => {
     // The folder-name lookup dispatches through the global app store, which render() does not populate.
@@ -70,8 +67,7 @@ describe('LegacyRuleListRedirect', () => {
     expect(screen.getByText('Redirecting...')).toBeInTheDocument();
     expect(Navigate).not.toHaveBeenCalled();
 
-    // Let the in-flight migration settle before the test ends, so its state update lands
-    // inside this test's act() scope rather than leaking into the next one.
+    // Let the in-flight migration settle inside this test's act() scope.
     await waitForNavigateTarget();
   });
 
@@ -100,7 +96,7 @@ describe('LegacyRuleListRedirect', () => {
     expect(warning).not.toHaveBeenCalled();
   });
 
-  // NAV-4: the redirect never fails or hangs; what cannot be migrated is removed and named.
+  // NAV-4: unmigratable filters are removed and named; the redirect never fails.
   it.each([403, 500])(
     'NAV-4: still redirects, without the folder filter, and warns when the folder lookup fails with %s',
     async (status) => {

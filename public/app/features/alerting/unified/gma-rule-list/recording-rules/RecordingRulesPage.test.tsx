@@ -11,8 +11,7 @@ import { setupMswServer } from '../../mockApi';
 
 import RecordingRulesPage from './RecordingRulesPage';
 
-// test-utils replaces the runtime's locationService for every render. A plain spread would freeze
-// the first one here, and the page would then write URL changes to a history its router never sees.
+// test-utils swaps locationService per render; a plain spread would freeze the first one.
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return Object.defineProperty({ ...actual, reportInteraction: jest.fn() }, 'locationService', {
@@ -21,8 +20,7 @@ jest.mock('@grafana/runtime', () => {
   });
 });
 
-// Combobox (the health filter) measures its own floating element to render option rows, which
-// jsdom reports as zero.
+// jsdom reports zero size, so Combobox renders no option rows.
 mockComboboxRect();
 
 const reportInteractionMock = jest.mocked(reportInteraction);
@@ -68,7 +66,6 @@ function mockRecordingRuleSearch(fn: (body: unknown) => object) {
   );
 }
 
-// Fails the first request to `url` and answers every later one with `ok`.
 function failFirstCall(url: string, ok: object) {
   let calls = 0;
   server.use(
@@ -136,8 +133,7 @@ describe('RecordingRulesPage', () => {
       'href',
       expect.stringContaining('/alerting/new/grafana-recording')
     );
-    // Settle the saved-searches async load before the test ends, so its state update lands
-    // inside this test's act() scope rather than leaking into the next one.
+    // Settle the saved-searches load so its state update stays inside this test's act().
     await screen.findByRole('button', { name: 'Saved searches' });
   });
 
@@ -441,7 +437,6 @@ describe('RecordingRulesPage', () => {
     expect(screen.queryByText('Failed to load folders')).not.toBeInTheDocument();
   });
 
-  // M1: one page-view event per mount, with kind and mode, no filter values.
   it('emits grafana_alerting_gma_rule_list_view once on mount with the kind and mode', async () => {
     mockFolderSearch(() => ({ items: [], metadata: {} }));
     mockRecordingRuleSearch(() => ({ items: [], metadata: {} }));
@@ -456,7 +451,6 @@ describe('RecordingRulesPage', () => {
     expect(pageViewCalls).toEqual([['grafana_alerting_gma_rule_list_view', { kind: 'recording', mode: 'list' }]]);
   });
 
-  // Saved searches: the control stays disabled until the one-time legacy copy settles.
   it('shows a disabled Saved searches control until the legacy copy settles, then an interactive one', async () => {
     mockFolderSearch(() => ({ items: [], metadata: {} }));
 

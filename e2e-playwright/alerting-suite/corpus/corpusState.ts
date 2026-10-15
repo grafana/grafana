@@ -1,9 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-// A JSON file on disk, not process.env: the setup and dependent projects each run in their
-// own Playwright worker process, so state has to survive a process boundary, not just outlive
-// a single test file.
+// JSON file, not process.env: projects run in separate worker processes.
 const MANIFEST_PATH = path.join(__dirname, '.gma-corpus-manifest.json');
 
 export interface CorpusRule {
@@ -14,25 +12,19 @@ export interface CorpusRule {
 export interface CorpusFolder {
   uid: string;
   title: string;
-  /** UID of the folder this one is nested under, if any — used to prove folder-path display. */
   parentUid?: string;
   alertRules: CorpusRule[];
   recordingRules: CorpusRule[];
 }
 
 export interface CorpusManifest {
-  /** The unique label value stamped on every rule this run created — read-only browsing tests
-   * assert against this, never an organization-wide total. */
+  /** Run-unique label on every rule. */
   runMarker: string;
-  /** 80 Alert and 80 Recording rules. */
   denseFolderUid: string;
-  /** Holds exactly one Alert rule and no Recording rule. */
   alertOnlyFolderUid: string;
-  /** Holds exactly one Recording rule and no Alert rule. */
   recordingOnlyFolderUid: string;
   /** Holds no rules, so the lists never show it. */
   emptyFolderUid: string;
-  /** Holds one rule of each kind and sits under another one-of-each folder. */
   nestedFolderUid: string;
   folders: CorpusFolder[];
   setupDurationMs: number;
@@ -49,8 +41,7 @@ export function readCorpusManifest(): CorpusManifest | undefined {
   return JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 }
 
-/** For specs that read the corpus: a missing manifest means the setup project did not run, which
- * must fail the run rather than silently skip the specs that depend on it. */
+/** Missing manifest fails the run rather than skipping specs. */
 export function requireCorpusManifest(): CorpusManifest {
   const manifest = readCorpusManifest();
   if (!manifest) {
@@ -69,7 +60,6 @@ export function getCorpusFolder(manifest: CorpusManifest, uid: string): CorpusFo
   return folder;
 }
 
-/** A top-level folder holding one rule of each kind, which no test changes. */
 export function getPlainCorpusFolder(manifest: CorpusManifest): CorpusFolder {
   const folder = manifest.folders.find(
     (f) => f.alertRules.length === 1 && f.recordingRules.length === 1 && f.parentUid === undefined

@@ -6,7 +6,6 @@ import { type RuleListMode } from './useRuleListSearchState';
 export interface RuleListModeToggleProps {
   mode: RuleListMode;
   onChange: (mode: RuleListMode) => void;
-  /** Folders mode supports only the folder filter, so it is unavailable while any other filter is applied. */
   foldersDisabled: boolean;
 }
 

@@ -3,12 +3,6 @@ import { parseLabelValue } from './labelMatcher';
 import { tokenize } from './tokenizer';
 import { TOKEN_KEYS, type TokenDefinition, buildTokenRegistry } from './tokens';
 
-/**
- * Parses a flat search string into a canonical Criteria object. A token the page cannot apply
- * (a key outside `registry`, an incomplete or malformed value, a repeat of a single-value token)
- * is recorded in `criteria.invalid` exactly as written, so it is shown as invalid rather than
- * silently ignored — see README.md.
- */
 export function parse(input: string, registry: TokenDefinition[]): Criteria {
   const byKey = buildTokenRegistry(registry);
   const criteria = createEmptyCriteria();
@@ -38,7 +32,7 @@ export function parse(input: string, registry: TokenDefinition[]): Criteria {
   return criteria;
 }
 
-/** Returns false when `value` is not one this token accepts, leaving `criteria` untouched. */
+/** Returns false, leaving `criteria` untouched, when the token rejects `value`. */
 function applyToken(criteria: Criteria, key: string, value: string): boolean {
   switch (key) {
     case TOKEN_KEYS.rule:

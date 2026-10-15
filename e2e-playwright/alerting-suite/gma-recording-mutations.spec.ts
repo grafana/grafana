@@ -2,13 +2,9 @@ import { test, expect } from './fixtures';
 import { RuleListPage, folderScope } from './pages/RuleListPage';
 import { ruleResourceUrl } from './ruleSeeding';
 
-// Each test seeds exactly one rule into its own worker folder and filters the list down to
-// that folder (`namespace:<uid>`) - see fixtures.ts and AGENTS.md for the isolation/cascade
-// cleanup model.
 test.describe('Recording rule mutations', () => {
   test('REC-6: Resume then Pause persist spec.paused across a reload', async ({ page, folder, recordingRules }) => {
     const title = 'CPU usage average';
-    // Seeded rules start paused (see RecordingRulesFixture.seedRule), so Resume is exercised first.
     await recordingRules.seedRule({ title, interval: '1m', metric: 'cpu_usage:avg' });
     const list = new RuleListPage(page, 'recording');
 
@@ -54,7 +50,6 @@ test.describe('Recording rule mutations', () => {
     await list.goto(folderScope(folder.uid));
     await expect(list.ruleLink(title)).not.toBeVisible();
 
-    // Confirm it's really gone server-side, not just filtered out of a stale client cache.
     const response = await page.request.get(await ruleResourceUrl(page.request, 'recordingrules', uid));
     expect(response.status()).toBe(404);
   });
@@ -73,7 +68,7 @@ test.describe('Recording rule mutations', () => {
     await expect(list.folderRow(folder.title)).toContainText('1 recording rule');
     await expect(list.statusIcon(title, 'Paused')).toBeVisible();
 
-    // Anything after the first load that reloads the page would hide a missing refresh.
+    // A later reload would hide a missing refresh.
     let pageLoads = 0;
     page.on('load', () => pageLoads++);
 
@@ -86,7 +81,6 @@ test.describe('Recording rule mutations', () => {
     await page.getByRole('menuitem', { name: 'Delete', exact: true }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(list.ruleLink(title)).toHaveCount(0);
-    // The folder count is refreshed too: it either reads zero or the folder is no longer listed.
     await expect(page.getByText('1 recording rule')).toHaveCount(0);
 
     expect(pageLoads).toBe(0);

@@ -15,14 +15,10 @@ import {
 import { deleteUser } from './deleteUser';
 import { writeViewerFixtures } from './viewerFixtureState';
 
-// Must match the user of the `alerting-viewer-login` project in playwright.config.ts.
 const VIEWER_LOGIN = 'alerting-viewer';
 const VIEWER_PASSWORD = 'password';
 
-// Creates the Viewer from scratch, the way the plugin-e2e auth setup does, because the grant below needs
-// its id before that project's login has run. A user left over from an earlier run is deleted first: the
-// authorization layers keep a short-lived cache per user, and a user that already made requests keeps
-// answering with its old permissions for several seconds after a grant, which a new user never does.
+// Created fresh: the grant needs its id before login. A leftover user is deleted since permissions cache per user.
 async function createViewerUser(request: APIRequestContext): Promise<number> {
   const existing = await request.get(`/api/users/lookup?loginOrEmail=${VIEWER_LOGIN}`);
   if (existing.ok()) {
@@ -38,9 +34,7 @@ async function createViewerUser(request: APIRequestContext): Promise<number> {
   return userId;
 }
 
-// A setup project that the Viewer's login depends on, not something the Viewer spec creates itself.
-// The rules are created through the API, not file provisioning, because provisioned rules disable
-// their actions for a reason other than the role.
+// API, not file provisioning, which would disable actions for non-role reasons.
 test('seed the folder and rules the Viewer reads', async ({ request }) => {
   const namespace = await getNamespace(request);
   const run = newRunMarker();
@@ -51,10 +45,7 @@ test('seed the folder and rules the Viewer reads', async ({ request }) => {
 
   const viewerId = await createViewerUser(request);
   await createFolderAndWait(request, namespace, folderUid, folderTitle);
-  // Grafana caches a basic role's permissions for 60 s in one entry shared by every user of that role,
-  // so a new folder's default Viewer grant stays invisible to the Viewer until that entry refreshes. A
-  // grant to this user itself is read from the database when the new user first asks, which makes the
-  // folder readable at once. This endpoint adds one permission and leaves the folder's others in place.
+  // The 60 s basic-role cache hides a new folder's default Viewer grant; a grant to this user is read from the DB at once.
   const grant = await request.post(`/api/access-control/folders/${folderUid}/users/${viewerId}`, {
     data: { permission: 'View' },
   });

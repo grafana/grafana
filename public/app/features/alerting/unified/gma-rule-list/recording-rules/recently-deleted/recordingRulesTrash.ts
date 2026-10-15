@@ -10,12 +10,7 @@ import { TRASH_SELECTOR } from '../../recently-deleted/trashSelector';
 import { type UseDeletedRulesResult, useDeletedRules } from '../../recently-deleted/useDeletedRules';
 import { keepFirstPage } from '../../shared/pagedQuery';
 
-/**
- * The deleted Recording rules, from the same collection request as the generated `listRecordingRule`
- * with the trash selector. That operation is a plain query that cannot follow continuation
- * tokens, so this injects it as an infinite query. It provides the `RecordingRule` tag, so rule
- * mutations refetch it.
- */
+/** The generated `listRecordingRule` cannot follow continuation tokens; this wraps it as a tagged infinite query. */
 const recordingRulesTrashAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
     listDeletedRecordingRules: build.infiniteQuery<RecordingRuleList, void, string | undefined>({
@@ -23,7 +18,7 @@ const recordingRulesTrashAPI = generatedAPI.injectEndpoints({
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.metadata.continue || undefined,
       },
-      // The list is a view of the current page only; leaving it drops it.
+      // The list belongs to the current page only.
       keepUnusedDataFor: 0,
       query: ({ pageParam }) => ({
         url: '/recordingrules',

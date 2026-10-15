@@ -2,24 +2,16 @@ import { type InstanceTotals } from '../rule-row/InstanceTotalsMeta';
 import { asBoolean, asLabels, asString, asStringArray } from '../rule-search/searchHitFields';
 import { type RuleSearchResultItem } from '../rule-search/searchQueryLeaves';
 
-/**
- * The per-row shape read out of an Alert rule search hit. Kept separate from the raw
- * `fields` bag (typed `any`) so row code never touches that bag directly, and so growing the
- * projected field set later only changes this one place.
- */
 export interface AlertRuleSearchHit {
   uid: string;
   title: string;
   folderUid?: string;
   paused?: boolean;
-  /** The rule's own evaluation interval, as a duration such as `1m`. */
   interval?: string;
-  /** Persisted evaluation state/health - absent unless `alerting.ruleStatusSync` has populated
-   * it. Absence must read as Unavailable, never a healthy default. */
+  /** Absent until `alerting.ruleStatusSync` populates it; absence reads as Unavailable. */
   state?: string;
   health?: string;
   lastError?: string;
-  /** Per-state instance counts; like state and health, absent without stored status. */
   totals: InstanceTotals;
   /** Falls back to this when there's no lastError. */
   summary?: string;
@@ -60,7 +52,7 @@ export function toAlertRuleSearchHit(item: RuleSearchResultItem): AlertRuleSearc
   };
 }
 
-/** The search index keeps annotations whole, as one JSON-encoded object string. */
+/** Indexed as one JSON-encoded object string. */
 function asAnnotations(value: unknown): Record<string, string> {
   if (typeof value !== 'string') {
     return {};

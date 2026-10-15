@@ -1,8 +1,7 @@
 import { tokenize } from './tokenizer';
 import { type RawToken } from './tokens';
 
-/** Strips source spans so tests can focus on token content; span correctness is covered
- * separately below. */
+/** Strips source spans; spans are tested separately below. */
 function withoutSpans(tokens: RawToken[]) {
   return tokens.map(({ start, end, ...rest }) => rest);
 }

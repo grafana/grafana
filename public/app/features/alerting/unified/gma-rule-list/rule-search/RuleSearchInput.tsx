@@ -11,13 +11,9 @@ import { serialize } from './serializer';
 import { type TokenDefinition } from './tokens';
 
 export interface RuleSearchInputProps {
-  /** The applied canonical query — the full serialized criteria, not just free text. */
   query: string;
-  /** Called with the typed text on a debounced valid edit, and immediately on Enter or blur. */
   onApply: (query: string) => void;
-  /** This page's token registry, used to generate the help popover. */
   tokens: TokenDefinition[];
-  /** Filters that could not be applied, to describe accessibly — from getCriteriaIssues(). */
   issues?: CriteriaIssue[];
   debounceMs?: number;
 }
@@ -26,13 +22,7 @@ const DEFAULT_DEBOUNCE_MS = 400;
 const INPUT_ID = 'rule-search-input';
 const ISSUES_DESCRIPTION_ID = 'rule-search-input-issues';
 
-/**
- * Free-text + filter-syntax search input shared by the Alert and Recording pages. The typed
- * text is a local draft: applying it parses the text into criteria for the URL, but the input
- * never takes the canonical form back, so typing never reorders tokens or drops unfinished ones.
- * The draft is replaced only when the applied query changes for another reason (sidebar edit,
- * saved search, Clear filters, browser navigation).
- */
+/** The typed text is a draft, replaced only when the query changes elsewhere (sidebar, saved search, clear). */
 export function RuleSearchInput({
   query,
   onApply,
@@ -41,8 +31,7 @@ export function RuleSearchInput({
   debounceMs = DEFAULT_DEBOUNCE_MS,
 }: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
-  // The last text this component applied. A `query` that is its canonical form is an echo of
-  // our own apply, not an outside change.
+  // A `query` equal to the canonical form of this text is an echo of our own apply.
   const lastAppliedRef = useRef(query);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -83,8 +72,7 @@ export function RuleSearchInput({
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    // A half-typed filter would only flash an invalid-filter state, so only complete text is
-    // applied while typing; Enter and blur apply whatever is there.
+    // Half-typed filters would flash invalid, so only complete text applies while typing.
     if (parse(value, tokens).invalid.length === 0) {
       timeoutRef.current = setTimeout(() => apply(value), debounceMs);
     }

@@ -2,17 +2,12 @@ import { ContactPointSelector, useListContactPoints } from '@grafana/alerting/un
 import { t } from '@grafana/i18n';
 
 interface AlertContactPointFilterProps {
-  /** The applied contact point's title: criteria, the URL and saved searches all carry titles. */
   title?: string;
   disabled?: boolean;
   onChange: (title: string | undefined) => void;
 }
 
-/**
- * Contact point picker for the filter sidebar. The selector keys its options by UID while the
- * criteria hold a title, so the title is resolved to its UID for the selector to show the right
- * option as selected.
- */
+/** The selector keys options by UID but criteria hold a title, so resolve title to UID. */
 export function AlertContactPointFilter({ title, disabled, onChange }: AlertContactPointFilterProps) {
   const { currentData } = useListContactPoints();
   const uid = title

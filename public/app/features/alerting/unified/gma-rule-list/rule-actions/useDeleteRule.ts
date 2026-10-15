@@ -17,7 +17,6 @@ export interface DeleteRuleResult {
   error?: string;
 }
 
-/** Shared between the Alert and Recording delete flows - only the generated mutation differs. */
 async function performDelete(
   kind: 'alert' | 'recording',
   triggerDelete: () => Promise<unknown>,

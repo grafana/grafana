@@ -1,8 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-// A JSON file on disk, not process.env: the setup, the Viewer specs and the teardown each run in
-// their own Playwright worker process, so state has to survive a process boundary.
+// JSON file: setup, specs and teardown run in separate processes.
 const MANIFEST_PATH = path.join(__dirname, '.gma-viewer-fixtures-manifest.json');
 
 export interface ViewerFixtureRule {
@@ -11,9 +10,7 @@ export interface ViewerFixtureRule {
 }
 
 export interface ViewerFixtures {
-  /** The label value stamped on both rules, used to scope the Viewer's list to them. */
   runMarker: string;
-  /** The dedicated Viewer user, created fresh by the setup and deleted by the teardown. */
   viewerUserId: number;
   folderUid: string;
   folderTitle: string;
@@ -32,8 +29,7 @@ export function readViewerFixtures(): ViewerFixtures | undefined {
   return JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 }
 
-/** A missing manifest means the setup project did not run, which must fail the spec rather than
- * silently skip what depends on it. */
+/** Missing manifest fails the spec rather than skipping. */
 export function requireViewerFixtures(): ViewerFixtures {
   const fixtures = readViewerFixtures();
   if (!fixtures) {

@@ -4,8 +4,6 @@ import { RuleListPage } from './pages/RuleListPage';
 import { runScope } from './ruleSeeding';
 import { requireViewerFixtures } from './viewer-fixtures/viewerFixtureState';
 
-// Uses the `alerting-viewer` project (playwright.config.ts) — a Viewer-role user dedicated to
-// this suite, distinct from the org-wide `viewer` project which belongs to plugin API tests.
 test.describe('Viewer', () => {
   test('RBAC-V: opens the active pages but sees no Recently deleted tab', async ({ page }) => {
     await page.goto('/alerting/rules/alert');
@@ -20,15 +18,11 @@ test.describe('Viewer', () => {
 
   test('RBAC-V: the Recently deleted route itself is inaccessible', async ({ page }) => {
     await page.goto('/alerting/rules/alert/deleted');
-    // Route-level role gating redirects an unauthorized Viewer to the home dashboard rather
-    // than rendering the deleted-rules table — assert the deleted page never appears.
     await expect(page).not.toHaveURL(/\/alerting\/rules\/alert\/deleted/);
     await expect(page.getByRole('table')).toHaveCount(0);
   });
 
-  // The folder and rules come from the `alerting-viewer-fixtures-setup` project, which seeds them as Admin
-  // before the Viewer logs in: a folder created after the Viewer's first request is invisible to the
-  // Viewer until Grafana's 60 s basic-role permission cache refreshes.
+  // Seeded as Admin before login: a later folder stays invisible until the 60 s role-permission cache refreshes.
   test('RBAC-V: sees readable rules without New rule buttons or any usable row mutation', async ({ page }) => {
     const { runMarker, alertRule, recordingRule } = requireViewerFixtures();
 
@@ -42,7 +36,6 @@ test.describe('Viewer', () => {
       const row = list.ruleRow(title);
       await expect(row).toBeVisible();
       await expect(page.getByRole('link', { name: newRuleButton })).toHaveCount(0);
-      // Unavailable actions are shown disabled with their reason in the name, never usable.
       await expect(row.getByRole('link', { name: 'Edit' })).toHaveCount(0);
       await expect(row.getByRole('button', { name: /^Edit: /, disabled: true })).toBeVisible();
 

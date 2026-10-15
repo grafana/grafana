@@ -6,10 +6,7 @@ import { type RuleKind } from '../shared/analytics';
 
 import { trackRuleCopyLink } from './analytics';
 
-/**
- * Copies a rule's share URL, reporting both success and failure. The clipboard API is missing in
- * insecure contexts and its write can reject, and both must reach the user as the failure toast.
- */
+/** The clipboard is missing in insecure contexts and writes can reject; both surface as the failure toast. */
 export async function copyRuleLink(kind: RuleKind, url: string) {
   try {
     await navigator.clipboard.writeText(url);

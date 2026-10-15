@@ -16,12 +16,7 @@ export interface RecordingRuleSearchPage {
   continueToken?: string;
 }
 
-/**
- * The single place that chooses which API endpoint serves Recording rule search. The generated
- * operation is a mutation (it is a POST), so it provides no tags and has no page state; this
- * injects the same request as an infinite query keyed by the criteria, with continuation tokens as
- * the page parameters. It provides the `RecordingRule` tag, so every rule mutation refetches it.
- */
+/** The generated search is a POST mutation with no tags or paging; this wraps it as a tagged infinite query. */
 const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
     searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, Criteria, string | undefined>({
@@ -29,7 +24,7 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
       },
-      // Results are a view of the current page only; leaving it drops them.
+      // Results belong to the current page only.
       keepUnusedDataFor: 0,
       query: ({ queryArg, pageParam }) => ({
         url: '/recordingrules/searchRules',
@@ -47,7 +42,6 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
-/** Recording rules matching the criteria, one page at a time, in the order the API returns them. */
 export function useRecordingRuleSearch(criteria: Criteria): PagedResult<RecordingRuleSearchHit> {
   const dispatch = useDispatch();
   const query = useSearchRecordingRulesInfiniteQuery(criteria, { refetchOnMountOrArgChange: true });

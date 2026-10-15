@@ -34,7 +34,7 @@ jest.mocked(useAssistant).mockReturnValue({
 const ALERT_RULES_URL = `${getAPIBaseURL('rules.alerting.grafana.app', 'v0alpha1')}/alertrules`;
 const FOLDER_COUNTS_URL = `${getAPIBaseURL('folder.grafana.app', 'v1beta1')}/folders/:name/counts`;
 
-/** Stands in for a Folders-mode row, so a mutation's effect on folder counts is observable. */
+/** Stands in for a Folders-mode row to observe folder counts. */
 function FolderCountProbe() {
   const count = useFolderAlertRuleCount('folder-uid-1');
   return <div>{`Folder holds ${count.status === 'loaded' ? count.count : 'unknown'} rules`}</div>;
@@ -229,7 +229,7 @@ describe('AlertRuleActionsMenu', () => {
   describe('unavailable actions show their reason', () => {
     const MUTATING_ACTIONS = ['Pause', 'Delete'];
 
-    // ACC-7: the reason is part of the disabled item's accessible name, not only a hover tooltip.
+    // ACC-7: reason is in the accessible name, not only a tooltip.
     async function expectDisabledWithReason(user: Awaited<ReturnType<typeof openMenu>>, name: string, reason: string) {
       const item = screen.getByRole('menuitem', { name: `${name}: ${reason}` });
       expect(isDisabled(item)).toBe(true);
@@ -434,8 +434,7 @@ describe('AlertRuleActionsMenu', () => {
       await waitFor(() => expect(silenceItem).toBeEnabled());
       await user.click(silenceItem);
 
-      // The drawer that opened is the Silence drawer, populated from the rule this exact
-      // menu was given (title, not just some other rule) - proving it received the right UID.
+      // Drawer is populated from this menu's rule, proving it received the right UID.
       expect(await screen.findByText('Silence alert rule')).toBeInTheDocument();
       expect(document.getElementById('alert-rule-name')).toHaveValue('High CPU usage');
     });

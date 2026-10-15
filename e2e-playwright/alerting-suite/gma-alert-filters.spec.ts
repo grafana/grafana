@@ -11,10 +11,6 @@ import {
   testDataSourceUid,
 } from './ruleSeeding';
 
-// Every journey seeds its own rules, tags them with a run label, and scopes the list to that label,
-// so assertions name the journey's own rules and never depend on what else exists on the instance.
-// Each filter is applied the way a user does, through the search input token or the sidebar control,
-// and checks both the request body sent to /alertrules/searchRules and the rules shown.
 function rule(run: string, name: string, extra: Partial<AlertRuleSeed> = {}): AlertRuleSeed {
   return { ...extra, title: runTitle(run, name), labels: { [RUN_LABEL]: run, ...extra.labels } };
 }

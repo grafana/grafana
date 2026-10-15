@@ -68,7 +68,7 @@ function AlertRulesPage() {
       trackedView.current = true;
       trackRuleListPageView('alert', mode);
     }
-    // Intentionally tracked once per mount with the mode at that time, not on every mode change.
+    // Once per mount, with the mode at that time.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -79,9 +79,7 @@ function AlertRulesPage() {
     setCriteria(parse(raw, alertTokens));
   };
 
-  // The search/filter UI only ever produces criteria; it never fetches. Skip the request and
-  // show the invalid-filter state when getCriteriaIssues() reports an unsupported token or a
-  // panel ID with no dashboard, rather than sending a narrower/wider request than intended.
+  // Skip the request and show the invalid-filter state when getCriteriaIssues() reports issues.
   const canSearch = issues.length === 0;
 
   return (

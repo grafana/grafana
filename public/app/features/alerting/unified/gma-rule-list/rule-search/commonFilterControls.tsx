@@ -15,7 +15,6 @@ import {
 import { DataSourceMultiFilter, FolderMultiFilter } from './multiValueFilters';
 import { TOKEN_KEYS } from './tokens';
 
-/** The sidebar controls both the Alert and the Recording page have, by definition key. */
 export function useCommonFilterControls(
   criteria: Criteria,
   onChange: (criteria: Criteria) => void,

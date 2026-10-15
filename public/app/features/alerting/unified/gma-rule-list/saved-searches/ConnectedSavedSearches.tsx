@@ -12,26 +12,18 @@ import { applySavedSearch } from './savedSearchesMigration';
 const trackDefaultSearchApplied = createAutoApplyTracker();
 
 interface ConnectedSavedSearchesProps {
-  /** The page's own saved-search collection hook (Alert's or Recording's) - called here so its
-   * storage read only starts once the caller has decided it's safe to mount this (see
-   * useLegacySavedSearchesCopied). */
+  /** Called here so its storage read starts only after the legacy copy has settled. */
   useSavedSearches: () => UseGenericSavedSearchesResult;
   query: string;
   parseForKind: (query: string) => Criteria;
   resolvers: NameResolvers;
   setCriteria: (criteria: Criteria, options?: { replace?: boolean }) => void;
   getHref: (search: SavedSearch) => string;
-  /** Apply the collection's default search once it has loaded, for a page opened with no query. */
   applyDefault: boolean;
-  /** Called once the default search has been applied, or there is none to apply. */
   onDefaultSettled: () => void;
 }
 
-/**
- * Wires one page's saved-search hook into the generic SavedSearches UI, including applying a
- * search that still needs query migration: the migrated form is persisted back onto that same
- * entry via updateSearch, so re-applying it later reads the canonical query directly.
- */
+/** Applies searches needing migration and persists the migrated form back onto the entry. */
 export function ConnectedSavedSearches({
   useSavedSearches,
   query,
