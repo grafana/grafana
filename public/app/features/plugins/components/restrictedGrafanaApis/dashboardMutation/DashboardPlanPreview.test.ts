@@ -1,4 +1,5 @@
 import { locationService } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import type { MutationClient, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 import { takePendingPlanBuild } from 'app/features/dashboard-scene/scene/pendingPlanBuild';
 
@@ -25,11 +26,23 @@ describe('DashboardPlanPreview', () => {
     client = null;
     preview = new DashboardPlanPreview(() => client);
     locationService.replace('/explore?orgId=1#origin');
+    setTestFlags({ 'assistant.dashboardPlanBuildingScreen': true });
   });
 
   afterEach(() => {
+    setTestFlags({});
     jest.useRealTimers();
     jest.restoreAllMocks();
+  });
+
+  it('refuses a building screen while its feature flag is off, before navigating', async () => {
+    setTestFlags({ 'assistant.dashboardPlanBuildingScreen': false });
+
+    const result = await preview.render({ ...plan, phase: 'building' });
+
+    expect(result.success).toBe(false);
+    expect(locationService.getLocation().pathname).toBe('/explore');
+    expect(takePendingPlanBuild()).toBeUndefined();
   });
 
   async function openPlan() {

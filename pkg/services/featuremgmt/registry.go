@@ -3133,6 +3133,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "assistant.dashboardPlanBuildingScreen",
+			Description: "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "features.bulkFlagEvalFiltering",
 			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
 			Stage:        FeatureStageExperimental,

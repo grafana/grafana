@@ -62,6 +62,8 @@ export const FlagKeys = {
   AlertingUIUseFullyCompatBackendFilters: "alertingUIUseFullyCompatBackendFilters",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan */
+  AssistantDashboardPlanBuildingScreen: "assistant.dashboardPlanBuildingScreen",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
@@ -638,6 +640,17 @@ export const useFlagAlertingUIUseFullyCompatBackendFilters = (options?: ReactFla
  */
 export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("analyticsFramework", false, options).value;
+};
+
+/**
+ * Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboardPlanBuildingScreen`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardPlanBuildingScreen = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboardPlanBuildingScreen", false, options).value;
 };
 
 /**

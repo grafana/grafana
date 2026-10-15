@@ -1,4 +1,5 @@
 import { locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { payloads } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 import {
@@ -31,6 +32,15 @@ export class DashboardPlanPreview {
     const parsed = payloads.renderPlan.safeParse(payload);
     if (!parsed.success) {
       return { success: false, error: parsed.error.message, changes: [] };
+    }
+
+    // Refused before anything changes, so the caller carries on with no building screen, the same
+    // as on a Grafana version without one.
+    if (
+      parsed.data.phase === 'building' &&
+      !getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardPlanBuildingScreen, false)
+    ) {
+      return { success: false, error: 'The dashboard plan building screen is not enabled.', changes: [] };
     }
 
     const location = locationService.getLocation();
