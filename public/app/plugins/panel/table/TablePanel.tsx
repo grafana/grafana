@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import {
   applyFieldOverrides,
+  CoreApp,
   type DataFrame,
   type GrafanaTheme2,
   getFrameDisplayName,
@@ -72,7 +73,8 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const outputMain = frames[currentIndex];
-  const sourceSeries = tableRefreshNewFeaturesEnabled
+  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
+  const sourceSeries = adHocTransformationsEnabled
     ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
   const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
@@ -115,19 +117,12 @@ export function TablePanel(props: Props) {
       })),
     [sourceSeries, sourceFramesWithOverrides]
   );
-  const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
-  const adHocColumns = useAdHocColumnState(
-    frames,
-    currentIndex,
-    tableRefreshNewFeaturesEnabled,
-    configuredSourceSeries
-  );
+  const columnManagementEnabled = adHocTransformationsEnabled && supportsColumnManagement(rawMain);
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, adHocTransformationsEnabled, configuredSourceSeries);
   const main = useMemo(
     () =>
-      tableRefreshNewFeaturesEnabled && rawMain
-        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns))
-        : rawMain,
-    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
+      adHocTransformationsEnabled && rawMain ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns)) : rawMain,
+    [rawMain, adHocTransformationsEnabled, adHocColumns]
   );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.

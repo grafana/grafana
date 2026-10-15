@@ -129,6 +129,7 @@ describe('TableSidebar', () => {
     fireEvent.dragOver(rowA, { dataTransfer });
     fireEvent.drop(rowA, { dataTransfer });
 
+    expect(dataTransfer.setData).toHaveBeenCalledWith('text/plain', 'Column B');
     expect(onColumnsReorder).toHaveBeenCalledWith('Column B', 'Column A');
   });
 
