@@ -128,7 +128,6 @@ const expectChildrenRefetched = (store: Store<StoreState>, parentUID: string | u
 const expectTeamFoldersRefetched = (store: Store<StoreState>) =>
   waitFor(() => expect(store.getState().browseDashboards.childrenByParentUID[TEAM_FOLDERS_UID]?.items).toEqual([]));
 
-const originalToggles = { ...config.featureToggles };
 const originalProvisioningEnabled = config.provisioningEnabled;
 const originalPermissions = contextSrv.user.permissions;
 
@@ -149,11 +148,6 @@ afterEach(async () => {
   });
 });
 
-afterAll(() => {
-  // Restore the original feature toggle value changed during tests
-  config.featureToggles = originalToggles;
-});
-
 describe('useGetFolderQueryFacade', () => {
   const originalAppSubUrl = String(config.appSubUrl);
   const originalSharedWithMeFolderUID = config.sharedWithMeFolderUID;
@@ -163,7 +157,6 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   afterEach(() => {
-    config.featureToggles = originalToggles;
     config.appSubUrl = originalAppSubUrl;
     config.sharedWithMeFolderUID = originalSharedWithMeFolderUID;
   });
@@ -447,7 +440,6 @@ describe.each([
     }
   });
   afterEach(() => {
-    config.featureToggles = originalToggles;
     folderAPIVersionResolver.reset();
   });
 
@@ -555,7 +547,6 @@ describe('useUpdateFolder app-platform starred nav update', () => {
 
   afterEach(() => {
     config.appSubUrl = originalAppSubUrl;
-    config.featureToggles = originalToggles;
     folderAPIVersionResolver.set('v1beta1');
   });
 
@@ -589,7 +580,6 @@ describe('getFolderByUidFacade', () => {
     folderAPIVersionResolver.set('v1beta1');
   });
   afterEach(() => {
-    config.featureToggles = originalToggles;
     folderAPIVersionResolver.reset();
   });
 
