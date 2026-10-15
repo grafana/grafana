@@ -1,7 +1,8 @@
 import type { JSX } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
-import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { useFlagEnableDashboardEmptyExtensions } from '@grafana/runtime/internal';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 
@@ -13,7 +14,9 @@ interface DashboardEmptyExtensionPointProps {
 }
 
 export function DashboardEmptyExtensionPoint(props: DashboardEmptyExtensionPointProps): JSX.Element | null {
-  if (config.featureToggles.enableDashboardEmptyExtensions !== true) {
+  const isEnabled = useFlagEnableDashboardEmptyExtensions();
+
+  if (!isEnabled) {
     return props.renderDefaultUI();
   }
 
