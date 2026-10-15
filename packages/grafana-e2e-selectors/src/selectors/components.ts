@@ -708,6 +708,9 @@ export const versionedComponents = {
           hideItem: {
             '13.3.0': 'data-testid tableng header column-menu-hide-item',
           },
+          pinItem: {
+            '13.3.0': 'data-testid tableng header column-menu-pin-item',
+          },
           manageColumnsItem: {
             '13.3.0': 'data-testid tableng header column-menu-manage-columns-item',
           },

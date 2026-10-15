@@ -179,6 +179,8 @@ export interface ColumnBuildConfig {
   onCellFilterAdded?: TableFilterActionCallback;
   onHideColumn?: (displayName: string) => void;
   canHideColumn?: boolean;
+  pinnedColumns?: ReadonlySet<string>;
+  onTogglePin?: (displayName: string) => void;
   onOpenColumnPanel?: () => void;
   onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
@@ -276,6 +278,8 @@ function buildColumnsFromFields(
     onCellFilterAdded,
     onHideColumn,
     canHideColumn = false,
+    pinnedColumns,
+    onTogglePin,
     onOpenColumnPanel,
     onFieldAddToAssistant,
     onCellAddToAssistant,
@@ -639,6 +643,8 @@ function buildColumnsFromFields(
           hasColumnSidebar={hasColumnSidebar}
           onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
           canHideColumn={canHideColumn}
+          isPinned={pinnedColumns?.has(displayName)}
+          onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
           onOpenColumnPanel={onOpenColumnPanel}
           onAddToAssistant={onFieldAddToAssistant ? () => onFieldAddToAssistant(frame, field) : undefined}
           selectFirstCell={() => {

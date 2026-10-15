@@ -26,7 +26,9 @@ interface TableSidebarProps {
   columns: SidebarColumn[];
   reorderable?: boolean;
   hiddenColumns: ReadonlySet<string>;
+  pinnedColumns?: ReadonlySet<string>;
   onToggleColumn: (displayName: string, visible: boolean) => void;
+  onTogglePin?: (displayName: string) => void;
   onColumnsReorder: (sourceColumnKey: string, targetColumnKey: string) => void;
   onClose: () => void;
   headerHeight?: number;
@@ -39,7 +41,9 @@ export function TableSidebar({
   columns,
   reorderable = false,
   hiddenColumns,
+  pinnedColumns,
   onToggleColumn,
+  onTogglePin,
   onColumnsReorder,
   onClose,
   headerHeight = TABLE.HEADER_HEIGHT,
@@ -150,6 +154,21 @@ export function TableSidebar({
                   <span className={styles.visibilityTogglePlaceholder} aria-hidden="true" />
                 )}
                 <span className={styles.columnName}>{displayName}</span>
+                {onTogglePin && (
+                  <button
+                    type="button"
+                    className={styles.pinButton}
+                    aria-pressed={pinnedColumns?.has(displayName) ?? false}
+                    aria-label={
+                      pinnedColumns?.has(displayName)
+                        ? t('grafana-ui.table.unpin-column-label', 'Unpin {{columnName}}', { columnName: displayName })
+                        : t('grafana-ui.table.pin-column-label', 'Pin {{columnName}}', { columnName: displayName })
+                    }
+                    onClick={() => onTogglePin(displayName)}
+                  >
+                    <Icon name="gf-pin" aria-hidden="true" />
+                  </button>
+                )}
               </Stack>
             </div>
           );
@@ -227,6 +246,15 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     '&:active': {
       cursor: 'grabbing',
     },
+  }),
+  pinButton: css({
+    display: 'flex',
+    alignItems: 'center',
+    border: 'none',
+    background: 'transparent',
+    color: theme.colors.text.secondary,
+    cursor: 'pointer',
+    '&[aria-pressed="true"]': { color: theme.colors.primary.main },
   }),
   // Keep column names aligned when a capability is unavailable.
   visibilityTogglePlaceholder: css({

@@ -22,6 +22,8 @@ interface HeaderCellMenuProps {
   onOpenFilter: (anchor: HTMLButtonElement | null) => void;
   onHideColumn?: () => void;
   canHideColumn?: boolean;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
   onOpenColumnPanel?: () => void;
 }
 
@@ -39,6 +41,8 @@ export function HeaderCellMenu({
   onOpenFilter,
   onHideColumn,
   canHideColumn,
+  isPinned,
+  onTogglePin,
   onOpenColumnPanel,
   onAddToAssistant,
 }: HeaderCellMenuProps) {
@@ -82,6 +86,20 @@ export function HeaderCellMenu({
                       onClick={onHideColumn}
                     />
                   );
+                case 'pin':
+                  return (
+                    <Menu.Item
+                      key={option}
+                      label={
+                        isPinned
+                          ? t('grafana-ui.table.column-menu-unpin', 'Unpin column')
+                          : t('grafana-ui.table.column-menu-pin', 'Pin column left')
+                      }
+                      icon="gf-pin"
+                      testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.pinItem}
+                      onClick={onTogglePin}
+                    />
+                  );
                 case 'manage':
                   return (
                     <Menu.Item
@@ -107,7 +125,18 @@ export function HeaderCellMenu({
         ))}
       </Menu>
     ),
-    [groups, hasActiveFilter, menuLabel, onOpenFilter, onHideColumn, canHideColumn, onOpenColumnPanel, onAddToAssistant]
+    [
+      groups,
+      hasActiveFilter,
+      menuLabel,
+      onOpenFilter,
+      onHideColumn,
+      canHideColumn,
+      isPinned,
+      onTogglePin,
+      onOpenColumnPanel,
+      onAddToAssistant,
+    ]
   );
 
   return (
