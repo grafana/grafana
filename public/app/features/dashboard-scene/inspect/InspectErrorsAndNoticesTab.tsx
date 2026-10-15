@@ -11,7 +11,8 @@ import {
   type SceneObjectRef,
   type VizPanel,
 } from '@grafana/scenes';
-import { PanelContextProvider, usePanelStatusSnapshot } from '@grafana/ui';
+import { PanelContextProvider } from '@grafana/ui';
+import { usePanelStatusSnapshot } from '@grafana/ui/unstable';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { StandardErrorsAndNoticesInspector } from './StandardErrorsAndNoticesInspector';

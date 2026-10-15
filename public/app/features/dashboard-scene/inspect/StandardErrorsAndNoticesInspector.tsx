@@ -11,8 +11,9 @@ import {
   textUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, Icon, type IconName, Stack, TextLink, useStyles2, PanelStatusActions } from '@grafana/ui';
+import { ClipboardButton, Icon, type IconName, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { groupPanelStatusItems } from '@grafana/ui/internal';
+import { PanelStatusActions } from '@grafana/ui/unstable';
 
 export interface StandardErrorsAndNoticesInspectorProps {
   data?: DataFrame[];

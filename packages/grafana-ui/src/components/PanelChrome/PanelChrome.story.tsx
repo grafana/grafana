@@ -2,6 +2,7 @@ import { type Meta, type StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 import { type CSSProperties, useMemo, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
+import { action } from 'storybook/actions';
 
 import { EventBusSrv, LoadingState, type PanelNotice } from '@grafana/data';
 // Storybook-only host setup exercises Grafana's internal status store without exposing it as plugin API.

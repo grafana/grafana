@@ -1,6 +1,6 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { StrictMode } from 'react';
+import { type PropsWithChildren, StrictMode } from 'react';
 
 import { createTheme, EventBusSrv, ThemeContext, type PanelNotice } from '@grafana/data';
 // Tests exercise host integration against Grafana's internal store without making it public package API.
@@ -18,6 +18,22 @@ function Reporter({ items }: { items: readonly PanelNotice[] }) {
   usePanelNotices(items);
   return <div>Visualization</div>;
 }
+
+it('returns the host notice controller or undefined when unsupported', () => {
+  const notices = new PanelStatusStore();
+  const items: PanelNotice[] = [];
+  const wrapper = ({ children }: PropsWithChildren) => (
+    <PanelContextProvider value={{ notices, eventBus: new EventBusSrv(), eventsScope: 'panel' }}>
+      {children}
+    </PanelContextProvider>
+  );
+  const { result, unmount } = renderHook(() => usePanelNotices(items), { wrapper });
+  expect(result.current).toBe(notices);
+  unmount();
+
+  const { result: unsupportedResult } = renderHook(() => usePanelNotices(items));
+  expect(unsupportedResult.current).toBeUndefined();
+});
 
 it('groups action-free query notices in the popover but keeps a custom CTA notice separate', async () => {
   const store = new PanelStatusStore();
