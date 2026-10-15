@@ -530,6 +530,48 @@ describe('mode toggle', () => {
     expect(await screen.findByRole('button', { name: /reset to default policy/i })).toBeInTheDocument();
   });
 
+  it.each([false, true])(
+    'keeps notification policy mode when resetting a named tree to default (loaded after mount: %p)',
+    async (loadAfterMount) => {
+      const namedTree: NotificationSettings = { type: 'NamedRoutingTree', routingTree: 'deployment-tools' };
+      const onChange = jest.fn();
+      const onModeChange = jest.fn();
+      const onValidityChange = jest.fn();
+
+      function Parent() {
+        const [value, setValue] = useState<NotificationSettings | null>(loadAfterMount ? null : namedTree);
+        return (
+          <>
+            {loadAfterMount && <button onClick={() => setValue(namedTree)}>Load rule</button>}
+            <NotificationsSettingsSelector
+              value={value}
+              onChange={(next) => {
+                setValue(next);
+                onChange(next);
+              }}
+              onModeChange={onModeChange}
+              onValidityChange={onValidityChange}
+            />
+          </>
+        );
+      }
+
+      const { user } = render(<Parent />);
+      if (loadAfterMount) {
+        await user.click(screen.getByRole('button', { name: 'Load rule' }));
+      }
+      expect(screen.getByRole('radio', { name: 'Notification policy' })).toBeChecked();
+
+      await user.click(await screen.findByRole('button', { name: /reset to default policy/i }));
+
+      expect(onChange).toHaveBeenLastCalledWith(null);
+      expect(screen.getByRole('radio', { name: 'Notification policy' })).toBeChecked();
+      expect(await screen.findByText('Default policy')).toBeInTheDocument();
+      expect(onValidityChange).toHaveBeenLastCalledWith(true);
+      expect(onModeChange).not.toHaveBeenCalled();
+    }
+  );
+
   it('switches mode, clears the value and reports the new mode', async () => {
     const onChange = jest.fn();
     const onModeChange = jest.fn();

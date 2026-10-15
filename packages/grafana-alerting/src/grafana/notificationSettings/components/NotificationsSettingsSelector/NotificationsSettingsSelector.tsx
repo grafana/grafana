@@ -68,9 +68,16 @@ export function NotificationsSettingsSelector({
   viewPoliciesHref,
   manageContactPointsHref,
 }: NotificationsSettingsSelectorProps) {
-  // A value decides its own mode so one that arrives after mount is shown; the toggle only matters while empty.
-  const [ownMode, setOwnMode] = useState<RecipientMode>('contactPoint');
-  const mode = controlledMode ?? modeOf(value) ?? ownMode;
+  // Remember the last value's mode so clearing a named tree keeps the default policy picker open.
+  const valueMode = modeOf(value);
+  const [ownMode, setOwnMode] = useState<RecipientMode>(valueMode ?? 'contactPoint');
+  const mode = controlledMode ?? valueMode ?? ownMode;
+
+  useEffect(() => {
+    if (valueMode !== undefined) {
+      setOwnMode(valueMode);
+    }
+  }, [valueMode]);
 
   const handleModeChange = (next: RecipientMode) => {
     setOwnMode(next);
