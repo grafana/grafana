@@ -626,11 +626,6 @@ export interface FeatureToggles {
   */
   pluginsSriChecks?: boolean;
   /**
-  * Enables time pickers sync
-  * @default false
-  */
-  timeRangeProvider?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -1211,11 +1206,6 @@ export interface FeatureToggles {
   * @default false
   */
   analyticsFramework?: boolean;
-  /**
-  * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
-  * @default false
-  */
-  datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
   /**
   * Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
   * @default false

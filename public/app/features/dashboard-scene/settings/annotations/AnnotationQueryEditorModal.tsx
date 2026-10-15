@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { Button, Field, Modal, Stack } from '@grafana/ui';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';

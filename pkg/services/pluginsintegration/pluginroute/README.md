@@ -85,8 +85,8 @@ Paths under `namespaces/{namespace}/` are namespaced. A path of the form
 `{plural}/{name}/<subresource>` is a subresource of one object of that kind, and
 the plugin receives the stored object with the request. Which paths can be
 served, including catch-all segments, is decided by
-[`manifestroutes`](manifestroutes/README.md), which is written to be copied into
-app-sdk so a manifest can be checked when it is generated. A path it rejects is
+the app-sdk `routes` package (`github.com/grafana/grafana-app-sdk/routes`), which
+also checks a manifest when it is generated. A path it rejects is
 skipped with a warning, and left out of the spec and the authorizer as well.
 The router reserves the `app` settings resource and does not serve `TRACE` or
 `OPTIONS`.
@@ -112,7 +112,7 @@ cluster-scoped kind; watching one is left to service identities.
 
 A manifest route can also declare an access check on each operation, with the
 `x-grafana-declared-authz-*` extensions (see
-[`manifestroutes`](manifestroutes/README.md#declared-access-checks)). The route
+the app-sdk `routes` package). The route
 handler runs it through the configured `AccessClient` before calling the plugin,
 and after reading the parent object, so a refused request never has the parent's
 secure values decrypted. The check's group is the manifest's, its namespace the

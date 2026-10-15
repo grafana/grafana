@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
-	"slices"
 	"strings"
 	"testing"
 
@@ -135,9 +133,9 @@ func TestListKeys_ProjectsOntoPartialObjectMetadataList(t *testing.T) {
 		"a cluster-scoped list must not pin a namespace, or it silently covers only one")
 }
 
-// ListOptions fields must reach the store request unchanged, and an absent body
+// ListKeyRequest fields must reach the store request unchanged, and an absent body
 // must mean defaults rather than an error.
-func TestListKeys_TranslatesListOptions(t *testing.T) {
+func TestListKeys_TranslatesRequest(t *testing.T) {
 	for name, tc := range map[string]struct {
 		body      string
 		wantLimit int64
@@ -150,6 +148,10 @@ func TestListKeys_TranslatesListOptions(t *testing.T) {
 		"resource version":          {body: `{"resourceVersion":"999"}`, wantRV: 999},
 		// Kubernetes reads "0" as "any version", which is what latest gives.
 		"resource version zero": {body: `{"resourceVersion":"0"}`, wantRV: 0},
+		"declared envelope": {
+			body:      `{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyRequest","limit":5}`,
+			wantLimit: 5,
+		},
 		"all three": {
 			body:      `{"continue":"tok","resourceVersion":"999","limit":5}`,
 			wantLimit: 5, wantToken: "tok", wantRV: 999,
@@ -172,18 +174,41 @@ func TestListKeys_TranslatesListOptions(t *testing.T) {
 
 // Silently ignoring a selector would hand a reconciliation loop an unfiltered
 // list, so this is a trust boundary rather than input tidiness.
-func TestListKeys_RejectsUnsupportedListOptions(t *testing.T) {
-	// Unhonored fields are covered exhaustively by
-	// TestListKeys_RefusesEveryUnhonoredField. These are the malformed bodies and
-	// bad values of honored fields, which reflection cannot reach.
+func TestListKeys_RejectsUnsupportedFields(t *testing.T) {
+	for name, tc := range map[string]struct {
+		body      string
+		wantInMsg string
+	}{
+		"watch":            {body: `{"watch":true}`, wantInMsg: "watch"},
+		"labelSelector":    {body: `{"labelSelector":"team=a"}`, wantInMsg: "labelSelector"},
+		"fieldSelector":    {body: `{"fieldSelector":"metadata.name=a"}`, wantInMsg: "fieldSelector"},
+		"timeoutSeconds":   {body: `{"timeoutSeconds":5}`, wantInMsg: "timeoutSeconds"},
+		"wrong kind":       {body: `{"kind":"ListOptions"}`, wantInMsg: "kind"},
+		"wrong apiVersion": {body: `{"apiVersion":"meta.k8s.io/v1"}`, wantInMsg: "apiVersion"},
+		"right kind, wrong version": {
+			body: `{"apiVersion":"storage.grafana.app/v1","kind":"ListKeyRequest"}`, wantInMsg: "apiVersion",
+		},
+		"unknown field":           {body: `{"nonsense":true}`, wantInMsg: "nonsense"},
+		"supported plus rejected": {body: `{"limit":5,"labelSelector":"team=a"}`, wantInMsg: "labelSelector"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			store := &fakeStore{}
+			rec := do(t, store, serviceIdentity(), tc.body)
+			assert.Equal(t, http.StatusBadRequest, rec.Code, rec.Body.String())
+			assert.Contains(t, rec.Body.String(), tc.wantInMsg, "the error should name the offending field")
+			assert.Empty(t, store.calls, "a rejected request must not reach the store")
+		})
+	}
+}
+
+func TestListKeys_RejectsMalformedRequests(t *testing.T) {
 	for name, body := range map[string]string{
-		"unknown field":       `{"nonsense":true}`,
-		"wrong kind":          `{"kind":"SearchQuery"}`,
 		"two objects":         `{}{}`,
 		"negative limit":      `{"limit":-1}`,
 		"bad resourceVersion": `{"resourceVersion":"not-a-number"}`,
 		// Parses, but both backends read <= 0 as unset and serve the latest.
 		"negative resourceVersion": `{"resourceVersion":"-1"}`,
+		"oversized body":           `{"continue":"` + strings.Repeat("x", maxRequestBody) + `"}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			store := &fakeStore{}
@@ -481,62 +506,5 @@ func TestListKeysInNamespace_ServesAnyPermittedIdentity(t *testing.T) {
 			require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
 			assert.Empty(t, store.calls)
 		})
-	}
-}
-
-// Pins the allowlist itself. The test below derives its cases from
-// honoredListOptions, so it cannot notice a field wrongly added there; this fails
-// instead, forcing the decision to be deliberate.
-func TestListKeys_HonoursOnlyPagingFields(t *testing.T) {
-	assert.Equal(t, []string{"limit", "continue", "resourceVersion"}, honoredListOptions,
-		"adding a field here stops it being refused; confirm the handler actually reads it")
-}
-
-// Drives every field of ListOptions, so a field added upstream is covered without
-// anyone updating a list. ShardSelector was reaching the store until this existed.
-func TestListKeys_RefusesEveryUnhonoredField(t *testing.T) {
-	typ := reflect.TypeOf(metav1.ListOptions{})
-	tested := 0
-
-	for i := range typ.NumField() {
-		field := typ.Field(i)
-		name, _, _ := strings.Cut(field.Tag.Get("json"), ",")
-		// TypeMeta is inline and so unnamed; its kind is checked separately.
-		if name == "" || name == "-" || slices.Contains(honoredListOptions, name) {
-			continue
-		}
-
-		t.Run(name, func(t *testing.T) {
-			opts := metav1.ListOptions{}
-			setNonZero(t, reflect.ValueOf(&opts).Elem().Field(i))
-			body, err := json.Marshal(opts)
-			require.NoError(t, err)
-
-			store := &fakeStore{}
-			rec := do(t, store, serviceIdentity(), string(body))
-			require.Equal(t, http.StatusBadRequest, rec.Code, rec.Body.String())
-			assert.Contains(t, rec.Body.String(), name, "the error should name the offending field")
-			assert.Empty(t, store.calls, "a rejected request must not reach the store")
-		})
-		tested++
-	}
-
-	require.NotZero(t, tested, "reflection found no fields to test")
-}
-
-func setNonZero(t *testing.T, v reflect.Value) {
-	t.Helper()
-	switch v.Kind() {
-	case reflect.String:
-		v.SetString("x")
-	case reflect.Bool:
-		v.SetBool(true)
-	case reflect.Int64:
-		v.SetInt(1)
-	case reflect.Pointer:
-		v.Set(reflect.New(v.Type().Elem()))
-		setNonZero(t, v.Elem())
-	default:
-		t.Fatalf("no non-zero value known for kind %s; extend setNonZero", v.Kind())
 	}
 }

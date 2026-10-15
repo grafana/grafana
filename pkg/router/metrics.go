@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sony/gobreaker/v2"
 )
 
@@ -113,6 +114,18 @@ func newPluginGRPCRequestDuration(reg prometheus.Registerer, source string) *pro
 	return h
 }
 
+// newPluginGRPCRequestRetries returns the counter of retried unary gRPC calls
+// to plugin deployments, registered with reg unless it is nil. Like the
+// request duration, the source const label lets plugins_url and core_url
+// register on one registry.
+func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prometheus.CounterVec {
+	return promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		ConstLabels: prometheus.Labels{"source": source},
+		Name:        "grafana_router_plugin_grpc_request_retries_total",
+		Help:        "Retries of unary gRPC calls to plugin deployments, by plugin and gRPC method.",
+	}, []string{"plugin_id", "method"})
+}
+
 // requestGroup returns the group a request is for: the group of an
 // /apis/<group>/... path, or of an /openapi/v3/apis/<group>/<version>
 // document, which is served by the same backend.
@@ -199,6 +212,7 @@ type routerCollector struct {
 	lastSuccess     *prometheus.Desc
 	polls           *prometheus.Desc
 	stackLookups    *prometheus.Desc
+	stackDiscovery  *prometheus.Desc
 }
 
 func newRouterCollector(router *GrafanaRouter) *routerCollector {
@@ -227,13 +241,15 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 			"Load or poll attempts of each route source, by result: success or failure.", []string{"source", "result"}, nil),
 		stackLookups: prometheus.NewDesc(name("stack_lookups_total"),
 			"Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.", []string{"result"}, nil),
+		stackDiscovery: prometheus.NewDesc(name("stack_discovery_cache_total"),
+			"Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.", []string{"result"}, nil),
 	}
 }
 
 func (c *routerCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range []*prometheus.Desc{
 		c.ready, c.lastReconcile, c.reconciles, c.reconcileErrors, c.groups, c.breaker,
-		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups,
+		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups, c.stackDiscovery,
 	} {
 		ch <- d
 	}
@@ -294,5 +310,8 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	for result, n := range status.stackLookups() {
 		ch <- prometheus.MustNewConstMetric(c.stackLookups, prometheus.CounterValue, float64(n), result)
+	}
+	for result, n := range status.stackDiscoveryCache() {
+		ch <- prometheus.MustNewConstMetric(c.stackDiscovery, prometheus.CounterValue, float64(n), result)
 	}
 }

@@ -71,6 +71,9 @@ type servingEntry struct {
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
 	discovery *apidiscoveryv2.APIGroupDiscovery
+
+	// callerScoped is set when the backend is a CallerScopedDiscovery.
+	callerScoped bool
 }
 
 type phase int
@@ -281,6 +284,18 @@ func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.
 	next.ServeHTTP(w, req)
 }
 
+// discoverySource is where root discovery reads the groups the router does
+// not serve: the unregistered-group handler when one is set, otherwise next.
+// callerScoped reports whether the source answers for the caller, so its
+// answer replaces the defaults of caller-scoped backends. next never serves
+// those groups, so its answer must not hide them.
+func (r *GrafanaRouter) discoverySource(next http.Handler) (source http.Handler, callerScoped bool) {
+	if r.unregisteredGroupHandler != nil {
+		return r.unregisteredGroupHandler, true
+	}
+	return next, false
+}
+
 // groupFromPath returns the group segment of an /apis/<group>[/...] path.
 // The caller guarantees the /apis/ prefix and a non-root path.
 func groupFromPath(path string) string {
@@ -380,7 +395,9 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	}
 
 	cacheKey := group + "/" + version
-	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
+	// A caller-scoped backend may answer each caller differently, and the
+	// cache is shared.
+	cacheableRequest := !entry.callerScoped && req.Method == http.MethodGet && req.Header.Get("Range") == ""
 	if cached, ok := r.openapiDocs.Load(cacheKey); ok && cacheableRequest {
 		c := cached.(openapiCacheEntry)
 		if c.key == entry.key && c.accept == req.Header.Get("Accept") && c.encoding == req.Header.Get("Accept-Encoding") {
@@ -397,9 +414,13 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	}
 
 	// Cache miss or stale key: proxy through the breaker and capture the
-	// response so it can be cached.
+	// response so it can be cached. Conditional headers are stripped only
+	// when this cache may store the response; otherwise the backend answers
+	// them, as a caller-scoped backend's own cache does.
 	proxyReq := req.Clone(req.Context())
-	stripConditionalHeaders(proxyReq)
+	if cacheableRequest {
+		stripConditionalHeaders(proxyReq)
+	}
 	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter(maxCachedOpenAPIDocBytes, w)
 	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)
@@ -663,6 +684,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 					entry.discovery = &d
 				}
 			}
+			_, entry.callerScoped = e.backend.(CallerScopedDiscovery)
 		}
 		snap[group] = entry
 	}
