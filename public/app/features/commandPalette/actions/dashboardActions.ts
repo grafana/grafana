@@ -2,7 +2,7 @@ import debounce from 'debounce-promise';
 import { useEffect, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { useFlagDashboardNotebooks, useFlagGrafanaCmdkHybridSearch } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
@@ -144,17 +144,30 @@ async function getClassicSearchResultActions(
   return goToSearchResultActions;
 }
 
+// Remember a missing endpoint until reload, including across palette opens. The hybrid endpoint may not be
+// rolled out everywhere yet, in which case we have a fallback we don't want to spam the nonexistent endpoint.
+let hybridSearchUnavailable = false;
+
 /**
  * Dashboard search backed by the hybrid (lexical + semantic) endpoint. Falls
  * back to the classic searcher when the request fails, e.g. when the vector
  * backend isn't configured (501) or the endpoint's toggle is off (404).
  */
 async function getHybridDashboardActions(searchQuery: string): Promise<CommandPaletteAction[]> {
+  if (hybridSearchUnavailable) {
+    return getClassicSearchResultActions(searchQuery, ['dashboard']);
+  }
+
   let hits;
   try {
     hits = await searchDashboardsHybrid(searchQuery, { limit: MAX_HYBRID_SEARCH_RESULTS });
   } catch (error) {
-    console.error('Hybrid dashboard search failed, falling back to the classic search.', error);
+    if (isFetchError(error) && error.status === 404) {
+      hybridSearchUnavailable = true;
+      console.warn('Hybrid dashboard search not available, falling back to the classic search.', error);
+    } else {
+      console.error('Hybrid dashboard search failed, falling back to the classic search.', error);
+    }
     return getClassicSearchResultActions(searchQuery, ['dashboard']);
   }
 

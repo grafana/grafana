@@ -86,4 +86,10 @@ describe('searchDashboardsHybrid', () => {
     items = [hit];
     expect(await searchDashboardsHybrid('latency')).toEqual([hit]);
   });
+
+  it('preserves the HTTP status when the hybrid endpoint is missing', async () => {
+    server.use(http.post(hybridSearchRoute, () => HttpResponse.json({}, { status: 404 })));
+
+    await expect(searchDashboardsHybrid('latency')).rejects.toMatchObject({ status: 404, data: {} });
+  });
 });
