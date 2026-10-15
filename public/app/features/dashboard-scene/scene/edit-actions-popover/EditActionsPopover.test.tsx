@@ -1,5 +1,5 @@
 import { type JSX, type ReactNode } from 'react';
-import { act, createEvent, fireEvent, render, screen, userEvent } from 'test/test-utils';
+import { act, createEvent, fireEvent, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { LazyLoader } from '@grafana/scenes';
 import { ElementSelectionContext } from '@grafana/ui';
@@ -264,6 +264,20 @@ describe('<EditActionsPopover />', () => {
       await user.keyboard('{Escape}');
 
       expect(screen.queryByRole('toolbar', { name: 'Panel actions' })).not.toBeInTheDocument();
+    });
+
+    test('pressing Escape on an action returns focus to the reference', async () => {
+      const { user } = renderKeyboardAccessible();
+
+      await user.tab();
+      await user.tab();
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'action' })).toHaveFocus();
+
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('toolbar', { name: 'Panel actions' })).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('button', { name: 'inside reference' })).toHaveFocus());
     });
   });
 

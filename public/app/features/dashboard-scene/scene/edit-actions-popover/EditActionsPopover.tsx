@@ -186,7 +186,8 @@ export function EditActionsPopover({
       {showPopover && keyboardAccessible && (
         // FloatingPortal keeps the portalled content in the tab order right after the reference.
         <FloatingPortal root={portalRoot?.()}>
-          <FloatingFocusManager context={context} modal={false} initialFocus={-1} returnFocus={false}>
+          {/* Closing with focus inside, e.g. via Escape, returns focus to the reference. Hover closes don't move focus. */}
+          <FloatingFocusManager context={context} modal={false} initialFocus={-1} returnFocus>
             {floating}
           </FloatingFocusManager>
         </FloatingPortal>
