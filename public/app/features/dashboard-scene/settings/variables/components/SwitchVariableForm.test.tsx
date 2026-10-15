@@ -8,12 +8,14 @@ import { SwitchVariableForm } from './SwitchVariableForm';
 describe('SwitchVariableForm', () => {
   const onEnabledValueChange = jest.fn();
   const onDisabledValueChange = jest.fn();
+  const onValuePairChange = jest.fn();
 
   const defaultProps = {
     enabledValue: 'true',
     disabledValue: 'false',
     onEnabledValueChange,
     onDisabledValueChange,
+    onValuePairChange,
   };
 
   function renderForm(props = {}) {
