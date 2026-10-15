@@ -1,12 +1,22 @@
+import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
+import { HttpResponse } from 'msw';
+
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
-import { render, screen } from '../../../../../tests/test-utils';
+import { store } from '../../../../../tests/provider';
+import { act, render, screen, waitFor } from '../../../../../tests/test-utils';
+import { notificationsAPI } from '../../../api/notifications';
 import {
   ListRoutingTreeApiResponseFactory,
   RoutingTreeFactory,
 } from '../../../api/notifications/v1beta1/mocks/fakes/Routes';
+import {
+  ListTimeIntervalApiResponseFactory,
+  TimeIntervalFactory,
+} from '../../../api/notifications/v1beta1/mocks/fakes/TimeIntervals';
 import { listRoutingTreeHandler } from '../../../api/notifications/v1beta1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
+import { listTimeIntervalHandler } from '../../../api/notifications/v1beta1/mocks/handlers/TimeIntervalHandlers/listTimeIntervalHandler';
 import { USER_DEFINED_TREE_NAME } from '../../../notificationPolicies/routingTree.utils';
 
 import { NotificationsSettingsSelector } from './NotificationsSettingsSelector';
@@ -285,6 +295,134 @@ describe('onValidityChange', () => {
     });
 
     expect(onValidityChange).toHaveBeenLastCalledWith(true);
+  });
+});
+
+describe('selected time intervals', () => {
+  const receiver = { type: 'SimplifiedRouting' as const, receiver: 'slack-oncall' };
+
+  it.each(['muteTimeIntervals', 'activeTimeIntervals'] as const)(
+    'reports a missing %s as invalid until the reference is removed',
+    async (field) => {
+      const onValidityChange = jest.fn();
+      const onChange = jest.fn();
+      const { renderResult } = renderPicker({
+        value: { ...receiver, [field]: ['deleted-interval'] },
+        onChange,
+        onValidityChange,
+      });
+
+      await screen.findByDisplayValue('slack-oncall');
+      await waitFor(() => expect(onValidityChange).toHaveBeenLastCalledWith(false));
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Some selected mute or active time intervals no longer exist or cannot be used: deleted-interval'
+      );
+      expect(onChange).not.toHaveBeenCalled();
+
+      renderResult.rerender(
+        <NotificationsSettingsSelector
+          mode="contactPoint"
+          value={receiver}
+          onChange={onChange}
+          onValidityChange={onValidityChange}
+        />
+      );
+
+      expect(onValidityChange).toHaveBeenLastCalledWith(true);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    }
+  );
+
+  it.each(['muteTimeIntervals', 'activeTimeIntervals'] as const)('reports an unusable %s as invalid', async (field) => {
+    server.use(
+      listTimeIntervalHandler(
+        ListTimeIntervalApiResponseFactory.build({
+          items: [
+            TimeIntervalFactory.build({
+              spec: { name: 'imported-interval' },
+              metadata: { annotations: { 'grafana.com/canUse': 'false' } },
+            }),
+          ],
+        })
+      )
+    );
+    const onValidityChange = jest.fn();
+    renderPicker({ value: { ...receiver, [field]: ['imported-interval'] }, onValidityChange });
+
+    await screen.findByDisplayValue('slack-oncall');
+    await waitFor(() => expect(onValidityChange).toHaveBeenLastCalledWith(false));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Some selected mute or active time intervals no longer exist or cannot be used: imported-interval'
+    );
+  });
+
+  it('waits for the interval list before reporting a selected interval as valid', async () => {
+    server.use(
+      listTimeIntervalHandler(
+        ListTimeIntervalApiResponseFactory.build({
+          items: [TimeIntervalFactory.build({ spec: { name: 'weekends' } })],
+        })
+      )
+    );
+    const onValidityChange = jest.fn();
+    renderPicker({ value: { ...receiver, muteTimeIntervals: ['weekends'] }, onValidityChange });
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
+    await waitFor(() => expect(onValidityChange).toHaveBeenLastCalledWith(true));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('keeps selected intervals invalid when the initial list request fails', async () => {
+    server.use(listTimeIntervalHandler(() => new HttpResponse(null, { status: 500 })));
+    const onValidityChange = jest.fn();
+    renderPicker({ value: { ...receiver, activeTimeIntervals: ['business-hours'] }, onValidityChange });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load mute/active timings');
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('reports invalid when a refetch removes the selected interval', async () => {
+    server.use(
+      listTimeIntervalHandler(
+        ListTimeIntervalApiResponseFactory.build({
+          items: [TimeIntervalFactory.build({ spec: { name: 'weekends' } })],
+        })
+      )
+    );
+    const onValidityChange = jest.fn();
+    renderPicker({ value: { ...receiver, muteTimeIntervals: ['weekends'] }, onValidityChange });
+    await waitFor(() => expect(onValidityChange).toHaveBeenLastCalledWith(true));
+
+    server.use(...emptyTimeIntervalsScenario);
+    const dispatch = store.dispatch as ThunkDispatch<unknown, unknown, UnknownAction>;
+    await act(async () => {
+      await dispatch(notificationsAPI.endpoints.listTimeInterval.initiate({}, { forceRefetch: true }));
+    });
+
+    await waitFor(() => expect(onValidityChange).toHaveBeenLastCalledWith(false));
+    expect(screen.getByRole('alert')).toHaveTextContent('weekends');
+  });
+
+  it('keeps a confirmed interval valid when a later refetch fails', async () => {
+    server.use(
+      listTimeIntervalHandler(
+        ListTimeIntervalApiResponseFactory.build({
+          items: [TimeIntervalFactory.build({ spec: { name: 'weekends' } })],
+        })
+      )
+    );
+    const onValidityChange = jest.fn();
+    renderPicker({ value: { ...receiver, muteTimeIntervals: ['weekends'] }, onValidityChange });
+    await waitFor(() => expect(onValidityChange).toHaveBeenLastCalledWith(true));
+
+    server.use(listTimeIntervalHandler(() => new HttpResponse(null, { status: 500 })));
+    const dispatch = store.dispatch as ThunkDispatch<unknown, unknown, UnknownAction>;
+    await act(async () => {
+      await dispatch(notificationsAPI.endpoints.listTimeInterval.initiate({}, { forceRefetch: true }));
+    });
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 

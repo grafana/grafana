@@ -7,6 +7,7 @@ import { type ContactPoint } from '../../../api/notifications';
 import { ContactPointSelector } from '../../../contactPoints/components/ContactPointSelector/ContactPointSelector';
 import { useResolvedContactPoint } from '../../../contactPoints/hooks/v1beta1/useResolvedContactPoint';
 import { type Label } from '../../../matchers/types';
+import { useListTimeIntervals } from '../../../muteTimings/hooks/useListTimeIntervals';
 import { RoutingTreePicker } from '../../../notificationPolicies/components/RoutingTreePicker/RoutingTreePicker';
 import { useResolvedRoutingTree } from '../../../notificationPolicies/hooks/useResolvedRoutingTree';
 import { isDefaultRoutingTreeName } from '../../../notificationPolicies/routingTree.utils';
@@ -31,7 +32,8 @@ export interface NotificationsSettingsSelectorProps {
   value: NotificationSettings | null;
   onChange: (value: NotificationSettings | null) => void;
   /** Fires on mount and when validity changes; `false` when the value can't be saved (no or missing receiver,
-   * a missing tree, invalid timings). Gate saving on it, since timing fields report values as typed. */
+   * a missing tree, invalid timings, or missing/unusable time intervals). Also false while selected intervals load.
+   * Gate saving on it, since timing fields report values as typed. */
   onValidityChange?: (isValid: boolean) => void;
   /** Forwarded to RoutingTreePicker in notificationPolicy mode. See RoutingTreePicker's own docs. */
   instancesToPreview?: Label[][];
@@ -86,7 +88,21 @@ function ContactPointRecipient({
   manageContactPointsHref,
 }: ContactPointRecipientProps) {
   const { selectorValue, isNotFound, isError } = useResolvedContactPoint(value?.receiver);
-  const isValid = Boolean(value?.receiver) && !isNotFound && isValidRoutingTimings(value ?? {});
+  const { timeIntervals, isLoading: isLoadingTimeIntervals, isError: isTimeIntervalsError } = useListTimeIntervals();
+  const selectedTimeIntervals = [
+    ...new Set([...(value?.muteTimeIntervals ?? []), ...(value?.activeTimeIntervals ?? [])]),
+  ];
+  const unavailableTimeIntervals =
+    isLoadingTimeIntervals || isTimeIntervalsError
+      ? []
+      : selectedTimeIntervals.filter(
+          (name) => !timeIntervals.some((interval) => interval.name === name && interval.canUse)
+        );
+  const hasValidTimeIntervals =
+    selectedTimeIntervals.length === 0 ||
+    (!isLoadingTimeIntervals && !isTimeIntervalsError && unavailableTimeIntervals.length === 0);
+  const isValid =
+    Boolean(value?.receiver) && !isNotFound && isValidRoutingTimings(value ?? {}) && hasValidTimeIntervals;
 
   useEffect(() => {
     onValidityChange?.(isValid);
@@ -147,6 +163,16 @@ function ContactPointRecipient({
           title={t(
             'alerting.notifications-settings-selector.contact-point-not-found',
             'The previously selected contact point could not be found — it may have been deleted'
+          )}
+        />
+      )}
+      {unavailableTimeIntervals.length > 0 && (
+        <Alert
+          severity="warning"
+          title={t(
+            'alerting.notifications-settings-selector.time-intervals-unavailable',
+            'Some selected mute or active time intervals no longer exist or cannot be used: {{names}}',
+            { names: unavailableTimeIntervals.join(', ') }
           )}
         />
       )}
