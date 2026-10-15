@@ -356,6 +356,7 @@ func migrateLibraryPanelPages(
 			return err
 		}
 		for _, panel := range panels.Items {
+			panel.Namespace = opts.Namespace
 			meta, err := utils.MetaAccessor(&panel)
 			if err != nil {
 				return err
