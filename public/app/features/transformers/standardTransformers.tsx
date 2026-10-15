@@ -9,7 +9,7 @@ import {
   type TransformerRegistryItem,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 // Direct source import - standardTransformers was removed from @grafana/data's public API
 // to keep it out of the plugin-facing shared chunk.
@@ -680,7 +680,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: groupToNestedTableDark,
       imageLight: groupToNestedTableLight,
     }),
-    ...(config.featureToggles.smoothingTransformation
+    ...(getFeatureFlagClient().getBooleanValue(FlagKeys.SmoothingTransformation, false)
       ? [
           makeLazyRegistryItem({
             id: DataTransformerID.smoothing,

@@ -5,7 +5,8 @@ import {
   generatedAPI as correlationsAPIv0alpha1,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { type DataLinkTransformationConfig } from '@grafana/data';
-import { type CorrelationData, reportInteraction, config, getDataSourceInstance } from '@grafana/runtime';
+import { type CorrelationData, reportInteraction, getDataSourceInstance } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -78,7 +79,7 @@ export function saveCurrentCorrelation(
     if (sourceDatasource?.uid && targetDatasource?.uid && targetPane.correlationEditorHelperData?.resultField) {
       const finalLabel = label || (await generateDefaultLabel(sourcePane, targetPane));
 
-      if (config.featureToggles.kubernetesCorrelations) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.KubernetesCorrelations, false)) {
         const corrSpec: CorrelationSpec = {
           label: finalLabel,
           description: description,

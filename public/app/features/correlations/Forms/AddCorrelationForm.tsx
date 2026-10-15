@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 import { useCreateCorrelationMutation } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { type GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { useFlagKubernetesCorrelations } from '@grafana/runtime/internal';
 import { PanelContainer, useStyles2 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
@@ -35,7 +35,8 @@ interface Props {
 }
 
 export const AddCorrelationFormWrapper = ({ onClose, onCreated }: Props) => {
-  if (config.featureToggles.kubernetesCorrelations) {
+  const kubernetesCorrelations = useFlagKubernetesCorrelations();
+  if (kubernetesCorrelations) {
     return <AddCorrelationFormAppPlatform onClose={onClose} onCreated={onCreated} />;
   }
 

@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within, type Matcher, getByRole } from '@testing-library/react';
+import { act, render, waitFor, screen, within, type Matcher, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { openMenu } from 'react-select-event';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -8,8 +8,10 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { type reportInteraction, setAppEvents, config } from '@grafana/runtime';
+import { type reportInteraction, setAppEvents } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { type createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -28,8 +30,6 @@ import { prePopulateCorrelations, setupMockCorrelations } from './__mocks__/fixt
 import { setupCorrelationsMswServer } from './__mocks__/server';
 
 const server = setupCorrelationsMswServer();
-
-const originalFeatureToggles = config.featureToggles;
 
 // Set app events up, otherwise plugin modules will fail to load
 setAppEvents(appEvents);
@@ -168,12 +168,18 @@ jest.mock('app/core/copy/appNotification', () => {
 beforeAll(() => {
   mockBoundingClientRect();
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
-  config.featureToggles.kubernetesCorrelations = true;
+});
+
+beforeEach(() => {
+  setTestFlags({ [FlagKeys.KubernetesCorrelations]: true });
+});
+
+afterEach(() => {
+  act(() => setTestFlags({}));
 });
 
 afterAll(() => {
   jest.restoreAllMocks();
-  config.featureToggles = originalFeatureToggles;
 });
 
 describe('CorrelationsPage - App Platform', () => {

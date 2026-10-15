@@ -1,6 +1,8 @@
+import { act } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import CorrelationsPageWrapper from './CorrelationsPageWrapper';
 
@@ -26,19 +28,17 @@ jest.mock('./useCorrelationsK8s', () => ({
 }));
 
 describe('CorrelationsPageWrapper', () => {
-  const originalFeatureToggles = config.featureToggles;
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   afterEach(() => {
-    config.featureToggles = originalFeatureToggles;
+    act(() => setTestFlags({}));
   });
 
   describe('with the kubernetes feature toggle on', () => {
     it('uses the K8s correlations hook', () => {
-      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: true };
+      setTestFlags({ [FlagKeys.KubernetesCorrelations]: true });
       render(<CorrelationsPageWrapper />);
       expect(mockUseCorrelationsK8s).toHaveBeenCalled();
     });
@@ -46,7 +46,7 @@ describe('CorrelationsPageWrapper', () => {
 
   describe('with the kubernetes feature toggle off', () => {
     it('uses the legacy correlations hook', () => {
-      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: false };
+      setTestFlags({ [FlagKeys.KubernetesCorrelations]: false });
       render(<CorrelationsPageWrapper />);
       expect(mockUseCorrelations).toHaveBeenCalled();
     });

@@ -11,6 +11,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagTransformationsEmptyPlaceholder } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { Box, Button, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
@@ -181,7 +182,8 @@ function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
 }
 
 export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
-  if (config.featureToggles.transformationsEmptyPlaceholder) {
+  const transformationsEmptyPlaceholder = useFlagTransformationsEmptyPlaceholder();
+  if (transformationsEmptyPlaceholder) {
     return <NewEmptyTransformationsMessage {...props} />;
   }
 

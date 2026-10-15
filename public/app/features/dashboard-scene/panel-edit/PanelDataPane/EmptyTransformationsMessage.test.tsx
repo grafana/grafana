@@ -1,9 +1,12 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { type DataSourceInstanceSettings, standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceInstanceSettings } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -36,6 +39,22 @@ describe('EmptyTransformationsMessage', () => {
     config.featureToggles.sqlExpressions = true;
   });
 
+  afterEach(() => {
+    act(() => setTestFlags({}));
+  });
+
+  it.each([
+    { name: 'disabled', flag: false },
+    { name: 'absent', flag: undefined },
+  ])('renders the legacy UI when the OpenFeature flag is $name despite a true boot value', ({ flag }) => {
+    config.featureToggles.transformationsEmptyPlaceholder = true;
+    setTestFlags(flag === undefined ? {} : { [FlagKeys.TransformationsEmptyPlaceholder]: flag });
+
+    render(<EmptyTransformationsMessage onShowPicker={onShowPicker} data={[]} />);
+
+    expect(screen.getByText('Start transforming data')).toBeInTheDocument();
+  });
+
   describe('LegacyEmptyTransformationsMessage', () => {
     it('should render the legacy empty state message', () => {
       render(<LegacyEmptyTransformationsMessage onShowPicker={onShowPicker} />);
@@ -57,7 +76,7 @@ describe('EmptyTransformationsMessage', () => {
 
   describe('EmptyTransformationsMessage (new UI)', () => {
     beforeEach(() => {
-      config.featureToggles.transformationsEmptyPlaceholder = true;
+      setTestFlags({ [FlagKeys.TransformationsEmptyPlaceholder]: true });
 
       mockGetDataSourceInstanceSettings.mockResolvedValue({
         uid: MOCK_DATA_SOURCE_UID,

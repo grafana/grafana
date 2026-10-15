@@ -8,7 +8,9 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { config, type CorrelationData } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema/dist/esm/index';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';
 
@@ -28,6 +30,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('correlations utils', () => {
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   it('attaches correlations defined in the configuration', () => {
     config.featureToggles.lokiLogsDataplane = false;
     const { testDataFrames, correlations, refIdMap, prometheus, elastic } = setup();
@@ -256,7 +262,7 @@ describe('correlations utils', () => {
       const unsubscribe = jest.fn();
       const subscription = { unsubscribe };
       const dispatch = jest.fn(() => subscription);
-      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: true };
+      setTestFlags({ [FlagKeys.KubernetesCorrelations]: true });
 
       await utils.getCorrelationsFromStorage(dispatch, [], 'test');
       expect(listCorrelationK8sMock).toHaveBeenCalled();
@@ -267,7 +273,7 @@ describe('correlations utils', () => {
       const unsubscribe = jest.fn();
       const subscription = { unsubscribe };
       const dispatch = jest.fn(() => subscription);
-      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: false };
+      setTestFlags({ [FlagKeys.KubernetesCorrelations]: false });
 
       await utils.getCorrelationsFromStorage(dispatch, [], 'test');
       expect(listCorrelationK8sMock).not.toHaveBeenCalled();
@@ -278,7 +284,7 @@ describe('correlations utils', () => {
       const unsubscribe = jest.fn();
       const subscription = { unsubscribe };
       const dispatch = jest.fn(() => subscription);
-      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: true };
+      setTestFlags({ [FlagKeys.KubernetesCorrelations]: true });
       await utils.getCorrelationsFromStorage(
         dispatch,
         [{ refId: 'test', datasource: { uid: 'testUid', type: 'testType' } }],
@@ -293,7 +299,7 @@ describe('correlations utils', () => {
       const unsubscribe = jest.fn();
       const subscription = { unsubscribe };
       const dispatch = jest.fn(() => subscription);
-      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: true };
+      setTestFlags({ [FlagKeys.KubernetesCorrelations]: true });
       await utils.getCorrelationsFromStorage(
         dispatch,
         [{ refId: 'test', datasource: { uid: 'testUIdNoShow', type: 'testTypeNoShow' } }],

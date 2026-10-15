@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { handleRequestError } from '@grafana/api-clients';
 import { useDeleteCorrelationMutation } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { config } from '@grafana/runtime';
+import { useFlagKubernetesCorrelations } from '@grafana/runtime/internal';
 
 import CorrelationsPage from './CorrelationsPage';
 import { type GetCorrelationsParams, type RemoveCorrelationParams } from './types';
@@ -59,7 +59,8 @@ export function CorrelationsPageAppPlatform() {
 }
 
 export default function CorrelationsPageWrapper() {
-  if (config.featureToggles.kubernetesCorrelations) {
+  const kubernetesCorrelations = useFlagKubernetesCorrelations();
+  if (kubernetesCorrelations) {
     return <CorrelationsPageAppPlatform />;
   }
 

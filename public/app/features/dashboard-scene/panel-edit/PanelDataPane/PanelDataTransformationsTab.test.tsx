@@ -1,5 +1,6 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import {
   type DataTransformerConfig,
@@ -12,8 +13,9 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
-import config from 'app/core/config';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -31,6 +33,10 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
 }));
+
+afterEach(() => {
+  act(() => setTestFlags({}));
+});
 
 function createModelMock(
   panelData: PanelData,
@@ -181,7 +187,7 @@ describe('PanelDataTransformationsTab', () => {
   });
 
   it('renders the new empty transformations message with transformationsEmptyPlaceholder on', async () => {
-    config.featureToggles.transformationsEmptyPlaceholder = true;
+    setTestFlags({ [FlagKeys.TransformationsEmptyPlaceholder]: true });
     const modelMock = createModelMock(mockData);
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 

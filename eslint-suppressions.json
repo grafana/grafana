@@ -1493,16 +1493,6 @@
       "count": 3
     }
   },
-  "public/app/features/correlations/CorrelationsPageWrapper.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/correlations/Forms/AddCorrelationForm.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/correlations/Forms/ConfigureCorrelationBasicInfoForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -1514,11 +1504,6 @@
     },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    }
-  },
-  "public/app/features/correlations/Forms/EditCorrelationForm.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/correlations/Forms/QueryEditorField.tsx": {
@@ -1533,7 +1518,7 @@
   },
   "public/app/features/correlations/utils.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard-prompt/datasources.ts": {
@@ -1571,7 +1556,7 @@
   },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/NewAlertRuleButton.tsx": {
@@ -2160,11 +2145,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/state/correlations.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/state/time.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2587,11 +2567,6 @@
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/standardTransformers.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },

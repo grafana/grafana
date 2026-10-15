@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { config } from '@grafana/runtime';
+import { useFlagKubernetesCorrelations } from '@grafana/runtime/internal';
 import { useUpdateCorrelationMutation } from 'app/api/clients/correlations/v0alpha1';
 
 import { Wizard } from '../components/Wizard/Wizard';
@@ -22,7 +22,8 @@ interface Props {
 }
 
 export const EditCorrelationFormWrapper = ({ onUpdated, correlation, readOnly = false }: Props) => {
-  if (config.featureToggles.kubernetesCorrelations) {
+  const kubernetesCorrelations = useFlagKubernetesCorrelations();
+  if (kubernetesCorrelations) {
     return <EditCorrelationFormAppPlatform onUpdated={onUpdated} correlation={correlation} readOnly={readOnly} />;
   }
 

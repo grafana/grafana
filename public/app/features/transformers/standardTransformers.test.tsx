@@ -7,6 +7,8 @@ import {
   type TransformerRegistryItem,
   type TransformerUIProps,
 } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -33,6 +35,10 @@ import { isSmoothingApplicable } from './smoothing/applicability';
 import { getStandardTransformers } from './standardTransformers';
 
 describe('getStandardTransformers', () => {
+  afterEach(() => {
+    act(() => setTestFlags({}));
+  });
+
   beforeAll(() => {
     standardTransformersRegistry.setInit(getStandardTransformers);
   });
@@ -100,13 +106,12 @@ describe('getStandardTransformers', () => {
     });
 
     describe('toggle on', () => {
-      const mockConfig = jest.requireMock('@grafana/runtime');
-      mockConfig.config.featureToggles.smoothingTransformation = true;
+      setTestFlags({ [FlagKeys.SmoothingTransformation]: true });
       const smoothing = getStandardTransformers().find((i) => i.id === DataTransformerID.smoothing);
       try {
         defaultAssertions(smoothing!);
       } finally {
-        mockConfig.config.featureToggles.smoothingTransformation = false;
+        setTestFlags({});
       }
     });
   });
@@ -118,14 +123,13 @@ describe('getStandardTransformers', () => {
     });
 
     it('wires smoothing isApplicable to isSmoothingApplicable when toggle is on', () => {
-      const mockConfig = jest.requireMock('@grafana/runtime');
-      mockConfig.config.featureToggles.smoothingTransformation = true;
+      setTestFlags({ [FlagKeys.SmoothingTransformation]: true });
 
       try {
         const smoothing = getStandardTransformers().find((i) => i.id === DataTransformerID.smoothing);
         expect(smoothing?.isApplicable).toBe(isSmoothingApplicable);
       } finally {
-        mockConfig.config.featureToggles.smoothingTransformation = false;
+        setTestFlags({});
       }
     });
   });

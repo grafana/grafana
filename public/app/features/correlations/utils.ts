@@ -13,6 +13,7 @@ import {
   getBackendSrv,
   getDataSourceInstance,
 } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';
@@ -216,7 +217,7 @@ export const getCorrelationsFromStorage = async (
   instanceUid: string
 ): Promise<CorrelationsData> => {
   let correlations: CorrelationsData;
-  if (config.featureToggles.kubernetesCorrelations) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.KubernetesCorrelations, false)) {
     let queryDSRefList: DataSourceRef[];
     if (instanceUid === MIXED_DATASOURCE_NAME) {
       // filter out undefineds and duplicates. typescript doesnt recognize the null check when combined
