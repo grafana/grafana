@@ -663,6 +663,62 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(0), c)
 	})
+
+	t.Run("should delete rules in multiple folders", func(t *testing.T) {
+		orgID := int64(1)
+		gen := models.RuleGen.With(models.RuleMuts.WithOrgID(orgID), models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
+		r1 := createRule(t, store, gen)
+		r2 := createRule(t, store, gen.With(models.RuleMuts.WithNamespaceUIDNotIn(r1.NamespaceUID)))
+		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
+		})
+
+		err := store.DeleteInFolders(context.Background(), orgID, []string{r1.NamespaceUID, r2.NamespaceUID}, &user.SignedInUser{})
+		require.NoError(t, err)
+
+		c, err := store.CountInFolders(context.Background(), orgID, []string{r1.NamespaceUID, r2.NamespaceUID}, &user.SignedInUser{})
+		require.NoError(t, err)
+		require.Equal(t, int64(0), c)
+	})
+
+	t.Run("should delete rules across multiple chunks", func(t *testing.T) {
+		orig := ruleUIDsChunkSize
+		ruleUIDsChunkSize = 1
+		t.Cleanup(func() { ruleUIDsChunkSize = orig })
+
+		orgID := int64(1)
+		gen := models.RuleGen.With(models.RuleMuts.WithOrgID(orgID), models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
+		r1 := createRule(t, store, gen)
+		r2 := createRule(t, store, gen.With(models.RuleMuts.WithNamespaceUIDNotIn(r1.NamespaceUID)))
+		r3 := createRule(t, store, gen.With(models.RuleMuts.WithNamespaceUIDNotIn(r1.NamespaceUID, r2.NamespaceUID)))
+		folders := []string{r1.NamespaceUID, r2.NamespaceUID, r3.NamespaceUID}
+		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
+		})
+
+		require.NoError(t, store.DeleteInFolders(context.Background(), orgID, folders, &user.SignedInUser{}))
+
+		c, err := store.CountInFolders(context.Background(), orgID, folders, &user.SignedInUser{})
+		require.NoError(t, err)
+		require.Equal(t, int64(0), c)
+	})
+
+	t.Run("should not delete anything if access is denied on any folder", func(t *testing.T) {
+		orgID := int64(1)
+		gen := models.RuleGen.With(models.RuleMuts.WithOrgID(orgID), models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
+		r1 := createRule(t, store, gen)
+		r2 := createRule(t, store, gen.With(models.RuleMuts.WithNamespaceUIDNotIn(r1.NamespaceUID)))
+		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(r1.NamespaceUID)},
+		})
+
+		err := store.DeleteInFolders(context.Background(), orgID, []string{r1.NamespaceUID, r2.NamespaceUID}, &user.SignedInUser{})
+		require.ErrorIs(t, err, folder.ErrAccessDenied)
+
+		c, err := store.CountInFolders(context.Background(), orgID, []string{r1.NamespaceUID}, &user.SignedInUser{})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), c)
+	})
 }
 
 func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {

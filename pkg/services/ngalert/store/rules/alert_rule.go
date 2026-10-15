@@ -1826,6 +1826,7 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 	// from here.
 	ctx = identity.WithRequester(ctx, user)
 
+	// Check access for every folder before deleting anything so a denial does not leave a partial delete.
 	for _, folderUID := range folderUIDs {
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
@@ -1837,17 +1838,54 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
 			return folder.ErrAccessDenied
 		}
+	}
 
-		uids, err := st.ListAlertRuleUIDsInFolder(ctx, orgID, folderUID)
-		if err != nil {
-			return err
-		}
+	uids, err := st.ListAlertRuleUIDsInFolders(ctx, orgID, folderUIDs)
+	if err != nil {
+		return err
+	}
 
-		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), false, uids...); err != nil {
+	for chunk := range slices.Chunk(uids, ruleUIDsChunkSize) {
+		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), false, chunk...); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// ruleUIDsChunkSize bounds IN-list sizes to stay under database bind-variable limits. It is a var so tests can shrink it.
+var ruleUIDsChunkSize = 500
+
+// ListAlertRuleUIDsInFolders is the batched form of ListAlertRuleUIDsInFolder.
+func (st RuleStore) ListAlertRuleUIDsInFolders(ctx context.Context, orgID int64, folderUIDs []string) ([]string, error) {
+	if len(folderUIDs) == 0 {
+		return nil, nil
+	}
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn := dbHelper.DB
+	alertRuleTable := dbHelper.Table("alert_rule")
+	if st.LegacyDatabaseProvider != nil {
+		ctx = ambientSessionFor(ctx, conn)
+	}
+
+	var uids []string
+	err = conn.WithDbSession(ctx, func(sess *db.Session) error {
+		for chunk := range slices.Chunk(folderUIDs, ruleUIDsChunkSize) {
+			var found []string
+			if err := sess.Table(alertRuleTable).Cols("uid").Where("org_id = ?", orgID).In("namespace_uid", chunk).Find(&found); err != nil {
+				return err
+			}
+			uids = append(uids, found...)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return uids, nil
 }
 
 // ListAlertRuleUIDsInFolder is a narrow ListAlertRules substitute, routed through
