@@ -1,7 +1,7 @@
 import { expect, test } from '../fixtures';
 import { flows } from '../helpers';
 
-import { expectPreviewOfValuesToBe } from './helpers/assertions';
+import { expectPreviewOfValuesToBe, expectVariableOptionsToBe } from './helpers/assertions';
 import { addNewCustomVariable, importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
@@ -61,9 +61,7 @@ test.describe(
       await expect(controls.variables.getLabel(variable.label)).toHaveText(variable.label);
 
       // We check the options because they are recomputed on load, so only the saved query can produce them.
-      await controls.variables.openDropdown(variable.label);
-      await expect(controls.variables.getOptions()).toHaveText(expectedOptions);
-      await page.keyboard.press('Escape');
+      await expectVariableOptionsToBe(page, controls, variable.label, expectedOptions);
 
       await controls.enterEditMode();
       await flows.contentOutline.selectVariable(sidebar, variable.label);
