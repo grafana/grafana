@@ -125,25 +125,14 @@ func TestPluginEnvVarsProvider_signingKeysEnvVars(t *testing.T) {
 	require.NoError(t, err)
 	want := v3.EnvVarSigningKeys + "=" + jwks
 
-	envVars := func(localTokens, skipHostEnvVars bool) []string {
+	envVars := func(localTokens bool) []string {
 		cfg := &PluginInstanceCfg{LocalPluginTokens: localTokens, Features: featuremgmt.WithFeatures()}
 		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
-		return provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "test"}, SkipHostEnvVars: skipHostEnvVars})
+		return provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "test"}})
 	}
 
-	t.Run("passed on when Grafana signs tokens itself", func(t *testing.T) {
-		assert.Contains(t, envVars(true, false), want)
-	})
-	t.Run("not passed on with a token exchange", func(t *testing.T) {
-		assert.NotContains(t, envVars(false, false), want)
-	})
-	for _, key := range []string{v3.EnvVarSigningKeys, v3.EnvVarSigningKeysURL} {
-		t.Run("host "+key+" takes precedence", func(t *testing.T) {
-			t.Setenv(key, "from-host")
-			assert.NotContains(t, envVars(true, false), want, "the host environment is forwarded")
-			assert.Contains(t, envVars(true, true), want, "the host environment is not forwarded")
-		})
-	}
+	assert.Contains(t, envVars(true), want, "passed on when Grafana signs tokens itself")
+	assert.NotContains(t, envVars(false), want, "not passed on with a token exchange or real signing keys")
 }
 
 func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {

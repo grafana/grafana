@@ -67,6 +67,19 @@ func TestClientV3TokenExchanger(t *testing.T) {
 	require.Same(t, local, ClientV3TokenExchanger(dev, "other-app", nil), "without a configured exchanger, tokens are signed locally")
 	require.Same(t, local, ClientV3TokenExchanger(cfgFor(setting.Prod), "other-app", nil), "local tokens do not need development mode")
 	require.Same(t, local, ClientV3TokenExchanger(nil, "other-app", nil))
+
+	t.Run("not with a real JWKS URL", func(t *testing.T) {
+		cfg := cfgFor(setting.Dev)
+		cfg.ExtJWTAuth.JWKSUrl = "https://auth.example.com/v1/keys"
+		require.Nil(t, ClientV3TokenExchanger(cfg, "other-app", nil))
+		require.Equal(t, configured, ClientV3TokenExchanger(cfg, "other-app", configured))
+	})
+	for _, key := range []string{v3.EnvVarSigningKeys, v3.EnvVarSigningKeysURL} {
+		t.Run("not with "+key+" in the environment", func(t *testing.T) {
+			t.Setenv(key, "from-host")
+			require.Nil(t, ClientV3TokenExchanger(dev, "other-app", nil))
+		})
+	}
 }
 
 func TestInvalidClientV3TokenExchanger(t *testing.T) {

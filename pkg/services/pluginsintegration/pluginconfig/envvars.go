@@ -309,11 +309,6 @@ func (p *EnvVarsProvider) signingKeysEnvVars(plugin *plugins.Plugin) []string {
 	if !p.cfg.LocalPluginTokens {
 		return nil
 	}
-	// The plugin accepts only one source of keys, so keep keys from the host
-	// environment, which go-plugin forwards unless SkipHostEnvVars is set.
-	if !plugin.SkipHostEnvVars && (os.Getenv(v3.EnvVarSigningKeys) != "" || os.Getenv(v3.EnvVarSigningKeysURL) != "") {
-		return nil
-	}
 	jwks, err := v3.LocalSigningKeys()
 	if err != nil {
 		p.logger.Error("Failed to get the local plugin signing keys", "pluginId", plugin.PluginID(), "error", err)

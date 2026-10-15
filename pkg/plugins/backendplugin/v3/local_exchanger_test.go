@@ -38,6 +38,17 @@ func TestEnvVarSigningKeysMatchAppSDK(t *testing.T) {
 	require.Equal(t, appplugin.EnvVarGrafanaJWKSURL, EnvVarSigningKeysURL)
 }
 
+func TestRealSigningKeysConfigured(t *testing.T) {
+	require.False(t, RealSigningKeysConfigured(""))
+	require.True(t, RealSigningKeysConfigured("https://auth.example.com/v1/keys"))
+	for _, key := range []string{EnvVarSigningKeys, EnvVarSigningKeysURL} {
+		t.Run(key, func(t *testing.T) {
+			t.Setenv(key, "from-host")
+			require.True(t, RealSigningKeysConfigured(""))
+		})
+	}
+}
+
 func TestLocalSigningKeys(t *testing.T) {
 	exchanger, err := newLocalExchanger()
 	require.NoError(t, err)

@@ -7,6 +7,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -74,15 +75,22 @@ func TestProvidePluginInstanceConfigOpenFeature(t *testing.T) {
 
 func TestProvidePluginInstanceConfigLocalPluginTokens(t *testing.T) {
 	for _, tc := range []struct {
-		name, token, url string
-		want             bool
+		name, token, url, jwksURL string
+		hostEnv                   string
+		want                      bool
 	}{
 		{name: "no token exchange", want: true},
 		{name: "token exchange", token: "cap-token", url: "https://auth.example.com/v1/sign-access-token", want: false},
 		{name: "misconfigured token exchange", token: "cap-token", want: false},
+		{name: "real JWKS URL", jwksURL: "https://auth.example.com/v1/keys", want: false},
+		{name: "host " + v3.EnvVarSigningKeys, hostEnv: v3.EnvVarSigningKeys, want: false},
+		{name: "host " + v3.EnvVarSigningKeysURL, hostEnv: v3.EnvVarSigningKeysURL, want: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := &setting.Cfg{Raw: ini.Empty()}
+			if tc.hostEnv != "" {
+				t.Setenv(tc.hostEnv, "from-host")
+			}
+			cfg := &setting.Cfg{Raw: ini.Empty(), ExtJWTAuth: setting.ExtJWTSettings{JWKSUrl: tc.jwksURL}}
 			section := cfg.Raw.Section("plugins")
 			section.Key("v3_cap_token").SetValue(tc.token)
 			section.Key("v3_token_exchange_url").SetValue(tc.url)

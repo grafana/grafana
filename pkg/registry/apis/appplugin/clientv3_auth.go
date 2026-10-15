@@ -35,9 +35,11 @@ func NewClientV3TokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error
 }
 
 // ClientV3TokenExchanger returns the exchanger for requests to pluginID: the
-// configured exchanger when there is one. Otherwise it is the local exchanger,
+// configured exchanger when there is one. Otherwise, unless real signing keys
+// are configured (see v3.RealSigningKeysConfigured), it is the local exchanger,
 // whose tokens verify with the keys Grafana passes to the plugin processes it
 // starts (see v3.LocalSigningKeys). Plugins started elsewhere reject them.
+// Otherwise it is nil, and requests carry no identity.
 func ClientV3TokenExchanger(cfg *setting.Cfg, pluginID string, exchanger authnlib.TokenExchanger) authnlib.TokenExchanger {
 	if exchanger != nil {
 		insecure := cfg != nil && cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] == "true"
@@ -45,6 +47,14 @@ func ClientV3TokenExchanger(cfg *setting.Cfg, pluginID string, exchanger authnli
 			clientV3AuthLogger.Warn("Plugin does not verify requests (insecure_skip_authentication); use only for local development", "pluginId", pluginID)
 		}
 		return exchanger
+	}
+	jwksURL := ""
+	if cfg != nil {
+		jwksURL = cfg.ExtJWTAuth.JWKSUrl
+	}
+	if v3.RealSigningKeysConfigured(jwksURL) {
+		clientV3AuthLogger.Warn("Signing keys are configured without a plugin token exchange; plugin requests carry no caller identity", "pluginId", pluginID)
+		return nil
 	}
 	local, err := v3.LocalTokenExchanger()
 	if err != nil {
