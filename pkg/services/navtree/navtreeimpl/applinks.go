@@ -215,8 +215,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 			}
 
-			if plugin.ID == assistantAppID && include.Path == assistantAppHomePath+"/pages" && include.AddToNav &&
-				ac.HasAccess(s.accessControl, c)(ac.EvalPermission("assistant.ext.grafana.app/pages:create")) {
+			if s.canCreateAssistantPage(plugin, include, c) {
 				link.Children = append(link.Children, &navtree.NavLink{
 					Id:             "assistant/pages/new",
 					Text:           "New Grafana Page",
@@ -325,6 +324,11 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) canCreateAssistantPage(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
+	return plugin.ID == assistantAppID && include.Path == assistantAppHomePath+"/pages" && include.AddToNav &&
+		ac.HasAccess(s.accessControl, c)(ac.EvalPermission("assistant.ext.grafana.app/pages:create"))
 }
 
 func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
