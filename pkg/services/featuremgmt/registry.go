@@ -3286,6 +3286,14 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:        "grafana.pluginNavAvailability",
+			Description: "Let plugin.json include entries gate their nav visibility with the 'available' feature-flag expression field",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "grafana.rspackBuild",
 			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
 			Stage:       FeatureStageExperimental,

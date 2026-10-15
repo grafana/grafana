@@ -585,7 +585,9 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 		} else if !include.RequiresRBACAction() && !c.HasUserRole(include.Role) {
 			return false
 		}
-		if !evaluateAvailable(c.Req.Context(), include.Available) {
+		ctx := c.Req.Context()
+		navAvailabilityEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaPluginNavAvailability, false, openfeature.TransactionContext(ctx))
+		if navAvailabilityEnabled && !evaluateAvailable(ctx, include.Available) {
 			s.log.Debug("plugin include is gated by a feature flag, not currently available",
 				"plugin", pluginID,
 				"include", include.Name)

@@ -1026,6 +1026,10 @@ const (
 	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
 	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 
+	// FlagGrafanaPluginNavAvailability
+	// Let plugin.json include entries gate their nav visibility with the 'available' feature-flag expression field
+	FlagGrafanaPluginNavAvailability = "grafana.pluginNavAvailability"
+
 	// FlagGrafanaRspackBuild
 	// Switches the backend to load frontend assets built with rspack instead of webpack
 	FlagGrafanaRspackBuild = "grafana.rspackBuild"

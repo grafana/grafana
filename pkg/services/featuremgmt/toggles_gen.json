@@ -3504,6 +3504,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.pluginNavAvailability",
+        "resourceVersion": "1792069845967",
+        "creationTimestamp": "2026-10-15T13:10:45Z"
+      },
+      "spec": {
+        "description": "Let plugin.json include entries gate their nav visibility with the 'available' feature-flag expression field",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.pluginPathNesting",
         "resourceVersion": "1785918906185",
         "creationTimestamp": "2026-08-05T08:35:06Z"
