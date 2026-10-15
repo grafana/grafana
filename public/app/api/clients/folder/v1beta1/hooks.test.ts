@@ -130,24 +130,28 @@ const expectTeamFoldersRefetched = (store: Store<StoreState>) =>
 
 const originalToggles = { ...config.featureToggles };
 const originalProvisioningEnabled = config.provisioningEnabled;
-config.provisioningEnabled = false;
-// Browse-tree refetches skip the folder list without folders:read, which would leave the refresh assertions below
-// passing on dashboards alone.
 const originalPermissions = contextSrv.user.permissions;
-contextSrv.user.permissions = { [AccessControlAction.FoldersRead]: true };
-afterAll(() => {
-  // Restore the original feature toggle value changed during tests
-  config.featureToggles = originalToggles;
-  config.provisioningEnabled = originalProvisioningEnabled;
-  contextSrv.user.permissions = originalPermissions;
+
+beforeEach(() => {
+  config.provisioningEnabled = false;
+  // Browse-tree refetches skip the folder list without folders:read, which would leave the refresh assertions below
+  // passing on dashboards alone.
+  contextSrv.user.permissions = { [AccessControlAction.FoldersRead]: true };
 });
 
-// setTestFlags mutates a module-level provider, so reset it for every test. The act wrap is needed
-// because the reset fires OpenFeature events while components are still mounted.
 afterEach(async () => {
+  config.provisioningEnabled = originalProvisioningEnabled;
+  contextSrv.user.permissions = originalPermissions;
+  // setTestFlags mutates a module-level provider, so reset it for every test. The act wrap is needed
+  // because the reset fires OpenFeature events while components are still mounted.
   await act(async () => {
     setTestFlags({});
   });
+});
+
+afterAll(() => {
+  // Restore the original feature toggle value changed during tests
+  config.featureToggles = originalToggles;
 });
 
 describe('useGetFolderQueryFacade', () => {
