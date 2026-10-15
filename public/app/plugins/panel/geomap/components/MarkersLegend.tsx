@@ -7,9 +7,8 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, useTheme2, type VizLegendItem } from '@grafana/ui';
+import { SanitizedSVG, useStyles2, useTheme2, type VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
 
 import { type StyleConfigState } from '../style/types';

@@ -1,0 +1,18 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+import { SanitizedSVG } from './SanitizedSVG';
+
+<Meta title="MDX|SanitizedSVG" component={SanitizedSVG} />
+
+# SanitizedSVG
+
+Renders an SVG inline with [react-inlinesvg](https://github.com/gilbarbara/react-inlinesvg) after sanitizing its markup. Use it instead of `react-inlinesvg` directly whenever the `src` can come from a user, a dashboard, or a plugin.
+
+SVGs that ship with Grafana (under `public/build/` and `public/img/`) keep their styles. Every other source is sanitized with stricter rules.
+
+## Usage
+
+```tsx
+<SanitizedSVG src="public/img/icons/marker/circle.svg" className={styles.icon} />
+```
+
+Pass `cleanStyle` to scope the SVG's embedded `<style type="text/css">` rules to that SVG, so they do not leak to the rest of the page.

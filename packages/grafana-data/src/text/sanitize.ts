@@ -113,6 +113,16 @@ function sanitizeSVGContent(unsanitizedString: string): string {
   return DOMPurify.sanitize(unsanitizedString, { USE_PROFILES: { svg: true, svgFilters: true } });
 }
 
+// Like sanitizeSVGContent, but for SVGs that do not ship with Grafana, which may be attacker controlled.
+// Inlined SVG <style> applies to the whole document, and <image>/<feImage> pull in content this sanitizer
+// never inspects, so they are removed.
+function sanitizeUntrustedSVGContent(unsanitizedString: string): string {
+  return DOMPurify.sanitize(unsanitizedString, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    FORBID_TAGS: ['style', 'image', 'feImage'],
+  });
+}
+
 // Return a sanitized URL, free from XSS attacks, such as javascript:alert(1)
 export function sanitizeUrl(url: string): string {
   return braintreeSanitizeUrl(url);
@@ -186,6 +196,7 @@ export const textUtil = {
   sanitizeTextPanelContent,
   sanitizeUrl,
   sanitizeSVGContent,
+  sanitizeUntrustedSVGContent,
   sanitizeTrustedTypes,
   sanitizeTrustedTypesRSS,
 };
