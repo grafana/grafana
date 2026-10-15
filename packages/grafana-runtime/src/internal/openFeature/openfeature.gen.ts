@@ -110,6 +110,8 @@ export const FlagKeys = {
   DashboardUndoRedo: "dashboardUndoRedo",
   /** Enables dashboard validator app to run compatibility checks between a dashboard and data source */
   DashboardValidatorApp: "dashboardValidatorApp",
+  /** Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out */
+  DashboardsLibraryPanelHorizontalRepeatFullWidth: "dashboards.libraryPanelHorizontalRepeatFullWidth",
   /** Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state */
   DashboardsLibraryPanelRepeatFromServerResolution: "dashboards.libraryPanelRepeatFromServerResolution",
   /** Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto */
@@ -192,12 +194,16 @@ export const FlagKeys = {
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
   GrafanaMultiTenantUserPermissions: "grafana.multiTenantUserPermissions",
+  /** Enables the refreshed information architecture for Grafana's navigation */
+  GrafanaNavigationInfoArchRefresh: "grafana.navigationInfoArchRefresh",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Enables the new text panel */
   GrafanaNewTextPanel: "grafana.newTextPanel",
   /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
+  /** Enables a new version of log details optimized for displaying OTel logs */
+  GrafanaOtelLogDetails: "grafana.otelLogDetails",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
@@ -302,8 +308,6 @@ export const FlagKeys = {
   QueryLibrary: "queryLibrary",
   /** Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query */
   QueryService: "queryService",
-  /** Routes requests to the new query service */
-  QueryServiceFromUI: "queryServiceFromUI",
   /** Adds datasource connections to the query service */
   QueryServiceWithConnections: "queryServiceWithConnections",
   /** Enables the Query with Assistant button in the query editor */
@@ -905,6 +909,17 @@ export const useFlagDashboardValidatorApp = (options?: ReactFlagEvaluationOption
 };
 
 /**
+ * Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out
+ *
+ * **Details:**
+ * - flag key: `dashboards.libraryPanelHorizontalRepeatFullWidth`
+ * - default value: `false`
+ */
+export const useFlagDashboardsLibraryPanelHorizontalRepeatFullWidth = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.libraryPanelHorizontalRepeatFullWidth", false, options).value;
+};
+
+/**
  * Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state
  *
  * **Details:**
@@ -1356,6 +1371,17 @@ export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEval
 };
 
 /**
+ * Enables the refreshed information architecture for Grafana's navigation
+ *
+ * **Details:**
+ * - flag key: `grafana.navigationInfoArchRefresh`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNavigationInfoArchRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.navigationInfoArchRefresh", false, options).value;
+};
+
+/**
  * Enables a new UI for query errors and notices
  *
  * **Details:**
@@ -1386,6 +1412,17 @@ export const useFlagGrafanaNewTextPanel = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.onDemandDiagnostics", false, options).value;
+};
+
+/**
+ * Enables a new version of log details optimized for displaying OTel logs
+ *
+ * **Details:**
+ * - flag key: `grafana.otelLogDetails`
+ * - default value: `false`
+ */
+export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.otelLogDetails", false, options).value;
 };
 
 /**
@@ -1958,17 +1995,6 @@ export const useFlagQueryLibrary = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagQueryService = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryService", false, options).value;
-};
-
-/**
- * Routes requests to the new query service
- *
- * **Details:**
- * - flag key: `queryServiceFromUI`
- * - default value: `false`
- */
-export const useFlagQueryServiceFromUI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryServiceFromUI", false, options).value;
 };
 
 /**

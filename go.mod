@@ -32,6 +32,7 @@ replace (
 	github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
 	github.com/grafana/grafana/pkg/infra/features => ./pkg/infra/features
+	github.com/grafana/grafana/pkg/infra/log => ./pkg/infra/log
 	github.com/grafana/grafana/pkg/infra/metrics => ./pkg/infra/metrics
 	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
 	github.com/grafana/grafana/pkg/storage/unified/apistore => ./pkg/storage/unified/apistore
@@ -179,6 +180,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // @grafana/grafana-backend-services-squad
+	github.com/grafana/grafana/pkg/infra/log v0.0.0 // @grafana/grafana-backend-services-squad
 	github.com/grafana/grafana/pkg/infra/metrics v0.0.0 // @grafana/grafana-backend-services-squad
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0 // @grafana/grafana-search-and-storage
@@ -214,7 +216,6 @@ require (
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.5.0 // @grafana/alerting-backend
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // @grafana/identity-access-team
-	github.com/mattn/go-isatty v0.0.24 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
 	github.com/migueleliasweb/go-github-mock v1.5.0 // @grafana/grafana-git-ui-sync-team
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c // @grafana/identity-access-team
@@ -248,6 +249,7 @@ require (
 	github.com/rs/cors v1.11.1 // @grafana/identity-access-team
 	github.com/russellhaering/gosaml2 v0.12.1-0.20260805181527-c47eb2cf608a // @grafana/identity-access-team
 	github.com/russellhaering/goxmldsig v1.6.1 // @grafana/grafana-backend-group
+	github.com/russross/blackfriday/v2 v2.1.0 // @grafana/grafana-app-platform-squad
 	github.com/shopspring/decimal v1.4.0 // @grafana/grafana-datasources-core-services
 	github.com/sony/gobreaker/v2 v2.4.0 // @grafana/grafana-app-platform-squad
 	github.com/spf13/cobra v1.10.2 // @grafana/grafana-app-platform-squad
@@ -256,7 +258,6 @@ require (
 	github.com/stretchr/testify v1.12.1 // @grafana/grafana-backend-group
 	github.com/testcontainers/testcontainers-go v0.44.0 // @grafana/grafana-app-platform-squad
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-services-squad
-	github.com/tjhop/slog-gokit v0.2.0 // @grafana/grafana-app-platform-squad
 	github.com/ua-parser/uap-go v0.0.0-20251207011819-db9adb27a0b8 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.7 // @grafana/grafana-backend-group
 	github.com/wk8/go-ordered-map v1.0.0 // @grafana/grafana-backend-group
@@ -533,6 +534,7 @@ require (
 	github.com/matryer/is v1.4.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
+	github.com/mattn/go-isatty v0.0.24 // indirect; @grafana/grafana-backend-group
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.30 // indirect
 	github.com/maypok86/otter/v2 v2.3.0 // indirect
@@ -611,7 +613,6 @@ require (
 	github.com/redis/rueidis v1.0.77 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
@@ -640,6 +641,7 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/tinylib/msgp v1.6.3 // indirect
+	github.com/tjhop/slog-gokit v0.2.0 // indirect; @grafana/grafana-app-platform-squad
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/trivago/tgo v1.0.7 // indirect

@@ -857,7 +857,6 @@ type Cfg struct {
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
-	SearchBackedListResources     []string
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend           bool
@@ -872,6 +871,8 @@ type Cfg struct {
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
+	BlobGarbageCollectionEnabled      bool
+	BlobGarbageCollectionDryRun       bool
 	GarbageCollectionInterval         time.Duration
 	GarbageCollectionBatchSize        int
 	GarbageCollectionBatchWait        time.Duration

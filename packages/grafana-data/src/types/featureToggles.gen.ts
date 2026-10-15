@@ -214,11 +214,6 @@ export interface FeatureToggles {
   */
   queryServiceRewrite?: boolean;
   /**
-  * Routes requests to the new query service
-  * @default false
-  */
-  queryServiceFromUI?: boolean;
-  /**
   * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false
   */
@@ -620,11 +615,6 @@ export interface FeatureToggles {
   * @default false
   */
   rolePickerDrawer?: boolean;
-  /**
-  * Enables SRI checks for plugin assets
-  * @default false
-  */
-  pluginsSriChecks?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false

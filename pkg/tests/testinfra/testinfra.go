@@ -50,18 +50,23 @@ import (
 )
 
 // findTestLicense returns the absolute path to the enterprise test license
-// fixture bundled in the enterprise tree, or "" if it is not present (OSS build).
-// Used when wiring MT-mode Zanzana tests that need FeatureAccessControl enabled.
+// fixture, or "" if it is not present. Used when wiring MT-mode
+// Zanzana tests that need FeatureAccessControl enabled.
 func findTestLicense() string {
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
 		return ""
 	}
-	candidate := filepath.Join(filepath.Dir(thisFile), "..", "..", "extensions", "apiserver", "testdata", "valid", "license.jwt")
-	if exists, err := fs.Exists(candidate); err != nil || !exists {
-		return ""
+	rootDir := filepath.Join(filepath.Dir(thisFile), "..", "..", "..")
+	for _, candidate := range []string{
+		filepath.Join(rootDir, "pkg", "extensions", "apiserver", "testdata", "valid", "license.jwt"),
+		filepath.Join(rootDir, "..", "grafana-enterprise", "pkg", "apiserver", "testdata", "valid", "license.jwt"),
+	} {
+		if exists, err := fs.Exists(candidate); err == nil && exists {
+			return candidate
+		}
 	}
-	return candidate
+	return ""
 }
 
 // StartGrafana starts a Grafana server.
@@ -1058,6 +1063,17 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.EnableGlobalSearch {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_global_search_api", "true")
+		require.NoError(t, err)
+		usSection, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = usSection.NewKey("global_search_index_enabled", "true")
+		require.NoError(t, err)
+	}
+
 	if opts.ScopesApiEnabled {
 		section, err := getOrCreateSection("scopes")
 		require.NoError(t, err)
@@ -1213,6 +1229,10 @@ type GrafanaOpts struct {
 
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool
+
+	// EnableGlobalSearch turns on the search that spans resource types, and the
+	// index it reads. Both are off by default.
+	EnableGlobalSearch bool
 
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
