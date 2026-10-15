@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Box, Divider, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { Box, Divider, Stack } from '@grafana/ui';
 
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
-import { legacyRuleListNameResolvers } from '../legacy-migration/nameResolvers';
 import { RulesPageShell } from '../page-shell/RulesPageShell';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
@@ -13,36 +12,16 @@ import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 import { parse } from '../rule-search/parser';
 import { serialize } from '../rule-search/serializer';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
-import { ConnectedSavedSearches } from '../saved-searches/ConnectedSavedSearches';
-import { SavedSearchesLoadingPlaceholder } from '../saved-searches/SavedSearchesLoadingPlaceholder';
-import { useDefaultSavedSearchGate } from '../saved-searches/useDefaultSavedSearchGate';
-import { useLegacySavedSearchesCopied } from '../saved-searches/useLegacySavedSearchesCopied';
+import { RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { trackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 import { FoldersView } from './AlertRulesFoldersView';
 import { AlertRulesHeaderActions } from './AlertRulesHeaderActions';
 import { ListView } from './AlertRulesListView';
-import { useAlertRulesSavedSearches } from './alertRulesSavedSearches';
 
-function AlertRulesBody({
-  canSearch,
-  isApplyingDefault,
-  mode,
-  criteria,
-}: {
-  canSearch: boolean;
-  isApplyingDefault: boolean;
-  mode: RuleListMode;
-  criteria: Criteria;
-}) {
-  if (isApplyingDefault) {
-    return (
-      <LoadingPlaceholder
-        text={t('alerting.gma-rule-list.saved-searches.applying-default', 'Applying your default search...')}
-      />
-    );
-  }
+function AlertRulesBody({ canSearch, mode, criteria }: { canSearch: boolean; mode: RuleListMode; criteria: Criteria }) {
   if (!canSearch) {
     return (
       <div role="alert">
@@ -57,10 +36,7 @@ function AlertRulesBody({
 }
 
 function AlertRulesPage() {
-  const { criteria, issues, mode, hasNonFolderFilters, hasSearchQuery, setCriteria, setMode, reset } =
-    useRuleListSearchState('alert');
-  const savedSearchesReady = useLegacySavedSearchesCopied(legacyRuleListNameResolvers);
-  const defaultSearch = useDefaultSavedSearchGate(hasSearchQuery);
+  const { criteria, issues, mode, hasNonFolderFilters, setCriteria, setMode, reset } = useRuleListSearchState('alert');
 
   const trackedView = useRef(false);
   useEffect(() => {
@@ -98,20 +74,7 @@ function AlertRulesPage() {
               <RuleSearchInput query={query} onApply={onApplyQuery} tokens={alertTokens} issues={issues} />
             </Box>
             <Box shrink={0}>
-              {savedSearchesReady ? (
-                <ConnectedSavedSearches
-                  useSavedSearches={useAlertRulesSavedSearches}
-                  query={query}
-                  parseForKind={(q) => parse(q, alertTokens)}
-                  resolvers={legacyRuleListNameResolvers}
-                  setCriteria={setCriteria}
-                  applyDefault={defaultSearch.applyDefault}
-                  onDefaultSettled={defaultSearch.onSettled}
-                  getHref={(search) => `/alerting/rules/alert?search=${encodeURIComponent(search.query)}`}
-                />
-              ) : (
-                <SavedSearchesLoadingPlaceholder query={query} />
-              )}
+              <RuleListSavedSearches kind="alert" />
             </Box>
             <Box shrink={0}>
               <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
@@ -130,12 +93,7 @@ function AlertRulesPage() {
               <Divider direction="vertical" spacing={0} />
             </Box>
             <Box grow={1} minWidth={0}>
-              <AlertRulesBody
-                canSearch={canSearch}
-                isApplyingDefault={!defaultSearch.settled}
-                mode={mode}
-                criteria={criteria}
-              />
+              <AlertRulesBody canSearch={canSearch} mode={mode} criteria={criteria} />
             </Box>
           </Stack>
         </Stack>
@@ -144,4 +102,4 @@ function AlertRulesPage() {
   );
 }
 
-export default withPageErrorBoundary(AlertRulesPage);
+export default withPageErrorBoundary(withSavedSearchesSetup('alert', AlertRulesPage));

@@ -1,4 +1,5 @@
 import { HttpResponse, http } from 'msw';
+import { Suspense } from 'react';
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
@@ -122,6 +123,19 @@ function mockFolderCounts(countByUid: Record<string, number>) {
   );
 }
 
+// GrafanaRoute provides this boundary in the app; the page suspends until saved searches are set up.
+function renderPage(options?: Parameters<typeof render>[1]) {
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  return act(async () =>
+    render(
+      <Suspense>
+        <AlertRulesPage />
+      </Suspense>,
+      options
+    )
+  );
+}
+
 describe('AlertRulesPage', () => {
   const previousPermissions = contextSrv.user.permissions;
 
@@ -144,7 +158,7 @@ describe('AlertRulesPage', () => {
       metadata: {},
     }));
 
-    render(<AlertRulesPage />);
+    await renderPage();
 
     expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
     expect(screen.getByText('Infra')).toBeInTheDocument();
@@ -167,7 +181,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
 
     expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
     expect(lastWhere).toEqual({ filter: { field: 'name', operator: 'In', values: ['folder-1'] } });
@@ -189,7 +203,7 @@ describe('AlertRulesPage', () => {
       return { items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} };
     });
 
-    render(<AlertRulesPage />);
+    await renderPage();
     await screen.findByText('Team Alerts');
 
     expect(ruleSearchCalls).toBe(0);
@@ -215,7 +229,7 @@ describe('AlertRulesPage', () => {
       metadata: {},
     }));
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
     expect(screen.getByText('Disk full')).toBeInTheDocument();
@@ -228,7 +242,7 @@ describe('AlertRulesPage', () => {
   it('shows an empty state for a successful empty List response', async () => {
     mockAlertRuleSearch(() => ({ items: [], metadata: {} }));
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(await screen.findByText('No Alert rules found')).toBeInTheDocument();
   });
@@ -240,7 +254,7 @@ describe('AlertRulesPage', () => {
       return { items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} };
     });
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=paused%3Afalse&view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?search=paused%3Afalse&view=list'] } });
 
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
     expect(body).toMatchObject({
@@ -256,7 +270,7 @@ describe('AlertRulesPage', () => {
       metadata: {},
     });
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
     expect(screen.queryByText('No Alert rules found')).not.toBeInTheDocument();
@@ -289,7 +303,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
@@ -321,7 +335,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     await screen.findByText('CPU high');
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
@@ -356,7 +370,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     await screen.findByText('CPU high');
     await userEvent.dblClick(screen.getByRole('button', { name: 'Load more' }));
@@ -373,7 +387,7 @@ describe('AlertRulesPage', () => {
     mockFolderSearch(() => ({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} }));
     failFirstCall(ALERT_SEARCH_URL, { items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: {} });
 
-    render(<AlertRulesPage />);
+    await renderPage();
     await userEvent.click(await screen.findByRole('button', { name: 'Expand Team Alerts', expanded: false }));
 
     expect(await screen.findByText('Failed to load rules')).toBeInTheDocument();
@@ -404,7 +418,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />);
+    await renderPage();
     await userEvent.click(await screen.findByRole('button', { name: 'Expand Team Alerts', expanded: false }));
     await screen.findByText('CPU high');
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
@@ -429,7 +443,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />);
+    await renderPage();
 
     expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
@@ -464,7 +478,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />);
+    await renderPage();
     await screen.findByText('Team Alerts');
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
 
@@ -479,7 +493,7 @@ describe('AlertRulesPage', () => {
   it('shows a retryable error instead of the empty state when the first folder page fails', async () => {
     failFirstCall(FOLDER_SEARCH_URL, { items: [folderItem('folder-1', 'Team Alerts')], metadata: {} });
 
-    render(<AlertRulesPage />);
+    await renderPage();
 
     expect(await screen.findByText('Failed to load folders')).toBeInTheDocument();
     expect(screen.queryByText('No folders found')).not.toBeInTheDocument();
@@ -520,7 +534,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />);
+    await renderPage();
     expect(await screen.findByText('3 alert rules')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Expand Team Alerts', expanded: false }));
     await screen.findByText('CPU high');
@@ -542,7 +556,7 @@ describe('AlertRulesPage', () => {
     mockFolderSearch(() => ({ items: [], metadata: {} }));
     mockAlertRuleSearch(() => ({ items: [], metadata: {} }));
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     await screen.findByText('No Alert rules found');
 
@@ -555,11 +569,15 @@ describe('AlertRulesPage', () => {
   it('does not emit another page-view event on a later re-render of the same mount', async () => {
     mockFolderSearch(() => ({ items: [], metadata: {} }));
 
-    const { rerender } = render(<AlertRulesPage />);
+    const { rerender } = await renderPage();
     await screen.findByText('No folders found');
 
     // Re-rendering without unmounting must not re-fire the once-per-mount tracking guard.
-    rerender(<AlertRulesPage />);
+    rerender(
+      <Suspense>
+        <AlertRulesPage />
+      </Suspense>
+    );
     await screen.findByText('No folders found');
 
     const pageViewCalls = reportInteractionMock.mock.calls.filter(
@@ -568,14 +586,19 @@ describe('AlertRulesPage', () => {
     expect(pageViewCalls).toHaveLength(1);
   });
 
-  // Saved searches stay disabled until the one-time legacy copy settles.
-  it('shows a disabled Saved searches control until the legacy copy settles, then an interactive one', async () => {
+  it('lists a legacy saved search as soon as the page shows', async () => {
+    const user = userEvent.setup();
     mockFolderSearch(() => ({ items: [], metadata: {} }));
+    localStorage.clear();
+    await new UserStorage('alerting').setItem(
+      'savedSearches',
+      JSON.stringify([{ id: 'legacy-1', name: 'Legacy CPU', query: 'cpu', isDefault: false, createdAt: 1 }])
+    );
 
-    render(<AlertRulesPage />);
+    await renderPage();
+    await user.click(screen.getByRole('button', { name: 'Saved searches' }));
 
-    expect(screen.getByRole('button', { name: 'Saved searches' })).toBeDisabled();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
+    expect(await screen.findByRole('link', { name: 'Legacy CPU' })).toBeInTheDocument();
   });
 });
 
@@ -622,7 +645,7 @@ describe('AlertRulesPage search and filters', () => {
   // SEARCH-1
   it('keeps a multi-token query exactly as typed, puts the applied criteria in the URL and sends them as one request', async () => {
     const user = userEvent.setup();
-    render(<AlertRulesPage />);
+    await renderPage();
     const typed = 'paused:false cpu label:team=api  namespace:folder-1';
 
     await user.type(await screen.findByRole('textbox', { name: 'Search' }), `${typed}{Enter}`);
@@ -644,7 +667,7 @@ describe('AlertRulesPage search and filters', () => {
   // SEARCH-1: sidebar and input edit the same criteria.
   it('the search input follows a sidebar change', async () => {
     const user = userEvent.setup();
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=cpu&view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?search=cpu&view=list'] } });
     await screen.findByText('CPU high');
 
     await user.click(screen.getByRole('switch', { name: 'Hide plugin rules' }));
@@ -658,7 +681,7 @@ describe('AlertRulesPage search and filters', () => {
     { search: 'foo%3Abar%20cpu', key: 'foo' },
     { search: 'metric%3Acpu_usage', key: 'metric' },
   ])('NAV-5: names the invalid $key filter and sends no request', async ({ search, key }) => {
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: [`/?search=${search}&view=list`] } });
+    await renderPage({ historyOptions: { initialEntries: [`/?search=${search}&view=list`] } });
 
     expect(await screen.findByText('Fix the invalid filter to see results')).toBeInTheDocument();
     expect(screen.getByText(`Some filters could not be applied: ${key}`)).toBeInTheDocument();
@@ -666,14 +689,14 @@ describe('AlertRulesPage search and filters', () => {
   });
 
   it('keeps an unsupported token in the input as typed', async () => {
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=foo%3Abar%20cpu&view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?search=foo%3Abar%20cpu&view=list'] } });
 
     expect(await screen.findByRole('textbox', { name: 'Search' })).toHaveValue('foo:bar cpu');
   });
 
   // SEARCH-5
   it('sends the mapped state and health values for legacy token spellings', async () => {
-    render(<AlertRulesPage />, {
+    await renderPage({
       historyOptions: { initialEntries: ['/?search=state%3Anormal%20health%3Aerr&view=list'] },
     });
 
@@ -690,7 +713,7 @@ describe('AlertRulesPage search and filters', () => {
 
   it('choosing a state in the sidebar puts it in the URL and the request', async () => {
     const user = userEvent.setup();
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
     await screen.findByText('CPU high');
 
     await user.click(screen.getByRole('combobox', { name: 'Alert state' }));
@@ -707,7 +730,7 @@ describe('AlertRulesPage search and filters', () => {
   // SEARCH-3: the sidebar shows and edits every value.
   it('shows every folder and data source from the URL, sends each as one In and edits them from the sidebar', async () => {
     const user = userEvent.setup();
-    render(<AlertRulesPage />, {
+    await renderPage({
       historyOptions: {
         initialEntries: [
           '/?search=namespace%3Afolder-1%20namespace%3Afolder-2%20datasource%3Ads-1%20datasource%3Ads-2&view=list',
@@ -745,7 +768,7 @@ describe('AlertRulesPage search and filters', () => {
   // SEARCH-1: Add label filter.
   it('Add label filter shows an empty row without changing the URL or sending a request until it has a key', async () => {
     const user = userEvent.setup();
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
     await screen.findByText('CPU high');
     const requestsBefore = ruleSearchBodies.length;
 
@@ -770,7 +793,7 @@ describe('AlertRulesPage search and filters', () => {
   // SEARCH-7
   it('applying a non-folder filter switches to List, disables Folders with its tooltip, and clearing returns to Folders', async () => {
     const user = userEvent.setup();
-    render(<AlertRulesPage />);
+    await renderPage();
     expect(await screen.findByRole('radio', { name: 'Folders' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeEnabled();
 
@@ -791,7 +814,7 @@ describe('AlertRulesPage search and filters', () => {
   });
 
   it('a folder-only filter stays in Folders mode', async () => {
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
 
     expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
@@ -801,7 +824,7 @@ describe('AlertRulesPage search and filters', () => {
   // SEARCH-2
   it('Back and Forward restore the search input, the sidebar, the mode and the request for each applied query', async () => {
     const user = userEvent.setup();
-    render(<AlertRulesPage />);
+    await renderPage();
     await user.type(await screen.findByRole('textbox', { name: 'Search' }), 'cpu{Enter}');
     await screen.findByText('CPU high');
     await user.click(screen.getByRole('switch', { name: 'Hide plugin rules' }));
@@ -838,7 +861,7 @@ describe('AlertRulesPage search and filters', () => {
   // SEARCH-2
   it('rendering again from the URL restores the input, the sidebar and the request', async () => {
     const user = userEvent.setup();
-    const { unmount } = render(<AlertRulesPage />);
+    const { unmount } = await renderPage();
     await user.type(
       await screen.findByRole('textbox', { name: 'Search' }),
       'cpu namespace:folder-1 label:team=api paused:false{Enter}'
@@ -848,7 +871,7 @@ describe('AlertRulesPage search and filters', () => {
     unmount();
     ruleSearchBodies.length = 0;
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: [`${pathname}${search}`] } });
+    await renderPage({ historyOptions: { initialEntries: [`${pathname}${search}`] } });
 
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue(
@@ -895,7 +918,7 @@ describe('AlertRulesPage search and filters', () => {
     it('saves, renames, sets as default and deletes a search in the Alert collection and leaves the Recording one untouched', async () => {
       const user = userEvent.setup();
       await seed('recordingRulesSavedSearches', [RECORDING_SEARCH]);
-      render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=cpu&view=list'] } });
+      await renderPage({ historyOptions: { initialEntries: ['/?search=cpu&view=list'] } });
       await screen.findByText('CPU high');
       await openSavedSearches(user);
 
@@ -943,7 +966,7 @@ describe('AlertRulesPage search and filters', () => {
         { id: 'alert-1', name: 'Running rules', query: 'cpu paused:false', isDefault: false, createdAt: 1 },
       ]);
       await seed('recordingRulesSavedSearches', [RECORDING_SEARCH]);
-      render(<AlertRulesPage />);
+      await renderPage();
       expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
       await openSavedSearches(user);
 
@@ -975,7 +998,7 @@ describe('AlertRulesPage search and filters', () => {
     it('applies the default saved search when the page opens with no query, without an unfiltered request first', async () => {
       await seedDefaultSearch('cpu paused:false');
 
-      render(<AlertRulesPage />);
+      await renderPage();
 
       expect(await screen.findByText('CPU high')).toBeInTheDocument();
       expect(urlSearchParams().get('search')).toBe('paused:false cpu');
@@ -986,7 +1009,7 @@ describe('AlertRulesPage search and filters', () => {
     it('does not apply the default saved search when the URL already has a query', async () => {
       await seedDefaultSearch('cpu paused:false');
 
-      render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
+      await renderPage({ historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
 
       expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
       await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
@@ -995,7 +1018,7 @@ describe('AlertRulesPage search and filters', () => {
     });
 
     it('shows the Folders view when there is no default saved search', async () => {
-      render(<AlertRulesPage />);
+      await renderPage();
 
       expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();

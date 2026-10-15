@@ -1,4 +1,5 @@
 import { HttpResponse, http } from 'msw';
+import { Suspense } from 'react';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { type DataSourceSrv, locationService, reportInteraction, setDataSourceSrv } from '@grafana/runtime';
@@ -96,6 +97,19 @@ function mockFolderCounts(countByUid: Record<string, number>) {
   );
 }
 
+// GrafanaRoute provides this boundary in the app; the page suspends until saved searches are set up.
+function renderPage(options?: Parameters<typeof render>[1]) {
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  return act(async () =>
+    render(
+      <Suspense>
+        <RecordingRulesPage />
+      </Suspense>,
+      options
+    )
+  );
+}
+
 describe('RecordingRulesPage', () => {
   const previousPermissions = contextSrv.user.permissions;
 
@@ -127,7 +141,7 @@ describe('RecordingRulesPage', () => {
       [AccessControlAction.AlertingRuleCreate]: true,
     };
 
-    render(<RecordingRulesPage />);
+    await renderPage();
 
     expect(screen.getByRole('link', { name: 'New recording rule' })).toHaveAttribute(
       'href',
@@ -140,7 +154,7 @@ describe('RecordingRulesPage', () => {
   it('hides New recording rule for a user without alert.rules:create', async () => {
     mockFolderSearch(() => ({ items: [], metadata: {} }));
 
-    render(<RecordingRulesPage />);
+    await renderPage();
 
     expect(screen.queryByRole('link', { name: 'New recording rule' })).not.toBeInTheDocument();
     await screen.findByRole('button', { name: 'Saved searches' });
@@ -153,7 +167,7 @@ describe('RecordingRulesPage', () => {
       metadata: {},
     }));
 
-    render(<RecordingRulesPage />);
+    await renderPage();
 
     expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
     expect(screen.getByText('Infra')).toBeInTheDocument();
@@ -171,7 +185,7 @@ describe('RecordingRulesPage', () => {
       return { items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')], metadata: {} };
     });
 
-    render(<RecordingRulesPage />);
+    await renderPage();
     await screen.findByText('Team Alerts');
 
     await userEvent.click(screen.getByRole('button', { name: 'Expand Team Alerts', expanded: false }));
@@ -194,7 +208,7 @@ describe('RecordingRulesPage', () => {
       metadata: {},
     }));
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(await screen.findByText('cpu_usage:avg')).toBeInTheDocument();
     expect(screen.getByText('mem_usage:avg')).toBeInTheDocument();
@@ -207,7 +221,7 @@ describe('RecordingRulesPage', () => {
   it('retries a failed first List page and then shows its rules', async () => {
     failFirstCall(RECORDING_SEARCH_URL, { items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')], metadata: {} });
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
     expect(screen.queryByText('No Recording rules found')).not.toBeInTheDocument();
@@ -239,7 +253,7 @@ describe('RecordingRulesPage', () => {
       })
     );
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     await screen.findByText('cpu_usage:avg');
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
@@ -258,7 +272,7 @@ describe('RecordingRulesPage', () => {
     mockFolderSearch(() => ({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} }));
     failFirstCall(RECORDING_SEARCH_URL, { items: [ruleItem('rule-1', 'cpu_usage:avg', 'folder-1')], metadata: {} });
 
-    render(<RecordingRulesPage />);
+    await renderPage();
     await userEvent.click(await screen.findByRole('button', { name: 'Expand Team Alerts', expanded: false }));
 
     expect(await screen.findByText('Failed to load rules')).toBeInTheDocument();
@@ -288,7 +302,7 @@ describe('RecordingRulesPage', () => {
       })
     );
 
-    render(<RecordingRulesPage />);
+    await renderPage();
     await screen.findByText('Team Alerts');
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
 
@@ -306,7 +320,7 @@ describe('RecordingRulesPage', () => {
   it('shows the empty state for a successful empty List response', async () => {
     mockRecordingRuleSearch(() => ({ items: [], metadata: {} }));
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(await screen.findByText('No Recording rules found')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -329,7 +343,7 @@ describe('RecordingRulesPage', () => {
       })
     );
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     await screen.findByText('cpu_usage:avg');
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
@@ -364,7 +378,7 @@ describe('RecordingRulesPage', () => {
       })
     );
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     await screen.findByText('cpu_usage:avg');
     await userEvent.dblClick(screen.getByRole('button', { name: 'Load more' }));
@@ -399,7 +413,7 @@ describe('RecordingRulesPage', () => {
     );
     const user = userEvent.setup();
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
     await waitFor(() => expect(requests).toHaveLength(1));
 
     await user.type(await screen.findByRole('textbox', { name: 'Search' }), 'cpu{Enter}');
@@ -417,7 +431,7 @@ describe('RecordingRulesPage', () => {
   it('shows a retryable error instead of the empty state when the first folder page fails', async () => {
     failFirstCall(FOLDER_SEARCH_URL, { items: [folderItem('folder-1', 'Team Alerts')], metadata: {} });
 
-    render(<RecordingRulesPage />);
+    await renderPage();
 
     expect(await screen.findByText('Failed to load folders')).toBeInTheDocument();
     expect(screen.queryByText('No folders found')).not.toBeInTheDocument();
@@ -431,7 +445,7 @@ describe('RecordingRulesPage', () => {
   it('shows the empty state for a successful empty folder page', async () => {
     mockFolderSearch(() => ({ items: [], metadata: {} }));
 
-    render(<RecordingRulesPage />);
+    await renderPage();
 
     expect(await screen.findByText('No folders found')).toBeInTheDocument();
     expect(screen.queryByText('Failed to load folders')).not.toBeInTheDocument();
@@ -441,7 +455,7 @@ describe('RecordingRulesPage', () => {
     mockFolderSearch(() => ({ items: [], metadata: {} }));
     mockRecordingRuleSearch(() => ({ items: [], metadata: {} }));
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
 
     await screen.findByText('No Recording rules found');
 
@@ -450,14 +464,21 @@ describe('RecordingRulesPage', () => {
     );
     expect(pageViewCalls).toEqual([['grafana_alerting_gma_rule_list_view', { kind: 'recording', mode: 'list' }]]);
   });
-
-  it('shows a disabled Saved searches control until the legacy copy settles, then an interactive one', async () => {
+  it('lists a legacy saved search as soon as the page shows', async () => {
+    const user = userEvent.setup();
     mockFolderSearch(() => ({ items: [], metadata: {} }));
+    localStorage.clear();
+    await new UserStorage('alerting').setItem(
+      'savedSearches',
+      JSON.stringify([
+        { id: 'legacy-1', name: 'Legacy errors', query: 'type:recording health:error', isDefault: false, createdAt: 1 },
+      ])
+    );
 
-    render(<RecordingRulesPage />);
+    await renderPage();
+    await user.click(screen.getByRole('button', { name: 'Saved searches' }));
 
-    expect(screen.getByRole('button', { name: 'Saved searches' })).toBeDisabled();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
+    expect(await screen.findByRole('link', { name: 'Legacy errors' })).toBeInTheDocument();
   });
 
   describe('search and filters', () => {
@@ -483,7 +504,7 @@ describe('RecordingRulesPage', () => {
     // SEARCH-1
     it('keeps a multi-token query exactly as typed and sends the applied criteria as one request', async () => {
       const user = userEvent.setup();
-      render(<RecordingRulesPage />);
+      await renderPage();
       const typed = 'metric:cpu_usage  cpu health:ok';
 
       await user.type(await screen.findByRole('textbox', { name: 'Search' }), `${typed}{Enter}`);
@@ -502,7 +523,7 @@ describe('RecordingRulesPage', () => {
 
     // SEARCH-5
     it('sends health In [NoData] for health:nodata and shows it in the sidebar', async () => {
-      render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=health%3Anodata&view=list'] } });
+      await renderPage({ historyOptions: { initialEntries: ['/?search=health%3Anodata&view=list'] } });
 
       expect(await screen.findByText('CPU recorded')).toBeInTheDocument();
       expect(ruleSearchBodies.at(-1)?.where).toEqual({
@@ -513,7 +534,7 @@ describe('RecordingRulesPage', () => {
 
     // NAV-5
     it('shows an Alert-only state token as an invalid filter and sends no request', async () => {
-      render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=state%3Afiring&view=list'] } });
+      await renderPage({ historyOptions: { initialEntries: ['/?search=state%3Afiring&view=list'] } });
 
       expect(await screen.findByText('Some filters could not be applied: state')).toBeInTheDocument();
       expect(screen.getByText('Fix the invalid filter to see results')).toBeInTheDocument();
@@ -523,7 +544,7 @@ describe('RecordingRulesPage', () => {
     // SEARCH-7
     it('applying a filter switches to List with Folders disabled, and clearing it returns to Folders', async () => {
       const user = userEvent.setup();
-      render(<RecordingRulesPage />);
+      await renderPage();
       expect(await screen.findByRole('radio', { name: 'Folders' })).toBeChecked();
 
       await user.type(screen.getByRole('textbox', { name: 'Search' }), 'cpu{Enter}');
@@ -541,7 +562,7 @@ describe('RecordingRulesPage', () => {
     // SEARCH-2
     it('Back and Forward restore the search input, the sidebar, the mode and the request for each applied query', async () => {
       const user = userEvent.setup();
-      render(<RecordingRulesPage />);
+      await renderPage();
       await user.type(await screen.findByRole('textbox', { name: 'Search' }), 'cpu{Enter}');
       await screen.findByText('CPU recorded');
       await user.click(screen.getByRole('switch', { name: 'Hide plugin rules' }));
@@ -578,7 +599,7 @@ describe('RecordingRulesPage', () => {
     // SEARCH-2
     it('rendering again from the URL restores the input, the sidebar and the request', async () => {
       const user = userEvent.setup();
-      const { unmount } = render(<RecordingRulesPage />);
+      const { unmount } = await renderPage();
       await user.type(
         await screen.findByRole('textbox', { name: 'Search' }),
         'cpu metric:cpu_usage health:error label:team=api{Enter}'
@@ -588,7 +609,7 @@ describe('RecordingRulesPage', () => {
       unmount();
       ruleSearchBodies.length = 0;
 
-      render(<RecordingRulesPage />, { historyOptions: { initialEntries: [`${pathname}${search}`] } });
+      await renderPage({ historyOptions: { initialEntries: [`${pathname}${search}`] } });
 
       expect(await screen.findByText('CPU recorded')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue(
@@ -634,7 +655,7 @@ describe('RecordingRulesPage', () => {
       it('saves, renames, sets as default and deletes a search in the Recording collection and leaves the Alert one untouched', async () => {
         const user = userEvent.setup();
         await seed('alertRulesSavedSearches', [ALERT_SEARCH]);
-        render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=cpu&view=list'] } });
+        await renderPage({ historyOptions: { initialEntries: ['/?search=cpu&view=list'] } });
         await screen.findByText('CPU recorded');
         await openSavedSearches(user);
 
@@ -682,7 +703,7 @@ describe('RecordingRulesPage', () => {
           { id: 'rec-1', name: 'Failing metrics', query: 'cpu health:error', isDefault: false, createdAt: 1 },
         ]);
         await seed('alertRulesSavedSearches', [ALERT_SEARCH]);
-        render(<RecordingRulesPage />);
+        await renderPage();
         expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
         await openSavedSearches(user);
 
@@ -716,7 +737,7 @@ describe('RecordingRulesPage', () => {
         JSON.stringify([{ id: 'alert-1', name: 'Alert default', query: 'cpu', isDefault: true, createdAt: 1 }])
       );
 
-      render(<RecordingRulesPage />);
+      await renderPage();
 
       expect(await screen.findByText('CPU recorded')).toBeInTheDocument();
       expect(urlSearchParams().get('search')).toBe('health:error');
@@ -733,7 +754,7 @@ describe('RecordingRulesPage', () => {
         ])
       );
 
-      render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
+      await renderPage({ historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
 
       expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
       await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());

@@ -121,11 +121,6 @@ describe('useRuleListSearchState', () => {
     expect(result.current.hasNonFolderFilters).toBe(false);
   });
 
-  it('reports whether the URL carries a search at all', () => {
-    expect(renderAt('/alerting/rules/alert').result.current.hasSearchQuery).toBe(false);
-    expect(renderAt('/alerting/rules/alert?search=cpu').result.current.hasSearchQuery).toBe(true);
-  });
-
   it('SEARCH-1: setCriteria serializes criteria into the search URL param', () => {
     const { result } = renderAt('/alerting/rules/alert');
 

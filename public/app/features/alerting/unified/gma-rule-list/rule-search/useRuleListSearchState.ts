@@ -17,7 +17,6 @@ export interface UseRuleListSearchStateResult {
   issues: CriteriaIssue[];
   mode: RuleListMode;
   hasNonFolderFilters: boolean;
-  hasSearchQuery: boolean;
   setCriteria: (criteria: Criteria, options?: { replace?: boolean }) => void;
   setMode: (mode: RuleListMode) => void;
   reset: () => void;
@@ -26,6 +25,18 @@ export interface UseRuleListSearchStateResult {
 /** Folders mode supports only the folder filter. Serializing keeps filters added later from being missed here. */
 function hasNonFolderCriteria(criteria: Criteria): boolean {
   return serialize({ ...criteria, namespaces: [] }).length > 0;
+}
+
+/** The `search` and `view` params that apply `next`, following the `view` rules of useRuleListSearchState. */
+export function searchParamsForCriteria(next: Criteria, view: string | null, hadNonFolderFilters: boolean) {
+  const search = serialize(next);
+  let nextView = view ?? undefined;
+  if (hasNonFolderCriteria(next)) {
+    nextView = 'list';
+  } else if (hadNonFolderFilters) {
+    nextView = undefined;
+  }
+  return { search: search.length > 0 ? search : undefined, view: nextView };
 }
 
 /**
@@ -48,15 +59,7 @@ export function useRuleListSearchState(kind: RuleListKind): UseRuleListSearchSta
 
   const setCriteria = useCallback(
     (next: Criteria, options?: { replace?: boolean }) => {
-      const nextSearch = serialize(next);
-      const hasNext = hasNonFolderCriteria(next);
-      let nextView = viewParam ?? undefined;
-      if (hasNext) {
-        nextView = 'list';
-      } else if (hasNonFolderFilters) {
-        nextView = undefined;
-      }
-      updateQueryParams({ search: nextSearch.length > 0 ? nextSearch : undefined, view: nextView }, options?.replace);
+      updateQueryParams(searchParamsForCriteria(next, viewParam, hasNonFolderFilters), options?.replace);
     },
     [hasNonFolderFilters, updateQueryParams, viewParam]
   );
@@ -79,7 +82,6 @@ export function useRuleListSearchState(kind: RuleListKind): UseRuleListSearchSta
     issues,
     mode,
     hasNonFolderFilters,
-    hasSearchQuery: search.length > 0,
     setCriteria,
     setMode,
     reset,
