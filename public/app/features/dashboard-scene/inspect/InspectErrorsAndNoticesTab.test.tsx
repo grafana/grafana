@@ -71,16 +71,15 @@ it('does not show a per-item Assistant action in the inspector', () => {
   expect(screen.queryByRole('button', { name: 'Fix with Assistant' })).not.toBeInTheDocument();
 });
 
-it('shows panel notices alongside the custom datasource inspector', async () => {
+it('shows only the custom datasource inspector when provided', () => {
   const store = new PanelStatusStore();
   const source = store.createSource();
-  const onClick = jest.fn();
   source.set([
     {
       id: 'field',
       severity: 'warning',
       text: 'Choose a numeric field',
-      actions: [{ id: 'choose', label: 'Choose field', onClick }],
+      actions: [{ id: 'choose', label: 'Choose field', onClick: jest.fn() }],
     },
   ]);
   const context: PanelContext = {
@@ -89,6 +88,7 @@ it('shows panel notices alongside the custom datasource inspector', async () => 
     eventBus: new EventBusSrv(),
   };
   const panel = new VizPanel({
+    _pluginLoadError: 'Plugin failed to load',
     $data: new SceneDataNode({
       data: {
         series: [],
@@ -113,9 +113,9 @@ it('shows panel notices alongside the custom datasource inspector', async () => 
   render(<tab.Component model={tab} />);
   expect(screen.getByText('Datasource details')).toBeVisible();
   expect(screen.queryByText('Custom query error')).not.toBeInTheDocument();
-  expect(screen.getByText('Choose a numeric field')).toBeVisible();
-  await userEvent.click(screen.getByRole('button', { name: 'Choose field' }));
-  expect(onClick).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText('Plugin failed to load')).not.toBeInTheDocument();
+  expect(screen.queryByText('Choose a numeric field')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Choose field' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Explain with Assistant' })).not.toBeInTheDocument();
 });
 
