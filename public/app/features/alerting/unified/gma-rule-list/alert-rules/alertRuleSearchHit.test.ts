@@ -30,4 +30,17 @@ describe('toAlertRuleSearchHit', () => {
       error: undefined,
     });
   });
+
+  it('reads the summary from the JSON-encoded annotations', () => {
+    const hit = toHit({
+      annotations: JSON.stringify({ summary: 'CPU above 90%', runbook_url: 'https://example.com' }),
+    });
+
+    expect(hit.summary).toBe('CPU above 90%');
+  });
+
+  it('leaves the summary undefined when the annotations are absent or not valid JSON', () => {
+    expect(toHit({}).summary).toBeUndefined();
+    expect(toHit({ annotations: '{not json' }).summary).toBeUndefined();
+  });
 });

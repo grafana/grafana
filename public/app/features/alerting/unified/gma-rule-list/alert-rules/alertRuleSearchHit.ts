@@ -32,7 +32,7 @@ export interface AlertRuleSearchHit {
 
 export function toAlertRuleSearchHit(item: RuleSearchResultItem): AlertRuleSearchHit {
   const fields: Record<string, unknown> = item.fields ?? {};
-  const annotations = asRecord(fields.annotations);
+  const annotations = asAnnotations(fields.annotations);
 
   return {
     uid: item.resource.name,
@@ -58,6 +58,18 @@ export function toAlertRuleSearchHit(item: RuleSearchResultItem): AlertRuleSearc
     receiver: asString(fields.receiver),
     routingTree: asString(fields.routingTree),
   };
+}
+
+/** The search index keeps annotations whole, as one JSON-encoded object string. */
+function asAnnotations(value: unknown): Record<string, string> {
+  if (typeof value !== 'string') {
+    return {};
+  }
+  try {
+    return asRecord(JSON.parse(value));
+  } catch {
+    return {};
+  }
 }
 
 function asRecord(value: unknown): Record<string, string> {
