@@ -1,7 +1,7 @@
 # Dashboard CodeMirror schema support
 
 `dashboardSchemaExtensions.ts` is a Dashboard-owned adapter for the schema returned by
-`fetchDashboardSchema()`. It does not install extensions in any production editor.
+`fetchDashboardSchema()`. `DashboardSchemaEditor` installs it for V2 settings and Edit as code.
 
 ```ts
 const schema = await fetchDashboardSchema();
@@ -35,7 +35,7 @@ version, with no new packages in the lockfile.
 
 ## Consumer inventory and migration boundaries
 
-| Consumer                                                                         | Existing behavior to retain when wiring this adapter                                                                                                                                                                                                                                                                                                 |
+| Consumer                                                                         | Behavior preserved by the migration                                                                                                                                                                                                                                                                                                                  |
 | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `v2schema/DashboardSchemaEditor.tsx`                                             | Fetch the Dashboard resource schema; report validation and YAML parse state separately; keep invalid YAML local; block format switches on syntax errors; preserve read-only mode, callbacks, header actions, and content overrides.                                                                                                                  |
 | `settings/JsonModelEditView.tsx` and `JsonModelEditViewRenderer.tsx`             | Only V2 uses the schema editor. Edits are a resource envelope; Save validates the envelope and unwraps `spec`. Keep the V1 path and Save behavior intact.                                                                                                                                                                                            |
@@ -43,8 +43,9 @@ version, with no new packages in the lockfile.
 | `sidebar/codePaneUtils.ts` and `dashboardResource.ts`                            | Keep resource serialization, normalized diffs, V1 conversion, and envelope restrictions on metadata/kind/apiVersion separate from JSON Schema validation. Continue applying the edited `spec` through the existing action.                                                                                                                           |
 | `settings/variables/` and `features/variables/editor/getVariableQueryEditor.tsx` | Query forms delegate to datasource-owned variable/query editors, including their completion providers. Regex/plain variable inputs use textareas. `StaticOptionsEditor.tsx` edits CSV with completion disabled. No Dashboard resource-schema completion editor exists in these variable forms; datasource query completion remains datasource-owned. |
 
-Production wiring belongs to DPRO-432. Shared diff-editor replacement belongs to DPRO-327.
-This PR leaves production editor, format, resource, and variable logic unchanged.
+The adapter and its production consumer ship together. Shared diff-editor replacement
+belongs to DPRO-327. V1 settings, resource serialization, and variable editors retain their
+existing implementations.
 
 ## Compatibility evidence
 
