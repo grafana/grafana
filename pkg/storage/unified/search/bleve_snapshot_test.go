@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -754,7 +755,7 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 			builderCalled.Add(1)
 			return 1, nil
 		},
-		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 	assert.Zero(t, builderCalled.Load(), "builder should not run when a fresh remote snapshot is used")
@@ -787,7 +788,7 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 			builderCalled.Add(1)
 			return 1, nil
 		},
-		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 	assert.Equal(t, int32(1), builderCalled.Load(), "builder should run when no fresh snapshot is available")
@@ -813,7 +814,7 @@ func TestBuildIndex_RebuildLeaderUploads(t *testing.T) {
 			builderCalled.Add(1)
 			return 7, nil
 		},
-		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
@@ -844,7 +845,7 @@ func TestBuildIndex_RebuildLeaderLockLostDuringBuild(t *testing.T) {
 			store.signalLockLost()
 			return 7, nil
 		},
-		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
@@ -884,7 +885,7 @@ func TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot(t *testing.T) {
 				builderCalled.Add(1)
 				return 1, nil
 			},
-			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/, resource.BuildIndexOptions{})
 		resultCh <- buildResult{idx: idx, err: err}
 	}()
 
@@ -933,7 +934,7 @@ func TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait(t *testing.T) {
 	go func() {
 		idx, err := be.BuildIndex(ctx, ns, 10, "rebuild",
 			func(resource.ResourceIndex) (int64, error) { return 1, nil },
-			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/, resource.BuildIndexOptions{})
 		resultCh <- buildResult{idx: idx, err: err}
 	}()
 
@@ -972,7 +973,7 @@ func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
 			builderCalled.Add(1)
 			return 1, nil
 		},
-		nil, true /*rebuild*/, time.Time{}, 0 /*disabled*/)
+		nil, true /*rebuild*/, time.Time{}, 0 /*disabled*/, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 	assert.Equal(t, int32(1), builderCalled.Load())
@@ -992,7 +993,7 @@ func TestBuildIndex_SkipsDownloadBelowMinDocCount(t *testing.T) {
 
 	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 1, "test",
 		func(resource.ResourceIndex) (int64, error) { return 1, nil },
-		nil, false, time.Time{}, 0)
+		nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 	assert.Zero(t, store.listKeyCalls.Load(), "ListIndexSnapshots should not be called below MinDocCount")
@@ -1204,7 +1205,7 @@ func TestBleveSnapshotLifecycleWithSharedStore(t *testing.T) {
 			},
 		}}))
 		return 2, nil
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idxA)
 
@@ -1224,7 +1225,7 @@ func TestBleveSnapshotLifecycleWithSharedStore(t *testing.T) {
 	idxB, err := beB.BuildIndex(ctx, key, 10, "startup", func(resource.ResourceIndex) (int64, error) {
 		builderCalled.Store(true)
 		return 0, fmt.Errorf("builder should not be called when a remote snapshot is available")
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idxB)
 
@@ -1299,7 +1300,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	idx, err := be.BuildIndex(ctx, key, 10, "startup", func(resource.ResourceIndex) (int64, error) {
 		builderCalled.Store(true)
 		return 0, nil
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
@@ -1550,18 +1551,6 @@ func withSnapshotBuildPollInterval(t *testing.T, poll time.Duration) {
 	})
 }
 
-// withColdStartTimings overrides the cold-start wait-loop timings for the
-// duration of the test. Restored via t.Cleanup.
-func withColdStartTimings(t *testing.T, poll, total time.Duration) {
-	t.Helper()
-	withSnapshotBuildPollInterval(t, poll)
-	prev := coldStartTotalWait
-	coldStartTotalWait = total
-	t.Cleanup(func() {
-		coldStartTotalWait = prev
-	})
-}
-
 // coldStartTest bundles common setup for coordinateColdStartBuild tests.
 type coldStartTest struct {
 	be          *bleveBackend
@@ -1589,7 +1578,7 @@ func newColdStartTest(t *testing.T, store *hookableStore) coldStartTest {
 }
 
 func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time) (string, IndexStoreLock, error) {
-	idx, _, _, lock, err := ct.be.coordinateColdStartBuild(ctx, ct.ns, ct.resourceDir, lastImportTime, ct.be.log)
+	idx, _, _, lock, err := ct.be.coordinateColdStartBuild(ctx, ct.ns, ct.resourceDir, lastImportTime, ct.be.log, false)
 	role := "build_alone"
 	switch {
 	case err != nil:
@@ -1605,6 +1594,151 @@ func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time
 
 func (ct coldStartTest) coldStartCounter(outcome string) float64 {
 	return testutil.ToFloat64(ct.metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, outcome))
+}
+
+func TestColdStartReplicasShareOneBuild(t *testing.T) {
+	for _, key := range []resource.NamespacedResource{
+		{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"},
+		resource.GlobalSearchKey("default"),
+	} {
+		t.Run(key.Resource, func(t *testing.T) {
+			kvStore := newTestBadgerKV(t)
+			leaderStore := newTestKVRemoteIndexStoreOn(t, kvStore, "leader")
+			followerStore := newTestKVRemoteIndexStoreOn(t, kvStore, "follower")
+			leader, _ := newTestBleveBackend(t, SnapshotOptions{Store: leaderStore, MinDocCount: 1, MaxIndexAge: time.Hour})
+			follower, _ := newTestBleveBackend(t, SnapshotOptions{Store: followerStore, MinDocCount: 1, MaxIndexAge: time.Hour})
+
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			started := make(chan struct{})
+			release := make(chan struct{})
+			leaderDone := make(chan error, 1)
+			var builds sync.WaitGroup
+			builds.Go(func() {
+				_, err := leader.BuildIndex(ctx, key, 1, "init", func(index resource.ResourceIndex) (int64, error) {
+					close(started)
+					select {
+					case <-ctx.Done():
+						return 0, ctx.Err()
+					case <-release:
+					}
+					err := index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Name:  "dashboard",
+							Title: "Dashboard",
+							RV:    1,
+							Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dashboard"},
+						},
+					}}})
+					return 1, err
+				}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{SkipIfBuilding: true})
+				leaderDone <- err
+			})
+			t.Cleanup(func() {
+				cancel()
+				builds.Wait()
+			})
+			select {
+			case <-started:
+			case <-ctx.Done():
+				t.Fatal("leader did not start building")
+			}
+
+			var followerBuilds atomic.Int32
+			tryFollower := func() (resource.ResourceIndex, error) {
+				return follower.BuildIndex(ctx, key, 1, "init", func(resource.ResourceIndex) (int64, error) {
+					followerBuilds.Add(1)
+					return 0, fmt.Errorf("follower must download the leader's snapshot")
+				}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{SkipIfBuilding: true})
+			}
+			for range 3 {
+				index, err := tryFollower()
+				require.ErrorIs(t, err, resource.ErrIndexBuildInProgress)
+				require.Nil(t, index)
+			}
+			close(release)
+			require.NoError(t, <-leaderDone)
+
+			index, err := tryFollower()
+			require.NoError(t, err)
+			require.NotNil(t, index)
+			require.Zero(t, followerBuilds.Load())
+			count, err := index.DocCount(ctx, "", nil)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), count)
+			snapshots, err := ListIndexSnapshots(ctx, followerStore, key, testLogger)
+			require.NoError(t, err)
+			require.Len(t, snapshots, 1)
+		})
+	}
+}
+
+func TestOnDemandGlobalReplicasSkipSnapshotsForUnknownSize(t *testing.T) {
+	kvStore := newTestBadgerKV(t)
+	firstStore := &hookableStore{inner: newTestKVRemoteIndexStoreOn(t, kvStore, "first")}
+	secondStore := &hookableStore{inner: newTestKVRemoteIndexStoreOn(t, kvStore, "second")}
+	first, _ := newTestBleveBackend(t, SnapshotOptions{Store: firstStore, MinDocCount: 5, MaxIndexAge: time.Hour})
+	second, _ := newTestBleveBackend(t, SnapshotOptions{Store: secondStore, MinDocCount: 5, MaxIndexAge: time.Hour})
+	key := resource.GlobalSearchKey("default")
+	writeDoc := func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Name:  "dashboard",
+				Title: "Dashboard",
+				RV:    1,
+				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dashboard"},
+			},
+		}}})
+	}
+
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	started := make(chan struct{})
+	release := make(chan struct{})
+	firstDone := make(chan error, 1)
+	var builds sync.WaitGroup
+	builds.Go(func() {
+		_, err := first.BuildIndex(ctx, key, -1, "search", func(index resource.ResourceIndex) (int64, error) {
+			close(started)
+			select {
+			case <-ctx.Done():
+				return 0, ctx.Err()
+			case <-release:
+				return writeDoc(index)
+			}
+		}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+		firstDone <- err
+	})
+	t.Cleanup(func() {
+		cancel()
+		builds.Wait()
+	})
+	select {
+	case <-started:
+	case <-ctx.Done():
+		t.Fatal("first request did not start building")
+	}
+
+	// Unknown size is what a request passes, and its build uses blocking options.
+	index, err := second.BuildIndex(ctx, key, -1, "search", writeDoc, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err, "a small on-demand build must not wait for another replica")
+	count, err := index.DocCount(ctx, "", nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), count)
+	select {
+	case err := <-firstDone:
+		t.Fatalf("the first build should still be waiting for release: %v", err)
+	default:
+	}
+	close(release)
+	require.NoError(t, <-firstDone)
+	for _, store := range []*hookableStore{firstStore, secondStore} {
+		require.Zero(t, store.lockAcquireCalls.Load())
+		require.Zero(t, store.listKeyCalls.Load())
+		require.Zero(t, store.uploadCalls.Load())
+	}
 }
 
 func TestColdStart_BecameLeader(t *testing.T) {
@@ -1627,7 +1761,7 @@ func TestColdStart_WaitedForLeader(t *testing.T) {
 	store := newHookableStore(t)
 	store.setLockBuildErr(errLockHeld) // another instance is the leader
 	ct := newColdStartTest(t, store)
-	withColdStartTimings(t, 10*time.Millisecond, time.Second)
+	withSnapshotBuildPollInterval(t, 10*time.Millisecond)
 
 	// Build the snapshot on the test goroutine — the build uses require.*,
 	// which would violate testing.TB rules if called from the helper
@@ -1657,26 +1791,40 @@ func TestColdStart_WaitedForLeader(t *testing.T) {
 	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeDownloadedAfterWait))
 }
 
-func TestColdStart_WaitTimeout(t *testing.T) {
+func TestColdStart_WaitsUntilCanceled(t *testing.T) {
 	store := newHookableStore(t)
 	store.setLockBuildErr(errLockHeld)
 	ct := newColdStartTest(t, store)
-	withColdStartTimings(t, 5*time.Millisecond, 30*time.Millisecond)
+	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
 
-	role, lock, err := ct.coordinate(context.Background(), time.Time{})
-	require.NoError(t, err)
-	assert.Equal(t, "build_alone", role)
+	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+	defer cancel()
+	role, lock, err := ct.coordinate(ctx, time.Time{})
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.Equal(t, "error", role)
 	assert.Nil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut))
-	// We retried the lock at least a couple times before giving up.
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
 	assert.GreaterOrEqual(t, store.lockAcquireCalls.Load(), int32(2))
+}
+
+func TestColdStart_DefersWhenLeaderHoldsLock(t *testing.T) {
+	store := newHookableStore(t)
+	store.setLockBuildErr(errLockHeld)
+	ct := newColdStartTest(t, store)
+
+	idx, _, _, lock, err := ct.be.coordinateColdStartBuild(t.Context(), ct.ns, ct.resourceDir, time.Time{}, ct.be.log, true)
+	require.ErrorIs(t, err, resource.ErrIndexBuildInProgress)
+	assert.Nil(t, idx)
+	assert.Nil(t, lock)
+	assert.Equal(t, int32(1), store.lockAcquireCalls.Load())
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeLockHeld))
 }
 
 func TestColdStart_AcquiresLockAfterLeaderRelease(t *testing.T) {
 	store := newHookableStore(t)
 	store.setLockBuildErr(errLockHeld)
 	ct := newColdStartTest(t, store)
-	withColdStartTimings(t, 10*time.Millisecond, time.Second)
+	withSnapshotBuildPollInterval(t, 10*time.Millisecond)
 
 	// Simulate the leader releasing the lock without uploading a snapshot
 	// (e.g. its build failed). The next tryAcquire in the wait loop should
@@ -1720,7 +1868,6 @@ func TestColdStart_LockBackendContextErrorPropagates(t *testing.T) {
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
 	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeLockError), "context cancel must not be recorded as lock_error")
-	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
 	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
 }
 
@@ -1728,7 +1875,7 @@ func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 	store := newHookableStore(t)
 	store.setLockBuildErr(errLockHeld)
 	ct := newColdStartTest(t, store)
-	withColdStartTimings(t, 10*time.Millisecond, time.Second)
+	withSnapshotBuildPollInterval(t, 10*time.Millisecond)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
@@ -1738,7 +1885,6 @@ func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
-	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
 	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
 }
 
@@ -1749,7 +1895,7 @@ func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 // mid-build. MinDocCount=1, MaxIndexAge=24h, lastImportTime is zero,
 // rebuild=false, maxFreshSnapshotAge=0 (rebuild-path knob doesn't affect
 // cold-start).
-func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra func()) (
+func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra func(), options resource.BuildIndexOptions) (
 	*resource.BleveIndexMetrics, *atomic.Int32, resource.ResourceIndex, error,
 ) {
 	t.Helper()
@@ -1767,7 +1913,7 @@ func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra f
 			}
 			return 1, nil
 		},
-		nil, false, time.Time{}, 0)
+		nil, false, time.Time{}, 0, options)
 	return metrics, builderCalled, idx, err
 }
 
@@ -1779,7 +1925,7 @@ func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra f
 func TestBuildIndex_ColdStartFastPathDownloads(t *testing.T) {
 	store := newHookableStore(t)
 	seedDownloadableSnapshot(t, t.Context(), store.inner, newTestNsResource(), makeULID(t, time.Now()), freshSnapshot(time.Minute))
-	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
+	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
@@ -1795,7 +1941,7 @@ func TestBuildIndex_ColdStartFastPathDownloads(t *testing.T) {
 // is uploaded immediately under the held lock.
 func TestBuildIndex_ColdStartLeaderUploads(t *testing.T) {
 	store := newHookableStore(t)
-	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
+	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
@@ -1814,7 +1960,7 @@ func TestBuildIndex_ColdStartLeaderLockLostDuringBuild(t *testing.T) {
 	store := newHookableStore(t)
 	// Simulate heartbeat-detected lease loss while we're in the middle of
 	// the from-scratch build.
-	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, store.signalLockLost)
+	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, store.signalLockLost, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
@@ -1825,20 +1971,16 @@ func TestBuildIndex_ColdStartLeaderLockLostDuringBuild(t *testing.T) {
 	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
-// TestBuildIndex_ColdStartTimeoutBuildsAlone verifies that when the lock is
-// permanently held by another instance and no snapshot ever appears, the
-// timeout path runs the builder anyway (no upload).
-func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
+func TestBuildIndex_ColdStartDefersWithoutBuilding(t *testing.T) {
 	store := newHookableStore(t)
 	store.setLockBuildErr(errLockHeld)
-	withColdStartTimings(t, 5*time.Millisecond, 30*time.Millisecond)
-	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
-	require.NoError(t, err)
-	require.NotNil(t, idx)
+	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil, resource.BuildIndexOptions{SkipIfBuilding: true})
+	require.ErrorIs(t, err, resource.ErrIndexBuildInProgress)
+	require.Nil(t, idx)
 
-	assert.Equal(t, int32(1), builderCalled.Load(), "build alone after timeout")
-	assert.Zero(t, store.uploadCalls.Load(), "no leader upload on timeout path")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeWaitTimedOut)))
+	assert.Zero(t, builderCalled.Load())
+	assert.Zero(t, store.uploadCalls.Load())
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeLockHeld)))
 }
 
 // TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero verifies that
@@ -1859,7 +2001,7 @@ func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 			builderCalled.Add(1)
 			return 1, nil
 		},
-		nil, false, time.Time{}, 0)
+		nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
@@ -1877,7 +2019,7 @@ func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 func TestBuildIndex_ColdStartContextCancelPropagates(t *testing.T) {
 	store := newHookableStore(t)
 	store.setLockBuildErr(errLockHeld) // force entry to the wait loop
-	withColdStartTimings(t, 5*time.Millisecond, time.Second)
+	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
 	be, _ := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
 		MinDocCount: 1,
@@ -1896,7 +2038,7 @@ func TestBuildIndex_ColdStartContextCancelPropagates(t *testing.T) {
 			builderCalled.Add(1)
 			return 1, nil
 		},
-		nil, false, time.Time{}, 0)
+		nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.ErrorIs(t, err, context.Canceled)
 	assert.Nil(t, idx)
 	assert.Zero(t, builderCalled.Load(), "builder must not run after context cancel")
