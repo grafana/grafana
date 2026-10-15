@@ -220,7 +220,7 @@ func objectRV(obj any) int64 {
 // would be a duplicate registration.
 type RelistProjectionMetrics struct {
 	projections *prometheus.CounterVec
-	hydrations  *prometheus.CounterVec
+	drift       *prometheus.CounterVec
 }
 
 // NewRelistProjectionMetrics builds the projection metrics on reg. A nil reg
@@ -231,9 +231,9 @@ func NewRelistProjectionMetrics(reg prometheus.Registerer) *RelistProjectionMetr
 			Name: "grafana_provisioning_informer_relist_projection_total",
 			Help: "Re-lists by what the server returned: keys is the keys-only projection (identities, no object bodies), objects is the full list. Reports whether keys_only_relist took effect, and shows the fallback when a server does not serve the projection.",
 		}, []string{"group", "resource", "projection"}),
-		hydrations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_informer_relist_hydrations_total",
-			Help: "Object reads a keys-only re-list issued to fill in state the projection cannot carry, one per key whose resource version changed. Rising towards the snapshot size means the projection is not paying off for this resource.",
+		drift: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_informer_relist_drifted_keys_total",
+			Help: "Keys a keys-only re-list found new or at a different resource version than the snapshot held. A tick with any of them takes a full list. Stays near zero while live events keep the snapshot current; sustained growth means they are not.",
 		}, []string{"group", "resource"}),
 	}
 }
@@ -246,17 +246,17 @@ func (m *RelistProjectionMetrics) Recorder(gvr schema.GroupVersionResource) Reli
 		return RelistRecorder{}
 	}
 	return RelistRecorder{
-		keys:       m.projections.WithLabelValues(gvr.Group, gvr.Resource, "keys"),
-		objects:    m.projections.WithLabelValues(gvr.Group, gvr.Resource, "objects"),
-		hydrations: m.hydrations.WithLabelValues(gvr.Group, gvr.Resource),
+		keys:    m.projections.WithLabelValues(gvr.Group, gvr.Resource, "keys"),
+		objects: m.projections.WithLabelValues(gvr.Group, gvr.Resource, "objects"),
+		drift:   m.drift.WithLabelValues(gvr.Group, gvr.Resource),
 	}
 }
 
 // RelistRecorder records one kind's re-list outcomes. Its zero value discards.
 type RelistRecorder struct {
-	keys       prometheus.Counter
-	objects    prometheus.Counter
-	hydrations prometheus.Counter
+	keys    prometheus.Counter
+	objects prometheus.Counter
+	drift   prometheus.Counter
 }
 
 // Projection records which projection served one re-list.
@@ -270,9 +270,9 @@ func (r RelistRecorder) Projection(keysOnly bool) {
 	}
 }
 
-// Hydration records one object read a keys-only re-list issued.
-func (r RelistRecorder) Hydration() {
-	if r.hydrations != nil {
-		r.hydrations.Inc()
+// Drift records the keys a keys-only re-list found the snapshot did not match.
+func (r RelistRecorder) Drift(keys int) {
+	if r.drift != nil {
+		r.drift.Add(float64(keys))
 	}
 }

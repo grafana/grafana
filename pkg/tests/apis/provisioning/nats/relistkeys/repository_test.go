@@ -13,9 +13,7 @@ import (
 )
 
 const (
-	repoKeysSample       = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="keys",resource="repositories"}`
-	repoObjectsSample    = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="objects",resource="repositories"}`
-	repoHydrationsSample = `grafana_provisioning_informer_relist_hydrations_total{group="provisioning.grafana.app",resource="repositories"}`
+	repoKeysSample = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="keys",resource="repositories"}`
 )
 
 // Nothing publishes watch notifications here, so a created Repository reaches the
@@ -33,9 +31,9 @@ func TestIntegrationProvisioningKeysReList_RepositoryReconciledFromKeys(t *testi
 }
 
 // Reconciling proves the pipeline works; this proves it kept working on keys.
-// This server is below the read-back break-even, so settled ticks run on keys,
-// nothing is read back, and a full list is the correct answer whenever a
-// repository moves.
+// Once the repository settles its resource version stops moving, so ticks run on
+// keys; a tick where it did move takes the full list, which is why this waits
+// for several rather than all of them.
 //
 // The counters are cumulative and the server is shared, so everything is a delta
 // from when this repository settled.
@@ -51,16 +49,12 @@ func TestIntegrationProvisioningKeysReList_UsesTheKeysProjectionForRepositories(
 	})
 
 	keysBefore := scrapeMetric(t, helper, repoKeysSample)
-	hydrationsBefore := scrapeMetric(t, helper, repoHydrationsSample)
 
 	const ticks = 3
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		assert.GreaterOrEqual(collect, scrapeMetric(t, helper, repoKeysSample), keysBefore+ticks,
 			"later ticks must run on the keys projection")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-
-	assert.Equal(t, hydrationsBefore, scrapeMetric(t, helper, repoHydrationsSample),
-		"below the break-even nothing is read back: a changed repository takes the list instead")
 }
 
 // The quota count is the one consumer that needs more than identities: a removed

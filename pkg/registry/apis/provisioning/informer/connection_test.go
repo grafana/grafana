@@ -133,11 +133,11 @@ func TestRelistProjectionMetrics_ReportsTheProjection(t *testing.T) {
 	recorder.Projection(true)
 	recorder.Projection(true)
 	recorder.Projection(false)
-	recorder.Hydration()
+	recorder.Drift(2)
 
 	assert.Equal(t, float64(2), projectionCount(t, reg, connGVR, "keys"))
 	assert.Equal(t, float64(1), projectionCount(t, reg, connGVR, "objects"))
-	assert.Equal(t, float64(1), hydrationCount(t, reg, connGVR))
+	assert.Equal(t, float64(2), driftCount(t, reg, connGVR))
 }
 
 // The group is part of the series identity: the keys projection is a
@@ -167,20 +167,20 @@ func TestRelistProjectionMetrics_SharedAcrossResources(t *testing.T) {
 
 	metrics.Recorder(connGVR).Projection(true)
 	metrics.Recorder(repoGVR).Projection(false)
-	metrics.Recorder(repoGVR).Hydration()
+	metrics.Recorder(repoGVR).Drift(2)
 
 	assert.Equal(t, float64(1), projectionCount(t, reg, connGVR, "keys"))
 	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
 	assert.Zero(t, projectionCount(t, reg, connGVR, "objects"), "the resources must not share a series")
-	assert.Equal(t, float64(1), hydrationCount(t, reg, repoGVR))
-	assert.Zero(t, hydrationCount(t, reg, connGVR))
+	assert.Equal(t, float64(2), driftCount(t, reg, repoGVR))
+	assert.Zero(t, driftCount(t, reg, connGVR))
 }
 
 // A delta source built without metrics records nothing rather than panicking.
 func TestRelistRecorder_ZeroValueDiscards(t *testing.T) {
 	var recorder RelistRecorder
 	recorder.Projection(true)
-	recorder.Hydration()
+	recorder.Drift(2)
 }
 
 // projectionLabelSets returns the label sets of every projection series in reg.
