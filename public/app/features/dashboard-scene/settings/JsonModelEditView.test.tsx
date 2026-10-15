@@ -1,5 +1,3 @@
-/** @jest-environment-options {"customExportConditions": ["@grafana-app/source", "node", "node-addons"]} */
-
 import { waitFor } from '@testing-library/react';
 import { cleanup, render, screen } from 'test/test-utils';
 
