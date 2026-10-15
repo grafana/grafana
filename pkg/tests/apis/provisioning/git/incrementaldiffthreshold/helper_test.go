@@ -12,7 +12,6 @@ import (
 const testMaxIncrementalChanges = 5
 
 var env = common.NewSharedGitEnv(
-	common.WithoutProvisioningFolderMetadata,
 	common.WithProvisioningMaxIncrementalChanges(testMaxIncrementalChanges),
 )
 

@@ -7,7 +7,7 @@ import (
 )
 
 // TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag verifies that permission updates
-// succeed for provisioned folders when the provisioningFolderMetadata feature flag is enabled.
+// succeed for provisioned folders.
 func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) {
 	repoName := "nested-folder-repo-flag"
 	helper := sharedHelper(t)

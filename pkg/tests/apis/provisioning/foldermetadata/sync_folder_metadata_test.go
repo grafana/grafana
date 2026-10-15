@@ -28,10 +28,9 @@ func sha1Hex(data []byte) string {
 	return hex.EncodeToString(h[:])
 }
 
-// TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled verifies that when the
-// provisioningFolderMetadata feature flag is enabled, a full sync on a repository that has folders
+// TestIntegrationProvisioning_FullSync_MissingFolderMetadata verifies that a full sync on a repository that has folders
 // without _folder.json produces a warning job state and a MissingFolderMetadata condition reason.
-func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
+func TestIntegrationProvisioning_FullSync_MissingFolderMetadata(t *testing.T) {
 	t.Run("single folder", func(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "missing-folder-meta-single"
