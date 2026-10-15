@@ -46,6 +46,7 @@ import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
+import { useThemedReplaceVariables } from './useThemedReplaceVariables';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
@@ -62,21 +63,10 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const {
-    eventBus,
-    options,
-    onOptionsChange,
-    replaceVariables,
-    data,
-    renderCounter,
-    fitContent,
-    transparent,
-    height,
-    width,
-    title,
-    id,
-  } = props;
+  const { eventBus, options, onOptionsChange, data, renderCounter, fitContent, transparent, height, width, title, id } =
+    props;
   const styles = useStyles2(getStyles);
+  const replaceVariables = useThemedReplaceVariables(props.replaceVariables);
   const isEditing = app === CoreApp.PanelEditor;
   // Repeated copies share `id`. The dashboard gives each copy its own id in the request.
   const consent = { panelId: data.request?.panelId ?? id, panelTitle: title, dashboardUid: data.request?.dashboardUID };
