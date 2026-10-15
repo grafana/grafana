@@ -28,21 +28,21 @@ const (
 	EnvVarSigningKeysURL = "GRAFANA_JWKS_URL"
 )
 
-// RealSigningKeysConfigured reports whether a real signer's keys are
-// configured: jwksURL, Grafana's [auth.extended_jwt] jwks_url, or keys for
-// plugins in Grafana's environment. Grafana must not sign plugin tokens
-// locally then, as plugins trust the real signer instead.
+// localKeyID identifies the local signing key in tokens and in LocalSigningKeys.
+const localKeyID = "grafana-local"
+
+// RealSigningKeysConfigured reports whether a real token signer is configured,
+// either as jwksURL (Grafana's [auth.extended_jwt] jwks_url) or as plugin
+// signing keys in Grafana's environment, which go-plugin forwards to plugins.
+// Plugins then trust that signer, so Grafana must not sign tokens locally.
 func RealSigningKeysConfigured(jwksURL string) bool {
 	return jwksURL != "" || os.Getenv(EnvVarSigningKeys) != "" || os.Getenv(EnvVarSigningKeysURL) != ""
 }
 
-// localKeyID identifies the local signing key in tokens and in LocalSigningKeys.
-const localKeyID = "grafana-local"
-
 // LocalTokenExchanger returns a process-wide exchanger, for when neither a
-// token exchange nor real signing keys are configured. Its tokens are signed with a key generated in memory,
-// which only plugins started with LocalSigningKeys trust: those started by
-// this Grafana process. It must not be used when a real exchanger exists.
+// token exchange nor real signing keys are configured. Its tokens are signed
+// with a key generated in memory, which only plugins started with
+// LocalSigningKeys trust: those started by this Grafana process.
 func LocalTokenExchanger() (authnlib.TokenExchanger, error) {
 	e, err := sharedLocalExchanger()
 	if err != nil {
