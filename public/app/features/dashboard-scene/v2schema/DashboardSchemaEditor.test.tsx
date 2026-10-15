@@ -1,11 +1,17 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { draft07Config } from 'json-schema-library';
 import { useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { DashboardSchemaEditor, type DashboardSchemaEditorProps } from './DashboardSchemaEditor';
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 
 jest.mock('./dashboardSchemaFetcher', () => ({ fetchDashboardSchema: jest.fn() }));
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: jest.fn(jest.requireActual('react-use').useAsync),
+}));
 
 // Shiki's ESM/WASM tooltip renderer cannot run in Jest's CommonJS environment.
 jest.mock(require.resolve('codemirror-json-schema').replace('index.js', 'utils/markdown.js'), () => ({
@@ -43,6 +49,55 @@ async function replaceBuffer(user: ReturnType<typeof userEvent.setup>, text: str
 describe('DashboardSchemaEditor with CodeMirror', () => {
   beforeEach(() => {
     jest.mocked(fetchDashboardSchema).mockResolvedValue(schema);
+    jest.mocked(useAsync).mockImplementation(jest.requireActual('react-use').useAsync);
+  });
+
+  it.each(['JSON', 'YAML'])('validates %s once after typing pauses and blocks saving while pending', async (format) => {
+    const onValidationChange = jest.fn();
+    render(<ControlledEditor onValidationChange={onValidationChange} />);
+    await screen.findByRole('textbox', { name: 'Dashboard schema' });
+    if (format === 'YAML') {
+      await userEvent.setup().click(screen.getByRole('radio', { name: 'YAML' }));
+    }
+    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const validate = jest.spyOn(draft07Config, 'validate');
+    try {
+      await replaceBuffer(user, format === 'JSON' ? '{"spec":{"title":123}}' : 'spec:\n  title: 123');
+      await replaceBuffer(user, format === 'JSON' ? '{"spec":{"title":"Edited"}}' : 'spec:\n  title: Edited');
+      expect(onValidationChange).toHaveBeenLastCalledWith(true);
+      expect(validate).not.toHaveBeenCalled();
+
+      await act(async () => jest.advanceTimersByTime(99));
+      expect(validate).not.toHaveBeenCalled();
+      await act(async () => jest.advanceTimersByTime(1));
+      expect(validate.mock.calls.filter(([, , , pointer]) => pointer === '#')).toHaveLength(1);
+      expect(onValidationChange).toHaveBeenLastCalledWith(false);
+      await act(async () => jest.advanceTimersByTime(200));
+      expect(validate.mock.calls.filter(([, , , pointer]) => pointer === '#')).toHaveLength(1);
+    } finally {
+      validate.mockRestore();
+      jest.useRealTimers();
+    }
+  });
+
+  it('shows a read-only buffer and an error when schema support fails to load', async () => {
+    jest.mocked(useAsync).mockReturnValue({ loading: false, error: new Error('Loading chunk failed') });
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    const onValidationChange = jest.fn();
+    render(<ControlledEditor onChange={onChange} onValidationChange={onValidationChange} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Unable to load dashboard schema validation');
+    const editor = await screen.findByRole('textbox', { name: 'Dashboard schema' });
+    expect(editor).toHaveAttribute('aria-readonly', 'true');
+    expect(screen.getByRole('radio', { name: 'YAML' })).toBeDisabled();
+    await user.click(editor);
+    await user.keyboard('changed');
+    expect(editor).toHaveTextContent(initialValue);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onValidationChange).toHaveBeenLastCalledWith(true);
   });
 
   it('reports current JSON edits and blocks YAML for JSON syntax errors', async () => {
@@ -52,6 +107,9 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
     render(<ControlledEditor onChange={onChange} onValidationChange={onValidationChange} />);
     await screen.findByRole('textbox', { name: 'Dashboard schema' });
     await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+
+    await replaceBuffer(user, initialValue);
+    expect(onValidationChange).toHaveBeenLastCalledWith(false);
 
     await replaceBuffer(user, '{"spec":{"title":123}}');
     expect(onChange).toHaveBeenLastCalledWith('{"spec":{"title":123}}');
@@ -65,7 +123,7 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
 
     await replaceBuffer(user, '{"spec":{"title":"Edited"}}');
     expect(onChange).toHaveBeenLastCalledWith('{"spec":{"title":"Edited"}}');
-    expect(onValidationChange).toHaveBeenLastCalledWith(false);
+    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
     expect(screen.getByRole('radio', { name: 'YAML' })).toBeEnabled();
   });
 
@@ -88,7 +146,7 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
     await replaceBuffer(user, draft);
     expect(onChange).toHaveBeenLastCalledWith('{\n  "spec": {\n    "title": "Edited"\n  }\n}');
     expect(screen.getByRole('textbox', { name: 'Dashboard schema' })).toHaveTextContent('# My comment');
-    expect(onValidationChange).toHaveBeenLastCalledWith(false);
+    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
 
     onChange.mockClear();
     await replaceBuffer(user, 'spec: [');
@@ -106,7 +164,7 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
     await replaceBuffer(user, draft);
     await user.click(screen.getByRole('radio', { name: 'JSON' }));
     expect(screen.getByRole('textbox', { name: 'Dashboard schema' })).toHaveTextContent('"title": "Edited"');
-    expect(onValidationChange).toHaveBeenLastCalledWith(false);
+    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
   });
 
   it('validates external values while a diff replaces the editor', async () => {

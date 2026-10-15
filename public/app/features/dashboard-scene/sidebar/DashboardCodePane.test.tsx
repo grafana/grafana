@@ -228,7 +228,8 @@ describe('DashboardCodePane CodeMirror editing', () => {
 
     await user.keyboard('{Control>}a{/Control}');
     await user.paste('spec:\n  title: YAML edit');
-    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Apply changes' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Apply changes' }));
     expect(applyJsonToDashboard).toHaveBeenLastCalledWith({}, '{\n  "spec": {\n    "title": "YAML edit"\n  }\n}');
     expect(screen.getByRole('switch', { name: 'Show diff' })).toBeEnabled();

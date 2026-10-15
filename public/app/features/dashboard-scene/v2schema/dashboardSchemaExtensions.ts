@@ -11,10 +11,10 @@ import {
   stateExtensions,
   updateSchema,
 } from 'codemirror-json-schema';
-import yaml from 'js-yaml';
 import { Draft07, draft07Config, isJsonError, reduceSchema } from 'json-schema-library';
 
 import { type SchemaEditorFormat } from './DashboardSchemaEditor';
+import { parseDashboardSchema } from './dashboardSchemaParser';
 
 export interface DashboardSchemaValidation {
   diagnostics: Diagnostic[];
@@ -26,6 +26,7 @@ export interface DashboardSchemaValidation {
 
 interface DashboardSchemaExtensionOptions {
   format?: SchemaEditorFormat;
+  validate?: ReturnType<typeof createDashboardSchemaValidator>;
   onValidationChange?: (hasErrors: boolean) => void;
   onParseErrorChange?: (hasParseError: boolean) => void;
 }
@@ -52,27 +53,16 @@ export function createDashboardSchemaValidator(schema: Record<string, unknown>) 
     },
   });
 
-  return (text: string, format: SchemaEditorFormat = 'json'): DashboardSchemaValidation => {
-    let json: string;
-    let value: unknown;
-    try {
-      if (format === 'yaml') {
-        const serialized = JSON.stringify(yaml.load(text), null, 2);
-        if (serialized === undefined) {
-          throw new Error('YAML must contain a JSON value');
-        }
-        json = serialized;
-      } else {
-        json = text;
-      }
-      value = JSON.parse(json);
-    } catch (error) {
+  const validate = (text: string, format: SchemaEditorFormat): DashboardSchemaValidation => {
+    const parsed = parseDashboardSchema(text, format);
+    if (parsed.hasParseError) {
       return {
-        diagnostics: [{ from: 0, to: 0, severity: 'error', message: String(error) }],
+        diagnostics: [{ from: 0, to: 0, severity: 'error', message: parsed.error }],
         hasErrors: true,
         hasParseError: true,
       };
     }
+    const { json, value } = parsed;
 
     // YAML consumers need validation status, not JSON offsets in a YAML buffer.
     const errors = validator.validate(value);
@@ -98,6 +88,17 @@ export function createDashboardSchemaValidator(schema: Record<string, unknown>) 
       }
     }
     return { diagnostics, hasErrors: diagnostics.length > 0, hasParseError: false, json };
+  };
+
+  // The buffer's Save/Apply check and the editor linter share one result.
+  let previous: { text: string; format: SchemaEditorFormat; result: DashboardSchemaValidation } | undefined;
+  return (text: string, format: SchemaEditorFormat = 'json') => {
+    if (previous?.text === text && previous.format === format) {
+      return previous.result;
+    }
+    const result = validate(text, format);
+    previous = { text, format, result };
+    return result;
   };
 }
 
@@ -128,9 +129,13 @@ function getDiagnosticRanges(text: string) {
 
 export function createDashboardSchemaExtensions(
   schema: Record<string, unknown>,
-  { format = 'json', onValidationChange, onParseErrorChange }: DashboardSchemaExtensionOptions = {}
+  {
+    format = 'json',
+    validate = createDashboardSchemaValidator(schema),
+    onValidationChange,
+    onParseErrorChange,
+  }: DashboardSchemaExtensionOptions = {}
 ): Extension[] {
-  const validate = createDashboardSchemaValidator(schema);
   const parseLinter = jsonParseLinter();
   const validation = linter(
     (view) => {

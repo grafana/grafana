@@ -5,10 +5,11 @@ import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { RadioButtonGroup, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, RadioButtonGroup, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
+import { parseDashboardSchema } from './dashboardSchemaParser';
 
 export type SchemaEditorFormat = 'json' | 'yaml';
 
@@ -93,14 +94,19 @@ export function DashboardSchemaEditor({
     [schemaState]
   );
   const extensions = useMemo(
-    () => schemaState?.support.createDashboardSchemaExtensions(schemaState.schema ?? {}, { format }) ?? [],
-    [schemaState, format]
+    () => schemaState?.support.createDashboardSchemaExtensions(schemaState.schema ?? {}, { format, validate }) ?? [],
+    [schemaState, format, validate]
   );
 
   // Diff/content overrides unmount the editor, so validation belongs to the buffer,
   // rather than the lifetime of a CodeMirror view.
   useEffect(() => {
-    onValidationChange?.(isSchemaLoading || !validate || validate(displayValue, format).hasErrors);
+    onValidationChange?.(true);
+    if (isSchemaLoading || !validate) {
+      return;
+    }
+    const timeout = setTimeout(() => onValidationChange?.(validate(displayValue, format).hasErrors), 100);
+    return () => clearTimeout(timeout);
   }, [displayValue, format, isSchemaLoading, validate, onValidationChange]);
 
   const handleFormatChange = useCallback(
@@ -112,14 +118,15 @@ export function DashboardSchemaEditor({
         return;
       }
       if (newFormat === 'json' && localYamlContent !== null) {
-        const result = validate(localYamlContent, 'yaml');
+        const result = parseDashboardSchema(localYamlContent, 'yaml');
         if (result.hasParseError) {
-          setYamlParseError(result.diagnostics[0].message);
+          setYamlParseError(result.error);
           onValidationChange?.(true);
           return;
         }
-        onChange?.(result.json!);
+        onChange?.(result.json);
       }
+      onValidationChange?.(true);
       setFormat(newFormat);
       setYamlParseError(null);
       setLocalYamlContent(null);
@@ -138,8 +145,9 @@ export function DashboardSchemaEditor({
       if (!validate) {
         return;
       }
-      const result = validate(newValue, format);
-      onValidationChange?.(isSchemaLoading || result.hasErrors);
+      if (newValue !== displayValue) {
+        onValidationChange?.(true);
+      }
       if (format === 'json') {
         setYamlParseError(null);
         setLocalYamlContent(null);
@@ -147,21 +155,18 @@ export function DashboardSchemaEditor({
         return;
       }
       setLocalYamlContent(newValue);
+      const result = parseDashboardSchema(newValue, 'yaml');
       if (result.hasParseError) {
-        setYamlParseError(result.diagnostics[0].message);
+        setYamlParseError(result.error);
         return;
       }
       setYamlParseError(null);
-      onChange?.(result.json!);
+      onChange?.(result.json);
     },
-    [format, isSchemaLoading, onChange, onValidationChange, validate]
+    [displayValue, format, onChange, onValidationChange, validate]
   );
 
   const wrapperClassName = containerStyles ? `${styles.wrapper} ${containerStyles}` : styles.wrapper;
-
-  if (schemaLoadError) {
-    throw schemaLoadError;
-  }
 
   if (isSchemaLoading) {
     return (
@@ -175,6 +180,14 @@ export function DashboardSchemaEditor({
 
   return (
     <div className={wrapperClassName}>
+      {schemaLoadError && (
+        <Alert
+          severity="error"
+          title={t('dashboard-schema-editor.schema-load-error', 'Unable to load dashboard schema validation')}
+        >
+          {t('dashboard-schema-editor.schema-load-error-description', 'Reload the page to edit this dashboard.')}
+        </Alert>
+      )}
       {(showFormatToggle || headerLeftActions || headerActions) && (
         <div className={styles.formatToggleContainer}>
           {(showFormatToggle || headerLeftActions) && (
@@ -195,6 +208,7 @@ export function DashboardSchemaEditor({
                       value={format}
                       onChange={handleFormatChange}
                       disabledOptions={disabledFormats}
+                      disabled={Boolean(schemaLoadError)}
                     />
                   </div>
                 </Tooltip>
@@ -214,7 +228,7 @@ export function DashboardSchemaEditor({
               value={displayValue}
               language={format}
               extensions={extensions}
-              readOnly={readOnly}
+              readOnly={readOnly || Boolean(schemaLoadError)}
               aria-label={t('dashboard-schema-editor.editor-label', 'Dashboard schema')}
               onChange={handleChange}
             />

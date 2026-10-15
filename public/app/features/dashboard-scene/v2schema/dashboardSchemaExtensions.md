@@ -19,11 +19,17 @@ validate the displayed buffer using `js-yaml`, then validate its JSON representa
 the same schema. YAML schema diagnostics use the document start, not offsets from the JSON
 representation. The consumer supplies YAML highlighting through `language="yaml"`.
 
-`createDashboardSchemaValidator(schema)` also exposes synchronous validation for Save/Apply
-gates and content overrides, where an editor view may not exist. Its result distinguishes
-parse errors from schema errors and provides JSON only for parseable buffers. Validation
-does not rewrite the buffer, fill defaults, or strip plugin fields. Keep the consumer's
-local YAML draft so comments and formatting survive edits and rerenders.
+`createDashboardSchemaValidator(schema)` exposes validation for Save/Apply gates and content
+overrides, where an editor view may not exist. The editor blocks Save/Apply immediately on
+edits, then validates after a 100 ms pause. The linter and the buffer check share a validator
+that caches its last result, so they do not repeat schema validation for the same buffer.
+The change handler only parses YAML into JSON; it never runs schema validation. The
+validator's result distinguishes parse errors from schema errors and provides JSON only
+for parseable buffers. Validation does not rewrite the buffer, fill defaults, or strip
+plugin fields. Keep the consumer's local YAML draft so comments and formatting survive
+edits and rerenders.
+If the schema tooling fails to load, the editor shows a read-only buffer with a reload
+message and keeps Save/Apply disabled.
 
 Dashboard schemas use `const` and `if/then` for discriminated unions. Validation and
 completion use `json-schema-library`'s Draft 7 engine directly. Completion compiles its
@@ -59,3 +65,22 @@ transformation shapes; the generated schema itself is unchanged.
 strict JSON syntax, YAML schema/parse errors and recovery, completion, and per-editor
 schema reconfiguration. Only the package's Shiki tooltip renderer is replaced in Jest;
 the schema engine and completion source run unmocked.
+
+## Large-dashboard measurements
+
+A Chromium harness used the checked-in `v2beta1.complete.json` fixture, normalized as in
+the compatibility test, with its first panel repeated 200 times. The fetched V2 schema and
+validator were compiled before timing. These are medians of seven runs on formatted buffers
+(609 KB JSON, 388 KB YAML); schema-error cases set `spec.title` to a number.
+
+| Buffer             | Before: two synchronous schema checks | After: synchronous parsing |
+| ------------------ | ------------------------------------- | -------------------------- |
+| JSON, valid        | 54.7 ms                               | 0.7 ms                     |
+| JSON, schema error | 249.7 ms                              | 0.7 ms                     |
+| YAML, valid        | 63.2 ms                               | 5.5 ms                     |
+| YAML, schema error | 63.4 ms                               | 5.3 ms                     |
+
+The JSON change handler forwards the raw text; its render-time syntax check parses JSON.
+YAML edits parse and serialize to JSON. These measurements cover that synchronous work,
+not React rendering or painting. Full schema validation and diagnostic generation still
+run on the main thread after a 100 ms pause, once per buffer shared with the linter.

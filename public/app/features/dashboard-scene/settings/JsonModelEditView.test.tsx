@@ -255,7 +255,9 @@ describe('JsonModelEditView save failures', () => {
       view.setState({ jsonText: view.getJsonText() });
       const { user } = render(<view.Component model={view} />);
 
-      await user.click(await screen.findByRole('button', { name: 'Save changes' }));
+      const save = await screen.findByRole('button', { name: 'Save changes' });
+      await waitFor(() => expect(save).toBeEnabled());
+      await user.click(save);
 
       expect(await screen.findByText(expectedTitle)).toBeInTheDocument();
       expect(await screen.findByText(expectedMessage)).toBeInTheDocument();
@@ -295,6 +297,8 @@ describe('JsonModelEditView CodeMirror editing', () => {
     await user.keyboard('{Control>}a{/Control}');
     await user.paste(JSON.stringify(resource));
     expect(view.getEditedSaveModel().title).toBe('Edited in CodeMirror');
+    expect(save).toBeDisabled();
+    await waitFor(() => expect(save).toBeEnabled());
     await user.click(save);
     expect(saveDashboardMutationMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -310,7 +314,7 @@ describe('JsonModelEditView CodeMirror editing', () => {
 
     await user.keyboard('{Control>}a{/Control}');
     await user.paste(JSON.stringify(resource));
-    expect(save).toBeEnabled();
+    await waitFor(() => expect(save).toBeEnabled());
     await user.click(screen.getByRole('radio', { name: 'YAML' }));
     await user.click(await screen.findByRole('textbox', { name: 'Dashboard schema' }));
     await user.keyboard('{Control>}a{/Control}');
