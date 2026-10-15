@@ -131,7 +131,6 @@ func TestDebouncer(t *testing.T) {
 
 	t.Run("should handle errors", func(t *testing.T) {
 		var (
-			wg          sync.WaitGroup
 			errs        = make(chan error, 10)
 			expectedErr = errors.New("test error")
 		)
@@ -139,7 +138,6 @@ func TestDebouncer(t *testing.T) {
 		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize: 10,
 			ProcessHandler: func(ctx context.Context, value string) error {
-				wg.Done()
 				return expectedErr
 			},
 			MinWait:      10 * time.Millisecond,
@@ -154,19 +152,19 @@ func TestDebouncer(t *testing.T) {
 
 		group.Start(ctx)
 
-		wg.Add(1)
 		require.NoError(t, group.Add("key1"))
-
-		wg.Wait()
 
 		select {
 		case err := <-errs:
 			require.Equal(t, expectedErr, err)
-		default:
+		case <-time.After(time.Second):
 			t.Fatal("expected error")
 		}
 
-		require.Equal(t, float64(1), testutil.ToFloat64(group.metrics.processingErrorsCounter))
+		// The counter is incremented after ErrorHandler returns.
+		require.Eventually(t, func() bool {
+			return testutil.ToFloat64(group.metrics.processingErrorsCounter) == 1
+		}, time.Second, time.Millisecond)
 	})
 
 	t.Run("should gracefully handle stops", func(t *testing.T) {
