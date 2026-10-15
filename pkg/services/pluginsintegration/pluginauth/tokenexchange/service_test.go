@@ -11,7 +11,9 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -191,3 +193,56 @@ func TestSignAccessTokenLoopbackOnly(t *testing.T) {
 	require.Equal(t, http.StatusForbidden, call("192.0.2.10:51234", ""), "a valid CAP token from another host is refused")
 	require.Equal(t, http.StatusForbidden, call("192.0.2.10:51234", "127.0.0.1"), "forwarding headers are not trusted")
 }
+
+func TestProvideServiceLocalAPIURL(t *testing.T) {
+	for _, tc := range []struct {
+		name, override, jwksURL string
+		registered              bool
+		wantRemoteStatus        int
+	}{
+		{name: "automatic loopback", registered: true, wantRemoteStatus: http.StatusForbidden},
+		{name: "explicit loopback", override: "http://127.0.0.1:4321", registered: true, wantRemoteStatus: http.StatusForbidden},
+		{name: "explicit localhost", override: "http://LOCALHOST:4321", registered: true, wantRemoteStatus: http.StatusForbidden},
+		{name: "explicit interface", override: "http://192.0.2.10:4321", registered: true, wantRemoteStatus: http.StatusOK},
+		{name: "explicit hostname", override: "https://grafana.internal:8443", registered: true, wantRemoteStatus: http.StatusOK},
+		{name: "invalid override", override: "/relative"},
+		{name: "external signer", jwksURL: "https://auth.example.com/keys"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &setting.Cfg{Raw: ini.Empty(), Protocol: setting.HTTPScheme, HTTPPort: "4321", ExtJWTAuth: setting.ExtJWTSettings{JWKSUrl: tc.jwksURL, Audiences: []string{"grafana"}}}
+			cfg.Raw.Section("plugins").Key("local_api_url").SetValue(tc.override)
+			routes := &exchangeRoutes{}
+			s := ProvideService(cfg, routes, nil)
+			require.Equal(t, tc.registered, routes.registered)
+			if !tc.registered {
+				return
+			}
+			s.manifests = func(context.Context, string) ([]*app.ManifestData, error) {
+				return []*app.ManifestData{testManifest}, nil
+			}
+			token, err := v3.IssueLocalAccessPolicyToken("example-app")
+			require.NoError(t, err)
+			t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(token) })
+			for _, credential := range []string{token, "invalid"} {
+				req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"namespace":"*","audiences":["grafana"]}`))
+				req.RemoteAddr = "192.0.2.10:51234"
+				req.Header.Set("Authorization", "Bearer "+credential)
+				rec := httptest.NewRecorder()
+				c := &contextmodel.ReqContext{Context: &web.Context{Req: req, Resp: web.NewResponseWriter(req.Method, rec)}}
+				s.signAccessToken(c).WriteTo(c)
+				want := tc.wantRemoteStatus
+				if credential == "invalid" && want == http.StatusOK {
+					want = http.StatusUnauthorized
+				}
+				require.Equal(t, want, rec.Code)
+			}
+		})
+	}
+}
+
+type exchangeRoutes struct {
+	routing.RouteRegister
+	registered bool
+}
+
+func (r *exchangeRoutes) Post(string, ...web.Handler) { r.registered = true }

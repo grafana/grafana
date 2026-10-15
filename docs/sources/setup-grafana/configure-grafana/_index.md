@@ -2784,6 +2784,35 @@ Default is `false`.
 
 Set to `true` if you want to test alpha plugins that are not yet ready for general usage. Default is `false`.
 
+#### `local_api_url`
+
+The URL that app plugins started by this Grafana process use to call Grafana's API and to get access tokens for it.
+Grafana uses this setting only when no external plugin token signer is configured.
+That's when neither `v3_cap_token` nor `v3_token_exchange_url` is set in `[plugins]`, `jwks_url` isn't set in `[auth.extended_jwt]`, and neither the `GRAFANA_JWKS` nor the `GRAFANA_JWKS_URL` environment variable is set.
+Default is empty.
+
+When it's empty, Grafana derives a loopback URL, such as `http://127.0.0.1:3000`, from `[server]` settings.
+This works when `protocol` is `http`, `http_addr` is empty, a loopback address, or all interfaces, and `http_port` is a fixed port.
+If `serve_from_sub_path` is `true`, the URL includes the subpath from `root_url`.
+
+Set `local_api_url` when Grafana can't derive the URL, for example when it serves HTTPS, listens on a socket or a specific address, or has `enforce_domain` enabled.
+The URL must reach this Grafana process directly, not a load balancer, because each Grafana process signs its own tokens.
+Include the port and any subpath.
+
+The following example sets the URL for a Grafana process that serves HTTPS on an internal host name:
+
+```ini
+[plugins]
+local_api_url = https://<GRAFANA_HOST>:8443/grafana
+```
+
+Replace _`<GRAFANA_HOST>`_ with a host name that resolves to this Grafana process and matches its TLS certificate.
+If `enforce_domain` is enabled, the host must match `[server] domain`.
+
+Grafana doesn't start if `local_api_url` is invalid.
+If it's empty and Grafana can't derive a URL, Grafana logs a warning and app plugins can't call its API.
+Grafana still authenticates its own requests to plugins.
+
 #### `allow_loading_unsigned_plugins`
 
 Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.

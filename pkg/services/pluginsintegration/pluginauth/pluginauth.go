@@ -3,8 +3,11 @@
 package pluginauth
 
 import (
+	"errors"
+	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -16,37 +19,82 @@ import (
 // Grafana starts, not a public API.
 const TokenExchangePath = "/api/internal/plugin-token-exchange"
 
-// LocalAPIURL returns the URL at which the plugins Grafana starts reach this
-// Grafana process directly, on loopback, rather than through the app URL. Local
-// access policy tokens and signing keys belong to one process, so behind a
-// load balancer the app URL could reach another one.
-//
-// It is only set for a plain HTTP listener on all interfaces or on loopback:
-// an HTTPS certificate does not cover the loopback address, and a socket or a
-// listener on another address has none. Otherwise it is "", and plugins use
-// the app URL.
-func LocalAPIURL(cfg *setting.Cfg) string {
-	if cfg == nil || cfg.Protocol != setting.HTTPScheme || cfg.HTTPPort == "" || cfg.HTTPPort == "0" {
-		return ""
+// ErrNoLocalAPIURL is returned by LocalAPIURL when no [plugins] local_api_url
+// is set and none can be inferred from the listener. Plugins then get no
+// credentials for Grafana's API, while Grafana still authenticates its own
+// requests to them.
+var ErrNoLocalAPIURL = errors.New("local plugin API: no URL reaches this Grafana process")
+
+// LocalAPIURL resolves the plugin API endpoint. An explicit override must reach
+// this Grafana process: its access policy tokens and signing key are process-local.
+// Otherwise only an HTTP listener reachable on loopback can be inferred safely,
+// and any other listener returns ErrNoLocalAPIURL. An invalid override returns
+// another error.
+func LocalAPIURL(cfg *setting.Cfg) (string, error) {
+	invalid := func(reason string) (string, error) {
+		return "", fmt.Errorf("local plugin API: %s; configure [plugins] local_api_url to reach this Grafana process directly", reason)
 	}
-	host := "127.0.0.1"
-	if addr := cfg.HTTPAddr; addr != "" {
-		ip := net.ParseIP(addr)
-		switch {
-		case ip != nil && ip.IsUnspecified():
-		case ip != nil && ip.IsLoopback():
-			host = addr
-		case addr == "localhost":
-			host = addr
-		default:
-			return ""
+	cannotInfer := func(reason string) (string, error) {
+		return "", fmt.Errorf("%w: %s; configure [plugins] local_api_url to reach this Grafana process directly", ErrNoLocalAPIURL, reason)
+	}
+	if cfg == nil {
+		return cannotInfer("missing server configuration")
+	}
+	var endpoint string
+	if cfg.Raw != nil {
+		endpoint = strings.TrimSpace(cfg.SectionWithEnvOverrides("plugins").Key("local_api_url").MustString(""))
+	}
+	explicit := endpoint != ""
+	if !explicit {
+		if cfg.Protocol != setting.HTTPScheme {
+			return cannotInfer("cannot infer a loopback URL for this server protocol")
+		}
+		port, err := strconv.Atoi(cfg.HTTPPort)
+		if err != nil || port < 1 || port > 65535 {
+			return cannotInfer("automatic loopback requires a fixed [server] http_port between 1 and 65535")
+		}
+		host := "127.0.0.1"
+		if addr := strings.Trim(cfg.HTTPAddr, "[]"); addr != "" {
+			ip := net.ParseIP(addr)
+			switch {
+			case ip != nil && ip.IsUnspecified():
+			case ip != nil && ip.IsLoopback():
+				host = addr
+			case addr == "localhost":
+				host = addr
+			default:
+				return cannotInfer("the HTTP listener is not bound to loopback or all interfaces")
+			}
+		}
+		u := url.URL{Scheme: "http", Host: net.JoinHostPort(host, cfg.HTTPPort)}
+		if cfg.ServeFromSubPath {
+			u.Path = strings.TrimSuffix(cfg.AppSubURL, "/")
+		}
+		endpoint = u.String()
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" || u.User != nil ||
+		u.RawQuery != "" || u.ForceQuery || strings.Contains(endpoint, "#") {
+		return invalid("local_api_url must be an absolute HTTP(S) URL without credentials, query, or fragment")
+	}
+	if port := u.Port(); port != "" || strings.HasSuffix(u.Host, ":") {
+		n, err := strconv.Atoi(port)
+		if err != nil || n < 1 || n > 65535 {
+			return invalid("local_api_url has an invalid port")
 		}
 	}
-	u := url.URL{Scheme: "http", Host: net.JoinHostPort(host, cfg.HTTPPort)}
-	if cfg.ServeFromSubPath {
-		u.Path = strings.TrimSuffix(cfg.AppSubURL, "/")
+	if ip := net.ParseIP(u.Hostname()); ip != nil && ip.IsUnspecified() {
+		return invalid("local_api_url must identify a destination, not a wildcard listen address")
 	}
-	return u.String()
+	// Match ValidateHostHeader's comparison so the exchange POST cannot be redirected.
+	if cfg.EnforceDomain && !strings.EqualFold(strings.SplitN(u.Host, ":", 2)[0], cfg.Domain) {
+		if !explicit {
+			return cannotInfer("enforce_domain would redirect requests to the loopback address")
+		}
+		return invalid("local_api_url host conflicts with [server] domain while enforce_domain is enabled")
+	}
+	return endpoint, nil
 }
 
 // LocalTokens reports whether Grafana signs plugin access tokens itself (see

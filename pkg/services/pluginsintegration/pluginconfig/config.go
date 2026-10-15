@@ -1,11 +1,13 @@
 package pluginconfig
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
@@ -57,8 +59,8 @@ type PluginInstanceCfg struct {
 	// signing keys are configured, so Grafana signs the access tokens it sends
 	// to plugins itself.
 	LocalPluginTokens bool
-	// LocalAPIURL is where plugins reach this Grafana process directly, if it
-	// can be reached on loopback (see pluginauth.LocalAPIURL).
+	// LocalAPIURL is where plugins reach this Grafana process directly. It is
+	// inferred from the listener or set by [plugins] local_api_url.
 	LocalAPIURL string
 
 	AWSAllowedAuthProviders          []string
@@ -97,6 +99,21 @@ type PluginInstanceCfg struct {
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
 func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
+	localTokens := pluginauth.LocalTokens(cfg)
+	var localAPIURL string
+	if localTokens {
+		var err error
+		localAPIURL, err = pluginauth.LocalAPIURL(cfg)
+		switch {
+		case errors.Is(err, pluginauth.ErrNoLocalAPIURL):
+			// Grafana still authenticates its requests to plugins; only the
+			// plugins' own calls to Grafana's API are unavailable.
+			log.New("plugins.config").Warn("App plugins get no credentials for Grafana's API", "error", err)
+		case err != nil:
+			return nil, err
+		}
+	}
+
 	aws := settingProvider.Section("aws")
 	allowedAuth := cfg.AWSAllowedAuthProviders
 	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {
@@ -123,8 +140,8 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Tracing:                             tracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),
 		DevMode:                             cfg.Env == setting.Dev,
-		LocalPluginTokens:                   pluginauth.LocalTokens(cfg),
-		LocalAPIURL:                         pluginauth.LocalAPIURL(cfg),
+		LocalPluginTokens:                   localTokens,
+		LocalAPIURL:                         localAPIURL,
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
 		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),

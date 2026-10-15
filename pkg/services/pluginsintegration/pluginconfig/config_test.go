@@ -28,7 +28,7 @@ func TestPluginSettings(t *testing.T) {
 		normal_key = not a secret`))
 	require.NoError(t, err)
 
-	cfg := &setting.Cfg{Raw: raw}
+	cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000", Raw: raw}
 	settings := &setting.OSSImpl{Cfg: cfg}
 
 	ps := extractPluginSettings(settings)
@@ -42,7 +42,7 @@ func TestPluginSettings(t *testing.T) {
 }
 
 func TestProvidePluginInstanceConfigMarketplaceLicenseDirectory(t *testing.T) {
-	cfg := &setting.Cfg{
+	cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000",
 		Raw:                         ini.Empty(),
 		MarketplaceLicenseDirectory: "/var/lib/grafana/marketplace-licenses",
 	}
@@ -63,7 +63,7 @@ func TestProvidePluginInstanceConfigOpenFeature(t *testing.T) {
 		ContextAttrs: map[string]string{"namespace": "stacks-123"},
 		CacheTTL:     time.Minute,
 	}
-	cfg := &setting.Cfg{
+	cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000",
 		Raw:         ini.Empty(),
 		OpenFeature: openFeature,
 	}
@@ -90,7 +90,7 @@ func TestProvidePluginInstanceConfigLocalPluginTokens(t *testing.T) {
 			if tc.hostEnv != "" {
 				t.Setenv(tc.hostEnv, "from-host")
 			}
-			cfg := &setting.Cfg{Raw: ini.Empty(), ExtJWTAuth: setting.ExtJWTSettings{JWKSUrl: tc.jwksURL}}
+			cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000", Raw: ini.Empty(), ExtJWTAuth: setting.ExtJWTSettings{JWKSUrl: tc.jwksURL}}
 			section := cfg.Raw.Section("plugins")
 			section.Key("v3_cap_token").SetValue(tc.token)
 			section.Key("v3_token_exchange_url").SetValue(tc.url)
@@ -98,6 +98,39 @@ func TestProvidePluginInstanceConfigLocalPluginTokens(t *testing.T) {
 			pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 			require.NoError(t, err)
 			require.Equal(t, tc.want, pluginCfg.LocalPluginTokens)
+		})
+	}
+}
+
+func newTestServerConfig() *setting.Cfg {
+	cfg := setting.NewCfg()
+	cfg.Protocol = setting.HTTPScheme
+	cfg.HTTPPort = "3000"
+	return cfg
+}
+
+func TestProvidePluginInstanceConfigLocalAPIURL(t *testing.T) {
+	for _, tc := range []struct {
+		name, override, jwksURL, want string
+		wantError                     bool
+	}{
+		{name: "unsupported listener gets no API access", want: ""},
+		{name: "explicit override", override: "https://grafana.internal:8443", want: "https://grafana.internal:8443"},
+		{name: "invalid override", override: "/relative", wantError: true},
+		{name: "external signer does not need local endpoint", jwksURL: "https://auth.example.com/keys"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newTestServerConfig()
+			cfg.Protocol = setting.HTTPSScheme
+			cfg.ExtJWTAuth.JWKSUrl = tc.jwksURL
+			cfg.Raw.Section("plugins").Key("local_api_url").SetValue(tc.override)
+			pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+			if tc.wantError {
+				require.ErrorContains(t, err, "[plugins] local_api_url")
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, pluginCfg.LocalAPIURL)
 		})
 	}
 }

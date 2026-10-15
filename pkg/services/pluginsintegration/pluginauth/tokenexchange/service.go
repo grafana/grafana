@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 
@@ -38,8 +39,8 @@ const maxRequestBytes = 64 << 10
 type Service struct {
 	cfg *setting.Cfg
 	log log.Logger
-	// loopbackOnly refuses callers that are not on loopback, set when plugins
-	// are given this process's loopback URL (see pluginauth.LocalAPIURL).
+	// Restrict peers for loopback URLs. Explicit non-loopback endpoints still
+	// require a process-specific access policy token.
 	loopbackOnly bool
 	// manifests returns the app manifests of a plugin.
 	manifests func(ctx context.Context, pluginID string) ([]*app.ManifestData, error)
@@ -49,14 +50,21 @@ type Service struct {
 // when Grafana signs plugin access tokens itself.
 func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, pluginSources sources.Registry) *Service {
 	s := &Service{
-		cfg:          cfg,
-		log:          log.New("plugins.tokenexchange"),
-		loopbackOnly: pluginauth.LocalAPIURL(cfg) != "",
+		cfg: cfg,
+		log: log.New("plugins.tokenexchange"),
 		manifests: func(ctx context.Context, pluginID string) ([]*app.ManifestData, error) {
 			return loadManifests(ctx, pluginSources, pluginID)
 		},
 	}
 	if pluginauth.LocalTokens(cfg) {
+		endpoint, err := pluginauth.LocalAPIURL(cfg)
+		if err != nil {
+			// Plugin configuration already reports why: it warns, or fails startup
+			// for an invalid local_api_url.
+			return s
+		}
+		u, _ := url.Parse(endpoint) // LocalAPIURL has validated the URL.
+		s.loopbackOnly = strings.EqualFold(u.Hostname(), "localhost") || net.ParseIP(u.Hostname()).IsLoopback()
 		// Callers authenticate with their access policy token, not as a Grafana
 		// user, so the route is not behind sign-in.
 		rr.Post(pluginauth.TokenExchangePath, routing.Wrap(s.signAccessToken))

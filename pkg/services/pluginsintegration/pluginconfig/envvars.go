@@ -344,12 +344,7 @@ func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
 	if !p.cfg.LocalPluginTokens || plugin.Type != plugins.TypeApp {
 		return nil
 	}
-	// Prefer this process on loopback: its tokens are not valid on another
-	// Grafana behind the same app URL.
-	apiURL := p.cfg.LocalAPIURL
-	if apiURL == "" {
-		apiURL = strings.TrimSuffix(p.cfg.GrafanaAppURL, "/")
-	}
+	apiURL := strings.TrimRight(p.cfg.LocalAPIURL, "/")
 	if apiURL == "" {
 		return nil
 	}

@@ -139,7 +139,7 @@ func TestPluginEnvVarsProvider_signingKeysEnvVars(t *testing.T) {
 
 func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 	envVars := func(localTokens bool, plugin *plugins.Plugin) []string {
-		cfg := &PluginInstanceCfg{LocalPluginTokens: localTokens, GrafanaAppURL: "http://localhost:3000/", Features: featuremgmt.WithFeatures()}
+		cfg := &PluginInstanceCfg{LocalPluginTokens: localTokens, LocalAPIURL: "http://localhost:3000", GrafanaAppURL: "http://localhost:3000/", Features: featuremgmt.WithFeatures()}
 		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
 		return provider.PluginEnvVars(context.Background(), plugin)
 	}
@@ -172,6 +172,18 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 		env := provider.PluginEnvVars(context.Background(), app(false))
 		assert.Contains(t, env, "API_ACCESS_ROUTER_URL=http://127.0.0.1:3000")
 		assert.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=http://127.0.0.1:3000"+pluginauth.TokenExchangePath)
+	})
+	t.Run("does not fall back to the public URL", func(t *testing.T) {
+		cfg := &PluginInstanceCfg{LocalPluginTokens: true, GrafanaAppURL: "https://load-balancer.example.com/", Features: featuremgmt.WithFeatures()}
+		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+		require.False(t, hasAPIAccess(provider.PluginEnvVars(context.Background(), app(false))))
+	})
+	t.Run("preserves override and joins exchange path", func(t *testing.T) {
+		cfg := &PluginInstanceCfg{LocalPluginTokens: true, LocalAPIURL: "https://grafana.internal:8443/grafana/", Features: featuremgmt.WithFeatures()}
+		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+		env := provider.PluginEnvVars(context.Background(), app(false))
+		require.Contains(t, env, "API_ACCESS_ROUTER_URL=https://grafana.internal:8443/grafana")
+		require.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=https://grafana.internal:8443/grafana"+pluginauth.TokenExchangePath)
 	})
 	t.Run("each process start gets its own access policy token", func(t *testing.T) {
 		assert.NotEqual(t, capToken(envVars(true, app(false))), capToken(envVars(true, app(false))))
@@ -435,7 +447,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 	}
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
@@ -452,7 +464,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 	t.Run("with SkipHostEnvVars = true", func(t *testing.T) {
 		p.SkipHostEnvVars = true
 
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
@@ -879,7 +891,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 			},
 		}
 
-		cfg := &setting.Cfg{
+		cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000",
 			Raw:    ini.Empty(),
 			AppURL: "https://myorg.com/",
 		}
@@ -1044,7 +1056,7 @@ func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
 
 func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 	t.Run("backend datasource with azure settings", func(t *testing.T) {
-		cfg := &setting.Cfg{
+		cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000",
 			Raw: ini.Empty(),
 			Azure: &azsettings.AzureSettings{
 				AzureAuthEnabled:        true,
@@ -1091,7 +1103,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 	})
 
 	t.Run("sets user token endpoint settings from SSO settings for an Azure plugin", func(t *testing.T) {
-		cfg := &setting.Cfg{
+		cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000",
 			Raw: ini.Empty(),
 			Azure: &azsettings.AzureSettings{
 				AzureAuthEnabled:        true,
@@ -1143,7 +1155,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 	})
 
 	t.Run("does not use SSO settings if overrides have been set for an Azure plugin", func(t *testing.T) {
-		cfg := &setting.Cfg{
+		cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000",
 			Raw: ini.Empty(),
 			Azure: &azsettings.AzureSettings{
 				AzureAuthEnabled:        true,
@@ -1333,7 +1345,7 @@ func TestPluginEnvVarsProvider_azureHostEnvVars(t *testing.T) {
 					ID: tc.pluginID,
 				},
 			}
-			cfg := &setting.Cfg{
+			cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000",
 				Raw: ini.Empty(),
 				Azure: &azsettings.AzureSettings{
 					ManagedIdentityEnabled:  tc.managedIdentityEnabled,

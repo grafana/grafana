@@ -155,7 +155,31 @@ credentials across Grafana replicas. With a plain HTTP listener on all
 interfaces or loopback, plugins reach their own Grafana process on loopback,
 so each replica's plugins work behind a load balancer, and the token exchange
 (`/api/internal/plugin-token-exchange`) refuses callers that are not on
-loopback. HTTPS, socket, and specific-address listeners use the app URL.
+loopback. The port comes from `[server] http_port`.
+
+Override automatic detection with `[plugins] local_api_url` (or
+`GF_PLUGINS_LOCAL_API_URL`):
+
+```ini
+[plugins]
+local_api_url = https://grafana-instance.internal:8443/grafana
+```
+
+The override supplies the complete base URL, including its port and any subpath,
+for both API requests and token exchange. It must reach the Grafana process that
+started the plugin; a load-balanced public URL cannot provide that guarantee.
+An explicit non-loopback endpoint still requires the process's CAP token, but
+accepts non-loopback peers so a specific-interface listener or local proxy can
+be used. HTTPS uses normal certificate verification.
+
+With local signing enabled, Grafana cannot infer the endpoint for HTTPS,
+sockets, specific non-loopback addresses, a dynamic port, or `[server]
+enforce_domain` with another domain. It then logs a warning and gives app
+plugins no API credentials; Grafana's own requests to plugins are still
+authenticated. Set the override to enable plugin API access. An invalid
+override, or one whose host conflicts with `enforce_domain`, is a configuration
+error at startup. Grafana never falls back to the public `root_url`. External
+token-exchange configurations do not use this setting.
 
 ## Admission hooks
 
