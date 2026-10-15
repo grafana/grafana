@@ -105,6 +105,20 @@ describe('HeaderCell', () => {
     expect(handle.querySelector('svg')).toBeInTheDocument();
   });
 
+  it('does not sort when the reorder drag handle is clicked', async () => {
+    const onHeaderClick = jest.fn();
+    const { container } = render(
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <div onClick={onHeaderClick}>
+        <HeaderCell {...baseProps} field={makeField()} column={{ ...column, draggable: true }} tableRefreshEnabled />
+      </div>
+    );
+
+    await userEvent.click(container.querySelector('button[aria-hidden="true"]')!);
+
+    expect(onHeaderClick).not.toHaveBeenCalled();
+  });
+
   it('keeps the refreshed label colour when Wrap header text is toggled', () => {
     // The wrap option changes the label rule's own hash. While the refreshed colour lived in a second
     // class composed over it, that re-inserted rule landed *after* the override in the stylesheet and

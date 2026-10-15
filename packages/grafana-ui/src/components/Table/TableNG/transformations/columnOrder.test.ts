@@ -11,9 +11,9 @@ it('preserves source order until the user reorders', () => {
   expect(columnOrder.read(columnVisibility.write([], new Set(['B']), context), context).columnOrder).toBeUndefined();
 });
 
-it('orders known columns and appends new columns without mutating the catalog', () => {
+it('orders known columns and places new columns by their upstream neighbors without mutating the catalog', () => {
   const configs = columnOrder.write([], ['C', 'A'], context);
-  expect(columnOrder.read(configs, context).columnOrder).toEqual(['C', 'A', 'B', 'D']);
+  expect(columnOrder.read(configs, context).columnOrder).toEqual(['C', 'D', 'A', 'B']);
   expect(context.catalog).toEqual(['A', 'B', 'C', 'D']);
   expect(configs).toEqual([
     {
@@ -21,6 +21,22 @@ it('orders known columns and appends new columns without mutating the catalog', 
       options: { indexByName: { C: 0, A: 1 }, excludeByName: {}, renameByName: {} },
     },
   ]);
+});
+
+it('places added columns by their upstream neighbors without disturbing the viewer order', () => {
+  const configs = columnOrder.write([], ['C', 'A', 'B', 'D'], context);
+
+  expect(columnOrder.read(configs, { catalog: ['Before', 'A', 'New 1', 'New 2', 'B', 'C', 'D'] }).columnOrder).toEqual([
+    'C',
+    'Before',
+    'A',
+    'New 1',
+    'New 2',
+    'B',
+    'D',
+  ]);
+  expect(columnOrder.read(configs, { catalog: ['A', 'C', 'D'] }).columnOrder).toEqual(['C', 'A', 'D']);
+  expect(columnOrder.read(configs, context).columnOrder).toEqual(['C', 'A', 'B', 'D']);
 });
 
 it('updates one organize entry while preserving visibility, renames, and unrelated transformations', () => {

@@ -121,7 +121,7 @@ it('keeps row filtering unavailable in panel edit until saved-stack editing is s
     )
   );
 
-  await userEvent.click(screen.getByLabelText('Column options for metric'));
+  expect(screen.queryByLabelText('Column options for metric')).not.toBeInTheDocument();
   expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
 });
 
