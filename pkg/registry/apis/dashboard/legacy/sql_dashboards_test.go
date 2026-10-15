@@ -10,6 +10,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -19,9 +20,80 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
+
+type recordingLibraryPanelStream struct {
+	grpc.ClientStream
+	requests []*resourcepb.BulkRequest
+}
+
+func (s *recordingLibraryPanelStream) Send(req *resourcepb.BulkRequest) error {
+	s.requests = append(s.requests, req)
+	return nil
+}
+
+func (s *recordingLibraryPanelStream) CloseAndRecv() (*resourcepb.BulkResponse, error) {
+	return &resourcepb.BulkResponse{}, nil
+}
+
+func TestMigrateLibraryPanelPages(t *testing.T) {
+	stream := &recordingLibraryPanelStream{}
+	var queries []LibraryPanelQuery
+	getPanels := func(_ context.Context, query LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error) {
+		queries = append(queries, query)
+		switch query.LastID {
+		case 0:
+			return &dashboardV0.LibraryPanelList{
+				ListMeta: metav1.ListMeta{Continue: "10"},
+				Items: []dashboardV0.LibraryPanel{
+					{ObjectMeta: metav1.ObjectMeta{Name: "first"}},
+					{ObjectMeta: metav1.ObjectMeta{Name: "second", Generation: 2}},
+				},
+			}, nil
+		case 10:
+			return &dashboardV0.LibraryPanelList{
+				Items: []dashboardV0.LibraryPanel{{ObjectMeta: metav1.ObjectMeta{Name: "third"}}},
+			}, nil
+		default:
+			t.Fatalf("unexpected cursor: %d", query.LastID)
+			return nil, nil
+		}
+	}
+
+	err := migrateLibraryPanelPages(t.Context(), 7, migrations.MigrateOptions{
+		Namespace: "org-7",
+		Progress:  func(int, string) {},
+	}, stream, getPanels, 2)
+	require.NoError(t, err)
+	require.Equal(t, []LibraryPanelQuery{
+		{OrgID: 7, Limit: 2},
+		{OrgID: 7, Limit: 2, LastID: 10},
+	}, queries)
+	require.Len(t, stream.requests, 3)
+	require.Equal(t, []string{"first", "second", "third"}, []string{
+		stream.requests[0].Key.Name,
+		stream.requests[1].Key.Name,
+		stream.requests[2].Key.Name,
+	})
+	for _, req := range stream.requests {
+		require.Equal(t, "org-7", req.Key.Namespace)
+	}
+	require.Equal(t, resourcepb.BulkRequest_MODIFIED, stream.requests[1].Action)
+}
+
+func TestMigrateLibraryPanelPagesRejectsInvalidCursor(t *testing.T) {
+	getPanels := func(_ context.Context, _ LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error) {
+		return &dashboardV0.LibraryPanelList{ListMeta: metav1.ListMeta{Continue: "invalid"}}, nil
+	}
+	err := migrateLibraryPanelPages(t.Context(), 7, migrations.MigrateOptions{
+		Namespace: "org-7",
+		Progress:  func(int, string) {},
+	}, &recordingLibraryPanelStream{}, getPanels, 2)
+	require.ErrorContains(t, err, "invalid library panel continuation token")
+}
 
 func TestScanRow(t *testing.T) {
 	mockDB, mock, err := sqlmock.New()

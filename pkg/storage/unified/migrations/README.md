@@ -9,6 +9,7 @@ once at startup, per organization, and are validated before being recorded as co
 |---|---|---|---|
 | Folders | `folder.grafana.app` | `dashboard`, `dashboard_version`, `dashboard_provisioning` | yes |
 | Dashboards | `dashboard.grafana.app` | `dashboard`, `dashboard_version`, `dashboard_provisioning` | yes |
+| Library panels | `dashboard.grafana.app` | `library_element` | no |
 | Playlists | `playlist.grafana.app` | `playlist`, `playlist_item` | yes |
 | Snapshots | `dashboard.grafana.app` | `dashboard_snapshot` | no |
 | Short URLs | `shorturl.grafana.app` | `short_url` | no |
