@@ -1620,16 +1620,11 @@ func (s *searchServer) globalIndexStats(stats []ResourceStats) []ResourceStats {
 	return out
 }
 
-func (s *searchServer) buildStartupIndex(ctx context.Context, info ResourceStats) error {
+func (s *searchServer) buildStartupIndex(ctx context.Context, info ResourceStats, lastImportTime time.Time) error {
 	if s.search.GetIndex(info.NamespacedResource) != nil {
 		return nil
 	}
-	lastImportTime, err := s.storage.GetResourceLastImportTime(ctx, info.NamespacedResource)
-	if err != nil {
-		s.log.Warn("Failed to get last import time", "key", info.NamespacedResource, "error", err)
-		lastImportTime = time.Time{}
-	}
-	_, err = s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true})
+	_, err := s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true})
 	return err
 }
 
@@ -1661,6 +1656,12 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 	if len(builds) == 0 {
 		return 0, nil
 	}
+	// SQL reads the whole import-time table, so share one lookup across builds and retries.
+	importTimes, err := s.storage.ListResourceLastImportTimes(ctx)
+	if err != nil {
+		s.log.Warn("Failed to load startup import times", "error", err)
+		importTimes = nil
+	}
 	// Replicas should try different indexes first, not all wait for the same ones.
 	rand.Shuffle(len(builds), func(i, j int) { builds[i], builds[j] = builds[j], builds[i] })
 
@@ -1686,7 +1687,7 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 				if shutdown {
 					return
 				}
-				err := s.buildStartupIndex(ctx, info)
+				err := s.buildStartupIndex(ctx, info, importTimes[info.NamespacedResource])
 				if ctx.Err() != nil {
 					err = ctx.Err()
 				}

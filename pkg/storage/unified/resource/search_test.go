@@ -483,10 +483,17 @@ func (m *mockSearchBackend) Stop() {
 
 type initialBuildTestBackend struct {
 	mockSearchBackend
-	beforeBuild func(context.Context, NamespacedResource, BuildIndexOptions) error
+	beforeBuild      func(context.Context, NamespacedResource, BuildIndexOptions) error
+	buildImportTimes map[NamespacedResource][]time.Time
 }
 
 func (b *initialBuildTestBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration, options BuildIndexOptions) (ResourceIndex, error) {
+	b.mu.Lock()
+	if b.buildImportTimes == nil {
+		b.buildImportTimes = make(map[NamespacedResource][]time.Time)
+	}
+	b.buildImportTimes[key] = append(b.buildImportTimes[key], lastImportTime)
+	b.mu.Unlock()
 	if err := b.beforeBuild(ctx, key, options); err != nil {
 		return nil, err
 	}
@@ -586,6 +593,75 @@ func TestStartupBuildsDeferHeldLocksWithoutOccupyingWorker(t *testing.T) {
 	}
 	for _, info := range stats {
 		require.NotNil(t, backend.GetIndex(info.NamespacedResource))
+	}
+}
+
+func TestStartupReadsImportTimesOnceAcrossBuildsAndRetries(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		readFails      bool
+		failBeforeRead bool
+	}{
+		{name: "successful lookup"},
+		{name: "failed lookup", readFails: true, failBeforeRead: true},
+		{name: "partial lookup failure", readFails: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			importTimes := map[NamespacedResource]time.Time{
+				dashboardType("default"): time.Now().UTC().Truncate(time.Second).Add(-time.Hour),
+				folderType("default"):    time.Now().UTC().Truncate(time.Second).Add(-2 * time.Hour),
+			}
+			for key, importedAt := range importTimes {
+				require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+					NamespacedResource: key, LastImportTime: importedAt,
+				}))
+			}
+			storage := &countingImportTimeBackend{StorageBackend: backend, failBeforeRead: tc.failBeforeRead}
+			if tc.readFails {
+				storage.readErr = errors.New("import times unavailable")
+			}
+			stats := []ResourceStats{
+				{NamespacedResource: dashboardType("default"), Count: 2},
+				{NamespacedResource: folderType("default"), Count: 2},
+				{NamespacedResource: dashboardType("stacks-1"), Count: 2},
+			}
+			var attempts atomic.Int32
+			search := &initialBuildTestBackend{beforeBuild: func(_ context.Context, key NamespacedResource, _ BuildIndexOptions) error {
+				if key == dashboardType("default") && attempts.Add(1) <= 2 {
+					return ErrIndexBuildInProgress
+				}
+				return nil
+			}}
+			search.openIndexStats = stats
+			server, err := newSearchServer(SearchOptions{
+				Backend: search,
+				Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{
+					"dashboard.grafana.app": "dashboards",
+					"folder.grafana.app":    "folders",
+				}},
+				InitWorkerThreads: 3,
+			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+			require.NoError(t, err)
+			server.initRetryInterval = time.Millisecond
+			built, err := server.buildIndexes(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, len(stats), built)
+			require.Equal(t, 1, storage.listCalls)
+			require.Zero(t, storage.singleCalls, "startup retries must not issue per-key import-time reads")
+			require.Equal(t, int32(3), attempts.Load())
+			for _, info := range stats {
+				want := importTimes[info.NamespacedResource]
+				if tc.readFails {
+					want = time.Time{}
+				}
+				got := search.buildImportTimes[info.NamespacedResource]
+				require.NotEmpty(t, got)
+				for _, importedAt := range got {
+					require.Equal(t, want, importedAt, "timestamp for %s", info.String())
+				}
+			}
+		})
 	}
 }
 
