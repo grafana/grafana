@@ -5,19 +5,24 @@ import {
   applyFieldOverrides,
   CoreApp,
   DataTransformerID,
+  fieldReducers,
   type DataFrame,
   type GrafanaTheme2,
+  getDisplayProcessor,
   getFrameDisplayName,
+  isReducerID,
   type PanelProps,
   type SelectableValue,
   useDataLinksContext,
 } from '@grafana/data';
+import { getFieldTypeForReducer, getPivotProvenance, pivotFooter } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSourceFrameIndex } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
+import { TableViewSettings } from 'app/features/table/TableViewSettings';
 import {
   TABLE_TRANSFORMATIONS_OWNER,
   useAdHocColumnState,
@@ -29,6 +34,8 @@ import {
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
 import { supportsColumnManagement, withAdHocTransformCapabilities } from 'app/features/table/tableCapabilities';
+import { useTablePivot } from 'app/features/table/useTablePivot';
+import { useTableTranspose } from 'app/features/table/useTableTranspose';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -79,6 +86,29 @@ export function TablePanel(props: Props) {
   const sourceSeries = adHocTransformationsEnabled
     ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
+  const viewSource = sourceSeries?.length ? sourceSeries : frames;
+  const transpose = useTableTranspose(viewSource, currentIndex, adHocTransformationsEnabled, options.sortBy);
+  const pivot = useTablePivot(
+    viewSource,
+    outputMain,
+    currentIndex,
+    adHocTransformationsEnabled,
+    transpose.disabledReason,
+    options.sortBy
+  );
+  const mode = pivot.selected ? 'pivot' : transpose.enabled ? 'transpose' : 'table';
+  const viewSettings = adHocTransformationsEnabled ? (
+    <TableViewSettings
+      mode={mode}
+      transpose={transpose}
+      pivot={pivot}
+      source={pivot.selected ? pivot.source : viewSource[currentIndex]}
+      onModeChange={(next) => {
+        pivot.select(next === 'pivot');
+        transpose.onToggle(next === 'transpose');
+      }}
+    />
+  ) : undefined;
   const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
   const getFrameScope = useTableFrameScope(sourceSeries ?? frames);
   const editFrameKey = isPanelEditor
@@ -110,9 +140,10 @@ export function TablePanel(props: Props) {
   const displayFrames =
     !isPanelEditor && sourceFrameIndex >= 0 && sourceFramesWithOverrides ? sourceFramesWithOverrides : frames;
   useCacheFieldDisplayNames(displayFrames);
-  const rawMain = isPanelEditor
-    ? outputMain
-    : (displayFrames[sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex] ?? outputMain);
+  const rawMain =
+    isPanelEditor || mode !== 'table'
+      ? outputMain
+      : (displayFrames[sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex] ?? outputMain);
   const configuredSourceSeries = useMemo(
     () =>
       sourceSeries &&
@@ -133,12 +164,45 @@ export function TablePanel(props: Props) {
     [sourceSeries, sourceFramesWithOverrides]
   );
   const columnManagementEnabled = adHocTransformationsEnabled && supportsColumnManagement(rawMain);
-  const adHocColumns = useAdHocColumnState(frames, currentIndex, adHocTransformationsEnabled, configuredSourceSeries);
-  const main = useMemo(
-    () =>
-      adHocTransformationsEnabled && rawMain ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns)) : rawMain,
-    [rawMain, adHocTransformationsEnabled, adHocColumns]
+  const adHocColumns = useAdHocColumnState(
+    frames,
+    currentIndex,
+    adHocTransformationsEnabled && mode === 'table',
+    configuredSourceSeries
   );
+  const pivotMetadata = mode === 'pivot' && pivot.applied && rawMain ? getPivotProvenance(rawMain) : undefined;
+  const main = useMemo(() => {
+    if (!adHocTransformationsEnabled || !rawMain) {
+      return rawMain;
+    }
+    if (mode === 'table') {
+      return withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns));
+    }
+    return {
+      ...rawMain,
+      fields: rawMain.fields.map((field) => ({
+        ...field,
+        config: {
+          ...field.config,
+          custom: {
+            ...field.config.custom,
+            filterable: false,
+            hideable: false,
+            sortable: false,
+            ...(mode === 'pivot' && pivot.applied
+              ? {
+                  footer: {
+                    reducers: pivot.applied.totalRow
+                      ? (pivotMetadata?.columns.get(field.name)?.footerReducers ?? [])
+                      : [],
+                  },
+                }
+              : {}),
+          },
+        },
+      })),
+    };
+  }, [rawMain, adHocTransformationsEnabled, adHocColumns, mode, pivot.applied, pivotMetadata]);
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
@@ -162,11 +226,37 @@ export function TablePanel(props: Props) {
     <TableNG
       {...commonTableProps}
       {...adHocColumns}
-      reorderable={Boolean(adHocColumns)}
-      showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
+      viewSettings={viewSettings}
+      viewSettingsActive={mode !== 'table'}
+      viewColumnsDisabled={mode !== 'table'}
+      summaryReducer={
+        pivotMetadata && !pivotMetadata.error
+          ? (field, indices, reducers) => ({
+              calcs: pivotFooter(pivotMetadata, field, indices, reducers),
+              display: (reducer) => {
+                const source = pivotMetadata.columns.get(field.name)?.source;
+                if (!source || !isReducerID(reducer)) {
+                  return undefined;
+                }
+                return getDisplayProcessor({
+                  field: {
+                    ...source,
+                    type: getFieldTypeForReducer(reducer, source.type),
+                    config: { unit: fieldReducers.get(reducer).preservesUnits ? source.config.unit : undefined },
+                  },
+                  theme,
+                  timeZone: props.timeZone,
+                });
+              },
+            })
+          : undefined
+      }
+      transposeRows={mode === 'transpose' && transpose.fieldSettings === 'rows'}
+      reorderable={mode === 'table' && Boolean(adHocColumns)}
+      showColumnsSidebar={(columnManagementEnabled || Boolean(viewSettings)) && options.showColumnsSidebar}
       rowTransformationsEnabled={adHocTransformationsEnabled}
       rowTransformations={
-        adHocTransformationsEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
+        adHocTransformationsEnabled && mode === 'table' && panelContext.adHocTransformations && sourceFrameIndex >= 0
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,

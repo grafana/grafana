@@ -66,6 +66,7 @@ import {
   type NestedRowEntry,
   type TableCellStyleOptions,
   type TableFilterActionCallback,
+  type TableNGProps,
   type TableRow,
   type TableSummaryRow,
   type TypographyCtx,
@@ -152,6 +153,7 @@ export function useDataGridRows(
 // -----------------------------------------------------------------------------
 
 export interface ColumnBuildConfig {
+  summaryReducer?: TableNGProps['summaryReducer'];
   wrapFallback?: TextWrapFallback;
   nestedWrapFallback?: TextWrapFallback;
   disableKeyboardEvents?: boolean;
@@ -264,6 +266,7 @@ function buildColumnsFromFields(
   config: ColumnBuildConfig
 ): FromFieldsResult {
   const {
+    summaryReducer,
     wrapFallback,
     theme,
     getCellColorInlineStyles,
@@ -654,6 +657,7 @@ function buildColumnsFromFields(
       ),
       renderSummaryCell: () => (
         <SummaryCell
+          summaryReducer={summaryReducer}
           rows={visibleRows}
           footers={fieldFooters}
           field={field}

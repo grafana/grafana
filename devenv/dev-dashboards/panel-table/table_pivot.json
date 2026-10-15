@@ -1,0 +1,121 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "table-pivot"
+  },
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Pivot — sales",
+          "description": "Group sales by Region, Product, and Period. Repeated records and unequal group sizes exercise aggregation and source-aware grand totals.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"refId\":\"A\",\"fields\":[{\"name\":\"Region\",\"type\":\"string\"},{\"name\":\"Product\",\"type\":\"string\"},{\"name\":\"Period\",\"type\":\"string\"},{\"name\":\"Revenue\",\"type\":\"number\"},{\"name\":\"Quantity\",\"type\":\"number\"},{\"name\":\"Customer\",\"type\":\"string\"}]},\"data\":{\"values\":[[\"East\",\"East\",\"East\",\"West\",\"West\"],[\"A\",\"A\",\"B\",\"A\",\"A\"],[\"Jan\",\"Jan\",\"Feb\",\"Jan\",\"Jan\"],[10,30,90,100,100],[1,3,9,10,10],[\"alice\",\"bob\",\"alice\",\"bob\",\"bob\"]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "maxDataPoints": 10
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.3.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "showColumnsSidebar": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "width": 150,
+                    "footer": {
+                      "reducers": ["min"]
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Revenue"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 16,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "panel-tests", "table"],
+    "timeSettings": {
+      "from": "2025-01-01T00:00:00.000Z",
+      "to": "2025-01-01T01:00:00.000Z",
+      "timezone": "utc",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel Tests - Table - Pivot",
+    "variables": []
+  }
+}

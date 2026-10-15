@@ -3,16 +3,20 @@ import memoize from 'micro-memoize';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { clamp } from '../../../utils/clamp';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
+import { IconButton } from '../../IconButton/IconButton';
 import { usePanelContext } from '../../PanelChrome';
 import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
+import { TableRowsAsFields } from './TableRowsAsFields';
 import { TableSidebar, type SidebarColumn } from './components/TableSidebar';
 import { COLUMN_SETTLE_MS, FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
 import {
@@ -303,7 +307,8 @@ export function TableFlat(props: TableNGProps) {
     }));
   }, [columnCatalog, orderedVisibleFields]);
   // The catalog includes restored columns before they return in the transformed data.
-  const hasColumnSidebar = reorderable || sidebarColumns.some((column) => column.hideable);
+  const hasColumnSidebar =
+    Boolean(props.viewSettings) || reorderable || sidebarColumns.some((column) => column.hideable);
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
   // Follow option changes without overriding local open/close actions on every render.
@@ -539,6 +544,7 @@ export function TableFlat(props: TableNGProps) {
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
       wrapFallback,
+      summaryReducer: props.summaryReducer,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -576,6 +582,7 @@ export function TableFlat(props: TableNGProps) {
     }),
     [
       wrapFallback,
+      props.summaryReducer,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -633,7 +640,7 @@ export function TableFlat(props: TableNGProps) {
     [zebraStriping, paginatedRows]
   );
 
-  const dataGrid = (
+  const normalGrid = (
     <TableDataGrid
       role="grid"
       gridRef={gridRef}
@@ -691,7 +698,35 @@ export function TableFlat(props: TableNGProps) {
     />
   );
 
-  if (!hasColumnSidebar || !hasHeader || !isColumnVisibilityPanelOpen) {
+  const dataGrid = props.transposeRows ? (
+    <TableRowsAsFields
+      {...props}
+      width={fullWidth}
+      height={hasColumnSidebar && !isColumnVisibilityPanelOpen ? Math.max(0, height - 32) : height}
+      fields={displayedFields}
+      rowIndices={sortedRows.map((row) => row.__index)}
+    />
+  ) : (
+    normalGrid
+  );
+
+  if (props.transposeRows && hasColumnSidebar && !isColumnVisibilityPanelOpen) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', height: 32 }}>
+          <IconButton
+            name="columns"
+            aria-label={t('grafana-ui.table.manage-columns', 'Manage columns')}
+            data-testid={selectors.components.Panels.Visualization.TableNG.columnsSidebar.transposeManageButton}
+            onClick={() => setIsColumnVisibilityPanelOpen(true)}
+          />
+        </div>
+        {dataGrid}
+      </div>
+    );
+  }
+
+  if (!hasColumnSidebar || (!hasHeader && !props.viewSettings) || !isColumnVisibilityPanelOpen) {
     return dataGrid;
   }
 
@@ -709,6 +744,9 @@ export function TableFlat(props: TableNGProps) {
         }}
       >
         <TableSidebar
+          settings={props.viewSettings}
+          settingsActive={props.viewSettingsActive}
+          columnsDisabled={props.viewColumnsDisabled}
           columns={sidebarColumns}
           reorderable={reorderable}
           hiddenColumns={hiddenColumns}

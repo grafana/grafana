@@ -17,11 +17,12 @@ import {
   standardFieldConfigEditorRegistry,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, SceneObjectStateChangedEvent, VizPanel } from '@grafana/scenes';
 import { TableCellDisplayMode, TableCellHeight, type TableOptions } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockClientSize, mockComboboxRect } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
@@ -66,7 +67,10 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id) => (id === 'table' ? plugin : getPanelPlugin({ id })),
 });
 
-beforeAll(() => mockClientSize({ width: 800, height: 600 }));
+beforeAll(() => {
+  mockClientSize({ width: 800, height: 600 });
+  mockComboboxRect();
+});
 afterEach(() => setTestFlags({}));
 
 it.each(['defaults', 'override'])('preserves image cell %s when rebuilding ad-hoc source fields', (mode) => {
@@ -229,7 +233,17 @@ it('writes viewer sorting to runtime transformations without changing panel opti
   const props = getPanelProps(options, { fieldConfig, width: 800, height: 600 });
   function LiveTable() {
     const { data } = transformer.useState();
-    return data ? <TablePanel {...props} data={data} /> : null;
+    if (!data) {
+      return null;
+    }
+    const series = applyFieldOverrides({
+      data: data.series,
+      fieldConfig,
+      fieldConfigRegistry: plugin.fieldConfigRegistry,
+      theme: createTheme(),
+      replaceVariables: (value) => value,
+    });
+    return <TablePanel {...props} data={{ ...data, series }} />;
   }
   const view = render(
     <OpenFeatureProvider client={getTestFeatureFlagClient()}>
@@ -243,6 +257,86 @@ it('writes viewer sorting to runtime transformations without changing panel opti
     await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual([1, 2, 3]));
     expect(api.get('grafana:table-view').map((config) => config.id)).toEqual([DataTransformerID.sortBy]);
     expect(props.onOptionsChange).not.toHaveBeenCalled();
+  } finally {
+    view.unmount();
+    deactivate();
+  }
+});
+
+it('switches between viewer-local transpose and pivot views', async () => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+  const source = new SceneDataNode({
+    data: {
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      series: [
+        toDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'Host', type: FieldType.string, values: ['a', 'b'] },
+            { name: 'Load', type: FieldType.number, values: [2, 3] },
+          ],
+        }),
+      ],
+    },
+  });
+  const transformer = new SceneDataTransformer({ $data: source, transformations: [] });
+  const panel = new VizPanel({ pluginId: 'table', $data: transformer });
+  const api = panel.getRuntimeTransformations();
+  const deactivate = transformer.activate();
+  const panelOptions: TableOptions = { ...options, showColumnsSidebar: true };
+  const props = getPanelProps(panelOptions, { fieldConfig, width: 800, height: 600 });
+  function LiveTable() {
+    const { data } = transformer.useState();
+    if (!data) {
+      return null;
+    }
+    const series = applyFieldOverrides({
+      data: data.series,
+      fieldConfig,
+      fieldConfigRegistry: plugin.fieldConfigRegistry,
+      theme: createTheme(),
+      replaceVariables: (value) => value,
+    });
+    return <TablePanel {...props} data={{ ...data, series }} />;
+  }
+  const view = render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <PanelContextProvider value={{ eventsScope: 'global', eventBus: new EventBusSrv(), adHocTransformations: api }}>
+        <LiveTable />
+      </PanelContextProvider>
+    </OpenFeatureProvider>
+  );
+  const user = userEvent.setup();
+  try {
+    await user.click(await screen.findByRole('button', { name: 'Column settings' }));
+    await user.click(screen.getByRole('radio', { name: 'Transpose' }));
+    expect(api.get('grafana:table-view')).toEqual([]);
+    await user.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+    await user.click(screen.getByRole('button', { name: 'Manage columns' }));
+    await user.click(screen.getByRole('button', { name: 'Column settings' }));
+    await user.click(screen.getByRole('radio', { name: 'Columns' }));
+    await waitFor(() =>
+      expect(api.get('grafana:table-view').map((config) => config.id)).toEqual([DataTransformerID.transpose])
+    );
+    await waitFor(() => expect(transformer.state.data?.series[0].fields[0].name).toBe('Field'));
+
+    await user.click(screen.getByRole('radio', { name: 'Pivot' }));
+    expect(api.get('grafana:table-view')).toEqual([]);
+    await waitFor(() => expect(transformer.state.data?.series[0].fields[0].name).toBe('Host'));
+    expect(api.getSourceSeries('grafana:table-view')[0].fields.map((field) => field.name)).toEqual(['Host', 'Load']);
+    await user.click(screen.getByRole('combobox', { name: 'Add Rows field' }));
+    await user.click(await screen.findByRole('option', { name: 'Host' }));
+    await user.click(screen.getByRole('combobox', { name: 'Add Values field' }));
+    await user.click(await screen.findByRole('option', { name: 'Load' }));
+    await user.click(screen.getByRole('button', { name: 'Apply pivot' }));
+    await waitFor(() =>
+      expect(api.get('grafana:table-view').map((config) => config.id)).toEqual([DataTransformerID.pivot])
+    );
+    await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual([2, 3]));
+    expect(await screen.findByTestId(selectors.components.Panels.Visualization.TableNG.Footer.Value)).toHaveTextContent(
+      '5'
+    );
   } finally {
     view.unmount();
     deactivate();

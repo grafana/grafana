@@ -11,7 +11,7 @@ import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { OVERFLOW_CELL_CLASS } from '../constants';
 import { useReducerEntries } from '../hooks';
 import { getDefaultCellStyles, getJustifyContent, type TextAlign } from '../styles';
-import { type TableRow } from '../types';
+import { type TableNGProps, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 interface SummaryCellProps {
@@ -22,6 +22,7 @@ interface SummaryCellProps {
   colIdx: number;
   rowLabel?: boolean;
   hideLabel?: boolean;
+  summaryReducer?: TableNGProps['summaryReducer'];
 }
 
 const getReducerName = (reducerId: string): string => {
@@ -39,6 +40,7 @@ export const SummaryCell = ({
   hideLabel = false,
   rowLabel = false,
   textAlign,
+  summaryReducer,
 }: SummaryCellProps) => {
   const styles = useStyles2(getStyles, textAlign, hideLabel);
   const theme = useTheme2();
@@ -49,7 +51,7 @@ export const SummaryCell = ({
     textWrap: false,
   });
   const displayName = getDisplayName(field);
-  const reducerResultsEntries = useReducerEntries(field, rows, displayName, colIdx);
+  const reducerResultsEntries = useReducerEntries(field, rows, displayName, colIdx, summaryReducer);
   const cellClass = clsx(styles.footerCell, defaultFooterCellStyles, OVERFLOW_CELL_CLASS);
   const firstFooterReducers = useMemo(() => {
     for (const footer of footers) {

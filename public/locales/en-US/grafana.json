@@ -10770,6 +10770,7 @@
       "column-menu-pin": "Pin column left",
       "column-menu-unpin": "Unpin column",
       "column-menu-update-filter": "Update filter",
+      "column-settings": "Column settings",
       "column-visibility": "Column visibility",
       "columns": "Columns",
       "copy": "Copy to Clipboard",
@@ -10853,12 +10854,19 @@
       "tooltip": {
         "trigger": "Toggle tooltip"
       },
+      "transpose-columns": "Columns",
+      "transpose-disabled-hint": "Turn off Transpose to change filters, sorting, or field layout. Apply filters before transposing.",
+      "transpose-field-settings": "Apply field settings to",
+      "transpose-rows": "Rows",
       "unpin-column-label": "Unpin {{columnName}}",
       "view": {
         "clear": "Clear filters ({{total}})",
         "error": "Unable to apply this table view.",
         "reset": "Reset view"
       }
+    },
+    "tag": {
+      "remove": "Remove tag: {{name}}"
     },
     "tags": {
       "list-label": "Tags"
@@ -16619,12 +16627,38 @@
     "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",
     "placeholder-page-size": "auto",
+    "pivot": {
+      "add-axis-field": "Add {{axis}} field",
+      "add-field": "Add field",
+      "add-values-field": "Add Values field",
+      "apply": "Apply pivot",
+      "columns": "Columns",
+      "footer-calculations": "Footer calculations",
+      "footer-field": "Footer calculations {{field}} {{index}}",
+      "pivot": "Pivot",
+      "remove-dimension": "Remove {{axis}} {{field}}",
+      "remove-value": "Remove value {{index}}",
+      "rows": "Rows",
+      "summarize": "Summarize by",
+      "summarize-field": "Summarize {{field}} {{index}}",
+      "table": "Table",
+      "total-columns": "Grand total columns",
+      "total-row": "Grand total row",
+      "transpose": "Transpose",
+      "values": "Values",
+      "view": "View"
+    },
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",
       "label-left": "Left",
       "label-right": "Right",
       "label-top": "Top"
+    },
+    "transpose": {
+      "empty": "Transpose requires fields.",
+      "nested": "Transpose is not available for nested tables.",
+      "no-api": "Transpose is only available in dashboard tables."
     }
   },
   "tag-filter": {

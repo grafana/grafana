@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,6 +22,9 @@ export interface SidebarColumn {
 }
 
 interface TableSidebarProps {
+  settings?: ReactNode;
+  settingsActive?: boolean;
+  columnsDisabled?: boolean;
   /** All columns in display order, including hidden columns. */
   columns: SidebarColumn[];
   reorderable?: boolean;
@@ -38,6 +41,9 @@ interface TableSidebarProps {
 }
 
 export function TableSidebar({
+  settings,
+  settingsActive = false,
+  columnsDisabled = false,
   columns,
   reorderable = false,
   hiddenColumns,
@@ -51,6 +57,8 @@ export function TableSidebar({
   willCloseOnRelease = false,
 }: TableSidebarProps) {
   const styles = useStyles2(getStyles, transparent, headerHeight);
+  const settingsId = useId();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const visibleCount = columns.filter(({ name }) => !hiddenColumns.has(name)).length;
 
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
@@ -71,15 +79,34 @@ export function TableSidebar({
           <span className={styles.heading}>
             <Trans i18nKey="grafana-ui.table.columns">Columns</Trans>
           </span>
-          <IconButton
-            name="times"
-            size="sm"
-            aria-label={t('grafana-ui.table.close-column-visibility', 'Close column visibility panel')}
-            onClick={onClose}
-            data-testid={sidebarSelectors.closeButton}
-          />
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            {settings && (
+              <IconButton
+                name="cog"
+                size="sm"
+                variant={settingsActive ? 'primary' : 'secondary'}
+                aria-label={t('grafana-ui.table.column-settings', 'Column settings')}
+                aria-expanded={settingsOpen}
+                aria-controls={settingsId}
+                data-testid={sidebarSelectors.settingsButton}
+                onClick={() => setSettingsOpen((open) => !open)}
+              />
+            )}
+            <IconButton
+              name="times"
+              size="sm"
+              aria-label={t('grafana-ui.table.close-column-visibility', 'Close column visibility panel')}
+              onClick={onClose}
+              data-testid={sidebarSelectors.closeButton}
+            />
+          </Stack>
         </Stack>
       </div>
+      {settings && (
+        <div id={settingsId} hidden={!settingsOpen} className={styles.settings}>
+          {settings}
+        </div>
+      )}
       <div className={styles.columnList}>
         {columns.map(({ name: displayName, hideable }) => {
           const isVisible = !hiddenColumns.has(displayName);
@@ -91,7 +118,7 @@ export function TableSidebar({
               className={css(styles.row, dragOverColumn === displayName && styles.rowDragOver)}
               data-testid={sidebarSelectors.row(displayName)}
               onDragOver={(ev) => {
-                if (!reorderable || draggedColumn == null || draggedColumn === displayName) {
+                if (columnsDisabled || !reorderable || draggedColumn == null || draggedColumn === displayName) {
                   return;
                 }
                 ev.preventDefault();
@@ -101,7 +128,7 @@ export function TableSidebar({
               onDrop={(ev) => {
                 ev.preventDefault();
                 setDragOverColumn(null);
-                if (reorderable && draggedColumn != null && draggedColumn !== displayName) {
+                if (!columnsDisabled && reorderable && draggedColumn != null && draggedColumn !== displayName) {
                   onColumnsReorder(draggedColumn, displayName);
                 }
               }}
@@ -111,7 +138,8 @@ export function TableSidebar({
                   <button
                     type="button"
                     className={styles.dragHandle}
-                    draggable
+                    draggable={!columnsDisabled}
+                    disabled={columnsDisabled}
                     aria-label={t('grafana-ui.table.reorder-column-label', 'Reorder {{columnName}}', {
                       columnName: displayName,
                     })}
@@ -142,7 +170,7 @@ export function TableSidebar({
                 {hideable ? (
                   <Checkbox
                     value={isVisible}
-                    disabled={isLastVisible}
+                    disabled={columnsDisabled || isLastVisible}
                     aria-label={
                       isVisible
                         ? t('grafana-ui.table.hide-column-label', 'Hide {{columnName}}', { columnName: displayName })
@@ -154,7 +182,7 @@ export function TableSidebar({
                   <span className={styles.visibilityTogglePlaceholder} aria-hidden="true" />
                 )}
                 <span className={styles.columnName}>{displayName}</span>
-                {onTogglePin && (
+                {onTogglePin && !columnsDisabled && (
                   <button
                     type="button"
                     className={styles.pinButton}
@@ -223,6 +251,12 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     flexDirection: 'column',
     overflowY: 'auto',
     flex: 1,
+  }),
+  settings: css({
+    padding: theme.spacing(1.5),
+    overflowY: 'auto',
+    maxHeight: '70%',
+    borderBottom: `1px solid ${theme.components.table.border}`,
   }),
   row: css({
     padding: theme.spacing(0.75, 1, 0.75, 1.5),

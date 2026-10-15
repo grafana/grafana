@@ -4,12 +4,14 @@ import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { getTagColor, getTagColorsFromName } from '../../utils/tags';
 import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 
 /**
  * @public
@@ -24,33 +26,81 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
    * The index wraps around, so a value beyond the number of colors is fine. */
   colorIndex?: number;
   onClick?: OnTagClick;
+  /** Show a trailing close button. Disabled when onClose is not provided. */
+  showCloseButton?: boolean;
+  /** Requests removal; the parent controls whether the tag remains rendered. */
+  onClose?: OnTagClick;
+  /** Accessible label for the close button. Defaults to "Remove tag: <name>". */
+  closeButtonLabel?: string;
 }
 
-const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
-  const theme = useTheme2();
-  const styles = getTagStyles(theme, name, colorIndex);
+const TagComponent = forwardRef<HTMLElement, Props>(
+  (
+    { name, onClick, icon, className, colorIndex, showCloseButton = false, onClose, closeButtonLabel, ...rest },
+    ref
+  ) => {
+    const theme = useTheme2();
+    const styles = getTagStyles(theme, name, colorIndex);
 
-  const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+    const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    onClick?.(name, event);
-  };
+      onClick?.(name, event);
+    };
 
-  const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
+    const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
 
-  return onClick ? (
-    <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </button>
-  ) : (
-    <span {...rest} className={classes} ref={ref}>
-      {icon && <Icon name={icon} />}
-      {name}
-    </span>
-  );
-});
+    if (showCloseButton) {
+      const content = (
+        <>
+          {icon && <Icon name={icon} />}
+          {name}
+        </>
+      );
+      return (
+        <span {...rest} className={cx(styles.wrapper, styles.closable, className)} ref={ref}>
+          {onClick ? (
+            <button
+              type="button"
+              className={cx(styles.contentButton, styles.hover)}
+              onClick={onTagClick}
+              aria-label={rest['aria-label']}
+            >
+              {content}
+            </button>
+          ) : (
+            content
+          )}
+          <IconButton
+            name="times"
+            size="sm"
+            className={styles.closeButton}
+            aria-label={closeButtonLabel ?? t('grafana-ui.tag.remove', 'Remove tag: {{name}}', { name })}
+            disabled={!onClose}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onClose?.(name, event);
+            }}
+          />
+        </span>
+      );
+    }
+
+    return onClick ? (
+      <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
+        {icon && <Icon name={icon} />}
+        {name}
+      </button>
+    ) : (
+      <span {...rest} className={classes} ref={ref}>
+        {icon && <Icon name={icon} />}
+        {name}
+      </span>
+    );
+  }
+);
 TagComponent.displayName = 'Tag';
 
 const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
@@ -76,6 +126,26 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
   const { background, text } =
     colorIndex === undefined ? getTagColorsFromName(name, theme) : getTagColor(colorIndex, theme);
   return {
+    closable: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
+    contentButton: css({
+      appearance: 'none',
+      border: 0,
+      padding: 0,
+      background: 'transparent',
+      color: 'inherit',
+      font: 'inherit',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
+    closeButton: css({
+      margin: 0,
+      color: 'inherit',
+    }),
     wrapper: css(
       {
         appearance: 'none',
