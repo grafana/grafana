@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -18,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -143,12 +142,15 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 
 	useAPI := snapshotAPIEnabled(c.Req.Context())
 	if useAPI && hs.Cfg.StackID == "" {
-		storage := hs.Cfg.UnifiedStorage[setting.SnapshotResource]
-		// Migration can switch the read store at runtime, so configuration alone
-		// cannot establish that a legacy lookup is safe when migration is enabled.
-		// TODO: Enable OSS unified public reads once public keys have an indexed lookup.
-		if storage.EnableMigration || storage.DualWriterMode > grafanarest.Mode2 {
-			return response.Error(http.StatusServiceUnavailable, "OSS public snapshot reads require legacy storage", nil)
+		// Self-managed instances have no stack namespace for public-key lookups.
+		// Consult the resolved mode because a completed migration overrides configuration.
+		// TODO: Enable self-managed unified public reads once public keys have an indexed lookup.
+		mode, err := hs.migrationStatusReader.GetStorageMode(c.Req.Context(), snapshot.SnapshotResourceInfo.GroupResource())
+		if err != nil {
+			return response.Error(http.StatusServiceUnavailable, "Unable to determine snapshot storage mode", err)
+		}
+		if mode != unifiedmigrations.StorageModeLegacy {
+			return response.Error(http.StatusServiceUnavailable, "Self-managed public snapshot reads require legacy storage", nil)
 		}
 		// The default namespace resolves public keys via a cross-namespace LIST,
 		// including background unified reads in Mode 1. Bypass the dual writer.

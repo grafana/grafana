@@ -273,7 +273,7 @@ func TestSnapshotWrapperPreservesLocalSnapshotOnExternalFailure(t *testing.T) {
 	storage.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
-func TestSnapshotWrapperUsesStoredExternalDeleteURL(t *testing.T) {
+func TestSnapshotWrapperUsesOriginalExternalHost(t *testing.T) {
 	setExternalSnapshotsK8SAPIPushToggle(t, false)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -283,7 +283,7 @@ func TestSnapshotWrapperUsesStoredExternalDeleteURL(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: "default"},
 		Spec:       dashv0.SnapshotSpec{External: new(true), DeleteKey: new("secret")},
 	}
-	snap.SetExternalDeleteURL(server.URL + "/api/snapshots-delete/secret")
+	snap.Spec.ExternalUrl = new(server.URL + "/dashboard/snapshot/public-key")
 	storage := grafanarest.NewMockStorage(t)
 	storage.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
 	access := acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}})
