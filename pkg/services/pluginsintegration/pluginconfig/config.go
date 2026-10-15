@@ -57,6 +57,9 @@ type PluginInstanceCfg struct {
 	// signing keys are configured, so Grafana signs the access tokens it sends
 	// to plugins itself.
 	LocalPluginTokens bool
+	// LocalAPIURL is where plugins reach this Grafana process directly, if it
+	// can be reached on loopback (see pluginauth.LocalAPIURL).
+	LocalAPIURL string
 
 	AWSAllowedAuthProviders          []string
 	AWSAssumeRoleEnabled             bool
@@ -121,6 +124,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		PluginSettings:                      extractPluginSettings(settingProvider),
 		DevMode:                             cfg.Env == setting.Dev,
 		LocalPluginTokens:                   pluginauth.LocalTokens(cfg),
+		LocalAPIURL:                         pluginauth.LocalAPIURL(cfg),
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
 		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),

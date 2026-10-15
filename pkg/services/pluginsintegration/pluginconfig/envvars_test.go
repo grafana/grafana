@@ -166,6 +166,13 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, "example-app", pluginID)
 	})
+	t.Run("prefers this process on loopback", func(t *testing.T) {
+		cfg := &PluginInstanceCfg{LocalPluginTokens: true, LocalAPIURL: "http://127.0.0.1:3000", GrafanaAppURL: "https://grafana.example.com/", Features: featuremgmt.WithFeatures()}
+		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+		env := provider.PluginEnvVars(context.Background(), app(false))
+		assert.Contains(t, env, "API_ACCESS_ROUTER_URL=http://127.0.0.1:3000")
+		assert.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=http://127.0.0.1:3000"+pluginauth.TokenExchangePath)
+	})
 	t.Run("each process start gets its own access policy token", func(t *testing.T) {
 		assert.NotEqual(t, capToken(envVars(true, app(false))), capToken(envVars(true, app(false))))
 	})

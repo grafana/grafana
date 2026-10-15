@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"slices"
 	"strings"
@@ -37,6 +38,9 @@ const maxRequestBytes = 64 << 10
 type Service struct {
 	cfg *setting.Cfg
 	log log.Logger
+	// loopbackOnly refuses callers that are not on loopback, set when plugins
+	// are given this process's loopback URL (see pluginauth.LocalAPIURL).
+	loopbackOnly bool
 	// manifests returns the app manifests of a plugin.
 	manifests func(ctx context.Context, pluginID string) ([]*app.ManifestData, error)
 }
@@ -45,8 +49,9 @@ type Service struct {
 // when Grafana signs plugin access tokens itself.
 func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, pluginSources sources.Registry) *Service {
 	s := &Service{
-		cfg: cfg,
-		log: log.New("plugins.tokenexchange"),
+		cfg:          cfg,
+		log:          log.New("plugins.tokenexchange"),
+		loopbackOnly: pluginauth.LocalAPIURL(cfg) != "",
 		manifests: func(ctx context.Context, pluginID string) ([]*app.ManifestData, error) {
 			return loadManifests(ctx, pluginSources, pluginID)
 		},
@@ -74,6 +79,10 @@ func errorResponse(status int, message string) response.Response {
 }
 
 func (s *Service) signAccessToken(c *contextmodel.ReqContext) response.Response {
+	// The socket's peer address, not c.RemoteAddr(), which trusts forwarding headers.
+	if s.loopbackOnly && !isLoopback(c.Req.RemoteAddr) {
+		return errorResponse(http.StatusForbidden, "only available to plugin processes on this host")
+	}
 	bearer, ok := strings.CutPrefix(c.Req.Header.Get("Authorization"), "Bearer ")
 	if !ok {
 		return errorResponse(http.StatusUnauthorized, "an access policy token is required")
@@ -107,6 +116,15 @@ func (s *Service) signAccessToken(c *contextmodel.ReqContext) response.Response 
 		Token string `json:"token"`
 	}{Token: token}}
 	return response.JSON(http.StatusOK, rsp)
+}
+
+func isLoopback(remoteAddr string) bool {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		return false
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // loadManifests returns the app manifests of pluginID. They are read on each

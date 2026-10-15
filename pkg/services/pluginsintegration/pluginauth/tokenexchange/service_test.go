@@ -160,3 +160,34 @@ func TestSignAccessTokenRequests(t *testing.T) {
 		})
 	}
 }
+
+func TestSignAccessTokenLoopbackOnly(t *testing.T) {
+	capToken, err := v3.IssueLocalAccessPolicyToken("example-app")
+	require.NoError(t, err)
+	t.Cleanup(func() { v3.RevokeLocalAccessPolicyToken(capToken) })
+	s := &Service{
+		cfg:          &setting.Cfg{ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}}},
+		log:          log.NewNopLogger(),
+		loopbackOnly: true,
+		manifests: func(context.Context, string) ([]*app.ManifestData, error) {
+			return []*app.ManifestData{testManifest}, nil
+		},
+	}
+	call := func(remoteAddr, forwardedFor string) int {
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"namespace":"*","audiences":["grafana"]}`))
+		req.RemoteAddr = remoteAddr
+		req.Header.Set("Authorization", "Bearer "+capToken)
+		if forwardedFor != "" {
+			req.Header.Set("X-Forwarded-For", forwardedFor)
+		}
+		rec := httptest.NewRecorder()
+		c := &contextmodel.ReqContext{Context: &web.Context{Req: req, Resp: web.NewResponseWriter(req.Method, rec)}, SignedInUser: &user.SignedInUser{}}
+		s.signAccessToken(c).WriteTo(c)
+		return rec.Code
+	}
+
+	require.Equal(t, http.StatusOK, call("127.0.0.1:51234", ""))
+	require.Equal(t, http.StatusOK, call("[::1]:51234", ""))
+	require.Equal(t, http.StatusForbidden, call("192.0.2.10:51234", ""), "a valid CAP token from another host is refused")
+	require.Equal(t, http.StatusForbidden, call("192.0.2.10:51234", "127.0.0.1"), "forwarding headers are not trusted")
+}

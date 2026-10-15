@@ -151,7 +151,11 @@ and token-exchange environment variables, and keep the `grafana` audience in
 The key and credentials belong to one Grafana process. Restarting Grafana
 invalidates them; stopping, replacing, or failing to start a plugin revokes that
 plugin process's exchange credential. This local signer does not provide shared
-credentials across Grafana replicas.
+credentials across Grafana replicas. With a plain HTTP listener on all
+interfaces or loopback, plugins reach their own Grafana process on loopback,
+so each replica's plugins work behind a load balancer, and the token exchange
+(`/api/internal/plugin-token-exchange`) refuses callers that are not on
+loopback. HTTPS, socket, and specific-address listeners use the app URL.
 
 ## Admission hooks
 

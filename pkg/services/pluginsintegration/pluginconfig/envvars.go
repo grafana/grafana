@@ -332,7 +332,7 @@ var apiAccessHostEnvVars = []string{
 }
 
 // apiAccessEnvVars passes an app plugin the credentials for Grafana's API when
-// Grafana signs plugin access tokens itself: Grafana's URL, the local token
+// Grafana signs plugin access tokens itself: this Grafana's URL, the local token
 // exchange, and an access policy token for it (see
 // v3.IssueLocalAccessPolicyToken). The app SDK then exchanges tokens to act as
 // the plugin or on behalf of its caller, as with a cloud access policy.
@@ -344,8 +344,13 @@ func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
 	if !p.cfg.LocalPluginTokens || plugin.Type != plugins.TypeApp {
 		return nil
 	}
-	appURL := strings.TrimSuffix(p.cfg.GrafanaAppURL, "/")
-	if appURL == "" {
+	// Prefer this process on loopback: its tokens are not valid on another
+	// Grafana behind the same app URL.
+	apiURL := p.cfg.LocalAPIURL
+	if apiURL == "" {
+		apiURL = strings.TrimSuffix(p.cfg.GrafanaAppURL, "/")
+	}
+	if apiURL == "" {
 		return nil
 	}
 	if !plugin.SkipHostEnvVars && slices.ContainsFunc(apiAccessHostEnvVars, func(key string) bool { return os.Getenv(key) != "" }) {
@@ -357,8 +362,8 @@ func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
 		return nil
 	}
 	return []string{
-		p.envVar("API_ACCESS_ROUTER_URL", appURL),
-		p.envVar("API_ACCESS_TOKEN_EXCHANGE_URL", appURL+pluginauth.TokenExchangePath),
+		p.envVar("API_ACCESS_ROUTER_URL", apiURL),
+		p.envVar("API_ACCESS_TOKEN_EXCHANGE_URL", apiURL+pluginauth.TokenExchangePath),
 		p.envVar(v3.EnvVarAccessPolicyToken, token),
 	}
 }

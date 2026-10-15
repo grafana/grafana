@@ -3,15 +3,51 @@
 package pluginauth
 
 import (
+	"net"
+	"net/url"
 	"strings"
 
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TokenExchangePath is the path, under Grafana's app URL, of the local token
-// exchange that plugins call to get access tokens for Grafana's API.
-const TokenExchangePath = "/api/plugin-auth/sign-access-token"
+// TokenExchangePath is the path of the local token exchange that plugins call
+// to get access tokens for Grafana's API. It is internal to the plugins
+// Grafana starts, not a public API.
+const TokenExchangePath = "/api/internal/plugin-token-exchange"
+
+// LocalAPIURL returns the URL at which the plugins Grafana starts reach this
+// Grafana process directly, on loopback, rather than through the app URL. Local
+// access policy tokens and signing keys belong to one process, so behind a
+// load balancer the app URL could reach another one.
+//
+// It is only set for a plain HTTP listener on all interfaces or on loopback:
+// an HTTPS certificate does not cover the loopback address, and a socket or a
+// listener on another address has none. Otherwise it is "", and plugins use
+// the app URL.
+func LocalAPIURL(cfg *setting.Cfg) string {
+	if cfg == nil || cfg.Protocol != setting.HTTPScheme || cfg.HTTPPort == "" || cfg.HTTPPort == "0" {
+		return ""
+	}
+	host := "127.0.0.1"
+	if addr := cfg.HTTPAddr; addr != "" {
+		ip := net.ParseIP(addr)
+		switch {
+		case ip != nil && ip.IsUnspecified():
+		case ip != nil && ip.IsLoopback():
+			host = addr
+		case addr == "localhost":
+			host = addr
+		default:
+			return ""
+		}
+	}
+	u := url.URL{Scheme: "http", Host: net.JoinHostPort(host, cfg.HTTPPort)}
+	if cfg.ServeFromSubPath {
+		u.Path = strings.TrimSuffix(cfg.AppSubURL, "/")
+	}
+	return u.String()
+}
 
 // LocalTokens reports whether Grafana signs plugin access tokens itself (see
 // v3.LocalTokenExchanger and v3.SignLocalAccessToken): neither [plugins]
