@@ -93,6 +93,10 @@ func TestAuthzResourcesCreateOnlyAppliesToFolders(t *testing.T) {
 	idx := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: dashboardGroup, Resource: "dashboards"}}
 	got := idx.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
 	assert.Equal(t, map[string]string{"dashboards": utils.VerbGet}, got)
+
+	other := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: "other.grafana.app", Resource: "folders"}}
+	got = other.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
+	assert.Equal(t, map[string]string{"folders": utils.VerbGet}, got, "same resource name in another group")
 }
 
 func TestBatchCheckItem(t *testing.T) {
@@ -105,4 +109,8 @@ func TestBatchCheckItem(t *testing.T) {
 	create := folder
 	create.verb = utils.VerbCreate
 	assert.Equal(t, authz.BatchCheckItem{Namespace: "default", Group: dashboardGroup, Resource: "dashboards", Folder: "team-a", Verb: utils.VerbCreate}, batchCheckItem(create))
+
+	other := create
+	other.group = "other.grafana.app"
+	assert.Equal(t, "other.grafana.app", batchCheckItem(other).Group, "a folders resource in another group is not rewritten")
 }

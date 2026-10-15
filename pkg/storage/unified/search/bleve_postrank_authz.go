@@ -364,8 +364,8 @@ func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[s
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
 		verb = utils.VerbUpdate
 	}
-	verbFor := func(res string) string {
-		if req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && res == folderResource {
+	verbFor := func(group, res string) string {
+		if req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && group == folderGroup && res == folderResource {
 			return utils.VerbCreate
 		}
 		return verb
@@ -373,10 +373,10 @@ func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[s
 	resources := map[string]string{}
 	if b.key.IsGlobal() {
 		for _, gr := range resource.GlobalSearchResourceTypes() {
-			resources[gr.Resource] = verbFor(gr.Resource)
+			resources[gr.Resource] = verbFor(gr.Group, gr.Resource)
 		}
 	} else {
-		resources[b.key.Resource] = verbFor(b.key.Resource)
+		resources[b.key.Resource] = verbFor(b.key.Group, b.key.Resource)
 	}
 	for _, federated := range req.Federated {
 		resources[federated.Resource] = utils.VerbGet
@@ -384,12 +384,15 @@ func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[s
 	return resources
 }
 
-const folderResource = "folders"
+const (
+	folderGroup    = "folder.grafana.app"
+	folderResource = "folders"
+)
 
 // batchCheckItem authorizes a folder hit under permission=create by the right to
 // create dashboards inside it; every other hit is checked as itself.
 func batchCheckItem(info docInfo) authz.BatchCheckItem {
-	if info.verb == utils.VerbCreate && info.resourceType == folderResource {
+	if info.verb == utils.VerbCreate && info.group == folderGroup && info.resourceType == folderResource {
 		return authz.BatchCheckItem{
 			Folder:    info.name,
 			Verb:      utils.VerbCreate,
