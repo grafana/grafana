@@ -2,11 +2,12 @@ package libraryelements
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/selection"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -24,19 +25,26 @@ const searchDashboardsLimit = 100000
 // running standalone). Dashboards are migrated to unified storage even where alert rules and
 // library panels are not, so this query needs no legacy database routing of its own.
 type SearchConnectedDashboardsFinder struct {
-	Searcher   resourcepb.ResourceIndexClient
-	Namespacer request.NamespaceMapper
+	Searcher resourcepb.ResourceIndexClient
 }
 
 // GetDashboardsByLibraryPanelUID mirrors
 // dashboards.DashboardServiceImpl.GetDashboardsByLibraryPanelUID's search request, querying the
-// search index directly instead of through a local DashboardService.
+// search index directly instead of through a local DashboardService. The namespace comes from ctx
+// (the same apiserver request namespace LegacyDatabaseProvider resolves the routed database from)
+// rather than orgID: in a standalone deployment, every tenant's namespace can parse to the same
+// OrgID, so orgID alone cannot identify which tenant's dashboards to search.
 func (f *SearchConnectedDashboardsFinder) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
+	ns, ok := apirequest.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("expecting namespace in context")
+	}
+
 	gvr := dashboardv0alpha1.DashboardResourceInfo.GroupVersionResource()
 	req := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
-				Namespace: f.Namespacer(orgID),
+				Namespace: ns,
 				Group:     gvr.Group,
 				Resource:  gvr.Resource,
 			},

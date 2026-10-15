@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -49,12 +50,10 @@ func TestSearchConnectedDashboardsFinder_GetDashboardsByLibraryPanelUID(t *testi
 			TotalHits: 1,
 		},
 	}
-	finder := &SearchConnectedDashboardsFinder{
-		Searcher:   searcher,
-		Namespacer: func(orgID int64) string { return "org-5" },
-	}
+	finder := &SearchConnectedDashboardsFinder{Searcher: searcher}
+	ctx := apirequest.WithNamespace(context.Background(), "org-5")
 
-	results, err := finder.GetDashboardsByLibraryPanelUID(context.Background(), "test-library-panel", 5)
+	results, err := finder.GetDashboardsByLibraryPanelUID(ctx, "test-library-panel", 5)
 	require.NoError(t, err)
 	assert.Equal(t, []*dashboards.DashboardRef{
 		{UID: "dashboard1", FolderUID: "folder1", ID: 1},
@@ -69,11 +68,16 @@ func TestSearchConnectedDashboardsFinder_GetDashboardsByLibraryPanelUID(t *testi
 
 func TestSearchConnectedDashboardsFinder_GetDashboardsByLibraryPanelUID_Error(t *testing.T) {
 	wantErr := assert.AnError
-	finder := &SearchConnectedDashboardsFinder{
-		Searcher:   &fakeResourceIndexClient{err: wantErr},
-		Namespacer: func(orgID int64) string { return "org-5" },
-	}
+	finder := &SearchConnectedDashboardsFinder{Searcher: &fakeResourceIndexClient{err: wantErr}}
+	ctx := apirequest.WithNamespace(context.Background(), "org-5")
+
+	_, err := finder.GetDashboardsByLibraryPanelUID(ctx, "test-library-panel", 5)
+	assert.ErrorIs(t, err, wantErr)
+}
+
+func TestSearchConnectedDashboardsFinder_GetDashboardsByLibraryPanelUID_MissingNamespace(t *testing.T) {
+	finder := &SearchConnectedDashboardsFinder{Searcher: &fakeResourceIndexClient{}}
 
 	_, err := finder.GetDashboardsByLibraryPanelUID(context.Background(), "test-library-panel", 5)
-	assert.ErrorIs(t, err, wantErr)
+	assert.Error(t, err)
 }
