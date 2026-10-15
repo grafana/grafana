@@ -27,6 +27,7 @@ import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/Snapsho
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
+import { isPreviewingPendingChanges } from '../lifecycle/pendingChangePreview';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -141,6 +142,11 @@ const createTestStore = () =>
   });
 
 let testStore: ReturnType<typeof createTestStore>;
+
+jest.mock('../lifecycle/pendingChangePreview', () => {
+  const actual = jest.requireActual('../lifecycle/pendingChangePreview');
+  return { ...actual, isPreviewingPendingChanges: jest.fn(actual.isPreviewingPendingChanges) };
+});
 
 jest.mock('app/store/store', () => {
   const actual = jest.requireActual('app/store/store');
@@ -1540,6 +1546,33 @@ describe('DashboardScenePageStateManager v2', () => {
         expect(loader.state.dashboard!.state.version).toBe(2);
       });
 
+      it('should not take scene from cache after a metadata-only change, such as publishing a draft', async () => {
+        const dashboard = (resourceVersion: string): DashboardWithAccessInfo<DashboardV2Spec> => ({
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            generation: 1,
+            resourceVersion,
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        });
+        setupDashboardAPI(dashboard('1'), jest.fn());
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        const draft = loader.state.dashboard;
+        loader.clearState();
+        loader.clearDashboardCache();
+
+        setupDashboardAPI(dashboard('2'), jest.fn());
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        expect(loader.state.dashboard === draft).toBe(false);
+        expect(loader.state.dashboard?.state.meta.k8s?.resourceVersion).toBe('2');
+      });
+
       it('should cache the dashboard DTO', async () => {
         const getDashSpy = jest.fn();
         setupDashboardAPI(
@@ -2433,6 +2466,21 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       await manager.reloadDashboard(params);
 
       expect(reloadMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps a pending changes preview instead of reloading the saved dashboard', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      const reloadMock = jest.fn();
+      manager['activeManager'].reloadDashboard = reloadMock;
+      jest.mocked(isPreviewingPendingChanges).mockReturnValueOnce(true);
+
+      await manager.reloadDashboard({ version: 2, scopes: [], from: 'now-1h', to: 'now' });
+
+      expect(isPreviewingPendingChanges).toHaveBeenCalledWith('fake-dash');
+      expect(reloadMock).not.toHaveBeenCalled();
     });
 
     it('should reload v2 dashboard with v2 manager', async () => {
