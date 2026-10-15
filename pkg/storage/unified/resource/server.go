@@ -428,6 +428,9 @@ type SearchOptions struct {
 	// stored in an index's IndexBuildInfo. May be nil.
 	SearchFields *SearchFieldsRegistry
 
+	// HybridSearchConfig shares the manifest watcher's current hybrid opt-ins.
+	HybridSearchConfig *HybridSearchConfigRegistry
+
 	// EmbeddingConfig is shared with the manifest watcher; consumers must read
 	// it after the initial poll and retain the registry to observe later reloads.
 	EmbeddingConfig *EmbeddingConfigRegistry
