@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func testBundleFile(path string, data []byte) *provisioning.BundleFile {
@@ -30,6 +31,11 @@ func TestNewBundleFile(t *testing.T) {
 	assert.Equal(t, "acme-repo", file.Labels[provisioning.BundleFileRepositoryLabel])
 	assert.Equal(t, "sample", file.Labels[provisioning.BundleLabel])
 	assert.Equal(t, "sample", file.Spec.Bundle)
+
+	// Files are foldered under their bundle so a folder view groups them under it.
+	meta, err := utils.MetaAccessor(file)
+	require.NoError(t, err)
+	assert.Equal(t, BundleFolderID("sample", "acme-repo"), meta.GetFolder())
 
 	assert.Equal(t, "bundles/sample/docs/a.md", file.Spec.Path)
 	assert.Equal(t, int64(len(data)), file.Spec.Size)
@@ -97,6 +103,40 @@ func TestBundleFileName(t *testing.T) {
 	t.Run("stays within the resource name limit", func(t *testing.T) {
 		name := BundleFileName(strings.Repeat("b", 253), "bundles/sample/a.md")
 		assert.LessOrEqual(t, len(name), 253)
+	})
+}
+
+func TestBundleFolderID(t *testing.T) {
+	t.Run("is stable and bundle-specific", func(t *testing.T) {
+		a := BundleFolderID("sample", "acme-repo")
+
+		assert.Equal(t, a, BundleFolderID("sample", "acme-repo"))
+		assert.NotEqual(t, a, BundleFolderID("other", "acme-repo"))
+	})
+
+	t.Run("is scoped to the repository", func(t *testing.T) {
+		// Two repositories may each have a bundle named "sample"; their folders must not
+		// be the same folder.
+		assert.NotEqual(t,
+			BundleFolderID("sample", "acme-repo"),
+			BundleFolderID("sample", "other-repo"),
+		)
+	})
+
+	t.Run("cannot collide with a repository directory of the same name", func(t *testing.T) {
+		// ParseFolder keys the hash on the directory path; this keys it on
+		// "bundle/<name>", so a directory literally called "sample" lands elsewhere.
+		assert.NotEqual(t,
+			BundleFolderID("sample", "acme-repo"),
+			ParseFolder("sample", "acme-repo").ID,
+		)
+	})
+
+	t.Run("is a valid folder UID", func(t *testing.T) {
+		id := BundleFolderID(strings.Repeat("b", 120), "acme-repo")
+
+		assert.LessOrEqual(t, len(id), 40, "UIDs are capped at 40 characters")
+		assert.Equal(t, id, sanitiseKubeName(id), "must already be a valid Kubernetes name")
 	})
 }
 

@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // bundleFileNameHashLen is how much of the path hash goes into a bundle file's name.
@@ -37,6 +38,19 @@ func BundleFileName(bundle, path string) string {
 	return prefix + "-" + suffix
 }
 
+// BundleFolderID derives the UID of the folder a bundle's files are placed in.
+//
+// Files are foldered under their bundle so a folder view shows a bundle as a folder of its
+// files, rather than scattering them beside unrelated resources.
+//
+// The UID is derived the same way every other provisioning folder UID is -- hashed and
+// salted by repository, so it is deterministic and a valid Kubernetes name. The hash key
+// is prefixed so a bundle can never land on the UID of a repository directory that merely
+// shares its name: ParseFolder keys on the directory path, this keys on "bundle/<name>".
+func BundleFolderID(bundle, repository string) string {
+	return appendHashSuffix("bundle/"+bundle, repository)(sanitiseKubeName(bundle))
+}
+
 // BundleFileOptions describes one file to be stored for a bundle.
 type BundleFileOptions struct {
 	Namespace  string
@@ -56,10 +70,14 @@ type BundleFileOptions struct {
 // is not valid UTF-8. Hash and Size describe the decoded content, so they can be compared
 // against a freshly read file without decoding the stored one -- the hash is also the
 // version a bundle records, so there is nothing else to keep in step.
+//
+// The file is placed in the bundle's folder, so a folder view groups a bundle's files
+// under it. The folder itself is the reconciler's to create; this only stamps the
+// annotation that puts the file in it.
 func NewBundleFile(opts BundleFileOptions) *provisioning.BundleFile {
 	sum := sha256.Sum256(opts.Data)
 
-	return &provisioning.BundleFile{
+	file := &provisioning.BundleFile{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      BundleFileName(opts.Bundle, opts.Path),
 			Namespace: opts.Namespace,
@@ -77,6 +95,13 @@ func NewBundleFile(opts BundleFileOptions) *provisioning.BundleFile {
 			Content:    base64.StdEncoding.EncodeToString(opts.Data),
 		},
 	}
+
+	// MetaAccessor only fails for an object without ObjectMeta, which BundleFile has.
+	if meta, err := utils.MetaAccessor(file); err == nil {
+		meta.SetFolder(BundleFolderID(opts.Bundle, opts.Repository))
+	}
+
+	return file
 }
 
 // BundleFileAction is what reconciliation has to do to one bundle file.
