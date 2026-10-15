@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -12,6 +12,8 @@ interface SwitchVariableFormProps {
   disabledValue: string;
   onEnabledValueChange: (value: string) => void;
   onDisabledValueChange: (value: string) => void;
+  onValuePairChange: (enabledValue: string, disabledValue: string) => void;
+  onCustomValueBlur?: () => void;
   inline?: boolean;
 }
 
@@ -27,11 +29,20 @@ export function SwitchVariableForm({
   disabledValue,
   onEnabledValueChange,
   onDisabledValueChange,
+  onValuePairChange,
+  onCustomValueBlur,
   inline,
 }: SwitchVariableFormProps) {
   const readOnly = useOptionsPaneReadOnly();
   const currentValuePairType = getCurrentValuePairType(enabledValue, disabledValue);
   const [isCustomValuePairType, setIsCustomValuePairType] = useState(currentValuePairType === 'custom');
+  // Values can also change outside of the form (e.g. undo/redo), custom values are always edited in custom mode
+  const showCustomValues = isCustomValuePairType || currentValuePairType === 'custom';
+  const [enabledValueInput, setEnabledValueInput] = useState(enabledValue);
+  const [disabledValueInput, setDisabledValueInput] = useState(disabledValue);
+
+  useEffect(() => setEnabledValueInput(enabledValue), [enabledValue]);
+  useEffect(() => setDisabledValueInput(disabledValue), [disabledValue]);
   const [enabledValueInvalid, setEnabledValueInvalid] = useState<boolean>(false);
   const [disabledValueInvalid, setDisabledValueInvalid] = useState<boolean>(false);
   const identicalValuesErrorMessage = t(
@@ -49,18 +60,15 @@ export function SwitchVariableForm({
 
     switch (selection.value) {
       case 'boolean':
-        onEnabledValueChange('true');
-        onDisabledValueChange('false');
+        onValuePairChange('true', 'false');
         setIsCustomValuePairType(false);
         break;
       case 'number':
-        onEnabledValueChange('1');
-        onDisabledValueChange('0');
+        onValuePairChange('1', '0');
         setIsCustomValuePairType(false);
         break;
       case 'string':
-        onEnabledValueChange('yes');
-        onDisabledValueChange('no');
+        onValuePairChange('yes', 'no');
         setIsCustomValuePairType(false);
         break;
       case 'custom':
@@ -70,6 +78,7 @@ export function SwitchVariableForm({
   };
 
   const handleEnabledValueChange = (newEnabledValue: string) => {
+    setEnabledValueInput(newEnabledValue);
     const isInvalid = newEnabledValue === disabledValue;
 
     setEnabledValueInvalid(isInvalid);
@@ -81,6 +90,7 @@ export function SwitchVariableForm({
   };
 
   const handleDisabledValueChange = (newDisabledValue: string) => {
+    setDisabledValueInput(newDisabledValue);
     const isInvalid = newDisabledValue === enabledValue;
 
     setDisabledValueInvalid(isInvalid);
@@ -114,7 +124,7 @@ export function SwitchVariableForm({
         >
           <Combobox
             width={fieldWidth}
-            value={isCustomValuePairType ? 'custom' : currentValuePairType}
+            value={showCustomValues ? 'custom' : currentValuePairType}
             options={VALUE_PAIR_OPTIONS}
             onChange={onValuePairTypeChange}
             data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.valuePairTypeSelect}
@@ -122,7 +132,7 @@ export function SwitchVariableForm({
         </Field>
 
         {/* Custom value pair type */}
-        {isCustomValuePairType && (
+        {showCustomValues && (
           <Stack gap={2} direction="column">
             <Field
               noMargin
@@ -137,10 +147,11 @@ export function SwitchVariableForm({
             >
               <Input
                 width={fieldWidth}
-                defaultValue={enabledValue}
+                value={enabledValueInput}
                 onChange={(event) => {
                   handleEnabledValueChange(event.currentTarget.value);
                 }}
+                onBlur={onCustomValueBlur}
                 placeholder={t(
                   'dashboard-scene.switch-variable-form.enabled-value-placeholder',
                   'e.g. On, Enabled, Active'
@@ -162,8 +173,9 @@ export function SwitchVariableForm({
             >
               <Input
                 width={fieldWidth}
-                defaultValue={disabledValue}
+                value={disabledValueInput}
                 onChange={(event) => handleDisabledValueChange(event.currentTarget.value)}
+                onBlur={onCustomValueBlur}
                 placeholder={t(
                   'dashboard-scene.switch-variable-form.disabled-value-placeholder',
                   'e.g. Off, Disabled, Inactive'

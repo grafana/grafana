@@ -16,6 +16,7 @@ interface IntervalVariableFormProps {
   onIntervalsChange: (event: FormEvent<HTMLInputElement>) => void;
   onAutoEnabledChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onAutoMinIntervalChanged: (event: FormEvent<HTMLInputElement>) => void;
+  onAutoMinIntervalBlur?: () => void;
   onAutoCountChanged: (option: SelectableValue) => void;
   autoEnabled: boolean;
   autoMinInterval: string;
@@ -28,6 +29,7 @@ export function IntervalVariableForm({
   onIntervalsChange,
   onAutoEnabledChange,
   onAutoMinIntervalChanged,
+  onAutoMinIntervalBlur,
   onAutoCountChanged,
   autoEnabled,
   autoMinInterval,
@@ -95,6 +97,7 @@ export function IntervalVariableForm({
             // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="10s"
             onChange={onAutoMinIntervalChanged}
+            onBlur={onAutoMinIntervalBlur}
             width={11}
             testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.minIntervalInput}
           />
