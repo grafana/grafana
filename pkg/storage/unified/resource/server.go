@@ -3066,6 +3066,14 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 	queueCtx, cancel := context.WithTimeout(ctx, s.queueConfig.Timeout)
 	defer cancel()
 
+	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
+	// This is only used as a QOS queue key, not as a storage namespace.
+	if tenantID == "" {
+		// "cs" = cluster scoped. 2 characters on purpose as the min size of namespace is 3 characters, guaranteed not
+		// to clash
+		tenantID = "cs"
+	}
+
 	_, waitSpan := tracer.Start(queueCtx, "resource.server.runInQueue", trace.WithAttributes(
 		attribute.String("operation", operation), attribute.String("stack", tenantID),
 	))
@@ -3084,14 +3092,6 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 		MaxBackoff: s.queueConfig.MaxBackoff,
 		MaxRetries: s.queueConfig.MaxRetries,
 	})
-
-	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
-	// This is only used as a QOS queue key, not as a storage namespace.
-	if tenantID == "" {
-		// "cs" = cluster scoped. 2 characters on purpose as the min size of namespace is 3 characters, guaranteed not
-		// to clash
-		tenantID = "cs"
-	}
 
 	for {
 		err := s.queue.Enqueue(queueCtx, tenantID, wrappedRunnable)

@@ -119,7 +119,7 @@ type Queue struct {
 	maxConcurrentPerTenant int
 
 	// Metrics
-	inFlight          *prometheus.GaugeVec
+	inFlight          prometheus.Gauge
 	queueLength       *prometheus.GaugeVec
 	discardedRequests *prometheus.CounterVec
 	queueWaitDuration *prometheus.HistogramVec
@@ -159,10 +159,10 @@ func NewQueue(opts *QueueOptions) *Queue {
 		maxConcurrentPerTenant: max(0, opts.MaxConcurrentPerTenant),
 	}
 
-	q.inFlight = promauto.With(opts.Registerer).NewGaugeVec(prometheus.GaugeOpts{
+	q.inFlight = promauto.With(opts.Registerer).NewGauge(prometheus.GaugeOpts{
 		Name: "grafana_resource_server_qos_in_flight",
-		Help: "Number of reserved or executing requests per tenant",
-	}, []string{"tenant"})
+		Help: "Number of reserved or executing requests across all tenants",
+	})
 	q.queueLength = promauto.With(opts.Registerer).NewGaugeVec(prometheus.GaugeOpts{
 		Name: "grafana_resource_server_qos_queue_length",
 		Help: "Number of items in the queue",
@@ -210,7 +210,7 @@ func (q *Queue) scheduleRoundRobin() {
 		tq.items = tq.items[1:]
 		qi.stopCancel()
 		tq.inFlight++
-		q.inFlight.WithLabelValues(tq.id).Set(float64(tq.inFlight))
+		q.inFlight.Inc()
 		q.queueLength.WithLabelValues(tq.id).Set(float64(tq.len()))
 		q.pendingDequeueRequests.Remove(reqElem)
 		req.respChan <- dequeueResponse{runnable: q.wrapRunnable(qi)}
@@ -249,7 +249,6 @@ func (q *Queue) cleanupTenant(tq *tenantQueue) {
 	tq.clear()
 	if tq.inFlight == 0 && q.tenantQueues[tq.id] == tq {
 		delete(q.tenantQueues, tq.id)
-		q.inFlight.DeleteLabelValues(tq.id)
 	}
 }
 
@@ -348,7 +347,7 @@ func (q *Queue) dispatcherLoop(ctx context.Context) error {
 
 		case tq := <-q.completionChan:
 			tq.inFlight--
-			q.inFlight.WithLabelValues(tq.id).Set(float64(tq.inFlight))
+			q.inFlight.Dec()
 			q.cleanupTenant(tq)
 		case qi := <-q.cancellationChan:
 			if qi != nil {
@@ -485,7 +484,7 @@ func (q *Queue) stopping(_ error) error {
 
 	q.queueLength.Reset()
 	q.discardedRequests.Reset()
-	q.inFlight.Reset()
+	q.inFlight.Set(0)
 	for _, tq := range q.tenantQueues {
 		for _, qi := range tq.items {
 			qi.stopCancel()

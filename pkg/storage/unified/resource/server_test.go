@@ -4762,6 +4762,14 @@ func TestResourceServerQOSQueueWaitSpan(t *testing.T) {
 		require.Contains(t, spans[0].Attributes(), attribute.String("operation", "read"))
 		require.Contains(t, spans[0].Attributes(), attribute.String("stack", "stack-a"))
 	})
+	t.Run("cluster-scoped waits use the queue tenant", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv, _ := newTestServerWithQueue(t, 10, 2)
+		require.NoError(t, srv.runInQueue(t.Context(), "", "read", func(context.Context) {}))
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Contains(t, spans[0].Attributes(), attribute.String("stack", "cs"))
+	})
 	t.Run("ends on queued cancellation", func(t *testing.T) {
 		recorder := newQOSTestSpanRecorder(t)
 		q := scheduler.NewQueue(&scheduler.QueueOptions{})

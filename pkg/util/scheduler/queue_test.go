@@ -602,6 +602,26 @@ func TestQueue(t *testing.T) {
 	})
 
 	t.Run("Execution", func(t *testing.T) {
+		t.Run("AggregateInFlight", func(t *testing.T) {
+			q := newExecutionTestQueue(t, 1)
+			require.Zero(t, testutil.ToFloat64(q.inFlight))
+			work := make([]func(), 0, 32)
+			for i := range 32 {
+				require.NoError(t, q.Enqueue(t.Context(), fmt.Sprintf("tenant-%d", i), func() {}))
+				work = append(work, dequeueExecution(t, q))
+			}
+			require.NoError(t, testutil.CollectAndCompare(q.inFlight, strings.NewReader(`
+# HELP grafana_resource_server_qos_in_flight Number of reserved or executing requests across all tenants
+# TYPE grafana_resource_server_qos_in_flight gauge
+grafana_resource_server_qos_in_flight 32
+`)))
+			for _, fn := range work {
+				fn()
+			}
+			require.Zero(t, q.Len())
+			require.Zero(t, testutil.ToFloat64(q.inFlight))
+		})
+
 		t.Run("TenantIsolation", func(t *testing.T) {
 			q := newExecutionTestQueue(t, 4)
 			startExecutionTestScheduler(t, q, 32)
@@ -621,10 +641,10 @@ func TestQueue(t *testing.T) {
 			awaitExecutionSignal(t, healthy)
 			require.Equal(t, 1, q.Len())
 			require.Len(t, started, 0, "the fifth request must remain queued")
-			require.Equal(t, float64(4), testutil.ToFloat64(q.inFlight.WithLabelValues("slow")))
+			require.Eventually(t, func() bool { return testutil.ToFloat64(q.inFlight) == 4 }, time.Second, time.Millisecond)
 			unblock()
 			awaitExecutionSignal(t, started)
-			require.Eventually(t, func() bool { return testutil.CollectAndCount(q.inFlight) == 0 }, time.Second, time.Millisecond)
+			require.Eventually(t, func() bool { return testutil.ToFloat64(q.inFlight) == 0 }, time.Second, time.Millisecond)
 		})
 
 		t.Run("FairnessAndFIFO", func(t *testing.T) {
@@ -652,7 +672,7 @@ func TestQueue(t *testing.T) {
 			require.Equal(t, []string{"b0", "b1", "a0", "a1", "c0", "c1"}, order)
 			require.Zero(t, q.Len())
 			require.Zero(t, q.ActiveTenantsLen())
-			require.Zero(t, testutil.CollectAndCount(q.inFlight))
+			require.Zero(t, testutil.ToFloat64(q.inFlight))
 		})
 
 		t.Run("RoundRobinAmongEligibleTenants", func(t *testing.T) {
@@ -688,12 +708,12 @@ func TestQueue(t *testing.T) {
 				runnable := dequeueExecution(t, q)
 				cancel()
 				require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
-				require.Equal(t, float64(1), testutil.ToFloat64(q.inFlight.WithLabelValues("a")))
+				require.Equal(t, float64(1), testutil.ToFloat64(q.inFlight))
 				runnable()
 				require.Equal(t, float64(1), testutil.ToFloat64(q.discardedRequests.WithLabelValues("a", "context_canceled")))
 				dequeueExecution(t, q)()
 				require.Zero(t, q.Len())
-				require.Zero(t, testutil.CollectAndCount(q.inFlight))
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
 			})
 			t.Run("executing cancellation retains capacity until return", func(t *testing.T) {
 				q := newExecutionTestQueue(t, 1)
@@ -712,7 +732,7 @@ func TestQueue(t *testing.T) {
 				require.NoError(t, q.Enqueue(t.Context(), "b", func() {}))
 				dequeueExecution(t, q)()
 				require.Equal(t, 1, q.Len())
-				require.Equal(t, float64(1), testutil.ToFloat64(q.inFlight.WithLabelValues("a")))
+				require.Equal(t, float64(1), testutil.ToFloat64(q.inFlight))
 				unblock()
 				awaitExecutionSignal(t, finished)
 				dequeueExecution(t, q)()
@@ -775,13 +795,13 @@ func TestQueue(t *testing.T) {
 				fn := dequeueExecution(t, q)
 				require.NoError(t, q.Enqueue(t.Context(), "a", runnable))
 				require.Equal(t, 1, q.Len())
-				require.Equal(t, float64(1), testutil.ToFloat64(q.inFlight.WithLabelValues("a")))
+				require.Equal(t, float64(1), testutil.ToFloat64(q.inFlight))
 				fn()
 				require.Equal(t, 1, executions)
 				dequeueExecution(t, q)()
 				require.Equal(t, 2, executions)
 				require.Zero(t, q.Len())
-				require.Zero(t, testutil.CollectAndCount(q.inFlight))
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
 			})
 			t.Run("panic releases reservation and propagates", func(t *testing.T) {
 				q := newExecutionTestQueue(t, 1)
@@ -807,7 +827,7 @@ func TestQueue(t *testing.T) {
 						require.ErrorIs(t, <-result, ErrQueueClosed)
 					}
 					fn()
-					require.Zero(t, testutil.CollectAndCount(q.inFlight))
+					require.Zero(t, testutil.ToFloat64(q.inFlight))
 					require.Empty(t, q.tenantQueues)
 				})
 			})
@@ -822,12 +842,12 @@ func TestQueue(t *testing.T) {
 						require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
 						work = append(work, dequeueExecution(t, q))
 					}
-					require.Equal(t, float64(8), testutil.ToFloat64(q.inFlight.WithLabelValues("a")))
+					require.Equal(t, float64(8), testutil.ToFloat64(q.inFlight))
 					for _, fn := range work {
 						fn()
 					}
 					require.Zero(t, q.Len())
-					require.Zero(t, testutil.CollectAndCount(q.inFlight))
+					require.Zero(t, testutil.ToFloat64(q.inFlight))
 				})
 			}
 		})
@@ -862,7 +882,7 @@ func TestQueue(t *testing.T) {
 			}
 			wg.Wait()
 			require.NoError(t, q.Enqueue(t.Context(), "a", func() { executed.Add(1) }))
-			require.Eventually(t, func() bool { return q.Len() == 0 && testutil.CollectAndCount(q.inFlight) == 0 }, 5*time.Second, time.Millisecond)
+			require.Eventually(t, func() bool { return q.Len() == 0 && testutil.ToFloat64(q.inFlight) == 0 }, 5*time.Second, time.Millisecond)
 			require.False(t, exceeded.Load())
 			require.GreaterOrEqual(t, executed.Load(), int32(401), "all 400 uncanceled requests and the final request must execute")
 		})
