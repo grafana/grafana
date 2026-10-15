@@ -1631,6 +1631,20 @@
     },
     {
       "metadata": {
+        "name": "dashboards.libraryPanelHorizontalRepeatFullWidth",
+        "resourceVersion": "1791472020296",
+        "creationTimestamp": "2026-10-08T15:07:00Z"
+      },
+      "spec": {
+        "description": "Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboards.libraryPanelRepeatFromServerResolution",
         "resourceVersion": "1791320467097",
         "creationTimestamp": "2026-10-06T21:01:07Z"
@@ -1764,6 +1778,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.gatewayAuditPolicy",
+        "resourceVersion": "1791975503776",
+        "creationTimestamp": "2026-10-14T10:58:23Z"
+      },
+      "spec": {
+        "description": "Enable support for the query gateway audit policies",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2145,7 +2173,8 @@
       "metadata": {
         "name": "enableDashboardEmptyExtensions",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-10-13T07:03:13Z"
+        "creationTimestamp": "2025-10-13T07:03:13Z",
+        "deletionTimestamp": "2026-10-15T11:19:04Z"
       },
       "spec": {
         "description": "Set this to true to enable all dashboard empty state extensions registered by plugins.",
@@ -2845,6 +2874,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.navigationInfoArchRefresh",
+        "resourceVersion": "1791988590221",
+        "creationTimestamp": "2026-10-14T14:36:30Z"
+      },
+      "spec": {
+        "description": "Enables the refreshed information architecture for Grafana's navigation",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1791798499805",
         "creationTimestamp": "2026-06-19T08:30:47Z",
@@ -2863,12 +2905,15 @@
     {
       "metadata": {
         "name": "grafana.newTextPanel",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-20T21:57:11Z"
+        "resourceVersion": "1792001973031",
+        "creationTimestamp": "2026-07-20T21:57:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-14 18:19:33.031329 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new text panel",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
@@ -2898,6 +2943,20 @@
         "description": "Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more",
         "stage": "experimental",
         "codeowner": "@grafana/data-sources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.otelLogDetails",
+        "resourceVersion": "1791390838681",
+        "creationTimestamp": "2026-10-07T16:33:58Z"
+      },
+      "spec": {
+        "description": "Enables a new version of log details optimized for displaying OTel logs",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -4554,7 +4613,8 @@
       "metadata": {
         "name": "pluginsSriChecks",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-10-04T12:55:09Z"
+        "creationTimestamp": "2024-10-04T12:55:09Z",
+        "deletionTimestamp": "2026-10-07T08:59:38Z"
       },
       "spec": {
         "description": "Enables SRI checks for plugin assets",

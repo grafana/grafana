@@ -653,6 +653,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboards.libraryPanelHorizontalRepeatFullWidth",
+			Description: "Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "disableScriptedDashboards",
 			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
 			Stage:       FeatureStageDeprecated,
@@ -1312,14 +1320,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:        "pluginsSriChecks",
-			Description: "Enables SRI checks for plugin assets",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false", // disabled by default
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1897,15 +1897,6 @@ var (
 			Expression:   "false", // extensions will be disabled by default
 		},
 		{
-			Name:         "enableDashboardEmptyExtensions",
-			Description:  "Set this to true to enable all dashboard empty state extensions registered by plugins.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			Expression:   "false", // extensions will be disabled by default
-		},
-		{
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1983,7 +1974,7 @@ var (
 		{
 			Name:        "grafana.newTextPanel",
 			Description: "Enables the new text panel",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDatavizSquad,
 			Generate:    Generate{React: true},
 			Expression:  "false",
@@ -3160,6 +3151,14 @@ var (
 			Generate:     Generate{Go: true, React: true},
 		},
 		{
+			Name:        "grafana.navigationInfoArchRefresh",
+			Description: "Enables the refreshed information architecture for Grafana's navigation",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
+		},
+		{
 			Name:        "grafana.exploreMetricsSidebar",
 			Description: "Enables the sidebar in Explore metrics (Metrics Drilldown)",
 			Stage:       FeatureStageExperimental,
@@ -3408,6 +3407,23 @@ var (
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "grafana.otelLogDetails",
+			Description: "Enables a new version of log details optimized for displaying OTel logs",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "datasources.gatewayAuditPolicy",
+			Description:  "Enable support for the query gateway audit policies",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

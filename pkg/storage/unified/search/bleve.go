@@ -2349,6 +2349,21 @@ func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest
 	}
 }
 
+func (b *bleveIndex) SearchFieldDefinitions() []resource.SearchFieldDefinition {
+	definitions := make([]resource.SearchFieldDefinition, 0, len(b.searchFields.resultFields))
+	for name, field := range b.searchFields.resultFields {
+		// Skip prefixed aliases and keep standard fields' precedence over
+		// per-kind declarations with the same name.
+		if name == field.Name {
+			definitions = append(definitions, field)
+		}
+	}
+	slices.SortFunc(definitions, func(a, b resource.SearchFieldDefinition) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	return definitions
+}
+
 // Search implements resource.DocumentIndex.
 func (b *bleveIndex) Search(
 	ctx context.Context,

@@ -13,8 +13,10 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -49,17 +51,65 @@ func groupResourceOf(key NamespacedResource) schema.GroupResource {
 }
 
 // GlobalSearchResourceTypes lists the resource types a namespace-wide index
-// covers.
-//
-// Written out for now. The list is meant to come from the manifests, with each
-// kind opting in, which also gives the owner of a kind somewhere to say so.
-// Until then it stays short and explicit, because adding a type means checking
-// how its documents are authorized first.
+// covers, sorted: the kinds whose manifest opts them in to the global search
+// index. A kind is left out unless it opts in, because adding one means checking
+// how its documents are authorized first. See globalSearchCoverageOf.
 func GlobalSearchResourceTypes() []schema.GroupResource {
-	return []schema.GroupResource{
-		{Group: "dashboard.grafana.app", Resource: "dashboards"},
-		{Group: "folder.grafana.app", Resource: "folders"},
+	return slices.Clone(globalSearchCoverage().types)
+}
+
+// GlobalSearchKinds names the Kubernetes kind of each covered resource type,
+// which a result reports and which its group and resource do not say.
+func GlobalSearchKinds() map[schema.GroupResource]string {
+	return maps.Clone(globalSearchCoverage().kinds)
+}
+
+type globalSearchTypes struct {
+	types []schema.GroupResource
+	kinds map[schema.GroupResource]string
+}
+
+// globalSearchCoverage is worked out once, from every manifest compiled in, on
+// first use: after the init functions that register manifests have run.
+var globalSearchCoverage = sync.OnceValue(func() globalSearchTypes {
+	return globalSearchCoverageOf(AppManifests())
+})
+
+// globalSearchCoverageOf returns the kinds that opt in to the global search
+// index in any version of their manifest, and serve the search and list-keys
+// routes in every version.
+//
+// A kind turns those routes off when its lists hide objects in a way generic
+// reads cannot repeat, such as showing users only their own. The global index is
+// another generic read, so it leaves such a kind out even if it opts in.
+func globalSearchCoverageOf(manifests []*app.ManifestData) globalSearchTypes {
+	kinds := map[schema.GroupResource]string{}
+	closed := map[schema.GroupResource]bool{}
+	for _, m := range manifests {
+		if m == nil {
+			continue
+		}
+		for _, version := range m.Versions {
+			for _, kind := range version.Kinds {
+				gr := schema.GroupResource{Group: m.Group, Resource: ManifestResourceName(kind)}
+				if kind.InGlobalSearchIndex() {
+					kinds[gr] = kind.Kind
+				}
+				if !kind.HasSearchEndpoint() || !kind.HasListKeysEndpoint() {
+					closed[gr] = true
+				}
+			}
+		}
 	}
+	out := globalSearchTypes{kinds: map[schema.GroupResource]string{}}
+	for gr, kind := range kinds {
+		if !closed[gr] {
+			out.kinds[gr] = kind
+		}
+	}
+	out.types = slices.Collect(maps.Keys(out.kinds))
+	slices.SortFunc(out.types, func(a, b schema.GroupResource) int { return strings.Compare(a.String(), b.String()) })
+	return out
 }
 
 // keepStandardFieldsOnly drops what a document carries for its own resource type,
@@ -80,7 +130,8 @@ func keepStandardFieldsOnly(doc *IndexableDocument) *IndexableDocument {
 // GlobalIndexCoversType reports whether a global index holds documents of this
 // resource type.
 func GlobalIndexCoversType(gr schema.GroupResource) bool {
-	return slices.Contains(GlobalSearchResourceTypes(), gr)
+	_, ok := globalSearchCoverage().kinds[gr]
+	return ok
 }
 
 // indexSources returns the resource types whose documents belong in the index
@@ -856,41 +907,13 @@ func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
 // watchWrittenKeys watches written keys straight from the bus when the backend
 // can, and otherwise takes them from the watch stream, which is a few seconds
 // slower but needs no bus.
-func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *resourcepb.ResourceKey, error) {
+func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *WrittenEvent, error) {
 	keys, err := s.storage.WatchWrittenKeys(ctx, GlobalSearchResourceTypes(), s.queueReconcileAfterLostKeys)
 	if !errors.Is(err, ErrWrittenKeysUnsupported) {
 		return keys, err
 	}
 	s.log.Info("global search indexes follow the watch stream, which is slower than watching written keys", "reason", err)
-	events, err := s.storage.WatchWriteEvents(ctx)
-	if err != nil {
-		return nil, err
-	}
-	out := make(chan *resourcepb.ResourceKey, maxWatchBatch)
-	go func() {
-		defer close(out)
-		for {
-			var event *WrittenEvent
-			select {
-			case <-ctx.Done():
-				return
-			case e, ok := <-events:
-				if !ok {
-					return
-				}
-				event = e
-			}
-			if event == nil || event.Key == nil {
-				continue
-			}
-			select {
-			case out <- event.Key:
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-	return out, nil
+	return s.storage.WatchWriteEvents(ctx)
 }
 
 // queueReconcileAfterLostKeys queues a reconcile of the open global index this
@@ -916,8 +939,8 @@ func (s *searchServer) queueReconcileAfterLostKeys(namespace string) {
 // nextWrittenKeysBatch blocks for one key, then takes what else arrives within
 // globalWatchBatchWait. It reports false once ctx is cancelled or the stream
 // ends.
-func nextWrittenKeysBatch(ctx context.Context, keys <-chan *resourcepb.ResourceKey) ([]*resourcepb.ResourceKey, bool) {
-	var first *resourcepb.ResourceKey
+func nextWrittenKeysBatch(ctx context.Context, keys <-chan *WrittenEvent) ([]*WrittenEvent, bool) {
+	var first *WrittenEvent
 	select {
 	case <-ctx.Done():
 		return nil, false
@@ -927,7 +950,7 @@ func nextWrittenKeysBatch(ctx context.Context, keys <-chan *resourcepb.ResourceK
 		}
 		first = key
 	}
-	batch := make([]*resourcepb.ResourceKey, 0, maxWatchBatch)
+	batch := make([]*WrittenEvent, 0, maxWatchBatch)
 	batch = append(batch, first)
 	wait := time.NewTimer(globalWatchBatchWait)
 	defer wait.Stop()
@@ -956,13 +979,14 @@ func nextWrittenKeysBatch(ctx context.Context, keys <-chan *resourcepb.ResourceK
 // state again, so it cannot put back an older version or a deleted object. That
 // relies on a read after a write is announced seeing that write, which holds
 // while storage reads from the database the writes go to.
-func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*resourcepb.ResourceKey) {
+func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*WrittenEvent) {
 	changed := map[NamespacedResource][]string{}
 	var sources []NamespacedResource
-	for _, key := range batch {
-		if key == nil {
+	for _, written := range batch {
+		if written == nil || written.Key == nil {
 			continue
 		}
+		key := written.Key
 		src := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
 		if !GlobalIndexCoversType(groupResourceOf(src)) {
 			continue
