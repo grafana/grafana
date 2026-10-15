@@ -112,9 +112,9 @@ export const flows = {
       } else {
         await sidebar.addOptions.addVariable();
         await sidebar.variableOptions.selectVariableType(variable.type);
+        // Only the variable type picker autofocuses the name input; adding a Filter does not
+        await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
       }
-
-      await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
 
       await sidebar.variableOptions.setName(variable.name);
       if (variable.label) {
