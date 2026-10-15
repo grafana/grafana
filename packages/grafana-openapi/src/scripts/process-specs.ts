@@ -36,7 +36,10 @@ function processDirectory(sourceDir: string, outputDir: string) {
     }
 
     const outputSpec = processOpenAPISpec(inputSpec);
-    fs.writeFileSync(outputPath, JSON.stringify(outputSpec, null, 2), 'utf-8');
+    const outputContent = JSON.stringify(outputSpec, null, 2);
+    if (!fs.existsSync(outputPath) || !fs.readFileSync(outputPath).equals(Buffer.from(outputContent, 'utf-8'))) {
+      fs.writeFileSync(outputPath, outputContent, 'utf-8');
+    }
     console.log(`Processing completed for file "${file}".`);
   }
 }

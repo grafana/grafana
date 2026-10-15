@@ -167,7 +167,7 @@ openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 alread
 
 .PHONY: generate-openapi
 generate-openapi: openapi3-gen
-	$(GO) test ./pkg/tests/apis || true
+	UPDATE_OPENAPI_SNAPSHOTS=1 $(GO) test -count=1 -run '^TestIntegrationOpenAPIs$$' ./pkg/tests/apis
 	yarn workspace @grafana/openapi process-specs
 
 ##@ Internationalisation
