@@ -125,7 +125,7 @@ describe('AlertRulesFilterSidebar accessibility', () => {
     });
 
     expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('team');
-    expect(screen.getByRole('radiogroup', { name: 'Label operator' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Label operator' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Label value' })).toHaveValue('api');
     expect(screen.getByRole('button', { name: 'Remove label filter' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Remove Team Alerts' })).toBeInTheDocument();

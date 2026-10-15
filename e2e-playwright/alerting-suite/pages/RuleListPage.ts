@@ -219,11 +219,8 @@ export class RuleListPage {
 
     this.forgetRequests();
     if (operator !== '=') {
-      await labels
-        .getByRole('radiogroup', { name: 'Label operator' })
-        .nth(rowCount)
-        .getByRole('radio', { name: operator, exact: true })
-        .click();
+      await labels.getByRole('combobox', { name: 'Label operator' }).nth(rowCount).click();
+      await this.page.getByRole('option', { name: operator, exact: true }).click();
     }
     if (value !== undefined) {
       const valueInput = labels.getByRole('textbox', { name: 'Label value' }).nth(rowCount);

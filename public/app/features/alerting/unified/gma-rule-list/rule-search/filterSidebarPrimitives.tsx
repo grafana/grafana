@@ -1,22 +1,11 @@
 import { type KeyboardEvent, useEffect, useId, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  Combobox,
-  type ComboboxOption,
-  Icon,
-  IconButton,
-  Input,
-  RadioButtonGroup,
-  Stack,
-  Switch,
-  Text,
-} from '@grafana/ui';
+import { Button, Combobox, type ComboboxOption, Icon, IconButton, Input, Stack, Switch, Text } from '@grafana/ui';
 
 import { type Criteria, type HealthValue, type LabelMatcher, type LabelOperator } from './criteria';
 
-function getOperatorOptions(): Array<{ label: string; value: LabelOperator }> {
+function getOperatorOptions(): Array<ComboboxOption<LabelOperator>> {
   return [
     { label: '=', value: 'equal' },
     { label: '!=', value: 'notEqual' },
@@ -133,11 +122,13 @@ function LabelMatcherRow({ matcher, onChange, onRemove }: LabelMatcherRowProps) 
         onBlur={commitKey}
         onKeyDown={commitOnEnter(commitKey)}
       />
-      <RadioButtonGroup
+      <Combobox<LabelOperator>
         aria-label={t('alerting.gma-rule-list.search.label-operator', 'Label operator')}
         options={getOperatorOptions()}
         value={matcher.operator}
-        onChange={(operator) =>
+        width="auto"
+        minWidth={8}
+        onChange={({ value: operator }) =>
           onChange({ ...matcher, operator, value: VALUELESS_OPERATORS.has(operator) ? undefined : value })
         }
       />

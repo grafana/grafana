@@ -302,7 +302,8 @@ describe('AlertRulesFilterSidebar', () => {
     const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('button', { name: 'Add label filter' }));
-    await user.click(screen.getByRole('radio', { name: '!=' }));
+    await user.click(screen.getByRole('combobox', { name: 'Label operator' }));
+    await user.click(await screen.findByRole('option', { name: '!=' }));
     await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api');
     await user.tab();
 
@@ -314,7 +315,8 @@ describe('AlertRulesFilterSidebar', () => {
     const { user, onChange } = renderSidebar();
 
     await user.click(screen.getByRole('button', { name: 'Add label filter' }));
-    await user.click(screen.getByRole('radio', { name: '!=' }));
+    await user.click(screen.getByRole('combobox', { name: 'Label operator' }));
+    await user.click(await screen.findByRole('option', { name: '!=' }));
     await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api');
     await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
 
