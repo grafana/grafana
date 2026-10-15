@@ -15,6 +15,7 @@ export type OperationDefinition = {
   pathItem: OpenAPIV3.PathItemObject;
   operation: OpenAPIV3.OperationObject;
 };
+export type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
 
 const defaultHooksOptions = {
   queries: true,
@@ -26,35 +27,48 @@ const defaultHooksOptions = {
 // The older group-root dashboard search routes remain included.
 const perResourceSearch = /^\/[^/]+\/(search(?:\/hybrid)?|trash)$/;
 
-export const createAPIConfigWithSearch = (app: string, version: string) => {
+export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
+  if (Array.isArray(filterEndpoints)) {
+    return filterEndpoints;
+  }
+  return (name, operation) =>
+    !perResourceSearch.test(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
+};
+
+/**
+ * Helper to return consistent base API generation config
+ */
+const createAPIConfig = (app: string, version: string, filterEndpoints?: EndpointMatcher, additional = {}) => {
   const filePath = `../clients/rtkq/${app}/${version}/endpoints.gen.ts`;
   return {
     [filePath]: {
       schemaFile: path.join(basePath, `packages/grafana-openapi/src/apis/${app}.grafana.app-${version}.json`),
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
+      filterEndpoints: withoutPerResourceSearch(filterEndpoints),
       tag: true,
       hooks: defaultHooksOptions,
-      // Generic search and trash POSTs read resources, so generate queries.
-      endpointOverrides: [
-        {
-          pattern: (_name: string, operation: OperationDefinition) =>
-            operation.verb === 'post' && perResourceSearch.test(operation.path),
-          type: 'query' as const,
-        },
-      ],
+      ...additional,
     },
   };
 };
 
-export const createAPIConfig = (app: string, version: string) => {
-  const filePath = `../clients/rtkq/${app}/${version}/endpoints.gen.ts`;
-  return {
-    [filePath]: {
-      ...createAPIConfigWithSearch(app, version)[filePath],
-      filterEndpoints: (_name: string, operation: OperationDefinition) => !perResourceSearch.test(operation.path),
-    },
-  };
-};
+/**
+ * Includes the hybrid search endpoint in the generated APIs, in contrast to createAPIConfig which filters them out.
+ */
+const createAPIConfigWithSearch = (app: string, version: string) =>
+  createAPIConfig(app, version, undefined, {
+    // Disable the default search-route filter.
+    filterEndpoints: undefined,
+    // Generic search and trash use POSTs to read resources, which by default would be considered a mutation by RTK,
+    // so we have to make this override.
+    endpointOverrides: [
+      {
+        pattern: (_name: string, operation: OperationDefinition) =>
+          operation.verb === 'post' && perResourceSearch.test(operation.path),
+        type: 'query',
+      },
+    ],
+  });
 
 const config: ConfigFile = {
   schemaFile: '', // leave this empty, and instead populate the outputFiles object below
