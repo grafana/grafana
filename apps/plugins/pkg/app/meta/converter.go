@@ -283,6 +283,18 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			if include.Icon != "" {
 				v0Include.Icon = &include.Icon
 			}
+			if include.Available != nil {
+				v0Available := pluginsv0alpha1.MetaBoolOrIncludeAvailableFlag{}
+				if include.Available.Static != nil {
+					v0Available.Bool = include.Available.Static
+				} else if include.Available.Flag != nil {
+					v0Available.IncludeAvailableFlag = &pluginsv0alpha1.MetaIncludeAvailableFlag{
+						Flag:     *include.Available.Flag,
+						Fallback: include.Available.Fallback,
+					}
+				}
+				v0Include.Available = &v0Available
+			}
 			meta.Includes = append(meta.Includes, v0Include)
 		}
 	}

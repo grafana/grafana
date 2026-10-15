@@ -261,54 +261,43 @@ test("The new page works", () => {
 include item unavailable. If you leave it out, it defaults to `true`, and the include is considered
 available. `available` accepts **any** flag key, including ones a plugin defines and owns itself, evaluated
 against whatever OpenFeature provider the Grafana instance is configured with (refer to
-[`pkg/services/ofrep`](../pkg/services/ofrep) for how that's served).
+[`pkg/services/ofrep`](../pkg/services/ofrep) for how that's served). The whole capability is gated
+behind `grafana.pluginNavAvailability` (default off) — `available` is ignored entirely until that
+toggle is on.
 
 - Field omitted entirely: always available.
 
-- A literal boolean: static override to false, to make it unavailble.
- 
+- A literal boolean: static override.
+
   ```json
   "available": false
   ```
 
-- A bare flag key: shorthand for `{{ flag `my-plugin.myFlag` false }}` below.
-  Setting this field to a flag key explicitly controls availability, so unlike the
-  field being omitted, this fails CLOSED (unavailable) if the flag can't be resolved.
+- A bare flag key: sugar for `{"flag": "my-plugin.myFlag", "fallback": false}` below. Setting this
+  field to a flag key is an explicit opt-in to gating, so unlike the field being omitted, this
+  fails **closed** (unavailable) if the flag can't be resolved.
 
   ```json
   "available": "my-plugin.myFlag"
   ```
 
-- A `{{ }}` Go template expression: full control, including the fallback.
+- An explicit `{flag, fallback}` object, for when the default fail-closed fallback isn't what you want:
 
   ```json
-  "available": "{{ flag `my-plugin.myFlag` true }}"
+  "available": { "flag": "my-plugin.myFlag", "fallback": true }
   ```
 
-  The expression form is a [`text/template`](https://pkg.go.dev/text/template) string evaluated
-  server-side when the nav tree is built. It exposes one custom function, plus the stdlib's
-  built-in `and`/`or`/`not` for combining multiple flags:
+  `fallback` is used only when the flag genuinely can't be resolved (unknown key, provider
+  unreachable) — an internal evaluation error (e.g. a panic in the flag provider) fails **open**
+  instead, regardless of `fallback`, since that's a bug in our own plumbing, not a flag-resolution
+  outcome.
 
-  ```go
-  flag(key string, fallback bool) bool
-  ```
-
-  `fallback` is required, not optional — there's no implicit default inside the function itself,
-  only in the bare-key shorthand's expansion above. Combine multiple flags with `or`/`and`:
-
-  ```json
-  "available": "{{ or (flag `my-plugin.flagA` false) (flag `my-plugin.flagB` true) }}"
-  ```
-
-  Use backtick-quoted string literals for flag keys, not double quotes — `text/template` supports
-  both, but backticks pass through the surrounding JSON string with no escaping, whereas `"` would
-  need to be written as `\"`. This is the same trick used in Helm/Sprig templates for the same
-  reason (a Go template embedded inside another quoted format).
-
-  A malformed expression, or any internal evaluation error, fails **open** (the include stays
-  visible) — that's a difference from the author's own chosen `fallback`, which only covers the
-  flag genuinely not resolving (unknown key, provider unreachable), not bugs in the expression
-  itself.
+This only supports one flag per include today. Combining several (AND/OR) isn't supported, and
+wasn't needed by anything built so far — if that changes, the natural extension is additive:
+`{"and": [{flag, fallback}, ...]}` / `{"or": [...]}` wrapping the same leaf shape, at which point
+it's worth revisiting whether this should share a representation with
+[`pkg/services/accesscontrol`](../pkg/services/accesscontrol)'s `ac.Evaluator` tree
+(`EvalAny`/`EvalAll`/`EvalPermission`) rather than growing its own.
 
 ## Enabling toggles in development
 

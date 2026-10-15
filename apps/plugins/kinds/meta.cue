@@ -143,6 +143,11 @@ metaV0Alpha1: {
 	[string]: _
 }
 
+#IncludeAvailableFlag: {
+	flag:     string
+	fallback: bool
+}
+
 #Include: {
 	uid?:        string
 	type?:       "dashboard" | "page" | "panel" | "datasource"
@@ -154,6 +159,7 @@ metaV0Alpha1: {
 	addToNav?:   bool
 	defaultNav?: bool
 	icon?:       string
+	available?:  bool | #IncludeAvailableFlag
 }
 
 #QueryOptions: {

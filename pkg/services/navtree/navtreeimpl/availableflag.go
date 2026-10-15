@@ -1,10 +1,7 @@
 package navtreeimpl
 
 import (
-	"bytes"
 	"context"
-	"strconv"
-	"text/template"
 
 	"github.com/open-feature/go-sdk/openfeature"
 
@@ -12,49 +9,29 @@ import (
 )
 
 // evaluateAvailable resolves an include's availability for this request.
-// An omitted value is visible.
-func evaluateAvailable(ctx context.Context, expr *plugins.FlagExpr) (visible bool) {
+// An omitted value is available.
+func evaluateAvailable(ctx context.Context, expr *plugins.FlagExpr) (available bool) {
 	if expr == nil {
 		return true
 	}
 	if expr.Static != nil {
 		return *expr.Static
 	}
-	if expr.Template == nil {
+	if expr.Flag == nil {
 		return true
 	}
 
-	// Fail open on panic: Execute re-panics on runtime errors from the bound flag function.
-	visible = true
+	// Fail open on panic: a nil context (or any other client-internal bug) can
+	// panic here, independent of expr.Fallback, which only covers the flag
+	// genuinely not resolving.
+	available = true
 	defer func() {
 		if recover() != nil {
-			visible = true
+			available = true
 		}
 	}()
 
-	// Clone before rebinding: the manifest template is shared across requests,
-	// so mutating it could race or reuse another request's context.
-	evalTmpl, err := expr.Template.Clone()
-	if err != nil {
-		return true
-	}
-
 	client := openfeature.NewDefaultClient()
-	evalTmpl = evalTmpl.Funcs(template.FuncMap{
-		"flag": func(key string, fallback bool) bool {
-			return client.Boolean(ctx, key, fallback, openfeature.TransactionContext(ctx))
-		},
-	})
-
-	var buf bytes.Buffer
-	if err := evalTmpl.Execute(&buf, nil); err != nil {
-		return true
-	}
-
-	result, err := strconv.ParseBool(buf.String())
-	if err != nil {
-		return true
-	}
-	visible = result
-	return visible
+	available = client.Boolean(ctx, *expr.Flag, expr.Fallback, openfeature.TransactionContext(ctx))
+	return available
 }

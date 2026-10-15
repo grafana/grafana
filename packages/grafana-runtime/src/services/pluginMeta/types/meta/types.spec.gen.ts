@@ -149,9 +149,20 @@ export interface Include {
 	addToNav?: boolean;
 	defaultNav?: boolean;
 	icon?: string;
+	available?: boolean | IncludeAvailableFlag;
 }
 
 export const defaultInclude = (): Include => ({
+});
+
+export interface IncludeAvailableFlag {
+	flag: string;
+	fallback: boolean;
+}
+
+export const defaultIncludeAvailableFlag = (): IncludeAvailableFlag => ({
+	flag: "",
+	fallback: false,
 });
 
 export interface QueryOptions {

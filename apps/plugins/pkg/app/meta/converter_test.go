@@ -252,6 +252,42 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.Equal(t, pluginsv0alpha1.MetaIncludeRoleViewer, *meta.Includes[1].Role)
 	})
 
+	t.Run("converts include available", func(t *testing.T) {
+		mustAvailable := func(t *testing.T, jsonValue string) *plugins.FlagExpr {
+			t.Helper()
+			var f plugins.FlagExpr
+			require.NoError(t, json.Unmarshal([]byte(jsonValue), &f))
+			return &f
+		}
+
+		jsonData := plugins.JSONData{
+			ID:   "test-plugin",
+			Name: "Test Plugin",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{UID: "static", Type: "page", Available: mustAvailable(t, `false`)},
+				{UID: "flagged", Type: "page", Available: mustAvailable(t, `{"flag": "my-plugin.myFlag", "fallback": true}`)},
+				{UID: "unset", Type: "page"},
+			},
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+		require.Len(t, meta.Includes, 3)
+
+		require.NotNil(t, meta.Includes[0].Available)
+		require.NotNil(t, meta.Includes[0].Available.Bool)
+		assert.False(t, *meta.Includes[0].Available.Bool)
+		assert.Nil(t, meta.Includes[0].Available.IncludeAvailableFlag)
+
+		require.NotNil(t, meta.Includes[1].Available)
+		require.NotNil(t, meta.Includes[1].Available.IncludeAvailableFlag)
+		assert.Equal(t, "my-plugin.myFlag", meta.Includes[1].Available.IncludeAvailableFlag.Flag)
+		assert.True(t, meta.Includes[1].Available.IncludeAvailableFlag.Fallback)
+		assert.Nil(t, meta.Includes[1].Available.Bool)
+
+		assert.Nil(t, meta.Includes[2].Available)
+	})
+
 	t.Run("converts include role types", func(t *testing.T) {
 		testCases := []struct {
 			role     identity.RoleType

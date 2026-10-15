@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -1207,6 +1208,144 @@ func setupOpenFeatureFlag(t *testing.T, flag string, value bool) {
 	t.Cleanup(func() {
 		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
 		openfeatureTestMutex.Unlock()
+	})
+}
+
+// setupOpenFeatureFlags is setupOpenFeatureFlag for more than one flag at once.
+func setupOpenFeatureFlags(t *testing.T, flags map[string]bool) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	inMemFlags := make(map[string]memprovider.InMemoryFlag, len(flags))
+	for flag, value := range flags {
+		inMemFlags[flag] = setting.NewInMemoryFlag(flag, value)
+	}
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(inMemFlags)
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
+
+// TestAddAppLinks_AvailableFlag covers the actual wiring from hasAccessToInclude
+// to evaluateAvailable via a real addAppLinks call — availableflag_test.go only
+// exercises evaluateAvailable in isolation, so a broken wire-up there would pass
+// every existing test without this.
+func TestAddAppLinks_AvailableFlag(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"}}
+
+	mustAvailable := func(t *testing.T, jsonValue string) *plugins.FlagExpr {
+		t.Helper()
+		var f plugins.FlagExpr
+		require.NoError(t, json.Unmarshal([]byte(jsonValue), &f))
+		return &f
+	}
+
+	newService := func(gatedInclude *plugins.Includes) ServiceImpl {
+		testApp := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "test-gated-app",
+				Name: "Test gated app",
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{Name: "Always visible", Path: "/a/test-gated-app/always", Type: "page", AddToNav: true},
+					gatedInclude,
+				},
+			},
+		}
+		return ServiceImpl{
+			log:           log.New("navtree"),
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+				testApp.ID: {ID: 0, OrgID: 1, PluginID: testApp.ID, PluginVersion: "1.0.0", Enabled: true},
+			}},
+			features: featuremgmt.WithFeatures(),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{testApp},
+			},
+		}
+	}
+
+	t.Run("include with available:false is hidden, sibling stays visible", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaPluginNavAvailability, true)
+		service := newService(&plugins.Includes{
+			Name: "Gated", Path: "/a/test-gated-app/gated", Type: "page", AddToNav: true,
+			Available: mustAvailable(t, `false`),
+		})
+
+		treeRoot := navtree.NavTreeRoot{}
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		appNode := treeRoot.FindById("plugin-page-test-gated-app")
+		require.NotNil(t, appNode)
+		require.Len(t, appNode.Children, 1)
+		require.Equal(t, "Always visible", appNode.Children[0].Text)
+	})
+
+	t.Run("include with available:true is shown alongside its sibling", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaPluginNavAvailability, true)
+		service := newService(&plugins.Includes{
+			Name: "Gated", Path: "/a/test-gated-app/gated", Type: "page", AddToNav: true,
+			Available: mustAvailable(t, `true`),
+		})
+
+		treeRoot := navtree.NavTreeRoot{}
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		appNode := treeRoot.FindById("plugin-page-test-gated-app")
+		require.NotNil(t, appNode)
+		require.Len(t, appNode.Children, 2)
+	})
+
+	t.Run("bare flag key that can't be resolved fails closed", func(t *testing.T) {
+		setupOpenFeatureFlags(t, map[string]bool{
+			featuremgmt.FlagGrafanaPluginNavAvailability: true,
+			"test.someUnrelatedFlag":                     true,
+		})
+		service := newService(&plugins.Includes{
+			Name: "Gated", Path: "/a/test-gated-app/gated", Type: "page", AddToNav: true,
+			Available: mustAvailable(t, `"test.unregisteredFlag"`),
+		})
+
+		treeRoot := navtree.NavTreeRoot{}
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		appNode := treeRoot.FindById("plugin-page-test-gated-app")
+		require.NotNil(t, appNode)
+		require.Len(t, appNode.Children, 1)
+	})
+
+	t.Run("available is ignored while the rollout toggle is off, even when set to false", func(t *testing.T) {
+		service := newService(&plugins.Includes{
+			Name: "Gated", Path: "/a/test-gated-app/gated", Type: "page", AddToNav: true,
+			Available: mustAvailable(t, `false`),
+		})
+
+		treeRoot := navtree.NavTreeRoot{}
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		appNode := treeRoot.FindById("plugin-page-test-gated-app")
+		require.NotNil(t, appNode)
+		require.Len(t, appNode.Children, 2, "the capability should be fully inert until grafana.pluginNavAvailability is on")
+	})
+
+	t.Run("include with no available field is unaffected", func(t *testing.T) {
+		service := newService(&plugins.Includes{
+			Name: "Gated", Path: "/a/test-gated-app/gated", Type: "page", AddToNav: true,
+		})
+
+		treeRoot := navtree.NavTreeRoot{}
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+
+		appNode := treeRoot.FindById("plugin-page-test-gated-app")
+		require.NotNil(t, appNode)
+		require.Len(t, appNode.Children, 2)
 	})
 }
 

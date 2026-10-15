@@ -20,7 +20,7 @@ func mustFlagExpr(t *testing.T, jsonValue string) *plugins.FlagExpr {
 func TestEvaluateAvailable(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("nil expr (field omitted) is always visible", func(t *testing.T) {
+	t.Run("nil expr (field omitted) is always available", func(t *testing.T) {
 		require.True(t, evaluateAvailable(ctx, nil))
 	})
 
@@ -39,21 +39,14 @@ func TestEvaluateAvailable(t *testing.T) {
 		require.False(t, evaluateAvailable(ctx, mustFlagExpr(t, `"test.unregisteredFlag"`)))
 	})
 
-	t.Run("explicit expression can choose to fail open instead", func(t *testing.T) {
+	t.Run("explicit object form can choose to fail open instead", func(t *testing.T) {
 		setupOpenFeatureFlag(t, "test.someOtherFlag", true)
-		expr := mustFlagExpr(t, `"{{ flag `+"`"+`test.unregisteredFlag`+"`"+` true }}"`)
+		expr := mustFlagExpr(t, `{"flag": "test.unregisteredFlag", "fallback": true}`)
 		require.True(t, evaluateAvailable(ctx, expr))
 	})
 
-	t.Run("compound expression combines multiple flags with or", func(t *testing.T) {
-		setupOpenFeatureFlag(t, "test.availableFlag", false)
-		expr := mustFlagExpr(t, `"{{ or (flag `+"`"+`test.availableFlag`+"`"+` false) (flag `+"`"+`test.unregisteredFlag`+"`"+` true) }}"`)
-		require.True(t, evaluateAvailable(ctx, expr))
-	})
-
-	t.Run("fails open when the bound flag closure panics", func(t *testing.T) {
-		// A nil context makes OpenFeature panic; evaluateAvailable must recover
-		// because template execution doesn't recover runtime panics.
+	t.Run("fails open when the client panics", func(t *testing.T) {
+		// A nil context makes OpenFeature panic; evaluateAvailable must recover itself.
 		var nilCtx context.Context
 		require.NotPanics(t, func() {
 			require.True(t, evaluateAvailable(nilCtx, mustFlagExpr(t, `"test.anyFlag"`)))

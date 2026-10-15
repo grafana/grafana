@@ -2,6 +2,12 @@
 
 package v0alpha1
 
+import (
+	bytes "bytes"
+	json "encoding/json"
+	errors "errors"
+)
+
 // JSON configuration schema for Grafana plugins
 // Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
 // +k8s:openapi-gen=true
@@ -136,16 +142,17 @@ func (MetaEnterpriseFeatures) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type MetaInclude struct {
-	Uid        *string          `json:"uid,omitempty"`
-	Type       *MetaIncludeType `json:"type,omitempty"`
-	Name       *string          `json:"name,omitempty"`
-	Component  *string          `json:"component,omitempty"`
-	Role       *MetaIncludeRole `json:"role,omitempty"`
-	Action     *string          `json:"action,omitempty"`
-	Path       *string          `json:"path,omitempty"`
-	AddToNav   *bool            `json:"addToNav,omitempty"`
-	DefaultNav *bool            `json:"defaultNav,omitempty"`
-	Icon       *string          `json:"icon,omitempty"`
+	Uid        *string                         `json:"uid,omitempty"`
+	Type       *MetaIncludeType                `json:"type,omitempty"`
+	Name       *string                         `json:"name,omitempty"`
+	Component  *string                         `json:"component,omitempty"`
+	Role       *MetaIncludeRole                `json:"role,omitempty"`
+	Action     *string                         `json:"action,omitempty"`
+	Path       *string                         `json:"path,omitempty"`
+	AddToNav   *bool                           `json:"addToNav,omitempty"`
+	DefaultNav *bool                           `json:"defaultNav,omitempty"`
+	Icon       *string                         `json:"icon,omitempty"`
+	Available  *MetaBoolOrIncludeAvailableFlag `json:"available,omitempty"`
 }
 
 // NewMetaInclude creates a new MetaInclude object.
@@ -156,6 +163,22 @@ func NewMetaInclude() *MetaInclude {
 // OpenAPIModelName returns the OpenAPI model name for MetaInclude.
 func (MetaInclude) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaInclude"
+}
+
+// +k8s:openapi-gen=true
+type MetaIncludeAvailableFlag struct {
+	Flag     string `json:"flag"`
+	Fallback bool   `json:"fallback"`
+}
+
+// NewMetaIncludeAvailableFlag creates a new MetaIncludeAvailableFlag object.
+func NewMetaIncludeAvailableFlag() *MetaIncludeAvailableFlag {
+	return &MetaIncludeAvailableFlag{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaIncludeAvailableFlag.
+func (MetaIncludeAvailableFlag) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaIncludeAvailableFlag"
 }
 
 // +k8s:openapi-gen=true
@@ -843,4 +866,65 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1SpecSignatureType.
 func (MetaV0alpha1SpecSignatureType) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1SpecSignatureType"
+}
+
+// +k8s:openapi-gen=true
+type MetaBoolOrIncludeAvailableFlag struct {
+	Bool                 *bool                     `json:"Bool,omitempty"`
+	IncludeAvailableFlag *MetaIncludeAvailableFlag `json:"IncludeAvailableFlag,omitempty"`
+}
+
+// NewMetaBoolOrIncludeAvailableFlag creates a new MetaBoolOrIncludeAvailableFlag object.
+func NewMetaBoolOrIncludeAvailableFlag() *MetaBoolOrIncludeAvailableFlag {
+	return &MetaBoolOrIncludeAvailableFlag{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `MetaBoolOrIncludeAvailableFlag` as JSON.
+func (resource MetaBoolOrIncludeAvailableFlag) MarshalJSON() ([]byte, error) {
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+	if resource.IncludeAvailableFlag != nil {
+		return json.Marshal(resource.IncludeAvailableFlag)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `MetaBoolOrIncludeAvailableFlag` from JSON.
+func (resource *MetaBoolOrIncludeAvailableFlag) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// Bool
+	var Bool bool
+	if err := json.Unmarshal(raw, &Bool); err != nil {
+		errList = append(errList, err)
+		resource.Bool = nil
+	} else {
+		resource.Bool = &Bool
+		return nil
+	}
+
+	// IncludeAvailableFlag
+	var IncludeAvailableFlag MetaIncludeAvailableFlag
+	includeAvailableFlagdec := json.NewDecoder(bytes.NewReader(raw))
+	includeAvailableFlagdec.DisallowUnknownFields()
+	if err := includeAvailableFlagdec.Decode(&IncludeAvailableFlag); err != nil {
+		errList = append(errList, err)
+		resource.IncludeAvailableFlag = nil
+	} else {
+		resource.IncludeAvailableFlag = &IncludeAvailableFlag
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaBoolOrIncludeAvailableFlag.
+func (MetaBoolOrIncludeAvailableFlag) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaBoolOrIncludeAvailableFlag"
 }
