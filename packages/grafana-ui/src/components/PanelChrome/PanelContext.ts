@@ -44,8 +44,6 @@ export interface AdHocTransformationsState {
 export interface PanelContext {
   /** Panel-owned notices. Absent on hosts without notice support. @alpha */
   notices?: PanelNotices;
-  /** Investigates one current status item, addressed by its runtime ID. @alpha */
-  onInvestigateStatusItem?: (id: string) => void;
   /** Connects host data for the lifetime of a panel status surface. @internal */
   activateNotices?: () => () => void;
   /** Identifier for the events scope */

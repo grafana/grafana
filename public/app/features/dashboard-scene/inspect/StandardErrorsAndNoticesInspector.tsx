@@ -18,7 +18,6 @@ export interface StandardErrorsAndNoticesInspectorProps {
   data?: DataFrame[];
   errors?: DataQueryError[];
   statusItems?: readonly PanelStatusItem[];
-  onClose?: () => void;
 }
 
 type Severity = QueryResultMetaNotice['severity'];
@@ -98,7 +97,6 @@ export function StandardErrorsAndNoticesInspector({
   data,
   errors,
   statusItems,
-  onClose,
 }: StandardErrorsAndNoticesInspectorProps) {
   const styles = useStyles2(getStyles);
   const entries: InspectableEntry[] = statusItems
@@ -129,13 +127,13 @@ export function StandardErrorsAndNoticesInspector({
   return (
     <Stack direction="column" gap={1}>
       {entries.map((entry, index) => (
-        <EntryCard key={entry.statusItem?.id ?? `${entry.severity}-${index}`} entry={entry} onClose={onClose} />
+        <EntryCard key={entry.statusItem?.id ?? `${entry.severity}-${index}`} entry={entry} />
       ))}
     </Stack>
   );
 }
 
-function EntryCard({ entry, onClose }: { entry: InspectableEntry; onClose?: () => void }) {
+function EntryCard({ entry }: { entry: InspectableEntry }) {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(true);
 
@@ -182,7 +180,7 @@ function EntryCard({ entry, onClose }: { entry: InspectableEntry; onClose?: () =
                   {member.refId}
                 </span>
               )}
-              <PanelStatusActions statusItem={member} onClose={onClose} />
+              <PanelStatusActions statusItem={member} />
             </div>
           ))}
         </div>

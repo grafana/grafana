@@ -1,5 +1,4 @@
 import { type PanelStatusItem } from '@grafana/data';
-import { t } from '@grafana/i18n';
 
 import { Button } from '../Button/Button';
 import { Box } from '../Layout/Box/Box';
@@ -9,15 +8,11 @@ import { usePanelContext } from './PanelContext';
 import { usePanelStatusSnapshot } from './usePanelNotices';
 
 /** Status actions for the inspector. @alpha */
-export function PanelStatusActions({ statusItem, onClose }: { statusItem: PanelStatusItem; onClose?: () => void }) {
-  const { notices, onInvestigateStatusItem } = usePanelContext();
+export function PanelStatusActions({ statusItem }: { statusItem: PanelStatusItem }) {
+  const { notices } = usePanelContext();
   const snapshot = usePanelStatusSnapshot(notices);
   const current = snapshot.items.find((item) => item.id === statusItem.id);
-  if (
-    !current ||
-    !notices ||
-    (!current.actions?.length && (!onInvestigateStatusItem || current.assistant === 'hidden'))
-  ) {
+  if (!current?.actions?.length || !notices) {
     return null;
   }
   return (
@@ -41,20 +36,6 @@ export function PanelStatusActions({ statusItem, onClose }: { statusItem: PanelS
               </Button>
             );
           })}
-          {onInvestigateStatusItem && current.assistant !== 'hidden' && (
-            <Button
-              variant="secondary"
-              icon="ai-sparkle"
-              onClick={() => {
-                onInvestigateStatusItem(current.id);
-                onClose?.();
-              }}
-            >
-              {current.severity === 'error'
-                ? t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')
-                : t('grafana-ui.panel-chrome.explain-with-assistant', 'Explain with Assistant')}
-            </Button>
-          )}
         </Stack>
         {current.actions?.map((action) => {
           const error = snapshot.actions[JSON.stringify([current.id, action.id])]?.error;

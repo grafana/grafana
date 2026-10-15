@@ -251,7 +251,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Unreachable while the sample generator never reports an error for this popover to attach to;
   // would need this guard the moment that changes, so it stays guarded directly.
   if (isNewPanelQueryErrorsUIEnabled()) {
-    const notices = setupPanelNotices(vizPanel, context);
+    setupPanelNotices(vizPanel, context);
     context.onOpenInspector = () => {
       if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {
         return;
@@ -268,23 +268,23 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
         takeUntil(timer(ASSISTANT_AVAILABILITY_TIMEOUT_MS))
       )
       .subscribe((available) => {
-        context.onInvestigateErrors = available
-          ? () => investigatePanelErrorsWithAssistant(vizPanel, undefined, context)
-          : undefined;
-        context.onInvestigateStatusItem = available
-          ? (id) => investigatePanelErrorsWithAssistant(vizPanel, id, context)
-          : undefined;
-        notices.refresh();
+        context.onInvestigateErrors = available ? () => investigatePanelErrorsWithAssistant(vizPanel) : undefined;
         vizPanel.forceRender();
       });
   }
 }
 
 /**
- * Keeps the panel reference for live investigation. Selected plugin notices must accompany
- * it because their runtime-only messages cannot be recovered by querying the datasource.
+ * Checks the panel's current errors/notices (mirroring the "Errors and notices" inspector tab)
+ * to decide whether there's anything to investigate, then opens the assistant with a reference
+ * to the panel itself rather than a text snapshot of its errors.
+ *
+ * Attaching the panel this way (name/panelId/panelKey) mirrors the assistant's own "select a
+ * panel as context" picker (PanelSelectButton in grafana-assistant-app), so the assistant
+ * resolves it through the same path and can inspect the panel's live queries/data with its own
+ * tools instead of trusting a frozen description we send in the prompt.
  */
-function investigatePanelErrorsWithAssistant(vizPanel: VizPanel, statusItemId?: string, context?: PanelContext) {
+function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
   if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {
     return;
   }
@@ -292,16 +292,8 @@ function investigatePanelErrorsWithAssistant(vizPanel: VizPanel, statusItemId?: 
   const panelData = sceneGraph.getData(vizPanel).state.data;
   const errors = panelData?.errors ?? (panelData?.error ? [panelData.error] : []);
   const entries = buildEntries(panelData?.series, errors);
-  const snapshot = context?.notices?.getSnapshot();
-  const statusItems = snapshot?.items.filter((item) => item.assistant !== 'hidden') ?? [];
-  const runtimeStatusItems = statusItems.filter((item) => item.origin === 'panel' || item.origin === 'plugin-load');
-  const hasQueryStatusItems = statusItems.some((item) => item.origin === 'query' || item.origin === 'notice');
-  const statusItem = statusItemId ? snapshot?.items.find((item) => item.id === statusItemId) : undefined;
-  const hasFallbackEntries = !snapshot?.hostInitialized && entries.length > 0;
 
-  if (
-    statusItemId ? !statusItem || statusItem.assistant === 'hidden' : statusItems.length === 0 && !hasFallbackEntries
-  ) {
+  if (entries.length === 0) {
     return;
   }
 
@@ -309,27 +301,13 @@ function investigatePanelErrorsWithAssistant(vizPanel: VizPanel, statusItemId?: 
   // LLM), so the fallback stays in English like the prompt does.
   const panelTitle = vizPanel.interpolate(vizPanel.state.title, undefined, 'text') || 'Untitled';
   const panelKey = vizPanel.state.key;
-  const hasError = statusItem
-    ? statusItem.severity === 'error'
-    : statusItems.some((item) => item.severity === 'error') ||
-      (hasFallbackEntries && entries.some((entry) => entry.severity === 'error'));
-  const hasQueryEntries = hasQueryStatusItems || hasFallbackEntries;
+  const hasError = entries.some((entry) => entry.severity === 'error');
   // Prompt text sent to the assistant is intentionally not translated (matching
   // QueryErrorAlert.tsx/AnalyzeRuleButton.tsx): it's an instruction to the LLM, not rendered
   // UI copy, so it stays in English regardless of UI locale.
-  const prompt = statusItem
-    ? hasError
-      ? 'Investigate and fix the selected error or notice for this panel.'
-      : 'Explain the selected error or notice for this panel and what I should do about it.'
-    : hasError
-      ? runtimeStatusItems.length > 0
-        ? 'Investigate and fix the errors or notices reported for this panel.'
-        : 'Investigate and fix the query errors causing this panel to fail.'
-      : runtimeStatusItems.length > 0
-        ? 'Investigate the notices reported for this panel and explain what they mean and what I should do about them.'
-        : hasQueryEntries
-          ? 'Investigate the query notices for this panel and explain what they mean and what I should do about them.'
-          : 'Explain the notices reported for this panel and what I should do about them.';
+  const prompt = hasError
+    ? 'Investigate and fix the query errors causing this panel to fail.'
+    : 'Investigate the query notices for this panel and explain what they mean and what I should do about them.';
 
   openAssistant({
     origin: 'grafana/panel-status-popover',
@@ -348,27 +326,6 @@ function investigatePanelErrorsWithAssistant(vizPanel: VizPanel, statusItemId?: 
           // field back, it's only serialized into the `<ref />` for the model.
           panelId: String(getPanelIdForVizPanel(vizPanel)),
           panelKey,
-          ...(statusItem
-            ? {
-                statusItem: {
-                  severity: statusItem.severity,
-                  text: statusItem.text,
-                  origin: statusItem.origin,
-                  refId: statusItem.refId,
-                  datasourceUid: statusItem.datasourceUid,
-                },
-              }
-            : runtimeStatusItems.length > 0
-              ? {
-                  statusItems: runtimeStatusItems.map(({ severity, text, origin, refId, datasourceUid }) => ({
-                    severity,
-                    text,
-                    origin,
-                    refId,
-                    datasourceUid,
-                  })),
-                }
-              : {}),
         },
       }),
     ],

@@ -42,7 +42,6 @@ it('shows an existing panel notice on a non-query panel', async () => {
   const deactivate = drawer.activate();
   await waitFor(() => expect(tabs()).toEqual([InspectTab.ErrorsAndNotices, InspectTab.JSON]));
   expect(drawer.state.tabs?.[0]).toBeInstanceOf(InspectErrorsAndNoticesTab);
-  expect((drawer.state.tabs?.[0] as InspectErrorsAndNoticesTab).state.onClose).toBe(drawer.onClose);
   deactivate();
 });
 
