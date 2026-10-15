@@ -1303,6 +1303,17 @@
             }
           },
           {
+            "name": "name",
+            "in": "query",
+            "description": "only include resources with these names (UIDs)",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
             "name": "facet",
             "in": "query",
             "description": "count distinct terms for selected fields",

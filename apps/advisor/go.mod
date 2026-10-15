@@ -54,6 +54,7 @@ replace (
 	github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 	github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/features
+	github.com/grafana/grafana/pkg/infra/log => ../../pkg/infra/log
 	github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
 	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 	github.com/grafana/grafana/pkg/storage/unified/apistore => ../../pkg/storage/unified/apistore
@@ -62,7 +63,7 @@ replace (
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
 	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
 
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623
 )
 
 require (
@@ -178,7 +179,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20261007180837-e51b976f5df2 // indirect
+	github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b // indirect
 	github.com/grafana/authlib v0.0.0-20261012083909-accb40645dc4 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
@@ -189,6 +190,7 @@ require (
 	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/infra/log v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/metrics v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // indirect

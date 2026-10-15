@@ -42,6 +42,7 @@ import {
   SCROLL_SHADOW_THRESHOLD,
   TABLE,
 } from './constants';
+import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -436,6 +437,7 @@ interface UseHeaderHeightOptions {
   tableRefreshEnabled?: boolean;
   /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
 }
 
 export function useHeaderHeight({
@@ -448,6 +450,7 @@ export function useHeaderHeight({
   tableRefreshEnabled = false,
   filter,
   lastColumnExtraPadding = 0,
+  hasColumnSidebar = false,
   hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
@@ -472,7 +475,13 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
-          hasAssistantAction,
+          hasColumnOptions:
+            getColumnMenuOptions({
+              filterable: field.config.custom?.filterable,
+              hideable: field.config.custom?.hideable,
+              hasColumnSidebar,
+              hasAssistantAction,
+            }).length > 0,
         });
         return Math.floor(width);
       }),
@@ -484,6 +493,7 @@ export function useHeaderHeight({
       tableRefreshEnabled,
       filteredKeys,
       lastColumnExtraPadding,
+      hasColumnSidebar,
       hasAssistantAction,
     ]
   );
@@ -507,33 +517,37 @@ export function useHeaderHeight({
   return headerHeight;
 }
 
-export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
-  // A new result may contain only short values despite having the same schema or value buffers.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const epoch = useMemo(() => ({ disabled: new Set<string>(), pending: new Set<string>() }), [data]);
-  const [version, setVersion] = useState(0);
+function createTextWrapFallbackEpoch(data: DataFrame) {
+  return { data, disabledFields: new Set<string>(), pending: new Set<string>() };
+}
 
-  // Height callbacks run inside the grid's render, after columns have already been built. Collect
-  // discoveries without updating another component during render, then repair all heights and
-  // column styles together before paint. Finishing the scan batches discoveries across columns.
-  // Check every commit: pagination and expansion can expose new values without changing fields.
+export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
+  let [epoch, setEpoch] = useState(() => createTextWrapFallbackEpoch(data));
+  // New results can reuse the schema and value buffers while containing only short values.
+  if (epoch.data !== data) {
+    epoch = createTextWrapFallbackEpoch(data);
+    setEpoch(epoch);
+  }
+
+  // Grid height callbacks discover values during child render. Publish their batch before paint,
+  // including commits caused only by pagination or expansion, then invalidate dependent caches.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     if (epoch.pending.size > 0) {
-      for (const name of epoch.pending) {
-        epoch.disabled.add(name);
-      }
-      epoch.pending.clear();
-      setVersion((value) => value + 1);
+      setEpoch({
+        data: epoch.data,
+        disabledFields: new Set([...epoch.disabledFields, ...epoch.pending]),
+        pending: new Set<string>(),
+      });
     }
   });
 
   return useMemo(
     () => ({
-      disabledFields: new Set(epoch.disabled),
+      disabledFields: epoch.disabledFields,
       shouldDisable: (field: Field, value: unknown) => {
         const name = getDisplayName(field);
-        if (epoch.disabled.has(name) || epoch.pending.has(name)) {
+        if (epoch.disabledFields.has(name) || epoch.pending.has(name)) {
           return true;
         }
         if (value != null && String(value).length > TABLE.MAX_WRAP_TEXT_LENGTH) {
@@ -543,9 +557,7 @@ export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
         return false;
       },
     }),
-    // version publishes discoveries as a new immutable snapshot and invalidates height caches.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [epoch, version]
+    [epoch]
   );
 }
 
@@ -1043,6 +1055,7 @@ export interface ContentAwareWidths {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1093,6 +1106,7 @@ interface UseContentAwareWidthsOptions {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1110,6 +1124,7 @@ export function useContentAwareWidths({
   getActions,
   tableRefreshEnabled = false,
   filter,
+  hasColumnSidebar = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
@@ -1129,6 +1144,7 @@ export function useContentAwareWidths({
             getActions,
             tableRefreshEnabled,
             filter,
+            hasColumnSidebar,
             noPanelPadding,
             preventHorizontalOverflow,
           }
@@ -1144,6 +1160,7 @@ export function useContentAwareWidths({
       filter,
       tableRefreshEnabled,
       theme,
+      hasColumnSidebar,
       noPanelPadding,
       preventHorizontalOverflow,
     ]
@@ -1354,3 +1371,42 @@ export const useReducerEntries = (
     });
   }, [field, rows, displayName, colIdx]);
 };
+
+interface ColumnViewStateOptions {
+  hiddenColumns?: ReadonlySet<string>;
+  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
+  structureRev?: number;
+}
+
+interface ColumnViewState {
+  hiddenColumns: ReadonlySet<string>;
+  setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
+}
+
+const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
+
+// Change handlers select controlled mode because controlled values may initially be empty.
+export function useColumnViewState({
+  hiddenColumns,
+  onHiddenColumnsChange,
+  structureRev,
+}: ColumnViewStateOptions): ColumnViewState {
+  const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
+
+  useEffect(() => {
+    if (!onHiddenColumnsChange) {
+      setLocalHiddenColumns(NO_HIDDEN_COLUMNS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structureRev]);
+
+  const setHiddenColumns = useCallback(
+    (next: ReadonlySet<string>) => (onHiddenColumnsChange ? onHiddenColumnsChange(next) : setLocalHiddenColumns(next)),
+    [onHiddenColumnsChange]
+  );
+
+  return {
+    hiddenColumns: (onHiddenColumnsChange ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
+    setHiddenColumns,
+  };
+}

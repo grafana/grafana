@@ -180,6 +180,13 @@ interface BaseTableProps {
   jsonSyntaxHighlightingEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
+  /** Initial sidebar state. Later prop changes also update the sidebar. */
+  showColumnsSidebar?: boolean;
+  /** Controlled hidden columns, by display name. */
+  hiddenColumns?: ReadonlySet<string>;
+  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
+  /** All columns the controlling owner can show, including those removed from `data`. */
+  columnCatalog?: string[];
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -188,6 +195,7 @@ export interface TableNGProps extends BaseTableProps {}
 export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
+  tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
   rowIdx: number;
   frame: DataFrame;
@@ -269,6 +277,7 @@ export interface GeoCellProps {
 }
 
 export interface AutoCellProps {
+  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   rowIdx: number;
@@ -293,7 +302,13 @@ export interface PillCellProps {
   getTextColorForBackground: (color: string) => string;
 }
 
+export interface TableWarning {
+  id: string;
+  message: string;
+}
+
 export interface TableCellStyleOptions {
+  tableRefreshEnabled?: boolean;
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
