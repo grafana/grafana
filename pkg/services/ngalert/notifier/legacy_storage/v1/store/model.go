@@ -279,6 +279,12 @@ func (a *AlertingConfigDB) UnmarshalJSON(b []byte) error {
 		if err := validateInhibitRuleLabelNames(r.SourceMatch, r.TargetMatch, r.Equal); err != nil {
 			return err
 		}
+		if err := validateMatchRegexps(r.SourceMatchRE); err != nil {
+			return err
+		}
+		if err := validateMatchRegexps(r.TargetMatchRE); err != nil {
+			return err
+		}
 	}
 	tiNames := make(map[string]struct{})
 	for _, mt := range a.MuteTimeIntervals {
@@ -340,6 +346,20 @@ func checkTimeInterval(r *RouteDB, timeIntervals map[string]struct{}) error {
 		}
 	}
 
+	return nil
+}
+
+// validateMatchRegexps is a copy of the validation in common.MatchRegexps.UnmarshalYAML
+// (github.com/prometheus/alertmanager/config/common, matchers.go).
+func validateMatchRegexps(m common.MatchRegexps) error {
+	for k, v := range m {
+		if !model.LabelNameRE.MatchString(k) {
+			return fmt.Errorf("invalid label name %q", k)
+		}
+		if v.Regexp == nil {
+			return fmt.Errorf("invalid regexp value for %q", k)
+		}
+	}
 	return nil
 }
 

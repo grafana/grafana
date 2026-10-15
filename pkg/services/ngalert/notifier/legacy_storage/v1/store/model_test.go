@@ -123,6 +123,18 @@ func TestAMConfigDB_UnmarshalJSON_Validation(t *testing.T) {
 			wantErrSubstr: `invalid label name "1bad"`,
 		},
 		{
+			name:          "invalid inhibit rule source_match_re label name",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}], "inhibit_rules": [{"source_match_re": {"1bad": "x.*"}}]}}`,
+			wantErrSubstr: `invalid label name "1bad"`,
+		},
+		{
+			name:          "invalid inhibit rule target_match_re label name",
+			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}], "inhibit_rules": [{"target_match_re": {"1bad": "x.*"}}]}}`,
+			wantErrSubstr: `invalid label name "1bad"`,
+		},
+
+
+		{
 			name:          "invalid inhibit rule equal label name",
 			configJSON:    `{"alertmanager_config": {"route": {"receiver": "empty"}, "receivers": [{"name": "empty"}], "inhibit_rules": [{"equal": [""]}]}}`,
 			wantErrSubstr: `invalid label name "" in equal list`,
