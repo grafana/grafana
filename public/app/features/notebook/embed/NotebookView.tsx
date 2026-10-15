@@ -130,9 +130,18 @@ function SavedNotebookView({ uid, enterEditMode, onTitleChange }: SavedNotebookV
     };
   }, [stateManager, uid]);
 
+  // Held until the notebook has loaded: a host may turn the prop back off before then.
+  const editRequested = useRef(false);
   useEffect(() => {
+    if (enterEditMode) {
+      editRequested.current = true;
+    }
+    if (!scene || !editRequested.current) {
+      return;
+    }
+    editRequested.current = false;
     // Guarded: re-entering would reset what autosave counts as edited while an add is still saving.
-    if (scene && enterEditMode && !scene.state.isEditing) {
+    if (!scene.state.isEditing) {
       scene.onEnterEditMode(NOTEBOOK_EDIT_SESSION_SOURCE.ADD_TO_NOTEBOOK);
     }
   }, [scene, enterEditMode]);

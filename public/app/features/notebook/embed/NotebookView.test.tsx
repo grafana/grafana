@@ -221,6 +221,22 @@ describe('NotebookView', () => {
       expect(scene.state.isEditing).toBe(true);
     });
 
+    // The assistant clears its request as soon as it has passed it on, which is before a new notebook loads.
+    it('still enters edit mode when the prop turns off again before the notebook has loaded', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const scene = aNotebookScene();
+      const { rerender } = render(<NotebookView uid="nb-1" enterEditMode />);
+      rerender(<NotebookView uid="nb-1" enterEditMode={false} />);
+
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene });
+      });
+
+      expect(scene.state.isEditing).toBe(true);
+    });
+
     it('leaves a reader without write permission in view mode', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       const scene = aNotebookScene();
