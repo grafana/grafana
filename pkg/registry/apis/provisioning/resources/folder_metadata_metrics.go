@@ -94,7 +94,7 @@ func (m *FolderMetadataMetrics) recordRead(repo repository.Reader, start time.Ti
 
 // folderReadOutcome classifies the result of a folder metadata read. A missing
 // _folder.json is reported as its own outcome rather than an error because it is
-// an expected state when folder metadata is disabled or a folder predates it.
+// an expected state when a folder predates it.
 func folderReadOutcome(err error) string {
 	switch {
 	case err == nil:
