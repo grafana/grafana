@@ -2786,18 +2786,18 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 #### `local_api_url`
 
-The URL that app plugins started by this Grafana process use to call Grafana's API and to get access tokens for it.
+The URL that app plugins started by this Grafana process use to call the Grafana API and to get access tokens for it.
 Grafana uses this setting only when no external plugin token signer is configured.
 That's when neither `v3_cap_token` nor `v3_token_exchange_url` is set in `[plugins]`, `jwks_url` isn't set in `[auth.extended_jwt]`, and neither the `GRAFANA_JWKS` nor the `GRAFANA_JWKS_URL` environment variable is set.
 Default is empty.
 
 When it's empty, Grafana derives a loopback URL, such as `http://127.0.0.1:3000`, from `[server]` settings.
 This works when `protocol` is `http`, `http_addr` is empty, a loopback address, or all interfaces, and `http_port` is a fixed port.
-If `serve_from_sub_path` is `true`, the URL includes the subpath from `root_url`.
+If `serve_from_sub_path` is `true`, the URL includes the sub-path from `root_url`.
 
 Set `local_api_url` when Grafana can't derive the URL, for example when it serves HTTPS, listens on a socket or a specific address, or has `enforce_domain` enabled.
 The URL must reach this Grafana process directly, not a load balancer, because each Grafana process signs its own tokens.
-Include the port and any subpath.
+Include the port and any sub-path.
 
 The following example sets the URL for a Grafana process that serves HTTPS on an internal host name:
 
