@@ -644,7 +644,7 @@ export function TableFlat(props: TableNGProps) {
     />
   );
 
-  if (!hasColumnSidebar || !hasHeader || !isColumnVisibilityPanelOpen) {
+  if (!hasColumnSidebar || !hasHeader) {
     return dataGrid;
   }
 
@@ -659,21 +659,35 @@ export function TableFlat(props: TableNGProps) {
           minWidth: 0,
           maxWidth: maxSidebarWidth,
           overflow: 'hidden',
+          display: isColumnVisibilityPanelOpen ? undefined : 'none',
         }}
       >
-        <TableSidebar
-          focusOnOpen={focusSidebarOnOpen}
-          columns={sidebarColumns}
-          hiddenColumns={hiddenColumns}
-          onToggleColumn={handleToggleColumnVisibility}
-          onClose={closeColumnSidebar}
-          headerHeight={headerHeight}
-          transparent={transparent}
-          willCloseOnRelease={columnVisibilityPanelWidth < COLUMN_VISIBILITY_PANEL_MIN_WIDTH}
-        />
+        {isColumnVisibilityPanelOpen && (
+          <TableSidebar
+            focusOnOpen={focusSidebarOnOpen}
+            columns={sidebarColumns}
+            hiddenColumns={hiddenColumns}
+            onToggleColumn={handleToggleColumnVisibility}
+            onClose={closeColumnSidebar}
+            headerHeight={headerHeight}
+            transparent={transparent}
+            willCloseOnRelease={columnVisibilityPanelWidth < COLUMN_VISIBILITY_PANEL_MIN_WIDTH}
+          />
+        )}
       </div>
-      <div {...splitterProps} />
-      <div {...secondaryProps} style={{ ...secondaryProps.style, minWidth: 0, flexDirection: 'column' }}>
+      <div
+        {...splitterProps}
+        style={{ ...splitterProps.style, display: isColumnVisibilityPanelOpen ? undefined : 'none' }}
+      />
+      <div
+        {...secondaryProps}
+        style={{
+          ...secondaryProps.style,
+          minWidth: 0,
+          flexDirection: 'column',
+          flexGrow: isColumnVisibilityPanelOpen ? secondaryProps.style.flexGrow : 1,
+        }}
+      >
         {dataGrid}
       </div>
     </div>

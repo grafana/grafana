@@ -48,9 +48,13 @@ export function TableSidebar({
   const visibleCount = columns.filter(({ name }) => !hiddenColumns.has(name)).length;
 
   useEffect(() => {
-    if (focusOnOpen) {
-      sidebarRef.current?.focus();
+    if (!focusOnOpen) {
+      return;
     }
+
+    // The column dropdown returns focus to its trigger after closing.
+    const timer = window.setTimeout(() => sidebarRef.current?.focus(), 0);
+    return () => window.clearTimeout(timer);
   }, [focusOnOpen]);
 
   return (

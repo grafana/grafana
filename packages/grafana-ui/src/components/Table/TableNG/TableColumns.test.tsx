@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
@@ -35,13 +35,41 @@ it('focuses the sidebar after keyboard opening, then tabs to its controls', asyn
   act(() => manageColumns.focus());
   await user.keyboard('{Enter}');
 
-  expect(screen.getByRole('group', { name: 'Column visibility' })).toHaveFocus();
+  await waitFor(() => expect(screen.getByRole('group', { name: 'Column visibility' })).toHaveFocus());
   await user.tab();
   expect(screen.getByRole('button', { name: 'Close column visibility panel' })).toHaveFocus();
   await user.keyboard('{Enter}');
 
   expect(screen.queryByRole('group', { name: 'Column visibility' })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Column options for A' })).toHaveFocus();
+});
+
+it('preserves horizontal scroll and restores focus to a virtualized column after closing the sidebar', async () => {
+  const data = createDataFrame({
+    fields: Array.from({ length: 20 }, (_, index) => ({
+      name: `Column ${index}`,
+      type: FieldType.string,
+      values: [`value ${index}`],
+      config: { custom: { hideable: true, width: 180 } },
+      display: () => ({ text: `value ${index}`, numeric: NaN }),
+    })),
+  });
+  const user = userEvent.setup();
+  render(<TableNG data={data} width={800} height={400} tableRefreshEnabled />);
+
+  const grid = screen.getByRole('grid');
+  expect(screen.queryByRole('button', { name: 'Column options for Column 10' })).not.toBeInTheDocument();
+  grid.scrollLeft = 1600;
+  fireEvent.scroll(grid);
+  const opener = screen.getByRole('button', { name: 'Column options for Column 10' });
+  await user.click(opener);
+  await user.click(await screen.findByRole('menuitem', { name: 'Manage columns' }));
+  await waitFor(() => expect(screen.getByRole('group', { name: 'Column visibility' })).toHaveFocus());
+  await user.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+
+  expect(screen.getByRole('grid')).toBe(grid);
+  expect(grid.scrollLeft).toBe(1600);
+  expect(screen.getByRole('button', { name: 'Column options for Column 10' })).toHaveFocus();
 });
 
 it('focuses the grid when closing a sidebar opened from panel configuration', async () => {
