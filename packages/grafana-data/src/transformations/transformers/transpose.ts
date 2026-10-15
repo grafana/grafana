@@ -8,6 +8,7 @@ import { DataTransformerID } from './ids';
 import { getSpecialValue } from './utils';
 
 export interface TransposeTransformerOptions {
+  frameIndex?: number;
   firstFieldName?: string;
   restFieldsName?: string;
   emptyValue?: SpecialValue;
@@ -34,7 +35,10 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
   cacheFieldDisplayNames(data);
   const emptyValue = options.emptyValue ?? SpecialValue.Empty;
 
-  return data.map((frame) => {
+  return data.map((frame, index) => {
+    if (frame.fields.length === 0 || (options.frameIndex != null && options.frameIndex !== index)) {
+      return frame;
+    }
     const firstField = frame.fields[0];
     const firstName = !options.firstFieldName ? 'Field' : options.firstFieldName;
     const restName = !options.restFieldsName ? 'Value' : options.restFieldsName;

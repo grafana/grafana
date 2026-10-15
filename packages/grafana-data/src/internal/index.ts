@@ -98,6 +98,18 @@ export {
 } from '../transformations/transformers/sortBy';
 export { type TransposeTransformerOptions } from '../transformations/transformers/transpose';
 export {
+  getPivotProvenance,
+  isPivotScalar,
+  pivotFieldKey,
+  pivotFooter,
+  pivotFrame,
+  supportsPivotReducer,
+  type PivotField,
+  type PivotMeasure,
+  type PivotOptions,
+} from '../transformations/transformers/pivot';
+export { getFieldTypeForReducer } from '../transformations/fieldReducer';
+export {
   type FilterByValueTransformerOptions,
   FilterByValueMatch,
   FilterByValueType,
