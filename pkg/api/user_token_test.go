@@ -463,7 +463,6 @@ func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *auth.Us
 	})
 }
 
-
 func TestHTTPServer_RotateUserAuthTokenRedirect_DeletesCookieWhenTokenNotFound(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		cfg := setting.NewCfg()
