@@ -198,6 +198,7 @@ type BatchDisableUsersCommand struct {
 
 type GetSignedInUserQuery struct {
 	UserID int64 `xorm:"user_id"`
+	UID    string
 	Login  string
 	Email  string
 	OrgID  int64 `xorm:"org_id"`
