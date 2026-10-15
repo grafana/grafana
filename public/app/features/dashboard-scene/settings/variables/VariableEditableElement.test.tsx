@@ -34,8 +34,6 @@ jest.mock('../../utils/interactions', () => ({
   },
 }));
 
-beforeEach(() => setTestFlags({ [FlagKeys.GrafanaQueryVarEditorRedesign]: true }));
-
 const variableActionButtonClickedMock = jest.mocked(DashboardInteractions.variableActionButtonClicked);
 
 const TestWrapper = getWrapper({ renderWithRouter: true });
@@ -232,6 +230,30 @@ describe('VariableEditableElement', () => {
 });
 
 describe('VariableEditableElement undo/redo', () => {
+  it.each([
+    { label: /Include All value/, property: 'includeAll' as const, initial: false, changed: true },
+    { label: /Allow custom values/, property: 'allowCustomValue' as const, initial: undefined, changed: false },
+  ])('restores $property through undo and redo', async ({ label, property, initial, changed }) => {
+    const variable = new CustomVariable({ name: 'service', query: 'api,web', [property]: initial });
+    const { dashboard } = buildDashboardVariableScene(variable);
+    const sidebar = dashboard.state.sidebar;
+    const user = userEvent.setup();
+    renderVariableSidebar(dashboard);
+
+    await user.click(await screen.findByLabelText(label));
+    expect(variable.state[property]).toBe(changed);
+    expect(screen.getByLabelText(label)).toHaveProperty('checked', changed);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    act(() => sidebar.undoAction());
+    expect(variable.state[property]).toBe(initial);
+    expect(screen.getByLabelText(label)).toHaveProperty('checked', initial ?? true);
+
+    act(() => sidebar.redoAction());
+    expect(variable.state[property]).toBe(changed);
+    expect(screen.getByLabelText(label)).toHaveProperty('checked', changed);
+  });
+
   it('records a multi-value change as one undoable action', async () => {
     const variable = new CustomVariable({ name: 'service', query: 'api,web' });
     const { dashboard } = buildDashboardVariableScene(variable);
@@ -274,6 +296,7 @@ describe('VariableEditableElement undo/redo', () => {
   });
 
   it('records a query variable refresh change as one undoable action', async () => {
+    setTestFlags({ [FlagKeys.GrafanaQueryVarEditorRedesign]: true });
     mockBoundingClientRect();
     const variable = new QueryVariable({ name: 'query', refresh: VariableRefresh.onDashboardLoad });
     jest.spyOn(variable, 'validateAndUpdate').mockReturnValue(of({}));
