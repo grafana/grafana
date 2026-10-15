@@ -67,6 +67,23 @@ describe('Dashboard schema extensions', () => {
     expect(text.slice(result.diagnostics[0].from, result.diagnostics[0].to)).toBe('{}');
   });
 
+  it('distinguishes slash and tilde property names from nested diagnostic paths', () => {
+    const validate = createDashboardSchemaValidator({
+      type: 'object',
+      properties: {
+        'a/b': { type: 'string' },
+        a: { type: 'object', properties: { b: { type: 'string' } } },
+        't~1/': { type: 'object', properties: { title: { type: 'string' } } },
+      },
+    });
+    const result = validate('{"a/b":123,"a":{"b":123},"t~1/":{"title":123}}');
+    expect(result.diagnostics.map(({ from, to }) => ({ from, to }))).toEqual([
+      { from: 7, to: 10 },
+      { from: 20, to: 23 },
+      { from: 41, to: 44 },
+    ]);
+  });
+
   it('validates YAML using the same schema after conversion to JSON', () => {
     const validate = createDashboardSchemaValidator(schema);
     const invalid = validate('kind: Dashboard\nspec:\n  title: 123', 'yaml');

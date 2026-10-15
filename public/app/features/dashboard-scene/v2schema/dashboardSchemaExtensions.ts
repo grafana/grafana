@@ -12,7 +12,7 @@ import {
   updateSchema,
 } from 'codemirror-json-schema';
 import yaml from 'js-yaml';
-import { Draft07, isJsonError, reduceSchema } from 'json-schema-library';
+import { Draft07, draft07Config, isJsonError, reduceSchema } from 'json-schema-library';
 
 import { type SchemaEditorFormat } from './DashboardSchemaEditor';
 
@@ -33,7 +33,24 @@ interface DashboardSchemaExtensionOptions {
 export function createDashboardSchemaValidator(schema: Record<string, unknown>) {
   // The bundled CodeMirror schema linter uses Draft 4, which does not validate
   // Dashboard's if/then discriminated unions.
-  const validator = new Draft07(schema);
+  let parentPointer: string | undefined;
+  const validator = new Draft07(schema, {
+    validate(draft, value, schema, pointer = '#') {
+      // The library appends raw property names; escape each child before recursion
+      // so diagnostic pointers match the syntax tree, including keys containing / or ~.
+      if (parentPointer !== undefined && pointer.startsWith(parentPointer + '/')) {
+        const key = pointer.slice(parentPointer.length + 1);
+        pointer = parentPointer + '/' + key.replaceAll('~', '~0').replaceAll('/', '~1');
+      }
+      const previous = parentPointer;
+      parentPointer = pointer;
+      try {
+        return draft07Config.validate(draft, value, schema, pointer);
+      } finally {
+        parentPointer = previous;
+      }
+    },
+  });
 
   return (text: string, format: SchemaEditorFormat = 'json'): DashboardSchemaValidation => {
     let json: string;

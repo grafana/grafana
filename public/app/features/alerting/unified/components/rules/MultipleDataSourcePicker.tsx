@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
 
 import {
-  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type SelectableValue,
   getDataSourceUID,
@@ -10,9 +9,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type DataSourcePickerProps, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourcePickerProps, getDataSourceSrv, useDefaultDataSourceInstanceListItem } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { useDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
 
 import { isDataSourceManagingAlerts } from '../../utils/datasource';
@@ -27,15 +25,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
 
   const [state, setState] = useState<{ error?: string }>();
 
-  const dataSourceListItems: DataSourceInstanceListItem[] = dataSourceSrv.getList().map((ds) => ({
-    uid: ds.uid,
-    type: ds.type,
-    apiVersion: ds.apiVersion,
-    name: ds.name,
-    meta: ds.meta,
-    isDefault: ds.isDefault ?? false,
-  }));
-  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSourceListItems);
+  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSourceSrv.getList());
 
   const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
     if (actionMeta.action === 'clear' && props.onClear) {

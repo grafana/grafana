@@ -1,6 +1,8 @@
+import { waitFor } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
 
-import { config } from '@grafana/runtime';
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   behaviors,
   ConstantVariable,
@@ -34,8 +36,9 @@ import {
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -85,9 +88,7 @@ export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn(),
-  }),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('transformSaveModelSchemaV2ToScene', () => {
@@ -467,6 +468,20 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   describe('adhoc variables', () => {
+    it('should resolve supportsMultiValueOperators from the datasource settings', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce({
+        meta: { multiValueFilterOperators: true },
+      } as DataSourceInstanceSettings);
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(getDataSourceInstanceSettings).toHaveBeenCalledWith({ type: adhocVar.group });
+      await waitFor(() => expect(adhocVariable.state.supportsMultiValueOperators).toBe(true));
+    });
+
     it('should convert empty defaultKeys array to undefined', () => {
       const dashboard = cloneDeep(defaultDashboard);
       const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
@@ -615,6 +630,27 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(dataLayers.state.annotationLayers).toHaveLength(0);
     });
 
+    it('should resolve supportsMultiValueOperators for adhoc variables', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce({
+        meta: { multiValueFilterOperators: true },
+      } as DataSourceInstanceSettings);
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      await waitFor(() => expect(adhocVariable.state.supportsMultiValueOperators).toBe(true));
+    });
+
     it('should convert empty defaultKeys array to undefined for adhoc variables', () => {
       const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = cloneDeep({
         ...defaultDashboard,
@@ -639,6 +675,44 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     });
   });
 
+  describe('when the perPanelNonApplicableDrilldowns flag is on', () => {
+    beforeEach(() => {
+      setTestFlags({ perPanelNonApplicableDrilldowns: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('should enable applicability on adhoc and group by variables', () => {
+      const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+      const variables = scene.state.$variables?.state.variables ?? [];
+
+      const adhocVariable = variables.find((v) => v instanceof AdHocFiltersVariable);
+      const groupByVariable = variables.find((v) => v instanceof GroupByVariable);
+
+      expect(adhocVariable?.state).toMatchObject({ applicabilityEnabled: true });
+      expect(groupByVariable?.state).toMatchObject({ applicabilityEnabled: true });
+    });
+
+    it('should enable applicability on adhoc variables in snapshots', () => {
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      expect(scene.state.$variables?.getByName('adhocVar')?.state).toMatchObject({ applicabilityEnabled: true });
+    });
+  });
+
   describe('meta', () => {
     describe('initializes meta based on k8s resource', () => {
       it('handles undefined access values', () => {
@@ -660,6 +734,18 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.updatedBy).toBe('user:updatedBy');
         expect(scene.state.meta.folderUid).toBe('folder-uid');
         expect(scene.state.meta.version).toBe(123);
+      });
+
+      it('carries libraryPanelRepeatUnresolved through from the DTO', () => {
+        expect(transformSaveModelSchemaV2ToScene(defaultDashboard).state.meta.libraryPanelRepeatUnresolved).toBe(
+          undefined
+        );
+
+        const resolved: DashboardWithLoadInfo<DashboardV2Spec> = {
+          ...defaultDashboard,
+          libraryPanelRepeatUnresolved: true,
+        };
+        expect(transformSaveModelSchemaV2ToScene(resolved).state.meta.libraryPanelRepeatUnresolved).toBe(true);
       });
 
       it('handles access metadata values', () => {

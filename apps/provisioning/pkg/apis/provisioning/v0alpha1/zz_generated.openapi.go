@@ -3761,6 +3761,13 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 							Format:      "int64",
 						},
 					},
+					"lastChecked": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the controller last attempted a sync or an interval check (Unix milliseconds).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"scheduled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When the next sync check is scheduled",

@@ -3026,7 +3026,7 @@
       },
       "toggle": {
         "use-new-experience": "Use new experience",
-        "view-previous-experience": "Revert to previous experience"
+        "view-previous-experience-deprecated": "Revert to previous experience (deprecated)"
       },
       "unknown-rule-type": "Unknown rule type"
     },
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Collapse all",
+      "deprecation-notice": {
+        "body": "It will be removed in a future release of Grafana and replaced by the new alert rule list.",
+        "switch-button": "Switch to the new list",
+        "title": "This version of the alert rule list is deprecated"
+      },
       "expand-all": "Expand all"
     },
     "rule-list-v2": {
@@ -3913,6 +3918,11 @@
     },
     "viz-wrapper": {
       "table": "Table"
+    },
+    "watchers-banner": {
+      "description": "Create a calibrated proactive agent that inspects telemetry on a schedule and surfaces potential issues to you.",
+      "open-button": "Create a Watcher",
+      "title": "Assistant Watchers are now generally available"
     },
     "welcome-header": {
       "description-alert-activity": "See what is currently alerting and explore historical data to investigate current or past issues.",
@@ -8798,19 +8808,24 @@
       "filter-values": "Filter values",
       "hide-values": "Hide values for {{label}}",
       "labels-error": "Failed to load labels",
+      "load-more-metrics": "Load more metrics",
       "loading": "Loading metrics…",
       "loading-labels": "Loading labels…",
       "loading-values": "Loading values…",
       "no-metrics": "No metrics found",
+      "no-metrics-status": "Query {{refId}}: no metrics found",
       "search-placeholder": "Search metrics",
       "show-metric-details": "Show details for {{name}}",
       "show-more": "Show more",
-      "show-more-metrics": "Show more metrics",
       "show-more-values": "Show more values",
       "show-values": "Show values for {{label}}",
       "sort-ascending": "Sort ascending",
       "sort-descending": "Sort descending",
-      "values-error": "Failed to load values"
+      "values-error": "Failed to load values",
+      "visible-count_one": "Query {{refId}}: showing {{visible}} of {{count}} metric",
+      "visible-count_other": "Query {{refId}}: showing {{visible}} of {{count}} metrics",
+      "visible-count-truncated_one": "Query {{refId}}: showing {{visible}} of at least {{count}} metric",
+      "visible-count-truncated_other": "Query {{refId}}: showing {{visible}} of at least {{count}} metrics"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -8984,8 +8999,8 @@
     },
     "show-all-spans": "Show all spans",
     "signal-card": {
-      "collapse-aria-label": "Collapse datasource explorer for query {{refId}}",
-      "expand-aria-label": "Expand datasource explorer for query {{refId}}",
+      "collapse-aria-label": "Collapse datasource explorer for query {{refId}} ({{datasourceName}})",
+      "expand-aria-label": "Expand datasource explorer for query {{refId}} ({{datasourceName}})",
       "jump-to-query-label": "Jump to query {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -10753,13 +10768,21 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
+      "cell-preview": "Cell preview",
+      "cell-warnings": "Cell warnings",
+      "close-column-visibility": "Close column visibility panel",
       "column-menu-filter": "Filter values",
+      "column-menu-hide": "Hide column",
       "column-menu-label": "Column options for {{name}}",
+      "column-menu-manage-columns": "Manage columns",
       "column-menu-update-filter": "Update filter",
+      "column-visibility": "Column visibility",
+      "columns": "Columns",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
       "edit-column-filter": "Edit filter on {{name}}",
+      "field-warnings": "Field warnings",
       "filter": {
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
@@ -10793,6 +10816,8 @@
           "count": "Count"
         }
       },
+      "hide-column-label": "Hide {{columnName}}",
+      "hover-expansion-disabled-warning": "Content is too long to expand on hover. Use Inspect value to view the full content.",
       "inspect-drawer-title": "Inspect value",
       "loading": "Loading table",
       "nested-table": {
@@ -10802,6 +10827,7 @@
       "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
       "sort-by-column-ascending": "Sort by column {{column}}, ascending",
       "sort-by-column-descending": "Sort by column {{column}}, descending",
@@ -10811,7 +10837,8 @@
       },
       "tooltip": {
         "trigger": "Toggle tooltip"
-      }
+      },
+      "wrapping-disabled-warning": "Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content."
     },
     "tags": {
       "list-label": "Tags"
@@ -11102,12 +11129,14 @@
   },
   "home": {
     "alerts-incidents": {
+      "alert-filter-all": "All alerts",
+      "alert-filter-label": "Filter alerts by label",
       "alert-tab-label": "Firing alerts",
       "incident-filter-all": "All incidents",
       "incident-filter-label": "Filter incidents by label",
       "incident-tab-label": "Incidents",
-      "team-filter-all": "All teams",
-      "team-filter-label": "Filter alerts by team",
+      "on-call-now": "On call now",
+      "on-call-tab-label": "My on-call schedules",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
@@ -11131,7 +11160,7 @@
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
       "empty": "You have no firing alerts.",
-      "empty-selected-team": "No firing alerts for {{team}}.",
+      "empty-selected-label": "No firing alerts with {{label}}.",
       "empty-teams": "No firing alerts for your teams.",
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
@@ -11184,6 +11213,17 @@
       "error-title": "Could not load recent blog posts",
       "read-more": "Read more from the Grafana Labs blog",
       "title": "Latest from the blog"
+    },
+    "on-call-card": {
+      "current-shift": "You're on call until {{end}}",
+      "empty": "You have no shifts in the next {{days}} days, and nobody on your teams is on call right now.",
+      "error-failed": "Could not load schedules",
+      "error-forbidden": "You don't have access to IRM schedules",
+      "error-not-available": "Grafana IRM is not available",
+      "next-shift": "Your next shift {{start}}–{{end}}",
+      "next-shift-multi-day": "Your next shift {{start}} – {{end}}",
+      "nobody-on-call": "Nobody on call",
+      "view-schedules": "View schedules"
     },
     "overview": {
       "available": {
@@ -11946,6 +11986,11 @@
       "load-newer": "Loading newer logs...",
       "load-older": "Loading older logs..."
     },
+    "log-details": {
+      "error": {
+        "error-details": "Error details"
+      }
+    },
     "log-labels": {
       "collapse": "Collapse labels",
       "expand": "Expand labels"
@@ -11996,6 +12041,7 @@
       "inline-mode": "Display inline",
       "inline-no-scrolls": "Switch to expanded view",
       "inline-with-scrolls": "Switch to condensed view",
+      "link-fallback-label": "Link",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-attributes-field": "Log attributes",
@@ -12005,13 +12051,14 @@
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
+      "open-value-in": "Open value in",
       "pin-line": "Pin log",
       "prettify": "Prettify",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
       "search": {
-        "no-results": "No results to display."
+        "no-results": "No matching results."
       },
       "search-placeholder": "Search field names and values",
       "show-context": "Show context",
@@ -13150,6 +13197,11 @@
       "saving-title": "This notebook is still saving",
       "stay": "Stay"
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": "Assistant edit"
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Cancel",
       "confirm-discard": "Discard",
@@ -13193,6 +13245,11 @@
       "target-new": "New notebook",
       "title": "Add panel to notebook"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": "New panel"
+      }
+    },
     "autosave": {
       "conflict-cancel": "Cancel",
       "conflict-confirm": "Save and overwrite",
@@ -13231,6 +13288,7 @@
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
       "remove-tag": "Remove tag",
+      "rename": "Rename notebook",
       "reset-cell-time-range": "Use notebook time range",
       "select-query": "Select query",
       "set-cell-time-range": "Set panel time range",
@@ -13856,6 +13914,9 @@
       "label-plugin-id": "Plugin Id",
       "label-severity": "Severity"
     },
+    "marketplace-plugin-banner": {
+      "info": "This is a marketplace plugin requiring a subscription. Support is provided by a marketplace <2>plugin partner</2>."
+    },
     "no-updates-available": {
       "message": "All plugins are up to date"
     },
@@ -13877,6 +13938,10 @@
     "plugin-details-body": {
       "needs-service-account": "The {{pluginName}} plugin needs a service account to be able to query Grafana. The following list contains the permissions available to the service account:",
       "page-not-found": "Page not found."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "Starting with Grafana 13.3, the canvas visualization loads as a standalone plugin by default. This instance uses the core plugin because <1>as_external = false</1> is set in the <3>[plugin.canvas]</3> section of the configuration file. Grafana 14.0 removes the core plugin. To switch now, remove the setting and restart Grafana. Existing dashboards keep working. <6>Learn more</6>",
+      "title": "Canvas is moving out of core"
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Deprecated"
@@ -14212,13 +14277,16 @@
       "create-new-connection-button": "Create connection",
       "creating-connection-button": "Creating connection...",
       "description-app-id": "The ID of your GitHub App",
+      "description-auth-url": "The OAuth authorization endpoint of your Git provider",
       "description-client-id": "The identifier of your OAuth app",
       "description-client-secret": "The secret of your OAuth app",
       "description-description": "Optional description for this connection",
       "description-installation-id": "The installation ID of your GitHub App",
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
+      "description-scopes": "OAuth scopes that grant read and write access to your repositories",
       "description-title": "A human-readable name for this connection",
+      "description-token-url": "The OAuth token endpoint of your Git provider",
       "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
       "description-webhook-disabled-oauth": "When enabled, Grafana will not register or receive webhook events for repositories using this connection. Use this when Grafana is not reachable from the public internet.",
       "description-workspace": "The workspace your OAuth consumer belongs to",
@@ -14230,13 +14298,16 @@
       "grafana-repositories": "Repositories using this connection",
       "label-app-id": "GitHub App ID",
       "label-application-id": "Application ID",
+      "label-auth-url": "Authorization URL",
       "label-client-id": "Client ID",
       "label-client-secret": "Client secret",
       "label-description": "Description",
       "label-installation-id": "GitHub Installation ID",
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
+      "label-scopes": "Scopes",
       "label-title": "Title",
+      "label-token-url": "Token URL",
       "label-webhook-disabled": "Disable webhook integration",
       "label-workspace": "Workspace",
       "loading-types": "Loading connection types...",
@@ -14250,6 +14321,7 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
+      "placeholder-scopes": "Type a scope and press Enter",
       "placeholder-title": "My App",
       "reauthorize-button": "Reauthorize"
     },
@@ -14411,7 +14483,7 @@
       "token-description": "Git repository access token or password",
       "token-label": "Access Token",
       "token-required": "Git token is required",
-      "token-user-description": "The username that will be used to access the repository with the access token",
+      "token-user-description": "The username that will be used to access the repository with the access token. Defaults to \"git\".",
       "url-description": "The Git repository URL. Most servers require the URL to end with .git (e.g. https://host/owner/repo.git).",
       "url-pattern": "Must be a valid Git repository URL",
       "url-required": "Repository URL is required"
@@ -14651,6 +14723,7 @@
       "copy": "Copy",
       "create-and-authorize-button": "Create and authorize",
       "help-instructions-bitbucket": "In Bitbucket, go to your workspace settings and add an OAuth consumer with the callback URL below, then paste its key and secret here. <2>View step-by-step instructions</2>. Add the consumer with these permissions:",
+      "help-instructions-git": "In your Git provider, create an OAuth application with the callback URL below, then paste its client ID, client secret, and OAuth endpoints here. The access tokens it issues must be accepted for Git over HTTPS.",
       "help-instructions-github": "In GitHub, go to your developer settings and create an OAuth app with the callback URL below, then paste its client ID and a generated client secret here. <2>View step-by-step instructions</2>",
       "help-instructions-gitlab": "In GitLab, go to your user or group settings and create an application with the callback URL below, then paste its application ID and secret here. <2>View step-by-step instructions</2>. Create the application with this scope:",
       "help-title": "Need help creating an OAuth app?",
@@ -14792,6 +14865,7 @@
       "health": "Health",
       "healthy": "Healthy",
       "job-id": "Job ID:",
+      "last-checked": "Last checked:",
       "last-ref": "Last Ref:",
       "messages": "Messages:",
       "not-available": "N/A",
@@ -16502,6 +16576,7 @@
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
+    "description-show-columns-sidebar": "Open the column management sidebar with the panel, rather than from a column menu",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
@@ -16540,6 +16615,7 @@
     "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
     "name-page-size": "Page size",
+    "name-show-columns-sidebar": "Show columns sidebar",
     "name-show-table-header": "Show table header",
     "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",
@@ -16703,6 +16779,7 @@
     "editor": {
       "aria-label-content": "Text content",
       "aria-label-mode": "Text mode: {{mode}}",
+      "feedback": "Give feedback",
       "footer-line-numbers": "Line numbers",
       "format-bold": "B",
       "format-heading": "H",
@@ -16744,6 +16821,14 @@
     "render-mode": {
       "once": "Once",
       "per-row": "Per row"
+    },
+    "sandbox": {
+      "diagram-error": "Diagram could not be rendered",
+      "title": "Text panel content"
+    },
+    "truncation": {
+      "label": "Content truncated",
+      "tooltip": "The render hit a ceiling of {{maxChars, number}} characters or {{maxRows, number}} rows, so the rest was dropped. Shorten the template, or query fewer rows, to see all of it."
     }
   },
   "theme-playground": {
@@ -17713,15 +17798,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "Add sort field",
+      "all-fields-used": "Every field is already used",
       "description": {
         "sort-fields": "Sort fields in a frame."
       },
+      "drag-handle-label": "Drag to change sort priority",
       "label-field": "Field",
       "label-reverse": "Reverse",
       "name": {
         "sort-by": "Sort by"
       },
-      "placeholder-select-field": "Select field"
+      "placeholder-select-field": "Select field",
+      "remove-sort-field": "Remove sort field"
     },
     "supplier": {
       "description": {

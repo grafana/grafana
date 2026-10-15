@@ -834,6 +834,8 @@ func TestReadingNavigationSettings(t *testing.T) {
 		service.readNavigationSettings()
 
 		require.Equal(t, "observability", service.navigationAppConfig["grafana-k8s-app"].SectionID)
+		require.Equal(t, navtree.NavIDRoot, service.navigationAppConfig["grafana-workflows-app"].SectionID)
+		require.Equal(t, int64(navtree.WeightWorkflows), service.navigationAppConfig["grafana-workflows-app"].SortWeight)
 	})
 
 	t.Run("Can add additional overrides via ini system", func(t *testing.T) {
@@ -1117,6 +1119,68 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 	}
 }
 
+func TestAssistantPagesTopLevelNavigation(t *testing.T) {
+	for _, tt := range []struct {
+		name      string
+		ossMode   bool
+		trialMode bool
+		role      identity.RoleType
+		wantPages bool
+	}{
+		{name: "cloud", role: identity.RoleAdmin, wantPages: true},
+		{name: "OSS", role: identity.RoleAdmin, ossMode: true},
+		{name: "trial", role: identity.RoleAdmin, trialMode: true},
+		{name: "without access", role: identity.RoleViewer},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppSubURL = "/grafana"
+			service := ServiceImpl{
+				cfg: cfg,
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+					assistantAppID: {JSONData: map[string]any{"ossMode": tt.ossMode, "trialMode": tt.trialMode}},
+				}},
+			}
+			service.readNavigationSettings()
+			httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+			require.NoError(t, err)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{OrgRole: tt.role},
+				Context:      &web.Context{Req: httpReq},
+			}
+			plugin := pluginstore.Plugin{JSONData: plugins.JSONData{
+				ID:   assistantAppID,
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{Name: "Assistant", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+					{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Icon: "file-alt", Type: "page", AddToNav: true, Role: identity.RoleAdmin},
+				},
+			}}
+			dashboards := &navtree.NavLink{Id: navtree.NavIDDashboards, SortWeight: navtree.WeightDashboard}
+			explore := &navtree.NavLink{Id: navtree.NavIDExplore, SortWeight: navtree.WeightExplore}
+			tree := navtree.NavTreeRoot{Children: []*navtree.NavLink{dashboards, explore}}
+			service.processAppPlugin(plugin, reqCtx, &tree)
+			ai := tree.FindById("plugin-page-" + assistantAppID)
+			require.NotNil(t, ai)
+			require.Len(t, ai.Children, 1)
+			require.Equal(t, "Assistant", ai.Children[0].Text)
+			pages := tree.FindByURL("/grafana/a/grafana-assistant-app/pages")
+			if !tt.wantPages {
+				require.Nil(t, pages)
+				return
+			}
+			require.NotNil(t, pages)
+			require.Contains(t, tree.Children, pages)
+			require.Equal(t, "Pages", pages.Text)
+			require.Equal(t, "pages", pages.Icon)
+			require.True(t, pages.IsNew)
+			require.Equal(t, assistantAppID, pages.PluginID)
+			tree.Sort()
+			require.Equal(t, []*navtree.NavLink{dashboards, pages, explore, ai}, tree.Children)
+		})
+	}
+}
+
 func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
@@ -1135,7 +1199,7 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 	}
 	mwApp := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
-			ID: "grafana-maintenancewindows-app", Name: "Maintenance Windows", Type: plugins.TypeApp,
+			ID: "grafana-maintenancewindows-app", Name: "Maintenance windows", Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{Name: "Maintenance windows", Path: "/a/grafana-maintenancewindows-app/maintenance-windows", Type: "page", AddToNav: true, DefaultNav: true},
 			},
@@ -1174,10 +1238,10 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 		require.NotNil(t, sloNode)
 		mwChild := navtree.FindByURL(sloNode.Children, "/a/grafana-maintenancewindows-app/maintenance-windows")
 		require.NotNil(t, mwChild)
-		require.Equal(t, "Maintenance Windows", mwChild.Text)
+		require.Equal(t, mwApp.Name, mwChild.Text)
 		require.Equal(t, "grafana-maintenancewindows-app", mwChild.PluginID)
 		require.Equal(t, "standalone-plugin-page-grafana-maintenancewindows-app", mwChild.Id)
-		require.True(t, mwChild.IsNew)
+		require.False(t, mwChild.IsNew)
 
 		require.Nil(t, treeRoot.FindById(navtree.NavIDApps))
 	})
@@ -1189,7 +1253,10 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Nil(t, treeRoot.FindById("plugin-page-grafana-slo-app"))
-		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
+		mwNode := treeRoot.FindById("plugin-page-grafana-maintenancewindows-app")
+		require.NotNil(t, mwNode)
+		require.Equal(t, mwApp.Name, mwNode.Text)
+		require.False(t, mwNode.IsNew)
 	})
 }
 
