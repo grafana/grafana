@@ -90,7 +90,7 @@ func TestProvidePluginInstanceConfigLocalPluginTokens(t *testing.T) {
 			if tc.hostEnv != "" {
 				t.Setenv(tc.hostEnv, "from-host")
 			}
-			cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000", Raw: ini.Empty(), ExtJWTAuth: setting.ExtJWTSettings{JWKSUrl: tc.jwksURL}}
+			cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000", Raw: ini.Empty(), ExtJWTAuth: setting.ExtJWTSettings{JWKSUrl: tc.jwksURL, Audiences: []string{"grafana"}}}
 			section := cfg.Raw.Section("plugins")
 			section.Key("v3_cap_token").SetValue(tc.token)
 			section.Key("v3_token_exchange_url").SetValue(tc.url)
@@ -106,6 +106,7 @@ func newTestServerConfig() *setting.Cfg {
 	cfg := setting.NewCfg()
 	cfg.Protocol = setting.HTTPScheme
 	cfg.HTTPPort = "3000"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 	return cfg
 }
 

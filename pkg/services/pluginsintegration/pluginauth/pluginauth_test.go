@@ -34,6 +34,9 @@ func TestLocalAPIURL(t *testing.T) {
 		{name: "random port", cfg: setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "0"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.cfg.ExtJWTAuth.Audiences == nil {
+				tc.cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+			}
 			got, err := LocalAPIURL(&tc.cfg)
 			if tc.want == "" {
 				require.ErrorIs(t, err, ErrNoLocalAPIURL, "an unsupported listener disables plugin API access instead of failing startup")
@@ -73,7 +76,8 @@ func TestLocalAPIURLOverride(t *testing.T) {
 		{name: "wildcard address", endpoint: "http://0.0.0.0:3000", wantError: "wildcard listen address"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := &setting.Cfg{Raw: ini.Empty(), Protocol: setting.HTTPSScheme, HTTPPort: "4321", AppSubURL: "/other", ServeFromSubPath: true, Domain: tc.domain, EnforceDomain: tc.domain != ""}
+			cfg := &setting.Cfg{Raw: ini.Empty(), Protocol: setting.HTTPSScheme, HTTPPort: "4321", AppSubURL: "/other", ServeFromSubPath: true, Domain: tc.domain, EnforceDomain: tc.domain != "",
+				ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}}}
 			cfg.Raw.Section("plugins").Key("local_api_url").SetValue(tc.endpoint)
 			got, err := LocalAPIURL(cfg)
 			if tc.wantError != "" {
@@ -90,10 +94,20 @@ func TestLocalAPIURLOverride(t *testing.T) {
 
 func TestLocalAPIURLOverrideFromEnvironment(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 	cfg.Protocol = setting.SocketScheme
 	cfg.Raw.Section("plugins").Key("local_api_url").SetValue("http://old:1234")
 	t.Setenv("GF_PLUGINS_LOCAL_API_URL", "http://127.0.0.1:4321")
 	got, err := LocalAPIURL(cfg)
 	require.NoError(t, err)
 	require.Equal(t, "http://127.0.0.1:4321", got)
+}
+
+func TestLocalAPIURLRequiresGrafanaAudience(t *testing.T) {
+	for _, audiences := range [][]string{nil, {"custom"}} {
+		cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000", ExtJWTAuth: setting.ExtJWTSettings{Audiences: audiences}}
+		got, err := LocalAPIURL(cfg)
+		require.ErrorIs(t, err, ErrNoLocalAPIURL, "plugins would get credentials Grafana's API never accepts")
+		require.Empty(t, got)
+	}
 }

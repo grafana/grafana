@@ -23,6 +23,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,19 +43,15 @@ type Service struct {
 
 // ProvideService registers the token exchange at pluginauth.TokenExchangePath
 // when Grafana signs plugin access tokens itself.
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) *Service {
+func ProvideService(cfg *setting.Cfg, pluginCfg *pluginconfig.PluginInstanceCfg, rr routing.RouteRegister) *Service {
 	s := &Service{
 		cfg: cfg,
 		log: log.New("plugins.tokenexchange"),
 	}
-	if pluginauth.LocalTokens(cfg) {
-		endpoint, err := pluginauth.LocalAPIURL(cfg)
-		if err != nil {
-			// Plugin configuration already reports why: it warns, or fails startup
-			// for an invalid local_api_url.
-			return s
-		}
-		u, _ := url.Parse(endpoint) // LocalAPIURL has validated the URL.
+	// Serve the exchange exactly when plugins are given its URL. The plugin
+	// configuration has already decided both, and reported why not.
+	if pluginCfg != nil && pluginCfg.LocalPluginTokens && pluginCfg.LocalAPIURL != "" {
+		u, _ := url.Parse(pluginCfg.LocalAPIURL) // LocalAPIURL has validated the URL.
 		s.loopbackOnly = strings.EqualFold(u.Hostname(), "localhost") || net.ParseIP(u.Hostname()).IsLoopback()
 		// Callers authenticate with their access policy token, not as a Grafana
 		// user, so the route is not behind sign-in.

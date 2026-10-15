@@ -2811,6 +2811,7 @@ If `enforce_domain` is enabled, the host must match `[server] domain`.
 
 Grafana doesn't start if `local_api_url` is invalid.
 If it's empty and Grafana can't derive a URL, Grafana logs a warning and app plugins can't call its API.
+The same happens if `[auth.extended_jwt] audiences` doesn't include `grafana`, which it does by default.
 Grafana still authenticates its own requests to plugins.
 
 #### `allow_loading_unsigned_plugins`

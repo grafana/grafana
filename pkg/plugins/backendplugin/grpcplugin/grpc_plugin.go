@@ -59,8 +59,8 @@ func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.
 			accessPolicyToken := localv3.LocalAccessPolicyTokenFromEnv(processEnv)
 			clientConfig, err := newClientConfig(descriptor, processEnv, logger, tracer)
 			if err != nil {
-				localv3.RevokeLocalAccessPolicyToken(accessPolicyToken)
-				return nil, "", err
+				// Start revokes the token of a failed start.
+				return nil, accessPolicyToken, err
 			}
 			return plugin.NewClient(clientConfig), accessPolicyToken, nil
 		},

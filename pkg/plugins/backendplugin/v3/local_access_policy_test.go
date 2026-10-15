@@ -111,6 +111,15 @@ func TestSignLocalAccessToken(t *testing.T) {
 		require.Equal(t, []string{"dashboard.grafana.app/dashboards:get"}, claims.Rest.DelegatedPermissions)
 	})
 
+	t.Run("restricted delegated permissions leave the plugin's own token alone", func(t *testing.T) {
+		claims, err := sign(authnlib.TokenExchangeRequest{
+			Namespace: "*", Audiences: []string{"grafana"},
+			RestrictedDelegatedPermissions: []string{"folder.grafana.app/folders:get"},
+		})
+		require.NoError(t, err)
+		require.Equal(t, policy.Permissions, claims.Rest.Permissions)
+	})
+
 	for _, tc := range []struct {
 		name string
 		req  authnlib.TokenExchangeRequest

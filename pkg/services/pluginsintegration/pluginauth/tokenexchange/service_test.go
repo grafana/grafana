@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -218,7 +220,13 @@ func TestProvideServiceLocalAPIURL(t *testing.T) {
 			cfg := &setting.Cfg{Raw: ini.Empty(), Protocol: setting.HTTPScheme, HTTPPort: "4321", ExtJWTAuth: setting.ExtJWTSettings{JWKSUrl: tc.jwksURL, Audiences: []string{"grafana"}}}
 			cfg.Raw.Section("plugins").Key("local_api_url").SetValue(tc.override)
 			routes := &exchangeRoutes{}
-			s := ProvideService(cfg, routes)
+			// As at startup: an invalid override fails the plugin configuration.
+			pluginCfg, err := pluginconfig.ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+			if err != nil {
+				require.False(t, tc.registered)
+				return
+			}
+			s := ProvideService(cfg, pluginCfg, routes)
 			require.Equal(t, tc.registered, routes.registered)
 			if !tc.registered {
 				return

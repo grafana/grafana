@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -18,6 +19,9 @@ import (
 // to get access tokens for Grafana's API. It is internal to the plugins
 // Grafana starts, not a public API.
 const TokenExchangePath = "/api/internal/plugin-token-exchange"
+
+// grafanaAudience is the audience app plugins request for Grafana's API.
+const grafanaAudience = "grafana"
 
 // ErrNoLocalAPIURL is returned by LocalAPIURL when no [plugins] local_api_url
 // is set and none can be inferred from the listener. Plugins then get no
@@ -33,6 +37,11 @@ var ErrNoLocalAPIURL = errors.New("local plugin API: no URL reaches this Grafana
 func LocalAPIURL(cfg *setting.Cfg) (string, error) {
 	if cfg == nil {
 		return "", cannotInferLocalAPIURL("missing server configuration")
+	}
+	// The app SDK requests this audience for every call to Grafana's API, and
+	// the exchange only grants the audiences Grafana accepts.
+	if !slices.Contains(cfg.ExtJWTAuth.Audiences, grafanaAudience) {
+		return "", fmt.Errorf("%w: [auth.extended_jwt] audiences must include %q for plugins to call Grafana's API", ErrNoLocalAPIURL, grafanaAudience)
 	}
 	var endpoint string
 	if cfg.Raw != nil {

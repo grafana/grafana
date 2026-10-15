@@ -35,9 +35,9 @@ type LocalAccessPolicy struct {
 // the policy does not allow.
 var ErrLocalAccessDenied = errors.New("local plugin token exchange: access denied")
 
-// localAccessPolicyTokenPrefix keeps the tokens apart from Grafana's service
-// account tokens (glsa_), which the API key client would look up.
-const localAccessPolicyTokenPrefix = "gl_local_plugin_"
+// LocalAccessPolicyTokenPrefix starts every local access policy token, so the
+// API key client can leave them alone.
+const LocalAccessPolicyTokenPrefix = "gl_local_plugin_"
 
 // localAccessPolicyHolder is what a local access policy token was issued to.
 type localAccessPolicyHolder struct {
@@ -70,7 +70,7 @@ func IssueLocalAccessPolicyToken(pluginID string, manifests ...*app.ManifestData
 	if _, err := rand.Read(secret); err != nil {
 		return "", fmt.Errorf("local plugin token exchange: %w", err)
 	}
-	token := localAccessPolicyTokenPrefix + base64.RawURLEncoding.EncodeToString(secret)
+	token := LocalAccessPolicyTokenPrefix + base64.RawURLEncoding.EncodeToString(secret)
 
 	localAccessPolicyTokens.Lock()
 	defer localAccessPolicyTokens.Unlock()
@@ -145,17 +145,17 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 			return "", fmt.Errorf("%w: audience %q is not allowed", ErrLocalAccessDenied, audience)
 		}
 	}
-	permissions := policy.Permissions
-	if len(req.RestrictedDelegatedPermissions) > 0 {
-		permissions = slices.DeleteFunc(slices.Clone(permissions), func(p string) bool {
-			return !slices.Contains(req.RestrictedDelegatedPermissions, p)
-		})
-	}
-
 	claims := authnlib.AccessTokenClaims{Namespace: req.Namespace}
 	if req.SubjectToken == "" {
-		claims.Permissions = permissions
+		claims.Permissions = policy.Permissions
 	} else {
+		// Like a token exchange, the restriction narrows only what is delegated.
+		permissions := policy.Permissions
+		if len(req.RestrictedDelegatedPermissions) > 0 {
+			permissions = slices.DeleteFunc(slices.Clone(permissions), func(p string) bool {
+				return !slices.Contains(req.RestrictedDelegatedPermissions, p)
+			})
+		}
 		verifier := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: []string{policy.PluginID}}, e.keys)
 		subject, err := verifier.Verify(ctx, req.SubjectToken)
 		if err != nil {

@@ -155,7 +155,10 @@ credentials across Grafana replicas. With a plain HTTP listener on all
 interfaces or loopback, plugins reach their own Grafana process on loopback,
 so each replica's plugins work behind a load balancer, and the token exchange
 (`/api/internal/plugin-token-exchange`) refuses callers that are not on
-loopback. The port comes from `[server] http_port`.
+loopback. The port comes from `[server] http_port`. The loopback check is
+defense in depth: a reverse proxy on the same host makes its callers look local,
+so the process-specific CAP token is what authenticates a plugin. Plugin API
+access also needs `grafana` in `[auth.extended_jwt] audiences`, the default.
 
 Override automatic detection with `[plugins] local_api_url` (or
 `GF_PLUGINS_LOCAL_API_URL`):
