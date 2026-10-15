@@ -330,9 +330,6 @@
     }
   },
   "packages/grafana-runtime/src/utils/DataSourceWithBackend.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -704,11 +701,6 @@
   },
   "packages/grafana-ui/src/utils/useAsyncDependency.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/AppWrapper.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -1241,7 +1233,7 @@
   },
   "public/app/features/alerting/unified/featureToggles.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 5
+      "count": 6
     }
   },
   "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
@@ -1346,7 +1338,7 @@
   },
   "public/app/features/alerting/unified/rule-list/RuleListPageTitle.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/alerting/unified/settings/import/ImportSettingsPage.tsx": {
@@ -1499,11 +1491,6 @@
   "public/app/features/commandPalette/scopes/scopeActions.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 3
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/correlations/CorrelationsPageWrapper.tsx": {
@@ -1723,9 +1710,6 @@
   "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 11
-    },
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
@@ -1748,9 +1732,6 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    },
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -1881,9 +1862,6 @@
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -2574,11 +2552,6 @@
     }
   },
   "public/app/features/transformers/editors/ReduceTransformerEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/editors/SortByTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }

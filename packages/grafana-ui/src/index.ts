@@ -138,7 +138,7 @@ export {
   BigValueJustifyMode,
   BigValueTextMode,
 } from './components/BigValue/BigValueTypes';
-export { Sparkline } from './components/Sparkline/Sparkline';
+export { Sparkline, type SparklineHoverEvent } from './components/Sparkline/Sparkline';
 
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {

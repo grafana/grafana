@@ -2999,7 +2999,7 @@
       },
       "toggle": {
         "use-new-experience": "Gunakan pengalaman baru",
-        "view-previous-experience": "Kembali ke pengalaman sebelumnya"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Jenis aturan tidak diketahui",
       "checking-data-sources_other": "",
@@ -3017,6 +3017,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Ciutkan semua",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Perluas semua"
     },
     "rule-list-v2": {
@@ -8930,8 +8935,8 @@
     },
     "show-all-spans": "Tampilkan semua rentang",
     "signal-card": {
-      "collapse-aria-label": "Ciutkan penjelajah sumber data untuk kueri {{refId}}",
-      "expand-aria-label": "Perluas penjelajah sumber data untuk kueri {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Lompat ke kueri {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -10687,13 +10692,21 @@
       "cell-filter-out": "Filter nilai",
       "cell-inspect": "Periksa nilai",
       "cell-inspect-tooltip": "Periksa nilai",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filter nilai",
+      "column-menu-hide": "",
       "column-menu-label": "Opsi kolom untuk {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Perbarui filter",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Salin ke Papan Klip",
       "csv-counts": "Baris:{{rows}}, Kolom:{{columns}}",
       "csv-placeholder": "Masukkan CSV di sini...",
       "edit-column-filter": "Edit filter di {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Tambahkan semua nilai yang ditampilkan ke filter",
         "blanks": "(Kosong)",
@@ -10727,6 +10740,8 @@
           "count": "Jumlah"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Periksa nilai",
       "loading": "Memuat tabel",
       "nested-table": {
@@ -10736,6 +10751,7 @@
       "no-rows": "Tidak ada baris",
       "no-values-label": "Tidak ada nilai",
       "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris",
+      "show-column-label": "",
       "sort-by-column": "Urutkan berdasarkan kolom {{column}}",
       "sort-by-column-ascending": "Urutkan berdasarkan kolom {{column}}, naik",
       "sort-by-column-descending": "Urutkan berdasarkan kolom {{column}}, menurun",
@@ -10745,7 +10761,8 @@
       },
       "tooltip": {
         "trigger": "Alihkan tooltip"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Tag"
@@ -13055,6 +13072,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Batalkan",
       "confirm-discard": "Buang",
@@ -13136,6 +13158,7 @@
       "redo-action": "Ulangi: {{action}}",
       "remove-query": "Hapus kueri",
       "remove-tag": "Hapus tag",
+      "rename": "",
       "reset-cell-time-range": "Gunakan rentang waktu notebook",
       "select-query": "Pilih kueri",
       "set-cell-time-range": "Atur rentang waktu panel",
@@ -13760,6 +13783,9 @@
       "label-plugin-id": "ID Plugin",
       "label-severity": "Keparahan"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Semua plugin sudah diperbarui"
     },
@@ -13781,6 +13807,10 @@
     "plugin-details-body": {
       "needs-service-account": "Plugin {{pluginName}} memerlukan akun layanan untuk dapat melakukan kueri Grafana. Daftar berikut ini berisi izin yang tersedia untuk akun layanan:",
       "page-not-found": "Halaman tidak ditemukan."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Usang"
@@ -16385,6 +16415,7 @@
     "description-frozen-columns": "Kolom dibekukan dari sisi kiri tabel",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
     "description-page-size": "Jumlah baris per halaman. Saat kosong, ukuran halaman didasarkan pada tinggi panel.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Bidang yang berisi objek JSON dengan properti CSS",
     "description-tooltip-from-field": "Render sel dari bidang (tersembunyi atau terlihat) dalam tooltip",
     "description-zebra-striping": "Ganti warna latar belakang setiap baris berikutnya",
@@ -16423,6 +16454,7 @@
     "name-max-height": "Tinggi baris maks",
     "name-min-column-width": "Lebar kolom minimum",
     "name-page-size": "Ukuran halaman",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Tampilkan header tabel",
     "name-styling-from-field": "Penataan dari bidang",
     "name-tooltip-from-field": "Tooltip dari bidang",
@@ -16586,6 +16618,7 @@
     "editor": {
       "aria-label-content": "Isi teks",
       "aria-label-mode": "Mode teks: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Nomor baris",
       "format-bold": "B",
       "format-heading": "H",
@@ -16631,6 +16664,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -17600,15 +17637,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Urutkan bidang dalam bingkai."
       },
+      "drag-handle-label": "",
       "label-field": "Bidang",
       "label-reverse": "Balik",
       "name": {
         "sort-by": "Urutkan berdasarkan"
       },
-      "placeholder-select-field": "Pilih bidang"
+      "placeholder-select-field": "Pilih bidang",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

@@ -220,6 +220,7 @@ var serviceIdentityTokenPermissions = []string{
 	"playlist.grafana.app:*",
 	"secret.grafana.app:*",
 	"query.grafana.app:*",
+	"queries.grafana.app:*", // saved queries
 	"datasource.grafana.app:*",
 	"iam.grafana.app:*",
 	"provisioning.grafana.app:*",
@@ -241,6 +242,9 @@ var serviceIdentityTokenPermissions = []string{
 
 	// Allow access to all apiextensions.k8s.io resources
 	"*.ext.grafana.app:*",
+
+	// Allow access to app plugin API groups, which are named by plugin ID
+	"*-app:*",
 
 	// Named explicitly: the *.ext.grafana.app wildcard only matches single-segment prefixes.
 	"assistant.alertrules.ext.grafana.app:*",

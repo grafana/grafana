@@ -38,7 +38,7 @@ import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
 import { changedCellTimeRange, changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
-import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, NotebookEditHistory, type NotebookEditAction } from './NotebookEditHistory';
 import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -95,6 +95,17 @@ export interface NotebookSceneState extends SceneObjectState {
 const sceneContextStack: NotebookScene[] = [];
 let beforeFirstSceneContext: SceneObject | undefined;
 
+// Matches CONTENT_EDIT_COALESCE_MS in NotebookLayoutManager: the same run-of-keystrokes-into-one-step
+// coalescing, for the title instead of a cell's content.
+const TITLE_EDIT_COALESCE_MS = 800;
+
+interface PendingTitleEdit {
+  before: string;
+  after: string;
+  action: NotebookEditAction;
+  timer?: ReturnType<typeof setTimeout>;
+}
+
 function claimSceneContext(scene: NotebookScene): void {
   if (sceneContextStack.length === 0) {
     beforeFirstSceneContext = window.__grafanaSceneContext;
@@ -120,6 +131,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   // Declared before `editHistory`, which is handed it: class fields initialise in order.
   public readonly editSession = new NotebookEditSession();
   public readonly editHistory = new NotebookEditHistory(this.editSession);
+  private pendingTitleEdit?: PendingTitleEdit;
   // The layout manager needs to find the scene it lives in. It cannot use instanceof, because
   // importing this class would make the two files import each other, so it looks for this field.
   public readonly isNotebookScene = true;
@@ -184,11 +196,6 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         if (newState.body !== prevState.body || newState.title !== prevState.title) {
           newState.body.setTitle?.(newState.title);
         }
-        // Every undo step puts a cell back into the body that recorded it. That body is gone now, so
-        // the steps cannot run any more.
-        if (newState.body !== prevState.body) {
-          this.editHistory.clear();
-        }
       });
 
       // Only while editing. A reader moving the time range is theirs to move, and the notebook
@@ -223,6 +230,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
           this.setState({ isEditing: false });
           this.state.body.editModeChanged?.(false);
         }
+        this.commitTitleEdit();
         stopAutosave?.();
         destroyMutationClient();
         timeRangeSub.unsubscribe();
@@ -343,6 +351,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     const wasEditing = this.state.isEditing;
 
     this.state.body.commitPendingEdits();
+    this.commitTitleEdit();
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
     // Leaving edit mode is a natural save point, and it is where changes stop counting. Without this, a
@@ -370,9 +379,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       return;
     }
 
-    // Closes out any cell edit still coalescing, so it lands as its own undo step under this one
-    // instead of being interrupted by it.
+    // Closes out any cell or title edit still coalescing, so it lands as its own undo step under
+    // this one instead of being interrupted by it.
     this.state.body.commitPendingEdits();
+    this.commitTitleEdit();
 
     this.editHistory.execute({
       label:
@@ -386,12 +396,94 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   };
 
   /**
-   * Single writer for the title, on the same terms as onTagsChange above. Nothing persists it here:
-   * the save model reads this state, and autosave writes on any change made while editing.
+   * Single writer for the title, on the same terms as onTagsChange above — including being
+   * recorded on editHistory. Without that, a rename made after an assistant write would be
+   * invisible to the undo stack, and undoing that write (which restores the whole prior state)
+   * would silently discard the rename instead of being undone itself first. Nothing persists it
+   * here: the save model reads this state, and autosave writes on any change made while editing.
+   *
+   * NotebookTitleEditor reports every keystroke, not just the closing one (edit mode can be left
+   * without a blur), so a run of keystrokes coalesces into one undo step the same way cell content
+   * typing does (NotebookLayoutManager.setCellContent) — otherwise undo would walk a rename back
+   * one character at a time instead of reverting it as a whole.
    */
   public onTitleChange = (title: string) => {
-    this.setState({ title });
+    const previous = this.state.title;
+    if (previous === title) {
+      return;
+    }
+
+    // Closes out any cell edit still coalescing, so it lands as its own undo step under this one
+    // instead of being interrupted by it.
+    this.state.body.commitPendingEdits();
+
+    const pending = this.pendingTitleEdit;
+    if (pending) {
+      this.extendTitleEdit(pending, title);
+    } else {
+      this.startTitleEdit(previous, title);
+    }
   };
+
+  private startTitleEdit(before: string, title: string): void {
+    // perform and undo read `edit` when they run, not now — see NotebookLayoutManager's
+    // startContentEdit for why: extendTitleEdit keeps changing `after` while typing continues.
+    const edit: PendingTitleEdit = {
+      before,
+      after: title,
+      action: {
+        label: t('notebooks.history.rename', 'Rename notebook'),
+        kind: NOTEBOOK_EDIT_KIND.TITLE,
+        perform: () => {
+          this.finishTitleEdit(edit);
+          this.setState({ title: edit.after });
+        },
+        undo: () => {
+          this.finishTitleEdit(edit);
+          this.setState({ title: edit.before });
+        },
+      },
+    };
+
+    this.pendingTitleEdit = edit;
+    this.setState({ title });
+    this.editHistory.record(edit.action);
+    this.scheduleTitleEditCommit(edit);
+  }
+
+  private extendTitleEdit(edit: PendingTitleEdit, title: string): void {
+    this.setState({ title });
+    edit.after = title;
+
+    if (edit.before === edit.after) {
+      this.editHistory.discard(edit.action);
+      this.finishTitleEdit(edit);
+      return;
+    }
+
+    this.scheduleTitleEditCommit(edit);
+  }
+
+  private scheduleTitleEditCommit(edit: PendingTitleEdit): void {
+    clearTimeout(edit.timer);
+    edit.timer = setTimeout(() => this.finishTitleEdit(edit), TITLE_EDIT_COALESCE_MS);
+  }
+
+  private finishTitleEdit(edit: PendingTitleEdit): void {
+    clearTimeout(edit.timer);
+    if (this.pendingTitleEdit === edit) {
+      this.pendingTitleEdit = undefined;
+    }
+  }
+
+  // Left open underneath another action, a later keystroke would mutate this now-buried edit
+  // instead of extending the live one, and editHistory.discard (which only acts on the top of the
+  // stack) would fail to drop it.
+  public commitTitleEdit(): void {
+    if (this.pendingTitleEdit) {
+      this.finishTitleEdit(this.pendingTitleEdit);
+    }
+  }
 
   public showModal(modal: SceneObject) {
     this.setState({ overlay: modal });
