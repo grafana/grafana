@@ -5,13 +5,14 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // HybridSearchConfigRegistry tracks manifest opt-in independently of index
 // rebuilds, so disabling hybrid search does not wait for an index update.
 type HybridSearchConfigRegistry struct {
 	mu      sync.RWMutex
-	enabled map[LowerGroupResource]bool
+	enabled map[schema.GroupResource]bool
 }
 
 func NewHybridSearchConfigRegistry(manifests []*app.ManifestData) *HybridSearchConfigRegistry {
@@ -26,23 +27,23 @@ func (r *HybridSearchConfigRegistry) Enabled(group, resource string) bool {
 	}
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return r.enabled[NewLowerGroupResource(group, resource)]
+	return r.enabled[schema.GroupResource{Group: group, Resource: resource}]
 }
 
 // Reload replaces the snapshot, with later sources and the first manifest
 // within each source winning. A winning resource's absent or false declarations
 // also override older versions, even when it declares no search fields.
 func (r *HybridSearchConfigRegistry) Reload(sources ...[]*app.ManifestData) {
-	enabled := make(map[LowerGroupResource]bool)
+	enabled := make(map[schema.GroupResource]bool)
 	for _, source := range slices.Backward(sources) {
 		for _, manifest := range source {
 			if manifest == nil {
 				continue
 			}
-			declared := make(map[LowerGroupResource]bool)
+			declared := make(map[schema.GroupResource]bool)
 			for _, version := range manifest.Versions {
 				for _, kind := range version.Kinds {
-					key := NewLowerGroupResource(manifest.Group, ManifestResourceName(kind))
+					key := schema.GroupResource{Group: manifest.Group, Resource: ManifestResourceName(kind)}
 					declared[key] = declared[key] || (version.Served && kind.Scope == "Namespaced" && kind.HasHybridEndpoint())
 				}
 			}

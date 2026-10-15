@@ -7,7 +7,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -24,10 +23,10 @@ func (h *HybridHandler) GlobalHybridSearchFor(targets map[schema.GroupResource]s
 	}
 	gvr := GlobalSearchGVR()
 	kind := kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kinds: kinds}
-	return h.hybridSearchFor(kind, func(ctx context.Context, q *searchv0.HybridSearchQuery, namespace string) (*resourcepb.HybridSearchRequest, field.ErrorList, error) {
+	return h.hybridSearchFor(kind, func(ctx context.Context, q *searchv0.HybridSearchQuery, namespace string) (*resourcepb.HybridSearchRequest, error) {
 		req, errs := TranslateGlobalHybridSearchQuery(q, namespace)
 		if len(errs) > 0 {
-			return nil, errs, nil
+			return nil, apierrors.NewInvalid(schema.GroupKind{Group: searchv0.GROUP, Kind: searchv0.KindHybridSearchQuery}, "", errs)
 		}
 		user, _ := request.UserFrom(ctx)
 		for _, target := range q.Resources {
@@ -46,12 +45,12 @@ func (h *HybridHandler) GlobalHybridSearchFor(targets map[schema.GroupResource]s
 				Path:            "/apis/" + gr.Group + "/" + gvk.Version + "/namespaces/" + namespace + "/" + gr.Resource + "/search/hybrid",
 			})
 			if err != nil {
-				return nil, nil, apierrors.NewInternalError(err)
+				return nil, apierrors.NewInternalError(err)
 			}
 			if decision != authorizer.DecisionAllow {
-				return nil, nil, apierrors.NewForbidden(gr, "", fmt.Errorf("not authorized to search this resource"))
+				return nil, apierrors.NewForbidden(gr, "", fmt.Errorf("not authorized to search this resource"))
 			}
 		}
-		return req, nil, nil
+		return req, nil
 	})
 }

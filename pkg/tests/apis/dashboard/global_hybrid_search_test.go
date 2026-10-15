@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -112,6 +113,28 @@ func testIntegrationGlobalHybridSearch(t *testing.T) {
 		require.Len(t, response.Result.Items, 1)
 		assert.Equal(t, "hybrid-visible", response.Result.Items[0].Resource.Name)
 	})
+	t.Run("resource without hybrid opt-in", func(t *testing.T) {
+		// Playlists omit hybrid opt-in in every served version.
+		playlists := searchV0.HybridSearchResource{Group: "playlist.grafana.app", Resource: "playlists"}
+		for _, version := range []string{"v0alpha1", "v1"} {
+			resourcePath := fmt.Sprintf("/apis/%s/%s/namespaces/%s/playlists", playlists.Group, version, namespace)
+			list := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Path: resourcePath}, &unstructured.UnstructuredList{})
+			require.Equal(t, http.StatusOK, list.Response.StatusCode, string(list.Body))
+			response := postHybridSearch(t, helper, helper.Org1.Admin, resourcePath+"/search/hybrid", searchV0.HybridSearchQuery{Query: query.Query})
+			assert.Equal(t, http.StatusNotFound, response.Response.StatusCode, string(response.Body))
+		}
+		for _, resources := range [][]searchV0.HybridSearchResource{
+			{playlists},
+			{query.Resources[0], playlists},
+		} {
+			response := postHybridSearch(t, helper, helper.Org1.Admin, path, searchV0.HybridSearchQuery{Query: query.Query, Resources: resources})
+			require.Equal(t, http.StatusBadRequest, response.Response.StatusCode, string(response.Body))
+			assert.Contains(t, string(response.Body), "hybrid search is not enabled for playlist.grafana.app/playlists")
+			var body map[string]json.RawMessage
+			require.NoError(t, json.Unmarshal(response.Body, &body))
+			assert.NotContains(t, body, "items")
+		}
+	})
 	t.Run("global lexical endpoint remains disabled", func(t *testing.T) {
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User: helper.Org1.Admin, Method: http.MethodPost,
@@ -140,6 +163,15 @@ func TestIntegrationGlobalHybridSearchDisabled(t *testing.T) {
 			path := fmt.Sprintf("/apis/search.grafana.app/v0alpha1/namespaces/%s/global/search", helper.Org1.Admin.Identity.GetNamespace())
 			response := postHybridSearch(t, helper, helper.Org1.Admin, path+"/hybrid", searchV0.HybridSearchQuery{Query: "saturation"})
 			assert.Equal(t, http.StatusNotFound, response.Response.StatusCode, string(response.Body))
+			openapi := apis.DoRequest(helper, apis.RequestParams{
+				User: helper.Org1.Admin, Path: "/openapi/v3/apis/search.grafana.app/v0alpha1",
+			}, &spec3.OpenAPI{})
+			require.Equal(t, http.StatusOK, openapi.Response.StatusCode, string(openapi.Body))
+			require.NotNil(t, openapi.Result)
+			require.NotNil(t, openapi.Result.Paths)
+			const schemaPath = "/apis/search.grafana.app/v0alpha1/namespaces/{namespace}/global/search"
+			assert.Contains(t, openapi.Result.Paths.Paths, schemaPath)
+			assert.NotContains(t, openapi.Result.Paths.Paths, schemaPath+"/hybrid")
 			// A malformed request proves the existing lexical handler remains mounted.
 			lexical := apis.DoRequest(helper, apis.RequestParams{
 				User: helper.Org1.Admin, Method: http.MethodPost, Path: path,

@@ -50,6 +50,7 @@ func TestHybridSearch_RequiresManifestOptIn(t *testing.T) {
 		extSuffix   bool
 		disallowed  bool
 		lexicalOnly bool
+		target      *resourcepb.HybridSearchRequest_Resource
 		want        codes.Code
 	}{
 		{name: "internal enabled", enabled: true, require: true},
@@ -59,6 +60,8 @@ func TestHybridSearch_RequiresManifestOptIn(t *testing.T) {
 		{name: "pushed collection still needs enrollment", external: true, require: true, disallowed: true, want: codes.NotFound},
 		{name: "lexical fallback enabled", lexicalOnly: true, enabled: true, require: true},
 		{name: "lexical fallback disabled", lexicalOnly: true, require: true, want: codes.InvalidArgument},
+		{name: "lexical fallback rejects group case variant", lexicalOnly: true, enabled: true, require: true, target: &resourcepb.HybridSearchRequest_Resource{Group: "G", Resource: "r"}, want: codes.InvalidArgument},
+		{name: "lexical fallback rejects resource case variant", lexicalOnly: true, enabled: true, require: true, target: &resourcepb.HybridSearchRequest_Resource{Group: "g", Resource: "R"}, want: codes.InvalidArgument},
 		{name: "custom RPC caller keeps existing behavior"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -85,9 +88,13 @@ func TestHybridSearch_RequiresManifestOptIn(t *testing.T) {
 			manifest.Group = key.Group
 			manifest.Versions[0].Kinds[0].Plural = key.Resource
 			s.hybridSearchConfig = NewHybridSearchConfigRegistry([]*app.ManifestData{manifest})
+			target := tc.target
+			if target == nil {
+				target = &resourcepb.HybridSearchRequest_Resource{Group: key.Group, Resource: key.Resource}
+			}
 			response, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 				Namespace: key.Namespace, Query: "cpu", RequireHybridEnabled: tc.require,
-				Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: key.Group, Resource: key.Resource}},
+				Resources: []*resourcepb.HybridSearchRequest_Resource{target},
 			})
 			require.Equal(t, tc.want, status.Code(err), err)
 			if tc.want != codes.OK {

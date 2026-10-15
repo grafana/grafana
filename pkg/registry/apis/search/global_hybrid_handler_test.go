@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -142,9 +143,12 @@ func TestGlobalHybridSearchRejectsBeforeRPC(t *testing.T) {
 		err        error
 		wantStatus int
 		wantChecks int
+		field      string
 	}{
 		{name: "missing namespace", resource: "folders", wantStatus: http.StatusBadRequest},
 		{name: "wildcard namespace", resource: "folders", namespace: "*", wantStatus: http.StatusBadRequest},
+		{name: "case variant cannot skip authorization", resource: "Folders", namespace: "default", decision: authorizer.DecisionDeny, wantStatus: http.StatusUnprocessableEntity, field: "resources[2].resource"},
+		{name: "padded resource", resource: " folders ", namespace: "default", wantStatus: http.StatusUnprocessableEntity, field: "resources[2].resource"},
 		{name: "target denied", resource: "folders", namespace: "default", decision: authorizer.DecisionDeny, wantStatus: http.StatusForbidden, wantChecks: 2},
 		{name: "target no opinion", resource: "folders", namespace: "default", decision: authorizer.DecisionNoOpinion, wantStatus: http.StatusForbidden, wantChecks: 2},
 		{name: "authorization error", resource: "folders", namespace: "default", err: errors.New("authorization unavailable"), wantStatus: http.StatusInternalServerError, wantChecks: 2},
@@ -170,6 +174,13 @@ func TestGlobalHybridSearchRejectsBeforeRPC(t *testing.T) {
 			assert.Equal(t, tc.wantStatus, w.Code, w.Body.String())
 			assert.Equal(t, tc.wantChecks, checks)
 			assert.Nil(t, client.request)
+			if tc.field != "" {
+				var apiStatus metav1.Status
+				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &apiStatus))
+				require.NotNil(t, apiStatus.Details)
+				require.Len(t, apiStatus.Details.Causes, 1)
+				assert.Equal(t, tc.field, apiStatus.Details.Causes[0].Field)
+			}
 		})
 	}
 }

@@ -26,10 +26,15 @@ func TestTranslateGlobalHybridSearchTargets(t *testing.T) {
 		{name: "blank group", resources: []searchv0.HybridSearchResource{{Group: " \t", Resource: "dashboards"}}, field: "resources[0].group", errorType: field.ErrorTypeRequired},
 		{name: "missing resource", resources: []searchv0.HybridSearchResource{{Group: "dashboard.grafana.app"}}, field: "resources[0].resource", errorType: field.ErrorTypeRequired},
 		{name: "blank resource", resources: []searchv0.HybridSearchResource{{Group: "dashboard.grafana.app", Resource: " \t"}}, field: "resources[0].resource", errorType: field.ErrorTypeRequired},
+		{name: "uppercase group", resources: []searchv0.HybridSearchResource{{Group: "Dashboard.grafana.app", Resource: "dashboards"}}, field: "resources[0].group", errorType: field.ErrorTypeInvalid},
+		{name: "uppercase resource", resources: []searchv0.HybridSearchResource{{Group: "dashboard.grafana.app", Resource: "Dashboards"}}, field: "resources[0].resource", errorType: field.ErrorTypeInvalid},
+		{name: "padded group", resources: []searchv0.HybridSearchResource{{Group: " dashboard.grafana.app", Resource: "dashboards"}}, field: "resources[0].group", errorType: field.ErrorTypeInvalid},
+		{name: "padded resource", resources: []searchv0.HybridSearchResource{{Group: "dashboard.grafana.app", Resource: "dashboards\t"}}, field: "resources[0].resource", errorType: field.ErrorTypeInvalid},
 		{name: "duplicate targets", resources: []searchv0.HybridSearchResource{dashboards, folders, dashboards}, field: "resources[2]", errorType: field.ErrorTypeDuplicate},
 		{name: "single target", resources: []searchv0.HybridSearchResource{dashboards}},
 		{name: "multiple targets", resources: []searchv0.HybridSearchResource{folders, dashboards}},
 		{name: "same resource in distinct groups", resources: []searchv0.HybridSearchResource{dashboards, {Group: "other.grafana.app", Resource: "dashboards"}}},
+		{name: "external collection name", resources: []searchv0.HybridSearchResource{{Group: "example.ext.grafana.app", Resource: "alert_rules-v2"}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			q := hybridQuery()

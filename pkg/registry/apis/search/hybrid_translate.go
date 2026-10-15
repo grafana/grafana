@@ -54,9 +54,13 @@ func TranslateGlobalHybridSearchQuery(q *searchv0.HybridSearchQuery, namespace s
 		path := field.NewPath("resources").Index(i)
 		if strings.TrimSpace(target.Group) == "" {
 			errs = append(errs, field.Required(path.Child("group"), "must not be empty or whitespace"))
+		} else if target.Group != strings.ToLower(strings.TrimSpace(target.Group)) {
+			errs = append(errs, field.Invalid(path.Child("group"), target.Group, "must be lowercase with no surrounding whitespace"))
 		}
 		if strings.TrimSpace(target.Resource) == "" {
 			errs = append(errs, field.Required(path.Child("resource"), "must not be empty or whitespace"))
+		} else if target.Resource != strings.ToLower(strings.TrimSpace(target.Resource)) {
+			errs = append(errs, field.Invalid(path.Child("resource"), target.Resource, "must be lowercase with no surrounding whitespace"))
 		}
 		if seen[target] {
 			errs = append(errs, field.Duplicate(path, target))
