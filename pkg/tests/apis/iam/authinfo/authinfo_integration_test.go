@@ -332,7 +332,6 @@ func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.D
 // new User API also removes its AuthInfo objects and user_auth row.
 func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	t.Run("deleting the user via the new API removes its AuthInfo objects and user_auth row", func(t *testing.T) {
-		t.Skip("flaky: the background dual-write to unified storage can outlast the wait")
 		ctx := context.Background()
 		userUID := createTestUser(t, helper, "authinfo-cascade-user", "authinfo-cascade-user@example.com")
 
