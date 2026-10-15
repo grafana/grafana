@@ -4828,16 +4828,7 @@ func (s *batchAuthzSearcher) initPullIterator() {
 		}
 	}
 
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
+	extractFn := batchCheckItem
 
 	// WithTracer makes FilterAuthorized emit a span around the batched
 	// BatchCheck loop, so the authz phase is visible as a child of this

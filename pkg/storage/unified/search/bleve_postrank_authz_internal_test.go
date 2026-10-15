@@ -5,9 +5,12 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
+	"github.com/grafana/authlib/authz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -72,4 +75,34 @@ func TestReadAuthzMetadata(t *testing.T) {
 		"root": {},
 	}, metadata)
 	require.NotZero(t, page.cost, "the lookup's reads count towards the search's cost")
+}
+
+func TestAuthzResourcesVerb(t *testing.T) {
+	idx := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}}
+	for perm, verb := range map[dashboardaccess.PermissionType]string{
+		0:                                 utils.VerbGet,
+		dashboardaccess.PERMISSION_EDIT:   utils.VerbUpdate,
+		dashboardaccess.PERMISSION_CREATE: utils.VerbCreate,
+	} {
+		got := idx.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(perm)})
+		assert.Equal(t, map[string]string{"folders": verb}, got, "permission %v", perm)
+	}
+}
+
+func TestAuthzResourcesCreateOnlyAppliesToFolders(t *testing.T) {
+	idx := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: dashboardGroup, Resource: "dashboards"}}
+	got := idx.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
+	assert.Equal(t, map[string]string{"dashboards": utils.VerbGet}, got)
+}
+
+func TestBatchCheckItem(t *testing.T) {
+	folder := docInfo{namespace: "default", group: "folder.grafana.app", resourceType: "folders", name: "team-a", folder: "public"}
+
+	edit := folder
+	edit.verb = utils.VerbUpdate
+	assert.Equal(t, authz.BatchCheckItem{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: "team-a", Folder: "public", Verb: utils.VerbUpdate}, batchCheckItem(edit))
+
+	create := folder
+	create.verb = utils.VerbCreate
+	assert.Equal(t, authz.BatchCheckItem{Namespace: "default", Group: dashboardGroup, Resource: "dashboards", Folder: "team-a", Verb: utils.VerbCreate}, batchCheckItem(create))
 }

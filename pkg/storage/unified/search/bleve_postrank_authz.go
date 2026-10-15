@@ -364,18 +364,48 @@ func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[s
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
 		verb = utils.VerbUpdate
 	}
+	verbFor := func(res string) string {
+		if req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && res == folderResource {
+			return utils.VerbCreate
+		}
+		return verb
+	}
 	resources := map[string]string{}
 	if b.key.IsGlobal() {
 		for _, gr := range resource.GlobalSearchResourceTypes() {
-			resources[gr.Resource] = verb
+			resources[gr.Resource] = verbFor(gr.Resource)
 		}
 	} else {
-		resources[b.key.Resource] = verb
+		resources[b.key.Resource] = verbFor(b.key.Resource)
 	}
 	for _, federated := range req.Federated {
 		resources[federated.Resource] = utils.VerbGet
 	}
 	return resources
+}
+
+const folderResource = "folders"
+
+// batchCheckItem authorizes a folder hit under permission=create by the right to
+// create dashboards inside it; every other hit is checked as itself.
+func batchCheckItem(info docInfo) authz.BatchCheckItem {
+	if info.verb == utils.VerbCreate && info.resourceType == folderResource {
+		return authz.BatchCheckItem{
+			Folder:    info.name,
+			Verb:      utils.VerbCreate,
+			Group:     dashboardGroup,
+			Resource:  "dashboards",
+			Namespace: info.namespace,
+		}
+	}
+	return authz.BatchCheckItem{
+		Name:      info.name,
+		Folder:    info.folder,
+		Verb:      info.verb,
+		Group:     info.group,
+		Resource:  info.resourceType,
+		Namespace: info.namespace,
+	}
 }
 
 // parseHitDocInfo extracts the authorization fields from an already-ranked hit.
@@ -480,16 +510,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	// sparse-access users.
 	firstReq.Size = baseWindow
 
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
+	extractFn := batchCheckItem
 
 	page := postRankPage{index: index, query: firstReq.Query, sort: firstReq.Sort, fields: firstReq.Fields, limit: limit, stats: stats}
 
@@ -659,16 +680,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 		return nil, 0, false, nil
 	}
 
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
+	extractFn := batchCheckItem
 	agg, authorized, exhausted, err := b.aggregateFacetsFromTop(
 		ctx, access, index, firstReq, resources, extractFn, req.Facet, stats, trashAuthz,
 	)
