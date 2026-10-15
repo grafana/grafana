@@ -94,6 +94,11 @@ export const versionedComponents = {
       '13.3.0': 'data-testid ControlsAddButton trigger button',
     },
   },
+  DashboardFiltersOverview: {
+    row: {
+      '13.3.0': 'data-testid DashboardFiltersOverview row',
+    },
+  },
   /**
    * @deprecated use DashboardSidebarSplitter instead
    */

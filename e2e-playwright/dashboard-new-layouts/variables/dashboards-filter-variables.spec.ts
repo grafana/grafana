@@ -22,7 +22,7 @@ async function mockPrometheusLabels(page: Page) {
   });
 }
 
-test.describe('Dashboard edit - Unified controls', { tag: ['@dashboards'] }, () => {
+test.describe('Dashboard edit - Filter variables', { tag: ['@dashboards'] }, () => {
   test.beforeEach(async ({ page }) => {
     await mockPrometheusLabels(page);
   });
