@@ -19,9 +19,17 @@ export interface JobContentProps {
   isFinishedJob?: boolean;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
   onRetry?: () => void;
+  includeResourceIssues?: boolean;
 }
 
-export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange, onRetry }: JobContentProps) {
+export function JobContent({
+  jobType,
+  job,
+  isFinishedJob = false,
+  onStatusChange,
+  onRetry,
+  includeResourceIssues,
+}: JobContentProps) {
   const errorSetRef = useRef(false);
 
   const { state, message, progress, summary } = job?.status || {};
@@ -40,7 +48,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
         break;
       case 'warning': {
         if (!errorSetRef.current) {
-          const messages = getJobMessages(job?.status ?? {});
+          const messages = getJobMessages(job?.status ?? {}, { includeResourceIssues });
           onStatusChange?.({
             status: 'warning',
             warning: {
@@ -54,7 +62,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
       }
       case 'error': {
         if (!errorSetRef.current) {
-          const messages = getJobMessages(job?.status ?? {});
+          const messages = getJobMessages(job?.status ?? {}, { includeResourceIssues });
           const warningInfo = messages.warning
             ? {
                 title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
@@ -84,7 +92,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
       default:
         break;
     }
-  }, [state, message, job, onStatusChange, onRetry]);
+  }, [state, message, job, onStatusChange, onRetry, includeResourceIssues]);
 
   if (!job?.status) {
     return null;

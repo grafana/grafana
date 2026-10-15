@@ -19,9 +19,17 @@ export interface FinishedJobProps {
   jobType: JobType;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
   onRetry?: () => void;
+  includeResourceIssues?: boolean;
 }
 
-export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange, onRetry }: FinishedJobProps) {
+export function FinishedJobStatus({
+  jobUid,
+  repositoryName,
+  jobType,
+  onStatusChange,
+  onRetry,
+  includeResourceIssues,
+}: FinishedJobProps) {
   const retryCount = useRef(0);
   const pendingRetry = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
@@ -64,7 +72,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
 
     if (finishedQuery.isSuccess && job?.status) {
       const { state } = job.status;
-      const messages = getJobMessages(job.status);
+      const messages = getJobMessages(job.status, { includeResourceIssues });
 
       if (state === 'error') {
         const warningInfo = messages.warning
@@ -102,7 +110,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
         });
       }
     }
-  }, [finishedQuery, job, onStatusChange, onRetry, retryFailed]);
+  }, [finishedQuery, job, onStatusChange, onRetry, retryFailed, includeResourceIssues]);
 
   // Clear a scheduled retry only on unmount; clearing in the main effect's cleanup
   // would cancel a pending retry on every re-render of the watched (now-empty) list.
@@ -131,6 +139,13 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
   }
 
   return (
-    <JobContent job={job} isFinishedJob={true} onStatusChange={onStatusChange} jobType={jobType} onRetry={onRetry} />
+    <JobContent
+      job={job}
+      isFinishedJob={true}
+      onStatusChange={onStatusChange}
+      jobType={jobType}
+      onRetry={onRetry}
+      includeResourceIssues={includeResourceIssues}
+    />
   );
 }

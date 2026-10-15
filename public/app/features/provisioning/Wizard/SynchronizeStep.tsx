@@ -113,7 +113,15 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     );
   }
   if (job) {
-    return <JobStatus watch={job} onStatusChange={setStepStatusInfo} jobType="sync" onRetry={retryJob} />;
+    return (
+      <JobStatus
+        watch={job}
+        onStatusChange={setStepStatusInfo}
+        jobType="sync"
+        onRetry={retryJob}
+        includeResourceIssues
+      />
+    );
   }
 
   return (

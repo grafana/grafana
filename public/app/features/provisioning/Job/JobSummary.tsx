@@ -2,9 +2,11 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Button, Icon, InteractiveTable, Modal, Stack } from '@grafana/ui';
-import { type JobResourceSummary, type ResourceSyncIssue } from 'app/api/clients/provisioning/v0alpha1';
+import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
 
 import { getKindInfoByGroupKind } from '../utils/resourceKinds';
+
+import { getIssueMessages } from './getJobMessage';
 
 type SummaryCell = {
   row: {
@@ -15,16 +17,6 @@ type SummaryCell = {
 interface IssueModalState {
   title: string;
   messages: string[];
-}
-
-// resourceErrors/resourceWarnings are the categorized counterparts to the
-// deprecated flat-string errors/warnings -- prefer them, but fall back for
-// historic jobs recorded before this field existed.
-function getIssueMessages(issues: ResourceSyncIssue[] | undefined, fallback: string[] | undefined): string[] {
-  if (issues?.length) {
-    return issues.map((issue) => (issue.path ? `${issue.path}: ${issue.message}` : issue.message));
-  }
-  return fallback ?? [];
 }
 
 function CountLink({

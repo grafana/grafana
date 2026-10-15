@@ -16,9 +16,10 @@ export interface JobStatusProps {
   jobType: JobType;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
   onRetry?: () => void;
+  includeResourceIssues?: boolean;
 }
 
-export function JobStatus({ jobType, watch, onStatusChange, onRetry }: JobStatusProps) {
+export function JobStatus({ jobType, watch, onStatusChange, onRetry, includeResourceIssues }: JobStatusProps) {
   const activeQuery = useListJobQuery({
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
@@ -65,6 +66,7 @@ export function JobStatus({ jobType, watch, onStatusChange, onRetry }: JobStatus
         onStatusChange={onStatusChange}
         jobType={jobType}
         onRetry={onRetry}
+        includeResourceIssues={includeResourceIssues}
       />
     );
   }
@@ -77,6 +79,7 @@ export function JobStatus({ jobType, watch, onStatusChange, onRetry }: JobStatus
         onStatusChange={onStatusChange}
         jobType={jobType}
         onRetry={onRetry}
+        includeResourceIssues={includeResourceIssues}
       />
     );
   }
