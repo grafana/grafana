@@ -1,4 +1,14 @@
-import test, { expect, type Locator } from '@playwright/test';
+import test, { expect, type Locator, type Page } from '@playwright/test';
+
+import { type Controls } from '../../page-objects';
+
+export async function expectVariableOptionsToBe(page: Page, controls: Controls, label: string, options: string[]) {
+  await test.step(`Check the options of variable "${label}"`, async () => {
+    await controls.variables.openDropdown(label);
+    await expect(controls.variables.getOptions()).toHaveText(options);
+    await page.keyboard.press('Escape');
+  });
+}
 
 export async function expectPreviewOfValuesToBe(previewOptions: Locator, labels: string[]) {
   await test.step('Checking preview of values', async () => {
