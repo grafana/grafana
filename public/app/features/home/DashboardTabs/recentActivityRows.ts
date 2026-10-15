@@ -1,8 +1,9 @@
-import { dateMath, dateTime, type DateTime, ISO_8601, locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
+import { locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type BadgeColor } from '@grafana/ui';
 import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { type PageHistoryEntry, type PageHistoryKind } from 'app/core/services/pageHistory/types';
+import { parseUrlTime } from 'app/core/utils/timePicker';
 import { type ExplorePaneDescription } from 'app/features/explore/utils/describeExplorePanes';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { VARIABLE_PREFIX } from 'app/features/variables/constants';
@@ -83,20 +84,11 @@ interface PageParams {
 
 function collectParams(search: string): PageParams {
   const params = new URLSearchParams(search);
-  const from = params.get('from');
-  const to = params.get('to');
   // The URL's own timezone keeps the subtitle consistent with what the restored view shows.
   const timeZone = params.get('timezone') || undefined;
-  // Relative expressions stay text so the quick-range names apply. Absolute values (epoch ms, or the ISO 8601
-  // the dashboard scene writes) must become DateTime first, otherwise describeTimeRange echoes them raw.
-  const toRawTime = (value: string): string | DateTime => {
-    if (dateMath.isMathString(value)) {
-      return value;
-    }
-    const parsed = /^\d+$/.test(value) ? dateTime(Number(value)) : dateTime(value, ISO_8601);
-    return parsed.isValid() ? parsed : value;
-  };
-  const range = from && to ? rangeUtil.describeTimeRange({ from: toRawTime(from), to: toRawTime(to) }, timeZone) : '';
+  const from = parseUrlTime(params.get('from') ?? '');
+  const to = parseUrlTime(params.get('to') ?? '');
+  const range = from && to ? rangeUtil.describeTimeRange({ from, to }, timeZone) : '';
 
   const vars = new Map<string, string[]>();
   const others = new Map<string, string[]>();
@@ -128,6 +120,17 @@ function row(title: string, details: Array<string | undefined>): Row {
 
 /** Between the panes of a split Explore view, in both the title and the subtitle. */
 const PANE_SEPARATOR = ' | ';
+/** Holds a pane's slot in a line when that pane has nothing for it. */
+const PANE_PLACEHOLDER = '—';
+
+/**
+ * One slot per pane, so the n-th query text sits under the n-th datasource whichever panes have either;
+ * `undefined` when no pane has anything for the line.
+ */
+function joinPanes(slots: Array<string | undefined>): string | undefined {
+  return slots.some(Boolean) ? slots.map((slot) => slot || PANE_PLACEHOLDER).join(PANE_SEPARATOR) : undefined;
+}
+
 /** The badge already names the area, so a shown path drops its `/alerting` or `/a` prefix. */
 const AREA_PREFIX = { alerting: /^\/alerting\/?/, app: /^\/a\/?/ };
 
@@ -144,17 +147,9 @@ export function toRow(
       return row(item.dashboard.name, [foldersByUid[item.dashboard.location]?.name, range, ...vars]);
     }
     case 'explore': {
-      // The datasource names the page, the query text is what it restores. A pane without a datasource has
-      // no name to show; "Explore" stands in when none has.
-      const datasources = item.panes
-        .map((pane) => pane.datasource)
-        .filter(Boolean)
-        .join(PANE_SEPARATOR);
-      const queries = item.panes
-        .map((pane) => pane.queries.join('; '))
-        .filter(Boolean)
-        .join(PANE_SEPARATOR);
-      return row(datasources || t('home.recent-activity-tab.kind-explore', 'Explore'), [queries]);
+      // The datasource names the page, the query text is what it restores; "Explore" when no pane names one.
+      const title = joinPanes(item.panes.map((pane) => pane.datasource)) ?? getPageKindMeta('explore').badge;
+      return row(title, [joinPanes(item.panes.map((pane) => pane.queries.join('; ')))]);
     }
     case 'alerting':
     case 'app': {

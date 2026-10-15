@@ -5,16 +5,38 @@ import { useStoredString } from 'app/core/hooks/useStored';
 import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
 import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
 import { searchDashboardsByUid } from 'app/features/browse-dashboards/api/searchDashboardsByUid';
-import { describeExplorePanes } from 'app/features/explore/utils/describeExplorePanes';
+import {
+  describeExplorePanes,
+  type ExploreDataSources,
+  getExploreDataSources,
+} from 'app/features/explore/utils/describeExplorePanes';
 
-import { countByKind, PAGE_KINDS, type RecentActivityItem } from './recentActivityRows';
+import { countByKind, PAGE_KINDS, type PageKindCounts, type RecentActivityItem } from './recentActivityRows';
 
 /** Last chosen kind filter; remembered per browser. */
 const FILTER_KEY = 'grafana.home.recentActivity.filter';
 const NO_ITEMS: RecentActivityItem[] = [];
+const NO_DATA_SOURCES: ExploreDataSources = new Map();
 
 /** `''` shows every kind. */
 export type RecentActivityFilter = PageHistoryKind | '';
+
+export interface RecentActivity {
+  /** Rows after the kind filter, newest first. */
+  items: RecentActivityItem[];
+  /** Per kind over the whole history, so the filter options and what analytics report follow it, not the filtered rows. */
+  counts: PageKindCounts;
+  /** Over the whole history. */
+  total: number;
+  filter: RecentActivityFilter;
+  setFilter: (filter: RecentActivityFilter) => void;
+  loading: boolean;
+  error: Error | undefined;
+  /** The list is what the tab shows: loaded, no error, and the history has rows. The footer belongs to the list. */
+  hasRows: boolean;
+  retry: () => void;
+  clear: () => Promise<void>;
+}
 
 /**
  * Newest first. The history is already capped per kind, so no display cap is needed. Dashboards the user
@@ -22,27 +44,26 @@ export type RecentActivityFilter = PageHistoryKind | '';
  */
 async function getRecentActivity(): Promise<RecentActivityItem[]> {
   const entries = await pageHistorySrv.getEntries();
-  // Not awaited here so the Explore lookups below run alongside the search.
-  const dashboards = searchDashboardsByUid(entries.flatMap((entry) => (entry.kind === 'dashboard' ? [entry.uid] : [])));
-  const items = await Promise.all(
-    entries.map(async (entry): Promise<RecentActivityItem | undefined> => {
-      switch (entry.kind) {
-        case 'dashboard': {
-          const dashboard = (await dashboards).get(entry.uid);
-          return dashboard && { ...entry, dashboard };
-        }
-        case 'explore':
-          return { ...entry, panes: await describeExplorePanes(entry.search) };
-        default:
-          return entry;
+  const [dashboards, dataSources] = await Promise.all([
+    searchDashboardsByUid(entries.flatMap((entry) => (entry.kind === 'dashboard' ? [entry.uid] : []))),
+    entries.some((entry) => entry.kind === 'explore') ? getExploreDataSources() : NO_DATA_SOURCES,
+  ]);
+  return entries.flatMap((entry): RecentActivityItem[] => {
+    switch (entry.kind) {
+      case 'dashboard': {
+        const dashboard = dashboards.get(entry.uid);
+        return dashboard ? [{ ...entry, dashboard }] : [];
       }
-    })
-  );
-  return items.filter((item) => item !== undefined);
+      case 'explore':
+        return [{ ...entry, panes: describeExplorePanes(entry.search, dataSources) }];
+      default:
+        return [entry];
+    }
+  });
 }
 
 /** The whole history is fetched once; the kind filter is applied here, so switching it never refetches. */
-export function useRecentActivity() {
+export function useRecentActivity(): RecentActivity {
   const { value, loading, error, retry } = useAsyncRetry(getRecentActivity, []);
   const [storedFilter, setStoredFilter] = useStoredString(FILTER_KEY, '');
 
@@ -54,15 +75,14 @@ export function useRecentActivity() {
   const filter: RecentActivityFilter = PAGE_KINDS.find((kind) => kind === storedFilter && counts[kind] > 0) ?? '';
 
   return {
-    /** Rows after the kind filter, newest first. */
     items: filter ? all.filter((item) => item.kind === filter) : all,
-    /** Per kind over the whole history, so disabled filter options follow what each kind would reveal. */
     counts,
     total: all.length,
     filter,
     setFilter: setStoredFilter,
     loading,
     error,
+    hasRows: !loading && !error && all.length > 0,
     retry,
     clear: async () => {
       await pageHistorySrv.clear();

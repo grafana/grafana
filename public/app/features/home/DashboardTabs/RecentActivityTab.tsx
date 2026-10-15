@@ -16,15 +16,11 @@ import { ctaClicked, recentActivityShown } from '../analytics/main';
 
 import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError } from './DashboardTabError';
-import { type PageKindCounts, type RecentActivityItem, getPageKindMeta, toRow } from './recentActivityRows';
+import { getPageKindMeta, toRow } from './recentActivityRows';
+import { type RecentActivity } from './useRecentActivity';
 
 interface Props {
-  items: RecentActivityItem[];
-  /** Over the whole history, so what was shown is reported independently of the kind filter. */
-  counts: PageKindCounts;
-  loading: boolean;
-  error: Error | undefined;
-  retry: () => void;
+  recent: RecentActivity;
   foldersByUid: Record<string, LocationInfo>;
   density?: 'default' | 'compact';
 }
@@ -54,7 +50,8 @@ function EmptyStateCta() {
   );
 }
 
-export function RecentActivityTab({ items, counts, loading, error, retry, foldersByUid, density }: Props) {
+export function RecentActivityTab({ recent, foldersByUid, density }: Props) {
+  const { items, counts, total, loading, error, retry } = recent;
   const styles = useStyles2(getStyles, density === 'compact');
   const navTree = useSelector((state) => state.navBarTree);
 
@@ -66,13 +63,13 @@ export function RecentActivityTab({ items, counts, loading, error, retry, folder
     }
     shown.current = true;
     recentActivityShown({
-      page_count: counts.dashboard + counts.explore + counts.alerting + counts.app,
+      page_count: total,
       dashboard_count: counts.dashboard,
       explore_count: counts.explore,
       alerting_count: counts.alerting,
       app_count: counts.app,
     });
-  }, [loading, error, counts]);
+  }, [loading, error, counts, total]);
 
   if (loading) {
     return <PageLoader text={t('home.recent-activity-tab.loading', 'Loading your recent activity...')} />;

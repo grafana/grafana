@@ -59,6 +59,27 @@ describe('toRow', () => {
       ).toEqual({ title: 'Ops Logs | unknown-uid', subtitle: 'up; down | select 1' });
     });
 
+    it('keeps each query under its own pane when only some panes have text or a name', () => {
+      expect(
+        explore([
+          { datasource: 'Ops Logs', queries: ['up'] },
+          { datasource: 'Prom', queries: [] },
+        ])
+      ).toEqual({ title: 'Ops Logs | Prom', subtitle: 'up | —' });
+      expect(
+        explore([
+          { datasource: 'Ops Logs', queries: [] },
+          { datasource: 'Prom', queries: ['up'] },
+        ])
+      ).toEqual({ title: 'Ops Logs | Prom', subtitle: '— | up' });
+      expect(
+        explore([
+          { datasource: undefined, queries: ['a'] },
+          { datasource: 'Prom', queries: ['b'] },
+        ])
+      ).toEqual({ title: '— | Prom', subtitle: 'a | b' });
+    });
+
     it('falls back to "Explore" without a datasource and to no subtitle without query text', () => {
       expect(explore([{ datasource: 'Ops Logs', queries: [] }])).toEqual({ title: 'Ops Logs', subtitle: undefined });
       expect(explore([{ datasource: undefined, queries: ['up'] }])).toEqual({ title: 'Explore', subtitle: 'up' });
