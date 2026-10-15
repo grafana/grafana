@@ -330,9 +330,6 @@
     }
   },
   "packages/grafana-runtime/src/utils/DataSourceWithBackend.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -1496,11 +1493,6 @@
       "count": 3
     }
   },
-  "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/correlations/CorrelationsPageWrapper.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1684,9 +1676,6 @@
   "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 6
-    },
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
@@ -1709,9 +1698,6 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    },
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -1873,11 +1859,6 @@
   },
   "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/services/DashboardLoaderSrv.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },

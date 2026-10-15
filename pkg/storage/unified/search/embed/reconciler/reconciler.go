@@ -1,5 +1,5 @@
 // Package reconciler keeps the vector index in sync by sweeping writes since
-// a durable checkpoint. Watch notifications only seed the initial checkpoint;
+// a durable checkpoint. Written keys only seed the initial checkpoint;
 // payloads are read and processed one at a time from storage. Recovery of
 // out-of-order writes relies on KV notifier settling and listing lookback;
 // arbitrarily late writes below that window require a durable backend watermark.
@@ -43,6 +43,15 @@ const DefaultInterval = time.Minute
 // can't wedge cursor advancement forever. This includes provider errors:
 // providers can misclassify an invalid request as temporarily unavailable.
 const maxEventAttempts = 5
+
+// seedLookback puts the first checkpoint below the earliest observed write, so
+// the sweep still lists older writes whose keys arrive later, as the KV notifier
+// settles events for 3s.
+const seedLookback = 3 * time.Second
+
+// seedWatchRetryDelay is how long the seed watch waits before opening again
+// after it failed or its stream ended.
+const seedWatchRetryDelay = 5 * time.Second
 
 // defaultLockRetryInterval is how long Run waits between attempts to
 // acquire the reconciler advisory lock when another replica holds it.
@@ -108,14 +117,14 @@ type Reconciler struct {
 	// folderTitleResolver is uncached: event rate is low and fresh titles beat cache staleness.
 	folderTitleResolver *foldertitle.Resolver
 
-	// broadcaster is attached after construction by the resource server,
-	broadcaster resource.Broadcaster[*resource.WrittenEvent]
-
-	// Watch notifications provide the earliest observed RV until the initial
-	// checkpoint is persisted. No watch payloads are retained.
+	// Written keys provide the earliest observed RV until the initial
+	// checkpoint is persisted. No payloads are retained.
 	seedMu sync.Mutex
 	seedRV int64
 	seeded bool
+	// stopSeedWatch ends the seed watch once the checkpoint is persisted. Only
+	// touched from Run's goroutine.
+	stopSeedWatch context.CancelFunc
 
 	// Only ever touched from the sweep, which runs on Run's goroutine.
 	lastSweepSinceRv  int64
@@ -131,11 +140,9 @@ type Reconciler struct {
 	ensuredResources map[schema.GroupResource]string
 }
 
-// New constructs the embedding reconciler.
-// The caller is expected to attach a broadcaster via Reconciler.UseBroadcaster
-// before calling Run. Without one the reconciler can only sweep, and a fleet
-// that has never checkpointed stays inert: the cursor is seeded from the first
-// delivered write, and the sweep does nothing until it is.
+// New constructs the embedding reconciler. A fleet that has never
+// checkpointed stays inert until the first write is delivered: the cursor is
+// seeded from it, and the sweep does nothing until it is.
 func New(opts Options) (*Reconciler, error) {
 	builders := make(map[schema.GroupResource]struct{}, len(opts.Builders))
 	if len(opts.Builders) == 0 && opts.BuilderProvider == nil {
@@ -188,10 +195,6 @@ func (s *Reconciler) hasBuilder(group, resource string) bool {
 		return s.builderProvider.Has(group, resource)
 	}
 	return s.builders.Has(group, resource)
-}
-
-func (s *Reconciler) UseBroadcaster(b resource.Broadcaster[*resource.WrittenEvent]) {
-	s.broadcaster = b
 }
 
 // observeWrite tracks the earliest write for the initial checkpoint.
@@ -254,24 +257,20 @@ func (s *Reconciler) Run(ctx context.Context) error {
 		go s.runEmbeddingCounts(ctx)
 	}
 
-	// Not load-bearing for correctness: the sweep lists everything past
-	// the cursor whether or not an event was delivered.
-	if s.broadcaster != nil {
-		ch, err := s.broadcaster.Subscribe(ctx, "embeddings-reconciler", "embeddings-reconciler")
-		if err != nil {
-			s.log.Error("reconciler: subscribe to write events", "err", err)
-		} else if ch != nil {
-			watchFinished := make(chan struct{})
-			defer func() {
-				<-watchFinished
-				s.broadcaster.Unsubscribe(ch)
-			}()
-			go func() {
-				defer close(watchFinished)
-				s.consumeWatchEvents(ctx, ch)
-			}()
-			s.log.Info("reconciler: subscribed to write events broadcaster")
-		}
+	// Writes only seed the first checkpoint, so a fleet that already has one
+	// needs no watch.
+	if rv, err := s.vectorBackend.GetLatestRV(ctx); err != nil || rv == 0 {
+		watchCtx, stop := context.WithCancel(ctx)
+		s.stopSeedWatch = stop
+		watchDone := make(chan struct{})
+		defer func() {
+			stop()
+			<-watchDone
+		}()
+		go func() {
+			defer close(watchDone)
+			s.runSeedWatch(watchCtx)
+		}()
 	}
 
 	t := time.NewTicker(s.interval)
@@ -343,19 +342,61 @@ func (s *Reconciler) recordEmbeddingCounts(ctx context.Context) {
 	}
 }
 
-func (s *Reconciler) consumeWatchEvents(ctx context.Context, ch <-chan *resource.WrittenEvent) {
+// runSeedWatch observes writes until ctx is cancelled, opening the watch again
+// after it fails or its stream ends.
+func (s *Reconciler) runSeedWatch(ctx context.Context) {
+	for ctx.Err() == nil {
+		s.watchSeedWrites(ctx)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(seedWatchRetryDelay):
+		}
+	}
+}
+
+func (s *Reconciler) watchSeedWrites(ctx context.Context) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	types := s.seedTypes()
+	// A lost write is not missed: it is older than the seed, so the backfill
+	// job created at its resource's first listed write covers it.
+	events, err := s.storage.WatchWrittenKeys(ctx, types, func(string) {})
+	if errors.Is(err, resource.ErrWrittenKeysUnsupported) {
+		s.log.Info("reconciler: seeding from the watch stream, which is slower than watching written keys", "reason", err)
+		events, err = s.storage.WatchWriteEvents(ctx)
+	}
+	if err != nil {
+		s.log.Warn("reconciler: watch writes to seed the checkpoint", "err", err)
+		return
+	}
+	s.log.Info("reconciler: watching writes to seed the checkpoint", "resources", types)
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case ev, ok := <-ch:
+		case ev, ok := <-events:
 			if !ok {
-				s.log.Warn("reconciler: watch channel closed")
 				return
 			}
 			s.observeWrite(ev)
 		}
 	}
+}
+
+// seedTypes covers every type that may be enrolled, not just the enrolled
+// ones: a write to a type enrolled while the watch is open must still seed, and
+// reopening the watch would not replay it. observeWrite checks enrollment.
+func (s *Reconciler) seedTypes() []schema.GroupResource {
+	if s.builderProvider != nil {
+		return s.builderProvider.Allowed()
+	}
+	builders := s.builders.Builders()
+	types := make([]schema.GroupResource, 0, len(builders))
+	for _, b := range builders {
+		types = append(types, schema.GroupResource{Group: b.Group(), Resource: b.Resource()})
+	}
+	return types
 }
 
 // ensureResourceInitialized provisions a resource's partition leaf + backfill
@@ -528,23 +569,21 @@ func (s *Reconciler) ensureCheckpoint(ctx context.Context) (int64, error) {
 		seed := s.seedRV
 		s.seedMu.Unlock()
 		if seed == 0 {
-			if s.broadcaster == nil {
-				s.log.Warn("reconciler: cursor at 0 and no write event broadcaster; nothing will be embedded")
-			}
 			return 0, nil
 		}
-		// A full millisecond keeps this predecessor below the seed after a
-		// legacy SQL RV is converted back from Snowflake format.
-		rv = resource.SubtractDurationFromSnowflake(seed, time.Millisecond)
+		rv = resource.SubtractDurationFromSnowflake(seed, seedLookback)
 		// Persist before any provider call so the first write survives a restart.
 		if err := s.vectorBackend.SetLatestRV(ctx, rv); err != nil {
 			return 0, fmt.Errorf("seed checkpoint: %w", err)
 		}
 	}
-	// Further notifications are unnecessary once sweeps have a durable starting point.
+	// Further writes are unnecessary once sweeps have a durable starting point.
 	s.seedMu.Lock()
 	s.seeded = true
 	s.seedMu.Unlock()
+	if s.stopSeedWatch != nil {
+		s.stopSeedWatch()
+	}
 	return rv, nil
 }
 

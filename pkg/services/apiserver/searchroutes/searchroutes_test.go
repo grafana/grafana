@@ -555,7 +555,6 @@ func TestBuild_MountedKindsAreListedHere(t *testing.T) {
 		"rulesequences",
 		"serviceaccounts",
 		"shorturls",
-		"snapshots",
 		"teambindings",
 		"teamlbacrules",
 		"teams",

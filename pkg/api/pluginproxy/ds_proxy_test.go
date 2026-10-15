@@ -1256,7 +1256,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil)
+	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil, nil)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
@@ -1387,7 +1387,7 @@ func runDatasourceAuthTest(t *testing.T,
 	loader, err := NewDataSourceLoader(test.datasource, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil)
+	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil, nil)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -1451,7 +1451,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil)
+	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1498,5 +1498,61 @@ func toHTTPContext(t *testing.T, ctx *contextmodel.ReqContext) HTTPContext {
 		Req:       ctx.Req,
 		Resp:      ctx.Resp,
 		UserToken: ctx.UserToken,
+	}
+}
+
+func TestDataSourceProxyLocalRouteAccess(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		route   plugins.Route
+		role    org.RoleType
+		scope   string
+		allowed bool
+	}{
+		{name: "unrestricted route", allowed: true},
+		{name: "role allowed", route: plugins.Route{ReqRole: org.RoleEditor}, role: org.RoleAdmin, allowed: true},
+		{name: "role denied", route: plugins.Route{ReqRole: org.RoleAdmin}, role: org.RoleViewer},
+		{name: "action allowed", route: plugins.Route{ReqAction: "datasources:query"}, scope: "datasources:uid:ds-1", allowed: true},
+		{name: "other datasource denied", route: plugins.Route{ReqAction: "datasources:query"}, scope: "datasources:uid:ds-2"},
+		{name: "action grant takes precedence over role", route: plugins.Route{ReqAction: "datasources:query", ReqRole: org.RoleAdmin}, role: org.RoleViewer, scope: "datasources:uid:ds-1", allowed: true},
+		{name: "role cannot bypass denied action", route: plugins.Route{ReqAction: "datasources:query", ReqRole: org.RoleAdmin}, role: org.RoleAdmin},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := newReqContext(t)
+			ctx.SignedInUser = &user.SignedInUser{OrgID: 1, OrgRole: tc.role}
+			if tc.scope != "" {
+				ctx.Permissions = map[int64]map[string][]string{1: {"datasources:query": {tc.scope}}}
+			}
+			proxy, err := setupDSProxyTest(t, ctx, &datasources.DataSource{UID: "ds-1"}, nil, "")
+			require.NoError(t, err)
+			require.Equal(t, tc.allowed, proxy.hasAccessToRoute(&tc.route))
+		})
+	}
+}
+
+func TestDataSourceProxyRoleChecksWithoutAction(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		route   plugins.Route
+		role    org.RoleType
+		allowed bool
+	}{
+		{name: "unrestricted route", allowed: true},
+		{name: "role allowed", route: plugins.Route{ReqRole: org.RoleEditor}, role: org.RoleAdmin, allowed: true},
+		{name: "role denied", route: plugins.Route{ReqRole: org.RoleAdmin}, role: org.RoleViewer},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			ctx := newReqContext(t)
+			ctx.SignedInUser = &user.SignedInUser{OrgRole: tc.role}
+			proxy, err := setupDSProxyTest(t, ctx, &datasources.DataSource{UID: "ds-1"}, nil, "")
+			require.NoError(t, err)
+			proxy.routeAccessChecker = func(context.Context, identity.Requester, string, string) (bool, error) {
+				calls++
+				return false, errors.New("unexpected authz call")
+			}
+			require.Equal(t, tc.allowed, proxy.hasAccessToRoute(&tc.route))
+			require.Zero(t, calls)
+		})
 	}
 }

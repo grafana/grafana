@@ -6,6 +6,7 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -31,10 +32,20 @@ func InterceptorLogger(l log.Logger, enabled bool) logging.Logger {
 	})
 }
 
+// serverCodeToLevel logs HTTP 4xx statuses sent as gRPC codes (the httpgrpc
+// convention) as warnings, like the gRPC client-error codes, instead of the
+// error level the default gives unknown codes.
+func serverCodeToLevel(code codes.Code) logging.Level {
+	if code >= 400 && code < 500 {
+		return logging.LevelWarn
+	}
+	return logging.DefaultServerCodeToLevel(code)
+}
+
 func LoggingUnaryInterceptor(logger log.Logger, enabled bool) grpc.UnaryServerInterceptor {
-	return logging.UnaryServerInterceptor(InterceptorLogger(logger, enabled))
+	return logging.UnaryServerInterceptor(InterceptorLogger(logger, enabled), logging.WithLevels(serverCodeToLevel))
 }
 
 func LoggingStreamInterceptor(logger log.Logger, enabled bool) grpc.StreamServerInterceptor {
-	return logging.StreamServerInterceptor(InterceptorLogger(logger, enabled))
+	return logging.StreamServerInterceptor(InterceptorLogger(logger, enabled), logging.WithLevels(serverCodeToLevel))
 }

@@ -84,15 +84,10 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: (ref: string | null) => (ref === null ? defaultDsSettings : undefined),
     getList: () => [defaultDsSettings],
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(async () => dsMock),
   getDataSourceInstanceSettings: jest.fn(async (ref: string | null) => (ref === null ? defaultDsSettings : undefined)),
   getDataSourceInstanceList: jest.fn(async () => [defaultDsSettings]),
 }));
-
 describe('isEditableVariableType', () => {
   it('should return true for editable variable types', () => {
     const editableTypes: VariableType[] = [

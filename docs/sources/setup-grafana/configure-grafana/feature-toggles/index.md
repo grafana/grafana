@@ -34,6 +34,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled | Yes                |
 | `reportingHeaderSettings`                    | Enables configuration of PDF report settings                                                                                        |                    |
 | `reportingFooterSettings`                    | Enables the configurable footer settings for PDF reports                                                                            |                    |
+| `grafana.newPanelQueryErrorsUI`              | Enables a new UI for query errors and notices                                                                                       | Yes                |
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                           | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                 |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
@@ -97,6 +98,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `datasources.azureMonitorBatchAPI` | Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request |
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
 | `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
+| `grafana.newTextPanel`             | Enables the new text panel                                                                                                     |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
 | `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |

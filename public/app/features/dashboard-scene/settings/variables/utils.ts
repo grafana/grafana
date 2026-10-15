@@ -2,8 +2,7 @@ import { chain } from 'lodash';
 
 import { type SelectableValue, getDataSourceRef } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,

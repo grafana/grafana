@@ -28,11 +28,10 @@ export class AddOptions extends PageObject {
     });
   }
 
-  /** Adds a new ad hoc filters variable by clicking the "Filter and Group by" button */
-  async addFilters() {
-    await test.step('Add new filters from sidebar', async () => {
+  async addFilter() {
+    await test.step('Add Filter and Group by from sidebar', async () => {
       await this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
-        .getByRole('button', { name: 'Filter and Group by' })
+        .getByRole('button', { name: 'Filter and Group by', exact: true })
         .click();
     });
   }

@@ -1,5 +1,6 @@
 import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -128,6 +129,9 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         return;
       }
 
+      // Panel cells are built synchronously below.
+      await getPanelPluginMetasMap();
+
       // RTK Query freezes cached responses (Immer). The scene pipeline mutates nested panel
       // fieldConfig (e.g. threshold base → -Infinity), so clone before transforming.
       const scene = transformNotebookToScene(structuredClone(notebook));
@@ -166,22 +170,46 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
    * what leaves `uid` unset here. It is deliberately not cached either, because the cache is keyed by
    * uid and this notebook has none.
    */
-  public newNotebook(): void {
+  public async newNotebook(): Promise<void> {
     // A load already in flight would otherwise resolve on top of this and replace the blank notebook
     // with whichever one the page was previously asked for.
-    this.requestSeq++;
+    const seq = ++this.requestSeq;
 
-    const spec: NotebookSpec = {
-      ...defaultNotebookSpec(),
-      title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
-        date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
-      }),
-    };
+    this.setState({ isLoading: true, loadError: undefined });
 
-    // Held so the page can keep this exact scene once its first save gives it a uid.
-    this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
+    try {
+      // The first visualization block inserted into the blank notebook is built synchronously.
+      await getPanelPluginMetasMap();
 
-    this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
+      if (this.isSuperseded(seq)) {
+        return;
+      }
+
+      const spec: NotebookSpec = {
+        ...defaultNotebookSpec(),
+        title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
+          date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
+        }),
+      };
+
+      // Held so the page can keep this exact scene once its first save gives it a uid.
+      this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
+
+      this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
+    } catch (error) {
+      if (this.isSuperseded(seq)) {
+        return;
+      }
+
+      this.setState({
+        isLoading: false,
+        loadError: {
+          status: getStatusFromError(error),
+          message: getMessageFromError(error),
+          messageId: getMessageIdFromError(error),
+        },
+      });
+    }
   }
 
   /**
