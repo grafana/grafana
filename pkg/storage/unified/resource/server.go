@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -1278,7 +1279,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	}
 
 	var res *resourcepb.CreateResponse
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, "create", func(queueCtx context.Context) {
 		res, err = s.create(queueCtx, user, req)
 	})
 	if runErr != nil {
@@ -1390,7 +1391,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		res *resourcepb.UpdateResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, "update", func(queueCtx context.Context) {
 		res, err = s.update(queueCtx, user, req)
 	})
 	if runErr != nil {
@@ -1488,7 +1489,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		err error
 	)
 
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, "delete", func(queueCtx context.Context) {
 		res, err = s.delete(queueCtx, user, req)
 	})
 	if runErr != nil {
@@ -1600,7 +1601,7 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 		res *resourcepb.ReadResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, "read", func(queueCtx context.Context) {
 		res, err = s.read(queueCtx, user, req)
 	})
 	if runErr != nil {
@@ -3060,13 +3061,19 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 	return refs, true, nil
 }
 
-func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
+func (s *server) runInQueue(ctx context.Context, tenantID, operation string, runnable func(ctx context.Context)) error {
 	// Enforce a timeout for the entire operation, including queueing and execution.
 	queueCtx, cancel := context.WithTimeout(ctx, s.queueConfig.Timeout)
 	defer cancel()
 
+	_, waitSpan := tracer.Start(queueCtx, "resource.server.runInQueue", trace.WithAttributes(
+		attribute.String("operation", operation), attribute.String("stack", tenantID),
+	))
+	defer waitSpan.End()
+
 	done := make(chan struct{})
 	wrappedRunnable := func() {
+		waitSpan.End()
 		defer close(done)
 		runnable(queueCtx)
 	}
@@ -3096,7 +3103,7 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 		s.log.Warn("failed to enqueue runnable, retrying", "tenantID", tenantID, "error", err)
 		if !boff.Ongoing() {
 			// Backoff finished (retries exhausted or context canceled).
-			return fmt.Errorf("failed to enqueue for tenant %s: %w", tenantID, err)
+			return tracing.Errorf(waitSpan, "failed to enqueue for tenant %s: %w", tenantID, err)
 		}
 		boff.Wait()
 	}
@@ -3106,7 +3113,7 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	case <-done:
 		return nil // Completed successfully.
 	case <-queueCtx.Done():
-		return queueCtx.Err() // Timed out or canceled while waiting for execution.
+		return tracing.Error(waitSpan, queueCtx.Err()) // Timed out or canceled while waiting for execution.
 	}
 }
 

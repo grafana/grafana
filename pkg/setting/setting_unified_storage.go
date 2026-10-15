@@ -218,6 +218,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.QOSEnabled = section.Key("qos_enabled").MustBool(false)
 	cfg.QOSNumberWorker = section.Key("qos_num_worker").MustInt(16)
 	cfg.QOSMaxSizePerTenant = section.Key("qos_max_size_per_tenant").MustInt(1000)
+	cfg.QOSMaxConcurrentPerTenant = section.Key("qos_max_concurrent_per_tenant").MustInt(0)
 	cfg.MemberlistBindAddr = section.Key("memberlist_bind_addr").String()
 	cfg.MemberlistAdvertiseAddr = section.Key("memberlist_advertise_addr").String()
 	cfg.MemberlistAdvertisePort = section.Key("memberlist_advertise_port").MustInt(7946)

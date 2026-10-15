@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -29,12 +30,16 @@ var ErrMissingTenantID = errors.New("item requires TenantID")
 type queuedItem struct {
 	runnable   func()
 	enqueuedAt time.Time
+	ctx        context.Context
+	stopCancel func() bool
+	tenant     *tenantQueue
 }
 
 type tenantQueue struct {
-	id       string
-	items    []queuedItem
-	isActive bool
+	id         string
+	items      []*queuedItem
+	inFlight   int
+	activeElem *list.Element
 }
 
 func (tq *tenantQueue) len() int {
@@ -42,7 +47,7 @@ func (tq *tenantQueue) len() int {
 }
 func (tq *tenantQueue) clear() {
 	tq.items = nil
-	tq.isActive = false
+	tq.activeElem = nil
 }
 func (tq *tenantQueue) isEmpty() bool {
 	return len(tq.items) == 0
@@ -50,17 +55,15 @@ func (tq *tenantQueue) isEmpty() bool {
 func (tq *tenantQueue) isFull(maxSize int) bool {
 	return maxSize > 0 && len(tq.items) >= maxSize
 }
-func (tq *tenantQueue) addItem(runnable func()) {
-	tq.items = append(tq.items, queuedItem{runnable: runnable, enqueuedAt: time.Now()})
-}
 
 type enqueueRequest struct {
 	tenantID string
-	runnable func()
+	item     *queuedItem
 	respChan chan error
 }
 
 type dequeueRequest struct {
+	ctx      context.Context
 	respChan chan dequeueResponse
 }
 
@@ -99,6 +102,9 @@ type Queue struct {
 	lenChan               chan lenRequest
 	activeTenantsLenChan  chan activeTenantsLenRequest
 	dispatcherStoppedChan chan struct{}
+	completionChan        chan *tenantQueue
+	// A nil item signals cancellation of pending dequeue requests.
+	cancellationChan chan *queuedItem
 
 	// tenantQueues stores the queues for each tenant
 	tenantQueues map[string]*tenantQueue
@@ -109,18 +115,21 @@ type Queue struct {
 	// used for notifying when items are available
 	pendingDequeueRequests *list.List
 	// maxSizePerTenant is the maximum number of items per tenant
-	maxSizePerTenant int
+	maxSizePerTenant       int
+	maxConcurrentPerTenant int
 
 	// Metrics
+	inFlight          *prometheus.GaugeVec
 	queueLength       *prometheus.GaugeVec
 	discardedRequests *prometheus.CounterVec
 	queueWaitDuration *prometheus.HistogramVec
 }
 
 type QueueOptions struct {
-	MaxSizePerTenant int
-	Registerer       prometheus.Registerer
-	Logger           log.Logger
+	MaxSizePerTenant       int
+	MaxConcurrentPerTenant int
+	Registerer             prometheus.Registerer
+	Logger                 log.Logger
 }
 
 // NewQueue creates a new Queue and starts its dispatcher goroutine.
@@ -128,7 +137,6 @@ func NewQueue(opts *QueueOptions) *Queue {
 	if opts.MaxSizePerTenant <= 0 {
 		opts.MaxSizePerTenant = DefaultMaxSizePerTenant
 	}
-
 	if opts.Logger == nil {
 		opts.Logger = log.NewNopLogger()
 	}
@@ -141,13 +149,20 @@ func NewQueue(opts *QueueOptions) *Queue {
 		lenChan:               make(chan lenRequest),
 		activeTenantsLenChan:  make(chan activeTenantsLenRequest),
 		dispatcherStoppedChan: make(chan struct{}),
+		completionChan:        make(chan *tenantQueue),
+		cancellationChan:      make(chan *queuedItem),
 
 		tenantQueues:           make(map[string]*tenantQueue),
 		activeTenants:          list.New(),
 		pendingDequeueRequests: list.New(),
 		maxSizePerTenant:       opts.MaxSizePerTenant,
+		maxConcurrentPerTenant: max(0, opts.MaxConcurrentPerTenant),
 	}
 
+	q.inFlight = promauto.With(opts.Registerer).NewGaugeVec(prometheus.GaugeOpts{
+		Name: "grafana_resource_server_qos_in_flight",
+		Help: "Number of reserved or executing requests per tenant",
+	}, []string{"tenant"})
 	q.queueLength = promauto.With(opts.Registerer).NewGaugeVec(prometheus.GaugeOpts{
 		Name: "grafana_resource_server_qos_queue_length",
 		Help: "Number of items in the queue",
@@ -158,7 +173,7 @@ func NewQueue(opts *QueueOptions) *Queue {
 	}, []string{"tenant", "reason"})
 	q.queueWaitDuration = promauto.With(opts.Registerer).NewHistogramVec(prometheus.HistogramOpts{
 		Name:                            "grafana_resource_server_qos_queue_wait_duration_seconds",
-		Help:                            "Time items spend waiting in the queue before being dequeued, in seconds",
+		Help:                            "Time items spend waiting in the queue before execution begins, in seconds",
 		NativeHistogramBucketFactor:     1.1,
 		NativeHistogramMaxBucketNumber:  160,
 		NativeHistogramMinResetDuration: time.Hour,
@@ -170,50 +185,107 @@ func NewQueue(opts *QueueOptions) *Queue {
 }
 
 func (q *Queue) scheduleRoundRobin() {
-	// Process as long as we have both pending requests and active tenants
-	for {
-		// Get the front elements of both lists
+	for q.pendingDequeueRequests.Len() > 0 {
 		reqElem := q.pendingDequeueRequests.Front()
-		tenantElem := q.activeTenants.Front()
-
-		// Exit when either list is empty
-		if reqElem == nil || tenantElem == nil {
+		req := reqElem.Value.(*dequeueRequest)
+		if err := req.ctx.Err(); err != nil {
+			q.pendingDequeueRequests.Remove(reqElem)
+			req.respChan <- dequeueResponse{err: err}
+			continue
+		}
+		var tenantElem *list.Element
+		for elem := q.activeTenants.Front(); elem != nil; elem = elem.Next() {
+			tq := elem.Value.(*tenantQueue)
+			if q.maxConcurrentPerTenant == 0 || tq.inFlight < q.maxConcurrentPerTenant {
+				tenantElem = elem
+				break
+			}
+		}
+		if tenantElem == nil {
 			break
 		}
-
-		req := reqElem.Value.(*dequeueRequest)
 		tq := tenantElem.Value.(*tenantQueue)
-
-		// Get and deliver the runnable item
 		qi := tq.items[0]
-		req.respChan <- dequeueResponse{runnable: qi.runnable, err: nil}
-
-		// Observe how long the item spent waiting in the queue.
-		q.queueWaitDuration.WithLabelValues(tq.id).Observe(time.Since(qi.enqueuedAt).Seconds())
-
-		// Update bookkeeping
-		q.pendingDequeueRequests.Remove(reqElem)
+		tq.items[0] = nil
 		tq.items = tq.items[1:]
-
-		// Update metrics
+		qi.stopCancel()
+		tq.inFlight++
+		q.inFlight.WithLabelValues(tq.id).Set(float64(tq.inFlight))
 		q.queueLength.WithLabelValues(tq.id).Set(float64(tq.len()))
-
-		// Round-robin: move to back if tenant still has items, otherwise remove
-		if tq.isEmpty() {
-			tq.clear()
-			q.activeTenants.Remove(tenantElem)
-		} else {
-			q.activeTenants.MoveToBack(tenantElem)
+		q.pendingDequeueRequests.Remove(reqElem)
+		req.respChan <- dequeueResponse{runnable: q.wrapRunnable(qi)}
+		q.cleanupTenant(tq)
+		if tq.activeElem != nil {
+			q.activeTenants.MoveToBack(tq.activeElem)
 		}
 	}
 }
 
+func (q *Queue) wrapRunnable(qi *queuedItem) func() {
+	return func() {
+		tq := qi.tenant
+		defer func() {
+			select {
+			case q.completionChan <- tq:
+			case <-q.dispatcherStoppedChan:
+			}
+		}()
+		if err := qi.ctx.Err(); err != nil {
+			q.recordCancellation(tq.id, err)
+			return
+		}
+		q.queueWaitDuration.WithLabelValues(tq.id).Observe(time.Since(qi.enqueuedAt).Seconds())
+		qi.runnable()
+	}
+}
+
+func (q *Queue) cleanupTenant(tq *tenantQueue) {
+	if !tq.isEmpty() {
+		return
+	}
+	if tq.activeElem != nil {
+		q.activeTenants.Remove(tq.activeElem)
+	}
+	tq.clear()
+	if tq.inFlight == 0 && q.tenantQueues[tq.id] == tq {
+		delete(q.tenantQueues, tq.id)
+		q.inFlight.DeleteLabelValues(tq.id)
+	}
+}
+
+func (q *Queue) cancelItem(qi *queuedItem) {
+	tq := qi.tenant
+	index := slices.Index(tq.items, qi)
+	if index < 0 {
+		return
+	}
+	qi.stopCancel()
+	tq.items = slices.Delete(tq.items, index, index+1)
+	q.recordCancellation(tq.id, qi.ctx.Err())
+	q.queueLength.WithLabelValues(tq.id).Set(float64(tq.len()))
+	q.cleanupTenant(tq)
+}
+
+func (q *Queue) recordCancellation(tenantID string, err error) {
+	reason := "context_canceled"
+	if errors.Is(err, context.DeadlineExceeded) {
+		reason = "deadline_exceeded"
+	}
+	q.discardedRequests.WithLabelValues(tenantID, reason).Inc()
+}
+
 func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
+	qi := req.item
+	if err := qi.ctx.Err(); err != nil {
+		q.recordCancellation(req.tenantID, err)
+		req.respChan <- err
+		return
+	}
 	tq, exists := q.tenantQueues[req.tenantID]
 	if !exists {
 		tq = &tenantQueue{
 			id:    req.tenantID,
-			items: make([]queuedItem, 0, 8),
+			items: make([]*queuedItem, 0, 8),
 		}
 		q.tenantQueues[req.tenantID] = tq
 	}
@@ -224,12 +296,16 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 		return
 	}
 
-	tq.addItem(req.runnable)
+	qi.enqueuedAt = time.Now()
+	qi.tenant = tq
+	qi.stopCancel = context.AfterFunc(qi.ctx, func() {
+		q.sendCancellation(qi)
+	})
+	tq.items = append(tq.items, qi)
 	q.queueLength.WithLabelValues(req.tenantID).Set(float64(len(tq.items)))
 
-	if !tq.isActive {
-		q.activeTenants.PushBack(tq)
-		tq.isActive = true
+	if tq.activeElem == nil {
+		tq.activeElem = q.activeTenants.PushBack(tq)
 	}
 
 	req.respChan <- nil
@@ -248,7 +324,12 @@ func (q *Queue) handleLenRequest(req lenRequest) {
 }
 
 func (q *Queue) dispatcherLoop(ctx context.Context) error {
-	defer close(q.dispatcherStoppedChan)
+	defer func() {
+		for elem := q.pendingDequeueRequests.Front(); elem != nil; elem = elem.Next() {
+			elem.Value.(*dequeueRequest).respChan <- dequeueResponse{err: ErrQueueClosed}
+		}
+		close(q.dispatcherStoppedChan)
+	}()
 
 	q.logger.Info("queue running", "maxSizePerTenant", q.maxSizePerTenant)
 
@@ -265,12 +346,37 @@ func (q *Queue) dispatcherLoop(ctx context.Context) error {
 		case req := <-q.dequeueChan:
 			q.handleDequeueRequest(req)
 
+		case tq := <-q.completionChan:
+			tq.inFlight--
+			q.inFlight.WithLabelValues(tq.id).Set(float64(tq.inFlight))
+			q.cleanupTenant(tq)
+		case qi := <-q.cancellationChan:
+			if qi != nil {
+				q.cancelItem(qi)
+			} else {
+				for elem := q.pendingDequeueRequests.Front(); elem != nil; {
+					next := elem.Next()
+					req := elem.Value.(*dequeueRequest)
+					if err := req.ctx.Err(); err != nil {
+						q.pendingDequeueRequests.Remove(elem)
+						req.respChan <- dequeueResponse{err: err}
+					}
+					elem = next
+				}
+			}
 		case req := <-q.lenChan:
 			q.handleLenRequest(req)
 
 		case req := <-q.activeTenantsLenChan:
 			req.respChan <- q.activeTenants.Len()
 		}
+	}
+}
+
+func (q *Queue) sendCancellation(qi *queuedItem) {
+	select {
+	case q.cancellationChan <- qi:
+	case <-q.dispatcherStoppedChan:
 	}
 }
 
@@ -291,55 +397,51 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) e
 	respChan := make(chan error, 1)
 	req := enqueueRequest{
 		tenantID: tenantID,
-		runnable: runnable,
+		item:     &queuedItem{ctx: ctx, runnable: runnable},
 		respChan: respChan,
 	}
 
-	var err error
 	select {
 	case q.enqueueChan <- req:
-		err = <-respChan
+		return <-respChan
 	case <-q.dispatcherStoppedChan:
 		q.discardedRequests.WithLabelValues(tenantID, "dispatcher_stopped").Inc()
-		err = ErrQueueClosed
+		return ErrQueueClosed
 	case <-ctx.Done():
-		err = ctx.Err()
-		reason := "context_canceled"
-		if errors.Is(err, context.DeadlineExceeded) {
-			reason = "deadline_exceeded"
-		}
-		q.discardedRequests.WithLabelValues(tenantID, reason).Inc()
+		err := ctx.Err()
+		q.recordCancellation(tenantID, err)
+		return err
 	}
-
-	return err
 }
 
 // Dequeue removes and returns a work item from the qos using linked-list round-robin.
 // It blocks until an item is available for any tenant, the queue is closed,
 // or the context is cancelled.
+// The caller must invoke a successfully returned runnable exactly once to release
+// its execution slot.
 func (q *Queue) Dequeue(ctx context.Context) (func(), error) {
 	if q.State() != services.Running {
 		return nil, ErrQueueClosed
 	}
-
-	respChan := make(chan dequeueResponse, 1)
-	req := dequeueRequest{
-		respChan: respChan,
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
-
+	req := dequeueRequest{ctx: ctx, respChan: make(chan dequeueResponse, 1)}
 	select {
 	case q.dequeueChan <- req:
-		select {
-		case resp := <-respChan:
-			return resp.runnable, resp.err
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	case <-q.dispatcherStoppedChan:
 		return nil, ErrQueueClosed
 	}
+	stop := context.AfterFunc(ctx, func() {
+		q.sendCancellation(nil)
+	})
+	defer stop()
+	// Once accepted, the dispatcher owns cancellation and delivery. Returning on
+	// ctx.Done here could abandon a runnable whose execution slot was reserved.
+	resp := <-req.respChan
+	return resp.runnable, resp.err
 }
 
 // Len returns the total number of items across all tenants in the queue.
@@ -383,9 +485,14 @@ func (q *Queue) stopping(_ error) error {
 
 	q.queueLength.Reset()
 	q.discardedRequests.Reset()
+	q.inFlight.Reset()
 	for _, tq := range q.tenantQueues {
+		for _, qi := range tq.items {
+			qi.stopCancel()
+		}
 		tq.clear()
 	}
+	clear(q.tenantQueues)
 	q.activeTenants.Init()
 	q.pendingDequeueRequests.Init()
 
