@@ -1,5 +1,6 @@
 import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
 import { HttpResponse } from 'msw';
+import { useState } from 'react';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -20,6 +21,7 @@ import {
 import { listRoutingTreeHandler } from '../../../api/notifications/v1beta1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
 import { listTimeIntervalHandler } from '../../../api/notifications/v1beta1/mocks/handlers/TimeIntervalHandlers/listTimeIntervalHandler';
 import { USER_DEFINED_TREE_NAME } from '../../../notificationPolicies/routingTree.utils';
+import { type NotificationSettings } from '../../notificationSettingsValue';
 
 import { NotificationsSettingsSelector } from './NotificationsSettingsSelector';
 import {
@@ -489,5 +491,112 @@ describe('inherited timings', () => {
     await user.click(screen.getByText(/muting, grouping and timings/i));
 
     expect(await screen.findByText('1m')).toBeInTheDocument();
+  });
+});
+
+describe('mode toggle', () => {
+  it('renders no toggle when the caller controls the mode', async () => {
+    renderPicker({ mode: 'contactPoint' });
+
+    await screen.findByRole('combobox', { name: /contact point/i });
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+  });
+
+  it('renders the toggle, starting on contact point, when no mode is given', async () => {
+    renderPicker({ mode: undefined });
+
+    expect(await screen.findByRole('radio', { name: /contact point/i })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /notification policy/i })).not.toBeChecked();
+  });
+
+  it('starts on notification policy when the value is a named routing tree', async () => {
+    renderPicker({ mode: undefined, value: { type: 'NamedRoutingTree', routingTree: 'deployment-tools' } });
+
+    expect(await screen.findByRole('radio', { name: /notification policy/i })).toBeChecked();
+  });
+
+  it('follows a named routing tree that arrives after mount', async () => {
+    const { renderResult } = renderPicker({ mode: undefined });
+    await screen.findByRole('combobox', { name: /contact point/i });
+
+    renderResult.rerender(
+      <NotificationsSettingsSelector
+        value={{ type: 'NamedRoutingTree', routingTree: 'deployment-tools' }}
+        onChange={jest.fn()}
+      />
+    );
+
+    expect(await screen.findByRole('radio', { name: /notification policy/i })).toBeChecked();
+    expect(await screen.findByRole('button', { name: /reset to default policy/i })).toBeInTheDocument();
+  });
+
+  it('switches mode, clears the value and reports the new mode', async () => {
+    const onChange = jest.fn();
+    const onModeChange = jest.fn();
+    function Parent() {
+      const [value, setValue] = useState<NotificationSettings | null>({
+        type: 'SimplifiedRouting',
+        receiver: 'slack-oncall',
+      });
+      return (
+        <NotificationsSettingsSelector
+          value={value}
+          onChange={(next) => {
+            onChange(next);
+            setValue(next);
+          }}
+          onModeChange={onModeChange}
+        />
+      );
+    }
+    const { user } = render(<Parent />);
+
+    await user.click(await screen.findByRole('radio', { name: /notification policy/i }));
+
+    expect(onChange).toHaveBeenCalledWith(null);
+    expect(onModeChange).toHaveBeenCalledWith('notificationPolicy');
+    expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
+  });
+
+  it('does not clear the value when the active mode is clicked again', async () => {
+    const onChange = jest.fn();
+    const { user } = renderPicker({ mode: undefined, onChange });
+
+    await user.click(await screen.findByRole('radio', { name: /contact point/i }));
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('allowEmpty', () => {
+  it('reports valid with no contact point picked', () => {
+    const onValidityChange = jest.fn();
+    renderPicker({ allowEmpty: true, onValidityChange });
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('still reports invalid for a saved contact point that no longer exists', async () => {
+    const onValidityChange = jest.fn();
+    renderPicker({
+      allowEmpty: true,
+      value: { type: 'SimplifiedRouting', receiver: 'deleted-contact-point' },
+      onValidityChange,
+    });
+
+    await screen.findByText(/contact point could not be found/i);
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('still reports invalid for bad timings', () => {
+    const onValidityChange = jest.fn();
+    renderPicker({
+      allowEmpty: true,
+      value: { type: 'SimplifiedRouting', receiver: 'slack-oncall', groupWait: '20s4h' },
+      onValidityChange,
+    });
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
   });
 });

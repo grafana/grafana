@@ -39,7 +39,7 @@ const meta: Meta<typeof NotificationsSettingsSelector> = {
 // mirroring RuleEditorSection.tsx's switchMode: InlineSwitch, row-reverse, right-aligned.
 const StoryRenderFn: StoryFn<NotificationsSettingsSelectorProps> = (args) => {
   const styles = useStyles2(getStyles);
-  const [mode, setMode] = useState<RecipientMode>(args.mode);
+  const [mode, setMode] = useState<RecipientMode>(args.mode ?? 'contactPoint');
   const [value, setValue] = useState<NotificationSettings | null>(args.value ?? null);
 
   return (
@@ -83,4 +83,17 @@ export const NotificationPolicy: Story = {
     viewPoliciesHref: '/alerting/routes',
   },
   render: StoryRenderFn,
+};
+
+const UncontrolledModeRenderFn: StoryFn<NotificationsSettingsSelectorProps> = (args) => {
+  const [value, setValue] = useState<NotificationSettings | null>(args.value ?? null);
+  return <NotificationsSettingsSelector {...args} value={value} onChange={setValue} />;
+};
+
+export const WithModeToggle: Story = {
+  args: {
+    manageContactPointsHref: '/alerting/notifications',
+    viewPoliciesHref: '/alerting/routes',
+  },
+  render: UncontrolledModeRenderFn,
 };
