@@ -164,9 +164,9 @@ export function TablePanel(props: Props) {
       {...adHocColumns}
       reorderable={Boolean(adHocColumns)}
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
-      rowTransformationsEnabled={tableRefreshNewFeaturesEnabled}
+      rowTransformationsEnabled={adHocTransformationsEnabled}
       rowTransformations={
-        tableRefreshNewFeaturesEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
+        adHocTransformationsEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,
