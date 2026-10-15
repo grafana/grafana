@@ -26,8 +26,6 @@ func (blobUIDAges) FirstUnused(_ context.Context, key string, _ time.Time) (time
 	return time.Time{}, nil
 }
 
-func (blobUIDAges) ClearUnused(context.Context, string) error { return nil }
-
 // uuidV7Time returns the millisecond timestamp of a canonical UUIDv7 string.
 func uuidV7Time(uid string) (time.Time, bool) {
 	if len(uid) != 36 || uid[8] != '-' || uid[13] != '-' || uid[14] != '7' {

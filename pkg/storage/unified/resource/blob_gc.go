@@ -29,7 +29,6 @@ type BlobGCStore interface {
 
 type blobGCAges interface {
 	FirstUnused(context.Context, string, time.Time) (time.Time, error)
-	ClearUnused(context.Context, string) error
 }
 
 type blobGCAgeStore interface {
@@ -111,9 +110,6 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 			continue
 		}
 		if live {
-			if err := ages.ClearUnused(ctx, key); err != nil {
-				errs = append(errs, err)
-			}
 			continue
 		}
 		first, err := ages.FirstUnused(ctx, key, now)
@@ -132,9 +128,6 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 			if err := g.store.Delete(ctx, kv.BlobDataSection, key); err != nil {
 				errs = append(errs, err)
 				continue
-			}
-			if err := ages.ClearUnused(ctx, key); err != nil {
-				errs = append(errs, err)
 			}
 		}
 		count++
