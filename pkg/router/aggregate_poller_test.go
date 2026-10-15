@@ -55,6 +55,48 @@ func TestAggregateTarget_DiscoversAndFiltersGroups(t *testing.T) {
 	cancel()
 }
 
+// TestAggregateTarget_DropsTheDiscoveryGroupOfAnotherRouter points a target at
+// another router, whose /apis always lists the discovery group, in both
+// discovery formats.
+func TestAggregateTarget_DropsTheDiscoveryGroupOfAnotherRouter(t *testing.T) {
+	upstream := discoveryRouter(t, "dashboard.grafana.app", http.NotFoundHandler())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		upstream.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+	}))
+	defer srv.Close()
+
+	for _, accept := range []string{aggregatedDiscoveryJSON + ", application/json", "application/json"} {
+		client := srv.Client()
+		client.Transport = acceptTransport{accept: accept, next: http.DefaultTransport}
+		groups, err := discoverGroupResources(t.Context(), client, srv.URL)
+		require.NoError(t, err)
+		names := make([]string, 0, len(groups))
+		for _, g := range groups {
+			names = append(names, g.group.Name)
+		}
+		require.Equal(t, []string{"dashboard.grafana.app"}, names, "accept=%s", accept)
+	}
+
+	target, err := newAggregateTarget(aggregateTargetConfig{Name: "router", URL: srv.URL}, srv.Client(), srv.Client().Transport)
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1)
+	require.Equal(t, "dashboard.grafana.app", target.Backends()[0].Group().Name)
+	require.Zero(t, target.status.status("router").Skipped, "an expected group is not a skipped backend")
+}
+
+// acceptTransport overrides the Accept header, to force a discovery format.
+type acceptTransport struct {
+	accept string
+	next   http.RoundTripper
+}
+
+func (a acceptTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("Accept", a.accept)
+	return a.next.RoundTrip(req)
+}
+
 func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 	var attempts atomic.Int64
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -189,7 +231,7 @@ func (t *taggedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 // transport (CAP-token-wrapped, used only for the router's own /apis poll)
 // must never end up as the aggregateBackend's proxy transport (which carries
 // real caller traffic and must forward the caller's own credentials
-// transparently, same as forwardBackend).
+// transparently).
 func TestAggregateTarget_PollUsesDedicatedProxyTransportNotDiscoveryClient(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		list := metav1.APIGroupList{Groups: []metav1.APIGroup{

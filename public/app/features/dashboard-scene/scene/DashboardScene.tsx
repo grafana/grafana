@@ -79,6 +79,7 @@ import {
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
+import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import {
   createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2,
   transformSaveModelSchemaV2ToScene,
@@ -630,7 +631,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
-      const { isOverlayLoading, ...initialState } = this._initialState ?? {};
+      const { loadingView, ...initialState } = this._initialState ?? {};
       this.setState({ ...initialState, isEditing: false });
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
@@ -673,7 +674,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
     this.deactivateSidebar();
 
-    const { isOverlayLoading, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
+    const { loadingView, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
       isDirty: false,
     });
 
@@ -764,10 +765,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         meta: this.state.meta,
       };
 
+      await resolveLegacyDatasourceNames(dashboardDTO.dashboard);
       dashScene = transformSaveModelToScene(dashboardDTO);
     }
 
-    const { isOverlayLoading, ...newState } = sceneUtils.cloneSceneObjectState(dashScene.state);
+    const { loadingView, ...newState } = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
     this.setState(newState);
@@ -1196,11 +1198,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.state.sidebar.cancelPaneRequest();
   }
 
-  private setOverlayLoading(isOverlayLoading: boolean) {
-    // Loading bookkeeping must not recursively cancel the request it belongs to.
-    super.setState(isOverlayLoading ? { isOverlayLoading, overlay: undefined } : { isOverlayLoading });
-  }
-
   public async openFiltersOverview() {
     await this.loadView(dashboardViews.overlay.filters());
   }
@@ -1214,10 +1211,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.cancelPendingViews();
     const request = new AbortController();
     this._viewRequest = request;
-    request.signal.addEventListener('abort', () => this.setOverlayLoading(false), { once: true });
-    if (view.key === 'overlay') {
-      this.setOverlayLoading(true);
-    }
+    request.signal.addEventListener(
+      'abort',
+      () => {
+        if (this._viewRequest === request) {
+          super.setState({ loadingView: undefined });
+        }
+      },
+      { once: true }
+    );
+    // Loading bookkeeping must not cancel the request it belongs to.
+    super.setState({ loadingView: view.key, ...(view.key === 'overlay' ? { overlay: undefined } : {}) });
     // Some overlays and editor transitions are applied directly through setState.
     const subscription = this.subscribeToState((state, previous) => {
       if (dashboardViewChanged(state, previous)) {
@@ -1235,20 +1239,44 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           (key) => nextSearch.get(key) !== search.get(key)
         )
       ) {
+        if (
+          this._viewRequest === request &&
+          !request.signal.aborted &&
+          view.key === 'editPanel' &&
+          nextLocation.pathname === location.pathname &&
+          nextSearch.get('orgId') === search.get('orgId') &&
+          nextSearch.get('editPanel') !== search.get('editPanel')
+        ) {
+          // Resolve the new editor before cancellation can publish the old held panel ID back into the URL.
+          this._urlSync.updateFromUrl({ editPanel: nextSearch.get('editPanel') });
+        }
         request.abort();
       }
     });
+    let cleanedUp = false;
+    const cleanup = () => {
+      if (cleanedUp) {
+        return;
+      }
+      cleanedUp = true;
+      subscription.unsubscribe();
+      unlisten();
+    };
     try {
-      const value = await view.load();
+      const value = await view.load(request.signal);
       if (value !== undefined && !request.signal.aborted) {
+        // Committing the view can normalize its URL; that is not a new navigation request.
+        cleanup();
         this.setState({ [view.key]: value });
       }
     } finally {
-      subscription.unsubscribe();
-      unlisten();
+      cleanup();
       if (this._viewRequest === request) {
         request.abort();
-        this._viewRequest = undefined;
+        // Clearing loading state can synchronously start another request.
+        if (this._viewRequest === request) {
+          this._viewRequest = undefined;
+        }
       }
     }
   }

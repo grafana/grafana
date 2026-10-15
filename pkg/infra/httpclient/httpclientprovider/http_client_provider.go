@@ -24,6 +24,13 @@ var newProviderFunc = sdkhttpclient.NewProvider
 
 // New creates a new HTTP client provider with pre-configured middlewares.
 func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
+	setDefaultTimeoutOptions(cfg)
+	return NewForConfig(cfg, validator, tracer)
+}
+
+// NewForConfig configures middleware without changing the SDK's process-wide
+// timeout defaults, so it can be used for tenant-specific providers.
+func NewForConfig(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
 
 	middlewares := []sdkhttpclient.Middleware{
@@ -71,8 +78,6 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 			})
 		}))
 	}
-
-	setDefaultTimeoutOptions(cfg)
 
 	return newProviderFunc(sdkhttpclient.ProviderOptions{
 		Middlewares: middlewares,

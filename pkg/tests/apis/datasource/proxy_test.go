@@ -108,6 +108,11 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		"routes": [
 			{
 				"method": "GET",
+				"path": "/query",
+				"reqAction": "datasources:query"
+			},
+			{
+				"method": "GET",
 				"path": "/rules",
 				"reqRole": "Viewer",
 				"reqAction": "alert.rules.external:read"
@@ -170,8 +175,7 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		return "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/" + dsUID + "/proxy/" + sub
 	}
 
-	// A viewer with the query permission may reach the proxy, but the Prometheus
-	// admin (rules) routes require the Editor role.
+	// A viewer with the query permission may reach the proxy, but cannot write alert rules.
 	routeViewer := helper.CreateUser("proxy-route-viewer", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions:           []string{datasources.ActionQuery},
@@ -240,15 +244,30 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		})
 
 		t.Run(transport.name+" enforces plugin route RBAC", func(t *testing.T) {
-			// DELETE /rules requires Editor -> denied for the viewer.
 			status, _ := doProxy(routeViewer, http.MethodDelete, transport.path(uid, "rules"), nil)
 			require.Equal(t, http.StatusForbidden, status)
 			require.Nil(t, upstreamGot(), "RBAC-denied request must not reach the upstream")
 
-			// GET /rules only requires Viewer -> allowed.
-			status, body := doProxy(routeViewer, http.MethodGet, transport.path(uid, "rules"), nil)
-			require.Equal(t, http.StatusOK, status, "body: %s", body)
-			require.NotNil(t, upstreamGot())
+			// Explicit route actions remain supported by the legacy proxy only.
+			for _, request := range []struct {
+				user   apis.User
+				method string
+				path   string
+			}{
+				{routeViewer, http.MethodGet, "query"},
+				{routeViewer, http.MethodGet, "rules"},
+				{helper.Org1.Admin, http.MethodGet, "rules"},
+				{helper.Org1.Admin, http.MethodDelete, "rules"},
+			} {
+				status, body := doProxy(request.user, request.method, transport.path(uid, request.path), nil)
+				if transport.name == "apiserver" {
+					require.Equal(t, http.StatusForbidden, status, "body: %s", body)
+					require.Nil(t, upstreamGot(), "unsupported route action must not reach the upstream")
+				} else {
+					require.Equal(t, http.StatusOK, status, "body: %s", body)
+					require.NotNil(t, upstreamGot())
+				}
+			}
 		})
 
 		t.Run(transport.name+" returns 404 for an unknown datasource", func(t *testing.T) {

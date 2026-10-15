@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Új felhasználói környezet használata",
-        "view-previous-experience": "Vissza az előző felhasználói környezethez"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Ismeretlen szabálytípus",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Összes összecsukása",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Összes kibontása"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Az összes tartomány megjelenítése",
     "signal-card": {
-      "collapse-aria-label": "Adatforrás-böngésző összecsukása {{refId}} lekérdezéshez",
-      "expand-aria-label": "Adatforrás-böngésző kibontása {{refId}} lekérdezéshez",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Ugrás a(z) {{refId}} lekérdezéshez ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -10757,13 +10762,21 @@
       "cell-filter-out": "Érték kiszűrése",
       "cell-inspect": "Érték ellenőrzése",
       "cell-inspect-tooltip": "Érték ellenőrzése",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Értékek szűrése",
+      "column-menu-hide": "",
       "column-menu-label": "Oszlopbeállítások a következőhöz: {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Szűrő frissítése",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Másolás a vágólapra",
       "csv-counts": "Sorok:{{rows}}, Oszlopok:{{columns}}",
       "csv-placeholder": "Itt adja meg a CSV-t...",
       "edit-column-filter": "Szűrő szerkesztése itt: {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Az összes megjelenített érték hozzáadása a szűrőhöz",
         "blanks": "(Üresek)",
@@ -10797,6 +10810,8 @@
           "count": "Szám"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Érték ellenőrzése",
       "loading": "Táblázat betöltése",
       "nested-table": {
@@ -10806,6 +10821,7 @@
       "no-rows": "Nincsenek sorok",
       "no-values-label": "Nincsenek értékek",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
+      "show-column-label": "",
       "sort-by-column": "Rendezés a(z) {{column}} oszlop szerint",
       "sort-by-column-ascending": "Rendezés a(z) {{column}} oszlop szerint, növekvő sorrendben",
       "sort-by-column-descending": "Rendezés a(z) {{column}} oszlop szerint, csökkenő sorrendben",
@@ -10815,7 +10831,8 @@
       },
       "tooltip": {
         "trigger": "Elemleírás ki- és bekapcsolása"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Címkék"
@@ -13154,6 +13171,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Mégse",
       "confirm-discard": "Elvetés",
@@ -13235,6 +13257,7 @@
       "redo-action": "Újra: {{action}}",
       "remove-query": "Lekérdezés eltávolítása",
       "remove-tag": "Címke eltávolítása",
+      "rename": "",
       "reset-cell-time-range": "Jegyzetfüzet időtartományának használata",
       "select-query": "Lekérdezés kijelölése",
       "set-cell-time-range": "Panel időtartományának beállítása",
@@ -13860,6 +13883,9 @@
       "label-plugin-id": "Bővítményazonosító",
       "label-severity": "Súlyosság"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Minden bővítmény naprakész"
     },
@@ -13881,6 +13907,10 @@
     "plugin-details-body": {
       "needs-service-account": "A(z) {{pluginName}} bővítménynek szolgáltatási fiókra van szüksége a Grafana lekérdezéséhez. A következő lista tartalmazza a szolgáltatási fiókhoz elérhető engedélyeket:",
       "page-not-found": "Az oldal nem található."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Elavult"
@@ -16515,6 +16545,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
     "description-page-size": "Sorok száma oldalanként. Ha üres, az oldalméret a panel magasságán alapul.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Minden második sor háttérszínének váltogatása",
@@ -16553,6 +16584,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-page-size": "Lapméret",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
     "name-styling-from-field": "Stílus a mezőből",
     "name-tooltip-from-field": "",
@@ -16716,6 +16748,7 @@
     "editor": {
       "aria-label-content": "Szövegtartalom",
       "aria-label-mode": "Szöveges mód: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Sorok számozása",
       "format-bold": "B",
       "format-heading": "H",
@@ -16761,6 +16794,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -17730,15 +17767,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Mezők rendezése egy keretben."
       },
+      "drag-handle-label": "",
       "label-field": "Mező",
       "label-reverse": "Fordított",
       "name": {
         "sort-by": "Rendezés alapja"
       },
-      "placeholder-select-field": "Mező kijelölése"
+      "placeholder-select-field": "Mező kijelölése",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

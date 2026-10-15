@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Utilizar la nueva experiencia",
-        "view-previous-experience": "Volver a la experiencia anterior"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Tipo de regla desconocido",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Contraer todo",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Expandir todo"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Mostrar todos los intervalos",
     "signal-card": {
-      "collapse-aria-label": "Contraer el explorador de fuentes de datos para la consulta {{refId}}",
-      "expand-aria-label": "Expandir el explorador de fuentes de datos para la consulta {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Ir a la consulta {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -10757,13 +10762,21 @@
       "cell-filter-out": "Filtrar valor",
       "cell-inspect": "Inspeccionar valor",
       "cell-inspect-tooltip": "Inspeccionar valor",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filtrar valores",
+      "column-menu-hide": "",
       "column-menu-label": "Opciones de columna para {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Actualizar filtro",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Copiar al portapapeles",
       "csv-counts": "Filas: {{rows}}, Columnas: {{columns}}",
       "csv-placeholder": "Introducir CSV aquí...",
       "edit-column-filter": "Editar filtro en {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Añadir todos los valores mostrados al filtro",
         "blanks": "(En blanco)",
@@ -10797,6 +10810,8 @@
           "count": "Recuento"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Inspeccionar valor",
       "loading": "Cargando tabla",
       "nested-table": {
@@ -10806,6 +10821,7 @@
       "no-rows": "Sin filas",
       "no-values-label": "Sin valores",
       "pagination-summary": "{{itemsRangeStart}}-{{displayedEnd}} de {{numRows}} filas",
+      "show-column-label": "",
       "sort-by-column": "Ordenar por la columna {{column}}",
       "sort-by-column-ascending": "Ordenar por la columna {{column}}, de forma ascendente",
       "sort-by-column-descending": "Ordenar por la columna {{column}}, en orden descendente",
@@ -10815,7 +10831,8 @@
       },
       "tooltip": {
         "trigger": "Alternar descripción emergente"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Etiquetas"
@@ -13154,6 +13171,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Cancelar",
       "confirm-discard": "Descartar",
@@ -13235,6 +13257,7 @@
       "redo-action": "Rehacer: {{action}}",
       "remove-query": "Eliminar consulta",
       "remove-tag": "Quitar etiqueta",
+      "rename": "",
       "reset-cell-time-range": "Usar el intervalo de tiempo del cuaderno",
       "select-query": "Seleccionar consulta",
       "set-cell-time-range": "Definir el intervalo de tiempo del panel",
@@ -13860,6 +13883,9 @@
       "label-plugin-id": "ID del plugin",
       "label-severity": "Gravedad"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Todos los plugins están actualizados"
     },
@@ -13881,6 +13907,10 @@
     "plugin-details-body": {
       "needs-service-account": "El plugin {{pluginName}} necesita una cuenta de servicio para poder consultar a Grafana. La siguiente lista contiene los permisos disponibles para la cuenta de servicio:",
       "page-not-found": "Pagina no encontrada."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Obsoleto"
@@ -16515,6 +16545,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
     "description-page-size": "Número de filas por página. Cuando está vacío, el tamaño de la página se basa en la altura del panel.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Un campo que contiene objetos JSON con propiedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar el color de fondo de una fila sí y otra no",
@@ -16553,6 +16584,7 @@
     "name-max-height": "",
     "name-min-column-width": "Ancho mínimo de columna",
     "name-page-size": "Tamaño de página",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Mostrar encabezado de tabla",
     "name-styling-from-field": "Estilo desde el campo",
     "name-tooltip-from-field": "",
@@ -16716,6 +16748,7 @@
     "editor": {
       "aria-label-content": "Contenido de texto",
       "aria-label-mode": "Modo texto: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Números de línea",
       "format-bold": "B",
       "format-heading": "H",
@@ -16761,6 +16794,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -17730,15 +17767,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Ordenar campos en un marco."
       },
+      "drag-handle-label": "",
       "label-field": "Campo",
       "label-reverse": "Reverso",
       "name": {
         "sort-by": "Ordenar por"
       },
-      "placeholder-select-field": "Seleccionar campo"
+      "placeholder-select-field": "Seleccionar campo",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

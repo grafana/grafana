@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';
 import { type CatalogPlugin } from 'app/features/plugins/admin/types';
@@ -14,11 +16,11 @@ import { AddNewConnection } from './ConnectData';
 jest.mock('app/features/datasources/api');
 
 beforeAll(() => {
-  config.featureToggles.connectionsFilterSidebar = true;
+  setTestFlags({ [FlagKeys.ConnectionsFilterSidebar]: true });
 });
 
 afterAll(() => {
-  config.featureToggles.connectionsFilterSidebar = false;
+  setTestFlags({});
 });
 
 jest.mock('@grafana/runtime', () => ({

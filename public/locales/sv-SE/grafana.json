@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Använd ny upplevelse",
-        "view-previous-experience": "Återgå till föregående upplevelse"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Okänd regeltyp",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Stäng alla",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Visa alla"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Visa hela tidsspannet",
     "signal-card": {
-      "collapse-aria-label": "Dölj datakällutforskaren för frågan {{refId}}",
-      "expand-aria-label": "Expandera datakällutforskaren för frågan {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Gå till frågan {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -10757,13 +10762,21 @@
       "cell-filter-out": "Filtrera bort värde",
       "cell-inspect": "Inspektera värde",
       "cell-inspect-tooltip": "Inspektera värde",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filtrera värden",
+      "column-menu-hide": "",
       "column-menu-label": "Kolumnalternativ för {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Uppdatera filter",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Kopiera till klippbordet",
       "csv-counts": "Rader:{{rows}}, Kolumner:{{columns}}",
       "csv-placeholder": "Ange CSV här…",
       "edit-column-filter": "Redigera filter på {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Lägg till alla visade värden i filtret",
         "blanks": "(Tomma)",
@@ -10797,6 +10810,8 @@
           "count": "Räknare"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Inspektera värde",
       "loading": "Läser in tabell",
       "nested-table": {
@@ -10806,6 +10821,7 @@
       "no-rows": "Inga rader",
       "no-values-label": "Inga värden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader",
+      "show-column-label": "",
       "sort-by-column": "Sortera efter kolumnen {{column}}",
       "sort-by-column-ascending": "Sortera efter kolumn {{column}}, stigande",
       "sort-by-column-descending": "Sortera efter kolumnen {{column}}, fallande",
@@ -10815,7 +10831,8 @@
       },
       "tooltip": {
         "trigger": "Växla verktygstips"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Taggar"
@@ -13154,6 +13171,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Avbryt",
       "confirm-discard": "Kassera",
@@ -13235,6 +13257,7 @@
       "redo-action": "Gör om: {{action}}",
       "remove-query": "Ta bort fråga",
       "remove-tag": "Ta bort tagg",
+      "rename": "",
       "reset-cell-time-range": "Använd anteckningsbokens tidsintervall",
       "select-query": "Välj fråga",
       "set-cell-time-range": "Ange panelens tidsintervall",
@@ -13860,6 +13883,9 @@
       "label-plugin-id": "Tilläggs-ID",
       "label-severity": "Allvarlighetsgrad"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Alla tillägg är uppdaterade"
     },
@@ -13881,6 +13907,10 @@
     "plugin-details-body": {
       "needs-service-account": "Tillägget {{pluginName}} kräver ett servicekonto för att kunna fråga Grafana. Följande lista innehåller de behörigheter som är tillgängliga för servicekontot:",
       "page-not-found": "Sidan hittades inte."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Föråldrat"
@@ -16515,6 +16545,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
     "description-page-size": "Antal rader per sida. När den är tom baseras sidstorleken på panelens höjd.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Ett fält som innehåller JSON-objekt med CSS-egenskaper",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Växla bakgrundsfärg varannan rad",
@@ -16553,6 +16584,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minsta kolumnbredd",
     "name-page-size": "Sidstorlek",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Visa tabellsidhuvud",
     "name-styling-from-field": "Styling från fält",
     "name-tooltip-from-field": "",
@@ -16716,6 +16748,7 @@
     "editor": {
       "aria-label-content": "Textinnehåll",
       "aria-label-mode": "Textläge: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Radnummer",
       "format-bold": "B",
       "format-heading": "H",
@@ -16761,6 +16794,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -17730,15 +17767,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Sortera fält i en ram."
       },
+      "drag-handle-label": "",
       "label-field": "Fält",
       "label-reverse": "Omvänt",
       "name": {
         "sort-by": "Sortera efter"
       },
-      "placeholder-select-field": "Välj fält"
+      "placeholder-select-field": "Välj fält",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

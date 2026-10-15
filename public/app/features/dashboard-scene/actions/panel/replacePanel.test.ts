@@ -1,5 +1,4 @@
 import { waitFor } from '@testing-library/react';
-import { testWithFeatureToggles } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -24,7 +23,6 @@ setPluginImportUtils({
 });
 
 describe('replacePanel', () => {
-  testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
   let deactivate: () => void;
   const cleanups: Array<() => void> = [];
 

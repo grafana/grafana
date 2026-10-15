@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Nieuwe ervaring gebruiken",
-        "view-previous-experience": "Terug naar de vorige ervaring"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Onbekend regeltype",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Alles samenvouwen",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Alles uitvouwen"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Alle spans weergeven",
     "signal-card": {
-      "collapse-aria-label": "Gegevensbronverkenner samenvouwen voor query {{refId}}",
-      "expand-aria-label": "Gegevensbronverkenner uitvouwen voor query {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Ga naar query {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -10757,13 +10762,21 @@
       "cell-filter-out": "Waarde uitfilteren",
       "cell-inspect": "Waarde inspecteren",
       "cell-inspect-tooltip": "Waarde inspecteren",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filter waarden",
+      "column-menu-hide": "",
       "column-menu-label": "Kolomopties voor {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Filter updaten",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Naar klembord kopiëren",
       "csv-counts": "Rijen:{{rows}}, kolommen:{{columns}}",
       "csv-placeholder": "Voer hier csv in ...",
       "edit-column-filter": "Filter bewerken op {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Voeg alle weergegeven waarden toe aan het filter",
         "blanks": "(Lege velden)",
@@ -10797,6 +10810,8 @@
           "count": "Telling"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Waarde inspecteren",
       "loading": "Tabel laden",
       "nested-table": {
@@ -10806,6 +10821,7 @@
       "no-rows": "Geen rijen",
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
+      "show-column-label": "",
       "sort-by-column": "Sorteren op kolom {{column}}",
       "sort-by-column-ascending": "Sorteren op kolom {{column}}, oplopend",
       "sort-by-column-descending": "Sorteren op kolom {{column}}, aflopend",
@@ -10815,7 +10831,8 @@
       },
       "tooltip": {
         "trigger": "Tooltip in-/uitschakelen"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Tags"
@@ -13154,6 +13171,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Annuleren",
       "confirm-discard": "Negeren",
@@ -13235,6 +13257,7 @@
       "redo-action": "Opnieuw uitvoeren: {{action}}",
       "remove-query": "Query verwijderen",
       "remove-tag": "Tag verwijderen",
+      "rename": "",
       "reset-cell-time-range": "Tijdsbereik van notitieboek gebruiken",
       "select-query": "Query selecteren",
       "set-cell-time-range": "Tijdsbereik van paneel instellen",
@@ -13860,6 +13883,9 @@
       "label-plugin-id": "Plug-in-id",
       "label-severity": "Ernst"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Alle plug-ins zijn up-to-date"
     },
@@ -13881,6 +13907,10 @@
     "plugin-details-body": {
       "needs-service-account": "De plug-in {{pluginName}} heeft een serviceaccount nodig om Grafana te kunnen bevragen. De volgende lijst bevat de toestemmingen die beschikbaar zijn voor het serviceaccount:",
       "page-not-found": "Pagina niet gevonden."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Verouderd"
@@ -16515,6 +16545,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "description-page-size": "Aantal rijen per pagina. Wanneer leeg, is het paginaformaat gebaseerd op de paneelhoogte.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Een veld met JSON-objecten met CSS-eigenschappen",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "De achtergrondkleur van elke tweede rij afwisselen",
@@ -16553,6 +16584,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimale kolombreedte",
     "name-page-size": "Paginaformaat",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Header tabel tonen",
     "name-styling-from-field": "Styling vanuit veld",
     "name-tooltip-from-field": "",
@@ -16716,6 +16748,7 @@
     "editor": {
       "aria-label-content": "Tekstinhoud",
       "aria-label-mode": "Tekstmodus: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Regelnummers",
       "format-bold": "B",
       "format-heading": "H",
@@ -16761,6 +16794,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -17730,15 +17767,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Velden in een frame sorteren."
       },
+      "drag-handle-label": "",
       "label-field": "Veld",
       "label-reverse": "Omkeren",
       "name": {
         "sort-by": "Sorteren op"
       },
-      "placeholder-select-field": "Veld selecteren"
+      "placeholder-select-field": "Veld selecteren",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

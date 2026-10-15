@@ -63,6 +63,7 @@ type StorageOptions struct {
 	GrpcClientAuthenticationTokenNamespace   string
 	GrpcClientAuthenticationAllowInsecure    bool
 	GrpcClientKeepaliveTime                  time.Duration
+	GrpcClientMaxRecvMsgSize                 int
 
 	// Secrets Manager Configuration for InlineSecureValueSupport
 	SecretsManagerGrpcClientEnable               bool
@@ -188,6 +189,7 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.GrpcClientAuthenticationTokenNamespace, "grpc-client-authentication-token-namespace", o.GrpcClientAuthenticationTokenNamespace, "Token namespace for grpc client authentication")
 	fs.BoolVar(&o.GrpcClientAuthenticationAllowInsecure, "grpc-client-authentication-allow-insecure", o.GrpcClientAuthenticationAllowInsecure, "Allow insecure grpc client authentication")
 	fs.DurationVar(&o.GrpcClientKeepaliveTime, "grpc-client-keepalive-time", o.GrpcClientKeepaliveTime, "gRPC client keep-alive ping interval (e.g., 6m).")
+	fs.IntVar(&o.GrpcClientMaxRecvMsgSize, "grpc-client-max-recv-msg-size", o.GrpcClientMaxRecvMsgSize, "Maximum gRPC response message size in bytes for storage and search clients; 0 uses the gRPC default (4 MiB).")
 
 	// Use custom flag value for unified storage config
 	fs.Var(&unifiedStorageConfigValue{config: &o.UnifiedStorageConfig},
@@ -207,6 +209,9 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 
 func (o *StorageOptions) Validate() []error {
 	errs := []error{}
+	if o.GrpcClientMaxRecvMsgSize < 0 {
+		errs = append(errs, fmt.Errorf("--grpc-client-max-recv-msg-size must be non-negative"))
+	}
 	switch o.StorageType {
 	// nolint:staticcheck
 	case StorageTypeUnifiedKVGrpc:
@@ -344,6 +349,10 @@ func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
 			},
 			MinConnectTimeout: 5 * time.Second,
 		}),
+	}
+
+	if o.GrpcClientMaxRecvMsgSize > 0 {
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(o.GrpcClientMaxRecvMsgSize)))
 	}
 
 	if o.GrpcClientKeepaliveTime > 0 {

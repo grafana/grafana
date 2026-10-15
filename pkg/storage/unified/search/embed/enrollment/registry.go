@@ -96,6 +96,10 @@ func (r *Registry) Has(group, resource string) bool {
 	return r.configs.HasResource(gr)
 }
 
+func (r *Registry) Allowed() []schema.GroupResource {
+	return slices.Clone(r.allowed)
+}
+
 func (r *Registry) Validate() error {
 	declared := make(map[schema.GroupResource]bool)
 	for gvr := range r.configs.Snapshot() {

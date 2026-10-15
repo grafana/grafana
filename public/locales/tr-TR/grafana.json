@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Yeni deneyimi kullan",
-        "view-previous-experience": "Önceki deneyime geri dön"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Bilinmeyen kural türü",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Tümünü daralt",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Tümünü genişlet"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Tüm aralıkları göster",
     "signal-card": {
-      "collapse-aria-label": "{{refId}} sorgusu için veri kaynağı gezginini daralt",
-      "expand-aria-label": "{{refId}} sorgusu için veri kaynağı gezginini genişlet",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "{{refId}} sorgusuna git ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -10757,13 +10762,21 @@
       "cell-filter-out": "Değeri filtre dışı bırak",
       "cell-inspect": "Değeri incele",
       "cell-inspect-tooltip": "Değeri incele",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Değerleri filtrele",
+      "column-menu-hide": "",
       "column-menu-label": "{{name}} için sütun seçenekleri",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Filtreyi güncelle",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Panoya kopyala",
       "csv-counts": "Satırlar:{{rows}}, Sütunlar:{{columns}}",
       "csv-placeholder": "Buraya CSV girin...",
       "edit-column-filter": "{{name}} üzerindeki filtreyi düzenle",
+      "field-warnings": "",
       "filter": {
         "add-all": "Görüntülenen tüm değerleri filtreye ekle",
         "blanks": "(Boşluklar)",
@@ -10797,6 +10810,8 @@
           "count": "Sayı"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Değeri incele",
       "loading": "Tablo yükleniyor",
       "nested-table": {
@@ -10806,6 +10821,7 @@
       "no-rows": "Satır yok",
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır",
+      "show-column-label": "",
       "sort-by-column": "Sütuna göre sırala: {{column}}",
       "sort-by-column-ascending": "Sütuna göre sırala: {{column}}, artan sırayla",
       "sort-by-column-descending": "Sütuna göre sırala: {{column}}, azalan sırayla",
@@ -10815,7 +10831,8 @@
       },
       "tooltip": {
         "trigger": "Araç ipucunu aç/kapat"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Etiketler"
@@ -13154,6 +13171,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "İptal et",
       "confirm-discard": "Vazgeç",
@@ -13235,6 +13257,7 @@
       "redo-action": "{{action}} işlemini yinele",
       "remove-query": "Sorguyu kaldır",
       "remove-tag": "Etiketi kaldır",
+      "rename": "",
       "reset-cell-time-range": "Not defteri zaman aralığını kullan",
       "select-query": "Sorgu seç",
       "set-cell-time-range": "Panel zaman aralığını ayarla",
@@ -13860,6 +13883,9 @@
       "label-plugin-id": "Eklenti Kimliği",
       "label-severity": "Önem derecesi"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Tüm eklentiler güncel"
     },
@@ -13881,6 +13907,10 @@
     "plugin-details-body": {
       "needs-service-account": "{{pluginName}} eklentisinin Grafana sorgulaması yapabilmesi için bir hizmet hesabına ihtiyacı var. Aşağıdaki liste, hizmet hesabı için mevcut izinleri içerir:",
       "page-not-found": "Sayfa bulunamadı."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Kullanımdan kaldırıldı"
@@ -16515,6 +16545,7 @@
     "description-frozen-columns": "Sütunlar tablonun sol tarafından sabitlenir",
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
     "description-page-size": "Sayfa başına satır sayısı. Boş bırakıldığında sayfa boyutu panel yüksekliğini temel alır.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "CSS özellikleri içeren JSON nesnelerinden oluşan bir alan",
     "description-tooltip-from-field": "Araç ipucunda (gizli veya görünür) bir alandaki hücreyi göster",
     "description-zebra-striping": "Arka plan rengini birer satır atlayarak değiştirin",
@@ -16553,6 +16584,7 @@
     "name-max-height": "Maks. satır yüksekliği",
     "name-min-column-width": "Minimum sütun genişliği",
     "name-page-size": "Sayfa boyutu",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Tablo başlığını göster",
     "name-styling-from-field": "Alan üzerinden stil uygulama",
     "name-tooltip-from-field": "Alandan araç ipucu",
@@ -16716,6 +16748,7 @@
     "editor": {
       "aria-label-content": "Metin içeriği",
       "aria-label-mode": "Metin modu: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Satır numaraları",
       "format-bold": "K",
       "format-heading": "B",
@@ -16761,6 +16794,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -17730,15 +17767,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Alanları bir çerçevede sıralayın."
       },
+      "drag-handle-label": "",
       "label-field": "Alan",
       "label-reverse": "Geri döndür",
       "name": {
         "sort-by": "Sıralama ölçütü"
       },
-      "placeholder-select-field": "Gönderi seçim alanı"
+      "placeholder-select-field": "Gönderi seçim alanı",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {
