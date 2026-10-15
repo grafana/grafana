@@ -42,6 +42,7 @@ declare module "@openfeature/core" {
     | "dashboardNewLayouts"
     | "dashboards.libraryPanelRepeatFromServerResolution"
     | "dashboards.publicDashboardBadgeFromApi"
+    | "dashboards.libraryPanelHorizontalRepeatFullWidth"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
     | "dashboardUndoRedo"
