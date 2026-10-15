@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { type SceneVariable, TextBoxVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { undoableVariableEdit } from '../../../actions/variable/undoableVariableEdit';
 import { TextBoxVariableForm } from '../components/TextBoxVariableForm';
 
 interface TextBoxVariableEditorProps {
@@ -17,10 +18,20 @@ export function TextBoxVariableEditor({ variable, inline }: TextBoxVariableEdito
   const { value } = variable.useState();
 
   const onTextValueChange = (e: FormEvent<HTMLInputElement>) => {
-    variable.setState({ value: e.currentTarget.value });
+    const newValue = e.currentTarget.value;
+    const oldValue = variable.state.value;
+
+    undoableVariableEdit(inline && newValue !== oldValue, {
+      meta: { actionId: 'variable.changeValue', scope: 'textbox' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-textbox-value', 'Change variable value'),
+      perform: () => variable.setState({ value: newValue }),
+      undo: () => variable.setState({ value: oldValue }),
+    });
   };
 
-  return <TextBoxVariableForm defaultValue={value} onBlur={onTextValueChange} inline={inline} />;
+  // The input is uncontrolled, remount it when the value changes outside of it (e.g. undo/redo)
+  return <TextBoxVariableForm key={value} defaultValue={value} onBlur={onTextValueChange} inline={inline} />;
 }
 
 export function getTextBoxVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
