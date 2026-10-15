@@ -35,6 +35,8 @@
       "contact-point-unusable": "The previously selected contact point cannot be used — it may have been imported from an external Alertmanager",
       "contact-points-error": "Could not load contact points",
       "manage-contact-points": "View or create contact points",
+      "mode-contact-point": "Contact point",
+      "mode-notification-policy": "Notification policy",
       "routing-tree-not-found": "The previously selected notification policy could not be found — it may have been deleted",
       "routing-tree-reset": "Use the default policy",
       "routing-trees-error": "Could not load notification policies",
