@@ -80,6 +80,7 @@ export function AddToNotebookForm({
   return (
     <AddPanelToNotebookModalBody
       {...common}
+      cellSource={source}
       buildPanel={async () => buildPanelElementFromPlugin(buildPanel())}
       isLibraryPanel={false}
       capturedTimeRange={capturedTimeRange}

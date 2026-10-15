@@ -138,6 +138,22 @@ describe('AddToNotebookFormExposedComponent', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('attributes a single panel to the source given', async () => {
+    const { user } = render(
+      <AddToNotebookFormExposedComponent
+        onClose={onClose}
+        buildPanel={() => panel}
+        capturedTimeRange={{ from: 'now-6h', to: 'now', timeZone: 'utc' }}
+        source="assistant"
+      />
+    );
+
+    await addToCheckoutErrorSpike(user);
+
+    await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
+    expect(addToExisting.mock.calls[0][4]).toBe('assistant');
+  });
+
   it('does not open the form for a reader who can neither create nor write', () => {
     jest
       .spyOn(contextSrv, 'hasPermission')

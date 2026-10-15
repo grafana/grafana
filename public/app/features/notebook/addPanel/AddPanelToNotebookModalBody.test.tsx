@@ -246,7 +246,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', false));
+      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', false, 'user'));
       // Built on submit, so a panel edited while the modal was open is the one that lands.
       expect(buildPanel).toHaveBeenCalledTimes(1);
       expect(onDismiss).toHaveBeenCalled();
@@ -261,7 +261,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', true));
+      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', true, 'user'));
     });
 
     it('stays open when the write fails, so the choice is not lost', async () => {
@@ -441,7 +441,13 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
-        expect(createWithPanel).toHaveBeenCalledWith({ title: 'New investigation' }, panel(), 'dashboard_panel', true)
+        expect(createWithPanel).toHaveBeenCalledWith(
+          { title: 'New investigation' },
+          panel(),
+          'dashboard_panel',
+          true,
+          'user'
+        )
       );
     });
 
@@ -457,7 +463,8 @@ describe('AddPanelToNotebookModalBody', () => {
           { title: 'Checkout latency' },
           panel(),
           'dashboard_panel',
-          false
+          false,
+          'user'
         )
       );
       expect(onDismiss).toHaveBeenCalled();
@@ -519,7 +526,9 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', lockedPanel(), 'dashboard_panel', false));
+      await waitFor(() =>
+        expect(addToExisting).toHaveBeenCalledWith('nb2', lockedPanel(), 'dashboard_panel', false, 'user')
+      );
     });
 
     it('adds the panel unlocked when the user turns the default off', async () => {
@@ -530,7 +539,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', false));
+      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', false, 'user'));
     });
 
     // The relative raw is stored rather than resolved, so the cell keeps re-evaluating it - the same

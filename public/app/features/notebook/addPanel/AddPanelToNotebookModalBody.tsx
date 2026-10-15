@@ -76,8 +76,9 @@ interface SinglePanelProps extends BaseProps {
   isLibraryPanel: boolean;
   /** The window the source was showing, offered as a lock on the capture. */
   capturedTimeRange: CapturedTimeRange;
+  /** Who the panel is attributed to. Defaults to the person adding it. */
+  cellSource?: AppendedCellSource;
   cells?: never;
-  cellSource?: never;
 }
 
 interface CellsProps extends BaseProps {
@@ -183,10 +184,10 @@ export function AddPanelToNotebookModalBody(props: Props) {
       let added: AddedToNotebook;
       try {
         const title = values.title.trim();
+        const source = props.cellSource ?? 'user';
         if (props.cells) {
           const cells = await buildCells(props.cells, values.lockTimeRange);
           panelWasBuilt = true;
-          const source = props.cellSource ?? 'user';
           added = existingUid
             ? await addCellsToExistingNotebook(existingUid, cells, entryPoint, source)
             : await createNotebookWithCells({ title }, cells, entryPoint, source);
@@ -199,8 +200,8 @@ export function AddPanelToNotebookModalBody(props: Props) {
           const panel = values.lockTimeRange ? withCapturedTimeRange(built, props.capturedTimeRange) : built;
 
           added = existingUid
-            ? await addPanelToExistingNotebook(existingUid, panel, entryPoint, props.isLibraryPanel)
-            : await createNotebookWithPanel({ title }, panel, entryPoint, props.isLibraryPanel);
+            ? await addPanelToExistingNotebook(existingUid, panel, entryPoint, props.isLibraryPanel, source)
+            : await createNotebookWithPanel({ title }, panel, entryPoint, props.isLibraryPanel, source);
         }
 
         dispatch(

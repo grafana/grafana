@@ -130,6 +130,14 @@ describe('addPanelToExistingNotebook', () => {
     expect(captured.body!.spec!.tags).toEqual(['incident']);
   });
 
+  it('attributes the panel to the source given', async () => {
+    const captured = captureWrite();
+
+    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.PLUGIN, false, 'assistant');
+
+    expect(captured.body!.spec!.layout.spec.cells.map((cell) => cell.spec.source)).toEqual(['assistant']);
+  });
+
   // Without this the apiserver has nothing to compare against and a concurrent edit is silently
   // overwritten instead of rejected.
   it('sends the resourceVersion it read back with the write', async () => {
@@ -226,6 +234,14 @@ describe('createNotebookWithPanel', () => {
     expect(captured.body!.spec).toMatchObject({ title: 'Checkout latency investigation', tags: [] });
     expect(captured.body!.spec).not.toHaveProperty('description');
     expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
+  });
+
+  it('attributes the panel to the source given', async () => {
+    const captured = captureCreate();
+
+    await createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'plugin', false, 'assistant');
+
+    expect(captured.body!.spec!.layout.spec.cells.map((cell) => cell.spec.source)).toEqual(['assistant']);
   });
 
   // A k8s create body carries its own type; the apiserver does not infer it from the endpoint.

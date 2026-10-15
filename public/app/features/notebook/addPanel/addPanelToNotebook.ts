@@ -23,12 +23,7 @@ import {
   type Spec as NotebookSpec,
 } from '../types';
 
-import {
-  appendElementsToNotebook,
-  appendPanelToNotebook,
-  type AppendedCellSource,
-  type AppendedElement,
-} from './appendPanelToNotebook';
+import { appendElementsToNotebook, type AppendedCellSource, type AppendedElement } from './appendPanelToNotebook';
 
 /** Enough to build the success toast and its link. */
 export interface AddedToNotebook {
@@ -124,9 +119,10 @@ export async function addPanelToExistingNotebook(
   uid: string,
   panel: PanelElement,
   entryPoint: NotebookEntryPoint,
-  isLibraryPanel: boolean
+  isLibraryPanel: boolean,
+  source: AppendedCellSource = 'user'
 ): Promise<AddedToNotebook> {
-  const { spec, firstPosition } = await appendToExistingNotebook(uid, [{ kind: 'panel', panel }], 'user');
+  const { spec, firstPosition } = await appendToExistingNotebook(uid, [{ kind: 'panel', panel }], source);
 
   // Reported here, not in the layout manager, which only reports cells added from inside the notebook.
   NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, firstPosition, {
@@ -141,9 +137,14 @@ export async function createNotebookWithPanel(
   fields: CreateNotebookFields,
   panel: PanelElement,
   entryPoint: NotebookEntryPoint,
-  isLibraryPanel: boolean
+  isLibraryPanel: boolean,
+  source: AppendedCellSource = 'user'
 ): Promise<AddedToNotebook> {
-  const spec = appendPanelToNotebook({ ...defaultNotebookSpec(), title: fields.title }, panel);
+  const spec = appendElementsToNotebook(
+    { ...defaultNotebookSpec(), title: fields.title },
+    [{ kind: 'panel', panel }],
+    source
+  );
 
   const created = await createNotebook(spec);
   NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length, { panel, isLibraryPanel });
