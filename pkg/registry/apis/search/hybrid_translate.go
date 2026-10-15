@@ -56,7 +56,7 @@ func TranslateHybridSearchQuery(q *searchv0.HybridSearchQuery, gvr schema.GroupV
 		limit = defaultHybridLimit
 	}
 	req := &resourcepb.HybridSearchRequest{
-		Key: &resourcepb.ResourceKey{
+		Key: &resourcepb.ResourceKey{ //nolint:staticcheck // Older search servers require key.
 			Namespace: namespace,
 			Group:     gvr.Group,
 			Resource:  gvr.Resource,

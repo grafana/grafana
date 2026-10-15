@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -15,12 +16,17 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+const (
+	trashSearchTestGroup    = "dashboard.grafana.app"
+	trashSearchTestResource = "dashboards"
+)
+
 func TestListTrashWithSearch(t *testing.T) {
 	ctx, metricsState := withRequestMetricsState(identity.WithServiceIdentityContext(context.Background(), 1))
 	key := &resourcepb.ResourceKey{
 		Namespace: "nsx",
-		Group:     "advisor.grafana.app",
-		Resource:  "advisors",
+		Group:     trashSearchTestGroup,
+		Resource:  trashSearchTestResource,
 		Name:      "deleted-a",
 	}
 	searchResp := &resourcepb.ResourceSearchResponse{
@@ -42,7 +48,7 @@ func TestListTrashWithSearch(t *testing.T) {
 	require.Equal(t, 1, backend.batchCalls)
 	require.NotNil(t, searchClient.last)
 	require.True(t, searchClient.last.IsDeleted)
-	require.Equal(t, []string{SEARCH_FIELD_RV}, searchClient.last.Fields)
+	require.Equal(t, []string{SEARCH_FIELD_RV, SEARCH_FIELD_FOLDER}, searchClient.last.Fields)
 	require.Equal(t, []*resourcepb.ResourceSearchRequest_Sort{{Field: SEARCH_FIELD_DELETED_RV, Desc: true}}, searchClient.last.SortBy)
 	require.Equal(t, listPathTrashSearch, metricsState.listPath)
 }
@@ -151,31 +157,29 @@ func TestShouldUseSearchForTrash(t *testing.T) {
 			Source: resourcepb.ListRequest_TRASH,
 			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 				Namespace: "nsx",
-				Group:     "advisor.grafana.app",
-				Resource:  "checks",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
 			}},
 		}
 	}
 
 	tests := map[string]struct {
-		mutate      func(*resourcepb.ListRequest)
-		disable     bool
-		allowlisted bool
-		want        bool
+		mutate  func(*resourcepb.ListRequest)
+		disable bool
+		want    bool
 	}{
-		"allowlisted trash": {allowlisted: true, want: true},
-		"no search":         {disable: true, allowlisted: true},
-		"store source":      {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.Source = resourcepb.ListRequest_STORE }},
-		"cross namespace":   {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.Options.Key.Namespace = "" }},
-		"named resource":    {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.Options.Key.Name = "a" }},
-		"not allowlisted":   {},
-		"resource version":  {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.ResourceVersion = 42 }},
-		"exact version":     {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Exact }},
-		"not older than": {allowlisted: true, want: true, mutate: func(req *resourcepb.ListRequest) {
+		"approved kind":    {want: true},
+		"no search":        {disable: true},
+		"store source":     {mutate: func(req *resourcepb.ListRequest) { req.Source = resourcepb.ListRequest_STORE }},
+		"cross namespace":  {mutate: func(req *resourcepb.ListRequest) { req.Options.Key.Namespace = "" }},
+		"named resource":   {mutate: func(req *resourcepb.ListRequest) { req.Options.Key.Name = "a" }},
+		"resource version": {mutate: func(req *resourcepb.ListRequest) { req.ResourceVersion = 42 }},
+		"exact version":    {mutate: func(req *resourcepb.ListRequest) { req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Exact }},
+		"not older than": {want: true, mutate: func(req *resourcepb.ListRequest) {
 			req.ResourceVersion = 42
 			req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
 		}},
-		"kind absent from manifests": {allowlisted: true, want: true, mutate: func(req *resourcepb.ListRequest) {
+		"kind not approved for trash": {mutate: func(req *resourcepb.ListRequest) {
 			req.Options.Key.Group = "runtime.test"
 			req.Options.Key.Resource = "runtimekinds"
 		}},
@@ -192,14 +196,15 @@ func TestShouldUseSearchForTrash(t *testing.T) {
 			if !tc.disable {
 				s.searchClient = &stubSearchClient{}
 			}
-			allowed := map[string]bool{}
-			if tc.allowlisted {
-				allowed[req.Options.Key.Group+"/"+req.Options.Key.Resource] = true
-			}
-			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 			require.Equal(t, tc.want, s.shouldUseSearchForTrash(req))
 		})
 	}
+}
+
+func TestTrashSearchAllowed(t *testing.T) {
+	require.True(t, TrashSearchAllowed("dashboard.grafana.app", "dashboards"))
+	require.False(t, TrashSearchAllowed("dashboard.grafana.app", "folders"))
+	require.False(t, TrashSearchAllowed("exampletodoapp.ext.grafana.app", "todos"))
 }
 
 func TestListTrashWithSearchFallsBackWhenIndexCannotServeTrash(t *testing.T) {
@@ -279,8 +284,8 @@ func TestListTrashWithSearchDoesNotFallBackFromSearchContinueToken(t *testing.T)
 
 func TestListTrashWithSearchContinuesAfterFilteringRows(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-	provisionedKey := &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "provisioned"}
-	visibleKey := &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "visible"}
+	provisionedKey := &resourcepb.ResourceKey{Namespace: "nsx", Group: trashSearchTestGroup, Resource: trashSearchTestResource, Name: "provisioned"}
+	visibleKey := &resourcepb.ResourceKey{Namespace: "nsx", Group: trashSearchTestGroup, Resource: trashSearchTestResource, Name: "visible"}
 	searchResp := &resourcepb.ResourceSearchResponse{
 		ResourceVersion: 100,
 		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
@@ -309,8 +314,8 @@ func TestListTrashWithSearchContinuesAfterFilteringRows(t *testing.T) {
 
 func TestListTrashWithSearchSkipsGarbageCollectedDeletionMarkers(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-	visibleKey := &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "visible"}
-	staleKey := &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "stale"}
+	visibleKey := &resourcepb.ResourceKey{Namespace: "nsx", Group: trashSearchTestGroup, Resource: trashSearchTestResource, Name: "visible"}
+	staleKey := &resourcepb.ResourceKey{Namespace: "nsx", Group: trashSearchTestGroup, Resource: trashSearchTestResource, Name: "stale"}
 	searchResp := &resourcepb.ResourceSearchResponse{
 		ResourceVersion: 100,
 		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
@@ -340,7 +345,7 @@ func TestListTrashWithSearchSkipsGarbageCollectedDeletionMarkers(t *testing.T) {
 
 func TestListTrashWithSearchUsesStoreWhenBatchReadsAreUnsupported(t *testing.T) {
 	ctx, metricsState := withRequestMetricsState(identity.WithServiceIdentityContext(context.Background(), 1))
-	key := &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "a"}
+	key := &resourcepb.ResourceKey{Namespace: "nsx", Group: trashSearchTestGroup, Resource: trashSearchTestResource, Name: "a"}
 	searchResp := &resourcepb.ResourceSearchResponse{
 		ResourceVersion: 100,
 		Rows:            []*resourcepb.ResourceSearchRow{{Key: key, ResourceVersion: 42}},
@@ -384,9 +389,6 @@ func newSearchBackedTrashTestServer(searchResp *resourcepb.ResourceSearchRespons
 	searchClient := &stubSearchClient{resp: searchResp}
 	s := createTestServer(searchClient, 1024)
 	s.backend = backend
-	s.searchBackedListResources = SearchBackedListConfig{AllowedResources: map[string]bool{
-		"advisor.grafana.app/advisors": true,
-	}}
 	return s, searchClient
 }
 
@@ -396,8 +398,8 @@ func trashListRequest() *resourcepb.ListRequest {
 		Limit:  10,
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 			Namespace: "nsx",
-			Group:     "advisor.grafana.app",
-			Resource:  "advisors",
+			Group:     trashSearchTestGroup,
+			Resource:  trashSearchTestResource,
 		}},
 	}
 }
@@ -417,7 +419,7 @@ func (b *trashBatchFakeBackend) SupportsDeletedBatchReads() bool {
 	return !b.unsupported
 }
 
-func (b *trashBatchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
+func (b *trashBatchFakeBackend) BatchReadResource(_ context.Context, requests []BatchReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
 	b.batchCalls++
 	if b.unsupported || !includeDeleted {
 		return nil, ErrBatchReadUnsupported
@@ -471,4 +473,64 @@ func trashObjectJSON(t *testing.T, key *resourcepb.ResourceKey, folder, deletedB
 	value, err := obj.MarshalJSON()
 	require.NoError(t, err)
 	return value
+}
+
+type trashHistoryBackend struct {
+	trashBatchFakeBackend
+}
+
+func (b *trashHistoryBackend) ListHistory(_ context.Context, _ *resourcepb.ListRequest, consume func(ListIterator) error) (int64, error) {
+	return 100, consume(&docListIterator{values: [][]byte{b.value}})
+}
+
+func TestTrashListServicePermissionErrors(t *testing.T) {
+	for _, path := range []string{"store", "search"} {
+		t.Run(path, func(t *testing.T) {
+			for _, granted := range []bool{false, true} {
+				name := "missing service grant"
+				if granted {
+					name = "valid service grant but user denied"
+				}
+				t.Run(name, func(t *testing.T) {
+					key := &resourcepb.ResourceKey{Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "deleted-a"}
+					backend := &trashHistoryBackend{trashBatchFakeBackend: trashBatchFakeBackend{
+						value: trashObjectJSON(t, key, "folder-1", "user:alice", false),
+					}}
+					s, _ := newSearchBackedTrashTestServer(&resourcepb.ResourceSearchResponse{
+						ResourceVersion: 100,
+						ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+						Rows:            []*resourcepb.ResourceSearchRow{{Key: key, ResourceVersion: 42}},
+					}, backend)
+					s.access = NewAuthzLimitedClient(authlib.FixedAccessClient(false), AuthzOptions{})
+					id := userWithDelegatedPermissions("dashboard.grafana.app:get")
+					if granted {
+						id.AccessTokenClaims.Rest.DelegatedPermissions = []string{"dashboard.grafana.app:set_permissions"}
+					}
+					ctx := authlib.WithAuthInfo(t.Context(), id)
+					req := &resourcepb.ListRequest{Source: resourcepb.ListRequest_TRASH, Limit: 10, Options: &resourcepb.ListOptions{Key: key}}
+					var resp *resourcepb.ListResponse
+					var err error
+					if path == "store" {
+						resp, err = s.listFromTrash(ctx, req)
+					} else {
+						resp, err = s.listTrashFromSearch(ctx, req)
+					}
+					if granted {
+						require.NoError(t, err)
+						require.Nil(t, resp.Error)
+						require.Empty(t, resp.Items)
+						return
+					}
+					if path == "store" {
+						require.NoError(t, err)
+						require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
+						require.Contains(t, resp.Error.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
+					} else {
+						require.ErrorIs(t, err, ErrServiceCannotDelegate)
+						require.Nil(t, resp)
+					}
+				})
+			}
+		})
+	}
 }

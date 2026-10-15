@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
@@ -5,14 +6,18 @@ import { type Field } from '@grafana/data';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { clamp } from '../../../utils/clamp';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { usePanelContext } from '../../PanelChrome';
+import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
+import { TableSidebar, type SidebarColumn } from './components/TableSidebar';
+import { FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
 import {
   useColumnResize,
+  useColumnViewState,
   useColWidths,
   useContentAwareWidths,
   useFlatRowHeight,
@@ -21,11 +26,12 @@ import {
   useManagedSort,
   useNotifyDisplayedRowIndices,
   usePaginatedRows,
-  useScrollbarWidth,
+  useNativeScrollbarWidth,
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
   useHeaderTypographyCtx,
+  useTextWrapFallback,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -33,6 +39,7 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { shouldReserveScrollbarGutter } from './scrollbar';
 import { getGridStyles } from './styles';
 import {
   type CellRootRenderer,
@@ -44,12 +51,16 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
+  filterFieldsByHiddenColumns,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
+  getDisplayName,
   getVisibleFields,
+  isShiftTabToHeader,
   makeStripedRowClass,
   markEdgeColumns,
+  isFieldHideable,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
@@ -58,6 +69,13 @@ type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellC
 // Stable references avoid invalidating useDataGridRows' memo on every render.
 const EMPTY_EXPANDED_ROWS: Set<string> = new Set();
 const NOOP_STABLE_KEY = () => '';
+
+const COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH = 220;
+const COLUMN_VISIBILITY_PANEL_MIN_WIDTH = 160;
+const COLUMN_VISIBILITY_PANEL_MAX_WIDTH = 400;
+// Must match useSplitter's unexported `sm` handle width.
+const COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH = 8;
+const COLUMN_VISIBILITY_TABLE_BORDER_WIDTH = 1;
 
 export function TableFlat(props: TableNGProps) {
   const {
@@ -78,6 +96,8 @@ export function TableFlat(props: TableNGProps) {
     noHeader,
     noValue,
     onCellFilterAdded,
+    onFieldAddToAssistant,
+    onCellAddToAssistant,
     onColumnResize,
     onDisplayedRowIndicesChange,
     onSortByChange,
@@ -94,6 +114,10 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled = false,
     preventHorizontalOverflow = false,
     zebraStriping = false,
+    showColumnsSidebar = false,
+    hiddenColumns: hiddenColumnsProp,
+    onHiddenColumnsChange,
+    columnCatalog,
   } = props;
 
   const theme = useTheme2();
@@ -111,11 +135,8 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
-  // Row-height and column-width measurement must both see the same rendered value column-building
-  // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
-  // `prepareFieldsForDisplay`), so measuring against `visibleFields` directly would stringify its raw
-  // object value to "[object Object]" — a single short line that never grows the row past one line,
-  // and that content-aware width sizes no wider than a plain short string column.
+  const wrapFallback = useTextWrapFallback(data);
+  // Measure the prepared display values so JSON cells are not treated as "[object Object]".
   const preparedFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
   const hasHeader = !noHeader;
   const hasFooter = useMemo(
@@ -126,6 +147,12 @@ export function TableFlat(props: TableNGProps) {
     () => (hasFooter ? calculateFooterHeight(visibleFields) : 0),
     [hasFooter, visibleFields]
   );
+
+  const { hiddenColumns, setHiddenColumns } = useColumnViewState({
+    hiddenColumns: hiddenColumnsProp,
+    onHiddenColumnsChange,
+    structureRev,
+  });
 
   const resizeHandler = useColumnResize(onColumnResize);
 
@@ -141,6 +168,97 @@ export function TableFlat(props: TableNGProps) {
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
   useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
+
+  const canHideAnotherColumn =
+    (columnCatalog ?? preparedFields.map(getDisplayName)).filter((name) => !hiddenColumns.has(name)).length > 1;
+
+  const handleHideColumn = useCallback(
+    (displayName: string) => {
+      if (!canHideAnotherColumn) {
+        return;
+      }
+      setHiddenColumns(new Set(hiddenColumns).add(displayName));
+      setFilter((current) => {
+        if (!(displayName in current)) {
+          return current;
+        }
+        const next = { ...current };
+        delete next[displayName];
+        return next;
+      });
+      setSortColumns((current) => current.filter((sort) => sort.columnKey !== displayName));
+    },
+    [canHideAnotherColumn, hiddenColumns, setFilter, setHiddenColumns, setSortColumns]
+  );
+
+  const handleToggleColumnVisibility = useCallback(
+    (displayName: string, visible: boolean) => {
+      if (!visible) {
+        handleHideColumn(displayName);
+        return;
+      }
+      const next = new Set(hiddenColumns);
+      next.delete(displayName);
+      setHiddenColumns(next);
+    },
+    [handleHideColumn, hiddenColumns, setHiddenColumns]
+  );
+
+  // Also filter controlled data during the render before its transformed frame arrives.
+  const displayedFields = useMemo(
+    () => filterFieldsByHiddenColumns(preparedFields, hiddenColumns),
+    [preparedFields, hiddenColumns]
+  );
+  const displayedRawFields = useMemo(
+    () => filterFieldsByHiddenColumns(visibleFields, hiddenColumns),
+    [visibleFields, hiddenColumns]
+  );
+
+  // Catalog-only columns were necessarily hideable.
+  const sidebarColumns: SidebarColumn[] = useMemo(() => {
+    const capabilities = new Map(
+      preparedFields.map((field) => [getDisplayName(field), { hideable: isFieldHideable(field) }])
+    );
+
+    return (columnCatalog ?? Array.from(capabilities.keys())).map((name) => ({
+      name,
+      ...(capabilities.get(name) ?? { hideable: true }),
+    }));
+  }, [columnCatalog, preparedFields]);
+  // The catalog includes restored columns before they return in the transformed data.
+  const hasColumnSidebar = sidebarColumns.some((column) => column.hideable);
+
+  const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
+  // Follow option changes without overriding local open/close actions on every render.
+  const prevShowColumnsSidebar = useRef(showColumnsSidebar);
+  if (prevShowColumnsSidebar.current !== showColumnsSidebar) {
+    prevShowColumnsSidebar.current = showColumnsSidebar;
+    setIsColumnVisibilityPanelOpen(showColumnsSidebar);
+  }
+  const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
+  const splitterAvailableWidth = Math.max(width - COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH, 0);
+  const maxSidebarWidth = Math.min(COLUMN_VISIBILITY_PANEL_MAX_WIDTH, splitterAvailableWidth / 2);
+  const sidebarWidth = clamp(columnVisibilityPanelWidth, 0, maxSidebarWidth);
+  const handlePanelResizing = useCallback((_flexFraction: number, sidebarPixels: number) => {
+    setColumnVisibilityPanelWidth(sidebarPixels);
+  }, []);
+  const handlePanelResizeEnd = useCallback((_flexFraction: number, sidebarPixels: number) => {
+    if (sidebarPixels < COLUMN_VISIBILITY_PANEL_MIN_WIDTH) {
+      setIsColumnVisibilityPanelOpen(false);
+      setColumnVisibilityPanelWidth(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
+      return;
+    }
+    setColumnVisibilityPanelWidth(sidebarPixels);
+  }, []);
+  // useSplitter applies the fraction after reserving the handle, so exclude it from the denominator.
+  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+    direction: 'row',
+    initialSize: sidebarWidth / Math.max(splitterAvailableWidth, 1),
+    dragPosition: 'middle',
+    handleSize: 'sm',
+    onResizing: handlePanelResizing,
+    onSizeChanged: handlePanelResizeEnd,
+  });
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -163,13 +281,12 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const gridRef = useRef<DataGridHandle>(null);
-  const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // A scrollbar appearing/disappearing changes how much room the columns have. An inset table's
-  // frame also lives inside `width`, so its two borders are not available to the columns.
-  const availableWidth = useMemo(
-    () => width - scrollbarWidth - (tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
-    [width, scrollbarWidth, tableRefreshEnabled, noPanelPadding]
-  );
+  const columnVisibilityPanelAllocation =
+    hasColumnSidebar && hasHeader && isColumnVisibilityPanelOpen
+      ? sidebarWidth + COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH + COLUMN_VISIBILITY_TABLE_BORDER_WIDTH
+      : 0;
+  const frameSize = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+  const fullWidth = Math.max(width - frameSize - columnVisibilityPanelAllocation, 0);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
@@ -194,6 +311,7 @@ export function TableFlat(props: TableNGProps) {
   prevConfiguredWidthCount.current = configuredWidthCount;
 
   const contentAwareWidths = useContentAwareWidths({
+    hasAssistantAction: onFieldAddToAssistant != null,
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
@@ -201,27 +319,24 @@ export function TableFlat(props: TableNGProps) {
     getActions: getCellActions,
     tableRefreshEnabled,
     filter,
+    hasColumnSidebar,
     noPanelPadding,
     preventHorizontalOverflow,
   });
 
-  const [widths, numFrozenColsFullyInView] = useColWidths(
-    preparedFields,
-    availableWidth,
-    frozenColumns,
-    widthConfigResetKey,
-    contentAwareWidths
-  );
+  const [fullWidths] = useColWidths(displayedFields, fullWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
 
-  const headerHeight = useHeaderHeight({
-    columnWidths: widths,
-    fields: visibleFields,
+  const fullHeaderHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
+    columnWidths: fullWidths,
+    fields: displayedFields,
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
     noPanelPadding,
     tableRefreshEnabled,
     filter,
+    hasColumnSidebar,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -230,9 +345,10 @@ export function TableFlat(props: TableNGProps) {
     [theme, visibleFields, cellHeight]
   );
 
-  const rowHeight = useFlatRowHeight({
-    columnWidths: widths,
-    fields: preparedFields,
+  const fullRowHeight = useFlatRowHeight({
+    wrapFallback,
+    columnWidths: fullWidths,
+    fields: displayedFields,
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
@@ -250,16 +366,75 @@ export function TableFlat(props: TableNGProps) {
     smallPagination,
   } = usePaginatedRows(sortedRows, {
     enabled: enablePagination,
-    width: availableWidth,
+    width: fullWidth,
     height,
     footerHeight,
-    headerHeight: hasHeader ? headerHeight : 0,
-    rowHeight,
+    headerHeight: hasHeader ? fullHeaderHeight : 0,
+    rowHeight: fullRowHeight,
     pageSize,
     noPanelPadding,
     tableRefreshEnabled,
   });
   const showPagination = enablePagination && numRows > 0;
+  const scrollbarWidth = useNativeScrollbarWidth(gridRef);
+  const needsScrollbarSpace = useMemo(
+    () =>
+      scrollbarWidth > 0 &&
+      shouldReserveScrollbarGutter(
+        paginatedRows,
+        fullRowHeight,
+        fullWidths,
+        fullWidth,
+        height -
+          frameSize -
+          (hasHeader ? fullHeaderHeight : 0) -
+          footerHeight -
+          (showPagination ? getPaginationChromeHeight(noPanelPadding) : 0)
+      ),
+    [
+      scrollbarWidth,
+      paginatedRows,
+      fullRowHeight,
+      fullWidths,
+      fullWidth,
+      height,
+      frameSize,
+      hasHeader,
+      fullHeaderHeight,
+      footerHeight,
+      showPagination,
+      noPanelPadding,
+    ]
+  );
+  const availableWidth = fullWidth - (needsScrollbarSpace ? scrollbarWidth : 0);
+  const [widths, numFrozenColsFullyInView] = useColWidths(
+    displayedFields,
+    availableWidth,
+    frozenColumns,
+    widthConfigResetKey,
+    contentAwareWidths
+  );
+  const headerHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
+    columnWidths: widths,
+    fields: displayedFields,
+    enabled: hasHeader,
+    showTypeIcons: showTypeIcons ?? false,
+    typographyCtx: headerTypographyCtx,
+    noPanelPadding,
+    tableRefreshEnabled,
+    filter,
+    hasColumnSidebar,
+  });
+  const rowHeight = useFlatRowHeight({
+    wrapFallback,
+    columnWidths: widths,
+    fields: displayedFields,
+    defaultHeight: defaultRowHeight,
+    typographyCtx,
+    maxHeight: maxRowHeight,
+    noPanelPadding,
+  });
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -283,6 +458,7 @@ export function TableFlat(props: TableNGProps) {
 
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -294,6 +470,8 @@ export function TableFlat(props: TableNGProps) {
       gridRef,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
+      onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
       maxRowHeight,
@@ -305,10 +483,15 @@ export function TableFlat(props: TableNGProps) {
       timeRange,
       tableRefreshEnabled,
       typographyCtx,
+      hasColumnSidebar,
+      onHideColumn: handleHideColumn,
+      canHideColumn: canHideAnotherColumn,
+      onOpenColumnPanel: hasColumnSidebar ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -317,6 +500,8 @@ export function TableFlat(props: TableNGProps) {
       filter,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
+      onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
       maxRowHeight,
@@ -329,6 +514,9 @@ export function TableFlat(props: TableNGProps) {
       timeRange,
       tableRefreshEnabled,
       typographyCtx,
+      hasColumnSidebar,
+      handleHideColumn,
+      canHideAnotherColumn,
       noPanelPadding,
     ]
   );
@@ -336,10 +524,11 @@ export function TableFlat(props: TableNGProps) {
   const fromFields = useColumnBuilderFromFields(filterResult, columnBuildConfig);
 
   const { columns, cellRootRenderers } = useMemo(() => {
-    const result = fromFields(visibleFields, widths, data, rows, sortedRows);
+    // The column builder prepares display processors itself; wrapping JSON processors twice repeats units.
+    const result = fromFields(displayedRawFields, widths, data, rows, sortedRows);
     markEdgeColumns(result);
     return result;
-  }, [fromFields, visibleFields, widths, data, rows, sortedRows]);
+  }, [fromFields, displayedRawFields, widths, data, rows, sortedRows]);
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -356,7 +545,7 @@ export function TableFlat(props: TableNGProps) {
     [zebraStriping, paginatedRows]
   );
 
-  return (
+  const dataGrid = (
     <TableDataGrid
       role="grid"
       gridRef={gridRef}
@@ -369,11 +558,11 @@ export function TableFlat(props: TableNGProps) {
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
       onCellClick={onCellClick}
-      className={noPanelPadding ? styles.firstColumnInset : undefined}
+      className={clsx(noPanelPadding && styles.firstColumnInset)}
       onCellKeyDown={({ column, row }, event) => {
-        if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+        if (isShiftTabToHeader(column, row, event, columns[0].key)) {
           event.preventGridDefault();
-          gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 });
+          gridRef.current?.setActivePosition({ rowIdx: -1, idx: columns.length - 1 });
           return;
         }
         if (disableKeyboardEvents) {
@@ -394,6 +583,7 @@ export function TableFlat(props: TableNGProps) {
       transparent={transparent}
       tableRefreshEnabled={tableRefreshEnabled}
       zebraStriping={zebraStriping}
+      showColumnSidebarBorder={hasColumnSidebar && isColumnVisibilityPanelOpen}
       noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
@@ -410,5 +600,39 @@ export function TableFlat(props: TableNGProps) {
       inspectCell={inspectCell}
       onInspectCellDismiss={() => setInspectCell(null)}
     />
+  );
+
+  if (!hasColumnSidebar || !hasHeader || !isColumnVisibilityPanelOpen) {
+    return dataGrid;
+  }
+
+  return (
+    // The splitter needs an explicit height to preserve the grid's percentage-based scroll region.
+    <div {...containerProps} style={{ height: '100%' }}>
+      <div
+        {...primaryProps}
+        style={{
+          ...primaryProps.style,
+          // Override the flex min-content width so the pane can cross the close threshold.
+          minWidth: 0,
+          maxWidth: maxSidebarWidth,
+          overflow: 'hidden',
+        }}
+      >
+        <TableSidebar
+          columns={sidebarColumns}
+          hiddenColumns={hiddenColumns}
+          onToggleColumn={handleToggleColumnVisibility}
+          onClose={() => setIsColumnVisibilityPanelOpen(false)}
+          headerHeight={headerHeight}
+          transparent={transparent}
+          willCloseOnRelease={columnVisibilityPanelWidth < COLUMN_VISIBILITY_PANEL_MIN_WIDTH}
+        />
+      </div>
+      <div {...splitterProps} />
+      <div {...secondaryProps} style={{ ...secondaryProps.style, minWidth: 0, flexDirection: 'column' }}>
+        {dataGrid}
+      </div>
+    </div>
   );
 }

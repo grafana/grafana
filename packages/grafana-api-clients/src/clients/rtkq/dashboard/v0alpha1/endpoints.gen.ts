@@ -187,6 +187,7 @@ const injectedRtkApi = api
             query: queryArg.query,
             type: queryArg['type'],
             folder: queryArg.folder,
+            name: queryArg.name,
             facet: queryArg.facet,
             facetLimit: queryArg.facetLimit,
             tags: queryArg.tags,
@@ -478,6 +479,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   type?: 'folder' | 'dashboard';
   /** search/list within a folder (not recursive) */
   folder?: string;
+  /** only include resources with these names (UIDs) */
+  name?: string[];
   /** count distinct terms for selected fields */
   facet?: string[];
   /** maximum number of terms to return per facet (default 50, max 1000) */
@@ -1060,6 +1063,15 @@ export type DashboardSearchResults = {
   /** The number of matching results */
   totalHits: number;
 };
+export type SnapshotBlobReference = {
+  contentType?: string;
+  hash?: string;
+  size?: number;
+  uid: string;
+};
+export type SnapshotBlobs = {
+  dashboard?: SnapshotBlobReference;
+};
 export type SnapshotSpec = {
   /** The raw dashboard (unstructured for now) */
   dashboard?: {
@@ -1083,6 +1095,7 @@ export type SnapshotSpec = {
 export type Snapshot = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  blobs: SnapshotBlobs;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
@@ -1100,6 +1113,7 @@ export type SnapshotList = {
 export type DashboardSnapshotWithDeleteKey = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  blobs: SnapshotBlobs;
   /** The delete key is only returned when the item is created.  It is not returned from a get request */
   deleteKey?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */

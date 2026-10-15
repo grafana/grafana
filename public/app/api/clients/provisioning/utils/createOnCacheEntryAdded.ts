@@ -29,6 +29,38 @@ function compareResourceVersions(a: string | undefined, b: string | undefined): 
   return x < y ? -1 : x > y ? 1 : 0;
 }
 
+interface VersionedObject {
+  metadata?: { name?: string; resourceVersion?: string };
+}
+
+/**
+ * Applies a watch event to cached list items in place. Only events newer than the
+ * cached object are applied: equal versions are duplicate deliveries, older ones are
+ * stale and would flip the UI backward. Skipping leaves the array untouched, so an
+ * immer draft keeps its state reference and no re-render fires. A MODIFIED event for
+ * an object the list does not contain is a no-op.
+ */
+export function applyWatchEvent<T extends VersionedObject>(
+  items: T[],
+  event: { type: 'ADDED' | 'DELETED' | 'MODIFIED'; object: T }
+) {
+  const index = items.findIndex((item) => item.metadata?.name === event.object.metadata?.name);
+  const existing = index === -1 ? undefined : items[index];
+  const cmp = compareResourceVersions(event.object.metadata?.resourceVersion, existing?.metadata?.resourceVersion);
+
+  if (event.type === 'ADDED' && index === -1) {
+    items.push(event.object);
+  } else if (event.type === 'DELETED' && index !== -1) {
+    // Remove the item, unless the cached item is newer than the delete
+    // event (a stale delete replayed after the object was re-created)
+    if (cmp === null || cmp >= 0) {
+      items.splice(index, 1);
+    }
+  } else if (index !== -1 && (cmp === null || cmp > 0)) {
+    items[index] = event.object;
+  }
+}
+
 /**
  * Creates a cache entry handler for RTK Query that watches for changes to a resource
  * and updates the cache accordingly.
@@ -76,31 +108,7 @@ export function createOnCacheEntryAdded<Spec, Status>(
               if (!draft.items) {
                 draft.items = [];
               }
-              // Find the item with the matching name
-              const existingIndex = draft.items.findIndex((item) => item.metadata?.name === event.object.metadata.name);
-              const existing = existingIndex === -1 ? undefined : draft.items[existingIndex];
-              const cmp = compareResourceVersions(
-                event.object.metadata.resourceVersion,
-                existing?.metadata?.resourceVersion
-              );
-
-              if (event.type === 'ADDED' && existingIndex === -1) {
-                draft.items.push(event.object);
-              } else if (event.type === 'DELETED' && existingIndex !== -1) {
-                // Remove the item, unless the cached item is newer than the delete
-                // event (a stale delete replayed after the object was re-created)
-                if (cmp === null || cmp >= 0) {
-                  draft.items.splice(existingIndex, 1);
-                }
-              } else if (existingIndex !== -1) {
-                // Could be ADDED or MODIFIED. Only apply events newer than the cached
-                // item: equal versions are duplicate deliveries, older ones are stale
-                // and would flip the UI backward. Skipping leaves the draft untouched,
-                // so RTK Query keeps the same state reference and no re-render fires.
-                if (cmp === null || cmp > 0) {
-                  draft.items[existingIndex] = event.object;
-                }
-              }
+              applyWatchEvent(draft.items, event);
             });
           },
           error: (error) => {

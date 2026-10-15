@@ -13,15 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ConfigSection and ConfigKey name the ini setting that turns these endpoints
-// on. Both are on by default.
-//
-// Trash has its own key rather than sharing ConfigKey, because a deployment may
-// want search on for live search alone.
 const (
 	ConfigSection   = "grafana-apiserver"
-	ConfigKey       = "enable_search_api"
-	ConfigKeyTrash  = "enable_trash_api"
 	ConfigKeyHybrid = "enable_hybrid_api"
 	// ConfigKeyGlobalSearch turns on the search that spans resource types. Off by
 	// default, and useless without the global index it reads
@@ -148,16 +141,45 @@ func searchRouteSpec(kindName, version string) *spec3.PathProps {
 func globalSearchRouteSpec() *spec3.PathProps {
 	return routeSpec(routeSpecArgs{
 		operationID:  "listGlobalSearch" + capitalize(searchv0.VERSION),
-		description:  "Search resources of several types in a namespace.",
+		description:  globalSearchDescription(),
 		requestKind:  searchv0.KindSearchQuery,
 		requestGo:    searchQueryGoName,
 		responseKind: searchv0.KindSearchResults,
 		responseGo:   searchResultsGoName,
-		example: &searchv0.SearchQuery{
-			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
-			Limit:    10,
-		},
+		example:      globalSearchExample(),
 	})
+}
+
+// globalSearchDescription says what this search adds to the search of one kind,
+// which is all a caller cannot learn from the shared request schema.
+func globalSearchDescription() string {
+	types := make([]string, 0, len(resource.GlobalSearchResourceTypes()))
+	for _, gr := range resource.GlobalSearchResourceTypes() {
+		types = append(types, "`"+gr.Group+"/"+gr.Resource+"`")
+	}
+	return "Search resources of several types in a namespace: " + strings.Join(types, ", ") + ". " +
+		"Each result names its own group, resource and kind, and is authorized on its own.\n\n" +
+		"Only the fields every resource has can be used, plus:\n\n" +
+		"- `" + resource.SEARCH_FIELD_GROUP_RESOURCE + "` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n" +
+		"- `" + resource.SEARCH_FIELD_CREATED + "` and `" + resource.SEARCH_FIELD_UPDATED + "`: also filter (including range) and sort, so results of several types can be ordered by time.\n" +
+		"- `" + resource.SEARCH_FIELD_FOLDER_TREE + "`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. " +
+		"`general` names the root folder and matches everything; an empty value is rejected.\n\n" +
+		"Results are eventually consistent: just after a change, a search can still return what was there before, " +
+		"and just after a folder moves, a `" + resource.SEARCH_FIELD_FOLDER_TREE + "` search can still find what was below it in its old place."
+}
+
+// globalSearchExample searches one folder and everything below it for
+// dashboards, newest first.
+func globalSearchExample() *searchv0.SearchQuery {
+	return &searchv0.SearchQuery{
+		TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
+		Where: &searchv0.WhereNode{And: []searchv0.WhereNode{
+			{Filter: &searchv0.FilterPredicate{Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "In", Values: []string{"team-a"}}},
+			{Filter: &searchv0.FilterPredicate{Field: resource.SEARCH_FIELD_GROUP_RESOURCE, Operator: "In", Values: []string{"dashboard.grafana.app/dashboards"}}},
+		}},
+		Sort:  []searchv0.SortField{{Field: resource.SEARCH_FIELD_UPDATED, Direction: "desc"}},
+		Limit: 10,
+	}
 }
 
 func trashRouteSpec(kindName, version string) *spec3.PathProps {
