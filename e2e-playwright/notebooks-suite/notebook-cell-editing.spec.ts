@@ -187,7 +187,7 @@ test.describe('Notebook cell duplicate and delete', () => {
     await deleteNotebook(request, uid);
   });
 
-  test('duplicates a cell via hover-revealed actions, then deletes the duplicate', async ({ page }) => {
+  test('duplicates a cell via the block actions menu, then deletes the duplicate', async ({ page }) => {
     await page.goto(`/notebooks/${uid}?edit=true`);
 
     const cellFrames = page.locator(`.${NOTEBOOK_CELL_FRAME_CLASS}`);
@@ -197,14 +197,16 @@ test.describe('Notebook cell duplicate and delete', () => {
     // cell and the editor's own trailing empty slot.
     const firstCellFrame = cellFrames.first();
     await firstCellFrame.hover();
-    await firstCellFrame.getByRole('button', { name: 'Duplicate block' }).click();
+    await firstCellFrame.getByRole('button', { name: 'Block actions', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Duplicate block', exact: true }).click();
     await expect(cellFrames).toHaveCount(3);
     await expect(page.locator('.cm-content').nth(1)).toContainText('Existing content');
 
     // Delete the duplicate specifically (not the original) - it asks for confirmation first.
     const duplicateFrame = cellFrames.nth(1);
     await duplicateFrame.hover();
-    await duplicateFrame.getByRole('button', { name: 'Delete block' }).click();
+    await duplicateFrame.getByRole('button', { name: 'Block actions', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Delete block', exact: true }).click();
     await page.getByRole('button', { name: 'Delete', exact: true }).click();
 
     await expect(cellFrames).toHaveCount(2);
