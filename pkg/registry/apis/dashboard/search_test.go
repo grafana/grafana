@@ -1902,6 +1902,15 @@ func TestSearchHandlerCreatePermissionSharedWithMe(t *testing.T) {
 			for _, call := range mockClient.MockCalls {
 				assert.Equal(t, int64(tc.expected), call.Permission)
 			}
+
+			lookup := mockClient.MockCalls[0]
+			if tc.expected == dashboardaccess.PERMISSION_CREATE {
+				assert.Equal(t, "folders", lookup.Options.Key.Resource)
+				assert.Empty(t, lookup.Federated)
+			} else {
+				assert.Equal(t, "dashboards", lookup.Options.Key.Resource)
+				assert.Len(t, lookup.Federated, 1)
+			}
 		})
 	}
 }

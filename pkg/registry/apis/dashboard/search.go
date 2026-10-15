@@ -1190,14 +1190,20 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
+	primaryKey, federated := key, []*resourcepb.ResourceKey{folderKey}
+	if requestedPermission == dashboardaccess.PERMISSION_CREATE {
+		// Federated folders are always authorized as read, which would drop create-only folders.
+		primaryKey, federated = folderKey, nil
+	}
+
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Federated:    []*resourcepb.ResourceKey{folderKey},
+		Federated:    federated,
 		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
 		Limit:        int64(len(dashboardUids)),
 		Permission:   int64(requestedPermission),
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
-			Key: key,
+			Key: primaryKey,
 			Fields: []*resourcepb.Requirement{{
 				Key:      "name",
 				Operator: "in",
