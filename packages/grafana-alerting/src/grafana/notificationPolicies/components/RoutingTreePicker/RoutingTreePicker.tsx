@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Stack, Text, TextLink } from '@grafana/ui';
 
@@ -46,7 +47,7 @@ export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPol
 
   const viewPoliciesLink = viewPoliciesHref && (
     <TextLink
-      href={viewPoliciesHref}
+      href={locationUtil.assureBaseUrl(viewPoliciesHref)}
       external
       aria-label={t('alerting.routing-tree-picker.view-policies-aria', 'View notification policies')}
     >
