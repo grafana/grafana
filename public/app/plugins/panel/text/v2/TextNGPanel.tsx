@@ -77,7 +77,8 @@ export function TextNGPanel(props: Props) {
   } = props;
   const styles = useStyles2(getStyles);
   const isEditing = app === CoreApp.PanelEditor;
-  const consent = { panelId: id, panelTitle: title, dashboardUid: data.request?.dashboardUID };
+  // Repeated copies share `id`. The dashboard gives each copy its own id in the request.
+  const consent = { panelId: data.request?.panelId ?? id, panelTitle: title, dashboardUid: data.request?.dashboardUID };
   // Fit-content only applies to the rendered view: the inline editor keeps its
   // bounded, scrollable layout since active editing needs stable interactive space.
   const fitContentOn = fitContent && !isEditing;
