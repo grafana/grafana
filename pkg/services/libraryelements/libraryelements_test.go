@@ -457,14 +457,15 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	err = folderSvc.RegisterService(alertStore)
 	require.NoError(t, err)
 	service := LibraryElementService{
-		Cfg:               cfg,
-		features:          featuremgmt.WithFeatures(),
-		SQLStore:          sqlStore,
-		folderService:     folderSvc,
-		dashboardsService: dashService,
-		AccessControl:     ac,
-		log:               log.NewNopLogger(),
-		treeCache:         newFolderTreeCache(folderSvc, false),
+		Cfg:                       cfg,
+		features:                  featuremgmt.WithFeatures(),
+		SQLStore:                  sqlStore,
+		folderService:             folderSvc,
+		dashboardsService:         dashService,
+		ConnectedDashboardsFinder: dashService,
+		AccessControl:             ac,
+		log:                       log.NewNopLogger(),
+		treeCache:                 newFolderTreeCache(folderSvc, false),
 	}
 
 	service.AccessControl.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(&service, folderSvc))

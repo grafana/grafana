@@ -835,7 +835,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 
 	serviceCtx, _ := identity.WithServiceIdentity(c, orgID)
 	for _, elem := range elements {
-		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
+		connectedDashboards, err := l.ConnectedDashboardsFinder.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
 		if err != nil {
 			return err
 		}
