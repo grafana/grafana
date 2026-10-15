@@ -42,13 +42,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     position: 'absolute',
     left: theme.spacing(3.5),
-    top: theme.spacing(4),
+    top: theme.spacing(2),
     width: theme.spacing(3),
     height: theme.spacing(3),
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     opacity: 0,
+    '@media (hover: none)': { opacity: 1 },
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),
     },

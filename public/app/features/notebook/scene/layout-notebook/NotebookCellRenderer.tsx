@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { Suspense, useEffect, useId, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -119,11 +119,24 @@ function PanelCell({
   // NotebookCellItem has no static Component and is never otherwise activated, so a $timeRange
   // assigned to it would never get its own activate() call without this.
   const { elementName, $timeRange } = useSceneObjectState(cell, { shouldActivateOrKeepAlive: true });
+  const { pluginId } = panel.useState();
+  const panelHeight = pluginId === 'stat' || pluginId === 'gauge' ? 180 : PANEL_HEIGHT;
 
   const [queryEditorOpen, setQueryEditorOpen] = useState(Boolean(autoFocus));
   const [queryEditorMounted, setQueryEditorMounted] = useState(Boolean(autoFocus));
   const queryEditorId = useId();
   const hasTimeRange = Boolean($timeRange);
+  const focusClockOnMount = useRef(false);
+  const clockButtonRef = useCallback((button: HTMLElement | null) => {
+    if (button && focusClockOnMount.current) {
+      requestAnimationFrame(() => {
+        if (button.isConnected && focusClockOnMount.current) {
+          focusClockOnMount.current = false;
+          button.focus();
+        }
+      });
+    }
+  }, []);
   const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
   const autoSuggest = useRef(Boolean(autoFocus));
   const canEditQuery = isEditing && isEditableQueryPanel(panel);
@@ -132,10 +145,21 @@ function PanelCell({
     <Stack direction="column" gap={1}>
       {hasTimeRange && (
         <Box display="flex">
-          <NotebookCellTimeRangeControl cell={cell} popoverAlign="start" isEditing={isEditing} />
+          <NotebookCellTimeRangeControl
+            cell={cell}
+            popoverAlign="start"
+            isEditing={isEditing}
+            onClear={() => {
+              focusClockOnMount.current = true;
+            }}
+          />
         </Box>
       )}
-      <div className={styles.panel} data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}>
+      <div
+        className={styles.panel}
+        style={{ height: panelHeight }}
+        data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}
+      >
         <NotebookPanelActions
           cell={cell}
           panel={panel}
@@ -152,7 +176,9 @@ function PanelCell({
           }
           queryEditorOpen={queryEditorOpen}
           queryEditorId={queryEditorId}
-          timeRangeControl={isEditing && !hasTimeRange && <NotebookCellTimeRangeControl cell={cell} />}
+          timeRangeControl={
+            isEditing && !hasTimeRange && <NotebookCellTimeRangeControl cell={cell} buttonRef={clockButtonRef} />
+          }
           onDuplicate={onDuplicate}
           onDelete={onDelete}
         />
@@ -389,13 +415,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.secondary,
   }),
   panel: css({
-    height: PANEL_HEIGHT,
     position: 'relative',
     // Inert on screen: only a print/PDF layout reads it, where a split panel is a chart cut in half.
     breakInside: 'avoid',
     pageBreakInside: 'avoid',
-    '&:hover, &:focus-within': {
-      '[data-notebook-panel-actions]': {
+    '&:hover, &:has(:focus-visible)': {
+      '[data-notebook-panel-actions], [data-notebook-title-action]': {
         opacity: 1,
         pointerEvents: 'auto',
       },

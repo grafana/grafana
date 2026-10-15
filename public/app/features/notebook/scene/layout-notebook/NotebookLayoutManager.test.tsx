@@ -1,6 +1,13 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneReactObject,
+  SceneRefreshPicker,
+  SceneTimePicker,
+  SceneTimeRange,
+  VizPanel,
+} from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { PanelTimeRange } from 'app/features/dashboard-scene/scene/panel-timerange/PanelTimeRange';
@@ -440,6 +447,11 @@ describe('NotebookLayoutManager', () => {
     // reached, not about the reveal, so they opt out of user-event's pointer-events assertion — the
     // gating itself is pinned in NotebookCellFrame.test.tsx.
     const reachActions = () => userEvent.setup({ pointerEventsCheck: 0 });
+    const chooseCellAction = async (action: string, index: number) => {
+      const user = reachActions();
+      await user.click(screen.getAllByRole('button', { name: 'Block actions' })[index]);
+      await user.click(await screen.findByRole('menuitem', { name: action }));
+    };
 
     it('does not offer them outside edit mode', () => {
       renderNotebook();
@@ -450,11 +462,18 @@ describe('NotebookLayoutManager', () => {
 
     // renderNotebook's two given cells plus the trailing-invariant cell the bootstrap effect appends
     // after them (its last cell — the collapsed panel — is not an empty markdown cell either).
-    it('offers duplicate and delete on every cell in edit mode', () => {
+    it('offers duplicate and delete through every cell menu in edit mode', async () => {
       renderNotebook(true);
 
-      expect(screen.getAllByRole('button', { name: 'Duplicate block' })).toHaveLength(3);
-      expect(screen.getAllByRole('button', { name: 'Delete block' })).toHaveLength(3);
+      const menus = screen.getAllByRole('button', { name: 'Block actions' });
+      expect(menus).toHaveLength(3);
+      const user = reachActions();
+      for (const menu of menus) {
+        await user.click(menu);
+        expect(await screen.findByRole('menuitem', { name: 'Duplicate block' })).toBeInTheDocument();
+        expect(screen.getByRole('menuitem', { name: 'Delete block' })).toBeInTheDocument();
+        await user.keyboard('{Escape}');
+      }
     });
 
     // Inside the frame, so the existing hover rule reveals them with the rest of the cell's controls
@@ -464,7 +483,7 @@ describe('NotebookLayoutManager', () => {
 
       const frame = (await screen.findByText('Hello notebook')).closest<HTMLElement>('[data-rfd-draggable-id]');
 
-      expect(within(frame!).getByRole('button', { name: 'Duplicate block' })).toBeInTheDocument();
+      expect(within(frame!).getByRole('button', { name: 'Block actions' })).toBeInTheDocument();
     });
 
     // ModalsContextProvider (which test-utils' render supplies) tracks the confirmation but ModalRoot,
@@ -473,7 +492,7 @@ describe('NotebookLayoutManager', () => {
       const publish = jest.spyOn(appEvents, 'publish');
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b', 'c']), true));
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+      await chooseCellAction('Delete block', 1);
 
       expect(publish).toHaveBeenCalledTimes(1);
       expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
@@ -485,7 +504,7 @@ describe('NotebookLayoutManager', () => {
       const publish = jest.spyOn(appEvents, 'publish');
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b', 'c']), true));
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+      await chooseCellAction('Delete block', 1);
       act(() => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         (publish.mock.calls[0][0] as ShowConfirmModalEvent).payload.onConfirm?.();
@@ -512,7 +531,7 @@ describe('NotebookLayoutManager', () => {
         )
       );
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+      await chooseCellAction('Delete block', 1);
 
       expect(publish).not.toHaveBeenCalled();
       // Plus the trailing-invariant cell appended after 'b'.
@@ -529,7 +548,7 @@ describe('NotebookLayoutManager', () => {
       cell.setState({ collapsed: true });
       const { manager } = renderManager(buildManager([cell], true));
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[0]);
+      await chooseCellAction('Delete block', 0);
 
       expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
       expect(cellNames(manager)).toEqual(['latency', 'paragraph-1']);
@@ -538,7 +557,7 @@ describe('NotebookLayoutManager', () => {
     it('duplicates the cell directly below itself', async () => {
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Duplicate block' })[0]);
+      await chooseCellAction('Duplicate block', 0);
 
       // Plus the trailing-invariant cell appended after 'b'.
       expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b', 'paragraph-1']);
@@ -698,6 +717,29 @@ describe('NotebookLayoutManager', () => {
 
       const keys = manager.getVizPanels().map((panel) => panel.state.key);
       expect(new Set(keys).size).toBe(2);
+    });
+
+    it('duplicates panel content without transient header controls', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        title: 'Latency',
+        pluginId: 'timeseries',
+        options: { legend: { showLegend: true } },
+        headerActions: new SceneReactObject({ reactNode: <button>Header action</button> }),
+        titleItems: [new SceneReactObject({ reactNode: <button>Edit title</button> })],
+      });
+      const cell = new NotebookCellItem({ elementName: 'latency', source: 'user', body: panel });
+      const manager = buildManager([cell]);
+
+      manager.duplicateCell(cell);
+
+      const copy = manager.state.cells[1].state.body!;
+      expect(copy.state.title).toBe('Latency');
+      expect(copy.state.pluginId).toBe('timeseries');
+      expect(copy.state.options).toEqual({ legend: { showLegend: true } });
+      expect(copy.state.headerActions).toBeUndefined();
+      expect(copy.state.titleItems).toEqual([]);
+      expect(panel.state.titleItems).toHaveLength(1);
     });
 
     it('ignores a cell that is not in the notebook', () => {
@@ -1745,6 +1787,55 @@ describe('NotebookLayoutManager', () => {
       expect(history.state.undoLabel).toBe('Rename panel');
       history.undo();
       expect(panel.state.title).not.toBe('Latency');
+      expect(history.undo()).toBe(false);
+    });
+
+    it('restores all linked panels after a delayed visualization change fails', async () => {
+      const first = panelCell('shared').cell;
+      const second = panelCell('shared').cell;
+      const firstPanel = first.state.body!;
+      const secondPanel = second.state.body!;
+      const originalPluginId = firstPanel.state.pluginId;
+      const { manager, history } = withHistory([first, second]);
+      let finishSecond!: () => void;
+      const pluginLoaded = new Promise<void>((resolve) => {
+        finishSecond = resolve;
+      });
+      jest.spyOn(firstPanel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        firstPanel.setState({
+          pluginId,
+          options: options ?? {},
+          fieldConfig: fieldConfig ?? firstPanel.state.fieldConfig,
+        });
+        if (pluginId === 'table') {
+          throw new Error('Cannot migrate visualization');
+        }
+      });
+      jest.spyOn(secondPanel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        if (pluginId === 'table') {
+          await pluginLoaded;
+        }
+        secondPanel.setState({
+          pluginId,
+          options: options ?? {},
+          fieldConfig: fieldConfig ?? secondPanel.state.fieldConfig,
+        });
+      });
+
+      const change = manager.changePanelVisualization(first, { name: 'Table', pluginId: 'table', hash: 'table' });
+      const failure = expect(change).rejects.toThrow('Cannot migrate visualization');
+      await waitFor(() => expect(firstPanel.state.pluginId).toBe('table'));
+      manager.setPanelTitle(first, 'Updated latency');
+      finishSecond();
+      await failure;
+
+      expect(firstPanel.state.pluginId).toBe(originalPluginId);
+      expect(secondPanel.state.pluginId).toBe(originalPluginId);
+      expect(firstPanel.state.title).toBe('Updated latency');
+      expect(secondPanel.state.title).toBe('Updated latency');
+      expect(history.state.undoLabel).toBe('Rename panel');
+      history.undo();
+      expect(firstPanel.state.title).not.toBe('Updated latency');
       expect(history.undo()).toBe(false);
     });
 

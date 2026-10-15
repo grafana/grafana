@@ -23,6 +23,7 @@ import { VisualizationSuggestionCard } from 'app/features/panel/components/VizTy
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { NotebookCellActions } from './edit/NotebookCellActions';
 import { NOTEBOOK_CELL_CONTROLS_CLASS } from './edit/cellClassNames';
 
 interface Props {
@@ -88,6 +89,8 @@ export function NotebookPanelActions({
           <IconButton
             name="pen"
             size="sm"
+            className={styles.titleEdit}
+            data-notebook-title-action
             tooltip={t('notebooks.panel.rename', 'Edit panel title')}
             onClick={startRename}
           />
@@ -97,7 +100,7 @@ export function NotebookPanelActions({
           </Button>
         ),
       }),
-    [startRename, title]
+    [startRename, title, styles.titleEdit]
   );
 
   useEffect(() => {
@@ -137,8 +140,7 @@ export function NotebookPanelActions({
     <div
       className={cx(
         styles.toolbar,
-        !headerTarget && (isEditing ? styles.toolbarEditing : styles.toolbarViewing),
-        headerTarget && styles.headerToolbar,
+        headerTarget ? styles.headerToolbar : isEditing ? styles.toolbarEditing : styles.toolbarViewing,
         NOTEBOOK_CELL_CONTROLS_CLASS
       )}
       data-notebook-panel-actions
@@ -170,20 +172,7 @@ export function NotebookPanelActions({
         )}
         <PanelExploreLink panel={panel} />
         {isEditing && onDuplicate && onDelete && (
-          <>
-            <IconButton
-              name="copy"
-              size="sm"
-              tooltip={t('notebook.cell.duplicate', 'Duplicate block')}
-              onClick={onDuplicate}
-            />
-            <IconButton
-              name="trash-alt"
-              size="sm"
-              tooltip={t('notebook.cell.delete', 'Delete block')}
-              onClick={onDelete}
-            />
-          </>
+          <NotebookCellActions inline onDuplicate={onDuplicate} onDelete={onDelete} />
         )}
       </Stack>
     </div>
@@ -349,13 +338,15 @@ function SuggestionsContent({
   const styles = useStyles2(getStyles);
   const { data } = sceneGraph.getData(panel).useState();
   const [suggestions, setSuggestions] = useState<PanelPluginVisualizationSuggestion[]>();
-  const [error, setError] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [changeError, setChangeError] = useState(false);
   const [changing, setChanging] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setSuggestions(undefined);
-    setError(false);
+    setLoadError(false);
+    setChangeError(false);
     if (data?.series.length) {
       void getAllSuggestions(data.series)
         .then((result) => {
@@ -365,7 +356,7 @@ function SuggestionsContent({
         })
         .catch(() => {
           if (!cancelled) {
-            setError(true);
+            setLoadError(true);
           }
         });
     }
@@ -377,7 +368,7 @@ function SuggestionsContent({
   if (!data?.series.length) {
     return <Text color="secondary">{t('notebooks.panel.suggestions-no-data', 'Run a query to see suggestions.')}</Text>;
   }
-  if (error) {
+  if (loadError) {
     return <Text color="secondary">{t('notebooks.panel.suggestions-error', 'Could not load suggestions.')}</Text>;
   }
   if (!suggestions) {
@@ -388,44 +379,56 @@ function SuggestionsContent({
   }
 
   return (
-    <div className={styles.suggestions}>
-      {suggestions.map((suggestion, index) => (
-        <div
-          key={`${suggestion.pluginId}-${index}`}
-          role="button"
-          tabIndex={0}
-          aria-label={suggestion.name}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              event.currentTarget.click();
-            }
-          }}
-          onClick={() => {
-            if (changing) {
-              return;
-            }
-            const selectedQuery = getQueryRunnerFor(panel)?.state.queries[0];
-            if (autoSuggest) {
-              autoSuggest.current = false;
-            }
-            setChanging(true);
-            void cell
-              .onVisualizationChange(suggestion)
-              .then(() => {
-                if (lastSuggestedQuery) {
-                  lastSuggestedQuery.current = selectedQuery;
-                }
-                onSelect();
-              })
-              .catch(() => setError(true))
-              .finally(() => setChanging(false));
-          }}
-        >
-          <VisualizationSuggestionCard data={data} suggestion={suggestion} width={150} />
+    <Stack direction="column" gap={1}>
+      {changeError && (
+        <div role="alert">
+          <Text color="error">
+            {t('notebooks.panel.visualization-error', 'Could not change visualization. Try again.')}
+          </Text>
         </div>
-      ))}
-    </div>
+      )}
+      <div className={styles.suggestions} aria-busy={changing}>
+        {suggestions.map((suggestion, index) => (
+          <div
+            key={`${suggestion.pluginId}-${index}`}
+            role="button"
+            tabIndex={0}
+            aria-label={suggestion.name}
+            aria-disabled={changing}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                event.currentTarget.click();
+              }
+            }}
+            onClick={() => {
+              if (changing) {
+                return;
+              }
+              const selectedQuery = getQueryRunnerFor(panel)?.state.queries[0];
+              if (autoSuggest) {
+                autoSuggest.current = false;
+              }
+              setChanging(true);
+              setChangeError(false);
+              void cell
+                .onVisualizationChange(suggestion)
+                .then(() => {
+                  if (lastSuggestedQuery) {
+                    lastSuggestedQuery.current = selectedQuery;
+                  }
+                  onSelect();
+                })
+                .catch(() => setChangeError(true))
+                .finally(() => setChanging(false));
+            }}
+          >
+            <VisualizationSuggestionCard data={data} suggestion={suggestion} width={150} />
+            <div className={styles.suggestionLabel}>{suggestion.name}</div>
+          </div>
+        ))}
+      </div>
+    </Stack>
   );
 }
 
@@ -446,7 +449,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     opacity: 0,
     pointerEvents: 'none',
-    '&:has(button[aria-expanded="true"])': {
+    '@media (hover: none)': {
+      opacity: 1,
+      pointerEvents: 'auto',
+    },
+    '&:has(button[aria-expanded="true"]:not([aria-pressed]))': {
+      opacity: 1,
+      pointerEvents: 'auto',
+    },
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create('opacity'),
+    },
+  }),
+  titleEdit: css({
+    opacity: 0,
+    pointerEvents: 'none',
+    '@media (hover: none)': {
       opacity: 1,
       pointerEvents: 'auto',
     },
@@ -479,10 +497,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   suggestions: css({
     display: 'grid',
-    gridTemplateColumns: 'repeat(2, 150px)',
+    gridTemplateColumns: 'repeat(auto-fit, 150px)',
+    justifyContent: 'center',
+    width: 316,
+    maxWidth: `calc(100vw - ${theme.spacing(6)})`,
     gap: theme.spacing(1),
-    maxHeight: 420,
+    maxHeight: `min(420px, calc(50dvh - ${theme.spacing(10)}))`,
     overflowY: 'auto',
     padding: theme.spacing(0.5),
+  }),
+  suggestionLabel: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    marginTop: theme.spacing(0.5),
   }),
 });
