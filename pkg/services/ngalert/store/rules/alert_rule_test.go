@@ -665,6 +665,27 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	})
 }
 
+func TestIntegration_DeleteInFoldersUnchecked(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	rule := createRule(t, store, nil)
+
+	// No permissions configured at all; DeleteInFoldersUnchecked must not consult AccessControl.
+	store.AccessControl = acmock.New()
+	err := store.DeleteInFoldersUnchecked(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+	require.NoError(t, err)
+
+	c, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+	require.NoError(t, err)
+	require.Equal(t, int64(0), c)
+}
+
 func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 

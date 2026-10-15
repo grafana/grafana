@@ -1820,9 +1820,6 @@ func (st RuleStore) GetAlertRulesForScheduling(ctx context.Context, query *ngmod
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
-	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its
-	// own, so a context-dependent LegacyDatabaseProvider can only resolve the target database
-	// from here.
 	ctx = identity.WithRequester(ctx, user)
 
 	for _, folderUID := range folderUIDs {
@@ -1836,7 +1833,19 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
 			return folder.ErrAccessDenied
 		}
+	}
+	return st.DeleteInFoldersUnchecked(ctx, orgID, folderUIDs, user)
+}
 
+// DeleteInFoldersUnchecked is DeleteInFolders without the AccessControl check, for callers that have
+// already authorized the requester through a different mechanism (e.g. a standalone folder
+// apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in).
+func (st RuleStore) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its own,
+	// so a context-dependent LegacyDatabaseProvider can only resolve the target database from here.
+	ctx = identity.WithRequester(ctx, user)
+
+	for _, folderUID := range folderUIDs {
 		uids, err := st.ListAlertRuleUIDsInFolder(ctx, orgID, folderUID)
 		if err != nil {
 			return err
