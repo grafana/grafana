@@ -11,10 +11,9 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled verifies
-// that when the provisioningFolderMetadata feature flag is enabled, each
-// exported folder contains a _folder.json manifest (no .keep file).
-func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled(t *testing.T) {
+// TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadata verifies
+// that each exported folder contains a _folder.json manifest (no .keep file).
+func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadata(t *testing.T) {
 	helper := sharedGitHelper(t)
 
 	const (
@@ -29,9 +28,8 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled(t *test
 	job := triggerExport(t, helper.ProvisioningTestHelper, repoName)
 	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
-	// With the feature flag enabled, a _folder.json manifest must be committed instead of
-	// a bare .keep placeholder.  Read the file directly from the git server to avoid the
-	// ownership-conflict check that the provisioning files API performs on unmanaged resources.
+	// Read directly from the git server to avoid the ownership-conflict check
+	// that the provisioning files API performs on unmanaged resources.
 	data := helper.GitReadFile(t, repoName, folderTitle+"/_folder.json")
 
 	// The committed _folder.json must be pretty-printed with two-space indentation,
@@ -47,5 +45,5 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled(t *test
 
 	// No .keep file must be present when _folder.json is written.
 	require.False(t, helper.GitFileExists(t, repoName, folderTitle+"/.keep"),
-		".keep must not exist when the feature flag is enabled")
+		".keep must not exist when _folder.json is written")
 }

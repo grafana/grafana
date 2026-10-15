@@ -688,22 +688,16 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree Folder
 			return opts.OnFolder(folder, false, startedAt, nil)
 		}
 
-		if fm.folderMetadataEnabled {
-			manifestID := folder.ID
-			if opts.GenerateNewFolderIDs {
-				manifestID = grafanautil.GenerateShortUID()
-			}
-			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
-			manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)
-			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, opts.Ref, msg); err != nil {
-				return opts.OnFolder(folder, true, startedAt, err)
-			}
-		} else {
-			msg := fmt.Sprintf("Add folder %s", p)
-			if err := fm.repo.Create(ctx, p, opts.Ref, nil, msg); err != nil {
-				return opts.OnFolder(folder, true, startedAt, fmt.Errorf("write folder in repo: %w", err))
-			}
+		manifestID := folder.ID
+		if opts.GenerateNewFolderIDs {
+			manifestID = grafanautil.GenerateShortUID()
 		}
+		msg := fmt.Sprintf("Add folder and folder metadata %s", p)
+		manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)
+		if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, opts.Ref, msg); err != nil {
+			return opts.OnFolder(folder, true, startedAt, err)
+		}
+
 		// Add it to the existing tree
 		fm.tree.Add(folder, parent)
 

@@ -89,13 +89,12 @@ func TestIntegrationProvisioning_CrossFolderWriteDeniedWithoutDestinationAccess(
 }
 
 // TestIntegrationProvisioning_FolderAuthorizationWithMetadata verifies folder
-// authorization when the provisioningFolderMetadata feature flag is enabled.
-// The flag-disabled counterpart lives in the core provisioning package.
+// authorization using stable folder metadata.
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const (
-		repoName         = "folder-auth-metadata-enabled-repo"
+		repoName         = "folder-auth-metadata-repo"
 		folderPathPrefix = "parent-with-metadata"
 	)
 
