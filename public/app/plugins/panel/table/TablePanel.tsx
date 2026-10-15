@@ -63,7 +63,7 @@ export function TablePanel(props: Props) {
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
   const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
-  const rowTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
+  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
   const onFieldAddToAssistant = useTableFieldAssistant(props);
   const onCellAddToAssistant = useTableCellAssistant(props);
   const enableSharedCrosshair = useTableSharedCrosshair();
@@ -74,7 +74,7 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const outputMain = frames[currentIndex];
-  const sourceSeries = tableRefreshNewFeaturesEnabled
+  const sourceSeries = adHocTransformationsEnabled
     ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
   const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
@@ -117,19 +117,14 @@ export function TablePanel(props: Props) {
       })),
     [sourceSeries, sourceFramesWithOverrides]
   );
-  const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
-  const adHocColumns = useAdHocColumnState(
-    frames,
-    currentIndex,
-    tableRefreshNewFeaturesEnabled,
-    configuredSourceSeries
-  );
+  const columnManagementEnabled = adHocTransformationsEnabled && supportsColumnManagement(rawMain);
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, adHocTransformationsEnabled, configuredSourceSeries);
   const main = useMemo(
     () =>
       tableRefreshNewFeaturesEnabled && rawMain
-        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns), rowTransformationsEnabled)
+        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns), adHocTransformationsEnabled)
         : rawMain,
-    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns, rowTransformationsEnabled]
+    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns, adHocTransformationsEnabled]
   );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
@@ -156,9 +151,9 @@ export function TablePanel(props: Props) {
       {...adHocColumns}
       reorderable={Boolean(adHocColumns)}
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
-      rowTransformationsEnabled={rowTransformationsEnabled}
+      rowTransformationsEnabled={adHocTransformationsEnabled}
       rowTransformations={
-        rowTransformationsEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
+        adHocTransformationsEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,

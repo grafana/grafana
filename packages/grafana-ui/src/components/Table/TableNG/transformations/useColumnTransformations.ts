@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type DataFrame } from '@grafana/data';
 
@@ -9,6 +9,20 @@ import { prepareColumnContext } from './columnContext';
 import { ensureVisibleColumnPerFrame } from './columnVisibility';
 import { columnTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
+
+function shouldResetColumnOrder(previous: string[], current: string[]): boolean {
+  const previousNames = new Set(previous);
+  const currentNames = new Set(current);
+  const sharedBefore = previous.filter((name) => currentNames.has(name));
+  const sharedAfter = current.filter((name) => previousNames.has(name));
+
+  if (sharedBefore.length === 0) {
+    return previous.length !== 0 || current.length !== 0;
+  }
+
+  // Insertions and removals do not change the order of columns shared by both snapshots.
+  return sharedBefore.some((name, index) => name !== sharedAfter[index]);
+}
 
 export function useColumnTransformations(
   sourceIndex: number,
@@ -29,6 +43,23 @@ export function useColumnTransformations(
       sourceFrame && sourceSeries && sourceIndex >= 0 ? prepareColumnContext(sourceSeries, sourceIndex) : undefined,
     [sourceFrame, sourceSeries, sourceIndex]
   );
+  const previousCatalogs = useRef(new Map<string, string[]>());
+  useEffect(() => {
+    if (!context || context.catalog.length === 0) {
+      return;
+    }
+
+    const frameKey = sourceFrame?.refId ?? `#${sourceIndex}`;
+    const previous = previousCatalogs.current.get(frameKey);
+    previousCatalogs.current.set(frameKey, context.catalog);
+    if (previous && shouldResetColumnOrder(previous, context.catalog)) {
+      update((current) =>
+        columnTransformations.columnOrder.read(current, context).columnOrder
+          ? columnTransformations.columnOrder.write(current, [], context)
+          : current
+      );
+    }
+  }, [context, sourceFrame?.refId, sourceIndex, update]);
   const onHiddenColumnsChange = useCallback(
     (hidden: ReadonlySet<string>) => {
       if (context) {
