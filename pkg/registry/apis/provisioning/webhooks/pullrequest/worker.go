@@ -45,8 +45,7 @@ func ProvidePullRequestWorker(
 
 	// FIXME: we should create providers for client and parsers, so that we don't have
 	// multiple connections for webhooks
-	supportedResources, _ := resources.ParseSupportedResources(cfg.ProvisioningResources)
-	clients := resources.NewClientFactory(configProvider, supportedResources...)
+	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urls, registry)
