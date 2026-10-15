@@ -58,7 +58,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository, opts ...r
 		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
 	}
 
-	return NewRepository(ctx, r, RepositoryConfig{
+	repo, err := NewRepository(ctx, r, RepositoryConfig{
 		URL:              cfg.URL,
 		Branch:           cfg.Branch,
 		Path:             cfg.Path,
@@ -69,6 +69,13 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository, opts ...r
 		SMIMECertificate: SMIMECertificateFromSpec(r),
 		SkipGitSuffix:    true,
 	}, e.metrics, e.clientMetrics)
+	if err != nil {
+		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	return repo, nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {

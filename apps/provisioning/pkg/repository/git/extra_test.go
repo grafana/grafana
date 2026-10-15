@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"errors"
+	"net/url"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -81,12 +82,17 @@ func TestExtra_BuildDeadlineAndCancellation(t *testing.T) {
 		elapsed       time.Duration
 		calls         int
 		wantErr       error
+		token         *common.InlineSecureValue
 	}{
 		{name: "timeout during construction", timeout: 50 * time.Millisecond, elapsed: 50 * time.Millisecond, calls: 1, wantErr: context.DeadlineExceeded},
 		{name: "earlier caller deadline", timeout: time.Second, callerTimeout: 30 * time.Millisecond, elapsed: 30 * time.Millisecond, calls: 1, wantErr: context.DeadlineExceeded},
 		{name: "caller deadline without option", callerTimeout: 30 * time.Millisecond, elapsed: 30 * time.Millisecond, calls: 1, wantErr: context.DeadlineExceeded},
 		{name: "canceled context reaches decrypt", timeout: time.Second, canceled: true, calls: 1, wantErr: context.Canceled},
 		{name: "canceled during construction", timeout: time.Second, cancelAfter: 25 * time.Millisecond, elapsed: 25 * time.Millisecond, calls: 1, wantErr: context.Canceled},
+		{name: "canceled with absent secrets", canceled: true, token: &common.InlineSecureValue{}, wantErr: context.Canceled},
+		{name: "canceled with inline token", canceled: true, token: &common.InlineSecureValue{Create: "token"}, wantErr: context.Canceled},
+		{name: "expired deadline with absent secrets", callerTimeout: -time.Second, token: &common.InlineSecureValue{}, wantErr: context.DeadlineExceeded},
+		{name: "expired deadline with inline token", callerTimeout: -time.Second, token: &common.InlineSecureValue{Create: "token"}, wantErr: context.DeadlineExceeded},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
@@ -97,7 +103,7 @@ func TestExtra_BuildDeadlineAndCancellation(t *testing.T) {
 				} else if tt.cancelAfter > 0 {
 					time.AfterFunc(tt.cancelAfter, cancel)
 				}
-				if tt.callerTimeout > 0 {
+				if tt.callerTimeout != 0 {
 					var cancelDeadline context.CancelFunc
 					ctx, cancelDeadline = context.WithTimeout(ctx, tt.callerTimeout)
 					defer cancelDeadline()
@@ -117,6 +123,9 @@ func TestExtra_BuildDeadlineAndCancellation(t *testing.T) {
 					return nil, ctx.Err()
 				})
 				extra, config := newBuildTestExtra(svc)
+				if tt.token != nil {
+					config.Secure.Token = *tt.token
+				}
 				result, err := extra.Build(ctx, config, repository.WithTimeout(tt.timeout))
 				require.Nil(t, result)
 				require.ErrorIs(t, err, tt.wantErr)
@@ -162,4 +171,19 @@ func TestExtra_BuildDecryptDeadline(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestExtra_BuildPreservesConstructionErrorWhenCanceled(t *testing.T) {
+	extra, config := newBuildTestExtra(nil)
+	config.Secure = provisioning.SecureValues{}
+	config.Spec.Git.URL = "://invalid-url"
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	result, err := extra.Build(ctx, config)
+	require.Nil(t, result)
+	require.ErrorContains(t, err, "create nanogit client")
+	require.NotErrorIs(t, err, context.Canceled)
+	var urlErr *url.Error
+	require.ErrorAs(t, err, &urlErr)
 }
