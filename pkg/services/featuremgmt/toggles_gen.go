@@ -994,10 +994,6 @@ const (
 	// Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route
 	FlagGrafanaOfrepRootUrl = "grafana.ofrepRootUrl"
 
-	// FlagFeaturesBulkFlagEvalFiltering
-	// Filters bulk OFREP flag evaluations to public-metadata flags only
-	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
-
 	// FlagFeaturesLegacyOverrideLookupBypass
 	// Skips checking for flag overrides.
 	FlagFeaturesLegacyOverrideLookupBypass = "features.legacyOverrideLookupBypass"
