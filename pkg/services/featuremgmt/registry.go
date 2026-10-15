@@ -1897,15 +1897,6 @@ var (
 			Expression:   "false", // extensions will be disabled by default
 		},
 		{
-			Name:         "enableDashboardEmptyExtensions",
-			Description:  "Set this to true to enable all dashboard empty state extensions registered by plugins.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			Expression:   "false", // extensions will be disabled by default
-		},
-		{
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
 			Stage:        FeatureStageGeneralAvailability,
@@ -3416,6 +3407,15 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "datasources.gatewayAuditPolicy",
+			Description:  "Enable support for the query gateway audit policies",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

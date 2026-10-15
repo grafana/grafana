@@ -133,7 +133,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.24.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20261007180837-e51b976f5df2 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b // @grafana/alerting-backend
 	github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20261012083909-accb40645dc4 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 // @grafana/identity-access-team
@@ -727,7 +727,7 @@ replace (
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7
 
 	// Use our fork of the upstream Alertmanager.
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623
 )
 
 // This was retracted, but seems to be known by the Go module proxy,

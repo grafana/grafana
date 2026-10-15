@@ -634,6 +634,57 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	require.Contains(t, string(raw), "does not implement ClientV3")
 }
 
+// A route's declared access check on a subresource is granted only by a role
+// that names it as Kind/<route>. Viewer holds the kind; only Admin holds
+// Thing/reload.
+func TestIntegrationPluginManifestRouteSubresourceRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupHelperFull(t, rest.Mode5, "app-sdk-manifest-route-roles.json", featuremgmt.FlagGrafanaUseRouterMiddleware)
+	ctx := context.Background()
+
+	things := func(user apis.User) dynamic.ResourceInterface {
+		return helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: "default",
+			GVR: schema.GroupVersionResource{
+				Group:    testAppGroup,
+				Version:  "v1",
+				Resource: "things",
+			},
+		}).Resource
+	}
+
+	// The writer role is bound to Editor, so Editor can create the parent object.
+	_, err := things(helper.Org1.Editor).Create(ctx, newThing("thing-route-roles", map[string]any{"foo": "bar"}), metav1.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = things(helper.Org1.Editor).Delete(ctx, "thing-route-roles", metav1.DeleteOptions{})
+	})
+
+	// A request that passes its route's access check reaches the plugin, which
+	// has no v3 backend and answers 503.
+	getRoute := func(user apis.User, route string) error {
+		_, err := things(user).Get(ctx, "thing-route-roles", metav1.GetOptions{}, route)
+		return err
+	}
+
+	t.Run("a check on the parent resource is granted by the kind", func(t *testing.T) {
+		err := getRoute(helper.Org1.Viewer, "peek")
+		require.Truef(t, apierrors.IsServiceUnavailable(err), "got %s: %v", apierrors.ReasonForError(err), err)
+	})
+
+	t.Run("a check on a subresource is refused without a role that grants it", func(t *testing.T) {
+		err := getRoute(helper.Org1.Viewer, "reload")
+		require.Truef(t, apierrors.IsForbidden(err), "got %s: %v", apierrors.ReasonForError(err), err)
+	})
+
+	t.Run("a check on a subresource is granted by Kind/<route>", func(t *testing.T) {
+		err := getRoute(helper.Org1.Admin, "reload")
+		require.Truef(t, apierrors.IsServiceUnavailable(err), "got %s: %v", apierrors.ReasonForError(err), err)
+	})
+}
+
 func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
