@@ -1,20 +1,16 @@
 import { css } from '@emotion/css';
 import yaml from 'js-yaml';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { RadioButtonGroup, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
-import { createDashboardSchemaExtensions, createDashboardSchemaValidator } from './dashboardSchemaExtensions';
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 
 export type SchemaEditorFormat = 'json' | 'yaml';
-
-interface JSONSchema {
-  [key: string]: unknown;
-}
 
 export interface DashboardSchemaEditorProps {
   /** The JSON value to edit */
@@ -53,8 +49,18 @@ export function DashboardSchemaEditor({
 }: DashboardSchemaEditorProps) {
   const styles = useStyles2(getStyles);
 
-  const [schema, setSchema] = useState<JSONSchema | null>(null);
-  const [isSchemaLoading, setIsSchemaLoading] = useState(true);
+  // Settings routes also import this component, so load schema tooling only when it mounts.
+  const {
+    value: schemaState,
+    loading: isSchemaLoading,
+    error: schemaLoadError,
+  } = useAsync(async () => {
+    const [schema, support] = await Promise.all([
+      fetchDashboardSchema().catch(() => null),
+      import('./dashboardSchemaExtensions'),
+    ]);
+    return { schema, support };
+  }, []);
   const [format, setFormat] = useState<SchemaEditorFormat>(initialFormat);
   const [yamlParseError, setYamlParseError] = useState<string | null>(null);
   const [localYamlContent, setLocalYamlContent] = useState<string | null>(null);
@@ -82,17 +88,26 @@ export function DashboardSchemaEditor({
     }
   }, [value, format, localYamlContent]);
 
-  const validate = useMemo(() => createDashboardSchemaValidator(schema ?? {}), [schema]);
-  const extensions = useMemo(() => createDashboardSchemaExtensions(schema ?? {}, { format }), [schema, format]);
+  const validate = useMemo(
+    () => schemaState?.support.createDashboardSchemaValidator(schemaState.schema ?? {}),
+    [schemaState]
+  );
+  const extensions = useMemo(
+    () => schemaState?.support.createDashboardSchemaExtensions(schemaState.schema ?? {}, { format }) ?? [],
+    [schemaState, format]
+  );
 
   // Diff/content overrides unmount the editor, so validation belongs to the buffer,
   // rather than the lifetime of a CodeMirror view.
   useEffect(() => {
-    onValidationChange?.(isSchemaLoading || validate(displayValue, format).hasErrors);
+    onValidationChange?.(isSchemaLoading || !validate || validate(displayValue, format).hasErrors);
   }, [displayValue, format, isSchemaLoading, validate, onValidationChange]);
 
   const handleFormatChange = useCallback(
     (newFormat: SchemaEditorFormat) => {
+      if (!validate) {
+        return;
+      }
       if (newFormat === 'yaml' && !isValidJson(value)) {
         return;
       }
@@ -113,15 +128,6 @@ export function DashboardSchemaEditor({
     [localYamlContent, value, onChange, onValidationChange, onFormatChange, validate]
   );
 
-  useEffect(() => {
-    fetchDashboardSchema()
-      .then((s) => {
-        setSchema(s);
-        setIsSchemaLoading(false);
-      })
-      .catch(() => setIsSchemaLoading(false));
-  }, []);
-
   // A YAML parse error means `value` no longer reflects the buffer on screen.
   useEffect(() => {
     onParseErrorChange?.(yamlParseError !== null);
@@ -129,6 +135,9 @@ export function DashboardSchemaEditor({
 
   const handleChange = useCallback(
     (newValue: string) => {
+      if (!validate) {
+        return;
+      }
       const result = validate(newValue, format);
       onValidationChange?.(isSchemaLoading || result.hasErrors);
       if (format === 'json') {
@@ -149,6 +158,10 @@ export function DashboardSchemaEditor({
   );
 
   const wrapperClassName = containerStyles ? `${styles.wrapper} ${containerStyles}` : styles.wrapper;
+
+  if (schemaLoadError) {
+    throw schemaLoadError;
+  }
 
   if (isSchemaLoading) {
     return (
