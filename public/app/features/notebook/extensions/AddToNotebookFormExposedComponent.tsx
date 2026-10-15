@@ -29,6 +29,7 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * "source" attributes the cells ("user" by default, "assistant" for generated content).
  *
  * Requires the `dashboard.notebooks` feature flag and `notebooks:create` or `notebooks:write`.
+ * It is only registered while `dashboard.notebooks` is on, so a missing component means notebooks are off.
  *
  * Usage from a plugin:
  * ```tsx

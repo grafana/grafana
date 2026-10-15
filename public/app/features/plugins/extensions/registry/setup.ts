@@ -1,6 +1,6 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
-import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
+import { FlagKeys, getAppPluginMetas, getCachedPromise, getFeatureFlagClient } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponentLazy';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
@@ -72,12 +72,17 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         description: 'An editable notebook, for a host rendering one outside the notebooks route',
         component: NotebookViewLazy,
       },
-      {
-        id: PluginExtensionExposedComponents.AddToNotebookFormV1,
-        title: 'Add to notebook form',
-        description: 'Add to notebook form',
-        component: AddToNotebookFormExposedComponent,
-      },
+      // Only with notebooks on: plugins treat the form's absence as notebooks being unavailable.
+      ...(getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)
+        ? [
+            {
+              id: PluginExtensionExposedComponents.AddToNotebookFormV1,
+              title: 'Add to notebook form',
+              description: 'Add to notebook form',
+              component: AddToNotebookFormExposedComponent,
+            },
+          ]
+        : []),
     ],
   });
 }
