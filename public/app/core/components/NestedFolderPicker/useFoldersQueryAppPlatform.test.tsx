@@ -34,6 +34,7 @@ describe('useFoldersQueryAppPlatform', () => {
   it('returns a list that contains the virtual "Shared with me" folder under the root', () => {
     mockSelectorResult = {
       isLoading: false,
+      selectableByParent: {},
       responseByParent: {},
     };
 
@@ -57,6 +58,7 @@ describe('useFoldersQueryAppPlatform', () => {
   it('normalizes the canonical root folder sentinel', () => {
     mockSelectorResult = {
       isLoading: false,
+      selectableByParent: {},
       responseByParent: {
         general: {
           status: QueryStatus.fulfilled,
@@ -87,6 +89,7 @@ describe('useFoldersQueryAppPlatform', () => {
     mockDispatchResult = dispatch;
     mockSelectorResult = {
       isLoading: false,
+      selectableByParent: {},
       responseByParent: {},
     };
 
@@ -108,5 +111,74 @@ describe('useFoldersQueryAppPlatform', () => {
     expect(mockInitiate).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
     expect(dispatch).toHaveBeenCalledWith(subscription);
     expect(mockSelect).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
+  });
+
+  describe('when showing read only folders', () => {
+    const rootResponse = {
+      status: QueryStatus.fulfilled,
+      data: {
+        hits: [
+          { name: 'editable', title: 'Editable', folder: 'general', resource: 'folders' },
+          { name: 'view-only', title: 'View only', folder: 'general', resource: 'folders' },
+        ],
+      },
+    };
+
+    beforeEach(() => {
+      mockDispatchResult = jest.fn(() => ({ unsubscribe: jest.fn() }));
+      mockSelect.mockReturnValue(jest.fn());
+    });
+
+    it('requests every folder, then checks which of them can be picked', () => {
+      mockSelectorResult = { isLoading: false, selectableByParent: {}, responseByParent: {} };
+
+      const { result, rerender } = renderHook(() =>
+        useFoldersQueryAppPlatform({ isBrowsing: true, openFolders: {}, permission: 'edit', showReadOnly: true })
+      );
+
+      act(() => {
+        result.current.requestNextPage(undefined);
+      });
+      expect(mockInitiate).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: undefined });
+
+      mockSelectorResult = { isLoading: false, selectableByParent: {}, responseByParent: { general: rootResponse } };
+      rerender();
+
+      expect(mockInitiate).toHaveBeenCalledWith({
+        type: 'folder',
+        permission: 'edit',
+        name: ['editable', 'view-only'],
+        limit: 2,
+      });
+    });
+
+    it('holds the children back until it knows which can be picked', () => {
+      mockSelectorResult = { isLoading: false, selectableByParent: {}, responseByParent: { general: rootResponse } };
+
+      const { result } = renderHook(() =>
+        useFoldersQueryAppPlatform({ isBrowsing: true, openFolders: {}, permission: 'edit', showReadOnly: true })
+      );
+
+      expect(result.current.items.find((treeItem) => treeItem.item.uid === 'editable')).toBeUndefined();
+      expect(result.current.items.some((treeItem) => treeItem.item.kind === 'ui')).toBe(true);
+    });
+
+    it('marks the folders that cannot be picked as disabled and read only', () => {
+      mockSelectorResult = {
+        isLoading: false,
+        selectableByParent: { general: new Set(['editable']) },
+        responseByParent: { general: rootResponse },
+      };
+
+      const { result } = renderHook(() =>
+        useFoldersQueryAppPlatform({ isBrowsing: true, openFolders: {}, permission: 'edit', showReadOnly: true })
+      );
+
+      const editable = result.current.items.find((treeItem) => treeItem.item.uid === 'editable');
+      const viewOnly = result.current.items.find((treeItem) => treeItem.item.uid === 'view-only');
+      expect(editable).toMatchObject({ disabled: false });
+      expect(editable?.readOnly).toBeUndefined();
+      expect(viewOnly).toMatchObject({ disabled: true, readOnly: true });
+    });
   });
 });

@@ -14,7 +14,7 @@ import { PAGE_SIZE } from '../../../features/browse-dashboards/api/constants';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
 import { type UseFoldersQueryProps } from './useFoldersQuery';
-import { getRootFolderItem } from './utils';
+import { getRootFolderItem, getSelectableFoldersArgs } from './utils';
 
 type GetFolderChildrenQuery = ReturnType<
   ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>
@@ -22,6 +22,7 @@ type GetFolderChildrenQuery = ReturnType<
 type GetFolderChildrenRequest = {
   unsubscribe: () => void;
 };
+type FolderChildrenSelector = ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>;
 
 const rootFolderToken = 'general';
 const sharedWithMeFolderToken = 'sharedwithme';
@@ -39,6 +40,7 @@ export function useFoldersQueryAppPlatform({
   rootFolderUID,
   rootFolderItem,
   permission,
+  showReadOnly,
 }: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
@@ -91,6 +93,64 @@ export function useFoldersQueryAppPlatform({
 
   const state = useSelector(listAllFoldersSelector);
 
+  // Selectors for which of each parent's children the user can pick, keyed by parent UID
+  const [selectableSelectors, setSelectableSelectors] = useState<Record<string, FolderChildrenSelector>>({});
+  // The child names last requested per parent, so a changed tree response is checked again
+  const requestedSelectableRef = useRef<Record<string, string>>({});
+
+  const selectableSelector = useMemo(() => {
+    const parents = Object.keys(selectableSelectors);
+    return createSelector(
+      parents.map((parent) => selectableSelectors[parent]),
+      (...responses) => {
+        let isLoading = false;
+        let error: unknown = undefined;
+        const selectableByParent: Record<string, Set<string>> = {};
+
+        responses.forEach((response, index) => {
+          if (response.status === QueryStatus.pending) {
+            isLoading = true;
+          }
+          if (!error && response.error) {
+            error = response.error;
+          }
+          // A failed check leaves the set empty, so the folders show as read only rather than selectable
+          if (response.status === QueryStatus.fulfilled || response.status === QueryStatus.rejected) {
+            selectableByParent[parents[index]] = new Set(response.data?.hits.map((hit) => hit.name));
+          }
+        });
+
+        return { isLoading, error, selectableByParent };
+      }
+    );
+  }, [selectableSelectors]);
+
+  const selectableState = useSelector(selectableSelector);
+
+  // Once a parent's children have loaded, check which of them the user can pick
+  useEffect(() => {
+    if (!showReadOnly) {
+      return;
+    }
+
+    for (const [parentName, response] of Object.entries(state.responseByParent)) {
+      const names = response.data?.hits.map((hit) => hit.name);
+      const namesKey = names?.join(',');
+      if (!names?.length || requestedSelectableRef.current[parentName] === namesKey) {
+        continue;
+      }
+      requestedSelectableRef.current[parentName] = namesKey ?? '';
+
+      const args = getSelectableFoldersArgs(names);
+      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
+      requestsRef.current = requestsRef.current.concat([subscription]);
+      setSelectableSelectors((selectors) => ({
+        ...selectors,
+        [parentName]: dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select(args),
+      }));
+    }
+  }, [showReadOnly, state.responseByParent, dispatch]);
+
   // Loads folders for the given parent UID
   const requestNextPage = useCallback(
     (parentUid: string | undefined) => {
@@ -98,12 +158,17 @@ export function useFoldersQueryAppPlatform({
       const response = state.responseByParent[finalParentUid];
       const isLoading = response?.status === QueryStatus.pending;
 
-      // If already loading, don't request again
-      if (isLoading) {
+      // If already loading or loaded, don't request again. There's no pagination, so a loaded response is complete.
+      if (isLoading || response?.data) {
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder', permission } as const;
+      // With read only folders shown, every folder is listed and selectability comes from a separate check
+      const args = {
+        folder: finalParentUid,
+        type: 'folder',
+        permission: showReadOnly ? undefined : permission,
+      } as const;
 
       // Make a request
       const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
@@ -115,7 +180,7 @@ export function useFoldersQueryAppPlatform({
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
       requestsRef.current = requestsRef.current.concat([subscription]);
     },
-    [state, dispatch, permission]
+    [state, dispatch, permission, showReadOnly]
   );
 
   // Unsubscribe from all requests when the component is unmounted
@@ -139,7 +204,11 @@ export function useFoldersQueryAppPlatform({
       response: GetFolderChildrenQuery | undefined,
       level: number
     ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> {
-      let folders = response?.data?.hits ? [...response.data.hits] : [];
+      const selectable = parentUid ? selectableState.selectableByParent[parentUid] : undefined;
+      // Hold the children back until we know which can be picked, so read only folders never look selectable
+      const isAwaitingSelectable = showReadOnly && Boolean(response?.data?.hits.length) && !selectable;
+
+      let folders = response?.data?.hits && !isAwaitingSelectable ? [...response.data.hits] : [];
       folders.sort((a, b) => collator.compare(a.title, b.title));
 
       // Add virtual "Shared with me" folder under the top-level "Dashboards" root.
@@ -152,10 +221,12 @@ export function useFoldersQueryAppPlatform({
       const list: DashboardsTreeItem[] = folders.flatMap((item) => {
         const name = item.name;
         const folderIsOpen = openFolders[name];
+        const isReadOnly = showReadOnly && name !== sharedWithMeFolderToken && !selectable?.has(name);
         const flatItem: DashboardsTreeItem = {
           isOpen: Boolean(folderIsOpen),
           level: level,
-          disabled: item.name === sharedWithMeFolderToken,
+          disabled: item.name === sharedWithMeFolderToken || isReadOnly,
+          readOnly: isReadOnly || undefined,
           item: {
             kind: 'folder' as const,
             title: item.title,
@@ -185,7 +256,7 @@ export function useFoldersQueryAppPlatform({
 
       // We could return early but we are adding the "shared with me" folder statically, so even if response is empty
       // there could be a folder to process
-      if (!response) {
+      if (!response || isAwaitingSelectable) {
         // The pagination placeholders are what actually triggers the call to the next page. So if there is no response,
         // meaning to request for some children, we add these placeholders, and they will trigger the load.
         list.push(...getPaginationPlaceholders(PAGE_SIZE, parentUid, level));
@@ -198,13 +269,15 @@ export function useFoldersQueryAppPlatform({
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
+  }, [state, selectableState, showReadOnly, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
+
+  const error = state.error ?? selectableState.error;
 
   return {
     emptyFolders,
     items: treeList,
-    isLoading: state.isLoading,
-    error: state.error ? new Error(getMessageFromError(state.error)) : undefined,
+    isLoading: state.isLoading || selectableState.isLoading,
+    error: error ? new Error(getMessageFromError(error)) : undefined,
     requestNextPage,
   };
 }

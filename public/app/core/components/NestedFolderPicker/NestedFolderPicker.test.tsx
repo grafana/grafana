@@ -1,7 +1,8 @@
+import { http, HttpResponse } from 'msw';
 import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -621,6 +622,104 @@ describe('NestedFolderPicker', () => {
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
       expect(screen.queryByLabelText('Starred folders')).toBeNull();
       expect(screen.queryByLabelText('Starred Folder One')).toBeNull();
+    });
+  });
+
+  describe('read only folders', () => {
+    const readOnlyFlags = { 'grafana.folderPickerFolderEditAccess': true, foldersAppPlatformAPI: true };
+
+    // The shared mock search handler ignores `permission`, so answer the name-scoped selectability checks here and
+    // let every other search fall through to it
+    function useSelectableFoldersHandler(selectableNames: string[]) {
+      server.use(
+        http.get(searchRoute, ({ request }) => {
+          const url = new URL(request.url);
+          const names = url.searchParams.getAll('name');
+          if (url.searchParams.get('permission') !== 'edit' || names.length === 0) {
+            return undefined;
+          }
+
+          const hits = names
+            .filter((name) => selectableNames.includes(name))
+            .map((name) => ({ resource: 'folders', name, title: name, field: {} }));
+          return HttpResponse.json({ totalHits: hits.length, hits });
+        })
+      );
+    }
+
+    beforeEach(() => {
+      useSelectableFoldersHandler([folderA.item.uid]);
+    });
+
+    it('shows folders the user cannot pick as read only, and does not select them', async () => {
+      setTestFlags(readOnlyFlags);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
+      expect(within(readOnlyRow).getByText('Read only')).toBeInTheDocument();
+      expect(readOnlyRow).toHaveAttribute('aria-disabled', 'true');
+
+      await user.click(within(readOnlyRow).getByText(folderC.item.title));
+      expect(mockOnChange).not.toHaveBeenCalled();
+
+      const editableRow = screen.getByRole('treeitem', { name: folderA.item.title });
+      expect(within(editableRow).queryByText('Read only')).not.toBeInTheDocument();
+      await user.click(within(editableRow).getByText(folderA.item.title));
+      expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
+    });
+
+    it('does not select a read only folder with the keyboard', async () => {
+      setTestFlags(readOnlyFlags);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
+      const input = screen.getByRole('combobox');
+      for (let i = 0; i < 20 && input.getAttribute('aria-activedescendant') !== readOnlyRow.id; i++) {
+        await user.keyboard('{ArrowDown}');
+      }
+      expect(input).toHaveAttribute('aria-activedescendant', readOnlyRow.id);
+
+      await user.keyboard('{Enter}');
+      expect(mockOnChange).not.toHaveBeenCalled();
+    });
+
+    it('marks typed search results the user cannot pick as read only', async () => {
+      setTestFlags(readOnlyFlags);
+      server.use(
+        getCustomSearchHandler([
+          { resource: 'folders', name: 'searchable-editable', title: 'Searchable editable' },
+          { resource: 'folders', name: 'searchable-view-only', title: 'Searchable view only' },
+        ])
+      );
+      useSelectableFoldersHandler(['searchable-editable']);
+
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+      fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'searchable' } });
+
+      const readOnlyRow = await screen.findByRole('treeitem', { name: /Searchable view only/ });
+      expect(within(readOnlyRow).getByText('Read only')).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('treeitem', { name: /Searchable editable/ })).queryByText('Read only')
+      ).not.toBeInTheDocument();
+    });
+
+    it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; permission?: 'view' | 'edit' }>([
+      { name: 'the feature flag is off', flags: { foldersAppPlatformAPI: true } },
+      {
+        name: 'the app platform folders API is off',
+        flags: { 'grafana.folderPickerFolderEditAccess': true, foldersAppPlatformAPI: false },
+      },
+      { name: 'the picker lists folders the user can view', flags: readOnlyFlags, permission: 'view' },
+    ])('does not show read only folders when $name', async ({ flags, permission }) => {
+      setTestFlags(flags);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} permission={permission} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
+      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
     });
   });
 });

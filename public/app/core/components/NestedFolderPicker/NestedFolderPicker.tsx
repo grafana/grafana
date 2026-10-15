@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import debounce from 'debounce-promise';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
@@ -8,6 +9,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -20,6 +22,7 @@ import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
 import { type PermissionLevel } from 'app/types/acl';
+import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
@@ -27,7 +30,7 @@ import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
-import { getRootFolderItem } from './utils';
+import { getRootFolderItem, getSelectableFoldersArgs } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -71,16 +74,29 @@ export interface NestedFolderPickerProps {
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
-async function getSearchResults(searchQuery: string, permission?: PermissionLevel) {
+type SearchResults = QueryResponse & {
+  items: DashboardViewItem[];
+  /** Names of the results the user can pick, when read only folders are shown */
+  selectableNames?: Set<string>;
+};
+
+async function getSearchResults(
+  searchQuery: string,
+  permission?: PermissionLevel,
+  getSelectableNames?: (names: string[]) => Promise<Set<string>>
+): Promise<SearchResults> {
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
     limit: 100,
-    permission,
+    // With read only folders shown, every folder is listed and selectability comes from a separate check
+    permission: getSelectableNames ? undefined : permission,
   });
 
   const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
-  return { ...queryResponse, items };
+  const selectableNames =
+    getSelectableNames && items.length > 0 ? await getSelectableNames(items.map((item) => item.uid)) : undefined;
+  return { ...queryResponse, items, selectableNames };
 }
 
 export function NestedFolderPicker({
@@ -98,7 +114,30 @@ export function NestedFolderPicker({
   disabled = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
   const getSelectedFolderResult = useGetFolderQueryFacade(value);
+
+  const isFolderEditAccessEnabled = useBooleanFlagValue('grafana.folderPickerFolderEditAccess', false);
+  // Selectability comes from the search API, which only backs the picker with the app platform folder API
+  const isFoldersAppPlatformAPIEnabled = useBooleanFlagValue('foldersAppPlatformAPI', true);
+  const showReadOnly = isFolderEditAccessEnabled && isFoldersAppPlatformAPIEnabled && permission === 'edit';
+
+  const getSelectableNames = useCallback(
+    async (names: string[]) => {
+      try {
+        const response = await dispatch(
+          dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(getSelectableFoldersArgs(names), {
+            subscribe: false,
+          })
+        ).unwrap();
+        return new Set(response.hits.map((hit) => hit.name));
+      } catch {
+        // Show the results as read only rather than selectable when the check fails
+        return new Set<string>();
+      }
+    },
+    [dispatch]
+  );
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
@@ -106,7 +145,7 @@ export function NestedFolderPicker({
   const isForbidden = getStatusFromError(getSelectedFolderResult.error) === 403;
 
   const [search, setSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
 
   const [autoFocusButton, setAutoFocusButton] = useState(false);
@@ -141,6 +180,7 @@ export function NestedFolderPicker({
     permission,
     rootFolderUID,
     rootFolderItem,
+    showReadOnly,
   });
 
   useEffect(() => {
@@ -152,19 +192,18 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, permission).then((queryResponse) => {
+    debouncedSearch(search, permission, showReadOnly ? getSelectableNames : undefined).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
       // request in progress, this will clear it for us
       if (timestamp > lastSearchTimestamp.current) {
-        const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
-        setSearchResults({ ...queryResponse, items });
+        setSearchResults(queryResponse);
         setIsFetchingSearchResults(false);
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, permission]);
+  }, [search, permission, showReadOnly, getSelectableNames]);
 
   // the order of middleware is important!
   const middleware = [
@@ -260,7 +299,11 @@ export function NestedFolderPicker({
         flatTree = [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
       }
     } else {
-      flatTree = (searchResults?.items ?? []).map((item) => ({ isOpen: false, level: 0, item }));
+      const selectableNames = searchResults?.selectableNames;
+      flatTree = (searchResults?.items ?? []).map((item) => {
+        const readOnly = selectableNames !== undefined && !selectableNames.has(item.uid);
+        return { isOpen: false, level: 0, item, ...(readOnly && { disabled: true, readOnly: true }) };
+      });
     }
 
     return filterItems(flatTree, excludeUIDs, folderFilter);
@@ -270,6 +313,7 @@ export function NestedFolderPicker({
     folderFilter,
     isBrowsing,
     searchResults?.items,
+    searchResults?.selectableNames,
     showRootFolder,
     teamFolderTreeItems,
     starredFolderTreeItems,

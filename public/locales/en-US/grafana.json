@@ -9353,6 +9353,9 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": "You can't create dashboards in this folder"
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonymous",
