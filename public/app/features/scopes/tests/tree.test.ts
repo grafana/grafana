@@ -96,9 +96,7 @@ describe('Tree', () => {
     await openSelector();
     await expandResultApplications();
     await selectResultApplicationsGrafana();
-    // Once for the select prefetch, and once more if the metadata tooltip opened while hovering the item.
-    expect(fetchScopeSpy).toHaveBeenCalled();
-    expect(fetchScopeSpy.mock.calls.every(([id]) => id === fetchScopeSpy.mock.calls[0][0])).toBe(true);
+    expect(fetchScopeSpy).toHaveBeenCalledTimes(1);
   });
 
   it('Selects the proper scopes', async () => {
@@ -459,7 +457,9 @@ describe('Tree', () => {
       const selectedItem = screen.getByRole('treeitem', { selected: true });
       expect(selectedItem).toBeTruthy();
 
-      // Reset with Escape
+      // The first Escape dismisses the highlighted item's metadata tooltip, the second one resets the highlight
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
       await user.keyboard('{Escape}');
       expect(screen.queryByRole('treeitem', { selected: true })).toBeFalsy();
     });

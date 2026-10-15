@@ -1,64 +1,100 @@
-import { screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { screen, waitFor } from '@testing-library/react';
+import { testWithFeatureToggles } from 'test/test-utils';
 
-import { type Scope } from '@grafana/data';
+import { type Scope, type ScopeNode } from '@grafana/data';
 
 import { RecentScopes } from './RecentScopes';
+import { renderWithScopesServices } from './tooltipTestUtils';
 import { type RecentScopeSet } from './types';
 
-const mockGetScope = jest.fn<Promise<Scope | undefined>, [string]>();
-
-// The real services object is referentially stable, which the component's effect depends on
-jest.mock('../ScopesContextProvider', () => {
-  const services = {
-    scopesSelectorService: {
-      getScope: (id: string) => mockGetScope(id),
-      getScopeNode: jest.fn().mockResolvedValue(undefined),
-    },
-  };
-  return { useScopesServices: () => services };
+const scope = (name: string, spec: Partial<Scope['spec']> = {}): Scope => ({
+  metadata: { name },
+  spec: { title: name, filters: [], ...spec },
 });
 
-const withFilters: RecentScopeSet = {
-  scopeIds: ['with-filters'],
-  scopes: [{ id: 'with-filters', title: 'Vault prod' }],
+const leafNode = (name: string, linkId: string, description?: string): ScopeNode => ({
+  metadata: { name },
+  spec: { nodeType: 'leaf', title: name, description, linkType: 'scope', linkId, parentName: 'category' },
+});
+
+const scopes = [
+  scope('with-filters', { filters: [{ key: 'cluster', operator: 'equals', value: 'prod' }] }),
+  scope('with-path', { defaultPath: ['', 'category', 'path-node'] }),
+  scope('bare'),
+  scope('other', { filters: [{ key: 'env', operator: 'not-equals', value: 'dev' }] }),
+];
+const nodes = [
+  leafNode('path-node', 'with-path', 'Found through the default path'),
+  leafNode('stored-node', 'with-filters', 'Found through the stored node'),
+];
+
+const set = (id: string, scopeNodeId?: string): RecentScopeSet => ({
+  scopeIds: [id],
+  scopes: [{ id, title: `Title ${id}` }],
+  scopeNodeId,
+});
+
+testWithFeatureToggles({ enable: ['scopeFilters'] });
+
+const renderExpanded = async (recentScopes: RecentScopeSet[]) => {
+  const result = renderWithScopesServices(<RecentScopes recentScopes={recentScopes} onSelect={jest.fn()} />, {
+    scopes,
+    nodes,
+  });
+  await result.user.click(screen.getByTestId('scopes-selector-recent-scopes-section'));
+  return result;
 };
-const bare: RecentScopeSet = { scopeIds: ['bare'], scopes: [{ id: 'bare', title: 'No metadata' }] };
 
 describe('RecentScopes metadata tooltip', () => {
-  beforeEach(() => {
-    mockGetScope.mockReset();
-    mockGetScope.mockImplementation(async (id) => ({
-      metadata: { name: id },
-      spec: {
-        title: id,
-        filters: id === 'with-filters' ? [{ key: 'cluster', operator: 'equals', value: 'prod' }] : [],
-      },
-    }));
-  });
+  it('shows the filters when hovering a recent scope', async () => {
+    const { user } = await renderExpanded([set('with-filters')]);
 
-  const renderExpanded = async () => {
-    const result = render(<RecentScopes recentScopes={[withFilters, bare]} onSelect={jest.fn()} />);
-    await result.user.click(screen.getByTestId('scopes-selector-recent-scopes-section'));
-    return result;
-  };
-
-  it('shows the filters when hovering a recent scope that has metadata', async () => {
-    const { user } = await renderExpanded();
-
-    await user.hover(screen.getByRole('button', { name: /Vault prod/ }));
+    await user.hover(screen.getByRole('button', { name: /Title with-filters/ }));
 
     expect(await screen.findByText('cluster = prod')).toBeInTheDocument();
   });
 
-  it('shows no tooltip for a recent scope without metadata', async () => {
-    const { user } = await renderExpanded();
-    // Let the scope fetches settle so the "no metadata" state is final
-    await screen.findByRole('button', { name: /Vault prod/ });
+  it('shows the description of the node stored with the recent scope', async () => {
+    const { user } = await renderExpanded([set('with-filters', 'stored-node')]);
 
-    await user.hover(screen.getByRole('button', { name: /No metadata/ }));
+    await user.hover(screen.getByRole('button', { name: /Title with-filters/ }));
 
-    expect(screen.getByRole('button', { name: /No metadata/ })).toBeInTheDocument();
+    expect(await screen.findByText('Found through the stored node')).toBeInTheDocument();
+  });
+
+  it('finds the description through the scope default path when no node is stored', async () => {
+    const { user } = await renderExpanded([set('with-path')]);
+
+    await user.hover(screen.getByRole('button', { name: /Title with-path/ }));
+
+    expect(await screen.findByText('Found through the default path')).toBeInTheDocument();
+  });
+
+  it('labels each scope with its title when the recent set has several scopes', async () => {
+    const { user } = await renderExpanded([
+      {
+        scopeIds: ['with-filters', 'other'],
+        scopes: [
+          { id: 'with-filters', title: 'First' },
+          { id: 'other', title: 'Second' },
+        ],
+      },
+    ]);
+
+    await user.hover(screen.getByRole('button', { name: /First, Second/ }));
+
+    expect(await screen.findByText('cluster = prod')).toBeInTheDocument();
+    expect(screen.getByText('env != dev')).toBeInTheDocument();
+    expect(screen.getByText('First')).toBeInTheDocument();
+    expect(screen.getByText('Second', { selector: 'span' })).toBeInTheDocument();
+  });
+
+  it('shows no tooltip for a recent scope without a description or filters', async () => {
+    const { user, fetchScope } = await renderExpanded([set('bare')]);
+
+    await user.hover(screen.getByRole('button', { name: /Title bare/ }));
+
+    await waitFor(() => expect(fetchScope).toHaveBeenCalledWith('bare'));
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 });

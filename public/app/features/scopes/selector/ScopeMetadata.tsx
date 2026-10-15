@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useState, type JSX } from 'react';
 
-import { type GrafanaTheme2, type Scope, type ScopeSpecFilter, reverseScopeFilterOperatorMap } from '@grafana/data';
+import { type GrafanaTheme2, type ScopeSpecFilter, reverseScopeFilterOperatorMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, Text, useStyles2 } from '@grafana/ui';
+import { Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
+
+import { type ScopesSelectorService } from './ScopesSelectorService';
 
 export interface ScopeMetadataProps {
   title?: string;
@@ -55,25 +57,135 @@ export function ScopeMetadata({ title, description, filters }: ScopeMetadataProp
   );
 }
 
+export interface ScopeMetadataSource {
+  scopeId: string;
+  // Node the scope was picked from. Falls back to the last element of the scope's defaultPath.
+  nodeId?: string;
+  title?: string;
+}
+
+interface LoadedScopeMetadata extends ScopeMetadataProps {
+  scopeId: string;
+}
+
+async function loadScopeMetadata(
+  service: ScopesSelectorService,
+  { scopeId, nodeId, title }: ScopeMetadataSource
+): Promise<LoadedScopeMetadata> {
+  const scope = await service.getScope(scopeId);
+  const resolvedNodeId = nodeId ?? scope?.spec.defaultPath?.at(-1);
+  const node = resolvedNodeId ? await service.getScopeNode(resolvedNodeId) : undefined;
+  // Only trust a node that actually links to this scope, so a category's description is never shown for a scope.
+  const description = node?.spec.linkId === scopeId ? node.spec.description : undefined;
+  return { scopeId, title, description, filters: scope?.spec.filters };
+}
+
+interface ScopeMetadataTooltipProps {
+  sources: ScopeMetadataSource[];
+  // Show the tooltip for the item that has keyboard focus through aria-activedescendant
+  highlighted?: boolean;
+  className?: string;
+  children: JSX.Element;
+}
+
+interface AnchorProps {
+  className?: string;
+  children: JSX.Element;
+  'aria-describedby'?: string;
+  onActiveChange: (active: boolean) => void;
+}
+
+// Tooltip clones its child to inject a tab stop and its own hover and focus handling. We control visibility
+// ourselves (the tooltip must stay hidden when there is nothing to show), so only the ref and aria-describedby
+// are used and the extra tab stop is dropped.
+const TooltipAnchor = forwardRef<HTMLDivElement, AnchorProps>(function TooltipAnchor(
+  { className, children, 'aria-describedby': describedBy, onActiveChange },
+  ref
+) {
+  return (
+    // Only observes hover and focus of the interactive children, it is not a control itself
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      ref={ref}
+      className={className}
+      aria-describedby={describedBy}
+      onMouseEnter={() => onActiveChange(true)}
+      onMouseLeave={() => onActiveChange(false)}
+      onFocus={() => onActiveChange(true)}
+      onBlur={() => onActiveChange(false)}
+    >
+      {children}
+    </div>
+  );
+});
+
 /**
- * Loads the scope behind a tree node on demand. Only rendered while the tooltip is open, so nothing is fetched
- * for nodes the user never hovers. The scope fetch is cached by the API layer.
+ * Shows a scope's description and filters in a tooltip while its child is hovered or focused. The metadata is loaded
+ * on first interaction and nothing is shown when the scope has neither a description nor filters.
  */
-export function ScopeNodeMetadata({ description, scopeId }: { description?: string; scopeId?: string }) {
-  const services = useScopesServices();
-  const [scope, setScope] = useState<Scope | undefined>(undefined);
+export function ScopeMetadataTooltip({ sources, highlighted, className, children }: ScopeMetadataTooltipProps) {
+  const service = useScopesServices()?.scopesSelectorService;
+  const [active, setActive] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [loaded, setLoaded] = useState<LoadedScopeMetadata[]>([]);
+
+  const sourcesKey = sources.map((s) => `${s.scopeId}|${s.nodeId ?? ''}|${s.title ?? ''}`).join(',');
+  const interacted = active || Boolean(highlighted);
 
   useEffect(() => {
-    let cancelled = false;
-    if (scopeId && services?.scopesSelectorService) {
-      services.scopesSelectorService.getScope(scopeId).then((s) => !cancelled && setScope(s));
+    if (!interacted || !service) {
+      return;
     }
+    let cancelled = false;
+    Promise.all(sources.map((source) => loadScopeMetadata(service, source))).then((result) => {
+      if (!cancelled) {
+        setLoaded(result);
+      }
+    });
     return () => {
       cancelled = true;
     };
-  }, [scopeId, services?.scopesSelectorService]);
+    // sourcesKey stands in for sources, which is a new array on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interacted, service, sourcesKey]);
 
-  return <ScopeMetadata description={description} filters={scope?.spec.filters} />;
+  const metadata = loaded.filter(hasScopeMetadata);
+  const open = interacted && !dismissed && metadata.length > 0;
+
+  // The pointer can hover without focus being inside the anchor, so listen on the document while the tooltip is open
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && setDismissed(true);
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
+
+  const onActiveChange = (value: boolean) => {
+    setActive(value);
+    if (value) {
+      setDismissed(false);
+    }
+  };
+
+  return (
+    <Tooltip
+      show={open}
+      placement="right"
+      content={
+        <Stack direction="column" gap={1} alignItems="flex-start">
+          {metadata.map(({ scopeId, title, description, filters }) => (
+            <ScopeMetadata key={scopeId} title={title} description={description} filters={filters} />
+          ))}
+        </Stack>
+      }
+    >
+      <TooltipAnchor className={className} onActiveChange={onActiveChange}>
+        {children}
+      </TooltipAnchor>
+    </Tooltip>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

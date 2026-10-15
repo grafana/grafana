@@ -1,44 +1,51 @@
-import { screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { screen, waitFor } from '@testing-library/react';
+import { testWithFeatureToggles } from 'test/test-utils';
 
 import { type Scope, type ScopeNode } from '@grafana/data';
 
 import { ScopesTreeItem } from './ScopesTreeItem';
+import { renderWithScopesServices } from './tooltipTestUtils';
 import { type NodesMap } from './types';
 
-const mockGetScope = jest.fn<Promise<Scope | undefined>, [string]>();
+const scope = (name: string, filters: Scope['spec']['filters'] = []): Scope => ({
+  metadata: { name },
+  spec: { title: name, filters },
+});
 
-jest.mock('../ScopesContextProvider', () => ({
-  useScopesServices: () => ({
-    scopesSelectorService: { closeAndApply: jest.fn(), getScope: (id: string) => mockGetScope(id) },
-  }),
-}));
-
-jest.mock('./useScopeActions', () => ({
-  useScopeActions: () => ({ selectScope: jest.fn(), deselectScope: jest.fn(), toggleExpandedNode: jest.fn() }),
-}));
-
-const leaf: ScopeNode = {
-  metadata: { name: 'leaf' },
+const leaf = (name: string, description?: string): ScopeNode => ({
+  metadata: { name },
   spec: {
     nodeType: 'leaf',
-    title: 'prod-us-central-0',
-    description: 'Production Vault cluster',
+    title: name,
+    description,
     linkType: 'scope',
-    linkId: 'scope-leaf',
+    linkId: `scope-${name}`,
     parentName: 'category',
   },
-};
+});
 
 const category: ScopeNode = {
   metadata: { name: 'category' },
   spec: { nodeType: 'container', title: 'Vault', description: 'Vault clusters', parentName: '' },
 };
 
-const scopeNodes: NodesMap = { leaf, category };
+const leaves = {
+  full: leaf('full', 'Production Vault cluster'),
+  filtersOnly: leaf('filtersOnly'),
+  empty: leaf('empty'),
+};
+const scopes = [
+  scope('scope-full', [{ key: 'cluster', operator: 'equals', value: 'prod' }]),
+  scope('scope-filtersOnly', [{ key: 'region', operator: 'regex-match', value: 'us-.*' }]),
+  scope('scope-empty'),
+];
+const nodes = [category, ...Object.values(leaves)];
+const scopeNodes: NodesMap = Object.fromEntries(nodes.map((n) => [n.metadata.name, n]));
 
-const renderItem = (scopeNodeId: string) =>
-  render(
+testWithFeatureToggles({ enable: ['scopeFilters'] });
+
+const renderItem = (scopeNodeId: string, highlighted = false) => {
+  const result = renderWithScopesServices(
     <ScopesTreeItem
       anyChildExpanded={false}
       loadingNodeName={undefined}
@@ -46,40 +53,71 @@ const renderItem = (scopeNodeId: string) =>
       scopeNodes={scopeNodes}
       selected={false}
       selectedScopes={[]}
-      highlighted={false}
-    />
+      highlighted={highlighted}
+    />,
+    { scopes, nodes }
   );
+  return result;
+};
 
 describe('ScopesTreeItem metadata tooltip', () => {
-  beforeEach(() => {
-    mockGetScope.mockReset();
-    mockGetScope.mockResolvedValue({
-      metadata: { name: 'scope-leaf' },
-      spec: {
-        title: 'prod-us-central-0',
-        filters: [{ key: 'cluster', operator: 'equals', value: 'prod-us-central-0' }],
-      },
-    });
-  });
-
   it('shows the description and the scope filters when hovering a scope', async () => {
-    const { user } = renderItem('leaf');
+    const { user } = renderItem('full');
 
-    await user.hover(screen.getByTestId('scopes-tree-leaf'));
+    await user.hover(screen.getByTestId('scopes-tree-full'));
 
     expect(await screen.findByText('Production Vault cluster')).toBeInTheDocument();
-    expect(await screen.findByText('cluster = prod-us-central-0')).toBeInTheDocument();
-    expect(mockGetScope).toHaveBeenCalledWith('scope-leaf');
+    expect(screen.getByText('cluster = prod')).toBeInTheDocument();
   });
 
-  it('does not show a tooltip when hovering a category, even if it has a description', async () => {
-    const { user } = renderItem('category');
+  it('shows only the filters when the scope node has no description', async () => {
+    const { user } = renderItem('filtersOnly');
+
+    await user.hover(screen.getByTestId('scopes-tree-filtersOnly'));
+
+    expect(await screen.findByText('region =~ us-.*')).toBeInTheDocument();
+    expect(screen.queryByText('Description')).not.toBeInTheDocument();
+  });
+
+  it('shows no tooltip for a scope without a description or filters', async () => {
+    const { user, fetchScope } = renderItem('empty');
+
+    await user.hover(screen.getByTestId('scopes-tree-empty'));
+
+    await waitFor(() => expect(fetchScope).toHaveBeenCalledWith('scope-empty'));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('shows no tooltip for a category, even if it has a description', async () => {
+    const { user, fetchScope } = renderItem('category');
 
     await user.hover(screen.getByTestId('scopes-tree-category'));
 
     expect(screen.getByText('Vault')).toBeInTheDocument();
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
-    expect(screen.queryByText('Vault clusters')).not.toBeInTheDocument();
-    expect(mockGetScope).not.toHaveBeenCalled();
+    expect(fetchScope).not.toHaveBeenCalled();
+  });
+
+  it('shows the tooltip for the keyboard highlighted scope without hovering', async () => {
+    renderItem('full', true);
+
+    expect(await screen.findByText('cluster = prod')).toBeInTheDocument();
+  });
+
+  it('hides the tooltip when Escape is pressed', async () => {
+    const { user } = renderItem('full');
+    await user.hover(screen.getByTestId('scopes-tree-full'));
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('does not add a tab stop for the tooltip anchor', () => {
+    const { container } = renderItem('full');
+
+    expect(screen.getByTestId('scopes-tree-full')).toBeInTheDocument();
+    expect(container.querySelector('[tabindex]')).toBeNull();
   });
 });
