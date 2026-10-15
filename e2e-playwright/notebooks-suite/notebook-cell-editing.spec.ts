@@ -320,6 +320,13 @@ test.describe('Notebook drag-to-reorder', () => {
     await expect(firstEditor).toContainText('First cell');
 
     const firstHandle = page.getByRole('button', { name: 'Drag to reorder' }).first();
+    for (const width of [390, 900, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.locator(`.${NOTEBOOK_CELL_FRAME_CLASS}`).first().hover();
+      await expect(firstHandle).toBeInViewport({ ratio: 1 });
+      await expect(firstHandle).toHaveCSS('opacity', '1');
+      await expect(page.getByRole('button', { name: 'Click to add above' }).first()).toBeInViewport({ ratio: 1 });
+    }
     await firstHandle.focus();
     await page.keyboard.press('Space');
     await expect(page.getByText(/you have lifted/i)).toBeVisible();

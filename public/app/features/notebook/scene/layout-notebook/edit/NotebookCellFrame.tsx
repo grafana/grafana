@@ -217,7 +217,12 @@ export function NotebookCellFrame({
             />
           )}
 
-          <div className={NOTEBOOK_CELL_CONTENT_CLASS}>
+          <div
+            className={cx(
+              NOTEBOOK_CELL_CONTENT_CLASS,
+              isEditing && onDuplicate && onDelete && (!body || collapsed) && styles.contentWithActions
+            )}
+          >
             <NotebookCellRenderer
               cell={cell}
               isEditing={Boolean(isEditing)}
@@ -263,7 +268,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // Wide enough for the drag handle and the add-cell button side by side.
     paddingLeft: theme.spacing(7),
     marginLeft: theme.spacing(-7),
-    paddingTop: theme.spacing(3),
+    paddingTop: theme.spacing(1),
     [theme.breakpoints.up('md')]: {
       paddingLeft: theme.spacing(10),
       marginLeft: theme.spacing(-10),
@@ -288,7 +293,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     left: 0,
     width: theme.spacing(3),
     height: theme.spacing(3),
-    top: theme.spacing(4),
+    top: theme.spacing(2),
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -296,6 +301,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     cursor: 'grab',
     opacity: 0,
+    '@media (hover: none)': { opacity: 1 },
     '&:hover': {
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.action.hover,
@@ -309,6 +315,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),
     },
+  }),
+  contentWithActions: css({
+    paddingRight: theme.spacing(4),
   }),
   dragging: css({
     opacity: 0.9,

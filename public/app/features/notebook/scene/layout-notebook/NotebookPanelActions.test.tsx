@@ -1,5 +1,5 @@
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { CoreApp, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime';
@@ -22,7 +22,7 @@ jest.mock('app/features/panel/suggestions/getAllSuggestions', () => ({
   getAllSuggestions: jest.fn(),
 }));
 jest.mock('app/features/panel/components/VizTypePicker/VisualizationSuggestionCard', () => ({
-  VisualizationSuggestionCard: ({ suggestion }: { suggestion: { name: string } }) => <div>{suggestion.name}</div>,
+  VisualizationSuggestionCard: () => <div>Visualization preview</div>,
 }));
 
 function buildPanelCell(title = 'Latency') {
@@ -119,7 +119,7 @@ describe('NotebookPanelActions', () => {
     expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, runner.state.queries);
   });
 
-  it('groups panel and block actions in edit mode', async () => {
+  it('groups visualization controls with a shared block menu in edit mode', async () => {
     const { cell, panel } = buildPanelCell();
     const onDuplicate = jest.fn();
     const onDelete = jest.fn();
@@ -135,10 +135,12 @@ describe('NotebookPanelActions', () => {
     expect(toolbar).not.toContainElement(screen.getByRole('button', { name: 'Edit panel title' }));
     expect(toolbar).toContainElement(screen.getByRole('button', { name: 'Change visualization' }));
     expect(toolbar).toContainElement(screen.getByRole('link', { name: 'Open in Explore' }));
-    expect(toolbar).toContainElement(screen.getByRole('button', { name: 'Duplicate block' }));
-    expect(toolbar).toContainElement(screen.getByRole('button', { name: 'Delete block' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Duplicate block' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Delete block' }));
+    expect(toolbar).toContainElement(screen.getByRole('button', { name: 'Block actions' }));
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Block actions' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Duplicate block' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Block actions' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Delete block' }));
     expect(onDuplicate).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
@@ -224,7 +226,9 @@ describe('NotebookPanelActions', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
-    await user.click(await screen.findByRole('button', { name: 'Table' }));
+    const suggestion = await screen.findByRole('button', { name: 'Table' });
+    expect(within(suggestion).getByText('Table')).toBeVisible();
+    await user.click(suggestion);
 
     await waitFor(() => expect(lastSuggestedQuery.current).toBe(runner.state.queries[0]));
     expect(autoSuggest.current).toBe(false);
@@ -234,6 +238,39 @@ describe('NotebookPanelActions', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
     expect(await screen.findByRole('button', { name: 'Table' })).toBeInTheDocument();
+  });
+
+  it('lets users retry a failed visualization change', async () => {
+    const { cell, panel } = buildPanelCell();
+    const runner = panel.state.$data as SceneQueryRunner;
+    runner.setState({
+      data: {
+        state: LoadingState.Done,
+        series: [toDataFrame({ fields: [{ name: 'value', values: [1] }] })],
+        timeRange: getDefaultTimeRange(),
+      },
+    });
+    jest.mocked(getAllSuggestions).mockResolvedValue({
+      suggestions: [{ name: 'Table', pluginId: 'table', hash: 'table', options: {} }],
+      hasErrors: false,
+    });
+    const changeVisualization = jest
+      .spyOn(cell, 'onVisualizationChange')
+      .mockRejectedValueOnce(new Error('Plugin failed'))
+      .mockResolvedValueOnce(undefined);
+    const { user } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change visualization' }));
+    await user.click(await screen.findByRole('button', { name: 'Table' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not change visualization. Try again.');
+    expect(panel.state.pluginId).toBe('timeseries');
+    await user.click(screen.getByRole('button', { name: 'Table' }));
+
+    await waitFor(() => expect(changeVisualization).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Change visualization' })).toHaveAttribute('aria-expanded', 'false')
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('lets keyboard users choose a visualization suggestion', async () => {

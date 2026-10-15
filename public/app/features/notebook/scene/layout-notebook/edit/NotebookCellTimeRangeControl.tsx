@@ -4,7 +4,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { uniqBy } from 'lodash';
-import { useRef, useState } from 'react';
+import { type Ref, useRef, useState } from 'react';
 
 import {
   isDateTime,
@@ -42,9 +42,17 @@ interface Props {
   cell: NotebookCellItem;
   popoverAlign?: 'start' | 'end';
   isEditing?: boolean;
+  buttonRef?: Ref<HTMLElement>;
+  onClear?: () => void;
 }
 
-export function NotebookCellTimeRangeControl({ cell, popoverAlign = 'end', isEditing = true }: Props) {
+export function NotebookCellTimeRangeControl({
+  cell,
+  popoverAlign = 'end',
+  isEditing = true,
+  buttonRef,
+  onClear,
+}: Props) {
   const { $timeRange } = cell.useState();
   const [open, setOpen] = useState(false);
   const styles = useStyles2(getStyles);
@@ -95,13 +103,10 @@ export function NotebookCellTimeRangeControl({ cell, popoverAlign = 'end', isEdi
   });
 
   const clearTimeLock = () => {
+    onClear?.();
     cell.onTimeRangeChange(undefined);
     setOpen(false);
   };
-  const iconTooltip = $timeRange
-    ? t('notebook.cell.time-range.edit-locked', 'Edit locked time range')
-    : t('notebook.cell.time-range.tooltip-default', 'Lock panel time range');
-
   const lockedContent = (
     <>
       <Icon name="lock" size="sm" />
@@ -136,7 +141,14 @@ export function NotebookCellTimeRangeControl({ cell, popoverAlign = 'end', isEdi
 
   const trigger = (
     <Tooltip
-      content={$timeRange ? <TimePickerTooltip timeRange={value} timeZone={ancestorTimeZone} /> : iconTooltip}
+      ref={!$timeRange ? buttonRef : undefined}
+      content={
+        $timeRange ? (
+          <TimePickerTooltip timeRange={value} timeZone={ancestorTimeZone} />
+        ) : (
+          t('notebook.cell.time-range.tooltip-default', 'Lock panel time range')
+        )
+      }
       placement="bottom"
       interactive
       show={open ? false : undefined}

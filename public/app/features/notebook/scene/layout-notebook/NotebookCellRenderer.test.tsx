@@ -4,7 +4,8 @@ import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils
 
 import { type DataSourceInstanceSettings, EventBusSrv, PluginType } from '@grafana/data';
 import { getMockPlugin, getPanelPlugin } from '@grafana/data/test';
-import { setAppEvents, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { selectors } from '@grafana/e2e-selectors';
+import { getPluginImportUtils, setAppEvents, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {
   SceneDataTransformer,
   SceneQueryRunner,
@@ -14,6 +15,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import * as libraryPanelsApi from 'app/features/library-panels/state/api';
 import { runRequest } from 'app/features/query/state/runRequest';
 
@@ -26,7 +28,7 @@ import { NotebookLayoutManager } from './NotebookLayoutManager';
 setAppEvents(new EventBusSrv());
 setRunRequest(runRequest);
 setPluginImportUtils({
-  importPanelPlugin: () => Promise.resolve(getPanelPlugin({}, () => <div>Visualization</div>)),
+  importPanelPlugin: (pluginId) => Promise.resolve(getPanelPlugin({ id: pluginId }, () => <div>Visualization</div>)),
   getPanelPluginFromCache: () => undefined,
 });
 
@@ -86,6 +88,53 @@ function buildMarkdownCellInLayout(text?: string) {
 }
 
 describe('NotebookCellRenderer', () => {
+  it('restores the visualization when a plugin fails after changing panel state', async () => {
+    const importPlugin = jest
+      .spyOn(getPluginImportUtils(), 'importPanelPlugin')
+      .mockImplementation(async (pluginId) => {
+        const plugin = getPanelPlugin({ id: pluginId }, () => <div>Visualization</div>);
+        if (pluginId === 'table') {
+          plugin.setPanelChangeHandler(() => {
+            throw new Error('Cannot migrate visualization');
+          });
+        }
+        return plugin;
+      });
+    try {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        title: 'Latency',
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }),
+      });
+      const cell = new NotebookCellItem({ elementName: 'latency', source: 'user', body: panel });
+      const layout = new NotebookLayoutManager({
+        cells: [cell],
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+      await panel.changePluginType('timeseries', { legend: { showLegend: true } });
+      const originalOptions = structuredClone(panel.state.options);
+      const originalFieldConfig = structuredClone(panel.state.fieldConfig);
+
+      await expect(
+        layout.changePanelVisualization(cell, {
+          name: 'Table',
+          pluginId: 'table',
+          hash: 'table',
+          options: { showHeader: false },
+        })
+      ).rejects.toThrow('Cannot migrate visualization');
+
+      expect(panel.state.pluginId).toBe('timeseries');
+      expect(panel.state.options).toEqual(originalOptions);
+      expect(panel.state.fieldConfig).toEqual(originalFieldConfig);
+      expect(panel.getPlugin()?.meta.id).toBe('timeseries');
+      expect(panel.state.title).toBe('Latency');
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual([{ refId: 'A' }]);
+    } finally {
+      importPlugin.mockRestore();
+    }
+  });
   // The edit goes out through the cell to its layout manager, which applies it — cells sharing an
   // element have to move together, and only the manager can see the siblings.
   it('routes an edit through the layout manager onto the cell', async () => {
@@ -248,6 +297,69 @@ describe('NotebookCellRenderer', () => {
       return cell;
     }
 
+    it('keeps Stat and Gauge panels compact and restores chart height when the visualization changes', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'stat',
+        $data: new SceneQueryRunner({ queries: [] }),
+      });
+      const cell = buildPanelCellInLayout(panel);
+      render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+      await screen.findByRole('heading', { name: 'Title' });
+      const container = screen.getByTestId(selectors.pages.Notebooks.Item.panelCell('panel-1'));
+
+      expect(container).toHaveStyle({ height: '180px' });
+      await act(async () => panel.setState({ pluginId: 'timeseries' }));
+      expect(container).toHaveStyle({ height: '300px' });
+      await act(async () => panel.setState({ pluginId: 'gauge' }));
+      expect(container).toHaveStyle({ height: '180px' });
+    });
+
+    it('keeps separate controls when a live visualization is duplicated', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        title: 'Latency',
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ queries: [] }),
+      });
+      const cell = buildPanelCellInLayout(panel);
+      const layout = cell.getParentLayout();
+      const Cells = () => {
+        const { cells } = layout.useState();
+        return (
+          <>
+            {cells.map((item) => (
+              <div role="group" aria-label={item.state.elementName} key={item.state.elementName}>
+                <NotebookCellRenderer
+                  cell={item}
+                  isEditing={true}
+                  onDuplicate={() => layout.duplicateCell(item)}
+                  onDelete={() => {}}
+                />
+              </div>
+            ))}
+          </>
+        );
+      };
+      const { user } = render(<Cells />);
+      await screen.findByRole('heading', { name: 'Latency' });
+
+      act(() => layout.duplicateCell(cell));
+      await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Latency' })).toHaveLength(2));
+      const original = within(screen.getByRole('group', { name: 'panel-1', exact: true }));
+      const copy = within(screen.getByRole('group', { name: 'panel-1-copy-1', exact: true }));
+      expect(original.getAllByRole('button', { name: 'Block actions' })).toHaveLength(1);
+      expect(copy.getAllByRole('button', { name: 'Block actions' })).toHaveLength(1);
+      expect(copy.getAllByRole('button', { name: 'Edit panel title' })).toHaveLength(1);
+
+      fireEvent.click(copy.getByRole('button', { name: 'Edit panel title' }));
+      const title = copy.getByRole('textbox', { name: 'Panel title' });
+      await user.clear(title);
+      await user.type(title, 'Copied latency{Enter}');
+      expect(panel.state.title).toBe('Latency');
+      expect(layout.state.cells[1].state.body?.state.title).toBe('Copied latency');
+    });
+
     it('starts existing query editors closed and opens them below the visualization', async () => {
       const cell = buildPanelCellInLayout(
         new VizPanel({
@@ -351,7 +463,8 @@ describe('NotebookCellRenderer', () => {
       const picker = await screen.findByRole('dialog', { name: 'Panel time range' });
       expect(within(picker).getByRole('textbox', { name: 'From' })).toHaveValue('now-24h');
       await user.click(within(picker).getByRole('button', { name: 'Remove time lock' }));
-      expect(await screen.findByRole('button', { name: 'Update time range' })).toBeInTheDocument();
+      const restoredClock = await screen.findByRole('button', { name: 'Update time range' });
+      await waitFor(() => expect(restoredClock).toHaveFocus());
       expect(screen.queryByRole('button', { name: 'Locked: Last 24 hours' })).not.toBeInTheDocument();
       expect(panel.state.subHeader).toBeUndefined();
       expect(cell.state.$timeRange).toBeUndefined();

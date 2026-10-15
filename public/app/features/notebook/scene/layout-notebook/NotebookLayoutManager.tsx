@@ -619,7 +619,7 @@ export class NotebookLayoutManager
           .map((candidate) => candidate.state.body)
           .filter((panel): panel is VizPanel => Boolean(panel));
         before = panels.map(snapshotVisualization);
-        await Promise.all(
+        const results = await Promise.allSettled(
           panels.map((panel) => {
             const fieldConfig = {
               defaults: { ...panel.state.fieldConfig.defaults, custom: {} },
@@ -631,6 +631,11 @@ export class NotebookLayoutManager
             });
           })
         );
+        const failure = results.find((result) => result.status === 'rejected');
+        if (failure) {
+          await applyVisualizations(panels, before);
+          throw failure.reason;
+        }
         after = panels.map(snapshotVisualization);
       });
     } catch (error) {
@@ -860,7 +865,11 @@ export class NotebookLayoutManager
     const copy = cell.clone({
       key: undefined,
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
-      body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
+      body: cell.state.body?.clone({
+        key: getVizPanelKeyForPanelId(nextId()),
+        headerActions: undefined,
+        titleItems: [],
+      }),
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
       // A bare .clone() would reuse the same $timeRange instance across both cells.
       ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),
@@ -1033,6 +1042,9 @@ async function applyVisualizations(panels: VizPanel[], snapshots: Array<ReturnTy
   await Promise.all(
     panels.map((panel, index) => {
       const snapshot = snapshots[index];
+      if (isEqual(snapshotVisualization(panel), snapshot)) {
+        return;
+      }
       return panel.changePluginType(snapshot.pluginId, snapshot.options, snapshot.fieldConfig);
     })
   );
@@ -1280,9 +1292,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   document: css({
     maxWidth: 900,
     margin: '0 auto',
-    padding: theme.spacing(3, 4, 6, 4),
+    padding: theme.spacing(3, 4, 6, 8),
     [theme.breakpoints.up('md')]: {
-      paddingLeft: theme.spacing(7),
+      paddingLeft: theme.spacing(11),
       paddingRight: theme.spacing(7),
     },
     width: '100%',
@@ -1310,10 +1322,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // the pointer wins: this hides the controls on every cell the pointer is not over. Whatever holds
     // focus stays visible, because a tab stop at opacity 0 is a focus trap. A control that pinned
     // itself stays too, which is how a control with an open menu keeps the menu anchored.
-    [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within):not(.${NOTEBOOK_CELL_CONTROLS_PINNED_CLASS})`]:
-      {
-        opacity: 0,
-        pointerEvents: 'none',
-      },
+    '@media (hover: hover)': {
+      [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within):not(.${NOTEBOOK_CELL_CONTROLS_PINNED_CLASS})`]:
+        {
+          opacity: 0,
+          pointerEvents: 'none',
+        },
+    },
   }),
 });
