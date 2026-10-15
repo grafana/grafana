@@ -260,12 +260,13 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     if (this.ended) {
       return;
     }
-    const annotations = items.map(({ id, ref, point, label, state }) => ({
+    const annotations = items.map(({ id, ref, point, label, state, alsoRefs }) => ({
       id,
       ref: { ...ref },
       point: { x: clamp01(point.x), y: clamp01(point.y) },
       label: label.slice(0, 3),
       state,
+      ...(Array.isArray(alsoRefs) && alsoRefs.length > 0 ? { alsoRefs: alsoRefs.map((also) => ({ ...also })) } : {}),
     }));
     const ids = new Set(annotations.map(({ id }) => id));
     for (const [id, anchor] of this.anchors) {
@@ -275,7 +276,11 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
       }
     }
     // A region lives only while an annotation points at it.
-    const regionIds = new Set(annotations.flatMap(({ ref }) => (ref.kind === 'region' ? [ref.regionId] : [])));
+    const regionIds = new Set(
+      annotations.flatMap(({ ref, alsoRefs = [] }) =>
+        [ref, ...alsoRefs].flatMap((each) => (each.kind === 'region' ? [each.regionId] : []))
+      )
+    );
     for (const regionId of this.regions.keys()) {
       if (!regionIds.has(regionId)) {
         this.regions.delete(regionId);

@@ -129,6 +129,11 @@ export interface ComposerAnnotation {
   label: string;
   /** An active item also outlines its element; a staged one shows only its pin. */
   state: 'active' | 'staged';
+  /**
+   * Further elements one comment covers (⌘/Ctrl-click). Each is outlined as `ref` is, by its kind and the
+   * item's state; the pin stays on `ref`. A ref that does not resolve is left out.
+   */
+  alsoRefs?: ElementRef[];
 }
 
 export interface RegionPick {

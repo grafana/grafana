@@ -1518,6 +1518,44 @@ describe('annotations and data layers', () => {
     expect(screen.getByRole('button', { name: 'Comment 1' })).toBeInTheDocument();
   });
 
+  // D7: one comment can cover several elements; core outlines each, and keeps one pin.
+  it('outlines every element one comment covers, skipping one that does not resolve, with one pin', () => {
+    const { scene, annotate } = setup();
+    annotationControl(scene);
+    const annotation = { kind: 'annotation', name: 'Annotations & Alerts', layerKind: 'annotation' } as const;
+
+    annotate([item({ id: 'm', alsoRefs: [{ kind: 'panel', panelId: 99 }, annotation] })]);
+
+    expect(screen.getByTestId('composer-annotation-outline-m')).toBeInTheDocument();
+    // Panel 99 does not resolve, so the annotation is the only other outline.
+    expect(screen.getByTestId('composer-annotation-outline-m-also-0')).toBeInTheDocument();
+    expect(screen.queryByTestId('composer-annotation-outline-m-also-1')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Comment/ })).toHaveLength(1);
+  });
+
+  it('outlines the other elements as their kind is outlined while staged', async () => {
+    const { scene, session, startPick, annotate } = setup();
+    annotationControl(scene);
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+    const region = ((await pick) as { ref: { kind: 'region'; regionId: string } }).ref;
+    const annotation = { kind: 'annotation', name: 'Annotations & Alerts', layerKind: 'annotation' } as const;
+
+    annotate([item({ id: 's', state: 'staged', alsoRefs: [annotation, region] })]);
+
+    // Staged: the panel and the annotation show no outline, the region a faint one, kept while referenced.
+    expect(screen.queryByTestId('composer-annotation-outline-s')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('composer-annotation-outline-s-also-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('composer-annotation-outline-s-also-1')).toHaveAttribute('data-state', 'staged');
+    expect(
+      session.resolveBox(region, screen.getByTestId('dashboard-composer-overlay').getBoundingClientRect())
+    ).not.toBeNull();
+  });
+
   it('does not pick rows or tabs yet', async () => {
     const { startPick } = setup();
     const pick = startPick();

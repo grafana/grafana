@@ -10,7 +10,7 @@ import { FLOATING_DRAG_HANDLE_ATTRIBUTE } from 'app/core/components/AppChrome/Ex
 
 import { type ComposerSession } from './ComposerSession';
 import { type Box, PICKABLE_CONTROL_SELECTOR, VARIABLE_CONTROL_SELECTOR } from './composerGeometry';
-import { type ComposerAnnotation, type ElementPick, type RegionPick } from './types';
+import { type ComposerAnnotation, type ElementPick, type ElementRef, type RegionPick } from './types';
 
 const TAB_SELECTOR = '[role="tab"]';
 /** The dashboard controls (time picker, refresh, save, share, variables) stay usable in Composer. */
@@ -28,12 +28,14 @@ interface Layout {
   highlight: Box | null;
   /** Element bounds per annotation id; an id without an entry does not resolve and is hidden. */
   items: Record<string, Box>;
+  /** The bounds of each annotation's `alsoRefs` that resolve, with their refs, per annotation id. */
+  also: Record<string, Array<{ ref: ElementRef; box: Box }>>;
   /** The overlay's own size, which pins are kept inside. */
   width: number;
   height: number;
 }
 
-const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, width: 0, height: 0 };
+const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, also: {}, width: 0, height: 0 };
 
 /**
  * A layer over the dashboard controls and body while Composer is active.
@@ -103,6 +105,7 @@ export function ComposerOverlay({
     const next: Layout = {
       highlight: highlight ? session.resolveBox(highlight, rootRect) : null,
       items: {},
+      also: {},
       width: rootRect.width,
       height: rootRect.height,
     };
@@ -110,6 +113,13 @@ export function ComposerOverlay({
       const box = session.resolveBox(item.ref, rootRect);
       if (box) {
         next.items[item.id] = box;
+      }
+      const also = (item.alsoRefs ?? []).flatMap((ref) => {
+        const alsoBox = session.resolveBox(ref, rootRect);
+        return alsoBox ? [{ ref, box: alsoBox }] : [];
+      });
+      if (also.length > 0) {
+        next.also[item.id] = also;
       }
     }
     session.getAnchors().forEach((anchor, id) => {
@@ -659,23 +669,36 @@ export function ComposerOverlay({
         aria-hidden
       >
         {layout.highlight && <div className={cx(styles.box, styles.highlight)} style={layout.highlight} />}
-        {annotations.map(({ id, ref, state }) => {
-          const box = layout.items[id];
-          // Panels are outlined only while active; regions always, faint while staged.
-          if (!box || (ref.kind !== 'region' && state !== 'active')) {
-            return null;
-          }
-          const outline =
-            ref.kind === 'region' ? (state === 'active' ? styles.regionActive : styles.regionStaged) : styles.active;
-          return (
-            <div
-              key={id}
-              className={cx(styles.box, outline)}
-              style={box}
-              data-testid={`composer-annotation-outline-${id}`}
-              data-state={state}
-            />
-          );
+        {annotations.flatMap(({ id, ref, state }) => {
+          // The comment's own element, then the others it covers, each outlined by its kind.
+          const outlines = [
+            { ref, box: layout.items[id], testId: `composer-annotation-outline-${id}` },
+            ...(layout.also[id] ?? []).map((also, index) => ({
+              ...also,
+              testId: `composer-annotation-outline-${id}-also-${index}`,
+            })),
+          ];
+          return outlines.map(({ ref: outlined, box, testId }) => {
+            // Panels are outlined only while active; regions always, faint while staged.
+            if (!box || (outlined.kind !== 'region' && state !== 'active')) {
+              return null;
+            }
+            const outline =
+              outlined.kind === 'region'
+                ? state === 'active'
+                  ? styles.regionActive
+                  : styles.regionStaged
+                : styles.active;
+            return (
+              <div
+                key={testId}
+                className={cx(styles.box, outline)}
+                style={box}
+                data-testid={testId}
+                data-state={state}
+              />
+            );
+          });
         })}
         {picking && hovered && <div className={cx(styles.box, styles.hover)} style={hovered.box} />}
         {draft && <div className={cx(styles.box, styles.draft)} style={draft} data-testid="composer-region-draft" />}
