@@ -75,7 +75,7 @@ func TestQueueLagTracker(t *testing.T) {
 		})
 	})
 
-	t.Run("re-add while in flight preserves the first-enqueue time", func(t *testing.T) {
+	t.Run("re-add while in flight has its own enqueue time", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
 			q.add("a") // first enqueue
@@ -83,10 +83,12 @@ func TestQueueLagTracker(t *testing.T) {
 			require.True(t, ok)
 			time.Sleep(time.Minute)
 			q.add("a") // re-added while in flight (informer update or AddAfter)
+			assert.Equal(t, time.Minute, q.lag())
+			time.Sleep(10 * time.Second)
 			q.done("a")
-			time.Sleep(30 * time.Second)
-			// Lag must be measured from the first enqueue (90s), not the re-add (30s).
-			assert.Equal(t, 90*time.Second, q.lag())
+			assert.Equal(t, 10*time.Second, q.lag())
+			time.Sleep(20 * time.Second)
+			assert.Equal(t, 30*time.Second, q.lag())
 		})
 	})
 
@@ -131,7 +133,7 @@ func TestQueueLagTracker(t *testing.T) {
 	})
 }
 
-func TestQueueLagTrackerFailure(t *testing.T) {
+func TestQueueLagTrackerCompletion(t *testing.T) {
 	t.Run("repeated retries start a fresh wait and survive deferred cleanup", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
@@ -143,7 +145,7 @@ func TestQueueLagTrackerFailure(t *testing.T) {
 				assert.Equal(t, 10*time.Second, time.Since(enqueuedAt))
 				time.Sleep(20 * time.Second)
 				assert.Equal(t, 30*time.Second, q.lag())
-				q.failed("a")
+				q.done("a")
 				q.add("a")
 				q.done("a")
 				q.done("a")
@@ -156,7 +158,7 @@ func TestQueueLagTrackerFailure(t *testing.T) {
 		})
 	})
 
-	t.Run("failure resets a waiting entry inherited from an in-flight update", func(t *testing.T) {
+	t.Run("completion and duplicate enqueues preserve an in-flight update's wait", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
 			q.add("a")
@@ -165,21 +167,21 @@ func TestQueueLagTrackerFailure(t *testing.T) {
 			time.Sleep(time.Minute)
 			q.add("a")
 			time.Sleep(10 * time.Second)
-			q.failed("a")
+			q.done("a")
 			time.Sleep(10 * time.Second)
-			q.failed("a")
+			q.done("a")
 			q.add("a")
 			q.done("a")
-			assert.Equal(t, 10*time.Second, q.lag())
+			assert.Equal(t, 20*time.Second, q.lag())
 			enqueuedAt, ok := q.get("a")
 			require.True(t, ok)
-			assert.Equal(t, 10*time.Second, time.Since(enqueuedAt))
+			assert.Equal(t, 20*time.Second, time.Since(enqueuedAt))
 			q.done("a")
 			assert.Zero(t, q.lag())
 		})
 	})
 
-	t.Run("failure preserves older waiting and in-flight keys", func(t *testing.T) {
+	t.Run("completion preserves enqueue order across waiting and in-flight entries", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
 			q.add("retry")
@@ -187,38 +189,37 @@ func TestQueueLagTrackerFailure(t *testing.T) {
 			require.True(t, ok)
 			time.Sleep(10 * time.Second)
 			q.add("waiting")
-			time.Sleep(10 * time.Second)
+			time.Sleep(5 * time.Second)
+			q.add("retry")
+			time.Sleep(5 * time.Second)
 			q.add("inflight")
 			_, ok = q.get("inflight")
 			require.True(t, ok)
 			time.Sleep(10 * time.Second)
-			q.failed("retry")
-			q.add("retry")
 			q.done("retry")
 			assert.Equal(t, 20*time.Second, q.lag())
 			_, ok = q.get("waiting")
 			require.True(t, ok)
 			q.done("waiting")
-			assert.Equal(t, 10*time.Second, q.lag())
-			q.done("inflight")
-			assert.Zero(t, q.lag())
-			time.Sleep(5 * time.Second)
+			assert.Equal(t, 15*time.Second, q.lag())
 			enqueuedAt, ok := q.get("retry")
 			require.True(t, ok)
-			assert.Equal(t, 5*time.Second, time.Since(enqueuedAt))
+			assert.Equal(t, 15*time.Second, time.Since(enqueuedAt))
 			q.done("retry")
+			assert.Equal(t, 10*time.Second, q.lag())
+			q.done("inflight")
 			assert.Zero(t, q.lag())
 		})
 	})
 
-	t.Run("failure without redelivery removes the key", func(t *testing.T) {
+	t.Run("completion without redelivery removes the key", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
 			q.add("a")
 			_, ok := q.get("a")
 			require.True(t, ok)
 			time.Sleep(time.Minute)
-			q.failed("a")
+			q.done("a")
 			q.done("a")
 			assert.Empty(t, q.waiting)
 			assert.Empty(t, q.inflight)
@@ -226,15 +227,15 @@ func TestQueueLagTrackerFailure(t *testing.T) {
 		})
 	})
 
-	t.Run("failure without an in-flight attempt leaves waiting keys alone", func(t *testing.T) {
+	t.Run("completion without an in-flight attempt leaves waiting keys alone", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker
-			q.failed("untracked")
+			q.done("untracked")
 			assert.Empty(t, q.waiting)
 			assert.Zero(t, q.lag())
 			q.add("waiting")
 			time.Sleep(time.Minute)
-			q.failed("waiting")
+			q.done("waiting")
 			assert.Equal(t, time.Minute, q.lag())
 		})
 	})

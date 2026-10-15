@@ -2166,7 +2166,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	assertRepositoryStatusFailureResetsQueueLag(t, rc, "default/test-repo")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
@@ -2235,7 +2235,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	assertRepositoryStatusFailureResetsQueueLag(t, rc, "default/test-repo")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
@@ -2422,7 +2422,7 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	assertRepositoryStatusFailureResetsQueueLag(t, rc, "default/test-repo")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the failure must still be surfaced on /status/health")
@@ -3104,7 +3104,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 		tracer:            tracing.InitializeTracerForTest(),
 	}
 
-	assertRepositoryStatusFailureResetsQueueLag(t, rc, namespace+"/"+repoName)
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, namespace+"/"+repoName)
 
 	assert.Equal(t, 1.0,
 		counterValueWithLabel(t, reg, "grafana_provisioning_repository_token_generation_errors_total", "cause", reconcileCauseUser),
@@ -3872,7 +3872,7 @@ func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	assertRepositoryStatusFailureResetsQueueLag(t, rc, namespace+"/"+repoName)
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, namespace+"/"+repoName)
 
 	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
 

@@ -196,7 +196,7 @@ func NewRepositoryController(
 	registry.MustRegister(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Name: "grafana_provisioning_repository_worker_queue_lag_seconds",
-			Help: "Age in seconds of the oldest unfinished repository key (waiting or in flight) in this replica's queue, measured from first enqueue and reset after a failed attempt.",
+			Help: "Age in seconds of the oldest unfinished repository queue entry (waiting or in flight) in this replica, measured from that entry's enqueue.",
 		},
 		func() float64 { return rc.queueLag.lag().Seconds() },
 	))
@@ -402,7 +402,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	// every failure/retry line for a resolvable repository.
 	logger = logger.With("repositoryType", repoType, "queue_lag", rc.queueLag.lag(), "error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
-	rc.queueLag.failed(key)
+	rc.queueLag.done(key)
 
 	if attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
@@ -915,9 +915,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		case err != nil:
 			rc.recordReconcileError(phase, err)
 		case swallowedErr != nil:
-			// A failure surfaced on status must retire its lag even when no error
-			// is returned to the worker. Run after the deferred status flush.
-			rc.queueLag.failed(key)
 			rc.recordReconcileError(swallowedPhase, swallowedErr)
 		}
 	}()
