@@ -48,12 +48,18 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
 
   const [originalFilters, setOriginalFilters] = useState<AdHocFilterWithLabels[]>(() => variable.getOriginalFilters());
   const originFiltersSetByEditor = useRef(originFilters);
+  const lastOriginalFilters = useRef(variable.getOriginalFilters());
 
   // Origin filters can also be replaced outside of the editor (e.g. undo/redo), re-read the original filters then
   useEffect(() => {
     if (originFilters !== originFiltersSetByEditor.current) {
       originFiltersSetByEditor.current = originFilters;
-      setOriginalFilters(variable.getOriginalFilters());
+      const nextOriginalFilters = variable.getOriginalFilters();
+      // Runtime value changes do not change defaults and should not close an editing pill.
+      if (!isEqual(nextOriginalFilters, lastOriginalFilters.current)) {
+        lastOriginalFilters.current = nextOriginalFilters;
+        setOriginalFilters(nextOriginalFilters);
+      }
     }
   }, [variable, originFilters]);
 
@@ -92,6 +98,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
           variable.setState({ originFilters: oldOriginFilters });
         },
       });
+      lastOriginalFilters.current = variable.getOriginalFilters();
     },
     [variable, inline]
   );
@@ -165,7 +172,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     const { datasource: oldDatasource, supportsMultiValueOperators, enableGroupBy: oldEnableGroupBy } = variable.state;
     const updateEnableGroupBy = config.featureToggles.dashboardUnifiedDrilldownControls;
 
-    undoableVariableEdit(inline, {
+    undoableVariableEdit(inline && !isEqual(oldDatasource, dsRef), {
       meta: { actionId: 'variable.changeDataSource', scope: 'adhoc' },
       source: variable,
       description: t('dashboard.edit-actions.variable-datasource', 'Change variable data source'),

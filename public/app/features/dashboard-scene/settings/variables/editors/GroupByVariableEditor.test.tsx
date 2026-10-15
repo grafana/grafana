@@ -197,6 +197,30 @@ describe('GroupByVariableEditor', () => {
 });
 
 describe('GroupByVariableEditor undo/redo', () => {
+  it('preserves quoted static dimensions after undo and blur', async () => {
+    const original = [{ text: 'Region, name', value: 'region' }];
+    const { user, sidebar, variable } = await setup(original, undefined, true);
+    const editor = await screen.findByRole('textbox', { name: 'Static dimensions CSV' });
+    await user.click(editor);
+    await user.keyboard('{Control>}a{/Control}{Backspace}');
+    await user.paste('Host,host');
+    await user.click(document.body);
+    expect(variable.state.defaultOptions).toEqual([{ text: 'Host', value: 'host' }]);
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.defaultOptions).toEqual(original);
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Static dimensions CSV' })).toHaveTextContent('"Region, name",region')
+    );
+    await user.click(screen.getByRole('textbox', { name: 'Static dimensions CSV' }));
+    await user.click(document.body);
+    expect(variable.state.defaultOptions).toEqual(original);
+    expect(sidebar.state.undoStack).toHaveLength(0);
+    await act(async () => sidebar.redoAction());
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Static dimensions CSV' })).toHaveTextContent('Host,host')
+    );
+  });
+
   const originalGroupByToggle = config.featureToggles.groupByVariable;
 
   beforeAll(() => {

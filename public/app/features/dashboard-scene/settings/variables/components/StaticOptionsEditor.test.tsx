@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { readCSV } from '@grafana/data';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { StaticOptionsEditor } from './StaticOptionsEditor';
@@ -61,4 +62,34 @@ it('keeps the draft as typed when committing it changes the options', async () =
 
   expect(onCommit).toHaveBeenCalledWith('"Region, name",region');
   expect(editor).toHaveTextContent('"Region, name",region');
+});
+
+it.each([
+  { text: 'Region, name', value: 'region,code' },
+  { text: 'Say "hello"', value: '"quoted"' },
+  { text: 'First\nSecond', value: 'line1\nline2' },
+])('preserves CSV fields when external options are committed: $text', async (option) => {
+  mockBoundingClientRect();
+  const user = userEvent.setup();
+  const onCommit = jest.fn();
+  const { rerender } = render(<StaticOptionsEditor options={[]} onCommit={onCommit} />);
+  const editor = await screen.findByRole('textbox', { name: 'Static dimensions CSV' });
+  rerender(<StaticOptionsEditor options={[option]} onCommit={onCommit} />);
+  await user.click(editor);
+  await user.click(document.body);
+  const frame = readCSV('key,value\n' + onCommit.mock.calls[0][0])[0];
+  expect(frame.fields.map((field) => field.values[0])).toEqual([option.text, option.value]);
+});
+
+it('refreshes external options after a commit that does not rerender the parent', async () => {
+  mockBoundingClientRect();
+  const user = userEvent.setup();
+  const onCommit = jest.fn();
+  const { rerender } = render(<StaticOptionsEditor options={[{ text: 'Host', value: 'host' }]} onCommit={onCommit} />);
+  const editor = await screen.findByRole('textbox', { name: 'Static dimensions CSV' });
+  await user.click(editor);
+  await user.click(document.body);
+  expect(onCommit).toHaveBeenCalledWith('Host,host');
+  rerender(<StaticOptionsEditor options={[{ text: 'Region', value: 'region' }]} onCommit={onCommit} />);
+  expect(editor).toHaveTextContent('Region,region');
 });

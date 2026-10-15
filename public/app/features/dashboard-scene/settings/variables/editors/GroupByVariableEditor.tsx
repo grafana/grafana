@@ -47,7 +47,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     const dsRef = getDataSourceRef(ds);
     const oldDatasource = variable.state.datasource;
 
-    undoableVariableEdit(inline, {
+    undoableVariableEdit(inline && !isEqual(oldDatasource, dsRef), {
       meta: { actionId: 'variable.changeDataSource', scope: 'groupby' },
       source: variable,
       description: t('dashboard.edit-actions.variable-datasource', 'Change variable data source'),

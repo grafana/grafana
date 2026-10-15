@@ -494,6 +494,25 @@ describe('AdHocFiltersVariableEditor undo/redo', () => {
     expect(capturedOriginController!.useState().filters).toEqual([euFilter]);
   });
 
+  it('keeps a default filter open when only its runtime value changes', async () => {
+    config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    const { variable } = await setup(undefined, { inline: true });
+    await waitFor(() => expect(capturedOriginController).toBeDefined());
+    act(() => capturedOriginController!.addWip());
+    act(() => capturedOriginController!.updateFilter(capturedOriginController!.useState().wip!, { key: 'region' }));
+    act(() => capturedOriginController!.updateFilter(capturedOriginController!.useState().wip!, { value: 'eu' }));
+    const filter = capturedOriginController!.useState().filters[0];
+    act(() => capturedOriginController!.updateFilter(filter, { forceEdit: true }));
+    expect(capturedOriginController!.useState().filters[0].forceEdit).toBe(true);
+
+    act(() =>
+      variable.setState({
+        originFilters: variable.state.originFilters!.map((filter) => ({ ...filter, value: 'us' })),
+      })
+    );
+    expect(capturedOriginController!.useState().filters[0]).toMatchObject({ value: 'eu', forceEdit: true });
+  });
+
   it('does not record moving editing to the previous default filter', async () => {
     config.featureToggles.dashboardUnifiedDrilldownControls = true;
     const { sidebar } = await setup(undefined, { inline: true });
