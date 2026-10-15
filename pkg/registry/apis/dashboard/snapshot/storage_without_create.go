@@ -261,7 +261,6 @@ func stripSensitiveFields(obj runtime.Object) (*dashv0.Snapshot, error) {
 	out := snap.DeepCopy()
 	out.Spec.DeleteKey = nil
 	out.Spec.Dashboard = nil
-	out.SetExternalDeleteURL("")
 	return out, nil
 }
 
@@ -278,7 +277,6 @@ func stripSensitiveFieldsFromList(obj runtime.Object) (*dashv0.SnapshotList, err
 	for i := range out.Items {
 		out.Items[i].Spec.DeleteKey = nil
 		out.Items[i].Spec.Dashboard = nil
-		out.Items[i].SetExternalDeleteURL("")
 	}
 	return out, nil
 }

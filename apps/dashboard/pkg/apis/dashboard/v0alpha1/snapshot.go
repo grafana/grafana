@@ -3,27 +3,32 @@ package v0alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"net/url"
+	"strings"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-const externalDeleteURLAnnotation = "grafana.app/externalDeleteURL"
-
-// GetExternalDeleteURL returns the private endpoint used to delete an external snapshot.
+// GetExternalDeleteURL derives the delete endpoint from the snapshot's original host,
+// rather than the current external snapshot configuration, which may have changed.
 func (s *Snapshot) GetExternalDeleteURL() string {
-	return s.Annotations[externalDeleteURLAnnotation]
-}
-
-// SetExternalDeleteURL stores the private endpoint outside the public snapshot spec.
-func (s *Snapshot) SetExternalDeleteURL(value string) {
-	if value == "" {
-		delete(s.Annotations, externalDeleteURLAnnotation)
-		return
+	if s.Spec.ExternalUrl == nil || s.Spec.DeleteKey == nil || *s.Spec.DeleteKey == "" {
+		return ""
 	}
-	if s.Annotations == nil {
-		s.Annotations = make(map[string]string)
+	parsed, err := url.Parse(*s.Spec.ExternalUrl)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return ""
 	}
-	s.Annotations[externalDeleteURLAnnotation] = value
+	index := strings.LastIndex(parsed.Path, "/dashboard/snapshot/")
+	if index < 0 {
+		return ""
+	}
+	parsed.Path = parsed.Path[:index] + "/api/snapshots-delete/" + *s.Spec.DeleteKey
+	parsed.RawPath = ""
+	parsed.RawQuery = ""
+	parsed.ForceQuery = false
+	parsed.Fragment = ""
+	return parsed.String()
 }
 
 // This is returned from the POST command

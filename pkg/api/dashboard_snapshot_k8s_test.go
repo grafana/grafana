@@ -2,10 +2,14 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"io"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -47,24 +51,38 @@ func snapshotAPIContext(t *testing.T, path string) (*HTTPServer, *contextmodel.R
 	return &HTTPServer{Cfg: cfg, Features: featuremgmt.WithFeatures()}, ctx
 }
 
-func TestOSSPublicSnapshotReadStore(t *testing.T) {
+type snapshotMigrationStatusReader struct {
+	unifiedmigrations.MigrationStatusReader
+	mode unifiedmigrations.StorageMode
+	err  error
+}
+
+func (r snapshotMigrationStatusReader) GetStorageMode(_ context.Context, gr schema.GroupResource) (unifiedmigrations.StorageMode, error) {
+	if gr.Group != "dashboard.grafana.app" || gr.Resource != "snapshots" {
+		return 0, fmt.Errorf("unexpected resource: %s", gr)
+	}
+	return r.mode, r.err
+}
+
+func TestSelfManagedPublicSnapshotReadStore(t *testing.T) {
 	for _, mode := range []grafanarest.DualWriterMode{0, 1, 2, 3, 4, 5} {
-		for _, migration := range []bool{false, true} {
-			t.Run(fmt.Sprintf("mode=%d/migration=%t", mode, migration), func(t *testing.T) {
+		for _, resolved := range []unifiedmigrations.StorageMode{unifiedmigrations.StorageModeLegacy, unifiedmigrations.StorageModeDualWrite, unifiedmigrations.StorageModeUnified} {
+			t.Run(fmt.Sprintf("mode=%d/resolved=%s", mode, resolved), func(t *testing.T) {
 				hs, c := snapshotAPIContext(t, "/api/snapshots/snapshot-key")
 				c.IsSignedIn = false
 				c.SignedInUser = &user.SignedInUser{IsAnonymous: true}
 				hs.Cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
-					setting.SnapshotResource: {DualWriterMode: mode, EnableMigration: migration},
+					setting.SnapshotResource: {DualWriterMode: mode},
 				}
+				hs.migrationStatusReader = snapshotMigrationStatusReader{mode: resolved}
 				hs.clientConfigProvider = &mockDirectRestConfigProvider{host: "http://localhost", transport: snapshotAPIRoundTripper(func(r *http.Request) (*http.Response, error) {
-					t.Fatal("OSS public reads must not reach Kubernetes storage")
+					t.Fatal("Self-managed public reads must not reach Kubernetes storage")
 					return nil, nil
 				})}
 				service := dashboardsnapshots.NewMockService(t)
 				hs.dashboardsnapshotsService = service
 				status := http.StatusServiceUnavailable
-				if mode <= grafanarest.Mode2 && !migration {
+				if resolved == unifiedmigrations.StorageModeLegacy {
 					status = http.StatusOK
 					service.On("GetDashboardSnapshot", c.Req.Context(), &dashboardsnapshots.GetDashboardSnapshotQuery{Key: "snapshot-key"}).
 						Return(&dashboardsnapshots.DashboardSnapshot{Dashboard: simplejson.New(), Expires: time.Now().Add(time.Hour)}, nil).Once()
@@ -73,6 +91,13 @@ func TestOSSPublicSnapshotReadStore(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestSelfManagedPublicSnapshotReadStorageError(t *testing.T) {
+	hs, c := snapshotAPIContext(t, "/api/snapshots/snapshot-key")
+	hs.migrationStatusReader = snapshotMigrationStatusReader{err: errors.New("migration log unavailable")}
+	hs.dashboardsnapshotsService = dashboardsnapshots.NewMockService(t)
+	require.Equal(t, http.StatusServiceUnavailable, hs.GetDashboardSnapshot(c).Status())
 }
 
 func TestGetDashboardSnapshotFromAPI(t *testing.T) {

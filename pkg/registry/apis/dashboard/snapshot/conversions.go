@@ -82,7 +82,6 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 	if v.External {
 		snap.Spec.External = &v.External
 		snap.Spec.ExternalUrl = &v.ExternalURL
-		snap.SetExternalDeleteURL(v.ExternalDeleteURL)
 	}
 	if expires > 0 {
 		snap.Spec.Expires = &expires
@@ -171,7 +170,6 @@ func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapsh
 
 	if cmd.External {
 		snap.Spec.External = &cmd.External
-		snap.SetExternalDeleteURL(cmd.ExternalDeleteURL)
 		if cmd.ExternalURL != "" {
 			snap.Spec.ExternalUrl = &cmd.ExternalURL
 		}

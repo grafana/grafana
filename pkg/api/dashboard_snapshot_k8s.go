@@ -67,7 +67,7 @@ func snapshotRequest(client rest.Interface, method, namespace string) *rest.Requ
 // Calling it also preserves snapshot-specific authorization and external deletion.
 func (hs *HTTPServer) getSnapshotFromAPI(c *contextmodel.ReqContext, key string) (*dashboardsnapshots.DashboardSnapshot, error) {
 	if hs.Cfg.StackID == "" {
-		return nil, apierrors.NewServiceUnavailable("OSS public snapshot reads require an indexed public-key lookup")
+		return nil, apierrors.NewServiceUnavailable("Self-managed public snapshot reads require an indexed public-key lookup")
 	}
 	client, ctx, namespace, err := hs.snapshotClient(c)
 	if err != nil {

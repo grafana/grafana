@@ -152,9 +152,6 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 				if row.externalURL.Valid && row.externalURL.String != "" {
 					snap.Spec.ExternalUrl = &row.externalURL.String
 				}
-				if row.externalDeleteURL.Valid {
-					snap.SetExternalDeleteURL(row.externalDeleteURL.String)
-				}
 			} else if len(row.dashboardEncrypted) > 0 {
 				plain, err := m.decrypt(ctx, row.dashboardEncrypted)
 				if err != nil {
