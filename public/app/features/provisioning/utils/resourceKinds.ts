@@ -16,7 +16,7 @@ import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { getIconForKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type AppDispatch } from 'app/store/configureStore';
 
-import { PROVISIONING_URL } from '../constants';
+import { BUNDLE_URL, PROVISIONING_URL } from '../constants';
 
 import { isManaged } from './managedResource';
 
@@ -146,8 +146,9 @@ export const resourceKindInfos = {
     // getIconForKind doesn't know bundles. layer-group reads as "a set of things
     // grouped together", which is what a bundle is.
     icon: 'layer-group',
-    // A bundle is only meaningful in the context of its repository, so it has no
-    // standalone route; the repository's Bundles tab lists them.
+    getRoute: (name: string) => `${BUNDLE_URL}/${name}`,
+    // Bundles have no collection page of their own; they are reached from the resource
+    // that uses one, or from a repository's resource tree.
     listRoute: PROVISIONING_URL,
     // The Bundle itself is not folder-contained — its *files* are, under a folder
     // named after the bundle.

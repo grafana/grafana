@@ -14132,13 +14132,21 @@
     "bulk-action": {
       "success-title-branch": "Requested changes were pushed to a branch"
     },
-    "bundles-view": {
-      "column-name": "Name",
+    "bundle-view": {
+      "back-to-repositories": "Back to repositories",
       "column-path": "Path",
-      "column-synced": "Last synced",
-      "description": "Bundles group the files a resource needs alongside it. A bundle's files are stored under a folder named after the bundle.",
-      "empty-description": "A bundle groups the files a resource needs alongside it — documentation, scripts or queries the resource pipeline cannot parse. Commit a Bundle manifest to this repository to see it here.",
-      "empty-message": "No bundles in this repository"
+      "column-size": "Size",
+      "declared-paths": "Declared paths",
+      "declared-paths-description": "A path ending in a slash is a folder, and everything beneath it belongs to the bundle.",
+      "error": "Failed to load bundle",
+      "files": "Files",
+      "no-files": "This bundle has not resolved to any files yet.",
+      "not-found": "Bundle not found",
+      "not-found-description": "The bundle may have been removed from the repository, or has not synced yet.",
+      "resolved-at": "resolved at {{ref}}",
+      "subtitle": "Files grouped with the resource that uses them",
+      "unresolved-description": "These paths resolved to nothing at the synced commit — a folder may have been renamed or removed, so the bundle holds fewer files than it declares.",
+      "unresolved-title": "Some declared paths matched no files"
     },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
@@ -14867,8 +14875,6 @@
       "cleaning-up-resources": "Cleaning up repository resources",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
-      "tab-bundles": "Bundles",
-      "tab-bundles-title": "File bundles attached to resources",
       "tab-overview": "Overview",
       "tab-overview-title": "Repository overview",
       "tab-resources": "Resources",
