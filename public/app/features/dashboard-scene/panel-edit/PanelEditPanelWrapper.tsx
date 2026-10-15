@@ -40,9 +40,12 @@ export function PanelEditPanelWrapper({ panel, tableView, dashboard }: PanelEdit
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  // The classic editor's splitter pane is a flex row, so the wrapper must grow or the panel measures 0 wide.
   container: css({
     display: 'flex',
     flexDirection: 'column',
+    flex: '1 1 0',
+    minWidth: 0,
     gap: theme.spacing(1),
     height: '100%',
   }),

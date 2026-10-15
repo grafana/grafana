@@ -566,7 +566,11 @@ test.describe('Text sandbox network boundary', () => {
           .toEqual(
             expect.arrayContaining([
               { directive: 'img-src', origin: undefined },
-              { directive: 'img-src', origin: 'https://external.test' },
+              {
+                directive: 'img-src',
+                origin: 'https://external.test',
+                urls: [{ url: 'https://external.test/secret', count: 1 }],
+              },
             ])
           );
       }
