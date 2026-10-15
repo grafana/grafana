@@ -21,13 +21,16 @@ export function LabelsMeta({ labels }: LabelsMetaProps) {
   return (
     <MetaItem icon="tag-alt">
       <Tooltip content={<AlertLabels labels={displayLabels} size="sm" />} interactive placement="right">
-        <Text variant="bodySmall" color="primary">
-          {t('alerting.gma-rule-list.shared.label-count', '', {
-            count,
-            defaultValue_one: '{{count}} label',
-            defaultValue_other: '{{count}} labels',
-          })}
-        </Text>
+        {/* A non-truncated Text drops its ref, and without one the tooltip never opens on hover. */}
+        <span>
+          <Text variant="bodySmall" color="primary">
+            {t('alerting.gma-rule-list.shared.label-count', '', {
+              count,
+              defaultValue_one: '{{count}} label',
+              defaultValue_other: '{{count}} labels',
+            })}
+          </Text>
+        </span>
       </Tooltip>
     </MetaItem>
   );

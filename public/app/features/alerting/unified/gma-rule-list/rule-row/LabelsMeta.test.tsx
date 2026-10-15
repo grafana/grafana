@@ -3,12 +3,22 @@ import { render, screen } from 'test/test-utils';
 import { LabelsMeta } from './LabelsMeta';
 
 describe('LabelsMeta', () => {
-  it('shows the label count and lists the labels in the tooltip', async () => {
+  it('lists the labels in a tooltip on hover', async () => {
     const { user } = render(<LabelsMeta labels={{ team: 'ops', severity: 'critical' }} />);
 
-    screen.getByText('2 labels');
+    await user.hover(screen.getByText('2 labels'));
+
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent(/team/);
+    expect(tooltip).toHaveTextContent(/severity/);
+  });
+
+  it('lists the labels in a tooltip on keyboard focus', async () => {
+    const { user } = render(<LabelsMeta labels={{ team: 'ops' }} />);
+
     await user.tab();
-    expect(await screen.findByText(/team/)).toBeInTheDocument();
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(/team/);
   });
 
   it('uses the singular for one label', () => {
