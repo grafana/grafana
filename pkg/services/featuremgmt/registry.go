@@ -2229,6 +2229,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.dashboardVariablesMigration",
+			Description: "Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "smoothingTransformation",
 			Description: "Enables the ASAP smoothing transformation for time series data",
 			Stage:       FeatureStageExperimental,
