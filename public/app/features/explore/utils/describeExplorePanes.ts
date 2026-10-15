@@ -1,5 +1,5 @@
 import { type ExploreUrlState, urlUtil } from '@grafana/data';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList } from '@grafana/runtime';
 import { isRecord } from 'app/core/utils/isRecord';
 
 import { parseURL } from '../hooks/useStateSync/parseURL';
