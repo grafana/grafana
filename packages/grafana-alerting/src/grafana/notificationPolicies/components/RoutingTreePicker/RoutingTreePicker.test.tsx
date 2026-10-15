@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
@@ -69,6 +71,36 @@ describe('default (collapsed) state', () => {
       'href',
       '/alerting/routes'
     );
+  });
+
+  describe('View policies links on a subpath', () => {
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+
+    afterEach(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: config.appSubUrl } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+
+    it.each([
+      ['/alerting/routes', '/grafana/alerting/routes'],
+      ['/grafana/alerting/routes', '/grafana/alerting/routes'],
+      ['https://example.com/alerting/routes', 'https://example.com/alerting/routes'],
+    ])('opens %s at %s in a new tab', (href, expected) => {
+      render(<RoutingTreePicker value={null} onChange={jest.fn()} viewPoliciesHref={href} />);
+
+      const link = screen.getByRole('link', { name: /view notification policies/i });
+      expect(link).toHaveAttribute('href', expected);
+      expect(link).toHaveAttribute('target', '_blank');
+    });
   });
 });
 
