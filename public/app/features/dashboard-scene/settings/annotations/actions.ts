@@ -198,6 +198,40 @@ export const annotationEditActions = {
       },
     });
   },
+  changeAnnotationQuery({
+    source,
+    oldValue,
+    newValue,
+    scope,
+  }: {
+    source: DataLayer;
+    oldValue: DataLayer['state']['query'];
+    newValue: DataLayer['state']['query'];
+    scope: 'query-editor' | 'query-library';
+  }) {
+    if (oldValue === newValue) {
+      return;
+    }
+
+    // The query editor applies changes live, so the query may already be set when the change is recorded
+    const setQuery = (query: DataLayer['state']['query']) => {
+      if (source.state.query !== query) {
+        source.setState({ query });
+        source.runLayer();
+      }
+    };
+
+    edit({
+      meta: { actionId: 'annotation.changeQuery', scope },
+      description: t(
+        'dashboard-scene.annotation-edit-actions.description.change-annotation-query',
+        'Change annotation query'
+      ),
+      source,
+      perform: () => setQuery(newValue),
+      undo: () => setQuery(oldValue),
+    });
+  },
   changeAnnotationPanelFilter({
     source,
     oldValue,
