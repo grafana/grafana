@@ -899,6 +899,7 @@ func (b *bleveBackend) BuildIndex(
 	rebuild bool,
 	lastImportTime time.Time,
 	maxFreshSnapshotAge time.Duration,
+	options resource.BuildIndexOptions,
 ) (resource.ResourceIndex, error) {
 	_, span := tracer.Start(ctx, "search.bleveBackend.BuildIndex")
 	defer span.End()
@@ -934,8 +935,9 @@ func (b *bleveBackend) BuildIndex(
 	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", indexBuildReason)
 	resourceDir := b.getResourceDir(key)
 	snapshotEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	skipIfBuilding := options.SkipIfBuilding
 
-	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails)
+	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
 	if err != nil {
 		return nil, err
 	}
@@ -1082,6 +1084,7 @@ func (b *bleveBackend) prepareIndex(
 	maxFreshSnapshotAge time.Duration,
 	resourceDir string,
 	logger log.Logger,
+	skipIfBuilding bool,
 ) (preparedBuildIndex, error) {
 	cachedIndex := b.getCachedIndex(key, time.Now())
 
@@ -1090,7 +1093,7 @@ func (b *bleveBackend) prepareIndex(
 	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
 	if cachedIndex == nil && !rebuild {
-		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotEnabled, logger)
+		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotEnabled, logger, skipIfBuilding)
 	}
 
 	if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
@@ -1138,6 +1141,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 	lastImportTime time.Time,
 	snapshotEnabled bool,
 	logger log.Logger,
+	skipIfBuilding bool,
 ) (preparedBuildIndex, error) {
 	idx, name, rv, err := b.tryReuseFileIndex(resourceDir, lastImportTime, logger)
 	if err != nil {
@@ -1173,8 +1177,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 		}, nil
 	}
 
-	// coordinateColdStartBuild only returns err on ctx cancellation; propagate it directly.
-	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger)
+	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger, skipIfBuilding)
 	if err != nil {
 		return preparedBuildIndex{}, err
 	}

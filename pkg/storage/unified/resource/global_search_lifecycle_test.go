@@ -1449,6 +1449,8 @@ func TestWatchSkipsAGlobalIndexOwnedElsewhere(t *testing.T) {
 func TestSearchNeverUpdatesAGlobalIndex(t *testing.T) {
 	search := &mockSearchBackend{}
 	server := globalTestServer(t, &multiTypeStorage{}, search)
+	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
+	require.NoError(t, err)
 
 	for range 2 {
 		idx, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
@@ -1462,7 +1464,7 @@ func TestSearchNeverUpdatesAGlobalIndex(t *testing.T) {
 func TestReopenedGlobalIndexIsReconciledAtOnce(t *testing.T) {
 	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{reusesFromDisk: true})
 
-	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
 	require.NoError(t, err)
 
 	queued := server.reconcileQueue.Elements()
@@ -1476,7 +1478,7 @@ func TestReopenedGlobalIndexIsReconciledAtOnce(t *testing.T) {
 func TestFreshGlobalIndexIsReconciled(t *testing.T) {
 	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{})
 
-	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
 	require.NoError(t, err)
 
 	queued := server.reconcileQueue.Elements()

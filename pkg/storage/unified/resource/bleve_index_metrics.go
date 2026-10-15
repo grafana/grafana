@@ -198,7 +198,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		IndexSnapshotBuildCoordinations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_build_coordinations_total",
 			Help: "Number of snapshot build coordination outcomes, by flow and outcome.",
-		}, []string{"flow", "outcome"}), // flow: cold_start, rebuild. outcome: acquired_lock, downloaded_after_wait, wait_timed_out, lock_error, context_canceled
+		}, []string{"flow", "outcome"}), // flow: cold_start, rebuild. outcome: acquired_lock, downloaded_after_wait, lock_held, lock_error, context_canceled
 		IndexSnapshotNamespaceCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_namespace_cleanups_total",
 			Help: "Number of namespace-level remote index snapshot cleanup attempts, by outcome.",
@@ -288,6 +288,7 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "acquired_lock").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "downloaded_after_wait").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "wait_timed_out").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_held").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_error").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "context_canceled").Add(0)
 	}

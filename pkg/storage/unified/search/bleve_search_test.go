@@ -1467,7 +1467,7 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, "test", writer, nil, false, time.Time{}, 0)
+	}, size, "test", writer, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	return index
@@ -1504,7 +1504,7 @@ func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, colum
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
-	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0)
+	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
@@ -1574,7 +1574,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 10, "test", noop, nil, false, time.Time{}, 0)
+	}, 10, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	err = index.BulkIndex(&resource.BulkIndexRequest{
@@ -1810,7 +1810,7 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, "test", noop, nil, false, time.Time{}, 0)
+	}, size, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
@@ -3104,7 +3104,7 @@ func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAu
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, "test", noop, nil, false, time.Time{}, 0)
+	}, size, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
@@ -4118,7 +4118,7 @@ func newTestIndexWithTypedFields(t testing.TB, key resource.NamespacedResource, 
 	t.Cleanup(backend.Stop)
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0)
+	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
@@ -4305,7 +4305,7 @@ func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, post
 			{Action: resource.ActionIndex, Doc: doc("no-rv", 0)},
 			{Action: resource.ActionIndex, Doc: deleted},
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
