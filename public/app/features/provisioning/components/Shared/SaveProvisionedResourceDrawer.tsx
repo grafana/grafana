@@ -1,10 +1,10 @@
 import { customAlphabet } from 'nanoid';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Stack, Text } from '@grafana/ui';
+import { Button, Drawer, Spinner, Stack, Text } from '@grafana/ui';
 import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import {
   AnnoKeyManagerIdentity,
@@ -32,6 +32,7 @@ import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from 
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
+import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
 /** Commit action handled by this drawer. */
@@ -78,11 +79,25 @@ interface BaseDrawerProps {
   successMessage?: string;
   /** Message shown when the repository can't be edited from the UI. */
   readOnlyMessage?: string;
+  /** Directory for a new resource's file, with a trailing slash. Defaults to the repository root. */
+  directory?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
+  /**
+   * Form fields for the resource itself, rendered above the commit fields so one drawer holds both.
+   * Pair with `getSpec` so the committed body reflects the fields at submit time.
+   */
+  children?: ReactNode;
+  /** Returns the spec to commit at submit time. Defaults to `resource.spec`. */
+  getSpec?: () => Record<string, unknown> | undefined;
+  /**
+   * Called on submit when no repository is involved (the folder is not managed and no repository was
+   * picked), so the caller stores the resource in Grafana. Without it the drawer requires a repository.
+   */
+  onSave?: () => Promise<void> | void;
   onDismiss?: () => void;
   /** Override the default post-commit (configured-branch) navigation to the kind's list page. */
-  onWriteSuccess?: () => void;
+  onWriteSuccess?: (resource: unknown) => void;
   /** Override the default post-push (PR workflow) navigation to the kind's list page. */
   onBranchSuccess?: (data: {
     ref: string;
@@ -103,13 +118,17 @@ interface BaseDrawerProps {
  * `update`/`delete` resolve the repository from the existing resource's annotations and take none.
  */
 export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
-  ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
+  ({ action: 'create'; repositoryName?: string } | { action: 'update' | 'delete'; repositoryName?: never });
 
 interface FormProps {
   kind: ResourceKindInfo;
   resourceName: string;
   title: string;
-  body?: Record<string, unknown>;
+  getBody: () => Record<string, unknown> | undefined;
+  children?: ReactNode;
+  onSave?: BaseDrawerProps['onSave'];
+  /** Repository lookup state, shown inline above the commit fields so `children` stay mounted. */
+  repositoryState?: { isLoading: boolean; isMissingRepo: boolean; isReadOnly: boolean; readOnlyMessage: string };
   action: ProvisionedResourceAction;
   isNew: boolean;
   successMessage?: string;
@@ -117,7 +136,7 @@ interface FormProps {
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
   onDismiss?: () => void;
-  onWriteSuccess?: () => void;
+  onWriteSuccess?: (resource: unknown) => void;
   onBranchSuccess?: SaveProvisionedResourceDrawerProps['onBranchSuccess'];
 }
 
@@ -125,7 +144,10 @@ function FormContent({
   kind,
   resourceName,
   title,
-  body,
+  getBody,
+  children,
+  onSave,
+  repositoryState,
   action,
   isNew,
   successMessage,
@@ -136,6 +158,7 @@ function FormContent({
   onWriteSuccess,
   onBranchSuccess,
 }: FormProps) {
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   // The kind's stable key is the UI-facing resource type for the commit message, telemetry and fields.
   const resourceType = kind.key;
@@ -147,8 +170,13 @@ function FormContent({
   const request = isDelete ? deleteRequest : saveRequest;
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues, mode: 'onBlur' });
-  const { handleSubmit, watch, formState } = methods;
+  const { handleSubmit, watch, formState, reset } = methods;
   const [workflow] = watch(['workflow']);
+  // The repository can change while the drawer is open (a folder or repository picked in `children`),
+  // and useForm reads defaultValues once, so apply the new branch, path and workflow defaults.
+  useEffect(() => {
+    reset(initialValues, { keepDirtyValues: true });
+  }, [initialValues, reset]);
 
   // Default the success handlers to the kind's list navigation (invalidate + navigate); a caller can
   // override either. `create`/`update`/`delete` differ only by the PR-banner action param.
@@ -159,7 +187,7 @@ function FormContent({
 
   const templateVars: CommitTemplateVars = {
     action,
-    resourceKind: resourceType,
+    resourceKind: kind.getLabel(),
     resourceID: resourceName,
     title,
     ...getCurrentCommitUser(),
@@ -194,7 +222,7 @@ function FormContent({
     successMessage,
     handlers: {
       onDismiss,
-      onWriteSuccess: () => writeSuccess(),
+      onWriteSuccess: (resource) => writeSuccess(resource),
       // Branch (PR) workflow: pass the repo info so the destination page can render the PR banner.
       onBranchSuccess: ({ ref, urls }) =>
         branchSuccess({
@@ -210,6 +238,18 @@ function FormContent({
 
   const doSave = async ({ ref, workflow, path }: BaseProvisionedFormData) => {
     setError(undefined);
+    const body = getBody();
+    if (!repository && onSave) {
+      setSaving(true);
+      try {
+        await onSave();
+      } catch (err) {
+        showError(err);
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
     const repoName = repository?.name;
     // Use the submitted path: for new resources the path field is editable, so the user may have
     // changed it from the initial slug. For existing resources the field is read-only (== initial).
@@ -243,15 +283,27 @@ function FormContent({
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(doSave)}>
         <Stack direction="column" gap={2}>
-          <ResourceEditFormSharedFields
-            resourceType={resourceType}
-            isNew={isNew}
-            canPushToConfiguredBranch={canPushToConfiguredBranch}
-            repository={repository}
-            lockComment={locked}
-            commitMessage={message}
-            lockBranch={lockBranch}
-          />
+          {children}
+          {repositoryState?.isLoading && <Spinner />}
+          {repositoryState?.isMissingRepo && <RepoInvalidStateBanner noRepository isReadOnlyRepo={false} />}
+          {repositoryState?.isReadOnly && (
+            <RepoInvalidStateBanner
+              noRepository={false}
+              isReadOnlyRepo
+              readOnlyMessage={repositoryState.readOnlyMessage}
+            />
+          )}
+          {repository && !repositoryState?.isLoading && !repositoryState?.isReadOnly && (
+            <ResourceEditFormSharedFields
+              resourceType={resourceType}
+              isNew={isNew}
+              canPushToConfiguredBranch={canPushToConfiguredBranch}
+              repository={repository}
+              lockComment={locked}
+              commitMessage={message}
+              lockBranch={lockBranch}
+            />
+          )}
 
           {error && <ProvisioningAlert error={error} />}
 
@@ -259,12 +311,20 @@ function FormContent({
             <Button variant="secondary" fill="outline" onClick={onDismiss}>
               {t('provisioning.save-resource.button-cancel', 'Cancel')}
             </Button>
-            <Button type="submit" variant={isDelete ? 'destructive' : 'primary'} disabled={request.isLoading}>
+            <Button
+              type="submit"
+              variant={isDelete ? 'destructive' : 'primary'}
+              disabled={
+                request.isLoading ||
+                saving ||
+                Boolean(repositoryState?.isLoading || repositoryState?.isMissingRepo || repositoryState?.isReadOnly)
+              }
+            >
               {isDelete
                 ? request.isLoading
                   ? t('provisioning.save-resource.button-deleting', 'Deleting...')
                   : t('provisioning.save-resource.button-delete', 'Delete')
-                : request.isLoading
+                : request.isLoading || saving
                   ? t('provisioning.save-resource.button-saving', 'Saving...')
                   : t('provisioning.save-resource.button-save', 'Save')}
             </Button>
@@ -311,7 +371,11 @@ function ResourceDrawerContent({
   repositoryName,
   successMessage,
   readOnlyMessage,
+  directory = '',
   branchPrefix,
+  children,
+  getSpec,
+  onSave,
   onDismiss,
   onWriteSuccess,
   onBranchSuccess,
@@ -334,21 +398,30 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: repositoryName ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kind.key),
+            [AnnoKeySourcePath]: directory + getNewResourcePath(title, kind.key),
           },
         },
       }
     : resource;
 
   // Delete removes the file, so it commits no body; create/update commit the standard resource shape.
-  const body = isDelete
-    ? undefined
-    : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
+  // Read at submit time, so fields rendered as `children` are reflected.
+  const getBody = () =>
+    isDelete
+      ? undefined
+      : {
+          apiVersion: resource.apiVersion,
+          kind: resource.kind,
+          metadata: { name: resourceName },
+          spec: getSpec ? getSpec() : resource.spec,
+        };
 
-  // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
-  const prefix = branchPrefix ?? kind.key;
+  // Branch names can't contain spaces or dots, so prefix from the kind name, not the display noun.
+  const prefix = branchPrefix ?? kind.kind.toLowerCase();
+  const wantsRepository = !isNew || Boolean(repositoryName);
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),
+    skipQuery: !wantsRepository,
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
@@ -362,19 +435,46 @@ function ResourceDrawerContent({
       })
     : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', { resource: resourceLabel });
 
-  const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
-    if (!repository || isLoading) {
-      return undefined;
-    }
+  const initialValues = useMemo<BaseProvisionedFormData>(() => {
     return {
       title: title || '',
       comment: '',
-      ref: getDefaultRef(repository, prefix),
-      repo: repository.name || '',
+      ref: repository ? getDefaultRef(repository, prefix) : '',
+      repo: repository?.name || '',
       path: sourcePath || '',
-      workflow: getDefaultWorkflow(repository),
+      workflow: repository ? getDefaultWorkflow(repository) : undefined,
     };
-  }, [repository, isLoading, title, sourcePath, prefix]);
+  }, [repository, title, sourcePath, prefix]);
+  const readOnlyText =
+    readOnlyMessage ??
+    t('provisioning.save-resource.read-only-message', 'To edit this resource, please update it in your repository directly.');
+  const repositoryState = {
+    isLoading: Boolean(isLoading),
+    isMissingRepo: wantsRepository && isMissingRepo,
+    isReadOnly: isReadOnlyRepo,
+    readOnlyMessage: readOnlyText,
+  };
+  const form = (
+    <FormContent
+      kind={kind}
+      resourceName={resourceName}
+      title={title}
+      getBody={getBody}
+      action={action}
+      onSave={onSave}
+      repositoryState={children ? repositoryState : undefined}
+      isNew={isNew}
+      successMessage={successMessage}
+      initialValues={initialValues}
+      repository={repository}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
+      onDismiss={onDismiss}
+      onWriteSuccess={onWriteSuccess}
+      onBranchSuccess={onBranchSuccess}
+    >
+      {children}
+    </FormContent>
+  );
 
   return (
     <Drawer
@@ -386,36 +486,15 @@ function ResourceDrawerContent({
       subtitle={title}
       onClose={() => onDismiss?.()}
     >
-      <ProvisionedFormGate
-        isLoading={isLoading}
-        isMissingRepo={isMissingRepo}
-        isReadOnly={isReadOnlyRepo}
-        readOnlyMessage={
-          readOnlyMessage ??
-          t(
-            'provisioning.save-resource.read-only-message',
-            'To edit this resource, please update it in your repository directly.'
-          )
-        }
-      >
-        {initialValues && (
-          <FormContent
-            kind={kind}
-            resourceName={resourceName}
-            title={title}
-            body={body}
-            action={action}
-            isNew={isNew}
-            successMessage={successMessage}
-            initialValues={initialValues}
-            repository={repository}
-            canPushToConfiguredBranch={canPushToConfiguredBranch}
-            onDismiss={onDismiss}
-            onWriteSuccess={onWriteSuccess}
-            onBranchSuccess={onBranchSuccess}
-          />
-        )}
-      </ProvisionedFormGate>
+      {children ? (
+        // Resource fields in `children` must stay mounted while the repository resolves, so the
+        // lookup state shows inline instead of replacing the form.
+        form
+      ) : (
+        <ProvisionedFormGate {...repositoryState}>
+          {form}
+        </ProvisionedFormGate>
+      )}
     </Drawer>
   );
 }

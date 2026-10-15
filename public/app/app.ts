@@ -35,6 +35,7 @@ import {
   setPluginLinksHook,
   setHelpNavItemHook,
   setFolderPicker,
+  provisioning,
   setCorrelationsService,
   setPanelScreenshotService,
   setPluginFunctionsHook,
@@ -122,6 +123,8 @@ import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/import
 import { pluginImporter } from './features/plugins/importer/pluginImporter';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
+import { provisioningComponents } from './features/provisioning/components/Shared/runtimeComponents';
+import { addResourceKinds } from './features/provisioning/utils/resourceKinds';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -230,6 +233,8 @@ export class GrafanaApp {
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
+      provisioning.setComponents(provisioningComponents);
+      provisioning.setRegisterResourceKinds(addResourceKinds);
       setDataSourcePicker(RuntimeDataSourcePickerShim);
       setPanelDataErrorView(LazyPanelDataErrorView);
       setLocationSrv(locationService);
