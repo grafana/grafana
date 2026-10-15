@@ -152,7 +152,7 @@ To filter column values, follow these steps:
 
 1. Do one of the following, depending on the type of data in that column:
    - **Values**: Click the checkboxes next to the values you want to include or click **Select all**. To narrow the set of values, enter text in the search field and then choose an operator:
-     - **Contains** - Matches a regex pattern (operator by default).
+     - **Contains** - Matches a regular expression pattern (operator by default).
      - **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
      - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
 
