@@ -109,9 +109,8 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     inlineContainer: css({
       label: 'hover-container-widget-inline',
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
+      // The items join the host element's flex layout and spacing; wrappers that render nothing leave no gap.
+      display: 'contents',
       color: theme.colors.text.primary,
     }),
     inlineSquare: css({

@@ -738,7 +738,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
     }),
     hoverSlotTitleItems: css({
-      gap: theme.spacing(1),
+      display: 'contents',
       // Title items that are plain buttons (e.g. the panel links dropdown) sit next to the slot's icon buttons.
       '& > button': {
         padding: 0,
