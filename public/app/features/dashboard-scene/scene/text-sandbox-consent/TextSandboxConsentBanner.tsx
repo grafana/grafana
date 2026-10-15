@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 
-import { imagesLabel, TextSandboxConsentModal } from './TextSandboxConsentModal';
+import { resourcesLabel, TextSandboxConsentModal } from './TextSandboxConsentModal';
 import { type BlockedOriginSummary, useBlockedSummary } from './textSandboxConsent';
 
 interface Props {
@@ -26,20 +26,20 @@ export function TextSandboxConsentBanner({ dashboardUid, panelId, className }: P
     return null;
   }
 
-  const images = sources.reduce((sum, source) => sum + source.count, 0);
+  const resources = sources.reduce((sum, source) => sum + source.count, 0);
   const title = t('dashboard-scene.text-sandbox-consent.banner-title', '', {
-    count: sources.length,
-    defaultValue_one: '{{resources}} with {{images}} is being blocked',
-    defaultValue_other: '{{resources}} with {{images}} are being blocked',
-    resources: t('dashboard-scene.text-sandbox-consent.resources', '', {
-      count: sources.length,
-      defaultValue_one: '{{count}} resource',
-      defaultValue_other: '{{count}} resources',
-    }),
-    images: imagesLabel(
-      images,
+    count: resources,
+    defaultValue_one: '{{resources}} from {{sources}} is blocked',
+    defaultValue_other: '{{resources}} from {{sources}} are blocked',
+    resources: resourcesLabel(
+      resources,
       sources.some((source) => source.truncated)
     ),
+    sources: t('dashboard-scene.text-sandbox-consent.sources', '', {
+      count: sources.length,
+      defaultValue_one: '{{count}} source',
+      defaultValue_other: '{{count}} sources',
+    }),
   });
 
   return (
@@ -57,10 +57,7 @@ export function TextSandboxConsentBanner({ dashboardUid, panelId, className }: P
             </Button>
           }
         >
-          {t(
-            'dashboard-scene.text-sandbox-consent.banner-description',
-            'To see these images, please review and allow their sources'
-          )}
+          {t('dashboard-scene.text-sandbox-consent.banner-description', 'To load them, review and allow their sources')}
         </Alert>
       )}
       {reviewing && (

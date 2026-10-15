@@ -57,10 +57,10 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-it('summarises blocked sources and images across panels', () => {
+it('summarises blocked sources and resources across panels', () => {
   render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
   reportMockupPanels();
-  expect(screen.getByText('2 resources with 8 images are being blocked')).toBeVisible();
+  expect(screen.getByText('8 resources from 2 sources are blocked')).toBeVisible();
 });
 
 it('renders nothing for a dashboard without blocked sources', () => {
@@ -77,11 +77,11 @@ it('lists each host with its panels and every blocked URL', async () => {
 
   expect(within(twimgRow).getByText('pbs.twimg.com')).toBeVisible();
   expect(within(twimgRow).getByText('Text sample')).toBeVisible();
-  expect(within(twimgRow).getByText('5 images from 1 URL')).toBeVisible();
+  expect(within(twimgRow).getByText('5 resources from 1 URL')).toBeVisible();
   expect(within(twimgRow).getByText('×5')).toBeVisible();
 
   expect(within(dicebearRow).getByText('Mixed image sources')).toBeVisible();
-  expect(within(dicebearRow).getByText('3 images')).toBeVisible();
+  expect(within(dicebearRow).getByText('3 resources')).toBeVisible();
   expect(within(dicebearRow).queryByText(/^×/)).not.toBeInTheDocument();
   for (const seed of ['j.smith', 'j.johnson', 'w.zhang']) {
     expect(within(dicebearRow).getByText(`${dicebear}/svg?seed=${seed}`)).toBeVisible();
@@ -98,10 +98,10 @@ it("doesn't let a source be allowed when some of its URLs couldn't be listed", a
       origins: [{ origin: twimg, urls: [{ url: `${twimg}/collect?d=abc`, count: 1 }], truncated: true }],
     });
   });
-  expect(screen.getByText('2 resources with 4+ images are being blocked')).toBeVisible();
+  expect(screen.getByText('4+ resources from 2 sources are blocked')).toBeVisible();
   const dialog = await openReview();
-  expect(within(dialog).getByText('1+ image')).toBeVisible();
-  expect(within(dialog).getByText("Too many images to review. This source can't be allowed.")).toBeVisible();
+  expect(within(dialog).getByText('1+ resource')).toBeVisible();
+  expect(within(dialog).getByText("Too many resources to review. This source can't be allowed.")).toBeVisible();
   expect(within(dialog).getByRole('checkbox', { name: 'pbs.twimg.com' })).toBeDisabled();
 
   await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Select all' }));
@@ -138,7 +138,7 @@ it('"Allow" unblocks the selected sources in the panels listed only and recounts
   expect(getAllowedOrigins(dashboardUid, 1)).toEqual([]);
   expect(getAllowedOrigins('another-dashboard', 2)).toEqual([]);
   expect(emit).toHaveBeenCalledWith(AppEvents.alertSuccess, ['1 source is now allowed in the panels listed']);
-  expect(screen.getByText('1 resource with 5 images is being blocked')).toBeVisible();
+  expect(screen.getByText('5 resources from 1 source are blocked')).toBeVisible();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 

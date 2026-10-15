@@ -117,7 +117,7 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
                 <Text variant="bodySmall" color="warning">
                   {t(
                     'dashboard-scene.text-sandbox-consent.truncated',
-                    "Too many images to review. This source can't be allowed."
+                    "Too many resources to review. This source can't be allowed."
                   )}
                 </Text>
               )}
@@ -131,7 +131,7 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
             label={t('dashboard-scene.text-sandbox-consent.allow', 'Allow')}
             tooltip={t(
               'dashboard-scene.text-sandbox-consent.allow-tooltip',
-              'Load images from the selected sources in the panels listed, until you close this tab.'
+              'Load content from the selected sources in the panels listed, until you close this tab.'
             )}
           />
         </Button>
@@ -140,7 +140,7 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
             label={t('dashboard-scene.text-sandbox-consent.always-allow', 'Always allow')}
             tooltip={t(
               'dashboard-scene.text-sandbox-consent.always-allow-tooltip',
-              'Load images from the selected sources on any dashboard for {{days}} days. Saved in this browser.',
+              'Load content from the selected sources on any dashboard for {{days}} days. Saved in this browser.',
               { days: ALWAYS_ALLOW_DAYS }
             )}
           />
@@ -150,29 +150,29 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
   );
 }
 
-/** `atLeast` adds a "+" when some images weren't listed, and so weren't counted. */
-export function imagesLabel(count: number, atLeast = false) {
+/** `atLeast` adds a "+" when some resources weren't listed, and so weren't counted. */
+export function resourcesLabel(count: number, atLeast = false) {
   return atLeast
-    ? t('dashboard-scene.text-sandbox-consent.images-at-least', '', {
+    ? t('dashboard-scene.text-sandbox-consent.resources-at-least', '', {
         count,
-        defaultValue_one: '{{count}}+ image',
-        defaultValue_other: '{{count}}+ images',
+        defaultValue_one: '{{count}}+ resource',
+        defaultValue_other: '{{count}}+ resources',
       })
-    : t('dashboard-scene.text-sandbox-consent.images', '', {
+    : t('dashboard-scene.text-sandbox-consent.resources', '', {
         count,
-        defaultValue_one: '{{count}} image',
-        defaultValue_other: '{{count}} images',
+        defaultValue_one: '{{count}} resource',
+        defaultValue_other: '{{count}} resources',
       });
 }
 
-// "3 images", or "3 images from 1 URL" when some URLs are used more than once.
+// "3 resources", or "3 resources from 1 URL" when some URLs are used more than once.
 function sourceSummary({ count, urls, truncated }: BlockedOriginSummary) {
-  const images = imagesLabel(count, truncated);
+  const resources = resourcesLabel(count, truncated);
   if (urls.length === 0 || urls.length === count) {
-    return images;
+    return resources;
   }
-  return t('dashboard-scene.text-sandbox-consent.images-from-urls', '{{images}} from {{urls}}', {
-    images,
+  return t('dashboard-scene.text-sandbox-consent.resources-from-urls', '{{resources}} from {{urls}}', {
+    resources,
     urls: t('dashboard-scene.text-sandbox-consent.url-count', '', {
       count: urls.length,
       defaultValue_one: '{{count}} URL',
