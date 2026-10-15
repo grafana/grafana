@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { useMeasure, useToggle } from 'react-use';
 
 import { type GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -18,6 +19,7 @@ import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { HoverWidget } from './HoverWidget';
+import { usePanelChromeHeaderControls } from './PanelChromeHeaderControlsContext';
 import { PanelDescription } from './PanelDescription';
 import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
@@ -184,6 +186,9 @@ export function PanelChrome({
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
   const pointerDistance = usePointerDistance();
   const [subHeaderRef, { height: measuredSubHeaderHeight }] = useMeasure<HTMLDivElement>();
+  const headerControls = usePanelChromeHeaderControls();
+  const hasExternalControls = Boolean(headerControls?.external);
+  const isInHoverSlot = hasExternalControls && hoverHeader;
 
   const hasHeader = !hoverHeader;
 
@@ -341,7 +346,10 @@ export function PanelChrome({
       )}
 
       {(titleItems || descriptionTitleItem) && (
-        <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+        <div
+          className={cx(styles.titleItems, isInHoverSlot && styles.hoverSlotTitleItems, dragClassCancel)}
+          data-testid="title-items-container"
+        >
           {descriptionTitleItem}
           {titleItems}
         </div>
@@ -381,6 +389,8 @@ export function PanelChrome({
   // Ignores streaming and loading (cancel query) states for simplicity
   // If you need to cancel streaming / loading panels set a title
   const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
+  const hoverSlotDragClass = headerControls?.hideDragHandle ? undefined : dragClass;
+  const hasHoverSlotContent = title || description || titleItems || hoverSlotDragClass || actions;
 
   return (
     <div className={styles.container}>
@@ -412,7 +422,22 @@ export function PanelChrome({
 
         {hoverHeader && (
           <>
-            {hasHeaderContent && (
+            {hasExternalControls &&
+              headerControls?.hoverSlot &&
+              hasHoverSlotContent &&
+              createPortal(
+                <HoverWidget
+                  inline
+                  title={typeof title === 'string' ? title : undefined}
+                  dragClass={hoverSlotDragClass}
+                  onDragStart={onDragStart}
+                >
+                  {headerContent}
+                </HoverWidget>,
+                headerControls.hoverSlot
+              )}
+
+            {!hasExternalControls && hasHeaderContent && (
               <HoverWidget
                 menu={menu}
                 title={typeof title === 'string' ? title : undefined}
@@ -462,7 +487,7 @@ export function PanelChrome({
 
               {headerContent}
 
-              {menu && (
+              {menu && !hasExternalControls && (
                 <PanelMenu
                   menu={menu}
                   title={typeof title === 'string' ? title : undefined}
@@ -711,6 +736,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       height: '100%',
       alignItems: 'center',
+    }),
+    hoverSlotTitleItems: css({
+      display: 'contents',
+      // Title items that are plain buttons (e.g. the panel links dropdown) sit next to the slot's icon buttons.
+      '& > button': {
+        padding: 0,
+        height: 'auto',
+        minWidth: 0,
+        border: 'none',
+        background: 'transparent',
+        color: theme.colors.text.primary,
+        '&:hover': {
+          background: 'transparent',
+          color: theme.colors.text.maxContrast,
+        },
+      },
     }),
     clearButtonStyles: css({
       alignItems: 'center',

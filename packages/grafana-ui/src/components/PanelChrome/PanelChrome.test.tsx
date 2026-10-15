@@ -1,4 +1,4 @@
-import { screen, render } from '@testing-library/react';
+import { screen, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useToggle } from 'react-use';
 
@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';
 
 import { PanelChrome, type PanelChromeProps } from './PanelChrome';
+import { type PanelChromeHeaderControls, PanelChromeHeaderControlsContext } from './PanelChromeHeaderControlsContext';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {
@@ -131,6 +132,80 @@ it('renders panel with an always visible menu icon if prop showMenuAlways is tru
 
   expect(screen.getByTestId('panel-menu-button')).toBeInTheDocument();
   expect(screen.getByTestId('panel-menu-button')).toBeVisible();
+});
+
+describe('when the header controls are provided from outside the panel', () => {
+  const renderWithHeaderControls = (controls: PanelChromeHeaderControls, propOverrides: Partial<PanelChromeProps>) => {
+    const props: PanelChromeProps = {
+      width: 100,
+      height: 100,
+      children: () => <div>Panel&apos;s Content</div>,
+    };
+    Object.assign(props, propOverrides);
+
+    return render(
+      <PanelChromeHeaderControlsContext.Provider value={controls}>
+        <PanelChrome {...props} />
+      </PanelChromeHeaderControlsContext.Provider>
+    );
+  };
+
+  it('does not render the menu button in the panel header', () => {
+    renderWithHeaderControls({ external: true, hoverSlot: null }, { title: 'Titled', menu: <div>Menu</div> });
+
+    expect(screen.getByText('Titled')).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Panels.Panel.menu('Titled'))).not.toBeInTheDocument();
+  });
+
+  it('renders the hover header items into the hover slot instead of the hover widget', () => {
+    const hoverSlot = document.createElement('div');
+    document.body.appendChild(hoverSlot);
+
+    renderWithHeaderControls(
+      { external: true, hoverSlot },
+      {
+        hoverHeader: true,
+        menu: <div>Menu</div>,
+        dragClass: 'drag-handle',
+        titleItems: <span>Panel links</span>,
+      }
+    );
+
+    const slot = within(hoverSlot);
+    expect(slot.getByText('Panel links')).toBeInTheDocument();
+    expect(slot.getByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)).toHaveClass('drag-handle');
+    expect(screen.queryByTestId('panel-menu-button')).not.toBeInTheDocument();
+    expect(hoverSlot.querySelector('.show-on-hover')).toBeNull();
+
+    hoverSlot.remove();
+  });
+
+  it('leaves out the drag handle when hideDragHandle is set', () => {
+    const hoverSlot = document.createElement('div');
+    document.body.appendChild(hoverSlot);
+
+    renderWithHeaderControls(
+      { external: true, hoverSlot, hideDragHandle: true },
+      { hoverHeader: true, dragClass: 'drag-handle', titleItems: <span>Panel links</span> }
+    );
+
+    expect(within(hoverSlot).getByText('Panel links')).toBeInTheDocument();
+    expect(
+      within(hoverSlot).queryByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)
+    ).not.toBeInTheDocument();
+
+    hoverSlot.remove();
+  });
+
+  it('renders no hover header items while there is no hover slot', () => {
+    renderWithHeaderControls(
+      { external: true, hoverSlot: null },
+      { hoverHeader: true, menu: <div>Menu</div>, titleItems: <span>Panel links</span> }
+    );
+
+    expect(screen.queryByText('Panel links')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Panels.Panel.HoverWidget.container)).not.toBeInTheDocument();
+  });
 });
 
 it('renders error status in the panel header if any given', () => {
