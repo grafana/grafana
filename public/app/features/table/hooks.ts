@@ -1,8 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   type ActionModel,
   cacheFieldDisplayNames,
+  compareArrayValues,
+  compareDataFrameStructures,
   DashboardCursorSync,
   type DataFrame,
   type Field,
@@ -20,7 +22,6 @@ import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
 import { getSourceFrameIndex, useColumnTransformations } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
-import { useStructureRev } from 'app/core/hooks/useStructureRev';
 
 import { supportsColumnManagement } from './tableCapabilities';
 import { getCellActions } from './utils';
@@ -31,10 +32,13 @@ export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
 
 /** Scope runtime state to a query position and invalidate it when source structure changes. */
 export function useTableFrameScope(sourceSeries: readonly DataFrame[]) {
-  const structureRev = useStructureRev(sourceSeries);
+  const [structure, setStructure] = useState(() => ({ frames: sourceSeries, revision: 1 }));
+  if (!compareArrayValues(sourceSeries, structure.frames, compareDataFrameStructures)) {
+    setStructure({ frames: sourceSeries, revision: structure.revision + 1 });
+  }
   return useCallback(
-    (frameIndex: number) => JSON.stringify([sourceSeries[frameIndex]?.refId, frameIndex, structureRev]),
-    [sourceSeries, structureRev]
+    (frameIndex: number) => JSON.stringify([sourceSeries[frameIndex]?.refId, frameIndex, structure.revision]),
+    [sourceSeries, structure.revision]
   );
 }
 

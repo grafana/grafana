@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import {
   applyFieldOverrides,
   CoreApp,
+  DataTransformerID,
   type DataFrame,
   type GrafanaTheme2,
   getFrameDisplayName,
@@ -73,12 +74,23 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const outputMain = frames[currentIndex];
-  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
+  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled;
+  const isPanelEditor = panelContext.app === CoreApp.PanelEditor;
   const sourceSeries = adHocTransformationsEnabled
     ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
   const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
   const getFrameScope = useTableFrameScope(sourceSeries ?? frames);
+  const editFrameKey = isPanelEditor
+    ? panelContext.adHocTransformations
+        ?.get(TABLE_TRANSFORMATIONS_OWNER)
+        .find(
+          (config) =>
+            config.id === DataTransformerID.filterByValue &&
+            config.options?.target?.frameIndex === sourceFrameIndex &&
+            config.options?.target?.refId === sourceSeries?.[sourceFrameIndex]?.refId
+        )?.options?.target?.frameKey
+    : undefined;
   // Rebuild against original rows while retaining cross-frame display and data-link context.
   const sourceFramesWithOverrides = useMemo(
     () =>
@@ -95,9 +107,12 @@ export function TablePanel(props: Props) {
         : undefined,
     [sourceSeries, fieldConfig, theme, props.timeZone, replaceVariables, dataLinkPostProcessor]
   );
-  const displayFrames = sourceFrameIndex >= 0 && sourceFramesWithOverrides ? sourceFramesWithOverrides : frames;
+  const displayFrames =
+    !isPanelEditor && sourceFrameIndex >= 0 && sourceFramesWithOverrides ? sourceFramesWithOverrides : frames;
   useCacheFieldDisplayNames(displayFrames);
-  const rawMain = displayFrames[sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex] ?? outputMain;
+  const rawMain = isPanelEditor
+    ? outputMain
+    : (displayFrames[sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex] ?? outputMain);
   const configuredSourceSeries = useMemo(
     () =>
       sourceSeries &&
@@ -155,7 +170,7 @@ export function TablePanel(props: Props) {
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,
-              frameKey: getFrameScope(sourceFrameIndex),
+              frameKey: editFrameKey ?? getFrameScope(sourceFrameIndex),
               frameIndex: sourceFrameIndex,
             }
           : undefined
