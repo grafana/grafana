@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/addon-docs/blocks';
+import { Meta, ArgTypes } from '@storybook/addon-docs/blocks';
 import { SanitizedSVG } from './SanitizedSVG';
 
 <Meta title="MDX|SanitizedSVG" component={SanitizedSVG} />
@@ -16,3 +16,5 @@ SVGs that ship with Grafana (under `public/build/` and `public/img/`) keep their
 ```
 
 Pass `cleanStyle` to scope the SVG's embedded `<style type="text/css">` rules to that SVG, so they do not leak to the rest of the page.
+
+<ArgTypes of={SanitizedSVG} />
