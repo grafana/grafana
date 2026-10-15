@@ -59,7 +59,7 @@ export function PanelActionsWrapper({ panel, children }: { panel: VizPanel; chil
   );
 }
 
-export function PanelActionsPopoverWrapper({
+function PanelActionsPopoverWrapper({
   panel,
   dashboard,
   children,
@@ -117,7 +117,7 @@ interface PanelActionsProps {
   onHoverSlotChange: (element: HTMLElement | null) => void;
 }
 
-export function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelActionsProps) {
+function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelActionsProps) {
   const onMenuOpenChange = usePanelActionsOverlayOpenChange();
   const styles = useStyles2(getStyles);
   const actionStyles = useStyles2(getActionStyles);
