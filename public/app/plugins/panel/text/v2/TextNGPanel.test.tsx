@@ -12,10 +12,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
-import {
-  allowOrigins,
-  getBlockedSummary,
-} from 'app/features/dashboard-scene/scene/text-sandbox-consent/textSandboxConsent';
+import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 

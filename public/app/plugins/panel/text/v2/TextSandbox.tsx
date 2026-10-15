@@ -9,7 +9,7 @@ import {
   reportBlocked,
   useAllowedOrigins,
   type BlockedOrigin,
-} from 'app/features/dashboard-scene/scene/text-sandbox-consent/textSandboxConsent';
+} from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { SandboxFrame } from './SandboxFrame';
 import { inlineSandboxFonts } from './sandboxFonts';

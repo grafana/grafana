@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Button, Checkbox, Icon, Modal, ScrollContainer, Stack, Tag, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 
-import { ALWAYS_ALLOW_DAYS, allowOrigins, type BlockedOriginSummary, type ConsentScope } from './textSandboxConsent';
+import { ALWAYS_ALLOW_DAYS, allowOrigins, type BlockedOriginSummary, type ConsentScope } from './sandboxConsent';
 
 // In theme spacing units, about six URLs. A long list scrolls so it can't push the other sources out of view.
 const URL_LIST_HEIGHT = 18;
@@ -17,7 +17,7 @@ interface Props {
   onDismiss: () => void;
 }
 
-export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Props) {
+export function SandboxConsentModal({ dashboardUid, sources, onDismiss }: Props) {
   const styles = useStyles2(getStyles);
   const [checked, setChecked] = useState<Set<string>>(() => new Set());
   // A source with URLs left out can't be reviewed, so it can't be allowed.
@@ -39,13 +39,13 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
     const count = selected.length;
     appEvents.emit(AppEvents.alertSuccess, [
       scope === 'always'
-        ? t('dashboard-scene.text-sandbox-consent.allowed-always', '', {
+        ? t('dashboard-scene.sandbox-consent.allowed-always', '', {
             count,
             days: ALWAYS_ALLOW_DAYS,
             defaultValue_one: '{{count}} source is now allowed for {{days}} days',
             defaultValue_other: '{{count}} sources are now allowed for {{days}} days',
           })
-        : t('dashboard-scene.text-sandbox-consent.allowed-panels', '', {
+        : t('dashboard-scene.sandbox-consent.allowed-panels', '', {
             count,
             defaultValue_one: '{{count}} source is now allowed in the panels listed',
             defaultValue_other: '{{count}} sources are now allowed in the panels listed',
@@ -55,14 +55,10 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
   };
 
   return (
-    <Modal
-      title={t('dashboard-scene.text-sandbox-consent.modal-title', 'Blocked resources')}
-      isOpen
-      onDismiss={onDismiss}
-    >
+    <Modal title={t('dashboard-scene.sandbox-consent.modal-title', 'Blocked resources')} isOpen onDismiss={onDismiss}>
       <div className={styles.selectAll}>
         <Checkbox
-          label={t('dashboard-scene.text-sandbox-consent.select-all', 'Select all')}
+          label={t('dashboard-scene.sandbox-consent.select-all', 'Select all')}
           value={allSelected}
           indeterminate={selected.length > 0 && !allSelected}
           disabled={allowable.length === 0}
@@ -106,7 +102,7 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
                       {url}
                       {count > 1 && (
                         <span className={styles.urlRepeats}>
-                          {t('dashboard-scene.text-sandbox-consent.url-repeats', '×{{times}}', { times: count })}
+                          {t('dashboard-scene.sandbox-consent.url-repeats', '×{{times}}', { times: count })}
                         </span>
                       )}
                     </div>
@@ -116,7 +112,7 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
               {source.truncated && (
                 <Text variant="bodySmall" color="warning">
                   {t(
-                    'dashboard-scene.text-sandbox-consent.truncated',
+                    'dashboard-scene.sandbox-consent.truncated',
                     "Too many resources to review. This source can't be allowed."
                   )}
                 </Text>
@@ -128,18 +124,18 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
       <Modal.ButtonRow>
         <Button variant="secondary" disabled={selected.length === 0} onClick={() => allow('dashboard')}>
           <ButtonLabel
-            label={t('dashboard-scene.text-sandbox-consent.allow', 'Allow')}
+            label={t('dashboard-scene.sandbox-consent.allow', 'Allow')}
             tooltip={t(
-              'dashboard-scene.text-sandbox-consent.allow-tooltip',
+              'dashboard-scene.sandbox-consent.allow-tooltip',
               'Load content from the selected sources in the panels listed, until you close this tab.'
             )}
           />
         </Button>
         <Button variant="primary" disabled={selected.length === 0} onClick={() => allow('always')}>
           <ButtonLabel
-            label={t('dashboard-scene.text-sandbox-consent.always-allow', 'Always allow')}
+            label={t('dashboard-scene.sandbox-consent.always-allow', 'Always allow')}
             tooltip={t(
-              'dashboard-scene.text-sandbox-consent.always-allow-tooltip',
+              'dashboard-scene.sandbox-consent.always-allow-tooltip',
               'Load content from the selected sources on any dashboard for {{days}} days. Saved in this browser.',
               { days: ALWAYS_ALLOW_DAYS }
             )}
@@ -153,12 +149,12 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
 /** `atLeast` adds a "+" when some resources weren't listed, and so weren't counted. */
 export function resourcesLabel(count: number, atLeast = false) {
   return atLeast
-    ? t('dashboard-scene.text-sandbox-consent.resources-at-least', '', {
+    ? t('dashboard-scene.sandbox-consent.resources-at-least', '', {
         count,
         defaultValue_one: '{{count}}+ resource',
         defaultValue_other: '{{count}}+ resources',
       })
-    : t('dashboard-scene.text-sandbox-consent.resources', '', {
+    : t('dashboard-scene.sandbox-consent.resources', '', {
         count,
         defaultValue_one: '{{count}} resource',
         defaultValue_other: '{{count}} resources',
@@ -171,9 +167,9 @@ function sourceSummary({ count, urls, truncated }: BlockedOriginSummary) {
   if (urls.length === 0 || urls.length === count) {
     return resources;
   }
-  return t('dashboard-scene.text-sandbox-consent.resources-from-urls', '{{resources}} from {{urls}}', {
+  return t('dashboard-scene.sandbox-consent.resources-from-urls', '{{resources}} from {{urls}}', {
     resources,
-    urls: t('dashboard-scene.text-sandbox-consent.url-count', '', {
+    urls: t('dashboard-scene.sandbox-consent.url-count', '', {
       count: urls.length,
       defaultValue_one: '{{count}} URL',
       defaultValue_other: '{{count}} URLs',

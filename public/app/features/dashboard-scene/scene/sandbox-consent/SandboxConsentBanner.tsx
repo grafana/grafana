@@ -5,8 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 
-import { resourcesLabel, TextSandboxConsentModal } from './TextSandboxConsentModal';
-import { type BlockedOriginSummary, useBlockedSummary } from './textSandboxConsent';
+import { resourcesLabel, SandboxConsentModal } from './SandboxConsentModal';
+import { type BlockedOriginSummary, useBlockedSummary } from './sandboxConsent';
 
 interface Props {
   dashboardUid?: string;
@@ -15,7 +15,7 @@ interface Props {
   className?: string;
 }
 
-export function TextSandboxConsentBanner({ dashboardUid, panelId, className }: Props) {
+export function SandboxConsentBanner({ dashboardUid, panelId, className }: Props) {
   const styles = useStyles2(getStyles);
   const sources = useBlockedSummary(dashboardUid, panelId);
   // Kept as opened, so a panel reporting while the modal is open can't join a source the viewer already checked.
@@ -27,7 +27,7 @@ export function TextSandboxConsentBanner({ dashboardUid, panelId, className }: P
   }
 
   const resources = sources.reduce((sum, source) => sum + source.count, 0);
-  const title = t('dashboard-scene.text-sandbox-consent.banner-title', '', {
+  const title = t('dashboard-scene.sandbox-consent.banner-title', '', {
     count: resources,
     defaultValue_one: '{{resources}} from {{sources}} is blocked',
     defaultValue_other: '{{resources}} from {{sources}} are blocked',
@@ -35,7 +35,7 @@ export function TextSandboxConsentBanner({ dashboardUid, panelId, className }: P
       resources,
       sources.some((source) => source.truncated)
     ),
-    sources: t('dashboard-scene.text-sandbox-consent.sources', '', {
+    sources: t('dashboard-scene.sandbox-consent.sources', '', {
       count: sources.length,
       defaultValue_one: '{{count}} source',
       defaultValue_other: '{{count}} sources',
@@ -53,15 +53,15 @@ export function TextSandboxConsentBanner({ dashboardUid, panelId, className }: P
           bottomSpacing={0}
           action={
             <Button variant="secondary" fill="outline" size="sm" onClick={() => setReviewing(sources)}>
-              {t('dashboard-scene.text-sandbox-consent.review', 'Review')}
+              {t('dashboard-scene.sandbox-consent.review', 'Review')}
             </Button>
           }
         >
-          {t('dashboard-scene.text-sandbox-consent.banner-description', 'To load them, review and allow their sources')}
+          {t('dashboard-scene.sandbox-consent.banner-description', 'To load them, review and allow their sources')}
         </Alert>
       )}
       {reviewing && (
-        <TextSandboxConsentModal
+        <SandboxConsentModal
           dashboardUid={dashboardUid}
           sources={reviewing}
           onDismiss={() => setReviewing(undefined)}

@@ -36,7 +36,7 @@ export type ConsentGrant = Pick<BlockedOriginSummary, 'origin' | 'panelIds'>;
 
 const hostCollator = new Intl.Collator();
 
-const STORAGE_KEY = 'grafana.dashboard.textSandbox.allowedOrigins';
+const STORAGE_KEY = 'grafana.sandbox.allowedOrigins';
 
 // The default login lifetime. The frontend can't read the configured one.
 export const ALWAYS_ALLOW_DAYS = 30;

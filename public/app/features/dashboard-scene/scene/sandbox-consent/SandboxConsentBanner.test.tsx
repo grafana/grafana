@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 
-import { TextSandboxConsentBanner } from './TextSandboxConsentBanner';
-import { clearBlocked, getAllowedOrigins, reportBlocked } from './textSandboxConsent';
+import { SandboxConsentBanner } from './SandboxConsentBanner';
+import { clearBlocked, getAllowedOrigins, reportBlocked } from './sandboxConsent';
 
 const twimg = 'https://pbs.twimg.com';
 const dicebear = 'https://api.dicebear.com';
@@ -58,19 +58,19 @@ afterEach(() => {
 });
 
 it('summarises blocked sources and resources across panels', () => {
-  render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
+  render(<SandboxConsentBanner dashboardUid={dashboardUid} />);
   reportMockupPanels();
   expect(screen.getByText('8 resources from 2 sources are blocked')).toBeVisible();
 });
 
 it('renders nothing for a dashboard without blocked sources', () => {
   reportMockupPanels();
-  render(<TextSandboxConsentBanner dashboardUid="another-dashboard" />);
+  render(<SandboxConsentBanner dashboardUid="another-dashboard" />);
   expect(screen.queryByRole('button', { name: 'Review' })).not.toBeInTheDocument();
 });
 
 it('lists each host with its panels and every blocked URL', async () => {
-  render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
+  render(<SandboxConsentBanner dashboardUid={dashboardUid} />);
   reportMockupPanels();
   const dialog = await openReview();
   const [twimgRow, dicebearRow] = within(dialog).getAllByRole('listitem');
@@ -89,7 +89,7 @@ it('lists each host with its panels and every blocked URL', async () => {
 });
 
 it("doesn't let a source be allowed when some of its URLs couldn't be listed", async () => {
-  render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
+  render(<SandboxConsentBanner dashboardUid={dashboardUid} />);
   reportMockupPanels();
   act(() => {
     reportBlocked('text-sample', {
@@ -111,7 +111,7 @@ it("doesn't let a source be allowed when some of its URLs couldn't be listed", a
 });
 
 it('enables the actions once a source is selected and shows a partial "Select all"', async () => {
-  render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
+  render(<SandboxConsentBanner dashboardUid={dashboardUid} />);
   reportMockupPanels();
   const dialog = await openReview();
   const allow = within(dialog).getByRole('button', { name: /^Allow/ });
@@ -128,7 +128,7 @@ it('enables the actions once a source is selected and shows a partial "Select al
 
 it('"Allow" unblocks the selected sources in the panels listed only and recounts the banner', async () => {
   const emit = jest.spyOn(appEvents, 'emit');
-  render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
+  render(<SandboxConsentBanner dashboardUid={dashboardUid} />);
   reportMockupPanels();
   const dialog = await openReview();
   await userEvent.click(within(dialog).getByRole('checkbox', { name: 'api.dicebear.com' }));
@@ -143,7 +143,7 @@ it('"Allow" unblocks the selected sources in the panels listed only and recounts
 });
 
 it('only allows the panels that were listed when the review opened', async () => {
-  render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
+  render(<SandboxConsentBanner dashboardUid={dashboardUid} />);
   reportMockupPanels();
   const dialog = await openReview();
   await userEvent.click(within(dialog).getByRole('checkbox', { name: 'api.dicebear.com' }));
@@ -163,7 +163,7 @@ it('only allows the panels that were listed when the review opened', async () =>
 });
 
 it('keeps the review and its selection while a panel reloads and reports again', async () => {
-  render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
+  render(<SandboxConsentBanner dashboardUid={dashboardUid} />);
   reportMockupPanels();
   const dialog = await openReview();
   await userEvent.click(within(dialog).getByRole('checkbox', { name: 'api.dicebear.com' }));
@@ -178,7 +178,7 @@ it('keeps the review and its selection while a panel reloads and reports again',
 
 it('"Always allow" unblocks the selected sources on every dashboard and hides the banner when none are left', async () => {
   const emit = jest.spyOn(appEvents, 'emit');
-  render(<TextSandboxConsentBanner dashboardUid={dashboardUid} />);
+  render(<SandboxConsentBanner dashboardUid={dashboardUid} />);
   reportMockupPanels();
   const dialog = await openReview();
   await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Select all' }));

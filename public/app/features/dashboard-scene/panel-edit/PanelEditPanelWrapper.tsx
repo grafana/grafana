@@ -6,7 +6,7 @@ import { type VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-import { TextSandboxConsentBanner } from '../scene/text-sandbox-consent/TextSandboxConsentBanner';
+import { SandboxConsentBanner } from '../scene/sandbox-consent/SandboxConsentBanner';
 import { SoloPanelContextProvider, SoloPanelContextForPanelEdit } from '../solo/SoloPanelContext';
 
 interface PanelEditPanelWrapperProps {
@@ -21,7 +21,7 @@ export function PanelEditPanelWrapper({ panel, tableView, dashboard }: PanelEdit
 
   return (
     <div className={styles.container}>
-      <TextSandboxConsentBanner
+      <SandboxConsentBanner
         dashboardUid={dashboard.state.uid}
         panelId={panel.getLegacyPanelId()}
         className={styles.banner}

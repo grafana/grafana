@@ -1,10 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 
 import { toDataFrame } from '@grafana/data';
-import {
-  allowOrigins,
-  getBlockedSummary,
-} from 'app/features/dashboard-scene/scene/text-sandbox-consent/textSandboxConsent';
+import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { TextMode } from '../panelcfg.gen';
 

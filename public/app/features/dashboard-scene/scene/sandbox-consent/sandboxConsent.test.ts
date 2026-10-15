@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
-import * as sharedStore from './textSandboxConsent';
+import * as sharedStore from './sandboxConsent';
 
 type Store = typeof sharedStore;
 
@@ -14,12 +14,12 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-const storageKey = () => `grafana.dashboard.textSandbox.allowedOrigins.${mockUser.orgId}.${mockUser.id}`;
+const storageKey = () => `grafana.sandbox.allowedOrigins.${mockUser.orgId}.${mockUser.id}`;
 
 function loadStore(): Store {
   let store!: Store;
   jest.isolateModules(() => {
-    store = require('./textSandboxConsent');
+    store = require('./sandboxConsent');
   });
   return store;
 }
