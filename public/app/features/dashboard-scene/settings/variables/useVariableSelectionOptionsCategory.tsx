@@ -124,7 +124,7 @@ function AllowCustomSwitch({ variable, id }: InputProps) {
 
   const onChange = (newAllowCustomValue: boolean) => {
     undoableVariableEdit(true, {
-      meta: { actionId: 'variable.changeAllowCustomValue', scope: variable.state.type },
+      meta: { actionId: 'variable.changeAllowCustomValue' },
       source: variable,
       description: t('dashboard.edit-actions.variable-allow-custom-value', 'Change variable allow custom values'),
       perform: () => variable.setState({ allowCustomValue: newAllowCustomValue }),
