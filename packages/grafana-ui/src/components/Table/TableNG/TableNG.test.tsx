@@ -2483,6 +2483,168 @@ describe('TableNG', () => {
 
   describe('Text wrapping', () => {
     const inspectButton = selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton;
+    it('explains oversized hover suppression only when hover expansion is enabled', async () => {
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['x'.repeat(10_000), 'x'.repeat(10_001)],
+              config: { custom: { wrapText: false, width: 300 } },
+            },
+          ],
+        })
+      );
+      const { rerender } = render(<TableNG data={data} width={800} height={600} />);
+      const warning = screen.getByRole('button', { name: 'Cell warnings' });
+      expect(warning.closest('[role="gridcell"]')).not.toHaveClass(OVERFLOW_CELL_CLASS);
+      expect(screen.getByText('x'.repeat(10_000)).closest('[role="gridcell"]')).toHaveClass(OVERFLOW_CELL_CLASS);
+      await user.hover(warning);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(
+        'Content is too long to expand on hover. Use Inspect value to view the full content.'
+      );
+      rerender(<TableNG data={data} width={800} height={600} hoverOverflow={false} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Cell warnings' })).not.toBeInTheDocument();
+    });
+
+    it('explains column wrapping fallback in the header and clears it for new data', async () => {
+      const makeData = (value: string) =>
+        withFieldOverrides(
+          toDataFrame({
+            fields: [
+              {
+                name: 'message',
+                type: FieldType.string,
+                values: ['short', value],
+                config: { custom: { wrapText: true, width: 300 } },
+              },
+            ],
+          })
+        );
+      const { rerender } = render(<TableNG data={makeData('x'.repeat(10_001))} width={800} height={600} />);
+      const warning = screen.getByRole('button', { name: 'Field warnings' });
+      expect(warning.closest('[role="columnheader"]')).toHaveTextContent('message');
+      await user.hover(warning);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(
+        'Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content.'
+      );
+      expect(screen.queryByRole('button', { name: 'Cell warnings' })).not.toBeInTheDocument();
+      rerender(<TableNG data={makeData('replacement')} width={800} height={600} />);
+      expect(screen.getByText('replacement')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Field warnings' })).not.toBeInTheDocument();
+    });
+
+    it.each([false, true])(
+      'offers Inspect for oversized non-wrapping cells with hoverOverflow=%s',
+      async (hoverOverflow) => {
+        const value = 'x'.repeat(10_001) + 'END OF MESSAGE';
+        const data = withFieldOverrides(
+          toDataFrame({
+            fields: [
+              {
+                name: 'message',
+                type: FieldType.string,
+                values: ['short', 'x'.repeat(10_000), value],
+                config: { custom: { wrapText: false, inspect: false, width: 300 } },
+              },
+            ],
+          })
+        );
+        render(<TableNG data={data} width={800} height={600} hoverOverflow={hoverOverflow} />);
+        expect(screen.getAllByTestId(inspectButton)).toHaveLength(1);
+        expect(screen.getByTestId(inspectButton).closest('[role="gridcell"]')).not.toHaveClass(OVERFLOW_CELL_CLASS);
+        await user.click(screen.getByTestId(inspectButton));
+        expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe(value);
+      }
+    );
+
+    it('offers Inspect for oversized formatted JSON with wrapping disabled', async () => {
+      const data = createJsonDataFrame(false);
+      data.fields[1].values = [{ content: 'x'.repeat(10_000) }];
+      render(<TableNG data={data} width={800} height={600} hoverOverflow={false} />);
+      await user.click(screen.getByTestId(inspectButton));
+      await user.click(screen.getByRole('tab', { name: 'Plain text' }));
+      expect(screen.getByRole('dialog')).toHaveTextContent('x'.repeat(10_000));
+    });
+
+    it('combines JSON cell warnings and field content behind one indicator', async () => {
+      const data = createJsonDataFrame(false);
+      data.fields[1].values = [{ content: 'x'.repeat(10_000) }];
+      data.fields[0].values = ['Field context'];
+      data.fields[1].config.custom.tooltip = { field: data.fields[0].name };
+      render(<TableNG data={data} width={800} height={600} />);
+      const warning = screen.getByRole('button', { name: 'Cell warnings' });
+      const cell = within(warning.closest('[role="gridcell"]') as HTMLElement);
+      expect(cell.queryByRole('button', { name: 'Toggle tooltip' })).not.toBeInTheDocument();
+      await user.hover(warning);
+      const tooltip = await screen.findByTestId(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper);
+      expect(tooltip).toHaveTextContent('Content is too long to expand on hover.');
+      expect(within(tooltip).getByRole('separator')).toBeInTheDocument();
+      expect(tooltip).toHaveTextContent('Field context');
+      await user.click(warning);
+      expect(warning).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it.each([
+      [false, TableCellDisplayMode.Auto],
+      [true, TableCellDisplayMode.Auto],
+      [false, TableCellDisplayMode.JSONView],
+      [true, TableCellDisplayMode.JSONView],
+    ])('gates the ellipsis container with table.refresh=%s for %s cells', (tableRefreshEnabled, type) => {
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['clipped message'],
+              config: { custom: { wrapText: false, width: 100, cellOptions: { type } } },
+            },
+          ],
+        })
+      );
+      render(<TableNG data={data} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />);
+      const text = screen.getByText('clipped message');
+      if (tableRefreshEnabled) {
+        expect(text.parentElement).toHaveAttribute('role', 'gridcell');
+        expect(text).toHaveStyle({ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 });
+      } else {
+        expect(text).toHaveAttribute('role', 'gridcell');
+        expect(text.firstChild?.nodeType).toBe(Node.TEXT_NODE);
+      }
+    });
+
+    it.each([false, true])('clamps wrapped rows with table.refresh=%s', (tableRefreshEnabled) => {
+      render(
+        <TableNG
+          data={wrappedFrame(['wrapped message'])}
+          width={800}
+          height={600}
+          maxRowHeight={100}
+          tableRefreshEnabled={tableRefreshEnabled}
+        />
+      );
+      const text = screen.getByText('wrapped message');
+      if (tableRefreshEnabled) {
+        expect(text).toHaveStyle({ display: '-webkit-box' });
+      } else {
+        expect(text.parentElement).toHaveAttribute('role', 'gridcell');
+      }
+      // jsdom omits vendor-prefixed properties from computed styles.
+      const clamp = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .find(
+          (rule): rule is CSSStyleRule =>
+            rule instanceof CSSStyleRule &&
+            rule.style.getPropertyValue('-webkit-line-clamp') === '4' &&
+            text.matches(rule.selectorText)
+        );
+      expect(clamp?.style.getPropertyValue('-webkit-box-orient')).toBe('vertical');
+      expect(clamp?.style.getPropertyValue('display')).toBe('-webkit-box');
+    });
+
     function wrappedFrame(values: string[]) {
       return withFieldOverrides(
         toDataFrame({
@@ -2585,6 +2747,7 @@ describe('TableNG', () => {
 
       await user.click(screen.getByRole('button', { name: /next page/i }));
       expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Field warnings' })).toBeInTheDocument();
       expect(getComputedStyle(screen.getByRole('grid')).gridTemplateRows).toBe('repeat(1, 34px) repeat(1, 34px)');
     });
 

@@ -21,8 +21,8 @@ import {
   useRowCompiler,
   useScrollShadows,
   useScrollbarWidth,
-  useTextWrapFallback,
   useFlatRowHeight,
+  useTextWrapFallback,
 } from './hooks';
 import { type FilterType, type TableRow, type TypographyCtx } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';

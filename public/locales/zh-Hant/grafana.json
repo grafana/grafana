@@ -10692,13 +10692,21 @@
       "cell-filter-out": "篩選出值",
       "cell-inspect": "檢查值",
       "cell-inspect-tooltip": "檢查值",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "篩選值",
+      "column-menu-hide": "",
       "column-menu-label": "{{name}} 的欄位選項",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "更新篩選條件",
+      "column-visibility": "",
+      "columns": "",
       "copy": "複製到剪貼簿",
       "csv-counts": "列：{{rows}}，欄：{{columns}}",
       "csv-placeholder": "在此處輸入 CSV …",
       "edit-column-filter": "編輯 {{name}} 的篩選條件",
+      "field-warnings": "",
       "filter": {
         "add-all": "將所有顯示的值新增至篩選條件",
         "blanks": "（空白）",
@@ -10732,6 +10740,8 @@
           "count": "計數"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "檢查值",
       "loading": "正在載入表格",
       "nested-table": {
@@ -10741,6 +10751,7 @@
       "no-rows": "無列",
       "no-values-label": "沒有數值",
       "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列",
+      "show-column-label": "",
       "sort-by-column": "按欄 {{column}} 排序",
       "sort-by-column-ascending": "按欄 {{column}} 以升序排序",
       "sort-by-column-descending": "按欄 {{column}} 以降序排序",
@@ -10750,7 +10761,8 @@
       },
       "tooltip": {
         "trigger": "切換工具提示"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "標籤"
@@ -13771,6 +13783,9 @@
       "label-plugin-id": "外掛程式 ID",
       "label-severity": "嚴重性"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "所有外掛程式均為最新版本"
     },
@@ -13792,6 +13807,10 @@
     "plugin-details-body": {
       "needs-service-account": "外掛程式「{{pluginName}}」需要服務帳戶才能查詢 Grafana。以下清單包含服務帳戶可用的權限：",
       "page-not-found": "找不到頁面。"
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "已取代"
@@ -16396,6 +16415,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "欄自動調整大小的最小寬度",
     "description-page-size": "每頁的列數。留空時，頁面大小會依面板高度決定。",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "包含 JSON 物件與 CSS 屬性的欄位",
     "description-tooltip-from-field": "在工具提示中從欄位（無論隱藏或顯示）轉譯儲存格",
     "description-zebra-striping": "每隔一列變更背景色彩",
@@ -16434,6 +16454,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小欄寬",
     "name-page-size": "頁面大小",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "顯示表格頁首",
     "name-styling-from-field": "欄位的樣式",
     "name-tooltip-from-field": "",
@@ -16597,6 +16618,7 @@
     "editor": {
       "aria-label-content": "文字內容",
       "aria-label-mode": "文字模式：{{mode}}",
+      "feedback": "",
       "footer-line-numbers": "行號",
       "format-bold": "B",
       "format-heading": "H",
@@ -16642,6 +16664,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

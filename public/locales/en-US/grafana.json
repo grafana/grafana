@@ -10762,6 +10762,8 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
+      "cell-preview": "Cell preview",
+      "cell-warnings": "Cell warnings",
       "close-column-visibility": "Close column visibility panel",
       "column-menu-filter": "Filter values",
       "column-menu-hide": "Hide column",
@@ -10774,6 +10776,7 @@
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
       "edit-column-filter": "Edit filter on {{name}}",
+      "field-warnings": "Field warnings",
       "filter": {
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
@@ -10808,6 +10811,7 @@
         }
       },
       "hide-column-label": "Hide {{columnName}}",
+      "hover-expansion-disabled-warning": "Content is too long to expand on hover. Use Inspect value to view the full content.",
       "inspect-drawer-title": "Inspect value",
       "loading": "Loading table",
       "nested-table": {
@@ -10827,7 +10831,8 @@
       },
       "tooltip": {
         "trigger": "Toggle tooltip"
-      }
+      },
+      "wrapping-disabled-warning": "Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content."
     },
     "tags": {
       "list-label": "Tags"
