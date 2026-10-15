@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/selection"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -123,9 +124,10 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 	if err != nil || lookup {
 		return result, err
 	}
-	for i := range result.Hits {
-		hit := &result.Hits[i]
+	hits := result.Hits[:0]
+	for i, hit := range result.Hits {
 		if searchHasUserFlags(resp, i) {
+			hits = append(hits, hit)
 			continue
 		}
 		// Older search servers and indexes do not return these fields. Read the
@@ -134,6 +136,10 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 			Namespace: query.Namespace, Group: gr.Group, Resource: gr.Resource, Name: hit.Name,
 		}})
 		if err := resource.StatusErrorFromResponse(stored.GetError(), err); err != nil {
+			// The search index can still contain a user deleted before this read.
+			if apierrors.IsNotFound(err) {
+				continue
+			}
 			return nil, err
 		}
 		var obj iamv0.User
@@ -142,6 +148,8 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 		}
 		hit.GrafanaAdmin = obj.Spec.GrafanaAdmin
 		hit.Provisioned = obj.Spec.Provisioned
+		hits = append(hits, hit)
 	}
+	result.Hits = hits
 	return result, nil
 }

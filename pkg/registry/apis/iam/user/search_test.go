@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	iamapis "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -893,6 +895,42 @@ func TestUnifiedSearchFlagsCompatibility(t *testing.T) {
 				require.NotContains(t, client.LastSearchRequest.Fields, fieldGrafanaAdmin)
 				require.NotContains(t, client.LastSearchRequest.Fields, fieldProvisioned)
 			}
+		})
+	}
+}
+
+func TestUnifiedSearchSkipsDeletedUsers(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		response *resourcepb.ReadResponse
+		err      error
+	}{
+		{name: "transport not found", err: status.Error(codes.NotFound, "user deleted")},
+		{name: "embedded not found", response: &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Reason: "NotFound", Message: "user deleted"}}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			response := &resourcepb.ResourceSearchResponse{TotalHits: 3, Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: fieldGrafanaAdmin}, {Name: fieldProvisioned}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "deleted"}, Cells: [][]byte{nil, nil}},
+					{Key: &resourcepb.ResourceKey{Name: "admin"}, Cells: [][]byte{{1}, {1}}},
+					{Key: &resourcepb.ResourceKey{Name: "viewer"}, Cells: [][]byte{{0}, {0}}},
+				},
+			}}
+			client := &flagsSearchClient{MockClient: &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{response}}, readResponse: tt.response, readError: tt.err}
+			backend := NewUnifiedSearchClient(client, &setting.Cfg{})
+			ctx := identity.WithRequester(t.Context(), &legacyuser.SignedInUser{OrgID: 1})
+			result, err := backend.Search(ctx, SearchQuery{Namespace: "stacks-1"})
+			require.NoError(t, err)
+			require.Len(t, result.Hits, 2)
+			require.Equal(t, "admin", result.Hits[0].Name)
+			require.True(t, result.Hits[0].GrafanaAdmin)
+			require.True(t, result.Hits[0].Provisioned)
+			require.Equal(t, "viewer", result.Hits[1].Name)
+			require.False(t, result.Hits[1].GrafanaAdmin)
+			require.False(t, result.Hits[1].Provisioned)
+			require.Equal(t, 1, client.reads)
+			require.Equal(t, "deleted", client.lastReadRequest.Key.Name)
 		})
 	}
 }
