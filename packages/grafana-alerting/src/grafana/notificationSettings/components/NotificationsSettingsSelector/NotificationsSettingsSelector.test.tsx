@@ -1,6 +1,8 @@
 import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
 import { HttpResponse } from 'msw';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
@@ -145,6 +147,34 @@ describe('NotificationsSettingsSelector', () => {
     await user.click(await screen.findByRole('button', { name: /reset to default policy/i }));
 
     expect(onChange).toHaveBeenCalledWith(null);
+  });
+});
+
+describe('contact point links', () => {
+  afterEach(() => {
+    locationUtil.initialize({
+      config: { appSubUrl: config.appSubUrl } as GrafanaConfig,
+      getVariablesUrlParams: jest.fn(),
+      getTimeRangeForUrl: jest.fn(),
+    });
+  });
+
+  it.each([
+    ['', '/alerting/notifications', '/alerting/notifications'],
+    ['/grafana', '/alerting/notifications', '/grafana/alerting/notifications'],
+    ['/grafana', '/grafana/alerting/notifications', '/grafana/alerting/notifications'],
+    ['/grafana', 'https://example.com/contact-points', 'https://example.com/contact-points'],
+  ])('opens %s + %s at %s in a new tab', (appSubUrl, href, expected) => {
+    locationUtil.initialize({
+      config: { appSubUrl } as GrafanaConfig,
+      getVariablesUrlParams: jest.fn(),
+      getTimeRangeForUrl: jest.fn(),
+    });
+    renderPicker({ manageContactPointsHref: href });
+
+    const link = screen.getByRole('link', { name: /view or create contact points/i });
+    expect(link).toHaveAttribute('href', expected);
+    expect(link).toHaveAttribute('target', '_blank');
   });
 });
 

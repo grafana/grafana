@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, Stack, Text, TextLink } from '@grafana/ui';
 
@@ -184,7 +185,7 @@ function ContactPointRecipient({
           aria-label={t('alerting.notifications-settings-selector.contact-point-aria', 'Contact point')}
         />
         {manageContactPointsHref && (
-          <TextLink href={manageContactPointsHref} external>
+          <TextLink href={locationUtil.assureBaseUrl(manageContactPointsHref)} external>
             <Trans i18nKey="alerting.notifications-settings-selector.manage-contact-points">
               View or create contact points
             </Trans>
