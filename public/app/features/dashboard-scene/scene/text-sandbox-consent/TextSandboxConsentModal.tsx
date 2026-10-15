@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Button, Checkbox, Icon, Modal, ScrollContainer, Stack, Tag, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 
-import { allowOrigins, type BlockedOriginSummary, type ConsentScope } from './textSandboxConsent';
+import { ALWAYS_ALLOW_DAYS, allowOrigins, type BlockedOriginSummary, type ConsentScope } from './textSandboxConsent';
 
 // In theme spacing units, about six URLs. A long list scrolls so it can't push the other sources out of view.
 const URL_LIST_HEIGHT = 18;
@@ -41,8 +41,9 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
       scope === 'always'
         ? t('dashboard-scene.text-sandbox-consent.allowed-always', '', {
             count,
-            defaultValue_one: '{{count}} source has now been indefinitely allowed',
-            defaultValue_other: '{{count}} sources have now been indefinitely allowed',
+            days: ALWAYS_ALLOW_DAYS,
+            defaultValue_one: '{{count}} source is now allowed for {{days}} days',
+            defaultValue_other: '{{count}} sources are now allowed for {{days}} days',
           })
         : t('dashboard-scene.text-sandbox-consent.allowed-panels', '', {
             count,
@@ -139,7 +140,8 @@ export function TextSandboxConsentModal({ dashboardUid, sources, onDismiss }: Pr
             label={t('dashboard-scene.text-sandbox-consent.always-allow', 'Always allow')}
             tooltip={t(
               'dashboard-scene.text-sandbox-consent.always-allow-tooltip',
-              'Always load images from the selected sources, on any dashboard. Saved in this browser.'
+              'Load images from the selected sources on any dashboard for {{days}} days. Saved in this browser.',
+              { days: ALWAYS_ALLOW_DAYS }
             )}
           />
         </Button>

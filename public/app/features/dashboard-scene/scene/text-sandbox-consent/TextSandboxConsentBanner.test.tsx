@@ -185,6 +185,6 @@ it('"Always allow" unblocks the selected sources on every dashboard and hides th
   await userEvent.click(within(dialog).getByRole('button', { name: /^Always allow/ }));
 
   expect(getAllowedOrigins('another-dashboard')).toEqual([dicebear, twimg]);
-  expect(emit).toHaveBeenCalledWith(AppEvents.alertSuccess, ['2 sources have now been indefinitely allowed']);
+  expect(emit).toHaveBeenCalledWith(AppEvents.alertSuccess, ['2 sources are now allowed for 30 days']);
   expect(screen.queryByRole('button', { name: 'Review' })).not.toBeInTheDocument();
 });

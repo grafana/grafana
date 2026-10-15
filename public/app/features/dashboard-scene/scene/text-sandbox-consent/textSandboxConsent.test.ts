@@ -29,6 +29,8 @@ const avatars = 'https://avatars.example.com';
 
 const grant = (origin: string, ...panelIds: Array<number | undefined>) => [{ origin, panelIds }];
 
+const day = 24 * 60 * 60 * 1000;
+
 afterEach(() => {
   jest.restoreAllMocks();
   window.localStorage.clear();
@@ -81,10 +83,47 @@ describe('allowed origins', () => {
     const store = loadStore();
     expect(store.getAllowedOrigins('dash-a', 1)).toEqual([]);
 
-    window.localStorage.setItem(storageKey(), JSON.stringify([users]));
+    window.localStorage.setItem(storageKey(), JSON.stringify({ [users]: Date.now() + day }));
     expect(store.getAllowedOrigins('dash-a', 1)).toEqual([]);
     window.dispatchEvent(new StorageEvent('storage', { key: storageKey() }));
     expect(store.getAllowedOrigins('dash-a', 1)).toEqual([users]);
+  });
+
+  describe('"Always allow" expiry', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    // 30 days is longer than setTimeout allows, so this also covers re-arming the timer.
+    it('ends after 30 days, also in a tab left open', () => {
+      const store = loadStore();
+      store.allowOrigins(grant(users), 'always');
+
+      jest.advanceTimersByTime(30 * day - 1);
+      expect(store.getAllowedOrigins('dash-a', 1)).toEqual([users]);
+      expect(loadStore().getAllowedOrigins('dash-a', 1)).toEqual([users]);
+
+      jest.advanceTimersByTime(1);
+      expect(store.getAllowedOrigins('dash-a', 1)).toEqual([]);
+      expect(loadStore().getAllowedOrigins('dash-a', 1)).toEqual([]);
+    });
+
+    it('starts again when the source is allowed again', () => {
+      const store = loadStore();
+      store.allowOrigins(grant(users), 'always');
+      store.allowOrigins(grant(avatars), 'always');
+      jest.advanceTimersByTime(20 * day);
+      store.allowOrigins(grant(users), 'always');
+
+      jest.advanceTimersByTime(10 * day);
+      expect(store.getAllowedOrigins()).toEqual([users]);
+      jest.advanceTimersByTime(20 * day);
+      expect(store.getAllowedOrigins()).toEqual([]);
+    });
+
+    it('ignores a list saved without expiry times', () => {
+      window.localStorage.setItem(storageKey(), JSON.stringify([users]));
+      expect(loadStore().getAllowedOrigins()).toEqual([]);
+    });
   });
 
   it('keeps consent in memory when storage is unavailable', () => {

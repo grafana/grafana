@@ -38,10 +38,17 @@ const hostCollator = new Intl.Collator();
 
 const STORAGE_KEY = 'grafana.dashboard.textSandbox.allowedOrigins';
 
+// The default login lifetime. The frontend can't read the configured one.
+export const ALWAYS_ALLOW_DAYS = 30;
+const ALWAYS_ALLOW_MS = ALWAYS_ALLOW_DAYS * 24 * 60 * 60 * 1000;
+// setTimeout fires straight away for longer delays.
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+
 interface AllowedOrigins {
   key: string;
-  /** "Always allow". Kept in localStorage. */
-  always: Set<string>;
+  /** "Always allow", as origin to expiry time. Kept in localStorage. */
+  always: Map<string, number>;
+  expiryTimer?: ReturnType<typeof setTimeout>;
   /**
    * "Allow", per panel. A panel that wasn't rendered when the viewer allowed a source wasn't reviewed,
    * so it isn't covered. Kept in sessionStorage, so it ends when the tab closes.
@@ -70,16 +77,49 @@ function allowedForUser(): AllowedOrigins {
     byPanel: new Map(Object.entries(stored ?? {}).map(([panel, origins]) => [panel, new Set(toOrigins(origins))])),
   };
   allowedByUser.set(key, allowed);
+  scheduleExpiry(allowed);
   // Picks up "Always allow" from other tabs.
   store.subscribe(key, () => {
     allowed.always = readAlways(key);
+    scheduleExpiry(allowed);
     emit(true);
   });
   return allowed;
 }
 
 function readAlways(key: string) {
-  return new Set(toOrigins(tryStorage(() => store.getObject(key), [])));
+  const stored = tryStorage(() => store.getObject(key), undefined);
+  const always = new Map<string, number>();
+  if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
+    for (const [origin, expiresAt] of Object.entries(stored)) {
+      if (typeof expiresAt === 'number' && expiresAt > Date.now()) {
+        always.set(origin, expiresAt);
+      }
+    }
+  }
+  return always;
+}
+
+// Dashboards on a TV can stay open for longer than the expiry.
+function scheduleExpiry(allowed: AllowedOrigins) {
+  clearTimeout(allowed.expiryTimer);
+  allowed.expiryTimer = undefined;
+  if (allowed.always.size === 0) {
+    return;
+  }
+  const earliest = Math.min(...allowed.always.values());
+  allowed.expiryTimer = setTimeout(
+    () => {
+      const now = Date.now();
+      const expired = [...allowed.always].filter(([, expiresAt]) => expiresAt <= now);
+      expired.forEach(([origin]) => allowed.always.delete(origin));
+      scheduleExpiry(allowed);
+      if (expired.length > 0) {
+        emit(true);
+      }
+    },
+    Math.min(Math.max(earliest - Date.now(), 0), MAX_TIMEOUT_MS)
+  );
 }
 
 function toOrigins(value: unknown): string[] {
@@ -117,17 +157,20 @@ function subscribe(listener: () => void) {
 
 export function getAllowedOrigins(dashboardUid = '', panelId?: number): string[] {
   const { always, byPanel } = allowedForUser();
-  return [...new Set([...always, ...(byPanel.get(panelKey(dashboardUid, panelId)) ?? [])])].sort();
+  return [...new Set([...always.keys(), ...(byPanel.get(panelKey(dashboardUid, panelId)) ?? [])])].sort();
 }
 
 export function allowOrigins(grants: ConsentGrant[], scope: ConsentScope, dashboardUid = '') {
   if (grants.length === 0) {
     return;
   }
-  const { key, always, byPanel } = allowedForUser();
+  const allowed = allowedForUser();
+  const { key, always, byPanel } = allowed;
   if (scope === 'always') {
-    grants.forEach(({ origin }) => always.add(origin));
-    tryStorage(() => store.setObject(key, [...always]), false);
+    const expiresAt = Date.now() + ALWAYS_ALLOW_MS;
+    grants.forEach(({ origin }) => always.set(origin, expiresAt));
+    tryStorage(() => store.setObject(key, Object.fromEntries(always)), false);
+    scheduleExpiry(allowed);
   } else {
     for (const { origin, panelIds } of grants) {
       for (const panelId of panelIds) {
