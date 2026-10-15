@@ -1,3 +1,4 @@
+import { LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
@@ -66,7 +67,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
         return;
       }
       const { panelRef } = this.state;
-      if (this.metadataTab?.state.dataSource !== metadata) {
+      if (this.metadataTab?.state.dataSource !== metadata && (metadata || data?.state !== LoadingState.Loading)) {
         this.metadataTab = metadata ? new InspectMetaDataTab({ panelRef, dataSource: metadata }) : undefined;
       }
       if (!this.noticesTab || this.noticesTab.state.dataSource !== notices) {
@@ -140,14 +141,20 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
     const hasNotices = snapshot?.hostInitialized
       ? snapshot.items.length > 0
       : hasErrorsOrNotices(panelData) || Boolean(panel.state._pluginLoadError) || Boolean(snapshot?.items.length);
-    if (hasNotices) {
+    const retainNoticesWhileLoading =
+      panelData?.state === LoadingState.Loading &&
+      Boolean(this.noticesTab && this.state.tabs?.includes(this.noticesTab));
+    if (hasNotices || retainNoticesWhileLoading) {
       this.noticesTab ??= new InspectErrorsAndNoticesTab({ panelRef, onClose: this.onClose });
       tabs.push(this.noticesTab);
     }
     this.jsonTab ??= new InspectJsonTab({ panelRef, onClose: this.onClose });
     tabs.push(this.jsonTab);
     if (tabs.length !== this.state.tabs?.length || tabs.some((tab, index) => tab !== this.state.tabs?.[index])) {
-      this.setState({ tabs });
+      const selectedTabRemoved =
+        this.state.tabs?.some((tab) => tab.getTabValue() === this.state.currentTab) &&
+        !tabs.some((tab) => tab.getTabValue() === this.state.currentTab);
+      this.setState({ tabs, ...(selectedTabRemoved && { currentTab: tabs[0].getTabValue() }) });
     }
   }
 

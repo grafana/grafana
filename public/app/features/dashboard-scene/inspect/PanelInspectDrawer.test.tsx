@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/react';
 
 import { CoreApp, DataSourceApi, getDefaultTimeRange, LoadingState, PanelPlugin, toDataFrame } from '@grafana/data';
-import { PanelStatusStore } from '@grafana/data/internal';
+import { getPanelDataStatusItems, PanelStatusStore } from '@grafana/data/internal';
 import { getDataSourceInstance, setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataNode, VizPanel } from '@grafana/scenes';
 import { InspectTab } from 'app/features/inspector/types';
@@ -195,6 +195,65 @@ it('shows and removes Errors and notices as query results change', async () => {
   await waitFor(() => expect(tabs()).toContain(InspectTab.ErrorsAndNotices));
   data.setState({ data: { ...data.state.data!, errors: [] } });
   await waitFor(() => expect(tabs()).toEqual([InspectTab.Data, InspectTab.Stats, InspectTab.Query, InspectTab.JSON]));
+  deactivate();
+});
+
+it('keeps result tabs visible while a refresh is loading', async () => {
+  jest.mocked(getDataSourceInstance).mockResolvedValue(datasource('first'));
+  const { store, data, drawer, tabs } = withQueryData();
+  store.setExternal(getPanelDataStatusItems(data.state.data));
+  const deactivate = drawer.activate();
+  const loadedTabs = [
+    InspectTab.Data,
+    InspectTab.Stats,
+    InspectTab.Query,
+    InspectTab.Meta,
+    InspectTab.ErrorsAndNotices,
+    InspectTab.JSON,
+  ];
+  await waitFor(() => expect(tabs()).toEqual(loadedTabs));
+  const original = drawer.state.tabs;
+
+  data.setState({ data: { ...data.state.data!, state: LoadingState.Loading, series: [], errors: [] } });
+  store.setExternal([]);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(tabs()).toEqual(loadedTabs);
+  expect(drawer.state.tabs).toBe(original);
+
+  data.setState({ data: { ...data.state.data!, state: LoadingState.Done } });
+  await waitFor(() => expect(tabs()).toEqual([InspectTab.Data, InspectTab.Stats, InspectTab.Query, InspectTab.JSON]));
+  deactivate();
+});
+
+it('selects a remaining tab when the active result tab disappears', async () => {
+  jest.mocked(getDataSourceInstance).mockResolvedValue(datasource('first'));
+  const { data, drawer, tabs } = withQueryData();
+  const deactivate = drawer.activate();
+  await waitFor(() => expect(tabs()).toContain(InspectTab.ErrorsAndNotices));
+  drawer.setState({ currentTab: InspectTab.ErrorsAndNotices });
+
+  data.setState({ data: { ...data.state.data!, series: [], errors: [] } });
+  await waitFor(() => expect(tabs()).toEqual([InspectTab.Data, InspectTab.Stats, InspectTab.Query, InspectTab.JSON]));
+  expect(drawer.state.currentTab).toBe(InspectTab.Data);
+
+  data.setState({ data: { ...data.state.data!, errors: [{ message: 'New error' }] } });
+  await waitFor(() => expect(tabs()).toContain(InspectTab.ErrorsAndNotices));
+  expect(drawer.state.currentTab).toBe(InspectTab.Data);
+  deactivate();
+});
+
+it('keeps a requested tab selected while datasource discovery is pending', async () => {
+  jest.mocked(getDataSourceInstance).mockResolvedValue(datasource('first'));
+  const { data, drawer, tabs } = setup();
+  data.setState({
+    data: { ...data.state.data!, series: [toDataFrame({ fields: [], meta: { custom: { detail: true } } })] },
+  });
+  drawer.setState({ currentTab: InspectTab.Meta });
+
+  const deactivate = drawer.activate();
+  expect(tabs()).toEqual([InspectTab.Data, InspectTab.Stats, InspectTab.Query, InspectTab.JSON]);
+  await waitFor(() => expect(tabs()).toContain(InspectTab.Meta));
+  expect(drawer.state.currentTab).toBe(InspectTab.Meta);
   deactivate();
 });
 
