@@ -108,6 +108,19 @@ describe('dashboardMutationApi', () => {
       expect(dashboardMutationApi.getPayloadSchema('GET_NOTEBOOK_SPEC')).toBeDefined();
     });
 
+    it('advertises the building phase of RENDER_PLAN only while its flag is on', () => {
+      const building = { planId: 'plan-1', title: 'Plan', sections: [], phase: 'building' };
+
+      const withoutFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN')!.safeParse(building);
+      expect(withoutFlag.success).toBe(true);
+      expect(withoutFlag.data).not.toHaveProperty('phase');
+
+      setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
+      const withFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN')!.safeParse(building);
+      expect(withFlag.data).toHaveProperty('phase', 'building');
+      setTestFlags({});
+    });
+
     it('is case-insensitive', () => {
       for (const cmd of allMutationCommands()) {
         const lower = dashboardMutationApi.getPayloadSchema(cmd.name.toLowerCase());
@@ -118,10 +131,13 @@ describe('dashboardMutationApi', () => {
     });
 
     it('returns the same schema as the command registry', () => {
+      // With the building screen on; RENDER_PLAN advertises less while it is off (tested below).
+      setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
       for (const cmd of allMutationCommands()) {
         const schema = dashboardMutationApi.getPayloadSchema(cmd.name);
         expect(schema).toBe(cmd.payloadSchema);
       }
+      setTestFlags({});
     });
 
     it('answers for every command a real client exposes', () => {

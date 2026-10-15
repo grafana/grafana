@@ -16,6 +16,11 @@ interface PreviewSession {
 
 const previewPath = '/dashboard/new';
 
+/** Whether a plan may show its building screen; see `assistant.dashboardPlanBuildingScreen`. */
+export function isPlanBuildingScreenEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardPlanBuildingScreen, false);
+}
+
 /** Owns navigation for the process-wide mutation API's single on-page plan preview. */
 export class DashboardPlanPreview {
   private active?: PreviewSession;
@@ -35,11 +40,8 @@ export class DashboardPlanPreview {
     }
 
     // Refused before anything changes, so the caller carries on with no building screen, the same
-    // as on a Grafana version without one.
-    if (
-      parsed.data.phase === 'building' &&
-      !getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardPlanBuildingScreen, false)
-    ) {
+    // as on a Grafana version without one. The schema already hides the phase while it is off.
+    if (parsed.data.phase === 'building' && !isPlanBuildingScreenEnabled()) {
       return { success: false, error: 'The dashboard plan building screen is not enabled.', changes: [] };
     }
 

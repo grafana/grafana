@@ -15,12 +15,13 @@
 import type { DashboardMutationAPI } from '@grafana/data';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { provideMutationClientFactory } from 'app/features/dashboard-scene/mutation-api/clientBridge';
+import { payloads } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { NotebookMutationClient } from 'app/features/notebook/mutation-api/NotebookMutationClient';
 import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
 
-import { DashboardPlanPreview } from './DashboardPlanPreview';
+import { DashboardPlanPreview, isPlanBuildingScreenEnabled } from './DashboardPlanPreview';
 import { allMutationCommands } from './commandRegistry';
 
 /**
@@ -76,6 +77,13 @@ const planPreview = new DashboardPlanPreview(() => {
   return client instanceof DashboardMutationClient ? client : null;
 });
 
+/**
+ * RENDER_PLAN as advertised while the building screen is off: previews only. It drops `phase` the way
+ * a schema without the field does, so a caller checking for the building screen sees none and never
+ * asks for it, rather than asking and being refused.
+ */
+const renderPlanWithoutBuildingPhase = payloads.renderPlan.transform(({ phase, ...preview }) => preview);
+
 export const dashboardMutationApi: DashboardMutationAPI = {
   execute: (mutation: MutationRequest) => {
     if (mutation.type.toUpperCase() === 'RENDER_PLAN') {
@@ -92,6 +100,9 @@ export const dashboardMutationApi: DashboardMutationAPI = {
   },
   getPayloadSchema: (commandId: string) => {
     const normalized = commandId.toUpperCase();
+    if (normalized === 'RENDER_PLAN' && !isPlanBuildingScreenEnabled()) {
+      return renderPlanWithoutBuildingPhase;
+    }
     // Every command, not just the ones the mounted document exposes: `execute` is what enforces where a
     // command can run.
     const cmd = allMutationCommands().find((c) => c.name === normalized);
