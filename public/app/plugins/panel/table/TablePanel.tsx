@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import {
   applyFieldOverrides,
+  CoreApp,
   type DataFrame,
   type GrafanaTheme2,
   getFrameDisplayName,
@@ -62,6 +63,7 @@ export function TablePanel(props: Props) {
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
   const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
+  const rowTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
   const onFieldAddToAssistant = useTableFieldAssistant(props);
   const onCellAddToAssistant = useTableCellAssistant(props);
   const enableSharedCrosshair = useTableSharedCrosshair();
@@ -125,9 +127,9 @@ export function TablePanel(props: Props) {
   const main = useMemo(
     () =>
       tableRefreshNewFeaturesEnabled && rawMain
-        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns))
+        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns), rowTransformationsEnabled)
         : rawMain,
-    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
+    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns, rowTransformationsEnabled]
   );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
@@ -154,9 +156,9 @@ export function TablePanel(props: Props) {
       {...adHocColumns}
       reorderable={Boolean(adHocColumns)}
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
-      rowTransformationsEnabled={tableRefreshNewFeaturesEnabled}
+      rowTransformationsEnabled={rowTransformationsEnabled}
       rowTransformations={
-        tableRefreshNewFeaturesEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
+        rowTransformationsEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,

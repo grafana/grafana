@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import {
   applyFieldOverrides,
+  CoreApp,
   createTheme,
   type DataFrame,
   type DataLinkPostProcessor,
@@ -56,7 +57,8 @@ function panel(
   dataLinkPostProcessor: DataLinkPostProcessor,
   frameIndex = 0,
   outputSeries = sourceSeries,
-  setTransformations: PanelRuntimeTransformations['set'] = () => {}
+  setTransformations: PanelRuntimeTransformations['set'] = () => {},
+  app = CoreApp.Dashboard
 ) {
   const fieldConfig = {
     defaults: {
@@ -88,6 +90,7 @@ function panel(
       <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
         <PanelContextProvider
           value={{
+            app,
             eventsScope: 'table',
             eventBus: new EventBusSrv(),
             adHocTransformations: {
@@ -104,6 +107,23 @@ function panel(
     </OpenFeatureProvider>
   );
 }
+
+it('keeps row filtering unavailable in panel edit until saved-stack editing is supported', async () => {
+  const sourceSeries = [makeFrame()];
+  render(
+    panel(
+      sourceSeries,
+      ({ linkModel }) => linkModel,
+      0,
+      sourceSeries,
+      () => {},
+      CoreApp.PanelEditor
+    )
+  );
+
+  await userEvent.click(screen.getByLabelText('Column options for metric'));
+  expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+});
 
 it('rebuilds row links with the current data-link processor', async () => {
   const sourceSeries = [makeFrame()];
