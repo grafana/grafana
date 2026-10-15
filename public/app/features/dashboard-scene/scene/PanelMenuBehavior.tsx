@@ -294,7 +294,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (config.featureToggles.panelTimeSettings) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PanelTimeSettings, true)) {
       items.push({
         text: t('panel.header-menu.time-settings', 'Time settings'),
         iconClassName: 'clock-nine',

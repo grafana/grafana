@@ -1606,7 +1606,7 @@
   },
   "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/dashboard-filters-overview/useFiltersOverviewState.ts": {
@@ -1672,16 +1672,6 @@
     },
     "react-hooks/rules-of-hooks": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/panel-timerange/PanelTimeRange.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/panel-timerange/PanelTimeRangeDrawer.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
     }
   },
   "public/app/features/dashboard-scene/serialization/buildNewDashboardSaveModel.ts": {
