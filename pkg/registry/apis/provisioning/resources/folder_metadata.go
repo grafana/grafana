@@ -21,8 +21,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -138,12 +136,6 @@ func FindFoldersMissingMetadata(source []repository.FileTreeEntry) []string {
 		}
 	}
 	return missing
-}
-
-// IsFolderMetadataEnabled reports whether the provisioningFolderMetadata feature flag is on.
-func IsFolderMetadataEnabled(cfg *setting.Cfg) bool {
-	//nolint:staticcheck // The usage of this function is deprecated, but we don't plan to keep it for long.
-	return cfg.IsFeatureToggleEnabled(featuremgmt.FlagProvisioningFolderMetadata)
 }
 
 // IsFolderMetadataFile reports whether path refers to a _folder.json file.
@@ -277,8 +269,8 @@ func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter
 // It attempts to read the stable UID from _folder.json.
 // If the metadata file doesn't exist, it falls back to the hash-based ID.
 // Returns an error if reading the metadata file fails for reasons other than not existing.
-func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (string, error) {
-	folder, err := ParseFolderWithMetadata(ctx, reader, path, ref, folderMetadataEnabled)
+func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string) (string, error) {
+	folder, err := ParseFolderWithMetadata(ctx, reader, path, ref)
 	if err != nil {
 		return "", err
 	}
@@ -286,7 +278,7 @@ func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string
 }
 
 // ParseFolderWithMetadata parses a Folder at the given path and applies stable UID, title, and checksum from folder metadata if it exists.
-func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (Folder, error) {
+func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path, ref string) (Folder, error) {
 	f := ParseFolder(path, reader.Config().Name)
 	meta, hash, err := ReadFolderMetadata(ctx, reader, path, ref)
 	if err != nil {
@@ -309,7 +301,7 @@ func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path
 // ParseFolderResource constructs a ParsedResource for a folder at the given path.
 // This allows folders to be authorized using the same AuthorizeResource flow as other resources.
 // folderGVK determines the GVK/GVR set on the returned ParsedResource.
-func ParseFolderResource(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool, folderGVK schema.GroupVersionKind) (*ParsedResource, error) {
+func ParseFolderResource(ctx context.Context, reader repository.Reader, path, ref string, folderGVK schema.GroupVersionKind) (*ParsedResource, error) {
 	config := reader.Config()
 
 	// Try to read existing folder metadata (single read for both metadata and ID)
@@ -386,7 +378,7 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 		parentFolderID = ""
 	} else {
 		// Get the parent folder's ID
-		parentFolderID, err = GetFolderID(ctx, reader, parentPath, ref, folderMetadataEnabled)
+		parentFolderID, err = GetFolderID(ctx, reader, parentPath, ref)
 		if err != nil {
 			return nil, fmt.Errorf("get parent folder ID: %w", err)
 		}
