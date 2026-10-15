@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { testWithFeatureToggles } from 'test/test-utils';
 
 import { type Scope, type ScopeNode } from '@grafana/data';
@@ -51,7 +51,7 @@ describe('RecentScopes metadata tooltip', () => {
 
     await user.hover(screen.getByRole('button', { name: /Title with-filters/ }));
 
-    expect(await screen.findByText('cluster = prod')).toBeInTheDocument();
+    expect(await within(await screen.findByRole('tooltip')).findByText('cluster = prod')).toBeInTheDocument();
   });
 
   it('shows the description of the node stored with the recent scope', async () => {
@@ -59,7 +59,9 @@ describe('RecentScopes metadata tooltip', () => {
 
     await user.hover(screen.getByRole('button', { name: /Title with-filters/ }));
 
-    expect(await screen.findByText('Found through the stored node')).toBeInTheDocument();
+    expect(
+      await within(await screen.findByRole('tooltip')).findByText('Found through the stored node')
+    ).toBeInTheDocument();
   });
 
   it('finds the description through the scope default path when no node is stored', async () => {
@@ -67,7 +69,9 @@ describe('RecentScopes metadata tooltip', () => {
 
     await user.hover(screen.getByRole('button', { name: /Title with-path/ }));
 
-    expect(await screen.findByText('Found through the default path')).toBeInTheDocument();
+    expect(
+      await within(await screen.findByRole('tooltip')).findByText('Found through the default path')
+    ).toBeInTheDocument();
   });
 
   it('labels each scope with its title when the recent set has several scopes', async () => {
@@ -83,10 +87,10 @@ describe('RecentScopes metadata tooltip', () => {
 
     await user.hover(screen.getByRole('button', { name: /First, Second/ }));
 
-    expect(await screen.findByText('cluster = prod')).toBeInTheDocument();
-    expect(screen.getByText('env != dev')).toBeInTheDocument();
-    expect(screen.getByText('First')).toBeInTheDocument();
-    expect(screen.getByText('Second', { selector: 'span' })).toBeInTheDocument();
+    expect(await within(await screen.findByRole('tooltip')).findByText('cluster = prod')).toBeInTheDocument();
+    expect(within(screen.getByRole('tooltip')).getByText('env != dev')).toBeInTheDocument();
+    expect(within(screen.getByRole('tooltip')).getByText('First')).toBeInTheDocument();
+    expect(within(screen.getByRole('tooltip')).getByText('Second')).toBeInTheDocument();
   });
 
   it('shows no tooltip for a recent scope without a description or filters', async () => {

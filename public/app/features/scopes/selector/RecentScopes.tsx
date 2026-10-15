@@ -68,19 +68,22 @@ function RecentScopeButton({ recentScopeSet, onSelect }: RecentScopeButtonProps)
 
   return (
     <ScopeMetadataTooltip sources={sources}>
-      <button
-        className={styles.recentScopeButton}
-        onClick={() => {
-          onSelect(recentScopeSet.scopeIds, recentScopeSet.scopeNodeId);
-        }}
-      >
-        <Text truncate>{recentScopeSet.scopes.map((s) => s.title).join(', ')}</Text>
-        {recentScopeSet.parentNodeTitle && (
-          <Text truncate variant="body" color="secondary">
-            {recentScopeSet.parentNodeTitle}
-          </Text>
-        )}
-      </button>
+      {(descriptionId) => (
+        <button
+          className={styles.recentScopeButton}
+          aria-describedby={descriptionId}
+          onClick={() => {
+            onSelect(recentScopeSet.scopeIds, recentScopeSet.scopeNodeId);
+          }}
+        >
+          <Text truncate>{recentScopeSet.scopes.map((s) => s.title).join(', ')}</Text>
+          {recentScopeSet.parentNodeTitle && (
+            <Text truncate variant="body" color="secondary">
+              {recentScopeSet.parentNodeTitle}
+            </Text>
+          )}
+        </button>
+      )}
     </ScopeMetadataTooltip>
   );
 }

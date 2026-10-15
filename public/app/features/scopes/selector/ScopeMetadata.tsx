@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { forwardRef, useEffect, useId, useState, useSyncExternalStore, type JSX } from 'react';
+import { forwardRef, useEffect, useId, useState, useSyncExternalStore, type JSX, type ReactNode } from 'react';
 
 import { type GrafanaTheme2, type ScopeSpecFilter, reverseScopeFilterOperatorMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -104,21 +104,24 @@ interface ScopeMetadataTooltipProps {
   // Show the tooltip for the item that has keyboard focus through aria-activedescendant
   highlighted?: boolean;
   className?: string;
-  children: JSX.Element;
+  // Receives the id of the element describing the scope, once there is something to describe. It has to be set as
+  // aria-describedby on the element that assistive technology treats as focused (the control, or the tree item when
+  // focus stays in the search input).
+  children: (descriptionId: string | undefined) => JSX.Element;
 }
 
 interface AnchorProps {
   className?: string;
-  children: JSX.Element;
-  'aria-describedby'?: string;
+  children: ReactNode;
   onActiveChange: (active: boolean) => void;
 }
 
-// Tooltip clones its child to inject a tab stop and its own hover and focus handling. We control visibility
-// ourselves (the tooltip must stay hidden when there is nothing to show), so only the ref and aria-describedby
-// are used and the extra tab stop is dropped.
+// Tooltip clones its child to inject a tab stop, aria-describedby and its own hover and focus handling. We control
+// visibility ourselves (the tooltip must stay hidden when there is nothing to show), so only the ref is used. The
+// extra tab stop is dropped and the description is wired to the focused element by ScopeMetadataTooltip instead,
+// because this wrapper is never the element that has focus.
 const TooltipAnchor = forwardRef<HTMLDivElement, AnchorProps>(function TooltipAnchor(
-  { className, children, 'aria-describedby': describedBy, onActiveChange },
+  { className, children, onActiveChange },
   ref
 ) {
   return (
@@ -127,7 +130,6 @@ const TooltipAnchor = forwardRef<HTMLDivElement, AnchorProps>(function TooltipAn
     <div
       ref={ref}
       className={className}
-      aria-describedby={describedBy}
       onMouseEnter={() => onActiveChange(true)}
       onMouseLeave={() => onActiveChange(false)}
       onFocus={() => onActiveChange(true)}
@@ -158,11 +160,17 @@ export function ScopeMetadataTooltip({ sources, highlighted, className, children
       return;
     }
     let cancelled = false;
-    Promise.all(sources.map((source) => loadScopeMetadata(service, source))).then((result) => {
-      if (!cancelled) {
-        setLoaded(result);
-      }
-    });
+    Promise.all(sources.map((source) => loadScopeMetadata(service, source)))
+      .then((result) => {
+        if (!cancelled) {
+          setLoaded(result);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoaded([]);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -175,6 +183,8 @@ export function ScopeMetadataTooltip({ sources, highlighted, className, children
 
   useEffect(() => {
     if (highlighted) {
+      // A tooltip dismissed with Escape comes back when the highlight returns to the item
+      setDismissed(false);
       setActiveTooltipId(id);
     }
   }, [highlighted, id]);
@@ -212,20 +222,25 @@ export function ScopeMetadataTooltip({ sources, highlighted, className, children
     }
   };
 
+  const descriptionId = metadata.length > 0 ? `${id}-description` : undefined;
+  const content = (
+    <Stack direction="column" gap={1} alignItems="flex-start">
+      {metadata.map(({ scopeId, title, description, filters }) => (
+        <ScopeMetadata key={scopeId} title={title} description={description} filters={filters} />
+      ))}
+    </Stack>
+  );
+
   return (
-    <Tooltip
-      show={open}
-      placement="right"
-      content={
-        <Stack direction="column" gap={1} alignItems="flex-start">
-          {metadata.map(({ scopeId, title, description, filters }) => (
-            <ScopeMetadata key={scopeId} title={title} description={description} filters={filters} />
-          ))}
-        </Stack>
-      }
-    >
+    <Tooltip show={open} placement="right" content={content}>
       <TooltipAnchor className={className} onActiveChange={onActiveChange}>
-        {children}
+        {children(descriptionId)}
+        {descriptionId && (
+          // Referenced by aria-describedby, which also works while the tooltip itself is not rendered
+          <div id={descriptionId} hidden>
+            {content}
+          </div>
+        )}
       </TooltipAnchor>
     </Tooltip>
   );

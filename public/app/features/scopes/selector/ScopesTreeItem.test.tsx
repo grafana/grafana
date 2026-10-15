@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { useEffect, useState } from 'react';
 import { testWithFeatureToggles } from 'test/test-utils';
 
@@ -67,8 +67,8 @@ describe('ScopesTreeItem metadata tooltip', () => {
 
     await user.hover(screen.getByTestId('scopes-tree-full'));
 
-    expect(await screen.findByText('Production Vault cluster')).toBeInTheDocument();
-    expect(screen.getByText('cluster = prod')).toBeInTheDocument();
+    expect(await within(await screen.findByRole('tooltip')).findByText('Production Vault cluster')).toBeInTheDocument();
+    expect(within(screen.getByRole('tooltip')).getByText('cluster = prod')).toBeInTheDocument();
   });
 
   it('shows only the filters when the scope node has no description', async () => {
@@ -76,8 +76,8 @@ describe('ScopesTreeItem metadata tooltip', () => {
 
     await user.hover(screen.getByTestId('scopes-tree-filtersOnly'));
 
-    expect(await screen.findByText('region =~ us-.*')).toBeInTheDocument();
-    expect(screen.queryByText('Description')).not.toBeInTheDocument();
+    expect(await within(await screen.findByRole('tooltip')).findByText('region =~ us-.*')).toBeInTheDocument();
+    expect(within(screen.getByRole('tooltip')).queryByText('Description')).not.toBeInTheDocument();
   });
 
   it('shows no tooltip for a scope without a description or filters', async () => {
@@ -102,7 +102,7 @@ describe('ScopesTreeItem metadata tooltip', () => {
   it('shows the tooltip for the keyboard highlighted scope without hovering', async () => {
     renderItem('full', true);
 
-    expect(await screen.findByText('cluster = prod')).toBeInTheDocument();
+    expect(await within(await screen.findByRole('tooltip')).findByText('cluster = prod')).toBeInTheDocument();
   });
 
   it('hides the tooltip when Escape is pressed', async () => {
@@ -113,6 +113,54 @@ describe('ScopesTreeItem metadata tooltip', () => {
     await user.keyboard('{Escape}');
 
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('describes the tree item by the scope metadata so the highlighted item is announced with it', async () => {
+    renderItem('full', true);
+
+    await screen.findByRole('tooltip');
+    const treeItem = screen.getByRole('treeitem');
+    const description = document.getElementById(treeItem.getAttribute('aria-describedby')!);
+
+    expect(description).toHaveTextContent('Production Vault cluster');
+    expect(description).toHaveTextContent('cluster = prod');
+  });
+
+  it('does not set aria-describedby on a scope without metadata', async () => {
+    renderItem('empty', true);
+
+    await waitFor(() => expect(screen.getByRole('treeitem')).toBeInTheDocument());
+    expect(screen.getByRole('treeitem')).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('shows the tooltip again when the highlight returns to an item that was dismissed with Escape', async () => {
+    const Harness = () => {
+      const [highlighted, setHighlighted] = useState(true);
+      return (
+        <>
+          <button onClick={() => setHighlighted((h) => !h)}>toggle highlight</button>
+          <ScopesTreeItem
+            anyChildExpanded={false}
+            loadingNodeName={undefined}
+            treeNode={{ scopeNodeId: 'full', expanded: false, query: '' }}
+            scopeNodes={scopeNodes}
+            selected={false}
+            selectedScopes={[]}
+            highlighted={highlighted}
+          />
+        </>
+      );
+    };
+    const { user } = renderWithScopesServices(<Harness />, { scopes, nodes });
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    await user.click(screen.getByText('toggle highlight'));
+    await user.click(screen.getByText('toggle highlight'));
+
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
   });
 
   it('shows one tooltip at a time when the keyboard highlight moves away from a hovered scope', async () => {
@@ -147,13 +195,13 @@ describe('ScopesTreeItem metadata tooltip', () => {
     };
     const { user } = renderWithScopesServices(<Harness />, { scopes, nodes });
     await user.hover(screen.getByTestId('scopes-tree-full'));
-    expect(await screen.findByText('cluster = prod')).toBeInTheDocument();
+    expect(await within(await screen.findByRole('tooltip')).findByText('cluster = prod')).toBeInTheDocument();
 
     await user.keyboard('{ArrowDown}');
 
-    expect(await screen.findByText('region =~ us-.*')).toBeInTheDocument();
+    expect(await within(await screen.findByRole('tooltip')).findByText('region =~ us-.*')).toBeInTheDocument();
     expect(screen.getAllByRole('tooltip')).toHaveLength(1);
-    expect(screen.queryByText('cluster = prod')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('tooltip')).queryByText('cluster = prod')).not.toBeInTheDocument();
   });
 
   it('does not let Escape reach ancestors while it dismisses the tooltip', async () => {

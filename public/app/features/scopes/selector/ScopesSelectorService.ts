@@ -86,7 +86,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     });
   }
 
-  // Loads a node from the API and adds it to the nodes cache
   // Hover tooltips, recent scopes and selecting a scope all ask for the same scope, so share one request per id.
   private scopeRequests: Record<string, Promise<Scope | undefined>> = {};
 
@@ -112,6 +111,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.scopeRequests[scopeId];
   };
 
+  // Loads a node from the API and adds it to the nodes cache
   public getScopeNode = async (scopeNodeId: string) => {
     if (this.state.nodes[scopeNodeId]) {
       return this.state.nodes[scopeNodeId];

@@ -285,7 +285,9 @@ export function ScopesTreeItem({
     </div>
   );
 
-  return (
+  // aria-describedby goes on the tree item because that is what aria-activedescendant points at while focus stays in
+  // the search input
+  const renderItem = (descriptionId?: string) => (
     <div
       key={treeNode.scopeNodeId}
       id={getTreeItemElementId(treeNode.scopeNodeId)}
@@ -293,19 +295,10 @@ export function ScopesTreeItem({
       // aria-selected refers to the highlighted item in the tree, not the selected checkbox/radio button
       aria-selected={highlighted}
       aria-expanded={isExpandable ? treeNode.expanded : undefined}
+      aria-describedby={descriptionId}
       className={anyChildExpanded ? styles.expandedContainer : undefined}
     >
-      {hasMetadata ? (
-        <ScopeMetadataTooltip
-          sources={[{ scopeId: scopeNode.spec.linkId!, nodeId: treeNode.scopeNodeId }]}
-          highlighted={highlighted}
-          className={styles.metadataAnchor}
-        >
-          {row}
-        </ScopeMetadataTooltip>
-      ) : (
-        row
-      )}
+      {row}
 
       <div id={childrenId} className={styles.children}>
         {treeNode.expanded && (
@@ -318,6 +311,20 @@ export function ScopesTreeItem({
         )}
       </div>
     </div>
+  );
+
+  if (!hasMetadata) {
+    return renderItem();
+  }
+
+  return (
+    <ScopeMetadataTooltip
+      sources={[{ scopeId: scopeNode.spec.linkId!, nodeId: treeNode.scopeNodeId }]}
+      highlighted={highlighted}
+      className={styles.metadataAnchor}
+    >
+      {renderItem}
+    </ScopeMetadataTooltip>
   );
 }
 
