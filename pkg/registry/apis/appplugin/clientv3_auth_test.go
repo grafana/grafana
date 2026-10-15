@@ -8,6 +8,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/stretchr/testify/require"
 
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -54,21 +55,18 @@ func TestClientV3TokenExchanger(t *testing.T) {
 		cfg.Env = env
 		cfg.PluginSettings = config.PluginSettings{
 			"insecure-app": {"insecure_skip_authentication": "true"},
-			"secure-app":   {"insecure_skip_authentication": "false"},
 		}
 		return cfg
 	}
 	dev := cfgFor(setting.Dev)
 
 	require.Equal(t, configured, ClientV3TokenExchanger(dev, "insecure-app", configured), "a configured exchanger always wins")
-	require.Nil(t, ClientV3TokenExchanger(dev, "secure-app", nil))
-	require.Nil(t, ClientV3TokenExchanger(dev, "other-app", nil))
-	require.Nil(t, ClientV3TokenExchanger(nil, "insecure-app", nil))
-	require.Nil(t, ClientV3TokenExchanger(cfgFor(setting.Prod), "insecure-app", nil), "local tokens are for development only")
 
-	local := ClientV3TokenExchanger(dev, "insecure-app", nil)
-	require.NotNil(t, local)
-	require.Same(t, local, ClientV3TokenExchanger(dev, "insecure-app", nil), "one signing key is shared")
+	local, err := v3.LocalTokenExchanger()
+	require.NoError(t, err)
+	require.Same(t, local, ClientV3TokenExchanger(dev, "other-app", nil), "without a configured exchanger, tokens are signed locally")
+	require.Same(t, local, ClientV3TokenExchanger(cfgFor(setting.Prod), "other-app", nil), "local tokens do not need development mode")
+	require.Same(t, local, ClientV3TokenExchanger(nil, "other-app", nil))
 }
 
 func TestInvalidClientV3TokenExchanger(t *testing.T) {

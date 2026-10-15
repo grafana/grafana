@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
@@ -82,6 +83,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, p.azureHostEnvVars(azureSettings, plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
+	hostEnv = append(hostEnv, p.signingKeysEnvVars(plugin)...)
 
 	// If SkipHostEnvVars is enabled, get some allowed variables from the current process and pass
 	// them down to the plugin. If the flag is not set, do not add anything else because ALL env vars
@@ -298,6 +300,26 @@ func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
 	}
 	return vars
+}
+
+// signingKeysEnvVars passes the plugin the keys that verify the access tokens
+// Grafana signs itself, so it can authenticate plugin protocol v3 requests
+// without insecure_skip_authentication.
+func (p *EnvVarsProvider) signingKeysEnvVars(plugin *plugins.Plugin) []string {
+	if !p.cfg.LocalPluginTokens {
+		return nil
+	}
+	// The plugin accepts only one source of keys, so keep keys from the host
+	// environment, which go-plugin forwards unless SkipHostEnvVars is set.
+	if !plugin.SkipHostEnvVars && (os.Getenv(v3.EnvVarSigningKeys) != "" || os.Getenv(v3.EnvVarSigningKeysURL) != "") {
+		return nil
+	}
+	jwks, err := v3.LocalSigningKeys()
+	if err != nil {
+		p.logger.Error("Failed to get the local plugin signing keys", "pluginId", plugin.PluginID(), "error", err)
+		return nil
+	}
+	return []string{p.envVar(v3.EnvVarSigningKeys, jwks)}
 }
 
 // insecureSkipAuthenticationSetting makes a plugin serve plugin protocol v3

@@ -1,0 +1,143 @@
+package v3
+
+import (
+	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
+	authnlib "github.com/grafana/authlib/authn"
+)
+
+// localTokenTTL bounds how long a locally minted token is valid.
+const localTokenTTL = 5 * time.Minute
+
+// EnvVarSigningKeys and EnvVarSigningKeysURL name the environment variables
+// from which app-sdk plugins read the keys that verify their access tokens.
+// A plugin accepts only one of them.
+const (
+	EnvVarSigningKeys    = "GRAFANA_JWKS"
+	EnvVarSigningKeysURL = "GRAFANA_JWKS_URL"
+)
+
+// localKeyID identifies the local signing key in tokens and in LocalSigningKeys.
+const localKeyID = "grafana-local"
+
+// LocalTokenExchanger returns a process-wide exchanger, for when no token
+// exchange is configured. Its tokens are signed with a key generated in memory,
+// which only plugins started with LocalSigningKeys trust: those started by
+// this Grafana process. It must not be used when a real exchanger exists.
+func LocalTokenExchanger() (authnlib.TokenExchanger, error) {
+	e, err := sharedLocalExchanger()
+	if err != nil {
+		return nil, err
+	}
+	return e, nil
+}
+
+// LocalSigningKeys returns the JWKS, as a JSON document, that verifies the
+// tokens of LocalTokenExchanger. It holds only the public key.
+func LocalSigningKeys() (string, error) {
+	e, err := sharedLocalExchanger()
+	if err != nil {
+		return "", err
+	}
+	return e.jwks, nil
+}
+
+var sharedLocalExchanger = sync.OnceValues(newLocalExchanger)
+
+// localExchanger mints access tokens shaped like exchanged ones, carrying the
+// subject token's identity as the actor.
+type localExchanger struct {
+	signer jose.Signer
+	jwks   string
+}
+
+var _ authnlib.TokenExchanger = (*localExchanger)(nil)
+
+func newLocalExchanger() (*localExchanger, error) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return nil, fmt.Errorf("local plugin token exchange: %w", err)
+	}
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
+		(&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", localKeyID))
+	if err != nil {
+		return nil, fmt.Errorf("local plugin token exchange: %w", err)
+	}
+	jwks, err := json.Marshal(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{{
+		Key:       &key.PublicKey,
+		KeyID:     localKeyID,
+		Algorithm: string(jose.ES256),
+		Use:       "sig",
+	}}})
+	if err != nil {
+		return nil, fmt.Errorf("local plugin token exchange: %w", err)
+	}
+	return &localExchanger{signer: signer, jwks: string(jwks)}, nil
+}
+
+// Exchange implements [authnlib.TokenExchanger].
+func (e *localExchanger) Exchange(_ context.Context, req authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
+	if req.Namespace == "" || len(req.Audiences) == 0 {
+		return nil, errors.New("local plugin token exchange: namespace and audiences are required")
+	}
+	claims := authnlib.AccessTokenClaims{Namespace: req.Namespace}
+	if req.SubjectToken != "" {
+		actor, err := actorFromSubjectToken(req.SubjectToken)
+		if err != nil {
+			return nil, err
+		}
+		claims.Actor = actor
+	}
+	now := time.Now()
+	token, err := jwt.Signed(e.signer).Claims(jwt.Claims{
+		Subject:   "access-policy:grafana",
+		Audience:  jwt.Audience(req.Audiences),
+		IssuedAt:  jwt.NewNumericDate(now),
+		NotBefore: jwt.NewNumericDate(now),
+		Expiry:    jwt.NewNumericDate(now.Add(localTokenTTL)),
+	}).Claims(claims).Serialize()
+	if err != nil {
+		return nil, fmt.Errorf("local plugin token exchange: %w", err)
+	}
+	return &authnlib.TokenExchangeResponse{Token: token}, nil
+}
+
+// actorFromSubjectToken returns the delegation chain for the new token: the
+// caller of an ID token, or the chain of a previous access token.
+func actorFromSubjectToken(token string) (*authnlib.ActorClaims, error) {
+	parsed, err := authnlib.Parse(token)
+	if err != nil {
+		return nil, fmt.Errorf("local plugin token exchange: %w", err)
+	}
+	typ, err := authnlib.GetType(parsed)
+	if err != nil {
+		return nil, fmt.Errorf("local plugin token exchange: %w", err)
+	}
+	var std jwt.Claims
+	switch typ {
+	case authnlib.TokenTypeID:
+		var id authnlib.IDTokenClaims
+		if err := parsed.UnsafeClaimsWithoutVerification(&std, &id); err != nil {
+			return nil, fmt.Errorf("local plugin token exchange: %w", err)
+		}
+		return &authnlib.ActorClaims{Subject: std.Subject, IDTokenClaims: id}, nil
+	case authnlib.TokenTypeAccess:
+		var at authnlib.AccessTokenClaims
+		if err := parsed.UnsafeClaimsWithoutVerification(&std, &at); err != nil {
+			return nil, fmt.Errorf("local plugin token exchange: %w", err)
+		}
+		return &authnlib.ActorClaims{Subject: std.Subject, ServiceIdentity: at.ServiceIdentity, Actor: at.Actor}, nil
+	default:
+		return nil, fmt.Errorf("local plugin token exchange: unsupported subject token type %q", typ)
+	}
+}

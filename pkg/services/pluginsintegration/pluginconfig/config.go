@@ -52,6 +52,9 @@ type PluginInstanceCfg struct {
 	PluginSettings config.PluginSettings
 	// DevMode is set when Grafana runs with app_mode = development.
 	DevMode bool
+	// LocalPluginTokens is set when no plugin v3 token exchange is configured,
+	// so Grafana signs the access tokens it sends to plugins itself.
+	LocalPluginTokens bool
 
 	AWSAllowedAuthProviders          []string
 	AWSAssumeRoleEnabled             bool
@@ -87,6 +90,16 @@ type PluginInstanceCfg struct {
 	LiveClientQueueMaxSize int
 }
 
+// localPluginTokens reports whether neither [plugins] v3_cap_token nor
+// v3_token_exchange_url is set, so the API layer uses v3.LocalTokenExchanger.
+// With only one of them set, the exchange is misconfigured and no tokens are
+// signed at all.
+func localPluginTokens(cfg *setting.Cfg) bool {
+	section := cfg.SectionWithEnvOverrides("plugins")
+	return strings.TrimSpace(section.Key("v3_cap_token").MustString("")) == "" &&
+		strings.TrimSpace(section.Key("v3_token_exchange_url").MustString("")) == ""
+}
+
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
 func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
 	aws := settingProvider.Section("aws")
@@ -115,6 +128,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Tracing:                             tracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),
 		DevMode:                             cfg.Env == setting.Dev,
+		LocalPluginTokens:                   localPluginTokens(cfg),
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
 		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),

@@ -71,3 +71,25 @@ func TestProvidePluginInstanceConfigOpenFeature(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, openFeature, pluginCfg.OpenFeature)
 }
+
+func TestProvidePluginInstanceConfigLocalPluginTokens(t *testing.T) {
+	for _, tc := range []struct {
+		name, token, url string
+		want             bool
+	}{
+		{name: "no token exchange", want: true},
+		{name: "token exchange", token: "cap-token", url: "https://auth.example.com/v1/sign-access-token", want: false},
+		{name: "misconfigured token exchange", token: "cap-token", want: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &setting.Cfg{Raw: ini.Empty()}
+			section := cfg.Raw.Section("plugins")
+			section.Key("v3_cap_token").SetValue(tc.token)
+			section.Key("v3_token_exchange_url").SetValue(tc.url)
+
+			pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+			require.NoError(t, err)
+			require.Equal(t, tc.want, pluginCfg.LocalPluginTokens)
+		})
+	}
+}

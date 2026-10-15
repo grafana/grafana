@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
@@ -115,6 +116,32 @@ func TestPluginEnvVarsProvider_insecureSkipAuthentication(t *testing.T) {
 			} else {
 				assert.NotContains(t, envVars, "GF_PLUGIN_INSECURE_SKIP_AUTHENTICATION=true")
 			}
+		})
+	}
+}
+
+func TestPluginEnvVarsProvider_signingKeysEnvVars(t *testing.T) {
+	jwks, err := v3.LocalSigningKeys()
+	require.NoError(t, err)
+	want := v3.EnvVarSigningKeys + "=" + jwks
+
+	envVars := func(localTokens, skipHostEnvVars bool) []string {
+		cfg := &PluginInstanceCfg{LocalPluginTokens: localTokens, Features: featuremgmt.WithFeatures()}
+		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+		return provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "test"}, SkipHostEnvVars: skipHostEnvVars})
+	}
+
+	t.Run("passed on when Grafana signs tokens itself", func(t *testing.T) {
+		assert.Contains(t, envVars(true, false), want)
+	})
+	t.Run("not passed on with a token exchange", func(t *testing.T) {
+		assert.NotContains(t, envVars(false, false), want)
+	})
+	for _, key := range []string{v3.EnvVarSigningKeys, v3.EnvVarSigningKeysURL} {
+		t.Run("host "+key+" takes precedence", func(t *testing.T) {
+			t.Setenv(key, "from-host")
+			assert.NotContains(t, envVars(true, false), want, "the host environment is forwarded")
+			assert.Contains(t, envVars(true, true), want, "the host environment is not forwarded")
 		})
 	}
 }
@@ -1000,6 +1027,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
+		pCfg.LocalPluginTokens = false
 
 		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
@@ -1046,6 +1074,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
+		pCfg.LocalPluginTokens = false
 
 		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{
 			GetForProviderFunc: getAzureSSOSettings,
@@ -1105,6 +1134,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
+		pCfg.LocalPluginTokens = false
 
 		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{
 			GetForProviderFunc: getAzureSSOSettings,
