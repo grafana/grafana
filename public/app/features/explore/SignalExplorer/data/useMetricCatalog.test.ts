@@ -338,6 +338,42 @@ describe('useMetricCatalog', () => {
       expect(result.current.loading).toBe(true);
     });
 
+    it('shows the catalog’s matches while the search for a replaced term waits', async () => {
+      const { result, rerender, search } = renderSearch(complete);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      const pending = deferred<MetricInfo[]>();
+      search.mockReturnValue(pending.promise);
+
+      rerender({ searchText: 'node' });
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      expect(search).toHaveBeenLastCalledWith({ uid: 'p1' }, range, 'node');
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('merges the last answer with the catalog’s matches, in name order, while a shortened term waits', async () => {
+      const catalog: Catalog = { metrics: [...rows, ...found], truncated: false, searchable: true };
+      const { result, rerender, search } = renderSearch(catalog);
+      search.mockResolvedValue([found[1]]);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quickpizza_lat' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      rerender({ searchText: 'quick' });
+
+      expect(result.current.metrics.map((m) => m.name)).toEqual([
+        'quickpizza_latency_seconds',
+        'quickpizza_requests_total',
+      ]);
+      expect(result.current.loading).toBe(true);
+    });
+
     it('shows the whole catalog again as soon as the search is cleared', async () => {
       const { result, rerender } = renderSearch(truncated);
       await waitFor(() => expect(result.current.loading).toBe(false));

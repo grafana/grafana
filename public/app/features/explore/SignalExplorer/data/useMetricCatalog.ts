@@ -69,9 +69,13 @@ export function useMetricCatalog(
     }
   }, [searchInFlight, settledSource]);
 
-  // With nothing settled to keep, as on the first search after the catalog (re)loads, the catalog's
-  // own matches are the best interim answer.
-  const source = searchInFlight ? (lastSettled.length > 0 ? lastSettled : catalog.data.metrics) : settledSource;
+  // A term the debounce has not released yet is still waiting on the datasource.
+  const pending = catalog.data.searchable && term !== '' && term !== debouncedTerm;
+
+  // While waiting, the previous answer covers only terms that extend its own; the catalog's matches
+  // cover a term edited any other way, such as backspaced or replaced.
+  const interim = useMemo(() => mergeByName(lastSettled, catalog.data.metrics), [lastSettled, catalog.data.metrics]);
+  const source = pending || searchInFlight ? interim : settledSource;
 
   // Filtered by the live term even when the datasource already did the matching, so results keep
   // narrowing as the user types rather than waiting out the debounce.
@@ -81,9 +85,6 @@ export function useMetricCatalog(
     return source.filter((m) => (!q || m.name.toLowerCase().includes(q)) && (!type || m.type === type));
   }, [source, term, opts?.typeFilter]);
 
-  // A term the debounce has not released yet is still waiting on the datasource.
-  const pending = catalog.data.searchable && term !== '' && term !== debouncedTerm;
-
   return {
     metrics,
     // A settled datasource search answers from the whole datasource, not the cut-short catalog.
@@ -92,4 +93,16 @@ export function useMetricCatalog(
     // A failed search belongs to the term it was for, not to the one being typed now.
     error: catalog.error ?? (pending ? undefined : search.error),
   };
+}
+
+// Sorted like `searchCatalog`'s answer, so rows don't reorder when that answer lands.
+function mergeByName(preferred: MetricInfo[], rest: MetricInfo[]): MetricInfo[] {
+  if (preferred === rest || preferred.length === 0) {
+    return rest;
+  }
+  const byName = new Map(rest.map((metric) => [metric.name, metric]));
+  for (const metric of preferred) {
+    byName.set(metric.name, metric);
+  }
+  return [...byName.values()].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
