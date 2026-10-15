@@ -53,6 +53,7 @@ type Service interface {
 	DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error)
 	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
 	DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error
+	DeleteLibraryElementsInFolderUnchecked(c context.Context, signedInUser identity.Requester, folderUID string) error
 	GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error)
 }
 
@@ -89,6 +90,13 @@ func (l *LibraryElementService) GetElement(c context.Context, signedInUser ident
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return l.deleteLibraryElementsInFolderUID(c, signedInUser, folderUID)
+}
+
+// DeleteLibraryElementsInFolderUnchecked is DeleteLibraryElementsInFolder without the edit-
+// permission check, for callers that have already authorized the requester through a different
+// mechanism (e.g. a standalone folder apiserver's cascade delete).
+func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, signedInUser identity.Requester, folderUID string) error {
+	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), signedInUser.GetOrgID(), folderUID)
 }
 
 // GetAll gets all library elements with support to query filters.
