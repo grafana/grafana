@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import { useEffect, useState } from 'react';
 import { testWithFeatureToggles } from 'test/test-utils';
 
 import { type Scope, type ScopeNode } from '@grafana/data';
@@ -112,6 +113,47 @@ describe('ScopesTreeItem metadata tooltip', () => {
     await user.keyboard('{Escape}');
 
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('shows one tooltip at a time when the keyboard highlight moves away from a hovered scope', async () => {
+    const itemProps = {
+      anyChildExpanded: false,
+      loadingNodeName: undefined,
+      scopeNodes,
+      selected: false,
+      selectedScopes: [],
+    };
+    const Harness = () => {
+      const [highlighted, setHighlighted] = useState(false);
+      useEffect(() => {
+        const onKeyDown = () => setHighlighted(true);
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+      }, []);
+      return (
+        <>
+          <ScopesTreeItem
+            {...itemProps}
+            treeNode={{ scopeNodeId: 'full', expanded: false, query: '' }}
+            highlighted={false}
+          />
+          <ScopesTreeItem
+            {...itemProps}
+            treeNode={{ scopeNodeId: 'filtersOnly', expanded: false, query: '' }}
+            highlighted={highlighted}
+          />
+        </>
+      );
+    };
+    const { user } = renderWithScopesServices(<Harness />, { scopes, nodes });
+    await user.hover(screen.getByTestId('scopes-tree-full'));
+    expect(await screen.findByText('cluster = prod')).toBeInTheDocument();
+
+    await user.keyboard('{ArrowDown}');
+
+    expect(await screen.findByText('region =~ us-.*')).toBeInTheDocument();
+    expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+    expect(screen.queryByText('cluster = prod')).not.toBeInTheDocument();
   });
 
   it('does not let Escape reach ancestors while it dismisses the tooltip', async () => {

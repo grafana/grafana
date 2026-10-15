@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { forwardRef, useEffect, useState, type JSX } from 'react';
+import { forwardRef, useEffect, useId, useState, useSyncExternalStore, type JSX } from 'react';
 
 import { type GrafanaTheme2, type ScopeSpecFilter, reverseScopeFilterOperatorMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -80,6 +80,25 @@ async function loadScopeMetadata(
   return { scopeId, title, description, filters: scope?.spec.filters };
 }
 
+// Only the tooltip that was interacted with last is shown, so a hovered tooltip gives way when the keyboard highlight
+// moves to another scope, and the other way around.
+let activeTooltipId: string | undefined;
+const activeTooltipListeners = new Set<() => void>();
+
+function setActiveTooltipId(id: string | undefined) {
+  if (activeTooltipId !== id) {
+    activeTooltipId = id;
+    activeTooltipListeners.forEach((listener) => listener());
+  }
+}
+
+function subscribeToActiveTooltip(listener: () => void) {
+  activeTooltipListeners.add(listener);
+  return () => {
+    activeTooltipListeners.delete(listener);
+  };
+}
+
 interface ScopeMetadataTooltipProps {
   sources: ScopeMetadataSource[];
   // Show the tooltip for the item that has keyboard focus through aria-activedescendant
@@ -125,6 +144,8 @@ const TooltipAnchor = forwardRef<HTMLDivElement, AnchorProps>(function TooltipAn
  */
 export function ScopeMetadataTooltip({ sources, highlighted, className, children }: ScopeMetadataTooltipProps) {
   const service = useScopesServices()?.scopesSelectorService;
+  const id = useId();
+  const activeId = useSyncExternalStore(subscribeToActiveTooltip, () => activeTooltipId);
   const [active, setActive] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [loaded, setLoaded] = useState<LoadedScopeMetadata[]>([]);
@@ -150,7 +171,21 @@ export function ScopeMetadataTooltip({ sources, highlighted, className, children
   }, [interacted, service, sourcesKey]);
 
   const metadata = loaded.filter(hasScopeMetadata);
-  const open = interacted && !dismissed && metadata.length > 0;
+  const open = interacted && activeId === id && !dismissed && metadata.length > 0;
+
+  useEffect(() => {
+    if (highlighted) {
+      setActiveTooltipId(id);
+    }
+  }, [highlighted, id]);
+
+  useEffect(() => {
+    return () => {
+      if (activeTooltipId === id) {
+        setActiveTooltipId(undefined);
+      }
+    };
+  }, [id]);
 
   // The pointer can hover without focus being inside the anchor, so listen on the window while the tooltip is open.
   // Capturing and stopping the event means Escape only dismisses the tooltip, and does not also reach the drawer that
@@ -173,6 +208,7 @@ export function ScopeMetadataTooltip({ sources, highlighted, className, children
     setActive(value);
     if (value) {
       setDismissed(false);
+      setActiveTooltipId(id);
     }
   };
 
