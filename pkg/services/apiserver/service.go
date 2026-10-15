@@ -447,7 +447,7 @@ func (s *service) start(ctx context.Context) error {
 	)
 	if globalSearchAPIEnabled {
 		searchAndStorageRoutes = append(searchAndStorageRoutes,
-			searchroutes.BuildGlobalSearch(s.tracing, s.unified, builders)...)
+			searchroutes.BuildGlobalSearch(s.tracing, s.unified)...)
 		// The search that spans resource types has no resource of its own to hold a
 		// permission on, so the request itself carries no check. Every result is
 		// authorized against its own group, resource and folder before it is

@@ -10762,13 +10762,21 @@
       "cell-filter-out": "Escludi valore",
       "cell-inspect": "Ispeziona valore",
       "cell-inspect-tooltip": "Ispeziona valore",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Valori filtro",
+      "column-menu-hide": "",
       "column-menu-label": "Opzioni della colonna per {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Aggiorna filtro",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Copia negli appunti",
       "csv-counts": "Righe: {{rows}}, Colonne: {{columns}}",
       "csv-placeholder": "Inserisci qui il CSV...",
       "edit-column-filter": "Modifica filtro su {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Aggiungi tutti i valori visualizzati al filtro",
         "blanks": "(Vuoti)",
@@ -10802,6 +10810,8 @@
           "count": "Conta"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Ispeziona valore",
       "loading": "Caricamento tabella in corso",
       "nested-table": {
@@ -10811,6 +10821,7 @@
       "no-rows": "Nessuna riga",
       "no-values-label": "Nessun valore",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe",
+      "show-column-label": "",
       "sort-by-column": "Ordina per colonna {{column}}",
       "sort-by-column-ascending": "Ordina per colonna {{column}}, in ordine crescente",
       "sort-by-column-descending": "Ordina per colonna {{column}}, in ordine decrescente",
@@ -10820,7 +10831,8 @@
       },
       "tooltip": {
         "trigger": "Attiva/disattiva suggerimento"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Tag"
@@ -13871,6 +13883,9 @@
       "label-plugin-id": "ID componente aggiuntivo",
       "label-severity": "Gravità"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Tutti i plug-in sono aggiornati"
     },
@@ -13892,6 +13907,10 @@
     "plugin-details-body": {
       "needs-service-account": "Il componente aggiuntivo {{pluginName}} ha bisogno di un account di servizio per poter eseguire query su Grafana. Il seguente elenco contiene le autorizzazioni disponibili per l'account di servizio:",
       "page-not-found": "Pagina non trovata."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Obsoleto"
@@ -16526,6 +16545,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
     "description-page-size": "Numero di righe per pagina. Quando è vuoto, il formato della pagina si basa sull'altezza del pannello.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Un campo contenente oggetti JSON con proprietà CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterna il colore di sfondo di ogni seconda riga",
@@ -16564,6 +16584,7 @@
     "name-max-height": "",
     "name-min-column-width": "Larghezza minima colonna",
     "name-page-size": "Dimensione della pagina",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Mostra intestazione tabella",
     "name-styling-from-field": "Stile dal campo",
     "name-tooltip-from-field": "",
@@ -16727,6 +16748,7 @@
     "editor": {
       "aria-label-content": "Contenuto del testo",
       "aria-label-mode": "Modalità testo: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Numeri di riga",
       "format-bold": "B",
       "format-heading": "H",
@@ -16772,6 +16794,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

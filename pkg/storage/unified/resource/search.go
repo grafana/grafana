@@ -323,6 +323,10 @@ type ResourceIndex interface {
 	// The order of the items is guaranteed to be the same as the input
 	BulkIndex(req *BulkIndexRequest) error
 
+	// SearchFieldDefinitions returns the canonical fields supported by this index.
+	// The definitions and their capabilities must not be modified by callers.
+	SearchFieldDefinitions() []SearchFieldDefinition
+
 	// Search within a namespaced resource
 	// When working with federated queries, the additional indexes will be passed in explicitly
 	Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex, stats *SearchStats) (*resourcepb.ResourceSearchResponse, error)
@@ -870,6 +874,12 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 
 // Search implements ResourceIndexServer.
 func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	return s.searchWithIndex(ctx, req, nil)
+}
+
+// searchWithIndex prepares the request against the same index that executes it,
+// so a concurrent rebuild cannot change the field definitions between the two.
+func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.ResourceSearchRequest, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.Search")
 	defer span.End()
 
@@ -946,6 +956,9 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		}
 	}
 
+	if prepare != nil {
+		prepare(idx)
+	}
 	return idx.Search(ctx, s.access, req, federate, stats)
 }
 

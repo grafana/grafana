@@ -82,6 +82,7 @@ import {
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
+import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import {
   createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2,
   transformSaveModelSchemaV2ToScene,
@@ -1187,6 +1188,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         meta: this.state.meta,
       };
 
+      await resolveLegacyDatasourceNames(dashboardDTO.dashboard);
       dashScene = transformSaveModelToScene(dashboardDTO);
     }
 

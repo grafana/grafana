@@ -53,6 +53,7 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].hoverOverflow === key[1].hoverOverflow &&
   cacheKey[1].maxHeight === key[1].maxHeight &&
   cacheKey[1].textAlign === key[1].textAlign &&
+  cacheKey[1].tableRefreshEnabled === key[1].tableRefreshEnabled &&
   cacheKey[1].textWrap === key[1].textWrap;
 
 // Geometry shared by the two header corner masks (see their use in `getGridStyles`). react-data-grid
@@ -68,6 +69,14 @@ const headerCornerMask = (radius: string) =>
     pointerEvents: 'none',
   }) as const;
 
+export const getGridBackgroundColor = (theme: GrafanaTheme2, transparent?: boolean): string => {
+  return transparent
+    ? theme.flags.visualDesignRefresh
+      ? theme.colors.background.page
+      : theme.colors.background.canvas
+    : theme.components.panel.background;
+};
+
 export const getGridStyles = memoize(
   (
     theme: GrafanaTheme2,
@@ -75,14 +84,11 @@ export const getGridStyles = memoize(
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
     noPanelPadding?: boolean,
-    zebraStriping?: boolean
+    zebraStriping?: boolean,
+    showColumnSidebarBorder?: boolean
   ) => {
     const table = theme.components.table;
-    const bgColor = transparent
-      ? theme.flags.visualDesignRefresh
-        ? theme.colors.background.page
-        : theme.colors.background.canvas
-      : theme.components.panel.background;
+    const bgColor = getGridBackgroundColor(theme, transparent);
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
     const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
     const cornerRadius = theme.shape.radius.default;
@@ -149,6 +155,7 @@ export const getGridStyles = memoize(
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
+        ...(showColumnSidebarBorder && { borderInlineStart: `1px solid ${table.border}` }),
 
         // The grid defaults to tabular digits; override them while dataviz.tabularNums is disabled.
         ...(theme.flags.tabularNums ? {} : { fontVariantNumeric: 'normal' }),
@@ -584,6 +591,13 @@ export const getTooltipStyles = memoize((theme: GrafanaTheme2, textAlign: TextAl
     width: theme.spacing(1.75),
     height: theme.spacing(1.75),
     background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.strong),
+    '&[data-warning=true]': {
+      background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.warning.main),
+    },
+    '&:focus-visible': {
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: 1,
+    },
   }),
 }));
 

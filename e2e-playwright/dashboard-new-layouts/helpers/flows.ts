@@ -3,7 +3,7 @@ import test, { expect, type Page } from '@playwright/test';
 import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../../dashboards/TestV2Dashboard.json';
-import { type Sidebar, type Controls } from '../page-objects';
+import { type Controls, type Sidebar } from '../page-objects';
 
 /**
  * Multi-step user flows composed from page objects, grouped by domain
@@ -81,8 +81,17 @@ export const flows = {
       { reloadPageAfterSave = true, title }: { reloadPageAfterSave?: boolean; title?: string } = {}
     ): Promise<string | undefined> {
       const uniqueTitle = title ? buildUniqueDashboardTitle(title) : undefined;
+      const pathnameBeforeSave = new URL(page.url()).pathname;
 
       await controls.saveDashboard(uniqueTitle);
+
+      // A first "Save"/"Save as" creates a new dashboard, then the app redirects to its /d/<uid> URL
+      // so we wait for that redirect to make sure that a reload (or the next step) targets the saved dashboard
+      if (uniqueTitle) {
+        await expect(page, 'Expected a redirect to the newly saved dashboard').toHaveURL(
+          (url) => url.pathname.startsWith('/d/') && url.pathname !== pathnameBeforeSave
+        );
+      }
 
       // wait for the toast
       const toast = page.getByRole('status', { name: 'Dashboard saved' });
