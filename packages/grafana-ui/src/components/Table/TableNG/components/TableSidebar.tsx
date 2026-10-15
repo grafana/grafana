@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
+import { useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -20,6 +21,7 @@ export interface SidebarColumn {
 }
 
 interface TableSidebarProps {
+  focusOnOpen?: boolean;
   /** All columns in display order, including hidden columns. */
   columns: SidebarColumn[];
   hiddenColumns: ReadonlySet<string>;
@@ -32,6 +34,7 @@ interface TableSidebarProps {
 }
 
 export function TableSidebar({
+  focusOnOpen = false,
   columns,
   hiddenColumns,
   onToggleColumn,
@@ -41,11 +44,20 @@ export function TableSidebar({
   willCloseOnRelease = false,
 }: TableSidebarProps) {
   const styles = useStyles2(getStyles, transparent, headerHeight);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const visibleCount = columns.filter(({ name }) => !hiddenColumns.has(name)).length;
+
+  useEffect(() => {
+    if (focusOnOpen) {
+      sidebarRef.current?.focus();
+    }
+  }, [focusOnOpen]);
 
   return (
     // A complementary landmark cannot be nested inside the page's main landmark.
     <div
+      ref={sidebarRef}
+      tabIndex={-1}
       role="group"
       className={css(styles.container, willCloseOnRelease && styles.containerWillClose)}
       aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}

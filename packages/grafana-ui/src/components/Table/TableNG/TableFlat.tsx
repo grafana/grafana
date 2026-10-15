@@ -229,11 +229,21 @@ export function TableFlat(props: TableNGProps) {
   const hasColumnSidebar = sidebarColumns.some((column) => column.hideable);
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
+  const [focusSidebarOnOpen, setFocusSidebarOnOpen] = useState(false);
+  const openColumnSidebar = useCallback(() => {
+    setFocusSidebarOnOpen(true);
+    setIsColumnVisibilityPanelOpen(true);
+  }, []);
+  const closeColumnSidebar = useCallback(() => {
+    setFocusSidebarOnOpen(false);
+    setIsColumnVisibilityPanelOpen(false);
+  }, []);
   // Follow option changes without overriding local open/close actions on every render.
   const prevShowColumnsSidebar = useRef(showColumnsSidebar);
   if (prevShowColumnsSidebar.current !== showColumnsSidebar) {
     prevShowColumnsSidebar.current = showColumnsSidebar;
     setIsColumnVisibilityPanelOpen(showColumnsSidebar);
+    setFocusSidebarOnOpen(false);
   }
   const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
   const splitterAvailableWidth = Math.max(width - COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH, 0);
@@ -242,14 +252,17 @@ export function TableFlat(props: TableNGProps) {
   const handlePanelResizing = useCallback((_flexFraction: number, sidebarPixels: number) => {
     setColumnVisibilityPanelWidth(sidebarPixels);
   }, []);
-  const handlePanelResizeEnd = useCallback((_flexFraction: number, sidebarPixels: number) => {
-    if (sidebarPixels < COLUMN_VISIBILITY_PANEL_MIN_WIDTH) {
-      setIsColumnVisibilityPanelOpen(false);
-      setColumnVisibilityPanelWidth(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
-      return;
-    }
-    setColumnVisibilityPanelWidth(sidebarPixels);
-  }, []);
+  const handlePanelResizeEnd = useCallback(
+    (_flexFraction: number, sidebarPixels: number) => {
+      if (sidebarPixels < COLUMN_VISIBILITY_PANEL_MIN_WIDTH) {
+        closeColumnSidebar();
+        setColumnVisibilityPanelWidth(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
+        return;
+      }
+      setColumnVisibilityPanelWidth(sidebarPixels);
+    },
+    [closeColumnSidebar]
+  );
   // useSplitter applies the fraction after reserving the handle, so exclude it from the denominator.
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
@@ -486,7 +499,7 @@ export function TableFlat(props: TableNGProps) {
       hasColumnSidebar,
       onHideColumn: handleHideColumn,
       canHideColumn: canHideAnotherColumn,
-      onOpenColumnPanel: hasColumnSidebar ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
+      onOpenColumnPanel: hasColumnSidebar ? openColumnSidebar : undefined,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
@@ -516,6 +529,7 @@ export function TableFlat(props: TableNGProps) {
       typographyCtx,
       hasColumnSidebar,
       handleHideColumn,
+      openColumnSidebar,
       canHideAnotherColumn,
       noPanelPadding,
     ]
@@ -620,10 +634,11 @@ export function TableFlat(props: TableNGProps) {
         }}
       >
         <TableSidebar
+          focusOnOpen={focusSidebarOnOpen}
           columns={sidebarColumns}
           hiddenColumns={hiddenColumns}
           onToggleColumn={handleToggleColumnVisibility}
-          onClose={() => setIsColumnVisibilityPanelOpen(false)}
+          onClose={closeColumnSidebar}
           headerHeight={headerHeight}
           transparent={transparent}
           willCloseOnRelease={columnVisibilityPanelWidth < COLUMN_VISIBILITY_PANEL_MIN_WIDTH}

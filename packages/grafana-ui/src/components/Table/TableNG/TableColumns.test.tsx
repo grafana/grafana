@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
@@ -11,6 +11,39 @@ import { TableNG } from './TableNG';
 beforeAll(() => {
   mockClientSize({ width: 800, height: 600 });
   mockBoundingClientRect({ width: 800, height: 600 });
+});
+
+const sidebarFocusData = createDataFrame({
+  fields: [
+    {
+      name: 'A',
+      type: FieldType.string,
+      values: ['value'],
+      config: { custom: { hideable: true } },
+      display: () => ({ text: 'value', numeric: NaN }),
+    },
+  ],
+});
+
+it('focuses the sidebar after keyboard opening, then tabs to its controls', async () => {
+  const user = userEvent.setup();
+  render(<TableNG data={sidebarFocusData} width={800} height={400} tableRefreshEnabled />);
+
+  act(() => screen.getByRole('button', { name: 'Column options for A' }).focus());
+  await user.keyboard('{Enter}');
+  const manageColumns = await screen.findByRole('menuitem', { name: 'Manage columns' });
+  act(() => manageColumns.focus());
+  await user.keyboard('{Enter}');
+
+  expect(screen.getByRole('group', { name: 'Column visibility' })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole('button', { name: 'Close column visibility panel' })).toHaveFocus();
+});
+
+it('does not move focus into a sidebar already open from panel configuration', () => {
+  render(<TableNG data={sidebarFocusData} width={800} height={400} tableRefreshEnabled showColumnsSidebar />);
+
+  expect(screen.getByRole('group', { name: 'Column visibility' })).not.toHaveFocus();
 });
 
 it('sizes the grid from the clamped sidebar width when the panel shrinks, grows, and is dragged', async () => {
