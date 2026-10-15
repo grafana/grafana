@@ -41,6 +41,7 @@ const esModules = [
   '@react-hookz/web',
   '@ver0/deep-equal',
   '@marcbachmann/cel-js',
+  'yaml',
 ].join('|');
 
 module.exports = {

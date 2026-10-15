@@ -1,5 +1,3 @@
-/** @jest-environment-options {"customExportConditions": ["@grafana-app/source", "node", "node-addons"]} */
-
 import { type CompletionSource, CompletionContext } from '@codemirror/autocomplete';
 import { forceLinting, forEachDiagnostic } from '@codemirror/lint';
 import { Compartment, EditorState } from '@codemirror/state';
