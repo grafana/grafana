@@ -11,7 +11,9 @@ const FALLBACK_ELEMENT_NAME = 'panel';
 const MARKDOWN_ELEMENT_NAME = 'markdown';
 
 /** One cell to append, in document order. */
-export type AppendedElement = { kind: 'panel'; panel: PanelElement } | { kind: 'markdown'; text: string };
+export type AppendedElement =
+  // `isLibraryPanel` is for analytics only: a library panel is inlined by the time it gets here.
+  { kind: 'panel'; panel: PanelElement; isLibraryPanel?: boolean } | { kind: 'markdown'; text: string };
 
 /** Who authored an appended cell: the person adding it, or an assistant whose content they added. */
 export type AppendedCellSource = NotebookLayoutItemKind['spec']['source'];

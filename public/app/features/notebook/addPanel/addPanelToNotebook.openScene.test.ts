@@ -19,12 +19,7 @@ import { transformNotebookSceneToSaveModel } from '../serialization/transformNot
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { defaultPanelKind } from '../types';
 
-import {
-  addCellsToExistingNotebook,
-  addPanelErrorMessage,
-  addPanelToExistingNotebook,
-  OpenNotebookConflictError,
-} from './addPanelToNotebook';
+import { addPanelErrorMessage, addToExistingNotebook, OpenNotebookConflictError } from './addPanelToNotebook';
 
 jest.mock('../api/notebookResource', () => ({
   ...jest.requireActual('../api/notebookResource'),
@@ -77,7 +72,7 @@ describe('adding to a notebook that is open', () => {
   it('appends through the open scene so it updates without a reload, and saves it from there', async () => {
     const scene = openNotebook();
 
-    const added = await addCellsToExistingNotebook(
+    const added = await addToExistingNotebook(
       'nb-1',
       [
         { kind: 'markdown', text: 'Latency rose.' },
@@ -103,7 +98,7 @@ describe('adding to a notebook that is open', () => {
     const scene = openNotebook();
     expect(scene.state.isEditing).toBeFalsy();
 
-    await addCellsToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'Hi.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user');
+    await addToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'Hi.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user');
 
     expect(scene.state.isEditing).toBe(true);
   });
@@ -112,8 +107,8 @@ describe('adding to a notebook that is open', () => {
     const scene = openNotebook();
 
     await Promise.all([
-      addCellsToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'First.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user'),
-      addCellsToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'Second.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user'),
+      addToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'First.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user'),
+      addToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'Second.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user'),
     ]);
 
     expect(cellContents(scene)).toEqual([
@@ -134,7 +129,7 @@ describe('adding to a notebook that is open', () => {
       return loadMetas();
     });
 
-    await addCellsToExistingNotebook(
+    await addToExistingNotebook(
       'nb-1',
       [{ kind: 'markdown', text: 'Latency rose.' }],
       NOTEBOOK_ENTRY_POINT.EXPLORE,
@@ -152,7 +147,7 @@ describe('adding to a notebook that is open', () => {
     const savedTimeSettings = transformNotebookSceneToSaveModel(scene).timeSettings;
     scene.state.$timeRange.onTimeRangeChange(rangeUtil.convertRawToRange({ from: 'now-1h', to: 'now' }));
 
-    await addCellsToExistingNotebook(
+    await addToExistingNotebook(
       'nb-1',
       [{ kind: 'markdown', text: 'Latency rose.' }],
       NOTEBOOK_ENTRY_POINT.EXPLORE,
@@ -168,7 +163,7 @@ describe('adding to a notebook that is open', () => {
     const scene = openNotebook();
     scene.state.$timeRange.onTimeRangeChange(rangeUtil.convertRawToRange({ from: 'now-1h', to: 'now' }));
 
-    await addCellsToExistingNotebook(
+    await addToExistingNotebook(
       'nb-1',
       [{ kind: 'markdown', text: 'Latency rose.' }],
       NOTEBOOK_ENTRY_POINT.EXPLORE,
@@ -193,7 +188,7 @@ describe('adding to a notebook that is open', () => {
     const override = { matcher: { id: 'byName', options: 'up' }, properties: [{ id: 'color', value: 'red' }] };
     panel.setState({ fieldConfig: { defaults: {}, overrides: [override] } });
 
-    await addCellsToExistingNotebook(
+    await addToExistingNotebook(
       'nb-1',
       [{ kind: 'markdown', text: 'Latency rose.' }],
       NOTEBOOK_ENTRY_POINT.EXPLORE,
@@ -213,11 +208,16 @@ describe('adding to a notebook that is open', () => {
     }
     const panel = defaultPanelKind();
 
-    await addPanelToExistingNotebook(
+    await addToExistingNotebook(
       'nb-1',
-      { ...panel, spec: { ...panel.spec, title: slot.state.elementName } },
-      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
-      false
+      [
+        {
+          kind: 'panel',
+          panel: { ...panel, spec: { ...panel.spec, title: slot.state.elementName } },
+          isLibraryPanel: false,
+        },
+      ],
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL
     );
 
     const names = cellNamesOf(scene);
@@ -228,7 +228,7 @@ describe('adding to a notebook that is open', () => {
   it('lands as one undoable step named for the add', async () => {
     const scene = openNotebook();
 
-    await addCellsToExistingNotebook(
+    await addToExistingNotebook(
       'nb-1',
       [{ kind: 'markdown', text: 'Latency rose.' }],
       NOTEBOOK_ENTRY_POINT.EXPLORE,
@@ -244,7 +244,11 @@ describe('adding to a notebook that is open', () => {
     openNotebook();
     const panel = defaultPanelKind();
 
-    await addPanelToExistingNotebook('nb-1', panel, NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL, false);
+    await addToExistingNotebook(
+      'nb-1',
+      [{ kind: 'panel', panel: panel, isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL
+    );
 
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
       'nb-1',
@@ -259,7 +263,7 @@ describe('adding to a notebook that is open', () => {
     scene.autosave.setState({ savedResourceVersion: '5' });
     jest.mocked(readNotebookResourceVersion).mockResolvedValue('6');
 
-    const adding = addCellsToExistingNotebook(
+    const adding = addToExistingNotebook(
       'nb-1',
       [{ kind: 'markdown', text: 'Latency rose.' }],
       NOTEBOOK_ENTRY_POINT.EXPLORE,
@@ -276,7 +280,7 @@ describe('adding to a notebook that is open', () => {
     const scene = openNotebook();
     jest.mocked(updateNotebook).mockRejectedValue(new Error('apiserver unavailable'));
 
-    const added = await addCellsToExistingNotebook(
+    const added = await addToExistingNotebook(
       'nb-1',
       [{ kind: 'markdown', text: 'Latency rose.' }],
       NOTEBOOK_ENTRY_POINT.EXPLORE,
@@ -292,7 +296,7 @@ describe('adding to a notebook that is open', () => {
     openNotebook('nb-other');
     jest.mocked(updateNotebookSpec).mockResolvedValue(notebookSpec());
 
-    await addCellsToExistingNotebook(
+    await addToExistingNotebook(
       'nb-1',
       [{ kind: 'markdown', text: 'Latency rose.' }],
       NOTEBOOK_ENTRY_POINT.EXPLORE,

@@ -34,13 +34,11 @@ import { LockTimeRangeField } from './LockTimeRangeField';
 import { NotebookPickerList } from './NotebookPickerList';
 import { type AddPanelFormValues } from './addPanelForm';
 import {
-  addCellsToExistingNotebook,
   addPanelErrorMessage,
   addPanelFailureReason,
-  addPanelToExistingNotebook,
+  addToExistingNotebook,
   type AddedToNotebook,
-  createNotebookWithCells,
-  createNotebookWithPanel,
+  createNotebookWithContent,
 } from './addPanelToNotebook';
 import { type AppendedCellSource, type AppendedElement } from './appendPanelToNotebook';
 import { shouldLockCapturedTimeRange, withCapturedTimeRange, type CapturedTimeRange } from './capturedTimeRange';
@@ -92,6 +90,17 @@ interface CellsProps extends BaseProps {
 }
 
 type Props = SinglePanelProps | CellsProps;
+
+/**
+ * Locks whenever asked, relative windows included: the checkbox named this panel's own window. Applied
+ * here rather than in either builder, which serialize what the source has without deciding what the
+ * notebook keeps.
+ */
+async function buildSinglePanelCell(props: SinglePanelProps, lockTimeRange: boolean): Promise<AppendedElement[]> {
+  const built = await props.buildPanel();
+  const panel = lockTimeRange ? withCapturedTimeRange(built, props.capturedTimeRange) : built;
+  return [{ kind: 'panel', panel, isLibraryPanel: props.isLibraryPanel }];
+}
 
 async function buildCells(cells: AddNotebookCell[], lockTimeRange: boolean): Promise<AppendedElement[]> {
   return Promise.all(
@@ -185,24 +194,13 @@ export function AddPanelToNotebookModalBody(props: Props) {
       try {
         const title = values.title.trim();
         const source = props.cellSource ?? 'user';
-        if (props.cells) {
-          const cells = await buildCells(props.cells, values.lockTimeRange);
-          panelWasBuilt = true;
-          added = existingUid
-            ? await addCellsToExistingNotebook(existingUid, cells, entryPoint, source)
-            : await createNotebookWithCells({ title }, cells, entryPoint, source);
-        } else {
-          const built = await props.buildPanel();
-          panelWasBuilt = true;
-
-          // Applied here rather than in either builder: both entry points capture the same way, and
-          // the builders serialize what the source has without deciding what the notebook keeps.
-          const panel = values.lockTimeRange ? withCapturedTimeRange(built, props.capturedTimeRange) : built;
-
-          added = existingUid
-            ? await addPanelToExistingNotebook(existingUid, panel, entryPoint, props.isLibraryPanel, source)
-            : await createNotebookWithPanel({ title }, panel, entryPoint, props.isLibraryPanel, source);
-        }
+        const cells = props.cells
+          ? await buildCells(props.cells, values.lockTimeRange)
+          : await buildSinglePanelCell(props, values.lockTimeRange);
+        panelWasBuilt = true;
+        added = existingUid
+          ? await addToExistingNotebook(existingUid, cells, entryPoint, source)
+          : await createNotebookWithContent({ title }, cells, entryPoint, source);
 
         dispatch(
           notifyApp(

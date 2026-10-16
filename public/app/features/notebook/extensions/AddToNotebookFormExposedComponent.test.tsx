@@ -6,7 +6,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { addCellsToExistingNotebook, addPanelToExistingNotebook } from '../addPanel/addPanelToNotebook';
+import { addToExistingNotebook } from '../addPanel/addPanelToNotebook';
+import { type AppendedElement } from '../addPanel/appendPanelToNotebook';
 import { useNotebookPicker } from '../addPanel/useNotebookPicker';
 import { type NotebookRow } from '../list/useNotebooksList';
 
@@ -19,9 +20,8 @@ jest.mock('../addPanel/useNotebookPicker', () => ({
 
 jest.mock('../addPanel/addPanelToNotebook', () => ({
   ...jest.requireActual('../addPanel/addPanelToNotebook'),
-  addPanelToExistingNotebook: jest.fn(),
-  createNotebookWithPanel: jest.fn(),
-  addCellsToExistingNotebook: jest.fn(),
+  addToExistingNotebook: jest.fn(),
+  createNotebookWithContent: jest.fn(),
 }));
 
 // The create fields offer the library's existing tags, which reads a facet off this module. It
@@ -33,8 +33,16 @@ jest.mock('../list/notebookSearchApi', () => ({
 }));
 
 const mockUseNotebookPicker = jest.mocked(useNotebookPicker);
-const addToExisting = jest.mocked(addPanelToExistingNotebook);
-const addCellsToExisting = jest.mocked(addCellsToExistingNotebook);
+const addToExisting = jest.mocked(addToExistingNotebook);
+
+/** The one panel the form handed over, as stored. */
+function onlyPanel(cells: AppendedElement[]) {
+  const [cell] = cells;
+  if (cells.length !== 1 || cell.kind !== 'panel' || cell.panel.kind !== 'Panel') {
+    throw new Error('expected a single Panel cell');
+  }
+  return { element: cell.panel, isLibraryPanel: cell.isLibraryPanel };
+}
 
 const panel: Panel = {
   title: 'Checkout latency',
@@ -93,8 +101,6 @@ describe('AddToNotebookFormExposedComponent', () => {
     } as unknown as ReturnType<typeof useNotebookPicker>);
     addToExisting.mockReset();
     addToExisting.mockResolvedValue({ uid: 'nb2', title: 'Checkout error spike' });
-    addCellsToExisting.mockReset();
-    addCellsToExisting.mockResolvedValue({ uid: 'nb2', title: 'Checkout error spike' });
     onClose.mockClear();
   });
 
@@ -120,14 +126,11 @@ describe('AddToNotebookFormExposedComponent', () => {
     await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
     // Built on submit, so a panel edited while the form was open is the one that lands.
     expect(buildPanel).toHaveBeenCalledTimes(1);
-    const [uid, element, entryPoint, isLibraryPanel] = addToExisting.mock.calls[0];
+    const [uid, cells, entryPoint] = addToExisting.mock.calls[0];
+    const { element, isLibraryPanel } = onlyPanel(cells);
     expect(uid).toBe('nb2');
     expect(entryPoint).toBe('plugin');
     expect(isLibraryPanel).toBe(false);
-    expect(element.kind).toBe('Panel');
-    if (element.kind !== 'Panel') {
-      throw new Error('expected a Panel element');
-    }
     expect(element.spec.title).toBe('Checkout latency');
     expect(element.spec.vizConfig.group).toBe('timeseries');
     expect(element.spec.data.spec.queries[0].spec.refId).toBe('A');
@@ -151,7 +154,7 @@ describe('AddToNotebookFormExposedComponent', () => {
     await addToCheckoutErrorSpike(user);
 
     await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
-    expect(addToExisting.mock.calls[0][4]).toBe('assistant');
+    expect(addToExisting.mock.calls[0][3]).toBe('assistant');
   });
 
   it('does not open the form for a reader who can neither create nor write', () => {
@@ -188,11 +191,7 @@ describe('AddToNotebookFormExposedComponent', () => {
     await addToCheckoutErrorSpike(user);
 
     await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
-    const element = addToExisting.mock.calls[0][1];
-    expect(element.kind).toBe('Panel');
-    if (element.kind !== 'Panel') {
-      throw new Error('expected a Panel element');
-    }
+    const { element } = onlyPanel(addToExisting.mock.calls[0][1]);
     expect(element.spec.data.spec.queryOptions).toMatchObject({
       timeFrom: '2026-10-05T08:00:00.000Z',
       timeTo: '2026-10-05T09:30:00.000Z',
@@ -215,8 +214,8 @@ describe('AddToNotebookFormExposedComponent', () => {
 
     await addToCheckoutErrorSpike(user);
 
-    await waitFor(() => expect(addCellsToExisting).toHaveBeenCalledTimes(1));
-    const [uid, cells, entryPoint, source] = addCellsToExisting.mock.calls[0];
+    await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
+    const [uid, cells, entryPoint, source] = addToExisting.mock.calls[0];
     expect([uid, entryPoint, source]).toEqual(['nb2', 'plugin', 'assistant']);
     expect(cells[0]).toEqual({ kind: 'markdown', text: 'Errors spiked after the deploy.' });
     expect(cells[1].kind === 'panel' && cells[1].panel.spec.title).toBe('Checkout latency');

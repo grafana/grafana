@@ -15,8 +15,8 @@ import { defaultPanelKind, type PanelKind, type Spec as NotebookSpec } from '../
 import {
   addPanelErrorMessage,
   addPanelFailureReason,
-  addPanelToExistingNotebook,
-  createNotebookWithPanel,
+  addToExistingNotebook,
+  createNotebookWithContent,
 } from './addPanelToNotebook';
 
 jest.mock('../analytics/main', () => ({
@@ -117,11 +117,15 @@ function captureCreate(name: string | null = 'nb2'): CapturedRequest {
   return captured;
 }
 
-describe('addPanelToExistingNotebook', () => {
+describe('addToExistingNotebook', () => {
   it('writes back the fetched notebook with the panel appended', async () => {
     const captured = captureWrite();
 
-    const added = await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false);
+    const added = await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE
+    );
 
     expect(added).toEqual({ uid: 'nb1', title: 'Checkout error spike' });
     expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
@@ -133,7 +137,12 @@ describe('addPanelToExistingNotebook', () => {
   it('attributes the panel to the source given', async () => {
     const captured = captureWrite();
 
-    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.PLUGIN, false, 'assistant');
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.PLUGIN,
+      'assistant'
+    );
 
     expect(captured.body!.spec!.layout.spec.cells.map((cell) => cell.spec.source)).toEqual(['assistant']);
   });
@@ -143,7 +152,11 @@ describe('addPanelToExistingNotebook', () => {
   it('sends the resourceVersion it read back with the write', async () => {
     const captured = captureWrite();
 
-    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false);
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE
+    );
 
     expect(captured.body!.metadata?.resourceVersion).toBe('42');
   });
@@ -156,7 +169,11 @@ describe('addPanelToExistingNotebook', () => {
     );
 
     await expect(
-      addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false)
+      addToExistingNotebook(
+        'nb1',
+        [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+        NOTEBOOK_ENTRY_POINT.EXPLORE
+      )
     ).rejects.toBeInstanceOf(NotebookConflictError);
   });
 
@@ -167,7 +184,11 @@ describe('addPanelToExistingNotebook', () => {
     );
 
     await expect(
-      addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false)
+      addToExistingNotebook(
+        'nb1',
+        [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+        NOTEBOOK_ENTRY_POINT.EXPLORE
+      )
     ).rejects.toThrow('notebook is too large');
   });
 
@@ -177,7 +198,11 @@ describe('addPanelToExistingNotebook', () => {
   it('reports the added cell with the caller entry point, the index it landed on and the panel', async () => {
     captureWrite();
 
-    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL, false);
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL
+    );
 
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledTimes(1);
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
@@ -193,7 +218,11 @@ describe('addPanelToExistingNotebook', () => {
   it('passes on that the panel came from the library', async () => {
     captureWrite();
 
-    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL, true);
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: true }],
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL
+    );
 
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
       'nb1',
@@ -210,24 +239,27 @@ describe('addPanelToExistingNotebook', () => {
     );
 
     await expect(
-      addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false)
+      addToExistingNotebook(
+        'nb1',
+        [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+        NOTEBOOK_ENTRY_POINT.EXPLORE
+      )
     ).rejects.toThrow();
 
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).not.toHaveBeenCalled();
   });
 });
 
-describe('createNotebookWithPanel', () => {
+describe('createNotebookWithContent', () => {
   // The modal asks for a name only, so the rest of the header is the schema's empty default: no
   // tags, and no description key at all rather than an empty one nobody wrote.
   it('creates a notebook carrying the panel under the given name, with no tags or description', async () => {
     const captured = captureCreate();
 
-    const added = await createNotebookWithPanel(
+    const added = await createNotebookWithContent(
       { title: 'Checkout latency investigation' },
-      panel('p95 latency'),
-      'dashboard_panel',
-      false
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      'dashboard_panel'
     );
 
     expect(added).toEqual({ uid: 'nb2', title: 'Checkout latency investigation' });
@@ -239,7 +271,12 @@ describe('createNotebookWithPanel', () => {
   it('attributes the panel to the source given', async () => {
     const captured = captureCreate();
 
-    await createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'plugin', false, 'assistant');
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+      'plugin',
+      'assistant'
+    );
 
     expect(captured.body!.spec!.layout.spec.cells.map((cell) => cell.spec.source)).toEqual(['assistant']);
   });
@@ -248,7 +285,11 @@ describe('createNotebookWithPanel', () => {
   it('sends a create body the apiserver can type', async () => {
     const captured = captureCreate();
 
-    await createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'dashboard_panel', false);
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+      'dashboard_panel'
+    );
 
     expect(captured.body!.apiVersion).toBe('dashboard.grafana.app/v2beta1');
     expect(captured.body!.kind).toBe('Notebook');
@@ -261,14 +302,55 @@ describe('createNotebookWithPanel', () => {
     captureCreate(null);
 
     await expect(
-      createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'dashboard_panel', false)
+      createNotebookWithContent(
+        { title: 'Untitled' },
+        [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+        'dashboard_panel'
+      )
     ).rejects.toThrow(/carried no name/);
+  });
+
+  it('describes the panel when the new notebook holds exactly one, alongside text', async () => {
+    captureCreate();
+
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [
+        { kind: 'markdown', text: 'Latency rose.' },
+        { kind: 'panel', panel: panel('Chart'), isLibraryPanel: true },
+      ],
+      'plugin'
+    );
+
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, {
+      panel: panel('Chart'),
+      isLibraryPanel: true,
+    });
+  });
+
+  it('describes no panel when the new notebook holds several', async () => {
+    captureCreate();
+
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [
+        { kind: 'panel', panel: panel('A') },
+        { kind: 'panel', panel: panel('B') },
+      ],
+      'plugin'
+    );
+
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined);
   });
 
   it('reports the caller entry point and cell count once the notebook is created', async () => {
     captureCreate();
 
-    await createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'explore', false);
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+      'explore'
+    );
 
     expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
     expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'explore', 1, {
@@ -282,7 +364,13 @@ describe('createNotebookWithPanel', () => {
   it('does not report a create when the write fails', async () => {
     captureCreate(null);
 
-    await expect(createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'explore', false)).rejects.toThrow();
+    await expect(
+      createNotebookWithContent(
+        { title: 'Untitled' },
+        [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+        'explore'
+      )
+    ).rejects.toThrow();
 
     expect(NotebookAnalytics.created).not.toHaveBeenCalled();
   });

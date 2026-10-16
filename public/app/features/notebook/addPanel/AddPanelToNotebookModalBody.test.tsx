@@ -12,12 +12,7 @@ import { type NotebookRow } from '../list/useNotebooksList';
 import { defaultPanelKind, type PanelKind } from '../types';
 
 import { type AddNotebookCell, AddPanelToNotebookModalBody } from './AddPanelToNotebookModalBody';
-import {
-  addCellsToExistingNotebook,
-  addPanelToExistingNotebook,
-  createNotebookWithCells,
-  createNotebookWithPanel,
-} from './addPanelToNotebook';
+import { addToExistingNotebook, createNotebookWithContent } from './addPanelToNotebook';
 import { type CapturedTimeRange } from './capturedTimeRange';
 import { useNotebookPicker } from './useNotebookPicker';
 
@@ -28,10 +23,8 @@ jest.mock('./useNotebookPicker', () => ({
 
 jest.mock('./addPanelToNotebook', () => ({
   ...jest.requireActual('./addPanelToNotebook'),
-  addPanelToExistingNotebook: jest.fn(),
-  createNotebookWithPanel: jest.fn(),
-  addCellsToExistingNotebook: jest.fn(),
-  createNotebookWithCells: jest.fn(),
+  addToExistingNotebook: jest.fn(),
+  createNotebookWithContent: jest.fn(),
 }));
 
 jest.mock('app/core/services/context_srv');
@@ -50,10 +43,8 @@ jest.mock('app/core/copy/appNotification', () => ({
 }));
 
 const mockUseNotebookPicker = jest.mocked(useNotebookPicker);
-const addToExisting = jest.mocked(addPanelToExistingNotebook);
-const createWithPanel = jest.mocked(createNotebookWithPanel);
-const addCellsToExisting = jest.mocked(addCellsToExistingNotebook);
-const createWithCells = jest.mocked(createNotebookWithCells);
+const addToExisting = jest.mocked(addToExistingNotebook);
+const createWithContent = jest.mocked(createNotebookWithContent);
 const mockContextSrv = jest.mocked(contextSrv);
 const mockCreateSuccessNotification = jest.mocked(createSuccessNotification);
 
@@ -157,7 +148,7 @@ describe('AddPanelToNotebookModalBody', () => {
     setPicker();
     grant([AccessControlAction.NotebooksWrite, AccessControlAction.NotebooksCreate]);
     addToExisting.mockResolvedValue({ uid: 'nb1', title: 'Q2 latency regression' });
-    createWithPanel.mockResolvedValue({ uid: 'nb3', title: 'New investigation' });
+    createWithContent.mockResolvedValue({ uid: 'nb3', title: 'New investigation' });
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -246,7 +237,14 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', false, 'user'));
+      await waitFor(() =>
+        expect(addToExisting).toHaveBeenCalledWith(
+          'nb2',
+          [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
+          'dashboard_panel',
+          'user'
+        )
+      );
       // Built on submit, so a panel edited while the modal was open is the one that lands.
       expect(buildPanel).toHaveBeenCalledTimes(1);
       expect(onDismiss).toHaveBeenCalled();
@@ -261,7 +259,14 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', true, 'user'));
+      await waitFor(() =>
+        expect(addToExisting).toHaveBeenCalledWith(
+          'nb2',
+          [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
+          'dashboard_panel',
+          'user'
+        )
+      );
     });
 
     it('stays open when the write fails, so the choice is not lost', async () => {
@@ -316,7 +321,7 @@ describe('AddPanelToNotebookModalBody', () => {
       fireEvent.submit(document.getElementById('add-panel-to-notebook')!);
 
       await waitFor(() => expect(addToExisting).not.toHaveBeenCalled());
-      expect(createWithPanel).not.toHaveBeenCalled();
+      expect(createWithContent).not.toHaveBeenCalled();
     });
 
     it('says the list is partial when the server had more pages', async () => {
@@ -364,7 +369,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook name is required')).toBeInTheDocument();
-      expect(createWithPanel).not.toHaveBeenCalled();
+      expect(createWithContent).not.toHaveBeenCalled();
     });
 
     // The toast is dispatched to the app notification store rather than rendered in the modal, so
@@ -391,7 +396,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook with this name already exists')).toBeInTheDocument();
-      expect(createWithPanel).not.toHaveBeenCalled();
+      expect(createWithContent).not.toHaveBeenCalled();
     });
 
     // Two notebooks differing only in case read as the same one in a list, so the check is not
@@ -403,7 +408,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook with this name already exists')).toBeInTheDocument();
-      expect(createWithPanel).not.toHaveBeenCalled();
+      expect(createWithContent).not.toHaveBeenCalled();
     });
 
     // `required` is satisfied by any non-empty string, and the name is trimmed on the way out, so
@@ -415,7 +420,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook name is required')).toBeInTheDocument();
-      expect(createWithPanel).not.toHaveBeenCalled();
+      expect(createWithContent).not.toHaveBeenCalled();
     });
 
     // Submitted through the form rather than the button because that is the reachable path: the
@@ -430,7 +435,7 @@ describe('AddPanelToNotebookModalBody', () => {
       fireEvent.submit(form);
       fireEvent.submit(form);
 
-      await waitFor(() => expect(createWithPanel).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(createWithContent).toHaveBeenCalledTimes(1));
     });
 
     // Same fact as the existing route. The create event describes the panel it was created around.
@@ -441,11 +446,10 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
-        expect(createWithPanel).toHaveBeenCalledWith(
+        expect(createWithContent).toHaveBeenCalledWith(
           { title: 'New investigation' },
-          panel(),
+          [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
-          true,
           'user'
         )
       );
@@ -458,12 +462,11 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
-        expect(createWithPanel).toHaveBeenCalledWith(
+        expect(createWithContent).toHaveBeenCalledWith(
           // Trimmed, so a stray space doesn't become part of the notebook's name.
           { title: 'Checkout latency' },
-          panel(),
+          [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
-          false,
           'user'
         )
       );
@@ -527,7 +530,12 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
-        expect(addToExisting).toHaveBeenCalledWith('nb2', lockedPanel(), 'dashboard_panel', false, 'user')
+        expect(addToExisting).toHaveBeenCalledWith(
+          'nb2',
+          [{ kind: 'panel', panel: lockedPanel(), isLibraryPanel: false }],
+          'dashboard_panel',
+          'user'
+        )
       );
     });
 
@@ -539,7 +547,14 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', false, 'user'));
+      await waitFor(() =>
+        expect(addToExisting).toHaveBeenCalledWith(
+          'nb2',
+          [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
+          'dashboard_panel',
+          'user'
+        )
+      );
     });
 
     // The relative raw is stored rather than resolved, so the cell keeps re-evaluating it - the same
@@ -551,9 +566,12 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(createWithPanel).toHaveBeenCalled());
-      const [, created] = createWithPanel.mock.calls[0];
-      expect((created as PanelKind).spec.data.spec.queryOptions).toMatchObject({ timeFrom: 'now-6h', timeTo: 'now' });
+      await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+      const [, [created]] = createWithContent.mock.calls[0];
+      if (created.kind !== 'panel' || created.panel.kind !== 'Panel') {
+        throw new Error('expected a panel cell');
+      }
+      expect(created.panel.spec.data.spec.queryOptions).toMatchObject({ timeFrom: 'now-6h', timeTo: 'now' });
     });
 
     // The choice belongs to the capture, not to the destination, so switching routes must not throw
@@ -789,7 +807,7 @@ describe('AddPanelToNotebookModalBody', () => {
 
     // Nothing was created, so there is no uid to send.
     it('reports a failed create with no notebook uid', async () => {
-      createWithPanel.mockRejectedValue(new Error('notebook is too large'));
+      createWithContent.mockRejectedValue(new Error('notebook is too large'));
       const { user } = renderModal();
 
       await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
@@ -817,7 +835,7 @@ describe('AddPanelToNotebookModalBody', () => {
           { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'build_failed' },
         ])
       );
-      expect(createWithPanel).not.toHaveBeenCalled();
+      expect(createWithContent).not.toHaveBeenCalled();
     });
   });
 
@@ -846,8 +864,8 @@ describe('AddPanelToNotebookModalBody', () => {
     }
 
     beforeEach(() => {
-      createWithCells.mockResolvedValue({ uid: 'nb9', title: 'Checkout latency' });
-      addCellsToExisting.mockResolvedValue({ uid: 'nb2', title: 'Checkout error spike' });
+      createWithContent.mockResolvedValue({ uid: 'nb9', title: 'Checkout latency' });
+      addToExisting.mockResolvedValue({ uid: 'nb2', title: 'Checkout error spike' });
     });
 
     it('creates a notebook with the cells in order under the prefilled title', async () => {
@@ -864,7 +882,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
-        expect(createWithCells).toHaveBeenCalledWith(
+        expect(createWithContent).toHaveBeenCalledWith(
           { title: 'Checkout latency' },
           [
             { kind: 'markdown', text: 'Latency rose.' },
@@ -898,8 +916,8 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addCellsToExisting).toHaveBeenCalled());
-      const [, cells] = addCellsToExisting.mock.calls[0];
+      await waitFor(() => expect(addToExisting).toHaveBeenCalled());
+      const [, cells] = addToExisting.mock.calls[0];
       const ranges = cells.map((cell) =>
         cell.kind === 'panel' && cell.panel.kind === 'Panel' ? cell.panel.spec.data.spec.queryOptions : undefined
       );
@@ -919,8 +937,8 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addCellsToExisting).toHaveBeenCalled());
-      const [, cells] = addCellsToExisting.mock.calls[0];
+      await waitFor(() => expect(addToExisting).toHaveBeenCalled());
+      const [, cells] = addToExisting.mock.calls[0];
       const ranges = cells.map((cell) =>
         cell.kind === 'panel' && cell.panel.kind === 'Panel'
           ? cell.panel.spec.data.spec.queryOptions.timeFrom
@@ -948,9 +966,9 @@ describe('AddPanelToNotebookModalBody', () => {
         onAdded,
       });
 
-      createWithCells.mockRejectedValueOnce(new Error('denied'));
+      createWithContent.mockRejectedValueOnce(new Error('denied'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
-      await waitFor(() => expect(createWithCells).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(createWithContent).toHaveBeenCalledTimes(1));
       expect(onAdded).not.toHaveBeenCalled();
 
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));

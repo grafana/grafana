@@ -16,12 +16,7 @@ import {
 } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { findActiveNotebookScene } from '../scene/sceneContextStack';
-import {
-  defaultSpec as defaultNotebookSpec,
-  type NotebookElement,
-  type PanelElement,
-  type Spec as NotebookSpec,
-} from '../types';
+import { defaultSpec as defaultNotebookSpec, type NotebookElement, type Spec as NotebookSpec } from '../types';
 
 import { appendElementsToNotebook, type AppendedCellSource, type AppendedElement } from './appendPanelToNotebook';
 
@@ -115,76 +110,50 @@ async function appendThroughScene(
   return { spec, firstPosition };
 }
 
-export async function addPanelToExistingNotebook(
-  uid: string,
-  panel: PanelElement,
-  entryPoint: NotebookEntryPoint,
-  isLibraryPanel: boolean,
-  source: AppendedCellSource = 'user'
-): Promise<AddedToNotebook> {
-  const { spec, firstPosition } = await appendToExistingNotebook(uid, [{ kind: 'panel', panel }], source);
-
-  // Reported here, not in the layout manager, which only reports cells added from inside the notebook.
-  NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, firstPosition, {
-    panel,
-    isLibraryPanel,
-  });
-
-  return { uid, title: spec.title };
-}
-
-export async function createNotebookWithPanel(
-  fields: CreateNotebookFields,
-  panel: PanelElement,
-  entryPoint: NotebookEntryPoint,
-  isLibraryPanel: boolean,
-  source: AppendedCellSource = 'user'
-): Promise<AddedToNotebook> {
-  const spec = appendElementsToNotebook(
-    { ...defaultNotebookSpec(), title: fields.title },
-    [{ kind: 'panel', panel }],
-    source
-  );
-
-  const created = await createNotebook(spec);
-  NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length, { panel, isLibraryPanel });
-
-  return { uid: created.uid, title: spec.title };
-}
-
-/** Several cells in one write, e.g. a chat answer with its panels. */
-export async function addCellsToExistingNotebook(
+/** Adds cells in one write, e.g. a single panel or a chat answer with its panels. */
+export async function addToExistingNotebook(
   uid: string,
   cells: AppendedElement[],
   entryPoint: NotebookEntryPoint,
-  source: AppendedCellSource
+  source: AppendedCellSource = 'user'
 ): Promise<AddedToNotebook> {
   const { spec, firstPosition } = await appendToExistingNotebook(uid, cells, source);
 
+  // Reported here, not in the layout manager, which only reports cells added from inside the notebook.
   cells.forEach((cell, index) => {
     if (cell.kind === 'panel') {
-      NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, firstPosition + index, {
-        panel: cell.panel,
-        isLibraryPanel: false,
-      });
+      NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, firstPosition + index, addedPanel(cell));
     }
   });
 
   return { uid, title: spec.title };
 }
 
-export async function createNotebookWithCells(
+export async function createNotebookWithContent(
   fields: CreateNotebookFields,
   cells: AppendedElement[],
   entryPoint: NotebookEntryPoint,
-  source: AppendedCellSource
+  source: AppendedCellSource = 'user'
 ): Promise<AddedToNotebook> {
   const spec = appendElementsToNotebook({ ...defaultNotebookSpec(), title: fields.title }, cells, source);
 
   const created = await createNotebook(spec);
-  NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length);
+  // The created event describes a panel only when there is exactly one to describe.
+  const panels = cells.filter((cell): cell is PanelCell => cell.kind === 'panel');
+  NotebookAnalytics.created(
+    created.uid,
+    entryPoint,
+    spec.layout.spec.cells.length,
+    panels.length === 1 ? addedPanel(panels[0]) : undefined
+  );
 
   return { uid: created.uid, title: spec.title };
+}
+
+type PanelCell = Extract<AppendedElement, { kind: 'panel' }>;
+
+function addedPanel(cell: PanelCell) {
+  return { panel: cell.panel, isLibraryPanel: cell.isLibraryPanel ?? false };
 }
 
 /**
