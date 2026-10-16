@@ -34,7 +34,7 @@ If you're a self-managed Grafana user, you have the following AI tools available
 
 **MCP servers** let an external AI client (for example Claude, Cursor, or VS Code with Copilot) call Grafana as a set of tools that cover common tasks: dashboards and folders, data sources (Prometheus, Loki, and others), alerting, incidents, OnCall, and more.  
 
-  - Clients discover named tools with JSON schemas, the model picks a tool and supplies structured arguments, Grafana runs it under normal identity and RBAC, and the structured result goes back to the model for its next step. 
+  - A model picks which tool to use based on the tool description, and calls the tool with structured arguments. Grafana runs it under normal identity and RBAC, and the structured result goes back to the model for its next step. 
   - Grafana offers two servers: Cloud MCP (hosted by Grafana) and OSS MCP (you run it).
 
 **`gcx`** is an AI-native command-line tool that gives you or your AI agent structured access to Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, k6, Fleet Management, Incidents, and Adaptive Telemetry. You can script it to provide deterministic JSON or YAML output, defined errors, and predictable exit codes. Use it for scripts, CI, or GitOps. 
