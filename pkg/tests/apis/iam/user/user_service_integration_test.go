@@ -721,8 +721,13 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 				scoped := helper.CreateUser("lookup-scoped", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 					{Actions: []string{accesscontrol.ActionOrgUsersRead}, Resource: "users", ResourceAttribute: scopeAttr, ResourceID: scopeID},
 				})
+				teamPermissionsOnly := helper.CreateUser("lookup-team-permissions", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+					{Actions: []string{accesscontrol.ActionTeamsPermissionsWrite}, Resource: "teams", ResourceAttribute: "id", ResourceID: "*"},
+				})
 				hs := helper.GetEnv().Server.HTTPServer
 				cfg := helper.GetEnv().Cfg
+				// Route authorization is registered with the startup license; swapping it below only changes the handler.
+				require.False(t, hs.License.FeatureEnabled("accesscontrol.enforcement"), "lookup route must allow permission writers")
 				for _, tt := range []struct {
 					name    string
 					enforce bool
@@ -730,8 +735,10 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 					caller  apis.User
 					want    []string
 				}{
+					{name: "without enforcement team permission writers see the directory", caller: teamPermissionsOnly, want: []string{"org-user-one", "org-user-two"}},
+					{name: "team permission writers cannot see hidden users", hidden: true, caller: teamPermissionsOnly, want: []string{"org-user-one"}},
 					{name: "without enforcement scoped callers see the directory", caller: scoped, want: []string{"org-user-one", "org-user-two"}},
-					{name: "with enforcement callers see only their allowed users", enforce: true, caller: scoped, want: []string{"org-user-one"}},
+					{name: "handler enforcement limits callers to their allowed users", enforce: true, caller: scoped, want: []string{"org-user-one"}},
 					{name: "hidden users stay hidden without enforcement", hidden: true, caller: scoped, want: []string{"org-user-one"}},
 					{name: "server admins can see hidden users", hidden: true, caller: helper.Org1.Admin, want: []string{"org-user-one", "org-user-two"}},
 				} {
