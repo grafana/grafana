@@ -122,7 +122,8 @@ const getFieldsStyles = (
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(12) : theme.spacing(8.5)) : onClickShowField ? theme.spacing(12.75) : theme.spacing(9)} fit-content(30%) 1fr`,
+    // Icon buttons are 24px (sm) or 26px (md). Fit 3, or 4 when the show-field toggle is available.
+    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(12) : theme.spacing(9)) : onClickShowField ? theme.spacing(13) : theme.spacing(9.75)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',

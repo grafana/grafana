@@ -89,7 +89,8 @@ const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(8.5) : theme.spacing(10)} fit-content(30%) 1fr`,
+    // Icon buttons are 24px (sm) or 26px (md). This row always has three controls.
+    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(9) : theme.spacing(9.75)} fit-content(30%) 1fr`,
   }),
 });
 
