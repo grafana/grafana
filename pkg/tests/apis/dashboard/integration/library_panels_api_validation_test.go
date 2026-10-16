@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -24,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -51,6 +56,10 @@ func TestIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testin
 
 func TestIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelStorageModesEnforceWritePermissions)
+}
+
+func TestIntegrationLibraryPanelMode1PreservesSQLIDInUnifiedStorage(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelMode1PreservesSQLIDInUnifiedStorage)
 }
 
 func TestIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes(t *testing.T) {
@@ -642,6 +651,59 @@ func testIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testin
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, int64(100), missing["maxDataPoints"])
+}
+
+func testIntegrationLibraryPanelMode1PreservesSQLIDInUnifiedStorage(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
+		},
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"librarypanels.dashboard.grafana.app": {DualWriterMode: grafanarest.Mode1},
+		},
+	})
+	ctx := createTestContext(t, helper, helper.Org1)
+	created, err := postHelper(t, &ctx, "/api/library-elements", map[string]interface{}{
+		"kind": 1,
+		"name": "Mode 1 dual-write panel",
+		"model": map[string]interface{}{
+			"type":  "text",
+			"title": "Mode 1 dual-write panel",
+		},
+	}, ctx.AdminUser)
+	require.NoError(t, err)
+	result := created["result"].(map[string]interface{})
+	uid := result["uid"].(string)
+	sqlID := int64(result["id"].(float64))
+	require.Positive(t, sqlID)
+
+	svcCtx, _ := identity.WithServiceIdentity(context.Background(), ctx.OrgID)
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		rsp, readErr := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+			Namespace: helper.Namespacer(ctx.OrgID),
+			Group:     dashboardV0.APIGroup,
+			Resource:  dashboardV0.LibraryPanelResourceInfo.GroupResource().Resource,
+			Name:      uid,
+		}})
+		if !assert.NoError(c, readErr) || !assert.NotNil(c, rsp) {
+			return
+		}
+		if !assert.NoError(c, resource.ErrorFromResponse(rsp.Error, readErr)) {
+			return
+		}
+		stored := &unstructured.Unstructured{}
+		if !assert.NoError(c, stored.UnmarshalJSON(rsp.Value)) {
+			return
+		}
+		meta, metaErr := utils.MetaAccessor(stored)
+		if !assert.NoError(c, metaErr) {
+			return
+		}
+		assert.Equal(c, sqlID, meta.GetDeprecatedInternalID()) //nolint:staticcheck
+	}, 5*time.Second, 50*time.Millisecond)
 }
 
 func testIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T) {
