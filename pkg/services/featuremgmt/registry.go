@@ -1552,6 +1552,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "teamlbac.usageFromAppPlatform",
+			Description: "Collect Team LBAC usage through the IAM API instead of legacy datasource JSON",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
 			Name:        "teamLBACApiWriteFromAppPlatform",
 			Description: "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
 			Stage:       FeatureStageExperimental,
