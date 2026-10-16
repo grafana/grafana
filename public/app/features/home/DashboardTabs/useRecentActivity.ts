@@ -19,11 +19,11 @@ const NO_ITEMS: RecentActivityItem[] = [];
 const NO_DATA_SOURCES: ExploreDataSources = new Map();
 
 /** Every kind, in the order the filter and the rows present them; Pages next to Dashboards, as in the nav. */
-export const PAGE_KINDS: readonly PageHistoryKind[] = ['dashboard', 'page', 'explore', 'alerting', 'app'];
+const PAGE_KINDS: readonly PageHistoryKind[] = ['dashboard', 'page', 'explore', 'alerting', 'app'];
 
-export type PageKindCounts = Record<PageHistoryKind, number>;
+type PageKindCounts = Record<PageHistoryKind, number>;
 
-export function countByKind(items: ReadonlyArray<{ kind: PageHistoryKind }>): PageKindCounts {
+function countByKind(items: ReadonlyArray<{ kind: PageHistoryKind }>): PageKindCounts {
   const counts: PageKindCounts = { dashboard: 0, page: 0, explore: 0, alerting: 0, app: 0 };
   for (const { kind } of items) {
     counts[kind]++;
