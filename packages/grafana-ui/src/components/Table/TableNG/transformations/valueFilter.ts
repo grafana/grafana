@@ -4,7 +4,8 @@ import { FilterByValueType, type FilterByValueConfig, type ValueSetOptions } fro
 export function createValuePredicate(
   field: Field,
   values: ValueSetOptions['values'],
-  selection?: ValueSetOptions
+  selection?: ValueSetOptions,
+  timeZone?: string
 ): MatcherConfig {
   return {
     id: 'inSet',
@@ -13,7 +14,7 @@ export function createValuePredicate(
       values,
       mode: 'display',
       displayConfig: selection?.displayConfig ?? field.config,
-      timeZone: selection?.timeZone,
+      timeZone: selection?.timeZone ?? timeZone,
     } satisfies ValueSetOptions,
   };
 }

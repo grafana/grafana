@@ -13,6 +13,7 @@ import {
   clearFrameFilters,
   writeTableFilter,
 } from './filterByValue';
+import { editableRangeFilter } from './rangeFilter';
 import { useTableTransformations } from './useTableTransformations';
 import { editableValueFilter } from './valueFilter';
 
@@ -41,7 +42,10 @@ export function useRowTransformations(props: TableNGProps) {
         const context = { source, frameKey, frameIndex, field, parentIndex };
         const selected = readFieldFilters(current, context);
         // Compound or unfamiliar predicates must survive edits from a simpler editor unchanged.
-        if (selected.length > 1 || selected.some((config) => !editableValueFilter(config))) {
+        if (
+          selected.length > 1 ||
+          selected.some((config) => !editableValueFilter(config) && !editableRangeFilter(config))
+        ) {
           return current;
         }
         const next = writeTableFilter(current, predicate, context);
@@ -57,8 +61,8 @@ export function useRowTransformations(props: TableNGProps) {
   );
   const clearFilters = useCallback(() => update((current) => clearFrameFilters(current, frameKey)), [update, frameKey]);
   const value = useMemo(
-    () => ({ filters, getFilters, applyFilter, clearFilter, clearFilters }),
-    [filters, getFilters, applyFilter, clearFilter, clearFilters]
+    () => ({ filters, getFilters, applyFilter, clearFilter, clearFilters, timeZone: props.timeZone }),
+    [filters, getFilters, applyFilter, clearFilter, clearFilters, props.timeZone]
   );
   return { configs, value };
 }

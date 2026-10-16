@@ -5,6 +5,7 @@ import { type ValueSetOptions } from '@grafana/data/internal';
 
 import { useTableFilters } from '../TableFilterContext';
 import { tableFilterKey } from '../transformations/filterByValue';
+import { createRangePredicate, editableRangeFilter } from '../transformations/rangeFilter';
 import { createValuePredicate, editableValueFilter } from '../transformations/valueFilter';
 import { FilterOperator, type TableRow } from '../types';
 
@@ -49,7 +50,8 @@ export function useFilterPopupState({
   const selected = field ? (view?.getFilters(field, parentIndex) ?? []) : [];
   const snapshot = JSON.stringify(selected);
   const predicate = selected[0]?.options.filters[0]?.config;
-  const unsupported = selected.length > 1 || selected.some((config) => !editableValueFilter(config));
+  const unsupported =
+    selected.length > 1 || selected.some((config) => !editableValueFilter(config) && !editableRangeFilter(config));
   const selection: ValueSetOptions | undefined = predicate?.id === 'inSet' ? predicate.options : undefined;
   const range: RangeValueMatcherOptions<number> | undefined =
     predicate?.id === 'between' ? predicate.options : undefined;
@@ -90,7 +92,8 @@ export function useFilterPopupState({
               createValuePredicate(
                 field,
                 values.map((item) => item.value),
-                selection
+                selection,
+                view.timeZone
               ),
               parentIndex
             );
@@ -100,22 +103,10 @@ export function useFilterPopupState({
       onApplyRange:
         view && field
           ? ({ min, max, includeMissing }) =>
-              view.applyFilter(
-                field,
-                {
-                  id: 'between',
-                  options: {
-                    from: min,
-                    to: max,
-                    inclusive: true,
-                    allowOpenBounds: true,
-                    includeMissing,
-                  } satisfies RangeValueMatcherOptions<number>,
-                },
-                parentIndex
-              )
+              view.applyFilter(field, createRangePredicate({ min, max, includeMissing }), parentIndex)
           : undefined,
       onClear: () => field && view?.clearFilter(field, parentIndex),
+      timeZone: view?.timeZone,
       range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       rows: rowsForPopup,
       filterValue,
