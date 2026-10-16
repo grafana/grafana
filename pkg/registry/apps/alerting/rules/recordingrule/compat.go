@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -37,6 +37,9 @@ func convertToK8sResource(
 		return nil, fmt.Errorf("failed to parse interval: %w", err)
 	}
 	k8sRule := &model.RecordingRule{
+		// The apiserver converts the object to the requested version, which
+		// starts from the version named here.
+		TypeMeta: ResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
 			UID:             types.UID(rule.GUID),
