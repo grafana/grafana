@@ -284,9 +284,7 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 				break
 			}
 		}
-		if err := rows.Err(); err != nil {
-			return res, err
-		}
+		err = rows.Err()
 	}
 
 	return res, err

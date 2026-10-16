@@ -39,11 +39,10 @@ func TestLegacyStoreGet(t *testing.T) {
 		result   *legacy.ListUserResult
 		err      error
 		notFound bool
-		internal bool
 		disabled bool
 	}{
 		{name: "backend error", err: backendErr},
-		{name: "nil result", internal: true},
+		{name: "nil result", notFound: true},
 		{name: "successful absence", result: &legacy.ListUserResult{}, notFound: true},
 		{name: "active user", result: &legacy.ListUserResult{Items: []common.UserWithRole{{User: legacyuser.User{UID: "alice", Login: "alice", Email: "alice@example.com", Created: now, Updated: now}}}}},
 		{name: "disabled user", result: &legacy.ListUserResult{Items: []common.UserWithRole{{User: legacyuser.User{UID: "alice", Login: "alice", Email: "alice@example.com", IsDisabled: true, Created: now, Updated: now}}}}, disabled: true},
@@ -60,10 +59,9 @@ func TestLegacyStoreGet(t *testing.T) {
 				require.False(t, apierrors.IsNotFound(err))
 				return
 			}
-			if tc.internal || tc.notFound {
+			if tc.notFound {
 				require.Nil(t, obj)
-				require.Equal(t, tc.internal, apierrors.IsInternalError(err))
-				require.Equal(t, tc.notFound, apierrors.IsNotFound(err))
+				require.True(t, apierrors.IsNotFound(err))
 				return
 			}
 			require.NoError(t, err)

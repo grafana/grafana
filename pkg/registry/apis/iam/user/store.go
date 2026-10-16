@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -233,10 +232,7 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	if err != nil {
 		return nil, err
 	}
-	if found == nil {
-		return nil, apierrors.NewInternalError(fmt.Errorf("list users returned no result"))
-	}
-	if len(found.Items) < 1 {
+	if found == nil || len(found.Items) < 1 {
 		return nil, userResource.NewNotFound(name)
 	}
 
