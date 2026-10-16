@@ -82,6 +82,15 @@ describe('AlertRuleRow', () => {
     expect(interval.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it('names the interval chip and explains it in a tooltip', async () => {
+    const { user } = render(<AlertRuleRow hit={baseHit({ interval: '10m' })} fullRule={LOADING} />);
+
+    const chip = await screen.findByRole('img', { name: 'Evaluated every 10m' });
+    await user.hover(chip);
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Evaluated every 10m');
+  });
+
   it('shows no interval when the search hit has none', async () => {
     render(<AlertRuleRow hit={baseHit()} fullRule={LOADING} />);
 

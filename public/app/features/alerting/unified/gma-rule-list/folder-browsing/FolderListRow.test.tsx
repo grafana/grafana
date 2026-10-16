@@ -99,4 +99,15 @@ describe('FolderListRow', () => {
     const folderRow = screen.getAllByRole('listitem')[0];
     expect(within(folderRow).getByRole('list')).toHaveTextContent('child rule');
   });
+
+  it('explains on hover that the count covers only rules directly in the folder', async () => {
+    mockParents(['Root']);
+    const { user } = renderRow({ count: { status: 'loaded', count: 2 } });
+
+    await user.hover(screen.getByText('2 alert rules'));
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      'Rules directly in this folder. Subfolders are listed separately.'
+    );
+  });
 });

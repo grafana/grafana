@@ -6,6 +6,7 @@ import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { useDispatch } from 'app/types/store';
 
 import { type Criteria } from '../rule-search/criteria';
+import { type ResultTotal } from '../shared/ResultCount';
 import { type PagedResult, keepFirstPage, usePagedResult } from '../shared/pagedQuery';
 
 import { type AlertRuleSearchHit, toAlertRuleSearchHit } from './alertRuleSearchHit';
@@ -14,6 +15,7 @@ import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
 export interface AlertRuleSearchPage {
   hits: AlertRuleSearchHit[];
   continueToken?: string;
+  total?: ResultTotal;
 }
 
 /** Infinite query keyed by criteria; the generated search is a POST mutation with no tags or page state. */
@@ -34,6 +36,7 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
       transformResponse: (response: ListAlertRuleSearchRulesV0Alpha1ApiResponse): AlertRuleSearchPage => ({
         hits: response.items.map(toAlertRuleSearchHit),
         continueToken: response.metadata.continue,
+        total: toResultTotal(response.metadata),
       }),
       providesTags: ['AlertRule'],
     }),
@@ -42,15 +45,25 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchAlertRulesInfiniteQuery } = alertRuleSearchAPI;
 
-export function useAlertRuleSearch(criteria: Criteria): PagedResult<AlertRuleSearchHit> {
+export function useAlertRuleSearch(criteria: Criteria): PagedResult<AlertRuleSearchHit> & { total?: ResultTotal } {
   const dispatch = useDispatch();
   const query = useSearchAlertRulesInfiniteQuery(criteria, { refetchOnMountOrArgChange: true });
 
-  return usePagedResult(query, getHits, () => {
+  const paged = usePagedResult(query, getHits, () => {
     dispatch(alertRuleSearchAPI.util.updateQueryData('searchAlertRules', criteria, keepFirstPage));
   });
+
+  // Only the first page's total counts; later pages repeat it and the count never drives paging.
+  return { ...paged, total: query.currentData?.pages[0]?.total };
 }
 
 function getHits(page: AlertRuleSearchPage) {
   return page.hits;
+}
+
+function toResultTotal(metadata: { totalHits?: number; totalHitsRelation?: string }): ResultTotal | undefined {
+  if (typeof metadata.totalHits !== 'number') {
+    return undefined;
+  }
+  return { count: metadata.totalHits, isLowerBound: metadata.totalHitsRelation === 'lte' };
 }

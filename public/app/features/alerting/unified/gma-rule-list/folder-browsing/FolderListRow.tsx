@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, IconButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Button, Icon, IconButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { FolderPath } from '../rule-row/FolderPath';
 
@@ -87,9 +87,18 @@ function FolderCount({ kind, count, title }: { kind: 'alert' | 'recording'; coun
     );
   }
   return (
-    <Text variant="bodySmall" color="secondary">
-      {countLabel(kind, count.count)}
-    </Text>
+    <Tooltip
+      content={t(
+        'alerting.gma-rule-list.folder-row.count-tooltip',
+        'Rules directly in this folder. Subfolders are listed separately.'
+      )}
+    >
+      <span>
+        <Text variant="bodySmall" color="secondary">
+          {countLabel(kind, count.count)}
+        </Text>
+      </span>
+    </Tooltip>
   );
 }
 

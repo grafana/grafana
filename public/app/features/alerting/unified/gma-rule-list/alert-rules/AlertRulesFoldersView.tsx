@@ -52,7 +52,12 @@ export function FoldersView({ folderUids }: FoldersViewProps) {
   }
 
   if (folders.length === 0 && !failure) {
-    return <div>{t('alerting.gma-rule-list.alert-rules.no-folders', 'No folders found')}</div>;
+    // A folder filter that matches no labelled folder means the folder has no rules of this kind.
+    return folderUids.length > 0 ? (
+      <div>{t('alerting.gma-rule-list.alert-rules.no-rules-match-folder', 'No alert rules match this folder')}</div>
+    ) : (
+      <div>{t('alerting.gma-rule-list.alert-rules.no-folders', 'No folders found')}</div>
+    );
   }
 
   return (

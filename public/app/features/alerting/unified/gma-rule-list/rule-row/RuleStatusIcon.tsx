@@ -62,8 +62,8 @@ export function RuleStatusIcon({ kind, state, health, paused }: RuleStatusIconPr
   }
 
   if (kind === 'recording') {
-    return <StateIcon type="recording" health={mappedHealth} isPaused={isPaused} />;
+    return <StateIcon type="recording" health={mappedHealth} isPaused={isPaused} distinctShapes />;
   }
 
-  return <StateIcon state={mappedState} health={mappedHealth} isPaused={isPaused} />;
+  return <StateIcon state={mappedState} health={mappedHealth} isPaused={isPaused} distinctShapes />;
 }

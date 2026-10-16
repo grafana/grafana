@@ -95,4 +95,21 @@ describe('RecordingRulesFoldersView folder row lookups', () => {
     expect(screen.getByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Expand Team Alerts' })).toBeEnabled();
   });
+
+  it('says no recording rules match the folder when a folder filter returns no folders', async () => {
+    server.use(http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ items: [], metadata: {} })));
+
+    render(<FoldersView folderUids={['folder-1']} />);
+
+    expect(await screen.findByText('No recording rules match this folder')).toBeInTheDocument();
+    expect(screen.queryByText('No folders found')).not.toBeInTheDocument();
+  });
+
+  it('keeps the plain empty state when no folder filter is active', async () => {
+    server.use(http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ items: [], metadata: {} })));
+
+    render(<FoldersView folderUids={[]} />);
+
+    expect(await screen.findByText('No folders found')).toBeInTheDocument();
+  });
 });

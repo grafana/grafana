@@ -56,7 +56,7 @@ test.describe('Alert rules: Folders and List browsing', () => {
     await expect(list.folderRow(recordingOnly.title)).toContainText('0 alert rules');
 
     await list.gotoFolders(folderScope(empty.uid));
-    await expect(page.getByText('No folders found')).toBeVisible();
+    await expect(page.getByText('No alert rules match this folder')).toBeVisible();
     await expect(page.getByRole('link', { name: empty.title })).toHaveCount(0);
   });
 

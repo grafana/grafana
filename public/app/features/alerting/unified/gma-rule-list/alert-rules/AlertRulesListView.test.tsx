@@ -98,4 +98,61 @@ describe('AlertRulesListView', () => {
     expect(screen.queryByText('Old criteria rule')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
   });
+
+  describe('result count', () => {
+    function mockSearch(metadata: Record<string, unknown>) {
+      server.use(
+        http.post(ALERT_SEARCH_URL, () => HttpResponse.json({ items: [ruleItem('rule-1', 'CPU high')], metadata }))
+      );
+    }
+
+    it('shows the first page total with locale grouping', async () => {
+      mockSearch({ totalHits: 1542, totalHitsRelation: 'eq', continue: 'tok' });
+      render(<ListView criteria={createEmptyCriteria()} />);
+
+      expect(await screen.findByText('1,542 alert rules')).toBeInTheDocument();
+    });
+
+    it('uses the singular for one rule', async () => {
+      mockSearch({ totalHits: 1, totalHitsRelation: 'eq' });
+      render(<ListView criteria={createEmptyCriteria()} />);
+
+      expect(await screen.findByText('1 alert rule')).toBeInTheDocument();
+    });
+
+    it('adds a plus sign when the total is a lower bound', async () => {
+      mockSearch({ totalHits: 1000, totalHitsRelation: 'lte' });
+      render(<ListView criteria={createEmptyCriteria()} />);
+
+      expect(await screen.findByText('1,000+ alert rules')).toBeInTheDocument();
+    });
+
+    it('omits the count when the response has no total, instead of counting loaded rows', async () => {
+      mockSearch({});
+      render(<ListView criteria={createEmptyCriteria()} />);
+
+      expect(await screen.findByText('CPU high')).toBeInTheDocument();
+      expect(screen.queryByText(/\d alert rules?$/)).not.toBeInTheDocument();
+    });
+
+    it('keeps the first page total after loading more rules', async () => {
+      server.use(
+        http.post(ALERT_SEARCH_URL, async ({ request }) => {
+          const body = (await request.json()) as { continue?: string };
+          return body.continue
+            ? HttpResponse.json({ items: [ruleItem('rule-2', 'Memory high')], metadata: { totalHits: 7 } })
+            : HttpResponse.json({
+                items: [ruleItem('rule-1', 'CPU high')],
+                metadata: { totalHits: 2, totalHitsRelation: 'eq', continue: 'tok' },
+              });
+        })
+      );
+      render(<ListView criteria={createEmptyCriteria()} />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
+
+      expect(await screen.findByText('Memory high')).toBeInTheDocument();
+      expect(screen.getByText('2 alert rules')).toBeInTheDocument();
+    });
+  });
 });

@@ -5,6 +5,7 @@ import { RuleRowList } from '../rule-row/RuleRowList';
 import { type Criteria } from '../rule-search/criteria';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
+import { ResultCount } from '../shared/ResultCount';
 
 import { AlertRuleListEntry } from './AlertRuleListEntry';
 import { useAlertRuleSearch } from './alertRuleSearch';
@@ -14,10 +15,16 @@ interface ListViewProps {
 }
 
 export function ListView({ criteria }: ListViewProps) {
-  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useAlertRuleSearch(criteria);
+  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
+    useAlertRuleSearch(criteria);
 
   if (isLoading) {
-    return <LoadingPlaceholder text={t('alerting.gma-rule-list.alert-rules.loading-rules', 'Loading rules...')} />;
+    return (
+      <Stack direction="column" gap={0.5}>
+        <ResultCount kind="alert" isLoading />
+        <LoadingPlaceholder text={t('alerting.gma-rule-list.alert-rules.loading-rules', 'Loading rules...')} />
+      </Stack>
+    );
   }
 
   if (error !== undefined) {
@@ -36,6 +43,7 @@ export function ListView({ criteria }: ListViewProps) {
 
   return (
     <Stack direction="column" gap={0.5}>
+      <ResultCount kind="alert" total={total} />
       <RuleRowList>
         {items.map((hit) => (
           <AlertRuleListEntry key={hit.uid} hit={hit} showFolderPath />

@@ -1524,6 +1524,7 @@
         "no-folders": "No folders found",
         "no-rules": "No Alert rules found",
         "no-rules-in-folder": "No Alert rules in this folder",
+        "no-rules-match-folder": "No alert rules match this folder",
         "previous": "Previous",
         "routing-default": "Default policy",
         "routing-direct": "Delivered to",
@@ -1537,10 +1538,14 @@
         "collapse": "Collapse {{title}}",
         "count-retry": "Retry",
         "count-retry-label": "Retry loading the rule count of {{title}}",
+        "count-tooltip": "Rules directly in this folder. Subfolders are listed separately.",
         "count-unavailable": "Count unavailable",
         "expand": "Expand {{title}}",
         "recording-rule-count_one": "{{count}} recording rule",
         "recording-rule-count_other": "{{count}} recording rules"
+      },
+      "interval-indicator": {
+        "label": "Evaluated every {{interval}}"
       },
       "migrating-link": "Redirecting...",
       "migration-dropped-text": "These filters could not be migrated and were removed: {{filters}}",
@@ -1556,10 +1561,17 @@
         "no-folders": "No folders found",
         "no-rules": "No Recording rules found",
         "no-rules-in-folder": "No Recording rules in this folder",
+        "no-rules-match-folder": "No recording rules match this folder",
         "previous": "Previous",
         "rules-error": "Failed to load rules",
         "target-only": "Records to",
         "title": "Recording rules"
+      },
+      "result-count": {
+        "alert-rules_one": "{{formatted}} alert rule",
+        "alert-rules_other": "{{formatted}} alert rules",
+        "recording-rules_one": "{{formatted}} recording rule",
+        "recording-rules_other": "{{formatted}} recording rules"
       },
       "search": {
         "clear-filters": "Clear filters",
