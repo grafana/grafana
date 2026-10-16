@@ -34,23 +34,20 @@ type queueLagControllerTest struct {
 	waitSamples func() (uint64, float64)
 }
 
-func newQueueLagControllerTest(t *testing.T, component string, process func() error) *queueLagControllerTest {
+func newQueueLagControllerTest(t *testing.T, component string, limiter workqueue.TypedRateLimiter[string], process func() error) *queueLagControllerTest {
 	t.Helper()
 	reg := prometheus.NewPedanticRegistry()
 	queueReg := prometheus.NewPedanticRegistry()
 	clock := testingclock.NewFakeClock(time.Now())
-	limiter := workqueue.DefaultTypedControllerRateLimiter[string]()
-	queue := workqueue.NewTypedRateLimitingQueueWithConfig(
-		limiter,
-		workqueue.TypedRateLimitingQueueConfig[string]{
-			Name:            "queue-lag-test",
-			Clock:           clock,
-			MetricsProvider: newWorkerQueueWaitProvider(queueReg, component),
-		},
-	)
-	t.Cleanup(queue.ShutDown)
+	if limiter == nil {
+		limiter = workqueue.DefaultTypedControllerRateLimiter[string]()
+	}
+	queueConfig := workqueue.TypedQueueConfig[string]{
+		Name:            "queue-lag-test",
+		Clock:           clock,
+		MetricsProvider: newWorkerQueueWaitProvider(queueReg, component),
+	}
 	c := &queueLagControllerTest{
-		queue:   queue,
 		limiter: limiter,
 		clock:   clock,
 		gauge: func() float64 {
@@ -73,7 +70,8 @@ func newQueueLagControllerTest(t *testing.T, component string, process func() er
 			repository.IncrementalSyncPolicy{}, time.Minute, false,
 		)
 		rc.queue.ShutDown()
-		rc.queue = queue
+		rc.queue = newWorkerQueue(&rc.queueLag, limiter, queueConfig)
+		c.queue = rc.queue
 		rc.processFn = func(string) (string, error) { return "", process() }
 		c.tracker = &rc.queueLag
 		repo := &provisioning.Repository{ObjectMeta: meta}
@@ -82,7 +80,8 @@ func newQueueLagControllerTest(t *testing.T, component string, process func() er
 	case "connection":
 		cc := NewConnectionController(nil, nil, nil, nil, time.Minute, 5*time.Second, reg, nil, false)
 		cc.queue.ShutDown()
-		cc.queue = queue
+		cc.queue = newWorkerQueue(&cc.queueLag, limiter, queueConfig)
+		c.queue = cc.queue
 		cc.processFn = func(_ context.Context, _ string) error { return process() }
 		c.tracker = &cc.queueLag
 		conn := &provisioning.Connection{ObjectMeta: meta}
@@ -91,6 +90,7 @@ func newQueueLagControllerTest(t *testing.T, component string, process func() er
 	default:
 		t.Fatalf("unknown controller %q", component)
 	}
+	t.Cleanup(c.queue.ShutDown)
 	return c
 }
 
@@ -120,7 +120,7 @@ func TestControllerQueueLagRetries(t *testing.T) {
 				var pendingAt time.Time
 				attempt := 0
 				var c *queueLagControllerTest
-				c = newQueueLagControllerTest(t, component, func() error {
+				c = newQueueLagControllerTest(t, component, nil, func() error {
 					require.Less(t, attempt, len(tt.results))
 					if attempt == 0 && tt.reenqueue {
 						updated := make(chan struct{})
@@ -141,15 +141,20 @@ func TestControllerQueueLagRetries(t *testing.T) {
 					require.True(t, c.processNext())
 					assert.Empty(t, c.tracker.inflight)
 					if i < len(tt.results)-1 {
-						require.Contains(t, c.tracker.waiting, queueLagTestKey)
-						enqueuedAt := c.tracker.waiting[queueLagTestKey].Value.(time.Time)
 						if i == 0 && tt.reenqueue {
+							require.Contains(t, c.tracker.waiting, queueLagTestKey)
+							enqueuedAt := c.tracker.waiting[queueLagTestKey].Value.(time.Time)
 							assert.Equal(t, pendingAt, enqueuedAt, "retry must preserve the pending informer's enqueue time")
 						} else {
+							assert.Empty(t, c.tracker.waiting, "scheduled retry must not count as queued work")
+							assert.Zero(t, c.gauge())
+							c.clock.Step(time.Second)
+							require.Eventually(t, func() bool { return c.queue.Len() > 0 }, time.Second, time.Millisecond)
+							require.Contains(t, c.tracker.waiting, queueLagTestKey)
+							enqueuedAt := c.tracker.waiting[queueLagTestKey].Value.(time.Time)
 							assert.False(t, enqueuedAt.Before(completedAt), "retry must be timed from its own enqueue")
 							assert.LessOrEqual(t, c.gauge(), time.Since(completedAt).Seconds())
 						}
-						c.clock.Step(time.Second)
 					}
 				}
 				assert.Equal(t, len(tt.results), attempt)
@@ -167,14 +172,17 @@ func TestControllerQueueLagSuccessfulRedeliveryKeepsEnqueueTime(t *testing.T) {
 				synctest.Test(t, func(t *testing.T) {
 					var c *queueLagControllerTest
 					attempt := 0
-					c = newQueueLagControllerTest(t, component, func() error {
+					wantSecondWait := 80.0
+					if delivery == "delayed reschedule" {
+						wantSecondWait = 60.0
+					}
+					c = newQueueLagControllerTest(t, component, nil, func() error {
 						attempt++
 						if attempt == 1 {
 							c.advance(10 * time.Second)
 							if delivery == "informer update" {
 								go c.enqueue()
 							} else {
-								c.tracker.add(queueLagTestKey)
 								c.queue.AddAfter(queueLagTestKey, 20*time.Second)
 							}
 							synctest.Wait()
@@ -186,14 +194,14 @@ func TestControllerQueueLagSuccessfulRedeliveryKeepsEnqueueTime(t *testing.T) {
 							c.advance(10 * time.Second)
 							assert.Equal(t, 90.0, c.gauge(), "in-flight attempt still contributes its full age")
 						} else {
-							assert.Equal(t, 80.0, c.gauge(), "redelivery must be timed from its own enqueue at second 20")
+							assert.Equal(t, wantSecondWait, c.gauge(), "redelivery must be timed from its actual enqueue")
 						}
 						return nil
 					})
 					c.enqueue()
 					c.advance(10 * time.Second)
 					require.True(t, c.processNext())
-					assert.Equal(t, 70.0, c.gauge(), "pending delivery keeps the time it waited during processing")
+					assert.Equal(t, wantSecondWait-10, c.gauge(), "pending delivery keeps the time it waited during processing")
 					count, sum := c.waitSamples()
 					assert.Equal(t, uint64(1), count)
 					assert.Equal(t, 10.0, sum)
@@ -203,11 +211,6 @@ func TestControllerQueueLagSuccessfulRedeliveryKeepsEnqueueTime(t *testing.T) {
 					assert.Zero(t, c.gauge())
 					count, sum = c.waitSamples()
 					assert.Equal(t, uint64(2), count)
-					wantSecondWait := 80.0
-					if delivery == "delayed reschedule" {
-						// The histogram still excludes backoff; the lag tracker includes it.
-						wantSecondWait = 60.0
-					}
 					assert.Equal(t, wantSecondWait, sum-10)
 				})
 			})
@@ -238,7 +241,7 @@ func TestControllerQueueLagRepeatedRedelivery(t *testing.T) {
 				synctest.Test(t, func(t *testing.T) {
 					var c *queueLagControllerTest
 					attempt := 0
-					c = newQueueLagControllerTest(t, component, func() error {
+					c = newQueueLagControllerTest(t, component, nil, func() error {
 						attempt++
 						wantAge := 75.0
 						if attempt > 1 {
@@ -271,20 +274,139 @@ func TestControllerQueueLagRepeatedRedelivery(t *testing.T) {
 	}
 }
 
+func TestControllerQueueLagDelayedRetries(t *testing.T) {
+	const delay = 2 * time.Minute
+	for _, component := range []string{"repository", "connection"} {
+		for _, method := range []string{"AddAfter", "AddRateLimited"} {
+			t.Run(component+"/"+method, func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					var c *queueLagControllerTest
+					limiter := workqueue.NewTypedItemExponentialFailureRateLimiter[string](delay, delay)
+					c = newQueueLagControllerTest(t, component, limiter, func() error {
+						assert.Equal(t, 10.0, c.gauge(), "only time since actual enqueue contributes at pickup")
+						c.advance(5 * time.Second)
+						assert.Equal(t, 15.0, c.gauge(), "processing time still contributes")
+						return nil
+					})
+					schedule := func() {
+						if method == "AddAfter" {
+							c.queue.AddAfter(queueLagTestKey, delay)
+						} else {
+							c.queue.AddRateLimited(queueLagTestKey)
+						}
+					}
+					schedule()
+					synctest.Wait()
+					c.advance(30 * time.Second)
+					schedule()
+					synctest.Wait()
+					c.advance(delay - 30*time.Second - time.Nanosecond)
+					assert.Zero(t, c.gauge(), "intentional delay must not appear as queue lag")
+					assert.Empty(t, c.tracker.waiting)
+					assert.Empty(t, c.tracker.inflight)
+					require.Zero(t, c.queue.Len())
+					count, _ := c.waitSamples()
+					assert.Zero(t, count)
+
+					c.advance(time.Nanosecond)
+					require.Equal(t, 1, c.queue.Len(), "duplicate scheduling must preserve the earliest deadline")
+					assert.Zero(t, c.gauge())
+					c.advance(10 * time.Second)
+					require.True(t, c.processNext())
+					assert.Zero(t, c.gauge())
+					count, sum := c.waitSamples()
+					assert.Equal(t, uint64(1), count)
+					assert.Equal(t, 10.0, sum, "histogram and lag both exclude the delay")
+					assert.Zero(t, c.queue.NumRequeues(queueLagTestKey))
+					c.advance(delay)
+					assert.Zero(t, c.queue.Len(), "coalesced scheduling must not produce another delivery")
+					assert.Zero(t, c.gauge())
+				})
+			})
+		}
+	}
+}
+
+func TestControllerQueueLagInformerDuringBackoff(t *testing.T) {
+	const delay = 30 * time.Second
+	for _, component := range []string{"repository", "connection"} {
+		for _, state := range []string{"still waiting", "already processed"} {
+			t.Run(component+"/"+state, func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					limiter := workqueue.NewTypedItemExponentialFailureRateLimiter[string](delay, delay)
+					c := newQueueLagControllerTest(t, component, limiter, func() error { return nil })
+					c.queue.AddRateLimited(queueLagTestKey)
+					synctest.Wait()
+					c.advance(10 * time.Second)
+					assert.Zero(t, c.gauge())
+					c.enqueue()
+					c.advance(5 * time.Second)
+					assert.Equal(t, 5.0, c.gauge())
+					if state == "already processed" {
+						require.True(t, c.processNext())
+						assert.Zero(t, c.gauge())
+					}
+					c.advance(15 * time.Second)
+					require.Equal(t, 1, c.queue.Len())
+					if state == "still waiting" {
+						assert.Equal(t, 20.0, c.gauge(), "retry must retain the earlier informer enqueue time")
+					} else {
+						assert.Zero(t, c.gauge(), "delayed retry starts a new entry after the informer pass completed")
+					}
+					c.advance(10 * time.Second)
+					require.True(t, c.processNext())
+					assert.Zero(t, c.gauge())
+					count, sum := c.waitSamples()
+					if state == "still waiting" {
+						assert.Equal(t, uint64(1), count)
+						assert.Equal(t, 30.0, sum)
+					} else {
+						assert.Equal(t, uint64(2), count)
+						assert.Equal(t, 15.0, sum)
+					}
+				})
+			})
+		}
+	}
+}
+
+func TestControllerQueueLagShutdownDuringBackoff(t *testing.T) {
+	for _, component := range []string{"repository", "connection"} {
+		t.Run(component, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				c := newQueueLagControllerTest(t, component, nil, func() error {
+					t.Fatal("a cancelled delayed retry must not be processed")
+					return nil
+				})
+				c.queue.AddAfter(queueLagTestKey, time.Minute)
+				synctest.Wait()
+				c.advance(30 * time.Second)
+				c.queue.ShutDown()
+				c.advance(time.Minute)
+				c.enqueue()
+				c.advance(time.Second)
+				assert.Zero(t, c.queue.Len())
+				assert.Zero(t, c.gauge(), "discarded enqueues must not leave phantom lag")
+				assert.Empty(t, c.tracker.waiting)
+				assert.Empty(t, c.tracker.inflight)
+				assert.False(t, c.processNext())
+			})
+		})
+	}
+}
+
 func assertRepositoryStatusFailurePreservesPendingQueueLag(t *testing.T, rc *RepositoryController, key string) {
 	t.Helper()
-	rc.queue = workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())
+	rc.queue = newWorkerQueue(&rc.queueLag, workqueue.DefaultTypedControllerRateLimiter[string](), workqueue.TypedQueueConfig[string]{})
 	t.Cleanup(rc.queue.ShutDown)
 	var pendingAt time.Time
 	rc.processFn = func(key string) (string, error) {
-		rc.queueLag.add(key)
 		rc.queue.Add(key)
 		pendingAt = rc.queueLag.waiting[key].Value.(time.Time)
 		repoType, err := rc.process(key)
 		require.NoError(t, err, "status-reported failure must not become a controller retry")
 		return repoType, err
 	}
-	rc.queueLag.add(key)
 	rc.queue.Add(key)
 	require.True(t, rc.processNextWorkItem(t.Context()))
 	assert.Empty(t, rc.queueLag.inflight)
