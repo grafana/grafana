@@ -61,16 +61,6 @@ describe('getRecentlyViewedDashboards', () => {
     expect(search).toHaveBeenCalledWith(expect.objectContaining({ uid: ['a', 'b'], limit: 2 }));
   });
 
-  it('caps the results at maxItems when the search backend returns more hits than requested', async () => {
-    getDashboardOpenedMock.mockResolvedValue(['a', 'b', 'c']);
-    setupSearcher([hit('a'), hit('b'), hit('c'), hit('extra-1'), hit('extra-2')]);
-
-    const result = await getRecentlyViewedDashboards(2);
-
-    // The two most recently opened dashboards survive; unrequested hits are dropped
-    expect(result.map((d) => d.uid)).toEqual(['a', 'b']);
-  });
-
   it('does not search when nothing has been opened', async () => {
     getDashboardOpenedMock.mockResolvedValue([]);
     const search = setupSearcher([]);

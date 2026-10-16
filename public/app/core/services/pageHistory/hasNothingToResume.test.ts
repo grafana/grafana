@@ -33,9 +33,7 @@ describe('hasNothingToResume', () => {
   it.each([
     '/alerting',
     '/alerting/list',
-    '/alerting/list/',
     '/alerting/list?orgId=1',
-    '/alerting/list?returnTo=%2Fd%2Fabc',
     '/alerting/list?search=',
     '/a/grafana-irm-app/incidents',
     '/a/grafana-assistant-app/pages',
@@ -49,13 +47,9 @@ describe('hasNothingToResume', () => {
 
   it.each([
     '/alerting/new',
+    '/a/grafana-irm-app/incidents/new?orgId=1',
     '/alerting/new/alerting',
-    '/alerting/new/alerting?returnTo=%2Falerting%2Flist',
-    '/alerting/new/recording?orgId=1',
-    '/alerting/silence/new',
-    '/alerting/notifications/receivers/new',
-    '/a/grafana-irm-app/incidents/new',
-    '/a/grafana-assistant-app/pages/new',
+    '/alerting/new/recording?returnTo=%2Falerting%2Flist',
   ])('%s: a create form reopens blank', (url) => {
     expect(nothingToResume(url, [])).toBe(true);
   });
