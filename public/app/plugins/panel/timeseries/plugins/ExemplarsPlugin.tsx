@@ -9,7 +9,7 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   type TimeZone,
 } from '@grafana/data';
-import { FIXED_UNIT, EventsCanvas, type UPlotConfigBuilder } from '@grafana/ui';
+import { FIXED_UNIT, EventsCanvas, type PanelContext, type UPlotConfigBuilder } from '@grafana/ui';
 
 import { ExemplarMarker, type ExemplarSelection } from './ExemplarMarker';
 
@@ -18,6 +18,7 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   visibleSeries?: VisibleExemplarLabels;
+  openExemplar?: PanelContext['experimentalOpenExemplar'];
   maxHeight?: number;
   maxWidth?: number;
 }
@@ -27,13 +28,14 @@ export const ExemplarsPlugin = ({
   timeZone,
   config,
   visibleSeries,
+  openExemplar,
   maxHeight,
   maxWidth,
 }: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot | undefined>(undefined);
+  const [initializedConfig, setInitializedConfig] = useState<UPlotConfigBuilder>();
 
   const [lockedExemplar, setLockedExemplar] = useState<ExemplarSelection | undefined>();
-  const consumedRequests = useRef(new Set<string>());
   const currentLockedExemplar = useMemo(
     () => findExemplarSelection(exemplars, lockedExemplar),
     [exemplars, lockedExemplar]
@@ -46,27 +48,32 @@ export const ExemplarsPlugin = ({
   }, [currentLockedExemplar, lockedExemplar]);
 
   useEffect(() => {
-    for (const dataFrame of exemplars) {
-      const request = dataFrame.meta?.custom?.experimentalOpenExemplar;
-      if (
-        typeof request?.requestId !== 'string' ||
-        !Number.isInteger(request.rowIndex) ||
-        request.rowIndex < 0 ||
-        request.rowIndex >= dataFrame.length ||
-        consumedRequests.current.has(request.requestId) ||
-        (visibleSeries !== undefined && !showExemplarMarker(visibleSeries, dataFrame, request.rowIndex))
-      ) {
-        continue;
-      }
-      consumedRequests.current.add(request.requestId);
-      setLockedExemplar({ dataFrame, rowIndex: request.rowIndex });
+    if (!openExemplar || initializedConfig !== config) {
       return;
     }
-  }, [exemplars, visibleSeries]);
+    const request = openExemplar.getRequest(exemplars);
+    if (!request || !Number.isInteger(request.frameIndex)) {
+      return;
+    }
+    const dataFrame = exemplars[request.frameIndex];
+    if (
+      !dataFrame ||
+      typeof request.requestId !== 'string' ||
+      !Number.isInteger(request.rowIndex) ||
+      request.rowIndex < 0 ||
+      request.rowIndex >= dataFrame.length ||
+      (visibleSeries !== undefined && !showExemplarMarker(visibleSeries, dataFrame, request.rowIndex))
+    ) {
+      return;
+    }
+    openExemplar.onHandled(request.requestId);
+    setLockedExemplar({ dataFrame, rowIndex: request.rowIndex });
+  }, [exemplars, visibleSeries, openExemplar, initializedConfig, config]);
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
       plotInstance.current = u;
+      setInitializedConfig(config);
     });
   }, [config]);
 

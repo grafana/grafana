@@ -14,7 +14,7 @@ import {
   HttpRequestMethod,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { FIXED_UNIT, type UPlotConfigBuilder } from '@grafana/ui';
+import { FIXED_UNIT, type PanelContext, type UPlotConfigBuilder } from '@grafana/ui';
 
 import { ExemplarsPlugin, type VisibleExemplarLabels } from './ExemplarsPlugin';
 
@@ -217,6 +217,16 @@ describe('ExemplarsPlugin', () => {
     return { ...result, rerenderExemplars };
   };
 
+  const createOpenExemplar = (requestId: string, rowIndex: number) => {
+    let pending = true;
+    return {
+      getRequest: () => (pending ? { requestId, frameIndex: 0, rowIndex } : undefined),
+      onHandled: jest.fn(() => {
+        pending = false;
+      }),
+    } satisfies NonNullable<PanelContext['experimentalOpenExemplar']>;
+  };
+
   it('renders nothing before uPlot hooks', () => {
     setUp(undefined, undefined, undefined, false);
 
@@ -224,14 +234,13 @@ describe('ExemplarsPlugin', () => {
   });
 
   it('opens a retained request when data arrives and preserves dismissal upon refresh', async () => {
-    const result = setUp({ exemplars: [] });
+    const result = setUp({ exemplars: [], openExemplar: createOpenExemplar('navigation-1', 1) });
     const sample = createDataFrame({
       fields: [
         { name: 'Time', values: [1670418750000, 1670418750000] },
         { name: 'Value', values: [0.5, 0.5] },
         { name: 'traceID', type: FieldType.string, values: ['wrong-trace', 'exact-trace'] },
       ],
-      meta: { custom: { experimentalOpenExemplar: { requestId: 'navigation-1', rowIndex: 1 } } },
     });
     const updateData = () => result.rerenderExemplars([sample]);
 
@@ -250,6 +259,34 @@ describe('ExemplarsPlugin', () => {
     expect(getMarker(1)).toBeVisible();
     expect(screen.queryByText('exact-trace')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+  });
+
+  it('does not reopen a handled request after dismissal and remount, but opens a new navigation request', async () => {
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000] },
+        { name: 'Value', values: [0.5] },
+        { name: 'traceID', type: FieldType.string, values: ['selected-trace'] },
+      ],
+    });
+    const openExemplar = createOpenExemplar('navigation-remount', 0);
+    const result = setUp({ exemplars: [sample], openExemplar });
+    expect(await screen.findByText('selected-trace')).toBeVisible();
+
+    await userEvent.click(screen.getByLabelText('Close'));
+    result.unmount();
+    hooks = {};
+    const remounted = setUp({ exemplars: [sample], openExemplar });
+
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByText('selected-trace')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+
+    remounted.unmount();
+    hooks = {};
+    setUp({ exemplars: [sample], openExemplar: createOpenExemplar('navigation-new', 0) });
+    expect(await screen.findByText('selected-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
   });
 
   it('keeps a clicked exemplar pinned across replacement frames', async () => {
@@ -271,8 +308,10 @@ describe('ExemplarsPlugin', () => {
   });
 
   it('consumes a request present before chart initialization once the markers render', async () => {
+    const openExemplar = createOpenExemplar('navigation-early', 0);
     setUp(
       {
+        openExemplar,
         exemplars: [
           createDataFrame({
             fields: [
@@ -280,7 +319,6 @@ describe('ExemplarsPlugin', () => {
               { name: 'Value', values: [0.5] },
               { name: 'traceID', type: FieldType.string, values: ['early-trace'] },
             ],
-            meta: { custom: { experimentalOpenExemplar: { requestId: 'navigation-early', rowIndex: 0 } } },
           }),
         ],
       },
@@ -289,9 +327,12 @@ describe('ExemplarsPlugin', () => {
       false
     );
 
+    expect(openExemplar.onHandled).not.toHaveBeenCalled();
     runPlotHooks(new uPlot({} as uPlot.Options));
 
     expect(await screen.findByText('early-trace')).toBeVisible();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+    expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-early');
     expect(screen.getByLabelText('Close')).toBeVisible();
   });
 

@@ -58,6 +58,7 @@ export const TimeSeriesPanel = ({
     canExecuteActions,
     getFiltersBasedOnGrouping,
     onAddAdHocFilters,
+    experimentalOpenExemplar,
   } = usePanelContext();
   const theme = useTheme2();
 
@@ -243,6 +244,7 @@ export const TimeSeriesPanel = ({
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
                 {data.annotations && (
                   <ExemplarsPlugin
+                    openExemplar={experimentalOpenExemplar}
                     visibleSeries={getVisibleLabels(uplotConfig, frames)}
                     config={uplotConfig}
                     exemplars={data.annotations}
