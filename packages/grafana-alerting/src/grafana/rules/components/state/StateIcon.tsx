@@ -14,6 +14,8 @@ interface CommonStateIconsProps {
   health?: Health;
   isPaused?: boolean;
   operation?: RuleOperation;
+  /** Gives firing, pending and paused their own shapes instead of the shared circles, for lists where colour alone is not enough. */
+  distinctShapes?: boolean;
 }
 
 interface AlertingStateIconProps extends CommonStateIconsProps {
@@ -37,6 +39,11 @@ const icons: Record<State, IconName> = {
   firing: 'exclamation-circle',
   unknown: 'question-circle',
   inhibited: 'minus-circle',
+};
+
+const distinctStateIcons: Partial<Record<State, IconName>> = {
+  firing: 'fire',
+  pending: 'hourglass',
 };
 
 const color: Record<State, TextProps['color']> = {
@@ -77,6 +84,7 @@ export const StateIcon = memo(function StateIcon({
   type = 'alerting',
   isPaused = false,
   operation,
+  distinctShapes = false,
 }: StateIconProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -84,6 +92,11 @@ export const StateIcon = memo(function StateIcon({
   let iconName: IconName = state ? icons[state] : 'circle';
   let iconColor: TextProps['color'] = state ? color[state] : 'secondary';
   let stateName: string = state ? stateNames[state] : 'unknown';
+
+  const distinctIcon = distinctShapes && state ? distinctStateIcons[state] : undefined;
+  if (distinctIcon) {
+    iconName = distinctIcon;
+  }
 
   if (type === 'recording') {
     iconName = 'square-shape';
@@ -104,7 +117,7 @@ export const StateIcon = memo(function StateIcon({
   }
 
   if (isPaused) {
-    iconName = 'pause-circle';
+    iconName = distinctShapes ? 'pause' : 'pause-circle';
     iconColor = 'warning';
     stateName = 'Paused';
   }
