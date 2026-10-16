@@ -334,24 +334,6 @@ func newServiceAccountTranslation() translation {
 	return saTranslation
 }
 
-// newAlertingConfigTranslation preserves the short scopes used by the existing
-// config permissions. Configs are per-org singletons, not folder resources.
-// Creation, deletion and status writes are governed separately by the config
-// authorizer and are not granted by these read/update permissions.
-func newAlertingConfigTranslation(scopeRoot, readAction, updateAction string) translation {
-	return translation{
-		resource:  scopeRoot,
-		attribute: "uid",
-		verbMapping: map[string]string{
-			utils.VerbGet:    readAction,
-			utils.VerbList:   readAction,
-			utils.VerbWatch:  readAction,
-			utils.VerbUpdate: updateAction,
-			utils.VerbPatch:  updateAction,
-		},
-	}
-}
-
 // newRoutingTreeTranslation maps the notifications.alerting.grafana.app
 // routingtrees resource to the granular, per-resource managed route actions
 // (notifications.alerting.grafana.app/routingtrees:get, ...:uid:<name>) and to
@@ -608,7 +590,6 @@ func NewMapperRegistry() MapperRegistry {
 
 	mapper := mapper(map[string]map[string]translation{
 		"notifications.alerting.grafana.app": {
-			"configs":             newAlertingConfigTranslation(accesscontrol.AlertingConfigResource, accesscontrol.ActionAlertingConfigRead, accesscontrol.ActionAlertingConfigUpdate),
 			"routingtrees":        newRoutingTreeTranslation(),
 			"alertmanagerimports": newAlertmanagerImportsTranslation(),
 			// No silence kind is served here yet; the translation exists so folder-scoped
@@ -626,7 +607,6 @@ func NewMapperRegistry() MapperRegistry {
 			),
 		},
 		"rules.alerting.grafana.app": {
-			"configs": newAlertingConfigTranslation(accesscontrol.AlertingRulesConfigScopeRoot, accesscontrol.ActionAlertingRulesConfigRead, accesscontrol.ActionAlertingRulesConfigUpdate),
 			// All rule resources share the folder-scoped alert.rules:* actions.
 			"alertrules":     newAlertRuleTranslation(),
 			"recordingrules": newAlertRuleTranslation(),
