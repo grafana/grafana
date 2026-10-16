@@ -30,8 +30,12 @@ const ENGLISH_ORDINAL_SUFFIXES: Partial<Record<Intl.LDMLPluralRule, string>> = {
   few: 'rd',
 };
 
+const englishOrdinalRules = new Intl.PluralRules('en-US', {
+  type: 'ordinal',
+});
+
 function englishOrdinalSuffix(value: number): string {
-  const category = new Intl.PluralRules('en-US', { type: 'ordinal' }).select(value);
+  const category = englishOrdinalRules.select(value);
   return ENGLISH_ORDINAL_SUFFIXES[category] ?? 'th';
 }
 
