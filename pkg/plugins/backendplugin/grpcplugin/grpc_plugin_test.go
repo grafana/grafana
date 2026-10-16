@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -32,6 +33,7 @@ func TestHelperPluginV1(t *testing.T) {
 func TestGrpcPluginFailedStartKillsProcess(t *testing.T) {
 	cmd := exec.Command(os.Args[0], "-test.run=^TestHelperPluginV1$") //nolint:gosec // G204: the test binary runs itself as the helper plugin
 	cmd.Env = append(os.Environ(), helperPluginEnv+"=1")
+	var client *goplugin.Client
 	p := &grpcPlugin{
 		clientFactory: func() (*goplugin.Client, error) {
 			// Accept version 1 so the handshake succeeds and Grafana's own
@@ -40,25 +42,48 @@ func TestGrpcPluginFailedStartKillsProcess(t *testing.T) {
 			for v, set := range pluginSet {
 				versions[v] = set
 			}
-			return goplugin.NewClient(&goplugin.ClientConfig{
+			client = goplugin.NewClient(&goplugin.ClientConfig{
 				HandshakeConfig:  handshake,
 				VersionedPlugins: versions,
 				Cmd:              cmd,
+				AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
+				Logger:           hclog.NewNullLogger(),
+			})
+			return client, nil
+		},
+	}
+
+	t.Cleanup(func() {
+		if client != nil {
+			client.Kill() // don't leave the helper running if the test fails
+		}
+	})
+
+	require.ErrorContains(t, p.Start(context.Background()), "plugin protocol version not supported")
+	require.Eventually(t, client.Exited, 5*time.Second, 10*time.Millisecond,
+		"a failed start must not leave the process running")
+	require.True(t, p.Exited(), "a failed start must count as exited, or it is never restarted")
+	require.Nil(t, p.client)
+	require.Nil(t, p.pluginClient)
+	require.Nil(t, p.clientV3)
+}
+
+func TestGrpcPluginFailedLaunchIsExited(t *testing.T) {
+	p := &grpcPlugin{
+		clientFactory: func() (*goplugin.Client, error) {
+			return goplugin.NewClient(&goplugin.ClientConfig{
+				HandshakeConfig:  handshake,
+				VersionedPlugins: pluginSet,
+				Cmd:              exec.Command(filepath.Join(t.TempDir(), "missing-plugin")), //nolint:gosec // G204: a path that does not exist
 				AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
 				Logger:           hclog.NewNullLogger(),
 			}), nil
 		},
 	}
 
-	t.Cleanup(func() {
-		if p.client != nil {
-			p.client.Kill() // don't leave the helper running if the test fails
-		}
-	})
-
-	require.ErrorContains(t, p.Start(context.Background()), "plugin protocol version not supported")
-	require.Eventually(t, p.Exited, 5*time.Second, 10*time.Millisecond,
-		"a failed start must not leave the process running, or it is never restarted")
-	require.Nil(t, p.pluginClient)
-	require.Nil(t, p.clientV3)
+	require.Error(t, p.Start(context.Background()))
+	// go-plugin's client never reports exited when the process fails to
+	// launch, so the plugin must drop it to be restarted.
+	require.True(t, p.Exited())
+	require.Nil(t, p.client)
 }
