@@ -3919,6 +3919,11 @@
     "viz-wrapper": {
       "table": "Táblázat"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Tekintse meg, hogy mi vált ki jelenleg riasztást, és nézze át az előzményadatokat a jelenlegi vagy múltbeli problémák kivizsgálásához.",
       "description-alert-rules": "Határozza meg azt a feltételt, amelynek teljesülnie kell, mielőtt egy riasztási szabály aktiválódik",
@@ -6108,6 +6113,9 @@
       "only-overrides-button-tooltip": "Csak a felülbírálások megjelenítése",
       "placeholder-search-options": "Keresési beállítások",
       "visualization-button-tooltip": "Keresési beállítások"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Példaadat",
@@ -10821,6 +10829,7 @@
       "no-rows": "Nincsenek sorok",
       "no-values-label": "Nincsenek értékek",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Rendezés a(z) {{column}} oszlop szerint",
       "sort-by-column-ascending": "Rendezés a(z) {{column}} oszlop szerint, növekvő sorrendben",
@@ -11129,6 +11138,8 @@
       "incident-filter-all": "Összes incidens",
       "incident-filter-label": "Incidensek szűrése címke alapján",
       "incident-tab-label": "Incidensek",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Az Ön csapatai",
       "title": "Riasztások és incidensek",
       "title-alerts": "Riasztások",
@@ -11205,6 +11216,17 @@
       "error-title": "Nem sikerült betölteni a friss blogbejegyzéseket",
       "read-more": "További információ a Grafana Labs blogjáról",
       "title": "Újdonságok a blogról"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11967,6 +11989,11 @@
       "load-newer": "Újabb naplók betöltése...",
       "load-older": "Régebbi naplók betöltése..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Címkék összecsukása",
       "expand": "Címkék kibontása"
@@ -12017,6 +12044,7 @@
       "inline-mode": "Megjelenítés sorban",
       "inline-no-scrolls": "Váltás kibontott nézetre",
       "inline-with-scrolls": "Váltás tömörített nézetre",
+      "link-fallback-label": "",
       "link-value-tooltip": "Hivatkozás értéke",
       "links-section": "Hivatkozások",
       "log-attributes-field": "Naplóattribútumok",
@@ -12026,13 +12054,14 @@
       "move-displayed-field-up": "Mozgatás felfelé",
       "no-details": "Nincs megjeleníthető mező.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Napló kitűzése",
       "prettify": "Szépítés",
       "remove-displayed-field": "Mező eltávolítása",
       "remove-log": "Napló eltávolítása",
       "scroll-to-logline": "Görgetés a naplósorhoz",
       "search": {
-        "no-results": "Nincs megjeleníthető találat."
+        "no-results": ""
       },
       "search-placeholder": "Mezőnevek és értékek keresése",
       "show-context": "Kontextus megjelenítése",
@@ -13218,6 +13247,11 @@
       "target-label": "Céljegyzetfüzet",
       "target-new": "Új jegyzetfüzet",
       "title": "Panel hozzáadása a jegyzetfüzethez"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",

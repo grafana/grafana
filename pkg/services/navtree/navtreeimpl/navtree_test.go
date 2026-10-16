@@ -273,13 +273,64 @@ func TestBuildAlertNavLinks(t *testing.T) {
 }
 
 func hasHistoryLink(alertNav *navtree.NavLink) bool {
-	if alertNav == nil {
-		return false
+	return findChildLink(alertNav, "alerts-history") != nil
+}
+
+func TestBuildAlertNavLinks_RecentlyDeleted(t *testing.T) {
+	testCases := []struct {
+		name            string
+		role            org.RoleType
+		features        []any
+		expectedVisible bool
+	}{
+		{
+			name:            "admin sees the page",
+			role:            org.RoleAdmin,
+			expectedVisible: true,
+		},
+		{
+			name:            "editor does not see the page",
+			role:            org.RoleEditor,
+			expectedVisible: false,
+		},
+		{
+			name:            "navigation V2 shows the page as a tab instead",
+			role:            org.RoleAdmin,
+			features:        []any{featuremgmt.FlagAlertingNavigationV2},
+			expectedVisible: false,
+		},
 	}
-	for _, link := range alertNav.Children {
-		if link.Id == "alerts-history" {
-			return true
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			service := ServiceImpl{
+				cfg:           setting.NewCfg(),
+				accessControl: accesscontrolmock.New(),
+				features:      featuremgmt.WithFeatures(tc.features...),
+			}
+
+			httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{OrgRole: tc.role},
+				IsSignedIn:   true,
+				Context:      &web.Context{Req: httpReq},
+			}
+
+			link := findChildLink(service.buildAlertNavLinks(reqCtx), "alerts/recently-deleted")
+
+			require.Equal(t, tc.expectedVisible, link != nil, "unexpected visibility of the recently deleted nav link")
+		})
+	}
+}
+
+func findChildLink(nav *navtree.NavLink, id string) *navtree.NavLink {
+	if nav == nil {
+		return nil
+	}
+	for _, link := range nav.Children {
+		if link.Id == id {
+			return link
 		}
 	}
-	return false
+	return nil
 }

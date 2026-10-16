@@ -82,11 +82,7 @@ export const activeNotificationsAccess = () => alertInstanceAccess() && !(isAler
 export const historyAccess = () =>
   stateHistoryServedByLoki() && contextSrv.hasPermission(AccessControlAction.AlertingRuleRead);
 
-export const recentlyDeletedAccess = () =>
-  contextSrv.hasRole('Admin') &&
-  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertRuleRestore, true) &&
-  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingRuleRecoverDeleted, true) &&
-  !isAlertingV2();
+export const recentlyDeletedAccess = () => contextSrv.hasRole('Admin') && !isAlertingV2();
 
 export const alertingAdminAccess = () => contextSrv.hasRole('Admin');
 
