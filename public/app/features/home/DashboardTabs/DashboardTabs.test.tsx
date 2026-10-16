@@ -442,7 +442,6 @@ describe('DashboardTabs', () => {
       search: '?search=firing',
       lastVisited: Date.now() - 30_000,
     };
-    // A detail page whose chrome title is just the section's; the path has to tell it apart.
     const appEntry: PageHistoryEntry = {
       kind: 'app',
       pathname: '/a/grafana-irm-app/incidents/5987',
@@ -472,15 +471,9 @@ describe('DashboardTabs', () => {
         '/alerting/list?search=firing',
       ]);
 
-      const dashboardLink = screen.getByRole('link', { name: /Recent Dashboard 1/ });
-      expect(dashboardLink).toHaveTextContent('Last 90 days · Plugin=finnhub');
-      // An Explore row is named after its datasource and shows the query it restores.
-      expect(screen.getByRole('link', { name: /^Ops Logs/ })).toHaveTextContent('{service_name="api"}');
-      // Nav-tree pages use the nav label alone; deep links show the page's own title with the path under it.
-      expect(screen.getByRole('link', { name: /Alert rules/ })).toHaveTextContent('search=firing');
-      expect(screen.getByRole('link', { name: /Alert rules/ })).not.toHaveTextContent('/alerting/list');
-      expect(screen.getByRole('link', { name: /^Incidents/ })).toHaveTextContent(
-        'grafana-irm-app/incidents/5987 · tab=timeline'
+      // Row formatting is toRow's and tested with it; this only proves a row's URL state reaches the subtitle.
+      expect(screen.getByRole('link', { name: /Recent Dashboard 1/ })).toHaveTextContent(
+        'Last 90 days · Plugin=finnhub'
       );
 
       const list = within(screen.getByRole('list'));
