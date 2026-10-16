@@ -48,6 +48,11 @@ const (
 	// ST discovery changes very rarely, so poll it far less often than the
 	// aggregate targets. Failures still retry on the shorter backoff.
 	singleTenantDiscoveryInterval = 10 * time.Minute
+
+	// aggregatorOriginHeader is set by a stack's aggregator on the requests it
+	// sends here. Forwarding them back to that stack would loop, so the
+	// fallback refuses them. Spoofing it can only switch the fallback off.
+	aggregatorOriginHeader = "X-Grafana-Aggregator"
 )
 
 // singleTenantStack is what a resolver reports for a stack; the zero value means not found.
@@ -128,6 +133,8 @@ type singleTenantFallback struct {
 	cooldown  *cooldown
 	status    pollStatus
 	lookupsBy stackLookupCounts
+	// fallbackRefused counts requests refused for carrying aggregatorOriginHeader.
+	fallbackRefused atomic.Uint64
 
 	// discoveryDocs is nil when discovery is not cached. discoveryFetches
 	// shares one fetch among concurrent misses for the same document.
@@ -286,6 +293,14 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// Forwarding would send the request back to the stack that sent it. For
+	// root discovery the router serves its defaults instead.
+	if req.Header.Get(aggregatorOriginHeader) != "" {
+		st.fallbackRefused.Add(1)
+		w.Header().Set("Cache-Control", "private")
+		http.Error(w, "request from a stack's aggregator would loop back to it", http.StatusLoopDetected)
+		return
+	}
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
 	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
 		host, err := st.hostForNamespace(req.Context(), parts[4])

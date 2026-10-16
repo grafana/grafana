@@ -794,10 +794,16 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
 	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
 	b.blobGCMetrics.Record(count, dryRun, err)
+	skipped := b.blobGC.SkippedWithoutAge()
+	b.blobGCMetrics.RecordSkippedWithoutAge(skipped, err)
 	if err != nil {
 		b.log.Error("blob garbage collection failed", "error", err)
 	}
-	b.log.Info("blob garbage collection finished", "blobs", count, "dryRun", dryRun)
+	logArgs := []any{"blobs", count, "dryRun", dryRun}
+	if skipped > 0 {
+		logArgs = append(logArgs, "skippedWithoutAge", skipped)
+	}
+	b.log.Info("blob garbage collection finished", logArgs...)
 }
 
 // runGarbageCollection identifies deleted resources that are safe

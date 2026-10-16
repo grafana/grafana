@@ -3883,6 +3883,11 @@
     "viz-wrapper": {
       "table": "표"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "현재 알림 내용을 확인하고 과거 데이터를 탐색하여 현재 또는 과거 문제를 조사합니다.",
       "description-alert-rules": "경고 규칙이 발동되기 전에 충족되어야 하는 조건을 정의합니다",
@@ -6060,6 +6065,9 @@
       "only-overrides-button-tooltip": "재정의만 표시",
       "placeholder-search-options": "검색 옵션",
       "visualization-button-tooltip": "검색 옵션"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "샘플 데이터",
@@ -10751,6 +10759,7 @@
       "no-rows": "행 없음",
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "{{column}} 열 기준으로 정렬",
       "sort-by-column-ascending": "{{column}} 열 기준으로 오름차순 정렬",
@@ -11059,6 +11068,8 @@
       "incident-filter-all": "모든 인시던트",
       "incident-filter-label": "레이블로 인시던트 필터링",
       "incident-tab-label": "인시던트",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "내 팀",
       "title": "경보 및 인시던트",
       "title-alerts": "경보",
@@ -11133,6 +11144,17 @@
       "error-title": "최근 블로그 게시물을 불러올 수 없습니다",
       "read-more": "Grafana Labs 블로그에서 더 읽어보기",
       "title": "블로그 최근 글"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11873,6 +11895,11 @@
       "load-newer": "최근 로그 로딩 중...",
       "load-older": "이전 로그 로딩 중..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "라벨 접기",
       "expand": "라벨 펼치기"
@@ -11923,6 +11950,7 @@
       "inline-mode": "인라인 표시",
       "inline-no-scrolls": "확장 보기로 전환",
       "inline-with-scrolls": "간략 보기로 전환",
+      "link-fallback-label": "",
       "link-value-tooltip": "링크 값",
       "links-section": "링크",
       "log-attributes-field": "로그 속성",
@@ -11932,13 +11960,14 @@
       "move-displayed-field-up": "위로 이동",
       "no-details": "표시할 필드가 없습니다.",
       "open-assistant": "Assistant에서 로그 줄 설명",
+      "open-value-in": "",
       "pin-line": "로그 고정",
       "prettify": "보기 좋게 정리",
       "remove-displayed-field": "필드 제거",
       "remove-log": "로그 제거",
       "scroll-to-logline": "로그 라인으로 스크롤",
       "search": {
-        "no-results": "표시할 결과가 없습니다."
+        "no-results": ""
       },
       "search-placeholder": "필드 이름 및 값 검색",
       "show-context": "맥락 보기",
@@ -13119,6 +13148,11 @@
       "target-label": "대상 노트북",
       "target-new": "새 노트북",
       "title": "노트북에 패널 추가"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
