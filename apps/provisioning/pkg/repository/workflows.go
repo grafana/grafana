@@ -43,13 +43,11 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 // IncrementalSyncPolicy holds config-level settings for the incremental-vs-full sync decision.
 // Initialised once at startup and shared by both the controller and webhook paths.
 type IncrementalSyncPolicy struct {
-	folderMetadataEnabled bool
 	maxIncrementalChanges int
 }
 
-func NewIncrementalSyncPolicy(folderMetadataEnabled bool, maxIncrementalChanges int) IncrementalSyncPolicy {
+func NewIncrementalSyncPolicy(maxIncrementalChanges int) IncrementalSyncPolicy {
 	return IncrementalSyncPolicy{
-		folderMetadataEnabled: folderMetadataEnabled,
 		maxIncrementalChanges: maxIncrementalChanges,
 	}
 }
@@ -71,7 +69,7 @@ func (p IncrementalSyncPolicy) CanUseIncrementalSync(deletedPaths []string, tota
 
 	for _, path := range deletedPaths {
 		dir := safepath.Dir(path)
-		if isFolderMetadataFile(path, p.folderMetadataEnabled) {
+		if isFolderMetadataFile(path) {
 			dirsWithMetadataDeletes[dir] = struct{}{}
 		} else {
 			dirsWithOtherDeletes[dir] = struct{}{}
@@ -87,7 +85,7 @@ func (p IncrementalSyncPolicy) CanUseIncrementalSync(deletedPaths []string, tota
 	return true
 }
 
-func isFolderMetadataFile(path string, folderMetadataEnabled bool) bool {
+func isFolderMetadataFile(path string) bool {
 	if strings.HasSuffix(path, ".keep") {
 		return true
 	}

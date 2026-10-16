@@ -24,24 +24,22 @@ import (
 )
 
 type filesConnector struct {
-	getter                RepoGetter
-	access                auth.AccessChecker
-	parsers               resources.ParserFactory
-	clients               resources.ClientFactory
-	folderMetadataEnabled bool
+	getter  RepoGetter
+	access  auth.AccessChecker
+	parsers resources.ParserFactory
+	clients resources.ClientFactory
 	// maxFileSize caps the size in bytes of files read from or written to the
 	// repository through this connector. <=0 disables the check.
 	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, maxFileSize int64) *filesConnector {
 	return &filesConnector{
-		getter:                getter,
-		parsers:               parsers,
-		clients:               clients,
-		access:                access,
-		folderMetadataEnabled: folderMetadataEnabled,
-		maxFileSize:           maxFileSize,
+		getter:      getter,
+		parsers:     parsers,
+		clients:     clients,
+		access:      access,
+		maxFileSize: maxFileSize,
 	}
 }
 
@@ -181,9 +179,9 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, clients, folders, c.folderMetadataEnabled)
-	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), authorizer, nil
+	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK)
+	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, clients, folders)
+	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer), authorizer, nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.

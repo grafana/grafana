@@ -814,7 +814,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	}
 	latestRef := "456"
 
-	largePolicy := repository.NewIncrementalSyncPolicy(false, 1000)
+	largePolicy := repository.NewIncrementalSyncPolicy(1000)
 
 	t.Run("should use incremental sync", func(t *testing.T) {
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
@@ -841,7 +841,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	})
 
 	t.Run("should use incremental sync when diff is one under the max size", func(t *testing.T) {
-		policy := repository.NewIncrementalSyncPolicy(false, 100)
+		policy := repository.NewIncrementalSyncPolicy(100)
 		changes := make([]repository.VersionedFileChange, 99)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
@@ -853,7 +853,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	})
 
 	t.Run("should use incremental sync when diff is at the max size", func(t *testing.T) {
-		policy := repository.NewIncrementalSyncPolicy(false, 100)
+		policy := repository.NewIncrementalSyncPolicy(100)
 		changes := make([]repository.VersionedFileChange, 100)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
@@ -865,7 +865,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	})
 
 	t.Run("should not use incremental sync when diff exceeds max size", func(t *testing.T) {
-		policy := repository.NewIncrementalSyncPolicy(false, 100)
+		policy := repository.NewIncrementalSyncPolicy(100)
 		changes := make([]repository.VersionedFileChange, 101)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
@@ -877,7 +877,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	})
 
 	t.Run("should use incremental sync when max is zero (unlimited)", func(t *testing.T) {
-		policy := repository.NewIncrementalSyncPolicy(false, 0)
+		policy := repository.NewIncrementalSyncPolicy(0)
 		changes := make([]repository.VersionedFileChange, 1000)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}

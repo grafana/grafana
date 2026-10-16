@@ -129,7 +129,6 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		quotaGetter,
 		controller.NewRepositoryQuotaChecker(repoGetter),
 		repository.NewIncrementalSyncPolicy(
-			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
 		),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
