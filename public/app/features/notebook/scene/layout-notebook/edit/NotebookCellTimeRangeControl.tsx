@@ -132,7 +132,6 @@ export function NotebookCellTimeRangeControl({
       name="clock-nine"
       size="sm"
       variant="secondary"
-      className={styles.clockIcon}
       aria-label={t('notebook.cell.time-range.button', 'Update time range')}
       aria-expanded={open}
       onClick={() => setOpen(!open)}
@@ -242,9 +241,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   trigger: css({
     display: 'inline-flex',
     alignItems: 'center',
-  }),
-  clockIcon: css({
-    transform: 'translateY(1px)',
   }),
   content: css({
     overflowY: 'auto',
