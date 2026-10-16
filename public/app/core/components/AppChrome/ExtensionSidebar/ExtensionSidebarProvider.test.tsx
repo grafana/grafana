@@ -4,7 +4,7 @@ import { type ReactElement, type ReactNode } from 'react';
 import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
-import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents, setAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
@@ -57,6 +57,7 @@ jest.mock('@grafana/data', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
   locationService: {
     getLocation: jest.fn().mockReturnValue({ pathname: '/test-path' }),
     getLocationObservable: jest.fn(),
@@ -583,6 +584,20 @@ describe('ExtensionSidebarProvider', () => {
 
         expect(screen.getByTestId('is-open')).toHaveTextContent('true');
         expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('reports the layout an open happens in, and no open or close for a layout switch alone', async () => {
+        await renderOpen();
+        const changes = () =>
+          jest
+            .mocked(reportInteraction)
+            .mock.calls.filter(([name]) => name === 'grafana_extension_sidebar_changed')
+            .map(([, properties]) => properties);
+        expect(changes()).toEqual([expect.objectContaining({ opened: true, presentation: 'floating' })]);
+
+        act(() => setExtensionSidebarPresentation('docked'));
+
+        expect(changes()).toHaveLength(1);
       });
 
       it('never hides a docked sidebar', async () => {

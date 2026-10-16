@@ -1,7 +1,14 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 
+import { reportInteraction } from '@grafana/runtime';
+
 import { FLOATING_DRAG_HANDLE_ATTRIBUTE, FLOATING_SNAP_DURATION_MS, useFloatingDrag } from './useFloatingDrag';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 // jsdom has no PointerEvent, so fireEvent would drop clientX and button from pointer events.
 if (typeof window.PointerEvent === 'undefined') {
@@ -38,6 +45,7 @@ beforeEach(() => {
   natural = { left: 312, top: 500, width: 400, height: 244 };
   handleOutset = 0;
   onHandleClick.mockClear();
+  jest.mocked(reportInteraction).mockClear();
   window.localStorage.clear();
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
     if (this.id === 'pageContent') {
@@ -103,12 +111,12 @@ it('follows the pointer while dragging, kept inside the page with a gutter', () 
 
 // The anchors keep the default's 24px inset: left edge 24 (x -288), right edge 1000 (x 288), top edge 24 (y -476).
 it.each([
-  ['top left', { x: -250, y: -400 }, 'translate(-288px, -476px)'],
-  ['top centre', { x: 30, y: -400 }, 'translate(0px, -476px)'],
-  ['top right', { x: 250, y: -400 }, 'translate(288px, -476px)'],
-  ['bottom left', { x: -250, y: -50 }, 'translate(-288px, 0px)'],
-  ['bottom right', { x: 250, y: -50 }, 'translate(288px, 0px)'],
-])('snaps on release to the nearest snap point: %s', (_, by, transform) => {
+  ['top-left', { x: -250, y: -400 }, 'translate(-288px, -476px)'],
+  ['top-center', { x: 30, y: -400 }, 'translate(0px, -476px)'],
+  ['top-right', { x: 250, y: -400 }, 'translate(288px, -476px)'],
+  ['bottom-left', { x: -250, y: -50 }, 'translate(-288px, 0px)'],
+  ['bottom-right', { x: 250, y: -50 }, 'translate(288px, 0px)'],
+])('snaps on release to the nearest snap point and reports it: %s', (position, by, transform) => {
   render(<Floating />);
 
   drag({ x: 500, y: 520 }, { x: 500 + by.x, y: 520 + by.y });
@@ -116,6 +124,11 @@ it.each([
   expect(floating().style.transform).toBe(transform);
   // The handle's click does not fire after a move.
   expect(onHandleClick).not.toHaveBeenCalled();
+  expect(reportInteraction).toHaveBeenCalledTimes(1);
+  expect(reportInteraction).toHaveBeenCalledWith('grafana_extension_sidebar_floating_moved', {
+    method: 'drag',
+    position,
+  });
 });
 
 it('snaps back to the default place at the bottom centre', () => {
@@ -200,6 +213,12 @@ it('moves with the arrow keys and resets with Home or a double-click', () => {
   fireEvent.keyDown(handle(), { key: 'ArrowLeft', shiftKey: true });
   fireEvent.doubleClick(handle());
   expect(floating().style.transform).toBe('');
+
+  // Each reset is reported; the arrow-key steps are not.
+  expect(jest.mocked(reportInteraction).mock.calls).toEqual([
+    ['grafana_extension_sidebar_floating_moved', { method: 'reset', position: 'bottom-center' }],
+    ['grafana_extension_sidebar_floating_moved', { method: 'reset', position: 'bottom-center' }],
+  ]);
 });
 
 it('remembers the position: floating again starts where it was left', () => {

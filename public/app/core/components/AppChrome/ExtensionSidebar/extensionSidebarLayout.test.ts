@@ -1,3 +1,4 @@
+import { reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
@@ -11,12 +12,18 @@ import {
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
 
 describe('extensionSidebarLayout', () => {
   afterEach(() => {
     resetExtensionSidebarPresentationForTests();
     setTestFlags({});
+    jest.mocked(reportInteraction).mockClear();
   });
 
   it('floats only while the flag is on', () => {
@@ -98,5 +105,26 @@ describe('extensionSidebarLayout', () => {
     unsubscribe();
     setExtensionSidebarPresentation('floating');
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports each layout change with the surface it applies to, and nothing for an unchanged or refused one', () => {
+    setExtensionSidebarPresentation('docked', '/d/abc');
+    setExtensionSidebarPresentation('docked', '/d/abc');
+    // Floating is refused while the flag is off.
+    setExtensionSidebarPresentation('floating', '/d/abc');
+    setTestFlags({ [FLOATING_FLAG]: true });
+    setExtensionSidebarPresentation('floating', '/explore');
+    setExtensionSidebarPresentation('floating', '/d/abc');
+
+    expect(jest.mocked(reportInteraction).mock.calls).toEqual([
+      [
+        'grafana_extension_sidebar_presentation_changed',
+        { from: 'floating', to: 'docked', surface: 'dashboardOrNotebook' },
+      ],
+      [
+        'grafana_extension_sidebar_presentation_changed',
+        { from: 'docked', to: 'floating', surface: 'dashboardOrNotebook' },
+      ],
+    ]);
   });
 });

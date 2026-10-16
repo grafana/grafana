@@ -20,6 +20,7 @@ import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionS
 import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './constants';
 import {
   type ExtensionSidebarPresentation,
+  getEffectiveExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
   isFloatingExtensionSidebarHeld,
@@ -278,6 +279,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         componentTitle: (opened ? componentMeta : storedComponentMeta)?.componentTitle,
         pluginId: (opened ? componentMeta : storedComponentMeta)?.pluginId,
         fromLocalstorage: storedComponentId === dockedComponentId,
+        // Read here rather than from state, so a layout switch alone does not report an open or close.
+        presentation: getEffectiveExtensionSidebarPresentation(),
       });
     }
     if (dockedComponentId) {

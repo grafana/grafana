@@ -1,5 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
+  getEffectiveExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   resetExtensionSidebarPresentationForTests,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
@@ -45,11 +46,11 @@ describe('extensionSidebarApi', () => {
     });
 
     it('ignores floating and keeps the sidebar docked', () => {
-      extensionSidebarApi.setPresentation('floating');
-      expect(getRequestedExtensionSidebarPresentation()).toBe('docked');
-
       extensionSidebarApi.setPresentation('docked');
+      extensionSidebarApi.setPresentation('floating');
+
       expect(getRequestedExtensionSidebarPresentation()).toBe('docked');
+      expect(getEffectiveExtensionSidebarPresentation()).toBe('docked');
     });
   });
 });

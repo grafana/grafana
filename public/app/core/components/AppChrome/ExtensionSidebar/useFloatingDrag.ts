@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
 import { store } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 /**
  * Put this attribute on an element inside the floating extension sidebar to make it the handle that moves
@@ -28,6 +29,17 @@ interface Offset {
 }
 
 const ORIGIN: Offset = { x: 0, y: 0 };
+
+type SnapPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+
+interface SnapPoint {
+  position: SnapPosition;
+  offset: Offset;
+}
+
+function reportMoved(method: 'drag' | 'reset', position: SnapPosition): void {
+  reportInteraction('grafana_extension_sidebar_floating_moved', { method, position });
+}
 
 /**
  * Moves the floating extension sidebar away from its default place at the bottom centre. The offset is a
@@ -133,8 +145,10 @@ export function useFloatingDrag(element: HTMLElement | null): void {
         swallowClick = true;
         // Let go, it glides to the nearest snap point; `data-snapping` turns the transition on just for that.
         element.setAttribute('data-snapping', '');
-        apply(snapOffset(element, offsetRef.current));
+        const snap = snapOffset(element, offsetRef.current);
+        apply(snap.offset);
         remember();
+        reportMoved('drag', snap.position);
         window.clearTimeout(snapTimer);
         snapTimer = window.setTimeout(endSnap, FLOATING_SNAP_DURATION_MS);
       }
@@ -152,6 +166,7 @@ export function useFloatingDrag(element: HTMLElement | null): void {
       if (event.target instanceof Element && event.target.closest(HANDLE_SELECTOR)) {
         apply(ORIGIN);
         remember();
+        reportMoved('reset', 'bottom-center');
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
@@ -169,6 +184,7 @@ export function useFloatingDrag(element: HTMLElement | null): void {
         event.preventDefault();
         apply(ORIGIN);
         remember();
+        reportMoved('reset', 'bottom-center');
       } else if (moves[event.key]) {
         event.preventDefault();
         const { x, y } = offsetRef.current;
@@ -247,7 +263,7 @@ function clampOffset(element: HTMLElement, current: Offset, next: Offset): Offse
  * keeps its inset from the bottom edge, from the side and top edges instead. The result still goes through
  * the clamp, which keeps a point the page has no room for on the page.
  */
-function snapOffset(element: HTMLElement, current: Offset): Offset {
+function snapOffset(element: HTMLElement, current: Offset): SnapPoint {
   const rect = measureWithHandles(element);
   const left = rect.left - current.x;
   const top = rect.top - current.y;
@@ -256,15 +272,15 @@ function snapOffset(element: HTMLElement, current: Offset): Offset {
   const start = content.left + inset - left;
   const end = content.right - inset - (left + rect.width);
   const above = content.top + inset - top;
-  const points: Offset[] = [
-    { x: start, y: above },
-    { x: 0, y: above },
-    { x: end, y: above },
-    { x: start, y: 0 },
-    ORIGIN,
-    { x: end, y: 0 },
+  const points: SnapPoint[] = [
+    { position: 'top-left', offset: { x: start, y: above } },
+    { position: 'top-center', offset: { x: 0, y: above } },
+    { position: 'top-right', offset: { x: end, y: above } },
+    { position: 'bottom-left', offset: { x: start, y: 0 } },
+    { position: 'bottom-center', offset: ORIGIN },
+    { position: 'bottom-right', offset: { x: end, y: 0 } },
   ];
-  const distance = (point: Offset) => (point.x - current.x) ** 2 + (point.y - current.y) ** 2;
+  const distance = ({ offset }: SnapPoint) => (offset.x - current.x) ** 2 + (offset.y - current.y) ** 2;
   return points.reduce((nearest, point) => (distance(point) < distance(nearest) ? point : nearest));
 }
 

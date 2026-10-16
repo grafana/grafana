@@ -1,5 +1,5 @@
 import { store } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 
@@ -59,12 +59,22 @@ export function setExtensionSidebarPresentation(
   if (presentation === 'floating' && !canFloatExtensionSidebar()) {
     return;
   }
-  if (presentation === getRequestedExtensionSidebarPresentation(path)) {
+  const from = getRequestedExtensionSidebarPresentation(path);
+  if (presentation === from) {
     return;
   }
-  requested = { ...getRequested(), [getSurface(path)]: presentation };
+  const surface = getSurface(path);
+  requested = { ...getRequested(), [surface]: presentation };
   store.set(PRESENTATION_LOCAL_STORAGE_KEY, JSON.stringify(requested));
   listeners.forEach((listener) => listener());
+  reportInteraction('grafana_extension_sidebar_presentation_changed', { from, to: presentation, surface });
+}
+
+/** The layout the open sidebar shows on the current page: floating only while the flag allows it. */
+export function getEffectiveExtensionSidebarPresentation(): ExtensionSidebarPresentation {
+  return canFloatExtensionSidebar() && getRequestedExtensionSidebarPresentation() === 'floating'
+    ? 'floating'
+    : 'docked';
 }
 
 /** The requested layout for the current page, before the feature flag applies. */
