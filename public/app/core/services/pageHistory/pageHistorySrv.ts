@@ -3,7 +3,8 @@ import { throttle } from 'lodash';
 import { distinctUntilChanged } from 'rxjs';
 import * as z from 'zod';
 
-import { config, locationService } from '@grafana/runtime';
+import { type NavModelItem } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { type AppChromeService, getPageTitle } from 'app/core/components/AppChrome/AppChromeService';
 import { isUrlRewrite } from 'app/core/navigation/urlRewrite';
@@ -12,6 +13,7 @@ import { parseJsonWithSchema } from 'app/core/utils/parseJsonWithSchema';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 import { classifyPage, recordableSearch } from './classifyPage';
+import { hasNothingToResume } from './hasNothingToResume';
 import {
   clearHistory,
   EMPTY_HISTORY,
@@ -24,7 +26,7 @@ import {
   recordVisit,
   toStored,
 } from './pageHistoryState';
-import { type PageHistoryEntry, type PageIdentity } from './types';
+import { type PageHistoryEntry } from './types';
 
 const STORAGE_SERVICE = 'grafana-page-history';
 /** One envelope per user; the user-storage namespace already separates orgs. */
@@ -51,11 +53,6 @@ const StoredSchema = z.object({
   entries: z.array(z.unknown()),
 });
 
-/** The nav tree says which pages are menu destinations; the boot copy is enough, the rule reads only `url`. */
-function classify(pathname: string, search: string): PageIdentity | null {
-  return classifyPage(pathname, search, config.bootData.navTree);
-}
-
 /**
  * Validates the stored copy row by row so one bad or oversized entry drops only itself. Rows that no longer
  * classify are dropped. Anything but the envelope loads as empty.
@@ -68,7 +65,7 @@ function parseStored(raw: string | null): HistorySnapshot {
     if (!result.success || !fitsEntryCap(result.data)) {
       continue;
     }
-    const page = classify(result.data.pathname, result.data.search);
+    const page = classifyPage(result.data.pathname, result.data.search);
     if (page) {
       entries.push({ ...result.data, ...page });
     }
@@ -99,19 +96,25 @@ export class PageHistorySrv {
   private dirty = false;
   private readonly storage = new UserStorage(STORAGE_SERVICE);
   private ready: Promise<void> | undefined;
+  /** The menu as it is now, read per visit: items come and go with permissions, plugins and bookmarks. */
+  private navTree: () => NavModelItem[] = () => [];
 
   private readonly scheduleWrite = throttle(() => this.write(), PAGE_HISTORY_PERSIST_MS, {
     leading: false,
     trailing: true,
   });
 
-  /** Starts recording. Returns a function that stops it and drops any pending write. Renderer sessions record nothing. */
-  start(chrome: AppChromeService): () => void {
+  /**
+   * Starts recording. `navTree` is read on every visit to tell menu destinations from pages worth a row. Returns a
+   * function that stops recording and drops any pending write. Renderer sessions record nothing.
+   */
+  start(chrome: AppChromeService, navTree: () => NavModelItem[]): () => void {
     // Image-renderer and report captures load pages as the user; their visits are not the user's.
     if (isRenderTarget()) {
       return () => {};
     }
     this.ready = this.load();
+    this.navTree = navTree;
 
     // `history.listen` never emits the landing page.
     this.apply(locationService.getLocation(), false);
@@ -212,10 +215,13 @@ export class PageHistorySrv {
 
   /** Hash deliberately ignored. */
   private apply(location: Location, isRewrite: boolean): void {
-    const page = classify(location.pathname, location.search);
-    if (page) {
-      this.update(recordVisit(this.state, page, recordableSearch(page, location.search), Date.now(), isRewrite));
+    const page = classifyPage(location.pathname, location.search);
+    if (!page) {
+      return;
     }
+    // A page with nothing to resume gets no row, but a row it has is refreshed to where the user left it.
+    const refreshOnly = isRewrite || hasNothingToResume(page, location.search, this.navTree());
+    this.update(recordVisit(this.state, page, recordableSearch(page, location.search), Date.now(), refreshOnly));
   }
 
   /**
@@ -230,7 +236,7 @@ export class PageHistorySrv {
       return;
     }
     const { pathname, search } = locationService.getLocation();
-    const page = classify(pathname, search);
+    const page = classifyPage(pathname, search);
     if (page) {
       this.update(recordTitle(this.state, page, title, Date.now()));
     }

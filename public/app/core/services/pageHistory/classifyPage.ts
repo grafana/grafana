@@ -1,18 +1,16 @@
-import { locationUtil, type NavModelItem } from '@grafana/data';
-import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
-import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
+import { ASSISTANT_PAGES_PATH } from 'app/core/constants';
 import { isRecord } from 'app/core/utils/isRecord';
 
 import { type PageIdentity } from './types';
 
 /**
- * Maps a base-url-less URL to the page it belongs to, or `null` for pages that are not worth resuming
- * (home, browse pages, settings, Explore before it has written its state, a nav menu destination opened as
- * the menu opens it, ...). First matching rule wins.
+ * Maps a base-url-less URL to the page it belongs to, or `null` for URLs that are no page to come back to
+ * (home, browse pages, settings, Explore before it has written its state, ...). First matching rule wins.
+ * Whether a visit to the page is worth a row is `hasNothingToResume`'s question, not this one's.
  */
-export function classifyPage(pathname: string, search: string, navTree: NavModelItem[]): PageIdentity | null {
+export function classifyPage(pathname: string, search: string): PageIdentity | null {
   const normalized = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-  const [, first, second, third, fourth] = normalized.split('/');
+  const [, first, second] = normalized.split('/');
 
   if (first === 'd' && second) {
     return { kind: 'dashboard', uid: second, pathname: normalized };
@@ -23,38 +21,20 @@ export function classifyPage(pathname: string, search: string, navTree: NavModel
     return session ? { kind: 'explore', session, pathname: normalized } : null;
   }
 
-  // A Page before the generic app rule; its list page stays an app page and is a nav destination.
-  if (first === 'a' && second === ASSISTANT_PLUGIN_ID && third === 'pages' && fourth) {
-    return hasNothingToResume(normalized, search, navTree) ? null : { kind: 'page', pathname: normalized };
+  // A Page before the generic app rule; the list at ASSISTANT_PAGES_PATH itself stays an app page.
+  if (normalized.startsWith(`${ASSISTANT_PAGES_PATH}/`)) {
+    return { kind: 'page', pathname: normalized };
   }
 
   if (first === 'a' && second) {
-    return hasNothingToResume(normalized, search, navTree) ? null : { kind: 'app', pathname: normalized };
+    return { kind: 'app', pathname: normalized };
   }
 
   if (first === 'alerting') {
-    return hasNothingToResume(normalized, search, navTree) ? null : { kind: 'alerting', pathname: normalized };
+    return { kind: 'alerting', pathname: normalized };
   }
 
   return null;
-}
-
-/** Carried on many URLs without saying anything about the page's state. */
-const PLUMBING_PARAMS = ['orgId', 'returnTo'];
-
-/** Create forms: `…/new`, and `/alerting/new/:type`. What is typed into one lives in the form, not the URL. */
-function isCreateForm(pathname: string): boolean {
-  return pathname.endsWith('/new') || pathname.startsWith('/alerting/new/');
-}
-
-/**
- * A nav menu destination opened the way the menu opens it is one click away; a create form reopens blank. Neither
- * is worth a row unless its URL carries state of its own (a filter, a tab, prefilled values). Pages the menu does
- * not link to (a rule, an incident) are always kept. Starred dashboards are nav items too, so this is not for `/d/`.
- */
-function hasNothingToResume(pathname: string, search: string, navTree: NavModelItem[]): boolean {
-  const hasState = [...new URLSearchParams(search)].some(([key, value]) => value && !PLUMBING_PARAMS.includes(key));
-  return !hasState && (isCreateForm(pathname) || findByUrl(navTree, locationUtil.assureBaseUrl(pathname)) !== null);
 }
 
 /**

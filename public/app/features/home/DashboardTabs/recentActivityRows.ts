@@ -1,37 +1,14 @@
 import { locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type BadgeColor } from '@grafana/ui';
-import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
-import { type PageHistoryEntry, type PageHistoryKind } from 'app/core/services/pageHistory/types';
+import { findNavByUrl } from 'app/core/navtree/utils';
+import { PLUMBING_PARAMS } from 'app/core/services/pageHistory/hasNothingToResume';
+import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
 import { parseUrlTime } from 'app/core/utils/timePicker';
-import { type ExplorePaneDescription } from 'app/features/explore/utils/describeExplorePanes';
-import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
+import { type LocationInfo } from 'app/features/search/service/types';
 import { VARIABLE_PREFIX } from 'app/features/variables/constants';
 
-/** Every kind, in the order the filter and the rows present them; Pages next to Dashboards, as in the nav. */
-export const PAGE_KINDS: readonly PageHistoryKind[] = ['dashboard', 'page', 'explore', 'alerting', 'app'];
-
-export type PageKindCounts = Record<PageHistoryKind, number>;
-
-export function countByKind(items: ReadonlyArray<{ kind: PageHistoryKind }>): PageKindCounts {
-  const counts: PageKindCounts = { dashboard: 0, page: 0, explore: 0, alerting: 0, app: 0 };
-  for (const { kind } of items) {
-    counts[kind]++;
-  }
-  return counts;
-}
-
-type EntryOf<K extends PageHistoryKind> = Extract<PageHistoryEntry, { kind: K }>;
-
-/**
- * A history entry plus what needs an async lookup to show it: the search hit that proved the user can
- * still see a dashboard (title, folder), or the datasource names and query text of an Explore page.
- * Formatting happens at render time, in {@link toRow}.
- */
-export type RecentActivityItem =
-  | (EntryOf<'dashboard'> & { dashboard: DashboardQueryResult })
-  | (EntryOf<'explore'> & { panes: ExplorePaneDescription[] })
-  | EntryOf<'page' | 'alerting' | 'app'>;
+import { type RecentActivityItem } from './useRecentActivity';
 
 interface PageKindMeta {
   /** Plural, for the kind filter. */
@@ -77,8 +54,8 @@ export function getPageKindMeta(kind: PageHistoryKind): PageKindMeta {
 }
 
 const SEPARATOR = ' · ';
-/** Rendered through the time range (or not meaningful to show) rather than as `key=value`. */
-const HIDDEN_PARAMS = ['from', 'to', 'orgId', 'timezone', 'schemaVersion', 'returnTo'];
+/** Rendered through the time range, or plumbing, rather than as `key=value`. */
+const HIDDEN_PARAMS = [...PLUMBING_PARAMS, 'from', 'to', 'timezone'];
 
 interface PageParams {
   range: string;
@@ -158,16 +135,17 @@ export function toRow(
       return row(title, [joinPanes(item.panes.map((pane) => pane.queries.join('; ')))]);
     }
     case 'page': {
-      // The id in the path says nothing a reader wants; the slug the Assistant puts before it is the fallback title.
+      // Without a title, the last path segment (the page's slug) is the most readable thing the URL has.
       const { range, vars, others } = collectParams(item.search);
       return row(item.title ?? item.pathname.slice(item.pathname.lastIndexOf('/') + 1), [range, ...vars, ...others]);
     }
     case 'alerting':
     case 'app': {
-      // Pages in the nav tree use their nav label (exact url match; deep links have none). Deep links use the
+      // Pages in the nav tree use their nav label (matched by path; deep links have none). Deep links use the
       // title the page set, which often is just the section's ("Incidents" for every incident), so the path
       // tells them apart.
-      const navTitle = findByUrl(navTree, locationUtil.assureBaseUrl(item.pathname))?.text;
+      const pathname = locationUtil.assureBaseUrl(item.pathname);
+      const navTitle = findNavByUrl(navTree, (url) => url.split('?')[0] === pathname)?.text;
       const title = navTitle ?? item.title ?? item.pathname;
       const showPath = !navTitle && title !== item.pathname;
       const { range, vars, others } = collectParams(item.search);

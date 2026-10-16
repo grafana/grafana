@@ -178,6 +178,17 @@ export function DashboardTabs({ extensionComponents }: Props) {
   const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => !tab.href)];
   const linkTabs = extensionTabs.filter((tab) => tab.href);
   const listDensity = redesignEnabled ? 'compact' : 'default';
+  // The Recent footer belongs to its list: only once the list is loaded with rows. The dashboard tabs link out.
+  const footer =
+    activeTab === RECENT_TAB_ID ? (
+      !recent.loading && !recent.error && recent.total > 0 && <RecentActivityFooter recent={recent} />
+    ) : (
+      <FooterActions>
+        <FooterAction href="/dashboards">
+          <Trans i18nKey="home.dashboard-tabs.view-all-dashboards">View all dashboards</Trans>
+        </FooterAction>
+      </FooterActions>
+    );
 
   const renderContent = () => (
     <>
@@ -237,14 +248,9 @@ export function DashboardTabs({ extensionComponents }: Props) {
             )}
           </ScrollContainer>
           {/* Pinned below the scroll area so it stays visible however long the list is. */}
-          {activeTab === RECENT_TAB_ID && recent.hasRows && <RecentActivityFooter recent={recent} />}
-          {(activeTab === MOST_USED_TAB_ID || activeTab === STARRED_TAB_ID) && (
+          {footer && (
             <Box padding={1} paddingTop={1.5}>
-              <FooterActions>
-                <FooterAction href="/dashboards">
-                  <Trans i18nKey="home.dashboard-tabs.view-all-dashboards">View all dashboards</Trans>
-                </FooterAction>
-              </FooterActions>
+              {footer}
             </Box>
           )}
         </TabContent>
