@@ -114,7 +114,7 @@ Choose what data to display, repeat content for each row with `{{#each}}`, and a
 
 ## Style content with theme colors
 
-Use the [`$__theme` variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/#__theme) in inline styles to match the current Grafana theme.
+Use the [`$__theme` variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/#__theme) in inline styles to match the current Grafana theme.
 The content updates when a user switches between light and dark themes.
 
 For example, the following HTML shows a card with the theme's background, border, and secondary text colors:

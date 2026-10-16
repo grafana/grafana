@@ -147,7 +147,7 @@ The following HTML in a [text visualization](https://grafana.com/docs/grafana/<G
 
 Keep the following in mind when you use `$__theme`:
 
-- **Values follow the current theme:** When a user switches between light and dark themes, the variable returns the values of the theme they switched to.
+- **Values follow the current theme:** The variable returns values from the theme that's active when Grafana interpolates it. The text visualization updates as soon as a user switches between light and dark themes. Other places pick up the new values the next time they're interpolated, for example when the dashboard refreshes.
 - **Only single values resolve:** A path must end at a single value, like a color or a size. A path to a group of values, like `${__theme.colors}`, a missing path, like `${__theme.colors.nope}`, or `${__theme}` without a path stays as literal text, so you can spot a typo.
 - **Units are part of the value:** Most sizes include their unit, like `12px`. A few return only a number, like `${__theme.typography.fontSize}`, which returns `14`. Add the unit yourself: `${__theme.typography.fontSize}px`.
 - **Use `typography.size` for pixel font sizes:** Font sizes of text styles, like `${__theme.typography.h3.fontSize}`, are in `rem`. For pixel values, use `${__theme.typography.size.xs}`, `sm`, `md`, or `lg`.
