@@ -39,11 +39,7 @@ export function DeleteRuleConfirmModal({
       title={t('alerting.gma-rule-list.actions.delete-title', 'Delete rule')}
       body={
         <>
-          {t(
-            'alerting.gma-rule-list.actions.delete-body',
-            'Are you sure you want to delete "{{ruleTitle}}"? This action cannot be undone.',
-            { ruleTitle }
-          )}
+          {t('alerting.gma-rule-list.actions.delete-body', 'Delete "{{ruleTitle}}"?', { ruleTitle })}
           {error && (
             <Alert
               severity="error"

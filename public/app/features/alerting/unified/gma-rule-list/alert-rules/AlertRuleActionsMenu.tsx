@@ -16,7 +16,7 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
-import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
+import { RuleActionMenuItem, isActionShown } from '../rule-actions/RuleActionMenuItem';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
 import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteAlertRule } from '../rule-actions/useDeleteRule';
@@ -54,6 +54,14 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleAction
   // eslint-disable-next-line @grafana/no-config-feature-toggles
   const canManageEnrichments = Boolean(config.featureToggles.alertingEnrichmentPerRule) && canReadEnrichments;
 
+  // Analyze renders for any loaded rule, so the divider only needs a guard while the rule is not loaded.
+  const hasFirstSection =
+    rule !== undefined ||
+    isActionShown(abilities.pause) ||
+    isActionShown(silence) ||
+    isActionShown(abilities.duplicate);
+  const showDelete = isActionShown(abilities.delete);
+
   const menuItems = (
     <>
       <RuleActionMenuItem
@@ -80,7 +88,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleAction
         availability={abilities.duplicate}
         onConfirmFirst={confirmBeforeCopy ? () => setShowCopyModal(true) : undefined}
       />
-      <Menu.Divider />
+      {hasFirstSection && <Menu.Divider />}
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
         icon="share-alt"
@@ -93,7 +101,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleAction
           onClick={() => setShowEnrichmentDrawer(true)}
         />
       )}
-      <Menu.Divider />
+      {showDelete && <Menu.Divider />}
       <RuleActionMenuItem
         availability={abilities.delete}
         label={t('alerting.common.delete', 'Delete')}

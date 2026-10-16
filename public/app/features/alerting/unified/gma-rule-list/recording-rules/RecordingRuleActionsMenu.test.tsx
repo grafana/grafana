@@ -197,24 +197,31 @@ describe('RecordingRuleActionsMenu', () => {
       expect(screen.getByRole('menuitem', { name: 'Copy link' })).toHaveFocus();
     });
 
+    it('ACT-1: shows every action disabled as checking while the full rule is loading', async () => {
+      render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={{ status: 'loading' }} />);
+      const user = await openMenu();
+
+      for (const name of ['Pause', 'Delete', 'Duplicate']) {
+        // ACC-7: the reason is part of the disabled item's accessible name, not only a hover tooltip.
+        const item = screen.getByRole('menuitem', { name: `${name}: Checking permissions...` });
+        expect(isDisabled(item)).toBe(true);
+        await user.hover(item);
+        expect(await screen.findByText('Checking permissions...')).toBeInTheDocument();
+        await user.unhover(item);
+      }
+      expect(screen.getByRole('menuitem', { name: 'Copy link' })).toBeEnabled();
+    });
+
     it.each([
-      {
-        name: 'the full rule is loading',
-        state: { status: 'loading' } as const,
-        reason: 'Checking permissions...',
-        duplicateDisabled: true,
-      },
       {
         name: 'the full rule failed to load',
         state: { status: 'error' } as const,
-        reason: 'Permission unknown',
-        duplicateDisabled: true,
+        duplicateShown: false,
       },
       {
         name: 'the capability annotations are missing',
         state: { status: 'loaded', rule: buildRule({ annotations: {} }) } as const,
-        reason: 'Permission unknown',
-        duplicateDisabled: false,
+        duplicateShown: true,
       },
       {
         name: 'the capabilities are false',
@@ -228,8 +235,7 @@ describe('RecordingRuleActionsMenu', () => {
             },
           }),
         } as const,
-        reason: 'You do not have permission to do this',
-        duplicateDisabled: false,
+        duplicateShown: true,
       },
       {
         name: 'the rule is provisioned',
@@ -237,8 +243,7 @@ describe('RecordingRuleActionsMenu', () => {
           status: 'loaded',
           rule: buildRule({ annotations: { ...WRITABLE_ANNOTATIONS, 'grafana.com/provenance': 'api' } }),
         } as const,
-        reason: 'Provisioned',
-        duplicateDisabled: false,
+        duplicateShown: true,
       },
       {
         name: 'the rule is both provisioned and managed by Terraform',
@@ -252,28 +257,30 @@ describe('RecordingRuleActionsMenu', () => {
             },
           }),
         } as const,
-        reason: 'Managed by Terraform',
-        duplicateDisabled: false,
+        duplicateShown: true,
       },
       {
         name: 'the origin label starts with plugin/',
         state: { status: 'loaded', rule: buildRule({ labels: { __grafana_origin: 'plugin/my-app' } }) } as const,
-        reason: 'This rule is managed by a plugin and cannot be edited through the UI',
-        duplicateDisabled: true,
+        duplicateShown: false,
       },
-    ])('ACT: disables Pause and Delete with their reason when $name', async ({ state, reason, duplicateDisabled }) => {
+    ])('ACT: leaves Pause and Delete out of the menu when $name', async ({ state, duplicateShown }) => {
       render(<RecordingRuleActionsMenu ruleUid="rule-uid-1" resourceState={state} />);
-      const user = await openMenu();
+      await openMenu();
 
-      for (const name of ['Pause', 'Delete']) {
-        // ACC-7: the reason is part of the disabled item's accessible name, not only a hover tooltip.
-        const item = screen.getByRole('menuitem', { name: `${name}: ${reason}` });
-        expect(isDisabled(item)).toBe(true);
-        await user.hover(item);
-        expect(await screen.findByText(reason)).toBeInTheDocument();
-        await user.unhover(item);
-      }
-      expect(isDisabled(screen.getByRole('menuitem', { name: /^Duplicate/ }))).toBe(duplicateDisabled);
+      expect(screen.getByRole('menuitem', { name: 'Copy link' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /^(Pause|Resume)/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /^Delete/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /^Duplicate/ }) !== null).toBe(duplicateShown);
+    });
+
+    it('ACT: leaves Duplicate out when the user cannot create rules', async () => {
+      grantUserPermissions([]);
+      renderLoaded();
+      await openMenu();
+
+      expect(screen.queryByRole('menuitem', { name: /^Duplicate/ })).not.toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Pause' })).toBeEnabled();
     });
 
     it('does not restrict a rule whose origin label is not a plugin', async () => {

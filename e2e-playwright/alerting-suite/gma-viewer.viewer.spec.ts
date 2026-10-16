@@ -41,9 +41,7 @@ test.describe('Viewer', () => {
 
       await row.getByRole('button', { name: 'More', exact: true }).click();
       await expect(page.getByRole('menuitem', { name: 'Copy link' })).toBeVisible();
-      await expect(page.getByRole('menuitem', { name: /^(Pause|Resume|Delete)$/ })).toHaveCount(0);
-      await expect(page.getByRole('menuitem', { name: /^(Pause|Resume): /, disabled: true })).toBeVisible();
-      await expect(page.getByRole('menuitem', { name: /^Delete: /, disabled: true })).toBeVisible();
+      await expect(page.getByRole('menuitem', { name: /^(Pause|Resume|Delete|Duplicate)(:|$)/ })).toHaveCount(0);
       await page.keyboard.press('Escape');
     }
   });

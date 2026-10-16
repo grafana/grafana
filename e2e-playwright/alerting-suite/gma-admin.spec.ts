@@ -21,7 +21,7 @@ test.describe('Admin (RBAC-A)', () => {
     await expect(page.getByRole('tab', { name: 'Recently deleted', selected: true })).toBeVisible();
   });
 
-  test('RBAC-A: Admin can use Resume/Delete on a normal Alert rule, but they are disabled on a provisioned one (Duplicate stays available)', async ({
+  test('RBAC-A: Admin can use Resume/Delete on a normal Alert rule, but a provisioned one offers neither (Duplicate stays available)', async ({
     page,
     folder,
     alertRules,
@@ -45,12 +45,11 @@ test.describe('Admin (RBAC-A)', () => {
     await expect(page.getByRole('link', { name: provisionedTitle })).toBeVisible();
     await list.rowMoreButton(provisionedTitle).click();
     await expect(page.getByRole('menuitem', { name: 'Duplicate', exact: true })).toBeEnabled();
-    await expect(page.getByRole('menuitem', { name: /^(Pause|Resume): Provisioned$/ })).toBeDisabled();
-    await expect(page.getByRole('menuitem', { name: 'Delete: Provisioned', exact: true })).toBeDisabled();
+    await expect(page.getByRole('menuitem', { name: /^(Pause|Resume|Delete)(:|$)/ })).toHaveCount(0);
     await page.keyboard.press('Escape');
   });
 
-  test('RBAC-A: Admin can use Resume/Delete on a normal Recording rule, but they are disabled on a provisioned one (Duplicate stays available)', async ({
+  test('RBAC-A: Admin can use Resume/Delete on a normal Recording rule, but a provisioned one offers neither (Duplicate stays available)', async ({
     page,
     folder,
     recordingRules,
@@ -82,8 +81,7 @@ test.describe('Admin (RBAC-A)', () => {
     await expect(page.getByRole('link', { name: provisionedTitle })).toBeVisible();
     await list.rowMoreButton(provisionedTitle).click();
     await expect(page.getByRole('menuitem', { name: 'Duplicate', exact: true })).toBeEnabled();
-    await expect(page.getByRole('menuitem', { name: /^(Pause|Resume): Provisioned$/ })).toBeDisabled();
-    await expect(page.getByRole('menuitem', { name: 'Delete: Provisioned', exact: true })).toBeDisabled();
+    await expect(page.getByRole('menuitem', { name: /^(Pause|Resume|Delete)(:|$)/ })).toHaveCount(0);
     await page.keyboard.press('Escape');
   });
 });

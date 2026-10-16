@@ -58,7 +58,7 @@ describe('AlertRuleActions', () => {
     },
     {
       name: 'has no capability annotation',
-      reason: 'Permission unknown',
+      reason: 'You do not have permission to do this',
       state: loaded({}),
     },
     {

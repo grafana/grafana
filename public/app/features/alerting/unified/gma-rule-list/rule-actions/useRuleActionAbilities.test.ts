@@ -46,6 +46,7 @@ describe('useRuleActionAbilities', () => {
     const { result } = renderHook(() => useRuleActionAbilities({ status: 'error' }));
 
     expect(result.current.edit.available).toBe(false);
+    expect(result.current.edit.reason).toBe('Permission unknown');
     expect(result.current.delete.available).toBe(false);
   });
 
@@ -57,11 +58,12 @@ describe('useRuleActionAbilities', () => {
     expect(result.current.edit).toEqual({ available: true });
   });
 
-  it('ACT-2: treats a missing canWrite annotation as unknown, not denied, with a distinct reason', () => {
+  it('ACT-2: treats a missing canWrite annotation on a loaded rule as denied', () => {
     const { result } = renderHook(() => useRuleActionAbilities(loaded(buildRule({}))));
 
     expect(result.current.edit.available).toBe(false);
-    expect(result.current.edit.reason).toBe('Permission unknown');
+    expect(result.current.edit.reason).toBe('You do not have permission to do this');
+    expect(result.current.delete.reason).toBe('You do not have permission to do this');
   });
 
   it('ACT-3: denies edit when canWrite is present but not "true"', () => {

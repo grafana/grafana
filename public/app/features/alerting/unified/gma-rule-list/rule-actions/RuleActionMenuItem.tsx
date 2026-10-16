@@ -9,10 +9,19 @@ type RuleActionMenuItemProps = ComponentProps<typeof Menu.Item> & {
   availability: ActionAvailability;
 };
 
-/** Stays in the menu when unusable, disabled with the reason on hover and for assistive tech. */
+/** Menu sections use it to drop dividers that would be left with nothing next to them. */
+export function isActionShown(availability: ActionAvailability): boolean {
+  return availability.available || Boolean(availability.checking);
+}
+
+/** Unusable actions are left out, except while checking: then the item is disabled so the menu doesn't change shape. */
 export function RuleActionMenuItem({ availability, ...itemProps }: RuleActionMenuItemProps) {
   if (availability.available) {
     return <Menu.Item {...itemProps} />;
+  }
+
+  if (!isActionShown(availability)) {
+    return null;
   }
 
   return (

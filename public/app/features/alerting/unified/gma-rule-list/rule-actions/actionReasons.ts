@@ -5,7 +5,11 @@ import { managerKindName } from '../rule-data/managerKindName';
 import { type ActionAvailability } from './ruleActionTypes';
 
 export function checking(): ActionAvailability {
-  return { available: false, reason: t('alerting.rule-actions.reason-checking', 'Checking permissions...') };
+  return {
+    available: false,
+    checking: true,
+    reason: t('alerting.rule-actions.reason-checking', 'Checking permissions...'),
+  };
 }
 
 export function unknown(): ActionAvailability {

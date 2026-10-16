@@ -8,7 +8,7 @@ import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleB
 import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
-import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
+import { RuleActionMenuItem, isActionShown } from '../rule-actions/RuleActionMenuItem';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
 import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteRecordingRule } from '../rule-actions/useDeleteRule';
@@ -35,6 +35,9 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState }: RecordingRu
   const isPaused = Boolean(rule?.spec.paused);
   const confirmBeforeCopy = rule !== undefined && isProvisionedOrManaged(rule);
 
+  const hasFirstSection = rule !== undefined || isActionShown(abilities.pause) || isActionShown(abilities.duplicate);
+  const showDelete = isActionShown(abilities.delete);
+
   const menuItems = (
     <>
       <RuleActionMenuItem
@@ -55,13 +58,13 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState }: RecordingRu
         availability={abilities.duplicate}
         onConfirmFirst={confirmBeforeCopy ? () => setShowCopyModal(true) : undefined}
       />
-      <Menu.Divider />
+      {hasFirstSection && <Menu.Divider />}
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
         icon="share-alt"
         onClick={() => copyRuleLink('recording', ruleShareUrl(ruleUid))}
       />
-      <Menu.Divider />
+      {showDelete && <Menu.Divider />}
       <RuleActionMenuItem
         availability={abilities.delete}
         label={t('alerting.common.delete', 'Delete')}

@@ -1495,7 +1495,7 @@
         "copy-provisioned-evaluation-group": "You will need to set a new evaluation group for the copied rule because the original one has been provisioned and cannot be used for rules created in the UI.",
         "copy-provisioned-not-provisioned": "The new rule will <strong>not</strong> be marked as a provisioned rule.",
         "copy-provisioned-recording-title": "Copy provisioned recording rule",
-        "delete-body": "Are you sure you want to delete \"{{ruleTitle}}\"? This action cannot be undone.",
+        "delete-body": "Delete \"{{ruleTitle}}\"?",
         "delete-confirm": "Delete",
         "delete-error-title": "Unable to delete rule",
         "delete-sequence-restricted": "This rule belongs to a rule sequence and must be removed from it before it can be deleted.",

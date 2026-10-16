@@ -12,7 +12,7 @@ import { type ActionAvailability, type RuleActionAbilities } from './ruleActionT
 
 const AVAILABLE: ActionAvailability = { available: true };
 
-/** Only the exact string `"true"` grants; a missing annotation means unknown, not denied. */
+/** Only the exact string `"true"` grants; the backend omits the annotation when the action isn't allowed. */
 function capabilityGate(rule: AlertRule | RecordingRule, annotation: K8sAnnotations): ActionAvailability {
   // A rule that is both provisioned and managed names its manager, which says more than "provisioned".
   const managerKind = getManagedByKind(rule);
@@ -26,11 +26,7 @@ function capabilityGate(rule: AlertRule | RecordingRule, annotation: K8sAnnotati
     return pluginManaged();
   }
 
-  const value = getAnnotation(rule, annotation);
-  if (value === 'true') {
-    return AVAILABLE;
-  }
-  return value === undefined ? unknown() : denied();
+  return getAnnotation(rule, annotation) === 'true' ? AVAILABLE : denied();
 }
 
 /** Provisioning and managers don't block it: the copy is a fresh rule. */
