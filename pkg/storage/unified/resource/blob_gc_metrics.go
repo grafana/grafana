@@ -9,8 +9,11 @@ import (
 type BlobGCMetrics struct {
 	Runs       prometheus.Counter
 	Candidates prometheus.Gauge
-	Deleted    prometheus.Counter
-	Errors     prometheus.Counter
+	// SkippedWithoutAge is the number of unreferenced blobs the latest successful
+	// pass left alone because their age could not be determined (legacy UIDs).
+	SkippedWithoutAge prometheus.Gauge
+	Deleted           prometheus.Counter
+	Errors            prometheus.Counter
 }
 
 func NewBlobGCMetricsIfEnabled(reg prometheus.Registerer, backend string, enabled bool) *BlobGCMetrics {
@@ -26,6 +29,10 @@ func NewBlobGCMetricsIfEnabled(reg prometheus.Registerer, backend string, enable
 		Candidates: factory.NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_unified_storage_blob_gc_candidates",
 			Help: "Number of eligible unreferenced blobs found in the latest successful collection pass (also in dry-run mode).",
+		}),
+		SkippedWithoutAge: factory.NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_unified_storage_blob_gc_skipped_without_age",
+			Help: "Number of unreferenced blobs left alone in the latest successful collection pass because no upload time could be determined.",
 		}),
 		Deleted: factory.NewCounter(prometheus.CounterOpts{
 			Name: "grafana_unified_storage_blob_gc_deleted_total",
@@ -51,4 +58,13 @@ func (m *BlobGCMetrics) Record(count int, dryRun bool, err error) {
 	if !dryRun {
 		m.Deleted.Add(float64(count))
 	}
+}
+
+// RecordSkippedWithoutAge records the size of the legacy backlog. A failed pass
+// reports only a partial count, so it leaves the previous value in place.
+func (m *BlobGCMetrics) RecordSkippedWithoutAge(count int, err error) {
+	if m == nil || err != nil {
+		return
+	}
+	m.SkippedWithoutAge.Set(float64(count))
 }

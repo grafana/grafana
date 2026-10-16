@@ -108,7 +108,6 @@ declare module "@openfeature/core" {
     | "alertEnrichment"
     | "preferLibraryPanelTitle"
     | "enableAppChromeExtensions"
-    | "enableDashboardEmptyExtensions"
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
@@ -192,6 +191,7 @@ declare module "@openfeature/core" {
     | "grafana.globalHomePreference"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible";
+    | "datasources.gatewayAuditPolicy";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

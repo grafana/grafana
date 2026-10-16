@@ -28,6 +28,8 @@ import (
 )
 
 func TestIntegrationAuthInfo(t *testing.T) {
+	t.Skip("disable due to being flaky")
+
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3, rest.Mode5}

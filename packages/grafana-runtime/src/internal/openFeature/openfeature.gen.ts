@@ -122,6 +122,8 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Enable support for the query gateway audit policies */
+  DatasourcesGatewayAuditPolicy: "datasources.gatewayAuditPolicy",
   /** Data source query gateway guardrails */
   DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
   /** Data source query service, use the new name */
@@ -138,8 +140,6 @@ export const FlagKeys = {
   EnableAppChromeExtensions: "enableAppChromeExtensions",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
-  /** Set this to true to enable all dashboard empty state extensions registered by plugins. */
-  EnableDashboardEmptyExtensions: "enableDashboardEmptyExtensions",
   /** Enables the extension admin page regardless of development mode */
   EnableExtensionsAdminPage: "enableExtensionsAdminPage",
   /** Automatic service account and token setup for plugins */
@@ -977,6 +977,17 @@ export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: Rea
 };
 
 /**
+ * Enable support for the query gateway audit policies
+ *
+ * **Details:**
+ * - flag key: `datasources.gatewayAuditPolicy`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesGatewayAuditPolicy = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.gatewayAuditPolicy", false, options).value;
+};
+
+/**
  * Data source query gateway guardrails
  *
  * **Details:**
@@ -1062,17 +1073,6 @@ export const useFlagEnableAppChromeExtensions = (options?: ReactFlagEvaluationOp
  */
 export const useFlagEnableColorblindSafePanelOptions = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("enableColorblindSafePanelOptions", false, options).value;
-};
-
-/**
- * Set this to true to enable all dashboard empty state extensions registered by plugins.
- *
- * **Details:**
- * - flag key: `enableDashboardEmptyExtensions`
- * - default value: `false`
- */
-export const useFlagEnableDashboardEmptyExtensions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("enableDashboardEmptyExtensions", false, options).value;
 };
 
 /**

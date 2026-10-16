@@ -18,7 +18,8 @@ type BlobGarbageCollector struct {
 	store     BlobGCStore
 	batchSize int
 	batchWait time.Duration
-	uidAges   *blobUIDAgeStore // retained across runs for legacy-UID tracking
+
+	skippedWithoutAge int // blobs of the last Collect with no usable age
 }
 
 type BlobGCStore interface {
@@ -26,10 +27,13 @@ type BlobGCStore interface {
 	Delete(context.Context, string, string) error
 }
 
+type blobGCAges interface {
+	FirstUnused(context.Context, string, time.Time) (time.Time, error)
+}
+
 type blobGCAgeStore interface {
 	BlobGCStore
-	FirstUnused(context.Context, string, time.Time) (time.Time, error)
-	ClearUnused(context.Context, string) error
+	blobGCAges
 }
 
 var (
@@ -44,6 +48,11 @@ func NewBlobGarbageCollector(store BlobGCStore, batchSize int, batchWait time.Du
 	return &BlobGarbageCollector{store: store, batchSize: batchSize, batchWait: batchWait}
 }
 
+// SkippedWithoutAge reports how many unreferenced blobs the last Collect left
+// alone because no upload time could be determined for them (legacy UIDs on
+// stores without their own age tracking).
+func (g *BlobGarbageCollector) SkippedWithoutAge() int { return g.skippedWithoutAge }
+
 // Collect preserves blobs referenced by any retained revision, including trash.
 // referenced must fail closed on storage or decoding errors. Grace must be positive.
 func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace time.Duration, dryRun bool, referenced func(context.Context, kv.BlobKey) (bool, error)) (int, error) {
@@ -52,13 +61,11 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 	}
 	// SQL and bucket stores use upload time; any other KV (e.g. remote) uses the
 	// UUIDv7 embedded in the blob UID.
-	ages, ok := g.store.(blobGCAgeStore)
-	if !ok {
-		if g.uidAges == nil {
-			g.uidAges = newBlobUIDAgeStore(g.store)
-		}
-		ages = g.uidAges
+	var ages blobGCAges = blobUIDAges{}
+	if store, ok := g.store.(blobGCAgeStore); ok {
+		ages = store
 	}
+	g.skippedWithoutAge = 0
 	keys := g.store.Keys(ctx, kv.BlobDataSection, kv.ListOptions{})
 	if store, ok := g.store.(interface {
 		BlobGCKeys(context.Context, int) iter.Seq2[string, error]
@@ -103,9 +110,6 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 			continue
 		}
 		if live {
-			if err := ages.ClearUnused(ctx, key); err != nil {
-				errs = append(errs, err)
-			}
 			continue
 		}
 		first, err := ages.FirstUnused(ctx, key, now)
@@ -113,16 +117,17 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 			errs = append(errs, err)
 			continue
 		}
-		if first.IsZero() || now.Sub(first) < grace {
+		if first.IsZero() {
+			g.skippedWithoutAge++
+			continue
+		}
+		if now.Sub(first) < grace {
 			continue
 		}
 		if !dryRun {
 			if err := g.store.Delete(ctx, kv.BlobDataSection, key); err != nil {
 				errs = append(errs, err)
 				continue
-			}
-			if err := ages.ClearUnused(ctx, key); err != nil {
-				errs = append(errs, err)
 			}
 		}
 		count++

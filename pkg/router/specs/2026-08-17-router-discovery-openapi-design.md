@@ -7,8 +7,7 @@ Scope: `pkg/router/`
 
 > **What changed since this was written (as of 2026-10-10):**
 >
-> - Routes no longer come from `RouteBackend`/`AppManifest` resources. That source was removed in
->   #134652. The cloud loader polls the ST fallback, aggregate targets, `core_url` and `plugins_url`.
+> - The cloud loader polls the ST fallback, aggregate targets, `core_url` and `plugins_url`.
 > - `Backend` has no `Manifest()`. Groups come from `Backend.Group()`, and the cache key is
 >   `Backend.Key()`, not a resource version (`handlerEntry.lastKey`, `?hash=<key>`).
 > - The router imports the k8s discovery types (`metav1`, `apidiscovery/v2`, `kube-openapi`)
@@ -25,9 +24,7 @@ Scope: `pkg/router/`
 
 `GrafanaRouter` (`pkg/router/router.go`) is the whole HTTP surface of the
 standalone cloud-apps router process. It reverse-proxies `/apis/<group>*` to
-one `Backend` per group, reconciled from `RouteBackend`/`AppManifest` control-plane
-resources read via a remote apiserver (never proxied through `HandleFunc` — the
-router's data plane never touches those control-plane kinds). `next` in this
+one `Backend` per group, reconciled from the polled discovery sources. `next` in this
 process is always `http.NotFoundHandler()` (`cli.go:199`) — nothing else sits
 behind it. There is no "core apiserver" to merge discovery with; every group
 this router knows about comes from `Backend.Manifest()`.
