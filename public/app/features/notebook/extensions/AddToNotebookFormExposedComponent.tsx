@@ -9,7 +9,7 @@ import { type LooseProps, type Props } from './AddToNotebookForm';
 const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNotebookForm" */ './AddToNotebookForm'));
 
 /**
- * EXPOSED COMPONENT (stable): grafana/add-to-notebook-form/v1
+ * EXPOSED COMPONENT (stable): grafana/add-to-notebook-form/v1 and grafana/add-to-notebook-form/v2
  *
  * This component is exposed to plugins via the Plugin Extensions system.
  * Treat its props and user-visible behavior as a stable contract. Do not make
@@ -23,10 +23,12 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * store and "capturedTimeRange" for the window it was showing. The form offers
  * to lock the panel to that window.
  *
- * For ordered content, pass "cells" (markdown and panels, each panel with its own
- * captured window) instead of "buildPanel". Optional: "defaultTitle" prefills a new
- * notebook's title, "onAdded" receives { uid, title, url } after the write, and
- * "source" attributes the cells ("user" by default, "assistant" for generated content).
+ * v2 is the same component and adds ordered content: pass "cells" (markdown and panels,
+ * each panel with its own captured window) instead of "buildPanel". Optional: "defaultTitle"
+ * prefills a new notebook's title, "onAdded" receives { uid, title, url } after the write,
+ * and "source" attributes the cells ("user" by default, "assistant" for generated content).
+ * Use v2 for any of these: Grafana builds with only v1 ignore them, and v2's presence is how
+ * a plugin knows they are supported.
  *
  * Requires the `dashboard.notebooks` feature flag and `notebooks:create` or `notebooks:write`.
  * It is only registered while `dashboard.notebooks` is on, so a missing component means notebooks are off.
@@ -37,7 +39,7 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * import { usePluginComponent } from '@grafana/runtime';
  *
  * const { component: AddToNotebookForm } = usePluginComponent(
- *   PluginExtensionExposedComponents.AddToNotebookFormV1
+ *   PluginExtensionExposedComponents.AddToNotebookFormV2
  * );
  *
  * <Modal title="Add panel to notebook" isOpen onDismiss={onClose}>

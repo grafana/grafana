@@ -78,6 +78,7 @@ describe('getPluginExtensionRegistries', () => {
       const state = await exposedComponentsRegistry.getState();
 
       expect(PluginExtensionExposedComponents.AddToNotebookFormV1 in state).toBe(notebooksOn);
+      expect(PluginExtensionExposedComponents.AddToNotebookFormV2 in state).toBe(notebooksOn);
     });
   });
 });

@@ -81,6 +81,13 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
               description: 'Add to notebook form',
               component: AddToNotebookFormExposedComponent,
             },
+            // The same component. Its own id is how a plugin tells that this Grafana accepts `cells`.
+            {
+              id: PluginExtensionExposedComponents.AddToNotebookFormV2,
+              title: 'Add to notebook form',
+              description: 'Add to notebook form, with ordered cells',
+              component: AddToNotebookFormExposedComponent,
+            },
           ]
         : []),
     ],
