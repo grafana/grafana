@@ -1,4 +1,5 @@
-import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { isEqual } from 'lodash';
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type uPlot from 'uplot';
 
 import {
@@ -8,15 +9,16 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   type TimeZone,
 } from '@grafana/data';
-import { FIXED_UNIT, EventsCanvas, type UPlotConfigBuilder } from '@grafana/ui';
+import { FIXED_UNIT, EventsCanvas, type PanelContext, type UPlotConfigBuilder } from '@grafana/ui';
 
-import { ExemplarMarker } from './ExemplarMarker';
+import { ExemplarMarker, type ExemplarSelection } from './ExemplarMarker';
 
 interface ExemplarsPluginProps {
   config: UPlotConfigBuilder;
   exemplars: DataFrame[];
   timeZone: TimeZone;
   visibleSeries?: VisibleExemplarLabels;
+  openExemplar?: PanelContext['experimentalOpenExemplar'];
   maxHeight?: number;
   maxWidth?: number;
 }
@@ -26,18 +28,25 @@ export const ExemplarsPlugin = ({
   timeZone,
   config,
   visibleSeries,
+  openExemplar,
   maxHeight,
   maxWidth,
 }: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot | undefined>(undefined);
+  const [initializedConfig, setInitializedConfig] = useState<UPlotConfigBuilder>();
+  const [drawCount, setDrawCount] = useState(0);
 
-  const [lockedExemplarRowIndex, setLockedExemplarRowIndex] = useState<number | undefined>();
+  const [lockedExemplar, setLockedExemplar] = useState<ExemplarSelection | undefined>();
+  const currentLockedExemplar = useMemo(
+    () => findExemplarSelection(exemplars, lockedExemplar),
+    [exemplars, lockedExemplar]
+  );
 
-  useLayoutEffect(() => {
-    config.addHook('init', (u) => {
-      plotInstance.current = u;
-    });
-  }, [config]);
+  useEffect(() => {
+    if (currentLockedExemplar !== lockedExemplar) {
+      setLockedExemplar(currentLockedExemplar);
+    }
+  }, [currentLockedExemplar, lockedExemplar]);
 
   const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, rowIndex: number) => {
     const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
@@ -54,7 +63,11 @@ export const ExemplarsPlugin = ({
     const yMin = plotInstance.current.scales[yScale].min;
     const yMax = plotInstance.current.scales[yScale].max;
 
+    const x = time.values[rowIndex];
     let y = value.values[rowIndex];
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      return undefined;
+    }
     // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
     if (yMin != null && y < yMin) {
       y = yMin;
@@ -64,11 +77,61 @@ export const ExemplarsPlugin = ({
       y = yMax;
     }
 
-    return {
-      x: plotInstance.current.valToPos(time.values[rowIndex], 'x'),
+    const coords = {
+      x: plotInstance.current.valToPos(x, 'x'),
       y: plotInstance.current.valToPos(y, yScale),
     };
+    return Number.isFinite(coords.x) && Number.isFinite(coords.y) ? coords : undefined;
   }, []);
+
+  useEffect(() => {
+    if (!openExemplar || initializedConfig !== config) {
+      return;
+    }
+    const request = openExemplar.getRequest(exemplars);
+    if (!request || !Number.isInteger(request.frameIndex)) {
+      return;
+    }
+    const dataFrame = exemplars[request.frameIndex];
+    if (
+      !dataFrame ||
+      typeof request.requestId !== 'string' ||
+      !Number.isInteger(request.rowIndex) ||
+      request.rowIndex < 0 ||
+      request.rowIndex >= dataFrame.length ||
+      !mapExemplarToXYCoords(dataFrame, request.rowIndex)
+    ) {
+      return;
+    }
+    openExemplar.onHandled(request.requestId);
+    if (visibleSeries !== undefined && !showExemplarMarker(visibleSeries, dataFrame, request.rowIndex)) {
+      return;
+    }
+    setLockedExemplar({ dataFrame, rowIndex: request.rowIndex });
+  }, [exemplars, visibleSeries, openExemplar, initializedConfig, config, mapExemplarToXYCoords, drawCount]);
+
+  useLayoutEffect(() => {
+    config.addHook('init', (u) => {
+      plotInstance.current = u;
+      setInitializedConfig(config);
+    });
+    config.addHook('draw', () => {
+      setDrawCount((count) => count + 1);
+    });
+  }, [config]);
+
+  const onManualSelection = useCallback(
+    (selection: ExemplarSelection | undefined) => {
+      if (selection) {
+        const request = openExemplar?.getRequest(exemplars);
+        if (request) {
+          openExemplar?.onHandled(request.requestId);
+        }
+      }
+      setLockedExemplar(selection);
+    },
+    [openExemplar, exemplars]
+  );
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, rowIndex: number): ReactNode => {
@@ -83,8 +146,8 @@ export const ExemplarsPlugin = ({
 
       return (
         <ExemplarMarker
-          setClickedRowIndex={setLockedExemplarRowIndex}
-          clickedRowIndex={lockedExemplarRowIndex}
+          setLockedExemplar={onManualSelection}
+          lockedExemplar={currentLockedExemplar}
           timeZone={timeZone}
           dataFrame={dataFrame}
           frameIndex={0}
@@ -96,7 +159,7 @@ export const ExemplarsPlugin = ({
         />
       );
     },
-    [visibleSeries, lockedExemplarRowIndex, timeZone, config, maxHeight, maxWidth]
+    [visibleSeries, currentLockedExemplar, onManualSelection, timeZone, config, maxHeight, maxWidth]
   );
 
   return (
@@ -108,6 +171,47 @@ export const ExemplarsPlugin = ({
       mapEventToXYCoords={mapExemplarToXYCoords}
     />
   );
+};
+
+const findExemplarSelection = (
+  exemplars: DataFrame[],
+  selection: ExemplarSelection | undefined
+): ExemplarSelection | undefined => {
+  if (!selection || exemplars.includes(selection.dataFrame)) {
+    return selection;
+  }
+
+  const { dataFrame: previousFrame, rowIndex: previousRowIndex } = selection;
+  for (const dataFrame of exemplars) {
+    if (
+      dataFrame.refId !== previousFrame.refId ||
+      dataFrame.name !== previousFrame.name ||
+      dataFrame.fields.length !== previousFrame.fields.length
+    ) {
+      continue;
+    }
+
+    const fields = previousFrame.fields.map((previousField) =>
+      dataFrame.fields.find(
+        (field) =>
+          field.name === previousField.name &&
+          field.type === previousField.type &&
+          isEqual(field.labels, previousField.labels)
+      )
+    );
+    for (let rowIndex = 0; rowIndex < dataFrame.length; rowIndex++) {
+      if (
+        fields.every(
+          (field, index) =>
+            field && isEqual(field.values[rowIndex], previousFrame.fields[index].values[previousRowIndex])
+        )
+      ) {
+        return { dataFrame, rowIndex };
+      }
+    }
+  }
+
+  return undefined;
 };
 
 export type VisibleExemplarLabels = { labels: LabelWithExemplarUIData[]; totalSeriesCount: number };
