@@ -15,12 +15,16 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
     if (row.__depth > 0) {
       continue;
     }
-    const fieldValue = row[getDisplayName(field)];
-    const value = field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
+    const value = getFieldFilterValue(row, field);
     set[value || t('grafana-ui.table.filter.blanks', '(Blanks)')] = value;
   }
 
   return set;
+}
+
+export function getFieldFilterValue(row: TableRow, field: Field): string {
+  const fieldValue = row[getDisplayName(field)];
+  return field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
 }
 
 export function getFilteredOptions(options: SelectableValue[], filterValues?: SelectableValue[]): SelectableValue[] {

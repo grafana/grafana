@@ -17,6 +17,8 @@ interface RangeField {
   inputRef?: Ref<HTMLInputElement>;
   placeholder?: string;
   testId?: string;
+  invalid?: boolean;
+  errorId?: string;
 }
 
 interface Props {
@@ -24,10 +26,11 @@ interface Props {
   to: RangeField;
   calendar: Omit<ComponentProps<typeof TableRangeCalendar>, 'isOpen' | 'onClose' | 'anchorElement'>;
   calendarAnchor: RefObject<HTMLElement | null>;
+  calendarDisabled?: boolean;
 }
 
 // Keep range inputs local until shared date range fields support an anchored calendar.
-export function TableRangeFields({ from, to, calendar, calendarAnchor }: Props) {
+export function TableRangeFields({ from, to, calendar, calendarAnchor, calendarDisabled }: Props) {
   const fromId = useId();
   const toId = useId();
   const [isOpen, setOpen] = useState(false);
@@ -39,32 +42,33 @@ export function TableRangeFields({ from, to, calendar, calendarAnchor }: Props) 
       icon="calendar-alt"
       variant="secondary"
       type="button"
+      disabled={calendarDisabled}
       onClick={() => setOpen(true)}
     />
   );
 
   return (
-    <>
+    <Stack direction="column" gap={1}>
       {[
         { field: from, id: fromId },
         { field: to, id: toId },
       ].map(({ field, id }) => (
-        <Stack key={id} gap={0}>
-          <Field label={field.label}>
-            <Input
-              id={id}
-              autoComplete="off"
-              value={field.value}
-              onChange={(event) => field.onChange(event.currentTarget.value)}
-              ref={field.inputRef}
-              placeholder={field.placeholder}
-              data-testid={field.testId}
-              width={36}
-              onClick={(event) => event.stopPropagation()}
-              addonAfter={icon}
-            />
-          </Field>
-        </Stack>
+        <Field key={id} label={field.label}>
+          <Input
+            id={id}
+            autoComplete="off"
+            value={field.value}
+            onChange={(event) => field.onChange(event.currentTarget.value)}
+            ref={field.inputRef}
+            placeholder={field.placeholder}
+            width={48}
+            data-testid={field.testId}
+            invalid={field.invalid}
+            aria-describedby={field.invalid ? field.errorId : undefined}
+            onClick={(event) => event.stopPropagation()}
+            addonAfter={icon}
+          />
+        </Field>
       ))}
       <TableRangeCalendar
         {...calendar}
@@ -72,6 +76,6 @@ export function TableRangeFields({ from, to, calendar, calendarAnchor }: Props) 
         isOpen={isOpen}
         onClose={() => setOpen(false)}
       />
-    </>
+    </Stack>
   );
 }

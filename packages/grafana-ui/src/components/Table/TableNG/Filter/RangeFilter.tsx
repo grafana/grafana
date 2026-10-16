@@ -14,13 +14,16 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
-import { Button } from '../../../Button/Button';
+import { adjustDateForReactCalendar } from '../../../DateTimePickers/utils/adjustDateForReactCalendar';
+import { FieldValidationMessage } from '../../../Forms/FieldValidationMessage';
 import { Input } from '../../../Input/Input';
+import { Box } from '../../../Layout/Box/Box';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { RangeSliderG14 } from '../../../Slider/RangeSliderG14';
 import { type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
+import { FilterPopupFooter } from './FilterPopupLayout';
 import { TableRangeFields } from './TableRangeFields';
 
 type Range = { min?: number; max?: number; includeMissing: boolean };
@@ -50,14 +53,24 @@ export function rangeHistogram(values: unknown[]) {
   return { finite, min, max, bins, missing: values.length - finite.length };
 }
 
-export function sliderDecimals(values: number[], step: number) {
-  const dataDecimals = values.reduce(
-    (decimals, value) => Math.max(decimals, guessDecimals(Number(value.toPrecision(10)))),
-    0
-  );
-  const roundedStep = Number(step.toPrecision(10));
-  const stepDecimals = roundedStep > 0 && roundedStep < 1 ? Math.ceil(-Math.log10(roundedStep)) : 0;
-  return Math.min(100, Math.max(dataDecimals, stepDecimals));
+export function sliderDecimals(field: Field, values: number[], range: number) {
+  const display = field.display;
+  const displayed = display
+    ? values
+        .slice(0, 100)
+        .map((value) => Number(display(value).text.replaceAll(',', '')))
+        .filter(Number.isFinite)
+    : [];
+  const dataDecimals =
+    field.config.decimals ??
+    (displayed.length > 0
+      ? displayed.reduce((decimals, value) => Math.max(decimals, guessDecimals(value)), 0)
+      : Math.min(
+          3,
+          values.reduce((decimals, value) => Math.max(decimals, guessDecimals(Number(value.toPrecision(10)))), 0)
+        ));
+  const rangeDecimals = range > 0 && range < 1 ? Math.ceil(-Math.log10(range)) : 0;
+  return Math.min(100, Math.max(0, dataDecimals, rangeDecimals));
 }
 
 export function sliderBoundText(value: number, currentValue: number, currentText: string, decimals: number) {
@@ -67,10 +80,17 @@ export function sliderBoundText(value: number, currentValue: number, currentText
 const rangeSelectors = selectors.components.Panels.Visualization.TableNG.Filters.Range;
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
+function calendarBoundary(value: number, timeZone: string, endOfDay: boolean) {
+  const date = adjustDateForReactCalendar(new Date(value), timeZone);
+  date.setHours(endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0, endOfDay ? 999 : 0);
+  return date;
+}
+
 export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply, onClear, onCancel }: Props) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const id = useId();
+  const validationId = useId();
   const calendarAnchor = useRef<HTMLElement | null>(null);
   const minimumRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -83,14 +103,17 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
     value == null ? '' : isTime ? dateTimeFormat(value, { format: DATE_FORMAT, timeZone }) : String(value);
   const [lower, setLower] = useState(() => formatInput(range?.min));
   const [upper, setUpper] = useState(() => formatInput(range?.max));
-  const [includeMissing, setIncludeMissing] = useState(range?.includeMissing ?? false);
   const values = useMemo(
     () => rows.filter((row) => row.__depth === 0).map((row) => field.values[row.__index]),
     [rows, field]
   );
   const histogram = useMemo(() => rangeHistogram(values), [values]);
-  const sliderStep = (histogram.max - histogram.min) / 1000;
-  const decimals = useMemo(() => sliderDecimals(histogram.finite, sliderStep), [histogram.finite, sliderStep]);
+  const sliderRange = histogram.max - histogram.min;
+  const decimals = useMemo(
+    () => sliderDecimals(field, histogram.finite, sliderRange),
+    [field, histogram.finite, sliderRange]
+  );
+  const sliderStep = Math.max(sliderRange / 1000, 10 ** -decimals);
   const parse = (value: string) =>
     value.trim() === ''
       ? undefined
@@ -107,14 +130,13 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
     histogram.min,
     Math.min(histogram.max, max != null && Number.isFinite(max) ? max : histogram.max)
   );
-  const invalid =
-    (min != null && !Number.isFinite(min)) ||
-    (max != null && !Number.isFinite(max)) ||
-    (min != null && max != null && min > max);
+  const minimumInvalid = min != null && !Number.isFinite(min);
+  const maximumInvalid = max != null && !Number.isFinite(max);
+  const boundsReversed = min != null && max != null && min > max;
+  const invalid = minimumInvalid || maximumInvalid || boundsReversed;
   const count = invalid
     ? 0
-    : histogram.finite.filter((value) => (min == null || value >= min) && (max == null || value <= max)).length +
-      (includeMissing ? histogram.missing : 0);
+    : histogram.finite.filter((value) => (min == null || value >= min) && (max == null || value <= max)).length;
   const formatValue = (value: number) => (field.display ? formattedValueToString(field.display(value)) : String(value));
   const maxCount = Math.max(1, ...histogram.bins);
   const minimumLabel = isTime
@@ -123,25 +145,15 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
   const maximumLabel = isTime ? t('grafana-ui.table.range.end', 'End') : t('grafana-ui.table.range.maximum', 'Maximum');
 
   return (
-    <div
+    <Stack
       ref={(element) => {
         calendarAnchor.current = element?.parentElement ?? null;
       }}
-      className={styles.container}
+      direction="column"
+      gap={1.5}
       role="group"
       aria-label={t('grafana-ui.table.range.label', 'Filter {{field}}', { field: getDisplayName(field) })}
     >
-      <strong>{getDisplayName(field)}</strong>
-      <div className={styles.muted}>
-        {isTime
-          ? t('grafana-ui.table.range.timezone', 'Timezone: {{timeZone}}', {
-              timeZone: timeZone === 'browser' ? Intl.DateTimeFormat().resolvedOptions().timeZone : timeZone,
-              interpolation: { escapeValue: false },
-            })
-          : t('grafana-ui.table.range.units', 'Exact bounds use raw values (field unit: {{unit}}).', {
-              unit: field.config.unit ?? 'none',
-            })}
-      </div>
       {!isTime && (
         <>
           {histogram.bins.length > 0 ? (
@@ -178,24 +190,26 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
                 })}
               </svg>
               {histogram.min !== histogram.max && (
-                <RangeSliderG14
-                  min={histogram.min}
-                  max={histogram.max}
-                  value={[sliderMin, sliderMax]}
-                  step={sliderStep}
-                  tooltipAlwaysVisible={false}
-                  ariaLabelForHandle={[minimumLabel, maximumLabel]}
-                  formatTooltipResult={(value) => formatValue(Number(value.toFixed(decimals)))}
-                  onChange={([min, max]) => {
-                    setLower(sliderBoundText(min, sliderMin, lower, decimals));
-                    setUpper(sliderBoundText(max, sliderMax, upper, decimals));
-                  }}
-                />
+                <Box paddingRight={1}>
+                  <RangeSliderG14
+                    min={histogram.min}
+                    max={histogram.max}
+                    value={[sliderMin, sliderMax]}
+                    step={sliderStep}
+                    tooltipAlwaysVisible={false}
+                    ariaLabelForHandle={[minimumLabel, maximumLabel]}
+                    formatTooltipResult={(value) => formatValue(Number(value.toFixed(decimals)))}
+                    onChange={([min, max]) => {
+                      setLower(sliderBoundText(min, sliderMin, lower, decimals));
+                      setUpper(sliderBoundText(max, sliderMax, upper, decimals));
+                    }}
+                  />
+                </Box>
               )}
-              <div className={styles.endpoints}>
+              <Stack justifyContent="space-between">
                 <span>{formatValue(histogram.min)}</span>
                 <span>{formatValue(histogram.max)}</span>
-              </div>
+              </Stack>
             </>
           ) : (
             <div>{t('grafana-ui.table.range.empty', 'No finite values match the other filters.')}</div>
@@ -210,25 +224,35 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
               label: minimumLabel,
               inputRef: minimumRef,
               value: lower,
-              placeholder: t('grafana-ui.table.range.unbounded', 'No limit'),
+              placeholder: Number.isFinite(histogram.min)
+                ? formatInput(histogram.min)
+                : t('grafana-ui.table.range.unbounded', 'No limit'),
               testId: rangeSelectors.minimumInput,
               onChange: setLower,
+              invalid: minimumInvalid || boundsReversed,
+              errorId: validationId,
             }}
             to={{
               label: maximumLabel,
               value: upper,
-              placeholder: t('grafana-ui.table.range.unbounded', 'No limit'),
+              placeholder: Number.isFinite(histogram.max)
+                ? formatInput(histogram.max)
+                : t('grafana-ui.table.range.unbounded', 'No limit'),
               testId: rangeSelectors.maximumInput,
               onChange: setUpper,
+              invalid: maximumInvalid || boundsReversed,
+              errorId: validationId,
             }}
             calendar={{
               isFullscreen: true,
+              minDate: Number.isFinite(histogram.min) ? calendarBoundary(histogram.min, timeZone, false) : undefined,
+              maxDate: Number.isFinite(histogram.max) ? calendarBoundary(histogram.max, timeZone, true) : undefined,
               from: dateTimeParse(min ?? (Number.isFinite(histogram.min) ? histogram.min : Date.now()), { timeZone }),
               to: dateTimeParse(max ?? (Number.isFinite(histogram.max) ? histogram.max : Date.now()), { timeZone }),
               timeZone,
               onApply: () => {
                 if (!invalid) {
-                  onApply({ min, max, includeMissing });
+                  onApply({ min, max, includeMissing: false });
                 }
               },
               onChange: (from, to) => {
@@ -236,11 +260,12 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
                 setUpper(formatInput(to.endOf('day').valueOf()));
               },
             }}
+            calendarDisabled={histogram.finite.length === 0}
           />
         </div>
       ) : (
         <Stack gap={1}>
-          <div className={styles.boundInput}>
+          <Stack direction="column" gap={0.5} grow={1} minWidth={0}>
             <label htmlFor={`${id}-min`}>{minimumLabel}</label>
             <Input
               id={`${id}-min`}
@@ -250,10 +275,12 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
               inputMode="decimal"
               value={lower}
               placeholder={t('grafana-ui.table.range.unbounded', 'No limit')}
+              invalid={minimumInvalid || boundsReversed}
+              aria-describedby={minimumInvalid || boundsReversed ? validationId : undefined}
               onChange={(event) => setLower(event.currentTarget.value)}
             />
-          </div>
-          <div className={styles.boundInput}>
+          </Stack>
+          <Stack direction="column" gap={0.5} grow={1} minWidth={0}>
             <label htmlFor={`${id}-max`}>{maximumLabel}</label>
             <Input
               id={`${id}-max`}
@@ -262,59 +289,34 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
               inputMode="decimal"
               value={upper}
               placeholder={t('grafana-ui.table.range.unbounded', 'No limit')}
+              invalid={maximumInvalid || boundsReversed}
+              aria-describedby={maximumInvalid || boundsReversed ? validationId : undefined}
               onChange={(event) => setUpper(event.currentTarget.value)}
             />
-          </div>
+          </Stack>
         </Stack>
       )}
-      <label className={styles.missing}>
-        <input
-          type="checkbox"
-          data-testid={rangeSelectors.includeMissingCheckbox}
-          checked={includeMissing}
-          onChange={(event) => setIncludeMissing(event.currentTarget.checked)}
-        />
-        {t('grafana-ui.table.range.missing', 'Include missing / non-finite values ({{amount}})', {
-          amount: histogram.missing,
-        })}
-      </label>
       {invalid && (
-        <div role="alert">
+        <FieldValidationMessage id={validationId}>
           {t('grafana-ui.table.range.invalid', 'Enter valid bounds with minimum no greater than maximum.')}
-        </div>
+        </FieldValidationMessage>
       )}
-      <div role="status">
-        {t('grafana-ui.table.range.matches', '{{amount}} of {{total}} rows match', {
-          amount: count,
-          total: values.length,
-        })}
-      </div>
-      <div className={styles.actions}>
-        <Button size="sm" fill="text" variant="secondary" onClick={onClear} data-testid={rangeSelectors.clearButton}>
-          {t('grafana-ui.table.range.clear', 'Clear')}
-        </Button>
-        <Button size="sm" variant="secondary" onClick={onCancel} data-testid={rangeSelectors.cancelButton}>
-          {t('grafana-ui.table.range.cancel', 'Cancel')}
-        </Button>
-        <Button
-          size="sm"
-          disabled={invalid}
-          data-testid={rangeSelectors.applyButton}
-          onClick={() => onApply({ min, max, includeMissing })}
-        >
-          {t('grafana-ui.table.range.apply', 'Apply')}
-        </Button>
-      </div>
-    </div>
+      <FilterPopupFooter
+        selectedRows={count}
+        totalRows={values.length}
+        onClear={range !== undefined ? onClear : undefined}
+        onCancel={onCancel}
+        onApply={() => onApply({ min, max, includeMissing: false })}
+        applyLabel={t('grafana-ui.table.range.apply', 'Apply')}
+        applyDisabled={invalid}
+        clearTestId={rangeSelectors.clearButton}
+        cancelTestId={rangeSelectors.cancelButton}
+        applyTestId={rangeSelectors.applyButton}
+      />
+    </Stack>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({ width: 340, display: 'flex', flexDirection: 'column', gap: theme.spacing(1.5) }),
   histogram: css({ width: '100%', height: 80, padding: '0 6px' }),
-  muted: css({ color: theme.colors.text.secondary, fontSize: theme.typography.bodySmall.fontSize }),
-  endpoints: css({ display: 'flex', justifyContent: 'space-between', color: theme.colors.text.secondary }),
-  boundInput: css({ flex: 1, minWidth: 0 }),
-  missing: css({ display: 'flex', gap: theme.spacing(1), alignItems: 'center' }),
-  actions: css({ display: 'flex', justifyContent: 'flex-end', gap: theme.spacing(1) }),
 });
