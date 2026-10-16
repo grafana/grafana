@@ -19,6 +19,7 @@ import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
 import { type TableRowTransformations } from './TableFilterContext';
+import { type CellOption } from './cellMenuOptions';
 import { type TextAlign } from './styles';
 import { type ApplyFilterResult } from './utils';
 
@@ -219,18 +220,21 @@ export type InspectCellProps = {
   preformatted?: boolean;
 };
 
-export interface TableCellActionsProps {
+interface TableCellActionsBaseProps {
   onAddToAssistant?: () => void;
-  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   displayName: string;
-  cellInspect: boolean;
-  showFilters: boolean;
   setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }
+
+export type TableCellActionsProps = TableCellActionsBaseProps &
+  (
+    | { tableRefreshEnabled: true; groups: CellOption[][]; cellInspect?: never; showFilters?: never }
+    | { tableRefreshEnabled?: false; groups?: never; cellInspect: boolean; showFilters: boolean }
+  );
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {

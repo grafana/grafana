@@ -253,6 +253,7 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 	router.served[mt.group.Name] = &handlerEntry{backend: mt, handler: http.NotFoundHandler(), lastKey: mt.key, breaker: newGroupBreaker(mt.group.Name)}
 	router.publish(t.Context())
 
+	fromAggregator := false
 	serve := func(namespace, path, accept string) *httptest.ResponseRecorder {
 		mu.Lock()
 		calls = nil
@@ -260,6 +261,9 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 		req := requestWithNamespace(http.MethodGet, path, namespace)
 		if accept != "" {
 			req.Header.Set("Accept", accept)
+		}
+		if fromAggregator {
+			req.Header.Set(aggregatorOriginHeader, "true")
 		}
 		res := httptest.NewRecorder()
 		router.HandleFunc(res, req, http.NotFoundHandler())
@@ -315,6 +319,14 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 		require.Equal(t, []string{"discovery", "mt.grafana.app", "stack.grafana.app"}, groupList("stacks-123"))
 		require.Equal(t, []string{"discovery", "mt.grafana.app", "stack.grafana.app"}, aggregated("stacks-123"))
 		require.Equal(t, []string{"apis/discovery/v1alpha2", "apis/mt.grafana.app/v2", "apis/stack.grafana.app/v1"}, openAPIIndex("stacks-123"))
+	})
+	t.Run("stacks-123 aggregator gets the defaults", func(t *testing.T) {
+		fromAggregator = true
+		defer func() { fromAggregator = false }()
+		require.Equal(t, []string{"default.grafana.app", "discovery", "mt.grafana.app"}, groupList("stacks-123"))
+		require.Equal(t, []string{"default.grafana.app", "discovery", "mt.grafana.app"}, aggregated("stacks-123"))
+		require.Equal(t, []string{"apis/default.grafana.app/v1", "apis/discovery/v1alpha2", "apis/mt.grafana.app/v2"}, openAPIIndex("stacks-123"))
+		require.EqualValues(t, 3, st.fallbackRefused.Load())
 	})
 
 	t.Run("OpenAPI documents are not shared across callers", func(t *testing.T) {

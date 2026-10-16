@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "Failed to load content: {{error}}",
+        "hide-secrets": "Hide secrets",
         "loading": "Loading content...",
         "notifications-title": "Notifications Config Preview",
+        "redaction-error": "This configuration could not be safely previewed and was not displayed.",
+        "reveal-disabled-tooltip": "Nothing was redacted in this configuration.",
+        "reveal-secrets": "Reveal secrets",
         "rules-title": "Alert Rules Preview"
       },
       "recording-rules": "Recording rules",
@@ -6038,6 +6042,24 @@
       "tooltip-next": "Next",
       "tooltip-previous": "Previous"
     },
+    "modes": {
+      "agent-edit": "Agent editing",
+      "change-mode": "Change dashboard mode",
+      "current": "Dashboard mode: {{mode}}",
+      "discard": "Discard changes",
+      "discard-body": "This restores the last saved dashboard.",
+      "discard-title": "Discard dashboard changes?",
+      "edit": "Editing",
+      "edit-description": "Manually edit panels, layout, and settings.",
+      "empty": "This dashboard has no panels.",
+      "label": "Dashboard mode",
+      "save-before-viewing": "Save the dashboard before switching to Viewing.",
+      "switch-to-editing": "Switch to Editing",
+      "switch-to-viewing": "Switch to Viewing",
+      "view": "Viewing",
+      "view-changes": "View changes",
+      "view-description": "View and explore the dashboard."
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Assistant schema edit"
@@ -6156,6 +6178,9 @@
           "no-template-variables-found": "No template variables found"
         }
       }
+    },
+    "review": {
+      "no-changes": "No changes to save"
     },
     "rows-layout": {
       "cancel": "Cancel",
@@ -10822,8 +10847,6 @@
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
         "button": "Filter {{name}}",
-        "cancel": "Cancel",
-        "clear": "Clear filter",
         "operator": {
           "contains": "Contains",
           "equals": "Equals",
@@ -10838,8 +10861,7 @@
         "remove-all": "Remove all displayed values from the filter",
         "select-all": "Select all",
         "selected": "{{ numSelected }} selected",
-        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)",
-        "unsupported": "This filter cannot be edited here. Clear it to create a new filter."
+        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)"
       },
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",

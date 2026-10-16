@@ -98,6 +98,16 @@ func TestScheduler(t *testing.T) {
 			require.NoError(t, services.StopAndAwaitTerminated(context.Background(), scheduler))
 		})
 
+		t.Run("ExecutionCapAtOrAboveWorkerCount", func(t *testing.T) {
+			for _, limit := range []int{4, 5} {
+				t.Run(fmt.Sprint(limit), func(t *testing.T) {
+					q := NewQueue(&QueueOptions{MaxConcurrentPerTenant: limit})
+					_, err := NewScheduler(q, &Config{NumWorkers: 4})
+					require.NoError(t, err)
+				})
+			}
+		})
+
 		t.Run("NilQueue", func(t *testing.T) {
 			cfg := Config{
 				NumWorkers: 2,

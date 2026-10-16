@@ -45,7 +45,7 @@ interface HeaderCellProps {
   hasColumnSidebar?: boolean;
   onHideColumn?: () => void;
   canHideColumn?: boolean;
-  onOpenColumnPanel?: () => void;
+  onOpenColumnPanel?: (columnKey: string) => void;
 }
 
 const TABBABLE_SELECTOR = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -258,7 +258,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               onOpenFilter={openFilter}
               onHideColumn={hideable ? onHideColumn : undefined}
               canHideColumn={canHideColumn}
-              onOpenColumnPanel={onOpenColumnPanel}
+              onOpenColumnPanel={() => onOpenColumnPanel?.(column.key)}
               onAddToAssistant={onAddToAssistant}
             />
           </Stack>
