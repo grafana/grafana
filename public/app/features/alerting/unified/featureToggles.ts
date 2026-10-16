@@ -1,8 +1,6 @@
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { getPreviewToggle } from './previewToggles';
-import { isAdmin } from './utils/environment';
 
 export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 
@@ -30,13 +28,6 @@ export const shouldUseAlertingListViewV2 = () => {
   // even after that button is no longer offered to them.
   return getPreviewToggle('alertingListViewV2') ?? true;
 };
-
-export const shouldAllowRecoveringDeletedRules = () =>
-  isAdmin() &&
-  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingRuleRecoverDeleted, true) &&
-  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertRuleRestore, true);
-
-export const shouldAllowPermanentlyDeletingRules = () => shouldAllowRecoveringDeletedRules();
 
 export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUseBackendFilters ?? false;
 
