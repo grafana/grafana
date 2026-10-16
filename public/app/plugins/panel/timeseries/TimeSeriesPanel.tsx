@@ -34,6 +34,8 @@ import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getComparisonFieldPairs, getTimezones, prepareGraphableFields } from './utils';
 
+const noAnnotations: DataFrame[] = [];
+
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
 export const TimeSeriesPanel = ({
@@ -242,17 +244,15 @@ export const TimeSeriesPanel = ({
                   setNewRange={setNewAnnotationRange}
                 />
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                {data.annotations && (
-                  <ExemplarsPlugin
-                    openExemplar={experimentalOpenExemplar}
-                    visibleSeries={getVisibleLabels(uplotConfig, frames)}
-                    config={uplotConfig}
-                    exemplars={data.annotations}
-                    timeZone={timeZone}
-                    maxHeight={options.tooltip.maxHeight}
-                    maxWidth={options.tooltip.maxWidth}
-                  />
-                )}
+                <ExemplarsPlugin
+                  openExemplar={experimentalOpenExemplar}
+                  visibleSeries={getVisibleLabels(uplotConfig, frames)}
+                  config={uplotConfig}
+                  exemplars={data.annotations ?? noAnnotations}
+                  timeZone={timeZone}
+                  maxHeight={options.tooltip.maxHeight}
+                  maxWidth={options.tooltip.maxWidth}
+                />
               </>
             )}
           </>

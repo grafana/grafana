@@ -2,10 +2,14 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
+  applyFieldOverrides,
   createDataFrame,
+  createTheme,
   type DataFrame,
   DataFrameType,
+  dateTime,
   EventBusSrv,
+  FieldConfigOptionsRegistry,
   FieldType,
   getDefaultTimeRange,
   type PanelProps,
@@ -118,6 +122,78 @@ describe('TimeSeriesPanel', () => {
 
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeInTheDocument();
+  });
+
+  it('opens a retained exemplar request when annotations arrive after the chart initializes', async () => {
+    const from = Date.UTC(2026, 9, 15, 10);
+    const to = Date.UTC(2026, 9, 15, 11);
+    const props = getPanelProps(
+      { ...defaultOptions, legend: { ...defaultOptions.legend, showLegend: false } },
+      {
+        timeRange: {
+          from: dateTime(from),
+          to: dateTime(to),
+          raw: { from: dateTime(from), to: dateTime(to) },
+        },
+      }
+    );
+    const time = (from + to) / 2;
+    const [series, exemplar] = applyFieldOverrides({
+      data: [
+        createDataFrame({
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [from, time, to] },
+            { name: 'Value', type: FieldType.number, values: [10, 20, 30], labels: {}, config: { custom: {} } },
+          ],
+        }),
+        createDataFrame({
+          name: 'exemplar',
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [time] },
+            { name: 'Value', type: FieldType.number, values: [20] },
+            { name: 'traceID', type: FieldType.string, values: ['late-annotation-trace'] },
+          ],
+        }),
+      ],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+      fieldConfigRegistry: new FieldConfigOptionsRegistry(),
+    });
+    props.data = { ...props.data, series: [series], annotations: undefined };
+    let pending = true;
+    const onHandled = jest.fn(() => {
+      pending = false;
+    });
+    const context = {
+      eventsScope: 'test',
+      eventBus: new EventBusSrv(),
+      experimentalOpenExemplar: {
+        getRequest: () => (pending ? { requestId: 'late-annotations', frameIndex: 0, rowIndex: 0 } : undefined),
+        onHandled,
+      },
+    };
+    const { rerender } = render(
+      <PanelContextProvider value={context}>
+        <TimeSeriesPanel {...props} />
+      </PanelContextProvider>
+    );
+    const chart = await screen.findByTestId('uplot-main-div');
+    await waitFor(() => expect(chart.querySelector('.u-over')).toBeVisible());
+    const plotOverlay = chart.querySelector('.u-over');
+    expect(onHandled).not.toHaveBeenCalled();
+
+    rerender(
+      <PanelContextProvider value={context}>
+        <TimeSeriesPanel {...props} data={{ ...props.data, annotations: [exemplar] }} />
+      </PanelContextProvider>
+    );
+
+    expect(await screen.findByText('late-annotation-trace')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeVisible();
+    expect(chart.querySelector('.u-over')).toBe(plotOverlay);
+    expect(onHandled).toHaveBeenCalledTimes(1);
+    expect(onHandled).toHaveBeenCalledWith('late-annotations');
   });
 
   it('should show error view when series is empty', () => {
