@@ -74,8 +74,8 @@ describe('AlertInstanceSilenceAction', () => {
   });
 
   it('closes the drawer on cancel without navigating', async () => {
-    const locationBefore = locationService.getLocation();
     const { user } = render(<AlertInstanceSilenceAction rule={rule} instance={instance} />);
+    const locationBefore = locationService.getLocation();
 
     await user.click(await findSilenceButton());
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
