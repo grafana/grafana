@@ -101,6 +101,8 @@ interface BaseTableProps {
   /** Experimental transformation-backed table view, explicitly owned by its host. */
   rowTransformationsEnabled?: boolean;
   rowTransformations?: TableRowTransformations;
+  /** Called once when table value-filter evaluation fails. The host may show a notification. */
+  onFilterError?: (error: Error) => void;
   ariaLabel?: string;
   data: DataFrame;
   width: number;

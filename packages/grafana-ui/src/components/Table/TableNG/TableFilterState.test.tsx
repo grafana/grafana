@@ -269,6 +269,121 @@ it('hides an unfamiliar predicate while keeping it active', () => {
   warning.mockRestore();
 });
 
+it('shows unfiltered rows and disables filter controls after projection fails, then recovers on configuration change', () => {
+  const { props, api, filter } = setup();
+  const invalid = filter('Name', ['alpha']);
+  invalid.options.filters[0].config.id = 'missingMatcher';
+  api.set('table', [invalid]);
+  const notify = jest.fn();
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const report = jest.spyOn(faro.api, 'pushError').mockImplementation(() => {});
+  const { rerender } = render(<TableNG {...props} onFilterError={notify} />);
+
+  expect(screen.getAllByRole('row')).toHaveLength(4);
+  expect(screen.getByRole('button', { name: 'Filter Other' })).toBeDisabled();
+  expect(api.get('table')).toEqual([invalid]);
+  expect(notify).toHaveBeenCalledTimes(1);
+  expect(report).toHaveBeenCalledTimes(1);
+  expect(report).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('missingMatcher') }), {
+    context: { source: 'TableNG.filter' },
+  });
+
+  rerender(<TableNG {...props} onFilterError={notify} />);
+  expect(notify).toHaveBeenCalledTimes(1);
+  expect(report).toHaveBeenCalledTimes(1);
+
+  act(() => api.set('table', [filter('Name', ['alpha'])]));
+  expect(screen.getAllByRole('row')).toHaveLength(2);
+  expect(screen.getByRole('button', { name: 'Filter Other' })).toBeEnabled();
+  expect(notify).toHaveBeenCalledTimes(1);
+  report.mockRestore();
+  consoleError.mockRestore();
+});
+
+it('removes refreshed-header filter actions while filtering is disabled', async () => {
+  const { props, api, filter } = setup();
+  const invalid = filter('Name', ['alpha']);
+  invalid.options.filters[0].config.id = 'missingMatcher';
+  api.set('table', [invalid]);
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  render(<TableNG {...props} tableRefreshEnabled onFieldAddToAssistant={jest.fn()} />);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Column options for Other' }));
+  expect(screen.queryByRole('menuitem', { name: 'Filter values' })).not.toBeInTheDocument();
+  expect(screen.getByRole('menuitem', { name: 'Add to Assistant' })).toBeInTheDocument();
+  consoleError.mockRestore();
+});
+
+it('retries filtering when table data changes, reporting only once per failed attempt', () => {
+  const { props, api, filter } = setup();
+  const invalid = filter('Name', ['alpha']);
+  invalid.options.filters[0].config.id = 'missingMatcher';
+  api.set('table', [invalid]);
+  const notify = jest.fn();
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const report = jest.spyOn(faro.api, 'pushError').mockImplementation(() => {});
+  const { rerender } = render(<TableNG {...props} onFilterError={notify} />);
+  props.data = { ...props.data };
+  rerender(<TableNG {...props} onFilterError={notify} />);
+
+  expect(screen.getAllByRole('row')).toHaveLength(4);
+  expect(notify).toHaveBeenCalledTimes(2);
+  expect(report).toHaveBeenCalledTimes(2);
+  report.mockRestore();
+  consoleError.mockRestore();
+});
+
+it('shows parent rows when a nested filter fails', () => {
+  const { props, api, filter } = setup();
+  const nested = toDataFrame({ fields: [{ name: 'Nested', type: FieldType.string, values: ['one', 'two'] }] });
+  props.data = applyFieldOverrides({
+    data: [
+      toDataFrame({
+        fields: [
+          { name: 'Name', type: FieldType.string, values: ['alpha', 'beta'] },
+          { name: '__nestedFrames', type: FieldType.nestedFrames, values: [[nested], [nested]] },
+        ],
+      }),
+    ],
+    fieldConfig: { defaults: {}, overrides: [] },
+    theme: createTheme(),
+    replaceVariables: (s) => s,
+  })[0];
+  const invalid = filter('Nested', ['one']);
+  invalid.options.target = { ...invalid.options.target, parentIndex: 0 };
+  invalid.options.filters[0].config.id = 'missingMatcher';
+  api.set('table', [invalid]);
+  const notify = jest.fn();
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  render(<TableNG {...props} onFilterError={notify} />);
+
+  expect(screen.getByText('alpha')).toBeInTheDocument();
+  expect(screen.getByText('beta')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Filter Name' })).toBeDisabled();
+  expect(notify).toHaveBeenCalledTimes(1);
+  expect(api.get('table')).toEqual([invalid]);
+  consoleError.mockRestore();
+});
+
+it('does not recover unrelated table rendering errors as filter failures', () => {
+  const { props } = setup();
+  const notify = jest.fn();
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const BrokenTable = () => {
+    throw new Error('render failed');
+  };
+
+  expect(() =>
+    render(
+      <TableFilterProvider props={{ ...props, onFilterError: notify }}>
+        <BrokenTable />
+      </TableFilterProvider>
+    )
+  ).toThrow('render failed');
+  expect(notify).not.toHaveBeenCalled();
+  consoleError.mockRestore();
+});
+
 it('keeps the filtered rows without adding a clear-all control', () => {
   const { props, api, filter } = setup();
   api.set('table', [filter('Name', ['alpha'])]);

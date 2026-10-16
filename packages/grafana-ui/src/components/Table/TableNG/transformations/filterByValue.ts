@@ -68,7 +68,7 @@ export function activeFilters(
   });
 }
 
-export function readFieldFilters(configs: readonly DataTransformerConfig[], context: RowFilterContext) {
+function readFieldFilters(configs: readonly DataTransformerConfig[], context: RowFilterContext) {
   return configs.filter(
     (config): config is FilterByValueConfig =>
       isTableFilter(config, context.frameKey) &&

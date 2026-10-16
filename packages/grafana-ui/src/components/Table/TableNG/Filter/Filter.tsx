@@ -10,6 +10,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
 import { Popover } from '../../../Tooltip/Popover';
+import { useTableFilters } from '../TableFilterContext';
 import { type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
@@ -32,6 +33,7 @@ interface Props {
 export const Filter = memo(
   ({ name, field, timeZone, iconClassName, parentIndex, crossFilterRows, crossFilterTailRows }: Props) => {
     const ref = useRef<HTMLButtonElement>(null);
+    const filteringDisabled = useTableFilters()?.filteringDisabled;
     const styles = useStyles2(getStyles);
     const { isPopoverVisible, setPopoverVisible, filterEnabled, popupProps } = useFilterPopupState({
       name,
@@ -47,6 +49,7 @@ export const Filter = memo(
         className={styles.headerFilter}
         ref={ref}
         type="button"
+        disabled={filteringDisabled}
         aria-haspopup="dialog"
         aria-expanded={isPopoverVisible}
         aria-label={t('grafana-ui.table.filter.button', `Filter {{name}}`, {

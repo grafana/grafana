@@ -19,6 +19,7 @@ import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
+import { useTableFilters } from './TableFilterContext';
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { RowExpander } from './components/RowExpander';
 import { COLUMN, NESTED_LAST_ROW_CLASS, TABLE } from './constants';
@@ -74,6 +75,7 @@ const EXPANDED_COLUMN_KEY = 'expanded';
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
 export function TableNested(props: TableNGProps & { nestedFramesField: Field<DataFrame[]> }) {
+  const filteringDisabled = useTableFilters()?.filteringDisabled;
   const {
     cellHeight,
     data,
@@ -463,7 +465,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       setInspectCell,
       gridRef,
       getCellActions,
-      onCellFilterAdded,
+      onCellFilterAdded: filteringDisabled ? undefined : onCellFilterAdded,
       onFieldAddToAssistant,
       onCellAddToAssistant,
       frozenColumns,
@@ -491,6 +493,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       getTextColorForBackground,
       maxRowHeight,
       onCellFilterAdded,
+      filteringDisabled,
       onFieldAddToAssistant,
       onCellAddToAssistant,
       rowHeight,

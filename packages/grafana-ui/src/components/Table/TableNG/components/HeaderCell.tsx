@@ -79,6 +79,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const controlAlignment = headerCellWrap ? 'flex-end' : 'center';
   const displayName = getDisplayName(field);
   const filterable = isFieldFilterable(field);
+  const tableFilters = useTableFilters();
+  const filteringDisabled = tableFilters?.filteringDisabled;
   const hideable = isFieldHideable(field);
   const reorderable = column.draggable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
@@ -98,12 +100,12 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
   const showFilterControl = filterable && !unsupportedReason;
   const columnOptions = getColumnMenuOptions({
-    filterable: showFilterControl,
+    filterable: showFilterControl && !filteringDisabled,
     hideable: hideable && Boolean(onHideColumn),
     hasColumnSidebar: Boolean(hasColumnSidebar && onOpenColumnPanel),
     hasAssistantAction: Boolean(onAddToAssistant),
   });
-  const hasActiveFilter = showFilterControl && filterEnabled;
+  const hasActiveFilter = showFilterControl && filterEnabled && !filteringDisabled;
 
   useEffect(() => {
     if (filterable && unsupportedReason) {
@@ -122,12 +124,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     [setPopoverVisible]
   );
 
-  const tableFilters = useTableFilters();
   useEffect(() => {
-    if (!filterable && filterEnabled && !unsupportedReason) {
+    if (!filteringDisabled && !filterable && filterEnabled && !unsupportedReason) {
       tableFilters?.clearFilter(field, parentIndex);
     }
-  }, [filterable, filterEnabled, unsupportedReason, tableFilters, field, parentIndex]);
+  }, [filterable, filterEnabled, filteringDisabled, unsupportedReason, tableFilters, field, parentIndex]);
 
   if (hideHeader) {
     return null;

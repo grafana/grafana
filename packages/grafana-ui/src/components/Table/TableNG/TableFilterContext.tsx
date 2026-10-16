@@ -2,13 +2,13 @@ import { createContext, useContext, useMemo } from 'react';
 
 import { type Field, type MatcherConfig } from '@grafana/data';
 import { type FilterByValueConfig } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
+import { faro } from '@grafana/faro-web-sdk';
 
-import { Button } from '../../Button/Button';
 import { ErrorBoundary } from '../../ErrorBoundary/ErrorBoundary';
 import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext';
 
 import { matchesTableFilter } from './transformations/filterByValue';
+import { TableFilterEvaluationError } from './transformations/rowProjection';
 import { useRowTransformations } from './transformations/useRowTransformations';
 import { unsupportedFilterReason } from './transformations/valueFilter';
 import { type TableNGProps } from './types';
@@ -21,6 +21,7 @@ export interface TableRowTransformations {
 }
 interface FilterContext {
   filters: readonly FilterByValueConfig[];
+  filteringDisabled?: boolean;
   getFilters: (field: Field, parentIndex?: number) => readonly FilterByValueConfig[];
   applyFilter: (field: Field, predicate: MatcherConfig, parentIndex?: number) => void;
   clearFilter: (field: Field, parentIndex?: number) => void;
@@ -66,21 +67,39 @@ export function useHeaderFilterState() {
 
 export function TableFilterProvider({ props, children }: { props: TableNGProps; children: React.ReactNode }) {
   const { configs, value } = useRowTransformations(props);
-  const { clearFilters } = value;
   return (
-    <TableFilterContext.Provider value={value}>
-      <ErrorBoundary dependencies={[configs, props.data]}>
-        {({ error }) =>
-          error ? (
-            <div role="alert">
-              {t('grafana-ui.table.view.error', 'Unable to apply this table view.')}
-              <Button onClick={clearFilters}>{t('grafana-ui.table.view.reset', 'Reset view')}</Button>
-            </div>
-          ) : (
-            children
-          )
+    <ErrorBoundary
+      // A new frame, revision, or saved view gets one fresh attempt at filtering.
+      dependencies={[configs, props.data, props.structureRev, props.rowTransformations?.frameKey]}
+      errorLogger={(error) => {
+        if (error instanceof TableFilterEvaluationError) {
+          faro?.api?.pushError(error.originalError, { context: { source: 'TableNG.filter' } });
         }
-      </ErrorBoundary>
-    </TableFilterContext.Provider>
+      }}
+      onError={(error) => {
+        if (error instanceof TableFilterEvaluationError) {
+          props.onFilterError?.(error.originalError);
+        }
+      }}
+    >
+      {({ error }) => {
+        if (error && !(error instanceof TableFilterEvaluationError)) {
+          throw error;
+        }
+        const filteringDisabled = Boolean(error);
+        const context = filteringDisabled
+          ? {
+              ...value,
+              filters: [],
+              filteringDisabled,
+              getFilters: () => [],
+              applyFilter: () => {},
+              clearFilter: () => {},
+              clearFilters: () => {},
+            }
+          : value;
+        return <TableFilterContext.Provider value={context}>{children}</TableFilterContext.Provider>;
+      }}
+    </ErrorBoundary>
   );
 }

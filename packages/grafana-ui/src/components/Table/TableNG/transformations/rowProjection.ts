@@ -7,6 +7,17 @@ import { type ApplyFilterResult } from '../utils';
 import { tableFilterKey, matchesTableFilter } from './filterByValue';
 import { tableViewIndices } from './tableFiltering';
 
+export class TableFilterEvaluationError extends Error {
+  constructor(readonly originalError: Error) {
+    super(originalError.message);
+    this.name = 'TableFilterEvaluationError';
+  }
+}
+
+function asFilterError(error: unknown): TableFilterEvaluationError {
+  return new TableFilterEvaluationError(error instanceof Error ? error : new Error(String(error)));
+}
+
 function createRowProjector(rows: TableRow[], fields: Field[], parentIndex?: number) {
   const parents = rows.filter((row) => row.__depth === 0);
   const frame: DataFrame = {
@@ -36,6 +47,19 @@ export function transformTableFilters(
   filters: readonly FilterByValueConfig[],
   parentIndex?: number
 ): ApplyFilterResult {
+  try {
+    return projectTableFilters(rows, fields, filters, parentIndex);
+  } catch (error) {
+    throw asFilterError(error);
+  }
+}
+
+function projectTableFilters(
+  rows: TableRow[],
+  fields: Field[],
+  filters: readonly FilterByValueConfig[],
+  parentIndex?: number
+): ApplyFilterResult {
   const scoped = filters.filter((config) => !config.disabled && config.options.target?.parentIndex === parentIndex);
   if (!scoped.length) {
     return { filteredRows: rows, crossFilterOrder: [], crossFilterRows: {}, crossFilterTailRows: rows };
@@ -56,7 +80,13 @@ export function transformTableFilters(
       const key = tableFilterKey(field, parentIndex);
       const otherFilters = scoped.filter((config) => !selected.includes(config));
       let cached: TableRow[] | undefined;
-      crossFilterRows[key] = () => (cached ??= projectRows(otherFilters));
+      crossFilterRows[key] = () => {
+        try {
+          return (cached ??= projectRows(otherFilters));
+        } catch (error) {
+          throw asFilterError(error);
+        }
+      };
       crossFilterOrder.push(key);
     }
   }

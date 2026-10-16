@@ -27,7 +27,7 @@ import {
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
 import { supportsColumnManagement, withAdHocTransformCapabilities } from 'app/features/table/tableCapabilities';
-import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
+import { getCurrentFrameIndex, notifyTableFilterError, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { useTableCellAssistant } from './useTableCellAssistant';
@@ -162,6 +162,7 @@ export function TablePanel(props: Props) {
       reorderable={Boolean(adHocColumns)}
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       rowTransformationsEnabled={adHocTransformationsEnabled}
+      onFilterError={notifyTableFilterError}
       rowTransformations={
         adHocTransformationsEnabled && panelContext.adHocTransformations && sourceFrameIndex >= 0
           ? {
