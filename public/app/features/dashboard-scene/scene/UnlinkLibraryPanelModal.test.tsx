@@ -8,6 +8,8 @@ import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 describe('UnlinkLibraryPanelModal', () => {
+  let deactivate: () => void;
+  afterEach(() => deactivate?.());
   it('records unlinking the library panel in the undo history on confirm', () => {
     const panel = new VizPanel({
       key: 'panel-1',
@@ -20,7 +22,7 @@ describe('UnlinkLibraryPanelModal', () => {
       body: DefaultGridLayoutManager.fromVizPanels([panel]),
       overlay: modal,
     });
-    dashboard.state.sidebar.activate();
+    deactivate = dashboard.state.sidebar.activate();
 
     modal.onConfirm();
 

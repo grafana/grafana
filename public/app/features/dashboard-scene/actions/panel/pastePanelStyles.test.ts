@@ -2,6 +2,7 @@ import { store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -26,10 +27,11 @@ function copyStyles(showLegend: boolean) {
 }
 
 describe('pastePanelStyles', () => {
-  let deactivate: () => void;
+  let deactivate: (() => void) | undefined;
 
   afterEach(() => {
     deactivate?.();
+    deactivate = undefined;
     store.delete(LS_STYLES_COPY_KEY);
   });
 
@@ -81,6 +83,27 @@ describe('pastePanelStyles', () => {
     expect(panel.state.options).toEqual({ legend: { showLegend: false } });
     expect(sidebar.state.undoStack).toHaveLength(1);
     expect(sidebar.state.redoStack).toHaveLength(0);
+  });
+
+  it.each([undefined, null])('does not record failed pastes with styles=%s', async (styles) => {
+    const { dashboard, panel, sidebar } = await setup();
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const alert = jest.spyOn(appEvents, 'emit');
+    store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles }));
+    try {
+      pastePanelStyles(dashboard, panel);
+      expect(panel.state.options).toEqual({ legend: { showLegend: true } });
+      expect(alert).toHaveBeenCalledWith('alert-error', ['Error pasting panel styles.']);
+      expect(sidebar.state.undoStack).toHaveLength(0);
+    } finally {
+      error.mockRestore();
+      alert.mockRestore();
+    }
+  });
+
+  it.each(['invalid', [], { options: [] }, { fieldConfig: null }])('rejects malformed styles %j', (styles) => {
+    store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles }));
+    expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
   });
 
   it('does not record pasting when there are no styles to paste', async () => {
