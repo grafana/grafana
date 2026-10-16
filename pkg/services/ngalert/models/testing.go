@@ -1392,7 +1392,7 @@ func ReceiverGen(mutators ...Mutator[Receiver]) func() Receiver {
 		name := util.GenerateShortUID()
 		integration := IntegrationGen(IntegrationMuts.WithName(name))()
 		c := Receiver{
-			UID:          nameToUid(name),
+			UID:          util.GenerateShortUID(),
 			Name:         name,
 			Integrations: []*Integration{&integration},
 			Provenance:   ProvenanceNone,
@@ -1415,7 +1415,6 @@ type ReceiverMutators struct{}
 func (n ReceiverMutators) WithName(name string) Mutator[Receiver] {
 	return func(r *Receiver) {
 		r.Name = name
-		r.UID = nameToUid(name)
 	}
 }
 
@@ -1646,8 +1645,4 @@ func ConvertToRecordingRule(rule *AlertRule) {
 	rule.KeepFiringFor = 0
 	rule.NotificationSettings = nil
 	rule.MissingSeriesEvalsToResolve = nil
-}
-
-func nameToUid(name string) string { // Avoid legacy_storage.NameToUid import cycle.
-	return base64.RawURLEncoding.EncodeToString([]byte(name))
 }

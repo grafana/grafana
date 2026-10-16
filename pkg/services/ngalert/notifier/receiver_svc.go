@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -237,11 +238,6 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	))
 	defer span.End()
 
-	uids := make([]string, 0, len(q.Names))
-	for _, name := range q.Names {
-		uids = append(uids, string(v1.ReceiverUID(name))) // TODO: This won't work with static UIDs.
-	}
-
 	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
@@ -250,7 +246,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		return nil, err
 	}
 
-	receivers, err := revision.GetReceivers(uids)
+	receivers, err := revision.GetReceivers(q.Names)
 	if err != nil {
 		return nil, err
 	}
@@ -261,6 +257,12 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	))
 
 	if rs.includeImported {
+		// Imported receivers have no independent identity of their own, so their UID is always
+		// name-derived - unlike Grafana-managed receivers above, deriving it here is correct.
+		uids := make([]string, 0, len(q.Names))
+		for _, name := range q.Names {
+			uids = append(uids, string(v1.ReceiverUID(name)))
+		}
 		imported := rs.getImportedReceivers(ctx, span, uids, revision)
 		receivers = append(receivers, imported...)
 	}
@@ -408,6 +410,11 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 
 	span.AddEvent("Loaded Alertmanager configuration", trace.WithAttributes(attribute.String("concurrency_token", revision.ConcurrencyToken)))
 
+	// Check for a name collision explicitly, now that UID no longer doubles as a name check.
+	if _, exists := revision.GetReceiversNames()[r.Name]; exists {
+		return nil, models.ErrReceiverExists.Errorf("")
+	}
+
 	createdReceiver := r.Clone()
 	for _, integration := range createdReceiver.Integrations {
 		if err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings); err != nil {
@@ -424,8 +431,16 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
-	// Generate UID from name.
-	createdReceiver.UID = string(v1.ReceiverUID(createdReceiver.Name))
+	// A brand new receiver gets its own independent UID; it has no existing identity to preserve.
+	// A caller may supply its own (validated below); otherwise one is generated. Either way, the
+	// occupancy check in revision.CreateReceiver guards against reusing a UID that's already taken.
+	if createdReceiver.UID != "" {
+		if err := v1.ValidateReceiverUID(createdReceiver.UID); err != nil {
+			return nil, models.ErrReceiverInvalid(err)
+		}
+	} else {
+		createdReceiver.UID = util.GenerateShortUID()
+	}
 
 	result, err = revision.CreateReceiver(&createdReceiver)
 	if err != nil {
