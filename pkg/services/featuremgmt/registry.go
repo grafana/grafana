@@ -3398,6 +3398,8 @@ var (
 			HideFromDocs: true,
 			Expression:   "true",
 			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "datasources.gatewayAuditPolicy",
 			Description:  "Enable support for the query gateway audit policies",
 			Stage:        FeatureStageExperimental,
