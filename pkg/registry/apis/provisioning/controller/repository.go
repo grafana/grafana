@@ -1053,10 +1053,8 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	quotaCtx, quotaSpan := rc.tracer.Start(ctx, "provisioning.controller.check_quota", repoSpanAttrs(obj))
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(quotaCtx, namespace, newQuota)
 	if err == nil && isCurrentlyBlocked && !isQuotaExceeded([]v1.Condition{quotaCondition}) {
-		// The cached count can miss repositories another replica saw. Releasing
-		// on it would let an over-quota repository sync, and replicas disagreeing
-		// would flip it between blocked and unblocked. An overcount only holds a
-		// repository blocked a little longer, so blocking needs no confirmation.
+		// The cached count can miss repositories another replica saw, so confirm
+		// before unblocking. Blocking on an overcount is harmless.
 		quotaCondition, err = rc.quotaChecker.ConfirmRepositoryQuotaConditions(quotaCtx, namespace, newQuota)
 	}
 	quotaSpan.End()

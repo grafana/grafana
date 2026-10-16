@@ -29,9 +29,8 @@ type RepositoryGetter interface {
 	// namespace stays at its quota until a deletion finishes. That keeps the
 	// count answerable from identities alone.
 	CountRepositories(ctx context.Context, namespace string) (int, error)
-	// ConfirmRepositoryCount counts like CountRepositories, from a source that
-	// cannot miss repositories another replica saw. It backs releasing a
-	// repository blocked over quota, so it may be slower.
+	// ConfirmRepositoryCount is CountRepositories from a source that cannot miss
+	// repositories another replica saw. Slower; used before unblocking.
 	ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error)
 }
 
@@ -97,9 +96,7 @@ func (g cachedRepositoryGetter) CountRepositories(_ context.Context, namespace s
 	return len(repos), nil
 }
 
-// ConfirmRepositoryCount reads the same lister: its apiserver watch delivers
-// every event to every replica, so it does not miss repositories the way the
-// NATS snapshot can.
+// ConfirmRepositoryCount reads the same lister: the apiserver watch reaches every replica.
 func (g cachedRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error) {
 	return g.CountRepositories(ctx, namespace)
 }
@@ -146,9 +143,7 @@ func (g clientRepositoryGetter) CountRepositories(ctx context.Context, namespace
 	return count, nil
 }
 
-// ConfirmRepositoryCount lists the namespace from the API. Under round-robin
-// delivery this replica's store can lack repositories whose live ADDED went to
-// another replica until its next re-list.
+// ConfirmRepositoryCount lists the namespace from the API, which the store can lag.
 func (g clientRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error) {
 	objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return g.client.Repositories(namespace).List(ctx, opts)

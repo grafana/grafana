@@ -40,9 +40,7 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 	return c.conditions(ctx, namespace, quotaStatus, c.repos.CountRepositories)
 }
 
-// ConfirmRepositoryQuotaConditions checks like RepositoryQuotaConditions against a
-// count that cannot lag behind other replicas. Use it before releasing a
-// repository blocked over quota.
+// ConfirmRepositoryQuotaConditions is RepositoryQuotaConditions on the confirmed count.
 func (c *RepositoryQuotaChecker) ConfirmRepositoryQuotaConditions(
 	ctx context.Context,
 	namespace string,

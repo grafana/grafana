@@ -4349,11 +4349,7 @@ func TestRepositoryController_process_BlockedOverQuotaSteadyStateIsNotATrigger(t
 	}
 }
 
-// Under round-robin NATS delivery a replica's store can lack a repository whose
-// live ADDED went to another replica. Its cached count then reads the namespace
-// as within quota, but releasing the block on that would let an over-quota
-// repository sync, and replicas disagreeing would flip it back and forth. The
-// count is confirmed against the API first, so the block holds.
+// A replica whose store missed a repository must not unblock on its cached count.
 func TestRepositoryController_process_BlockedRepositoryStaysBlockedWhenTheCacheLags(t *testing.T) {
 	namespace, repoName := "default", "test-repo"
 
@@ -4361,7 +4357,6 @@ func TestRepositoryController_process_BlockedRepositoryStaysBlockedWhenTheCacheL
 	addedElsewhere := blockedOverQuotaRepo(namespace, "added-elsewhere", time.Now(), false)
 	rc, patcher, stub, _ := newQuotaController(t, 1, repo)
 
-	// This replica's store has never seen the second repository; the API has both.
 	getter := informer.NewClientRepositoryGetter(fake.NewClientset(repo, addedElsewhere).ProvisioningV0alpha1(), usinformer.NewStore())
 	rc.repos = getter
 	rc.quotaChecker = NewRepositoryQuotaChecker(getter)
@@ -4374,8 +4369,7 @@ func TestRepositoryController_process_BlockedRepositoryStaysBlockedWhenTheCacheL
 	assert.True(t, isQuotaExceeded(repo.Status.Conditions))
 }
 
-// The confirmation is an API LIST, so it runs only to release a block: a
-// repository the cached count already holds over quota needs none.
+// The confirmation LIST runs only when unblocking.
 func TestRepositoryController_process_ConfirmsOnlyToReleaseABlock(t *testing.T) {
 	namespace, repoName := "default", "test-repo"
 

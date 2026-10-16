@@ -129,8 +129,7 @@ func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "a vanished repository leaves the store")
 }
 
-// The confirmed count lists the API, so it sees repositories this replica's store
-// never received.
+// The confirmed count reads the API, not the store.
 func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
 	client := fake.NewClientset(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
 	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), usinformer.NewStore())
