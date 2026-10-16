@@ -174,10 +174,11 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   `st_discovery_url`, served from the snapshot without a request. Group and version discovery
   (`/apis/<g>[/<v>]`, `/openapi/v3/apis/<g>/<v>`) follow the same rule.
   - A request with `X-Grafana-Aggregator` set came from a stack's aggregator, and forwarding it
-    would loop back to that stack. The fallback answers it with a private 404 before any stack
-    lookup or breaker, and counts it in `grafana_router_stack_fallback_refused_total`; root
-    discovery then serves the defaults. Spoofing the header only switches the fallback off, and
-    groups the router serves directly are unaffected.
+    would loop back to that stack. The fallback answers it with a private 508 Loop Detected
+    before any stack lookup or breaker, and counts it in
+    `grafana_router_stack_fallback_refused_total`; root discovery then serves the defaults.
+    Spoofing the header only switches the fallback off, and groups the router serves directly are
+    unaffected.
 - **The ST discovery cache** (`stackDiscoveryCache`) shares what the fallback fetches among every
   caller that the same stack serves, root discovery included. It is keyed by destination, path,
   query, `Accept` and `Accept-Encoding`, and expires entries after

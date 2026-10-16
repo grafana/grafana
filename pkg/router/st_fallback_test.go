@@ -246,7 +246,7 @@ func TestSingleTenantFallbackRefusesAggregatorRequests(t *testing.T) {
 		req.Header.Set(aggregatorOriginHeader, "true")
 		recorder := httptest.NewRecorder()
 		st.ServeHTTP(recorder, req)
-		require.Equal(t, http.StatusNotFound, recorder.Code, path)
+		require.Equal(t, http.StatusLoopDetected, recorder.Code, path)
 		require.Equal(t, "private", recorder.Header().Get("Cache-Control"), path)
 	}
 	require.EqualValues(t, 3, st.fallbackRefused.Load())

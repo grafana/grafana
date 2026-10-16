@@ -293,12 +293,12 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// A 404 tells the aggregator the router doesn't serve the group. For root
-	// discovery the router serves its defaults instead.
+	// Forwarding would send the request back to the stack that sent it. For
+	// root discovery the router serves its defaults instead.
 	if req.Header.Get(aggregatorOriginHeader) != "" {
 		st.fallbackRefused.Add(1)
 		w.Header().Set("Cache-Control", "private")
-		http.NotFound(w, req)
+		http.Error(w, "request from a stack's aggregator would loop back to it", http.StatusLoopDetected)
 		return
 	}
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
