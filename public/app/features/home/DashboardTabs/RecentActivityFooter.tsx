@@ -19,7 +19,7 @@ interface Props {
 export function RecentActivityFooter({ recent }: Props) {
   const { kinds, counts, total, filter, setFilter, clear } = recent;
   const options: Array<SelectableValue<RecentActivityFilter>> = [
-    { value: '', label: t('home.recent-activity-tab.filter-all', 'All') },
+    { value: 'all', label: t('home.recent-activity-tab.filter-all', 'All') },
     ...kinds.map((kind) => ({ value: kind, label: getPageKindMeta(kind).filterLabel })),
   ];
 
@@ -29,31 +29,29 @@ export function RecentActivityFooter({ recent }: Props) {
   };
 
   const handleFilterChange = (filter: RecentActivityFilter) => {
-    recentActivityFilterChanged({ filter: filter || 'all' });
+    recentActivityFilterChanged({ filter });
     setFilter(filter);
   };
 
   return (
-    <Box padding={1} paddingTop={1.5}>
-      <Stack direction="row" wrap="wrap" alignItems="center" gap={1}>
-        {kinds.length > 1 && (
-          <RadioButtonGroup<RecentActivityFilter>
-            size="sm"
-            aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
-            options={options}
-            value={filter}
-            onChange={handleFilterChange}
-          />
-        )}
-        {/* Grows so the action stays on the right with or without the filter, and when the row wraps. */}
-        <Box grow={1}>
-          <FooterActions>
-            <FooterAction onClick={handleClear}>
-              <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
-            </FooterAction>
-          </FooterActions>
-        </Box>
-      </Stack>
-    </Box>
+    <Stack direction="row" wrap="wrap" alignItems="center" gap={1}>
+      {kinds.length > 1 && (
+        <RadioButtonGroup<RecentActivityFilter>
+          size="sm"
+          aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
+          options={options}
+          value={filter}
+          onChange={handleFilterChange}
+        />
+      )}
+      {/* Grows so the action stays on the right with or without the filter, and when the row wraps. */}
+      <Box grow={1}>
+        <FooterActions>
+          <FooterAction onClick={handleClear}>
+            <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
+          </FooterAction>
+        </FooterActions>
+      </Box>
+    </Stack>
   );
 }

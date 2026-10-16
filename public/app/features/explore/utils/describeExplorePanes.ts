@@ -4,14 +4,7 @@ import { isRecord } from 'app/core/utils/isRecord';
 
 import { parseURL } from '../hooks/useStateSync/parseURL';
 
-/**
- * Datasource-specific query text fields, most common first (Prometheus/Loki, Elastic/Tempo, SQL, Graphite,
- * CloudWatch). This is a hint for a subtitle, not `createQueryText`: that needs the datasource plugin loaded
- * for `getQueryDisplayText`, and its no-plugin fallback is the whole query model as JSON, which must stay
- * faithful for copying but is noise here. Queries that keep their text elsewhere (nested shapes such as
- * Azure's) get no text, not a wrong one.
- */
-const QUERY_TEXT_FIELDS = ['expr', 'query', 'rawSql', 'target', 'expression'] as const;
+import { getQueryExpressionText } from './queries';
 
 /** What a row needs to know about a datasource, by uid and by name: Explore URLs have carried either. */
 export type ExploreDataSources = ReadonlyMap<string, { name: string; mixed: boolean }>;
@@ -41,19 +34,6 @@ export interface ExplorePaneDescription {
   queries: string[];
 }
 
-function getQueryText(query: unknown): string {
-  if (!isRecord(query)) {
-    return '';
-  }
-  for (const field of QUERY_TEXT_FIELDS) {
-    const value = query[field];
-    if (typeof value === 'string' && value.trim()) {
-      return value;
-    }
-  }
-  return '';
-}
-
 /** The uid (or legacy name) a query's own `datasource` points at, in either shape Explore has written. */
 function getQueryRef(query: unknown): string | undefined {
   const ref = isRecord(query) ? query.datasource : undefined;
@@ -68,13 +48,16 @@ function describePane(pane: ExploreUrlState, dataSources: ExploreDataSources): E
   const dataSource = ref ? dataSources.get(ref) : undefined;
   // The v1 migrator keeps `null` query elements and the v0 parser can keep a non-array `queries`.
   const queries: unknown[] = Array.isArray(pane.queries) ? pane.queries : [];
-  const texts = queries.map((query) => {
-    const text = getQueryText(query);
+  const texts = queries.flatMap((query) => {
+    const text = getQueryExpressionText(query);
+    if (!text) {
+      return [];
+    }
     // In a mixed pane each query names its own datasource; the pane's name alone would not say which.
-    const queryRef = dataSource?.mixed && text ? getQueryRef(query) : undefined;
-    return queryRef ? `${dataSources.get(queryRef)?.name ?? queryRef}: ${text}` : text;
+    const queryRef = dataSource?.mixed ? getQueryRef(query) : undefined;
+    return [queryRef ? `${dataSources.get(queryRef)?.name ?? queryRef}: ${text}` : text];
   });
-  return { datasource: dataSource?.name ?? ref, queries: texts.filter(Boolean) };
+  return { datasource: dataSource?.name ?? ref, queries: texts };
 }
 
 /**

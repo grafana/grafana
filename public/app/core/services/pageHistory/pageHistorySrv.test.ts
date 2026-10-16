@@ -1,6 +1,6 @@
 import { createMemoryHistory } from 'history';
 
-import { store } from '@grafana/data';
+import { type NavModelItem, store } from '@grafana/data';
 import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
@@ -25,11 +25,12 @@ const originalAuthenticatedBy = contextSrv.user.authenticatedBy;
 
 let chrome: AppChromeService;
 
-function startAt(path: string) {
+/** Starts a service at `path`; `navTree` is read on every visit, so a test can change what the menu links to. */
+function startAt(path: string, navTree: NavModelItem[] = []) {
   setLocationService(new HistoryWrapper(createMemoryHistory({ initialEntries: [path] })));
   chrome = new AppChromeService();
   const srv = new PageHistorySrv();
-  stop = srv.start(chrome);
+  stop = srv.start(chrome, () => navTree);
   return srv;
 }
 
@@ -188,6 +189,36 @@ describe('PageHistorySrv', () => {
       { kind: 'app', pathname: '/a/grafana-irm-app/incidents', search: '', lastVisited: T0 + 1 },
       { kind: 'app', pathname: '/a/grafana-irm-app/incidents/5987', search: '?x=1', lastVisited: T0 },
     ]);
+  });
+
+  it('gives a menu destination no row of its own, but refreshes the row it has to where the user left it', async () => {
+    const navTree: NavModelItem[] = [{ text: 'Alert rules', url: '/alerting/list' }];
+    const srv = startAt('/alerting/list?orgId=1', navTree);
+    await srv.getEntries();
+    expect(await srv.getEntries()).toEqual([]);
+
+    locationService.push('/alerting/list?search=firing');
+    expect(await srv.getEntries()).toEqual([
+      { kind: 'alerting', pathname: '/alerting/list', search: '?search=firing', lastVisited: T0 },
+    ]);
+
+    // Clearing the filter is the state the user left the page in; the row must not restore the filter.
+    locationService.push('/alerting/list?orgId=1');
+    expect(await srv.getEntries()).toEqual([
+      { kind: 'alerting', pathname: '/alerting/list', search: '?orgId=1', lastVisited: T0 + 1 },
+    ]);
+  });
+
+  it('reads the menu as it is at each visit, not as it was at start', async () => {
+    const navTree: NavModelItem[] = [];
+    const srv = startAt('/', navTree);
+    await srv.getEntries();
+
+    // The client-built menu fills in after start (permissions, plugins); a visit after that sees it.
+    navTree.push({ text: 'Incidents', url: '/a/grafana-irm-app/incidents' });
+    locationService.push('/a/grafana-irm-app/incidents');
+
+    expect(await srv.getEntries()).toEqual([]);
   });
 
   it('stamps the title a page sets in the chrome onto that page, newest nav wins', async () => {

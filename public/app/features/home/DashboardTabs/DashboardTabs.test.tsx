@@ -668,7 +668,7 @@ describe('DashboardTabs', () => {
       expect(jest.mocked(clearHistoryClicked)).toHaveBeenCalledWith({ dashboard_count: 1, total_count: 3 });
       expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
-      expect(window.localStorage.getItem(FILTER_KEY)).toBe('');
+      expect(window.localStorage.getItem(FILTER_KEY)).toBe('all');
     });
 
     it('ignores a stored filter that no longer matches any page', async () => {

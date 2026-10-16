@@ -2,7 +2,8 @@ import { type NavModelItem } from '@grafana/data';
 import { type ExplorePaneDescription } from 'app/features/explore/utils/describeExplorePanes';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 
-import { type RecentActivityItem, toRow } from './recentActivityRows';
+import { toRow } from './recentActivityRows';
+import { type RecentActivityItem } from './useRecentActivity';
 
 const dashboard = { uid: 'abc', name: 'Service overview', location: 'folder-1' } as DashboardQueryResult;
 const foldersByUid: Record<string, LocationInfo> = { 'folder-1': { kind: 'folder', name: 'Ops', url: '/f' } };
