@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -1038,6 +1039,66 @@ func TestGetOrgUsersForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 		assert.Equal(t, int64(42), got[0].UserID)
 		assert.Equal(t, "other", got[1].Login)
 	})
+}
+
+func TestGetOrgUsersForCurrentOrg_UserID(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
+	for _, value := range []string{"42", "0", "-1", "invalid"} {
+		t.Run(value, func(t *testing.T) {
+			called := false
+			hs := &HTTPServer{
+				Cfg:             setting.NewCfg(),
+				authInfoService: &authinfotest.FakeService{},
+				orgService: &orgtest.FakeOrgService{SearchOrgUsersFn: func(_ context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+					called = true
+					require.Equal(t, int64(42), query.UserID)
+					require.Equal(t, int64(7), query.OrgID)
+					require.True(t, query.ExcludeHiddenUsers)
+					return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{{UserID: 42, UID: "target"}}}, nil
+				}},
+			}
+			ctx := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userId="+value, nil)},
+				SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
+			}
+			resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+			if value == "42" {
+				require.Equal(t, http.StatusOK, resp.Status())
+				require.True(t, called)
+			} else {
+				require.Equal(t, http.StatusBadRequest, resp.Status())
+				require.False(t, called)
+			}
+		})
+	}
+}
+
+func TestGetOrgUsersForCurrentOrg_UserIDBeyondFirstRedirectPage(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+	service := &usertest.MockService{}
+	firstPage := make([]*user.UserSearchHitDTO, 1000)
+	for i := range firstPage {
+		firstPage[i] = &user.UserSearchHitDTO{ID: int64(i + 1)}
+	}
+	service.On("Search", mock.Anything, mock.MatchedBy(func(query *user.SearchUsersQuery) bool {
+		return query.OrgID == 7 && query.Page == 1 && query.Limit == 1000
+	})).Return(&user.SearchUserQueryResult{Users: firstPage, TotalCount: 1001}, nil).Once()
+	service.On("Search", mock.Anything, mock.MatchedBy(func(query *user.SearchUsersQuery) bool {
+		return query.OrgID == 7 && query.Page == 2 && query.Limit == 1000
+	})).Return(&user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{{ID: 1001, UID: "target"}}, TotalCount: 1001}, nil).Once()
+
+	hs := &HTTPServer{Cfg: setting.NewCfg(), userService: service}
+	ctx := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?userId=1001&limit=100", nil)},
+		SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1},
+	}
+	resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+	require.Equal(t, http.StatusOK, resp.Status())
+	var result []org.OrgUserDTO
+	require.NoError(t, json.Unmarshal(resp.Body(), &result))
+	require.Len(t, result, 1)
+	require.Equal(t, "target", result[0].UID)
+	service.AssertExpectations(t)
 }
 
 func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {

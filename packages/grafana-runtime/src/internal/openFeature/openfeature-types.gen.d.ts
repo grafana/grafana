@@ -132,6 +132,7 @@ declare module "@openfeature/core" {
     | "queryEditorNext"
     | "queryeditor.coauthoringUi"
     | "kubernetesTeamsApi"
+    | "kubernetesUsersApi"
     | "dashboard.recentlyDeletedViaTrash"
     | "managedPluginsV2"
     | "analyticsFramework"
