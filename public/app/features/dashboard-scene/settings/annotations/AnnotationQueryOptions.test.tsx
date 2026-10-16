@@ -53,13 +53,18 @@ jest.mock('app/features/annotations/components/StandardAnnotationQueryEditor', (
         }
       }, [onChange]);
       return (
-        <button
-          onClick={() =>
-            onChange(annotation.datasource ? { ...annotation, expr: 'edited after switch' } : editedAnnotation)
-          }
-        >
-          Edit query
-        </button>
+        <>
+          <button onClick={() => onChange({ name: 'Anno', enable: true, iconColor: 'red', expr: 'original' })}>
+            Restore original query
+          </button>
+          <button
+            onClick={() =>
+              onChange(annotation.datasource ? { ...annotation, expr: 'edited after switch' } : editedAnnotation)
+            }
+          >
+            Edit query
+          </button>
+        </>
       );
     },
   };
@@ -103,6 +108,31 @@ describe('AnnotationQueryEditorButton', () => {
 
     await user.click(screen.getByText('Close'));
     expect(sidebar.state.undoStack).toHaveLength(0);
+  });
+
+  it('does not record edits that return to the original query content', async () => {
+    const { layer, query, sidebar, user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Open query editor' }));
+    await user.click(await screen.findByRole('button', { name: 'Edit query' }));
+    await user.click(screen.getByRole('button', { name: 'Restore original query' }));
+    expect(layer.state.query).toEqual(query);
+    expect(layer.state.query).not.toBe(query);
+    await user.click(screen.getByText('Close'));
+    expect(sidebar.state.undoStack).toHaveLength(0);
+  });
+
+  it('records user edits after preparation and undoes to the prepared query', async () => {
+    mockPreparedAnnotation = { name: 'Anno', enable: true, iconColor: 'red', target: { refId: 'Anno' } };
+    const { layer, sidebar, user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Open query editor' }));
+    await user.click(await screen.findByRole('button', { name: 'Edit query' }));
+    await user.click(screen.getByText('Close'));
+    expect(layer.state.query).toBe(editedAnnotation);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+    act(() => sidebar.undoAction());
+    expect(layer.state.query).toBe(mockPreparedAnnotation);
+    act(() => sidebar.redoAction());
+    expect(layer.state.query).toBe(editedAnnotation);
   });
 
   it('records query editor changes as one undoable action when the modal closes', async () => {

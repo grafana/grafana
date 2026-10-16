@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { t } from '@grafana/i18n';
 import { type dataLayers } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema/dist/esm/index.gen';
@@ -209,7 +211,7 @@ export const annotationEditActions = {
     newValue: DataLayer['state']['query'];
     scope: 'query-editor' | 'query-library';
   }) {
-    if (oldValue === newValue) {
+    if (isEqual(oldValue, newValue)) {
       return;
     }
 

@@ -134,18 +134,12 @@ function AnnotationQueryEditor({ layer, onQueryPrepared }: AnnotationQueryEditor
   const { settings: dsi } = useDataSourceInstanceSettings(query?.datasource);
   const isEditorShown = Boolean(ds?.annotations && dsi && query);
 
-  // The editor prepares the query in its effect when it is shown for a data source. That effect runs
-  // before the one below, so a change made while this is set comes from the preparation.
+  // The child's preparation effect runs before this component marks the data source as prepared.
   const preparedDataSourceUid = useRef<string | null | undefined>(null);
-  const isPreparingQuery = useRef(false);
-  if (isEditorShown && ds?.uid !== preparedDataSourceUid.current) {
-    isPreparingQuery.current = true;
-  }
 
   useEffect(() => {
     if (isEditorShown) {
       preparedDataSourceUid.current = ds?.uid;
-      isPreparingQuery.current = false;
     }
   }, [ds?.uid, isEditorShown]);
 
@@ -153,11 +147,11 @@ function AnnotationQueryEditor({ layer, onQueryPrepared }: AnnotationQueryEditor
     (newQuery: typeof query) => {
       layer.setState({ query: newQuery });
       layer.runLayer();
-      if (isPreparingQuery.current) {
+      if (ds?.uid !== preparedDataSourceUid.current) {
         onQueryPrepared();
       }
     },
-    [layer, onQueryPrepared]
+    [layer, onQueryPrepared, ds?.uid]
   );
 
   if (!ds?.annotations || !dsi || !query) {
