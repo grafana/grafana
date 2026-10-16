@@ -1820,8 +1820,6 @@ func (st RuleStore) GetAlertRulesForScheduling(ctx context.Context, query *ngmod
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
-	ctx = identity.WithRequester(ctx, user)
-
 	for _, folderUID := range folderUIDs {
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)

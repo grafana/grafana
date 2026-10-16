@@ -807,8 +807,8 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 }
 
 // deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without
-// checking folder permissions; callers must have already confirmed the folder is gone. Elements
-// still connected to a dashboard are kept and block the delete (as in the permission-checked path).
+// checking folder permissions. Elements still connected to a dashboard are kept and block the
+// delete (as in the permission-checked path).
 func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
 	conn := l.SQLStore
 	libraryElementTable := "library_element"
