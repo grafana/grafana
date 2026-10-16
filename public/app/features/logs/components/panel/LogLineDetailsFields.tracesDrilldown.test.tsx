@@ -113,6 +113,7 @@ describe('log line trace links in Logs Drilldown', () => {
     });
     const link = screen.getByRole('link', { name: 'View in Traces Drilldown' });
     expect(link).toHaveAttribute('href', `${TRACES_PATH}&traceId=${TRACE_ID}`);
+    expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveTextContent(TRACE_ID);
   });
 
@@ -139,9 +140,8 @@ describe('log line trace links in Logs Drilldown', () => {
       </LogListContext.Provider>
     );
 
-    expect(screen.getByRole('link', { name: 'View in Traces Drilldown' })).toHaveAttribute(
-      'href',
-      `${TRACES_PATH}&traceId=${TRACE_ID}`
-    );
+    const link = screen.getByRole('link', { name: 'View in Traces Drilldown' });
+    expect(link).toHaveAttribute('href', `${TRACES_PATH}&traceId=${TRACE_ID}`);
+    expect(link).toHaveAttribute('target', '_blank');
   });
 });

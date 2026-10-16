@@ -91,6 +91,7 @@ function rewriteExploreTraceLink<T extends LinkModel>(link: T, path: string, dat
     ...link,
     href,
     title: t('logs.log-line-details.view-in-traces-drilldown', 'View in Traces Drilldown'),
+    target: '_blank',
     onClick: undefined,
   };
 }

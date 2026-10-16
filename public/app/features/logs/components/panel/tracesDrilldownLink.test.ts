@@ -40,12 +40,13 @@ function extensionLink(path = '/a/grafana-exploretraces-app/explore?var-ds=tempo
 }
 
 describe('resolveTracesDrilldownLinks', () => {
-  it('points an Explore trace link at Traces Drilldown and drops the Explore click handler', () => {
+  it('opens an Explore trace link in a new tab and drops the Explore click handler', () => {
     const link = tempoLink();
     const [resolved] = resolveTracesDrilldownLinks([link], [extensionLink()]);
 
     expect(resolved.href).toBe(`/a/grafana-exploretraces-app/explore?var-ds=tempo-uid&traceId=${TRACE_ID}`);
     expect(resolved.title).toBe('View in Traces Drilldown');
+    expect(resolved.target).toBe('_blank');
     expect(resolved.onClick).toBeUndefined();
   });
 
