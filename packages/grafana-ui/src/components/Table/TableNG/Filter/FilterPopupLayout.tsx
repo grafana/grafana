@@ -14,17 +14,16 @@ interface FilterPopupLayoutProps {
   children: ReactNode;
   containerRef: Ref<HTMLDivElement>;
   width?: number;
-  maxWidth?: number;
 }
 
-export function FilterPopupLayout({ children, containerRef, width, maxWidth }: FilterPopupLayoutProps) {
+export function FilterPopupLayout({ children, containerRef, width }: FilterPopupLayoutProps) {
   const styles = useStyles2(getStyles);
 
   return (
     <div
       ref={containerRef}
       className={styles.container}
-      style={width || maxWidth ? { width, maxWidth } : undefined}
+      style={width ? { width } : undefined}
       data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
     >
       <Stack direction="column" gap={1.5}>
