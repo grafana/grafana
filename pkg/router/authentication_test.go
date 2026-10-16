@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"maps"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -32,10 +31,9 @@ func authenticatedTestContext(ctx context.Context) context.Context {
 }
 
 func TestRouterAuthentication(t *testing.T) {
-	accessToken := http.Header{"X-Access-Token": {"test-token"}}
 	for _, tc := range []struct {
 		name          string
-		headers       http.Header
+		header        string
 		authErr       error
 		emptyIdentity bool
 		noVerifier    bool
@@ -44,16 +42,12 @@ func TestRouterAuthentication(t *testing.T) {
 		authCalls     int
 	}{
 		{name: "missing", status: http.StatusUnauthorized},
-		{name: "authorization only", headers: http.Header{"Authorization": {"Bearer test-token"}}, authCalls: 2},
-		{name: "lowercase bearer", headers: http.Header{"Authorization": {"bearer test-token"}}, authCalls: 2},
-		{name: "basic", headers: http.Header{"Authorization": {"Basic dGVzdDp0ZXN0"}}, status: http.StatusUnauthorized},
-		{name: "empty bearer", headers: http.Header{"Authorization": {"Bearer "}}, status: http.StatusUnauthorized},
-		{name: "both headers", headers: http.Header{"X-Access-Token": {"test-token"}, "Authorization": {"Bearer other-token"}}, authCalls: 2},
-		{name: "invalid", headers: accessToken, authErr: apierrors.NewUnauthorized("invalid token"), status: http.StatusUnauthorized, authCalls: 2},
-		{name: "unavailable", headers: accessToken, authErr: errors.New("unavailable"), status: http.StatusInternalServerError, authCalls: 2},
-		{name: "nil requester", headers: accessToken, emptyIdentity: true, status: http.StatusUnauthorized, authCalls: 2},
-		{name: "unconfigured", headers: accessToken, noVerifier: true, status: http.StatusUnauthorized},
-		{name: "valid", headers: accessToken, authCalls: 2},
+		{name: "authorization only", header: "Authorization", status: http.StatusUnauthorized},
+		{name: "invalid", header: "X-Access-Token", authErr: apierrors.NewUnauthorized("invalid token"), status: http.StatusUnauthorized, authCalls: 2},
+		{name: "unavailable", header: "X-Access-Token", authErr: errors.New("unavailable"), status: http.StatusInternalServerError, authCalls: 2},
+		{name: "nil requester", header: "X-Access-Token", emptyIdentity: true, status: http.StatusUnauthorized, authCalls: 2},
+		{name: "unconfigured", header: "X-Access-Token", noVerifier: true, status: http.StatusUnauthorized},
+		{name: "valid", header: "X-Access-Token", authCalls: 2},
 		{name: "existing", trusted: true},
 	} {
 		for _, path := range []string{"/apis", "/apis/", "/openapi/v3", "/openapi/v3/apis/example/v1", "/apis/example/v1/widgets", "/apis/unknown/v1/widgets"} {
@@ -91,7 +85,9 @@ func TestRouterAuthentication(t *testing.T) {
 				}
 				for range 2 {
 					req := httptest.NewRequest(http.MethodGet, path, nil)
-					maps.Copy(req.Header, tc.headers)
+					if tc.header != "" {
+						req.Header.Set(tc.header, "test-token")
+					}
 					if tc.trusted {
 						req = req.WithContext(identity.WithRequester(req.Context(), info))
 					}
