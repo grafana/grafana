@@ -31,17 +31,7 @@ func (e *extra) Type() provisioning.RepositoryType {
 	return provisioning.GitRepositoryType
 }
 
-func (e *extra) Build(ctx context.Context, r *provisioning.Repository, opts ...repository.BuildOption) (repository.Repository, error) {
-	var options repository.BuildOptions
-	for _, opt := range opts {
-		opt(&options)
-	}
-	if options.Timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, options.Timeout)
-		defer cancel()
-	}
-
+func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	secure := e.decrypter(r)
 	cfg := r.Spec.Git
 	if cfg == nil {
@@ -58,7 +48,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository, opts ...r
 		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
 	}
 
-	repo, err := NewRepository(ctx, r, RepositoryConfig{
+	return NewRepository(ctx, r, RepositoryConfig{
 		URL:              cfg.URL,
 		Branch:           cfg.Branch,
 		Path:             cfg.Path,
@@ -69,13 +59,6 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository, opts ...r
 		SMIMECertificate: SMIMECertificateFromSpec(r),
 		SkipGitSuffix:    true,
 	}, e.metrics, e.clientMetrics)
-	if err != nil {
-		return nil, err
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	return repo, nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {

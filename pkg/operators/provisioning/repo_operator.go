@@ -134,7 +134,6 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 		nats.Enabled(controllerCfg.natsSubscriber),
-		repository.WithTimeout(controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("repository_build_timeout").MustDuration(0)),
 	)
 	reg, err := repoSource.AddEventHandler(controller.EventHandler())
 	if err != nil {
