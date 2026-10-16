@@ -123,3 +123,97 @@ test.describe(
     }
   }
 );
+
+test(
+  'can bookmark top-level and nested tabs and navigate their browser history',
+  { tag: ['@dashboards'] },
+  async ({ page, context, tabs, rows, selectors: e2eSelectors }) => {
+    const dashboard = {
+      ...v2DashboardWithTabsForSlug,
+      spec: {
+        ...v2DashboardWithTabsForSlug.spec,
+        // Keep the existing nested tabs and give them a top-level tab alongside a separate summary.
+        layout: {
+          kind: 'TabsLayout',
+          spec: {
+            tabs: [
+              {
+                kind: 'TabsLayoutTab',
+                spec: { title: 'Services', layout: v2DashboardWithTabsForSlug.spec.layout },
+              },
+              {
+                kind: 'TabsLayoutTab',
+                spec: { title: 'Summary', layout: { kind: 'GridLayout', spec: { items: [] } } },
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    await flows.dashboards.importTestDashboard(
+      page,
+      e2eSelectors,
+      'Bookmark dashboard tabs',
+      JSON.stringify(dashboard)
+    );
+
+    await test.step('Write top-level tab selections to the URL and restore them through browser history', async () => {
+      await tabs.select('Summary');
+      await expect(page).toHaveURL((url) => url.searchParams.get('dtab') === 'Summary');
+      await expect(tabs.getTitle('Summary')).toHaveAttribute('aria-selected', 'true');
+
+      await tabs.select('Services');
+      await expect(page).toHaveURL((url) => url.searchParams.get('dtab') === 'Services');
+      await expect(tabs.getTitle('Services')).toHaveAttribute('aria-selected', 'true');
+
+      await page.goBack();
+      await expect(page).toHaveURL((url) => url.searchParams.get('dtab') === 'Summary');
+      await expect(tabs.getTitle('Summary')).toHaveAttribute('aria-selected', 'true');
+
+      await page.goForward();
+      await expect(page).toHaveURL((url) => url.searchParams.get('dtab') === 'Services');
+      await expect(tabs.getTitle('Services')).toHaveAttribute('aria-selected', 'true');
+    });
+
+    const overview = rows.getContent('Overview');
+
+    const bookmarkedUrl =
+      await test.step('Write nested tab selections to their own URL key and restore them through browser history', async () => {
+        await tabs.select('Metrics&Traces');
+        await expect(page).toHaveURL(
+          (url) =>
+            url.searchParams.get('dtab') === 'Services' &&
+            url.searchParams.get('Services-Overview-dtab') === 'Metrics&Traces'
+        );
+        await expect(tabs.getTitle('Metrics&Traces', overview)).toHaveAttribute('aria-selected', 'true');
+        const selectedUrl = page.url();
+
+        await tabs.select('Logs+');
+        await expect(page).toHaveURL((url) => url.searchParams.get('Services-Overview-dtab') === 'Logs+');
+        await expect(tabs.getTitle('Logs+', overview)).toHaveAttribute('aria-selected', 'true');
+
+        await page.goBack();
+        await expect(page).toHaveURL((url) => url.searchParams.get('Services-Overview-dtab') === 'Metrics&Traces');
+        await expect(tabs.getTitle('Metrics&Traces', overview)).toHaveAttribute('aria-selected', 'true');
+
+        await page.goForward();
+        await expect(page).toHaveURL((url) => url.searchParams.get('Services-Overview-dtab') === 'Logs+');
+        await expect(tabs.getTitle('Logs+', overview)).toHaveAttribute('aria-selected', 'true');
+        return selectedUrl;
+      });
+
+    await test.step('Open the bookmark in a fresh page with the same top-level and nested tabs selected', async () => {
+      const sharedPage = await context.newPage();
+      try {
+        await sharedPage.goto(bookmarkedUrl);
+        // The fixtures belong to the original page, so scope the getters to the new page's document.
+        const sharedDashboard = sharedPage.locator('body');
+        await expect(tabs.getTitle('Services', sharedDashboard)).toHaveAttribute('aria-selected', 'true');
+        await expect(tabs.getTitle('Metrics&Traces', sharedDashboard)).toHaveAttribute('aria-selected', 'true');
+      } finally {
+        await sharedPage.close();
+      }
+    });
+  }
+);
