@@ -90,7 +90,6 @@ declare module "@openfeature/core" {
     | "alertingEnrichmentPerRule"
     | "alertingEnrichmentAssistantInvestigations"
     | "alerting.dataSourceManagedRouteProxy"
-    | "alerting.instanceSilence"
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleReviews"
     | "alerting.ruleQuality"

@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
 import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 
-import { alertInstanceKey } from '../../utils/rules';
+import { alertInstanceKey, prometheusRuleType } from '../../utils/rules';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
@@ -40,6 +40,8 @@ export const AlertInstancesTable = ({
   showNotificationColumn,
   showSilenceAction,
 }: Props) => {
+  const silenceRule =
+    showSilenceAction && prometheusRuleType.grafana.alertingRule(rule?.promRule) ? rule.promRule : undefined;
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -82,7 +84,7 @@ export const AlertInstancesTable = ({
       }) => <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
       size: '150px',
     },
-    ...(showNotificationColumn || showSilenceAction
+    ...(showNotificationColumn || silenceRule
       ? [
           {
             id: 'actions',
@@ -90,7 +92,7 @@ export const AlertInstancesTable = ({
             renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
               <Stack direction="column" gap={0.5} alignItems="flex-start">
                 {showNotificationColumn && <AlertInstanceNotificationAction rule={rule} instance={alert} />}
-                {showSilenceAction && <AlertInstanceSilenceAction rule={rule} instance={alert} />}
+                {silenceRule && <AlertInstanceSilenceAction rule={silenceRule} instance={alert} />}
               </Stack>
             ),
             size: '120px',

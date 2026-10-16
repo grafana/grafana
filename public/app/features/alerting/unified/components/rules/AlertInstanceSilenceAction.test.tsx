@@ -8,13 +8,13 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../mockApi';
-import { grantUserPermissions, mockCombinedRule, mockGrafanaRulerRule, mockPromAlert } from '../../mocks';
+import { grantUserPermissions, mockGrafanaPromAlertingRule, mockPromAlert } from '../../mocks';
 import { setFolderAccessControl } from '../../mocks/server/configure';
 
 import { AlertInstanceSilenceAction } from './AlertInstanceSilenceAction';
 
 const RULE_UID = 'rule-uid-1';
-const rule = mockCombinedRule({ rulerRule: mockGrafanaRulerRule({ uid: RULE_UID }) });
+const rule = mockGrafanaPromAlertingRule({ uid: RULE_UID });
 const instance = mockPromAlert({
   state: GrafanaAlertState.Alerting,
   labels: { alertname: 'CPU high', instance: 'server-1' },

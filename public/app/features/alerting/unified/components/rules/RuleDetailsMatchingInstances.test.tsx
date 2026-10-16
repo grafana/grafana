@@ -204,7 +204,7 @@ const instanceWithState = (state: Alert['state'], labels: Record<string, string>
 const grafanaRuleWithInstances = (alerts: Alert[], rulerOverrides: Parameters<typeof mockGrafanaRulerRule>[0] = {}) =>
   mockCombinedRule({
     rulerRule: mockGrafanaRulerRule({ uid: SILENCE_RULE_UID, namespace_uid: SILENCE_FOLDER_UID, ...rulerOverrides }),
-    promRule: mockPromAlertingRule({ alerts }),
+    promRule: mockGrafanaPromAlertingRule({ uid: SILENCE_RULE_UID, folderUid: SILENCE_FOLDER_UID, alerts }),
   });
 
 describe('RuleDetailsMatchingInstances silence action', () => {
