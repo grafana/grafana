@@ -261,6 +261,7 @@ export const InspectDataTab = memo(function InspectDataTab({
               return (
                 <div style={{ width, height }}>
                   <CommonTableNG
+                    timeZone={timeZone}
                     width={width}
                     height={height}
                     data={dataFrame}

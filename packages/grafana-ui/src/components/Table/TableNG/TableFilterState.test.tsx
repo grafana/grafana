@@ -6,7 +6,6 @@ import {
   createTheme,
   DataTransformerID,
   FieldType,
-  formattedValueToString,
   toDataFrame,
   type DataTransformerConfig,
 } from '@grafana/data';
@@ -191,7 +190,7 @@ it('restores checkbox controls from JSON and replaces an open draft only when it
   ).toEqual(['alpha']);
 });
 
-it('stores the panel timezone for a newly selected time value', async () => {
+it('interprets a new time range bound in the panel timezone', async () => {
   const { props, api } = setup();
   const timeZone = 'Pacific/Auckland';
   props.data = applyFieldOverrides({
@@ -205,15 +204,22 @@ it('stores the panel timezone for a newly selected time value', async () => {
     timeZone,
     replaceVariables: (s) => s,
   })[0];
-  const field = props.data.fields[0];
-  const selected = formattedValueToString(field.display!(field.values[0]));
-
   render(<TableNG {...props} timeZone={timeZone} />);
   await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
-  await userEvent.click(screen.getByRole('checkbox', { name: selected }));
-  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  await userEvent.type(screen.getByRole('textbox', { name: 'Start' }), '2026-01-01 13:00:00.000');
+  await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-01 13:00:00.000');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
-  expect(api.get('table')[0].options.filters[0].config.options.timeZone).toBe(timeZone);
+  expect(api.get('table')[0].options.filters[0].config).toEqual({
+    id: 'between',
+    options: {
+      from: 1767225600000,
+      to: 1767225600000,
+      inclusive: true,
+      allowOpenBounds: true,
+      includeMissing: false,
+    },
+  });
   expect(screen.getAllByRole('row')).toHaveLength(2);
 });
 

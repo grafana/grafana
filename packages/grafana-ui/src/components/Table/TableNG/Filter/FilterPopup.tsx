@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { FieldType, type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -16,6 +16,7 @@ import { type FilterOperator, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
+import { RangeFilter } from './RangeFilter';
 import { calculateUniqueFieldValues, getFilteredOptions, operatorSelectableValues, valuesToOptions } from './utils';
 
 export interface FilterPopupProps {
@@ -41,7 +42,10 @@ export const FilterPopup = memo((props: FilterPopupProps) => <FilterPopupEditor 
 const FilterPopupEditor = memo(
   ({
     onApplyValues,
+    onApplyRange,
     onClear,
+    range,
+    timeZone,
     rows,
     filterValue,
     onClose,
@@ -113,6 +117,36 @@ const FilterPopupEditor = memo(
     const filterInputPlaceholder = t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values');
     const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
     const styles = useStyles2(getStyles);
+
+    if (!filterValue && field && (field.type === FieldType.number || field.type === FieldType.time)) {
+      return (
+        <div
+          className={styles.filterContainer}
+          ref={containerRef}
+          data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
+        >
+          <RangeFilter
+            field={field}
+            rows={rows}
+            range={range}
+            timeZone={timeZone}
+            onCancel={() => {
+              onClose();
+              buttonElement?.focus();
+            }}
+            onClear={() => {
+              onClearFilter();
+              buttonElement?.focus();
+            }}
+            onApply={(next) => {
+              onApplyRange?.(next);
+              onClose();
+              buttonElement?.focus();
+            }}
+          />
+        </div>
+      );
+    }
 
     return (
       <div
