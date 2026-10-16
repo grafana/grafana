@@ -155,6 +155,10 @@ test.describe('Panels test: Table - ad-hoc range filters', { tag: ['@panels', '@
       'placeholder',
       '2025-08-07 15:33:28.785'
     );
+    await expect(page.getByTestId(table.Filters.Range.minimumInput).locator('..').locator('..')).toHaveCSS(
+      'width',
+      '240px'
+    );
     await page.getByTestId(table.Filters.Range.minimumInput).fill('2025-08-07 11:00:00.000');
     await page.getByTestId(table.Filters.Range.maximumInput).fill('2025-08-07 12:30:00.000');
     await expect(page.getByTestId(table.Filters.Range.minimumInput)).toHaveJSProperty('scrollLeft', 0);

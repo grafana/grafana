@@ -61,7 +61,7 @@ export function TableRangeFields({ from, to, calendar, calendarAnchor, calendarD
             onChange={(event) => field.onChange(event.currentTarget.value)}
             ref={field.inputRef}
             placeholder={field.placeholder}
-            width={48}
+            width={30}
             data-testid={field.testId}
             invalid={field.invalid}
             aria-describedby={field.invalid ? field.errorId : undefined}

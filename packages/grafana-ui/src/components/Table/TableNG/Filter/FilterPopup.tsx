@@ -148,7 +148,7 @@ const FilterPopupEditor = memo(
 
     if (!filterValue && field && (field.type === FieldType.number || field.type === FieldType.time)) {
       return (
-        <FilterPopupLayout containerRef={containerRef} maxWidth={field.type === FieldType.time ? 424 : undefined}>
+        <FilterPopupLayout containerRef={containerRef}>
           <RangeFilter
             field={field}
             rows={rows}
