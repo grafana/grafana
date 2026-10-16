@@ -8,10 +8,10 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { deepFreeze } from './deepFreeze';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import {
-  deepFreeze,
   handleErrorsInFn,
   getReadOnlyProxy,
   createOpenModalFunction,
@@ -26,8 +26,8 @@ import {
   isReadOnlyProxy,
 } from './utils';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' }, id: 'test-plugin' }),
 }));
 

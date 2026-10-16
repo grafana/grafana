@@ -1057,6 +1057,111 @@
           }
         }
       },
+      "panel-14": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Cell warnings and tooltip from field",
+          "description": "Hover or focus the Content marker. Oversized cells use one warning-colored marker; their popover combines the warning and field tooltip with a divider. Short cells use the gray tooltip marker. Empty tooltip values show only the warning or no marker. Click to pin; press Escape to dismiss. Requires table.refresh.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "\"Case\",\"Content\",\"Context\"\n\"Warning + tooltip\",\"This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. \",\"Field tooltip: this context appears below the warning and divider.\"\n\"Tooltip only\",\"Short content expands normally. Short content expands normally. Short content expands normally. Short content expands normally. Short content expands normally. Short content expands normally. \",\"Field tooltip: no warning so the marker stays gray.\"\n\"Warning only (empty tooltip)\",\"This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. This oversized cell exceeds the hover expansion safety limit. \",\"\"\n\"No warning or tooltip\",\"Short content with no tooltip.\",\"\""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.3.0",
+            "spec": {
+              "options": {
+                "cellHeight": "md",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Case"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 240
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Content"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 330
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "auto",
+                          "wrapText": false
+                        }
+                      },
+                      {
+                        "id": "custom.tooltip.field",
+                        "value": "Context"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Context"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.hideFrom.viz",
+                        "value": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
       "panel-13": {
         "kind": "Panel",
         "spec": {
@@ -2800,6 +2905,19 @@
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-13"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 31,
+              "width": 12,
+              "height": 9,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-14"
               }
             }
           }

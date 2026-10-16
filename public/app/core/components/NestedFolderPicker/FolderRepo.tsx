@@ -9,12 +9,10 @@ import {
   RepoViewStatus,
   useGetResourceRepositoryView,
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
-import { type DashboardViewItem } from 'app/features/search/types';
-import { type FolderDTO } from 'app/types/folders';
+import { isItemManagedByRepository, type ManagedResourceItem } from 'app/features/provisioning/utils/managedResource';
 
 export interface Props {
-  folder?: FolderDTO | DashboardViewItem;
+  folder?: ManagedResourceItem;
   /** When true, the badge exposes repository actions (source folder, repository admin). Opt-in so the folder picker dropdown stays non-interactive. */
   enableRepositoryLink?: boolean;
   /** The folder's path within its repository (`grafana.app/sourcePath`); with `enableRepositoryLink`, the badge links to it. */
@@ -29,7 +27,7 @@ export const FolderRepo = memo(function FolderRepo({
   sourcePath,
   canEdit = false,
 }: Props) {
-  const showBadge = shouldShowBadge(folder);
+  const showBadge = isItemManagedByRepository(folder);
   // The item's manager id names the repository directly, so no folder resource has to be fetched
   // per row. Items from the legacy folder APIs carry no id: `includeInstance` keeps the settings
   // lookup alive for them so instance-managed setups still hide the badge, and they fall back to
@@ -62,12 +60,3 @@ export const FolderRepo = memo(function FolderRepo({
     </Stack>
   );
 });
-
-// Tree rows only badge root items, since nested rows sit under their managed root. Folder DTOs
-// (page title, picker trigger) have no tree context and are badged regardless of nesting.
-function shouldShowBadge(folder: FolderDTO | DashboardViewItem | undefined): boolean {
-  if (!folder || !isItemManagedByRepository(folder)) {
-    return false;
-  }
-  return !('parentUID' in folder && folder.parentUID);
-}

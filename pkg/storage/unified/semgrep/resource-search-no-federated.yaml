@@ -1,0 +1,20 @@
+# Best effort: an assignment only matches when semgrep can tell the receiver is a
+# ResourceSearchRequest. That works for parameters, local declarations, struct fields
+# and some helper results, but not for every value returned by a helper (see the
+# todoruleid case in the test file).
+rules:
+  - id: resource-search-no-federated
+    languages: [go]
+    message: >-
+      Federated search (one ResourceSearchRequest across several resource types)
+      is being removed. Search each resource type separately and merge the
+      results instead.
+    severity: ERROR
+    paths:
+      exclude:
+        - '*_test.go'
+        - '*.pb.go'
+    pattern-either:
+      - pattern: '$PB.ResourceSearchRequest{..., Federated: $X, ...}'
+      - pattern: '($REQUEST : *$PB.ResourceSearchRequest).Federated = $X'
+      - pattern: '($REQUEST : $PB.ResourceSearchRequest).Federated = $X'

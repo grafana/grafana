@@ -173,6 +173,9 @@ export function CodeCell({
           height="auto"
           readOnly={!isEditing}
           lineWrapping
+          // Tab leaves the cell instead of indenting, so the language picker above and the rest
+          // of the document stay reachable from the keyboard.
+          indentWithTab={false}
           basicSetup={isEditing ? EDIT_SETUP : VIEW_SETUP}
           extensions={[scrollMargin, ...navigateExt, ...(focusExtension ?? [])]}
           aria-label={t('notebook.cell.code.aria-label-editor', 'Code')}

@@ -106,6 +106,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontFamily: theme.typography.fontFamilyMonospace,
     padding: theme.spacing(1),
     flex: 1,
+    // A datasource error often carries the request URL, which holds no spaces to break at. Its
+    // min-content width is then the whole string, and a flex item never shrinks below that, so the
+    // row grew wider than the page. `anywhere` lets the text break mid-word and drops that minimum.
+    minWidth: 0,
+    overflowWrap: 'anywhere',
   }),
   assistantButton: css({
     padding: theme.spacing(0, 1),

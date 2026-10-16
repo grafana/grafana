@@ -32,6 +32,8 @@ TableColorTextCellOptions: {
 // Json view cell options
 TableJsonViewCellOptions: {
 	type: TableCellDisplayMode & "json-view"
+	// Enables syntax highlighting. Defaults to true when omitted.
+	syntaxHighlighting?: bool
 } @cuetsy(kind="interface")
 
 // Json view cell options
@@ -61,8 +63,9 @@ TableBarGaugeCellOptions: {
 // Sparkline cell options
 TableSparklineCellOptions: {
 	GraphFieldConfig
-	type:       TableCellDisplayMode & "sparkline"
-	hideValue?: bool
+	type:         TableCellDisplayMode & "sparkline"
+	hideValue?:   bool
+	showTooltip?: bool
 } @cuetsy(kind="interface")
 
 // Colored background cell options
@@ -134,6 +137,13 @@ TableOptions: {
 	}
 	// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 	disableKeyboardEvents?: bool
+	// Controls whether cells overflow when hovered. Selected cells always overflow.
+	hoverOverflow?: bool | *true
+	// Alternates the background color of every other row. Only applies when the
+	// `table.refreshNewFeatures` feature toggle is enabled.
+	zebraStriping?: bool | *false
+	// Whether the column management sidebar starts open.
+	showColumnsSidebar?: bool
 } @cuetsy(kind="interface")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
@@ -149,6 +159,8 @@ TableFieldOptions: {
 	filterable?:  bool
 	// Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
 	sortable?: bool
+	// Whether the column can be hidden from the table.
+	hideable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
 	// if true, wrap the text content of the cell

@@ -52,7 +52,22 @@ describe('GrafanaBootConfig legacy feature toggle handling', () => {
       expect(warnSpy.mock.calls[0][0]).toContain('will stop resolving');
     });
 
-    it('raises a warning alert rather than an error', () => {
+    it('stays in the console, without raising an alert', () => {
+      const config = createConfig();
+
+      void config.featureToggles.panelTitleSearch;
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(publishSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('alert', () => {
+    beforeEach(() => {
+      window.__grafanaLegacyFeatureToggleMode = 'alert';
+    });
+
+    it('raises a warning alert', () => {
       const config = createConfig();
 
       void config.featureToggles.panelTitleSearch;
@@ -64,6 +79,30 @@ describe('GrafanaBootConfig legacy feature toggle handling', () => {
           'Use OpenFeature instead, or remove the legacy toggle entirely.',
         ],
       });
+    });
+
+    it('leaves the values intact', () => {
+      const config = createConfig();
+
+      expect(config.featureToggles.panelTitleSearch).toBe(true);
+      expect(config.featureToggles.lokiExperimentalStreaming).toBe(false);
+    });
+
+    it('alerts once per toggle, not once per read', () => {
+      const config = createConfig();
+
+      void config.featureToggles.panelTitleSearch;
+      void config.featureToggles.panelTitleSearch;
+
+      expect(publishSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not throw when the app event bus is not wired up yet', () => {
+      setAppEvents(undefined as never);
+      const config = createConfig();
+
+      expect(() => config.featureToggles.panelTitleSearch).not.toThrow();
+      expect(warnSpy).toHaveBeenCalled();
     });
   });
 
@@ -88,22 +127,23 @@ describe('GrafanaBootConfig legacy feature toggle handling', () => {
 
       expect(warnSpy).toHaveBeenCalledTimes(2);
       expect(warnSpy.mock.calls[0][0]).toContain('"panelTitleSearch"');
-      expect(publishSpy).toHaveBeenCalledTimes(2);
-      expect(publishSpy).toHaveBeenNthCalledWith(1, {
-        type: AppEvents.alertError.name,
-        payload: [
-          'Legacy feature toggle blocked: "panelTitleSearch"',
-          'The read was blocked and resolved to undefined. Use OpenFeature instead, or remove the legacy toggle entirely.',
-        ],
-      });
     });
 
-    it('does not throw when the app event bus is not wired up yet', () => {
-      setAppEvents(undefined as never);
+    it('says the toggle already resolves to undefined, rather than that it will', () => {
       const config = createConfig();
 
-      expect(() => config.featureToggles.panelTitleSearch).not.toThrow();
-      expect(warnSpy).toHaveBeenCalled();
+      void config.featureToggles.panelTitleSearch;
+
+      expect(warnSpy.mock.calls[0][0]).toContain('now resolves to undefined');
+    });
+
+    it('stays in the console, without raising an alert', () => {
+      const config = createConfig();
+
+      void config.featureToggles.panelTitleSearch;
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(publishSpy).not.toHaveBeenCalled();
     });
 
     it('closes the bootData bypass by sharing one proxy', () => {

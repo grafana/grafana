@@ -91,7 +91,8 @@ func (f *fakeSubscriber) deliver(t *testing.T, subject string, data []byte) {
 
 type fakeSubscription struct{}
 
-func (fakeSubscription) Unsubscribe() error { return nil }
+func (fakeSubscription) WaitReady(ctx context.Context) error { return ctx.Err() }
+func (fakeSubscription) Unsubscribe() error                  { return nil }
 
 var _ nats.Subscriber = (*fakeSubscriber)(nil)
 

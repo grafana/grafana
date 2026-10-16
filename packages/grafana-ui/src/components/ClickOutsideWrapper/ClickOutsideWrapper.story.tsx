@@ -1,4 +1,4 @@
-import { type Meta } from '@storybook/react-webpack5';
+import { type Meta } from '@storybook/react';
 import { action } from 'storybook/actions';
 
 import { ClickOutsideWrapper } from './ClickOutsideWrapper';

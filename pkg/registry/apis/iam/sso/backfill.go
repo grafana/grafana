@@ -34,19 +34,20 @@ type storedLister interface {
 // SSOSettingsBackfill copies the stored SSO overrides into MT-Settings so the
 // store is populated before reads become MT-authoritative (dual-writer mode 4).
 type SSOSettingsBackfill struct {
-	reader    storedLister
-	writer    settingsvc.Writer
-	lock      *serverlock.ServerLockService
-	cfg       *setting.Cfg
-	namespace string
-	log       log.Logger
+	legacyReader storedLister
+	mtReader     settingsvc.Service
+	mtWriter     settingsvc.Writer
+	lock         *serverlock.ServerLockService
+	cfg          *setting.Cfg
+	namespace    string
+	log          log.Logger
 }
 
 func ProvideSSOSettingsBackfill(reader *ssosettingsimpl.Service, lock *serverlock.ServerLockService, cfg *setting.Cfg) (*SSOSettingsBackfill, error) {
 	b := &SSOSettingsBackfill{
-		reader: reader,
-		lock:   lock,
-		cfg:    cfg,
+		legacyReader: reader,
+		lock:         lock,
+		cfg:          cfg,
 		// Instance-global; the background context carries no namespace of its own.
 		namespace: grafanarequest.GetNamespaceMapper(cfg)(1),
 		log:       log.New("ssosettings.backfill"),
@@ -62,13 +63,14 @@ func ProvideSSOSettingsBackfill(reader *ssosettingsimpl.Service, lock *serverloc
 	if !ok {
 		return nil, fmt.Errorf("settings client does not implement the writer interface")
 	}
-	b.writer = writer
+	b.mtReader = client
+	b.mtWriter = writer
 	return b, nil
 }
 
 // IsDisabled implements registry.CanBeDisabled.
 func (s *SSOSettingsBackfill) IsDisabled() bool {
-	if s.writer == nil {
+	if s.mtWriter == nil {
 		return true
 	}
 	enabled, _ := openfeature.NewDefaultClient().BooleanValue(context.Background(),
@@ -101,34 +103,43 @@ func (s *SSOSettingsBackfill) backfill(ctx context.Context) error {
 	// The MT-Settings writer resolves the tenant from the context namespace.
 	ctx = request.WithNamespace(ctx, s.namespace)
 
-	stored, err := s.reader.ListStored(ctx)
+	stored, err := s.legacyReader.ListStored(ctx)
 	if err != nil {
 		return err
 	}
 
 	backfilledProviders := make([]string, 0, len(stored))
-	keys := 0
+	keys, pruned := 0, 0
 	for _, provider := range stored {
 		// LDAP nests its config under servers[]; MT-Settings has no representation for it yet.
 		if provider.Provider == social.LDAPProviderName {
 			continue
 		}
 		settings := provider.Settings
-		if defaults := s.reader.GetDefaults(provider.Provider); defaults != nil {
+		if defaults := s.legacyReader.GetDefaults(provider.Provider); defaults != nil {
 			settings = withDefaults(settings, defaults)
 		}
 		section := sectionFor(provider.Provider)
 		for key, val := range settings {
-			if err := s.writer.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
+			if err := s.mtWriter.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
 				return fmt.Errorf("failed to backfill provider %q key %q (backfilled so far: %v): %w",
 					provider.Provider, key, backfilledProviders, err)
 			}
 			keys++
 		}
+
+		count, err := pruneStaleRows(ctx, s.mtReader, s.mtWriter, provider.Provider, settings)
+		if err != nil {
+			return fmt.Errorf("failed to prune stale rows for provider %q (backfilled so far: %v): %w",
+				provider.Provider, backfilledProviders, err)
+		}
+		pruned += count
+
 		backfilledProviders = append(backfilledProviders, provider.Provider)
 	}
 
-	s.log.Info("Backfilled SSO settings into MT-Settings", "providers", backfilledProviders, "keys", keys)
+	s.log.Info("Backfilled SSO settings into MT-Settings",
+		"providers", backfilledProviders, "keys", keys, "pruned", pruned)
 	return nil
 }
 

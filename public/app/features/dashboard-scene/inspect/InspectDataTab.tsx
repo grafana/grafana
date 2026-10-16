@@ -51,7 +51,10 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
   const { options } = model.useState();
   const panel = model.state.panelRef.resolve();
   const dataProvider = sceneGraph.getData(panel);
-  const { data } = getDataProviderToSubscribeTo(dataProvider, options.withTransforms).useState();
+
+  const { data: transformedData } = dataProvider.useState();
+  const { data: sourceData } = getQuerySourceOf(dataProvider).useState();
+  const data = options.withTransforms ? transformedData : sourceData;
   const timeRange = sceneGraph.getTimeRange(panel);
   const useTableNG = useFlagTableInspectDataTableNG();
 
@@ -77,16 +80,26 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
   );
 }
 
+/**
+ * Whether anything transforms this panel's data
+ */
 function hasTransformations(dataProvider: SceneDataProvider) {
-  if (dataProvider instanceof SceneDataTransformer) {
-    return dataProvider.state.transformations.length > 0;
+  if (!(dataProvider instanceof SceneDataTransformer)) {
+    return false;
   }
 
-  return false;
+  if (dataProvider.state.transformations.length > 0) {
+    return true;
+  }
+
+  const { prepend, append } = dataProvider.getResolvedSystemTransformations();
+
+  return prepend.length > 0 || append.length > 0;
 }
 
-function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {
-  if (!withTransforms && dataProvider instanceof SceneDataTransformer && dataProvider.state.$data) {
+/** The query result before this panel's transformations. */
+function getQuerySourceOf(dataProvider: SceneDataProvider): SceneDataProvider {
+  if (dataProvider instanceof SceneDataTransformer && dataProvider.state.$data) {
     return dataProvider.state.$data;
   }
 

@@ -40,9 +40,8 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		{
 			Name: SEARCH_FIELD_DESCRIPTION,
 			Type: SearchFieldTypeString,
-			// unranked: description is indexed as text (the proto column declares
-			// FreeText:true), but no caller scores against it today; skipping
-			// BM25 frequency and length stats keeps the index small.
+			// Keep description indexing compact: text matching works without
+			// storing full BM25 frequency and length stats.
 			Capabilities: []SearchCapability{SearchCapabilityText, SearchCapabilityRetrieve, SearchCapabilityUnranked},
 			Description:  "Free-text description of the resource.",
 		},
@@ -134,7 +133,9 @@ func TrashSearchFieldDefinitions() []SearchFieldDefinition {
 		},
 		// A string, unlike deletion_time: resource versions are snowflake ids around
 		// 1.8e18, where a float64 can only represent multiples of 256, so a number
-		// would come back rounded. It has to stay exact to be usable for a restore.
+		// would come back rounded. The search backend prepares a separate fixed-width
+		// sort key, but the public capability remains disabled until clients can fall
+		// back from search servers deployed before that mapping.
 		{
 			Name:         SEARCH_FIELD_DELETED_RV,
 			Type:         SearchFieldTypeString,
@@ -159,9 +160,10 @@ var trashSearchFieldNames = func() map[string]bool {
 // Not every underscore-prefixed name belongs here: _id, _score, _explain and
 // _all_columns are part of the request API.
 var internalSearchFieldNames = map[string]bool{
-	SEARCH_FIELD_IS_DELETED:     true,
-	SEARCH_FIELD_IS_PROVISIONED: true,
-	SEARCH_FIELD_RV_STRING:      true,
+	SEARCH_FIELD_IS_DELETED:      true,
+	SEARCH_FIELD_IS_PROVISIONED:  true,
+	SEARCH_FIELD_RV_STRING:       true,
+	SEARCH_FIELD_DELETED_RV_SORT: true,
 }
 
 // IsInternalSearchField reports whether name is an index field callers cannot use.

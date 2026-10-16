@@ -215,7 +215,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	go d.leaseRenewalLoop(leaseRenewalCtx, logger, leaseExpired)
 	defer cancelLeaseRenewal()
 
-	recorder := newJobProgressRecorder(d.onProgress(), d.metrics, claimedJob.Spec.Action)
+	recorder := NewJobProgressRecorder(d.onProgress(), d.metrics, claimedJob.Spec.Action)
 	recorder.SetMessage(ctx, "start job")
 
 	// Process the job with lease loss detection
@@ -477,10 +477,9 @@ func (d *jobProcessor) processJobWithLeaseCheck(ctx context.Context, recorder Jo
 
 // withJobAuthorSignature carries the job's recorded author into ctx as the git
 // commit signature. The author annotations are set at creation time by the job
-// admission mutator, which is where the user-attribution feature flag is
-// enforced; the driver simply applies whatever was recorded on the job. An
-// email is required: webhook attribution carries none, so webhook-created jobs
-// keep the default Grafana commit identity.
+// admission mutator; the driver simply applies whatever was recorded on the
+// job. An email is required: webhook attribution carries none, so webhook-created
+// jobs keep the default Grafana commit identity.
 func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.Context {
 	name := job.Annotations[appjobs.AnnoAuthor]
 	email := job.Annotations[appjobs.AnnoAuthorEmail]

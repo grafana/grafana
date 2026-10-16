@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
@@ -12,6 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { ctaClicked } from '../analytics/main';
 
+import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError } from './DashboardTabError';
 import { RecentDashboardsClearButton } from './RecentDashboardsClearButton';
 
@@ -44,44 +45,33 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
 
   if (dashboards.length === 0) {
     const canCreate = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+    const message = t('home.recent-dashboards-tab.empty', "Dashboards you've recently viewed will appear here.");
+    const button = canCreate ? (
+      <LinkButton
+        icon="plus"
+        href="/dashboard/new"
+        onClick={() => ctaClicked({ surface: 'recent_tab', action: 'create_dashboard', placement: 'empty_state' })}
+      >
+        <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
+      </LinkButton>
+    ) : (
+      <LinkButton
+        icon="apps"
+        href="/dashboards"
+        variant="secondary"
+        onClick={() => ctaClicked({ surface: 'recent_tab', action: 'browse_dashboards', placement: 'empty_state' })}
+      >
+        <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
+      </LinkButton>
+    );
 
     return (
-      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
-        <EmptyState
-          hideImage
-          variant="call-to-action"
-          message={t('home.recent-dashboards-tab.empty', "Dashboards you've recently viewed will appear here.")}
-          button={
-            canCreate ? (
-              <LinkButton
-                icon="plus"
-                href="/dashboard/new"
-                onClick={() =>
-                  ctaClicked({ surface: 'recent_tab', action: 'create_dashboard', placement: 'empty_state' })
-                }
-              >
-                <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
-              </LinkButton>
-            ) : (
-              <LinkButton
-                icon="apps"
-                href="/dashboards"
-                variant="secondary"
-                onClick={() =>
-                  ctaClicked({ surface: 'recent_tab', action: 'browse_dashboards', placement: 'empty_state' })
-                }
-              >
-                <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
-              </LinkButton>
-            )
-          }
-        >
-          <Trans i18nKey="home.recent-dashboards-tab.empty-description">
-            After you&apos;ve connected data, you can use dashboards to query and visualize your data with charts, stats
-            and tables or create lists, markdowns and other widgets.
-          </Trans>
-        </EmptyState>
-      </Stack>
+      <DashboardTabEmptyState message={message} variant="call-to-action" button={button} density={density}>
+        <Trans i18nKey="home.recent-dashboards-tab.empty-description">
+          After you&apos;ve connected data, you can use dashboards to query and visualize your data with charts, stats
+          and tables or create lists, markdowns and other widgets.
+        </Trans>
+      </DashboardTabEmptyState>
     );
   }
 

@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { isRootFolderUID } from 'app/features/search/constants';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { type ManagerKind } from '../../../features/apiserver/types';
@@ -164,7 +165,7 @@ export function useFoldersQueryAppPlatform({
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             managedBy: item.managedBy?.kind as ManagerKind | undefined,
             managerId: item.managedBy?.id,
-            parentUID: item.folder,
+            parentUID: isRootFolderUID(item.folder) ? undefined : item.folder,
           },
         };
 

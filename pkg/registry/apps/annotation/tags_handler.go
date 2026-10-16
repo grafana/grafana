@@ -27,6 +27,7 @@ type TagItem struct {
 
 func newTagsHandler(
 	tagProvider TagProvider,
+	tracer trace.Tracer,
 	accessClient authtypes.AccessClient,
 	metrics *Metrics,
 	logger log.Logger,

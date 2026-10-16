@@ -111,7 +111,7 @@ describe('LogDetailsContextProvider', () => {
     expect(result.current.currentLog?.uid).toBe(log2.uid);
   });
 
-  test('when collapsing the active log with other rows expanded, currentLog moves to the last expanded row', () => {
+  test('replaces the current log when toggling a different row without a modifier key', () => {
     const { result } = renderLogDetailsProviderHook([log1, log2]);
 
     act(() => {
@@ -119,6 +119,34 @@ describe('LogDetailsContextProvider', () => {
     });
     act(() => {
       result.current.toggleDetails(1);
+    });
+
+    expect(result.current.showDetails.map((l) => l.uid)).toEqual([log2.uid]);
+    expect(result.current.currentLog?.uid).toBe(log2.uid);
+  });
+
+  test('opens an additional tab when a modifier key is pressed', () => {
+    const { result } = renderLogDetailsProviderHook([log1, log2]);
+
+    act(() => {
+      result.current.toggleDetails(0);
+    });
+    act(() => {
+      result.current.toggleDetails(1, true);
+    });
+
+    expect(result.current.showDetails.map((l) => l.uid)).toEqual([log1.uid, log2.uid]);
+    expect(result.current.currentLog?.uid).toBe(log2.uid);
+  });
+
+  test('when collapsing the active log with other rows expanded, currentLog moves to the last expanded row', () => {
+    const { result } = renderLogDetailsProviderHook([log1, log2]);
+
+    act(() => {
+      result.current.toggleDetails(0);
+    });
+    act(() => {
+      result.current.toggleDetails(1, true);
     });
     expect(result.current.currentLog?.uid).toBe(log2.uid);
 
@@ -206,7 +234,7 @@ describe('LogDetailsContextProvider', () => {
         result.current.toggleDetails(0);
       });
       act(() => {
-        result.current.toggleDetails(1);
+        result.current.toggleDetails(1, true);
       });
       expect(result.current.currentLog?.uid).toBe(log2.uid);
 
@@ -225,7 +253,7 @@ describe('LogDetailsContextProvider', () => {
         result.current.toggleDetails(0);
       });
       act(() => {
-        result.current.toggleDetails(1);
+        result.current.toggleDetails(1, true);
       });
 
       act(() => {

@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
+import { dateTime, dateTimeFormat, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
-import { TimeRangeProvider } from './TimeRangeContext';
+import { TimeRangeProvider } from '../../graveyard/TimeRangeContext/TimeRangeContext';
+
 import { TimePickerTooltip, TimeRangePicker } from './TimeRangePicker';
 
 const selectors = e2eSelectors.components.TimePicker;
@@ -94,6 +95,48 @@ describe('TimePicker', () => {
     expect(overlayContent).not.toBeInTheDocument();
   });
 
+  it('shows the "change time settings" footer by default', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        timeZone="utc"
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByTestId(selectors.openButton));
+
+    expect(screen.getByTestId(e2eSelectors.components.TimeZonePicker.changeTimeSettingsButton)).toBeInTheDocument();
+  });
+
+  it('hides the "change time settings" footer when hideTimeZone is set, without affecting the from/to fields', async () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={() => {}}
+        value={value}
+        timeZone="utc"
+        hideTimeZone
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByTestId(selectors.openButton));
+
+    expect(
+      screen.queryByTestId(e2eSelectors.components.TimeZonePicker.changeTimeSettingsButton)
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId(selectors.fromField)).toHaveValue(dateTimeFormat(value.raw.from, { timeZone: 'utc' }));
+    expect(screen.getByTestId(selectors.toField)).toHaveValue(dateTimeFormat(value.raw.to, { timeZone: 'utc' }));
+  });
+
+  // TODO: Delete this test when TimeRangeProvider is removed.
   it('shows a sync button if two are rendered inside a TimeRangeProvider', async () => {
     const onChange1 = jest.fn();
     const onChange2 = jest.fn();

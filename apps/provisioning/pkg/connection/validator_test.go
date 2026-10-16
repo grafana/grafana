@@ -25,6 +25,10 @@ func newValidatorTestAttributes(obj, old runtime.Object, op admission.Operation)
 }
 
 func newValidatorTestAttributesWithDryRun(obj, old runtime.Object, op admission.Operation, dryRun bool) admission.Attributes {
+	return newValidatorTestAttributesWithSubresource(obj, old, op, dryRun, "")
+}
+
+func newValidatorTestAttributesWithSubresource(obj, old runtime.Object, op admission.Operation, dryRun bool, subresource string) admission.Attributes {
 	name := "test"
 	if obj != nil {
 		if conn, ok := obj.(*provisioning.Connection); ok {
@@ -38,7 +42,7 @@ func newValidatorTestAttributesWithDryRun(obj, old runtime.Object, op admission.
 		"default",
 		name,
 		provisioning.ConnectionResourceInfo.GroupVersionResource(),
-		"",
+		subresource,
 		op,
 		nil,
 		dryRun,
@@ -309,6 +313,48 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAdmissionValidator_Validate_SkipsSubresourcePatches(t *testing.T) {
+	factory := NewMockFactory(t)
+	// No EXPECT() set up for Validate: the mock will fail the test if it's called,
+	// confirming structural/runtime validation never runs for status patches.
+
+	// Missing title would normally fail factory-backed structural validation,
+	// but since old carries the exact same spec/secure, this is a pure status patch.
+	conn := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+	}
+	old := conn.DeepCopy()
+
+	v := NewAdmissionValidator(factory)
+	attr := newValidatorTestAttributesWithSubresource(conn, old, admission.Update, false, "status")
+
+	require.NoError(t, v.Validate(context.Background(), attr, nil))
+}
+
+func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {
+	old := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.ConnectionSpec{Title: "Test Connection", Type: provisioning.GithubConnectionType},
+	}
+	// Bundled onto a /status request: spec.title is cleared, which
+	// factory-backed structural validation rejects.
+	conn := old.DeepCopy()
+	conn.Spec.Title = ""
+
+	factory := NewMockFactory(t)
+	factory.EXPECT().Validate(mock.Anything, conn).Return(field.ErrorList{
+		field.Required(field.NewPath("spec", "title"), "title is required"),
+	}).Once()
+
+	v := NewAdmissionValidator(factory)
+	attr := newValidatorTestAttributesWithSubresource(conn, old, admission.Update, false, "status")
+
+	err := v.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "title is required")
 }
 
 func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {

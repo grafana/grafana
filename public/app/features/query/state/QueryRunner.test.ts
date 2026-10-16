@@ -11,10 +11,9 @@ jest.mock('./runRequest', () => ({
   runRequest: (...args: unknown[]) => mockRunRequest(...args),
 }));
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: () => ({
-    get: (...args: unknown[]) => mockGetDatasource(...args),
-  }),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstance: (...args: unknown[]) => mockGetDatasource(...args),
 }));
 
 jest.mock('./PanelQueryRunner', () => ({

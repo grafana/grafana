@@ -2,6 +2,7 @@ package federated
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -77,6 +78,14 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	}
 
 	helper, err := s.SQL(ctx)
+	if errors.Is(err, legacysql.ErrNamespaceDeleted) {
+		// The stack was deleted or migrated away and its namespace is being torn down. Fall back
+		// to the unified storage counts alone, as when legacy counts are disabled; failing here
+		// turns every folder delete in that namespace into a 500. Any other lookup failure,
+		// including a stack that is only unavailable (e.g. archived or suspended), still fails:
+		// its legacy rows can come back, so it must not be treated as empty.
+		return &resourcepb.ResourceStatsResponse{}, nil
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -36,6 +36,7 @@ func TestMain(m *testing.M) {
 			os.Exit(exitCode)
 		}),
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
+		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.newEventExecutor.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("github.com/patrickmn/go-cache.(*janitor).Run"),                          // go-cache janitor stops via GC finalizer, not an explicit close.
 		goleak.IgnoreTopFunction("go.opentelemetry.io/otel/sdk/trace.(*batchSpanProcessor).processQueue"), // OTel span processor from test infra.
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),                                   // database/sql background goroutines from test DB setup.
@@ -552,12 +553,13 @@ func testEventStoreListSincePages(t *testing.T, ctx context.Context, store *even
 			}
 			for i, scan := range probe.scans {
 				require.Equal(t, SortOrderAsc, scan.Sort)
-				require.Equal(t, int64(500), scan.Limit)
 				if i == 0 {
+					require.Equal(t, int64(500), scan.Limit)
 					require.Equal(t, fmt.Sprint(since), scan.StartKey)
 				} else {
+					require.Equal(t, int64(501), scan.Limit)
 					cursor := eventStoreTestKey(expected[i*500-1])
-					require.Equal(t, PrefixRangeEnd(cursor), scan.StartKey)
+					require.Equal(t, cursor, scan.StartKey)
 				}
 			}
 			probe.assertClosed()

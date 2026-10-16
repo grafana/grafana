@@ -27,6 +27,7 @@ import {
   Text,
   Tooltip,
 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
@@ -118,6 +119,8 @@ export function Step1Content({ canImport, dryRunState, dryRunResult }: Step1Cont
     clearErrors,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
+
+  const notifyApp = useAppNotification();
 
   const [
     notificationsSource,
@@ -252,6 +255,10 @@ export function Step1Content({ canImport, dryRunState, dryRunResult }: Step1Cont
                                 const file = acceptedFiles[0];
                                 if (file) {
                                   onChange(file);
+                                  notifyApp.success(
+                                    t('alerting.import-to-gma.step1.yaml-added-title', 'Configuration file uploaded'),
+                                    file.name
+                                  );
                                 }
                               },
                             }}
@@ -308,7 +315,15 @@ export function Step1Content({ canImport, dryRunState, dryRunResult }: Step1Cont
                           // the file name becomes the template key, so we don't restrict by extension.
                           options={{
                             multiple: true,
-                            onDrop: (acceptedFiles) => onChange([...value, ...acceptedFiles]),
+                            onDrop: (acceptedFiles) => {
+                              onChange([...value, ...acceptedFiles]);
+                              const title = t('alerting.import-to-gma.step1.templates-added-title', '', {
+                                count: acceptedFiles.length,
+                                defaultValue_one: 'Template file added',
+                                defaultValue_other: 'Template files added',
+                              });
+                              notifyApp.success(title, acceptedFiles.map((file) => file.name).join(', '));
+                            },
                           }}
                           fileListRenderer={() => null}
                         >

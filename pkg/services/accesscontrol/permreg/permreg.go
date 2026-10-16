@@ -64,7 +64,7 @@ type PermissionRegistry interface {
 
 type PrefixSet map[string]bool
 
-var _ PermissionRegistry = &permissionRegistry{}
+var _ PermissionRegistry = (*permissionRegistry)(nil)
 
 type permissionRegistry struct {
 	mu                  sync.RWMutex
@@ -110,6 +110,7 @@ func newPermissionRegistry() *permissionRegistry {
 		accesscontrol.AlertingRoutesKind: accesscontrol.AlertingRoutesKind + ":uid:",
 		accesscontrol.AlertingAlertmanagerImportsKind: accesscontrol.AlertingAlertmanagerImportsKind + ":uid:",
 		accesscontrol.AlertingConfigResource:          accesscontrol.AlertingConfigResource + ":uid:",
+		accesscontrol.AlertingRulesConfigScopeRoot:    accesscontrol.AlertingRulesConfigScopeRoot + ":uid:",
 	}
 	return &permissionRegistry{
 		actionScopePrefixes: make(map[string]PrefixSet, 200),

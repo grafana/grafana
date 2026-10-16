@@ -12,6 +12,21 @@ import (
 
 var manifestMergeLogger = log.New("search-manifest-merge")
 
+// ReloadManifests updates declarations independently of index validation, so an
+// invalid search field cannot prevent a hybrid opt-out from taking effect.
+func (o SearchOptions) ReloadManifests(builtin, live []*app.ManifestData) error {
+	if o.HybridSearchConfig != nil {
+		o.HybridSearchConfig.Reload(builtin, live)
+	}
+	if o.EmbeddingConfig != nil {
+		o.EmbeddingConfig.Reload(builtin, live)
+	}
+	if o.SearchFields != nil {
+		return ApplyManifests(o.SearchFields, builtin, live)
+	}
+	return nil
+}
+
 // NewManifestBackedProvider is ManifestBackedProvider for compiled-in
 // manifests, where an invalid declaration is a bug rather than bad input, so it
 // panics instead of returning an error.

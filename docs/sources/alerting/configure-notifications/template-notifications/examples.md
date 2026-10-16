@@ -14,80 +14,29 @@ labels:
 title: Notification template examples
 menuTitle: Examples
 weight: 103
-refs:
-  template-annotations-and-labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
-  template-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
-  manage-notification-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
-  reference:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  reference-notification-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#notification-data
-  reference-alert:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#alert
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#alert
-  language:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
-  group-alert-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
-  link-alert-rules-to-panels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
-  custom-payload-webhook:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload
 ---
 
 # Notification template examples
 
-Notification templates allows you to change the default notification messages.
+Notification templates allow you to change the default notification messages.
 
 You can modify the content and format of notification messages. For example, you can customize the content to show only specific information or adjust the format to suit a particular contact point, such as Slack or Email.
 
 {{< admonition type="note" >}}
 Avoid adding extra information about alert instances in notification templates, as this information is only visible in the notification message.
 
-Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
+Instead, you should [use annotations or labels](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
 {{< /admonition >}}
 
 This page provides various examples illustrating how to template common notification messages. For more details about notification templates, refer to:
 
-- [Template notifications](ref:template-notifications)
-- [Select, create, and preview a notification template](ref:manage-notification-templates)
-- [Notification template reference](ref:reference)
+- [Template notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/)
+- [Select, create, and preview a notification template](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/)
+- [Notification template reference](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/)
 
 ## Basic examples
 
-Notification templates can access the [notification data](ref:reference-notification-data) using the dot (`.`). The following examples demonstrate some basic uses of the [template language](ref:language).
+Notification templates can access the [notification data](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data) using the dot (`.`). The following examples demonstrate some basic uses of the [template language](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/).
 
 ### Text formatting examples
 
@@ -169,7 +118,7 @@ The name of the alert is {{ .Labels.alertname }}
 {{ end }}
 ```
 
-You can then use the template by passing the [notification data (dot `.`)](ref:reference-notification-data):
+You can then use the template by passing the [notification data (dot `.`)](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data):
 
 ```go
 {{ template "custom_message" . }}
@@ -201,8 +150,8 @@ Here's an example that displays the summary and description annotations for each
 
 In this example:
 
-- A template (`alert.summary_and_description`) is defined to print the `summary`, `status`, and `description` of one [alert](ref:reference-alert).
-- The main template `custom.alerts` iterates the list of alerts (`.Alerts`) in [notification data](ref:reference-notification-data), executing the `alert.summary_and_description` template to print the details of each alert.
+- A template (`alert.summary_and_description`) is defined to print the `summary`, `status`, and `description` of one [alert](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#alert).
+- The main template `custom.alerts` iterates the list of alerts (`.Alerts`) in [notification data](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data), executing the `alert.summary_and_description` template to print the details of each alert.
 
 Execute the template by passing the dot (`.`):
 
@@ -219,7 +168,7 @@ Execute the template by passing the dot (`.`):
 
   Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
   Status: resolved
-  Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+  Description: This alert fires when a web server responds with more 5xx errors than expected. This could be an issue with the web server or a backend service.
 ```
 
 ## Print firing and resolved alerts
@@ -263,7 +212,7 @@ Run the template by passing the dot (`.`):
 
   Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
   Status: firing
-  Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+  Description: This alert fires when a web server responds with more 5xx errors than expected. This could be an issue with the web server or a backend service.
 ```
 
 ## Print common labels and annotations
@@ -285,7 +234,7 @@ Common annotations: {{ len .CommonAnnotations.SortedPairs }}
 {{ end -}}
 ```
 
-Note that `.CommonAnnotations` and `.CommonLabels` are part of [notification data](ref:reference-notification-data).
+Note that `.CommonAnnotations` and `.CommonLabels` are part of [notification data](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data).
 
 Execute the template by passing the dot (`.`) as argument:
 
@@ -305,7 +254,7 @@ Common annotations: 0
 
 ## Print individual labels and annotations
 
-This example displays all labels and annotations for each [alert](ref:reference-alert) in the notification.
+This example displays all labels and annotations for each [alert](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#alert) in the notification.
 
 ```go
 {{ define "custom.alert_labels_and_annotations" -}}
@@ -364,12 +313,12 @@ Alert labels: 4
 
 Alert annotations: 2
 - summary = The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
-- description = This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+- description = This alert fires when a web server responds with more 5xx errors than expected. This could be an issue with the web server or a backend service.
 ```
 
 ## Print URLs for runbook and alert data in Grafana
 
-Note that the following example works only for Grafana-managed alerts. It displays some [alert data](ref:reference-alert) such as `DashboardURL`, `PanelURL`, and `SilenceURL`, which are exclusive to Grafana-managed alerts.
+Note that the following example works only for Grafana-managed alerts. It displays some [alert data](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#alert) such as `DashboardURL`, `PanelURL`, and `SilenceURL`, which are exclusive to Grafana-managed alerts.
 
 ```go
 {{ define "custom.alert_additional_details" -}}
@@ -448,7 +397,7 @@ The next example is a copy of the default title/subject template used in Grafana
 This is a more advanced example:
 
 - Prints the number of firing and resolved alerts in the notification.
-- Outputs `.GroupLabels`, the labels used to [group multiple alerts in one notification](ref:group-alert-notifications).
+- Outputs `.GroupLabels`, the labels used to [group multiple alerts in one notification](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/).
 - Prints `CommonLabels`, excluding labels in `.GroupLabels`.
 
 Execute the template by passing the dot (`.`):
@@ -469,7 +418,7 @@ Including a dashboard link in the notification helps responders quickly navigate
 
 Use one of the following methods to include a dashboard link with the correct time range in the alert notification:
 
-1. You can [link the alert rule to a panel](ref:link-alert-rules-to-panels). This includes the dashboard and panel URLs via `{{.Alert.DashboardURL}}` and `{{.Alert.PanelURL}}`.
+1. You can [link the alert rule to a panel](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/). This includes the dashboard and panel URLs via `{{.Alert.DashboardURL}}` and `{{.Alert.PanelURL}}`.
 
    ```go
    {{ define "custom.link_to_dashboard" -}}
@@ -531,7 +480,7 @@ Use one of the following methods to include a dashboard link with the correct ti
 
 ## Custom JSON payload
 
-The [custom payload option](ref:custom-payload-webhook) in the webhook contact point allows you to customize the payload of webhook notifications using a custom template.
+The [custom payload option](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload) in the webhook contact point allows you to customize the payload of webhook notifications using a custom template.
 
 The following example generates a custom JSON payload by executing other templates with `tmpl.Exec`, and using functions like `coll.Dict` and `data.ToJSON` to process and format JSON data.
 

@@ -787,7 +787,7 @@ function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
     abbr(timestamp: number) {
       return (
         findTimeZoneAt(normalizedName, timestamp)?.abbr ??
-        DateTime.fromMillis(timestamp, { zone: normalizedName, locale: currentLocale }).offsetNameShort ??
+        DateTime.fromMillis(timestamp, { zone: normalizedName }).offsetNameShort ??
         ''
       );
     },

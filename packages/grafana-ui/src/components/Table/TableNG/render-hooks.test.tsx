@@ -29,7 +29,7 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
-import { getHeaderCellStyles } from './styles';
+import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
 import {
   type FilterType,
   type NestedRowEntry,
@@ -38,7 +38,7 @@ import {
   type TableRow,
   type TableSummaryRow,
 } from './types';
-import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
+import { type ApplyFilterResult, applyFilter, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows
@@ -353,6 +353,7 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
     disableSanitizeHtml: false,
     showTypeIcons: false,
     timeRange: undefined,
+    typographyCtx: createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily),
     ...overrides,
   };
 }
@@ -409,6 +410,15 @@ describe('useColumnBuilderFromFields', () => {
     expect(typeof result.cellRootRenderers['B']).toBe('function');
   });
 
+  it('reserves last-column padding only for the outer grid', () => {
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const outer = hook.result.current(frame.fields, [100, 100], frame, rows, rows, 6);
+    const inner = hook.result.current(frame.fields, [100, 100], frame, rows, rows);
+    expect(getCellRendererProps(outer.columns[0], rows[0]).width).toBe(87);
+    expect(getCellRendererProps(outer.columns[1], rows[0]).width).toBe(81);
+    expect(getCellRendererProps(inner.columns[1], rows[0]).width).toBe(87);
+  });
+
   it('marks columns frozen when index is within frozen range', () => {
     const config = makeConfig({ frozenColumns: 1, numFrozenColsFullyInView: 2 });
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config });
@@ -435,6 +445,67 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  describe('table.refresh column reorder', () => {
+    it.each([
+      { reorderable: true, expected: [true, true] },
+      { reorderable: false, expected: [false, false] },
+      { reorderable: undefined, expected: [false, false] },
+    ])('sets dragging for every column when reorderable=$reorderable', ({ reorderable, expected }) => {
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ reorderable }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns.map((c) => c.draggable)).toEqual(expected);
+    });
+
+    it('adds the settle class to headerCellClass only for settling columns', () => {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, settlingColumnKeys: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns[0].headerCellClass).toContain(getColumnSettleStyles(theme));
+      expect(result.columns[1].headerCellClass).not.toContain(getColumnSettleStyles(theme));
+    });
+  });
+
+  describe('table.refresh column hide', () => {
+    it('threads onHideColumn into each column, bound to its own display name', () => {
+      const onHideColumn = jest.fn();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ onHideColumn }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const fieldAProps = getHeaderCellProps(result.columns[0]);
+      const fieldBProps = getHeaderCellProps(result.columns[1]);
+
+      fieldAProps.onHideColumn?.();
+      expect(onHideColumn).toHaveBeenCalledWith('A');
+      fieldBProps.onHideColumn?.();
+      expect(onHideColumn).toHaveBeenCalledWith('B');
+    });
+
+    it('omits onHideColumn when not configured', () => {
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const headerProps = getHeaderCellProps(result.columns[0]);
+      expect(headerProps.onHideColumn).toBeUndefined();
+    });
+
+    it.each([true, false])('passes configured canHideColumn=%s to the header', (canHideColumn) => {
+      const singleFieldFrame = createDataFrame({ fields: [{ name: 'A', type: FieldType.string, values: ['x'] }] });
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig({ canHideColumn }) });
+      const result = callFromFields(hook, singleFieldFrame.fields, [100], singleFieldFrame, rows, rows);
+
+      expect(getHeaderCellProps(result.columns[0]).canHideColumn).toBe(canHideColumn);
+    });
   });
 
   it('renders a cell tooltip against a prepared copy of the tooltip field', () => {

@@ -83,17 +83,15 @@ const EnumMappingRow = ({
     onRemoveEnumRow(mappedIndex);
   };
 
+  const dragHandleLabel = t('transformers.enum-mapping-row.drag-handle-label', 'Reorder enum mapping row');
+
   return (
     <Draggable key={`${transformIndex}/${value}`} draggableId={`${transformIndex}/${value}`} index={index}>
       {(provided) => (
         <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
-            <div className={styles.dragHandle} {...provided.dragHandleProps}>
-              <Icon
-                name="draggabledots"
-                size="lg"
-                title={t('transformers.enum-mapping-row.drag-handle-label', 'Reorder enum mapping row')}
-              />
+            <div className={styles.dragHandle} {...provided.dragHandleProps} aria-label={dragHandleLabel}>
+              <Icon name="draggabledots" size="lg" title={dragHandleLabel} />
             </div>
           </td>
           {isEditing ? (

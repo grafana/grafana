@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-var _ authn.ContextAwareClient = new(Session)
+var _ authn.ContextAwareClient = (*Session)(nil)
 
 func ProvideSession(cfgProvider configprovider.ConfigProvider, sessionService auth.UserTokenService,
 	authInfoService login.AuthInfoService, tracer trace.Tracer) *Session {
