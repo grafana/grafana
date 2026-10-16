@@ -310,6 +310,7 @@ it('toggles reordering for the whole table without changing column visibility co
   const { rerender } = render(<Harness />);
   expect(screen.getAllByRole('columnheader').map((header) => header.draggable)).toEqual([true, true, true]);
   expect(screen.getAllByRole('button', { name: /^Reorder / })).toHaveLength(3);
+  expect(screen.getByRole('checkbox', { name: 'Hide A' })).toBeEnabled();
 
   rerender(<Harness reorderable={false} />);
   expect(screen.getAllByRole('columnheader').map((header) => header.draggable)).toEqual([false, false, false]);
