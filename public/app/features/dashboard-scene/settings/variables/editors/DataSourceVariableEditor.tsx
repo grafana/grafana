@@ -9,6 +9,7 @@ import { DataSourceVariable, type SceneVariable } from '@grafana/scenes';
 import { Combobox, type ComboboxOption, Input } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { undoableVariableEdit } from '../../../actions/variable/undoableVariableEdit';
 import { DataSourceVariableForm } from '../components/DataSourceVariableForm';
 import { useGetAllVariableOptions, VariableValuesPreview } from '../components/VariableValuesPreview';
 import { getOptionDataSourceTypes } from '../utils';
@@ -117,9 +118,24 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
   const { pluginId } = variable.useState();
   const { value: options = [] } = useAsync(getOptionDataSourceTypes, []);
 
-  const onChange = async (value: ComboboxOption<string>) => {
-    variable.setState({ pluginId: value.value });
-    await lastValueFrom(variable.validateAndUpdate!());
+  const onChange = (value: ComboboxOption<string>) => {
+    const { pluginId: oldPluginId, value: oldValue, text: oldText } = variable.state;
+
+    undoableVariableEdit(value.value !== oldPluginId, {
+      meta: { actionId: 'variable.changeDataSourceType' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-datasource-type', 'Change variable data source type'),
+      perform: async () => {
+        variable.setState({ pluginId: value.value });
+        await lastValueFrom(variable.validateAndUpdate!());
+      },
+      undo: async () => {
+        variable.setState({ pluginId: oldPluginId });
+        // Notify dependents explicitly; validation may keep the restored value and emit no change event.
+        variable.changeValueTo(oldValue, oldText);
+        await lastValueFrom(variable.validateAndUpdate!());
+      },
+    });
   };
 
   return (
@@ -137,13 +153,31 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
 function DataSourceNameFilter({ variable, id }: InputProps) {
   const { regex } = variable.useState();
 
-  const onBlur = async (evt: React.FormEvent<HTMLInputElement>) => {
-    variable.setState({ regex: evt.currentTarget.value });
-    await lastValueFrom(variable.validateAndUpdate!());
+  const onBlur = (evt: React.FormEvent<HTMLInputElement>) => {
+    const newRegex = evt.currentTarget.value;
+    const { regex: oldRegex, value: oldValue, text: oldText } = variable.state;
+
+    undoableVariableEdit(newRegex !== oldRegex, {
+      meta: { actionId: 'variable.changeNameFilter' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-datasource-name-filter', 'Change variable name filter'),
+      perform: async () => {
+        variable.setState({ regex: newRegex });
+        await lastValueFrom(variable.validateAndUpdate!());
+      },
+      undo: async () => {
+        variable.setState({ regex: oldRegex });
+        // Notify dependents explicitly; validation may keep the restored value and emit no change event.
+        variable.changeValueTo(oldValue, oldText);
+        await lastValueFrom(variable.validateAndUpdate!());
+      },
+    });
   };
 
   return (
     <Input
+      // The input is uncontrolled, remount it when the filter changes outside of it (e.g. undo/redo)
+      key={regex}
       id={id}
       defaultValue={regex}
       onBlur={onBlur}
