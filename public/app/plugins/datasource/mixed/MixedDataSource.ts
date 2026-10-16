@@ -1,6 +1,6 @@
 import { cloneDeep, groupBy } from 'lodash';
-import { forkJoin, from, type Observable, of, type OperatorFunction } from 'rxjs';
-import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
+import { from, merge, type Observable, of } from 'rxjs';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 
 import {
   type DataQuery,
@@ -135,30 +135,37 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
               return {
                 ...response,
                 data: response.data || [],
-                state: LoadingState.Loading,
+                // Preserve the source's state so a live source stays `Streaming` and a finite
+                // source is `Done` (the same default `runRequest` applies to a packet with no
+                // state), letting the panel render as soon as any source produces data.
+                state: response.state ?? LoadingState.Done,
                 key: mixedRequestId(i, response.key),
               };
             }),
-            toArray(),
             catchError((err) => {
               err = toDataQueryError(err);
               err.message = `${api.name}: ${err.message}`;
 
-              return of<DataQueryResponse[]>([
-                {
-                  data: [],
-                  state: LoadingState.Error,
-                  error: err,
-                  key: mixedRequestId(i, dsRequest.requestId),
-                },
-              ]);
+              return of<DataQueryResponse>({
+                data: [],
+                state: LoadingState.Error,
+                error: err,
+                key: mixedRequestId(i, dsRequest.requestId),
+              });
             })
           );
         })
       )
     );
 
-    return forkJoin(runningQueries).pipe(flattenResponses(), map(this.finalizeResponses), mergeAll());
+    // `merge` (rather than the previous `forkJoin` + `toArray`) forwards each datasource's
+    // responses as they arrive. A datasource that emits without ever completing — e.g. a
+    // continuous streaming query — therefore neither blocks the other results nor holds the
+    // response back until it finishes. Each response keeps its own state (`Streaming` for a
+    // live source, otherwise `Done`), so the panel can render historical frames immediately
+    // while a stream stays open. Per-datasource `catchError` keeps a failure isolated: a
+    // failed source surfaces as an `Error` response without discarding the others.
+    return merge(...runningQueries);
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
@@ -168,30 +175,4 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   private isQueryable(query: BatchedQueries): boolean {
     return query && Array.isArray(query.queries) && query.queries.length > 0;
   }
-
-  private finalizeResponses(responses: DataQueryResponse[]): DataQueryResponse[] {
-    const { length } = responses;
-
-    if (length === 0) {
-      return responses;
-    }
-
-    const error = responses.find((response) => response.state === LoadingState.Error);
-    if (error) {
-      responses.push(error); // adds the first found error entry so error shows up in the panel
-    } else {
-      responses[length - 1].state = LoadingState.Done;
-    }
-
-    return responses;
-  }
-}
-
-function flattenResponses(): OperatorFunction<DataQueryResponse[][], DataQueryResponse[]> {
-  return reduce((all: DataQueryResponse[], current) => {
-    return current.reduce((innerAll, innerCurrent) => {
-      innerAll.push.apply(innerAll, innerCurrent);
-      return innerAll;
-    }, all);
-  }, []);
 }
