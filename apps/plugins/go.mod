@@ -14,6 +14,8 @@ replace github.com/grafana/grafana/pkg/infra/log => ../../pkg/infra/log
 
 replace github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
 
+replace github.com/grafana/grafana/pkg/infra/tracing => ../../pkg/infra/tracing
+
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
 require (

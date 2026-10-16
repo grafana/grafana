@@ -190,6 +190,7 @@ declare module "@openfeature/core" {
     | "grafana.logDetailsDisplayedFieldControls"
     | "grafana.globalHomePreference"
     | "grafana.otelLogDetails"
+    | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

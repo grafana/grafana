@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "Failed to load content: {{error}}",
+        "hide-secrets": "Hide secrets",
         "loading": "Loading content...",
         "notifications-title": "Notifications Config Preview",
+        "redaction-error": "This configuration could not be safely previewed and was not displayed.",
+        "reveal-disabled-tooltip": "Nothing was redacted in this configuration.",
+        "reveal-secrets": "Reveal secrets",
         "rules-title": "Alert Rules Preview"
       },
       "recording-rules": "Recording rules",
@@ -10117,6 +10121,7 @@
             "name-humidity": "Humidity (%H)",
             "name-locale": "Locale format",
             "name-number": "Number",
+            "name-ordinal": "Ordinal (1st, 2nd, 3rd)",
             "name-percent-1": "Percent (0.0-1.0)",
             "name-percent-100": "Percent (0-100)",
             "name-pixels": "Pixels",
@@ -10242,7 +10247,11 @@
           },
           "name": "Volume"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "st",
+      "ordinal-suffix_ordinal_two": "nd",
+      "ordinal-suffix_ordinal_few": "rd",
+      "ordinal-suffix_ordinal_other": "th"
     }
   },
   "grafana-ui": {
@@ -16648,6 +16657,7 @@
     "name-page-size": "Page size",
     "name-show-columns-sidebar": "Show columns sidebar",
     "name-show-table-header": "Show table header",
+    "name-sparkline-show-tooltip": "Show hover tooltip",
     "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",

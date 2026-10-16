@@ -5495,3 +5495,46 @@ func TestRepositoryController_recordReconcileError(t *testing.T) {
 	// A system failure must not be miscounted as user-caused (which an SLO would ignore).
 	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseUser))
 }
+
+// The apiserver informer delivers a whole Repository and the NATS one a metadata
+// projection, so keying must accept both: a key that cannot be computed is a
+// repository that never gets enqueued, with no error.
+func TestRepoKeyFuncAcceptsBothFeeds(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		obj  any
+	}{
+		{
+			name: "whole repository, from the apiserver informer",
+			obj: &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns", Name: "repo", ResourceVersion: "42",
+			}},
+		},
+		{
+			name: "metadata projection, from the NATS informer",
+			obj: &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns", Name: "repo", ResourceVersion: "42",
+			}},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			key, err := repoKeyFunc(tc.obj)
+			require.NoError(t, err)
+			assert.Equal(t, "ns/repo", key)
+			assert.Equal(t, "42", resourceVersion(tc.obj))
+		})
+	}
+}
+
+// A delete tombstone carries no metadata to read.
+func TestRepoKeyFuncHandlesTombstones(t *testing.T) {
+	tombstone := cache.DeletedFinalStateUnknown{
+		Key: "ns/repo",
+		Obj: &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo"}},
+	}
+
+	key, err := repoKeyFunc(tombstone)
+	require.NoError(t, err)
+	assert.Equal(t, "ns/repo", key)
+	assert.Empty(t, resourceVersion(tombstone), "nothing to read a version from")
+}
