@@ -96,6 +96,11 @@ export class PageHistorySrv {
   private dirty = false;
   private readonly storage = new UserStorage(STORAGE_SERVICE);
   private ready: Promise<void> | undefined;
+  /**
+   * Changes made before the stored copy is in, replayed in order once it is. A visit that only refreshes a
+   * page's row (a menu destination, a rewrite) has to see the stored row, or it finds none and changes nothing.
+   */
+  private pending: Array<() => void> | undefined = [];
   /** The menu as it is now, read per visit: items come and go with permissions, plugins and bookmarks. */
   private navTree: () => NavModelItem[] = () => [];
 
@@ -138,6 +143,7 @@ export class PageHistorySrv {
       unlisten();
       chromeSubscription.unsubscribe();
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      this.pending = undefined;
       this.scheduleWrite.cancel();
     };
   }
@@ -171,6 +177,9 @@ export class PageHistorySrv {
     if ((await this.sync(false)) === 'empty') {
       await this.seed();
     }
+    const pending = this.pending;
+    this.pending = undefined;
+    pending?.forEach((change) => change());
   }
 
   /**
@@ -221,7 +230,9 @@ export class PageHistorySrv {
     }
     // A page with nothing to resume gets no row, but a row it has is refreshed to where the user left it.
     const refreshOnly = isRewrite || hasNothingToResume(page, location.search, this.navTree());
-    this.update(recordVisit(this.state, page, recordableSearch(page, location.search), Date.now(), refreshOnly));
+    const search = recordableSearch(page, location.search);
+    const at = Date.now();
+    this.record(() => recordVisit(this.state, page, search, at, refreshOnly));
   }
 
   /**
@@ -238,8 +249,22 @@ export class PageHistorySrv {
     const { pathname, search } = locationService.getLocation();
     const page = classifyPage(pathname, search);
     if (page) {
-      this.update(recordTitle(this.state, page, title, Date.now()));
+      const at = Date.now();
+      this.record(() => recordTitle(this.state, page, title, at));
     }
+  }
+
+  /**
+   * Applies `change` to the state, after the stored copy is in. Stamps are taken when the change is made, so a
+   * replay keeps the order of events; the write it arms waits for the load as every write does.
+   */
+  private record(change: () => HistoryState): void {
+    if (this.pending) {
+      this.pending.push(() => this.update(change()));
+      this.persist();
+      return;
+    }
+    this.update(change());
   }
 
   /** Adopts a change made in this tab, if `next` is one: written at the end of the current window. */

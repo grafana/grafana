@@ -209,6 +209,28 @@ describe('PageHistorySrv', () => {
     ]);
   });
 
+  it('refreshes a stored row when the landing page is a menu destination, and titles it', async () => {
+    // Signed-in users read the store over the network: the landing visit and the first title arrive before it.
+    const deferred = createDeferred<string | null>();
+    jest.spyOn(UserStorage.prototype, 'updateItem').mockImplementation(async (_key, update) => {
+      update(await deferred.promise);
+    });
+    const navTree: NavModelItem[] = [{ text: 'Alert rules', url: '/alerting/list' }];
+
+    const srv = startAt('/alerting/list?orgId=1', navTree);
+    renderPage('Alert rules', 'Alerting');
+    deferred.resolve(
+      JSON.stringify({
+        clearedAt: 0,
+        entries: [{ pathname: '/alerting/list', search: '?search=firing', lastVisited: T0 - 60_000 }],
+      })
+    );
+
+    expect(await srv.getEntries()).toEqual([
+      { kind: 'alerting', pathname: '/alerting/list', search: '?orgId=1', lastVisited: T0 + 1, title: 'Alert rules' },
+    ]);
+  });
+
   it('reads the menu as it is at each visit, not as it was at start', async () => {
     const navTree: NavModelItem[] = [];
     const srv = startAt('/', navTree);
