@@ -349,6 +349,56 @@ describe('ExemplarsPlugin', () => {
     });
   });
 
+  it.each([
+    { name: 'missing Time field', field: 'Time', missing: true },
+    { name: 'missing Value field', field: 'Value', missing: true },
+    { name: 'null time', field: 'Time', value: null },
+    { name: 'null value', field: 'Value', value: null },
+    { name: 'NaN time', field: 'Time', value: NaN },
+    { name: 'NaN value', field: 'Value', value: NaN },
+    { name: 'infinite time', field: 'Time', value: Infinity },
+    { name: 'infinite value', field: 'Value', value: Infinity },
+  ])(
+    'keeps hover working with $name and opens the request when valid data arrives',
+    async ({ field, missing, value }) => {
+      const sample = createDataFrame({
+        fields: [
+          { name: 'Time', values: [1670418750000] },
+          { name: 'Value', values: [0.5] },
+          { name: 'traceID', type: FieldType.string, values: ['requested-trace'] },
+        ],
+      });
+      const invalidSample = createDataFrame({
+        fields: sample.fields
+          .filter((f) => !missing || f.name !== field)
+          .map((f) => (f.name === field ? { ...f, values: [value] } : f)),
+      });
+      const hoverSample = createDataFrame({
+        fields: [
+          { name: 'Time', values: [1670418800000] },
+          { name: 'Value', values: [0.7] },
+          { name: 'traceID', type: FieldType.string, values: ['hover-trace'] },
+        ],
+      });
+      const openExemplar = createOpenExemplar('navigation-invalid', 0);
+      const result = setUp({ exemplars: [invalidSample, hoverSample], openExemplar });
+
+      expect(getMarkers()).toHaveLength(1);
+      await userEvent.hover(getMarker());
+      expect(await screen.findByText('hover-trace')).toBeVisible();
+      expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+      expect(openExemplar.onHandled).not.toHaveBeenCalled();
+
+      await userEvent.unhover(getMarker());
+      result.rerenderExemplars([sample, hoverSample]);
+
+      expect(await screen.findByText('requested-trace')).toBeVisible();
+      expect(screen.getByLabelText('Close')).toBeVisible();
+      expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+      expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-invalid');
+    }
+  );
+
   describe('marker', () => {
     it('renders', () => {
       setUp();

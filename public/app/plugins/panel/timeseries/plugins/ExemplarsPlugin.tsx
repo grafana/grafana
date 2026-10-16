@@ -47,36 +47,6 @@ export const ExemplarsPlugin = ({
     }
   }, [currentLockedExemplar, lockedExemplar]);
 
-  useEffect(() => {
-    if (!openExemplar || initializedConfig !== config) {
-      return;
-    }
-    const request = openExemplar.getRequest(exemplars);
-    if (!request || !Number.isInteger(request.frameIndex)) {
-      return;
-    }
-    const dataFrame = exemplars[request.frameIndex];
-    if (
-      !dataFrame ||
-      typeof request.requestId !== 'string' ||
-      !Number.isInteger(request.rowIndex) ||
-      request.rowIndex < 0 ||
-      request.rowIndex >= dataFrame.length ||
-      (visibleSeries !== undefined && !showExemplarMarker(visibleSeries, dataFrame, request.rowIndex))
-    ) {
-      return;
-    }
-    openExemplar.onHandled(request.requestId);
-    setLockedExemplar({ dataFrame, rowIndex: request.rowIndex });
-  }, [exemplars, visibleSeries, openExemplar, initializedConfig, config]);
-
-  useLayoutEffect(() => {
-    config.addHook('init', (u) => {
-      plotInstance.current = u;
-      setInitializedConfig(config);
-    });
-  }, [config]);
-
   const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, rowIndex: number) => {
     const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
     const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
@@ -92,7 +62,11 @@ export const ExemplarsPlugin = ({
     const yMin = plotInstance.current.scales[yScale].min;
     const yMax = plotInstance.current.scales[yScale].max;
 
+    const x = time.values[rowIndex];
     let y = value.values[rowIndex];
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      return undefined;
+    }
     // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
     if (yMin != null && y < yMin) {
       y = yMin;
@@ -102,11 +76,43 @@ export const ExemplarsPlugin = ({
       y = yMax;
     }
 
-    return {
-      x: plotInstance.current.valToPos(time.values[rowIndex], 'x'),
+    const coords = {
+      x: plotInstance.current.valToPos(x, 'x'),
       y: plotInstance.current.valToPos(y, yScale),
     };
+    return Number.isFinite(coords.x) && Number.isFinite(coords.y) ? coords : undefined;
   }, []);
+
+  useEffect(() => {
+    if (!openExemplar || initializedConfig !== config) {
+      return;
+    }
+    const request = openExemplar.getRequest(exemplars);
+    if (!request || !Number.isInteger(request.frameIndex)) {
+      return;
+    }
+    const dataFrame = exemplars[request.frameIndex];
+    if (
+      !dataFrame ||
+      typeof request.requestId !== 'string' ||
+      !Number.isInteger(request.rowIndex) ||
+      request.rowIndex < 0 ||
+      request.rowIndex >= dataFrame.length ||
+      !mapExemplarToXYCoords(dataFrame, request.rowIndex) ||
+      (visibleSeries !== undefined && !showExemplarMarker(visibleSeries, dataFrame, request.rowIndex))
+    ) {
+      return;
+    }
+    openExemplar.onHandled(request.requestId);
+    setLockedExemplar({ dataFrame, rowIndex: request.rowIndex });
+  }, [exemplars, visibleSeries, openExemplar, initializedConfig, config, mapExemplarToXYCoords]);
+
+  useLayoutEffect(() => {
+    config.addHook('init', (u) => {
+      plotInstance.current = u;
+      setInitializedConfig(config);
+    });
+  }, [config]);
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, rowIndex: number): ReactNode => {
