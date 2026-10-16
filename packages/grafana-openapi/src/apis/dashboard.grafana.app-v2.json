@@ -2583,6 +2583,14 @@
         "type": "object",
         "required": ["query", "refId", "hidden"],
         "properties": {
+          "conditionalRendering": {
+            "description": "When set, the query only runs while the group evaluates to visible",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardConditionalRenderingGroupKind"
+              }
+            ]
+          },
           "hidden": {
             "type": "boolean",
             "default": false

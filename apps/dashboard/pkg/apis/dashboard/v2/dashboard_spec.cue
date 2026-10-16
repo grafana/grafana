@@ -536,6 +536,8 @@ PanelQuerySpec: {
 	query:  DataQueryKind
 	refId:  string | *"A"
 	hidden: bool
+	// When set, the query only runs while the group evaluates to visible
+	conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 PanelQueryKind: {

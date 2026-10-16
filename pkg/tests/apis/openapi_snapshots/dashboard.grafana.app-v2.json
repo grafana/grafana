@@ -2859,6 +2859,14 @@
           "hidden"
         ],
         "properties": {
+          "conditionalRendering": {
+            "description": "When set, the query only runs while the group evaluates to visible",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingGroupKind"
+              }
+            ]
+          },
           "hidden": {
             "type": "boolean",
             "default": false
