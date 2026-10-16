@@ -4,7 +4,7 @@ import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 
 import { canAddPanelToNotebook } from '../permissions';
 
-import { type Props } from './AddToNotebookForm';
+import { type LooseProps, type Props } from './AddToNotebookForm';
 
 const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNotebookForm" */ './AddToNotebookForm'));
 
@@ -54,7 +54,7 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * </Modal>
  * ```
  */
-export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
+export const AddToNotebookFormExposedComponent = (props: LooseProps) => {
   const enabled = useFlagDashboardNotebooks();
   if (!enabled) {
     console.error(`[AddToNotebookFormExposedComponent] The required feature flag dashboard.notebooks is not enabled.`);
@@ -70,9 +70,8 @@ export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
     return null;
   }
 
-  const { onClose, buildPanel, capturedTimeRange, cells } = props;
-  const singlePanel = Boolean(buildPanel && capturedTimeRange);
-  if (!onClose || singlePanel === Boolean(cells)) {
+  const formProps = toFormProps(props);
+  if (!formProps) {
     console.error(
       `[AddToNotebookFormExposedComponent] Pass onClose and exactly one of: buildPanel with capturedTimeRange, or cells.`
     );
@@ -81,15 +80,18 @@ export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
 
   return (
     <Suspense fallback={null}>
-      <AddToNotebookFormLazy
-        onClose={onClose}
-        buildPanel={buildPanel}
-        capturedTimeRange={capturedTimeRange}
-        cells={cells}
-        defaultTitle={props.defaultTitle}
-        onAdded={props.onAdded}
-        source={props.source}
-      />
+      <AddToNotebookFormLazy {...formProps} />
     </Suspense>
   );
 };
+
+/** One shape or the other, or nothing when the plugin passed neither or both. */
+function toFormProps({ onClose, buildPanel, capturedTimeRange, cells, ...rest }: LooseProps): Props | undefined {
+  if (!onClose) {
+    return undefined;
+  }
+  if (cells) {
+    return buildPanel || capturedTimeRange ? undefined : { ...rest, onClose, cells };
+  }
+  return buildPanel && capturedTimeRange ? { ...rest, onClose, buildPanel, capturedTimeRange } : undefined;
+}

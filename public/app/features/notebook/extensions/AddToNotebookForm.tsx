@@ -20,18 +20,8 @@ export type AddToNotebookFormCell =
       capturedTimeRange: CapturedTimeRange;
     };
 
-export interface Props {
+interface CommonProps {
   onClose: () => void;
-  /**
-   * Called on submit, not when the form opens. Pass this or `cells`, not both.
-   */
-  buildPanel?: () => Panel;
-  /**
-   * The window the visualization was showing. The form offers to lock the panel to it. Required with `buildPanel`.
-   */
-  capturedTimeRange?: CapturedTimeRange;
-  /** Ordered content to add instead of a single panel. Panels convert on submit. */
-  cells?: AddToNotebookFormCell[];
   /** Prefills the new-notebook title. */
   defaultTitle?: string;
   /** Called once the content is written. `url` is the notebook route, without the sub-path. */
@@ -40,22 +30,40 @@ export interface Props {
   source?: AppendedCellSource;
 }
 
+interface SinglePanelProps extends CommonProps {
+  /** Called on submit, not when the form opens. */
+  buildPanel: () => Panel;
+  /** The window the visualization was showing. The form offers to lock the panel to it. */
+  capturedTimeRange: CapturedTimeRange;
+  cells?: never;
+}
+
+interface CellsProps extends CommonProps {
+  /** Ordered content to add instead of a single panel. Panels convert on submit. */
+  cells: AddToNotebookFormCell[];
+  buildPanel?: never;
+  capturedTimeRange?: never;
+}
+
+export type Props = SinglePanelProps | CellsProps;
+
+/** What a plugin can pass: nothing is type-checked across the plugin boundary. */
+export type LooseProps = Partial<CommonProps> & {
+  buildPanel?: () => Panel;
+  capturedTimeRange?: CapturedTimeRange;
+  cells?: AddToNotebookFormCell[];
+};
+
 /**
  * Internal implementation used by the exposed versioned wrapper.
  * For stability/versioning guidance, refer to AddToNotebookFormExposedComponent.
  */
-export function AddToNotebookForm({
-  onClose,
-  buildPanel,
-  capturedTimeRange,
-  cells,
-  defaultTitle,
-  onAdded,
-  source,
-}: Props): ReactElement | null {
+export function AddToNotebookForm(props: Props): ReactElement {
+  const { onClose, defaultTitle, onAdded, source } = props;
   const common = { onDismiss: onClose, entryPoint: NOTEBOOK_ENTRY_POINT.PLUGIN, defaultTitle, onAdded };
 
-  if (cells) {
+  if (props.cells) {
+    const { cells } = props;
     return (
       <AddPanelToNotebookModalBody
         {...common}
@@ -73,10 +81,7 @@ export function AddToNotebookForm({
     );
   }
 
-  if (!buildPanel || !capturedTimeRange) {
-    return null;
-  }
-
+  const { buildPanel, capturedTimeRange } = props;
   return (
     <AddPanelToNotebookModalBody
       {...common}
