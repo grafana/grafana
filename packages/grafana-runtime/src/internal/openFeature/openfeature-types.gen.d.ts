@@ -93,6 +93,7 @@ declare module "@openfeature/core" {
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleReviews"
     | "alerting.ruleQuality"
+    | "alerting.ruleQualityFix"
     | "datasourceConnectionsTab"
     | "connectionsFilterSidebar"
     | "alertingJiraIntegration"
