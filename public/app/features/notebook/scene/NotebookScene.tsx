@@ -50,6 +50,7 @@ import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
 import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
+import { claimSceneContext, releaseSceneContext } from './sceneContextStack';
 
 export interface NotebookSceneState extends SceneObjectState {
   title: string;
@@ -92,24 +93,6 @@ export interface NotebookSceneState extends SceneObjectState {
 
 type NotebookComposerSession = ComposerSession<ComposerNotebookSpec>;
 
-/**
- * Notebooks currently holding the global scene context, most recently activated last, and whatever
- * held it before the first of them.
- *
- * A stack rather than each activation remembering its own predecessor, because deactivation order is
- * not activation order: more than one notebook can be mounted at a time — an embedded one over
- * whatever else is open — and the naive version got both ends wrong. An older notebook closing used
- * to hand the context back while a newer one was still live, and the last one closing handed it to
- * an already-deactivated sibling, leaving panel interpolation and TimeSrv resolving against a dead
- * scene. Splicing by identity is correct for any order.
- *
- * Only notebooks are tracked. A dashboard deactivating still restores unconditionally and can take
- * the context from a live notebook; that is a pre-existing behaviour of DashboardScene and is
- * deliberately left alone here.
- */
-const sceneContextStack: NotebookScene[] = [];
-let beforeFirstSceneContext: SceneObject | undefined;
-
 // Matches CONTENT_EDIT_COALESCE_MS in NotebookLayoutManager: the same run-of-keystrokes-into-one-step
 // coalescing, for the title instead of a cell's content.
 const TITLE_EDIT_COALESCE_MS = 800;
@@ -119,26 +102,6 @@ interface PendingTitleEdit {
   after: string;
   action: NotebookEditAction;
   timer?: ReturnType<typeof setTimeout>;
-}
-
-function claimSceneContext(scene: NotebookScene): void {
-  if (sceneContextStack.length === 0) {
-    beforeFirstSceneContext = window.__grafanaSceneContext;
-  }
-  sceneContextStack.push(scene);
-  window.__grafanaSceneContext = scene;
-}
-
-function releaseSceneContext(scene: NotebookScene): void {
-  const index = sceneContextStack.lastIndexOf(scene);
-  if (index !== -1) {
-    sceneContextStack.splice(index, 1);
-  }
-  // The newest notebook still mounted, or whatever held it before any of them.
-  window.__grafanaSceneContext = sceneContextStack[sceneContextStack.length - 1] ?? beforeFirstSceneContext;
-  if (sceneContextStack.length === 0) {
-    beforeFirstSceneContext = undefined;
-  }
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
@@ -302,10 +265,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   };
 
   /**
-   * Enters edit mode for a write that is about to replace the whole document — the mutation API's
-   * own writes. Skips the prompt `onEnterEditMode` shows about a reader's own panel changes: those
-   * changes are about to be replaced by the incoming document anyway, same as
-   * `NotebookAutosave.saveDocumentChange` already treats them.
+   * Enters edit mode for a write that comes from outside the notebook's own editing: the mutation API's
+   * whole-document writes, and cells added from another surface. Skips the prompt `onEnterEditMode`
+   * shows about a reader's own panel changes: a document write replaces them anyway, same as
+   * `NotebookAutosave.saveDocumentChange` treats them, and an add leaves them out of what it saves.
    */
   public enterEditModeForDocumentWrite(source: NotebookEditSessionSource): void {
     if (this.state.isEditing || this.composer || !canEditNotebooks()) {

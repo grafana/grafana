@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
-  getExtensionSidebarPresentation,
+  getEffectiveExtensionSidebarPresentation,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
@@ -19,6 +19,9 @@ import {
   wasComposerEnterRequestDocked,
 } from './composerEntryRequests';
 import { type ComposerEnterRequestOptions } from './types';
+
+// The Assistant's sidebar: the plugin that may float.
+const sidebarPresentation = () => getEffectiveExtensionSidebarPresentation('grafana-assistant-app');
 
 const TARGET = { resource: 'dashboard', uid: 'abc' } as const;
 const NOTEBOOK = { resource: 'notebook', uid: 'nb' } as const;
@@ -104,7 +107,7 @@ it('never makes a request no listener supports', () => {
   expect(requestComposerEnter(NOTEBOOK, { float: true })).toBe(false);
 
   expect(getPendingComposerEnterTarget()).toBeUndefined();
-  expect(getExtensionSidebarPresentation()).toBe('docked');
+  expect(sidebarPresentation()).toBe('docked');
 });
 
 it('makes no request while nothing listens, and none fires later', () => {
@@ -132,39 +135,39 @@ describe('a request that floats the sidebar', () => {
   it('floats the sidebar while it waits for the entry attempt', () => {
     requestComposerEnter(TARGET, { float: true });
     expect(assistant).toHaveBeenCalledWith(TARGET);
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
   });
 
   it('docks the sidebar again when no session starts within 10 seconds', () => {
     jest.useFakeTimers();
     requestComposerEnter(TARGET, { float: true });
     jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS);
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('docks the sidebar again when the entry attempt settles without a session', () => {
     requestComposerEnter(TARGET, { float: true });
     settleComposerEnterRequest(TARGET.uid);
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('docks the sidebar again when the dashboard goes away first', () => {
     requestComposerEnter(TARGET, { float: true });
     clearPendingComposerEnterRequest();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('ignores the settling of another dashboard', () => {
     requestComposerEnter(TARGET, { float: true });
     settleComposerEnterRequest('another-dashboard');
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
   });
 
   it('still goes ahead, docked, when the user docks the sidebar while it waits', () => {
     requestComposerEnter(TARGET, { float: true });
     expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(false);
     setExtensionSidebarPresentation('docked');
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
     expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(true);
     expect(wasComposerEnterRequestDocked('another-dashboard')).toBe(false);
     expect(getPendingComposerEnterTarget()).toEqual(TARGET);
@@ -175,10 +178,10 @@ describe('a request that floats the sidebar', () => {
 
   it('leaves the layout alone for a request that does not float it', () => {
     requestComposerEnter(TARGET);
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
     settleComposerEnterRequest(TARGET.uid);
     clearPendingComposerEnterRequest();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 });
 
@@ -225,7 +228,7 @@ describe('a listener that declines', () => {
 
     expect(decline).toHaveBeenCalledWith(TARGET);
     expect(getPendingComposerEnterTarget()).toBeUndefined();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('does not pass the request on to another listener', () => {
@@ -261,7 +264,7 @@ describe('a listener that declines', () => {
     );
     expect(requestComposerEnter(TARGET, { float: true })).toBe(true);
     expect(getPendingComposerEnterTarget()).toEqual(TARGET);
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
   });
 });
 
@@ -295,7 +298,7 @@ describe('before Assistant first registers', () => {
   it('assumes dashboards, never notebooks', () => {
     expect(getSupportedComposerResources()).toEqual(['dashboard']);
     expect(requestComposerEnter(NOTEBOOK, { float: true })).toBe(false);
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it.each([
@@ -321,7 +324,7 @@ describe('before Assistant first registers', () => {
   it('holds a dashboard request, floating, and delivers it once to the first listener that registers', () => {
     expect(requestComposerEnter(TARGET, { float: true })).toBe(true);
     expect(getPendingComposerEnterTarget()).toEqual(TARGET);
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
 
     const first = listen();
     const second = listen();
@@ -331,7 +334,7 @@ describe('before Assistant first registers', () => {
     expect(second.listener).not.toHaveBeenCalled();
     // Outstanding, and floating, until the entry attempt settles.
     expect(getPendingComposerEnterTarget()).toEqual(TARGET);
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
   });
 
   it('releases a held request after 10 seconds, and delivers nothing later', () => {
@@ -341,14 +344,14 @@ describe('before Assistant first registers', () => {
     jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS);
 
     expect(getPendingComposerEnterTarget()).toBeUndefined();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
     const { listener } = listen();
     expect(listener).not.toHaveBeenCalled();
   });
 
   it('settles a held request the first listener declines as it registers', () => {
     requestComposerEnter(TARGET, { float: true });
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
 
     const decline = listen(
       undefined,
@@ -359,7 +362,7 @@ describe('before Assistant first registers', () => {
     expect(decline).toHaveBeenCalledWith(TARGET);
     expect(second).not.toHaveBeenCalled();
     expect(getPendingComposerEnterTarget()).toBeUndefined();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('releases a held request the first listener does not support', () => {
@@ -369,7 +372,7 @@ describe('before Assistant first registers', () => {
 
     expect(listener).not.toHaveBeenCalled();
     expect(getPendingComposerEnterTarget()).toBeUndefined();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('uses only the declared types once Assistant has registered, even after everything unsubscribes', () => {

@@ -410,6 +410,40 @@ describe('useProvisionedDashboardData', () => {
     });
   });
 
+  describe('loaded from a branch preview', () => {
+    const previewWrapper = getWrapper({
+      renderWithRouter: true,
+      historyOptions: { initialEntries: ['/?ref=feature-branch'] },
+    });
+
+    it.each([
+      { desc: 'a branch-only repository', workflows: ['branch'] as RepositoryView['workflows'] },
+      { desc: 'a repository allowing both workflows', workflows: ['branch', 'write'] as RepositoryView['workflows'] },
+    ])('defaults to writing back to the previewed branch for $desc', ({ workflows }) => {
+      const repo: RepositoryView = { ...folderRepo, workflows };
+      const { result } = renderHook(
+        () => useProvisionedDashboardData(createDashboard(), readyView(repo, folder('dashboards'))),
+        { wrapper: previewWrapper }
+      );
+
+      expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready);
+      expect(result.current.defaultValues?.workflow).toBe('write');
+      expect(result.current.defaultValues?.ref).toBe('feature-branch');
+    });
+
+    it('falls back to the configured branch when the repository is write-only', () => {
+      // Without the branch workflow the previewed ref can't be pushed to; the configured branch is the only target.
+      const writeOnlyRepo: RepositoryView = { ...folderRepo, workflows: ['write'] };
+      const { result } = renderHook(
+        () => useProvisionedDashboardData(createDashboard(), readyView(writeOnlyRepo, folder('dashboards'))),
+        { wrapper: previewWrapper }
+      );
+
+      expect(result.current.defaultValues?.workflow).toBe('write');
+      expect(result.current.defaultValues?.ref).toBe('main');
+    });
+  });
+
   describe('generated branch name', () => {
     // A rerender (e.g. from toggling a save option) must not regenerate the branch name: the form
     // resets to the defaults with keepDirtyValues, so a new name would replace the pristine field.

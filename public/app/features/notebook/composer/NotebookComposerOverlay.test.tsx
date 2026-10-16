@@ -5,7 +5,7 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
-  getExtensionSidebarPresentation,
+  getEffectiveExtensionSidebarPresentation,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
@@ -22,6 +22,9 @@ import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutMa
 
 import { enterNotebookComposer } from './NotebookComposerDocument';
 import { setRouteNotebook } from './notebookComposerAccess';
+
+// The Assistant's sidebar: the plugin that may float.
+const sidebarPresentation = () => getEffectiveExtensionSidebarPresentation('grafana-assistant-app');
 
 jest.mock('app/features/dashboard-scene/composer/raster', () => ({
   renderNode: jest.fn(),
@@ -263,10 +266,10 @@ describe('notebook Composer with the extension sidebar docked', () => {
   it('keeps the session open, and still picks and captures, without the docked sidebar', async () => {
     buildNotebook();
     const entered = await composerApi.enter({ resource: 'notebook', uid: 'nb-overlay' });
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
     setExtensionSidebarPresentation('docked');
     expect(entered.signal.aborted).toBe(false);
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
     const sidebar = document.createElement('div');
     sidebar.setAttribute('data-extension-sidebar', '');
     document.body.appendChild(sidebar);

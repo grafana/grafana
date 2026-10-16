@@ -62,6 +62,7 @@ const closedSidebarContext: ExtensionSidebarContextType = {
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
   presentation: 'docked',
+  floatingHidden: false,
 };
 
 const openSidebarContext: ExtensionSidebarContextType = {
@@ -252,8 +253,8 @@ describe('AppChrome', () => {
 
       await screen.findByTestId('ext-sidebar-stub');
       const mainContent = document.getElementById('pageContent')!;
-      // The page keeps its full width and pads its bottom by the inset the floating sidebar publishes.
-      expect(stylesFor(mainContent)).toContain('padding-bottom: var(--extension-floating-inset, 0px)');
+      // The floating sidebar overlays the page, so the page keeps its full size.
+      expect(stylesFor(mainContent)).not.toContain('padding-bottom');
       expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
     });
 

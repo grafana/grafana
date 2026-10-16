@@ -4,13 +4,14 @@ import { type ReactElement, type ReactNode } from 'react';
 import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
-import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents, setAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import {
   claimFloatingExtensionSidebar,
+  holdFloatingExtensionSidebar,
   onExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
@@ -45,6 +46,12 @@ const mockPluginMeta = {
   addedLinks: [],
 };
 
+const mockPathfinderMeta = {
+  pluginId: 'grafana-pathfinder-app',
+  addedComponents: [mockComponent],
+  addedLinks: [],
+};
+
 // Mock the store
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -58,6 +65,7 @@ jest.mock('@grafana/data', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
   locationService: {
     getLocation: jest.fn().mockReturnValue({ pathname: '/test-path' }),
     getLocationObservable: jest.fn(),
@@ -66,6 +74,10 @@ jest.mock('@grafana/runtime', () => ({
     links: [
       {
         pluginId: mockPluginMeta.pluginId,
+        title: mockComponent.title,
+      },
+      {
+        pluginId: mockPathfinderMeta.pluginId,
         title: mockComponent.title,
       },
     ],
@@ -508,12 +520,14 @@ describe('ExtensionSidebarProvider', () => {
     const PresentationComponent = () => (
       <div data-testid="presentation">{useExtensionSidebarContext().presentation}</div>
     );
-    const renderPresentation = () =>
+    const renderPresentation = (pluginId = mockPluginMeta.pluginId) => {
+      (store.get as jest.Mock).mockReturnValue(getComponentIdFromComponentMeta(pluginId, mockComponent.title));
       render(
         <ExtensionSidebarContextProvider>
           <PresentationComponent />
         </ExtensionSidebarContextProvider>
       );
+    };
 
     afterEach(async () => {
       resetExtensionSidebarPresentationForTests();
@@ -522,18 +536,129 @@ describe('ExtensionSidebarProvider', () => {
       });
     });
 
-    it('starts docked and follows setExtensionSidebarPresentation while floating is allowed', async () => {
+    describe('held hidden by a page', () => {
+      const componentId = () => getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
+      const HiddenComponent = () => {
+        const context = useExtensionSidebarContext();
+        return (
+          <>
+            <div data-testid="is-open">{context.isOpen.toString()}</div>
+            <div data-testid="floating-hidden">{context.floatingHidden.toString()}</div>
+          </>
+        );
+      };
+      const renderOpen = async () => {
+        await act(async () => {
+          setTestFlags({ [FLOATING_FLAG]: true });
+        });
+        (store.get as jest.Mock).mockReturnValue(componentId());
+        render(
+          <ExtensionSidebarContextProvider>
+            <HiddenComponent />
+          </ExtensionSidebarContextProvider>
+        );
+      };
+      const latestSubscriber = (eventType: unknown) =>
+        subscribeSpy.mock.calls.filter(([type]) => type === eventType).at(-1)![1];
+      const payload = { pluginId: mockPluginMeta.pluginId, componentTitle: mockComponent.title };
+
+      it('hides an open floating sidebar while held, and shows it again when released', async () => {
+        await renderOpen();
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+
+        let release = () => {};
+        act(() => {
+          release = holdFloatingExtensionSidebar();
+        });
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('true');
+        expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+
+        act(() => release());
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('shows it on any request to open it', async () => {
+        await renderOpen();
+        act(() => {
+          holdFloatingExtensionSidebar();
+        });
+
+        act(() => latestSubscriber(OpenExtensionSidebarEvent)(new OpenExtensionSidebarEvent(payload)));
+
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('shows it on a toggle, instead of closing it unseen', async () => {
+        await renderOpen();
+        act(() => {
+          holdFloatingExtensionSidebar();
+        });
+
+        act(() => latestSubscriber(ToggleExtensionSidebarEvent)(new ToggleExtensionSidebarEvent(payload)));
+
+        expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('reports the layout an open happens in, and no open or close for a layout switch alone', async () => {
+        await renderOpen();
+        const changes = () =>
+          jest
+            .mocked(reportInteraction)
+            .mock.calls.filter(([name]) => name === 'grafana_extension_sidebar_changed')
+            .map(([, properties]) => properties);
+        expect(changes()).toEqual([expect.objectContaining({ opened: true, presentation: 'floating' })]);
+
+        act(() => setExtensionSidebarPresentation('docked'));
+
+        expect(changes()).toHaveLength(1);
+      });
+
+      it('never hides a docked sidebar', async () => {
+        await renderOpen();
+        act(() => setExtensionSidebarPresentation('docked'));
+        act(() => {
+          holdFloatingExtensionSidebar();
+        });
+
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+    });
+
+    it('starts floating and follows setExtensionSidebarPresentation while floating is allowed', async () => {
       await act(async () => {
         setTestFlags({ [FLOATING_FLAG]: true });
       });
       renderPresentation();
-      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
-
-      act(() => setExtensionSidebarPresentation('floating'));
       expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
 
       act(() => setExtensionSidebarPresentation('docked'));
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+
+      act(() => setExtensionSidebarPresentation('floating'));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+    });
+
+    it('docks a plugin that does not support floating, even when floating is requested', async () => {
+      useAsyncMock.mockReturnValue({
+        loading: false,
+        value: new Map([
+          [mockPluginMeta.pluginId, mockPluginMeta],
+          [mockPathfinderMeta.pluginId, mockPathfinderMeta],
+        ]),
+      });
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true });
+      });
+      renderPresentation(mockPathfinderMeta.pluginId);
+
+      act(() => setExtensionSidebarPresentation('floating'));
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_extension_sidebar_changed',
+        expect.objectContaining({ opened: true, pluginId: mockPathfinderMeta.pluginId, presentation: 'docked' })
+      );
     });
 
     it('stays docked when floating is requested with the flag off', () => {
@@ -554,6 +679,23 @@ describe('ExtensionSidebarProvider', () => {
       expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
 
       act(() => release());
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('docks a plugin that does not support floating, even while a claim holds', () => {
+      useAsyncMock.mockReturnValue({
+        loading: false,
+        value: new Map([
+          [mockPluginMeta.pluginId, mockPluginMeta],
+          [mockPathfinderMeta.pluginId, mockPathfinderMeta],
+        ]),
+      });
+      renderPresentation(mockPathfinderMeta.pluginId);
+
+      act(() => {
+        claimFloatingExtensionSidebar();
+      });
+
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
     });
 
