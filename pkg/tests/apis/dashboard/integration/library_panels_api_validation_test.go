@@ -654,8 +654,11 @@ func testIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T
 		mode grafanarest.DualWriterMode
 	}{
 		{name: "legacy", mode: grafanarest.Mode0},
-		{name: "dual write", mode: grafanarest.Mode1},
-		{name: "unified", mode: grafanarest.Mode5},
+		{name: "dual write (mode 1)", mode: grafanarest.Mode1},
+		{name: "dual write (mode 2 compatibility)", mode: grafanarest.Mode2},
+		{name: "dual write (mode 3 compatibility)", mode: grafanarest.Mode3},
+		{name: "unified (mode 4 compatibility)", mode: grafanarest.Mode4},
+		{name: "unified (mode 5)", mode: grafanarest.Mode5},
 	}
 
 	for _, tt := range tests {
@@ -734,7 +737,7 @@ func testIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T
 
 			// The legacy store does not implement dry-run, and dual-write dry-run
 			// delegates only to unified storage. Verify dry-run where it is supported.
-			if tt.mode == grafanarest.Mode5 {
+			if tt.mode >= grafanarest.Mode4 {
 				require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{DryRun: []string{v1.DryRunAll}}))
 				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
 				require.NoError(t, err, "dry-run delete removed the panel")
@@ -744,7 +747,7 @@ func testIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T
 			_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
 			require.True(t, apierrors.IsNotFound(err), "Editor delete did not remove the panel: %v", err)
 
-			if tt.mode == grafanarest.Mode5 {
+			if tt.mode >= grafanarest.Mode4 {
 				_, err = viewerClient.Resource.Update(context.Background(), panel.DeepCopy(), v1.UpdateOptions{})
 				require.True(t, apierrors.IsForbidden(err), "Viewer create-on-update must be forbidden, got %v", err)
 				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})

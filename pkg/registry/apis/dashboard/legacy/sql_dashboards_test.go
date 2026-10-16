@@ -98,6 +98,22 @@ func TestMigrateLibraryPanelPagesRejectsInvalidCursor(t *testing.T) {
 	require.ErrorContains(t, err, "invalid library panel continuation token")
 }
 
+func TestMigrateLibraryPanelPagesEmpty(t *testing.T) {
+	stream := &recordingLibraryPanelStream{}
+	queries := 0
+	err := migrateLibraryPanelPages(t.Context(), 7, migrations.MigrateOptions{
+		Namespace: "org-7",
+		Progress:  func(int, string) {},
+	}, stream, func(_ context.Context, query LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error) {
+		queries++
+		require.Equal(t, LibraryPanelQuery{OrgID: 7, Limit: 1000}, query)
+		return &dashboardV0.LibraryPanelList{}, nil
+	}, 1000)
+	require.NoError(t, err)
+	require.Equal(t, 1, queries)
+	require.Empty(t, stream.requests)
+}
+
 func TestScanRow(t *testing.T) {
 	mockDB, mock, err := sqlmock.New()
 	require.NoError(t, err)
@@ -509,6 +525,29 @@ func TestCollectLibraryPanelPagePaginatesReadableItems(t *testing.T) {
 	require.Equal(t, "first-readable", page.Items[0].Name)
 	require.Equal(t, "2", page.Continue)
 	require.NoError(t, mockDBController.ExpectationsWereMet())
+}
+
+func TestCollectLibraryPanelPageRejectsMalformedModel(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer mockDB.Close() // nolint:errcheck
+
+	rows := sqlmock.NewRows([]string{
+		"id", "uid", "folder_uid", "created", "created_by", "updated", "updated_by",
+		"name", "type", "description", "model", "version",
+	}).AddRow(1, "bad-model", "", time.Now(), nil, time.Now(), nil, "Bad model", "text", "", []byte(`{"type":`), 1)
+	mock.ExpectQuery("SELECT").WillReturnRows(rows)
+
+	sqlRows, err := mockDB.Query("SELECT")
+	require.NoError(t, err)
+	defer sqlRows.Close() // nolint:errcheck
+
+	page, err := collectLibraryPanelPage(sqlRows, 1000, func(dashboardV0.LibraryPanel) (bool, error) {
+		return true, nil
+	})
+	require.Error(t, err)
+	require.Empty(t, page.Items)
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestRowsWrapper_PropagatesRowsErr(t *testing.T) {
