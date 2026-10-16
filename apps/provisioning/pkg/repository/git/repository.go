@@ -66,6 +66,7 @@ func NewRepository(
 	gitConfig RepositoryConfig,
 	metrics *repository.OperationMetrics,
 	clientMetrics *ClientMetrics,
+	clientOptions ...options.Option,
 ) (GitRepository, error) {
 	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {
@@ -80,7 +81,7 @@ func NewRepository(
 		opts = append(opts, options.WithBasicAuth(tokenUser, string(gitConfig.Token)))
 	}
 
-	client, err := nanogit.NewHTTPClient(gitConfig.URL, opts...)
+	client, err := nanogit.NewHTTPClient(gitConfig.URL, append(opts, clientOptions...)...)
 	if err != nil {
 		return nil, fmt.Errorf("create nanogit client: %w", err)
 	}

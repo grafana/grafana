@@ -91,6 +91,17 @@ Each test function changes one line:
 
 ### Test Isolation
 
+The Git interval tests use a standalone environment with automatic controllers
+disabled. Inside `testing/synctest`, they deliver repository and job events to the
+real controller and job driver, then wait for those operations to finish. Git,
+sync workers, API storage, and job history remain real. The servers start outside
+the bubble. The Git client disables keep-alives so idle network reads do not
+prevent the bubble from becoming durably blocked. Internal API and index calls
+run outside the bubble and are joined before continuing, because they use
+process-wide workers. The internal transport preserves the worker's provisioning
+identity. Advance virtual time to exercise sync intervals instead of aging
+status or polling for it to settle.
+
 `GetCleanHelper(t)` runs `CleanupAllResources(t, ctx)` at the start of every
 test, deleting resources in dependency order (repositories → connections →
 dashboards → folders). Cleanup failures are **fatal** to prevent cross-test

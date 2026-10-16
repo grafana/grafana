@@ -6,6 +6,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/nanogit/options"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -16,14 +17,16 @@ type extra struct {
 	allowInsecure bool
 	metrics       *repository.OperationMetrics
 	clientMetrics *ClientMetrics
+	clientOptions []options.Option
 }
 
-func Extra(decrypter repository.Decrypter, allowInsecure bool, metrics *repository.OperationMetrics, clientMetrics *ClientMetrics) repository.Extra {
+func Extra(decrypter repository.Decrypter, allowInsecure bool, metrics *repository.OperationMetrics, clientMetrics *ClientMetrics, clientOptions ...options.Option) repository.Extra {
 	return &extra{
 		decrypter:     decrypter,
 		allowInsecure: allowInsecure,
 		metrics:       metrics,
 		clientMetrics: clientMetrics,
+		clientOptions: clientOptions,
 	}
 }
 
@@ -58,7 +61,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		SigningMethod:    SigningMethodFromSpec(r),
 		SMIMECertificate: SMIMECertificateFromSpec(r),
 		SkipGitSuffix:    true,
-	}, e.metrics, e.clientMetrics)
+	}, e.metrics, e.clientMetrics, e.clientOptions...)
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {

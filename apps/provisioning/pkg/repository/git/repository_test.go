@@ -21,10 +21,22 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
+	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/client"
 	"github.com/grafana/nanogit/protocol/hash"
 )
+
+func TestExtraBuildClientOptions(t *testing.T) {
+	extra := Extra(repository.ProvideDecrypter(nil, nil), true, nil, nil, options.WithHTTPClient(nil))
+	_, err := extra.Build(t.Context(), &provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitRepositoryType,
+			Git:  &provisioning.GitRepositoryConfig{URL: "http://localhost/repo", Branch: "main"},
+		},
+	})
+	require.EqualError(t, err, "create nanogit client: httpClient is nil")
+}
 
 func TestIsValidGitURL(t *testing.T) {
 	tests := []struct {

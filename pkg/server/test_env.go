@@ -1,7 +1,11 @@
 package server
 
 import (
+	"context"
+	"errors"
+
 	"github.com/stretchr/testify/mock"
+	"k8s.io/client-go/rest"
 
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -11,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -87,4 +92,14 @@ type TestEnv struct {
 	QuotaGetter             quotas.QuotaGetter
 	// NATSConfig lets a test dial its own client to the embedded NATS server.
 	NATSConfig *infranats.Config
+}
+
+// GetRestConfig exposes the internal transport so test workers preserve their service identity.
+func (e TestEnv) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	for _, service := range e.Server.backgroundServiceRegistry.GetServices() {
+		if provider, ok := service.(apiserver.RestConfigProvider); ok {
+			return provider.GetRestConfig(ctx)
+		}
+	}
+	return nil, errors.New("API server rest config provider not found")
 }
