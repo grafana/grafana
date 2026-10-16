@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, type IconName, locationUtil, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
@@ -18,6 +19,10 @@ export interface ScopesNavigationTreeLinkProps {
   subScopePath?: string[];
   /** Called after a click is handled, e.g. so an overlay nav menu can close itself on navigation. */
   onNavigate?: () => void;
+  /** Whether this link is rendered inside the mega menu section rather than the legacy standalone
+   * docked drawer. Gates the color styles that match the regular mega-menu nav items, so the old
+   * drawer (which renders this same component) keeps its original, unstyled look. */
+  megaMenuStyle?: boolean;
 }
 
 export function ScopesNavigationTreeLink({
@@ -27,8 +32,10 @@ export function ScopesNavigationTreeLink({
   id,
   subScopePath,
   onNavigate,
+  megaMenuStyle,
 }: ScopesNavigationTreeLinkProps) {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, megaMenuStyle, visualRefreshEnabled);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
   const locPathname = useLocation().pathname;
   const services = useScopesServices();
@@ -126,8 +133,7 @@ const linkMap = new Map<string, IconName>([
   ['/a/grafana-pyroscope-app', 'drilldown'],
 ]);
 
-const getStyles = (theme: GrafanaTheme2) => {
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+const getStyles = (theme: GrafanaTheme2, megaMenuStyle?: boolean, visualRefreshEnabled?: boolean) => {
   return {
     container: css({
       display: 'flex',
@@ -137,33 +143,33 @@ const getStyles = (theme: GrafanaTheme2) => {
       textAlign: 'left',
       paddingLeft: theme.spacing(1),
       // Matches the regular nav items' base (non-active) text color (MegaMenuItemText.tsx) -
-      // independent of the visualRefreshEnabled accent styling below, same as the nav items.
-      color: theme.colors.text.secondary,
+      // independent of the visualRefreshEnabled accent styling below, same as the nav items. Only
+      // applied inside the mega menu section - the legacy standalone drawer keeps its original,
+      // unstyled look.
+      color: megaMenuStyle ? theme.colors.text.secondary : undefined,
 
       wordBreak: 'break-word',
 
       '&:hover, &:focus': css({
         textDecoration: 'underline',
+        // Matches the regular nav items' hover/focus background (MegaMenuItemText.tsx's `hoverable`),
+        // mega-menu-only like the rest of these color overrides.
+        ...(megaMenuStyle && {
+          backgroundColor: theme.colors.action.hover,
+          color: theme.colors.text.primary,
+        }),
       }),
     }),
     // Matches the regular nav items' icon tint (MegaMenuItem.tsx) so this tree's links read as part
-    // of the same nav rather than a visually distinct drawer transplant.
+    // of the same nav rather than a visually distinct drawer transplant. Mega-menu-only.
     icon: css({
-      color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
+      color: megaMenuStyle && visualRefreshEnabled ? theme.colors.accent.text : undefined,
     }),
     // Matches the regular nav items' active-row treatment (MegaMenuItemText.tsx) for the same reason.
-    current: visualRefreshEnabled
+    // Mega-menu-only: the legacy drawer keeps its original highlight below.
+    current: !megaMenuStyle
       ? css({
-          color: theme.colors.accent.text,
-          backgroundColor: theme.colors.accent.subtleBackground,
-          borderRadius: theme.shape.radius.default,
-          '&:hover': {
-            color: theme.colors.accent.textEmphasis,
-          },
-        })
-      : css({
           position: 'relative',
-          color: theme.colors.text.primary,
           background: theme.colors.action.selected,
           borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
           '&::before': {
@@ -177,6 +183,35 @@ const getStyles = (theme: GrafanaTheme2) => {
             top: 0,
             left: 0,
           },
-        }),
+        })
+      : visualRefreshEnabled
+        ? css({
+            color: theme.colors.accent.text,
+            backgroundColor: theme.colors.accent.subtleBackground,
+            borderRadius: theme.shape.radius.default,
+            '&:hover': {
+              color: theme.colors.accent.textEmphasis,
+            },
+          })
+        : css({
+            position: 'relative',
+            color: theme.colors.text.primary,
+            background: theme.colors.action.selected,
+            borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
+            // Matches MegaMenuItemText.tsx's `wrapperActiveOld` exactly (width + translateX), rather
+            // than the plain left-aligned bar the legacy drawer above uses.
+            '&::before': {
+              backgroundImage: theme.colors.gradients.brandVertical,
+              borderRadius: theme.shape.radius.default,
+              content: '" "',
+              display: 'block',
+              height: '100%',
+              position: 'absolute',
+              transform: 'translateX(-50%)',
+              width: theme.spacing(0.25),
+              top: 0,
+              left: 0,
+            },
+          }),
   };
 };

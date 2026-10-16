@@ -16,6 +16,9 @@ export interface ScopesDashboardsTreeProps {
   onFolderUpdate: OnFolderUpdate;
   /** Called after a navigation link is clicked, e.g. so an overlay nav menu can close itself. */
   onNavigate?: () => void;
+  /** Whether this tree is rendered inside the mega menu section rather than the legacy standalone
+   * docked drawer. Threaded through to the leaf components, which gate their color styles on it. */
+  megaMenuStyle?: boolean;
 }
 
 export function ScopesDashboardsTree({
@@ -25,6 +28,7 @@ export function ScopesDashboardsTree({
   folderPath,
   onFolderUpdate,
   onNavigate,
+  megaMenuStyle,
 }: ScopesDashboardsTreeProps) {
   const [queryParams] = useQueryParams();
   const styles = useStyles2(getStyles);
@@ -63,6 +67,7 @@ export function ScopesDashboardsTree({
           folderPath={[...folderPath, subFolderId]}
           onFolderUpdate={onFolderUpdate}
           onNavigate={onNavigate}
+          megaMenuStyle={megaMenuStyle}
         />
       ))}
       {regularNavigations.map((navigation) => (
@@ -74,6 +79,7 @@ export function ScopesDashboardsTree({
           title={navigation.title}
           id={navigation.id}
           onNavigate={onNavigate}
+          megaMenuStyle={megaMenuStyle}
         />
       ))}
 
@@ -90,6 +96,7 @@ export function ScopesDashboardsTree({
           folderPath={[...folderPath, subFolderId]}
           onFolderUpdate={onFolderUpdate}
           onNavigate={onNavigate}
+          megaMenuStyle={megaMenuStyle}
         />
       ))}
     </div>
