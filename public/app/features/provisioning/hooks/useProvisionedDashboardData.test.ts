@@ -245,4 +245,29 @@ describe('useProvisionedDashboardData', () => {
     expect(result.current.repository?.name).toBe('my-repo');
     expect(result.current.readOnly).toBe(false);
   });
+
+  describe('loaded from a branch preview', () => {
+    it.each([
+      { desc: 'a branch-only repository', workflows: ['branch'], expectedRef: 'feature-branch' },
+      { desc: 'a repository allowing both workflows', workflows: ['branch', 'write'], expectedRef: 'feature-branch' },
+      // Without the branch workflow the previewed ref can't be pushed to; the configured branch is the only target.
+      { desc: 'a write-only repository', workflows: ['write'], expectedRef: 'main' },
+    ])('defaults to writing to $expectedRef for $desc', async ({ workflows, expectedRef }) => {
+      server.use(
+        http.get(`${BASE}/settings`, () =>
+          HttpResponse.json({ ...settingsWithRepo, items: [{ ...settingsWithRepo.items[0], workflows }] })
+        ),
+        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      );
+
+      // A fresh wrapper per case: sharing one store would serve the previous case's cached settings.
+      const { result } = renderHook(() => useProvisionedDashboardData(createDashboard()), {
+        wrapper: getWrapper({ renderWithRouter: true, historyOptions: { initialEntries: ['/?ref=feature-branch'] } }),
+      });
+
+      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      expect(result.current.defaultValues?.workflow).toBe('write');
+      expect(result.current.defaultValues?.ref).toBe(expectedRef);
+    });
+  });
 });
