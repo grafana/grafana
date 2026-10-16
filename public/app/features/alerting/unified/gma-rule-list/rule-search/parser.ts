@@ -1,4 +1,6 @@
-import { type Criteria, HEALTH_VALUES, STATE_VALUES, createEmptyCriteria } from './criteria';
+import { isDefaultRoutingTreeName } from '@grafana/alerting/unstable';
+
+import { type Criteria, DEFAULT_POLICY, HEALTH_VALUES, STATE_VALUES, createEmptyCriteria } from './criteria';
 import { parseLabelValue } from './labelMatcher';
 import { tokenize } from './tokenizer';
 import { TOKEN_KEYS, type TokenDefinition, buildTokenRegistry } from './tokens';
@@ -81,7 +83,8 @@ function applyToken(criteria: Criteria, key: string, value: string): boolean {
       criteria.contactPoint = value;
       return true;
     case TOKEN_KEYS.policy:
-      criteria.policy = value;
+      // The default tree's emitted name (`user-defined`) means the default policy, which no named-tree filter matches.
+      criteria.policy = isDefaultRoutingTreeName(value) ? DEFAULT_POLICY : value;
       return true;
     case TOKEN_KEYS.paused:
       if (value === 'true' || value === 'false') {

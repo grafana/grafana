@@ -76,6 +76,11 @@ describe('parse', () => {
     expect(criteria.invalid).toEqual([]);
   });
 
+  it("reads the default routing tree's name as the default policy", () => {
+    expect(parse('policy:user-defined', alertTokens).policy).toBe('default');
+    expect(parse('policy:escalation', alertTokens).policy).toBe('escalation');
+  });
+
   it('SEARCH-5: accepts the legacy health spellings err and nodata', () => {
     expect(parse('health:err', alertTokens).health).toBe('err');
     expect(parse('health:nodata', recordingTokens).health).toBe('nodata');

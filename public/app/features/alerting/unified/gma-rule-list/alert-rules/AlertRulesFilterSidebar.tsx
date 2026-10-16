@@ -1,4 +1,4 @@
-import { RoutingTreeSelector } from '@grafana/alerting/unstable';
+import { RoutingTreeSelector, isDefaultRoutingTree } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption, Input, Stack, Tooltip } from '@grafana/ui';
@@ -98,7 +98,7 @@ export function AlertRulesFilterSidebar({
             onChange={(tree: RoutingTree | null) =>
               onChange({
                 ...criteria,
-                policy: tree?.metadata.name,
+                policy: tree && isDefaultRoutingTree(tree) ? DEFAULT_POLICY : tree?.metadata.name,
                 contactPoint: tree ? undefined : criteria.contactPoint,
               })
             }

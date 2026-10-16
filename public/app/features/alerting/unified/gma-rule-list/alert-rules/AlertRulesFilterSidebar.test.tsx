@@ -166,6 +166,15 @@ describe('AlertRulesFilterSidebar', () => {
     expect(screen.getByRole('combobox', { name: 'Contact point' })).toBeDisabled();
   });
 
+  it('choosing the default tree in the policy picker selects the default policy, not a named tree', async () => {
+    const { user, onChange } = renderSidebar();
+
+    await user.click(screen.getByRole('combobox', { name: 'Notification policy' }));
+    await user.click(await screen.findByRole('option', { name: /Default policy/ }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ policy: 'default' }));
+  });
+
   it('SEARCH-4: selecting Paused calls onChange with paused "true"', async () => {
     const { user, onChange } = renderSidebar();
 
