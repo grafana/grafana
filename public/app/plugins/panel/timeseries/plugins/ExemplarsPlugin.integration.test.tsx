@@ -339,6 +339,51 @@ describe('ExemplarsPlugin', () => {
     expect(screen.queryByText('requested-trace')).not.toBeInTheDocument();
   });
 
+  it('discards a pending request when the user pins an exemplar, but allows a new navigation request', async () => {
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418800000] },
+        { name: 'Value', values: [0.5, 0.6] },
+        { name: 'traceID', type: FieldType.string, values: ['requested-trace', 'manual-trace'] },
+      ],
+    });
+    const invalidSample = createDataFrame({
+      fields: sample.fields.map((field) => (field.name === 'Value' ? { ...field, values: [NaN, 0.6] } : field)),
+    });
+    const openExemplar = createOpenExemplar('navigation-delayed', 0);
+    const result = setUp({ exemplars: [invalidSample], openExemplar });
+
+    expect(getMarker()).toBeVisible();
+    expect(openExemplar.onHandled).not.toHaveBeenCalled();
+    await userEvent.setup({ skipHover: true }).click(getMarker());
+    expect(await screen.findByText('manual-trace')).toBeVisible();
+
+    result.rerenderExemplars([sample]);
+    act(() => {
+      hooks.draw.forEach((hook) => hook(new uPlot({} as uPlot.Options)));
+    });
+
+    expect(screen.getByText('manual-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('requested-trace')).not.toBeInTheDocument();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+    expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-delayed');
+
+    await userEvent.click(screen.getByLabelText('Close'));
+    result.unmount();
+    hooks = {};
+    const remounted = setUp({ exemplars: [sample], openExemplar });
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+
+    await userEvent.setup({ skipHover: true }).click(getMarker(1));
+    expect(await screen.findByText('manual-trace')).toBeVisible();
+    remounted.rerenderExemplars([sample], { openExemplar: createOpenExemplar('navigation-new', 0) });
+    expect(await screen.findByText('requested-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('manual-trace')).not.toBeInTheDocument();
+  });
+
   it('keeps a clicked exemplar pinned across replacement frames', async () => {
     const sample = createDataFrame({
       refId: 'A',

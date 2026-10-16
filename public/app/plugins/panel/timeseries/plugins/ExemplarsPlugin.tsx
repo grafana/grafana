@@ -120,6 +120,19 @@ export const ExemplarsPlugin = ({
     });
   }, [config]);
 
+  const onManualSelection = useCallback(
+    (selection: ExemplarSelection | undefined) => {
+      if (selection) {
+        const request = openExemplar?.getRequest(exemplars);
+        if (request) {
+          openExemplar?.onHandled(request.requestId);
+        }
+      }
+      setLockedExemplar(selection);
+    },
+    [openExemplar, exemplars]
+  );
+
   const renderMarker = useCallback(
     (dataFrame: DataFrame, rowIndex: number): ReactNode => {
       const showMarker = visibleSeries !== undefined ? showExemplarMarker(visibleSeries, dataFrame, rowIndex) : true;
@@ -133,7 +146,7 @@ export const ExemplarsPlugin = ({
 
       return (
         <ExemplarMarker
-          setLockedExemplar={setLockedExemplar}
+          setLockedExemplar={onManualSelection}
           lockedExemplar={currentLockedExemplar}
           timeZone={timeZone}
           dataFrame={dataFrame}
@@ -146,7 +159,7 @@ export const ExemplarsPlugin = ({
         />
       );
     },
-    [visibleSeries, currentLockedExemplar, timeZone, config, maxHeight, maxWidth]
+    [visibleSeries, currentLockedExemplar, onManualSelection, timeZone, config, maxHeight, maxWidth]
   );
 
   return (
