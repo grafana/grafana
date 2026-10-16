@@ -144,7 +144,7 @@ const getLogLineDetailsLogStyles = (theme: GrafanaTheme2) => ({
     overflow: 'auto',
   }),
   actions: css({
-    paddingRight: theme.spacing(0.5),
+    paddingRight: theme.spacing(0.75),
     gap: theme.spacing(0.25),
     display: 'inline-flex',
     alignItems: 'flex-end',
