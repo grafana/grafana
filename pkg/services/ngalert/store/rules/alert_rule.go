@@ -106,8 +106,7 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 		logger.Debug("Deleted alert rule state", "count", rows)
 
 		var versions []alertRuleVersion
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
+		if st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
 			// Reuses sess so a routed delete needs only one connection. Savepoint-scoped since this
 			// read is best-effort and a failed statement would otherwise abort the whole transaction
 			// on Postgres.
@@ -1510,12 +1509,13 @@ func (st RuleStore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.L
 		}
 	}
 
-	// FIXME: record is nullable but we don't save it as null when it's nil
+	// The record column is nullable. We write '' for alert rules, but rows that existed before
+	// the column was added hold NULL, and those are alert rules too.
 	switch query.RuleType {
 	case ngmodels.RuleTypeFilterAlerting:
-		q = q.Where("record = ''")
+		q = q.Where("(record IS NULL OR record = '')")
 	case ngmodels.RuleTypeFilterRecording:
-		q = q.Where("record != ''")
+		q = q.Where("(record IS NOT NULL AND record != '')")
 	case ngmodels.RuleTypeFilterAll:
 		// no additional filter
 	default:
@@ -2029,7 +2029,9 @@ func (st RuleStore) filterByContentInRecord(key, value string, exclude bool, ses
 	}
 	sql, param := st.SQLStore.GetDialect().LikeOperator("record", true, search, true)
 	if exclude {
-		return sess.And("NOT ("+sql+")", param), nil
+		// NOT (NULL LIKE ...) is NULL, so without the IS NULL check alert rules with a NULL
+		// record would be dropped by an exclude filter.
+		return sess.And("(record IS NULL OR NOT ("+sql+"))", param), nil
 	}
 	return sess.And(sql, param), nil
 }

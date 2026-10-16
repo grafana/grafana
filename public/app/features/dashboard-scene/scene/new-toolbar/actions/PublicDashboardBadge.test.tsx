@@ -29,15 +29,17 @@ function renderBadge({
   publicDashboard?: PublicDashboard;
   uid?: string;
 }) {
-  mockUseGetPublicDashboardQuery.mockReturnValue({ data: publicDashboard });
+  mockUseGetPublicDashboardQuery.mockReturnValue({ data: publicDashboard, isError: false });
 
   const dashboard = new DashboardScene({ uid, title: 'hello', meta: { publicDashboardEnabled } });
-
-  render(
+  const badgeTree = () => (
     <OpenFeatureProvider client={getTestFeatureFlagClient()}>
       <PublicDashboardBadge dashboard={dashboard} />
     </OpenFeatureProvider>
   );
+
+  const { rerender } = render(badgeTree());
+  return { rerender: () => rerender(badgeTree()) };
 }
 
 const badge = () => screen.queryByTestId(selectors.pages.Dashboard.DashNav.publicDashboardTag);
@@ -104,6 +106,16 @@ describe('PublicDashboardBadge', () => {
 
       expect(badge()).not.toBeInTheDocument();
     });
+
+    it('stops showing the badge when access.isPublic is absent and the latest lookup fails', () => {
+      const { rerender } = renderBadge({ publicDashboardEnabled: undefined, publicDashboard: PUBLIC_DASHBOARD });
+      expect(badge()).toBeInTheDocument();
+
+      mockUseGetPublicDashboardQuery.mockReturnValue({ data: PUBLIC_DASHBOARD, isError: true });
+      rerender();
+
+      expect(badge()).not.toBeInTheDocument();
+    });
   });
 
   // The public dashboard API is the source of truth, so it decouples the access.isPublic field.
@@ -120,6 +132,16 @@ describe('PublicDashboardBadge', () => {
 
     it('hides the badge when the API reports no public dashboard even though access.isPublic is true', () => {
       renderBadge({ publicDashboardEnabled: true });
+
+      expect(badge()).not.toBeInTheDocument();
+    });
+
+    it('stops showing the badge when the latest lookup fails', () => {
+      const { rerender } = renderBadge({ publicDashboardEnabled: false, publicDashboard: PUBLIC_DASHBOARD });
+      expect(badge()).toBeInTheDocument();
+
+      mockUseGetPublicDashboardQuery.mockReturnValue({ data: PUBLIC_DASHBOARD, isError: true });
+      rerender();
 
       expect(badge()).not.toBeInTheDocument();
     });
