@@ -1,5 +1,6 @@
 import { locationUtil, type NavModelItem } from '@grafana/data';
 import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
+import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 import { isRecord } from 'app/core/utils/isRecord';
 
 import { type PageIdentity } from './types';
@@ -11,7 +12,7 @@ import { type PageIdentity } from './types';
  */
 export function classifyPage(pathname: string, search: string, navTree: NavModelItem[]): PageIdentity | null {
   const normalized = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-  const [, first, second] = normalized.split('/');
+  const [, first, second, third, fourth] = normalized.split('/');
 
   if (first === 'd' && second) {
     return { kind: 'dashboard', uid: second, pathname: normalized };
@@ -20,6 +21,11 @@ export function classifyPage(pathname: string, search: string, navTree: NavModel
   if (normalized === '/explore') {
     const session = exploreSession(search);
     return session ? { kind: 'explore', session, pathname: normalized } : null;
+  }
+
+  // A Page before the generic app rule; its list page stays an app page and is a nav destination.
+  if (first === 'a' && second === ASSISTANT_PLUGIN_ID && third === 'pages' && fourth) {
+    return hasNothingToResume(normalized, search, navTree) ? null : { kind: 'page', pathname: normalized };
   }
 
   if (first === 'a' && second) {
@@ -97,6 +103,7 @@ export function pageKey(page: PageIdentity): string {
       return `dashboard:${page.uid}`;
     case 'explore':
       return `explore:${page.session}`;
+    case 'page':
     case 'alerting':
     case 'app':
       return page.pathname;

@@ -24,7 +24,7 @@ export function RecentActivityFooter({ recent }: Props) {
   ];
 
   const handleClear = () => {
-    clearHistoryClicked({ dashboard_count: counts.dashboard, page_count: total });
+    clearHistoryClicked({ dashboard_count: counts.dashboard, total_count: total });
     clear();
   };
 

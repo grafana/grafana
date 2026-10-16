@@ -31,6 +31,16 @@ describe('classifyPage', () => {
       '/a/grafana-assistant-app/investigations/abc-def/',
       { kind: 'app', pathname: '/a/grafana-assistant-app/investigations/abc-def' },
     ],
+    [
+      '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b',
+      { kind: 'page', pathname: '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b' },
+    ],
+    [
+      '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b/?orgId=1',
+      { kind: 'page', pathname: '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b' },
+    ],
+    // Another plugin's `/pages/<id>` is an ordinary app page.
+    ['/a/other-app/pages/abc', { kind: 'app', pathname: '/a/other-app/pages/abc' }],
     ['/a/grafana-k8s-app/navigation/cluster', { kind: 'app', pathname: '/a/grafana-k8s-app/navigation/cluster' }],
     ['/alerting/grafana/abc/view', { kind: 'alerting', pathname: '/alerting/grafana/abc/view' }],
     ['/alerting/grafana/abc/view/', { kind: 'alerting', pathname: '/alerting/grafana/abc/view' }],
@@ -74,6 +84,7 @@ describe('classifyPage', () => {
         url: '/a/grafana-irm-app',
         children: [{ text: 'Incidents', url: '/a/grafana-irm-app/incidents' }],
       },
+      { text: 'Pages', url: '/a/grafana-assistant-app/pages' },
     ];
 
     it.each([
@@ -84,6 +95,7 @@ describe('classifyPage', () => {
       '/alerting/list?returnTo=%2Fd%2Fabc',
       '/alerting/list?search=',
       '/a/grafana-irm-app/incidents',
+      '/a/grafana-assistant-app/pages',
     ])('ignores %s: the menu opens it the same way', (url) => {
       expect(classify(url, navTree)).toBeNull();
     });
@@ -96,6 +108,7 @@ describe('classifyPage', () => {
       '/alerting/silence/new',
       '/alerting/notifications/receivers/new',
       '/a/grafana-irm-app/incidents/new',
+      '/a/grafana-assistant-app/pages/new',
     ])('ignores %s: a create form reopens blank', (url) => {
       expect(classify(url)).toBeNull();
     });

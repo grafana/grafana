@@ -24,16 +24,18 @@ export interface RecommendationsShown extends EventProperty {
 export interface ClearHistoryClicked extends EventProperty {
   /** Number of dashboards in history before clearing. */
   dashboard_count: number;
-  /** Number of pages of any kind in history before clearing. */
-  page_count: number;
+  /** Number of entries of any kind in history before clearing. */
+  total_count: number;
 }
 
 /** Counts cover the whole history, not the rows left after the kind filter. */
 export interface RecentActivityShown extends EventProperty {
-  /** Pages of any kind in history when the tab was displayed. */
-  page_count: number;
+  /** Entries of any kind in history when the tab was displayed. */
+  total_count: number;
   /** Dashboards in history. */
   dashboard_count: number;
+  /** Grafana Pages in history. */
+  page_count: number;
   /** Explore sessions in history. */
   explore_count: number;
   /** Alerting pages in history. */

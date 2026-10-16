@@ -87,6 +87,26 @@ describe('toRow', () => {
     });
   });
 
+  describe('page', () => {
+    const page = (title: string | undefined, search = '') =>
+      toRow(
+        { kind: 'page', pathname: '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b', search, title },
+        [],
+        {}
+      );
+
+    it('titles the row with the title the page set and shows its state, never the path', () => {
+      expect(page('Grafana org tenure', '?orgId=1&tab=sources')).toEqual({
+        title: 'Grafana org tenure',
+        subtitle: 'tab=sources',
+      });
+    });
+
+    it('falls back to the slug from the path when the page never set a title', () => {
+      expect(page(undefined)).toEqual({ title: 'grafana-org-tenure-cb1e1e23764b', subtitle: undefined });
+    });
+  });
+
   describe('alerting and app pages', () => {
     const navTree: NavModelItem[] = [
       { text: 'Alerting', url: '/alerting', children: [{ text: 'Alert rules', url: '/alerting/list' }] },

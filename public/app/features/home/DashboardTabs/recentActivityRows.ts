@@ -8,13 +8,13 @@ import { type ExplorePaneDescription } from 'app/features/explore/utils/describe
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { VARIABLE_PREFIX } from 'app/features/variables/constants';
 
-/** Every kind, in the order the filter and the rows present them. */
-export const PAGE_KINDS: readonly PageHistoryKind[] = ['dashboard', 'explore', 'alerting', 'app'];
+/** Every kind, in the order the filter and the rows present them; Pages next to Dashboards, as in the nav. */
+export const PAGE_KINDS: readonly PageHistoryKind[] = ['dashboard', 'page', 'explore', 'alerting', 'app'];
 
 export type PageKindCounts = Record<PageHistoryKind, number>;
 
 export function countByKind(items: ReadonlyArray<{ kind: PageHistoryKind }>): PageKindCounts {
-  const counts: PageKindCounts = { dashboard: 0, explore: 0, alerting: 0, app: 0 };
+  const counts: PageKindCounts = { dashboard: 0, page: 0, explore: 0, alerting: 0, app: 0 };
   for (const { kind } of items) {
     counts[kind]++;
   }
@@ -31,7 +31,7 @@ type EntryOf<K extends PageHistoryKind> = Extract<PageHistoryEntry, { kind: K }>
 export type RecentActivityItem =
   | (EntryOf<'dashboard'> & { dashboard: DashboardQueryResult })
   | (EntryOf<'explore'> & { panes: ExplorePaneDescription[] })
-  | EntryOf<'alerting' | 'app'>;
+  | EntryOf<'page' | 'alerting' | 'app'>;
 
 interface PageKindMeta {
   /** Plural, for the kind filter. */
@@ -48,6 +48,12 @@ export function getPageKindMeta(kind: PageHistoryKind): PageKindMeta {
         filterLabel: t('home.recent-activity-tab.filter-dashboards', 'Dashboards'),
         badge: t('home.recent-activity-tab.kind-dashboard', 'Dashboard'),
         color: 'blue',
+      };
+    case 'page':
+      return {
+        filterLabel: t('home.recent-activity-tab.filter-pages', 'Pages'),
+        badge: t('home.recent-activity-tab.kind-page', 'Page'),
+        color: 'green',
       };
     case 'explore':
       return {
@@ -150,6 +156,11 @@ export function toRow(
       // The datasource names the page, the query text is what it restores; "Explore" when no pane names one.
       const title = joinPanes(item.panes.map((pane) => pane.datasource)) ?? getPageKindMeta('explore').badge;
       return row(title, [joinPanes(item.panes.map((pane) => pane.queries.join('; ')))]);
+    }
+    case 'page': {
+      // The id in the path says nothing a reader wants; the slug the Assistant puts before it is the fallback title.
+      const { range, vars, others } = collectParams(item.search);
+      return row(item.title ?? item.pathname.slice(item.pathname.lastIndexOf('/') + 1), [range, ...vars, ...others]);
     }
     case 'alerting':
     case 'app': {
