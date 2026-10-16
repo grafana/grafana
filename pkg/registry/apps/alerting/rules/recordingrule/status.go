@@ -14,7 +14,9 @@ import (
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/resource"
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
@@ -128,12 +130,19 @@ func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, sta
 		}
 		return
 	}
-	u, ok := unified.(*model.RecordingRule)
-	if !ok {
+	// The unified store serves the request version, which can be v0alpha1.
+	u, err := convert.Hub[*model.RecordingRule](unified)
+	if err != nil {
+		logging.FromContext(ctx).Warn("unable to convert unified recording rule for status mirroring", "error", err)
 		return
 	}
 	u.Status = status
-	if _, _, err := s.status.Update(ctx, name, rest.DefaultUpdatedObjectInfo(u), createValidation, updateValidation, false, options); err != nil {
+	out, err := convert.Like(u, unified.(resource.Object))
+	if err != nil {
+		logging.FromContext(ctx).Warn("unable to convert recording rule status for mirroring", "error", err)
+		return
+	}
+	if _, _, err := s.status.Update(ctx, name, rest.DefaultUpdatedObjectInfo(out), createValidation, updateValidation, false, options); err != nil {
 		logging.FromContext(ctx).Warn("failed to mirror recording rule status to unified storage", "error", err)
 	}
 }
