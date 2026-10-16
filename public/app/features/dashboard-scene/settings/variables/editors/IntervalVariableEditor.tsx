@@ -63,7 +63,7 @@ export function IntervalVariableEditor({ variable, onRunQuery, inline }: Interva
   const onAutoCountChanged = (option: SelectableValue<number>) => {
     const oldAutoStepCount = variable.state.autoStepCount;
 
-    undoableVariableEdit(inline, {
+    undoableVariableEdit(inline && option.value !== oldAutoStepCount, {
       meta: { actionId: 'variable.changeStepCount' },
       source: variable,
       description: t('dashboard.edit-actions.variable-interval-step-count', 'Change variable step count'),
@@ -86,10 +86,10 @@ export function IntervalVariableEditor({ variable, onRunQuery, inline }: Interva
   };
 
   // Typing updates the state right away, the whole edit is recorded once the input loses focus
-  const autoMinIntervalBeforeEdit = useRef<string | undefined>(undefined);
+  const autoMinIntervalBeforeEdit = useRef<{ value: string | undefined }>(undefined);
 
   const onAutoMinIntervalChanged = (event: FormEvent<HTMLInputElement>) => {
-    autoMinIntervalBeforeEdit.current ??= variable.state.autoMinInterval;
+    autoMinIntervalBeforeEdit.current ??= { value: variable.state.autoMinInterval };
     variable.setState({ autoMinInterval: event.currentTarget.value });
   };
 
@@ -98,7 +98,7 @@ export function IntervalVariableEditor({ variable, onRunQuery, inline }: Interva
     const newAutoMinInterval = variable.state.autoMinInterval;
     autoMinIntervalBeforeEdit.current = undefined;
 
-    if (!inline || oldAutoMinInterval === undefined || oldAutoMinInterval === newAutoMinInterval) {
+    if (!inline || oldAutoMinInterval === undefined || oldAutoMinInterval.value === newAutoMinInterval) {
       return;
     }
 
@@ -107,7 +107,7 @@ export function IntervalVariableEditor({ variable, onRunQuery, inline }: Interva
       source: variable,
       description: t('dashboard.edit-actions.variable-interval-min-interval', 'Change variable min interval'),
       perform: () => variable.setState({ autoMinInterval: newAutoMinInterval }),
-      undo: () => variable.setState({ autoMinInterval: oldAutoMinInterval }),
+      undo: () => variable.setState({ autoMinInterval: oldAutoMinInterval.value }),
     });
   };
 
@@ -122,7 +122,7 @@ export function IntervalVariableEditor({ variable, onRunQuery, inline }: Interva
       onAutoEnabledChange={onAutoEnabledChange}
       onAutoMinIntervalChanged={onAutoMinIntervalChanged}
       onAutoMinIntervalBlur={onAutoMinIntervalBlur}
-      autoMinInterval={autoMinInterval}
+      autoMinInterval={autoMinInterval ?? ''}
       inline={inline}
     />
   );

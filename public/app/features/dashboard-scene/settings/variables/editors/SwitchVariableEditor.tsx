@@ -68,7 +68,7 @@ export function SwitchVariableEditor({ variable, inline = false }: SwitchVariabl
     const oldValues = getSwitchValues(variable);
     const newValues = getNewValues(newEnabledValue, newDisabledValue);
 
-    undoableVariableEdit(inline, {
+    undoableVariableEdit(inline && !isEqual(oldValues, newValues), {
       meta: { actionId: 'variable.changeSwitchValues', scope: 'value-pair' },
       source: variable,
       description: t('dashboard.edit-actions.variable-switch-values', 'Change variable switch values'),

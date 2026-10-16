@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { SwitchVariableForm } from './SwitchVariableForm';
 
@@ -24,6 +25,20 @@ describe('SwitchVariableForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('changes a preset pair through one callback', async () => {
+    mockBoundingClientRect();
+    const user = userEvent.setup();
+    renderForm();
+    await user.click(
+      screen.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.valuePairTypeSelect)
+    );
+    await user.click(await screen.findByRole('option', { name: '1 / 0' }));
+    expect(onValuePairChange).toHaveBeenCalledTimes(1);
+    expect(onValuePairChange).toHaveBeenCalledWith('1', '0');
+    expect(onEnabledValueChange).not.toHaveBeenCalled();
+    expect(onDisabledValueChange).not.toHaveBeenCalled();
   });
 
   it('should render the form', () => {
