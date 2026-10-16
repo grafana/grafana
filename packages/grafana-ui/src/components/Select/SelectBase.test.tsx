@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { select } from 'react-select-event';
@@ -409,6 +409,27 @@ describe('SelectBase', () => {
 
       await userEvent.keyboard('{Escape}');
       expect(onClose).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('selected option check icon', () => {
+    it('shows a check only on the selected option', async () => {
+      render(<SelectBase onChange={onChangeHandler} options={options} value={1} />);
+      await userEvent.click(screen.getByRole('combobox'));
+
+      const [first, second] = screen.getAllByTestId(selectors.components.Select.option);
+      expect(within(first).getByTestId('icon-check')).toBeInTheDocument();
+      expect(within(second).queryByTestId('icon-check')).not.toBeInTheDocument();
+    });
+
+    it('shows a check on every selected option in multi-select', async () => {
+      render(
+        <SelectBase onChange={onChangeHandler} options={options} value={[1, 2]} isMulti hideSelectedOptions={false} />
+      );
+      await userEvent.click(screen.getByRole('combobox'));
+
+      const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
+      menuOptions.forEach((option) => expect(within(option).getByTestId('icon-check')).toBeInTheDocument());
     });
   });
 });
