@@ -646,21 +646,6 @@ export interface FeatureToggles {
   */
   azureMonitorEnableUserAuth?: boolean;
   /**
-  * Enable AI-generated alert rules.
-  * @default false
-  */
-  alertingAIGenAlertRules?: boolean;
-  /**
-  * Enable AI-generated feedback from the Grafana UI.
-  * @default false
-  */
-  alertingAIFeedback?: boolean;
-  /**
-  * Enable AI-improve alert rules labels and annotations.
-  * @default false
-  */
-  alertingAIImproveAlertRules?: boolean;
-  /**
   * Enable AI-generated alerting templates.
   * @default false
   */
