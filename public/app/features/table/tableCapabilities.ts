@@ -7,7 +7,8 @@ export function supportsColumnManagement(frame: DataFrame | undefined): boolean 
 /** Sets field capabilities for ad hoc transformations without mutating the frame. */
 export function withAdHocTransformCapabilities(
   frame: DataFrame,
-  columnManagementEnabled = supportsColumnManagement(frame)
+  columnManagementEnabled = supportsColumnManagement(frame),
+  filteringEnabled = true
 ): DataFrame {
   return {
     ...frame,
@@ -17,6 +18,7 @@ export function withAdHocTransformCapabilities(
         ...field.config,
         custom: {
           ...field.config.custom,
+          filterable: filteringEnabled,
           hideable: columnManagementEnabled && (field.config.custom?.hideable ?? true),
         },
       },

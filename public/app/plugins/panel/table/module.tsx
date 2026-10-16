@@ -44,6 +44,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     useCustomConfig: (builder) => {
       addTableCustomConfig(builder, {
         filters: true,
+        // Evaluate per render because the feature flag may resolve after module initialization.
+        filtersShowIf: () => !getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
         wrapHeaderText: true,
         hideFields: true,
       });

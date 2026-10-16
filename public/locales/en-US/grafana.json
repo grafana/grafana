@@ -10822,6 +10822,8 @@
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
         "button": "Filter {{name}}",
+        "cancel": "Cancel",
+        "clear": "Clear filter",
         "operator": {
           "contains": "Contains",
           "equals": "Equals",
@@ -10836,7 +10838,8 @@
         "remove-all": "Remove all displayed values from the filter",
         "select-all": "Select all",
         "selected": "{{ numSelected }} selected",
-        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)"
+        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)",
+        "unsupported": "This filter cannot be edited here. Clear it to create a new filter."
       },
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
@@ -10873,6 +10876,10 @@
       },
       "tooltip": {
         "trigger": "Toggle tooltip"
+      },
+      "view": {
+        "error": "Unable to apply this table view.",
+        "reset": "Reset view"
       },
       "wrapping-disabled-warning": "Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content."
     },

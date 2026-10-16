@@ -6,10 +6,12 @@ import { cacheFieldDisplayNames, type DataFrame, FieldType } from '@grafana/data
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 
+import { TableFilterProvider } from './TableFilterContext';
 import { TableFlat } from './TableFlat';
 import { TableNested } from './TableNested';
 import { IS_SAFARI_26 } from './styles';
 import { type TableNGProps } from './types';
+import { getDisplayName } from './utils';
 
 // Display names are cached (or not) across the whole frame at once, so a sample of the first
 // fields is enough to tell whether a consumer already called `cacheFieldDisplayNames` — no need
@@ -34,7 +36,56 @@ function Safari26Wrapper(props: { children: React.ReactNode }) {
 }
 
 export function TableNG(props: TableNGProps) {
-  const { data, width } = props;
+  const data = useMemo(() => {
+    if (!props.rowTransformationsEnabled) {
+      return props.data;
+    }
+    const frame = props.data;
+    const prepare = (frame: DataFrame): DataFrame => {
+      if (!hasCachedDisplayNames(frame)) {
+        cacheFieldDisplayNames([frame]);
+      }
+      const names = frame.fields.map(getDisplayName);
+      const identities = frame.fields.map((field) => JSON.stringify([field.name, field.labels]));
+      const duplicates = (values: string[]) => {
+        const seen = new Set<string>();
+        const repeated = new Set<string>();
+        for (const value of values) {
+          if (seen.has(value)) {
+            repeated.add(value);
+          }
+          seen.add(value);
+        }
+        return repeated;
+      };
+      const duplicateNames = duplicates(names);
+      const duplicateIdentities = duplicates(identities);
+      return {
+        ...frame,
+        fields: frame.fields.map((field, index) => ({
+          ...field,
+          ...(field.type === FieldType.nestedFrames
+            ? { values: field.values.map((children: DataFrame[] | undefined) => children?.map(prepare)) }
+            : {}),
+          config: {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              filterable:
+                !duplicateNames.has(names[index]) &&
+                !duplicateIdentities.has(identities[index]) &&
+                (field.config.custom?.filterable ?? true),
+              sortable:
+                !duplicateNames.has(names[index]) &&
+                !duplicateIdentities.has(identities[index]) &&
+                field.config.custom?.sortable !== false,
+            },
+          },
+        })),
+      };
+    };
+    return prepare(frame);
+  }, [props.data, props.rowTransformationsEnabled]);
 
   // runs during render (before TableFlat/TableNested read field.state), not after commit —
   // otherwise their own memoized row/column builders capture the pre-cache values and never see
@@ -51,19 +102,18 @@ export function TableNG(props: TableNGProps) {
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
 
   const inner = nestedDataField ? (
-    <TableNested {...props} width={width} nestedFramesField={nestedDataField} />
+    <TableNested {...props} data={data} nestedFramesField={nestedDataField} />
   ) : (
-    <TableFlat {...props} width={width} />
+    <TableFlat {...props} data={data} />
   );
   const rendered = IS_SAFARI_26 ? <Safari26Wrapper>{inner}</Safari26Wrapper> : inner;
-
-  if (!tableHasGeoCell) {
-    return rendered;
-  }
-
-  return (
+  const table = tableHasGeoCell ? (
     <Suspense fallback={rendered}>
       <LazyOpenLayersProvider>{rendered}</LazyOpenLayersProvider>
     </Suspense>
+  ) : (
+    rendered
   );
+
+  return props.rowTransformationsEnabled ? <TableFilterProvider props={props}>{table}</TableFilterProvider> : table;
 }

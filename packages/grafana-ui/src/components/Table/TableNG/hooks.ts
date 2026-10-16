@@ -33,6 +33,7 @@ import { type MatcherScope } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
+import { useTableFilters, useIsFieldFiltered } from './TableFilterContext';
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
@@ -44,6 +45,7 @@ import {
 } from './constants';
 import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
+import { transformTableFilters } from './transformations/rowProjection';
 import {
   type FilterType,
   type FooterFieldState,
@@ -73,11 +75,28 @@ import {
   extractPixelValue,
 } from './utils';
 
+const EMPTY_FILTER: FilterType = {};
+
+function useLegacyFilterState(enabled: boolean) {
+  const [state, setState] = useState<FilterType>();
+  const setFilter = useCallback<React.Dispatch<React.SetStateAction<FilterType>>>(
+    (action) => {
+      if (enabled) {
+        setState((current) => (typeof action === 'function' ? action(current ?? EMPTY_FILTER) : action));
+      }
+    },
+    [enabled]
+  );
+  return { filter: enabled ? (state ?? EMPTY_FILTER) : EMPTY_FILTER, setFilter };
+}
+
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
-  const [filter, setFilter] = useState<FilterType>({});
+  const view = useTableFilters();
+  const { filter, setFilter } = useLegacyFilterState(!view);
   const filterResult = useMemo(
-    () => applyFilter(rows, filter, fields, hasNestedFrames),
-    [rows, filter, fields, hasNestedFrames]
+    () =>
+      view ? transformTableFilters(rows, fields, view.filters) : applyFilter(rows, filter, fields, hasNestedFrames),
+    [rows, filter, fields, hasNestedFrames, view]
   );
   return { rows: filterResult.filteredRows, filter, setFilter, filterResult };
 }
@@ -390,6 +409,7 @@ export const useNestedRows = (
   filter: FilterType,
   sortColumns: SortColumn[]
 ): NestedRowEntry[] => {
+  const view = useTableFilters();
   const frameToRecords = useRowCompiler(nestedData?.[0] ?? createDataFrame({ fields: [] }));
 
   return useMemo(() => {
@@ -406,7 +426,9 @@ export const useNestedRows = (
       }
 
       const rawRows = frameToRecords(nestedFrame, parentRow.__index);
-      const filterResult = applyFilter(rawRows, filter, nestedFrame.fields, false, parentRow.__index);
+      const filterResult = view
+        ? transformTableFilters(rawRows, nestedFrame.fields, view.filters, parentRow.__index)
+        : applyFilter(rawRows, filter, nestedFrame.fields, false, parentRow.__index);
       const sortedRows = applySort(
         filterResult.filteredRows,
         nestedFrame.fields,
@@ -417,7 +439,7 @@ export const useNestedRows = (
     }
 
     return result;
-  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter, frameToRecords, nestedData]);
+  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter, frameToRecords, nestedData, view]);
 };
 
 interface UseHeaderHeightOptions {
@@ -456,7 +478,16 @@ export function useHeaderHeight({
   hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
-  const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
+  const isFiltered = useIsFieldFiltered();
+  const filteredKeys = useMemo(
+    () =>
+      new Set(
+        isFiltered
+          ? fields.filter(isFiltered).map(getDisplayName)
+          : Object.values(filter ?? {}).map((f) => f.displayName)
+      ),
+    [isFiltered, fields, filter]
+  );
 
   const columnAvailableWidths = useMemo(
     () =>
@@ -1059,6 +1090,7 @@ export interface ContentAwareWidths {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  isFiltered?: (field: Field) => boolean;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
   noPanelPadding?: boolean;
@@ -1136,6 +1168,7 @@ export function useContentAwareWidths({
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
+  const isFiltered = useIsFieldFiltered();
   const theme = useTheme2();
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
   return useMemo(
@@ -1151,6 +1184,7 @@ export function useContentAwareWidths({
             getActions,
             tableRefreshEnabled,
             filter,
+            isFiltered,
             hasColumnSidebar,
             reorderable,
             noPanelPadding,
@@ -1166,6 +1200,7 @@ export function useContentAwareWidths({
       hasHeader,
       getActions,
       filter,
+      isFiltered,
       tableRefreshEnabled,
       theme,
       hasColumnSidebar,
