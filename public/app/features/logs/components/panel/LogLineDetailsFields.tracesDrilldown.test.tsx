@@ -4,6 +4,7 @@ import {
   CoreApp,
   dateTime,
   type Field,
+  FieldType,
   type LinkModel,
   PluginExtensionPoints,
   PluginExtensionTypes,
@@ -35,6 +36,12 @@ const tempoLink: LinkModel<Field> = {
   title: 'tempo',
   target: '_self' as const,
   onClick: jest.fn(),
+  origin: {
+    name: '',
+    type: FieldType.time,
+    config: {},
+    values: [],
+  },
   interpolatedParams: {
     query: {
       refId: 'A',

@@ -10,7 +10,7 @@ import { t } from '@grafana/i18n';
 
 import { getTraceIdFromTempoQuery } from './links';
 
-export const TRACES_DRILLDOWN_APP_ID = 'grafana-exploretraces-app';
+const TRACES_DRILLDOWN_APP_ID = 'grafana-exploretraces-app';
 
 export function isExploreTempoTraceLink(link: LinkModel): boolean {
   const query = link.interpolatedParams?.query;
