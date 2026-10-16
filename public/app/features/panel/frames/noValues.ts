@@ -1,4 +1,16 @@
-import { type DataFrame, type FieldConfig, FieldType, LoadingState, ThresholdsMode } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  createDataFrame,
+  type DataFrame,
+  type FieldConfig,
+  type FieldConfigSource,
+  FieldType,
+  type GrafanaTheme2,
+  type InterpolateFunction,
+  LoadingState,
+  ThresholdsMode,
+  type TimeRange,
+} from '@grafana/data';
 import { type GraphFieldConfig, GraphThresholdsStyleMode } from '@grafana/schema';
 
 /**
@@ -74,4 +86,48 @@ function hasDrawableThresholds(config: FieldConfig<GraphFieldConfig>): boolean {
 
   // the first step is the -Infinity base and is never drawn
   return thresholds.steps.slice(1).some((step) => Number.isFinite(step.value));
+}
+
+const PLACEHOLDER_META_KEY = 'noValuesPlaceholder';
+
+interface PlaceholderFrameOptions {
+  timeRange: TimeRange;
+  fieldConfig: FieldConfigSource<GraphFieldConfig>;
+  theme: GrafanaTheme2;
+  replaceVariables: InterpolateFunction;
+  timeZone?: string;
+}
+
+/**
+ * A frame with one null-valued number field across the time range, so that a response with no frames
+ * still gets a plot to draw the panel's thresholds on.
+ */
+export function buildNoValuesPlaceholderFrame({
+  timeRange,
+  fieldConfig,
+  theme,
+  replaceVariables,
+  timeZone,
+}: PlaceholderFrameOptions): DataFrame {
+  const frame = createDataFrame({
+    meta: { custom: { [PLACEHOLDER_META_KEY]: true } },
+    fields: [
+      { name: 'time', type: FieldType.time, values: [timeRange.from.valueOf(), timeRange.to.valueOf()] },
+      {
+        name: 'noValuesPlaceholder',
+        type: FieldType.number,
+        values: [null, null],
+        config: {
+          // without the plugin's registry, applyFieldOverrides only fills standard options from defaults
+          custom: { ...fieldConfig.defaults.custom, hideFrom: { legend: true, tooltip: true, viz: false } },
+        },
+      },
+    ],
+  });
+
+  return applyFieldOverrides({ data: [frame], fieldConfig, theme, replaceVariables, timeZone })[0];
+}
+
+export function isNoValuesPlaceholderFrame(frame: DataFrame): boolean {
+  return frame.meta?.custom?.[PLACEHOLDER_META_KEY] === true;
 }

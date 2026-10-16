@@ -1,7 +1,21 @@
-import { createDataFrame, type FieldConfig, FieldType, LoadingState, ThresholdsMode } from '@grafana/data';
+import {
+  createDataFrame,
+  createTheme,
+  dateTime,
+  type FieldConfig,
+  type FieldConfigSource,
+  FieldMatcherID,
+  FieldType,
+  LoadingState,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  ThresholdsMode,
+  type TimeRange,
+} from '@grafana/data';
 import { type GraphFieldConfig, GraphThresholdsStyleMode } from '@grafana/schema';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
-import { getNoValuesShape } from './noValues';
+import { buildNoValuesPlaceholderFrame, getNoValuesShape, isNoValuesPlaceholderFrame } from './noValues';
 
 describe('getNoValuesShape', () => {
   const lineThresholds: FieldConfig<GraphFieldConfig> = {
@@ -120,5 +134,81 @@ describe('getNoValuesShape', () => {
 
       expect(shapeOf({ defaults })).toBe('no-frames');
     });
+  });
+});
+
+describe('buildNoValuesPlaceholderFrame', () => {
+  // the app fills these registries at startup
+  standardEditorsRegistry.setInit(getAllOptionEditors);
+  standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+
+  const timeRange: TimeRange = {
+    from: dateTime(1000),
+    to: dateTime(5000),
+    raw: { from: 'now-1h', to: 'now' },
+  };
+
+  const defaults: FieldConfig<GraphFieldConfig> = {
+    unit: 'percent',
+    custom: { thresholdsStyle: { mode: GraphThresholdsStyleMode.Dashed }, lineWidth: 3 },
+    thresholds: {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 80, color: 'red' },
+      ],
+    },
+  };
+
+  const build = (overrides: FieldConfigSource['overrides'] = []) =>
+    buildNoValuesPlaceholderFrame({
+      timeRange,
+      fieldConfig: { defaults, overrides },
+      theme: createTheme(),
+      replaceVariables: (v) => v,
+    });
+
+  const byType = (properties: FieldConfigSource['overrides'][number]['properties']) => [
+    { matcher: { id: FieldMatcherID.byType, options: FieldType.number }, properties },
+  ];
+
+  it('spans the time range with null values', () => {
+    const [time, value] = build().fields;
+
+    expect(time.values).toEqual([1000, 5000]);
+    expect(value.values).toEqual([null, null]);
+  });
+
+  it('carries the panel defaults, including custom options', () => {
+    const { config } = build().fields[1];
+
+    expect(config.unit).toBe('percent');
+    expect(config.thresholds).toEqual(defaults.thresholds);
+    expect(config.custom).toMatchObject({ thresholdsStyle: { mode: GraphThresholdsStyleMode.Dashed }, lineWidth: 3 });
+  });
+
+  it('hides the field from the legend and the tooltip, but not from the plot', () => {
+    expect(build().fields[1].config.custom.hideFrom).toEqual({ legend: true, tooltip: true, viz: false });
+  });
+
+  it('formats values with the unit', () => {
+    expect(build().fields[1].display!(50).suffix).toBe('%');
+  });
+
+  it('applies standard overrides', () => {
+    const field = build(byType([{ id: 'unit', value: 'ms' }])).fields[1];
+
+    expect(field.config.unit).toBe('ms');
+  });
+
+  it('does not apply custom overrides', () => {
+    const field = build(byType([{ id: 'custom.lineWidth', value: 10 }])).fields[1];
+
+    expect(field.config.custom.lineWidth).toBe(3);
+  });
+
+  it('is marked as a placeholder', () => {
+    expect(isNoValuesPlaceholderFrame(build())).toBe(true);
+    expect(isNoValuesPlaceholderFrame(createDataFrame({ fields: [] }))).toBe(false);
   });
 });
