@@ -130,6 +130,7 @@ export function Drawer({
       }}
       // this is handled by floating-ui
       autoFocus={false}
+      focusTrap={false}
     >
       <FloatingFocusManager context={context} modal getInsideElements={() => [getPortalContainer()]}>
         <div className={styles.container} ref={refs.setFloating}>
