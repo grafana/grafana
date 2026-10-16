@@ -153,6 +153,17 @@ describe('SimplifiedRoutingFields', () => {
     expect(screen.getByRole('switch', { name: /override grouping/i })).toBeDisabled();
   });
 
+  it('disables every interactive field without a reason when disabled is set', async () => {
+    const { user } = renderField({ disabled: true });
+
+    await user.click(screen.getByRole('button', { name: /muting, grouping and timings/i }));
+
+    expect(await screen.findByLabelText(/mute timings/i)).toBeDisabled();
+    expect(screen.getByLabelText(/active timings/i)).toBeDisabled();
+    expect(screen.getByRole('switch', { name: /override grouping/i })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: /override timings/i })).toBeDisabled();
+  });
+
   it('expands the section when a value with overrides arrives after mount, not just at mount time', () => {
     // The real caller loads an existing rule via `useQuery` and only has `value` once it resolves -
     // the section must react to that later value, not just whatever `value` was on first render.

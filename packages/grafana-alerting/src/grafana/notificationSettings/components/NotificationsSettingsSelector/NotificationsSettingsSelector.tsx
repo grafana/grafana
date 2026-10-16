@@ -35,6 +35,8 @@ export interface NotificationsSettingsSelectorProps {
   onModeChange?: (mode: RecipientMode) => void;
   /** Treats no contact point as valid. Missing contact points and invalid timings still report invalid. */
   allowEmpty?: boolean;
+  /** Makes the whole selector read-only, including the mode toggle. */
+  disabled?: boolean;
   value: NotificationSettings | null;
   onChange: (value: NotificationSettings | null) => void;
   /** Fires on mount and when validity changes; `false` when the value can't be saved (no receiver unless `allowEmpty`,
@@ -61,6 +63,7 @@ export function NotificationsSettingsSelector({
   mode: controlledMode,
   onModeChange,
   allowEmpty,
+  disabled,
   value,
   onChange,
   onValidityChange,
@@ -91,6 +94,7 @@ export function NotificationsSettingsSelector({
         <RadioButtonGroup
           value={mode}
           onChange={handleModeChange}
+          disabled={disabled}
           options={[
             {
               value: 'contactPoint',
@@ -109,6 +113,7 @@ export function NotificationsSettingsSelector({
           onChange={onChange}
           onValidityChange={onValidityChange}
           allowEmpty={allowEmpty}
+          disabled={disabled}
           manageContactPointsHref={manageContactPointsHref}
         />
       ) : (
@@ -116,6 +121,7 @@ export function NotificationsSettingsSelector({
           value={value?.type === 'NamedRoutingTree' ? value : null}
           onChange={onChange}
           onValidityChange={onValidityChange}
+          disabled={disabled}
           instancesToPreview={instancesToPreview}
           viewPoliciesHref={viewPoliciesHref}
         />
@@ -129,6 +135,7 @@ interface ContactPointRecipientProps {
   onChange: (value: NotificationSettings | null) => void;
   onValidityChange?: (isValid: boolean) => void;
   allowEmpty?: boolean;
+  disabled?: boolean;
   manageContactPointsHref?: string;
 }
 
@@ -137,6 +144,7 @@ function ContactPointRecipient({
   onChange,
   onValidityChange,
   allowEmpty,
+  disabled,
   manageContactPointsHref,
 }: ContactPointRecipientProps) {
   const { selectorValue, isNotFound, isError } = useResolvedContactPoint(value?.receiver);
@@ -173,6 +181,9 @@ function ContactPointRecipient({
     muteTimeIntervals: value?.muteTimeIntervals,
     activeTimeIntervals: value?.activeTimeIntervals,
   };
+
+  // Combobox's clear icon ignores `disabled`, so clearing is switched off instead.
+  const clearable: { isClearable: true } | { isClearable?: false } = disabled ? {} : { isClearable: true };
 
   const handleContactPointChange = (contactPoint: ContactPoint | null) => {
     if (!contactPoint) {
@@ -235,7 +246,8 @@ function ContactPointRecipient({
         <ContactPointSelector
           value={selectorValue}
           onChange={handleContactPointChange}
-          isClearable
+          {...clearable}
+          disabled={disabled}
           aria-label={t('alerting.notifications-settings-selector.contact-point-aria', 'Contact point')}
         />
         {manageContactPointsHref && (
@@ -250,6 +262,7 @@ function ContactPointRecipient({
         value={timingsValue}
         onChange={handleTimingsChange}
         inheritedTimings={defaultTree?.defaults}
+        disabled={disabled}
         disabledReason={
           value?.receiver && !isNotFound
             ? undefined
@@ -264,6 +277,7 @@ interface NotificationPolicyRecipientProps {
   value: NamedRoutingTreeSettings | null;
   onChange: (value: NotificationSettings | null) => void;
   onValidityChange?: (isValid: boolean) => void;
+  disabled?: boolean;
   instancesToPreview?: Label[][];
   viewPoliciesHref?: string;
 }
@@ -272,6 +286,7 @@ function NotificationPolicyRecipient({
   value,
   onChange,
   onValidityChange,
+  disabled,
   instancesToPreview,
   viewPoliciesHref,
 }: NotificationPolicyRecipientProps) {
@@ -326,7 +341,7 @@ function NotificationPolicyRecipient({
           )}
         >
           {/* The picker already shows "Default policy" here, so re-picking it emits nothing. */}
-          <Button size="sm" variant="secondary" onClick={() => onChange(null)}>
+          <Button size="sm" variant="secondary" onClick={() => onChange(null)} disabled={disabled}>
             <Trans i18nKey="alerting.notifications-settings-selector.routing-tree-reset">Use the default policy</Trans>
           </Button>
         </Alert>
@@ -334,6 +349,7 @@ function NotificationPolicyRecipient({
       <RoutingTreePicker
         value={selectedTree}
         onChange={handleChange}
+        disabled={disabled}
         instancesToPreview={isNotFound ? undefined : instancesToPreview}
         viewPoliciesHref={viewPoliciesHref}
       />

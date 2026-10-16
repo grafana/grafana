@@ -20,6 +20,8 @@ export interface RoutingTreePickerProps {
   instancesToPreview?: Label[][];
   /** Link target for "View policies". Omit to hide the link. */
   viewPoliciesHref?: string;
+  /** Disables changing the policy. Collapse and the "View policies" link stay usable. */
+  disabled?: boolean;
 }
 
 function isUsingDefaultPolicy(value: RoutingTreeView | null): boolean {
@@ -27,7 +29,13 @@ function isUsingDefaultPolicy(value: RoutingTreeView | null): boolean {
 }
 
 /** Lets a caller pick which notification policy tree routes an alert rule, with no alert-rule-form dependency. */
-export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPoliciesHref }: RoutingTreePickerProps) {
+export function RoutingTreePicker({
+  value,
+  onChange,
+  instancesToPreview,
+  viewPoliciesHref,
+  disabled,
+}: RoutingTreePickerProps) {
   const usingDefault = isUsingDefaultPolicy(value);
   const [isExpanded, setIsExpanded] = useState(!usingDefault);
 
@@ -69,6 +77,7 @@ export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPol
               isClearable={false}
               value={value ? value.name : USER_DEFINED_TREE_NAME}
               onChange={handleRoutingTreeSelectorChange}
+              disabled={disabled}
               aria-label={t('alerting.routing-tree-picker.selector-aria', 'Select notification policy')}
             />
             {usingDefault ? (
@@ -93,6 +102,7 @@ export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPol
                 icon="history"
                 type="button"
                 onClick={handleResetToDefault}
+                disabled={disabled}
                 aria-label={t('alerting.routing-tree-picker.reset-aria', 'Reset to default policy')}
               >
                 <Trans i18nKey="alerting.routing-tree-picker.reset">Reset to default</Trans>
@@ -120,6 +130,7 @@ export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPol
               size="sm"
               type="button"
               onClick={() => setIsExpanded(true)}
+              disabled={disabled}
               aria-label={t('alerting.routing-tree-picker.change-aria', 'Change notification policy')}
             >
               <Trans i18nKey="alerting.routing-tree-picker.change">Change</Trans>
