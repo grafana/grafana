@@ -363,7 +363,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-08-07,grafana.ofrepRootUrl,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-08-05,assistant.dashboardPlanning,experimental,@grafana/dashboards-squad,false,false,true
-2026-07-17,features.bulkFlagEvalFiltering,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-09-16,features.legacyOverrideLookupBypass,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-07-15,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-10-14,grafana.navigationInfoArchRefresh,experimental,@grafana/grafana-frontend-navigation,false,false,false
@@ -394,4 +393,5 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-07,grafana.globalHomePreference,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-07,datasources.apiServerConnectToHostedGrafanaDatabases,experimental,@grafana/data-sources-plugins,false,false,false
 2026-10-07,grafana.otelLogDetails,experimental,@grafana/observability-logs,false,false,true
+2026-10-16,grafana.announcementBannerDismissible,GA,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-14,datasources.gatewayAuditPolicy,experimental,@grafana/data-sources-plugins,false,false,false

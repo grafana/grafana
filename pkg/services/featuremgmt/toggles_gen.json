@@ -2399,7 +2399,8 @@
       "metadata": {
         "name": "features.bulkFlagEvalFiltering",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-17T14:01:17Z"
+        "creationTimestamp": "2026-07-17T14:01:17Z",
+        "deletionTimestamp": "2026-10-15T12:56:13Z"
       },
       "spec": {
         "description": "Filters bulk OFREP flag evaluations to public-metadata flags only",
@@ -2537,6 +2538,21 @@
         "codeowner": "@grafana/dashboards-squad",
         "requiresRestart": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.announcementBannerDismissible",
+        "resourceVersion": "1792146769363",
+        "creationTimestamp": "2026-10-16T10:32:49Z"
+      },
+      "spec": {
+        "description": "Allow admins to make announcement banners dismissible by users",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {

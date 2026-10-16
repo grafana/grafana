@@ -134,9 +134,3 @@ func projectionCount(t *testing.T, reg *prometheus.Registry, gvr schema.GroupVer
 	return counterValue(t, reg, "grafana_provisioning_informer_relist_projection_total",
 		map[string]string{"group": gvr.Group, "resource": gvr.Resource, "projection": projection})
 }
-
-func driftCount(t *testing.T, reg *prometheus.Registry, gvr schema.GroupVersionResource) float64 {
-	t.Helper()
-	return counterValue(t, reg, "grafana_provisioning_informer_relist_drifted_keys_total",
-		map[string]string{"group": gvr.Group, "resource": gvr.Resource})
-}

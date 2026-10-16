@@ -3142,15 +3142,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:         "features.bulkFlagEvalFiltering",
-			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBackendServicesSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:         "features.legacyOverrideLookupBypass",
 			Description:  "Skips checking for flag overrides.",
 			Stage:        FeatureStageExperimental,
@@ -3407,6 +3398,15 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "grafana.announcementBannerDismissible",
+			Description:  "Allow admins to make announcement banners dismissible by users",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "true",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:         "datasources.gatewayAuditPolicy",

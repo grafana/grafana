@@ -51,32 +51,32 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 	}
 
 	// The count tolerates staleness.
-	activeCount, err := c.repos.CountActiveRepositories(ctx, namespace)
+	count, err := c.repos.CountRepositories(ctx, namespace)
 	if err != nil {
 		return metav1.Condition{}, err
 	}
 
 	switch {
-	case activeCount == int(maxRepos):
+	case count == int(maxRepos):
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonQuotaReached,
-			Message: fmt.Sprintf("%s: %d/%d repositories", namespaceQuotaReachedMsg, activeCount, maxRepos),
+			Message: fmt.Sprintf("%s: %d/%d repositories", namespaceQuotaReachedMsg, count, maxRepos),
 		}, nil
-	case activeCount > int(maxRepos):
+	case count > int(maxRepos):
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionFalse,
 			Reason:  provisioning.ReasonQuotaExceeded,
-			Message: fmt.Sprintf("%s: %d/%d repositories", namespaceQuotaExceededMsg, activeCount, maxRepos),
+			Message: fmt.Sprintf("%s: %d/%d repositories", namespaceQuotaExceededMsg, count, maxRepos),
 		}, nil
 	default:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeNamespaceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonWithinQuota,
-			Message: fmt.Sprintf("%s: %d/%d repositories", withinQuotaMsg, activeCount, maxRepos),
+			Message: fmt.Sprintf("%s: %d/%d repositories", withinQuotaMsg, count, maxRepos),
 		}, nil
 	}
 }

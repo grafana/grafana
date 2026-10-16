@@ -5521,7 +5521,7 @@ func TestRepoKeyFuncAcceptsBothFeeds(t *testing.T) {
 			key, err := repoKeyFunc(tc.obj)
 			require.NoError(t, err)
 			assert.Equal(t, "ns/repo", key)
-			assert.Equal(t, "42", objectResourceVersion(tc.obj))
+			assert.Equal(t, "42", resourceVersion(tc.obj))
 		})
 	}
 }
@@ -5536,5 +5536,5 @@ func TestRepoKeyFuncHandlesTombstones(t *testing.T) {
 	key, err := repoKeyFunc(tombstone)
 	require.NoError(t, err)
 	assert.Equal(t, "ns/repo", key)
-	assert.Empty(t, objectResourceVersion(tombstone), "nothing to read a version from")
+	assert.Empty(t, resourceVersion(tombstone), "nothing to read a version from")
 }
