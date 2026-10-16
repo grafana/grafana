@@ -137,6 +137,24 @@ func enumText(field *data.Field, idx data.EnumItemIndex) string {
 	return strconv.Itoa(int(idx))
 }
 
+// SampleRow returns a copy of the row at rowIdx with values as SQL reads them,
+// so schema samples match what queries see.
+func SampleRow(frame *data.Frame, rowIdx int) []any {
+	row := frame.RowCopy(rowIdx)
+	for i, field := range frame.Fields {
+		switch v := row[i].(type) {
+		case data.EnumItemIndex:
+			row[i] = enumText(field, v)
+		case *data.EnumItemIndex:
+			if v != nil {
+				text := enumText(field, *v)
+				row[i] = &text
+			}
+		}
+	}
+	return row
+}
+
 // Close implements the mysql.RowIter interface.
 // In this no-op example, there isn't anything to do here.
 func (ri *rowIter) Close(*mysql.Context) error {

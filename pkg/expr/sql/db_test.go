@@ -500,3 +500,19 @@ func TestQueryFrames_EnumField(t *testing.T) {
 		})
 	}
 }
+
+func TestSampleRow_EnumField(t *testing.T) {
+	enumConfig := &data.FieldConfig{TypeConfig: &data.FieldTypeConfig{
+		Enum: &data.EnumFieldConfig{Text: []string{"Unknown", "Up", "Down"}},
+	}}
+	one := data.EnumItemIndex(1)
+
+	frame := data.NewFrame("A",
+		data.NewField("id", nil, []int64{1, 2}),
+		data.NewField("state", nil, []data.EnumItemIndex{1, 7}).SetConfig(enumConfig),
+		data.NewField("nullableState", nil, []*data.EnumItemIndex{&one, nil}).SetConfig(enumConfig),
+	)
+
+	require.Equal(t, []any{int64(1), "Up", new("Up")}, SampleRow(frame, 0))
+	require.Equal(t, []any{int64(2), "7", (*data.EnumItemIndex)(nil)}, SampleRow(frame, 1))
+}
