@@ -7,6 +7,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // RegistryServiceUnchecked is the Unchecked counterpart to folder.RegistryService, for stores that
@@ -47,6 +48,7 @@ func (c *UncheckedContentsCleaner) DeleteInFolder(ctx context.Context, namespace
 		return fmt.Errorf("requester org %d does not match namespace %q org %d", user.GetOrgID(), namespace, ns.OrgID)
 	}
 
+	ctx = folder.WithUncheckedDeleteAuthorized(ctx)
 	for _, r := range c.services {
 		if err := r.DeleteInFoldersUnchecked(ctx, ns.OrgID, []string{folderUID}, user); err != nil {
 			return err

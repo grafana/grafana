@@ -803,7 +803,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 		return err
 	}
-	return l.DeleteLibraryElementsInFolderUnchecked(c, signedInUser.GetOrgID(), signedInUser, folderUID)
+	return l.DeleteLibraryElementsInFolderUnchecked(folder.WithUncheckedDeleteAuthorized(c), signedInUser.GetOrgID(), signedInUser, folderUID)
 }
 
 // deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without

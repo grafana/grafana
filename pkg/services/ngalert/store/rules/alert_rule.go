@@ -1834,13 +1834,17 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			return folder.ErrAccessDenied
 		}
 	}
-	return st.DeleteInFoldersUnchecked(ctx, orgID, folderUIDs, user)
+	return st.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx), orgID, folderUIDs, user)
 }
 
 // DeleteInFoldersUnchecked is DeleteInFolders without the AccessControl check, for callers that have
 // already authorized the requester through a different mechanism (e.g. a standalone folder
 // apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in).
 func (st RuleStore) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	if !folder.IsUncheckedDeleteAuthorized(ctx) {
+		return folder.ErrAccessDenied
+	}
+
 	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its own,
 	// so a context-dependent LegacyDatabaseProvider can only resolve the target database from here.
 	ctx = identity.WithRequester(ctx, user)

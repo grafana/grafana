@@ -9,15 +9,18 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type fakeRegistryServiceUnchecked struct {
 	deleteErr   error
 	deletedOrgs []int64
 	deletedUIDs [][]string
+	gotCtx      context.Context
 }
 
-func (f *fakeRegistryServiceUnchecked) DeleteInFoldersUnchecked(_ context.Context, orgID int64, folderUIDs []string, _ identity.Requester) error {
+func (f *fakeRegistryServiceUnchecked) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, _ identity.Requester) error {
+	f.gotCtx = ctx
 	f.deletedOrgs = append(f.deletedOrgs, orgID)
 	f.deletedUIDs = append(f.deletedUIDs, folderUIDs)
 	return f.deleteErr
@@ -37,6 +40,7 @@ func TestUncheckedContentsCleaner_DeleteInFolder(t *testing.T) {
 		assert.Equal(t, [][]string{{"fold1"}}, a.deletedUIDs)
 		assert.Equal(t, []int64{2}, a.deletedOrgs)
 		assert.Equal(t, [][]string{{"fold1"}}, b.deletedUIDs)
+		assert.True(t, folder.IsUncheckedDeleteAuthorized(a.gotCtx))
 	})
 
 	t.Run("propagates the first cleanup error", func(t *testing.T) {

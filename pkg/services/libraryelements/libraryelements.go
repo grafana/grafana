@@ -109,6 +109,9 @@ func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context,
 // mechanism (e.g. a standalone folder apiserver's cascade delete). orgID is explicit rather than
 // signedInUser.GetOrgID(), since the two aren't guaranteed to match for every caller.
 func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
+	if !folder.IsUncheckedDeleteAuthorized(c) {
+		return folder.ErrAccessDenied
+	}
 	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), orgID, folderUID)
 }
 
