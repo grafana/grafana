@@ -77,7 +77,9 @@ Dataset selection is independent of SQL dialect:
 Changing datasets clears the table, builder expression, and generated SQL.
 Changing tables clears the expression and SQL. Other query properties are retained.
 Builder edits call `db.toRawSql` and return the updated expression and `rawSql`
-through `onChange`; the host decides when to execute it.
+through `onChange`; the host decides when to execute it. Only a missing `sql`
+expression receives builder defaults. The host retains ownership of `editorMode`
+and `format`; set `format: QueryFormat.Timeseries` to offer time/value aliases.
 
 The `queryRowFilter` prop controls the filter, group, order, and SQL preview rows;
 all four are visible by default. Render custom validation as children, or omit

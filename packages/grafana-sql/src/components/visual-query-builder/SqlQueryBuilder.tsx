@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { t } from '@grafana/i18n';
@@ -29,7 +29,7 @@ export function SqlQueryBuilder({
   onChange,
   children,
 }: SqlQueryBuilderProps) {
-  const query = applyQueryDefaults(inputQuery);
+  const query = useMemo(() => ({ ...inputQuery, sql: inputQuery.sql ?? applyQueryDefaults().sql }), [inputQuery]);
   const queryRowFilter = { filter: true, group: true, order: true, preview: true, ...rows };
   const queryRef = useRef(query);
   useEffect(() => {
