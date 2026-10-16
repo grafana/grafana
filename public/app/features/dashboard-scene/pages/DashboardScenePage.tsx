@@ -35,6 +35,7 @@ import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBann
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
+import { DrilldownMigrationSuggestionBanner } from '../variable-migration-suggestion/DrilldownMigrationSuggestionBanner';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
@@ -182,6 +183,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
+      <DrilldownMigrationSuggestionBanner dashboard={dashboard} />
       <DashboardTemplateSavedBanner />
       <DashboardTemplateUseBanner dashboard={dashboard} />
       <DashboardTemplateEditBanner dashboard={dashboard} />
