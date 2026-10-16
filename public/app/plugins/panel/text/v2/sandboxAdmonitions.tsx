@@ -16,7 +16,7 @@ import type { RenderCommand } from './sandboxProtocol';
 
 export type RenderAdmonitions = (command: RenderCommand, container: HTMLElement) => () => void;
 
-const renderAdmonitions: RenderAdmonitions = (command, container) => {
+export const renderAdmonitions: RenderAdmonitions = (command, container) => {
   const { admonitions } = command;
   if (!admonitions) {
     return () => {};

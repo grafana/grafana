@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import {
   createContext,
   useContext,
@@ -27,6 +28,7 @@ const severity: Record<Kind, AlertVariant> = {
   warning: 'warning',
   caution: 'error',
 };
+const admonitionBodyStyles = css({ '& a': { textDecoration: 'underline' } });
 
 export function getMarkdownAlertTitles(): Record<Kind, string> {
   return {
@@ -146,7 +148,7 @@ function AdmonitionBody({ body }: { body: HTMLElement }) {
   }, [body]);
   return (
     <>
-      <div ref={host} />
+      <div ref={host} className={admonitionBodyStyles} />
       <MarkdownAdmonitions container={body} />
     </>
   );

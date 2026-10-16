@@ -123,7 +123,13 @@ test.describe('Text sandbox network boundary', () => {
     await expect(content.getByRole('alert', { name: 'Caution' })).toContainText('Updated');
     await expect
       .poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources))
-      .toEqual([{ directive: 'img-src', origin: 'https://external.test' }]);
+      .toEqual([
+        {
+          directive: 'img-src',
+          origin: 'https://external.test',
+          urls: [{ url: 'https://external.test/secret', count: 1 }],
+        },
+      ]);
     expect(externalRequests).toEqual([]);
     expect(await page.evaluate(() => Math.max(...window.sandboxHeights))).toBeGreaterThan(20);
     await page.evaluate(() => window.sandboxSession.update({ html: '<p>Plain again</p>' }));

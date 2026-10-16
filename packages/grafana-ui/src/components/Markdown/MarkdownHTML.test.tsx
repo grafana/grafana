@@ -52,6 +52,14 @@ it('renders nested alerts while retaining surrounding markup', () => {
   expect(screen.getByText('After')).toBeInTheDocument();
 });
 
+it('underlines links in Alert text so they remain distinguishable from surrounding text', () => {
+  render(<MarkdownHTML html={renderMarkdown('> [!NOTE]\n> Read [docs](https://grafana.com).')} />);
+
+  expect(within(screen.getByRole('status', { name: 'Note' })).getByRole('link', { name: 'docs' })).toHaveStyle({
+    textDecoration: 'underline',
+  });
+});
+
 it('does not turn sanitized user HTML into executable content, even with forged markers', () => {
   const html = textUtil.sanitizeTextPanelContent(
     '<blockquote class="grafana-markdown-alert-note"><p>Note</p><div class="grafana-markdown-alert-body"><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">Unsafe</a><script>alert(1)</script></div></blockquote>'
