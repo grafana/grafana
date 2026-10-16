@@ -350,7 +350,7 @@ it('shows parent rows when a nested filter fails', () => {
     replaceVariables: (s) => s,
   })[0];
   const invalid = filter('Nested', ['one']);
-  invalid.options.target = { ...invalid.options.target, parentIndex: 0 };
+  invalid.options.target = { frameKey: props.rowTransformations.frameKey, parentIndex: 0 };
   invalid.options.filters[0].config.id = 'missingMatcher';
   api.set('table', [invalid]);
   const notify = jest.fn();
