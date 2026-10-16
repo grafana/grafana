@@ -200,6 +200,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
 	_ "github.com/grafana/grafana/pkg/infra/slugify"
 	_ "github.com/grafana/grafana/pkg/infra/tracing"
+	_ "github.com/grafana/grafana/pkg/infra/tracingsetting"
 	_ "github.com/grafana/grafana/pkg/infra/usagestats"
 	_ "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	_ "github.com/grafana/grafana/pkg/infra/usagestats/statscollector"

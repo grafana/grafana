@@ -293,19 +293,21 @@ func newClient(opts options.StorageOptions,
 
 		if cfg.QOSEnabled {
 			queue := scheduler.NewQueue(&scheduler.QueueOptions{
-				MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-				Registerer:       reg,
-				Logger:           cfg.Logger,
+				MaxSizePerTenant:       cfg.QOSMaxSizePerTenant,
+				MaxConcurrentPerTenant: cfg.QOSMaxConcurrentPerTenant,
+				Registerer:             reg,
+				Logger:                 cfg.Logger,
 			})
-			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
-				return nil, fmt.Errorf("failed to start queue: %w", err)
-			}
 			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 				NumWorkers: cfg.QOSNumberWorker,
 				Logger:     cfg.Logger,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create scheduler: %w", err)
+			}
+
+			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
+				return nil, fmt.Errorf("failed to start queue: %w", err)
 			}
 
 			err = services.StartAndAwaitRunning(ctx, scheduler)

@@ -2528,6 +2528,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.announcementBannerDismissible",
+        "resourceVersion": "1792146769363",
+        "creationTimestamp": "2026-10-16T10:32:49Z"
+      },
+      "spec": {
+        "description": "Allow admins to make announcement banners dismissible by users",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.cmdkHybridSearch",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-20T12:34:45Z"
