@@ -1,4 +1,4 @@
-import { type NavModelItem, PluginIncludeType } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -6,7 +6,13 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { buildNavTree, getInitialNavTree } from './buildNavTree';
 import { NavID } from './constants';
 import { addNavEntries, clearRegisteredNavEntries } from './registry';
-import { navIds as ids, setupNavTestApps as setupApps, setupNavTestState as setup } from './test-utils';
+import {
+  appPage,
+  appPluginConfig,
+  navIds as ids,
+  setupNavTestApps as setupApps,
+  setupNavTestState as setup,
+} from './test-utils';
 import { applyAppSubUrl, findNavById as findById, pruneEmptyNavSections, sortNavTree } from './utils';
 
 const DASHBOARD_READER = [AccessControlAction.DashboardsRead];
@@ -585,11 +591,8 @@ describe('getInitialNavTree', () => {
   // is where both land in the tree.
   describe('apps section', () => {
     const bothFlags = { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': true };
-    const appWithPage = (id: string, name: string) => ({
-      id,
-      name,
-      includes: [{ type: PluginIncludeType.page, name: 'Overview', path: `/a/${id}/overview`, addToNav: true }],
-    });
+    const appWithPage = (id: string, name: string) =>
+      appPluginConfig(id, name, [appPage('Overview', `/a/${id}/overview`)]);
     const someApp = appWithPage('some-app', 'Some app');
 
     afterEach(() => {
@@ -627,11 +630,7 @@ describe('getInitialNavTree', () => {
     it('prunes the section when no app has nav children', () => {
       setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
       setupApps([
-        {
-          id: 'hidden-app',
-          name: 'Hidden app',
-          includes: [{ type: PluginIncludeType.page, name: 'Hidden', path: '/a/hidden-app', addToNav: false }],
-        },
+        appPluginConfig('hidden-app', 'Hidden app', [appPage('Hidden', '/a/hidden-app', { addToNav: false })]),
       ]);
 
       expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
@@ -658,18 +657,6 @@ describe('getInitialNavTree', () => {
       setupApps([someApp]);
 
       expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
-    });
-
-    // withPluginNav catches, so without its flag gate first an uninitialised
-    // cache would cost the section and log instead of failing loudly
-    it('does not read the app metas cache when the plugin nav is disabled', () => {
-      const error = jest.spyOn(console, 'error').mockImplementation(() => {});
-      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: clientBuildOnly });
-      setupApps();
-
-      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
-      expect(error).not.toHaveBeenCalled();
-      error.mockRestore();
     });
 
     // sortNavTree recurses into the section, and only leaves its order alone

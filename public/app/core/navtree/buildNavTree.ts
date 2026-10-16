@@ -1,10 +1,11 @@
 import { cloneDeep } from 'lodash';
 
-import { type NavModelItem } from '@grafana/data';
+import { type AppPluginConfig, type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getAppPluginMetasSync } from '@grafana/runtime/internal';
 import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
-import { withPluginNav } from './buildPluginNav';
+import { applyPluginNav } from './buildPluginNav';
 import { getRegisteredNavEntries } from './registry';
 import { adminNavEntry } from './sections/admin.navEntry';
 import { connectionsNavEntry } from './sections/connections.navEntry';
@@ -18,6 +19,7 @@ import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEnt
 import {
   appendIntoSection,
   applyAppSubUrl,
+  arePluginNavItemsEnabled,
   buildEntries,
   isClientNavTreeEnabled,
   type NavEntryBuilder,
@@ -32,7 +34,8 @@ import {
  * This runs during configureStore, which app.ts calls only after it has awaited
  * both the app plugin metas and the user's permissions — the app plugin section
  * needs the first, and the permission gates need the second. That is why the
- * metas can be read synchronously further down.
+ * metas can be read synchronously here, and this is the only place that reads
+ * them: everything below takes the apps as a parameter.
  *
  * Prune after buildNavTree has sorted, not before: pruning first removes
  * siblings, and the index fallback in sortNavTree would then number the
@@ -47,14 +50,14 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  return applyAppSubUrl(pruneEmptyNavSections(buildNavTree()));
+  return applyAppSubUrl(pruneEmptyNavSections(buildNavTree(arePluginNavItemsEnabled() ? getAppPluginMetasSync() : [])));
 }
 
 /**
  * The static sections of the nav tree: each entry declares the gate that makes
  * it visible and how to build it. Home is not listed — it is unconditional and
  * seeds the tree. The entries are defined in ./sections; this module only
- * composes them. App plugin sections are folded in afterwards, by withPluginNav.
+ * composes them. App plugin items are folded in afterwards, by applyPluginNav.
  */
 const NAV_ENTRIES: NavEntryBuilder[] = [
   starredNavEntry,
@@ -71,25 +74,17 @@ const NAV_ENTRIES: NavEntryBuilder[] = [
 ];
 
 /**
- * The static sections, with nav items registered via addNavEntries (e.g. by the
- * enterprise bundle) appended into their target sections. Unsorted, and empty
- * attachment shells are left in place — the caller sorts and getInitialNavTree
- * prunes. Exported so tests can build the tree the plugin pass receives.
- */
-export function buildStaticSections(): NavModelItem[] {
-  return applyRegisteredNavEntries([getHomeNode(), ...buildEntries(NAV_ENTRIES)]);
-}
-
-/**
  * Builds the nav tree, sorted, with urls app-sub-url relative: callers apply
- * the prefix once via applyAppSubUrl at the end of their pipeline.
+ * the prefix once via applyAppSubUrl at the end of their pipeline. Empty
+ * attachment shells are left in place for getInitialNavTree to prune.
  *
- * The plugin pass runs between the two: after the static sections, because apps
- * are placed into sections those entries own, and before the sort, because the
- * weights it sets only take effect there.
+ * The plugin pass runs in the middle: after the static sections and the
+ * registered entries, because apps are placed into sections those own, and
+ * before the sort, because the weights it sets only take effect there.
  */
-export function buildNavTree(): NavModelItem[] {
-  return sortNavTree(withPluginNav(buildStaticSections()));
+export function buildNavTree(apps: AppPluginConfig[] = []): NavModelItem[] {
+  const sections = applyRegisteredNavEntries([getHomeNode(), ...buildEntries(NAV_ENTRIES)]);
+  return sortNavTree(applyPluginNav(sections, apps));
 }
 
 /** Appends registered extension items into their parent sections. Returns a new tree. */

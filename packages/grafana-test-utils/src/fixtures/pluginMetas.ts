@@ -1,25 +1,18 @@
-export interface MockPluginMetaInclude {
-  type?: 'dashboard' | 'page' | 'panel' | 'datasource';
-  name?: string;
-  path?: string;
-  icon?: string;
-  role?: 'Admin' | 'Editor' | 'Viewer' | 'None';
-  action?: string;
-  addToNav?: boolean;
-  defaultNav?: boolean;
-  uid?: string;
-  component?: string;
-}
+import { type Meta, type MetaInclude, type MetaJsonData } from '@grafana/api-clients/rtkq/plugins/v0alpha1';
 
 export interface MockPluginMetaOptions {
-  type?: 'app' | 'datasource' | 'panel' | 'renderer';
-  includes?: MockPluginMetaInclude[];
+  type?: MetaJsonData['type'];
+  includes?: MetaInclude[];
   description?: string;
   logos?: { small: string; large: string };
 }
 
-/** Builds a minimal plugins.grafana.app Meta object for the metas endpoint */
-export const mockPluginMeta = (id: string, name: string, options: MockPluginMetaOptions = {}) => {
+/**
+ * Builds a minimal plugins.grafana.app Meta object for the metas endpoint.
+ * Typed against the generated client, so a schema change fails typecheck here
+ * rather than surfacing as a confusing test failure downstream.
+ */
+export const mockPluginMeta = (id: string, name: string, options: MockPluginMetaOptions = {}): Meta => {
   const {
     type = 'app',
     includes = [],
@@ -48,7 +41,7 @@ export const mockPluginMeta = (id: string, name: string, options: MockPluginMeta
   };
 };
 
-export type MockPluginMeta = ReturnType<typeof mockPluginMeta>;
+export type MockPluginMeta = Meta;
 
 // No plugins are installed by default
 export const mockPluginMetasStore: MockPluginMeta[] = [];

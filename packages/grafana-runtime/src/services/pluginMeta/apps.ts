@@ -5,7 +5,7 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
 import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
+import { logPluginMetaDebug, logPluginMetaError, logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
 import { getPluginMetasUrl, initPluginMetas } from './plugins';
 import type { AppPluginMetas, PluginMetasResponse } from './types';
@@ -13,7 +13,7 @@ import type { AppPluginMetas, PluginMetasResponse } from './types';
 let apps: AppPluginMetas = {};
 // Tracked separately from whether `apps` holds anything: an instance with no app
 // plugins is a legitimately empty cache, and deriving this from the cache size
-// would both re-fetch on every read and make getAppPluginMetasSync() throw.
+// would re-fetch on every read and report that cache as never initialized.
 let didInit = false;
 
 function initialized(): boolean {
@@ -64,13 +64,17 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
  * Get the installed app plugins.
  * This is a synchronous function that should only be used as an escape hatch in cases where the caller is guaranteed to be called after the app plugins have been initialized.
  * In other cases, getAppPluginMetas() should be used instead to ensure the app plugins have been initialized before accessing them.
- * @throws Error if the app plugins have not been initialized yet
+ * Logs and returns what it has when the cache was never filled, like getPanelPluginMetasMapSync.
  * @returns the installed app plugins
  */
 export function getAppPluginMetasSync(): AppPluginConfig[] {
-  if (!initialized() && process.env.NODE_ENV === 'development') {
-    throw new Error('getAppPluginMetasSync() was called before app plugins cache was initialized!');
+  if (!initialized()) {
+    logPluginMetaError(
+      'PluginMeta: getAppPluginMetasSync() was called before the app plugins cache was initialized',
+      new Error('App plugin metas not initialized')
+    );
   }
+
   return Object.values(structuredClone(apps));
 }
 

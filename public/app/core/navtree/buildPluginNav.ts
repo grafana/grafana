@@ -5,13 +5,12 @@ import {
   type PluginInclude,
   PluginIncludeType,
 } from '@grafana/data';
-import { getAppPluginMetasSync } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { MORE_APPS_SHELL, NavID, NavWeight } from './constants';
-import { appendIntoSection, arePluginNavItemsEnabled, pluginPageId } from './utils';
+import { appendIntoSection, pluginPageId } from './utils';
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -69,31 +68,6 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
   }
 
   return next;
-}
-
-/**
- * The tree-building entry point: reads the app metas cache and folds them in.
- *
- * Everything below this is a pure function of the tree and the app list, which
- * is what the tests exercise. This wrapper owns the two things that are not:
- * the flag gate and the cache read.
- */
-export function withPluginNav(tree: NavModelItem[]): NavModelItem[] {
-  // arePluginNavItemsEnabled() has to come first. app.ts only fills the metas
-  // cache under that same flag, and getAppPluginMetasSync() throws in
-  // development builds when it is empty.
-  if (!arePluginNavItemsEnabled()) {
-    return tree;
-  }
-
-  try {
-    return applyPluginNav(tree, getAppPluginMetasSync());
-  } catch (error) {
-    // Nothing above catches for us, and this builds the tree the redux store is
-    // created from — so an escaping throw is a blank page, not a missing section
-    console.error('[navtree] failed to apply plugin nav', error);
-    return tree;
-  }
 }
 
 /** The app plugins, ordered by the title the user reads. Returns a new array. */

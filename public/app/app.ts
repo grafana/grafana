@@ -251,7 +251,10 @@ export class GrafanaApp {
       // bootdata already carries everywhere except the multi-tenant frontend
       // service, whose reduced boot ships none.
       const bootTasks: Array<Promise<unknown>> = [];
-      if (arePluginNavItemsEnabled()) {
+      // Signed-in too: the metas endpoint 401s without a session, and a login or
+      // public dashboard boot renders chromeless anyway. Same gate as the
+      // preloadPlugins call further down.
+      if (arePluginNavItemsEnabled() && contextSrv.user.orgRole !== '') {
         bootTasks.push(getAppPluginMetas());
       }
       if (
