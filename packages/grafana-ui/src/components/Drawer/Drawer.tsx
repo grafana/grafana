@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { FloatingFocusManager, useFloating } from '@floating-ui/react';
 import RcDrawer from '@rc-component/drawer';
-import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -15,6 +15,8 @@ import { Stack } from '../Layout/Stack/Stack';
 import { getPortalContainer } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
+
+import { DRAWER_COMPANION_ATTRIBUTE, DRAWER_CONTAINER_SELECTOR, DRAWER_OFFSET_RIGHT_VAR } from './drawerRegion';
 
 export interface Props {
   children: ReactNode;
@@ -35,10 +37,10 @@ export interface Props {
    **/
   expandable?: boolean;
   /**
-   * Specifies the width and min-width.
-   * sm = width 25vw & min-width 384px
-   * md = width 50vw & min-width 568px
-   * lg = width 75vw & min-width 744px
+   * Specifies the width and min-width, relative to the area the drawer can cover.
+   * sm = width 25% & min-width 384px
+   * md = width 50% & min-width 568px
+   * lg = width 75% & min-width 744px
    **/
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
@@ -54,9 +56,9 @@ export interface Props {
 }
 
 const drawerSizes = {
-  sm: { width: '25vw', minWidth: 384 },
-  md: { width: '50vw', minWidth: 568 },
-  lg: { width: '75vw', minWidth: 744 },
+  sm: { width: '25%', minWidth: 384 },
+  md: { width: '50%', minWidth: 568 },
+  lg: { width: '75%', minWidth: 744 },
 };
 
 /**
@@ -96,14 +98,15 @@ export function Drawer({
 
   const content = <div className={styles.content}>{children}</div>;
   const overrideWidth = drawerWidth ?? width ?? drawerSizes[size].width;
-  const minWidth = drawerSizes[size].minWidth;
+  // Never wider than the drawer region, which can be narrower than the min-width (e.g. next to a docked sidebar)
+  const minWidth = `min(${drawerSizes[size].minWidth}px, 100%)`;
 
   return (
     <RcDrawer
       open={true}
       onClose={onClose}
       placement="right"
-      getContainer={'.main-view'}
+      getContainer={DRAWER_CONTAINER_SELECTOR}
       className={styles.drawerContent}
       rootClassName={styles.drawer}
       classNames={{
@@ -131,7 +134,7 @@ export function Drawer({
       // this is handled by floating-ui
       autoFocus={false}
     >
-      <FloatingFocusManager context={context} modal getInsideElements={() => [getPortalContainer()]}>
+      <FloatingFocusManager context={context} modal getInsideElements={getInsideElements}>
         <div className={styles.container} ref={refs.setFloating}>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
@@ -188,10 +191,13 @@ function useResizebleDrawer(): [
 ] {
   const [drawerWidth, setDrawerWidth] = useState<string | undefined>(undefined);
   const visualDesignRefresh = useTheme2().flags.visualDesignRefresh;
+  // The drawer region is measured when a drag starts, so the width follows the area the drawer
+  // can cover rather than the whole body (they differ next to a docked sidebar or in a workspace).
+  const regionRef = useRef<DOMRect | undefined>(undefined);
 
   const onMouseMove = useCallback(
     (e: MouseEvent) => {
-      setDrawerWidth(getCustomDrawerWidth(e.clientX, visualDesignRefresh));
+      setDrawerWidth(getCustomDrawerWidth(e.clientX, regionRef.current, visualDesignRefresh));
     },
     [visualDesignRefresh]
   );
@@ -199,7 +205,7 @@ function useResizebleDrawer(): [
   const onTouchMove = useCallback(
     (e: TouchEvent) => {
       const touch = e.touches[0];
-      setDrawerWidth(getCustomDrawerWidth(touch.clientX, visualDesignRefresh));
+      setDrawerWidth(getCustomDrawerWidth(touch.clientX, regionRef.current, visualDesignRefresh));
     },
     [visualDesignRefresh]
   );
@@ -223,6 +229,7 @@ function useResizebleDrawer(): [
   function onMouseDown(e: React.MouseEvent<HTMLDivElement>) {
     e.stopPropagation();
     e.preventDefault();
+    regionRef.current = getDrawerRegion(e.currentTarget);
     // we will only add listeners when needed, and remove them afterward
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
@@ -231,6 +238,7 @@ function useResizebleDrawer(): [
   function onTouchStart(e: React.TouchEvent<HTMLDivElement>) {
     e.stopPropagation();
     e.preventDefault();
+    regionRef.current = getDrawerRegion(e.currentTarget);
     // we will only add listeners when needed, and remove them afterward
     document.addEventListener('touchmove', onTouchMove);
     document.addEventListener('touchend', onTouchEnd);
@@ -239,10 +247,20 @@ function useResizebleDrawer(): [
   return [drawerWidth, onMouseDown, onTouchStart];
 }
 
-function getCustomDrawerWidth(clientX: number, visualRefreshEnabled?: boolean): string {
-  let offsetRight = document.body.offsetWidth - (clientX - document.body.offsetLeft + (visualRefreshEnabled ? 8 : 0));
-  let widthPercent = Math.min((offsetRight / document.body.clientWidth) * 100, 98).toFixed(2);
-  return `${widthPercent}vw`;
+function getInsideElements(): Element[] {
+  return [getPortalContainer(), ...document.querySelectorAll(`[${DRAWER_COMPANION_ATTRIBUTE}]`)];
+}
+
+/** The box the drawer is laid out in: the rc-drawer root, which fills the drawer region. */
+function getDrawerRegion(resizer: HTMLElement): DOMRect {
+  return (resizer.closest('.rc-drawer') ?? document.body).getBoundingClientRect();
+}
+
+function getCustomDrawerWidth(clientX: number, region: DOMRect | undefined, visualRefreshEnabled?: boolean): string {
+  const { right, width } = region ?? document.body.getBoundingClientRect();
+  const offsetRight = right - clientX - (visualRefreshEnabled ? 8 : 0);
+  const widthPercent = Math.min((offsetRight / width) * 100, 98).toFixed(2);
+  return `${widthPercent}%`;
 }
 
 function useBodyClassWhileOpen() {
@@ -273,6 +291,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     drawer: css({
       inset: 0,
+      right: `var(${DRAWER_OFFSET_RIGHT_VAR}, 0px)`,
       position: 'fixed',
       zIndex: theme.zIndex.modalBackdrop,
       pointerEvents: 'none',
@@ -330,6 +349,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     // instead have a child pseudo element to apply the backdrop styling below the top bar
     mask: css({
       inset: 0,
+      right: `var(${DRAWER_OFFSET_RIGHT_VAR}, 0px)`,
       pointerEvents: 'auto',
       position: 'fixed',
       zIndex: theme.zIndex.modalBackdrop,
@@ -340,7 +360,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         content: '""',
         left: 0,
         position: 'fixed',
-        right: 0,
+        right: `var(${DRAWER_OFFSET_RIGHT_VAR}, 0px)`,
         top: 0,
       },
     }),

@@ -118,3 +118,9 @@ export { getSourceFrameIndex } from '../components/Table/TableNG/transformations
 
 export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';
+
+export {
+  DRAWER_COMPANION_ATTRIBUTE,
+  DRAWER_CONTAINER_ATTRIBUTE,
+  DRAWER_OFFSET_RIGHT_VAR,
+} from '../components/Drawer/drawerRegion';

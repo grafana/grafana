@@ -10,6 +10,7 @@ import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
+import { DRAWER_COMPANION_ATTRIBUTE, DRAWER_CONTAINER_ATTRIBUTE, DRAWER_OFFSET_RIGHT_VAR } from '@grafana/ui/internal';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
@@ -32,6 +33,10 @@ import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
 
 export const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
+
+// Surfaces shown next to a drawer stay usable while it's open (see grafana-ui Drawer/drawerRegion.ts)
+const drawerCompanionProps = { [DRAWER_COMPANION_ATTRIBUTE]: true };
+const drawerContainerProps = { [DRAWER_CONTAINER_ATTRIBUTE]: true };
 
 const CommandPalette = lazy(() =>
   import('app/features/commandPalette/CommandPalette').then((module) => ({ default: module.CommandPalette }))
@@ -85,6 +90,8 @@ export function AppChrome({ children }: Props) {
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
+  // On small screens the sidebar floats over the page, so drawers keep covering the full width
+  const isExtensionSidebarDocked = isExtensionSidebarOpen && !state.chromeless && !isSmallScreen;
 
   useResponsiveDockedMegaMenu(chrome);
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
@@ -118,8 +125,9 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
+  // The workspace (chat, canvas) stays usable while a drawer is open in the Platform tab
   const fullscreenWorkspaceChrome = (
-    <div id={floatingUtils.BOUNDARY_ELEMENT_ID}>
+    <div id={floatingUtils.BOUNDARY_ELEMENT_ID} {...drawerCompanionProps}>
       <FullscreenWorkspaceShell workspaceHostRef={setWorkspaceHost} />
       {workspaceHost &&
         createPortal(
@@ -130,6 +138,9 @@ export function AppChrome({ children }: Props) {
                 stays a direct flex child of the workspace host (like it is of <main> in normal mode)
                 and full-height pages (e.g. Explore) can fill the Platform tab instead of collapsing. */}
             <div ref={portalHostRef} className={styles.portalHost} />
+            {/* Drawers opened from the live page mount here, so they cover the Platform tab only
+                (the plugin makes the Platform tab their containing block) instead of the whole workspace. */}
+            <div className={styles.portalHost} {...drawerContainerProps} />
           </>,
           workspaceHost
         )}
@@ -144,6 +155,7 @@ export function AppChrome({ children }: Props) {
       id={floatingUtils.BOUNDARY_ELEMENT_ID}
       className={classNames('main-view', {
         'main-view--chrome-hidden': state.chromeless,
+        [contentSizeStyles.drawerOffset]: isExtensionSidebarDocked,
       })}
     >
       {!state.chromeless && (
@@ -193,7 +205,7 @@ export function AppChrome({ children }: Props) {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
               [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
-              [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen && !isSmallScreen,
+              [contentSizeStyles.contentWidth]: isExtensionSidebarDocked,
             })}
             id="pageContent"
             tabIndex={-1}
@@ -216,6 +228,7 @@ export function AppChrome({ children }: Props) {
                 handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
                 minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
                 maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
+                {...drawerCompanionProps}
               >
                 <ExtensionSidebar />
               </Resizable>
@@ -399,6 +412,10 @@ const getContentSizeStyles = (_: GrafanaTheme2, extensionSidebarWidth = 0) => {
   return {
     contentWidth: css({
       maxWidth: `calc(100% - ${extensionSidebarWidth}px) !important`,
+    }),
+    // Drawers open next to the docked sidebar instead of over it
+    drawerOffset: css({
+      [DRAWER_OFFSET_RIGHT_VAR]: `${extensionSidebarWidth}px`,
     }),
   };
 };
