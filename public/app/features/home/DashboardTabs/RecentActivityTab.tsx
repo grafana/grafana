@@ -67,8 +67,9 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
     }
     shown.current = true;
     recentActivityShown({
-      page_count: total,
+      total_count: total,
       dashboard_count: counts.dashboard,
+      page_count: counts.page,
       explore_count: counts.explore,
       alerting_count: counts.alerting,
       app_count: counts.app,

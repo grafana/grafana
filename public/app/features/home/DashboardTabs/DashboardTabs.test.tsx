@@ -212,6 +212,7 @@ describe('DashboardTabs', () => {
       expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith({
+        total_count: 0,
         page_count: 0,
         dashboard_count: 0,
         explore_count: 0,
@@ -494,7 +495,8 @@ describe('DashboardTabs', () => {
       // One exposure per display, counting the whole history.
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith({
-        page_count: 4,
+        total_count: 4,
+        page_count: 0,
         dashboard_count: 1,
         explore_count: 1,
         alerting_count: 1,
@@ -663,7 +665,7 @@ describe('DashboardTabs', () => {
       await user.click(screen.getByRole('button', { name: /clear recent activity/i }));
 
       // Counts cover the whole history, not the filtered rows.
-      expect(jest.mocked(clearHistoryClicked)).toHaveBeenCalledWith({ dashboard_count: 1, page_count: 3 });
+      expect(jest.mocked(clearHistoryClicked)).toHaveBeenCalledWith({ dashboard_count: 1, total_count: 3 });
       expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
       expect(window.localStorage.getItem(FILTER_KEY)).toBe('');

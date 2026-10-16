@@ -11368,10 +11368,12 @@
       "filter-dashboards": "Dashboards",
       "filter-explore": "Explore",
       "filter-label": "Show only",
+      "filter-pages": "Pages",
       "kind-alerting": "Alerting",
       "kind-app": "App",
       "kind-dashboard": "Dashboard",
       "kind-explore": "Explore",
+      "kind-page": "Page",
       "loading": "Loading your recent activity..."
     },
     "recommendations": {
