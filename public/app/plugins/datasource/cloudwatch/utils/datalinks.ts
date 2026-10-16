@@ -7,8 +7,7 @@ import {
   type ScopedVars,
   type TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
 
 import { type AwsUrl, encodeUrl } from '../aws_url';
 import { type CloudWatchLogsQuery } from '../dataquery.gen';

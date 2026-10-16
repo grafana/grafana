@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
@@ -46,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
@@ -365,15 +365,15 @@ func (s *service) start(ctx context.Context) error {
 	// Read here rather than next to the routes: whether the search that spans
 	// resource types is on decides what the api resource config below enables.
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
-	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
-	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	hybridAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true)
 	globalSearchAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyGlobalSearch).MustBool(false)
+	globalHybridAPIEnabled := hybridAPIEnabled && apiserverSection.Key(searchapi.ConfigKeyGlobalHybrid).MustBool(false)
 	globalSearchGV := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
 
 	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
 	// add the builder group versions to the api resource config
 	apiResourceConfig.EnableVersions(groupVersions...)
-	if globalSearchAPIEnabled {
+	if globalSearchAPIEnabled || globalHybridAPIEnabled {
 		// No builder serves this group version, so nothing else enables it, and a
 		// group version that is not enabled has its custom routes skipped.
 		apiResourceConfig.EnableVersions(globalSearchGV)
@@ -443,19 +443,23 @@ func (s *service) start(ctx context.Context) error {
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
 	searchAndStorageRoutes := searchroutes.Build(
-		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
+		true, true, s.tracing, s.unified, builders, s.appInstallers,
+		searchroutes.Options{HybridEnabled: hybridAPIEnabled},
 	)
 	if globalSearchAPIEnabled {
 		searchAndStorageRoutes = append(searchAndStorageRoutes,
-			searchroutes.BuildGlobalSearch(s.tracing, s.unified, builders)...)
-		// The search that spans resource types has no resource of its own to hold a
-		// permission on, so the request itself carries no check. Every result is
-		// authorized against its own group, resource and folder before it is
-		// returned, and a search reveals nothing that listing the same objects would
-		// not. That relies on get and list being one permission for every covered
-		// type, as they are for dashboards and folders; a type where they differ
-		// needs a list check here. Only this one route is served under this group
-		// version.
+			searchroutes.BuildGlobalSearch(s.tracing, s.unified)...)
+	}
+	if globalHybridAPIEnabled {
+		searchAndStorageRoutes = append(searchAndStorageRoutes,
+			searchroutes.BuildGlobalHybridSearch(s.tracing, s.unified, builders, s.appInstallers, s.authorizer)...)
+	}
+	if globalSearchAPIEnabled || globalHybridAPIEnabled {
+		// Global search has no resource of its own to hold a permission on. The
+		// hybrid handler checks locally registered API policies; storage checks
+		// manifest opt-in. Lexical search relies on get and list permissions being
+		// equivalent for every covered type. Both authorize every result in
+		// storage against its own group, resource and folder.
 		s.authorizer.Register(globalSearchGV, authorizer.NewAllowAuthorizer())
 	}
 
@@ -508,7 +512,7 @@ func (s *service) start(ctx context.Context) error {
 			Scheme:                s.scheme,
 			RESTOptionsGetter:     serverConfig.RESTOptionsGetter,
 			StorageClient:         s.unified,
-			SearchAPIEnabled:      searchAPIEnabled,
+			HybridAPIEnabled:      hybridAPIEnabled,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
 			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),

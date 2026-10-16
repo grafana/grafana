@@ -39,11 +39,14 @@ import {
 import { TextNGCodeView } from './TextNGCodeView';
 import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
+import { TextNGTruncationNotice } from './TextNGTruncationNotice';
+import { type TextSandboxProps } from './TextSandbox';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
+import { useThemedReplaceVariables } from './useThemedReplaceVariables';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
@@ -60,21 +63,13 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const {
-    eventBus,
-    options,
-    onOptionsChange,
-    replaceVariables,
-    data,
-    renderCounter,
-    fitContent,
-    transparent,
-    height,
-    width,
-  } = props;
+  const { eventBus, options, onOptionsChange, data, renderCounter, fitContent, transparent, height, width, title, id } =
+    props;
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
+  const replaceVariables = useThemedReplaceVariables(props.replaceVariables);
   const isEditing = app === CoreApp.PanelEditor;
+  // Repeated copies share `id`. The dashboard gives each copy its own id in the request.
+  const consent = { panelId: data.request?.panelId ?? id, panelTitle: title, dashboardUid: data.request?.dashboardUID };
   // Fit-content only applies to the rendered view: the inline editor keeps its
   // bounded, scrollable layout since active editing needs stable interactive space.
   const fitContentOn = fitContent && !isEditing;
@@ -85,6 +80,7 @@ export function TextNGPanel(props: Props) {
   const renderMode = newFeatures ? options.renderMode : RenderMode.Once;
 
   const frames = data.series;
+  const hasData = frames.length > 0;
   // Withheld with the selector: a saved index would otherwise pick a frame the reader
   // has no UI to change, and the macros read every frame again, as they did before it.
   const currentFrameIndex = newFeatures ? getCurrentFrameIndex(frames, options) : 0;
@@ -127,7 +123,7 @@ export function TextNGPanel(props: Props) {
   const [processed, setProcessed] = useState<ProcessedContent>(() =>
     // The editor renders its own preview, so skip the render pass on entry.
     isEditing
-      ? { mode: options.mode, content: EMPTY_CONTENT }
+      ? { mode: options.mode, content: EMPTY_CONTENT, hasData }
       : renderPanelContent(options, renderMode, series, replaceVariables, rowWindow)
   );
 
@@ -142,7 +138,8 @@ export function TextNGPanel(props: Props) {
     wasEditing !== isEditing ||
     prevWindow?.start !== rowWindow?.start ||
     prevWindow?.count !== rowWindow?.count ||
-    prevTemplate !== template
+    prevTemplate !== template ||
+    (!isEditing && processed.hasData !== hasData)
   ) {
     setWasEditing(isEditing);
     setPrevWindow(rowWindow);
@@ -154,15 +151,20 @@ export function TextNGPanel(props: Props) {
 
   // Batches bursts of change (data/variable refresh) so the interpolate and
   // markdown/sanitize pass runs once per burst. renderCounter covers a
-  // referenced variable changing and theme a ${__theme} token changing, neither
-  // of which touches options or data.
+  // referenced variable changing, which leaves options and data untouched.
   useDebounce(
     () => {
       if (isEditing) {
         return;
       }
       const next = renderPanelContent(options, renderMode, series, replaceVariables, rowWindow);
-      if (next.content !== processed.content || next.mode !== processed.mode || next.error !== processed.error) {
+      if (
+        next.content !== processed.content ||
+        next.mode !== processed.mode ||
+        next.error !== processed.error ||
+        next.truncated !== processed.truncated ||
+        next.hasData !== processed.hasData
+      ) {
         setProcessed(next);
       }
     },
@@ -176,7 +178,6 @@ export function TextNGPanel(props: Props) {
       series,
       replaceVariables,
       renderCounter,
-      theme,
     ]
   );
 
@@ -198,6 +199,9 @@ export function TextNGPanel(props: Props) {
         onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
       />
     ) : null;
+
+  // Not in the editor, where the preview's own footer carries it.
+  const truncationNotice = !isEditing && processed.truncated ? <TextNGTruncationNotice /> : null;
 
   const paginationBar = active ? (
     <Stack direction="row" gap={1} alignItems="center" justifyContent="center">
@@ -249,16 +253,24 @@ export function TextNGPanel(props: Props) {
         view={view}
         onViewChange={setView}
         transparent={transparent}
+        hasTitle={Boolean(title)}
+        consent={consent}
       />
     </Suspense>
   ) : (
-    <TextNGView {...processed} code={options.code} fitContent={fitContentOn} contentRef={contentRef} />
+    <TextNGView
+      {...processed}
+      code={options.code}
+      fitContent={fitContentOn}
+      contentRef={contentRef}
+      consent={consent}
+    />
   );
 
   // While editing, the footer belongs to the editor, below its panes.
   const panelFooter =
-    !isEditing && (frameSelector || paginationBar) ? (
-      <TextNGFooter left={frameSelector} center={paginationBar} />
+    !isEditing && (frameSelector || paginationBar || truncationNotice) ? (
+      <TextNGFooter left={frameSelector} center={paginationBar} right={truncationNotice} />
     ) : null;
 
   if (!panelFooter) {
@@ -294,6 +306,7 @@ function templateOf(options: Options, renderMode?: RenderMode): string {
 
 interface ProcessedContent extends RenderedContent {
   mode: TextMode;
+  hasData: boolean;
 }
 
 interface TextNGViewProps extends ProcessedContent {
@@ -301,9 +314,20 @@ interface TextNGViewProps extends ProcessedContent {
   fitContent?: boolean;
   contentRef?: Ref<HTMLDivElement>;
   transparent?: boolean;
+  consent?: TextSandboxProps['consent'];
 }
 
-function TextNGView({ mode, content, error, code, fitContent, contentRef, transparent }: TextNGViewProps) {
+function TextNGView({
+  mode,
+  content,
+  error,
+  code,
+  fitContent,
+  contentRef,
+  transparent,
+  hasData,
+  consent,
+}: TextNGViewProps) {
   const styles = useStyles2(getStyles);
 
   if (error) {
@@ -334,6 +358,8 @@ function TextNGView({ mode, content, error, code, fitContent, contentRef, transp
   const rendered = (
     <TextNGHtmlView
       html={content}
+      hasData={hasData}
+      consent={consent}
       className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
       testId="TextNGPanel-converted-content"
     />
@@ -377,9 +403,7 @@ function EditorLoadingFallback({
   const layout = useStyles2(getEditorLayoutStyles);
   const rendered = useMemo(
     () => renderPanelContent(options, renderMode, series, replaceVariables, rowWindow),
-    // theme: ${__theme} reads the current theme, which no other input reflects.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [options, renderMode, series, replaceVariables, rowWindow, theme]
+    [options, renderMode, series, replaceVariables, rowWindow]
   );
   const isCode = options.mode === TextMode.Code;
 
@@ -429,6 +453,7 @@ function renderPanelContent(
 ): ProcessedContent {
   return {
     mode: options.mode,
+    hasData: series.length > 0,
     ...catchTemplateError(() =>
       renderContent(
         {

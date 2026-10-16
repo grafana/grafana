@@ -1,6 +1,6 @@
 import { type ScopedVars } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { type FormatVariable, type SceneObject, type VariableCustomFormatterFn } from '@grafana/scenes';
+import { type VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { getFieldAccessor } from './fieldAccessorCache';
 import { formatVariableValue } from './formatVariableValue';
@@ -15,22 +15,6 @@ export function themeMacro(
   format?: string | VariableCustomFormatterFn
 ) {
   return formatVariableValue(getThemeValue(fieldPath) ?? match, format);
-}
-
-export class ThemeMacro implements FormatVariable {
-  public state: { name: string; type: string };
-
-  public constructor(
-    name: string,
-    _sceneObject: SceneObject,
-    private _match: string
-  ) {
-    this.state = { name, type: 'theme_macro' };
-  }
-
-  public getValue(fieldPath?: string): string {
-    return getThemeValue(fieldPath) ?? this._match;
-  }
 }
 
 // Only leaf values: an object would render as [object Object] and a function as its source code.

@@ -171,13 +171,8 @@ func (h *Handler) handle(
 		}
 
 		res, err := h.client.Search(ctx, req)
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
 			errhttp.Write(ctx, err, w)
-			return
-		}
-		// The backend reports failures in the payload, not as a transport error.
-		if res.GetError() != nil {
-			errhttp.Write(ctx, resource.GetError(res.GetError()), w)
 			return
 		}
 

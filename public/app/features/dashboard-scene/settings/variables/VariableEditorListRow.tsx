@@ -42,6 +42,11 @@ export function VariableEditorListRow({
   const usages = getVariableUsages(identifier, usageTree);
   const passed = usages > 0 || variableState.type === 'adhoc';
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const dragHandleLabel = t(
+    'dashboard-scene.variable-editor-list-row.drag-handle-label',
+    'Reorder variable {{variableName}}',
+    { variableName: variableState.name }
+  );
   const handleDeleteVariableModal = (show: boolean) => () => {
     setShowDeleteModal(show);
   };
@@ -135,16 +140,8 @@ export function VariableEditorListRow({
                 onDismiss={handleDeleteVariableModal(false)}
               />
 
-              <div {...provided.dragHandleProps} className={styles.dragHandle}>
-                <Icon
-                  name="draggabledots"
-                  size="lg"
-                  title={t(
-                    'dashboard-scene.variable-editor-list-row.drag-handle-label',
-                    'Reorder variable {{variableName}}',
-                    { variableName: variableState.name }
-                  )}
-                />
+              <div {...provided.dragHandleProps} className={styles.dragHandle} aria-label={dragHandleLabel}>
+                <Icon name="draggabledots" size="lg" title={dragHandleLabel} />
               </div>
             </div>
           </td>

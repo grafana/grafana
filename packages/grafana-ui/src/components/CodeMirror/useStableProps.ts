@@ -1,6 +1,8 @@
-import { useCallback, useInsertionEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 import { shallowCompare } from '@grafana/data';
+
+export { useStableCallback } from '../../utils/useStableCallback';
 
 function isShallowEqual(a: unknown, b: unknown): boolean {
   if (a === b) {
@@ -36,26 +38,4 @@ export function useShallowStable<T>(value: T): T {
   }
 
   return stable.current;
-}
-
-/**
- * Wraps `callback` in a reference that never changes but always invokes the
- * latest version.
- *
- * `onChange` reconfigures the editor too (see {@link useShallowStable}), and a
- * controlled editor re-renders its parent on every keystroke.
- */
-export function useStableCallback<Args extends unknown[], Return>(
-  callback: (...args: Args) => Return
-): (...args: Args) => Return {
-  const latest = useRef(callback);
-
-  // Stands in for useEffectEvent until we are off React 18. Insertion effects run
-  // before layout effects, so even a caller in another component's layout effect
-  // gets the latest callback instead of the previous render's.
-  useInsertionEffect(() => {
-    latest.current = callback;
-  }, [callback]);
-
-  return useCallback((...args: Args) => latest.current(...args), []);
 }

@@ -28,6 +28,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/apikey"
 	_ "github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	_ "github.com/grafana/grafana/pkg/services/authn/authntest"
+	_ "github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	_ "github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
