@@ -11,6 +11,10 @@ import { store } from '../../../../../tests/provider';
 import { act, render, screen, waitFor } from '../../../../../tests/test-utils';
 import { notificationsAPI } from '../../../api/notifications';
 import {
+  ContactPointFactory,
+  ListReceiverApiResponseFactory,
+} from '../../../api/notifications/v1beta1/mocks/fakes/Receivers';
+import {
   ListRoutingTreeApiResponseFactory,
   RoutingTreeFactory,
 } from '../../../api/notifications/v1beta1/mocks/fakes/Routes';
@@ -18,6 +22,7 @@ import {
   ListTimeIntervalApiResponseFactory,
   TimeIntervalFactory,
 } from '../../../api/notifications/v1beta1/mocks/fakes/TimeIntervals';
+import { listReceiverHandler } from '../../../api/notifications/v1beta1/mocks/handlers/ReceiverHandlers/listReceiverHandler';
 import { listRoutingTreeHandler } from '../../../api/notifications/v1beta1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
 import { listTimeIntervalHandler } from '../../../api/notifications/v1beta1/mocks/handlers/TimeIntervalHandlers/listTimeIntervalHandler';
 import { USER_DEFINED_TREE_NAME } from '../../../notificationPolicies/routingTree.utils';
@@ -696,5 +701,111 @@ describe('disabled', () => {
 
     expect(await screen.findByRole('radio', { name: /contact point/i })).toBeDisabled();
     expect(screen.getByRole('radio', { name: /notification policy/i })).toBeDisabled();
+  });
+});
+
+describe('hideRoutingOptions', () => {
+  const receiver = { type: 'SimplifiedRouting' as const, receiver: 'slack-oncall' };
+
+  it('does not render the muting, grouping and timings section', async () => {
+    renderPicker({ hideRoutingOptions: true, value: receiver });
+
+    await screen.findByDisplayValue('slack-oncall');
+
+    expect(screen.queryByText(/muting, grouping and timings/i)).not.toBeInTheDocument();
+  });
+
+  it('stays valid, without a warning, for a hidden time interval that no longer exists', async () => {
+    const onValidityChange = jest.fn();
+    renderPicker({
+      hideRoutingOptions: true,
+      value: { ...receiver, muteTimeIntervals: ['deleted-interval'] },
+      onValidityChange,
+    });
+
+    await screen.findByDisplayValue('slack-oncall');
+    // The warning would only appear once the interval list has loaded.
+    const dispatch = store.dispatch as ThunkDispatch<unknown, unknown, UnknownAction>;
+    await act(async () => {
+      await dispatch(notificationsAPI.endpoints.listTimeInterval.initiate({}));
+    });
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('stays valid for hidden timings that would otherwise be invalid', () => {
+    const onValidityChange = jest.fn();
+    renderPicker({
+      hideRoutingOptions: true,
+      value: { ...receiver, groupInterval: '0s' },
+      onValidityChange,
+    });
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('still requires a contact point unless allowEmpty is set', () => {
+    const onValidityChange = jest.fn();
+    const { renderResult } = renderPicker({ hideRoutingOptions: true, onValidityChange });
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
+
+    renderResult.rerender(
+      <NotificationsSettingsSelector
+        mode="contactPoint"
+        hideRoutingOptions
+        allowEmpty
+        value={null}
+        onChange={jest.fn()}
+        onValidityChange={onValidityChange}
+      />
+    );
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('still reports invalid for a saved contact point that no longer exists', async () => {
+    const onValidityChange = jest.fn();
+    renderPicker({
+      hideRoutingOptions: true,
+      value: { type: 'SimplifiedRouting', receiver: 'deleted-contact-point' },
+      onValidityChange,
+    });
+
+    await screen.findByText(/contact point could not be found/i);
+
+    expect(onValidityChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('keeps the hidden grouping and timings when a different contact point is selected', async () => {
+    server.use(
+      listReceiverHandler(
+        ListReceiverApiResponseFactory.build({
+          items: [slackOncallContactPoint, ContactPointFactory.build({ spec: { title: 'pagerduty-team' } })],
+        })
+      )
+    );
+    const onChange = jest.fn();
+    const hidden = {
+      groupBy: ['alertname'],
+      groupWait: '30s',
+      groupInterval: '5m',
+      repeatInterval: '4h',
+      muteTimeIntervals: ['weekends'],
+      activeTimeIntervals: ['business-hours'],
+    };
+    const { user } = renderPicker({ hideRoutingOptions: true, value: { ...receiver, ...hidden }, onChange });
+
+    await user.click(await screen.findByRole('combobox', { name: /contact point/i }));
+    await user.click(await screen.findByText('pagerduty-team'));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ receiver: 'pagerduty-team', ...hidden }));
+  });
+
+  it('does not change notification policy mode', async () => {
+    renderPicker({ mode: 'notificationPolicy', hideRoutingOptions: true });
+
+    expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
   });
 });
