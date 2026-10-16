@@ -169,11 +169,17 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 				service.Namespace = c.GetNamespace()
 			})
 		}
+		limit := c.QueryInt("limit")
+		searchLimit := limit
+		if limit > 0 && !c.IsGrafanaAdmin {
+			// Fetch enough candidates to fill the requested limit after filtering hidden users.
+			searchLimit += len(hs.Cfg.HiddenUsers)
+		}
 		searchResult, err := hs.userService.Search(ctx, &user.SearchUsersQuery{
 			SignedInUser: c.SignedInUser,
 			OrgID:        c.GetOrgID(),
 			Query:        c.Query("query"),
-			Limit:        c.QueryInt("limit"),
+			Limit:        searchLimit,
 		})
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
@@ -196,6 +202,9 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 				Login:     u.Login,
 				AvatarURL: avatarURL,
 			})
+			if limit > 0 && len(result) == limit {
+				break
+			}
 		}
 		return response.JSON(http.StatusOK, result)
 	}

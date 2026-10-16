@@ -1052,16 +1052,23 @@ func (s *lookupUserService) Search(ctx context.Context, query *user.SearchUsersQ
 
 func TestGetOrgUsersForCurrentOrgLookup_KubernetesUsersRedirect(t *testing.T) {
 	for _, tt := range []struct {
-		name       string
-		enforce    bool
-		admin      bool
-		login      string
-		wantLogins []string
+		name            string
+		enforce         bool
+		admin           bool
+		login           string
+		limit           int
+		wantSearchLimit int
+		wantLogins      []string
 	}{
-		{name: "unlicensed lookup uses service identity and hides other hidden users", login: "caller", wantLogins: []string{"visible"}},
-		{name: "licensed lookup keeps caller identity", enforce: true, login: "caller", wantLogins: []string{"visible"}},
-		{name: "hidden callers can see themselves", login: "hidden-self", wantLogins: []string{"hidden-self", "visible"}},
-		{name: "server admins can see hidden users", admin: true, login: "caller", wantLogins: []string{"hidden-self", "hidden-other", "visible"}},
+		{name: "unlicensed lookup uses service identity and hides other hidden users", login: "caller", limit: 10, wantSearchLimit: 12, wantLogins: []string{"visible"}},
+		{name: "licensed lookup keeps caller identity", enforce: true, login: "caller", limit: 10, wantSearchLimit: 12, wantLogins: []string{"visible"}},
+		{name: "hidden callers can see themselves", login: "hidden-self", limit: 10, wantSearchLimit: 12, wantLogins: []string{"hidden-self", "visible"}},
+		{name: "server admins can see hidden users", admin: true, login: "caller", limit: 10, wantSearchLimit: 10, wantLogins: []string{"hidden-self", "hidden-other", "visible"}},
+		{name: "limited lookup fills page after hidden users", login: "caller", limit: 1, wantSearchLimit: 3, wantLogins: []string{"visible"}},
+		{name: "limited hidden caller is trimmed", login: "hidden-self", limit: 1, wantSearchLimit: 3, wantLogins: []string{"hidden-self"}},
+		{name: "limited admin includes hidden users", admin: true, login: "caller", limit: 1, wantSearchLimit: 1, wantLogins: []string{"hidden-self"}},
+		{name: "zero limit preserves service default", login: "caller", wantSearchLimit: 0, wantLogins: []string{"visible"}},
+		{name: "negative limit preserves service default", login: "caller", limit: -1, wantSearchLimit: -1, wantLogins: []string{"visible"}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
@@ -1086,15 +1093,19 @@ func TestGetOrgUsersForCurrentOrgLookup_KubernetesUsersRedirect(t *testing.T) {
 				require.Same(t, caller, query.SignedInUser)
 				require.Equal(t, caller.OrgID, query.OrgID)
 				require.Equal(t, "lookup", query.Query)
-				require.Equal(t, 10, query.Limit)
-				return &user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{
+				require.Equal(t, tt.wantSearchLimit, query.Limit)
+				users := []*user.UserSearchHitDTO{
 					{ID: 42, UID: "self", Login: "hidden-self"},
 					{ID: 43, UID: "other", Login: "hidden-other"},
 					{ID: 44, UID: "visible", Login: "visible"},
-				}}, nil
+				}
+				if query.Limit > 0 && query.Limit < len(users) {
+					users = users[:query.Limit]
+				}
+				return &user.SearchUserQueryResult{Users: users}, nil
 			}}
 			hs := &HTTPServer{Cfg: cfg, License: license, userService: svc}
-			req := httptest.NewRequest(http.MethodGet, "/api/org/users/lookup?query=lookup&limit=10", nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/org/users/lookup?query=lookup&limit=%d", tt.limit), nil)
 			req = req.WithContext(identity.WithRequester(req.Context(), caller))
 			ctx := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: caller}
 			resp := hs.GetOrgUsersForCurrentOrgLookup(ctx)

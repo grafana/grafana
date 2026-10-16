@@ -748,8 +748,8 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 							rsp := apis.DoRequest(helper, apis.RequestParams{
 								User: tt.caller, Method: "GET", Path: "/api/org/users/lookup?query=org-user-",
 							}, &[]orgUser{})
-							require.Equal(collect, 200, rsp.Response.StatusCode, "body: %s", rsp.Body)
-							require.ElementsMatch(collect, tt.want, logins(*rsp.Result))
+							assert.Equal(collect, 200, rsp.Response.StatusCode, "body: %s", rsp.Body)
+							assert.ElementsMatch(collect, tt.want, logins(*rsp.Result))
 						}, 10*time.Second, 100*time.Millisecond)
 					})
 				}
