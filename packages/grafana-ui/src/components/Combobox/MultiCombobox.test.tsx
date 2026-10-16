@@ -268,6 +268,19 @@ describe('MultiCombobox', () => {
     expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
   });
 
+  it('does not show a check icon on selected options', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+    ];
+
+    render(<MultiCombobox options={options} value={['a']} onChange={jest.fn()} />);
+    await user.click(screen.getByRole('combobox'));
+
+    await screen.findAllByRole('option');
+    expect(screen.queryByTestId('icon-check')).not.toBeInTheDocument();
+  });
+
   describe('all option', () => {
     it('should render all option', async () => {
       const options = [

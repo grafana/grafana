@@ -1,5 +1,5 @@
 import { autoUpdate } from '@floating-ui/react';
-import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -442,6 +442,31 @@ describe('Combobox', () => {
 
       expect(onChangeHandler).not.toHaveBeenCalled();
       expect(input).toHaveValue('Option 1');
+    });
+  });
+
+  describe('selected option check icon', () => {
+    it('shows a check only on the selected option', async () => {
+      render(<Combobox options={options} value={options[1].value} onChange={onChangeHandler} />);
+      await userEvent.click(screen.getByRole('combobox'));
+
+      const optionEls = await screen.findAllByRole('option');
+      optionEls.forEach((optionEl, index) => {
+        const check = within(optionEl).queryByTestId('icon-check');
+        if (index === 1) {
+          expect(check).toBeInTheDocument();
+        } else {
+          expect(check).not.toBeInTheDocument();
+        }
+      });
+    });
+
+    it('shows no check when nothing is selected', async () => {
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+      await userEvent.click(screen.getByRole('combobox'));
+
+      await screen.findAllByRole('option');
+      expect(screen.queryByTestId('icon-check')).not.toBeInTheDocument();
     });
   });
 
