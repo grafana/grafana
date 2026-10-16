@@ -58,7 +58,4 @@ var dependencyMap = map[string][]string{
 	FrontendServer:          {},
 	Router:                  {InstrumentationServer, UnifiedBackend},
 	OperatorServer:          {InstrumentationServer},
-	CloudCoreAppsServer:     {InstrumentationServer, GRPCServer},
-	CloudPluginOperator:     {InstrumentationServer, GRPCServer},
-	CloudPluginManifests:    {InstrumentationServer},
 }
