@@ -3,21 +3,25 @@ import memoize from 'micro-memoize';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { FieldType, type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Button } from '../../../Button/Button';
 import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../../FilterInput/FilterInput';
-import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { type FilterOperator, type TableRow } from '../types';
-import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
+import { FilterPopupFooter, FilterPopupLayout } from './FilterPopupLayout';
 import { RangeFilter } from './RangeFilter';
-import { calculateUniqueFieldValues, getFilteredOptions, operatorSelectableValues, valuesToOptions } from './utils';
+import {
+  calculateUniqueFieldValues,
+  getFieldFilterValue,
+  getFilteredOptions,
+  operatorSelectableValues,
+  valuesToOptions,
+} from './utils';
 
 export interface FilterPopupProps {
   stateKey?: string;
@@ -60,8 +64,25 @@ const FilterPopupEditor = memo(
     const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
     const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
     const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
+    const { selectedRows, totalRows } = useMemo(() => {
+      const selectedValues = new Set(values.map((option) => option.value));
+      let selectedRows = 0;
+      let totalRows = 0;
+      for (const row of rows) {
+        if (row.__depth !== 0) {
+          continue;
+        }
+        totalRows++;
+        if (field && selectedValues.has(getFieldFilterValue(row, field))) {
+          selectedRows++;
+        }
+      }
+      return { selectedRows: values.length === 0 ? totalRows : selectedRows, totalRows };
+    }, [field, rows, values]);
+    const [popupWidth, setPopupWidth] = useState(240);
     const [matchCase, setMatchCase] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const pointerStartedInside = useRef(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const operators = Object.values(operatorSelectableValues());
 
@@ -99,32 +120,35 @@ const FilterPopupEditor = memo(
     // we can't directly use ClickOutsideWrapper here because the click and keyup
     // events are complex and need to be handled with care to avoid conflicts
     useEffect(() => {
+      const onPointerDown = (event: PointerEvent) => {
+        pointerStartedInside.current = event.target instanceof Node && !!containerRef.current?.contains(event.target);
+      };
       const onOutsideClick = (event: Event) => {
         const domNode = containerRef.current;
         if (!domNode) {
           return;
         }
-        if (event.target instanceof Node && !domNode.contains(event.target)) {
+        const startedInside = pointerStartedInside.current;
+        pointerStartedInside.current = false;
+        if (event.target instanceof Node && !domNode.contains(event.target) && !startedInside) {
           onClose();
         }
       };
+      window.addEventListener('pointerdown', onPointerDown, true);
       window.addEventListener('click', onOutsideClick);
       return () => {
+        window.removeEventListener('pointerdown', onPointerDown, true);
         window.removeEventListener('click', onOutsideClick);
       };
     }, [onClose]);
 
     const filterInputPlaceholder = t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values');
-    const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
+    const clearFilterVisible = filterValue !== undefined;
     const styles = useStyles2(getStyles);
 
     if (!filterValue && field && (field.type === FieldType.number || field.type === FieldType.time)) {
       return (
-        <div
-          className={styles.filterContainer}
-          ref={containerRef}
-          data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
-        >
+        <FilterPopupLayout containerRef={containerRef} maxWidth={field.type === FieldType.time ? 424 : undefined}>
           <RangeFilter
             field={field}
             rows={rows}
@@ -144,40 +168,32 @@ const FilterPopupEditor = memo(
               buttonElement?.focus();
             }}
           />
-        </div>
+        </FilterPopupLayout>
       );
     }
 
     return (
-      <div
-        className={styles.filterContainer}
-        data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
-        ref={containerRef}
-      >
-        <Stack direction="column">
-          <Stack alignItems="center">{field && <Label className={styles.label}>{getDisplayName(field)}</Label>}</Stack>
-
+      <FilterPopupLayout containerRef={containerRef} width={popupWidth}>
+        <Stack direction="column" gap={1.5}>
           <Stack gap={1}>
-            <div className={styles.inputContainer}>
-              <FilterInput
-                ref={inputRef}
-                placeholder={filterInputPlaceholder}
-                title={filterInputPlaceholder}
-                onChange={setSearchFilter}
-                value={searchFilter}
-                suffix={
-                  <ButtonSelect
-                    className={styles.buttonSelectOverrides}
-                    options={operators}
-                    onChange={setOperator}
-                    value={operator}
-                    tooltip={operator.description}
-                    narrow
-                    root={containerRef.current ?? undefined}
-                  />
-                }
-              />
-            </div>
+            <FilterInput
+              ref={inputRef}
+              placeholder={filterInputPlaceholder}
+              title={filterInputPlaceholder}
+              onChange={setSearchFilter}
+              value={searchFilter}
+              suffix={
+                <ButtonSelect
+                  className={styles.buttonSelectOverrides}
+                  options={operators}
+                  onChange={setOperator}
+                  value={operator}
+                  tooltip={operator.description}
+                  narrow
+                  root={containerRef.current ?? undefined}
+                />
+              }
+            />
             <Button
               tooltip={t('grafana-ui.table.filter-popup-aria-label-match-case', 'Match case')}
               variant={matchCase ? 'primary' : 'secondary'}
@@ -189,6 +205,7 @@ const FilterPopupEditor = memo(
 
           <FilterList
             onChange={setValues}
+            onWidthChange={setPopupWidth}
             values={values}
             options={options}
             caseSensitive={matchCase}
@@ -196,21 +213,16 @@ const FilterPopupEditor = memo(
             operator={operator}
           />
 
-          <Stack justifyContent="end" direction="row-reverse">
-            <Button size="sm" onClick={onFilter}>
-              <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
-            </Button>
-            <Button size="sm" variant="secondary" onClick={onClose}>
-              <Trans i18nKey="grafana-ui.table.filter-popup-cancel">Cancel</Trans>
-            </Button>
-            {clearFilterVisible && (
-              <Button fill="text" size="sm" onClick={onClearFilter}>
-                <Trans i18nKey="grafana-ui.table.filter-popup-clear">Clear filter</Trans>
-              </Button>
-            )}
-          </Stack>
+          <FilterPopupFooter
+            selectedRows={selectedRows}
+            totalRows={totalRows}
+            onClear={clearFilterVisible ? onClearFilter : undefined}
+            onCancel={onClose}
+            onApply={onFilter}
+            applyLabel={<Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>}
+          />
         </Stack>
-      </div>
+      </FilterPopupLayout>
     );
   }
 );
@@ -219,23 +231,6 @@ FilterPopup.displayName = 'FilterPopup';
 FilterPopupEditor.displayName = 'FilterPopupEditor';
 
 const getStyles = memoize((theme: GrafanaTheme2) => ({
-  filterContainer: css({
-    label: 'filterContainer',
-    width: '100%',
-    minWidth: '320px',
-    height: '100%',
-    backgroundColor: theme.colors.background.primary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    padding: theme.spacing(2),
-    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
-    borderRadius: theme.shape.radius.default,
-  }),
-  label: css({
-    marginBottom: 0,
-  }),
-  inputContainer: css({
-    width: 300,
-  }),
   buttonSelectOverrides: css({
     fontSize: 12,
     '&:hover, &:focus, &:active': {

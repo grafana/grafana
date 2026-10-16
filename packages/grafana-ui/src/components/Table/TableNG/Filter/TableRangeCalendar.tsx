@@ -15,6 +15,8 @@ import { type TimePickerCalendarProps } from '../../../DateTimePickers/TimeRange
 
 interface Props extends TimePickerCalendarProps {
   anchorElement: HTMLElement | null;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 export function TableRangeCalendar(props: Props) {

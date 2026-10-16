@@ -28,7 +28,7 @@ test.describe('Panels test: Table - ad-hoc range filters', { tag: ['@panels', '@
     await expect(page.getByTestId(range.histogram)).toBeVisible();
     await page.getByTestId(range.minimumInput).fill('90');
     await page.getByTestId(range.maximumInput).fill('91');
-    await expect(page.getByRole('status')).toHaveText('4 of 10 rows match');
+    await expect(page.getByRole('status')).toHaveText('4 of 10 rows');
     await expect(panel.getByRole('row')).toHaveCount(11);
     await page.getByTestId(range.applyButton).click();
     await expect(panel.getByRole('row')).toHaveCount(5);
@@ -74,6 +74,68 @@ test.describe('Panels test: Table - ad-hoc range filters', { tag: ['@panels', '@
       await expect(panel.getByRole('button', { name: 'Column options for A' })).toBeFocused();
     }
   );
+
+  test('keeps the numeric filter open after dragging a slider handle outside the popup', async ({
+    gotoDashboardPage,
+    page,
+    selectors,
+  }) => {
+    const dashboard = await gotoDashboardPage({
+      uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+      queryParams: new URLSearchParams({ viewPanel: 'panel-5' }),
+    });
+    await dashboard.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+    const panel = dashboard.getByGrafanaSelector(selectors.components.Panels.Panel.title('Apply to row - gradient'));
+    const table = selectors.components.Panels.Visualization.TableNG;
+    await waitForTableLoad(panel);
+    await panel.getByRole('button', { name: 'Column options for A' }).click();
+    await page.getByTestId(table.headerColumnMenu.filterItem).click();
+
+    const popup = page.getByTestId(table.Filters.Container);
+    const handle = page.getByRole('slider', { name: 'Minimum' });
+    const handleBox = await handle.boundingBox();
+    const popupBox = await popup.boundingBox();
+    if (!handleBox || !popupBox) {
+      throw new Error('Numeric range slider and filter popup must be visible');
+    }
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(popupBox.x - 30, handleBox.y + handleBox.height / 2, { steps: 5 });
+    await page.mouse.up();
+
+    await expect(popup).toBeVisible();
+    await page.mouse.click(popupBox.x - 30, handleBox.y + handleBox.height / 2);
+    await expect(popup).toBeHidden();
+  });
+
+  test('sizes string filters to visible values within the popup width limits', async ({
+    gotoDashboardPage,
+    page,
+    selectors,
+  }) => {
+    const dashboard = await gotoDashboardPage({
+      uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+      queryParams: new URLSearchParams({ viewPanel: 'panel-1' }),
+    });
+    await dashboard.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+    const panel = dashboard.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'));
+    const table = selectors.components.Panels.Visualization.TableNG;
+    await waitForTableLoad(panel);
+
+    await panel.getByRole('button', { name: 'Column options for Info' }).click();
+    await page.getByTestId(table.headerColumnMenu.filterItem).click();
+    const popup = page.getByTestId(table.Filters.Container);
+    await expect(popup).toBeVisible();
+    await expect(popup).toHaveCSS('width', '240px');
+
+    await page.keyboard.press('Escape');
+    await panel.getByRole('button', { name: 'Column options for Long Text' }).click();
+    await page.getByTestId(table.headerColumnMenu.filterItem).click();
+    await expect(popup).toBeVisible();
+    await expect(popup).toHaveCSS('width', '360px');
+    await expect(popup.getByRole('checkbox', { name: /Lorem ipsum dolor sit amet/ })).toBeVisible();
+  });
+
   test('applies absolute date bounds in the dashboard timezone', async ({ gotoDashboardPage, page, selectors }) => {
     const dashboard = await gotoDashboardPage({
       uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
@@ -85,10 +147,19 @@ test.describe('Panels test: Table - ad-hoc range filters', { tag: ['@panels', '@
     await waitForTableLoad(panel);
     await panel.getByRole('button', { name: 'Column options for Time' }).click();
     await page.getByTestId(table.headerColumnMenu.filterItem).click();
-    await expect(page.getByText('Timezone: America/New_York')).toBeVisible();
+    await expect(page.getByTestId(table.Filters.Range.minimumInput)).toHaveAttribute(
+      'placeholder',
+      '2025-08-07 11:03:28.785'
+    );
+    await expect(page.getByTestId(table.Filters.Range.maximumInput)).toHaveAttribute(
+      'placeholder',
+      '2025-08-07 15:33:28.785'
+    );
     await page.getByTestId(table.Filters.Range.minimumInput).fill('2025-08-07 11:00:00.000');
     await page.getByTestId(table.Filters.Range.maximumInput).fill('2025-08-07 12:30:00.000');
-    await expect(page.getByRole('status')).toHaveText('3 of 10 rows match');
+    await expect(page.getByTestId(table.Filters.Range.minimumInput)).toHaveJSProperty('scrollLeft', 0);
+    await expect(page.getByTestId(table.Filters.Range.maximumInput)).toHaveJSProperty('scrollLeft', 0);
+    await expect(page.getByRole('status')).toHaveText('3 of 10 rows');
     await page.getByTestId(table.Filters.Range.applyButton).click();
     await expect(panel.getByRole('row')).toHaveCount(4);
   });
