@@ -1,12 +1,12 @@
 import mermaid from 'mermaid';
-import { HttpResponse, delay, http } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 import { type UseFolderDocsResult, useFolderDocs } from '../../hooks/useFolderDocs';
@@ -29,23 +29,22 @@ jest.mock('mermaid', () => ({
 
 setupProvisioningMswServer();
 
-function fileResource(resource: string, name?: string): ResourceWrapper {
+function resourceItem(path: string, name: string, resource = 'dashboards'): ResourceListItem {
   return {
-    repository: { name: 'test-repo', namespace: 'default', title: 'Test', type: 'github' },
-    resource: {
-      type: { group: resource === 'folders' ? 'folder.grafana.app' : 'dashboard.grafana.app', resource },
-      existing: name ? { metadata: { name } } : undefined,
-      file: { metadata: { name: 'not-synced' } },
-    },
+    path,
+    name,
+    resource,
+    group: resource === 'folders' ? 'folder.grafana.app' : 'dashboard.grafana.app',
+    hash: '',
   };
 }
 
-function setFileResource(response: ResourceWrapper) {
+function setResources(items: ResourceListItem[]) {
   const requests = jest.fn();
   server.use(
-    http.get(`${BASE}/repositories/:name/files/*`, ({ request }) => {
-      requests(request.url);
-      return HttpResponse.json(response);
+    http.post(`${BASE}/repositories/:name/resources`, async ({ request }) => {
+      requests(request.url, await request.json());
+      return HttpResponse.json({ items });
     })
   );
   return requests;
@@ -283,322 +282,164 @@ describe('FolderReadmePanel', () => {
   });
 
   describe('resource links', () => {
-    const dashboardFile = fileResource('dashboards', 'abc');
-    const rootFolder = {
-      metadata: {
-        name: 'test-repo',
-        annotations: { 'grafana.app/managedBy': 'repo', 'grafana.app/managerId': 'test-repo' },
-      },
-      spec: { title: 'Test Repository' },
-    };
-    const rootFolderUrl = '/apis/folder.grafana.app/v1beta1/namespaces/default/folders/test-repo';
-
-    it('navigates in-app when a JSON link maps to a synced dashboard', async () => {
-      const requests = setFileResource(dashboardFile);
-      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
-
+    it('resolves deduplicated paths on load and navigates without another request', async () => {
+      const requests = setResources([resourceItem('dashboards/team-a/cpu.json', 'abc')]);
+      setReadmeResult({ markdownContent: 'See [CPU](cpu.json) and [same dashboard](./cpu.json?var-env=prod#panel-1)' });
       const { user } = setup();
-      expect(requests).not.toHaveBeenCalled();
-      // Spy after render: test-utils swaps the locationService the component uses.
       const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      await user.click(screen.getByRole('link', { name: 'CPU' }));
 
-      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+      await waitFor(() => expect(screen.getByRole('link', { name: 'CPU' })).toHaveAttribute('href', '/d/abc'));
+      expect(screen.getByRole('link', { name: 'same dashboard' })).toHaveAttribute(
+        'href',
+        '/d/abc?var-env=prod#panel-1'
+      );
       expect(requests.mock.calls).toEqual([
         [
-          'http://localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/files/dashboards/team-a/cpu.json',
+          'http://localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/resources',
+          { paths: ['dashboards/team-a/cpu.json'] },
         ],
       ]);
-      expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'in_app' });
-    });
-
-    it('resolves a bare relative link (no ./) that renderMarkdown would otherwise strip', async () => {
-      setFileResource(dashboardFile);
-      setReadmeResult({ markdownContent: 'See [CPU](cpu.json)' });
-
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      const link = screen.getByRole('link', { name: 'CPU' });
-      // The href must survive rendering (not be emptied to the app root).
-      expect(link).toHaveAttribute('href', 'https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json');
-      await user.click(link);
-
-      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
-    });
-
-    it.each([
-      { link: './', path: 'dashboards/team-a/', route: '/dashboards/f/fold1' },
-      { link: './_folder.json', path: 'dashboards/team-a/', route: '/dashboards/f/fold1' },
-    ])('resolves $link with a targeted folder lookup', async ({ link, path, route }) => {
-      const requests = setFileResource(fileResource('folders', 'fold1'));
-      setReadmeResult({ markdownContent: `See [target](${link})` });
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-
-      await user.click(screen.getByRole('link', { name: 'target' }));
-
-      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith(route));
-      expect(requests.mock.calls).toEqual([
-        [
-          `http://localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/files/${path}`,
-        ],
-      ]);
-    });
-
-    it.each([
-      { link: '../../README.md', route: '/dashboards/f/test-repo?docTab=README.md' },
-      { link: '../../', route: '/dashboards/f/test-repo' },
-      { link: '../../_folder.json', route: '/dashboards/f/test-repo' },
-    ])('resolves $link through the existing folders API', async ({ link, route }) => {
-      const requests = jest.fn();
-      const fileRequests = setFileResource(fileResource('folders', 'wrong-folder'));
-      server.use(
-        http.get(rootFolderUrl, ({ request }) => {
-          requests(request.url);
-          return HttpResponse.json(rootFolder);
-        })
-      );
-      setReadmeResult({ markdownContent: `See [target](${link})` });
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-
-      await user.click(screen.getByRole('link', { name: 'target' }));
-
-      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith(route));
-      expect(requests.mock.calls).toEqual([
-        ['http://localhost/apis/folder.grafana.app/v1beta1/namespaces/default/folders/test-repo'],
-      ]);
-      expect(fileRequests).not.toHaveBeenCalled();
-    });
-
-    it.each([
-      { description: 'access is denied', status: 403, annotations: rootFolder.metadata.annotations },
-      { description: 'the folder is missing', status: 404, annotations: rootFolder.metadata.annotations },
-      { description: 'the folder is unmanaged', status: 200, annotations: {} },
-      {
-        description: 'another repository owns the folder',
-        status: 200,
-        annotations: { ...rootFolder.metadata.annotations, 'grafana.app/managerId': 'another-repo' },
-      },
-      {
-        description: 'the folder has a non-root source path',
-        status: 200,
-        annotations: { ...rootFolder.metadata.annotations, 'grafana.app/sourcePath': 'team-a' },
-      },
-    ])('leaves root links on the host when $description', async ({ status, annotations }) => {
-      server.use(
-        http.get(rootFolderUrl, () =>
-          HttpResponse.json({ ...rootFolder, metadata: { ...rootFolder.metadata, annotations } }, { status })
-        )
-      );
-      setReadmeResult({ markdownContent: 'See [root doc](../../README.md)' });
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      const assignMock = jest.fn();
-      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
-      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
-      try {
-        await user.click(screen.getByRole('link', { name: 'root doc' }));
-
-        await waitFor(() =>
-          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/README.md')
-        );
-        expect(pushSpy).not.toHaveBeenCalled();
-      } finally {
-        if (originalLocation) {
-          Object.defineProperty(window, 'location', originalLocation);
-        }
-      }
-    });
-
-    it('leaves instance-scoped root links on the host without guessing a folder UID', async () => {
-      const requests = jest.fn();
-      server.use(
-        http.get(rootFolderUrl, () => {
-          requests();
-          return HttpResponse.json(rootFolder);
-        })
-      );
-      setDocs({ repository: { ...mockRepository, target: 'instance' } });
-      setReadmeResult({ markdownContent: 'See [root doc](../../README.md)' });
-      const { user } = setup();
-      const assignMock = jest.fn();
-      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
-      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
-      try {
-        await user.click(screen.getByRole('link', { name: 'root doc' }));
-
-        await waitFor(() =>
-          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/README.md')
-        );
-        expect(requests).not.toHaveBeenCalled();
-      } finally {
-        if (originalLocation) {
-          Object.defineProperty(window, 'location', originalLocation);
-        }
-      }
-    });
-
-    it('caches clicked paths and looks them up again after a sync', async () => {
-      const requests = setFileResource(dashboardFile);
-      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)', syncFinished: 1 });
-      const { user, rerender } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-
       await user.click(screen.getByRole('link', { name: 'CPU' }));
-      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
-      await user.click(screen.getByRole('link', { name: 'CPU' }));
-      expect(pushSpy).toHaveBeenCalledTimes(2);
+      expect(pushSpy).toHaveBeenCalledWith('/d/abc');
       expect(requests).toHaveBeenCalledTimes(1);
-
-      const nextRequests = setFileResource(fileResource('dashboards', 'after-sync'));
-      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)', syncFinished: 2 });
-      rerender(<FolderReadmePanel folderUID="test-folder" />);
-      await user.click(screen.getByRole('link', { name: 'CPU' }));
-
-      await waitFor(() => expect(pushSpy).toHaveBeenLastCalledWith('/d/after-sync'));
-      expect(nextRequests).toHaveBeenCalledTimes(1);
-    });
-
-    it.each([403, 404, 500])('falls back to the host when the file lookup returns HTTP %s', async (status) => {
-      server.use(http.get(`${BASE}/repositories/:name/files/*`, () => new HttpResponse(null, { status })));
-      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      const assignMock = jest.fn();
-      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
-      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
-      try {
-        await user.click(screen.getByRole('link', { name: 'CPU' }));
-        await waitFor(() =>
-          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json')
-        );
-        expect(pushSpy).not.toHaveBeenCalled();
-      } finally {
-        if (originalLocation) {
-          Object.defineProperty(window, 'location', originalLocation);
-        }
-      }
-    });
-
-    it('resolves when the click lands on a non-HTML element inside the link (e.g. an SVG icon)', async () => {
-      setFileResource(dashboardFile);
-      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
-
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      const link = screen.getByRole('link', { name: 'CPU' });
-      // An inline SVG icon's element is an SVGElement, not an HTMLElement.
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      link.appendChild(svg);
-      await user.click(svg);
-
-      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
-    });
-
-    it('navigates the current tab to the host URL when a JSON link has no synced resource', async () => {
-      setFileResource(fileResource('dashboards'));
-      const assignMock = jest.fn();
-      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
-
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      // window.location.assign is read-only in jsdom; replace it after render.
-      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
-      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
-      try {
-        await user.click(screen.getByRole('link', { name: 'CPU' }));
-
-        await waitFor(() =>
-          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json')
-        );
-        expect(pushSpy).not.toHaveBeenCalled();
-        expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'host' });
-      } finally {
-        if (originalLocation) {
-          Object.defineProperty(window, 'location', originalLocation);
-        }
-      }
-    });
-
-    it('resolves against the current repository after switching repos (no stale lookup)', async () => {
-      // Same path in each repo maps to a different dashboard. repo-b is delayed so
-      // that, without a remount, a stale synchronous read of repo-a's listing would
-      // push /d/aaa immediately (before repo-b's refetch resolves).
-      server.use(
-        http.get(`${BASE}/repositories/:name/files/*`, async ({ params }) => {
-          const isB = params.name === 'repo-b';
-          if (isB) {
-            await delay(50);
-          }
-          return HttpResponse.json(fileResource('dashboards', isB ? 'bbb' : 'aaa'));
-        })
-      );
-
-      // The panel resolves links against the repository from useFolderDocs.
-      setDocs({ repository: { ...mockRepository, name: 'repo-a' } });
-      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
-      const { user, rerender } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-
-      await user.click(screen.getByRole('link', { name: 'CPU' }));
-      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/aaa'));
-
-      // Switch to a different repository; the component must not reuse repo-a's listing.
-      setDocs({ repository: { ...mockRepository, name: 'repo-b' } });
-      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
-      rerender(<FolderReadmePanel folderUID="test-folder" />);
-      pushSpy.mockClear();
-
-      await user.click(screen.getByRole('link', { name: 'CPU' }));
-      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/bbb'));
-      // Must never have resolved against repo-a's stale listing.
-      expect(pushSpy).not.toHaveBeenCalledWith('/d/aaa');
-    });
-
-    it('navigates in-app to the containing folder doc tab when a markdown link maps to a synced folder', async () => {
-      // A folder is keyed by its directory; the doc's containing folder resolves it.
-      const requests = setFileResource(fileResource('folders', 'fold1'));
-      setReadmeResult({ markdownContent: 'See [contributing](./CONTRIBUTING.md)' });
-
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      await user.click(screen.getByRole('link', { name: 'contributing' }));
-
-      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/dashboards/f/fold1?docTab=CONTRIBUTING.md'));
-      expect(requests.mock.calls).toEqual([
-        [
-          'http://localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/files/dashboards/team-a/',
-        ],
-      ]);
       expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'in_app' });
     });
 
-    it('navigates the current tab to the host URL when a markdown link has no synced folder', async () => {
-      setFileResource(fileResource('folders'));
-      const assignMock = jest.fn();
-      setReadmeResult({ markdownContent: 'See [notes](./notes.md)' });
+    it('resolves folders, metadata, root and Markdown docs in the same batch', async () => {
+      const requests = setResources([
+        resourceItem('dashboards/team-a/', 'team', 'folders'),
+        resourceItem('/', 'root', 'folders'),
+      ]);
+      setDocs({ repository: { ...mockRepository, path: 'ops/resources' } });
+      setReadmeResult({
+        markdownContent:
+          '[folder](./) [metadata](./_folder.json) [doc](./CONTRIBUTING.md#help) [root](../../README.md)',
+      });
+      setup();
 
-      const { user } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      // window.location.assign is read-only in jsdom; replace it after render.
-      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
-      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
-      try {
-        const link = screen.getByRole('link', { name: 'notes' });
-        expect(link).toHaveAttribute('href', 'https://github.com/owner/repo/blob/main/dashboards/team-a/notes.md');
-        await user.click(link);
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: 'folder' })).toHaveAttribute('href', '/dashboards/f/team')
+      );
+      expect(screen.getByRole('link', { name: 'metadata' })).toHaveAttribute('href', '/dashboards/f/team');
+      expect(screen.getByRole('link', { name: 'doc' })).toHaveAttribute(
+        'href',
+        '/dashboards/f/team?docTab=CONTRIBUTING.md#help'
+      );
+      expect(screen.getByRole('link', { name: 'root' })).toHaveAttribute('href', '/dashboards/f/root?docTab=README.md');
+      expect(requests.mock.calls[0][1]).toEqual({ paths: ['dashboards/team-a/', '/'] });
+    });
 
-        await waitFor(() =>
-          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/dashboards/team-a/notes.md')
+    it('keeps denied and missing resources on the host while resolving allowed links', async () => {
+      setResources([resourceItem('dashboards/team-a/allowed.json', 'allowed')]);
+      setReadmeResult({ markdownContent: '[allowed](allowed.json) [denied](denied.json) [missing](missing.json)' });
+      setup();
+
+      await waitFor(() => expect(screen.getByRole('link', { name: 'allowed' })).toHaveAttribute('href', '/d/allowed'));
+      for (const name of ['denied', 'missing']) {
+        expect(screen.getByRole('link', { name })).toHaveAttribute(
+          'href',
+          `https://github.com/owner/repo/blob/main/dashboards/team-a/${name}.json`
         );
-        expect(pushSpy).not.toHaveBeenCalled();
-        expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'host' });
-      } finally {
-        if (originalLocation) {
-          Object.defineProperty(window, 'location', originalLocation);
-        }
+        expect(screen.getByRole('link', { name })).toHaveAttribute('target', '_blank');
       }
+    });
+
+    it('preserves native modified-click behavior with a resolved href', async () => {
+      setResources([resourceItem('dashboards/team-a/cpu.json', 'abc')]);
+      setReadmeResult({ markdownContent: '[CPU](./cpu.json)' });
+      setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      await waitFor(() => expect(screen.getByRole('link', { name: 'CPU' })).toHaveAttribute('href', '/d/abc'));
+      const prevented = jest.fn();
+      const preventNavigation = (event: MouseEvent) => {
+        prevented(event.defaultPrevented);
+        event.preventDefault();
+      };
+      document.addEventListener('click', preventNavigation);
+      try {
+        screen
+          .getByRole('link', { name: 'CPU' })
+          .dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true }));
+        expect(prevented).toHaveBeenCalledWith(false);
+        expect(pushSpy).not.toHaveBeenCalled();
+      } finally {
+        document.removeEventListener('click', preventNavigation);
+      }
+    });
+
+    it('refreshes resolved links after a sync even when Markdown is unchanged', async () => {
+      const requests = setResources([resourceItem('dashboards/team-a/cpu.json', 'before')]);
+      setReadmeResult({ markdownContent: '[CPU](./cpu.json)', syncFinished: 1 });
+      const { rerender } = setup();
+      await waitFor(() => expect(screen.getByRole('link', { name: 'CPU' })).toHaveAttribute('href', '/d/before'));
+
+      const refreshed = setResources([resourceItem('dashboards/team-a/cpu.json', 'after')]);
+      setReadmeResult({ markdownContent: '[CPU](./cpu.json)', syncFinished: 2 });
+      rerender(<FolderReadmePanel folderUID="test-folder" />);
+      await waitFor(() => expect(screen.getByRole('link', { name: 'CPU' })).toHaveAttribute('href', '/d/after'));
+      expect(requests).toHaveBeenCalledTimes(1);
+      expect(refreshed).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['repository', 'document'])('ignores late responses after switching %s', async (change) => {
+      let finishOldRequest!: () => void;
+      const pending = new Promise<void>((resolve) => {
+        finishOldRequest = resolve;
+      });
+      const started = jest.fn();
+      server.use(
+        http.post(`${BASE}/repositories/:name/resources`, async ({ request }) => {
+          const body = await request.json();
+          started(body);
+          if (started.mock.calls.length === 1) {
+            await pending;
+            return HttpResponse.json({ items: [resourceItem('dashboards/team-a/cpu.json', 'stale')] });
+          }
+          return HttpResponse.json({ items: [resourceItem('dashboards/team-a/cpu.json', 'current')] });
+        })
+      );
+      setReadmeResult({ markdownContent: '[CPU](./cpu.json)' });
+      const { rerender } = setup();
+      await waitFor(() => expect(started).toHaveBeenCalledTimes(1));
+
+      if (change === 'repository') {
+        setDocs({ repository: { ...mockRepository, name: 'other-repo' } });
+      } else {
+        setReadmeResult({ markdownContent: 'Another document: [CPU](./cpu.json)' });
+      }
+      rerender(<FolderReadmePanel folderUID="test-folder" />);
+      await waitFor(() => expect(screen.getByRole('link', { name: 'CPU' })).toHaveAttribute('href', '/d/current'));
+      await act(async () => {
+        finishOldRequest();
+        await pending;
+      });
+      expect(screen.getByRole('link', { name: 'CPU' })).toHaveAttribute('href', '/d/current');
+    });
+
+    it.each([403, 404, 500])('leaves the document usable when lookup returns HTTP %s', async (status) => {
+      const requests = jest.fn();
+      server.use(
+        http.post(`${BASE}/repositories/:name/resources`, () => {
+          requests();
+          return new HttpResponse(null, { status });
+        })
+      );
+      setReadmeResult({ markdownContent: '# Documentation\n\n[CPU](./cpu.json)' });
+      setup();
+      await waitFor(() => expect(requests).toHaveBeenCalledTimes(1));
+      expect(screen.getByRole('heading', { name: 'Documentation' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'CPU' })).toHaveAttribute(
+        'href',
+        'https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json'
+      );
+    });
+
+    it('does not fetch resources for a document without candidate links', () => {
+      const requests = setResources([]);
+      setReadmeResult({ markdownContent: '# Hello\n\n[external](https://grafana.com) [image](image.png)' });
+      setup();
+      expect(screen.getByRole('heading', { name: 'Hello' })).toBeInTheDocument();
+      expect(requests).not.toHaveBeenCalled();
     });
   });
 

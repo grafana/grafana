@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useIntersection } from 'react-use';
 
@@ -7,8 +7,7 @@ import { type GrafanaTheme2, locationUtil, renderMarkdown, textUtil } from '@gra
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, Button, LinkButton, Spinner, Stack, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
-import { useLazyGetFolderQuery } from 'app/api/clients/folder/v1beta1';
-import { type RepositoryView, useLazyGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, useLookupRepositoryPathsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { useMermaidDiagrams } from 'app/core/hooks/useMermaidDiagrams';
 import { DIAGRAM_CLASS } from 'app/core/utils/mermaid';
 
@@ -16,9 +15,8 @@ import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { type FolderDoc, FOLDER_DOC_TAB_PARAM, getDocTabLabel } from '../../utils/folderDocConventions';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
-import { getManagerIdentity, getSourcePath, isManagedByRepository } from '../../utils/managedResource';
-import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
-import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
+import { RESOURCE_PATH_ATTR, RESOURCE_ROUTE_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
+import { resolveMarkdownResourceLinks } from '../../utils/markdownResourceLinks';
 import { splitPath } from '../utils/path';
 
 import { FolderReadmeEvents } from './analytics/main';
@@ -180,9 +178,7 @@ function ReadmeBody({ status, markdownContent, repository, doc, newFileUrl, refe
   switch (status) {
     case 'ok':
       return markdownContent !== undefined ? (
-        // Key by repository so switching to a folder in a different repo remounts
-        // (resetting the cached listing/refs), rather than resolving links against
-        // the previous repository's resources.
+        // Remount across repositories so pending lookups cannot cross repository boundaries.
         <RenderedMarkdown
           key={repository.name}
           markdown={markdownContent}
@@ -223,142 +219,83 @@ function RenderedMarkdown({
   syncFinished: number | undefined;
 }) {
   const styles = useStyles2(getStyles);
-  const [fetchFile] = useLazyGetRepositoryFilesWithPathQuery();
-  const [fetchFolder] = useLazyGetFolderQuery();
-  const repositoryName = repository.name;
-  const repositoryPath = repository.path;
-  const repositoryTarget = repository.target;
+  const [fetchResources] = useLookupRepositoryPathsMutation();
 
-  // renderMarkdown's default sanitizer strips the href of bare relative links
-  // (e.g. `dashboard.json`, `subfolder/`), leaving `<a href>` that resolves to
-  // the app root — so folder/dashboard links can't be rewritten or resolved.
-  // Render without it and rely on textUtil.sanitize below (the XSS boundary),
-  // which preserves relative links.
+  // Keep relative hrefs until the repository resolver can process them; sanitize
+  // before and after rewriting instead of using renderMarkdown's relative-link filter.
   const html = renderMarkdown(markdown, { noSanitize: true });
   const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
   const safe = textUtil.sanitize(rewritten);
+  const source = useMemo(
+    () => ({ html: safe, repositoryName: repository.name, repositoryPath: repository.path, syncFinished }),
+    [safe, repository.name, repository.path, syncFinished]
+  );
+  const [resolved, setResolved] = useState<{ source: typeof source; html: string }>();
+  const rendered = resolved?.source === source ? textUtil.sanitize(resolved.html) : safe;
   const containerRef = useRef<HTMLDivElement>(null);
-  // Only the latest async (first-click) resolution navigates, so overlapping
-  // clicks can't race and push an earlier link's destination after a later one.
-  const navigationRef = useRef({ token: 0 });
-  const routesRef = useRef(new Map<string, string | undefined>());
 
-  // A sync or repository change can invalidate previously resolved paths.
   useEffect(() => {
-    const navigation = navigationRef.current;
-    routesRef.current.clear();
+    if (!source.html.includes(RESOURCE_PATH_ATTR)) {
+      return;
+    }
+    let active = true;
+    const requests: Array<{ abort: () => void }> = [];
+    void resolveMarkdownResourceLinks(
+      source.html,
+      (paths) => {
+        if (!active) {
+          return Promise.reject(new Error('Markdown lookup cancelled'));
+        }
+        const request = fetchResources({ name: source.repositoryName, paths });
+        requests.push(request);
+        return request.unwrap();
+      },
+      source.repositoryPath
+    )
+      .then((html) => {
+        if (active) {
+          setResolved({ source, html });
+        }
+      })
+      .catch(() => {
+        // A failed lookup must not hide the document or break its host links.
+      });
     return () => {
-      navigation.token++;
+      active = false;
+      requests.forEach((request) => request.abort());
     };
-  }, [syncFinished, repositoryName, repositoryPath, repositoryTarget]);
+  }, [source, fetchResources]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) {
       return;
     }
-    const navigation = navigationRef.current;
-
-    const routeFor = createGrafanaLinkResolver(
-      (query) => fetchFile({ name: repositoryName, ...query }, false).unwrap(),
-      repositoryPath,
-      async () => {
-        if (repositoryTarget !== 'folder') {
-          return undefined;
-        }
-        // Folder-targeted repositories use the repository name as their root folder UID.
-        const folder = await fetchFolder({ name: repositoryName }, false).unwrap();
-        if (
-          !isManagedByRepository(folder) ||
-          getManagerIdentity(folder) !== repositoryName ||
-          getSourcePath(folder)?.replace(/\/$/, '')
-        ) {
-          return undefined;
-        }
-        return folder.metadata.name;
-      }
-    );
-
-    // The first lookup of a path resolves asynchronously. This is
-    // the only path that may navigate the current tab on a host fallback (a
-    // window.open after the await would be treated as non-user-initiated and
-    // blocked); once cached, clicks resolve synchronously below.
-    const resolveAsync = async (href: string | null, repoPath: string, token: number) => {
-      let route: string | undefined;
-      try {
-        route = await routeFor(repoPath);
-        if (token === navigation.token) {
-          routesRef.current.set(repoPath, route);
-        }
-      } catch {
-        // Ignore — fall back to the host link below.
-      }
-      if (token !== navigation.token) {
-        return; // A later click superseded this one.
-      }
-      if (route) {
-        locationService.push(route);
-        FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'in_app' });
-        return;
-      }
-      if (href) {
-        FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'host' });
-        window.location.assign(href);
-      }
-    };
-
     const handleClick = (e: MouseEvent) => {
-      // Element (not HTMLElement): a click can land on an SVGElement — e.g. an
-      // inline icon inside the link — which still supports closest().
       if (!(e.target instanceof Element)) {
         return;
       }
       const anchor = e.target.closest('a');
-      if (!anchor) {
+      const href = anchor?.getAttribute('href');
+      if (!href) {
         return;
       }
-      const repoPath = anchor.getAttribute(RESOURCE_PATH_ATTR);
-      const href = anchor.getAttribute('href');
+      const route = anchor?.getAttribute(RESOURCE_ROUTE_ATTR);
       const plainClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
-
-      if (repoPath && plainClick) {
-        const token = ++navigation.token;
-        if (routesRef.current.has(repoPath)) {
-          // Cached: resolve synchronously and take over navigation only when
-          // there is an in-app route, so unresolved links keep their native
-          // (new-tab) behavior — consistent with untagged links beside them.
-          const route = routesRef.current.get(repoPath);
-          if (route) {
-            e.preventDefault();
-            locationService.push(route);
-            FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'in_app' });
-            return;
-          }
-        } else {
-          e.preventDefault();
-          void resolveAsync(href, repoPath, token);
-          return;
-        }
+      if (route && plainClick) {
+        e.preventDefault();
+        locationService.push(route);
       }
-
-      // Native navigation to the host link. Only count links that actually go
-      // somewhere (skip anchors whose href was stripped for hostless repos).
-      if (href) {
-        FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'host' });
-      }
+      FolderReadmeEvents.linkClicked({ repositoryType, outcome: route ? 'in_app' : 'host' });
     };
-
     el.addEventListener('click', handleClick);
-    return () => {
-      el.removeEventListener('click', handleClick);
-      navigation.token++;
-    };
-  }, [repositoryType, repositoryName, repositoryPath, repositoryTarget, fetchFile, fetchFolder]);
+    return () => el.removeEventListener('click', handleClick);
+  }, [repositoryType]);
 
   // React resets innerHTML whenever this object's identity changes, which would
   // wipe the diagrams the hook swapped in — so only hand it a new one when the html changes.
-  const innerHtml = useMemo(() => ({ __html: safe }), [safe]);
-  useMermaidDiagrams(containerRef, safe);
+  const innerHtml = useMemo(() => ({ __html: rendered }), [rendered]);
+  useMermaidDiagrams(containerRef, rendered);
 
   return (
     <div ref={containerRef} className={cx('markdown-html', styles.markdownBody)} dangerouslySetInnerHTML={innerHtml} />
