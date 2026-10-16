@@ -26,15 +26,22 @@ const NAVIGATE_TO = 'cuj-dashboard-3';
  * non-spec module and be called from two separate spec files rather than two describe blocks in one
  * file, because `openFeature` can only be overridden at the top level of a test file - overriding it
  * inside a describe block forces a new worker, which Playwright doesn't support.
+ *
+ * `megaMenu` must match the `grafana.scopesDashboardsMegaMenu` flag value set by the calling spec
+ * file's `test.use({ openFeature: ... })`, and is used purely to label the describe/test titles so
+ * the two flag states are distinguishable in reports, `--grep`, and flake tracking.
  */
-export function runDashboardNavigationCujs() {
+export function runDashboardNavigationCujs({ megaMenu }: { megaMenu: boolean }) {
+  const scenario = megaMenu ? '(scopes mega menu flag on)' : '(scopes mega menu flag off)';
+
   test.describe(
-    'Dashboard navigation CUJs',
+    `Dashboard navigation CUJs ${scenario}`,
     {
       tag: ['@dashboard-cujs'],
     },
     () => {
-      test('Navigate between dashboards', async ({ page, gotoDashboardPage, selectors }) => {
+      test(`Navigate between dashboards ${scenario}`, async ({ page, gotoDashboardPage, selectors }) => {
+        const scopesDashboardsContainer = page.getByTestId('scopes-dashboards-container');
         const scopeSelectorInput = getScopesSelectorInput(page);
         const scopesDashboards = getScopesDashboards(page);
         const scopesDashboardsSearchInput = getScopesDashboardsSearchInput(page);
@@ -50,6 +57,9 @@ export function runDashboardNavigationCujs() {
           await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
           await setScopes(page);
+
+          await expect(scopesDashboardsContainer).toBeVisible();
+          await expect(scopesDashboardsContainer).toHaveCount(1);
 
           await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
@@ -68,6 +78,9 @@ export function runDashboardNavigationCujs() {
 
           await setScopes(page);
 
+          await expect(scopesDashboardsContainer).toBeVisible();
+          await expect(scopesDashboardsContainer).toHaveCount(1);
+
           await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
           // assert the panel is visible and has the correct value
@@ -77,7 +90,7 @@ export function runDashboardNavigationCujs() {
           const timePickerButton = page.getByTestId(selectors.components.TimePicker.openButton);
 
           await timePickerButton.click();
-          const label = page.getByText('Last 12 hours');
+          const label = page.getByTestId(selectors.components.TimePicker.timeRangeOption('now-12h', 'now'));
           await label.click();
 
           await expect(markdownContent).toContainText(`now-12h`);
@@ -101,6 +114,9 @@ export function runDashboardNavigationCujs() {
               const dashboardPage = await gotoDashboardPage({ uid: db });
 
               await setScopes(page, { title: 'CUJ Dashboard 3', uid: NAVIGATE_TO });
+
+              await expect(scopesDashboardsContainer).toBeVisible();
+              await expect(scopesDashboardsContainer).toHaveCount(1);
 
               await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
@@ -145,6 +161,9 @@ export function runDashboardNavigationCujs() {
           const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
           await setScopes(page, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
+
+          await expect(scopesDashboardsContainer).toBeVisible();
+          await expect(scopesDashboardsContainer).toHaveCount(1);
 
           await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 

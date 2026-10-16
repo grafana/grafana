@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
+import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
 import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
@@ -17,13 +18,18 @@ export function ScopesDashboards() {
   const styles = useStyles2(getStyles);
   const scopes = useScopes();
   const scopeServices = useScopesServices();
+  const scopesMegaMenuEnabled = useFlagGrafanaScopesDashboardsMegaMenu();
 
   useObservable(
     scopeServices?.scopesDashboardsService.stateObservable ?? new Observable(),
     scopeServices?.scopesDashboardsService.state
   );
 
-  const showAsEnabled = useDebouncedScopesEnabled(scopes?.state.enabled ?? false);
+  // Hooks must be called unconditionally, but the debounce itself is only applied when the flag
+  // is on - with the flag off, this drawer must stay byte-for-byte unchanged from main, which reads
+  // `enabled` raw.
+  const debouncedEnabled = useDebouncedScopesEnabled(scopes?.state.enabled ?? false);
+  const showAsEnabled = scopesMegaMenuEnabled ? debouncedEnabled : (scopes?.state.enabled ?? false);
 
   if (!scopeServices || !scopes || !showAsEnabled || !scopes.state.drawerOpened) {
     return null;

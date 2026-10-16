@@ -12,4 +12,4 @@ test.use({
   openFeature: { flags: { 'grafana.scopesDashboardsMegaMenu': false } },
 });
 
-runDashboardNavigationCujs();
+runDashboardNavigationCujs({ megaMenu: false });
