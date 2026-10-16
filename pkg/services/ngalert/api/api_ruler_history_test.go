@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/matchers/compat"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -162,6 +164,18 @@ func TestParseHistoryQuery(t *testing.T) {
 		byName := matchersByName(result.Labels)
 		assert.Equal(t, labels.MatchEqual, byName["severity"].Type)
 		assert.Equal(t, labels.MatchRegexp, byName["env"].Type)
+	})
+
+	t.Run("matchers param supports label names with dots", func(t *testing.T) {
+		compat.InitFromFlags(log.NewNopLogger(), featurecontrol.NoopFlags{})
+		q := url.Values{
+			"matchers": {`{host.hostname="server-1"}`},
+		}
+		result, err := ParseHistoryQuery(1, &user.SignedInUser{}, q)
+		require.NoError(t, err)
+		require.Len(t, result.Labels, 1)
+		assert.Equal(t, "host.hostname", result.Labels[0].Name)
+		assert.Equal(t, "server-1", result.Labels[0].Value)
 	})
 
 	t.Run("invalid regex in matchers returns error", func(t *testing.T) {
