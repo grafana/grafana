@@ -270,6 +270,29 @@ describe('ExemplarsPlugin', () => {
     expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
   });
 
+  it('clears a hovered tooltip when another exemplar is pinned programmatically and keeps it closed after dismissal', async () => {
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418800000] },
+        { name: 'Value', values: [0.5, 0.6] },
+        { name: 'traceID', type: FieldType.string, values: ['hovered-trace', 'requested-trace'] },
+      ],
+    });
+    const result = setUp({ exemplars: [sample] });
+
+    await userEvent.hover(getMarker());
+    expect(await screen.findByText('hovered-trace')).toBeVisible();
+
+    result.rerenderExemplars([sample], { openExemplar: createOpenExemplar('navigation-hover', 1) });
+    expect(await screen.findByText('requested-trace')).toBeVisible();
+    expect(screen.queryByText('hovered-trace')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Close'));
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByText('hovered-trace')).not.toBeInTheDocument();
+    expect(screen.queryByText('requested-trace')).not.toBeInTheDocument();
+  });
+
   it('does not reopen a handled request after dismissal and remount, but opens a new navigation request', async () => {
     const sample = createDataFrame({
       fields: [

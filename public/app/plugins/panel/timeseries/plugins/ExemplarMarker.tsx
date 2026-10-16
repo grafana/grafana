@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { autoUpdate, safePolygon, useDismiss, useFloating, useHover, useInteractions } from '@floating-ui/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { type DataFrame, type Field, formattedValueToString, type GrafanaTheme2, type LinkModel } from '@grafana/data';
@@ -71,6 +71,10 @@ export const ExemplarMarker = ({
   });
 
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, hover]);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [lockedExemplar]);
 
   const getSymbol = () => {
     return (
