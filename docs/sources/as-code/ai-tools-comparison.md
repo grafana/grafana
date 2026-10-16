@@ -26,7 +26,7 @@ aliases:
 
 If you're a Grafana on prem user, you have the following AI tools available to interact with Grafana:
 
-**Grafana Assistant** is Grafana's own AI agent, built into Grafana. Assistant brings a purpose-built LLM into Grafana so operators, developers, and SREs can troubleshoot issues, manage dashboards, and answer product questions in plain language. 
+**Grafana Assistant** is the Grafana AI agent, built into Grafana. Assistant brings a purpose-built LLM into Grafana so operators, developers, and SREs can troubleshoot issues, manage dashboards, and answer product questions in plain language. 
 
   - In self-managed Grafana the Assistant app runs in your own deployment but connects to a Grafana Cloud Assistant backend, with a reduced feature set. 
   - Some advanced features require the full Grafana Cloud feature set.
@@ -37,7 +37,7 @@ If you're a Grafana on prem user, you have the following AI tools available to i
   - Clients discover named tools with JSON schemas, the model picks a tool and supplies structured arguments, Grafana runs it under normal identity and RBAC, and the structured result goes back to the model for its next step. 
   - Grafana offers two servers: Cloud MCP (hosted by Grafana) and OSS MCP (you run it).
 
-`**gcx**` is an AI-native command-line tool that gives you or your AI agent structured access to Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, k6, Fleet Management, Incidents, and Adaptive Telemetry. It's deterministic and scriptable, and provides JSON or YAML output, structured errors, and predictable exit codes. Use it for scripts, CI, or GitOps. 
+`**gcx**` is an AI-native command-line tool that gives you or your AI agent structured access to Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, k6, Fleet Management, Incidents, and Adaptive Telemetry. You can script it to provide deterministic JSON or YAML output, defined errors, and predictable exit codes. Use it for scripts, CI, or GitOps. 
 
 ## Side-by-side comparison
 
@@ -45,10 +45,10 @@ This table summarizes the main points for each tool:
 
 | | Grafana Assistant | Cloud MCP | OSS MCP | gcx |
 |---|---|---|---|---|
-|**What it is**| Grafana's built-in AI agent | Grafana-hosted MCP endpoint for external AI clients | Self-run MCP server (`mcp-grafana`) | CLI for Grafana and Grafana Cloud | 
+|**What it is**| Built-in Grafana AI agent | Grafana-hosted MCP endpoint for external AI clients | Self-run MCP server (`mcp-grafana`) | CLI for Grafana and Grafana Cloud | 
 |**Who drives it**| A person, inside Grafana | A person, through an MCP client | A person or an agent, through an MCP client | A person, a script, or a coding agent issuing explicit commands | 
 |**Setup**| In Cloud, there's nothing to install, just enable it in stack. Install app for self-managed | Add one endpoint to a client; complete browser consent | Install and operate a server | Install the binary and configure contexts | 
-|**Best for**| Ad hoc questions, dashboards, investigations in the UI | Interactive diagnosis from your AI client with per-user permissions | Self-hosted, private networks, service identity, custom policy | Repeatable work, CI, GitOps, multi-stack changes | 
+|**Best for**| Specific questions, dashboards, investigations in the UI | Interactive diagnosis from your AI client with per-user permissions | Self-hosted, private networks, service identity, custom policy | Repeatable work, CI, GitOps, multi-stack changes | 
 |**Cost note**| Per token consumed | Counts toward Assistant usage and active users | Server hosting is yours; Grafana usage rules apply | Free. Cloud products and Assistant requests are billed as usual | 
 
 ## When to use which
