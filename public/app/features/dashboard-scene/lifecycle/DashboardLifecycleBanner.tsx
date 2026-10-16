@@ -292,15 +292,13 @@ function PendingChangesBanner({ dashboard, uid, id, pending, inset, reload }: Pe
           onDismiss={() => setConfirm(undefined)}
           onConfirm={async () => {
             setConfirm(undefined);
-            try {
-              await pending.discard();
-              clearPendingChangePreview(uid, id);
-              await reload();
-            } catch {
-              appEvents.emit(AppEvents.alertError, [
-                t('dashboard-scene.lifecycle.discard-pending-failed', "Couldn't discard the changes. Try again."),
-              ]);
-            }
+            await discardPendingChanges(
+              pending,
+              uid,
+              id,
+              reload,
+              t('dashboard-scene.lifecycle.discard-pending-failed', "Couldn't discard the changes. Try again.")
+            );
           }}
         />
       )}
@@ -371,25 +369,36 @@ function NewDashboardBanner({ dashboard, uid, id, pending, placement, inset, rel
           onDismiss={() => setConfirmDiscard(false)}
           onConfirm={async () => {
             setConfirmDiscard(false);
-            try {
-              await pending.discard();
-              clearPendingChangePreview(uid, id);
-              if (placement === 'page') {
-                // Nothing is left to show here.
-                locationService.push('/dashboards');
-              } else {
-                await reload();
-              }
-            } catch {
-              appEvents.emit(AppEvents.alertError, [
-                t('dashboard-scene.lifecycle.discard-draft-failed', "Couldn't discard the draft. Try again."),
-              ]);
-            }
+            await discardPendingChanges(
+              pending,
+              uid,
+              id,
+              // Nothing is left to show on the page.
+              placement === 'page' ? async () => locationService.push('/dashboards') : reload,
+              t('dashboard-scene.lifecycle.discard-draft-failed', "Couldn't discard the draft. Try again.")
+            );
           }}
         />
       )}
     </>
   );
+}
+
+/** Discards the pending changes and forgets them in every view, then shows what's left. */
+async function discardPendingChanges(
+  pending: DashboardPendingChanges,
+  uid: string,
+  id: string,
+  afterwards: () => Promise<void>,
+  failureMessage: string
+) {
+  try {
+    await pending.discard();
+    clearPendingChangePreview(uid, id);
+    await afterwards();
+  } catch {
+    appEvents.emit(AppEvents.alertError, [failureMessage]);
+  }
 }
 
 interface LifecycleAlertProps {

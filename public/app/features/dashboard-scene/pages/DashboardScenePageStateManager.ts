@@ -61,6 +61,8 @@ import {
 } from 'app/types/dashboard';
 
 import {
+  clearPendingChangePreview,
+  getPendingChangePreview,
   isPreviewingPendingChanges,
   loadPendingChangePreview,
   type PendingChangePreview,
@@ -126,11 +128,20 @@ interface DashboardCacheEntry<T> {
   cacheKey: string;
 }
 
-/** Pending changes previews, which never go through the scene cache (see withPendingChanges). */
-const pendingChangesPreviews = new WeakSet<object>();
-
-/** Previews of new dashboards, by the uid saving them creates them under (see newDashboardPreview). */
-const newDashboardPreviews = new WeakMap<object, string>();
+/**
+ * The pending changes a load shows instead of the saved dashboard, if any (see withPendingChanges).
+ * Such a scene never goes through the scene cache: it shares the saved dashboard's version.
+ */
+function shownPendingChanges(options: LoadDashboardOptions): PendingChangePreview | undefined {
+  const view =
+    options.route === DashboardRoutes.Normal
+      ? 'page'
+      : options.route === DashboardRoutes.Embedded
+        ? 'embedded'
+        : undefined;
+  const preview = view ? getPendingChangePreview(view, options.uid) : undefined;
+  return preview?.previewing ? preview : undefined;
+}
 
 export interface LoadDashboardOptions {
   uid: string;
@@ -658,10 +669,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     // Provisioning previews are cached under the file path (options.uid for this route), which
     // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
     // preview when the same file is revisited at a different ref.
-    const skipSceneCache =
-      options.route === DashboardRoutes.Public ||
-      options.route === DashboardRoutes.Provisioning ||
-      (rsp !== null && pendingChangesPreviews.has(rsp));
+    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
@@ -1146,10 +1154,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // Provisioning previews are cached under the file path (options.uid for this route), which
     // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
     // preview when the same file is revisited at a different ref.
+    const pendingChanges = shownPendingChanges(options);
     const skipSceneCache =
       options.route === DashboardRoutes.Public ||
       options.route === DashboardRoutes.Provisioning ||
-      (rsp !== null && pendingChangesPreviews.has(rsp));
+      Boolean(pendingChanges);
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
@@ -1172,6 +1181,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     if (rsp) {
       const scene = transformSaveModelSchemaV2ToScene(rsp, options);
+
+      // A new dashboard proposed as pending changes is unsaved; saving creates it under this uid.
+      if (pendingChanges && proposesNewDashboard(pendingChanges.pending) && !scene.state.uid) {
+        scene.setState({ meta: { ...scene.state.meta, newDashboardUid: options.uid } });
+      }
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
@@ -1495,29 +1509,27 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     } catch (error) {
       const preview = await loadingPreview;
       if (isFetchError(error) && error.status === 404 && preview && proposesNewDashboard(preview.pending)) {
-        return this.newDashboardPreview(options.uid, preview);
+        return this.newDashboardPreview(preview);
       }
       throw error;
     }
-    return this.withPendingChanges(rsp, options, await loadingPreview);
+    const preview = await loadingPreview;
+    if (preview && proposesNewDashboard(preview.pending)) {
+      // The dashboard exists, so a proposal to create it no longer applies.
+      clearPendingChangePreview(options.uid, preview.id);
+      return rsp;
+    }
+    return this.withPendingChanges(rsp, options, preview);
   }
 
   /**
    * A new dashboard proposed as pending changes, under a uid no dashboard has yet: an unsaved
    * dashboard showing the proposed spec, which saving creates under that uid.
    */
-  private newDashboardPreview(uid: string, preview: PendingChangePreview): DashboardWithAccessInfo<DashboardV2Spec> {
-    const rsp: DashboardWithAccessInfo<DashboardV2Spec> = {
-      apiVersion: dashboardAPIVersionResolver.getV2(),
-      kind: 'DashboardWithAccessInfo',
-      metadata: { name: '', resourceVersion: '0', creationTimestamp: new Date().toISOString() },
-      // Editable unless the proposal says otherwise, so it can be saved.
-      spec: { editable: true, ...structuredClone(preview.pending.proposed) },
-      access: { canStar: false, canShare: false, canDelete: false },
-    };
-    pendingChangesPreviews.add(rsp);
-    newDashboardPreviews.set(rsp, uid);
-    return rsp;
+  private async newDashboardPreview(preview: PendingChangePreview): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+    const created = await buildNewDashboardSaveModelV2();
+    // Editable unless the proposal says otherwise, so it can be saved.
+    return { ...created, spec: { editable: true, ...structuredClone(preview.pending.proposed) } };
   }
 
   /**
@@ -1546,7 +1558,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
         spec: structuredClone(preview.pending.proposed),
         access: { ...saved.access, canEdit: false, canSave: false, canDelete: false },
       };
-      pendingChangesPreviews.add(previewRsp);
       return previewRsp;
     } catch {
       preview.previewing = false;
@@ -1603,12 +1614,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
     if (isDashboardV2Resource(rsp)) {
       this.activeManager = this.v2Manager;
-      const scene = this.v2Manager.transformResponseToScene(rsp, options);
-      const newDashboardUid = newDashboardPreviews.get(rsp);
-      if (scene && newDashboardUid) {
-        scene.setState({ meta: { ...scene.state.meta, newDashboardUid } });
-      }
-      return scene;
+      return this.v2Manager.transformResponseToScene(rsp, options);
     }
 
     return this.v1Manager.transformResponseToScene(rsp, options);

@@ -27,7 +27,11 @@ import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/Snapsho
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
-import { isPreviewingPendingChanges, loadPendingChangePreview } from '../lifecycle/pendingChangePreview';
+import {
+  getPendingChangePreview,
+  isPreviewingPendingChanges,
+  loadPendingChangePreview,
+} from '../lifecycle/pendingChangePreview';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -149,6 +153,7 @@ jest.mock('../lifecycle/pendingChangePreview', () => {
     ...actual,
     isPreviewingPendingChanges: jest.fn(actual.isPreviewingPendingChanges),
     loadPendingChangePreview: jest.fn(actual.loadPendingChangePreview),
+    getPendingChangePreview: jest.fn(actual.getPendingChangePreview),
   };
 });
 
@@ -2325,9 +2330,16 @@ describe('UnifiedDashboardScenePageStateManager', () => {
           loadDashboard: jest.fn().mockRejectedValue(notFound),
           loadSnapshot: jest.fn(),
         } as unknown as DashboardLoaderSrvV2;
-        jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(proposal(baseGeneration));
+        const preview = proposal(baseGeneration);
+        jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(preview);
+        jest
+          .mocked(getPendingChangePreview)
+          .mockImplementation((view, uid) => (uid === 'new-dash' ? preview : undefined));
 
         await manager.loadDashboard({ uid: 'new-dash', route: DashboardRoutes.Normal, pendingChanges: 'chat-1' });
+        jest
+          .mocked(getPendingChangePreview)
+          .mockImplementation(jest.requireActual('../lifecycle/pendingChangePreview').getPendingChangePreview);
         return manager;
       }
 
@@ -2340,6 +2352,19 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         expect(scene?.state.title).toBe('Proposed');
         expect(scene?.state.meta.newDashboardUid).toBe('new-dash');
         expect(scene?.state.meta.canSave).toBe(true);
+      });
+
+      it('shows the saved dashboard once the proposed one exists', async () => {
+        setTestFlags({ dashboardNewLayouts: false });
+        setupV1FailureV2Success();
+        const manager = new UnifiedDashboardScenePageStateManager({});
+        jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(proposal(0));
+
+        await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal, pendingChanges: 'chat-1' });
+
+        expect(manager.state.dashboard?.state.uid).toBe('fake-dash');
+        expect(manager.state.dashboard?.state.title).not.toBe('Proposed');
+        expect(manager.state.dashboard?.state.meta.newDashboardUid).toBeUndefined();
       });
 
       it('still reports a missing dashboard when its pending changes are to a saved one', async () => {
