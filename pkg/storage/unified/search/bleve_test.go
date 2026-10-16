@@ -1529,6 +1529,64 @@ func TestInMemoryIndexSegmentsOnlyHoldTheirOwnDocuments(t *testing.T) {
 	})
 }
 
+func TestOpenFileIndexWaitsForPersistence(t *testing.T) {
+	for _, unsafeBatch := range []bool{false, true} {
+		t.Run(fmt.Sprintf("unsafe_batch=%t", unsafeBatch), func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "index")
+			idx, err := bleve.NewUsing(path, bleve.NewIndexMapping(), scorch.Name, bleve.Config.DefaultKVStore, map[string]interface{}{"unsafe_batch": unsafeBatch})
+			require.NoError(t, err)
+
+			flush := func() {
+				t.Helper()
+				done := make(chan error, 1)
+				batch := idx.NewBatch()
+				batch.SetPersistedCallback(func(err error) { done <- err })
+				require.NoError(t, idx.Batch(batch))
+				select {
+				case err := <-done:
+					require.NoError(t, err)
+				case <-time.After(10 * time.Second):
+					t.Fatal("timed out waiting for test index to persist")
+				}
+			}
+
+			require.NoError(t, idx.Index("doc", map[string]string{"title": "persisted document"}))
+			flush()
+			require.NoError(t, setRV(idx, 42))
+			require.NoError(t, idx.SetInternal([]byte("test_metadata"), []byte("unchanged")))
+			flush()
+			advanced, err := idx.Advanced()
+			require.NoError(t, err)
+			epochs, err := advanced.(*scorch.Scorch).RootBoltSnapshotEpochs()
+			require.NoError(t, err)
+			previousEpoch := slices.Max(epochs)
+			require.NoError(t, idx.Close())
+
+			reopened, err := openFileIndex(path)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, reopened.Close()) })
+
+			advanced, err = reopened.Advanced()
+			require.NoError(t, err)
+			epochs, err = advanced.(*scorch.Scorch).RootBoltSnapshotEpochs()
+			require.NoError(t, err)
+			// A new persisted epoch proves the barrier reached disk before open returned.
+			require.Greater(t, slices.Max(epochs), previousEpoch)
+
+			rv, err := getRV(reopened)
+			require.NoError(t, err)
+			require.Equal(t, int64(42), rv)
+			metadata, err := reopened.GetInternal([]byte("test_metadata"))
+			require.NoError(t, err)
+			require.Equal(t, []byte("unchanged"), metadata)
+			result, err := reopened.Search(bleve.NewSearchRequest(bleve.NewMatchQuery("persisted")))
+			require.NoError(t, err)
+			require.Equal(t, uint64(1), result.Total)
+			require.Equal(t, "doc", result.Hits[0].ID)
+		})
+	}
+}
+
 // A local index whose build info cannot be read is discarded: there is no way to
 // tell whether it declares a requirement this binary cannot meet.
 func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {

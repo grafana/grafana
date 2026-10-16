@@ -17,8 +17,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -112,19 +114,63 @@ func globalSearchCoverageOf(manifests []*app.ManifestData) globalSearchTypes {
 	return out
 }
 
-// keepStandardFieldsOnly drops what a document carries for its own resource type,
-// leaving the fields every resource has.
-//
-// A namespace-wide index declares no resource-specific fields, so these values
-// would be built, handed over, and dropped by the index, once per document and
-// with a warning each time.
-func keepStandardFieldsOnly(doc *IndexableDocument) *IndexableDocument {
-	if doc == nil {
-		return nil
+// Type-specific builders can fetch external data that this index never uses.
+type globalDocumentBuilder struct {
+	blob BlobSupport
+}
+
+// Unexpected field types must not exclude an otherwise searchable resource.
+type globalDocumentSpec struct {
+	Title       any `json:"title"`
+	Name        any `json:"name"`
+	Description any `json:"description"`
+	Tags        any `json:"tags"`
+}
+
+func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
+	// Large panel and query payloads are not needed for standard fields.
+	var partial struct {
+		Metadata map[string]any     `json:"metadata"`
+		Spec     globalDocumentSpec `json:"spec"`
 	}
-	doc.Fields = nil
-	doc.SelectableFields = nil
-	return doc
+	if err := json.Unmarshal(value, &partial); err != nil {
+		return nil, err
+	}
+	obj := &unstructured.Unstructured{Object: map[string]any{"metadata": partial.Metadata}}
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
+	}
+	spec := partial.Spec
+
+	if info := meta.GetBlob(); info != nil {
+		if b.blob == nil {
+			return nil, fmt.Errorf("blob support is not configured")
+		}
+		rsp, err := b.blob.GetResourceBlob(ctx, key, info, true)
+		if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+			return nil, fmt.Errorf("error reading blob: %w", err)
+		}
+		var content struct {
+			globalDocumentSpec
+			Spec *globalDocumentSpec `json:"spec"`
+		}
+		if err := json.Unmarshal(rsp.GetValue(), &content); err != nil {
+			return nil, err
+		}
+		// Blobs can hold a full resource or just its spec. Keep the stored
+		// metadata, which may have changed since the blob was written.
+		spec = content.globalDocumentSpec
+		if content.Spec != nil {
+			spec = *content.Spec
+		}
+	}
+
+	obj.Object["spec"] = map[string]any{
+		"title": spec.Title, "name": spec.Name,
+		"description": spec.Description, "tags": spec.Tags,
+	}
+	return NewIndexableDocument(key, rv, meta, ""), nil
 }
 
 // GlobalIndexCoversType reports whether a global index holds documents of this
@@ -628,15 +674,12 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 		indexed[ref.Name] = struct{}{}
 	}
 
-	builder, err := s.builders.get(ctx, src)
-	if err != nil {
-		return repairResult{}, err
-	}
+	builder := &globalDocumentBuilder{blob: s.builders.blob}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
 	var result repairResult
 	written := map[string]struct{}{}
-	_, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
+	_, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource},
 		},
@@ -669,7 +712,7 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 				result.Failed++
 				continue
 			}
-			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)})
+			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: doc})
 			names = append(names, iter.Name())
 			if len(items) >= maxBatchSize {
 				if err := flush(); err != nil {
@@ -779,10 +822,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 		return result, nil
 	}
 
-	builder, err := s.builders.get(ctx, src)
-	if err != nil {
-		return result, err
-	}
+	builder := &globalDocumentBuilder{blob: s.builders.blob}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
 	items := make([]*BulkIndexItem, 0, maxBatchSize)
@@ -848,7 +888,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 				result.Failed++
 				continue
 			}
-			if err := add(&BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)}); err != nil {
+			if err := add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 				return result, err
 			}
 		}
@@ -1027,10 +1067,7 @@ func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*WrittenEve
 // so a reconcile sees it missing and tries again. An object whose read fails for
 // another reason is left as it is, for a reconcile to repair.
 func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string) error {
-	builder, err := s.builders.get(ctx, src)
-	if err != nil {
-		return err
-	}
+	builder := &globalDocumentBuilder{blob: s.builders.blob}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
 	requests := make([]BatchReadRequest, 0, len(names))
@@ -1068,7 +1105,7 @@ func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceInde
 			items = append(items, &BulkIndexItem{Action: ActionDelete, Key: key})
 			continue
 		}
-		items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)})
+		items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: doc})
 	}
 	if len(items) == 0 {
 		return nil
