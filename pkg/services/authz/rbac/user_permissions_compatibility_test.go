@@ -227,8 +227,9 @@ func TestIntegrationUserPermissionsRPCCompatibility(t *testing.T) {
 				require.Equal(t, codes.DeadlineExceeded, status.Code(err))
 			}
 
-			// Warm contribution caches must remain stale until a requested reload.
-			// A refresh also exercises chunking of the deduplicated snapshot.
+			// Local readers retain their warm basic-role cache. Catalog-backed AuthZ
+			// reads basic-role SQL fresh to avoid sharing cached static grants.
+			// Both paths still chunk the complete deduplicated snapshot.
 			require.NoError(t, sql.WithDbSession(t.Context(), func(session *db.Session) error {
 				for i := range 2501 {
 					grant := ac.Permission{RoleID: roleID, Action: "contract:large", Scope: fmt.Sprintf("contract:uid:%d", i), Created: now, Updated: now}
@@ -238,20 +239,25 @@ func TestIntegrationUserPermissionsRPCCompatibility(t *testing.T) {
 				}
 				return nil
 			}))
+			fresh := append([]ac.Permission{}, want...)
+			for i := range 2501 {
+				fresh = append(fresh, ac.Permission{Action: "contract:large", Scope: fmt.Sprintf("contract:uid:%d", i)})
+			}
 			for _, skip := range []bool{false, true} {
 				req.Options = &authzv1.GetUserPermissionsOptions{Skipcache: skip}
 				before, beforeChunks, beforeErr := permissionSnapshot(t.Context(), oldRPC, req)
 				after, afterChunks, afterErr := permissionSnapshot(t.Context(), newRPC, req)
 				require.NoError(t, beforeErr)
 				require.NoError(t, afterErr)
-				require.ElementsMatch(t, before, after)
-				require.Equal(t, beforeChunks, afterChunks)
 				if cached && !skip {
-					require.ElementsMatch(t, want, after)
+					require.ElementsMatch(t, want, before)
+					require.Equal(t, []int{len(want)}, beforeChunks)
 				} else {
-					require.Len(t, after, 2505)
-					require.Equal(t, []int{1000, 1000, 505}, afterChunks)
+					require.ElementsMatch(t, fresh, before)
+					require.Equal(t, []int{1000, 1000, 505}, beforeChunks)
 				}
+				require.ElementsMatch(t, fresh, after)
+				require.Equal(t, []int{1000, 1000, 505}, afterChunks)
 			}
 			require.NoError(t, sql.WithDbSession(t.Context(), func(session *db.Session) error {
 				_, err := session.Exec("DROP TABLE permission")
