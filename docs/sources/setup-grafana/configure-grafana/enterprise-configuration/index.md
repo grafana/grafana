@@ -553,6 +553,12 @@ Disabling the maximum is not recommended in production environments.
 
 ## [caching.redis]
 
+Use these settings to configure Redis as the query caching backend.
+
+{{< admonition type="note" >}}
+Redis Sentinel is not supported for query caching. Use a standalone Redis instance with `url`, or a Redis Cluster with `cluster`.
+{{< /admonition >}}
+
 ### url
 
 The full Redis URL of your Redis server. For example: `redis://username:password@localhost:6379`. To enable TLS, use the `rediss` scheme.
