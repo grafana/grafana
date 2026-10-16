@@ -3919,6 +3919,11 @@
     "viz-wrapper": {
       "table": "Tabel"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Bekijk welke waarschuwingen momenteel actief zijn en verken historische gegevens om huidige of eerdere problemen te onderzoeken.",
       "description-alert-rules": "Definieer de voorwaarde waaraan moet worden voldaan voordat een waarschuwingsregel geactiveerd wordt",
@@ -6108,6 +6113,9 @@
       "only-overrides-button-tooltip": "Alleen overschrijvingen weergeven",
       "placeholder-search-options": "Zoekopties",
       "visualization-button-tooltip": "Zoekopties"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Voorbeeldgegevens",
@@ -10821,6 +10829,7 @@
       "no-rows": "Geen rijen",
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Sorteren op kolom {{column}}",
       "sort-by-column-ascending": "Sorteren op kolom {{column}}, oplopend",
@@ -11129,6 +11138,8 @@
       "incident-filter-all": "Alle incidenten",
       "incident-filter-label": "Incidenten filteren op label",
       "incident-tab-label": "Incidenten",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Je teams",
       "title": "Waarschuwingen en incidenten",
       "title-alerts": "Waarschuwingen",
@@ -11205,6 +11216,17 @@
       "error-title": "Kon recente blogberichten niet laden",
       "read-more": "Lees meer op het Grafana Labs-blog",
       "title": "Laatste blogberichten"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11967,6 +11989,11 @@
       "load-newer": "Nieuwere logboeken worden geladen...",
       "load-older": "Oudere logboeken worden geladen..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Labels samenvouwen",
       "expand": "Labels uitvouwen"
@@ -12017,6 +12044,7 @@
       "inline-mode": "Inline weergave",
       "inline-no-scrolls": "Overschakelen naar uitgevouwen weergave",
       "inline-with-scrolls": "Overschakelen naar verkorte weergave",
+      "link-fallback-label": "",
       "link-value-tooltip": "Linkwaarde",
       "links-section": "Links",
       "log-attributes-field": "Logattributen",
@@ -12026,13 +12054,14 @@
       "move-displayed-field-up": "Naar boven verplaatsen",
       "no-details": "Weer te geven velden.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Logboek vastzetten",
       "prettify": "Verfraaien",
       "remove-displayed-field": "Veld verwijderen",
       "remove-log": "Log verwijderen",
       "scroll-to-logline": "Naar logregel scrollen",
       "search": {
-        "no-results": "Geen resultaten om weer te geven."
+        "no-results": ""
       },
       "search-placeholder": "Zoekveldnamen en -waarden",
       "show-context": "Context tonen",
@@ -13218,6 +13247,11 @@
       "target-label": "Doelnotitieboek",
       "target-new": "Nieuw notitieboek",
       "title": "Paneel aan notitieboek toevoegen"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
