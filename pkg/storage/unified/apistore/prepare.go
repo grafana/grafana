@@ -349,7 +349,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
-	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+	// Deleting an orphaned folder marks it as terminating first. That write has no
+	// manager to route to, so let it through instead of stranding the resource.
+	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil && !s.allowOrphanedUpdate(ctx, err, obj, previous, v.hasChanged) {
 		return v, err
 	}
 
