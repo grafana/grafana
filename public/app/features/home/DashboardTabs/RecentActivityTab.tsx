@@ -6,6 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
+import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
@@ -98,6 +99,10 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
     );
   }
 
+  // Rows seeded from the recently-viewed impressions carry no visit time. When none of the shown rows has one,
+  // the time column would be blank the whole way down, so the badges take the right edge instead.
+  const showTime = items.some((item) => item.lastVisited !== undefined);
+
   return (
     <ul className={styles.list}>
       {items.map((item, position) => {
@@ -122,6 +127,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
               }
               trailing={
                 <Stack gap={0.5} alignItems="center">
+                  {item.kind === 'dashboard' && <DescriptionTooltip description={item.dashboard.description} />}
                   <span className={styles.star}>
                     {item.kind === 'dashboard' && (
                       <StarToolbarButton
@@ -136,7 +142,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
                   <span className={styles.kind}>
                     <Badge text={badge} color={color} />
                   </span>
-                  <TimeAgoCell date={item.lastVisited} />
+                  {showTime && <TimeAgoCell date={item.lastVisited} />}
                 </Stack>
               }
             />
