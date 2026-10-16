@@ -3,7 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type UsersState, type OrgUser } from 'app/types/user';
 
 export const initialState: UsersState = {
-  users: [],
+  users: undefined,
   searchQuery: '',
   page: 0,
   perPage: 30,
@@ -29,7 +29,7 @@ const usersSlice = createSlice({
 
       return {
         ...state,
-        isLoading: true,
+        isLoading: false,
         users: orgUsers,
         perPage,
         page,
@@ -52,10 +52,10 @@ const usersSlice = createSlice({
       sort: action.payload,
     }),
     usersFetchBegin: (state) => {
-      return { ...state, isLoading: true };
+      return { ...state, isLoading: true, rolesLoading: false };
     },
     usersFetchEnd: (state) => {
-      return { ...state, isLoading: false };
+      return { ...state, isLoading: false, users: [], totalPages: 0 };
     },
     rolesFetchBegin: (state) => {
       return { ...state, rolesLoading: true };

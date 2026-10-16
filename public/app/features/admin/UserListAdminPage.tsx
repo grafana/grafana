@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 import { type ComponentType, useEffect } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
+import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
+import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState, LoadingBar } from '@grafana/ui';
+import { useDelayedSwitch } from '@grafana/ui/internal';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -13,6 +15,7 @@ import { type StoreState } from 'app/types/store';
 import { type UserFilter } from 'app/types/user';
 
 import { EnterpriseAuthFeaturesCard } from './EnterpriseAuthFeaturesCard';
+import { ExportUsersButton } from './Users/ExportUsersButton';
 import { UsersTable } from './Users/UsersTable';
 import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
 
@@ -43,6 +46,7 @@ const mapStateToProps = (state: StoreState) => ({
   totalPages: state.userListAdmin.totalPages,
   page: state.userListAdmin.page,
   filters: state.userListAdmin.filters,
+  sort: state.userListAdmin.sort,
   isLoading: state.userListAdmin.isLoading,
 });
 
@@ -60,6 +64,7 @@ const UserListAdminPageUnConnected = ({
   showPaging,
   changeFilter,
   filters,
+  sort,
   totalPages,
   page,
   changePage,
@@ -67,6 +72,8 @@ const UserListAdminPageUnConnected = ({
   isLoading,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  const [loadingBarRef, { width }] = useMeasure<HTMLDivElement>();
+  const showLoading = useDelayedSwitch(isLoading, { delay: 250, duration: 750 });
 
   useEffect(() => {
     fetchUsers();
@@ -77,6 +84,7 @@ const UserListAdminPageUnConnected = ({
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
+            className={styles.searchInput}
             placeholder={t(
               'admin.user-list-admin-page-un-connected.placeholder-search-login-email',
               'Search user by login, email, or name.'
@@ -101,6 +109,7 @@ const UserListAdminPageUnConnected = ({
           {extraFilters.map((FilterComponent, index) => (
             <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
           ))}
+          <ExportUsersButton scope="all" query={query} filters={filters} sort={sort} className={styles.exportButton} />
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
             <LinkButton href="admin/users/create" variant="primary">
               <Trans i18nKey="admin.users-list.create-button">New user</Trans>
@@ -108,16 +117,26 @@ const UserListAdminPageUnConnected = ({
           )}
         </div>
       </div>
-      {!isLoading && users.length === 0 ? (
+      <div ref={loadingBarRef} style={{ height: 1 }}>
+        {showLoading && (
+          <LoadingBar
+            width={width}
+            delay={0}
+            ariaLabel={t('users.users-list-page.loading-users', 'Loading users...')}
+          />
+        )}
+      </div>
+      {!isLoading && !showLoading && users?.length === 0 ? (
         <EmptyState message={t('users.empty-state.message', 'No users found')} variant="not-found" />
       ) : (
         <UsersTable
-          users={users}
+          users={users || []}
           showPaging={showPaging}
           totalPages={totalPages}
           onChangePage={changePage}
           currentPage={page}
           fetchData={changeSort}
+          sort={sort}
         />
       )}
       <EnterpriseAuthFeaturesCard page="users" />
@@ -129,10 +148,21 @@ export const UserListAdminPageContent = connector(UserListAdminPageUnConnected);
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    searchInput: css({
+      flex: '1 1 0',
+      minWidth: `min(${theme.spacing(40)}, 100%)`,
+    }),
     filter: css({
+      flexShrink: 0,
       margin: theme.spacing(0, 1),
       [theme.breakpoints.down('sm')]: {
         margin: 0,
+      },
+    }),
+    exportButton: css({
+      marginRight: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: {
+        marginRight: 0,
       },
     }),
     actionBar: css({
@@ -146,13 +176,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     row: css({
       display: 'flex',
+      flexWrap: 'wrap',
+      rowGap: theme.spacing(2),
       alignItems: 'flex-start',
       textAlign: 'left',
       marginBottom: theme.spacing(0.5),
       flexGrow: 1,
 
       [theme.breakpoints.down('sm')]: {
-        flexWrap: 'wrap',
         gap: theme.spacing(2),
         width: '100%',
       },

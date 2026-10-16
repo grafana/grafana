@@ -33,6 +33,21 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Render', () => {
+  it.each([
+    { lastSeenAt: '2026-10-01', expected: 'Never' },
+    { lastSeenAt: '2026-10-03', expected: '3 days' },
+  ])('shows $expected when last seen at $lastSeenAt', async ({ lastSeenAt, expected }) => {
+    const user: OrgUser = {
+      ...getMockUsers(1)[0],
+      created: '2026-10-02',
+      lastSeenAt,
+      lastSeenAtAge: '3 days',
+    };
+    setup({ users: [user] });
+
+    expect(await screen.findByRole('cell', { name: expected })).toBeInTheDocument();
+  });
+
   it('should render component', async () => {
     expect(() => setup()).not.toThrow();
     expect(await screen.findByText('Login')).toBeInTheDocument();

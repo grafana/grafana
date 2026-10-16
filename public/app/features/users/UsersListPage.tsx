@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
+import { useMeasure } from 'react-use';
 
 import { type OrgRole, renderMarkdown } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, EmptyState, LoadingBar } from '@grafana/ui';
+import { useDelayedSwitch } from '@grafana/ui/internal';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useUserListTabExtensions } from 'app/features/admin/useUserListTabExtensions';
@@ -30,6 +33,7 @@ function mapStateToProps(state: StoreState) {
     invitees: selectInvitesMatchingQuery(state.invites, searchQuery),
     isLoading: state.users.isLoading,
     rolesLoading: state.users.rolesLoading,
+    sort: state.users.sort,
   };
 }
 
@@ -46,7 +50,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = ConnectedProps<typeof connector>;
 
-export const UsersListPageUnconnected = ({
+const UsersListPageUnconnected = ({
   users,
   page,
   totalPages,
@@ -59,8 +63,12 @@ export const UsersListPageUnconnected = ({
   updateUser,
   removeUser,
   changeSort,
+  sort,
 }: Props) => {
   const [showInvites, setShowInvites] = useState(false);
+  const [loadingBarRef, { width }] = useMeasure<HTMLDivElement>();
+  const showLoading = useDelayedSwitch(isLoading, { delay: 250, duration: 750 });
+  const showEmptyState = !showInvites && !isLoading && !showLoading && users?.length === 0;
   const hasUserListExtension = useUserListTabExtensions().length > 0;
   const externalUserMngInfoHtml =
     config.externalUserMngInfo && !hasUserListExtension ? renderMarkdown(config.externalUserMngInfo) : '';
@@ -90,13 +98,14 @@ export const UsersListPageUnconnected = ({
     } else {
       return (
         <OrgUsersTable
-          users={users}
+          users={users ?? []}
           orgId={contextSrv.user.orgId}
           rolesLoading={rolesLoading}
           onRoleChange={onRoleChange}
           onRemoveUser={onRemoveUser}
           onUserRolesChange={onUserRolesChange}
           fetchData={changeSort}
+          sort={sort}
           changePage={changePage}
           page={page}
           totalPages={totalPages}
@@ -106,14 +115,25 @@ export const UsersListPageUnconnected = ({
   };
 
   return (
-    <Page.Contents isLoading={!isLoading}>
+    <Page.Contents>
       <UsersActionBar onShowInvites={onShowInvites} showInvites={showInvites} />
       {externalUserMngInfoHtml && (
         <Alert severity="info" title="">
           <div dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
         </Alert>
       )}
-      {isLoading && renderTable()}
+      <div ref={loadingBarRef} style={{ height: 1 }}>
+        {showLoading && (
+          <LoadingBar
+            width={width}
+            delay={0}
+            ariaLabel={t('users.users-list-page.loading-users', 'Loading users...')}
+          />
+        )}
+      </div>
+      {showEmptyState && <EmptyState message={t('users.empty-state.message', 'No users found')} variant="not-found" />}
+      {/* Keep the table mounted so loading and empty states do not trigger its initial sort request again. */}
+      <div hidden={!showInvites && showEmptyState}>{renderTable()}</div>
     </Page.Contents>
   );
 };

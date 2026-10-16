@@ -1,9 +1,12 @@
+import { css } from '@emotion/css';
 import type { JSX } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
+import { RadioButtonGroup, LinkButton, FilterInput, useStyles2 } from '@grafana/ui';
+import { ExportUsersButton } from 'app/features/admin/Users/ExportUsersButton';
 import { useUserListTabExtensions } from 'app/features/admin/useUserListTabExtensions';
 import { type StoreState } from 'app/types/store';
 
@@ -22,6 +25,7 @@ interface OwnProps {
 function mapStateToProps(state: StoreState) {
   return {
     searchQuery: getUsersSearchQuery(state.users),
+    sort: state.users.sort,
     pendingInvitesCount: selectTotal(state.invites),
   };
 }
@@ -36,11 +40,13 @@ export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export const UsersActionBarUnconnected = ({
   searchQuery,
+  sort,
   pendingInvitesCount,
   changeSearchQuery,
   onShowInvites,
   showInvites,
 }: Props): JSX.Element => {
+  const styles = useStyles2(getStyles);
   const hasUserListExtension = useUserListTabExtensions().length > 0;
 
   const options = [
@@ -56,22 +62,25 @@ export const UsersActionBarUnconnected = ({
   };
 
   return (
-    <div className="page-action-bar" data-testid="users-action-bar">
-      <InlineField grow>
-        <FilterInput
-          value={searchQuery}
-          onChange={changeSearchQuery}
-          placeholder={t(
-            'users.users-action-bar-unconnected.placeholder-search-login-email',
-            'Search user by login, email or name'
-          )}
-        />
-      </InlineField>
+    <div className={styles.actionBar} data-testid="users-action-bar">
+      <FilterInput
+        className={styles.searchInput}
+        value={searchQuery}
+        onChange={changeSearchQuery}
+        placeholder={t(
+          'users.users-action-bar-unconnected.placeholder-search-login-email',
+          'Search user by login, email or name'
+        )}
+      />
       {pendingInvitesCount > 0 && (
-        <div style={{ marginLeft: '1rem' }}>
-          <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
-        </div>
+        <RadioButtonGroup
+          className={styles.filter}
+          value={showInvites ? 'invites' : 'users'}
+          options={options}
+          onChange={onShowInvites}
+        />
       )}
+      {!showInvites && <ExportUsersButton scope="organization" query={searchQuery} sort={sort} />}
       {getCanInviteUsersToOrg() && (
         <LinkButton href="org/users/invite">
           <Trans i18nKey="users.users-action-bar-unconnected.invite">Invite</Trans>
@@ -83,3 +92,21 @@ export const UsersActionBarUnconnected = ({
 };
 
 export const UsersActionBar = connector(UsersActionBarUnconnected);
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  actionBar: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    columnGap: theme.spacing(1),
+    rowGap: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  }),
+  searchInput: css({
+    flex: '1 1 0',
+    minWidth: `min(${theme.spacing(40)}, 100%)`,
+  }),
+  filter: css({
+    flexShrink: 0,
+  }),
+});

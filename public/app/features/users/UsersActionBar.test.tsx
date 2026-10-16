@@ -15,6 +15,7 @@ jest.mock('app/core/services/context_srv', () => ({
 const setup = (propOverrides?: object) => {
   const props: Props = {
     searchQuery: '',
+    sort: undefined,
     changeSearchQuery: mockToolkitActionCreator(searchQueryChanged),
     onShowInvites: jest.fn(),
     pendingInvitesCount: 0,

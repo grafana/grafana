@@ -70,7 +70,7 @@ export interface Invitee {
 }
 
 export interface UsersState {
-  users: OrgUser[];
+  users: OrgUser[] | undefined;
   searchQuery: string;
   isLoading: boolean;
   rolesLoading?: boolean;
@@ -115,7 +115,7 @@ export interface UserAdminError {
 
 export type UserFilter = Record<string, string | boolean | SelectableValue[]>;
 export interface UserListAdminState {
-  users: UserDTO[];
+  users: UserDTO[] | undefined;
   query: string;
   perPage: number;
   page: number;
