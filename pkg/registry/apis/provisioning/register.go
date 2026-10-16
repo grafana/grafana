@@ -288,6 +288,10 @@ func NewAPIBuilder(
 	return b, nil
 }
 
+func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
+	b.repoValidatorOpts = opts
+}
+
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
 func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	// If LokiURL is defined, use Loki
@@ -409,7 +413,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
-	builder.repoValidatorOpts = repoValidatorOpts
+	builder.SetRepoValidatorOptions(repoValidatorOpts...)
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -456,7 +460,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
-	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
+	v1beta1Builder.SetRepoValidatorOptions(repoValidatorOpts...)
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
