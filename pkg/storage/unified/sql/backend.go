@@ -52,6 +52,8 @@ const defaultGarbageCollectionBatchWait = 1 * time.Second
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	DryRun           bool
+	BlobEnabled      bool
+	BlobDryRun       bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
 	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
@@ -65,6 +67,8 @@ func NewGarbageCollectionConfig(cfg *setting.Cfg) GarbageCollectionConfig {
 	return GarbageCollectionConfig{
 		Enabled:          cfg.EnableGarbageCollection,
 		DryRun:           cfg.GarbageCollectionDryRun,
+		BlobEnabled:      cfg.BlobGarbageCollectionEnabled,
+		BlobDryRun:       cfg.BlobGarbageCollectionDryRun,
 		Interval:         cfg.GarbageCollectionInterval,
 		BatchSize:        cfg.GarbageCollectionBatchSize,
 		BatchWait:        cfg.GarbageCollectionBatchWait,
@@ -165,6 +169,10 @@ func NewStorageBackend(
 		cfg.SectionWithEnvOverrides("resource_api"))
 
 	if !cfg.EnableSQLKVBackend {
+		blobURL, err := resolvedBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString(""), cfg.DataPath)
+		if err != nil {
+			return nil, err
+		}
 		return NewBackend(BackendOptions{
 			DBProvider:              eDB,
 			Reg:                     reg,
@@ -173,6 +181,7 @@ func NewStorageBackend(
 			LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
 			GCGate:                  gcGate,
 			GarbageCollection:       NewGarbageCollectionConfig(cfg),
+			BlobURL:                 blobURL,
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			MigrationChunkedWrites:  cfg.MigrationChunkedWrites,
@@ -314,6 +323,9 @@ type BackendOptions struct {
 	// an exported method of the SQL backend.
 	// TODO: remove after confirming sql/backend receives no production traffic.
 	LogCalls bool
+
+	// BlobURL selects the same external blob backend as the resource server.
+	BlobURL string
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -355,6 +367,8 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		batchTxnTimeout:         opts.BatchTransactionTimeout,
 		garbageCollection:       garbageCollection,
+		blobGCMetrics:           resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
+		blobURL:                 opts.BlobURL,
 		gcGate:                  opts.GCGate,
 		logCalls:                opts.LogCalls,
 	}
@@ -419,6 +433,9 @@ type backend struct {
 
 	garbageCollection GarbageCollectionConfig
 	gcGate            *resource.GCGate
+	blobGC            *resource.BlobGarbageCollector
+	blobGCMetrics     *resource.BlobGCMetrics
+	blobURL           string
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	migrationParquetBuffer bool
@@ -624,6 +641,9 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
 	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
 	defer span.End()
+	if b.garbageCollection.BlobEnabled {
+		defer b.collectBlobs(ctx)
+	}
 	start := time.Now()
 
 	deletedByKey := map[string]int64{}
@@ -1516,7 +1536,7 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 
 // WatchWrittenKeys is not supported: only the KV backend reads written keys
 // from NATS.
-func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resourcepb.ResourceKey, error) {
+func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resource.WrittenEvent, error) {
 	return nil, resource.ErrWrittenKeysUnsupported
 }
 

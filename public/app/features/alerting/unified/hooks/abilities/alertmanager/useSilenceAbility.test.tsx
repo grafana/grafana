@@ -7,7 +7,7 @@ import { grantUserPermissions } from '../../../mocks';
 import { setFolderAccessControl } from '../../../mocks/server/configure';
 import { useFolder } from '../../useFolder';
 import { isLoading } from '../abilityUtils';
-import { SilenceAction } from '../types';
+import { SilenceAction, isInsufficientPermissions } from '../types';
 
 import {
   EXTERNAL_AM_VISIBILITY_PERMISSION,
@@ -61,7 +61,7 @@ describe('useSilenceAbility', () => {
       expect(result.current.preview.granted).toBe(true);
     });
 
-    it('should grant View and Preview when only AlertingSilenceRead is held', () => {
+    it('should grant View but deny Preview when only AlertingSilenceRead is held', () => {
       const amSource = setupGrafanaAlertmanager();
       grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingSilenceRead]);
 
@@ -74,7 +74,11 @@ describe('useSilenceAbility', () => {
       );
 
       expect(result.current.view.granted).toBe(true);
-      expect(result.current.preview.granted).toBe(true);
+      expect(result.current.preview.granted).toBe(false);
+      expect(isInsufficientPermissions(result.current.preview)).toBe(true);
+      if (isInsufficientPermissions(result.current.preview)) {
+        expect(result.current.preview.anyOfPermissions).toEqual([AccessControlAction.AlertingInstanceRead]);
+      }
     });
 
     it('should deny Update when accessControl.write is false on the silence entity', () => {

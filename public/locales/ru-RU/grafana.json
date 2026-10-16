@@ -3991,6 +3991,11 @@
     "viz-wrapper": {
       "table": "Таблица"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Просматривайте текущие оповещения и архивные данные, чтобы анализировать актуальные или прошлые проблемы.",
       "description-alert-rules": "Задайте условие, которое должно быть выполнено до того, как автивируется правило оповещения.",
@@ -6204,6 +6209,9 @@
       "only-overrides-button-tooltip": "Показывать только переопределения",
       "placeholder-search-options": "Поиск параметров",
       "visualization-button-tooltip": "Поиск параметров"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Пример данных",
@@ -10902,13 +10910,21 @@
       "cell-filter-out": "Отсеять значение",
       "cell-inspect": "Проверить значение",
       "cell-inspect-tooltip": "Проверить значение",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Значения фильтра",
+      "column-menu-hide": "",
       "column-menu-label": "Параметры столбцов для {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Обновить фильтр",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Копировать в буфер обмена",
       "csv-counts": "Строки:{{rows}}, столбцы:{{columns}}",
       "csv-placeholder": "Ввести CSV...",
       "edit-column-filter": "Редактировать фильтр для {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Добавить все отображаемые значения в фильтр",
         "blanks": "(Пустые ячейки)",
@@ -10942,6 +10958,8 @@
           "count": "Количество"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Проверить значение",
       "loading": "Загрузка таблицы",
       "nested-table": {
@@ -10951,6 +10969,8 @@
       "no-rows": "Нет строк",
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "Сортировать по столбцу {{column}}",
       "sort-by-column-ascending": "Сортировать по столбцу {{column}}, по возрастанию",
       "sort-by-column-descending": "Сортировать по столбцу {{column}}, по убыванию",
@@ -10960,7 +10980,8 @@
       },
       "tooltip": {
         "trigger": "Переключить подсказку"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Теги"
@@ -11257,6 +11278,8 @@
       "incident-filter-all": "Все инциденты",
       "incident-filter-label": "Фильтровать инциденты по меткам",
       "incident-tab-label": "Инциденты",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Ваши команды",
       "title": "Оповещения и инциденты",
       "title-alerts": "Оповещения",
@@ -11337,6 +11360,17 @@
       "error-title": "Не удалось загрузить новые посты в блоге",
       "read-more": "Подробнее в блоге Grafana Labs",
       "title": "Последние записи в блоге"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -12143,6 +12177,11 @@
       "load-newer": "Загрузка новых журналов...",
       "load-older": "Загрузка старых журналов..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Свернуть метки",
       "expand": "Развернуть метки"
@@ -12193,6 +12232,7 @@
       "inline-mode": "Показать встроенные",
       "inline-no-scrolls": "Переключиться на развернутый вид",
       "inline-with-scrolls": "Переключиться на компактный вид",
+      "link-fallback-label": "",
       "link-value-tooltip": "Значение ссылки",
       "links-section": "Ссылки",
       "log-attributes-field": "Атрибуты журнала",
@@ -12202,13 +12242,14 @@
       "move-displayed-field-up": "Вверх",
       "no-details": "Отсутствуют поля для отображения.",
       "open-assistant": "Объяснить строку журнала в Assistant",
+      "open-value-in": "",
       "pin-line": "Закрепить журнал",
       "prettify": "Форматировать",
       "remove-displayed-field": "Удалить поле",
       "remove-log": "Удалить журнал",
       "scroll-to-logline": "Прокрутить до строки журнала",
       "search": {
-        "no-results": "Нет результатов для отображения."
+        "no-results": ""
       },
       "search-placeholder": "Поиск по именам и значениям полей",
       "show-context": "Показать контекст",
@@ -13405,6 +13446,11 @@
       "target-new": "Новый блокнот",
       "title": "Добавьте панель в блокнот"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
+    },
     "autosave": {
       "conflict-cancel": "",
       "conflict-confirm": "",
@@ -14071,6 +14117,9 @@
       "label-plugin-id": "Идентификатор плагина",
       "label-severity": "Серьезность"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Все плагины обновлены"
     },
@@ -14092,6 +14141,10 @@
     "plugin-details-body": {
       "needs-service-account": "Плагину {{pluginName}} необходима служебная учетная запись, чтобы иметь возможность отправлять запросы в Grafana. В следующем списке перечислены разрешения, доступные для служебной учетной записи:",
       "page-not-found": "Страница не найдена."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Устаревший"
@@ -16786,6 +16839,7 @@
     "description-frozen-columns": "Столбцы зафиксированы с левой стороны таблицы",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
     "description-page-size": "Количество строк на странице. Если значение не указано, размер страницы определяется на основе высоты панели.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Поле, содержащее объекты JSON со свойствами CSS",
     "description-tooltip-from-field": "Отобразите ячейку из поля (скрытого или видимого) в подсказке",
     "description-zebra-striping": "Чередовать цвет фона каждой второй строки",
@@ -16824,6 +16878,7 @@
     "name-max-height": "Максимальная высота строки",
     "name-min-column-width": "Минимальная ширина столбца",
     "name-page-size": "Размер страницы",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Показать заголовок таблицы",
     "name-styling-from-field": "Стилевое оформление из поля",
     "name-tooltip-from-field": "Подсказка из поля",
@@ -16987,6 +17042,7 @@
     "editor": {
       "aria-label-content": "Содержимое текста",
       "aria-label-mode": "Текстовый режим: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Номера строк",
       "format-bold": "B",
       "format-heading": "H",
@@ -17032,6 +17088,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

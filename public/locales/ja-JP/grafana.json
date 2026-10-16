@@ -3883,6 +3883,11 @@
     "viz-wrapper": {
       "table": "テーブル"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "現在アラートが発生しているものを確認し、履歴データを調べて現在または過去の問題を調査します。",
       "description-alert-rules": "アラートルールが発生される前に満たすべき条件を定義します",
@@ -6060,6 +6065,9 @@
       "only-overrides-button-tooltip": "オーバーライドのみ表示",
       "placeholder-search-options": "検索オプション",
       "visualization-button-tooltip": "検索オプション"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "サンプルデータ",
@@ -10692,13 +10700,21 @@
       "cell-filter-out": "値を除外してフィルタリング",
       "cell-inspect": "値を検査",
       "cell-inspect-tooltip": "値を検査",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "値で絞り込む",
+      "column-menu-hide": "",
       "column-menu-label": "{{name}}の列オプション",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "フィルターを更新",
+      "column-visibility": "",
+      "columns": "",
       "copy": "クリップボードにコピー",
       "csv-counts": "行：{{rows}}、列：{{columns}}",
       "csv-placeholder": "ここにCSVを入力...",
       "edit-column-filter": "{{name}}のフィルターを編集",
+      "field-warnings": "",
       "filter": {
         "add-all": "表示されたすべての値をフィルターに追加",
         "blanks": "（空白）",
@@ -10732,6 +10748,8 @@
           "count": "カウント"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "値を検査",
       "loading": "テーブルを読み込んでいます",
       "nested-table": {
@@ -10741,6 +10759,8 @@
       "no-rows": "行なし",
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "「{{column}}」列で並べ替え",
       "sort-by-column-ascending": "「{{column}}」列で並べ替え（昇順）",
       "sort-by-column-descending": "「{{column}}」列で並べ替え（降順）",
@@ -10750,7 +10770,8 @@
       },
       "tooltip": {
         "trigger": "ツールチップを切り替え"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "タグ"
@@ -11047,6 +11068,8 @@
       "incident-filter-all": "すべてのインシデント",
       "incident-filter-label": "ラベルでインシデントを絞り込む",
       "incident-tab-label": "インシデント",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "自分のチーム",
       "title": "アラートとインシデント",
       "title-alerts": "アラート",
@@ -11121,6 +11144,17 @@
       "error-title": "最近のブログ投稿を読み込めませんでした",
       "read-more": "Grafana Labsブログの記事をもっと読む",
       "title": "ブログの最新記事"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11861,6 +11895,11 @@
       "load-newer": "新しいログを読み込んでいます...",
       "load-older": "古いログを読み込んでいます..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "ラベルを折りたたむ",
       "expand": "ラベルを展開"
@@ -11911,6 +11950,7 @@
       "inline-mode": "インラインで表示",
       "inline-no-scrolls": "拡張ビューに切り替える",
       "inline-with-scrolls": "縮小ビューに切り替える",
+      "link-fallback-label": "",
       "link-value-tooltip": "リンク値",
       "links-section": "リンク",
       "log-attributes-field": "ログ属性",
@@ -11920,13 +11960,14 @@
       "move-displayed-field-up": "上へ移動",
       "no-details": "表示するフィールドがありません。",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "ログをピン留め",
       "prettify": "整形",
       "remove-displayed-field": "フィールドを削除する",
       "remove-log": "ログを削除",
       "scroll-to-logline": "ログ行までスクロール",
       "search": {
-        "no-results": "表示する結果がありません。"
+        "no-results": ""
       },
       "search-placeholder": "フィールド名と値を検索",
       "show-context": "コンテキストを表示",
@@ -13108,6 +13149,11 @@
       "target-new": "新しいノートブック",
       "title": "ノートブックにパネルを追加"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
+    },
     "autosave": {
       "conflict-cancel": "",
       "conflict-confirm": "",
@@ -13771,6 +13817,9 @@
       "label-plugin-id": "プラグインID",
       "label-severity": "重要度"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "すべてのプラグインが最新です"
     },
@@ -13792,6 +13841,10 @@
     "plugin-details-body": {
       "needs-service-account": "{{pluginName}}プラグインでGrafanaへのクエリを実行するには、サービスアカウントが必要です。次のリストはサービスアカウントで利用可能な権限を示しています。",
       "page-not-found": "ページが見つかりません。"
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "非推奨"
@@ -16396,6 +16449,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
     "description-page-size": "1ページあたりの行数。空の場合、ページサイズはパネルの高さに基づいています。",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "1行おきに背景色を交互に切り替えます",
@@ -16434,6 +16488,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小列幅",
     "name-page-size": "ページサイズ",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-styling-from-field": "フィールドからのスタイリング",
     "name-tooltip-from-field": "",
@@ -16597,6 +16652,7 @@
     "editor": {
       "aria-label-content": "テキストの内容",
       "aria-label-mode": "テキストモード：{{mode}}",
+      "feedback": "",
       "footer-line-numbers": "行番号",
       "format-bold": "B",
       "format-heading": "H",
@@ -16642,6 +16698,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
