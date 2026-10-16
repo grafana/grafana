@@ -76,7 +76,7 @@ describe('Node', () => {
       </svg>
     );
 
-    expect(screen.getByTestId('node-circle-1')).toHaveStyle({ fill: '#0f0' });
+    expect(screen.getByTestId('node-circle-1')).toHaveAttribute('fill', '#0f0');
   });
 
   it('strokes the hover ring with the accent colour', () => {

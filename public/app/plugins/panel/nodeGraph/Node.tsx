@@ -86,9 +86,6 @@ export const Node = memo(function Node(props: {
   const highlightColor =
     (node.highlightColor?.values && getColor(node.highlightColor, node.dataFrameRowIndex, theme)) ||
     highlightedNodeColor;
-  const highlightStyle = css({
-    fill: node.highlighted ? highlightColor : theme.components.panel.background,
-  });
   const strokeWidth = computeNodeCircumferenceStrokeWidth(nodeRadius);
 
   if (!(node.x !== undefined && node.y !== undefined)) {
@@ -103,7 +100,7 @@ export const Node = memo(function Node(props: {
     >
       <circle
         data-testid={`node-circle-${node.id}`}
-        className={highlightStyle}
+        fill={node.highlighted ? highlightColor : theme.components.panel.background}
         r={nodeRadius}
         cx={node.x}
         cy={node.y}
