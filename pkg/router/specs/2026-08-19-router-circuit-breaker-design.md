@@ -17,8 +17,7 @@ Package: `pkg/router`
 > - Breaker state and transitions are metrics (`grafana_router_breaker_state`,
 >   `grafana_router_breaker_transitions_total`).
 > - A failed reconcile is retried with backoff (#133646), so the retry gap described below is fixed.
-> - `lastRV` is now `lastKey` (`Backend.Key()`). `RouteBackend`, forward backends and the
->   `tlsCacheKey` transport cache no longer exist (#134652).
+> - `lastRV` is now `lastKey` (`Backend.Key()`).
 
 ## Problem
 
@@ -106,8 +105,7 @@ Piggybacks entirely on existing reconcile rules — no new goroutine, no new tea
 - **Unchanged RV** (existing skip branch): untouched — breaker state carries forward exactly like the
   connection pool does.
 - **Changed RV** (rebuild branch): **new breaker instance, reset to closed.** An RV change can mean the
-  target URL itself moved (new `RouteBackendSpec.Forward.Url`); carrying over trip state from the old
-  target would be stale. Same "reload = fresh trust" logic as the handler rebuild itself.
+  target URL itself moved; carrying over trip state from the old target would be stale. Same "reload = fresh trust" logic as the handler rebuild itself.
 - **Group removed**: breaker goes away with the rest of the entry; gobreaker holds no resources to
   release (unlike the transport pool).
 
@@ -115,7 +113,7 @@ Piggybacks entirely on existing reconcile rules — no new goroutine, no new tea
 
 Use `gobreaker.Settings{}` zero-value — the library's own defaults (trip after 5 consecutive failures,
 60s open cooldown before half-open, 1 half-open trial request) — rather than inventing thresholds or
-adding a new CRD field. No change to `RouteBackendSpec`, no enterprise loader change. Revisit only if a
+adding a new config field. Revisit only if a
 real group needs different tuning than the defaults provide.
 
 ## Failure signal

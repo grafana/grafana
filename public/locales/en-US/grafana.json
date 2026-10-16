@@ -2743,7 +2743,8 @@
     "recording-rules": {
       "description-target-data-source": "The Prometheus data source to store recording rules in",
       "label-target-data-source": "Target data source",
-      "target-data-source-required": "Please select a target data source"
+      "target-data-source-required": "Please select a target data source",
+      "target-data-sources-error": "Failed to load the list of data sources that can store recording rules"
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Select the Namespace and Group for your recording rule.",
@@ -3918,6 +3919,11 @@
     },
     "viz-wrapper": {
       "table": "Table"
+    },
+    "watchers-banner": {
+      "description": "Create a calibrated proactive agent that inspects telemetry on a schedule and surfaces potential issues to you.",
+      "open-button": "Create a Watcher",
+      "title": "Assistant Watchers are now generally available"
     },
     "welcome-header": {
       "description-alert-activity": "See what is currently alerting and explore historical data to investigate current or past issues.",
@@ -6109,6 +6115,9 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": "Ad hoc transformations are disabled in edit mode"
+    },
     "plan-building-overlay": {
       "quip-corners": "Polishing the panel corners…",
       "quip-green": "Picking a nice shade of green…",
@@ -7601,6 +7610,33 @@
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
       "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
+    },
+    "sandbox-consent": {
+      "allow": "Allow",
+      "allow-tooltip": "Load content from the selected sources in the panels listed, until you close this tab.",
+      "allowed-always_one": "{{count}} source is now allowed for {{days}} days",
+      "allowed-always_other": "{{count}} sources are now allowed for {{days}} days",
+      "allowed-panels_one": "{{count}} source is now allowed in the panels listed",
+      "allowed-panels_other": "{{count}} sources are now allowed in the panels listed",
+      "always-allow": "Always allow",
+      "always-allow-tooltip": "Load content from the selected sources on any dashboard for {{days}} days. Saved in this browser.",
+      "banner-description": "To load them, review and allow their sources",
+      "banner-title_one": "{{resources}} from {{sources}} is blocked",
+      "banner-title_other": "{{resources}} from {{sources}} are blocked",
+      "modal-title": "Blocked resources",
+      "resources_one": "{{count}} resource",
+      "resources_other": "{{count}} resources",
+      "resources-at-least_one": "{{count}}+ resource",
+      "resources-at-least_other": "{{count}}+ resources",
+      "resources-from-urls": "{{resources}} from {{urls}}",
+      "review": "Review",
+      "select-all": "Select all",
+      "sources_one": "{{count}} source",
+      "sources_other": "{{count}} sources",
+      "truncated": "Too many resources to review. This source can't be allowed.",
+      "url-count_one": "{{count}} URL",
+      "url-count_other": "{{count}} URLs",
+      "url-repeats": "×{{times}}"
     },
     "save-button": {
       "save": "Save",
@@ -10832,6 +10868,7 @@
       "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "reorder-column-label": "Reorder {{columnName}}",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
       "sort-by-column-ascending": "Sort by column {{column}}, ascending",
@@ -11991,6 +12028,11 @@
       "load-newer": "Loading newer logs...",
       "load-older": "Loading older logs..."
     },
+    "log-details": {
+      "error": {
+        "error-details": "Error details"
+      }
+    },
     "log-labels": {
       "collapse": "Collapse labels",
       "expand": "Expand labels"
@@ -12041,6 +12083,7 @@
       "inline-mode": "Display inline",
       "inline-no-scrolls": "Switch to expanded view",
       "inline-with-scrolls": "Switch to condensed view",
+      "link-fallback-label": "Link",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-attributes-field": "Log attributes",
@@ -12050,13 +12093,14 @@
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
+      "open-value-in": "Open value in",
       "pin-line": "Pin log",
       "prettify": "Prettify",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
       "search": {
-        "no-results": "No results to display."
+        "no-results": "No matching results."
       },
       "search-placeholder": "Search field names and values",
       "show-context": "Show context",
@@ -13242,6 +13286,11 @@
       "target-label": "Target notebook",
       "target-new": "New notebook",
       "title": "Add panel to notebook"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": "New panel"
+      }
     },
     "autosave": {
       "conflict-cancel": "Cancel",

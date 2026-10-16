@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,39 +36,43 @@ func NewClientV3TokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error
 }
 
 // ClientV3TokenExchanger returns the exchanger for requests to pluginID: the
-// configured exchanger when there is one. Otherwise, in development mode
-// (app_mode = development), for a plugin with insecure_skip_authentication =
-// true in [plugin.<id>], it is a local exchanger whose tokens only a plugin
-// that skips verification accepts, so local development sees the caller's
-// identity. Otherwise it is nil, and requests carry no identity.
-func ClientV3TokenExchanger(cfg *setting.Cfg, pluginID string, exchanger authnlib.TokenExchanger) authnlib.TokenExchanger {
-	insecure := cfg != nil && cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] == "true"
+// configured exchanger when there is one. Otherwise, unless real signing keys
+// are configured (see v3.RealSigningKeysConfigured), it is the local exchanger,
+// whose tokens verify with the keys Grafana passes to the plugin processes it
+// starts (see v3.LocalSigningKeys). Plugins started elsewhere reject them.
+// Otherwise it is nil, and requests carry no identity.
+func ClientV3TokenExchanger(cfg *setting.Cfg, pluginAuth *pluginauth.Config, pluginID string, exchanger authnlib.TokenExchanger) authnlib.TokenExchanger {
 	if exchanger != nil {
+		insecure := cfg != nil && cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] == "true"
 		if insecure && cfg.Env == setting.Dev {
 			clientV3AuthLogger.Warn("Plugin does not verify requests (insecure_skip_authentication); use only for local development", "pluginId", pluginID)
 		}
 		return exchanger
 	}
-	if !insecure {
-		return nil
+	if !pluginAuth.LocalTokens() {
+		if cfg == nil || v3.RealSigningKeysConfigured(cfg.ExtJWTAuth.JWKSUrl) {
+			return nil
+		}
+		// Plugins get no keys to verify local tokens, so send them only to a
+		// plugin that skips verification in development, as before local signing.
+		insecure := cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] == "true"
+		if !insecure || cfg.Env != setting.Dev {
+			return nil
+		}
+		clientV3AuthLogger.Warn("Plugin requests use unverifiable local tokens; use only for local development", "pluginId", pluginID)
 	}
-	if cfg.Env != setting.Dev {
-		clientV3AuthLogger.Warn("Ignoring insecure_skip_authentication outside development mode; plugin requests carry no caller identity", "pluginId", pluginID)
-		return nil
-	}
-	local, err := v3.InsecureTokenExchanger()
+	local, err := v3.LocalTokenExchanger()
 	if err != nil {
 		clientV3AuthLogger.Error("Failed to create the local plugin token exchanger", "pluginId", pluginID, "error", err)
 		return nil
 	}
-	clientV3AuthLogger.Warn("Plugin requests use unverifiable local tokens; use only for local development", "pluginId", pluginID)
 	return local
 }
 
 // InvalidClientV3TokenExchanger returns an exchanger that fails every exchange
 // with err, for an invalid exchange configuration. Requests to plugins then
 // fail with the configuration error, rather than being sent without a caller
-// identity or with local development tokens.
+// identity or with local tokens.
 func InvalidClientV3TokenExchanger(err error) authnlib.TokenExchanger {
 	return invalidTokenExchanger{err: err}
 }
