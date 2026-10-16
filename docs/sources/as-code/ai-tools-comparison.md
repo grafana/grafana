@@ -49,7 +49,7 @@ This table summarizes the main points for each tool:
 |**Who drives it**| A person, inside Grafana | A person, through an MCP client | A person or an agent, through an MCP client | A person, a script, or a coding agent issuing explicit commands | 
 |**Setup**| In Cloud, there's nothing to install, just enable it in your stack. Install the plugin for self-managed | Add one endpoint to a client; complete browser consent | Install and operate a server | Install the binary and configure contexts | 
 |**Best for**| Specific questions, dashboards, investigations in the UI | Interactive diagnosis from your AI client with per-user permissions | Self-hosted, private networks, service identity, custom policy | Repeatable work, CI, GitOps, multi-stack changes | 
-|**Cost note**| Per token consumed | Counts toward Assistant usage and active users | Server hosting is yours; Grafana usage rules apply | Free. Cloud products and Assistant requests are billed as usual | 
+|**Cost note**| Per token consumed | Counts toward Assistant usage and active users | Server hosting is yours. Grafana usage rules apply | Free to use. Grafana usage rules apply. | 
 
 ## When to use each tool
 
