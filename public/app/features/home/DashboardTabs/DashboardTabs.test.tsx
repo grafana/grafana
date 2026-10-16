@@ -535,7 +535,7 @@ describe('DashboardTabs', () => {
       expect(screen.queryByRole('radiogroup', { name: /show only/i })).not.toBeInTheDocument();
     });
 
-    it('shows no age for a dashboard seeded without a visit time', async () => {
+    it('keeps a blank time cell on a seeded dashboard while another shown row has a visit time', async () => {
       jest
         .mocked(pageHistorySrv.getEntries)
         .mockResolvedValue([
@@ -547,9 +547,52 @@ describe('DashboardTabs', () => {
       render(<DashboardTabs extensionComponents={[]} />);
 
       const seeded = (await screen.findByRole('link', { name: /Recent Dashboard 2/ })).closest('li')!;
-      expect(within(seeded).queryByText(/ago/)).not.toBeInTheDocument();
+      expect(within(seeded).getByTestId('time-ago')).toBeEmptyDOMElement();
       const visited = screen.getByRole('link', { name: /Recent Dashboard 1/ }).closest('li')!;
-      expect(within(visited).getByText(/ago/)).toBeInTheDocument();
+      expect(within(visited).getByTestId('time-ago')).toHaveTextContent(/ago/);
+    });
+
+    it('drops the time column when no shown row has a visit time; the kind filter decides which rows count', async () => {
+      const seeded: PageHistoryEntry = { kind: 'dashboard', uid: 'recent-1', pathname: '/d/recent-1/x', search: '' };
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry, seeded]);
+      server.use(getCustomSearchHandler(recentHits));
+
+      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+
+      // The Explore row has a time, so every row keeps the column.
+      await screen.findByRole('link', { name: /Recent Dashboard 1/ });
+      expect(screen.getAllByTestId('time-ago')).toHaveLength(2);
+
+      await user.click(screen.getByRole('radio', { name: 'Dashboards' }));
+      expect(screen.getByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
+      expect(screen.queryByTestId('time-ago')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('radio', { name: 'All' }));
+      expect(screen.getAllByTestId('time-ago')).toHaveLength(2);
+    });
+
+    it('shows a dashboard description behind an info icon, only on rows that have one', async () => {
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([recentDashboardEntry, dashboardEntry('recent-2')]);
+      server.use(
+        getCustomSearchHandler([
+          makeDashboardHit({
+            name: 'recent-1',
+            title: 'Recent Dashboard 1',
+            description: 'Service health at a glance',
+          }),
+          makeDashboardHit({ name: 'recent-2', title: 'Recent Dashboard 2' }),
+        ])
+      );
+
+      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+
+      await screen.findByRole('link', { name: /Recent Dashboard 2/ });
+      expect(screen.getAllByLabelText('Description')).toHaveLength(1);
+      const described = screen.getByRole('link', { name: /Recent Dashboard 1/ }).closest('li')!;
+
+      await user.hover(within(described).getByLabelText('Description'));
+
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Service health at a glance');
     });
 
     it('lets the user star a dashboard row, which updates the Starred tab', async () => {
