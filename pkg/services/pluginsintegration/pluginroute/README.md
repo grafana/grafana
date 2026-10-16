@@ -110,6 +110,14 @@ Cluster-scoped kinds are reserved for service identities unless the manifest
 marks them `userReadable`. End users can only `get` or `list` a user-readable
 cluster-scoped kind; watching one is left to service identities.
 
+An access policy is held to the permissions in its own token for every kind,
+namespaced or cluster-scoped, because storage is called with a token this
+server substitutes or exchanges. The verb checked is the one storage checks:
+`list` and `watch` need `get`, `patch` needs `update` and `deletecollection`
+needs `delete`. Search, trash and list-keys are reads, so they need `get`, and
+any other verb is refused. A subresource such as `status` needs the permission
+on its parent kind. Custom routes are left to their declared checks.
+
 A manifest route can also declare an access check on each operation, with the
 `x-grafana-declared-authz-*` extensions (see
 the app-sdk `routes` package). The route
