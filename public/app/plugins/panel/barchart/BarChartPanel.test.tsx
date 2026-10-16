@@ -257,6 +257,20 @@ describe('BarChartPanel', () => {
 
       expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
     });
+
+    it('hides legend when legend.displayMode is hidden, even if showLegend is true', () => {
+      renderBarChartPanel(undefined, {
+        legend: {
+          showLegend: true,
+          displayMode: LegendDisplayMode.Hidden,
+          placement: 'bottom',
+          calcs: [],
+        },
+      });
+
+      expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+    });
   });
 
   describe('DataLinks', () => {

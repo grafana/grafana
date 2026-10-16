@@ -36,7 +36,10 @@ func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Set
 		return settings, pluginsettings.EmptyDecryptedSecureJSONLoader, nil
 	}
 
-	obj, err := utils.MetaAccessor(settings)
+	// Unified secrets belong to the shared storage group, while settings use the served group.
+	stored := settings.DeepCopy()
+	stored.APIVersion = apppluginV0.GROUP + "/" + apppluginV0.VERSION
+	obj, err := utils.MetaAccessor(stored)
 	if err != nil {
 		return nil, nil, err
 	}

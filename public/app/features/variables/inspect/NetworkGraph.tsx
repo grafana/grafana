@@ -62,15 +62,15 @@ export const NetworkGraph = ({ nodes, edges, direction, width, height }: Props) 
   );
 };
 
-function toVisNetworkNodes(visData: any, nodes: GraphNode[]): DataSet<Node> {
+function toVisNetworkNodes(visData: { DataSet: typeof DataSet }, nodes: GraphNode[]): DataSet<Node> {
   const nodesWithStyle = nodes.map((node) => ({
     ...node,
     shape: 'box',
   }));
-  return new visData.DataSet(nodesWithStyle);
+  return new visData.DataSet<Node>(nodesWithStyle);
 }
 
-function toVisNetworkEdges(visData: any, edges: GraphEdge[]): DataSet<Edge> {
+function toVisNetworkEdges(visData: { DataSet: typeof DataSet }, edges: GraphEdge[]): DataSet<Edge> {
   const edgesWithStyle = edges.map((edge) => ({ ...edge, arrows: 'to', dashes: true }));
-  return new visData.DataSet(edgesWithStyle);
+  return new visData.DataSet<Edge>(edgesWithStyle);
 }

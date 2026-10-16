@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -45,29 +47,31 @@ func TestSearch(t *testing.T) {
 		return client
 	}
 
-	t.Run("should hit unified storage search handler", func(t *testing.T) {
+	t.Run("requests field-value results", func(t *testing.T) {
 		mockClient := &MockClient{}
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
 		doSearch(t, searchHandler, "/search")
 
 		require.NotNil(t, mockClient.LastSearchRequest)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, mockClient.LastSearchRequest.ResultFormat)
 	})
 
-	t.Run("requests field-value results when enabled", func(t *testing.T) {
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+	t.Run("ignores response fields that field-value results do not support", func(t *testing.T) {
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, nil)
 
-		client := doSearch(t, searchHandler, "/search")
+		client := doSearch(t, searchHandler, "/search?field=panel_types&field=labels&field=not_declared&field=labels.custom&field=rv&field=grafana.app/deprecatedInternalID&field=_score&field=source.path&field=source.checksum&field=source.timestampMillis")
 
-		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
-	})
-
-	t.Run("ignores explanations when field-value results are enabled", func(t *testing.T) {
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
-
-		client := doSearch(t, searchHandler, "/search?explain=true")
-
-		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
+		assert.Contains(t, client.LastSearchRequest.Fields, "panel_types")
+		assert.Contains(t, client.LastSearchRequest.Fields, "labels.custom")
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_RV)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_LEGACY_ID)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SCORE)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_PATH)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_CHECKSUM)
+		assert.Contains(t, client.LastSearchRequest.Fields, resource.SEARCH_FIELD_SOURCE_TIME)
+		assert.NotContains(t, client.LastSearchRequest.Fields, "labels")
+		assert.NotContains(t, client.LastSearchRequest.Fields, "not_declared")
 	})
 }
 
@@ -91,7 +95,7 @@ func TestSearchErrorStatus(t *testing.T) {
 			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
 			var got metav1.Status
 			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
-			require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), got)
+			require.Equal(t, resource.StatusError(failure).(apierrors.APIStatus).Status(), got)
 		})
 	}
 }
@@ -1100,29 +1104,27 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
-		"query string and explain": {
-			queryString: "query=test-query&explain=true",
+		"query string": {
+			queryString: "query=test-query",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options:   &resourcepb.ListOptions{Key: dashboardKey},
 				Query:     "test-query",
 				Limit:     50,
 				Offset:    0,
 				Page:      1,
-				Explain:   true,
 				Fields:    defaultFields,
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
 		"additional fields": {
-			queryString: "field=custom1&field=custom2",
+			queryString: "field=panel_types&field=labels.custom&field=labels&field=not_declared",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options:   &resourcepb.ListOptions{Key: dashboardKey},
 				Query:     "",
 				Limit:     50,
 				Offset:    0,
 				Page:      1,
-				Explain:   false,
-				Fields:    append(defaultFields, "custom1", "custom2"),
+				Fields:    append(defaultFields, "panel_types", "labels.custom"),
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
@@ -1152,6 +1154,19 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Fields:     defaultFields,
 				Permission: int64(dashboardaccess.PERMISSION_EDIT),
 				Federated:  []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"create permission": {
+			queryString: "permission=create&type=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:    &resourcepb.ListOptions{Key: folderKey},
+				Query:      "",
+				Limit:      50,
+				Offset:     0,
+				Page:       1,
+				Explain:    false,
+				Fields:     defaultFields,
+				Permission: int64(dashboardaccess.PERMISSION_CREATE),
 			},
 		},
 		"admin permission": {
@@ -1562,6 +1577,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
+			setCreateToggle(t, true)
 			queryParams, err := url.ParseQuery(tt.queryString)
 			require.NoError(t, err)
 
@@ -1572,7 +1588,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				return tt.sharedDashboards, nil
 			}
 
-			result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, getDashboardsFunc)
+			result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, getDashboardsFunc)
 
 			if tt.expectedError != nil {
 				assert.ErrorIs(t, err, tt.expectedError)
@@ -1581,6 +1597,9 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, result)
+
+			assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, result.ResultFormat)
+			tt.expected.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
 			// Exclude query fields from the expected search
 			if tt.queryString != "" {
@@ -1591,11 +1610,23 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		})
 	}
 
+	t.Run("rejects create permission unless searching only folders", func(t *testing.T) {
+		for _, qs := range []string{"permission=create", "permission=create&type=dashboard", "permission=create&type=dashboard&type=folder"} {
+			queryParams, err := url.ParseQuery(qs)
+			require.NoError(t, err)
+
+			_, err = convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+				return nil, nil
+			})
+			assert.True(t, apierrors.IsBadRequest(err), qs)
+		}
+	})
+
 	t.Run("names the logical title field once", func(t *testing.T) {
 		queryParams, err := url.ParseQuery("query=cpu")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 			return nil, nil
 		})
 
@@ -1612,7 +1643,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("query=cpu&panelTitleSearch=true")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 			return nil, nil
 		})
 
@@ -1629,7 +1660,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("facet=folder")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
 			return nil, nil
 		})
 
@@ -1643,7 +1674,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, &user.SignedInUser{
 			Namespace: "test-namespace",
 			OrgID:     1,
 		}, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
@@ -1662,7 +1693,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		queryParams, err := url.ParseQuery("")
 		require.NoError(t, err)
 
-		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+		result, err := convertHttpSearchRequestToResourceSearchRequest(t.Context(), queryParams, &user.SignedInUser{
 			Namespace:        "test-namespace",
 			OrgID:            1,
 			IsServiceAccount: true,
@@ -1812,4 +1843,75 @@ func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 
 func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
 	return nil, nil
+}
+
+func setCreateToggle(t *testing.T, enabled bool) {
+	t.Helper()
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagFolderPickerCreatePermission: {
+			Key:            featuremgmt.FlagFolderPickerCreatePermission,
+			DefaultVariant: "v",
+			Variants:       map[string]any{"v": enabled},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+}
+
+func TestSearchHandlerCreatePermissionToggle(t *testing.T) {
+	for name, tc := range map[string]struct {
+		enabled  bool
+		expected dashboardaccess.PermissionType
+	}{
+		"enabled keeps create":        {enabled: true, expected: dashboardaccess.PERMISSION_CREATE},
+		"disabled falls back to edit": {enabled: false, expected: dashboardaccess.PERMISSION_EDIT},
+	} {
+		t.Run(name, func(t *testing.T) {
+			setCreateToggle(t, tc.enabled)
+			mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{{Results: &resourcepb.ResourceTable{}}}}
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
+			req := httptest.NewRequest("GET", "/search?type=folder&permission=create", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1}))
+
+			handler.DoSearch(httptest.NewRecorder(), req)
+
+			require.Equal(t, 1, mockClient.CallCount)
+			assert.Equal(t, int64(tc.expected), mockClient.MockCalls[0].Permission)
+		})
+	}
+}
+
+func TestSearchHandlerCreatePermissionSharedWithMe(t *testing.T) {
+	for name, tc := range map[string]struct {
+		enabled  bool
+		perms    map[string][]string
+		expected dashboardaccess.PermissionType
+	}{
+		"toggle off uses edit":              {false, map[string][]string{folder.ActionFoldersWrite: {"folders:uid:privatefolder"}}, dashboardaccess.PERMISSION_EDIT},
+		"toggle on finds create-only grant": {true, map[string][]string{dashboards.ActionDashboardsCreate: {"folders:uid:privatefolder"}}, dashboardaccess.PERMISSION_CREATE},
+	} {
+		t.Run(name, func(t *testing.T) {
+			setCreateToggle(t, tc.enabled)
+			empty := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
+			mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{empty, empty, empty}}
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
+			req := httptest.NewRequest("GET", "/search?type=folder&folder=sharedwithme&permission=create", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: map[int64]map[string][]string{1: tc.perms}}))
+
+			handler.DoSearch(httptest.NewRecorder(), req)
+
+			require.NotEmpty(t, mockClient.MockCalls)
+			for _, call := range mockClient.MockCalls {
+				assert.Equal(t, int64(tc.expected), call.Permission)
+			}
+
+			lookup := mockClient.MockCalls[0]
+			if tc.expected == dashboardaccess.PERMISSION_CREATE {
+				assert.Equal(t, "folders", lookup.Options.Key.Resource)
+				assert.Empty(t, lookup.Federated)
+			} else {
+				assert.Equal(t, "dashboards", lookup.Options.Key.Resource)
+				assert.Len(t, lookup.Federated, 1)
+			}
+		})
+	}
 }

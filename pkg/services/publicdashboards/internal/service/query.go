@@ -50,7 +50,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 			From:         from,
 			To:           to,
 			OrgID:        dash.OrgID,
-			DashboardID:  dash.ID,
+			DashboardID:  dash.ID, //nolint:staticcheck // Preserve legacy field compatibility.
 			DashboardUID: dash.UID,
 			SignedInUser: svcIdent,
 		}

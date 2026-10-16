@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -68,12 +69,14 @@ import (
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
 	pluginconfig.ProvidePluginManagementConfig,
+	pluginauth.ProvideConfig,
 	pluginconfig.ProvidePluginInstanceConfig,
 	pluginconfig.NewEnvVarsProvider,
 	wire.Bind(new(envvars.Provider), new(*pluginconfig.EnvVarsProvider)),
 	pluginconfig.NewRequestConfigProvider,
 	wire.Bind(new(pluginconfig.PluginRequestConfigProvider), new(*pluginconfig.RequestConfigProvider)),
 	pluginstore.ProvideService,
+	installsync.ProvideClientGenerator,
 	installsync.ProvideSyncer,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
@@ -205,7 +208,9 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewCachingMiddleware(cachingServiceClient),
-		clientmiddleware.NewForwardIDMiddleware(),
+		// Single-tenant Grafana mints its own id token at the edge (see idimpl), so requester
+		// always carries one and the derive fallback is never needed here.
+		clientmiddleware.NewForwardIDMiddleware(nil),
 		clientmiddleware.NewUseAlertHeadersMiddleware(),
 	)
 

@@ -439,6 +439,13 @@ const getStyles = (theme: GrafanaTheme2, useTableNG: boolean, tableRefreshEnable
       padding: useTableNG ? 0 : theme.spacing(1),
       backgroundColor: useTableNG ? 'transparent' : theme.colors.background.secondary,
       height: '100%',
+      // Only the legacy table paints this wrapper; TableNG is transparent and rounds its own grid.
+      ...(useTableNG
+        ? {}
+        : {
+            borderStartStartRadius: theme.shape.radius.default,
+            borderStartEndRadius: theme.shape.radius.default,
+          }),
 
       '& .rdg': {
         '--rdg-background-color': theme.colors.background.secondary,

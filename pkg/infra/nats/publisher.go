@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
@@ -55,49 +54,6 @@ func (p *PublisherService) Run(ctx context.Context) error {
 		return err
 	}
 	return p.AwaitTerminated(ctx)
-}
-
-func (p *PublisherService) starting(ctx context.Context) error {
-	if !p.Enabled() {
-		return nil
-	}
-	// Embedded server and publisher services start concurrently. Wait until the
-	// server has published its in-process URL before making the initial dial.
-	if p.config.server != nil && !p.config.server.IsDisabled() {
-		ticker := time.NewTicker(10 * time.Millisecond)
-		defer ticker.Stop()
-		for p.config.server.clientURL() == "" {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-ticker.C:
-			}
-		}
-	}
-
-	// Keep retrying initial broker/authentication failures without failing Grafana
-	// startup. Publish rejects messages until this connection first succeeds.
-	nc, err := p.get(ctx)
-	if err != nil {
-		if ctx.Err() != nil {
-			return nil
-		}
-		return err
-	}
-	if !nc.IsConnected() {
-		p.log.Warn("nats publisher not yet connected at startup; retrying in the background",
-			"status", nc.Status(), "last_err", nc.LastError())
-	}
-	return nil
-}
-
-func (p *PublisherService) running(ctx context.Context) error {
-	// Publish is fire-and-forget: nats.go's flusher pushes each message to the
-	// server, PingInterval detects a dead link, and the reconnect buffer replays
-	// automatically after a reconnect. Nothing for the loop to do but stay alive
-	// until shutdown.
-	<-ctx.Done()
-	return nil
 }
 
 func (p *PublisherService) stopping(_ error) error {

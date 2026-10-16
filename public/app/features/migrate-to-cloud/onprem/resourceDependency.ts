@@ -10,7 +10,7 @@ export function buildDependencyMaps(resourceDependencies: ResourceDependencyDto[
 
   for (const dependency of resourceDependencies) {
     const resourceType = dependency.resourceType as ResourceTypeId;
-    const dependencies = (dependency.dependencies || []) as ResourceTypeId[];
+    const dependencies: ResourceTypeId[] = dependency.dependencies || [];
 
     dependencyMap.set(resourceType, dependencies);
 

@@ -673,6 +673,24 @@ describe('ExemplarsPlugin', () => {
       expect(tooltipWrapper.textContent).toContain('0.500');
     });
 
+    it('does not render exemplar fields with null values', async () => {
+      const frame = createDataFrame({
+        name: 'exemplars',
+        fields: [
+          { name: 'Time', values: [1670418750000] },
+          { name: 'Value', values: [0.5] },
+          { name: 'empty-label', type: FieldType.string, values: [null] },
+          { name: 'populated-label', type: FieldType.string, values: ['value'] },
+        ],
+      });
+
+      setUp({ exemplars: [frame] });
+      await userEvent.click(getMarker());
+
+      expect(screen.queryByText('empty-label')).not.toBeInTheDocument();
+      expect(screen.getByText('populated-label')).toBeVisible();
+    });
+
     it.each(['click', 'hover'])('renders data links on %s', async (userAction) => {
       setUp();
       //@ts-expect-error
@@ -698,13 +716,12 @@ describe('ExemplarsPlugin', () => {
       expect(screen.queryByText('2203801e0171aa8d')).not.toBeInTheDocument();
     });
 
-    it.each(['click', 'hover'])('renders link actions on %s', async (userAction) => {
+    it.each(['click', 'hover'])('does not render link action fields without values on %s', async (userAction) => {
       setUp();
       //@ts-expect-error
       await userEvent[userAction](getMarker());
 
-      // Actions are currently displayed like any other field
-      expect(screen.getByText('Field Action')).toBeVisible();
+      expect(screen.queryByText('Field Action')).not.toBeInTheDocument();
       // @todo link actions are not currently passed into the VizTooltipFooter, add test coverage when supported
     });
   });
