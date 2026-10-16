@@ -2385,7 +2385,8 @@
       "metadata": {
         "name": "features.bulkFlagEvalFiltering",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-17T14:01:17Z"
+        "creationTimestamp": "2026-07-17T14:01:17Z",
+        "deletionTimestamp": "2026-10-15T12:56:13Z"
       },
       "spec": {
         "description": "Filters bulk OFREP flag evaluations to public-metadata flags only",
