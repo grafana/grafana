@@ -685,5 +685,228 @@ describe('MixedDatasource', () => {
       // The successful datasource's frame survives the failure of the other.
       expect(latest.series).toContain('HEALTHY');
     });
+
+    // Regression for the Cursor Bugbot finding "Done overwrites active streaming state":
+    // a delayed finite source's Done must not clear the combined Streaming state while a
+    // Live source remains subscribed.
+    it('keeps the combined state Streaming when a delayed history Done arrives while a live stream is open', async () => {
+      const stream = new Subject<DataQueryResponse>();
+      setSrv({
+        HIST: new MockDelayedCompletionDataSourceApi('Historical', { data: ['HISTORICAL'] }, 150),
+        STREAM: new MockSubjectDataSourceApi('Streaming', stream),
+      });
+
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = getQueryOptions({
+        targets: [
+          { refId: 'HIST', datasource: { uid: 'HIST' } },
+          { refId: 'STREAM', datasource: { uid: 'STREAM' } },
+        ],
+      });
+
+      const states: LoadingState[] = [];
+      const seriesSnapshots: string[][] = [];
+      const subscription = runRequest(ds, request).subscribe((data) => {
+        states.push(data.state);
+        seriesSnapshots.push((data.series as unknown as string[]).map(String));
+      });
+
+      // The datasource promise must resolve before Mixed subscribes to the stream; wait for
+      // the subscription deterministically so the first live frame is not lost.
+      for (let i = 0; i < 50 && !stream.observed; i++) {
+        await flush();
+      }
+      expect(stream.observed).toBe(true);
+
+      // 5. Live frame arrives first.
+      stream.next({ data: ['STREAM-1'], state: LoadingState.Streaming });
+      await flush();
+
+      // 6. Combined state is Streaming.
+      expect(states[states.length - 1]).toBe(LoadingState.Streaming);
+
+      // 7. The delayed historical datasource emits its Done packet.
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
+      // 8. Both frames are retained.
+      expect(seriesSnapshots[seriesSnapshots.length - 1]).toEqual(expect.arrayContaining(['STREAM-1', 'HISTORICAL']));
+
+      // 9. State must remain Streaming because the Live subscription is still active.
+      expect(states[states.length - 1]).toBe(LoadingState.Streaming);
+
+      // 10. No further live events: the state does not change.
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      expect(states[states.length - 1]).toBe(LoadingState.Streaming);
+
+      // 11. A new live frame replaces the previous streaming frame and keeps both datasets.
+      stream.next({ data: ['STREAM-2'], state: LoadingState.Streaming });
+      await flush();
+      expect(states[states.length - 1]).toBe(LoadingState.Streaming);
+      expect(seriesSnapshots[seriesSnapshots.length - 1]).toEqual(expect.arrayContaining(['STREAM-2', 'HISTORICAL']));
+
+      // 12. Cancellation releases the live subscription.
+      subscription.unsubscribe();
+      expect(stream.observed).toBe(false);
+    });
+  });
+
+  describe('combined lifecycle states', () => {
+    const setSrv = (datasources: Record<string, DataSourceApi>) => {
+      const srv = new DatasourceSrvMock(new MockObservableDataSourceApi('DefaultDS'), datasources);
+      setDataSourceSrv({
+        ...srv,
+        get: (uid: DataSourceRef) => srv.get(uid),
+        getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+        getList: jest.fn(),
+        reload: jest.fn(),
+        registerRuntimeDataSource: jest.fn(),
+      } as unknown as DataSourceSrv);
+    };
+
+    const run = (targets: Array<{ refId: string; uid: string }>) => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = getQueryOptions({
+        targets: targets.map((t) => ({ refId: t.refId, datasource: { uid: t.uid } })),
+      });
+      const states: LoadingState[] = [];
+      const seriesSnapshots: string[][] = [];
+      const subscription = runRequest(ds, request).subscribe((data) => {
+        states.push(data.state);
+        seriesSnapshots.push((data.series as unknown as string[]).map(String));
+      });
+      return {
+        subscription,
+        states,
+        seriesSnapshots,
+        lastState: () => states[states.length - 1],
+        lastSeries: () => seriesSnapshots[seriesSnapshots.length - 1],
+      };
+    };
+
+    const waitForSubscription = async (stream: Subject<DataQueryResponse>) => {
+      for (let i = 0; i < 50 && !stream.observed; i++) {
+        await flush();
+      }
+      expect(stream.observed).toBe(true);
+    };
+
+    it('renders historical data immediately when the live source has not started', async () => {
+      const stream = new Subject<DataQueryResponse>();
+      setSrv({
+        HIST: new MockObservableDataSourceApi('Historical', [{ data: ['HISTORICAL'] }]),
+        STREAM: new MockSubjectDataSourceApi('Streaming', stream),
+      });
+
+      const r = run([
+        { refId: 'HIST', uid: 'HIST' },
+        { refId: 'STREAM', uid: 'STREAM' },
+      ]);
+      await flush();
+      await waitForSubscription(stream);
+
+      // The live source is open but has not reported `Streaming`, so it is not an active
+      // stream yet; the completed finite source yields a renderable terminal state.
+      expect(r.lastState()).not.toBe(LoadingState.Loading);
+      expect(r.lastState()).toBe(LoadingState.Done);
+      expect(r.lastSeries()).toContain('HISTORICAL');
+
+      r.subscription.unsubscribe();
+      expect(stream.observed).toBe(false);
+    });
+
+    it('stays Streaming after a history Done when multiple live sources are open', async () => {
+      const stream0 = new Subject<DataQueryResponse>();
+      const stream1 = new Subject<DataQueryResponse>();
+      setSrv({
+        HIST: new MockDelayedCompletionDataSourceApi('Historical', { data: ['HISTORICAL'] }, 150),
+        STREAM0: new MockSubjectDataSourceApi('Streaming0', stream0),
+        STREAM1: new MockSubjectDataSourceApi('Streaming1', stream1),
+      });
+
+      const r = run([
+        { refId: 'HIST', uid: 'HIST' },
+        { refId: 'S0', uid: 'STREAM0' },
+        { refId: 'S1', uid: 'STREAM1' },
+      ]);
+      await waitForSubscription(stream0);
+      await waitForSubscription(stream1);
+
+      stream0.next({ data: ['S0-1'], state: LoadingState.Streaming });
+      stream1.next({ data: ['S1-1'], state: LoadingState.Streaming });
+      await flush();
+      expect(r.lastState()).toBe(LoadingState.Streaming);
+
+      // History resolves while both streams remain open.
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(r.lastState()).toBe(LoadingState.Streaming);
+      expect(r.lastSeries()).toEqual(expect.arrayContaining(['S0-1', 'S1-1', 'HISTORICAL']));
+
+      r.subscription.unsubscribe();
+      expect(stream0.observed).toBe(false);
+      expect(stream1.observed).toBe(false);
+    });
+
+    it('does not treat a live source that reports Loading as an active stream', async () => {
+      const stream = new Subject<DataQueryResponse>();
+      setSrv({ STREAM: new MockSubjectDataSourceApi('Streaming', stream) });
+
+      const r = run([{ refId: 'STREAM', uid: 'STREAM' }]);
+      await waitForSubscription(stream);
+
+      stream.next({ data: ['WARMUP'], state: LoadingState.Loading });
+      await flush();
+      expect(r.lastState()).toBe(LoadingState.Loading);
+
+      stream.next({ data: ['LIVE'], state: LoadingState.Streaming });
+      await flush();
+      expect(r.lastState()).toBe(LoadingState.Streaming);
+
+      r.subscription.unsubscribe();
+      expect(stream.observed).toBe(false);
+    });
+
+    it('reports Done when a streaming source genuinely completes', async () => {
+      const stream = new Subject<DataQueryResponse>();
+      setSrv({
+        HIST: new MockObservableDataSourceApi('Historical', [{ data: ['HISTORICAL'] }]),
+        STREAM: new MockSubjectDataSourceApi('Streaming', stream),
+      });
+
+      const r = run([
+        { refId: 'HIST', uid: 'HIST' },
+        { refId: 'STREAM', uid: 'STREAM' },
+      ]);
+      await flush();
+      await waitForSubscription(stream);
+
+      stream.next({ data: ['LIVE-1'], state: LoadingState.Streaming });
+      await flush();
+      expect(r.lastState()).toBe(LoadingState.Streaming);
+
+      // The stream terminates normally; with every source completed the query is done.
+      stream.complete();
+      await flush();
+
+      expect(r.lastState()).toBe(LoadingState.Done);
+      expect(r.lastSeries()).toEqual(expect.arrayContaining(['LIVE-1', 'HISTORICAL']));
+    });
+
+    it('completes a finite-only query with terminal Done and all frames retained', async () => {
+      setSrv({
+        A: new MockObservableDataSourceApi('A', [{ data: ['AAAA'] }]),
+        B: new MockObservableDataSourceApi('B', [{ data: ['BBBB'] }]),
+      });
+
+      const r = run([
+        { refId: 'A', uid: 'A' },
+        { refId: 'B', uid: 'B' },
+      ]);
+      await flush();
+      await flush();
+
+      expect(r.lastState()).toBe(LoadingState.Done);
+      expect(r.lastSeries()).toEqual(expect.arrayContaining(['AAAA', 'BBBB']));
+      r.subscription.unsubscribe();
+    });
   });
 });

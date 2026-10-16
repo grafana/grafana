@@ -1,6 +1,6 @@
 import { cloneDeep, groupBy } from 'lodash';
-import { from, merge, type Observable, of } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { concat, defer, EMPTY, from, merge, type Observable, of } from 'rxjs';
+import { catchError, finalize, map, mergeMap } from 'rxjs/operators';
 
 import {
   type DataQuery,
@@ -122,7 +122,12 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   }
 
   batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    const runningQueries = mixed.filter(this.isQueryable).map((query, i) =>
+    const batches = mixed.filter(this.isQueryable);
+    // Tracks which batches are currently an active stream (have emitted `Streaming` and not
+    // yet completed), so the combined lifecycle stays `Streaming` while any stream is open.
+    const streaming = batches.map(() => false);
+
+    const runningQueries = batches.map((query, i) =>
       from(query.datasource).pipe(
         mergeMap((api: DataSourceApi) => {
           const dsRequest = cloneDeep(request);
@@ -132,6 +137,10 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
           return from(api.query(dsRequest)).pipe(
             map((response) => {
+              if (response.state === LoadingState.Streaming) {
+                streaming[i] = true;
+              }
+
               return {
                 ...response,
                 data: response.data || [],
@@ -154,18 +163,49 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
               });
             })
           );
+        }),
+        // A completed batch is no longer an active stream. This runs before `merge` completes,
+        // so the trailing `Done` below is emitted only once no stream remains open.
+        finalize(() => {
+          streaming[i] = false;
         })
       )
     );
 
     // `merge` (rather than the previous `forkJoin` + `toArray`) forwards each datasource's
-    // responses as they arrive. A datasource that emits without ever completing — e.g. a
-    // continuous streaming query — therefore neither blocks the other results nor holds the
-    // response back until it finishes. Each response keeps its own state (`Streaming` for a
-    // live source, otherwise `Done`), so the panel can render historical frames immediately
-    // while a stream stays open. Per-datasource `catchError` keeps a failure isolated: a
-    // failed source surfaces as an `Error` response without discarding the others.
-    return merge(...runningQueries);
+    // responses as they arrive, so a datasource that emits without ever completing — e.g. a
+    // continuous streaming query — neither blocks the other results nor holds the response
+    // back until it finishes. Per-datasource `catchError` keeps a failure isolated: a failed
+    // source surfaces as an `Error` response without discarding the others.
+    let lastResponse: DataQueryResponse | undefined;
+
+    return concat(
+      merge(...runningQueries).pipe(
+        map((response) => {
+          // `runRequest` derives the combined state from the latest packet, so while any stream
+          // is open a finite source's terminal `Done` must be reported as `Streaming`. Errors
+          // are forwarded as-is: `runRequest` already treats them as authoritative.
+          const forwarded =
+            response.state !== LoadingState.Error && streaming.some(Boolean)
+              ? { ...response, state: LoadingState.Streaming }
+              : response;
+
+          lastResponse = forwarded;
+          return forwarded;
+        })
+      ),
+      // Every underlying source has completed here (a never-completing stream keeps the source
+      // open and skips this). Emit one trailing `Done` so a stream that genuinely terminates
+      // does not leave the query reporting an active stream. Finite-only queries already ended
+      // on `Done`, and errors stay authoritative, so neither emits this packet.
+      defer(() => {
+        if (lastResponse && lastResponse.state !== LoadingState.Done && lastResponse.state !== LoadingState.Error) {
+          return of<DataQueryResponse>({ ...lastResponse, state: LoadingState.Done });
+        }
+
+        return EMPTY;
+      })
+    );
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
