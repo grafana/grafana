@@ -838,7 +838,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.yarnrc.yml @grafana/grafana-frontend-platform
 /yarn.config.cjs @grafana/grafana-frontend-platform
 /yarn.lock @grafana/grafana-frontend-platform
-/lerna.json @grafana/grafana-frontend-platform
 /.prettierrc.js @grafana/grafana-frontend-platform
 /.vim @zoltanbedi
 /jest.config.js @grafana/grafana-frontend-platform
@@ -1200,6 +1199,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/grafana-frontend-platform
 /scripts/rspack/ @grafana/grafana-frontend-platform
+/scripts/release/ @grafana/grafana-frontend-platform
 /scripts/test-aliases.py @grafana/docs-tooling @jtvdez
 eslint-suppressions.json @grafanabot
 
