@@ -99,12 +99,14 @@ export const ExemplarsPlugin = ({
       !Number.isInteger(request.rowIndex) ||
       request.rowIndex < 0 ||
       request.rowIndex >= dataFrame.length ||
-      !mapExemplarToXYCoords(dataFrame, request.rowIndex) ||
-      (visibleSeries !== undefined && !showExemplarMarker(visibleSeries, dataFrame, request.rowIndex))
+      !mapExemplarToXYCoords(dataFrame, request.rowIndex)
     ) {
       return;
     }
     openExemplar.onHandled(request.requestId);
+    if (visibleSeries !== undefined && !showExemplarMarker(visibleSeries, dataFrame, request.rowIndex)) {
+      return;
+    }
     setLockedExemplar({ dataFrame, rowIndex: request.rowIndex });
   }, [exemplars, visibleSeries, openExemplar, initializedConfig, config, mapExemplarToXYCoords, drawCount]);
 

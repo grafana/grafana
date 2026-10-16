@@ -101,7 +101,7 @@ let scales = {
   [FIXED_UNIT]: { min: 0, max: 1 },
 };
 
-let valToPos = jest.fn((value: number, scaleKey?: string) => {
+let valToPos = jest.fn((value: number, scaleKey?: string): number => {
   if (scaleKey === 'x') {
     return 100;
   }
@@ -199,7 +199,10 @@ describe('ExemplarsPlugin', () => {
       runPlotHooks(new uPlot(uPlotProps as uPlot.Options));
     }
 
-    const rerenderExemplars = (exemplars: DataFrame[]) => {
+    const rerenderExemplars = (
+      exemplars: DataFrame[],
+      overrides?: Partial<React.ComponentProps<typeof ExemplarsPlugin>>
+    ) => {
       const processed = applyFieldOverrides({
         data: exemplars,
         fieldConfig: { defaults: {}, overrides: [] },
@@ -209,7 +212,13 @@ describe('ExemplarsPlugin', () => {
       });
       result.rerender(
         <div>
-          <ExemplarsPlugin config={configWithDefaults} timeZone="browser" {...props} exemplars={processed} />
+          <ExemplarsPlugin
+            config={configWithDefaults}
+            timeZone="browser"
+            {...props}
+            {...overrides}
+            exemplars={processed}
+          />
         </div>
       );
     };
@@ -287,6 +296,47 @@ describe('ExemplarsPlugin', () => {
     setUp({ exemplars: [sample], openExemplar: createOpenExemplar('navigation-new', 0) });
     expect(await screen.findByText('selected-trace')).toBeVisible();
     expect(screen.getByLabelText('Close')).toBeVisible();
+  });
+
+  it('discards a hidden request so showing its series preserves a manual pin and remount cannot replay it', async () => {
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418800000] },
+        { name: 'Value', values: [0.5, 0.6] },
+        { name: 'job', type: FieldType.string, values: ['hidden', 'visible'] },
+        { name: 'traceID', type: FieldType.string, values: ['requested-trace', 'manual-trace'] },
+      ],
+    });
+    const openExemplar = createOpenExemplar('navigation-hidden', 0);
+    const result = setUp({
+      exemplars: [sample],
+      openExemplar,
+      visibleSeries: { totalSeriesCount: 2, labels: [{ labels: { job: 'visible' } }] },
+    });
+
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+    await userEvent.setup({ skipHover: true }).click(getMarker());
+    expect(await screen.findByText('manual-trace')).toBeVisible();
+
+    result.rerenderExemplars([sample], {
+      visibleSeries: {
+        totalSeriesCount: 2,
+        labels: [{ labels: { job: 'hidden' } }, { labels: { job: 'visible' } }],
+      },
+    });
+    expect(screen.getByText('manual-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('requested-trace')).not.toBeInTheDocument();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+    expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-hidden');
+
+    result.unmount();
+    hooks = {};
+    setUp({ exemplars: [sample], openExemplar });
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+    expect(screen.queryByText('requested-trace')).not.toBeInTheDocument();
   });
 
   it('keeps a clicked exemplar pinned across replacement frames', async () => {
