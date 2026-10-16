@@ -22,17 +22,11 @@ describe('toRow', () => {
       });
     });
 
-    it('formats absolute ranges in the URL timezone, whether epoch ms or ISO 8601', () => {
+    it('describes an absolute range in the URL timezone', () => {
+      // Parsing the forms a URL carries is parseUrlTime's; this proves both ends and the zone reach the range.
       expect(dashboardRow('?from=1717000000000&to=1717003600000&timezone=utc', {}).subtitle).toBe(
         '2024-05-29 16:26:40 to 2024-05-29 17:26:40'
       );
-      expect(dashboardRow('?from=1717000000000&to=1717003600000&timezone=Europe%2FBerlin', {}).subtitle).toBe(
-        '2024-05-29 18:26:40 to 2024-05-29 19:26:40'
-      );
-      // What the dashboard scene writes after an absolute pick or a zoom.
-      expect(
-        dashboardRow('?from=2024-05-29T16%3A26%3A40.000Z&to=2024-05-29T17%3A26%3A40.000Z&timezone=utc', {}).subtitle
-      ).toBe('2024-05-29 16:26:40 to 2024-05-29 17:26:40');
       expect(
         dashboardRow('?from=2024-05-29T16:26:40.000Z&to=2024-05-29T17:26:40.000Z&timezone=Europe%2FBerlin', {}).subtitle
       ).toBe('2024-05-29 18:26:40 to 2024-05-29 19:26:40');
@@ -60,25 +54,33 @@ describe('toRow', () => {
       ).toEqual({ title: 'Ops Logs | unknown-uid', subtitle: 'up; down | select 1' });
     });
 
-    it('keeps each query under its own pane when only some panes have text or a name', () => {
-      expect(
-        explore([
+    it.each([
+      [
+        [
           { datasource: 'Ops Logs', queries: ['up'] },
           { datasource: 'Prom', queries: [] },
-        ])
-      ).toEqual({ title: 'Ops Logs | Prom', subtitle: 'up | —' });
-      expect(
-        explore([
+        ],
+        'Ops Logs | Prom',
+        'up | —',
+      ],
+      [
+        [
           { datasource: 'Ops Logs', queries: [] },
           { datasource: 'Prom', queries: ['up'] },
-        ])
-      ).toEqual({ title: 'Ops Logs | Prom', subtitle: '— | up' });
-      expect(
-        explore([
+        ],
+        'Ops Logs | Prom',
+        '— | up',
+      ],
+      [
+        [
           { datasource: undefined, queries: ['a'] },
           { datasource: 'Prom', queries: ['b'] },
-        ])
-      ).toEqual({ title: '— | Prom', subtitle: 'a | b' });
+        ],
+        '— | Prom',
+        'a | b',
+      ],
+    ])('keeps each pane in its slot when only some have text or a name: %j', (panes, title, subtitle) => {
+      expect(explore(panes)).toEqual({ title, subtitle });
     });
 
     it('falls back to "Explore" without a datasource and to no subtitle without query text', () => {

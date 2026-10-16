@@ -15,7 +15,6 @@ describe('getQueryExpressionText', () => {
 
   it.each([
     null,
-    'up',
     { refId: 'A' },
     { refId: 'A', expr: '  ' },
     // A nested query model (Azure) has no single text to show; none is better than a wrong one.

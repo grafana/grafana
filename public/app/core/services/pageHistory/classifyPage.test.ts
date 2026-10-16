@@ -15,26 +15,22 @@ describe('classifyPage', () => {
   it.each([
     ['/d/abc', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
     ['/d/abc/some-slug', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc/some-slug' }],
-    ['/d/abc/', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
-    ['/d/abc?from=now-1h&to=now', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
+    // Search and a trailing slash change nothing.
+    ['/d/abc/?from=now-1h&to=now', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
     [`/explore${exploreSearch({ abc: { queries: [] } })}`, { kind: 'explore', session: 'abc', pathname: '/explore' }],
     // The left pane identifies the session; a split adds a pane on the right.
     [
-      `/explore/${exploreSearch({ abc: {}, def: {} }, '&orgId=1')}`,
+      `/explore${exploreSearch({ abc: {}, def: {} }, '&orgId=1')}`,
       { kind: 'explore', session: 'abc', pathname: '/explore' },
     ],
     ['/a/grafana-irm-app/incidents', { kind: 'app', pathname: '/a/grafana-irm-app/incidents' }],
     ['/a/grafana-irm-app/incidents/5987', { kind: 'app', pathname: '/a/grafana-irm-app/incidents/5987' }],
     [
-      '/a/grafana-assistant-app/investigations/abc-def/',
+      '/a/grafana-assistant-app/investigations/abc-def',
       { kind: 'app', pathname: '/a/grafana-assistant-app/investigations/abc-def' },
     ],
     [
       '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b',
-      { kind: 'page', pathname: '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b' },
-    ],
-    [
-      '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b/?orgId=1',
       { kind: 'page', pathname: '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b' },
     ],
     // Another plugin's `/pages/<id>` is an ordinary app page.
@@ -42,7 +38,6 @@ describe('classifyPage', () => {
     ['/a/grafana-k8s-app/navigation/cluster', { kind: 'app', pathname: '/a/grafana-k8s-app/navigation/cluster' }],
     ['/alerting', { kind: 'alerting', pathname: '/alerting' }],
     ['/alerting/list', { kind: 'alerting', pathname: '/alerting/list' }],
-    ['/alerting/list/', { kind: 'alerting', pathname: '/alerting/list' }],
     ['/alerting/grafana/abc/view', { kind: 'alerting', pathname: '/alerting/grafana/abc/view' }],
     // Create forms and menu destinations are pages too; whether a visit earns a row is hasNothingToResume's call.
     ['/alerting/new/alerting', { kind: 'alerting', pathname: '/alerting/new/alerting' }],

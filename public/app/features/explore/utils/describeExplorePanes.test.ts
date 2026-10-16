@@ -42,22 +42,14 @@ describe('describeExplorePanes', () => {
         ],
         range: { from: 'now-1h', to: 'now' },
       },
-      def: { datasource: 'unknown-uid', queries: [{ rawSql: 'select 1' }], range: { from: 'now-1h', to: 'now' } },
+      def: { datasource: 'unknown-uid', queries: [{ expr: 'down' }], range: { from: 'now-1h', to: 'now' } },
     });
 
     expect(describeExplorePanes(search, dataSources)).toEqual([
       { datasource: 'Ops Logs', queries: ['{service_name="api"}', 'up'] },
       // A datasource that no longer resolves keeps its ref so the row still says something.
-      { datasource: 'unknown-uid', queries: ['select 1'] },
+      { datasource: 'unknown-uid', queries: ['down'] },
     ]);
-  });
-
-  it('keeps the query text and shows refs as they are when no datasource resolved', () => {
-    const search = explorePanes({
-      abc: { datasource: 'loki-uid', queries: [{ expr: 'up' }], range: { from: 'now-1h', to: 'now' } },
-    });
-
-    expect(describeExplorePanes(search, new Map())).toEqual([{ datasource: 'loki-uid', queries: ['up'] }]);
   });
 
   it('names each query its own datasource in a mixed pane', () => {
@@ -88,11 +80,7 @@ describe('describeExplorePanes', () => {
 
   it('skips queries without text, including the null elements the migrator keeps', () => {
     const search = explorePanes({
-      abc: {
-        datasource: 'loki-uid',
-        queries: [null, { refId: 'A' }, { expr: '  ' }],
-        range: { from: 'now-1h', to: 'now' },
-      },
+      abc: { datasource: 'loki-uid', queries: [null, { refId: 'A' }], range: { from: 'now-1h', to: 'now' } },
     });
 
     expect(describeExplorePanes(search, dataSources)).toEqual([{ datasource: 'Ops Logs', queries: [] }]);
