@@ -113,6 +113,28 @@ function isLoader(fn: unknown): fn is DashboardPendingChangesLoader {
   return typeof fn === 'function';
 }
 
+/** How long the dashboard waits for a plugin's pending changes before it shows the saved one. */
+const LOADER_TIMEOUT_MS = 10_000;
+
+/** A loader's pending changes, or null when it throws, fails, or doesn't answer in time. */
+async function askLoader(
+  load: DashboardPendingChangesLoader,
+  request: { uid: string; id: string }
+): Promise<DashboardPendingChanges | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), LOADER_TIMEOUT_MS);
+  });
+  try {
+    // Called inside the promise chain so a synchronous throw is handled like a rejection.
+    return await Promise.race([Promise.resolve().then(() => load(request)), timeout]);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * The registered loaders. Loads the plugins that declare one (plugin.json addedFunctions) first,
  * as usePluginFunctions does: a dashboard opened straight from a link can load before them.
@@ -130,7 +152,8 @@ async function getLoaders(): Promise<DashboardPendingChangesLoader[]> {
 
 /**
  * Loads the pending changes `id` names before the dashboard is shown, and records whether
- * the scene should show them. Failures leave the saved dashboard on screen.
+ * the scene should show them. Failures leave the saved dashboard on screen: a missing or
+ * disabled plugin, one that fails to load, and a loader that throws, rejects, or hangs.
  */
 export async function loadPendingChangePreview(
   view: PendingChangesView,
@@ -146,8 +169,14 @@ export async function loadPendingChangePreview(
   if (!id) {
     return undefined;
   }
-  for (const load of await getLoaders()) {
-    const pending = await load({ uid, id }).catch(() => null);
+  let loaders: DashboardPendingChangesLoader[];
+  try {
+    loaders = await getLoaders();
+  } catch {
+    return undefined;
+  }
+  for (const load of loaders) {
+    const pending = await askLoader(load, { uid, id });
     if (pending) {
       const preview = { id, pending, previewing: !isShowingOriginal(uid, id) };
       previews.set(previewKey(view, uid), preview);
