@@ -1,3 +1,4 @@
+import { useFlagAlertingInstanceSilence } from '@grafana/runtime/internal';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { type CombinedRule } from 'app/types/unified-alerting';
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 const InstancesList = ({ rule }: Props) => {
+  const isInstanceSilenceEnabled = useFlagAlertingInstanceSilence();
   const isGrafanaAlertingRule =
     rulerRuleType.grafana.alertingRule(rule.rulerRule) || prometheusRuleType.grafana.alertingRule(rule.promRule);
 
@@ -17,7 +19,7 @@ const InstancesList = ({ rule }: Props) => {
       rule={rule}
       pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
       enableFiltering
-      showSilenceAction={isGrafanaAlertingRule}
+      showSilenceAction={isGrafanaAlertingRule && isInstanceSilenceEnabled}
     />
   );
 };

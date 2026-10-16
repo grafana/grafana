@@ -20,6 +20,8 @@ export const FlagKeys = {
   AlertRuleRestore: "alertRuleRestore",
   /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
   AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
+  /** Enable silencing individual alert instances from the alert rule Instances tab. */
+  AlertingInstanceSilence: "alerting.instanceSilence",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
@@ -415,6 +417,17 @@ export const useFlagAlertRuleRestore = (options?: ReactFlagEvaluationOptions): b
  */
 export const useFlagAlertingDataSourceManagedRouteProxy = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.dataSourceManagedRouteProxy", false, options).value;
+};
+
+/**
+ * Enable silencing individual alert instances from the alert rule Instances tab.
+ *
+ * **Details:**
+ * - flag key: `alerting.instanceSilence`
+ * - default value: `false`
+ */
+export const useFlagAlertingInstanceSilence = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.instanceSilence", false, options).value;
 };
 
 /**
