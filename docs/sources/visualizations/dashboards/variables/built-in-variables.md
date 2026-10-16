@@ -133,7 +133,7 @@ The following table lists common paths and their values in the dark theme:
 
 <!-- prettier-ignore-end -->
 
-The semantic colors `primary`, `secondary`, `info`, `success`, `warning`, and `error` each have the shades `main`, `shade`, `text`, `border`, `transparent`, `borderTransparent`, and `contrastText`, for example `${__theme.colors.warning.border}`.
+The semantic colors `primary`, `secondary`, `info`, `success`, `warning`, and `error` each have the shades `main`, `shade`, `text`, `border`, `transparent`, `borderTransparent`, and `contrastText`. For example, `${__theme.colors.warning.border}`.
 
 The following HTML in a [text visualization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/text/) shows a status badge in the theme's success colors:
 
