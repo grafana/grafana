@@ -2,6 +2,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
+import { createTheme, ThemeContext } from '@grafana/data';
+
 import { mockComboboxRect } from '../../test-utils/mockDom';
 import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
@@ -274,7 +276,13 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
     ];
 
-    render(<MultiCombobox options={options} value={['a']} onChange={jest.fn()} />);
+    const refreshTheme = { ...createTheme(), flags: { visualDesignRefresh: true } };
+
+    render(
+      <ThemeContext.Provider value={refreshTheme}>
+        <MultiCombobox options={options} value={['a']} onChange={jest.fn()} />
+      </ThemeContext.Provider>
+    );
     await user.click(screen.getByRole('combobox'));
 
     await screen.findAllByRole('option');

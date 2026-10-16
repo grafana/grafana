@@ -3,6 +3,8 @@ import { act, render, screen, fireEvent, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { createTheme, ThemeContext } from '@grafana/data';
+
 import { mockComboboxRect } from '../../test-utils/mockDom';
 import { Drawer } from '../Drawer/Drawer';
 import { Field } from '../Forms/Field';
@@ -446,23 +448,42 @@ describe('Combobox', () => {
   });
 
   describe('selected option check icon', () => {
-    it('shows a check only on the selected option', async () => {
-      render(<Combobox options={options} value={options[1].value} onChange={onChangeHandler} />);
-      await userEvent.click(screen.getByRole('combobox'));
+    const refreshTheme = { ...createTheme(), flags: { visualDesignRefresh: true } };
+    const RefreshThemeWrapper = ({ children }: { children: React.ReactNode }) => (
+      <ThemeContext.Provider value={refreshTheme}>{children}</ThemeContext.Provider>
+    );
 
-      const optionEls = await screen.findAllByRole('option');
-      optionEls.forEach((optionEl, index) => {
-        const check = within(optionEl).queryByTestId('icon-check');
-        if (index === 1) {
-          expect(check).toBeInTheDocument();
-        } else {
-          expect(check).not.toBeInTheDocument();
-        }
+    describe('with the visual refresh enabled', () => {
+      it('shows a check only on the selected option', async () => {
+        render(<Combobox options={options} value={options[1].value} onChange={onChangeHandler} />, {
+          wrapper: RefreshThemeWrapper,
+        });
+        await userEvent.click(screen.getByRole('combobox'));
+
+        const optionEls = await screen.findAllByRole('option');
+        optionEls.forEach((optionEl, index) => {
+          const check = within(optionEl).queryByTestId('icon-check');
+          if (index === 1) {
+            expect(check).toBeInTheDocument();
+          } else {
+            expect(check).not.toBeInTheDocument();
+          }
+        });
+      });
+
+      it('shows no check when nothing is selected', async () => {
+        render(<Combobox options={options} value={null} onChange={onChangeHandler} />, {
+          wrapper: RefreshThemeWrapper,
+        });
+        await userEvent.click(screen.getByRole('combobox'));
+
+        await screen.findAllByRole('option');
+        expect(screen.queryByTestId('icon-check')).not.toBeInTheDocument();
       });
     });
 
-    it('shows no check when nothing is selected', async () => {
-      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+    it('shows no check with the visual refresh disabled', async () => {
+      render(<Combobox options={options} value={options[1].value} onChange={onChangeHandler} />);
       await userEvent.click(screen.getByRole('combobox'));
 
       await screen.findAllByRole('option');
