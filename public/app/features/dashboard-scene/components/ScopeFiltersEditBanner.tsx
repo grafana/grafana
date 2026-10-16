@@ -2,22 +2,30 @@ import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import { SceneObjectStateChangedEvent, SceneQueryRunner, type SceneObject } from '@grafana/scenes';
+import {
+  SceneDataTransformer,
+  SceneObjectStateChangedEvent,
+  SceneQueryRunner,
+  type SceneObject,
+} from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
 import { hasScopeFilteredDatasource } from 'app/features/scopes/dashboards/scopeFilteredDatasources';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-// A SceneQueryRunner setState carrying only these keys is a data refresh (poll, panel in/out of
-// view, etc.), not a change to what the query actually targets — ignoring it is what keeps a
+// A SceneQueryRunner or SceneDataTransformer setState carrying only these keys is a data refresh
+// (poll, panel in/out of view, etc.), not a change to what the query actually targets — ignoring it is what keeps a
 // dashboard with N panels from re-walking the whole scene on every panel's every refresh tick.
 const QUERY_RUNNER_DATA_ONLY_KEYS = new Set(['data', '_hasFetchedData']);
 
 const RECOMPUTE_DEBOUNCE_MS = 150;
 
-function isQueryRunnerDataOnlyUpdate(event: SceneObjectStateChangedEvent): boolean {
+// Dashboard panels wrap the query runner in a SceneDataTransformer, which also emits `data` updates
+// on every refresh.
+function isDataOnlyUpdate(event: SceneObjectStateChangedEvent): boolean {
+  const { changedObject } = event.payload;
   return (
-    event.payload.changedObject instanceof SceneQueryRunner &&
+    (changedObject instanceof SceneQueryRunner || changedObject instanceof SceneDataTransformer) &&
     Object.keys(event.payload.partialUpdate).every((key) => QUERY_RUNNER_DATA_ONLY_KEYS.has(key))
   );
 }
@@ -35,10 +43,11 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
   // children, row/tab contents, a panel's query runner) — those call setState on the nested
   // object itself. SceneObjectStateChangedEvent bubbles from every descendant, so subscribing to
   // it here is what actually catches a panel being added/removed/changed while already editing.
-  // Only relevant while editing (the banner can't show otherwise), and the scene is re-walked
-  // only for structural changes, not every data refresh, so this stays cheap on a busy dashboard.
+  // Only relevant while editing with a filtered scope selected (the banner can't show otherwise),
+  // and the scene is re-walked only for structural changes, not every data refresh, so this stays
+  // cheap on a busy dashboard.
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing || !hasScopeWithFilters) {
       setHasFilteredDatasource(false);
       return;
     }
@@ -66,7 +75,7 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
 
     // Drag, resize and title edits emit bursts of state changes, so coalesce them into one walk.
     const sub = body.subscribeToEvent(SceneObjectStateChangedEvent, (event) => {
-      if (!isQueryRunnerDataOnlyUpdate(event)) {
+      if (!isDataOnlyUpdate(event)) {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(recomputeHasFilteredDatasource, RECOMPUTE_DEBOUNCE_MS);
       }
@@ -76,7 +85,7 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
       clearTimeout(debounceTimer);
       sub.unsubscribe();
     };
-  }, [dashboard, body, isEditing]);
+  }, [dashboard, body, isEditing, hasScopeWithFilters]);
 
   const [dismissed, setDismissed] = useState(false);
   useEffect(() => {

@@ -3,7 +3,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 import { type DataSourceInstanceSettings, type Scope } from '@grafana/data';
 import { useScopes } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
-import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { hasScopeFilteredDatasource } from 'app/features/scopes/dashboards/scopeFilteredDatasources';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -28,6 +28,8 @@ const mockUseScopes = jest.mocked(useScopes);
 const mockHasScopeFilteredDatasource = jest.mocked(hasScopeFilteredDatasource);
 
 const BANNER_TEST_ID = 'scope-filters-edit-banner';
+// Comfortably past the component's 150ms recompute debounce.
+const RECOMPUTE_DEBOUNCE_WAIT_MS = 300;
 
 // Every panel below sets an explicit datasource type, and buildDashboard gives each one a
 // `${type}-ds` uid, so seeding these four covers the whole suite.
@@ -125,11 +127,13 @@ describe('ScopeFiltersEditBanner', () => {
     expect(await screen.findByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 
-  it('does not render in view mode (not editing)', () => {
+  it('does not render in view mode (not editing)', async () => {
     mockScopes([makeScope('scope-1', true)]);
     const dashboard = buildDashboard({ isEditing: false, datasourceTypes: ['loki'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    // Let any mistakenly-started async walk resolve so it would have a chance to show the banner.
+    await act(async () => {});
 
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
@@ -211,29 +215,46 @@ describe('ScopeFiltersEditBanner', () => {
   });
 
   it('does not re-walk the scene for a panel data refresh, but does for a structural change', async () => {
-    mockScopes([makeScope('scope-1', true)]);
-    const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
-    const gridItem = (dashboard.state.body as DefaultGridLayoutManager).state.grid.state
-      .children[0] as DashboardGridItem;
-    const panel = gridItem.state.body as VizPanel;
-    const queryRunner = panel.state.$data as SceneQueryRunner;
+    jest.useFakeTimers();
+    try {
+      mockScopes([makeScope('scope-1', true)]);
+      const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
+      const gridItem = (dashboard.state.body as DefaultGridLayoutManager).state.grid.state
+        .children[0] as DashboardGridItem;
+      const panel = gridItem.state.body as VizPanel;
+      // Real panels wrap the query runner in a transformer, which also emits data updates.
+      const queryRunner = new SceneQueryRunner({
+        datasource: { type: 'loki', uid: 'loki-ds' },
+        queries: [{ refId: 'A' }],
+      });
+      const transformer = new SceneDataTransformer({ $data: queryRunner, transformations: [] });
+      panel.setState({ $data: transformer });
 
-    render(<ScopeFiltersEditBanner dashboard={dashboard} />);
-    const callsAfterMount = mockHasScopeFilteredDatasource.mock.calls.length;
-    await act(() => Promise.resolve());
+      render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+      await act(async () => {});
+      const callsAfterMount = mockHasScopeFilteredDatasource.mock.calls.length;
 
-    // A data refresh only ever touches `data` (and `_hasFetchedData`) on the query runner.
-    act(() => {
-      queryRunner.setState({ data: undefined });
-    });
-    expect(mockHasScopeFilteredDatasource.mock.calls.length).toBe(callsAfterMount);
+      // A data refresh only ever touches `data` (and `_hasFetchedData`) on the runner/transformer.
+      act(() => {
+        queryRunner.setState({ data: undefined });
+        transformer.setState({ data: undefined });
+      });
+      await act(async () => {
+        jest.advanceTimersByTime(RECOMPUTE_DEBOUNCE_WAIT_MS);
+      });
+      expect(mockHasScopeFilteredDatasource.mock.calls.length).toBe(callsAfterMount);
 
-    // Changing what the query actually targets is a structural change and must be picked up.
-    act(() => {
-      queryRunner.setState({ datasource: { type: 'mysql', uid: 'mysql-ds' } });
-    });
-    await waitFor(() => expect(mockHasScopeFilteredDatasource.mock.calls.length).toBeGreaterThan(callsAfterMount));
-    await act(() => Promise.resolve());
+      // Changing what the query actually targets is a structural change and must be picked up.
+      act(() => {
+        queryRunner.setState({ datasource: { type: 'mysql', uid: 'mysql-ds' } });
+      });
+      await act(async () => {
+        jest.advanceTimersByTime(RECOMPUTE_DEBOUNCE_WAIT_MS);
+      });
+      expect(mockHasScopeFilteredDatasource.mock.calls.length).toBe(callsAfterMount + 1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('coalesces a burst of structural changes into a single re-walk', async () => {
