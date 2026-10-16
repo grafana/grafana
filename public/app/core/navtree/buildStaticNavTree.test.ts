@@ -244,15 +244,31 @@ describe('buildStaticNavTree', () => {
       ]);
     });
 
-    it('hides alert groups under V2 with triage but keeps alert activity', () => {
-      setup({
-        permissions: [AccessControlAction.AlertingInstanceRead],
-        openFeatureFlags: { alertingNavigationV2: true, alertingTriage: true },
-      });
+    it('moves alert groups into alert activity under V2 when state history writes to Prometheus', () => {
+      const alertingChildren = (openFeatureFlags: Record<string, boolean>) => {
+        setup({
+          permissions: [AccessControlAction.AlertingInstanceRead],
+          openFeatureFlags: { alertingNavigationV2: true, ...openFeatureFlags },
+          config: {
+            unifiedAlerting: {
+              ...config.unifiedAlerting,
+              stateHistory: { backend: 'prometheus', prometheusTargetDatasourceUID: 'prom-uid' },
+            },
+          },
+        });
+        return ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? []);
+      };
 
-      const children = ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? []);
+      const children = alertingChildren({});
       expect(children).toContain('alert-activity');
       expect(children).not.toContain('groups');
+
+      // The flag can still turn the page off
+      const childrenWithFlagOff = alertingChildren({ alertingTriage: false });
+      expect(childrenWithFlagOff).not.toContain('alert-activity');
+      expect(childrenWithFlagOff).toContain('groups');
+
+      config.unifiedAlerting = { ...config.unifiedAlerting, stateHistory: undefined };
     });
 
     it('adds admin-only items for org admins', () => {

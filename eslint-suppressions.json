@@ -991,11 +991,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/assistant/AnalizeRuleButton.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/contact-points/ContactPoints.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1241,11 +1236,6 @@
       "count": 5
     }
   },
-  "public/app/features/alerting/unified/home/GettingStarted.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/home/Insights.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1322,11 +1312,6 @@
     }
   },
   "public/app/features/alerting/unified/rule-list/RuleList.v2.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/rule-list/RuleListPageTitle.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
     }

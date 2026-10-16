@@ -966,8 +966,9 @@ export interface FeatureToggles {
   */
   interactiveLearning?: boolean;
   /**
-  * Enables the alerting triage feature
-  * @default false
+  * Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.
+  * @deprecated
+  * @default true
   */
   alertingTriage?: boolean;
   /**

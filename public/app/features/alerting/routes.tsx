@@ -1,7 +1,6 @@
 import { Navigate } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -16,6 +15,7 @@ import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
 } from './unified/utils/alertmanagerPermissions';
+import { alertActivityEnabled } from './unified/utils/pageAccess';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   const routes = [
@@ -426,7 +426,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
   ];
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingTriage, false)) {
+  if (alertActivityEnabled()) {
     routes.push({
       path: '/alerting/alerts',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
