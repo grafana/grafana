@@ -755,7 +755,6 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
 
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 		uids := make([]string, 0, len(result))
@@ -822,7 +821,6 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		cfg.UnifiedAlerting.DeletedRuleRetention = 0
 
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 		uids := make([]string, 0, len(result))
@@ -875,7 +873,6 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
 
 		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-		store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 		result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, toInsertRules(gen.GenerateMany(3)))
 		uids := make([]string, 0, len(result))
@@ -1025,7 +1022,7 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{},
-		featuremgmt.FlagAlertingFolderHasRulesLabel, featuremgmt.FlagAlertRuleRestore)
+		featuremgmt.FlagAlertingFolderHasRulesLabel)
 
 	var requestedTables []string
 	spy := &dbSpy{DB: sqlStore}
@@ -1209,7 +1206,7 @@ func TestIntegration_DeleteAlertRulesByUID_SingleConnectionPool(t *testing.T) {
 	sqlStore.GetEngine().SetMaxOpenConns(1)
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{}, featuremgmt.FlagAlertRuleRestore)
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
 	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{
 			DB:    sqlStore,
@@ -4403,7 +4400,6 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
-	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 	oldT := timeNow
 	t.Cleanup(func() {
@@ -4499,7 +4495,6 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
-	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 	gen := models.RuleGen
 	orgID := int64(rand.IntN(1000)) + 1
