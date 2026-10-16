@@ -832,6 +832,12 @@ func TestLibraryPanelStorageDeclaresGVK(t *testing.T) {
 	require.Equal(t, "LibraryPanel", so.GVK.Kind)
 	require.True(t, so.EnableFolderSupport, "panels are synced into managed folders")
 	require.False(t, so.RequireFolder, "panels may live at the root")
+	require.Equal(t, apistore.DeprecatedID_Optional, so.DeprecatedInternalID,
+		"Mode 1 must preserve the SQL ID when copying a panel to unified storage")
+
+	standalone := (&DashboardsAPIBuilder{isStandalone: true}).libraryPanelStorageOpts()
+	require.Equal(t, apistore.DeprecatedID_None, standalone.DeprecatedInternalID,
+		"standalone writes must not accept client-supplied SQL IDs")
 }
 
 // The remaining resources in the group -- variables, notebooks and snapshots --
