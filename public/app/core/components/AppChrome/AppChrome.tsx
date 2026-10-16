@@ -402,7 +402,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
     sidebarContainerFloatingBar: css({
       // `Resizable` sets width and height inline.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      width: `min(480px, calc(100% - ${theme.spacing(6)})) !important` as 'auto',
+      width: `min(480px, calc(100% - ${theme.spacing(4)})) !important` as 'auto',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       height: 'auto !important' as 'auto',
       top: 'auto',
@@ -410,7 +410,8 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       left: '50%',
       right: 'auto',
       transform: 'translateX(-50%)',
-      bottom: theme.spacing(3),
+      // Matches the page's own padding, so the snap points (which reuse this inset) line up with its panes.
+      bottom: theme.spacing(2),
       background: 'transparent',
       // The sidebar inside can be moved off this box; the box itself must not block the page.
       pointerEvents: 'none',
