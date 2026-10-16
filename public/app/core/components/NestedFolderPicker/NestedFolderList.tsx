@@ -269,6 +269,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           </Text>
           {readOnly && (
             <ReadOnlyBadge
+              compact
               tooltip={t('folder-picker.read-only-folder-tooltip', "You can't create dashboards in this folder")}
             />
           )}

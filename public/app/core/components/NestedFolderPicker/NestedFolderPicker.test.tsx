@@ -657,14 +657,14 @@ describe('NestedFolderPicker', () => {
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
-      expect(within(readOnlyRow).getByText('Read only')).toBeInTheDocument();
+      expect(within(readOnlyRow).getByRole('img', { name: 'Read only' })).toBeInTheDocument();
       expect(readOnlyRow).toHaveAttribute('aria-disabled', 'true');
 
       await user.click(within(readOnlyRow).getByText(folderC.item.title));
       expect(mockOnChange).not.toHaveBeenCalled();
 
       const editableRow = screen.getByRole('treeitem', { name: folderA.item.title });
-      expect(within(editableRow).queryByText('Read only')).not.toBeInTheDocument();
+      expect(within(editableRow).queryByRole('img', { name: 'Read only' })).not.toBeInTheDocument();
       await user.click(within(editableRow).getByText(folderA.item.title));
       expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
     });
@@ -700,9 +700,9 @@ describe('NestedFolderPicker', () => {
       fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'searchable' } });
 
       const readOnlyRow = await screen.findByRole('treeitem', { name: /Searchable view only/ });
-      expect(within(readOnlyRow).getByText('Read only')).toBeInTheDocument();
+      expect(within(readOnlyRow).getByRole('img', { name: 'Read only' })).toBeInTheDocument();
       expect(
-        within(screen.getByRole('treeitem', { name: /Searchable editable/ })).queryByText('Read only')
+        within(screen.getByRole('treeitem', { name: /Searchable editable/ })).queryByRole('img', { name: 'Read only' })
       ).not.toBeInTheDocument();
     });
 
@@ -719,7 +719,7 @@ describe('NestedFolderPicker', () => {
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
-      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+      expect(screen.queryByRole('img', { name: 'Read only' })).not.toBeInTheDocument();
     });
   });
 });
