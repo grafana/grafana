@@ -37,6 +37,24 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 	namespace string,
 	quotaStatus provisioning.QuotaStatus,
 ) (metav1.Condition, error) {
+	return c.conditions(ctx, namespace, quotaStatus, c.repos.CountRepositories)
+}
+
+// ConfirmRepositoryQuotaConditions is RepositoryQuotaConditions on the confirmed count.
+func (c *RepositoryQuotaChecker) ConfirmRepositoryQuotaConditions(
+	ctx context.Context,
+	namespace string,
+	quotaStatus provisioning.QuotaStatus,
+) (metav1.Condition, error) {
+	return c.conditions(ctx, namespace, quotaStatus, c.repos.ConfirmRepositoryCount)
+}
+
+func (c *RepositoryQuotaChecker) conditions(
+	ctx context.Context,
+	namespace string,
+	quotaStatus provisioning.QuotaStatus,
+	countRepositories func(ctx context.Context, namespace string) (int, error),
+) (metav1.Condition, error) {
 	// Get quota limits for this namespace/tier
 	maxRepos := quotaStatus.MaxRepositories
 
@@ -51,7 +69,7 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 	}
 
 	// The count tolerates staleness.
-	count, err := c.repos.CountRepositories(ctx, namespace)
+	count, err := countRepositories(ctx, namespace)
 	if err != nil {
 		return metav1.Condition{}, err
 	}

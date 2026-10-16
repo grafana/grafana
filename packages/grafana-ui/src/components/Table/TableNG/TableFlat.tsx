@@ -160,6 +160,7 @@ export function TableFlat(props: TableNGProps) {
     structureRev,
   });
 
+  // Briefly highlight the dragged column and its drop target after a reorder.
   const [settlingColumnKeys, setSettlingColumnKeys] = useState<ReadonlySet<string>>(() => new Set());
   const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -177,13 +178,14 @@ export function TableFlat(props: TableNGProps) {
     settleTimeoutRef.current = setTimeout(() => setSettlingColumnKeys(new Set()), COLUMN_SETTLE_MS);
   }, []);
 
-  // A partial order cannot place unmentioned columns deterministically.
+  // Reorder using the saved order or catalog, not only currently rendered columns.
   const handleColumnsReorder = useCallback(
     (sourceColumnKey: string, targetColumnKey: string) => {
       const next = [...(columnOrder ?? columnCatalog ?? visibleFields.map(getDisplayName))];
       const sourceIndex = next.indexOf(sourceColumnKey);
       const targetIndex = next.indexOf(targetColumnKey);
 
+      // A drag cannot update an order that omits either dragged column.
       if (sourceIndex < 0 || targetIndex < 0) {
         return;
       }

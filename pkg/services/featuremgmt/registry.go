@@ -686,6 +686,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.dashboardPreviewMode",
+			Description: "Enables Viewing and Editing modes for dynamic dashboards",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
@@ -1178,6 +1186,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "authz.legacyUserPermissions",
+			Description:  "Load legacy Access Control permissions through embedded AuthZ.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:         "authz.userPermissions",

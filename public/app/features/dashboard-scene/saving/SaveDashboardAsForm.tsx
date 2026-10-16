@@ -155,6 +155,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
 
     if (result.status === 'success') {
       dashboard.closeModal();
+      drawer.state.onSaveSuccess?.();
     } else {
       setContentSent({
         title: data.title,
