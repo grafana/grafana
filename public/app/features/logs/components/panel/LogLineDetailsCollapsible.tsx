@@ -8,6 +8,7 @@ import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 
 interface LogLineDetailsCollapsibleProps {
+  actions?: ReactNode;
   children: ReactNode;
   count?: number;
   defaultExpanded?: boolean;
@@ -17,6 +18,7 @@ interface LogLineDetailsCollapsibleProps {
 }
 
 export const LogLineDetailsCollapsible = ({
+  actions,
   children,
   count,
   defaultExpanded = true,
@@ -47,22 +49,25 @@ export const LogLineDetailsCollapsible = ({
 
   return (
     <div className={styles.section}>
-      <button type="button" className={styles.header} aria-expanded={expanded} onClick={toggle}>
-        <Icon
-          name={expanded ? 'angle-down' : 'angle-right'}
-          className={styles.chevron}
-          size={fontSize === 'small' ? 'md' : 'lg'}
-        />
-        <span className={styles.headerContent}>
-          {icon != null && applyIconClassName(icon, styles.icon)}
-          <span className={styles.label}>{label}</span>
-          {count !== undefined && (
-            <span className={styles.counter}>
-              <Counter value={count} variant="secondary" />
-            </span>
-          )}
-        </span>
-      </button>
+      <div className={styles.header}>
+        <button type="button" className={styles.headerButton} aria-expanded={expanded} onClick={toggle}>
+          <Icon
+            name={expanded ? 'angle-down' : 'angle-right'}
+            className={styles.chevron}
+            size={fontSize === 'small' ? 'md' : 'lg'}
+          />
+          <span className={styles.headerContent}>
+            {icon != null && applyIconClassName(icon, styles.icon)}
+            <span className={styles.label}>{label}</span>
+            {count !== undefined && (
+              <span className={styles.counter}>
+                <Counter value={count} variant="secondary" />
+              </span>
+            )}
+          </span>
+        </button>
+        {expanded && actions != null && <div className={styles.actions}>{actions}</div>}
+      </div>
       {expanded && <div className={styles.content}>{children}</div>}
     </div>
   );
@@ -88,12 +93,25 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
 
   return {
     section: css({
-      marginTop: theme.spacing(1),
+      marginTop: theme.spacing(1.5),
     }),
     header: css({
       display: 'flex',
       alignItems: 'center',
       gap: iconGap,
+      minHeight: theme.spacing(3),
+      borderRadius: theme.shape.radius.default,
+      '&:hover': {
+        background: theme.colors.action.hover,
+      },
+      marginBottom: theme.spacing(1),
+    }),
+    headerButton: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: iconGap,
+      flex: 1,
+      minWidth: 0,
       minHeight: theme.spacing(3),
       padding: `0 ${theme.spacing(0.5)}`,
       lineHeight: 1,
@@ -104,13 +122,19 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
       appearance: 'none',
       background: 'none',
       border: 'none',
-      width: '100%',
       textAlign: 'left',
-      borderRadius: theme.shape.radius.default,
-      '&:hover': {
-        background: theme.colors.action.hover,
+    }),
+    actions: css({
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0,
+      marginLeft: 'auto',
+      paddingRight: theme.spacing(0.5),
+      // InlineSwitch sizes itself like a form control. Keep header actions on the same row as the label.
+      '& > div': {
+        height: 'auto',
+        padding: 0,
       },
-      marginBottom: theme.spacing(1),
     }),
     headerContent: css({
       display: 'flex',
