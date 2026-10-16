@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
-import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
   featureToggles: {
@@ -28,7 +28,7 @@ test.describe(
     test('can add a new constant variable', async ({ page, selectors, controls, sidebar, panels }) => {
       const viewUrl = await importVariableTestDashboard(page, selectors, panels);
       const variable = variableWithDefaults({ type: 'constant' });
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       await sidebar.variableOptions.constant.setValue(variable.value);
 
@@ -41,9 +41,7 @@ test.describe(
       await expect(markdownContent).toContainText(`VariableUnderTest: ${variable.value}`);
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Constant variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
@@ -54,7 +52,7 @@ test.describe(
     test('can add a new textbox variable', async ({ page, selectors, controls, sidebar, panels }) => {
       const viewUrl = await importVariableTestDashboard(page, selectors, panels);
       const variable = variableWithDefaults();
-      await flows.variables.addNewTextBoxVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewTextBoxVariable(sidebar, controls, variable);
 
       const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
@@ -77,9 +75,7 @@ test.describe(
       await expect(markdownContent).toContainText(`VariableUnderTest: bar`);
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Textbox variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
@@ -93,7 +89,7 @@ test.describe(
       const variable = variableWithDefaults({ type: 'interval', value: '1m' });
       // We use a non-default list without 6h because reverting to the defaults must fail, so the saved list is verified.
       const intervals = '1m,5m,2h';
-      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(sidebar, controls, variable);
 
       await sidebar.variableOptions.interval.setValues(intervals);
       await sidebar.variableOptions.interval.toggleAuto();
@@ -120,9 +116,7 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: 6h');
 
       await controls.enterEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
-      await sidebar.contentOutline.clickItem(variable.label);
+      await flows.contentOutline.selectVariable(sidebar, variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Interval variable');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
@@ -140,7 +134,7 @@ test.describe(
         await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false, title: test.info().title });
 
         const variable = variableWithDefaults({ display: 'Hidden' });
-        await flows.variables.addNewTextBoxVariable(page, sidebar, controls, variable);
+        await flows.variables.addNewTextBoxVariable(sidebar, controls, variable);
 
         // check the variable is hidden in the dashboard
         let variableLabel = controls.variables.getLabel(variable.label);
@@ -171,7 +165,7 @@ test.describe(
         await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false, title: test.info().title });
 
         const variable = variableWithDefaults();
-        await flows.variables.addNewTextBoxVariable(page, sidebar, controls, variable);
+        await flows.variables.addNewTextBoxVariable(sidebar, controls, variable);
 
         // check the variable is visible in the dashboard
         let variableLabel = controls.variables.getLabel(variable.label);

@@ -1,6 +1,9 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import {
+  applyFieldOverrides,
+  CoreApp,
   type DataFrame,
   getFrameDisplayName,
   type GrafanaTheme2,
@@ -8,16 +11,20 @@ import {
   type SelectableValue,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
+  TABLE_TRANSFORMATIONS_OWNER,
+  useAdHocColumnState,
+  useTableRefreshNewFeatures,
   useCacheFieldDisplayNames,
   useCellActions,
   useCommonTableProps,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
+import { supportsColumnManagement, withAdHocTransformCapabilities } from 'app/features/table/tableCapabilities';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -62,7 +69,45 @@ export function TablePanel(props: Props) {
   const count = frames?.length;
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
-  const main = frames[currentIndex];
+  const rawMain = frames[currentIndex];
+  const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
+  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
+  const sourceSeries = adHocTransformationsEnabled
+    ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
+    : undefined;
+  const configuredSourceSeries = useMemo(
+    () =>
+      sourceSeries &&
+      applyFieldOverrides({
+        data: [...sourceSeries],
+        fieldConfig,
+        fieldConfigRegistry: getPluginImportUtils().getPanelPluginFromCache('table')?.fieldConfigRegistry,
+        theme,
+        timeZone: props.timeZone,
+        replaceVariables,
+      }).map((frame, frameIndex) => ({
+        ...sourceSeries[frameIndex],
+        // Runtime transforms match source names, before display-name overrides are applied.
+        fields: frame.fields.map((field, fieldIndex) => {
+          const sourceField = sourceSeries[frameIndex].fields[fieldIndex];
+          return {
+            ...sourceField,
+            config: {
+              ...sourceField.config,
+              custom: { ...sourceField.config.custom, hideFrom: field.config.custom?.hideFrom },
+            },
+          };
+        }),
+      })),
+    [sourceSeries, fieldConfig, theme, props.timeZone, replaceVariables]
+  );
+  const columnManagementEnabled = adHocTransformationsEnabled && supportsColumnManagement(rawMain);
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, adHocTransformationsEnabled, configuredSourceSeries);
+  const main = useMemo(
+    () =>
+      adHocTransformationsEnabled && rawMain ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns)) : rawMain,
+    [rawMain, adHocTransformationsEnabled, adHocColumns]
+  );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
@@ -85,6 +130,9 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <TableNG
       {...commonTableProps}
+      {...adHocColumns}
+      reorderable={Boolean(adHocColumns)}
+      showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}

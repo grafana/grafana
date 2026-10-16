@@ -4,8 +4,21 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { textUtil } from '@grafana/data';
 
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
-import { resourceOrigin, type BlockedResource, type TextSandboxState } from './sandboxPolicy';
-import { isFrameNotification, TEXT_FRAME_PROTOCOL, type RenderCommand, type MermaidCommand } from './sandboxProtocol';
+import {
+  MAX_BLOCKED_URL_CHARS,
+  resourceOrigin,
+  urlChars,
+  type BlockedResource,
+  type BlockedUrl,
+  type TextSandboxState,
+} from './sandboxPolicy';
+import {
+  isFrameNotification,
+  randomId,
+  TEXT_FRAME_PROTOCOL,
+  type RenderCommand,
+  type MermaidCommand,
+} from './sandboxProtocol';
 
 export const WATCHDOG_TIMEOUT_MS = 15_000;
 
@@ -90,9 +103,9 @@ function useFrameRuntime({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [sandboxState, setSandboxState] = useState<TextSandboxState>({ status: 'loading', resources: [] });
   const [dimensions, setDimensions] = useState({ height: 1, contentHeight: 0 });
-  const [channel] = useState(randomChannel);
+  const [channel] = useState(randomId);
   // srcdoc inherits deployment CSP, so reuse Grafana's server nonce when one is present.
-  const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomChannel());
+  const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomId());
   const protectedFrame = policy !== undefined;
 
   useLayoutEffect(() => {
@@ -118,7 +131,7 @@ function useFrameRuntime({
       onResize: setDimensions,
       onBlocked: (incoming) =>
         setSandboxState((current) => {
-          const resources = mergeBlockedResources(current.resources, incoming);
+          const resources = mergeResources(current.resources, incoming);
           return resources === current.resources ? current : { ...current, resources };
         }),
     });
@@ -150,14 +163,14 @@ function createFrameController({
   onBlocked,
 }: FrameControllerOptions) {
   // Protocol guards update synchronously, independently of React's reported state.
-  let renderCommandSent = false;
+  let renderedDocument: string | undefined;
   let hasFailed = false;
   let mermaidRequested = false;
   let disposed = false;
   const expectedOrigin = protectedFrame ? 'null' : window.location.origin;
   // Opaque-origin frames require '*'; commands still target only this document's WindowProxy.
   const targetOrigin = protectedFrame ? '*' : window.location.origin;
-  const watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
+  let watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
   window.addEventListener('message', onMessage);
   void loadSandboxRuntime()
     .then((runtimeSource) => {
@@ -193,7 +206,7 @@ function createFrameController({
     }
     switch (message.type) {
       case 'ready':
-        return sendRender();
+        return sendRender(message.document);
       case 'mermaid-needed':
         return loadRequestedMermaid();
       case 'rendered':
@@ -207,24 +220,37 @@ function createFrameController({
     }
   }
 
-  function sendRender() {
+  function sendRender(documentId: string) {
     // Protected frames verify CSP violation delivery before sending ready and receiving panel data.
-    if (renderCommandSent || hasFailed) {
+    if (renderedDocument === documentId) {
       return;
     }
-    renderCommandSent = true;
+    // Moving an iframe within the DOM reloads its srcdoc. The new document passed its own CSP check, so it is a
+    // fresh attempt even if the previous one failed.
+    if (renderedDocument !== undefined) {
+      hasFailed = false;
+      mermaidRequested = false;
+      clearTimeout(watchdog);
+      watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
+    } else if (hasFailed) {
+      return;
+    }
+    renderedDocument = documentId;
     iframe.contentWindow?.postMessage(renderCommand, targetOrigin);
   }
 
   function loadRequestedMermaid() {
-    if (!renderCommandSent || hasFailed || !renderCommand.mermaid || mermaidRequested) {
+    if (renderedDocument === undefined || hasFailed || !renderCommand.mermaid || mermaidRequested) {
       return;
     }
     mermaidRequested = true;
     const target = iframe.contentWindow;
+    // A reloaded document requests its own copy; a late result for the previous one must not fail it.
+    const requestedBy = renderedDocument;
+    const isCurrent = () => !disposed && renderedDocument === requestedBy;
     void loadSandboxMermaid()
       .then((source) => {
-        if (disposed || hasFailed || !target || iframe.contentWindow !== target) {
+        if (!isCurrent() || hasFailed || !target || iframe.contentWindow !== target) {
           return;
         }
         const command: MermaidCommand = {
@@ -236,14 +262,14 @@ function createFrameController({
         target.postMessage(command, targetOrigin);
       })
       .catch(() => {
-        if (!disposed) {
+        if (isCurrent()) {
           fail();
         }
       });
   }
 
   function markRendered() {
-    if (renderCommandSent && !hasFailed) {
+    if (renderedDocument !== undefined && !hasFailed) {
       clearTimeout(watchdog);
       onStatus('ready');
     }
@@ -251,13 +277,13 @@ function createFrameController({
 
   // Content can still resize or report violations after a rendering failure.
   function updateDimensions(height: number, contentHeight: number) {
-    if (renderCommandSent) {
+    if (renderedDocument !== undefined) {
       onResize({ height, contentHeight });
     }
   }
 
   function recordBlockedResources(resources: BlockedResource[]) {
-    if (renderCommandSent) {
+    if (renderedDocument !== undefined) {
       onBlocked(resources);
     }
   }
@@ -310,22 +336,55 @@ function assignFrameShell(iframe: HTMLIFrameElement, shell: string) {
   Object.assign(iframe, { srcdoc: shellPolicy?.createHTML(shell) ?? shell });
 }
 
-function mergeBlockedResources(current: BlockedResource[], incoming: BlockedResource[]): BlockedResource[] {
+/** Returns `current` when nothing changed, so a repeated report doesn't re-render. */
+function mergeResources(current: BlockedResource[], reported: BlockedResource[]): BlockedResource[] {
+  let changed = false;
   const resources = [...current];
-  for (const resource of incoming) {
-    const normalized = {
-      directive: resource.directive,
-      origin: resource.origin ? resourceOrigin(resource.origin) : undefined,
-    };
-    if (!resources.some((entry) => entry.directive === normalized.directive && entry.origin === normalized.origin)) {
-      resources.push(normalized);
+  for (const resource of reported) {
+    const origin = resource.origin ? resourceOrigin(resource.origin) : undefined;
+    // The frame is untrusted, so drop URLs that don't match the origin they're reported under.
+    const urls = origin ? resource.urls?.filter(({ url }) => resourceOrigin(url) === origin) : undefined;
+    let index = resources.findIndex((entry) => entry.directive === resource.directive && entry.origin === origin);
+    if (index === -1) {
+      index = resources.push({ directive: resource.directive, origin }) - 1;
+      changed = true;
+    }
+    if (!urls) {
+      continue;
+    }
+    const entry = resources[index];
+    const merged = mergeUrls(entry.urls ?? [], urls);
+    const truncated = Boolean(entry.truncated || resource.truncated || merged.dropped);
+    if (merged.urls !== entry.urls || truncated !== Boolean(entry.truncated)) {
+      resources[index] = { ...entry, urls: merged.urls, ...(truncated && { truncated }) };
+      changed = true;
     }
   }
-  return resources.length === current.length ? current : resources;
+  return changed ? resources : current;
 }
 
-function randomChannel() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (value) => value.toString(16).padStart(2, '0')).join(
-    ''
-  );
+/** `dropped` is true when the budget left out a URL. */
+function mergeUrls(current: BlockedUrl[], reported: BlockedUrl[]): { urls: BlockedUrl[]; dropped: boolean } {
+  let changed = false;
+  let dropped = false;
+  let chars = urlChars(current);
+  const urls = [...current];
+  const indexes = new Map(urls.map(({ url }, index) => [url, index]));
+  for (const entry of reported) {
+    const index = indexes.get(entry.url);
+    if (index === undefined) {
+      if (chars + entry.url.length > MAX_BLOCKED_URL_CHARS) {
+        dropped = true;
+        continue;
+      }
+      indexes.set(entry.url, urls.length);
+      urls.push({ url: entry.url, count: entry.count });
+      chars += entry.url.length;
+      changed = true;
+    } else if (entry.count > urls[index].count) {
+      urls[index] = { url: entry.url, count: entry.count };
+      changed = true;
+    }
+  }
+  return { urls: changed ? urls : current, dropped };
 }

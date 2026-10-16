@@ -44,6 +44,11 @@ type ResourceIndexClient interface {
 	// Hybrid search: RRF fuse lexical and vector results with optional reranking.
 	// Without a vector backend or embedding provider, searches only the regular
 	// resource index using the lexical leg; reranking remains available.
+	// A single resource type behaves identically with either request selector.
+	// Multiple resource types are reranked together; without successful reranking,
+	// their results are interleaved in request order, preserving each type's ranking.
+	// A failure searching any requested resource fails the request; no partial
+	// results are returned.
 	HybridSearch(ctx context.Context, in *HybridSearchRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error)
 }
 
@@ -123,6 +128,11 @@ type ResourceIndexServer interface {
 	// Hybrid search: RRF fuse lexical and vector results with optional reranking.
 	// Without a vector backend or embedding provider, searches only the regular
 	// resource index using the lexical leg; reranking remains available.
+	// A single resource type behaves identically with either request selector.
+	// Multiple resource types are reranked together; without successful reranking,
+	// their results are interleaved in request order, preserving each type's ranking.
+	// A failure searching any requested resource fails the request; no partial
+	// results are returned.
 	HybridSearch(context.Context, *HybridSearchRequest) (*HybridSearchResponse, error)
 }
 

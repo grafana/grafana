@@ -45,6 +45,7 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_source_last_success_timestamp_seconds` | gauge | `source` | When each source last loaded successfully |
 | `grafana_router_source_polls_total` | counter | `source`, `result` | Load or poll attempts: `success` or `failure` |
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
+| `grafana_router_stack_fallback_refused_total` | counter | | Requests the single-tenant fallback refused because a stack's aggregator sent them (`X-Grafana-Aggregator`), which would loop back to that stack. Absent without the fallback |
 | `grafana_router_stack_discovery_cache_total` | counter | `result` | Single-tenant discovery requests looked up in the cache shared by each stack's callers: `hit`, `miss`. Absent when `st_discovery_cache_bytes = 0` |
 
 Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`
@@ -73,7 +74,7 @@ retried with backoff.
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_breaker_state` | gauge | `group`, `state` | 1 for the group's current breaker state (`closed`, `half-open`, `open`), 0 for the others |
+| `grafana_router_breaker_state` | gauge | `group`, `state` | 1 for the group's current breaker state (`closed`, `half-open`, `open`), 0 for the others. An open breaker stays `open` past its timeout until a request makes the trial: scrapes never move it |
 | `grafana_router_breaker_transitions_total` | counter | `group`, `state` | Breaker state changes, by the state entered |
 | `grafana_router_backend_failures_total` | counter | `group`, `plugin_id`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch`, `auth` (a plugin token exchange failed) |
 | `grafana_router_discovery_results_total` | counter | `group`, `result` | How aggregated discovery was obtained: `provided`, `cached`, `fetched`, `stale`, `unavailable` |
@@ -105,7 +106,7 @@ including watches the router rejects (for example with a 401, or a 400 for a Web
 
 `route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
-discovery the router builds), `next` (not the router's; passed on), `invalid` (rejected before
+discovery and `/apis/discovery`, which the router builds), `next` (not the router's; passed on), `invalid` (rejected before
 routing) or `unauthenticated` (rejected because the caller did not authenticate, in the standalone
 router).
 

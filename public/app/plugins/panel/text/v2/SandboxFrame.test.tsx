@@ -3,7 +3,7 @@ import { StrictMode } from 'react';
 
 import { SandboxFrame, type SandboxFrameProps, WATCHDOG_TIMEOUT_MS } from './SandboxFrame';
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
-import { textSandboxPolicy } from './sandboxPolicy';
+import { MAX_BLOCKED_URL_CHARS, textSandboxPolicy } from './sandboxPolicy';
 import { TEXT_FRAME_PROTOCOL } from './sandboxProtocol';
 
 jest.mock('./loadSandboxRuntime', () => ({
@@ -36,7 +36,7 @@ function notify(frame: HTMLIFrameElement, type: string, extra = {}, envelope = {
     new MessageEvent('message', {
       source: frame.contentWindow,
       origin: frame.hasAttribute('sandbox') ? 'null' : window.location.origin,
-      data: { protocol: TEXT_FRAME_PROTOCOL, channel, type, ...extra },
+      data: { protocol: TEXT_FRAME_PROTOCOL, channel, type, ...(type === 'ready' && { document: 'first' }), ...extra },
       ...envelope,
     })
   );
@@ -108,6 +108,43 @@ it('rejects foreign sources, origins, channels, and premature rendered messages'
   expect(postMessage).toHaveBeenCalledTimes(1);
 });
 
+it('renders again into a reloaded document and fails closed if it never completes', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+
+  notify(element, 'ready', { document: 'reloaded' });
+  notify(element, 'ready', { document: 'reloaded' });
+  expect(postMessage).toHaveBeenCalledTimes(2);
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'render', html: '<p>Private content</p>' }),
+    '*'
+  );
+
+  act(() => jest.advanceTimersByTime(WATCHDOG_TIMEOUT_MS));
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+});
+
+it('renders into a reloaded document after the previous document failed', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'error');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+
+  notify(element, 'ready', { document: 'reloaded' });
+  expect(postMessage).toHaveBeenCalledTimes(2);
+  expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'render' }), '*');
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+});
+
 it('retains the visible frame and reports a late violation', async () => {
   const options = props();
   render(<SandboxFrame {...options} />);
@@ -123,6 +160,84 @@ it('retains the visible frame and reports a late violation', async () => {
     status: 'ready',
     resources: [{ directive: 'img-src', origin: 'https://external.test' }],
   });
+});
+
+it('merges reported URLs per origin, keeping the highest count and dropping URLs from other origins', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  const origin = 'https://external.test';
+  notify(element, 'blocked', {
+    resources: [
+      {
+        directive: 'img-src',
+        origin,
+        urls: [
+          { url: `${origin}/a.png`, count: 1 },
+          { url: 'https://elsewhere.test/b.png', count: 1 },
+        ],
+      },
+    ],
+  });
+  notify(element, 'blocked', {
+    resources: [
+      {
+        directive: 'img-src',
+        origin,
+        urls: [
+          { url: `${origin}/a.png`, count: 4 },
+          { url: `${origin}/c.png`, count: 1 },
+        ],
+      },
+    ],
+  });
+  expect(options.onState).toHaveBeenLastCalledWith({
+    status: 'loading',
+    resources: [
+      {
+        directive: 'img-src',
+        origin,
+        urls: [
+          { url: `${origin}/a.png`, count: 4 },
+          { url: `${origin}/c.png`, count: 1 },
+        ],
+      },
+    ],
+  });
+  const count = jest.mocked(options.onState).mock.calls.length;
+  notify(element, 'blocked', {
+    resources: [{ directive: 'img-src', origin, urls: [{ url: `${origin}/a.png`, count: 2 }] }],
+  });
+  expect(options.onState).toHaveBeenCalledTimes(count);
+});
+
+it('keeps the truncated flag from a report', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  const urls = [{ url: 'https://external.test/collect?d=x', count: 1 }];
+  notify(element, 'blocked', {
+    resources: [{ directive: 'img-src', origin: 'https://external.test', urls, truncated: true }],
+  });
+  expect(options.onState).toHaveBeenLastCalledWith({
+    status: 'loading',
+    resources: [{ directive: 'img-src', origin: 'https://external.test', urls, truncated: true }],
+  });
+});
+
+it.each([
+  ['a non-string URL', [{ url: 1, count: 1 }]],
+  ['a zero count', [{ url: 'https://external.test/a.png', count: 0 }]],
+  ['URLs over the budget', [{ url: `https://external.test/${'x'.repeat(MAX_BLOCKED_URL_CHARS)}`, count: 1 }]],
+])('ignores reports with %s', async (_, urls) => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'blocked', { resources: [{ directive: 'img-src', origin: 'https://external.test', urls }] });
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
 });
 
 it('omits CSP and sandbox completely without data', async () => {
@@ -419,6 +534,21 @@ it.each(['error', 'timeout'] as const)('discards pending Mermaid source after %s
   expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
   expect(postMessage).toHaveBeenCalledTimes(1);
   expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'render' }), '*');
+});
+
+it('ignores a Mermaid failure from the document before a reload', async () => {
+  let reject!: (error: Error) => void;
+  jest.mocked(loadSandboxMermaid).mockReturnValueOnce(new Promise((_, fail) => (reject = fail)));
+  const options = props({ mermaid: {} });
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed');
+  notify(element, 'ready', { document: 'reloaded' });
+  notify(element, 'rendered');
+  await act(async () => reject(new Error('Chunk failed')));
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
 });
 
 it('fails closed on a forbidden shell policy and preserves TrustedHTML branding when permitted', async () => {

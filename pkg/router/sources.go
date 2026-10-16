@@ -19,22 +19,22 @@ func aggregateSource(target string) string { return aggregateSourceName + target
 
 // sourceStatus is how a route source's loads or polls are going.
 type sourceStatus struct {
-	Source string
+	Source string `json:"source"`
 	// LastSuccess is when the source last loaded successfully; zero if never.
-	LastSuccess time.Time
+	LastSuccess time.Time `json:"lastSuccess"`
 	// Successes and Failures count attempts since the router started.
-	Successes uint64
-	Failures  uint64
+	Successes uint64 `json:"successes"`
+	Failures  uint64 `json:"failures"`
 	// Skipped is the number of backends the latest successful load skipped.
-	Skipped int
+	Skipped int `json:"skipped"`
 }
 
 // shadowedGroup is a group that one source offered but a higher-priority
 // source serves instead.
 type shadowedGroup struct {
-	Group  string
-	Source string
-	By     string
+	Group  string `json:"group"`
+	Source string `json:"source"`
+	By     string `json:"servedBy"`
 }
 
 // loaderStatus is an optional RoutesLoader interface for loaders that report
@@ -45,6 +45,9 @@ type loaderStatus interface {
 	// stackLookups counts single-tenant stack lookups by result; nil without
 	// a single-tenant fallback.
 	stackLookups() map[string]uint64
+	// stackFallbackRefused counts requests the single-tenant fallback refused
+	// because a stack's aggregator sent them; false without the fallback.
+	stackFallbackRefused() (uint64, bool)
 	// stackDiscoveryCache counts single-tenant discovery cache lookups by
 	// result; nil without a single-tenant fallback or its discovery cache.
 	stackDiscoveryCache() map[string]uint64
