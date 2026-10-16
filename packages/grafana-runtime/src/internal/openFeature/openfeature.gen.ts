@@ -182,6 +182,8 @@ export const FlagKeys = {
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
+  /** Lets Grafana Assistant float the extension sidebar over the page instead of docking it */
+  GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Offers the reserved Grafana home option in the home dashboard preference */
@@ -220,6 +222,8 @@ export const FlagKeys = {
   GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
+  /** Disables creating new recorded queries while preserving access to existing queries */
+  GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
   /** Enables the dedicated Saved queries page and its navigation entry */
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
@@ -1311,6 +1315,17 @@ export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluatio
 };
 
 /**
+ * Lets Grafana Assistant float the extension sidebar over the page instead of docking it
+ *
+ * **Details:**
+ * - flag key: `grafana.extensionSidebarFloating`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.extensionSidebarFloating", false, options).value;
+};
+
+/**
  * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
  *
  * **Details:**
@@ -1517,6 +1532,17 @@ export const useFlagGrafanaPluginPathNesting = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.queryVarEditorRedesign", true, options).value;
+};
+
+/**
+ * Disables creating new recorded queries while preserving access to existing queries
+ *
+ * **Details:**
+ * - flag key: `grafana.recordedQueriesDisableCreate`
+ * - default value: `false`
+ */
+export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.recordedQueriesDisableCreate", false, options).value;
 };
 
 /**

@@ -20,6 +20,7 @@ declare module "@openfeature/core" {
     | "faroSessionReplay"
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
+    | "grafana.recordedQueriesDisableCreate"
     | "awsAssumeRolePerDatasourceExternalId"
     | "grafanaAPIServerWithExperimentalAPIs"
     | "provisioningFolderMetadata"
@@ -191,6 +192,7 @@ declare module "@openfeature/core" {
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.logDetailsDisplayedFieldControls"
     | "grafana.globalHomePreference"
+    | "grafana.extensionSidebarFloating"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy";
