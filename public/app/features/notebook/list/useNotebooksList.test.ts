@@ -1,14 +1,21 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
+import { defaultSpec as defaultNotebookSpec } from 'app/features/notebook/types';
 
 import { type ResultItem, type SearchResults, useSearchNotebooksInfiniteQuery } from './notebookSearchApi';
-import { NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
+import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
   useGetDisplayMappingQuery: jest.fn(),
+}));
+
+jest.mock('app/api/clients/dashboard/v2beta1', () => ({
+  useListNotebookQuery: jest.fn(),
 }));
 
 jest.mock('./notebookSearchApi', () => ({
@@ -16,10 +23,12 @@ jest.mock('./notebookSearchApi', () => ({
 }));
 
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
+const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery);
 
 const CREATED_MS = Date.UTC(2026, 0, 1);
 const UPDATED_MS = Date.UTC(2026, 1, 1);
+const CONTENT_SEARCH_FLAG = 'dashboard.notebooksContentSearch';
 
 function makeHit(overrides: {
   name: string;
@@ -123,6 +132,64 @@ function fullPage(): ResultItem[] {
   return Array.from({ length: NOTEBOOKS_PAGE_LIMIT }, (_, i) => makeHit({ name: `nb${i}`, title: `Notebook ${i}` }));
 }
 
+/** The route-missing failure that makes the hook fall back to LIST. */
+function setSearchRouteMissing(status = 404) {
+  setSearch([], { error: { status, data: { message: 'not found' }, config: { url: '' } } });
+}
+
+function unsupportedContentError(field = 'where.text.fields[1]') {
+  return {
+    status: 422,
+    data: {
+      details: {
+        causes: [{ reason: 'FieldValueInvalid', field, message: 'Invalid value: "content": unknown field' }],
+      },
+    },
+    config: { url: '' },
+  };
+}
+
+function makeNotebook(
+  overrides: {
+    name: string;
+    title: string;
+    tags?: string[];
+    createdBy?: string;
+    created?: string;
+    updated?: string;
+  } // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal fixture standing in for a full k8s resource
+): Notebook {
+  return {
+    metadata: {
+      name: overrides.name,
+      creationTimestamp: overrides.created ?? '2026-01-01T00:00:00Z',
+      annotations: {
+        ...(overrides.createdBy ? { 'grafana.app/createdBy': overrides.createdBy } : {}),
+        ...(overrides.updated ? { 'grafana.app/updatedTimestamp': overrides.updated } : {}),
+      },
+    },
+    spec: {
+      ...defaultNotebookSpec(),
+      // The schema and generated-client element unions are nominally distinct; these fixtures
+      // have no elements, so state that rather than casting the spec across the seam.
+      elements: {},
+      title: overrides.title,
+      tags: overrides.tags ?? [],
+    },
+  };
+}
+
+function setList(items: Notebook[], extra: { isLoading?: boolean; error?: unknown; continueToken?: string } = {}) {
+  const data = { items, metadata: { continue: extra.continueToken } };
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
+  mockUseListNotebookQuery.mockReturnValue({
+    data,
+    currentData: data,
+    isLoading: extra.isLoading ?? false,
+    error: extra.error,
+  } as unknown as ReturnType<typeof useListNotebookQuery>);
+}
+
 function setupHook(enabled = true) {
   const wrapper = getWrapper({ renderWithRouter: false });
   return renderHook(() => useNotebooksList({ enabled }), { wrapper });
@@ -142,21 +209,40 @@ describe('useNotebooksList', () => {
     while (afterEachRestore.length) {
       afterEachRestore.pop()?.();
     }
+    act(() => setTestFlags({}));
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    setTestFlags({ [CONTENT_SEARCH_FLAG]: true });
+    // The availability latch is module state by design, so each case starts from "unknown".
+    __resetSearchAvailabilityForTests();
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
     mockUseGetDisplayMappingQuery.mockReturnValue({ data: undefined } as unknown as ReturnType<
       typeof useGetDisplayMappingQuery
     >);
     setSearch([]);
+    setList([]);
   });
 
   describe('the request', () => {
+    it('searches titles only until content indexing is enabled', async () => {
+      setTestFlags({ [CONTENT_SEARCH_FLAG]: false });
+      const { result } = setupHook();
+
+      act(() => result.current.setSearchQuery('checkout'));
+
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).not.toHaveProperty('where.text.fields');
+      });
+      expect(result.current.searchesContent).toBe(false);
+    });
+
     it('projects only the fields the table renders', () => {
       setupHook();
 
+      // The point of the migration: LIST cannot ask for less than the whole notebook.
       expect(lastSearchArg()).toMatchObject({
         fields: ['title', 'tags', 'createdBy', 'created', 'updated'],
         limit: NOTEBOOKS_PAGE_LIMIT,
@@ -176,7 +262,7 @@ describe('useNotebooksList', () => {
       expect(lastSearchArg()).not.toHaveProperty('sort');
     });
 
-    it('sends a bare text leaf when only a title is searched', async () => {
+    it('searches titles and saved content', async () => {
       const { result } = setupHook();
 
       act(() => {
@@ -184,7 +270,7 @@ describe('useNotebooksList', () => {
       });
 
       await waitFor(() => {
-        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout', fields: ['title', 'content'] } } });
       });
     });
 
@@ -196,8 +282,102 @@ describe('useNotebooksList', () => {
       });
 
       await waitFor(() => {
-        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout', fields: ['title', 'content'] } } });
       });
+    });
+
+    it('falls back to title search if the server does not support content', async () => {
+      const { result, rerender } = setupHook();
+
+      act(() => result.current.setSearchQuery('checkout'));
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { fields: ['title', 'content'] } } });
+      });
+
+      setSearch([], { error: unsupportedContentError() });
+      rerender();
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).not.toHaveProperty('where.text.fields');
+      });
+      expect(mockUseListNotebookQuery).toHaveBeenLastCalledWith(skipToken);
+
+      setSearch([makeHit({ name: 'nb1', title: 'Checkout' })]);
+      rerender();
+      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+    });
+
+    it('falls back when an unsupported content error retains cached pages', async () => {
+      const { result, rerender } = setupHook();
+
+      act(() => result.current.setSearchQuery('checkout'));
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { fields: ['title', 'content'] } } });
+      });
+
+      setSearch([makeHit({ name: 'cached', title: 'Previous page' })], { error: unsupportedContentError() });
+      rerender();
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+        expect(lastSearchArg()).not.toHaveProperty('where.text.fields');
+      });
+      expect(result.current.searchesContent).toBe(false);
+      expect(mockUseListNotebookQuery).toHaveBeenLastCalledWith(skipToken);
+    });
+
+    it('falls back when a tag filter nests the unsupported content field', async () => {
+      const { result, rerender } = setupHook();
+
+      act(() => {
+        result.current.setSearchQuery('checkout');
+        result.current.addTagFilter('ops');
+      });
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [
+              { text: { fields: ['title', 'content'] } },
+              { filter: { field: 'tags', operator: 'In', values: ['ops'] } },
+            ],
+          },
+        });
+      });
+
+      setSearch([], { error: unsupportedContentError('where.and[0].text.fields[1]') });
+      rerender();
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [{ text: { value: 'checkout' } }, { filter: { field: 'tags', operator: 'In', values: ['ops'] } }],
+          },
+        });
+        expect(lastSearchArg()).not.toHaveProperty('where.and[0].text.fields');
+      });
+    });
+
+    it('does not hide unrelated search validation errors', async () => {
+      const { result, rerender } = setupHook();
+
+      act(() => result.current.setSearchQuery('checkout'));
+      await waitFor(() => {
+        expect(lastSearchArg()).toMatchObject({ where: { text: { fields: ['title', 'content'] } } });
+      });
+
+      const error = {
+        status: 422,
+        data: {
+          details: {
+            causes: [{ reason: 'FieldValueInvalid', field: 'where.text.fields[0]', message: 'Invalid query' }],
+          },
+        },
+        config: { url: '' },
+      };
+      setSearch([], { error });
+      rerender();
+
+      expect(lastSearchArg()).toMatchObject({ where: { text: { fields: ['title', 'content'] } } });
+      expect(result.current.error).toBe(error);
+      expect(result.current.searchesContent).toBe(true);
     });
 
     it('sends a bare filter leaf when only the author is filtered', async () => {
@@ -271,6 +451,7 @@ describe('useNotebooksList', () => {
       setupHook(false);
 
       expect(mockUseSearchNotebooksQuery).toHaveBeenCalledWith(skipToken);
+      expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
     });
   });
 
@@ -387,6 +568,49 @@ describe('useNotebooksList', () => {
 
       expect(result.current.isLoadingMore).toBe(false);
       expect(result.current.isTruncated).toBe(false);
+    });
+  });
+
+  describe('loadedTags', () => {
+    it('collects the tags of every row, deduped and ordered for a reader', () => {
+      setSearch([
+        makeHit({ name: 'nb1', title: 'One', tags: ['slo', 'errors'] }),
+        makeHit({ name: 'nb2', title: 'Two', tags: ['errors', 'Alerting'] }),
+      ]);
+
+      const { result } = setupHook();
+
+      expect(result.current.loadedTags).toEqual(['Alerting', 'errors', 'slo']);
+    });
+
+    it('is empty when nothing is loaded', () => {
+      setSearch([]);
+
+      const { result } = setupHook();
+
+      expect(result.current.loadedTags).toEqual([]);
+    });
+
+    // From the rows before client-side filtering: a picker whose options narrowed as the reader
+    // filtered would drop the very tags left to choose from, which is what happened to the author
+    // filter when it was built that way.
+    it('does not narrow as the rows are filtered', async () => {
+      setSearchRouteMissing();
+      setList([
+        makeNotebook({ name: 'nb1', title: 'Checkout error spike', tags: ['errors'] }),
+        makeNotebook({ name: 'nb2', title: 'Q2 latency regression', tags: ['latency'] }),
+      ]);
+
+      const { result } = setupHook();
+
+      await waitFor(() => expect(result.current.loadedTags).toEqual(['errors', 'latency']));
+
+      act(() => {
+        result.current.setSearchQuery('checkout');
+      });
+
+      await waitFor(() => expect(result.current.rows).toHaveLength(1));
+      expect(result.current.loadedTags).toEqual(['errors', 'latency']);
     });
   });
 
@@ -532,6 +756,7 @@ describe('useNotebooksList', () => {
       const { result } = setupHook();
 
       expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1', 'nb2', 'nb3']);
+      expect(result.current.loadedCount).toBe(3);
       // The total comes from the first page, which counts the whole match set, not the page.
       expect(result.current.totalCount).toBe(3);
     });
@@ -568,6 +793,16 @@ describe('useNotebooksList', () => {
       setupHook();
 
       expect(mockFetchNextPage).not.toHaveBeenCalled();
+    });
+
+    it('does not walk on the fallback path, where LIST cannot page', async () => {
+      setSearchRouteMissing();
+      setList([makeNotebook({ name: 'nb1', title: 'From list' })], { continueToken: 'next-page' });
+
+      const { result } = setupHook();
+
+      await waitFor(() => expect(result.current.rows).toHaveLength(1));
+      expect(result.current.isLoadingMore).toBe(false);
     });
   });
 
@@ -702,14 +937,197 @@ describe('useNotebooksList', () => {
     });
   });
 
-  // Nothing is swallowed: the rows come from one endpoint, so a failure there is the page's whole
-  // answer and has to reach the reader rather than read as an empty library.
-  it('surfaces a search failure as an error', () => {
+  // The search route is mounted from an ini key that is off by default and is not reported in
+  // frontend settings, so the page has to survive its absence.
+  describe('when the search endpoint is not served', () => {
+    it('falls back to LIST on a 404', async () => {
+      setSearchRouteMissing();
+      setList([makeNotebook({ name: 'nb1', title: 'From list' })]);
+
+      const { result } = setupHook();
+
+      await waitFor(() => {
+        expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+      });
+      expect(mockUseListNotebookQuery).toHaveBeenLastCalledWith({ limit: NOTEBOOKS_PAGE_LIMIT });
+      // The fallback is not a failure the user should see.
+      expect(result.current.error).toBeUndefined();
+    });
+
+    it('falls back on a 405 as well', async () => {
+      setSearchRouteMissing(405);
+      setList([makeNotebook({ name: 'nb1', title: 'From list' })]);
+
+      const { result } = setupHook();
+
+      await waitFor(() => {
+        expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+      });
+    });
+
+    it('converts list timestamps to millis so the table gets one shape', async () => {
+      setSearchRouteMissing();
+      setList([
+        makeNotebook({
+          name: 'nb1',
+          title: 'From list',
+          created: '2026-01-01T00:00:00Z',
+          updated: '2026-02-01T00:00:00Z',
+        }),
+      ]);
+
+      const { result } = setupHook();
+
+      await waitFor(() => {
+        expect(result.current.rows[0]).toEqual(expect.objectContaining({ created: CREATED_MS, updated: UPDATED_MS }));
+      });
+    });
+
+    it('falls back to the creation timestamp when the notebook was never updated', async () => {
+      setSearchRouteMissing();
+      setList([makeNotebook({ name: 'nb1', title: 'Never touched', created: '2026-01-01T00:00:00Z' })]);
+
+      const { result } = setupHook();
+
+      await waitFor(() => {
+        expect(result.current.rows[0].updated).toBe(CREATED_MS);
+      });
+    });
+
+    it('filters client-side, since the server did none', async () => {
+      setSearchRouteMissing();
+      setList([
+        makeNotebook({ name: 'nb1', title: 'Checkout error spike' }),
+        makeNotebook({ name: 'nb2', title: 'Q2 latency regression' }),
+      ]);
+
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setSearchQuery('CHECKOUT');
+      });
+
+      await waitFor(() => {
+        expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+      });
+    });
+
+    // The search path sends the tags as predicates; on this path nothing did, so the same narrowing
+    // has to happen here or the filter would silently do nothing wherever search is not served.
+    it('narrows by every selected tag, not any of them', async () => {
+      setSearchRouteMissing();
+      setList([
+        makeNotebook({ name: 'nb1', title: 'Both', tags: ['latency', 'slo'] }),
+        makeNotebook({ name: 'nb2', title: 'One of them', tags: ['latency'] }),
+        makeNotebook({ name: 'nb3', title: 'Neither', tags: ['checkout'] }),
+      ]);
+
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setTagFilter(['latency', 'slo']);
+      });
+
+      await waitFor(() => {
+        expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+      });
+    });
+
+    it('reports what it loaded rather than inventing a total LIST never gave', async () => {
+      setSearchRouteMissing();
+      setList([makeNotebook({ name: 'nb1', title: 'One' }), makeNotebook({ name: 'nb2', title: 'Two' })]);
+
+      const { result } = setupHook();
+
+      await waitFor(() => {
+        expect(result.current.loadedCount).toBe(2);
+      });
+      expect(result.current.totalCount).toBeUndefined();
+    });
+
+    // The opposite of the search path: LIST stops at its own byte limit before reaching the
+    // requested count, so here a short page with a cursor is real truncation.
+    it('treats a short LIST page with a continue token as truncated', async () => {
+      setSearchRouteMissing();
+      setList([makeNotebook({ name: 'nb1', title: 'One' })], { continueToken: 'next-page' });
+
+      const { result } = setupHook();
+
+      await waitFor(() => {
+        expect(result.current.isTruncated).toBe(true);
+      });
+    });
+
+    // Every page asks the same URL, so only a 404 with nothing loaded says the route is absent. One
+    // partway through the walk is transient — a pod restarting mid-deploy, a proxy answering for it
+    // — and abandoning search for the session on it would hide the failure behind stale-looking
+    // rows.
+    it('does not fall back when a 404 lands partway through the walk', async () => {
+      setSearchPages([searchPage([makeHit({ name: 'nb1', title: 'From search' })], { continueToken: 'next-page' })], {
+        error: { status: 404, data: { message: 'not found' }, config: { url: '' } },
+        errorAfterPages: true,
+      });
+      setList([makeNotebook({ name: 'nb-from-list', title: 'From list' })]);
+
+      const { result } = setupHook();
+
+      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+      expect(result.current.error).toEqual(expect.objectContaining({ status: 404 }));
+      expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
+    });
+
+    // Same class of bug as the mid-walk case, reached through a new cache key instead: `currentData`
+    // is empty on every filter change, so it cannot tell "the route never answered" from "it has
+    // not answered for these filters yet".
+    it('does not fall back when a 404 lands on a new filter after an earlier query answered', async () => {
+      setSearch([makeHit({ name: 'nb1', title: 'From search' })]);
+      setList([makeNotebook({ name: 'nb-from-list', title: 'From list' })]);
+
+      const { result } = setupHook();
+
+      // The route answered once, so it is served here.
+      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+
+      // A new filter is a new cache key, so nothing is held for it — and this one 404s.
+      setSearchRouteMissing();
+      act(() => {
+        result.current.setSearchQuery('checkout');
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toEqual(expect.objectContaining({ status: 404 }));
+      });
+      expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
+    });
+
+    it('stops asking for the search route once it is known to be missing', async () => {
+      setSearchRouteMissing();
+      setList([makeNotebook({ name: 'nb1', title: 'From list' })]);
+
+      const { result } = setupHook();
+
+      await waitFor(() => {
+        expect(result.current.rows).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.setSearchQuery('checkout');
+      });
+
+      // Every keystroke would otherwise be a new cache key and a fresh 404.
+      await waitFor(() => {
+        expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(skipToken);
+      });
+    });
+  });
+
+  it('surfaces a real error rather than falling back', () => {
     setSearch([], { error: { status: 500, data: { message: 'boom' }, config: { url: '' } } });
 
     const { result } = setupHook();
 
     expect(result.current.error).toEqual(expect.objectContaining({ status: 500 }));
+    expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
   });
 
   // The walk halts on a failure but leaves a next page on offer, so "still loading" would never
@@ -746,6 +1164,7 @@ describe('useNotebooksList', () => {
       const { result } = setupHook();
 
       expect(result.current.totalCount).toBe(0);
+      expect(result.current.loadedCount).toBe(0);
     });
 
     it('says it is reloading, not loading, once something has been shown', async () => {
