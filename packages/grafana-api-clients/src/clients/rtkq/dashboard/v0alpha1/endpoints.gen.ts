@@ -967,10 +967,14 @@ export type HybridSearchResults = {
   kind?: string;
 };
 export type HybridSearchFilter = {
-  /** Field is uid or folder for all resources. Dashboards additionally support datasource_uid and language (promql, logql, traceql or sql). */
+  /** Field is uid or folder for all resources. A single dashboard resource type additionally supports datasource_uid and language (promql, logql, traceql or sql). Searches across multiple types support only uid and folder. */
   field: string;
   /** Values must contain at least one value. Values containing '*' are rejected. An empty folder value matches resources in the root folder. */
   values: string[];
+};
+export type HybridSearchResource = {
+  group: string;
+  resource: string;
 };
 export type HybridSearchQuery = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -979,15 +983,17 @@ export type HybridSearchQuery = {
   filters?: HybridSearchFilter[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  /** Limit is the maximum number of results. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected. */
+  /** Limit is the maximum number of results across all requested resource types. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected. */
   limit?: number;
   /** MinRelevance is lowest, low, medium, high or highest. Empty keeps every result. Filtering is best-effort: no results are dropped when reranking is unavailable or fails. It cannot be combined with SkipRerank. */
   minRelevance?: string;
   /** Query supplies the lexical query and, unless SemanticQuery is set, the text embedded for semantic search. Required, with a maximum of 1000 bytes. */
   query: string;
+  /** Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs. */
+  resources?: HybridSearchResource[];
   /** SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes. */
   semanticQuery?: string;
-  /** SkipRerank returns the fused lexical and semantic ordering without reranking, even when a reranker is configured. */
+  /** SkipRerank skips reranking even when a reranker is configured. Multiple resource types are interleaved in request order, preserving each type's ranking. */
   skipRerank?: boolean;
 };
 export type TrashResults = {
