@@ -552,6 +552,24 @@ describe('DashboardTabs', () => {
       expect(within(visited).getByText(/ago/)).toBeInTheDocument();
     });
 
+    it('lets the user star a dashboard row, which updates the Starred tab', async () => {
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry, recentDashboardEntry]);
+      server.use(getCustomSearchHandler(recentHits));
+
+      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+
+      const star = await screen.findByRole('button', { name: 'Mark "Recent Dashboard 1" as favorite' });
+      expect(screen.getAllByRole('button', { name: /as favorite/ })).toHaveLength(1);
+      expect(screen.getByRole('tab', { name: /starred.*0/i })).toBeInTheDocument();
+
+      await user.click(star);
+
+      expect(
+        await screen.findByRole('button', { name: 'Unmark "Recent Dashboard 1" as favorite' })
+      ).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /starred.*1/i })).toBeInTheDocument();
+    });
+
     it('drops dashboards the user can no longer see', async () => {
       const gone: PageHistoryEntry[] = Array.from({ length: 3 }, (_, i) => dashboardEntry(`gone-${i}`));
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([...gone, exploreEntry]);
