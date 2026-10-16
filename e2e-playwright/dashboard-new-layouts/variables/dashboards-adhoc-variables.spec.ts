@@ -8,7 +8,6 @@ test.use({
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
-    dashboardUnifiedDrilldownControls: false,
   },
 });
 
@@ -53,7 +52,7 @@ test.describe(
 
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');
-      await sidebar.contentOutline.toggleNode('Variables');
+      await sidebar.contentOutline.toggleNode('Filters');
       await sidebar.contentOutline.clickItem(variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Filter');
