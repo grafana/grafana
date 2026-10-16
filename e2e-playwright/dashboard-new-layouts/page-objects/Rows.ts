@@ -4,9 +4,29 @@ import { PageObject } from './PageObject';
 
 /** A row of a rows layout in the dashboard canvas */
 export class Rows extends PageObject {
+  /** Returns the row wrapper, including its header and panels */
+  getContainer(rowTitle: string): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.DashboardRow.wrapper(rowTitle));
+  }
+
+  /** Returns the row's own header, excluding headers of nested rows */
+  getRowHeader(rowTitle: string): Locator {
+    return this.getContainer(rowTitle).locator('> .dashboard-row-header');
+  }
+
+  /** Returns the row's collapse or expand button */
+  getToggle(rowTitle: string): Locator {
+    return this.getRowHeader(rowTitle).getByTestId(this.selectors.components.DashboardRow.toggle(rowTitle));
+  }
+
+  /** Returns the row header's copy-link button, available in view mode */
+  getCopyLinkButton(rowTitle: string): Locator {
+    return this.getRowHeader(rowTitle).getByRole('button', { name: 'Copy link to row', exact: true });
+  }
+
   /** Returns the row's title element in the row header */
   getTitle(rowTitle: string): Locator {
-    return this.getByGrafanaSelector(this.selectors.components.DashboardRow.title(rowTitle));
+    return this.getRowHeader(rowTitle).getByTestId(this.selectors.components.DashboardRow.title(rowTitle));
   }
 
   /** Returns the row's content wrapper (grid or nested tabs) right after the row header */
@@ -42,7 +62,7 @@ export class Rows extends PageObject {
   /** Collapses an expanded row, expands a collapsed one */
   async toggle(rowTitle: string) {
     await test.step(`Toggle row "${rowTitle}"`, async () => {
-      await this.getByGrafanaSelector(this.selectors.components.DashboardRow.toggle(rowTitle)).click();
+      await this.getToggle(rowTitle).click();
     });
   }
 }
