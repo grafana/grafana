@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Icon, Stack, Text, TextLink } from '@grafana/ui';
+import { Alert, Button, Icon, Stack, Text, TextLink } from '@grafana/ui';
 
 import { type ContactPoint } from '../../../api/notifications';
 import { ContactPointSelector } from '../../../contactPoints/components/ContactPointSelector/ContactPointSelector';
@@ -270,7 +270,12 @@ function NotificationPolicyRecipient({
             'alerting.notifications-settings-selector.routing-tree-not-found',
             'The previously selected notification policy could not be found — it may have been deleted'
           )}
-        />
+        >
+          {/* The picker already shows "Default policy" here, so re-picking it emits nothing. */}
+          <Button size="sm" variant="secondary" onClick={() => onChange(null)}>
+            <Trans i18nKey="alerting.notifications-settings-selector.routing-tree-reset">Use the default policy</Trans>
+          </Button>
+        </Alert>
       )}
       <RoutingTreePicker
         value={selectedTree}
