@@ -69,6 +69,7 @@ import {
 } from '../../apiserver/types';
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
+import { endDashboardVisit, startDashboardVisit } from '../data-service/lifecycle';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
@@ -255,6 +256,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const isNew = pathname === '/dashboard/new';
 
     window.__grafanaSceneContext = this;
+    startDashboardVisit(this);
 
     this._initializePanelSearch();
 
@@ -317,6 +319,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
       destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
+      endDashboardVisit(this);
       clearKeyBindings();
       this._changeTracker.terminate();
       this.deactivateSidebar();

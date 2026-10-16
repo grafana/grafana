@@ -13,12 +13,15 @@ import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { type DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
+import { registerDashboardDataApi } from '../data-service/registerDashboardDataApi';
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { useScenesFlickeringFix } from '../utils/utils';
 
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
 import { SoloPanelPageLogo } from './SoloPanelPageLogo';
+
+registerDashboardDataApi();
 
 export interface Props
   extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string; hideLogo?: UrlQueryValue }> {}

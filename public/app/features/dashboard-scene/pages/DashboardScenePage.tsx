@@ -32,12 +32,15 @@ import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBa
 import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashboardDeprecationBanner';
 import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
+import { registerDashboardDataApi } from '../data-service/registerDashboardDataApi';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
+
+registerDashboardDataApi();
 
 // Loaded on demand so the dashboard-library UI stays out of the dashboard page chunk.
 const LazyTemplateDashboardModal = lazy(() =>
