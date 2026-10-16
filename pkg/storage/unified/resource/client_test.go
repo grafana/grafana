@@ -70,6 +70,7 @@ func TestLocalStreamClientInterceptor(t *testing.T) {
 		wantErr       error
 	}{
 		{name: "server streaming early rejection", sendErr: io.EOF},
+		{name: "server streaming wrapped EOF", sendErr: fmt.Errorf("send failed: %w", io.EOF)},
 		{name: "server streaming send succeeds"},
 		{name: "server streaming other error", sendErr: context.Canceled, wantErr: context.Canceled},
 		{name: "client streaming preserves EOF", clientStreams: true, sendErr: io.EOF, wantErr: io.EOF},

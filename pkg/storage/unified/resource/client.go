@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"io"
 	"time"
 
@@ -178,7 +179,7 @@ type localServerStreamingClientStream struct {
 
 func (s localServerStreamingClientStream) SendMsg(msg any) error {
 	err := s.ClientStream.SendMsg(msg)
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return nil
 	}
 	return err
