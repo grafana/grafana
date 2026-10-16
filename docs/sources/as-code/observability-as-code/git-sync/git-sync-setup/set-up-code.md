@@ -13,6 +13,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 title: Set up Git Sync as code
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/set-up-code
@@ -181,6 +182,7 @@ The following configuration parameters are available:
 | Field                                   | Description                                                          |
 | --------------------------------------- | -------------------------------------------------------------------- |
 | `metadata.name`                         | Unique identifier for this repository resource                       |
+| `metadata.namespace`                    | Use `org-<ORG_ID>` to map each repository resource to a specific org |
 | `spec.title`                            | Human-readable name displayed in Grafana UI                          |
 | `spec.type`                             | Repository type (`github`, `githubEnterprise`)                       |
 | `spec.github.url`                       | GitHub repository URL                                                |

@@ -134,7 +134,6 @@ This feature is available starting in Grafana 13.0.4, but not supported until Gr
 
 If you're setting up Git Sync as code or with Terraform and want to configure multiple organizations, use the `org_id` (Number) The Grafana organization ID this resource belongs to, for self-hosted OSS or Enterprise Grafana. When set, it overrides the provider's `org_id` for this resource only, so a single provider configuration can manage App Platform resources across multiple organizations. Not supported on Grafana Cloud (configure a stack with `stack_id` instead). Changing this value forces the resource to be recreated in the new organization.
 
-
 ## Compatible Git providers
 
 Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket.
