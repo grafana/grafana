@@ -285,9 +285,9 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 
 	var err error
 	errorType := "authentication_failure"
-	switch token := req.Header.Get("X-Access-Token"); {
+	switch token := callerToken(req); {
 	case token == "":
-		err = apierrors.NewUnauthorized("missing access token header")
+		err = apierrors.NewUnauthorized("missing access token")
 		errorType = "missing_token"
 	case r.authn == nil:
 		err = apierrors.NewUnauthorized("token authenticator is not configured")
@@ -309,6 +309,20 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 	}
 
 	return req.WithContext(identity.WithRequester(req.Context(), info))
+}
+
+// callerToken returns X-Access-Token when set, otherwise an Authorization
+// Bearer token. X-Access-Token wins because a gateway puts the verified token
+// there, while Authorization may still carry the caller's original credential.
+func callerToken(req *http.Request) string {
+	if token := req.Header.Get("X-Access-Token"); token != "" {
+		return token
+	}
+	scheme, token, _ := strings.Cut(req.Header.Get("Authorization"), " ")
+	if !strings.EqualFold(scheme, "Bearer") {
+		return ""
+	}
+	return strings.TrimSpace(token)
 }
 
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
