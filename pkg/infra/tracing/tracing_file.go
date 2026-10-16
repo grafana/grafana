@@ -18,12 +18,12 @@ import (
 )
 
 const (
-	// defaultTraceFileMaxSize bounds the capture file so an enabled-and-forgotten
+	// DefaultTraceFileMaxSize bounds the capture file so an enabled-and-forgotten
 	// exporter can't fill the disk on a production box.
-	defaultTraceFileMaxSize = int64(100 * 1024 * 1024) // 100 MiB
-	// defaultTraceCaptureDuration stops the capture some time after startup so a
+	DefaultTraceFileMaxSize = int64(100 * 1024 * 1024) // 100 MiB
+	// DefaultTraceCaptureDuration stops the capture some time after startup so a
 	// reproduction window is bounded even if the operator walks away.
-	defaultTraceCaptureDuration = 10 * time.Minute
+	DefaultTraceCaptureDuration = 10 * time.Minute
 )
 
 // fileClient is an otlptrace.Client that writes OTLP/JSON to a local file

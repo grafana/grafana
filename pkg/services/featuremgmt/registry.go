@@ -380,6 +380,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:         "folderPickerCreatePermission",
+			Description:  "Allow searching folders by dashboards:create (permission=create). When off, permission=create is treated as edit",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:         "kubernetesFolderCascadeDelete",
 			Description:  "Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned",
 			Stage:        FeatureStageExperimental,
@@ -674,6 +683,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.dashboardPreviewMode",
+			Description: "Enables Viewing and Editing modes for dynamic dashboards",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
 		{
@@ -1171,6 +1188,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "authz.legacyUserPermissions",
+			Description:  "Load legacy Access Control permissions through embedded AuthZ.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "authz.userPermissions",
 			Description:  "Route user permission snapshots through the AuthZ service.",
 			Stage:        FeatureStageExperimental,
@@ -1466,6 +1492,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, LegacyFrontend: true, React: true},
+		},
+		{
+			Name:         "alerting.ruleQualityFix",
+			Description:  "Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
@@ -1892,15 +1927,6 @@ var (
 			Description:  "Set this to true to enable all app chrome extensions registered by plugins.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaCatalogSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			Expression:   "false", // extensions will be disabled by default
-		},
-		{
-			Name:         "enableDashboardEmptyExtensions",
-			Description:  "Set this to true to enable all dashboard empty state extensions registered by plugins.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Generate:     Generate{LegacyFrontend: true, React: true},
 			Expression:   "false", // extensions will be disabled by default
@@ -3133,15 +3159,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:         "features.bulkFlagEvalFiltering",
-			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBackendServicesSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:         "features.legacyOverrideLookupBypass",
 			Description:  "Skips checking for flag overrides.",
 			Stage:        FeatureStageExperimental,
@@ -3348,24 +3365,6 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:         "unifiedStorageClient.requireCallerIdentity",
-			Description:  "Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{Go: true},
-		},
-		{
-			Name:         "unifiedStorageClient.onBehalfOf",
-			Description:  "Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:         "grafana.pluginExtensionReactElementProps",
 			Description:  "Pass React elements in plugin extension props by reference",
 			Stage:        FeatureStageExperimental,
@@ -3410,6 +3409,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.extensionSidebarFloating",
+			Description: "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.otelLogDetails",
 			Description: "Enables a new version of log details optimized for displaying OTel logs",
 			Stage:       FeatureStageExperimental,
@@ -3417,6 +3424,25 @@ var (
 			Expression:  "false",
 			Generate:    Generate{React: true},
 		},
+		{
+			Name:         "grafana.announcementBannerDismissible",
+			Description:  "Allow admins to make announcement banners dismissible by users",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "true",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "datasources.gatewayAuditPolicy",
+			Description:  "Enable support for the query gateway audit policies",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
+		},
+
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

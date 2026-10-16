@@ -3991,6 +3991,11 @@
     "viz-wrapper": {
       "table": "Tabulka"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Podívejte se na aktuální výstrahy a historická data, abyste prozkoumali aktuální nebo minulé problémy.",
       "description-alert-rules": "Definujte podmínku, která musí být splněna před spuštěním pravidla výstrahy",
@@ -6204,6 +6209,9 @@
       "only-overrides-button-tooltip": "Zobrazit pouze přepsání",
       "placeholder-search-options": "Možnosti hledání",
       "visualization-button-tooltip": "Možnosti hledání"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Data vzorku",
@@ -10961,6 +10969,7 @@
       "no-rows": "Žádné řádky",
       "no-values-label": "Žádné hodnoty",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Seřadit podle sloupce {{column}}",
       "sort-by-column-ascending": "Seřadit podle sloupce {{column}}, vzestupně",
@@ -11269,6 +11278,8 @@
       "incident-filter-all": "Zobrazit incidenty",
       "incident-filter-label": "Filtrovat incidenty podle štítku",
       "incident-tab-label": "Incidenty",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Vaše týmy",
       "title": "Výstrahy a incidenty",
       "title-alerts": "Výstrahy",
@@ -11349,6 +11360,17 @@
       "error-title": "Nelze načíst nedávné příspěvky na blogu",
       "read-more": "Zjistěte víc z blogu Grafana Labs",
       "title": "Novinky z blogu"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -12155,6 +12177,11 @@
       "load-newer": "Načítání novějších protokolů…",
       "load-older": "Načítání starších protokolů…"
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Sbalit štítky",
       "expand": "Rozbalit štítky"
@@ -12205,6 +12232,7 @@
       "inline-mode": "Zobrazit v řádku",
       "inline-no-scrolls": "Přepnout na rozšířené zobrazení",
       "inline-with-scrolls": "Přepnout na zhuštěné zobrazení",
+      "link-fallback-label": "",
       "link-value-tooltip": "Hodnota odkazu",
       "links-section": "Odkazy",
       "log-attributes-field": "Atributy protokolu",
@@ -12214,13 +12242,14 @@
       "move-displayed-field-up": "Přesunout nahoru",
       "no-details": "Žádná pole k zobrazení.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Připnout protokol",
       "prettify": "Zkrášlit",
       "remove-displayed-field": "Odebrat pole",
       "remove-log": "Odebrat protokol",
       "scroll-to-logline": "Posunout na řádek protokolu",
       "search": {
-        "no-results": "Žádné výsledky k zobrazení."
+        "no-results": ""
       },
       "search-placeholder": "Hledat názvy a hodnoty polí",
       "show-context": "Zobrazit kontext",
@@ -13416,6 +13445,11 @@
       "target-label": "Cílový zápisník",
       "target-new": "Nový zápisník",
       "title": "Přidat panel do zápisníku"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",

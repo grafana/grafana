@@ -3883,6 +3883,11 @@
     "viz-wrapper": {
       "table": "テーブル"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "現在アラートが発生しているものを確認し、履歴データを調べて現在または過去の問題を調査します。",
       "description-alert-rules": "アラートルールが発生される前に満たすべき条件を定義します",
@@ -6060,6 +6065,9 @@
       "only-overrides-button-tooltip": "オーバーライドのみ表示",
       "placeholder-search-options": "検索オプション",
       "visualization-button-tooltip": "検索オプション"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "サンプルデータ",
@@ -10751,6 +10759,7 @@
       "no-rows": "行なし",
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "「{{column}}」列で並べ替え",
       "sort-by-column-ascending": "「{{column}}」列で並べ替え（昇順）",
@@ -11059,6 +11068,8 @@
       "incident-filter-all": "すべてのインシデント",
       "incident-filter-label": "ラベルでインシデントを絞り込む",
       "incident-tab-label": "インシデント",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "自分のチーム",
       "title": "アラートとインシデント",
       "title-alerts": "アラート",
@@ -11133,6 +11144,17 @@
       "error-title": "最近のブログ投稿を読み込めませんでした",
       "read-more": "Grafana Labsブログの記事をもっと読む",
       "title": "ブログの最新記事"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11873,6 +11895,11 @@
       "load-newer": "新しいログを読み込んでいます...",
       "load-older": "古いログを読み込んでいます..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "ラベルを折りたたむ",
       "expand": "ラベルを展開"
@@ -11923,6 +11950,7 @@
       "inline-mode": "インラインで表示",
       "inline-no-scrolls": "拡張ビューに切り替える",
       "inline-with-scrolls": "縮小ビューに切り替える",
+      "link-fallback-label": "",
       "link-value-tooltip": "リンク値",
       "links-section": "リンク",
       "log-attributes-field": "ログ属性",
@@ -11932,13 +11960,14 @@
       "move-displayed-field-up": "上へ移動",
       "no-details": "表示するフィールドがありません。",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "ログをピン留め",
       "prettify": "整形",
       "remove-displayed-field": "フィールドを削除する",
       "remove-log": "ログを削除",
       "scroll-to-logline": "ログ行までスクロール",
       "search": {
-        "no-results": "表示する結果がありません。"
+        "no-results": ""
       },
       "search-placeholder": "フィールド名と値を検索",
       "show-context": "コンテキストを表示",
@@ -13119,6 +13148,11 @@
       "target-label": "ターゲットノートブック",
       "target-new": "新しいノートブック",
       "title": "ノートブックにパネルを追加"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",

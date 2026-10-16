@@ -3991,6 +3991,11 @@
     "viz-wrapper": {
       "table": "Tabela"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Sprawdzaj bieżące alerty i przeglądaj dane historyczne, aby zbadać obecne lub wcześniejsze problemy.",
       "description-alert-rules": "Zdefiniuj warunek, który musi zostać spełniony przed uruchomieniem reguły alertu",
@@ -6204,6 +6209,9 @@
       "only-overrides-button-tooltip": "Pokaż tylko zastąpienia",
       "placeholder-search-options": "Opcje wyszukiwania",
       "visualization-button-tooltip": "Opcje wyszukiwania"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Przykładowe dane",
@@ -10961,6 +10969,7 @@
       "no-rows": "Brak wierszy",
       "no-values-label": "Brak wartości",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} z {{numRows}} wierszy",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Sortuj według kolumny {{column}}",
       "sort-by-column-ascending": "Sortuj według kolumny {{column}} rosnąco",
@@ -11269,6 +11278,8 @@
       "incident-filter-all": "Wszystkie zdarzenia",
       "incident-filter-label": "Filtruj zdarzenia według etykiety",
       "incident-tab-label": "Incydenty",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Twoje zespoły",
       "title": "Alerty i incydenty",
       "title-alerts": "Alerty",
@@ -11349,6 +11360,17 @@
       "error-title": "Nie udało się wczytać ostatnich postów na blogu",
       "read-more": "Przeczytaj więcej na blogu Grafana Labs",
       "title": "Najnowsze na blogu"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -12155,6 +12177,11 @@
       "load-newer": "Ładowanie nowszych logów…",
       "load-older": "Ładowanie starszych logów…"
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Zwiń etykiety",
       "expand": "Rozwiń etykiety"
@@ -12205,6 +12232,7 @@
       "inline-mode": "Wyświetl bezpośrednio",
       "inline-no-scrolls": "Przełącz na widok rozszerzony",
       "inline-with-scrolls": "Przełącz na widok skrócony",
+      "link-fallback-label": "",
       "link-value-tooltip": "Wartość linku",
       "links-section": "Linki",
       "log-attributes-field": "Atrybuty logów",
@@ -12214,13 +12242,14 @@
       "move-displayed-field-up": "Przesuń do góry",
       "no-details": "Brak pól do wyświetlenia.",
       "open-assistant": "Wyjaśnij wiersz logu w Asystencie",
+      "open-value-in": "",
       "pin-line": "Przypnij log",
       "prettify": "Lepsze formatowanie",
       "remove-displayed-field": "Usuń pole",
       "remove-log": "Usuń log",
       "scroll-to-logline": "Przewiń do wiersza logu",
       "search": {
-        "no-results": "Brak wyników do wyświetlenia."
+        "no-results": ""
       },
       "search-placeholder": "Wyszukaj nazwy i wartości pól",
       "show-context": "Pokaż kontekst",
@@ -13416,6 +13445,11 @@
       "target-label": "Docelowy notatnik",
       "target-new": "Nowy notatnik",
       "title": "Dodaj panel do notatnika"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
