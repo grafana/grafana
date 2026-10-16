@@ -1,4 +1,4 @@
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { sceneGraph, VizPanel, type SceneObject } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
