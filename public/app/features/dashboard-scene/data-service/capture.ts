@@ -1,4 +1,3 @@
-import { type DataFrame, getFieldDisplayName, LoadingState, type PanelData } from '@grafana/data';
 import {
   type CapturedAnnotation,
   type CapturedFrame,
@@ -6,7 +5,11 @@ import {
   type DashboardPanelCapture,
   type DashboardPanelCaptureRequest,
   type DashboardSectionInfo,
-} from '@grafana/runtime';
+  type DataFrame,
+  getFieldDisplayName,
+  LoadingState,
+  type PanelData,
+} from '@grafana/data';
 import { MultiValueVariable, sceneGraph, type VariableValueOption } from '@grafana/scenes';
 
 import { type DashboardSceneLike } from '../scene/types/dashboard';

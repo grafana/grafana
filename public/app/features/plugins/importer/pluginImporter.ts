@@ -16,6 +16,7 @@ import { getLogger } from '@grafana/runtime/unstable';
 import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
+import { withRestrictedGrafanaApis } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
 import { getPluginExtensionRegistries } from '../extensions/registry/setup';
 
 import { importPluginModule } from './importPluginModule';
@@ -47,6 +48,10 @@ const panelPluginPostImport: PostImportStrategy<PanelPlugin, PanelPluginMeta> = 
       // pluginExports.plugin can either be a Promise<PanelPlugin> or a PanelPlugin
       const plugin: PanelPlugin = await pluginExports.plugin;
       plugin.meta = meta;
+      // Core panels are part of Grafana, so they have nothing to receive through restricted APIs.
+      if (plugin.panel && !meta.module.startsWith('core:')) {
+        plugin.panel = withRestrictedGrafanaApis(plugin.panel, meta.id);
+      }
       pluginsCache.set(meta.id, plugin);
       return plugin;
     }

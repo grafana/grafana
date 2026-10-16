@@ -1,5 +1,7 @@
 import { createContext, type ReactElement, type PropsWithChildren, useMemo, useContext } from 'react';
 
+import { type DashboardDataAPI } from './DashboardDataAPI';
+
 // Generic schema type to avoid zod dependency in @grafana/data
 interface ZodSchema {
   parse: (data: unknown) => unknown;
@@ -76,6 +78,7 @@ interface RestrictedGrafanaApisContextTypeInternal {
   dashboardMutationAPI?: DashboardMutationAPI;
   composer?: ComposerAPI;
   extensionSidebar?: ExtensionSidebarAPI;
+  dashboardDataAPI?: DashboardDataAPI;
 }
 
 // We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).

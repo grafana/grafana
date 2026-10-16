@@ -1,5 +1,5 @@
 import { ProviderEvents } from '@openfeature/react-sdk';
-import { useMemo, useSyncExternalStore, type PropsWithChildren, type ReactElement } from 'react';
+import { type ComponentType, useMemo, useSyncExternalStore, type PropsWithChildren, type ReactElement } from 'react';
 
 import { RestrictedGrafanaApisContextProvider } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -9,7 +9,7 @@ import { createDashboardMutationApi } from './dashboardMutation/dashboardMutatio
 import { getRestrictedGrafanaApis, isComposerEnabled } from './restrictedGrafanaApis';
 
 // This Provider is a wrapper around `RestrictedGrafanaApisContextProvider` from `@grafana/data`.
-// The reason for this is that like this we only need to define the configuration once (here) and can use it in multiple places (app root page, extensions).
+// The reason for this is that like this we only need to define the configuration once (here) and can use it in multiple places (app root page, extensions, panels).
 export function RestrictedGrafanaApisProvider({
   children,
   pluginId,
@@ -32,6 +32,20 @@ export function RestrictedGrafanaApisProvider({
       {children}
     </RestrictedGrafanaApisContextProvider>
   );
+}
+
+/** For plugin components that Grafana renders outside a plugin page or extension, such as panels. */
+export function withRestrictedGrafanaApis<P extends object>(
+  Component: ComponentType<P>,
+  pluginId: string
+): ComponentType<P> {
+  const WithRestrictedGrafanaApis = (props: P) => (
+    <RestrictedGrafanaApisProvider pluginId={pluginId}>
+      <Component {...props} />
+    </RestrictedGrafanaApisProvider>
+  );
+  WithRestrictedGrafanaApis.displayName = `WithRestrictedGrafanaApis(${Component.displayName ?? Component.name})`;
+  return WithRestrictedGrafanaApis;
 }
 
 /**

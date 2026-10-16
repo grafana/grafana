@@ -1,6 +1,6 @@
 import {
+  type DashboardDataAPI,
   type DashboardDataEvent,
-  type DashboardDataService,
   type DashboardInfo,
   type DashboardPanelCapture,
   type DashboardPanelCaptureRequest,
@@ -8,8 +8,8 @@ import {
   type DashboardSourceResolution,
   type DashboardVariableInfo,
   type DashboardVariableOption,
-  locationService,
-} from '@grafana/runtime';
+} from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   MultiValueVariable,
   SceneObjectStateChangedEvent,
@@ -58,7 +58,7 @@ function getCurrentDashboard(): { dashboard: DashboardSceneLike; visitId: string
   return visitId ? { dashboard: scene, visitId } : undefined;
 }
 
-export class DashboardDataServiceImpl implements DashboardDataService {
+export class DashboardDataApiImpl implements DashboardDataAPI {
   public getDashboard(): DashboardInfo | undefined {
     const current = getCurrentDashboard();
     if (!current) {

@@ -88,26 +88,6 @@ export {
   getPanelScreenshotService,
   setPanelScreenshotService,
 } from './services/PanelScreenshotService';
-export {
-  type CapturedAnnotation,
-  type CapturedField,
-  type CapturedFrame,
-  type CapturedPanel,
-  type CapturedPanelStatus,
-  type DashboardDataEvent,
-  type DashboardDataService,
-  type DashboardInfo,
-  type DashboardPanelCapture,
-  type DashboardPanelCaptureRequest,
-  type DashboardPanelInfo,
-  type DashboardSectionInfo,
-  type DashboardSourceResolution,
-  type DashboardUnavailableSource,
-  type DashboardVariableInfo,
-  type DashboardVariableOption,
-  getDashboardDataService,
-  setDashboardDataService,
-} from './services/DashboardDataService';
 export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
 export {
   useAppPluginInstalled,

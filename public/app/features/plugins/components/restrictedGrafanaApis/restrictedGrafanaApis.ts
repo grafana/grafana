@@ -5,10 +5,12 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
 import { composerApi } from './composer/composerApi';
+import { dashboardDataApi } from './dashboardData/dashboardDataApi';
 import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 
 const sharedApis: RestrictedGrafanaApisContextType = {
   alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
+  dashboardDataAPI: dashboardDataApi,
   // Always present; `canFloat()` reports whether grafana.extensionSidebarFloating lets it float.
   extensionSidebar: extensionSidebarApi,
 };
