@@ -3391,6 +3391,15 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:         "grafana.announcementBannerDismissible",
+			Description:  "Allow admins to make announcement banners dismissible by users",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "true",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "datasources.gatewayAuditPolicy",
 			Description:  "Enable support for the query gateway audit policies",
 			Stage:        FeatureStageExperimental,

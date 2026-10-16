@@ -1,4 +1,4 @@
-package tracing
+package tracingsetting
 
 import (
 	"testing"
@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -58,7 +59,7 @@ func TestSplitCustomAttribs_Malformed(t *testing.T) {
 }
 
 func TestTracingConfig_FileExporter(t *testing.T) {
-	parse := func(t *testing.T, ini string) *TracingConfig {
+	parse := func(t *testing.T, ini string) *tracing.TracingConfig {
 		t.Helper()
 		cfg := setting.NewCfg()
 		require.NoError(t, cfg.Raw.Append([]byte(ini)))
@@ -74,10 +75,10 @@ func TestTracingConfig_FileExporter(t *testing.T) {
 		[tracing.opentelemetry.file]
 		path = /tmp/traces.json
 		`)
-		assert.Equal(t, fileExporter, tc.enabled)
+		assert.Equal(t, tracing.FileExporter, tc.Exporter)
 		assert.Equal(t, "/tmp/traces.json", tc.FilePath)
-		assert.Equal(t, defaultTraceFileMaxSize, tc.FileMaxSize)
-		assert.Equal(t, defaultTraceCaptureDuration, tc.FileCaptureDuration)
+		assert.Equal(t, tracing.DefaultTraceFileMaxSize, tc.FileMaxSize)
+		assert.Equal(t, tracing.DefaultTraceCaptureDuration, tc.FileCaptureDuration)
 		// Capturing should sample everything by default so the file isn't empty.
 		assert.Equal(t, "const", tc.Sampler)
 		assert.Equal(t, 1.0, tc.SamplerParam)
@@ -102,7 +103,7 @@ func TestTracingConfig_FileExporter(t *testing.T) {
 		[tracing.opentelemetry.file]
 		path = /tmp/traces.json
 		`)
-		assert.Equal(t, fileExporter, tc.enabled)
+		assert.Equal(t, tracing.FileExporter, tc.Exporter)
 		assert.Equal(t, "probabilistic", tc.Sampler)
 		assert.Equal(t, 0.25, tc.SamplerParam)
 	})
@@ -114,13 +115,13 @@ func TestTracingConfig_FileExporter(t *testing.T) {
 		[tracing.opentelemetry.file]
 		path = /tmp/traces.json
 		`)
-		assert.Equal(t, otlpExporter, tc.enabled)
+		assert.Equal(t, tracing.OTLPExporter, tc.Exporter)
 		assert.Empty(t, tc.FilePath)
 	})
 
 	t.Run("no path leaves the file exporter disabled", func(t *testing.T) {
 		tc := parse(t, `[tracing.opentelemetry.file]`)
-		assert.Equal(t, noopExporter, tc.enabled)
+		assert.Equal(t, tracing.NoopExporter, tc.Exporter)
 		assert.Empty(t, tc.FilePath)
 	})
 }
@@ -143,7 +144,7 @@ func TestTracingConfig(t *testing.T) {
 		{
 			Name:             "default config uses noop exporter",
 			Cfg:              "",
-			ExpectedExporter: noopExporter,
+			ExpectedExporter: tracing.NoopExporter,
 			ExpectedInsecure: true,
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -153,7 +154,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry]
 			custom_attributes = key1:value1,key2:value2
 			`,
-			ExpectedExporter: noopExporter,
+			ExpectedExporter: tracing.NoopExporter,
 			ExpectedInsecure: true,
 			ExpectedAttrs:    []attribute.KeyValue{attribute.String("key1", "value1"), attribute.String("key2", "value2")},
 		},
@@ -163,7 +164,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.jaeger]
 			address = jaeger.example.com:6831
 			`,
-			ExpectedExporter: jaegerExporter,
+			ExpectedExporter: tracing.JaegerExporter,
 			ExpectedAddress:  "jaeger.example.com:6831",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -173,7 +174,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.otlp]
 			address = otlp.example.com:4317
 			`,
-			ExpectedExporter: otlpExporter,
+			ExpectedExporter: tracing.OTLPExporter,
 			ExpectedAddress:  "otlp.example.com:4317",
 			ExpectedInsecure: true,
 			ExpectedAttrs:    []attribute.KeyValue{},
@@ -185,7 +186,7 @@ func TestTracingConfig(t *testing.T) {
 			address = otlp.example.com:4317
 			insecure = false
 			`,
-			ExpectedExporter: otlpExporter,
+			ExpectedExporter: tracing.OTLPExporter,
 			ExpectedAddress:  "otlp.example.com:4317",
 			ExpectedInsecure: false,
 			ExpectedAttrs:    []attribute.KeyValue{},
@@ -196,7 +197,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.jaeger]
 			address = jaeger.example.com:6831
 			`,
-			ExpectedExporter: jaegerExporter,
+			ExpectedExporter: tracing.JaegerExporter,
 			ExpectedAddress:  "jaeger.example.com:6831",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -207,7 +208,7 @@ func TestTracingConfig(t *testing.T) {
 				"JAEGER_AGENT_HOST": "example.com",
 				"JAEGER_AGENT_PORT": "12345",
 			},
-			ExpectedExporter: jaegerExporter,
+			ExpectedExporter: tracing.JaegerExporter,
 			ExpectedAddress:  "example.com:12345",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -224,7 +225,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.jaeger]
 			address = bar.com:6831
 			`,
-			ExpectedExporter:     jaegerExporter,
+			ExpectedExporter:     tracing.JaegerExporter,
 			ExpectedAddress:      "bar.com:6831",
 			ExpectedAttrs:        []attribute.KeyValue{attribute.String("c", "d")},
 			ExpectedSamplerParam: 1.0,
@@ -239,7 +240,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.otlp]
 			address = otlp.example.com:4317
 			`,
-			ExpectedExporter:          otlpExporter,
+			ExpectedExporter:          tracing.OTLPExporter,
 			ExpectedAddress:           "otlp.example.com:4317",
 			ExpectedInsecure:          true,
 			ExpectedAttrs:             []attribute.KeyValue{},
@@ -265,7 +266,7 @@ func TestTracingConfig(t *testing.T) {
 			tracingConfig, err := ProvideTracingConfig(cfgProvider)
 			assert.NoError(t, err)
 			// make sure tracker is properly configured
-			assert.Equal(t, test.ExpectedExporter, tracingConfig.enabled)
+			assert.Equal(t, test.ExpectedExporter, tracingConfig.Exporter)
 			assert.Equal(t, test.ExpectedAddress, tracingConfig.Address)
 			assert.Equal(t, test.ExpectedPropagator, tracingConfig.Propagation)
 			assert.Equal(t, test.ExpectedAttrs, tracingConfig.CustomAttribs)
@@ -281,7 +282,7 @@ func TestTracingConfig(t *testing.T) {
 }
 
 func TestTracingConfig_FilterOperationalEndpoints(t *testing.T) {
-	parse := func(t *testing.T, ini string) *TracingConfig {
+	parse := func(t *testing.T, ini string) *tracing.TracingConfig {
 		t.Helper()
 		cfg := setting.NewCfg()
 		require.NoError(t, cfg.Raw.Append([]byte(ini)))

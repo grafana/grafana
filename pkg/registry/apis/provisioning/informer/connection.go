@@ -2,10 +2,8 @@ package informer
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -53,57 +51,12 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys keysapi.Lister, recorder RelistRecorder) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
-		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
+		return identity(ns, name, "")
 	}
-	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, connectionList(c, namespace, keys, recorder))
-}
-
-// connectionList builds the informer's re-list. With a keys lister it asks
-// storage for identities only; without one, or against storage too old to honour
-// the projection, it lists full objects.
-func connectionList(c typedclient.ProvisioningV0alpha1Interface, namespace string, keys keysapi.Lister, recorder RelistRecorder) func(context.Context) ([]runtime.Object, int64, error) {
-	return func(ctx context.Context) ([]runtime.Object, int64, error) {
-		if keys != nil {
-			objs, listRV, err := listConnectionKeys(ctx, keys)
-			if err == nil {
-				recorder.Projection(true)
-				return objs, listRV, nil
-			}
-			if !errors.Is(err, keysapi.ErrUnsupported) {
-				return nil, 0, err
-			}
-			// The server did not serve keys: over storage it predates keys_only,
-			// over HTTP the route is absent. Either way the full list is still
-			// correct, and failing the tick would stop reconciling altogether.
-			logging.FromContext(ctx).Warn("server did not serve a keys-only list, re-listing full objects", "error", err)
-		}
-		objs, listRV, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-			return c.Connections(namespace).List(ctx, opts)
-		})
-		if err == nil {
-			recorder.Projection(false)
-		}
-		return objs, listRV, err
-	}
-}
-
-// listConnectionKeys collects a keys-only re-list into the minimal objects the
-// informer's Store keys on. The Store diffs the whole set, so the stream has to
-// be drained; the reconcile re-fetches the bodies it needs.
-func listConnectionKeys(ctx context.Context, keys keysapi.Lister) ([]runtime.Object, int64, error) {
-	listRV, seq := keys.ListKeys(ctx)
-	var objs []runtime.Object
-	for k, err := range seq {
-		if err != nil {
-			return nil, 0, err
-		}
-		objs = append(objs, &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{
-			Namespace:       k.Namespace,
-			Name:            k.Name,
-			ResourceVersion: k.ResourceVersion,
-		}})
-	}
-	return objs, listRV, nil
+	list := identityList(keys, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		return c.Connections(namespace).List(ctx, opts)
+	}, recorder)
+	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
 }
 
 // NewCachedConnectionGetter backs a ConnectionGetter with the informer's
