@@ -10,7 +10,8 @@ import { createProps, renderPanel } from './test-utils';
 // depending on test order in TextNGPanel.test.tsx.
 
 // Stub the lazy CodeMirror bundle used by the inline editor.
-jest.mock('@grafana/ui/unstable', () => ({
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   __esModule: true,
   // The stubbed editor never runs completions; the source itself is covered by
   // editor/variableCompletion.test.ts.
