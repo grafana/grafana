@@ -1349,25 +1349,12 @@ func TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable(t *testing.T) 
 	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}}
 
 	factory := repository.NewMockFactory(t)
-	factory.EXPECT().Build(mock.Anything, cfg, mock.Anything).
-		Run(func(_ context.Context, _ *provisioning.Repository, opts ...repository.BuildOption) {
-			var options repository.BuildOptions
-			for _, opt := range opts {
-				opt(&options)
-			}
-			assert.Equal(t, repository.BuildOptions{Timeout: 10 * time.Second}, options)
-		}).Return(nonWebhookRepo{cfg: cfg}, nil).Once()
+	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nonWebhookRepo{cfg: cfg}, nil)
 
-	rc := NewRepositoryController(
-		nil, nil, factory, nil, nil, nil, nil, nil, nil,
-		prometheus.NewRegistry(), nil,
-		1, time.Minute, time.Minute, 30*time.Second,
-		nil, nil, repository.IncrementalSyncPolicy{}, 0, false,
-		repository.WithTimeout(10*time.Second),
-	)
-	t.Cleanup(rc.queue.ShutDown)
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{repoFactory: factory, metrics: &metrics}
 
-	err := rc.finalizer.process(t.Context(), cfg)
+	err := f.process(t.Context(), cfg)
 	assert.NoError(t, err)
 }
 

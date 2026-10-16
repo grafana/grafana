@@ -66,7 +66,6 @@ type RepositoryController struct {
 	statusPatcher StatusPatcher
 
 	repoFactory       repository.Factory
-	buildOptions      []repository.BuildOption
 	connectionFactory connection.Factory
 	healthChecker     *RepositoryHealthChecker
 	quotaChecker      *RepositoryQuotaChecker
@@ -126,7 +125,6 @@ func NewRepositoryController(
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	webhookSecretRotationInterval time.Duration,
 	natsBacked bool,
-	buildOptions ...repository.BuildOption,
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -148,7 +146,6 @@ func NewRepositoryController(
 			},
 		),
 		repoFactory:       repoFactory,
-		buildOptions:      buildOptions,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
 		quotaChecker:      quotaChecker,
@@ -157,7 +154,6 @@ func NewRepositoryController(
 			lister:        resourceLister,
 			clientFactory: clients,
 			repoFactory:   repoFactory,
-			buildOptions:  buildOptions,
 			jobs:          jobs,
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
@@ -1017,9 +1013,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// retryable delete error (see isRetryableProcessError) is preferred so the
 		// worker's queue predicate -- which consults the same helper -- fast-retries
 		// it; anything else is re-attempted on the next informer resync while the
-		// finalizer stays stuck.
+		// finalizer stays stuck. Provider-reported unreachable repositories also
+		// wait for that resync, even when the underlying error is retryable.
 		switch {
-		case isRetryableProcessError(err):
+		case !errors.Is(err, repository.ErrServerUnavailable) && isRetryableProcessError(err):
 			return repoType, err
 		case patchErr != nil:
 			// The status write itself failed: count it under the status phase.
@@ -1198,7 +1195,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	phase = reconcilePhaseBuild
 	buildCtx, buildSpan := rc.tracer.Start(ctx, "provisioning.controller.build", repoSpanAttrs(obj))
-	repo, err := rc.repoFactory.Build(buildCtx, obj, rc.buildOptions...)
+	repo, err := rc.repoFactory.Build(buildCtx, obj)
 	buildSpan.End()
 	if err != nil {
 		// The token references a stored secret that could not be decrypted (e.g. an
@@ -1246,7 +1243,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			obj = obj.DeepCopy()
 			obj.Secure.Token = common.InlineSecureValue{Create: token}
 
-			repo, err = rc.repoFactory.Build(ctx, obj, rc.buildOptions...)
+			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
 			buildHealthStatus := provisioning.HealthStatus{
@@ -1263,6 +1260,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 				obj.Status.Conditions, obj.GetGeneration(), readyCondition,
 			); conditionPatchOps != nil {
 				patchOperations = append(patchOperations, conditionPatchOps...)
+			}
+
+			if errors.Is(err, repository.ErrServerUnavailable) {
+				swallowedErr, swallowedPhase = err, reconcilePhaseBuild
+				logger.Warn("unable to reach repository while building", "error", err)
+				return repoType, nil
 			}
 
 			if rc.isUserCaused(err) {

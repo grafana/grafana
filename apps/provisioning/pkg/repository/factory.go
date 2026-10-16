@@ -17,7 +17,7 @@ type Mutator func(ctx context.Context, obj runtime.Object) error
 //go:generate mockery --name=Extra --structname=MockExtra --inpackage --filename=extra_mock.go --with-expecter
 type Extra interface {
 	Type() provisioning.RepositoryType
-	Build(ctx context.Context, r *provisioning.Repository, opts ...BuildOption) (Repository, error)
+	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
 	Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
@@ -25,7 +25,7 @@ type Extra interface {
 //go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
 type Factory interface {
 	Types() []provisioning.RepositoryType
-	Build(ctx context.Context, r *provisioning.Repository, opts ...BuildOption) (Repository, error)
+	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
 	Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
@@ -68,7 +68,7 @@ func (f *factory) Types() []provisioning.RepositoryType {
 	return types
 }
 
-func (f *factory) Build(ctx context.Context, r *provisioning.Repository, opts ...BuildOption) (Repository, error) {
+func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Repository, error) {
 	// Build is the single chokepoint every caller (job driver, HTTP handlers,
 	// controllers) funnels through to construct a repository, and it is where the
 	// repo's secrets (token, commit-signing-key, webhook secret) are decrypted via
@@ -91,7 +91,7 @@ func (f *factory) Build(ctx context.Context, r *provisioning.Repository, opts ..
 				return nil, err
 			}
 
-			repo, err := e.Build(ctx, r, opts...)
+			repo, err := e.Build(ctx, r)
 			if err != nil {
 				span.RecordError(err)
 			}
