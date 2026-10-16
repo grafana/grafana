@@ -1467,15 +1467,6 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:         "alerting.instanceSilence",
-			Description:  "Enable silencing individual alert instances from the alert rule Instances tab.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{React: true},
-		},
-		{
 			Name:         "alerting.manualAssistantInvestigation",
 			Description:  "Enable manually starting an Assistant investigation from the alert instance drawer.",
 			Stage:        FeatureStageExperimental,

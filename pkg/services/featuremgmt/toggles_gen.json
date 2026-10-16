@@ -118,7 +118,8 @@
       "metadata": {
         "name": "alerting.instanceSilence",
         "resourceVersion": "1792146590637",
-        "creationTimestamp": "2026-10-16T10:29:50Z"
+        "creationTimestamp": "2026-10-16T10:29:50Z",
+        "deletionTimestamp": "2026-10-16T14:33:09Z"
       },
       "spec": {
         "description": "Enable silencing individual alert instances from the alert rule Instances tab.",
