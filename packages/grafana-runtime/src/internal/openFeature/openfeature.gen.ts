@@ -156,6 +156,8 @@ export const FlagKeys = {
   FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Allow admins to make announcement banners dismissible by users */
+  GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables custom dashboard templates for enterprise */
@@ -166,6 +168,8 @@ export const FlagKeys = {
   GrafanaDashboardAutoGridDefault: "grafana.dashboardAutoGridDefault",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
+  /** Enables Viewing and Editing modes for dynamic dashboards */
+  GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables the auto-height feature for dashboard panels */
@@ -1164,6 +1168,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Allow admins to make announcement banners dismissible by users
+ *
+ * **Details:**
+ * - flag key: `grafana.announcementBannerDismissible`
+ * - default value: `true`
+ */
+export const useFlagGrafanaAnnouncementBannerDismissible = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.announcementBannerDismissible", true, options).value;
+};
+
+/**
  * Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette
  *
  * **Details:**
@@ -1216,6 +1231,17 @@ export const useFlagGrafanaDashboardAutoGridDefault = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardGlobalVariables", false, options).value;
+};
+
+/**
+ * Enables Viewing and Editing modes for dynamic dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardPreviewMode`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardPreviewMode", false, options).value;
 };
 
 /**

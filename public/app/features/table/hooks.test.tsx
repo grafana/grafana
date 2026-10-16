@@ -279,6 +279,17 @@ describe('useAdHocColumnState', () => {
       latest = next;
     });
 
+    act(() => result.current?.onColumnOrderChange(['value']));
+    expect(set).toHaveBeenLastCalledWith('grafana:table-view', [
+      otherFrame,
+      unrelated,
+      {
+        id: 'organize',
+        filter: { id: 'byRefId', options: 'B' },
+        options: { indexByName: { value: 0 }, excludeByName: {}, renameByName: {} },
+      },
+    ]);
+
     act(() => result.current?.onHiddenColumnsChange(new Set(['value'])));
     expect(set).toHaveBeenLastCalledWith('grafana:table-view', [
       otherFrame,
@@ -286,7 +297,7 @@ describe('useAdHocColumnState', () => {
       {
         id: 'organize',
         filter: { id: 'byRefId', options: 'B' },
-        options: { indexByName: {}, excludeByName: { value: true }, renameByName: {} },
+        options: { indexByName: { value: 0 }, excludeByName: { value: true }, renameByName: {} },
       },
     ]);
   });

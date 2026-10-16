@@ -3991,6 +3991,11 @@
     "viz-wrapper": {
       "table": "Таблица"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Просматривайте текущие оповещения и архивные данные, чтобы анализировать актуальные или прошлые проблемы.",
       "description-alert-rules": "Задайте условие, которое должно быть выполнено до того, как автивируется правило оповещения.",
@@ -6204,6 +6209,9 @@
       "only-overrides-button-tooltip": "Показывать только переопределения",
       "placeholder-search-options": "Поиск параметров",
       "visualization-button-tooltip": "Поиск параметров"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Пример данных",
@@ -10961,6 +10969,7 @@
       "no-rows": "Нет строк",
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Сортировать по столбцу {{column}}",
       "sort-by-column-ascending": "Сортировать по столбцу {{column}}, по возрастанию",
@@ -11269,6 +11278,8 @@
       "incident-filter-all": "Все инциденты",
       "incident-filter-label": "Фильтровать инциденты по меткам",
       "incident-tab-label": "Инциденты",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Ваши команды",
       "title": "Оповещения и инциденты",
       "title-alerts": "Оповещения",
@@ -11349,6 +11360,17 @@
       "error-title": "Не удалось загрузить новые посты в блоге",
       "read-more": "Подробнее в блоге Grafana Labs",
       "title": "Последние записи в блоге"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -12155,6 +12177,11 @@
       "load-newer": "Загрузка новых журналов...",
       "load-older": "Загрузка старых журналов..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Свернуть метки",
       "expand": "Развернуть метки"
@@ -12205,6 +12232,7 @@
       "inline-mode": "Показать встроенные",
       "inline-no-scrolls": "Переключиться на развернутый вид",
       "inline-with-scrolls": "Переключиться на компактный вид",
+      "link-fallback-label": "",
       "link-value-tooltip": "Значение ссылки",
       "links-section": "Ссылки",
       "log-attributes-field": "Атрибуты журнала",
@@ -12214,13 +12242,14 @@
       "move-displayed-field-up": "Вверх",
       "no-details": "Отсутствуют поля для отображения.",
       "open-assistant": "Объяснить строку журнала в Assistant",
+      "open-value-in": "",
       "pin-line": "Закрепить журнал",
       "prettify": "Форматировать",
       "remove-displayed-field": "Удалить поле",
       "remove-log": "Удалить журнал",
       "scroll-to-logline": "Прокрутить до строки журнала",
       "search": {
-        "no-results": "Нет результатов для отображения."
+        "no-results": ""
       },
       "search-placeholder": "Поиск по именам и значениям полей",
       "show-context": "Показать контекст",
@@ -13416,6 +13445,11 @@
       "target-label": "Целевой блокнот",
       "target-new": "Новый блокнот",
       "title": "Добавьте панель в блокнот"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",

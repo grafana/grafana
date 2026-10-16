@@ -45,6 +45,7 @@ declare module "@openfeature/core" {
     | "dashboards.libraryPanelHorizontalRepeatFullWidth"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
+    | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"
@@ -190,6 +191,7 @@ declare module "@openfeature/core" {
     | "grafana.logDetailsDisplayedFieldControls"
     | "grafana.globalHomePreference"
     | "grafana.otelLogDetails"
+    | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
     | "grafana.folderPickerFolderEditAccess";
   export type NumberFlagKey = never;
