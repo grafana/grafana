@@ -10,7 +10,8 @@ import {
   textUtil,
   type InterpolateFunction,
 } from '@grafana/data';
-import { CodeEditor, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { CodeEditor, MarkdownHTML, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { MarkdownAdmonitions } from '@grafana/ui/internal';
 import config from 'app/core/config';
 
 import { defaultCodeOptions, type Options, TextMode } from '../panelcfg.gen';
@@ -59,14 +60,27 @@ export function TextPanel(props: Props) {
     );
   }
 
-  const content = (
-    <DangerouslySetHtmlContent
-      allowRerender
-      html={processed.content}
-      className={cx('markdown-html', styles.markdownHtml)}
-      data-testid="TextPanel-converted-content"
-    />
-  );
+  const content =
+    processed.mode !== TextMode.HTML && !config.disableSanitizeHtml ? (
+      <MarkdownHTML
+        html={processed.content}
+        className={cx('markdown-html', styles.markdownHtml)}
+        data-testid="TextPanel-converted-content"
+      />
+    ) : processed.mode !== TextMode.HTML ? (
+      <LegacyMarkdown
+        key={processed.content}
+        html={processed.content}
+        className={cx('markdown-html', styles.markdownHtml)}
+      />
+    ) : (
+      <DangerouslySetHtmlContent
+        allowRerender
+        html={processed.content}
+        className={cx('markdown-html', styles.markdownHtml)}
+        data-testid="TextPanel-converted-content"
+      />
+    );
 
   // Fit-content: render in normal flow so the markdown defines the height. No
   // size containment and no inner scroll — the cell's CSS bounds the result.
@@ -83,6 +97,16 @@ export function TextPanel(props: Props) {
 
 const CODE_LINE_HEIGHT = 18;
 const CODE_VERTICAL_PADDING = 16;
+
+function LegacyMarkdown({ html, className }: { html: string; className: string }) {
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  return (
+    <div ref={setContainer} className={className} data-testid="TextPanel-converted-content">
+      <DangerouslySetHtmlContent html={html} />
+      <MarkdownAdmonitions container={container} />
+    </div>
+  );
+}
 
 function estimateCodeHeight(content: string): number {
   const lines = content ? content.split('\n').length : 1;

@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 import { renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder, MarkdownHTML } from '@grafana/ui';
 
 interface Props {
   pluginId: string;
@@ -36,5 +36,5 @@ export function PluginHelp({ pluginId }: Props) {
     );
   }
 
-  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: renderedMarkdown }} />;
+  return <MarkdownHTML className="markdown-html" html={renderedMarkdown} />;
 }

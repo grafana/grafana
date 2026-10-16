@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, locationUtil, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, Button, LinkButton, Spinner, Stack, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LinkButton, MarkdownHTML, Spinner, Stack, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 import {
   type RepositoryView,
   type ResourceListItem,
@@ -339,16 +339,11 @@ function RenderedMarkdown({
 
     el.addEventListener('click', handleClick);
     return () => el.removeEventListener('click', handleClick);
-  }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
+  }, [repositoryType, repositoryName, repositoryPath, fetchResources, safe]);
 
-  // React resets innerHTML whenever this object's identity changes, which would
-  // wipe the diagrams the hook swapped in — so only hand it a new one when the html changes.
-  const innerHtml = useMemo(() => ({ __html: safe }), [safe]);
   useMermaidDiagrams(containerRef, safe);
 
-  return (
-    <div ref={containerRef} className={cx('markdown-html', styles.markdownBody)} dangerouslySetInnerHTML={innerHtml} />
-  );
+  return <MarkdownHTML ref={containerRef} className={cx('markdown-html', styles.markdownBody)} html={safe} />;
 }
 
 /**
