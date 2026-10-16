@@ -862,6 +862,11 @@ describe('DashboardControls', () => {
   describe('scopes dashboards navigation toggle', () => {
     beforeEach(() => {
       mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+      mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+    });
+
+    afterEach(() => {
+      mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
     });
 
     it('hides the toggle when the mega-menu flag is on, even with scopeFilters enabled', () => {
@@ -874,6 +879,21 @@ describe('DashboardControls', () => {
         const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
 
         expect(renderer.queryByTestId('scopes-dashboards-expand')).not.toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
+    });
+
+    it('shows the toggle when the mega-menu flag is off and scopeFilters is enabled', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.scopeFilters = true;
+        mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+
+        const scene = buildTestScene();
+        const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
+
+        expect(renderer.queryByTestId('scopes-dashboards-expand')).toBeInTheDocument();
       } finally {
         config.featureToggles = originalFeatureToggles;
       }

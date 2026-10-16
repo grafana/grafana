@@ -1,6 +1,5 @@
-import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { render, screen } from 'test/test-utils';
 
 import { useScopes } from '@grafana/runtime';
 
@@ -16,6 +15,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useScopes: jest.fn(),
   locationService: {
+    ...jest.requireActual('@grafana/runtime').locationService,
     push: jest.fn(),
   },
 }));
@@ -25,8 +25,8 @@ jest.mock('../ScopesContextProvider', () => ({
   useScopesServices: jest.fn(),
 }));
 
-const mockUseScopes = useScopes as jest.Mock;
-const mockUseScopesServices = useScopesServices as jest.Mock;
+const mockUseScopes = jest.mocked(useScopes);
+const mockUseScopesServices = jest.mocked(useScopesServices);
 
 interface StateOverrides {
   loading?: boolean;
@@ -37,37 +37,38 @@ interface StateOverrides {
   filteredFolders?: Record<string, unknown>;
 }
 
-const makeScopeServices = (overrides: StateOverrides = {}) => ({
-  scopesDashboardsService: {
-    stateObservable: { subscribe: () => ({ unsubscribe: () => {} }) },
-    state: {
-      loading: false,
-      forScopeNames: ['scope-a'],
-      dashboards: [],
-      scopeNavigations: [{ title: 'Suggested dashboard', url: '/d/abc' }],
-      searchQuery: '',
-      filteredFolders: {
-        '': {
-          title: '',
-          expanded: true,
-          folders: {},
-          suggestedNavigations: {
-            'nav-1': { title: 'Suggested dashboard', url: '/d/abc', id: 'nav-1' },
+const makeScopeServices = (overrides: StateOverrides = {}): ReturnType<typeof useScopesServices> =>
+  ({
+    scopesDashboardsService: {
+      stateObservable: { subscribe: () => ({ unsubscribe: () => {} }) },
+      state: {
+        loading: false,
+        forScopeNames: ['scope-a'],
+        dashboards: [],
+        scopeNavigations: [{ title: 'Suggested dashboard', url: '/d/abc' }],
+        searchQuery: '',
+        filteredFolders: {
+          '': {
+            title: '',
+            expanded: true,
+            folders: {},
+            suggestedNavigations: {
+              'nav-1': { title: 'Suggested dashboard', url: '/d/abc', id: 'nav-1' },
+            },
           },
         },
+        ...overrides,
       },
-      ...overrides,
+      changeSearchQuery: jest.fn(),
+      updateFolder: jest.fn(),
+      clearSearchQuery: jest.fn(),
     },
-    changeSearchQuery: jest.fn(),
-    updateFolder: jest.fn(),
-    clearSearchQuery: jest.fn(),
-  },
-});
+  }) as unknown as ReturnType<typeof useScopesServices>;
 
 describe('ScopesDashboardsMegaMenuSection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseScopes.mockReturnValue({ state: { enabled: true } });
+    mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
   });
 
   it('renders nothing when scope services are unavailable', () => {
@@ -77,7 +78,7 @@ describe('ScopesDashboardsMegaMenuSection', () => {
   });
 
   it('renders nothing when scopes are not enabled', () => {
-    mockUseScopes.mockReturnValue({ state: { enabled: false } });
+    mockUseScopes.mockReturnValue({ state: { enabled: false } } as ReturnType<typeof useScopes>);
     mockUseScopesServices.mockReturnValue(makeScopeServices());
     const { container } = render(<ScopesDashboardsMegaMenuSection />);
     expect(container).toBeEmptyDOMElement();
@@ -105,11 +106,7 @@ describe('ScopesDashboardsMegaMenuSection', () => {
 
   it('renders the suggested-dashboards tree when content is available', () => {
     mockUseScopesServices.mockReturnValue(makeScopeServices());
-    render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <ScopesDashboardsMegaMenuSection />
-      </MemoryRouter>
-    );
+    render(<ScopesDashboardsMegaMenuSection />);
     expect(screen.getByText('Suggested dashboards')).toBeInTheDocument();
     expect(screen.getByTestId('scopes-dashboards-container')).toBeInTheDocument();
     expect(screen.getByText('Suggested dashboard')).toBeInTheDocument();
@@ -119,11 +116,7 @@ describe('ScopesDashboardsMegaMenuSection', () => {
     const user = userEvent.setup();
     const services = makeScopeServices({ searchQuery: 'no-match', filteredFolders: {} });
     mockUseScopesServices.mockReturnValue(services);
-    render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <ScopesDashboardsMegaMenuSection />
-      </MemoryRouter>
-    );
+    render(<ScopesDashboardsMegaMenuSection />);
 
     const clearButton = screen.getByTestId('scopes-dashboards-notFoundForFilter-clear');
     expect(clearButton).toBeInTheDocument();
