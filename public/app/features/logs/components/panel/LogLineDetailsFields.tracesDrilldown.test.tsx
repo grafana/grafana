@@ -1,8 +1,18 @@
 import { render, screen } from '@testing-library/react';
 
-import { CoreApp, PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
+import {
+  CoreApp,
+  dateTime,
+  type Field,
+  type LinkModel,
+  PluginExtensionPoints,
+  PluginExtensionTypes,
+  type TimeRange,
+} from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 
+import { type FieldDef } from '../logParser';
 import { createLogLine } from '../mocks/logRow';
 
 import { LogLineDetailsFields } from './LogLineDetailsFields';
@@ -20,11 +30,10 @@ jest.mock('@grafana/runtime', () => ({
 const TRACE_ID = '2203801e0171aa8b';
 const TRACES_PATH = '/a/grafana-exploretraces-app/explore?var-ds=tempo-uid';
 
-const tempoLink = {
+const tempoLink: LinkModel<Field> = {
   href: '/explore?left=abc',
   title: 'tempo',
   target: '_self' as const,
-  origin: undefined,
   onClick: jest.fn(),
   interpolatedParams: {
     query: {
@@ -32,16 +41,16 @@ const tempoLink = {
       datasource: { uid: 'tempo-uid' },
       query: TRACE_ID,
       queryType: 'traceql',
-    },
+    } as DataQuery,
     timeRange: {
-      from: 'now-1h',
-      to: 'now',
+      from: dateTime('2026-01-01T00:00:00Z'),
+      to: dateTime('2026-01-01T01:00:00Z'),
       raw: { from: 'now-1h', to: 'now' },
-    },
+    } satisfies TimeRange,
   },
 };
 
-const field = {
+const field: FieldDef = {
   keys: ['traceId'],
   values: [TRACE_ID],
   links: [tempoLink],

@@ -1,4 +1,5 @@
 import { type LinkModel, type PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
 import { appendTraceId, buildTracesDrilldownContext, resolveTracesDrilldownLinks } from './tracesDrilldownLink';
 
@@ -17,7 +18,7 @@ function tempoLink(query = TRACE_ID): LinkModel {
         datasource: { uid: 'tempo-uid' },
         query,
         queryType: 'traceql',
-      },
+      } as DataQuery,
       timeRange: {
         from: 'now-1h' as never,
         to: 'now' as never,

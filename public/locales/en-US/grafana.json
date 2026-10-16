@@ -12101,7 +12101,8 @@
         "loading-message": "Loading trace..."
       },
       "trace-section": "Trace",
-      "unpin-line": "Unpin log"
+      "unpin-line": "Unpin log",
+      "view-in-traces-drilldown": "View in Traces Drilldown"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
