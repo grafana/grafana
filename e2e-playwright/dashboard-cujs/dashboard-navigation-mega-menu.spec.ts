@@ -17,4 +17,4 @@ test.use({
   openFeature: { flags: { 'grafana.scopesDashboardsMegaMenu': true } },
 });
 
-runDashboardNavigationCujs();
+runDashboardNavigationCujs({ megaMenu: true });
