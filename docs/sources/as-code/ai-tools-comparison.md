@@ -37,7 +37,7 @@ If you're a Grafana on prem user, you have the following AI tools available to i
   - Clients discover named tools with JSON schemas, the model picks a tool and supplies structured arguments, Grafana runs it under normal identity and RBAC, and the structured result goes back to the model for its next step. 
   - Grafana offers two servers: Cloud MCP (hosted by Grafana) and OSS MCP (you run it).
 
-`**gcx**` is an AI-native command-line tool that gives you or your AI agent structured access to Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, k6, Fleet Management, Incidents, and Adaptive Telemetry. You can script it to provide deterministic JSON or YAML output, defined errors, and predictable exit codes. Use it for scripts, CI, or GitOps. 
+**`gcx`** is an AI-native command-line tool that gives you or your AI agent structured access to Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, k6, Fleet Management, Incidents, and Adaptive Telemetry. You can script it to provide deterministic JSON or YAML output, defined errors, and predictable exit codes. Use it for scripts, CI, or GitOps. 
 
 ## Side-by-side comparison
 
@@ -53,6 +53,8 @@ This table summarizes the main points for each tool:
 
 ## When to use which
 
+See the following scenarios to better understand when to use each tool:
+
 |I... | Use | Why? |
 |---|---|---|
 |Want an answer, a query, or a dashboard fast from the Grafana UI | Assistant | No setup, and Grafana manages context. |
@@ -66,5 +68,5 @@ This table summarizes the main points for each tool:
 
 You may use a composite pattern for coding agents: for example, use MCP for conversational discovery and diagnosis, then move durable changes into explicit `gcx` commands and version-controlled files. 
 
-[ai-tools.png](./ai-tools.png)
+[ai-tools.png](ai-tools.png)
 
