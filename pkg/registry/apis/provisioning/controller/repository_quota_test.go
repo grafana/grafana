@@ -175,7 +175,10 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 	}
 }
 
-func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
+// A repository awaiting its finalizers still counts: the NATS informer's store
+// holds identities only, so it cannot tell a deleting repository apart, and both
+// getters have to agree.
+func TestRepositoryQuotaConditions_CountsDeletingRepos(t *testing.T) {
 	ctx := context.Background()
 	namespace := "test-ns"
 
@@ -189,49 +192,22 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 		expectedMessageFmt string
 	}{
 		{
-			name:               "deleting repos excluded from count - under quota",
-			maxRepos:           5,
-			activeRepos:        3,
-			deletingRepos:      5,
-			expectedStatus:     metav1.ConditionTrue,
-			expectedReason:     provisioning.ReasonWithinQuota,
-			expectedMessageFmt: "within quota: 3/5 repositories",
-		},
-		{
-			name:               "deleting repos excluded from count - at quota",
-			maxRepos:           5,
-			activeRepos:        5,
-			deletingRepos:      2,
+			name:               "a deleting repo holds its place until it is gone",
+			maxRepos:           3,
+			activeRepos:        2,
+			deletingRepos:      1,
 			expectedStatus:     metav1.ConditionTrue,
 			expectedReason:     provisioning.ReasonQuotaReached,
-			expectedMessageFmt: "namespace quota reached: 5/5 repositories",
+			expectedMessageFmt: "namespace quota reached: 3/3 repositories",
 		},
 		{
-			name:               "deleting repos excluded from count - over quota",
+			name:               "deleting repos keep the namespace over quota",
 			maxRepos:           5,
-			activeRepos:        7,
+			activeRepos:        4,
 			deletingRepos:      3,
 			expectedStatus:     metav1.ConditionFalse,
 			expectedReason:     provisioning.ReasonQuotaExceeded,
 			expectedMessageFmt: "namespace quota exceeded: 7/5 repositories",
-		},
-		{
-			name:               "all repos being deleted - not over quota",
-			maxRepos:           5,
-			activeRepos:        0,
-			deletingRepos:      10,
-			expectedStatus:     metav1.ConditionTrue,
-			expectedReason:     provisioning.ReasonWithinQuota,
-			expectedMessageFmt: "within quota: 0/5 repositories",
-		},
-		{
-			name:               "deletion brings namespace under quota",
-			maxRepos:           3,
-			activeRepos:        3,
-			deletingRepos:      2,
-			expectedStatus:     metav1.ConditionTrue,
-			expectedReason:     provisioning.ReasonQuotaReached,
-			expectedMessageFmt: "namespace quota reached: 3/3 repositories",
 		},
 	}
 

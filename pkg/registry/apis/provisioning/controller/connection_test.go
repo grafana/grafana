@@ -2120,3 +2120,13 @@ func TestConnectionController_WorkerQueueSizeGauge(t *testing.T) {
 	cc.queue.Done(key)
 	require.Equal(t, 1.0, gaugeValueByName(t, reg, metricName))
 }
+
+// The apiserver informer delivers a whole Connection and the NATS one an
+// identity, so the version that attributes an enqueue must read from both.
+func TestConnectionResourceVersionAcceptsBothFeeds(t *testing.T) {
+	meta := metav1.ObjectMeta{Namespace: "ns", Name: "conn", ResourceVersion: "42"}
+
+	assert.Equal(t, "42", connectionResourceVersion(&provisioning.Connection{ObjectMeta: meta}))
+	assert.Equal(t, "42", connectionResourceVersion(&metav1.PartialObjectMetadata{ObjectMeta: meta}))
+	assert.Empty(t, connectionResourceVersion(cache.DeletedFinalStateUnknown{Key: "ns/conn"}), "nothing to read a version from")
+}

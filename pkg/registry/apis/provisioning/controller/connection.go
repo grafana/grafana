@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -187,13 +188,15 @@ func (cc *ConnectionController) popTrigger(key string) (usinformer.ProcessTrigge
 	return trigger, ok
 }
 
-// connectionResourceVersion returns the resource version of a delivered
-// Connection, or "" for a minimal NATS live event or a delete tombstone.
+// connectionResourceVersion returns the resource version of a delivered object,
+// or "" for a minimal NATS live event or a delete tombstone. The NATS informer
+// delivers an identity, not a Connection.
 func connectionResourceVersion(obj any) string {
-	if conn, ok := obj.(*provisioning.Connection); ok {
-		return conn.ResourceVersion
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		return ""
 	}
-	return ""
+	return acc.GetResourceVersion()
 }
 
 // connSpanAttrs returns the resource-identifying attributes stamped on every
