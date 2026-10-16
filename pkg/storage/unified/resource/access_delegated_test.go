@@ -3,7 +3,10 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -57,10 +60,10 @@ func newLimitedClient(t *testing.T) *authzLimitedClient {
 }
 
 func missingDelegatedCount(c *authzLimitedClient, group, resource, verb string) float64 {
-	return testutil.ToFloat64(c.metrics.missingDelegatedPermission.WithLabelValues(group, resource, verb))
+	return testutil.ToFloat64(c.metrics.servicePermissionFailures.WithLabelValues(group, resource, verb, "delegated", strconv.FormatBool(!c.IsCompatibleWithRBAC(group, resource))))
 }
 
-func TestServiceCanDelegate(t *testing.T) {
+func TestCheckServicePermission(t *testing.T) {
 	for name, tc := range map[string]struct {
 		id        authlib.AuthInfo
 		wantErr   bool
@@ -99,7 +102,7 @@ func TestServiceCanDelegate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			c := newLimitedClient(t)
 
-			err := c.serviceCanDelegate(context.Background(), tc.id, "dashboard.grafana.app", "dashboards", utils.VerbGet)
+			err := c.checkServicePermission(t.Context(), tc.id, "dashboard.grafana.app", "dashboards", utils.VerbGet)
 
 			if tc.wantErr {
 				require.ErrorIs(t, err, ErrServiceCannotDelegate)
@@ -159,7 +162,7 @@ func TestAuthzLimitedClient_RefusesWhenServiceCannotDelegate(t *testing.T) {
 		}, "")
 		require.NoError(t, err)
 		assert.True(t, resp.Allowed)
-		assert.Equal(t, 0.0, missingDelegatedCount(c, "playlist.grafana.app", "playlists", utils.VerbGet))
+		assert.Equal(t, 1.0, missingDelegatedCount(c, "playlist.grafana.app", "playlists", utils.VerbGet))
 	})
 
 	t.Run("a token that can delegate reaches the underlying client", func(t *testing.T) {
@@ -232,6 +235,267 @@ func TestAuthzLimitedClient_ServicePermissions(t *testing.T) {
 	}
 }
 
+func permissionFailureLabels(group, resource, verb, mode string, exempt bool) prometheus.Labels {
+	return prometheus.Labels{
+		"group": group, "resource": resource, "verb": verb, "mode": mode, "exempt": strconv.FormatBool(exempt),
+	}
+}
+
+func requirePermissionFailures(t *testing.T, counter *prometheus.CounterVec, name string, want ...prometheus.Labels) {
+	t.Helper()
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(counter)
+	families, err := registry.Gather()
+	require.NoError(t, err)
+	if len(want) == 0 {
+		require.Empty(t, families)
+		return
+	}
+	require.Len(t, families, 1)
+	require.Equal(t, name, families[0].GetName())
+	require.Contains(t, families[0].GetHelp(), "regardless of RBAC exemption")
+	var got []prometheus.Labels
+	for _, metric := range families[0].Metric {
+		labels := prometheus.Labels{}
+		for _, label := range metric.Label {
+			labels[label.GetName()] = label.GetValue()
+		}
+		got = append(got, labels)
+		require.Equal(t, 1.0, metric.GetCounter().GetValue())
+	}
+	require.ElementsMatch(t, want, got)
+}
+
+func TestAuthzLimitedClient_ServicePermissionFailures(t *testing.T) {
+	const group, resource = "playlist.grafana.app", "playlists"
+	for _, mode := range []string{"direct", "delegated"} {
+		for _, exemption := range []struct {
+			name   string
+			opts   AuthzOptions
+			exempt bool
+		}{
+			{"enforced", AuthzOptions{ExemptionEnabled: true}, false},
+			{"exempt", AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, true},
+			{"legacy bypass", AuthzOptions{}, true},
+		} {
+			for _, scenario := range []string{"missing permission", "valid permission", "tokenless", "namespace mismatch"} {
+				for _, method := range []string{"Check", "Compile", "BatchCheck"} {
+					t.Run(mode+"/"+exemption.name+"/"+scenario+"/"+method, func(t *testing.T) {
+						verb := utils.VerbGet
+						if method == "Compile" {
+							verb = utils.VerbList
+						}
+						var permissions []string
+						if scenario == "valid permission" {
+							permissions = []string{group + "/" + resource + ":" + verb}
+						}
+						id := serviceWithPermissions(permissions...)
+						missingErr := ErrServicePermissionMissing
+						if mode == "delegated" {
+							id = userWithDelegatedPermissions(permissions...)
+							id.AccessToken = "verified-access-token"
+							missingErr = ErrServiceCannotDelegate
+						}
+						if scenario == "tokenless" {
+							id.AccessToken = ""
+						}
+						namespace := "stacks-1"
+						var wantErr error
+						if scenario == "namespace mismatch" {
+							namespace = "stacks-2"
+							wantErr = authlib.ErrNamespaceMismatch
+						} else if scenario == "missing permission" && !exemption.exempt {
+							wantErr = missingErr
+						}
+
+						calls := 0
+						var inner authlib.AccessClient
+						if !exemption.exempt {
+							inner = &callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+								calls++
+								return deny()
+							}}
+						}
+						c := NewAuthzLimitedClient(inner, exemption.opts).(*authzLimitedClient)
+						logger := &permissionTestLogger{}
+						c.logger = logger
+						var allowed bool
+						var err error
+						switch method {
+						case "Check":
+							var resp authlib.CheckResponse
+							resp, err = c.Check(t.Context(), id, authlib.CheckRequest{
+								Namespace: namespace, Group: group, Resource: resource, Verb: verb,
+							}, "folder")
+							allowed = resp.Allowed
+						case "Compile":
+							var checker authlib.ItemChecker
+							checker, _, err = c.Compile(t.Context(), id, authlib.ListRequest{
+								Namespace: namespace, Group: group, Resource: resource, Verb: verb,
+							})
+							if wantErr != nil {
+								require.Nil(t, checker)
+							} else {
+								require.NotNil(t, checker)
+								allowed = checker("item", "folder")
+							}
+						case "BatchCheck":
+							var resp authlib.BatchCheckResponse
+							resp, err = c.BatchCheck(t.Context(), id, authlib.BatchCheckRequest{
+								Namespace: namespace,
+								Checks: []authlib.BatchCheckItem{
+									{CorrelationID: "1", Group: group, Resource: resource, Verb: verb},
+									{CorrelationID: "2", Group: group, Resource: resource, Verb: verb},
+								},
+							})
+							if wantErr != nil {
+								require.Empty(t, resp.Results)
+							} else {
+								require.Len(t, resp.Results, 2)
+								require.Equal(t, exemption.exempt, resp.Results["2"].Allowed)
+								allowed = resp.Results["1"].Allowed
+							}
+						}
+						require.ErrorIs(t, err, wantErr)
+						require.Equal(t, wantErr == nil && exemption.exempt, allowed)
+						wantCalls := 0
+						if wantErr == nil && !exemption.exempt {
+							wantCalls = 1
+							if method == "BatchCheck" {
+								wantCalls = 2
+							}
+						}
+						require.Equal(t, wantCalls, calls)
+						var failures []prometheus.Labels
+						if scenario == "missing permission" {
+							failures = append(failures, permissionFailureLabels(group, resource, verb, mode, exemption.exempt))
+						}
+						requirePermissionFailures(t, c.metrics.servicePermissionFailures, "grafana_grpc_authz_limited_client_service_permission_failures_total", failures...)
+						wantWarnings := 0
+						if errors.Is(wantErr, missingErr) {
+							wantWarnings = 1
+							require.Contains(t, logger.WarnLogs.Ctx, group+"/"+resource+":"+verb)
+						}
+						require.Equal(t, wantWarnings, logger.WarnLogs.Calls)
+						require.Zero(t, logger.ErrorLogs.Calls)
+						wantErrors := 0.0
+						if errors.Is(wantErr, ErrServicePermissionMissing) {
+							wantErrors = 1
+						}
+						require.Equal(t, wantErrors, testutil.ToFloat64(c.metrics.errorsTotal.WithLabelValues(group, resource, verb)))
+					})
+				}
+			}
+		}
+	}
+}
+
+func TestAuthzLimitedClient_BatchPermissionFailureCounts(t *testing.T) {
+	for mode, id := range map[string]authlib.AuthInfo{
+		"direct": serviceWithPermissions(), "delegated": tokenWithoutDelegation(),
+	} {
+		for _, reject := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/reject=%t", mode, reject), func(t *testing.T) {
+				const group, resource = "playlist.grafana.app", "playlists"
+				c := NewAuthzLimitedClient(nil, AuthzOptions{
+					ExemptionEnabled: true,
+					ExemptResources:  []string{group + "/" + resource, group + "/other", "other.grafana.app/" + resource},
+				}).(*authzLimitedClient)
+				logger := &permissionTestLogger{}
+				c.logger = logger
+				checks := []authlib.BatchCheckItem{
+					{Group: group, Resource: resource, Verb: utils.VerbGet},
+					{Group: group, Resource: resource, Verb: utils.VerbGet},
+					{Group: group, Resource: resource, Verb: utils.VerbUpdate},
+					{Group: group, Resource: "other", Verb: utils.VerbGet},
+					{Group: "other.grafana.app", Resource: resource, Verb: utils.VerbGet},
+				}
+				failures := []prometheus.Labels{
+					permissionFailureLabels(group, resource, utils.VerbGet, mode, true),
+					permissionFailureLabels(group, resource, utils.VerbUpdate, mode, true),
+					permissionFailureLabels(group, "other", utils.VerbGet, mode, true),
+					permissionFailureLabels("other.grafana.app", resource, utils.VerbGet, mode, true),
+				}
+				if reject {
+					checks = append(checks,
+						authlib.BatchCheckItem{Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet},
+						authlib.BatchCheckItem{Group: group, Resource: resource, Verb: utils.VerbDelete},
+						authlib.BatchCheckItem{Group: "folder.grafana.app", Resource: "folders", Verb: utils.VerbGet},
+					)
+					failures = append(failures, permissionFailureLabels("dashboard.grafana.app", "dashboards", utils.VerbGet, mode, false))
+				}
+				for i := range checks {
+					checks[i].CorrelationID = strconv.Itoa(i)
+				}
+				resp, err := c.BatchCheck(t.Context(), id, authlib.BatchCheckRequest{Namespace: "stacks-1", Checks: checks})
+				wantWarnings := 0
+				if reject {
+					wantErr := ErrServicePermissionMissing
+					if mode == "delegated" {
+						wantErr = ErrServiceCannotDelegate
+					}
+					require.ErrorIs(t, err, wantErr)
+					require.Empty(t, resp.Results)
+					wantWarnings = 1
+				} else {
+					require.NoError(t, err)
+					require.Len(t, resp.Results, len(checks))
+					for _, check := range checks {
+						require.True(t, resp.Results[check.CorrelationID].Allowed)
+					}
+				}
+				requirePermissionFailures(t, c.metrics.servicePermissionFailures, "grafana_grpc_authz_limited_client_service_permission_failures_total", failures...)
+				require.Equal(t, wantWarnings, logger.WarnLogs.Calls)
+				require.Zero(t, logger.ErrorLogs.Calls)
+			})
+		}
+	}
+}
+
+func TestAuthzLimitedClient_BatchExemptionsBypassUnderlyingClient(t *testing.T) {
+	const group, resource = "playlist.grafana.app", "playlists"
+	for mode, id := range map[string]authlib.AuthInfo{
+		"direct":    serviceWithPermissions("dashboard.grafana.app:get"),
+		"delegated": userWithDelegatedPermissions("dashboard.grafana.app:get"),
+	} {
+		t.Run(mode, func(t *testing.T) {
+			var checked []string
+			inner := &callbackAccessClient{fn: func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+				require.Equal(t, "dashboard.grafana.app", req.Group)
+				require.Equal(t, "dashboards", req.Resource)
+				checked = append(checked, req.Name)
+				return deny()
+			}}
+			c := NewAuthzLimitedClient(inner, AuthzOptions{
+				ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource},
+			}).(*authzLimitedClient)
+			logger := &permissionTestLogger{}
+			c.logger = logger
+			resp, err := c.BatchCheck(t.Context(), id, authlib.BatchCheckRequest{
+				Namespace: "stacks-1",
+				Checks: []authlib.BatchCheckItem{
+					{CorrelationID: "p1", Group: group, Resource: resource, Verb: utils.VerbGet},
+					{CorrelationID: "d1", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet, Name: "one"},
+					{CorrelationID: "p2", Group: group, Resource: resource, Verb: utils.VerbGet},
+					{CorrelationID: "d2", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet, Name: "two"},
+				},
+			})
+			require.NoError(t, err)
+			require.Equal(t, []string{"one", "two"}, checked)
+			require.Len(t, resp.Results, 4)
+			require.True(t, resp.Results["p1"].Allowed)
+			require.True(t, resp.Results["p2"].Allowed)
+			require.False(t, resp.Results["d1"].Allowed)
+			require.False(t, resp.Results["d2"].Allowed)
+			requirePermissionFailures(t, c.metrics.servicePermissionFailures, "grafana_grpc_authz_limited_client_service_permission_failures_total",
+				permissionFailureLabels(group, resource, utils.VerbGet, mode, true))
+			require.Zero(t, logger.WarnLogs.Calls)
+			require.Zero(t, logger.ErrorLogs.Calls)
+			require.Zero(t, testutil.ToFloat64(c.metrics.errorsTotal.WithLabelValues(group, resource, utils.VerbGet)))
+		})
+	}
+}
+
 func TestAuthzLimitedClient_BatchCheckReturnsItemErrors(t *testing.T) {
 	recorder := recordPermissionSpans(t)
 	logger := &permissionTestLogger{}
@@ -267,6 +531,34 @@ func TestSearchServicePermissions(t *testing.T) {
 			mutate:         func(req *resourcepb.ResourceSearchRequest) { req.Permission = int64(dashboardaccess.PERMISSION_EDIT) },
 			wantPermission: "dashboard.grafana.app/dashboards:update",
 		},
+		"create on folders requires dashboards create": {
+			permissions: []string{"folder.grafana.app:get"},
+			mutate: func(req *resourcepb.ResourceSearchRequest) {
+				req.Options.Key.Group, req.Options.Key.Resource = "folder.grafana.app", "folders"
+				req.Permission = int64(dashboardaccess.PERMISSION_CREATE)
+			},
+			wantPermission: "dashboard.grafana.app/dashboards:create",
+		},
+		"create on folders valid grant": {
+			permissions: []string{"dashboard.grafana.app:create"},
+			mutate: func(req *resourcepb.ResourceSearchRequest) {
+				req.Options.Key.Group, req.Options.Key.Resource = "folder.grafana.app", "folders"
+				req.Permission = int64(dashboardaccess.PERMISSION_CREATE)
+			},
+		},
+		"create on deleted folders keeps set_permissions": {
+			permissions: []string{"dashboard.grafana.app:create"},
+			mutate: func(req *resourcepb.ResourceSearchRequest) {
+				req.Options.Key.Group, req.Options.Key.Resource = "folder.grafana.app", "folders"
+				req.Permission = int64(dashboardaccess.PERMISSION_CREATE)
+				req.IsDeleted = true
+			},
+			wantPermission: "folder.grafana.app/folders:set_permissions",
+		},
+		"create on dashboards stays read": {
+			permissions: []string{"dashboard.grafana.app:get"},
+			mutate:      func(req *resourcepb.ResourceSearchRequest) { req.Permission = int64(dashboardaccess.PERMISSION_CREATE) },
+		},
 		"trash requires folder admin check": {
 			permissions:    []string{"dashboard.grafana.app:get"},
 			mutate:         func(req *resourcepb.ResourceSearchRequest) { req.IsDeleted = true },
@@ -292,25 +584,134 @@ func TestSearchServicePermissions(t *testing.T) {
 			wantPermission: "folder.grafana.app/folders:get",
 		},
 	} {
-		t.Run(name, func(t *testing.T) {
-			req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-				Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}}}
-			if tc.mutate != nil {
-				tc.mutate(req)
-			}
-			s := newPermissionTestSearchServer(newLimitedClient(t))
-			ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions(tc.permissions...))
-			if tc.wantPermission == "" {
-				require.NoError(t, s.checkSearchServicePermissions(ctx, req))
-				return
-			}
-			// No index is configured: the failure must precede any index lookup.
-			resp, err := s.Search(ctx, req)
-			require.NoError(t, err)
-			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-			require.Contains(t, resp.Error.GetMessage(), tc.wantPermission)
-		})
+		for _, mode := range []string{"direct", "delegated"} {
+			t.Run(mode+"/"+name, func(t *testing.T) {
+				req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
+				}}}
+				if tc.mutate != nil {
+					tc.mutate(req)
+				}
+				logger := &permissionTestLogger{}
+				s := newPermissionTestSearchServer(newLimitedClient(t))
+				s.log = logger
+				id := serviceWithPermissions(tc.permissions...)
+				if mode == "delegated" {
+					id = userWithDelegatedPermissions(tc.permissions...)
+					id.AccessToken = "verified-access-token"
+				}
+				ctx := authlib.WithAuthInfo(t.Context(), id)
+				if tc.wantPermission == "" {
+					require.NoError(t, s.checkSearchServicePermissions(ctx, req))
+					requirePermissionFailures(t, s.indexMetrics.SearchServicePermissionFailures, "grafana_index_server_search_service_permission_failures_total")
+					require.Zero(t, logger.WarnLogs.Calls)
+					require.Zero(t, logger.ErrorLogs.Calls)
+					return
+				}
+				// No index is configured: the failure must precede any index lookup.
+				resp, err := s.Search(ctx, req)
+				require.NoError(t, err)
+				require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
+				require.Contains(t, resp.Error.GetMessage(), tc.wantPermission)
+				group, rest, _ := strings.Cut(tc.wantPermission, "/")
+				resource, verb, _ := strings.Cut(rest, ":")
+				requirePermissionFailures(t, s.indexMetrics.SearchServicePermissionFailures, "grafana_index_server_search_service_permission_failures_total",
+					permissionFailureLabels(group, resource, verb, mode, false))
+				require.Equal(t, 1, logger.WarnLogs.Calls)
+				require.Zero(t, logger.ErrorLogs.Calls)
+			})
+		}
+	}
+}
+
+func TestSearchServicePermissionExemptions(t *testing.T) {
+	const group, resource = "playlist.grafana.app", "playlists"
+	for mode, id := range map[string]authlib.AuthInfo{
+		"direct":    serviceWithPermissions(),
+		"delegated": tokenWithoutDelegation(),
+	} {
+		for _, tc := range []struct {
+			name            string
+			opts            AuthzOptions
+			requestGroup    string
+			requestResource string
+			federated       bool
+			validPermission bool
+			tokenless       bool
+			namespace       string
+			wantErr         error
+			wantExempt      float64
+		}{
+			{name: "exempt", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, wantExempt: 1},
+			{name: "legacy bypass", wantExempt: 1},
+			{name: "not exempt", opts: AuthzOptions{ExemptionEnabled: true}, wantErr: ErrServicePermissionMissing},
+			{name: "sibling resource", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/other"}}, wantErr: ErrServicePermissionMissing},
+			{name: "always enforced", requestGroup: "dashboard.grafana.app", requestResource: "dashboards", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, wantErr: ErrServicePermissionMissing},
+			{name: "federated enforced resource", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, federated: true, wantExempt: 1, wantErr: ErrServicePermissionMissing},
+			{name: "namespace mismatch", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, namespace: "stacks-2", wantErr: authlib.ErrNamespaceMismatch},
+			{name: "enforced namespace mismatch", opts: AuthzOptions{ExemptionEnabled: true}, namespace: "stacks-2", wantErr: authlib.ErrNamespaceMismatch},
+			{name: "exempt valid permission", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, validPermission: true},
+			{name: "enforced valid permission", opts: AuthzOptions{ExemptionEnabled: true}, validPermission: true},
+			{name: "exempt tokenless", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, tokenless: true},
+			{name: "enforced tokenless", opts: AuthzOptions{ExemptionEnabled: true}, tokenless: true},
+		} {
+			t.Run(mode+"/"+tc.name, func(t *testing.T) {
+				requestGroup, requestResource := tc.requestGroup, tc.requestResource
+				if requestGroup == "" {
+					requestGroup, requestResource = group, resource
+				}
+				namespace := tc.namespace
+				if namespace == "" {
+					namespace = "stacks-1"
+				}
+				logger := &permissionTestLogger{}
+				s := newPermissionTestSearchServer(NewAuthzLimitedClient(nil, tc.opts))
+				s.log = logger
+				req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: namespace, Group: requestGroup, Resource: requestResource,
+				}}}
+				if tc.federated {
+					req.Federated = []*resourcepb.ResourceKey{{Group: "folder.grafana.app", Resource: "folders"}}
+				}
+				wantErr := tc.wantErr
+				if mode == "delegated" && errors.Is(wantErr, ErrServicePermissionMissing) {
+					wantErr = ErrServiceCannotDelegate
+				}
+				testID := id
+				if tc.validPermission {
+					permission := group + "/" + resource + ":" + utils.VerbGet
+					if mode == "direct" {
+						testID = serviceWithPermissions(permission)
+					} else {
+						testID = userWithDelegatedPermissions(permission)
+					}
+				}
+				if tc.tokenless {
+					if mode == "direct" {
+						testID = &identity.StaticRequester{Type: authlib.TypeAccessPolicy, Namespace: "stacks-1"}
+					} else {
+						testID = userWithDelegatedPermissions()
+					}
+				}
+				err := s.checkSearchServicePermissions(authlib.WithAuthInfo(t.Context(), testID), req)
+				require.ErrorIs(t, err, wantErr)
+				var failures []prometheus.Labels
+				if tc.wantExempt > 0 {
+					failures = append(failures, permissionFailureLabels(group, resource, utils.VerbGet, mode, true))
+				}
+				wantWarnings := 0
+				if wantErr != nil && !errors.Is(wantErr, authlib.ErrNamespaceMismatch) {
+					wantWarnings = 1
+					if tc.federated {
+						requestGroup, requestResource = "folder.grafana.app", "folders"
+					}
+					failures = append(failures, permissionFailureLabels(requestGroup, requestResource, utils.VerbGet, mode, false))
+				}
+				requirePermissionFailures(t, s.indexMetrics.SearchServicePermissionFailures, "grafana_index_server_search_service_permission_failures_total", failures...)
+				require.Equal(t, wantWarnings, logger.WarnLogs.Calls)
+				require.Zero(t, logger.ErrorLogs.Calls)
+			})
+		}
 	}
 }
 
@@ -406,9 +807,10 @@ func TestSearchPermissionFailureMonitoring(t *testing.T) {
 			}}})
 			require.NoError(t, err)
 			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-			require.Equal(t, 1.0, testutil.ToFloat64(s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(mode)))
-			require.Equal(t, 1, logger.ErrorLogs.Calls)
-			require.Contains(t, logger.ErrorLogs.Ctx, "dashboard.grafana.app/dashboards:get")
+			require.Equal(t, 1.0, testutil.ToFloat64(s.indexMetrics.SearchServicePermissionFailures.WithLabelValues("dashboard.grafana.app", "dashboards", utils.VerbGet, mode, "false")))
+			require.Zero(t, logger.ErrorLogs.Calls)
+			require.Equal(t, 1, logger.WarnLogs.Calls)
+			require.Contains(t, logger.WarnLogs.Ctx, "dashboard.grafana.app/dashboards:get")
 			require.Equal(t, 1, logger.DebugLogs.Calls, "rejected searches still report their stats")
 			require.Len(t, recorder.Ended(), 1)
 			require.Equal(t, otelcodes.Error, recorder.Ended()[0].Status().Code)

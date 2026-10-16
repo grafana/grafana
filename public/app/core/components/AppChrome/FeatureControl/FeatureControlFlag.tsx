@@ -19,8 +19,8 @@ import {
   Text,
   Tooltip,
   useStyles2,
+  CodeMirrorEditor,
 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 type OFREPEvaluationResult = ReturnType<typeof getOFREPWebProvider>['flagCache'][string];
 

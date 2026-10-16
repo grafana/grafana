@@ -1,5 +1,6 @@
 import { VariableHide } from '@grafana/data';
 import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -56,6 +57,8 @@ function buildRowsLayoutManager(rows: RowItem[] = []) {
   return rowsLayoutManager;
 }
 
+afterEach(() => setTestFlags({}));
+
 describe('RowsLayoutManager', () => {
   describe('getSlug', () => {
     it('generates slugs based on row titles', () => {
@@ -103,8 +106,26 @@ describe('RowsLayoutManager', () => {
   });
 
   describe('addNewRow', () => {
+    it('disables interaction in the inner layout added during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const manager = new RowsLayoutManager({ rows: [] });
+      new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+      const layout = AutoGridLayoutManager.createEmpty();
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+
+      manager.addNewRow(new RowItem({ layout }));
+
+      expect(layout.state.layout.state.isDraggable).toBe(false);
+      manager.editModeChanged(true);
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+    });
+
     beforeEach(() => {
       lastUndo = undefined;
+    });
+
+    afterEach(() => {
+      setTestFlags({});
     });
 
     it('should add a new row with default title when no title is provided', () => {
@@ -162,6 +183,8 @@ describe('RowsLayoutManager', () => {
     });
 
     it('should sync edit mode to a new row inner layout when the dashboard is already editing', () => {
+      // addNewRow's editModeChanged runs inside an edit action the sidebar performs. This test never activates it.
+      setTestFlags({ dashboardNewLayouts: false });
       // New rows use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
       // RowItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
       // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.

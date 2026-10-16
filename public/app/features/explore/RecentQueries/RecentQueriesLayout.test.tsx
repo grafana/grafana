@@ -14,8 +14,8 @@ jest.mock('./RecentQueriesList', () => ({
   RecentQueriesList: jest.fn(() => <div data-testid="list" />),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(() => ({
     isLoading: false,
     items: [

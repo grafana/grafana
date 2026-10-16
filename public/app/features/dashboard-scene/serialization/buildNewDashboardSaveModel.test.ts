@@ -53,11 +53,7 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
-  getDataSourceSrv: () => ({
-    get: (): Promise<DataSourceApi> => {
-      return Promise.resolve(fakeDsMock);
-    },
-  }),
+  getDataSourceInstance: (): Promise<DataSourceApi> => Promise.resolve(fakeDsMock),
 }));
 
 describe('buildNewDashboardSaveModelV1', () => {

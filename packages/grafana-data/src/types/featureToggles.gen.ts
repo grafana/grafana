@@ -214,11 +214,6 @@ export interface FeatureToggles {
   */
   queryServiceRewrite?: boolean;
   /**
-  * Routes requests to the new query service
-  * @default false
-  */
-  queryServiceFromUI?: boolean;
-  /**
   * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false
   */
@@ -621,16 +616,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Enables SRI checks for plugin assets
-  * @default false
-  */
-  pluginsSriChecks?: boolean;
-  /**
-  * Enables time pickers sync
-  * @default false
-  */
-  timeRangeProvider?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -896,11 +881,6 @@ export interface FeatureToggles {
   */
   recentlyViewedDashboards?: boolean;
   /**
-  * A/A test for recently viewed dashboards feature
-  * @default false
-  */
-  experimentRecentlyViewedDashboards?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -941,18 +921,13 @@ export interface FeatureToggles {
   */
   enableAppChromeExtensions?: boolean;
   /**
-  * Set this to true to enable all dashboard empty state extensions registered by plugins.
-  * @default false
-  */
-  enableDashboardEmptyExtensions?: boolean;
-  /**
   * Enables use of app platform API for folders
   * @default true
   */
   foldersAppPlatformAPI?: boolean;
   /**
   * Applies OTel formatting templates to displayed logs
-  * @default false
+  * @default true
   */
   otelLogsFormatting?: boolean;
   /**
@@ -1217,18 +1192,13 @@ export interface FeatureToggles {
   */
   analyticsFramework?: boolean;
   /**
-  * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
-  * @default false
-  */
-  datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
-  /**
   * Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
   * Enables an inline version of Log Details that creates no new scrolls
-  * @default false
+  * @default true
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
@@ -1248,7 +1218,7 @@ export interface FeatureToggles {
   streamingForwardTeamHeadersTempo?: boolean;
   /**
   * Aligns query splitting chunks with UTC midnight
-  * @default false
+  * @default true
   */
   lokiAlignedQuerySplitting?: boolean;
   /**

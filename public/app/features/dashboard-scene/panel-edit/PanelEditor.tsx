@@ -20,10 +20,15 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
+import { createInfoNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { dispatch } from 'app/store/store';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -99,6 +104,23 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panel = this.state.panelRef.resolve();
     const dashboard = getDashboardSceneFor(this);
 
+    const runtimeTransformations = panel.getRuntimeTransformations();
+    const tableTransformations = runtimeTransformations.get(TABLE_TRANSFORMATIONS_OWNER);
+    const pluginId = panel.state.pluginId;
+    if (pluginId === 'table' && tableTransformations.length > 0) {
+      runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, []);
+      dispatch(
+        notifyApp(
+          createInfoNotification(
+            t(
+              'dashboard.panel-editor.ad-hoc-transformations-disabled',
+              'Ad hoc transformations are disabled in edit mode'
+            )
+          )
+        )
+      );
+    }
+
     // Clear any panel selection when entering panel edit mode.
     // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
     dashboard.state.sidebar.clearSelection();
@@ -129,6 +151,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.waitForPlugin();
 
     return () => {
+      if (pluginId === panel.state.pluginId && tableTransformations.length > 0) {
+        runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, tableTransformations);
+      }
       this.commitChanges();
       reportInteraction('panel_edit_closed', {}, { silent: true });
     };
@@ -153,7 +178,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const originalState = this._layoutItemState!;
 
     // Temp fix for old edit mode
-    if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
+    if (this._layoutItem instanceof DashboardGridItem && !isDashboardNewLayoutsEnabled()) {
       this._layoutItem.handleEditChange();
       return;
     }
@@ -176,6 +201,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // is not active while panel edit is active so we have to let the sidebar (which owns undo/redo)
     // publish this event when it activates
     const dashboard = getDashboardSceneFor(this);
+    if (this.state.isDirty) {
+      dashboard.recordEditMutation();
+    }
     dashboard.state.sidebar.setPanelEditAction(editAction);
   }
 

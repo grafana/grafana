@@ -45,6 +45,11 @@ export class Sidebar extends PageObject {
     return this.getByGrafanaSelector(this.selectors.components.Sidebar.container);
   }
 
+  /** Returns the open pane's header title (e.g. "Constant variable" for a selected constant variable) */
+  getPaneTitle(): Locator {
+    return this.getContainer().getByTestId(this.selectors.components.Sidebar.headerTitle);
+  }
+
   /** Goes back to the previous pane by clicking the sidebar's back button */
   async goBack() {
     await test.step('Go back to previous pane', async () => {

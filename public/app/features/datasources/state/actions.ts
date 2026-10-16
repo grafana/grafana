@@ -12,13 +12,13 @@ import {
   config,
   type DataSourceSrv,
   DataSourceWithBackend,
+  getPluginSettings,
   HealthCheckError,
   type HealthCheckResultDetails,
   isFetchError,
   locationService,
 } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getPluginSettings } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
