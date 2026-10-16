@@ -21,7 +21,12 @@ import {
   NOTEBOOK_AUTOSAVE_FAILED_REASON,
   NOTEBOOK_ENTRY_POINT,
 } from '../analytics/types';
-import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
+import {
+  createNotebook,
+  NotebookConflictError,
+  readNotebookResourceVersion,
+  updateNotebook,
+} from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
 
@@ -519,6 +524,27 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     while (this.inFlightSave) {
       await this.inFlightSave;
     }
+  }
+
+  /**
+   * Whether someone else saved the notebook after this scene loaded it, for a write from outside the
+   * notebook that should be refused rather than overwrite theirs.
+   */
+  public async isSavedElsewhere(): Promise<boolean> {
+    const uid = this.scene.state.uid;
+    if (!uid || this.state.savedResourceVersion === undefined) {
+      return false;
+    }
+
+    // Let a save of this scene's own that is already running land first. Otherwise the server can
+    // already hold a version this scene wrote but has not yet recorded, which would read as someone
+    // else's save. Only one already running: bringing a waiting edit forward could conflict and raise
+    // the overwrite modal for it while the caller is about to ask the person elsewhere.
+    await this.awaitInFlightSave();
+    const serverVersion = await readNotebookResourceVersion(uid);
+    // Read after the request, not before: a save that finished during it moved both versions.
+    const savedVersion = this.state.savedResourceVersion;
+    return serverVersion !== undefined && savedVersion !== undefined && serverVersion !== savedVersion;
   }
 
   /**

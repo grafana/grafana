@@ -71,14 +71,12 @@ async function appendThroughScene(
   source: AppendedCellSource
 ): Promise<Appended> {
   // Lazy so a dashboard or Explore caller with no notebook open never loads the scene write path.
-  const [{ refuseIfSavedElsewhere }, { transformNotebookToScene }, { transformNotebookSceneToSaveModel }] =
-    await Promise.all([
-      import('../mutation-api/commands/applyNotebookSpec'),
-      import('../serialization/transformNotebookToScene'),
-      import('../serialization/transformNotebookSceneToSaveModel'),
-    ]);
+  const [{ transformNotebookToScene }, { transformNotebookSceneToSaveModel }] = await Promise.all([
+    import('../serialization/transformNotebookToScene'),
+    import('../serialization/transformNotebookSceneToSaveModel'),
+  ]);
 
-  if (await refuseIfSavedElsewhere(scene)) {
+  if (await scene.autosave.isSavedElsewhere()) {
     throw new OpenNotebookConflictError();
   }
 
