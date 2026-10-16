@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import {
   applyFieldOverrides,
+  CoreApp,
   createTheme,
   EventBusSrv,
   FieldType,
@@ -24,6 +25,7 @@ import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unst
 import { PanelContextProvider } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { DashboardSceneChangeTracker } from 'app/features/dashboard-scene/saving/DashboardSceneChangeTracker';
+import { createSavedPanelTransformations } from 'app/features/dashboard-scene/scene/SavedPanelTransformations';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { getPanelProps } from '../test-utils';
@@ -123,6 +125,83 @@ it('renders empty query results with refreshed features enabled', () => {
   setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
   setup(true);
   expect(screen.getByText('Unable to render data: .')).toBeInTheDocument();
+});
+
+it('shows and updates promoted columns in the saved transformation stack while editing', async () => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+  const frame = toDataFrame({
+    fields: [
+      { name: 'Value', type: FieldType.number, values: [1, 2] },
+      { name: 'Extra', type: FieldType.string, values: ['first', 'visible after edit'] },
+    ],
+  });
+  const source = new SceneDataNode({
+    data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [frame] },
+  });
+  const transformer = new SceneDataTransformer({
+    $data: source,
+    transformations: [{ id: 'organize', options: { excludeByName: { Extra: true } } }],
+  });
+  const api = createSavedPanelTransformations(transformer, () => [frame]);
+  const deactivate = transformer.activate();
+  const props = getPanelProps<TableOptions>(
+    { ...options, showColumnsSidebar: true },
+    { fieldConfig, width: 800, height: 600 }
+  );
+  function LiveTable() {
+    const { data } = transformer.useState();
+    return data ? (
+      <TablePanel
+        {...props}
+        data={{
+          ...data,
+          series: applyFieldOverrides({
+            data: data.series,
+            fieldConfig,
+            fieldConfigRegistry: plugin.fieldConfigRegistry,
+            theme: createTheme(),
+            replaceVariables: props.replaceVariables,
+          }),
+        }}
+      />
+    ) : null;
+  }
+
+  const view = render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <PanelContextProvider
+        value={{
+          app: CoreApp.PanelEditor,
+          eventsScope: 'global',
+          eventBus: new EventBusSrv(),
+          adHocTransformations: api,
+        }}
+      >
+        <LiveTable />
+      </PanelContextProvider>
+    </OpenFeatureProvider>
+  );
+  try {
+    await screen.findByRole('columnheader', { name: 'Value' });
+    expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['Value']);
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Show Extra' }));
+    await waitFor(() =>
+      expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['Value', 'Extra'])
+    );
+    expect(transformer.state.transformations).toEqual([]);
+
+    await userEvent.click(screen.getByLabelText('Column options for Value'));
+    await userEvent.click(await screen.findByText('Filter values'));
+    await userEvent.type(screen.getByRole('textbox', { name: 'Minimum' }), '2');
+    await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual([2]));
+    expect(transformer.state.transformations.map((config) => ('id' in config ? config.id : undefined))).toEqual([
+      'filterByValue',
+    ]);
+  } finally {
+    view.unmount();
+    deactivate();
+  }
 });
 
 it('retains saved-sort callbacks with experimental features enabled', async () => {

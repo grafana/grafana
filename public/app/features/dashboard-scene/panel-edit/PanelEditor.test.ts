@@ -26,10 +26,10 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
-import { dispatch } from 'app/store/store';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { getPanelAdHocTransformations } from '../scene/PanelAdHocTransformations';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -88,11 +88,6 @@ const dataSources = {
 
 setupDataSources(...Object.values(dataSources));
 
-jest.mock('app/store/store', () => ({
-  ...jest.requireActual('app/store/store'),
-  dispatch: jest.fn(),
-}));
-
 let deactivate: CancelActivationHandler | undefined;
 
 describe('PanelEditor', () => {
@@ -134,31 +129,83 @@ describe('PanelEditor', () => {
   });
 
   describe('Entering panel edit', () => {
-    beforeEach(() => jest.mocked(dispatch).mockClear());
-
-    it('pauses ad hoc table transformations and restores them on exit', async () => {
+    it('promotes ad hoc table transformations after saved transformations', async () => {
       const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { indexByName: { B: 0, A: 1 } } }];
-      const { panel } = await setup({ pluginId: 'table', initialTableTransformations: transformations });
+      const savedTransformations: DataTransformerConfig[] = [{ id: 'limit', options: { limitField: 2 } }];
+      const { panel, panelEditor } = await setup({
+        pluginId: 'table',
+        initialTableTransformations: transformations,
+        initialSavedTransformations: savedTransformations,
+      });
+      const transformer = panel.state.$data as SceneDataTransformer;
 
       expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
-      expect(dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          payload: expect.objectContaining({
-            title: 'Ad hoc transformations are disabled in edit mode',
-          }),
-        })
-      );
+      expect(transformer.state.transformations).toEqual([...savedTransformations, ...transformations]);
+      expect(panelEditor.state.isDirty).toBe(true);
 
       deactivate!();
       deactivate = undefined;
-      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(transformations);
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
+      expect(transformer.state.transformations).toEqual([...savedTransformations, ...transformations]);
     });
 
-    it('does not notify when the table has no ad hoc transformations', async () => {
+    it('promotes every owner on a non-table panel in runtime execution order', async () => {
+      const first = [{ id: 'limit', options: { limitField: 2 } }];
+      const second = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      const { panel, panelEditor, dashboard } = await setup({
+        pluginId: 'timeseries',
+        initialAdHocTransformations: [
+          ['second', second],
+          ['first', first],
+        ],
+      });
+
+      expect((panel.state.$data as SceneDataTransformer).state.transformations).toEqual([...second, ...first]);
+      expect(panel.getRuntimeTransformations().get('first')).toEqual([]);
+      expect(panel.getRuntimeTransformations().get('second')).toEqual([]);
+      expect(panelEditor.state.isDirty).toBe(true);
+
+      panelEditor.onDiscard();
+      const restored = findVizPanelByKey(dashboard, panel.state.key!)!;
+      expect((restored.state.$data as SceneDataTransformer).state.transformations).toEqual([]);
+      expect(restored.getRuntimeTransformations().get('first')).toEqual(first);
+      expect(restored.getRuntimeTransformations().get('second')).toEqual(second);
+    });
+
+    it('restores view-local transformations when promotion is discarded', async () => {
+      const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      const { panel, panelEditor, dashboard } = await setup({
+        pluginId: 'table',
+        initialTableTransformations: transformations,
+      });
+
+      panelEditor.onDiscard();
+
+      const restored = findVizPanelByKey(dashboard, panel.state.key!)!;
+      expect((restored.state.$data as SceneDataTransformer).state.transformations).toEqual([]);
+      expect(restored.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(transformations);
+    });
+
+    it('does not restore view-local transformations after the promoted stack is saved', async () => {
+      const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      const { panel, panelEditor, dashboard } = await setup({
+        pluginId: 'table',
+        initialTableTransformations: transformations,
+      });
+
+      panelEditor.dashboardSaved();
+      panelEditor.onDiscard();
+
+      const restored = findVizPanelByKey(dashboard, panel.state.key!)!;
+      expect((restored.state.$data as SceneDataTransformer).state.transformations).toEqual(transformations);
+      expect(restored.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
+    });
+
+    it('leaves saved transformations unchanged when the table has no ad hoc transformations', async () => {
       const { panel } = await setup({ pluginId: 'table' });
 
       expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
-      expect(dispatch).not.toHaveBeenCalled();
+      expect((panel.state.$data as SceneDataTransformer).state.transformations).toEqual([]);
     });
 
     it('should clear sidebar selection', () => {
@@ -510,6 +557,8 @@ interface SetupOptions {
   skipWait?: boolean;
   pluginLoadTime?: number;
   initialTableTransformations?: DataTransformerConfig[];
+  initialAdHocTransformations?: Array<[string, DataTransformerConfig[]]>;
+  initialSavedTransformations?: DataTransformerConfig[];
 }
 
 async function setup(options: SetupOptions = {}) {
@@ -536,7 +585,13 @@ async function setup(options: SetupOptions = {}) {
   });
 
   if (options.initialTableTransformations) {
-    panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, options.initialTableTransformations);
+    getPanelAdHocTransformations(panel).api.set(TABLE_TRANSFORMATIONS_OWNER, options.initialTableTransformations);
+  }
+  for (const [owner, transformations] of options.initialAdHocTransformations ?? []) {
+    getPanelAdHocTransformations(panel).api.set(owner, transformations);
+  }
+  if (options.initialSavedTransformations) {
+    (panel.state.$data as SceneDataTransformer).setState({ transformations: options.initialSavedTransformations });
   }
 
   const gridItem = new DashboardGridItem({ body: panel, variableName: options.repeatByVariable });

@@ -125,6 +125,35 @@ beforeEach(() => {
 
 describe('setDashboardPanelContext', () => {
   describe('adHocTransformations', () => {
+    it('routes edited panel transformations to the saved stack and returns to runtime after edit', () => {
+      const { scene, vizPanel, context } = buildTestScene({});
+      const runtime = context.adHocTransformations;
+      const transformer = vizPanel.state.$data as SceneDataTransformer;
+
+      scene.onEnterEditMode();
+      scene.setState({ editPanel: buildPanelEditScene(vizPanel) });
+
+      const saved = context.adHocTransformations!;
+      expect(saved).not.toBe(runtime);
+      const changed = jest.fn();
+      const unsubscribe = saved.subscribe('grafana:table-view', changed);
+      saved.set('grafana:table-view', [{ id: 'organize', options: { excludeByName: { Hidden: true } } }]);
+
+      expect(transformer.state.transformations).toEqual([
+        { id: 'organize', options: { excludeByName: { Hidden: true } } },
+      ]);
+      expect(runtime?.get('grafana:table-view')).toEqual([]);
+      expect(changed).toHaveBeenCalledTimes(1);
+
+      transformer.setState({ transformations: [{ id: 'limit', options: { limitField: 2 } }] });
+      expect(saved.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(changed).toHaveBeenCalledTimes(2);
+
+      unsubscribe();
+      scene.setState({ editPanel: undefined });
+      expect(context.adHocTransformations).toBe(runtime);
+    });
+
     it('reads and updates only the selected owner through the panel context hook', () => {
       const { context } = buildTestScene({});
       const api = context.adHocTransformations!;
@@ -207,14 +236,15 @@ describe('setDashboardPanelContext', () => {
     it('uses the panel runtime transformation controller across data replacements', () => {
       const { context, vizPanel } = buildTestScene({ dashboardCanEdit: false });
       const controller = vizPanel.getRuntimeTransformations();
+      const api = context.adHocTransformations;
 
-      expect(context.adHocTransformations).toBe(controller);
+      expect(api).not.toBe(controller);
       expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([]);
 
       controller.set('grafana:table-view', [{ id: 'organize', options: {} }]);
       vizPanel.setState({ $data: new SceneDataTransformer({ transformations: [] }) });
 
-      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations).toBe(api);
       expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
     });
   });

@@ -41,7 +41,7 @@ beforeAll(() => {
 beforeEach(() => setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true }));
 afterEach(() => setTestFlags({}));
 
-it('does not show ad hoc column controls in panel edit mode', () => {
+it('shows column controls in panel edit mode and writes through the provided transformation API', async () => {
   const source = createDataFrame({
     fields: ['A', 'B'].map((name) => ({ name, type: FieldType.number, values: [1] })),
   });
@@ -80,9 +80,11 @@ it('does not show ad hoc column controls in panel edit mode', () => {
   );
 
   expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['A', 'B']);
-  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: /manage columns/i })).not.toBeInTheDocument();
-  expect(set).not.toHaveBeenCalled();
+  expect(screen.getByRole('checkbox', { name: 'Hide A' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Hide A' }));
+  expect(set).toHaveBeenCalledWith('grafana:table-view', [
+    { id: 'organize', options: { indexByName: {}, excludeByName: { A: true }, renameByName: {} } },
+  ]);
 });
 
 it('excludes override-hidden columns while retaining ad-hoc-hidden columns and protecting the last visible column', async () => {

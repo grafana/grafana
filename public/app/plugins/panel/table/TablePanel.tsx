@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import {
   applyFieldOverrides,
   CoreApp,
+  DataTransformerID,
   type DataFrame,
   type GrafanaTheme2,
   getFrameDisplayName,
@@ -62,7 +63,6 @@ export function TablePanel(props: Props) {
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
   const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
-  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
   const onFieldAddToAssistant = useTableFieldAssistant(props);
   const onCellAddToAssistant = useTableCellAssistant(props);
   const enableSharedCrosshair = useTableSharedCrosshair();
@@ -73,6 +73,8 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const outputMain = frames[currentIndex];
+  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled;
+  const isPanelEditor = panelContext.app === CoreApp.PanelEditor;
   const sourceSeries = adHocTransformationsEnabled
     ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
@@ -85,6 +87,16 @@ export function TablePanel(props: Props) {
     sourceFrame?.name,
     sourceFrame?.fields.map((field) => [field.name, field.type, field.labels]),
   ]);
+  const editFrameKey = isPanelEditor
+    ? panelContext.adHocTransformations
+        ?.get(TABLE_TRANSFORMATIONS_OWNER)
+        .find(
+          (config) =>
+            config.id === DataTransformerID.filterByValue &&
+            config.options?.target?.frameIndex === sourceFrameIndex &&
+            config.options?.target?.refId === sourceSeries?.[sourceFrameIndex]?.refId
+        )?.options?.target?.frameKey
+    : undefined;
   // Rebuild against original rows while retaining cross-frame display and data-link context.
   const sourceFramesWithOverrides = useMemo(
     () =>
@@ -101,9 +113,12 @@ export function TablePanel(props: Props) {
         : undefined,
     [sourceSeries, fieldConfig, theme, props.timeZone, replaceVariables, dataLinkPostProcessor]
   );
-  const displayFrames = sourceFrameIndex >= 0 && sourceFramesWithOverrides ? sourceFramesWithOverrides : frames;
+  const displayFrames =
+    !isPanelEditor && sourceFrameIndex >= 0 && sourceFramesWithOverrides ? sourceFramesWithOverrides : frames;
   useCacheFieldDisplayNames(displayFrames);
-  const rawMain = displayFrames[sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex] ?? outputMain;
+  const rawMain = isPanelEditor
+    ? outputMain
+    : (displayFrames[sourceFrameIndex >= 0 ? sourceFrameIndex : currentIndex] ?? outputMain);
   const configuredSourceSeries = useMemo(
     () =>
       sourceSeries &&
@@ -127,10 +142,8 @@ export function TablePanel(props: Props) {
   const adHocColumns = useAdHocColumnState(frames, currentIndex, adHocTransformationsEnabled, configuredSourceSeries);
   const main = useMemo(
     () =>
-      tableRefreshNewFeaturesEnabled && rawMain
-        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns), adHocTransformationsEnabled)
-        : rawMain,
-    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns, adHocTransformationsEnabled]
+      adHocTransformationsEnabled && rawMain ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns)) : rawMain,
+    [rawMain, adHocTransformationsEnabled, adHocColumns]
   );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
@@ -163,7 +176,7 @@ export function TablePanel(props: Props) {
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,
-              frameKey: sourceFrameKey,
+              frameKey: editFrameKey ?? sourceFrameKey,
               frameIndex: sourceFrameIndex,
             }
           : undefined

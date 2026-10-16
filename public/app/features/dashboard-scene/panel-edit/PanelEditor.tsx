@@ -2,7 +2,7 @@ import deepEqual from 'fast-deep-equal';
 import type * as H from 'history';
 import { debounce } from 'lodash';
 
-import { type NavIndex, type PanelPlugin } from '@grafana/data';
+import { type DataFrame, type DataTransformerConfig, type NavIndex, type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -20,18 +20,15 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
-import { createInfoNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
-import { dispatch } from 'app/store/store';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { getPanelAdHocTransformations } from '../scene/PanelAdHocTransformations';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -84,6 +81,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
   private _tableViewPanelActivationAdded = false;
+  private _promotedTransformations = new Map<string, readonly DataTransformerConfig[]>();
+  private _sourceSeries = new Map<string, readonly DataFrame[]>();
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -104,21 +103,28 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panel = this.state.panelRef.resolve();
     const dashboard = getDashboardSceneFor(this);
 
-    const runtimeTransformations = panel.getRuntimeTransformations();
-    const tableTransformations = runtimeTransformations.get(TABLE_TRANSFORMATIONS_OWNER);
-    const pluginId = panel.state.pluginId;
-    if (pluginId === 'table' && tableTransformations.length > 0) {
-      runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, []);
-      dispatch(
-        notifyApp(
-          createInfoNotification(
-            t(
-              'dashboard.panel-editor.ad-hoc-transformations-disabled',
-              'Ad hoc transformations are disabled in edit mode'
-            )
-          )
-        )
-      );
+    this._promotedTransformations.clear();
+    this._sourceSeries.clear();
+    const { api, activeOwners } = getPanelAdHocTransformations(panel);
+    const transformer = panel.state.$data;
+    if (transformer instanceof SceneDataTransformer) {
+      const promoted: DataTransformerConfig[] = [];
+      for (const owner of activeOwners) {
+        const transformations = api.get(owner);
+        if (transformations.length > 0) {
+          this._sourceSeries.set(owner, api.getSourceSeries(owner));
+          this._promotedTransformations.set(owner, transformations);
+          promoted.push(...transformations);
+        }
+      }
+      if (promoted.length > 0) {
+        for (const owner of this._promotedTransformations.keys()) {
+          api.set(owner, []);
+        }
+        transformer.setState({ transformations: [...transformer.state.transformations, ...promoted] });
+        transformer.reprocessTransformations();
+        this.setState({ isDirty: true });
+      }
     }
 
     // Clear any panel selection when entering panel edit mode.
@@ -151,9 +157,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.waitForPlugin();
 
     return () => {
-      if (pluginId === panel.state.pluginId && tableTransformations.length > 0) {
-        runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, tableTransformations);
-      }
       this.commitChanges();
       reportInteraction('panel_edit_closed', {}, { silent: true });
     };
@@ -259,12 +262,18 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     return this.state.panelRef?.resolve();
   }
 
+  public getAdHocSourceSeries(owner: string): readonly DataFrame[] | undefined {
+    return this._sourceSeries.get(owner);
+  }
+
   private gotPanelPlugin(plugin: PanelPlugin) {
     const panel = this.getPanel();
 
     // First time initialization
     if (this.state.isInitializing) {
-      this.setOriginalState(this.state.panelRef);
+      if (this._promotedTransformations.size === 0) {
+        this.setOriginalState(this.state.panelRef);
+      }
       this._setupChangeDetection();
       this._updateDataPane(plugin);
 
@@ -366,6 +375,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     } else {
       // Revert any layout element changes
       this._layoutItem!.setState(this._layoutItemState!);
+      const restoredPanel = findVizPanelByKey(dashboard, panel.state.key!);
+      if (restoredPanel) {
+        const { api } = getPanelAdHocTransformations(restoredPanel);
+        for (const [owner, transformations] of this._promotedTransformations) {
+          api.set(owner, transformations);
+        }
+      }
     }
 
     locationService.partial({ editPanel: null });
@@ -374,6 +390,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public dashboardSaved() {
     this.setOriginalState(this.state.panelRef);
     this.setState({ isDirty: false });
+    this._promotedTransformations.clear();
 
     // Remember that we have done changes
     this._changesHaveBeenMade = true;
