@@ -7,6 +7,7 @@ import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type LocationInfo } from 'app/features/search/service/types';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
@@ -22,6 +23,8 @@ import { type RecentActivity } from './useRecentActivity';
 interface Props {
   recent: RecentActivity;
   foldersByUid: Record<string, LocationInfo>;
+  /** Starring a dashboard here changes what the Starred tab shows. */
+  onStarChange: () => void;
   density?: 'default' | 'compact';
 }
 
@@ -50,7 +53,7 @@ function EmptyStateCta() {
   );
 }
 
-export function RecentActivityTab({ recent, foldersByUid, density }: Props) {
+export function RecentActivityTab({ recent, foldersByUid, onStarChange, density }: Props) {
   const { items, counts, total, loading, error, retry } = recent;
   const styles = useStyles2(getStyles, density === 'compact');
   const navTree = useSelector((state) => state.navBarTree);
@@ -123,6 +126,17 @@ export function RecentActivityTab({ recent, foldersByUid, density }: Props) {
                     <Badge text={badge} color={color} />
                   </span>
                   <TimeAgoCell date={item.lastVisited} />
+                  <span className={styles.star}>
+                    {item.kind === 'dashboard' && (
+                      <StarToolbarButton
+                        title={item.dashboard.name}
+                        group="dashboard.grafana.app"
+                        kind="Dashboard"
+                        id={item.uid}
+                        onStarChange={onStarChange}
+                      />
+                    )}
+                  </span>
                 </Stack>
               }
             />
@@ -146,5 +160,15 @@ const getStyles = (theme: GrafanaTheme2, compact: boolean) => ({
     flexShrink: 0,
     justifyContent: 'center',
     minWidth: theme.spacing(10),
+  }),
+  // Only dashboards can be starred. The slot is the button's size on every row so the badge and time columns
+  // line up and rows stay one height whether the button is there or not.
+  star: css({
+    display: 'inline-flex',
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: theme.spacing(4.5),
+    height: theme.spacing(theme.components.height.md),
   }),
 });

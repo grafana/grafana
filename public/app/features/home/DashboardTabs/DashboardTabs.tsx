@@ -207,7 +207,12 @@ export function DashboardTabs({ extensionComponents }: Props) {
             minHeight={`${redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT}px`}
           >
             {activeTab === RECENT_TAB_ID && (
-              <RecentActivityTab recent={recent} foldersByUid={foldersByUid} density={listDensity} />
+              <RecentActivityTab
+                recent={recent}
+                foldersByUid={foldersByUid}
+                onStarChange={starredRetry}
+                density={listDensity}
+              />
             )}
             {activeTab === MOST_USED_TAB_ID && (
               <MostUsedDashboardsTab
