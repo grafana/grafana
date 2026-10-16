@@ -51,6 +51,7 @@ import {
   getCellActionStyles,
   getDefaultCellStyles,
   getHeaderCellStyles,
+  getColumnSettleStyles,
   getLinkStyles,
   getMaxHeightCellStyles,
   getTooltipStyles,
@@ -159,6 +160,7 @@ export interface ColumnBuildConfig {
   hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
@@ -186,6 +188,7 @@ export interface ColumnBuildConfig {
   rowHeightFn: (row: TableRow) => number;
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
+  settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
@@ -285,6 +288,8 @@ function buildColumnsFromFields(
     hoverOverflow = true,
     disableSanitizeHtml,
     hasColumnSidebar,
+    reorderable = false,
+    settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
@@ -358,7 +363,10 @@ function buildColumnsFromFields(
     const textAlign = getAlignment(field);
     const justifyContent = getJustifyContent(textAlign);
     const displayName = getDisplayName(field);
-    const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
+    const headerCellClass = clsx(
+      getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent),
+      settlingColumnKeys?.has(displayName) && getColumnSettleStyles(theme, tableRefreshEnabled)
+    );
     const CellType = getCellRenderer(field, cellOptions);
 
     const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
@@ -651,6 +659,7 @@ function buildColumnsFromFields(
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       resizable: field.config.custom?.resizable,
       sortable: isSortableField(field),
+      draggable: reorderable,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

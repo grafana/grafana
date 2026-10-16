@@ -3883,6 +3883,11 @@
     "viz-wrapper": {
       "table": "表格"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "查看目前的警示，並探索歷史資料以調查目前或過去的問題。",
       "description-alert-rules": "定義警報規則觸發前必須滿足的條件",
@@ -6060,6 +6065,9 @@
       "only-overrides-button-tooltip": "僅顯示覆寫",
       "placeholder-search-options": "搜尋選項",
       "visualization-button-tooltip": "搜尋選項"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "範例資料",
@@ -10751,6 +10759,7 @@
       "no-rows": "無列",
       "no-values-label": "沒有數值",
       "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "按欄 {{column}} 排序",
       "sort-by-column-ascending": "按欄 {{column}} 以升序排序",
@@ -11059,6 +11068,8 @@
       "incident-filter-all": "所有事件",
       "incident-filter-label": "依標籤篩選事件",
       "incident-tab-label": "事件",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "您的團隊",
       "title": "警報與事件",
       "title-alerts": "警報",
@@ -11133,6 +11144,17 @@
       "error-title": "無法載入最近的部落格文章",
       "read-more": "閱讀更多 Grafana Labs 部落格的內容",
       "title": "部落格的最新消息"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11873,6 +11895,11 @@
       "load-newer": "正在載入新的日誌…",
       "load-older": "正在載入舊的日誌…"
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "收闔標籤",
       "expand": "展開標籤"
@@ -11923,6 +11950,7 @@
       "inline-mode": "顯示內嵌",
       "inline-no-scrolls": "切換到展開檢視",
       "inline-with-scrolls": "切換到精簡檢視",
+      "link-fallback-label": "",
       "link-value-tooltip": "連結值",
       "links-section": "連結",
       "log-attributes-field": "記錄屬性",
@@ -11932,13 +11960,14 @@
       "move-displayed-field-up": "上移",
       "no-details": "沒有要顯示的欄位。",
       "open-assistant": "在 Assistant 中解釋記錄行",
+      "open-value-in": "",
       "pin-line": "固定記錄",
       "prettify": "美化",
       "remove-displayed-field": "移除欄位",
       "remove-log": "移除記錄",
       "scroll-to-logline": "捲動到記錄行",
       "search": {
-        "no-results": "沒有要顯示的結果。"
+        "no-results": ""
       },
       "search-placeholder": "搜尋欄位名稱和值",
       "show-context": "顯示前後文",
@@ -13119,6 +13148,11 @@
       "target-label": "目標筆記本",
       "target-new": "新筆記本",
       "title": "將面板新增至筆記本"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",

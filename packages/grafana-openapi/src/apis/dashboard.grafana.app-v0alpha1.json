@@ -1371,10 +1371,10 @@
           {
             "name": "permission",
             "in": "query",
-            "description": "permission needed for the resource (view, edit, admin)",
+            "description": "permission needed for the resource (view, edit, admin, create). create is only valid with type=folder",
             "schema": {
               "type": "string",
-              "enum": ["view", "edit", "admin"]
+              "enum": ["view", "edit", "admin", "create"]
             }
           },
           {

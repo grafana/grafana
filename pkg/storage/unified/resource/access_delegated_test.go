@@ -267,6 +267,34 @@ func TestSearchServicePermissions(t *testing.T) {
 			mutate:         func(req *resourcepb.ResourceSearchRequest) { req.Permission = int64(dashboardaccess.PERMISSION_EDIT) },
 			wantPermission: "dashboard.grafana.app/dashboards:update",
 		},
+		"create on folders requires dashboards create": {
+			permissions: []string{"folder.grafana.app:get"},
+			mutate: func(req *resourcepb.ResourceSearchRequest) {
+				req.Options.Key.Group, req.Options.Key.Resource = "folder.grafana.app", "folders"
+				req.Permission = int64(dashboardaccess.PERMISSION_CREATE)
+			},
+			wantPermission: "dashboard.grafana.app/dashboards:create",
+		},
+		"create on folders valid grant": {
+			permissions: []string{"dashboard.grafana.app:create"},
+			mutate: func(req *resourcepb.ResourceSearchRequest) {
+				req.Options.Key.Group, req.Options.Key.Resource = "folder.grafana.app", "folders"
+				req.Permission = int64(dashboardaccess.PERMISSION_CREATE)
+			},
+		},
+		"create on deleted folders keeps set_permissions": {
+			permissions: []string{"dashboard.grafana.app:create"},
+			mutate: func(req *resourcepb.ResourceSearchRequest) {
+				req.Options.Key.Group, req.Options.Key.Resource = "folder.grafana.app", "folders"
+				req.Permission = int64(dashboardaccess.PERMISSION_CREATE)
+				req.IsDeleted = true
+			},
+			wantPermission: "folder.grafana.app/folders:set_permissions",
+		},
+		"create on dashboards stays read": {
+			permissions: []string{"dashboard.grafana.app:get"},
+			mutate:      func(req *resourcepb.ResourceSearchRequest) { req.Permission = int64(dashboardaccess.PERMISSION_CREATE) },
+		},
 		"trash requires folder admin check": {
 			permissions:    []string{"dashboard.grafana.app:get"},
 			mutate:         func(req *resourcepb.ResourceSearchRequest) { req.IsDeleted = true },
