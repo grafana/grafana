@@ -31,6 +31,7 @@ import (
 // connector that redirects here, the external resources such as dashboards
 // end up requiring additional authorization checks which the DualReadWriter performs here.
 
+// TODO: it does not support folders yet
 type DualReadWriter struct {
 	repo                  repository.ReaderWriter
 	parser                Parser
@@ -57,8 +58,9 @@ func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *Fol
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
+	// TODO: implement this
 	if safepath.IsDir(path) {
-		return r.readFolder(ctx, path, ref)
+		return nil, fmt.Errorf("folder read not supported")
 	}
 
 	info, err := r.repo.Read(ctx, path, ref)
@@ -89,57 +91,6 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, fmt.Errorf("authorize read resource: %w", err)
 	}
 
-	return parsed, nil
-}
-
-func (r *DualReadWriter) readFolder(ctx context.Context, path, ref string) (*ParsedResource, error) {
-	cfg := r.repo.Config()
-	name := RootFolder(cfg)
-	if path != "" {
-		var err error
-		name, err = GetFolderID(ctx, r.repo, path, ref, r.folderMetadataEnabled)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if name == "" {
-		return nil, apierrors.NewNotFound(FolderResource.GroupResource(), path)
-	}
-
-	readCtx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	existing, err := r.folders.GetFolder(readCtx, name)
-	if err != nil {
-		return nil, err
-	}
-	meta, err := utils.MetaAccessor(existing)
-	if err != nil {
-		return nil, err
-	}
-	manager, _ := meta.GetManagerProperties()
-	source, _ := meta.GetSourceProperties()
-	// Git metadata can describe an unsynced move or reference a folder owned by another repository.
-	if manager.Kind != utils.ManagerKindRepo || manager.Identity != cfg.Name ||
-		strings.TrimSuffix(source.Path, "/") != strings.TrimSuffix(path, "/") {
-		return nil, apierrors.NewNotFound(FolderResource.GroupResource(), path)
-	}
-
-	gvk := r.folders.FolderGVK()
-	parsed := &ParsedResource{
-		Info: &repository.FileInfo{Path: path, Ref: ref},
-		Repo: provisioning.ResourceRepositoryInfo{
-			Type: cfg.Spec.Type, Namespace: cfg.Namespace, Name: cfg.Name, Title: cfg.Spec.Title,
-		},
-		Existing: existing,
-		Meta:     meta,
-		GVK:      gvk,
-		GVR:      gvk.GroupVersion().WithResource(FolderResource.Resource),
-	}
-	if err := r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbGet); err != nil {
-		return nil, fmt.Errorf("authorize read folder: %w", err)
-	}
 	return parsed, nil
 }
 

@@ -2906,7 +2906,7 @@
         "tags": [
           "Repository"
         ],
-        "description": "Read value from upstream repository, or the existing Grafana folder for a directory path",
+        "description": "Read value from upstream repository",
         "operationId": "getRepositoryFilesWithPath",
         "parameters": [
           {
@@ -3730,6 +3730,54 @@
         ],
         "description": "connect GET requests to resources of Repository",
         "operationId": "getRepositoryResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ResourceList"
+        }
+      },
+      "post": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "Resolve up to 50 exact paths relative to the configured repository root. Returns only synced resources readable by the caller. Directory paths select the folder itself; / selects the repository root folder. This operation does not modify resources.",
+        "operationId": "lookupRepositoryResources",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "paths"
+                ],
+                "properties": {
+                  "paths": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",

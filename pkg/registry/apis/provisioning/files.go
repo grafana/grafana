@@ -124,9 +124,9 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	logger = logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
 	ctx = logging.Context(ctx, logger)
 
-	// The empty path lists repository files; directory paths return their folder resource.
+	// Handle directory listing separately
 	isDir := safepath.IsDir(opts.Path)
-	if r.Method == http.MethodGet && opts.Path == "" {
+	if r.Method == http.MethodGet && isDir {
 		c.handleDirectoryListing(ctx, name, opts, readWriter, responder)
 		return
 	}
