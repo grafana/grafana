@@ -49,6 +49,10 @@ type Dependencies struct {
 	Extensions        ExtensionsDependencies `json:"extensions"`
 }
 
+type PanelDependencies struct {
+	Extensions ExtensionsDependencies `json:"extensions"`
+}
+
 // We need different versions for the Extensions struct because there is a now deprecated plugin.json schema out there, where the "extensions" prop
 // is in a different format (Extensions V1). In order to support those as well while reading the plugin.json, we need to add a custom unmarshaling logic for extensions.
 type ExtensionV1 struct {
@@ -328,6 +332,7 @@ type PanelDTO struct {
 	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
 	ModuleHash      string            `json:"moduleHash,omitempty"`
 	Translations    map[string]string `json:"translations,omitempty"`
+	Dependencies    PanelDependencies `json:"dependencies"`
 }
 
 type AppDTO struct {
