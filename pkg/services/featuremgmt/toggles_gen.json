@@ -2385,7 +2385,8 @@
       "metadata": {
         "name": "features.bulkFlagEvalFiltering",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-17T14:01:17Z"
+        "creationTimestamp": "2026-07-17T14:01:17Z",
+        "deletionTimestamp": "2026-10-15T12:56:13Z"
       },
       "spec": {
         "description": "Filters bulk OFREP flag evaluations to public-metadata flags only",
@@ -5853,7 +5854,8 @@
       "metadata": {
         "name": "unifiedStorageClient.onBehalfOf",
         "resourceVersion": "1789977477190",
-        "creationTimestamp": "2026-09-28T19:42:19Z"
+        "creationTimestamp": "2026-09-28T19:42:19Z",
+        "deletionTimestamp": "2026-10-16T09:18:02Z"
       },
       "spec": {
         "description": "Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service",
@@ -5867,7 +5869,8 @@
       "metadata": {
         "name": "unifiedStorageClient.requireCallerIdentity",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T09:56:21Z"
+        "creationTimestamp": "2026-09-16T09:56:21Z",
+        "deletionTimestamp": "2026-10-16T09:18:02Z"
       },
       "spec": {
         "description": "Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity",
