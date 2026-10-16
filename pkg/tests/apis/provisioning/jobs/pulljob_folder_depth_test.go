@@ -190,6 +190,6 @@ func TestIntegrationProvisioning_PullJobFolderDepthExceeded_RecoversAfterFix(t *
 	helper.SyncAndWait(t, repo, nil)
 	helper.WaitForConditionReason(t, repo,
 		provisioning.ConditionTypePullStatus,
-		provisioning.ReasonSuccess)
+		provisioning.ReasonMissingFolderMetadata)
 	helper.RequireRepoDashboardCount(t, repo, 1)
 }

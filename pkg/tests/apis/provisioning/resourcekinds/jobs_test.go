@@ -92,12 +92,15 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 				t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 			}
 
-			// Bulk move both files into a subdirectory in a single job. The move plus its
-			// post-move re-upsert must complete cleanly.
-			helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
+			// The bulk move creates a directory without metadata, so the post-move sync warns.
+			job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
 				Move:   &provisioning.MoveJobOptions{Paths: paths, TargetPath: "archived/"},
 			})
+			common.RequireJobWarning(t, job)
+			warnings := common.MustNestedStringSlice(job.Object, "status", "warnings")
+			require.Len(t, warnings, 1)
+			require.Contains(t, warnings[0], `folder "archived/" is missing folder metadata file`)
 
 			repoFiles := repositoryFilePaths(t, helper, repo)
 			for i := range paths {
