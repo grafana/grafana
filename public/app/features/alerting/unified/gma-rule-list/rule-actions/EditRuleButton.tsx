@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Button, LinkButton } from '@grafana/ui';
 
-import { unavailableActionLabel } from './actionReasons';
+import { isActionShown, unavailableActionLabel } from './actionReasons';
 import { type ActionAvailability } from './ruleActionTypes';
 import { ruleEditUrl } from './ruleLinks';
 
@@ -10,9 +10,13 @@ interface EditRuleButtonProps {
   availability: ActionAvailability;
 }
 
-/** Unavailable Edit is a disabled button: a disabled link ignores pointer events, so no tooltip. */
+/** Hidden when unusable; while checking it is a disabled button, since a disabled link ignores pointer events. */
 export function EditRuleButton({ uid, availability }: EditRuleButtonProps) {
   const label = t('alerting.gma-rule-list.actions.edit', 'Edit');
+
+  if (!isActionShown(availability)) {
+    return null;
+  }
 
   if (!availability.available) {
     return (

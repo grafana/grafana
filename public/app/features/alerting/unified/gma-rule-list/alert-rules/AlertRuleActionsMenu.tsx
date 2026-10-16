@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { useAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
@@ -16,7 +17,8 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
-import { RuleActionMenuItem, isActionShown } from '../rule-actions/RuleActionMenuItem';
+import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
+import { isActionShown } from '../rule-actions/actionReasons';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
 import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteAlertRule } from '../rule-actions/useDeleteRule';
@@ -54,12 +56,11 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState }: AlertRuleAction
   // eslint-disable-next-line @grafana/no-config-feature-toggles
   const canManageEnrichments = Boolean(config.featureToggles.alertingEnrichmentPerRule) && canReadEnrichments;
 
-  // Analyze renders for any loaded rule, so the divider only needs a guard while the rule is not loaded.
+  // Mirrors the Analyze item's own gate, so the divider never sits above nothing.
+  const assistant = useAssistant();
+  const showsAnalyze = rule !== undefined && assistant.isAvailable && Boolean(assistant.openAssistant);
   const hasFirstSection =
-    rule !== undefined ||
-    isActionShown(abilities.pause) ||
-    isActionShown(silence) ||
-    isActionShown(abilities.duplicate);
+    showsAnalyze || isActionShown(abilities.pause) || isActionShown(silence) || isActionShown(abilities.duplicate);
   const showDelete = isActionShown(abilities.delete);
 
   const menuItems = (

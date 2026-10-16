@@ -37,7 +37,7 @@ test.describe('Viewer', () => {
       await expect(row).toBeVisible();
       await expect(page.getByRole('link', { name: newRuleButton })).toHaveCount(0);
       await expect(row.getByRole('link', { name: 'Edit' })).toHaveCount(0);
-      await expect(row.getByRole('button', { name: /^Edit: /, disabled: true })).toBeVisible();
+      await expect(row.getByRole('button', { name: /^Edit/ })).toHaveCount(0);
 
       await row.getByRole('button', { name: 'More', exact: true }).click();
       await expect(page.getByRole('menuitem', { name: 'Copy link' })).toBeVisible();

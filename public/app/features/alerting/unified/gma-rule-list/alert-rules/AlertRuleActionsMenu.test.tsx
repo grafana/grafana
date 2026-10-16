@@ -336,7 +336,10 @@ describe('AlertRuleActionsMenu', () => {
       for (const name of [/^Pause/, /^Delete/, /^Duplicate/, /^Silence/]) {
         expect(screen.queryByRole('menuitem', { name })).not.toBeInTheDocument();
       }
-      expect(screen.getByRole('menuitem', { name: 'Copy link' })).toBeEnabled();
+      const copyLink = screen.getByRole('menuitem', { name: 'Copy link' });
+      expect(copyLink).toBeEnabled();
+      // Without the Assistant, Analyze is absent too, so no divider is left above Copy link.
+      expect(copyLink.previousElementSibling).toBeNull();
     });
 
     it.each([

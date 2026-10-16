@@ -53,3 +53,8 @@ export function unavailableActionLabel(label: string, reason: string | undefined
     ? t('alerting.gma-rule-list.actions.unavailable-label', '{{action}}: {{reason}}', { action: label, reason })
     : label;
 }
+
+/** Unusable actions are left out, except while checking, so the row and menu don't change shape mid-load. */
+export function isActionShown(availability: ActionAvailability): boolean {
+  return availability.available || Boolean(availability.checking);
+}

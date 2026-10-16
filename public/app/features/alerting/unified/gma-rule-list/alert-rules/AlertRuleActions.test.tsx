@@ -33,47 +33,30 @@ describe('AlertRuleActions', () => {
     expect(screen.getByRole('button', { name: /more/i })).toBeInTheDocument();
   });
 
-  it('ACC-7: a disabled Edit button stays keyboard-focusable and shows its reason on focus', async () => {
+  it('ACC-7: while checking, Edit is a disabled button that stays keyboard-focusable and shows its reason', async () => {
     const { user } = render(
-      <AlertRuleActions ruleUid="rule-1" resourceState={loaded({ 'grafana.com/access/canWrite': 'false' })} />
+      <AlertRuleActions ruleUid="rule-1" resourceState={{ status: 'loading' } as RuleResourceState<AlertRule>} />
     );
 
-    const edit = await screen.findByRole('button', { name: 'Edit: You do not have permission to do this' });
+    // The reason is in the accessible name, not only a tooltip.
+    const edit = await screen.findByRole('button', { name: 'Edit: Checking permissions...' });
+    expect(edit).toHaveAttribute('aria-disabled', 'true');
     await user.tab();
 
     expect(edit).toHaveFocus();
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('You do not have permission to do this');
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Checking permissions...');
   });
 
   it.each([
-    {
-      name: 'is still loading',
-      reason: 'Checking permissions...',
-      state: { status: 'loading' } as RuleResourceState<AlertRule>,
-    },
-    {
-      name: 'failed to load',
-      reason: 'Permission unknown',
-      state: { status: 'error' } as RuleResourceState<AlertRule>,
-    },
-    {
-      name: 'has no capability annotation',
-      reason: 'You do not have permission to do this',
-      state: loaded({}),
-    },
-    {
-      name: 'is not writable',
-      reason: 'You do not have permission to do this',
-      state: loaded({ 'grafana.com/access/canWrite': 'false' }),
-    },
+    { name: 'failed to load', state: { status: 'error' } as RuleResourceState<AlertRule> },
+    { name: 'has no capability annotation', state: loaded({}) },
+    { name: 'is not writable', state: loaded({ 'grafana.com/access/canWrite': 'false' }) },
     {
       name: 'is provisioned',
-      reason: 'Provisioned',
       state: loaded({ 'grafana.com/access/canWrite': 'true', 'grafana.com/provenance': 'api' }),
     },
     {
       name: 'is managed by Terraform',
-      reason: 'Managed by Terraform',
       state: loaded({
         'grafana.com/access/canWrite': 'true',
         'grafana.com/provenance': 'api',
@@ -82,19 +65,13 @@ describe('AlertRuleActions', () => {
     },
     {
       name: 'is managed by a plugin',
-      reason: 'This rule is managed by a plugin and cannot be edited through the UI',
       state: loaded({ 'grafana.com/access/canWrite': 'true' }, { __grafana_origin: 'plugin/my-app' }),
     },
-  ])('ACT: shows a disabled Edit button that explains why when the rule $name', async ({ reason, state }) => {
-    const { user } = render(<AlertRuleActions ruleUid="rule-1" resourceState={state} />);
+  ])('ACT: hides Edit when the rule $name', async ({ state }) => {
+    render(<AlertRuleActions ruleUid="rule-1" resourceState={state} />);
 
-    // ACC-7: reason is in the accessible name, not only a tooltip.
-    const edit = await screen.findByRole('button', { name: `Edit: ${reason}` });
-    expect(edit).toHaveAttribute('aria-disabled', 'true');
+    expect(await screen.findByRole('button', { name: /more/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
-    await user.hover(edit);
-
-    expect(await screen.findByText(reason)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /more/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Edit/ })).not.toBeInTheDocument();
   });
 });

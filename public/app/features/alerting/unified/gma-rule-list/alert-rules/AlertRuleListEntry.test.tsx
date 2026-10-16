@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from '../../mockApi';
 
@@ -85,7 +85,9 @@ describe('AlertRuleListEntry', () => {
     renderEntry(false);
 
     expect(await screen.findByText('Provisioned')).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'Edit: Provisioned' })).toBeInTheDocument();
+    // A provisioned rule can't be edited here, so Edit leaves the row once the lookup resolves.
+    await waitFor(() => expect(screen.queryByRole('button', { name: /^Edit/ })).not.toBeInTheDocument());
+    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     expect(ruleRequests.count).toBe(1);
   });
 
@@ -96,12 +98,13 @@ describe('AlertRuleListEntry', () => {
     expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/alerting/rule-1/edit');
   });
 
-  it('keeps the row usable with Edit disabled when the full-rule lookup fails', async () => {
+  it('keeps the row usable, without Edit, when the full-rule lookup fails', async () => {
     server.use(http.get(ALERT_RULE_GET_URL, () => HttpResponse.json({}, { status: 500 })));
     renderEntry(false);
 
-    expect(await screen.findByRole('button', { name: 'Edit: Permission unknown' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'CPU high' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'CPU high' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('button', { name: /^Edit/ })).not.toBeInTheDocument());
+    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
   });
 });

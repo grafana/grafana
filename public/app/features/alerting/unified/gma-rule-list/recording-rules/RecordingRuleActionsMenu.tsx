@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { useAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
 import { Dropdown, Menu } from '@grafana/ui';
 
@@ -8,7 +9,8 @@ import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleB
 import { CopyProvisionedRuleModal } from '../rule-actions/CopyProvisionedRuleModal';
 import { DeleteRuleConfirmModal } from '../rule-actions/DeleteRuleConfirmModal';
 import { DuplicateRuleMenuItem } from '../rule-actions/DuplicateRuleAction';
-import { RuleActionMenuItem, isActionShown } from '../rule-actions/RuleActionMenuItem';
+import { RuleActionMenuItem } from '../rule-actions/RuleActionMenuItem';
+import { isActionShown } from '../rule-actions/actionReasons';
 import { copyRuleLink } from '../rule-actions/copyRuleLink';
 import { ruleShareUrl } from '../rule-actions/ruleLinks';
 import { useDeleteRecordingRule } from '../rule-actions/useDeleteRule';
@@ -35,7 +37,10 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState }: RecordingRu
   const isPaused = Boolean(rule?.spec.paused);
   const confirmBeforeCopy = rule !== undefined && isProvisionedOrManaged(rule);
 
-  const hasFirstSection = rule !== undefined || isActionShown(abilities.pause) || isActionShown(abilities.duplicate);
+  // Mirrors the Analyze item's own gate, so the divider never sits above nothing.
+  const assistant = useAssistant();
+  const showsAnalyze = rule !== undefined && assistant.isAvailable && Boolean(assistant.openAssistant);
+  const hasFirstSection = showsAnalyze || isActionShown(abilities.pause) || isActionShown(abilities.duplicate);
   const showDelete = isActionShown(abilities.delete);
 
   const menuItems = (
