@@ -37,7 +37,7 @@ func TestIntegrationEmbeddedPermissionRPCsShareLoader(t *testing.T) {
 	// call back into Access Control, even when using the pre-existing AuthZ client.
 	service := &recordingAccessControlService{}
 	clients, err := ProvideAuthZClients(cfg, features, nil, tracing.InitializeTracerForTest(), prometheus.NewRegistry(), sql,
-		service, nil, apiserver.ProvideEventualRestConfigProvider(), nil, loader)
+		service, resourcepermissions.NewActionSetService(), nil, apiserver.ProvideEventualRestConfigProvider(), nil, loader)
 	require.NoError(t, err)
 	previousClient := newUserPermissionsClient(ProvideAuthZUserPermissionsClient(clients), false)
 	legacyClient := legacypermissions.NewEmbeddedClient(loader, cfg)
