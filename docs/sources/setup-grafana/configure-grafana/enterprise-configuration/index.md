@@ -556,7 +556,7 @@ Disabling the maximum is not recommended in production environments.
 Use these settings to configure Redis as the query caching backend.
 
 {{< admonition type="note" >}}
-Redis Sentinel is not supported for query caching. Use a standalone Redis instance with `url`, or a Redis Cluster with `cluster`.
+Redis Sentinel isn't supported for query caching. Use a standalone Redis instance with `url`, or a Redis Cluster with `cluster`.
 {{< /admonition >}}
 
 ### url
