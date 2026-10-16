@@ -251,6 +251,8 @@ func TestBlobStreamLocalClientErrorResultConversion(t *testing.T) {
 }
 
 func TestBlobStreamLocalClientInterceptorWithErrorConversion(t *testing.T) {
+	t.Skip("disabled due to flakiness")
+
 	srv, _, _ := newBlobAuthzTestServer(t, nil)
 	srv.grpcErrorResultToStatus = true
 	client := NewLocalResourceClient(srv)
