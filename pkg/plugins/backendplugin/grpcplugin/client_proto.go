@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/responsesize"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -112,7 +113,9 @@ func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataReque
 	if !exists {
 		return nil, errClientNotAvailable
 	}
-	return c.DataClient.QueryData(ctx, in, opts...)
+	resp, err := c.DataClient.QueryData(ctx, in, opts...)
+	responsesize.FromContext(ctx).AddQueryDataResponse(resp)
+	return resp, err
 }
 
 func (r *protoClient) QueryChunkedData(ctx context.Context, in *pluginv2.QueryChunkedDataRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv2.QueryChunkedDataResponse], error) {
@@ -120,7 +123,11 @@ func (r *protoClient) QueryChunkedData(ctx context.Context, in *pluginv2.QueryCh
 	if !exists {
 		return nil, errClientNotAvailable
 	}
-	return c.DataClient.QueryChunkedData(ctx, in, opts...)
+	stream, err := c.DataClient.QueryChunkedData(ctx, in, opts...)
+	if err != nil {
+		return stream, err
+	}
+	return responsesize.FromContext(ctx).WrapChunkedStream(stream), nil
 }
 
 func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourceRequest, opts ...grpc.CallOption) (pluginv2.Resource_CallResourceClient, error) {
