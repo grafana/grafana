@@ -21,8 +21,10 @@ import { LogLineDetailsError } from './LogLineDetailsError';
 import { filterFields, filterLabels, type LabelWithLinks } from './LogLineDetailsFields';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsSummary } from './LogLineDetailsSummary';
+import { LogLineDetailsTrace } from './LogLineDetailsTrace';
 import { LogLineOTelDetailsFields, LogLineOTelDetailsLabelFields } from './LogLineOTelDetailsFields';
 import { useLogListContext } from './LogListContext';
+import { getTempoTraceFromLinks } from './links';
 import { type LogListModel } from './processing';
 
 interface LogLineDetailsOTelComponentProps {
@@ -42,6 +44,7 @@ export const LogLineDetailsOTelComponent = ({
   search = '',
   setPrettifyDetailsJSON,
   timeRange,
+  timeZone,
 }: LogLineDetailsOTelComponentProps) => {
   const extensionLinks = useAttributesExtensionLinks(log, timeRange);
 
@@ -73,6 +76,13 @@ export const LogLineDetailsOTelComponent = ({
     [fieldsWithoutLinks]
   );
   const groupedLabels = useMemo(() => groupOTelAttributes(labelsWithLinks, (label) => label.key), [labelsWithLinks]);
+  const trace = useMemo(
+    () =>
+      getTempoTraceFromLinks(
+        log.fields.filter((field) => field.links?.length && field.fieldIndex !== log.entryFieldIndex)
+      ),
+    [log.entryFieldIndex, log.fields]
+  );
 
   return (
     <LogLineDetailsOTelComponentBody
@@ -85,6 +95,9 @@ export const LogLineDetailsOTelComponent = ({
       prettifyDetailsJSON={prettifyDetailsJSON}
       search={search}
       setPrettifyDetailsJSON={setPrettifyDetailsJSON}
+      timeRange={timeRange}
+      timeZone={timeZone}
+      trace={trace}
     />
   );
 };
@@ -99,6 +112,9 @@ interface LogLineDetailsOTelComponentBodyProps {
   prettifyDetailsJSON: boolean;
   search: string;
   setPrettifyDetailsJSON: (prettifyDetailsJSON: boolean) => void;
+  timeRange: TimeRange;
+  timeZone: string;
+  trace: ReturnType<typeof getTempoTraceFromLinks>;
 }
 
 const LogLineDetailsOTelComponentBody = ({
@@ -111,6 +127,9 @@ const LogLineDetailsOTelComponentBody = ({
   prettifyDetailsJSON,
   search,
   setPrettifyDetailsJSON,
+  timeRange,
+  timeZone,
+  trace,
 }: LogLineDetailsOTelComponentBodyProps) => {
   const { syntaxHighlighting, syntaxHighlightingUnavailable } = useLogListContext();
   const styles = useStyles2(getStyles);
@@ -148,6 +167,15 @@ const LogLineDetailsOTelComponentBody = ({
               syntaxHighlighting={syntaxHighlighting ?? true}
             />
           </LogLineDetailsCollapsible>
+          {trace && (
+            <LogLineDetailsCollapsible
+              defaultExpanded={false}
+              id="trace"
+              label={t('logs.log-line-details.trace-section', 'Trace')}
+            >
+              <LogLineDetailsTrace timeRange={timeRange} timeZone={timeZone} traceRef={trace} />
+            </LogLineDetailsCollapsible>
+          )}
         </div>
         {hasAttributes ? (
           <>

@@ -1,7 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { of } from 'rxjs';
 
-import { dateTime, type TimeRange } from '@grafana/data';
+import {
+  dateTime,
+  FieldType,
+  LogsSortOrder,
+  toDataFrame,
+  type DataSourceApi,
+  type Field,
+  type TimeRange,
+} from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
@@ -13,6 +23,7 @@ import { defaultValue } from './__mocks__/LogListContext';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn().mockReturnValue({ isLoading: false, links: [] }),
+  getDataSourceInstance: jest.fn(),
 }));
 
 jest.mock('./LogListContext');
@@ -32,6 +43,55 @@ function createLog() {
       'http.method': 'GET',
     },
   });
+}
+
+function createLogWithTrace() {
+  return createLogLine(
+    {
+      labels: { 'service.name': 'checkout' },
+      dataFrame: toDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1] },
+          { name: 'Line', type: FieldType.string, values: ['log message 1'] },
+          { name: 'labels', type: FieldType.other, values: [{ 'service.name': 'checkout' }] },
+          {
+            name: 'traceId',
+            type: FieldType.string,
+            values: ['abcd1234'],
+            config: { links: [{ title: 'tempo', url: '' }] },
+          },
+        ],
+      }),
+    },
+    {
+      escape: false,
+      order: LogsSortOrder.Descending,
+      timeZone: 'browser',
+      wrapLogMessage: true,
+      getFieldLinks: (field: Field) => {
+        if (!field.config?.links?.length) {
+          return [];
+        }
+        return [
+          {
+            href: '/explore',
+            interpolatedParams: {
+              query: {
+                datasource: { uid: 'tempo-uid' },
+                refId: 'A',
+                query: 'abcd1234',
+                queryType: 'traceql',
+              },
+            },
+            title: 'tempo',
+            target: '_blank',
+            origin: field,
+          },
+        ];
+      },
+    }
+  );
 }
 
 function renderDetails(
@@ -138,6 +198,36 @@ describe('LogLineDetailsOTelComponent', () => {
     expect(setPrettifyDetailsJSON).toHaveBeenCalledWith(true);
     expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('{"level":"info"}')).toBeInTheDocument();
+  });
+
+  it('does not show a trace section when the log has no trace link', () => {
+    renderDetails();
+
+    expect(screen.getByRole('button', { name: 'Log line' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Trace' })).not.toBeInTheDocument();
+  });
+
+  it('loads the linked trace when the trace section is opened', async () => {
+    const user = userEvent.setup();
+    const query = jest.fn().mockReturnValue(of({ data: [] }));
+    jest.mocked(getDataSourceInstance).mockResolvedValue({ uid: 'tempo-uid', query } as DataSourceApi);
+
+    renderDetails({ syntaxHighlighting: false }, { log: createLogWithTrace() });
+
+    const traceSection = screen.getByRole('button', { name: 'Trace' });
+    expect(traceSection).toHaveAttribute('aria-expanded', 'false');
+    expect(traceSection.querySelectorAll('svg')).toHaveLength(1);
+    expect(query).not.toHaveBeenCalled();
+
+    await user.click(traceSection);
+
+    expect(await screen.findByText('Could not retrieve trace.')).toBeInTheDocument();
+    expect(query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [expect.objectContaining({ query: 'abcd1234', queryType: 'traceql' })],
+      })
+    );
+    expect(screen.getByRole('button', { name: 'Trace' })).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('does not display the synthetic OTel log attributes field', () => {
