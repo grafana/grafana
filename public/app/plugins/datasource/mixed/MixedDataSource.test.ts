@@ -909,4 +909,128 @@ describe('MixedDatasource', () => {
       r.subscription.unsubscribe();
     });
   });
+
+  describe('subscription isolation (resubscribing the same observable)', () => {
+    /**
+     * Datasource whose `query()` hands back a fresh `Subject` on every subscription, so two
+     * subscribers of the same Mixed observable each get their own independent stream.
+     */
+    class PerCallSubjectDataSourceApi extends DataSourceApi {
+      public readonly streams: Array<Subject<DataQueryResponse>> = [];
+
+      constructor(name: string) {
+        super({ name } as DataSourceInstanceSettings);
+      }
+
+      query(_request: DataQueryRequest): Observable<DataQueryResponse> {
+        const stream = new Subject<DataQueryResponse>();
+        this.streams.push(stream);
+        return stream.asObservable();
+      }
+
+      testDatasource(): Promise<TestDataSourceResponse> {
+        return Promise.resolve({ message: '', status: '' });
+      }
+    }
+
+    const setSrv = (datasources: Record<string, DataSourceApi>) => {
+      const srv = new DatasourceSrvMock(new MockObservableDataSourceApi('DefaultDS'), datasources);
+      setDataSourceSrv({
+        ...srv,
+        get: (uid: DataSourceRef) => srv.get(uid),
+        getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+        getList: jest.fn(),
+        reload: jest.fn(),
+        registerRuntimeDataSource: jest.fn(),
+      } as unknown as DataSourceSrv);
+    };
+
+    it('does not leak streaming lifecycle between two subscribers of the same observable', async () => {
+      const histDS = new PerCallSubjectDataSourceApi('Historical');
+      const streamDS = new PerCallSubjectDataSourceApi('Streaming');
+      setSrv({ HIST: histDS, STREAM: streamDS });
+
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = getQueryOptions({
+        targets: [
+          { refId: 'HIST', datasource: { uid: 'HIST' } },
+          { refId: 'STREAM', datasource: { uid: 'STREAM' } },
+        ],
+      });
+
+      // ONE Mixed observable, shared by two independent `runRequest` pipelines that each
+      // subscribe to it. This is the exact re-subscription shape under investigation: the two
+      // subscribers must not share `MixedDatasource.batchQueries` lifecycle bookkeeping.
+      const shared = ds.query(request);
+      const wrapper = {
+        name: 'SharedMixed',
+        uid: 'shared-mixed',
+        type: 'mixed',
+        meta: {},
+        query: () => shared,
+      } as unknown as DataSourceApi;
+
+      const aStates: LoadingState[] = [];
+      const aSeries: string[][] = [];
+      const bStates: LoadingState[] = [];
+      const bSeries: string[][] = [];
+      const subA = runRequest(wrapper, request).subscribe((d) => {
+        aStates.push(d.state);
+        aSeries.push((d.series as unknown as string[]).map(String));
+      });
+      const subB = runRequest(wrapper, request).subscribe((d) => {
+        bStates.push(d.state);
+        bSeries.push((d.series as unknown as string[]).map(String));
+      });
+
+      for (let i = 0; i < 10 && (histDS.streams.length < 2 || streamDS.streams.length < 2); i++) {
+        await flush();
+      }
+      // Each subscriber created its own inner streams.
+      expect(histDS.streams.length).toBe(2);
+      expect(streamDS.streams.length).toBe(2);
+
+      // A is the first subscriber, B the second.
+      // 5. Subscriber A receives a Streaming packet.
+      streamDS.streams[0].next({ data: ['A-LIVE'], state: LoadingState.Streaming });
+      await flush();
+      expect(aStates[aStates.length - 1]).toBe(LoadingState.Streaming);
+
+      // 6. Subscriber B receives only a historical Done packet (B never emitted Streaming).
+      histDS.streams[1].next({ data: ['B-HIST'], state: LoadingState.Done });
+      await flush();
+
+      // 7. Subscriber B must not be influenced by subscriber A's streaming lifecycle.
+      expect(bStates[bStates.length - 1]).toBe(LoadingState.Done);
+      expect(bSeries[bSeries.length - 1]).toContain('B-HIST');
+      expect(bSeries[bSeries.length - 1]).not.toContain('A-LIVE');
+
+      // 8. Subscriber A completes (all of its sources finish); only A closes.
+      streamDS.streams[0].complete();
+      histDS.streams[0].complete();
+      await flush();
+      expect(subB.closed).toBe(false);
+
+      // 9. Subscriber B's subsequent frames remain correct. The new packet uses the same
+      // response key as B-HIST, so `runRequest` replaces it (that is the documented
+      // key-based aggregation), leaving only the freshest frame for that key.
+      histDS.streams[1].next({ data: ['B-HIST-2'], state: LoadingState.Done });
+      await flush();
+      expect(bStates[bStates.length - 1]).toBe(LoadingState.Done);
+      expect(bSeries[bSeries.length - 1]).toContain('B-HIST-2');
+      expect(bSeries[bSeries.length - 1]).not.toContain('B-HIST');
+      expect(bSeries[bSeries.length - 1]).not.toContain('A-LIVE');
+
+      // 10. Subscriber B completes and terminates cleanly.
+      histDS.streams[1].complete();
+      streamDS.streams[1].complete();
+      await flush();
+      const bTerminal = bStates[bStates.length - 1];
+      expect(bTerminal).toBe(LoadingState.Done);
+      expect(subB.closed).toBe(true);
+
+      subA.unsubscribe();
+      subB.unsubscribe();
+    });
+  });
 });
