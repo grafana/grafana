@@ -2,6 +2,7 @@ import { QueryStatus } from '@reduxjs/toolkit/query';
 import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -146,5 +147,26 @@ describe('ContactPointHeader', () => {
     renderWithProvider(<ContactPointHeader contactPoint={contactPointWithConvertedPrometheus} onDelete={jest.fn()} />);
 
     expect(screen.getByText('Imported')).toBeInTheDocument();
+  });
+
+  describe('when Grafana is served from a sub path', () => {
+    const originalAppSubUrl = config.appSubUrl;
+
+    beforeEach(() => {
+      config.appSubUrl = '/sub';
+    });
+
+    afterEach(() => {
+      config.appSubUrl = originalAppSubUrl;
+    });
+
+    it('includes the sub path in the edit link', () => {
+      renderWithProvider(<ContactPointHeader contactPoint={mockContactPoint} onDelete={jest.fn()} />);
+
+      expect(screen.getByTestId(/^(edit|view)-action$/)).toHaveAttribute(
+        'href',
+        '/sub/alerting/notifications/receivers/test-contact-point/edit'
+      );
+    });
   });
 });

@@ -32,6 +32,7 @@ import { type Folder } from '../../types/rule-form';
 import { DataSourceType } from '../../utils/datasource';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
+import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { CreateNewFolder } from '../create-folder/CreateNewFolder';
@@ -219,7 +220,7 @@ const ImportToGMARules = () => {
                   </Stack>
                 </Button>
 
-                <LinkButton variant="secondary" href="/alerting/list">
+                <LinkButton variant="secondary" href={createRelativeUrl('/alerting/list')}>
                   <Trans i18nKey="common.cancel">Cancel</Trans>
                 </LinkButton>
               </Stack>

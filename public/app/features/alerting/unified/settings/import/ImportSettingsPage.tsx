@@ -12,6 +12,7 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
+import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { useSettingsPageNav } from '../navigation';
 
@@ -33,7 +34,7 @@ function ImportSettingsPage() {
           key="add-alertmanager"
           title={t('alerting.settings-content.title-alerting-settings', 'Alerting settings')}
           component={
-            <LinkButton href="/connections/datasources/alertmanager" icon="plus" variant="primary">
+            <LinkButton href={createRelativeUrl('/connections/datasources/alertmanager')} icon="plus" variant="primary">
               <Trans i18nKey="alerting.settings-content.add-new-alertmanager">Add new Alertmanager</Trans>
             </LinkButton>
           }
@@ -108,7 +109,7 @@ function StagedConfigurationSection() {
           variant="call-to-action"
           message={t('alerting.settings.import.empty-title', 'No configuration imported yet')}
           button={
-            <LinkButton icon="cloud-upload" size="lg" href={IMPORT_WIZARD_URL}>
+            <LinkButton icon="cloud-upload" size="lg" href={createRelativeUrl(IMPORT_WIZARD_URL)}>
               <Trans i18nKey="alerting.settings.import.empty-cta">Import Alertmanager configuration</Trans>
             </LinkButton>
           }

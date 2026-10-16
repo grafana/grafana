@@ -4,7 +4,7 @@ import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
+import { config, setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
@@ -229,6 +229,20 @@ describe('RuleListActions', () => {
 
     expect(await ui.moreButton.find()).toBeInTheDocument();
     expect(ui.newRuleButton.query()).not.toBeInTheDocument();
+  });
+
+  it('should include the app sub path in the "New alert rule" link', async () => {
+    const originalAppSubUrl = config.appSubUrl;
+    config.appSubUrl = '/sub';
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+
+    try {
+      render(<RuleListActions />);
+
+      expect(await ui.newRuleButton.find()).toHaveAttribute('href', '/sub/alerting/new/alerting');
+    } finally {
+      config.appSubUrl = originalAppSubUrl;
+    }
   });
 
   it('should only show New alert rule for export when the user has view Grafana rules permission', async () => {
