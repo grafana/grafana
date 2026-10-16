@@ -210,7 +210,7 @@ describe('LogLineDetailsOTelComponent', () => {
   it('loads the linked trace when the trace section is opened', async () => {
     const user = userEvent.setup();
     const query = jest.fn().mockReturnValue(of({ data: [] }));
-    jest.mocked(getDataSourceInstance).mockResolvedValue({ uid: 'tempo-uid', query } as DataSourceApi);
+    jest.mocked(getDataSourceInstance).mockResolvedValue({ uid: 'tempo-uid', query } as unknown as DataSourceApi);
 
     renderDetails({ syntaxHighlighting: false }, { log: createLogWithTrace() });
 
