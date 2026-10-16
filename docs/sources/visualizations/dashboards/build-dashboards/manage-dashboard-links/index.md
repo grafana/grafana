@@ -59,7 +59,7 @@ Dashboard links can also be used as shortcuts to external systems, such as submi
 
 To see an example of dashboard links in action, check out [Dashboard links with variables](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1).
 
-Once you've added a dashboard link, it appears in the upper right corner of your dashboard.
+After you've added a dashboard link, it appears in the upper right corner of your dashboard.
 
 ### Add links to dashboards
 
