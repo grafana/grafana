@@ -2853,41 +2853,6 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		return tree, folder
 	}
 
-	t.Run("without metadata - existing folder does not create or write", func(t *testing.T) {
-		repo := makeRepo(t)
-		inputTree, _ := makeInputTree("my-folder")
-
-		repo.On("Read", mock.Anything, "my-folder/", ref).Return(&repository.FileInfo{}, nil)
-
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
-
-		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
-
-		require.NoError(t, err)
-		require.Len(t, calls, 1)
-		require.False(t, calls[0].created)
-		require.NoError(t, calls[0].err)
-	})
-
-	t.Run("without metadata - new folder is created in repo", func(t *testing.T) {
-		repo := makeRepo(t)
-		inputTree, _ := makeInputTree("my-folder")
-
-		repo.On("Read", mock.Anything, "my-folder/", ref).Return(nil, repository.ErrFileNotFound)
-		repo.On("Create", mock.Anything, "my-folder/", ref, mock.Anything, "Add folder my-folder/").Return(nil)
-
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
-
-		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
-
-		require.NoError(t, err)
-		require.Len(t, calls, 1)
-		require.True(t, calls[0].created)
-		require.NoError(t, calls[0].err)
-	})
-
 	t.Run("with metadata - existing folder does not write metadata file by default", func(t *testing.T) {
 		repo := makeRepo(t)
 		inputTree, _ := makeInputTree("my-folder")
@@ -3064,25 +3029,6 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		// The tree/result identity keeps the original UID so resources still resolve
 		// to their folder path; only the manifest gets the new UID.
 		require.Equal(t, folder.ID, calls[0].folder.ID)
-	})
-
-	t.Run("without metadata and generateNewFolderIDs - no UID is materialized", func(t *testing.T) {
-		repo := makeRepo(t)
-		inputTree, _ := makeInputTree("my-folder")
-
-		repo.On("Read", mock.Anything, "my-folder/", ref).Return(nil, repository.ErrFileNotFound)
-		// Without folder metadata, the folder is written as an empty directory and
-		// generateNewFolderIDs has no effect (no _folder.json, no UID).
-		repo.On("Create", mock.Anything, "my-folder/", ref, mock.Anything, "Add folder my-folder/").Return(nil)
-
-		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
-
-		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, GenerateNewFolderIDs: true, OnFolder: recordingFn(&calls)})
-
-		require.NoError(t, err)
-		require.Len(t, calls, 1)
-		require.True(t, calls[0].created)
 	})
 }
 

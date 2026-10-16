@@ -5,16 +5,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-func TestIntegrationProvisioning_FixFolderMetadataJobFlagDisabled(t *testing.T) {
+func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 	helper := sharedHelper(t)
 
-	const repo = "fixfoldermeta-flag-disabled"
+	const repo = "fixfoldermeta-default"
 	testRepo := common.TestRepo{
 		Name:       repo,
 		SyncTarget: "folder",
@@ -30,7 +29,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJobFlagDisabled(t *testing.T) 
 		Action: provisioning.JobActionFixFolderMetadata,
 	})
 
-	t.Run("admin cannot create fixFolderMetadata job when flag is disabled", func(t *testing.T) {
+	t.Run("admin can create fixFolderMetadata job", func(t *testing.T) {
 		var statusCode int
 		result := helper.AdminREST.Post().
 			Namespace("default").
@@ -41,8 +40,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJobFlagDisabled(t *testing.T) 
 			SetHeader("Content-Type", "application/json").
 			Do(t.Context()).StatusCode(&statusCode)
 
-		require.Error(t, result.Error(), "should fail when flag is disabled")
-		require.Equal(t, http.StatusBadRequest, statusCode, "should return 400 Bad Request")
-		require.True(t, apierrors.IsBadRequest(result.Error()), "error should be bad request")
+		require.NoError(t, result.Error())
+		require.Equal(t, http.StatusAccepted, statusCode)
 	})
 }

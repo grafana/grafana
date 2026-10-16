@@ -130,15 +130,6 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 // deep in a pre-existing unmanaged folder hierarchy: the migrate job completes
 // successfully and the dashboard ends up managed by the repository, parented
 // under a fully-managed folder chain.
-//
-// Note: this package runs with the provisioningFolderMetadata flag disabled, so
-// the export does not write a _folder.json preserving the original folder UIDs;
-// the sync therefore creates fresh managed folders instead of taking over the
-// original unmanaged ones. The unmanaged-parent-folder takeover path (the
-// selective-migrate folder-conflict regression) requires that flag and is
-// covered by the unit tests in
-// pkg/registry/apis/provisioning/resources/folders_test.go
-// (TestEnsureFolderExists_TakeoverAllowlist).
 func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -176,8 +167,7 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 		},
 	})
 	common.HasNoErrors()(t, migrateJob)
-	common.HasState(provisioning.JobStateWarning)(t, migrateJob)
-	require.Contains(t, strings.Join(common.MustNestedStringSlice(migrateJob.Object, "status", "warnings"), "\n"), "missing folder metadata")
+	common.HasState(provisioning.JobStateSuccess)(t, migrateJob)
 
 	// The dashboard is now managed by the repo, and every folder in its ancestry
 	// (child > parent > grandparent) is managed by the repo too.
