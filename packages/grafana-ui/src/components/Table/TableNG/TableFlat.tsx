@@ -14,7 +14,6 @@ import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { useTableFilters } from './TableFilterContext';
 import { TableSidebar, type SidebarColumn } from './components/TableSidebar';
 import { COLUMN_SETTLE_MS, FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
 import {
@@ -81,7 +80,6 @@ const COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH = 8;
 const COLUMN_VISIBILITY_TABLE_BORDER_WIDTH = 1;
 
 export function TableFlat(props: TableNGProps) {
-  const filteringDisabled = useTableFilters()?.filteringDisabled;
   const {
     cellHeight,
     data,
@@ -528,7 +526,7 @@ export function TableFlat(props: TableNGProps) {
       setInspectCell,
       gridRef,
       getCellActions,
-      onCellFilterAdded: filteringDisabled ? undefined : onCellFilterAdded,
+      onCellFilterAdded,
       onFieldAddToAssistant,
       onCellAddToAssistant,
       frozenColumns,
@@ -561,7 +559,6 @@ export function TableFlat(props: TableNGProps) {
       rowHeightFn,
       getCellActions,
       onCellFilterAdded,
-      filteringDisabled,
       onFieldAddToAssistant,
       onCellAddToAssistant,
       frozenColumns,

@@ -11,6 +11,7 @@ import {
   type DataTransformerConfig,
 } from '@grafana/data';
 import { FilterByValueMatch, FilterByValueType, type FilterByValueConfig } from '@grafana/data/internal';
+import { selectors } from '@grafana/e2e-selectors';
 import { faro, LogLevel } from '@grafana/faro-web-sdk';
 import { mockClientSize } from '@grafana/test-utils';
 
@@ -300,6 +301,25 @@ it('shows unfiltered rows and disables filter controls after projection fails, t
   consoleError.mockRestore();
 });
 
+it('keeps dashboard cell filter actions available when value filtering fails', async () => {
+  const { props, api, filter } = setup();
+  props.data.fields[1].config.filterable = true;
+  const invalid = filter('Name', ['alpha']);
+  invalid.options.filters[0].config.id = 'missingMatcher';
+  api.set('table', [invalid]);
+  const onCellFilterAdded = jest.fn();
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  render(<TableNG {...props} onCellFilterAdded={onCellFilterAdded} />);
+
+  expect(screen.getByRole('button', { name: 'Filter Other' })).toBeDisabled();
+  const cell = screen.getAllByRole('gridcell', { name: 'x' })[0];
+  await userEvent.click(
+    within(cell).getByTestId(selectors.components.Panels.Visualization.TableNG.cellActions.filterForButton)
+  );
+  expect(onCellFilterAdded).toHaveBeenCalledWith({ key: 'Other', operator: '=', value: 'x' });
+  consoleError.mockRestore();
+});
+
 it('removes refreshed-header filter actions while filtering is disabled', async () => {
   const { props, api, filter } = setup();
   const invalid = filter('Name', ['alpha']);
@@ -333,7 +353,7 @@ it('retries filtering when table data changes, reporting only once per failed at
   consoleError.mockRestore();
 });
 
-it('shows parent rows when a nested filter fails', () => {
+it('shows parent rows and keeps cell filter actions when a nested filter fails', async () => {
   const { props, api, filter } = setup();
   const nested = toDataFrame({ fields: [{ name: 'Nested', type: FieldType.string, values: ['one', 'two'] }] });
   props.data = applyFieldOverrides({
@@ -349,17 +369,25 @@ it('shows parent rows when a nested filter fails', () => {
     theme: createTheme(),
     replaceVariables: (s) => s,
   })[0];
+  props.data.fields[0].config.filterable = true;
   const invalid = filter('Nested', ['one']);
   invalid.options.target = { frameKey: props.rowTransformations.frameKey, parentIndex: 0 };
   invalid.options.filters[0].config.id = 'missingMatcher';
   api.set('table', [invalid]);
   const notify = jest.fn();
+  const onCellFilterAdded = jest.fn();
   const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-  render(<TableNG {...props} onFilterError={notify} />);
+  render(<TableNG {...props} onFilterError={notify} onCellFilterAdded={onCellFilterAdded} />);
 
   expect(screen.getByText('alpha')).toBeInTheDocument();
   expect(screen.getByText('beta')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Filter Name' })).toBeDisabled();
+  await userEvent.click(
+    within(screen.getByRole('gridcell', { name: 'alpha' })).getByTestId(
+      selectors.components.Panels.Visualization.TableNG.cellActions.filterForButton
+    )
+  );
+  expect(onCellFilterAdded).toHaveBeenCalledWith({ key: 'Name', operator: '=', value: 'alpha' });
   expect(notify).toHaveBeenCalledTimes(1);
   expect(api.get('table')).toEqual([invalid]);
   consoleError.mockRestore();
