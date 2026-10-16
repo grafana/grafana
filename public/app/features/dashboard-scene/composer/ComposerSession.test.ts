@@ -4,7 +4,7 @@ import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
-  getExtensionSidebarPresentation,
+  getEffectiveExtensionSidebarPresentation,
   resetExtensionSidebarPresentationForTests,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
@@ -22,6 +22,9 @@ import { DashboardInteractions } from '../utils/interactions';
 
 import { ComposerSession } from './ComposerSession';
 import { canEnterComposer } from './composerAccess';
+
+// The Assistant's sidebar: the plugin that may float.
+const sidebarPresentation = () => getEffectiveExtensionSidebarPresentation('grafana-assistant-app');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -118,7 +121,7 @@ describe('entering and leaving Composer', () => {
     expect(session.target).toEqual({ resource: 'dashboard', uid: 'composer-test' });
     expect(session).not.toHaveProperty('dashboardUid');
     // The session leaves the extension sidebar to whoever entered it.
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
     expect(canEnterComposer(scene)).toEqual({ ok: false, reason: 'unsupported' });
   });
 
@@ -192,7 +195,7 @@ describe('entering and leaving Composer', () => {
     expect(scene.state.isDirty).toBe(true);
     expect(scene.state.title).toBe('Composer title');
     expect(scene.getComposerSession()).toBeUndefined();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('returns to clean Viewing when an edit is restored to the saved spec before exit', async () => {

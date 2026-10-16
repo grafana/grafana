@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -209,6 +210,64 @@ func BuildGlobalSearch(tracer tracing.Tracer, index resourcepb.ResourceIndexClie
 	handler := searchapi.NewHandler(index, nil, tracer)
 	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
 	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalSearchRoute(kinds)}})
+}
+
+// BuildGlobalHybridSearch retains locally registered resource identities for API
+// authorization. The search backend owns hybrid eligibility.
+func BuildGlobalHybridSearch(
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
+	builders []builder.APIGroupBuilder,
+	installers []appsdkapiserver.AppInstaller,
+	auth authorizer.Authorizer,
+) []builder.GroupVersionRoutes {
+	if index == nil {
+		return nil
+	}
+	manifests := slices.Clone(resource.AppManifests())
+	for _, installer := range installers {
+		manifests = append(manifests, installer.ManifestData())
+	}
+	manifests = append(manifests, builder.ManifestsFromBuilders(builders)...)
+	targets := globalHybridSearchTargets(manifests, builder.ServedGroupVersions(builders, installers))
+	handler := searchapi.NewHybridHandler(index, tracer)
+	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
+	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, auth)}})
+}
+
+// globalHybridSearchTargets selects a registered version for API authorization
+// and result kinds. Disabling an HTTP route must not bypass its authorization.
+func globalHybridSearchTargets(manifests []*app.ManifestData, registered map[schema.GroupVersion]bool) map[schema.GroupResource]schema.GroupVersionKind {
+	targets := map[schema.GroupResource]schema.GroupVersionKind{}
+	seen := map[schema.GroupVersionResource]bool{}
+	for _, m := range manifests {
+		if m == nil {
+			continue
+		}
+		for _, version := range m.Versions {
+			gv := schema.GroupVersion{Group: m.Group, Version: version.Name}
+			if !registered[gv] {
+				continue
+			}
+			for _, kind := range version.Kinds {
+				if kind.Scope != namespacedScope {
+					continue
+				}
+				gvr := gv.WithResource(resource.ManifestResourceName(kind))
+				if seen[gvr] {
+					continue
+				}
+				seen[gvr] = true
+				gr := gvr.GroupResource()
+				// Select one registered version for the API-level authorization check;
+				// the storage search itself is version-independent.
+				if _, ok := targets[gr]; !ok || version.Name == m.PreferredVersion {
+					targets[gr] = gv.WithKind(kind.Kind)
+				}
+			}
+		}
+	}
+	return targets
 }
 
 func toGroupVersionRoutes(byGroupVersion map[schema.GroupVersion][]searchapi.Route) []builder.GroupVersionRoutes {

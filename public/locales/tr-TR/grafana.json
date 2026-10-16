@@ -3919,6 +3919,11 @@
     "viz-wrapper": {
       "table": "Tablo"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Şu anda hangi uyarıların aktif olduğunu görün ve mevcut ya da geçmiş sorunları incelemek için geçmiş verilere göz atın.",
       "description-alert-rules": "Bir uyarı kuralının tetiklenmesi için karşılanması gereken koşulu tanımlayın",
@@ -6108,6 +6113,9 @@
       "only-overrides-button-tooltip": "Sadece geçersiz kılmaları göster",
       "placeholder-search-options": "Arama seçenekleri",
       "visualization-button-tooltip": "Arama seçenekleri"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Örnek veri",
@@ -10821,6 +10829,7 @@
       "no-rows": "Satır yok",
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Sütuna göre sırala: {{column}}",
       "sort-by-column-ascending": "Sütuna göre sırala: {{column}}, artan sırayla",
@@ -11129,6 +11138,8 @@
       "incident-filter-all": "Tüm olaylar",
       "incident-filter-label": "Olayları etikete göre filtrele",
       "incident-tab-label": "Olaylar",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Ekipleriniz",
       "title": "Uyarılar ve olaylar",
       "title-alerts": "Uyarılar",
@@ -11205,6 +11216,17 @@
       "error-title": "Yakın zamandaki blog yazıları yüklenemedi",
       "read-more": "Grafana Labs blogunda daha fazlasını okuyun",
       "title": "Blog'tan son gönderiler"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11967,6 +11989,11 @@
       "load-newer": "Yeni günlükler yükleniyor...",
       "load-older": "Eski günlükler yükleniyor..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Etiketleri daralt",
       "expand": "Etiketleri genişlet"
@@ -12017,6 +12044,7 @@
       "inline-mode": "Satır içi görüntüle",
       "inline-no-scrolls": "Genişletilmiş görünüme geç",
       "inline-with-scrolls": "Daraltılmış görünüme geç",
+      "link-fallback-label": "",
       "link-value-tooltip": "Bağlantı değeri",
       "links-section": "Bağlantılar",
       "log-attributes-field": "Günlük kaydı öznitelikleri",
@@ -12026,13 +12054,14 @@
       "move-displayed-field-up": "Yukarı taşı",
       "no-details": "Görüntülenecek alan yok.",
       "open-assistant": "Asistan'da günlük kaydı satırını açıklayın",
+      "open-value-in": "",
       "pin-line": "Günlüğü sabitle",
       "prettify": "Düzgünleştir",
       "remove-displayed-field": "Alanı kaldır",
       "remove-log": "Günlüğü kaldır",
       "scroll-to-logline": "Günlük satırına git",
       "search": {
-        "no-results": "Görüntülenecek sonuç yok."
+        "no-results": ""
       },
       "search-placeholder": "Alan adlarını ve değerlerini ara",
       "show-context": "İçeriği göster",
@@ -13218,6 +13247,11 @@
       "target-label": "Hedef not defteri",
       "target-new": "Yeni not defteri",
       "title": "Paneli not defterine ekle"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",

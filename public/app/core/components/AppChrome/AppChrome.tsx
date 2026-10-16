@@ -18,7 +18,7 @@ import { useVisualRefreshNudge } from 'app/features/visual-refresh/useVisualRefr
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
-import { EXTENSION_FLOATING_INSET_VAR, ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
+import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar/constants';
 import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl';
@@ -48,6 +48,7 @@ export function AppChrome({ children }: Props) {
     extensionSidebarWidth,
     setExtensionSidebarWidth,
     presentation: extensionSidebarPresentation,
+    floatingHidden: isExtensionSidebarFloatingHidden,
   } = useExtensionSidebarContext();
   const isExtensionSidebarFloating = isExtensionSidebarOpen && extensionSidebarPresentation === 'floating';
   const state = chrome.useState();
@@ -198,7 +199,6 @@ export function AppChrome({ children }: Props) {
               // Floating takes no width from the page, so the docked width is 0.
               [contentSizeStyles.contentWidth]:
                 !state.chromeless && isExtensionSidebarOpen && !isSmallScreen && !isExtensionSidebarFloating,
-              [styles.pageContainerFloatingInset]: !state.chromeless && isExtensionSidebarFloating,
             })}
             id="pageContent"
             tabIndex={-1}
@@ -212,7 +212,8 @@ export function AppChrome({ children }: Props) {
               <div
                 className={cx(
                   styles.sidebarContainerFloating,
-                  isExtensionSidebarFloating && styles.sidebarContainerFloatingBar
+                  isExtensionSidebarFloating && styles.sidebarContainerFloatingBar,
+                  isExtensionSidebarFloatingHidden && styles.sidebarContainerHidden
                 )}
                 data-testid={EXTENSION_SIDEBAR_FLOATING_TESTID}
               >
@@ -224,6 +225,7 @@ export function AppChrome({ children }: Props) {
               <Resizable
                 className={cx(styles.sidebarContainer, {
                   [styles.sidebarContainerFloatingBar]: isExtensionSidebarFloating,
+                  [styles.sidebarContainerHidden]: isExtensionSidebarFloatingHidden,
                 })}
                 defaultSize={{ width: extensionSidebarWidth }}
                 enable={isExtensionSidebarFloating ? false : { left: true }}
@@ -396,24 +398,26 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
     }),
-    // A panel anchored to the bottom-right corner: content-driven height, no chrome of its own.
+    // A panel anchored to the bottom centre: content-driven height, no chrome of its own.
     sidebarContainerFloatingBar: css({
       // `Resizable` sets width and height inline.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      width: `min(560px, calc(100% - ${theme.spacing(6)})) !important` as 'auto',
+      width: `min(480px, calc(100% - ${theme.spacing(6)})) !important` as 'auto',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       height: 'auto !important' as 'auto',
       top: 'auto',
-      left: 'auto',
-      right: theme.spacing(3),
+      // The drag moves the sidebar wrapper inside, so this box's own transform is free for centring.
+      left: '50%',
+      right: 'auto',
+      transform: 'translateX(-50%)',
       bottom: theme.spacing(3),
       background: 'transparent',
       // The sidebar inside can be moved off this box; the box itself must not block the page.
       pointerEvents: 'none',
     }),
-    // Lets the last row of the page scroll above the floating bar.
-    pageContainerFloatingInset: css({
-      paddingBottom: `var(${EXTENSION_FLOATING_INSET_VAR}, 0px)`,
+    // A page holds the floating sidebar hidden: it stays mounted, so it takes over the page's prompt at once.
+    sidebarContainerHidden: css({
+      display: 'none',
     }),
     sidebarContainerFloating: css({
       position: 'fixed',

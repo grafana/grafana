@@ -16,6 +16,7 @@ describe('withAdHocTransformCapabilities', () => {
 
     for (const field of withCapabilities.fields) {
       expect(field.config.custom).toMatchObject({ hideable: true });
+      expect(field.config.custom).not.toHaveProperty('reorderable');
     }
   });
 

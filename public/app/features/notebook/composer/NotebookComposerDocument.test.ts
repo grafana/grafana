@@ -3,7 +3,7 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import {
-  getExtensionSidebarPresentation,
+  getEffectiveExtensionSidebarPresentation,
   notifyExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
@@ -21,6 +21,9 @@ import { transformNotebookToScene } from '../serialization/transformNotebookToSc
 
 import { enterNotebookComposer } from './NotebookComposerDocument';
 import { canEnterNotebookComposer, setRouteNotebook } from './notebookComposerAccess';
+
+// The Assistant's sidebar: the plugin that may float.
+const sidebarPresentation = () => getEffectiveExtensionSidebarPresentation('grafana-assistant-app');
 
 // Only the network write is stubbed, so what these tests see saved is what would be sent.
 jest.mock('../api/notebookResource', () => ({
@@ -152,12 +155,12 @@ describe('the extension sidebar', () => {
   it('floats for a notebook session and goes back to docked when it ends', async () => {
     const scene = onRoute();
     const session = await composerApi.enter(NOTEBOOK);
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
 
     session.exit();
 
     expect(scene.state.isComposing).toBe(false);
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('keeps the notebook session open, and writing, when the user docks it', async () => {
@@ -168,7 +171,7 @@ describe('the extension sidebar', () => {
 
     expect(session.signal.aborted).toBe(false);
     expect(scene.state.isComposing).toBe(true);
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the notebook session the API entered
     await expect(retitle(session as ReturnType<typeof enterNotebookComposer>, 'Docked')).resolves.toMatchObject({
       status: 'applied',
@@ -176,7 +179,7 @@ describe('the extension sidebar', () => {
     expect(scene.state.title).toBe('Docked');
 
     session.exit();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it("brings back the user's floating layout after a session they did not re-lay out", async () => {
@@ -187,7 +190,7 @@ describe('the extension sidebar', () => {
 
     session.exit();
 
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
   });
 
   it("keeps the user's mid-session dock after the notebook session ends", async () => {
@@ -199,7 +202,7 @@ describe('the extension sidebar', () => {
 
     session.exit();
 
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('ends the notebook session when the sidebar closes', async () => {
@@ -218,7 +221,7 @@ describe('the extension sidebar', () => {
 
     leave(scene);
 
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 });
 

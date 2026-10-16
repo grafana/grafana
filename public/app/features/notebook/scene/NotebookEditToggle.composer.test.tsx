@@ -10,7 +10,7 @@ import {
   useExtensionSidebarContext,
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import {
-  getExtensionSidebarPresentation,
+  getEffectiveExtensionSidebarPresentation,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
@@ -37,6 +37,9 @@ import { NotebookEmbeddedHost } from './NotebookEmbeddedContext';
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
+
+// The Assistant's sidebar: the plugin that may float.
+const sidebarPresentation = () => getEffectiveExtensionSidebarPresentation('grafana-assistant-app');
 
 jest.mock('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider', () => ({
   ...jest.requireActual('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider'),
@@ -65,6 +68,7 @@ function sidebarContext(assistant: 'available' | 'missing', docked = false): Ext
     extensionSidebarWidth: 300,
     setExtensionSidebarWidth: jest.fn(),
     presentation: 'docked',
+    floatingHidden: false,
   };
 }
 
@@ -225,7 +229,7 @@ describe('Composer in the notebook mode switch', () => {
     const layoutWhenOpened: string[] = [];
     const publish = jest.spyOn(appEvents, 'publish').mockImplementation((event) => {
       if (event instanceof OpenExtensionSidebarEvent) {
-        layoutWhenOpened.push(getExtensionSidebarPresentation());
+        layoutWhenOpened.push(sidebarPresentation());
       }
       originalPublish(event);
     });
@@ -240,7 +244,7 @@ describe('Composer in the notebook mode switch', () => {
     // The request floats the sidebar before it opens (the floating flag is off here).
     expect(layoutWhenOpened).toEqual(['floating']);
     expect(assistant).toHaveBeenCalledWith(TARGET);
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
   });
 
   it('shows Composer selected while the request waits, and keeps it once the session starts', async () => {
@@ -278,12 +282,12 @@ describe('Composer in the notebook mode switch', () => {
 
     fireEvent.click(composerOption()!);
     expect(composerOption()).toBeChecked();
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
     act(() => jest.advanceTimersByTime(PENDING_REQUEST_TTL_MS + 1));
 
     expect(radio('View')).toBeChecked();
     expect(getPendingComposerEnterTarget()).toBeUndefined();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('falls back at once, and docks the sidebar again, when Assistant declines the request', async () => {
@@ -297,7 +301,7 @@ describe('Composer in the notebook mode switch', () => {
     expect(decline).toHaveBeenCalledWith(TARGET);
     expect(radio('View')).toBeChecked();
     expect(getPendingComposerEnterTarget()).toBeUndefined();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('withdraws a waiting request when the user picks another mode', async () => {
@@ -316,7 +320,7 @@ describe('Composer in the notebook mode switch', () => {
 
     setExtensionSidebarPresentation('docked');
 
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
     expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(true);
     expect(assistant).toHaveBeenCalledWith(TARGET);
     expect(getPendingComposerEnterTarget()).toEqual(TARGET);
@@ -346,12 +350,12 @@ describe('Composer in the notebook mode switch', () => {
     cleanups.push(setRouteNotebook(scene));
     const { user } = render(<NotebookEditToggle notebook={scene} />);
     await user.click(composerOption()!);
-    expect(getExtensionSidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('floating');
 
     act(() => deactivate());
 
     expect(getPendingComposerEnterTarget()).toBeUndefined();
-    expect(getExtensionSidebarPresentation()).toBe('docked');
+    expect(sidebarPresentation()).toBe('docked');
   });
 
   it('selects Composer when Assistant enters it by other means', () => {
