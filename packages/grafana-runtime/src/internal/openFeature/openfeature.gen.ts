@@ -206,6 +206,8 @@ export const FlagKeys = {
   GrafanaOtelLogDetails: "grafana.otelLogDetails",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Shows panel actions, including the panel menu and maximize/restore, in a single hover popover */
+  GrafanaPanelHoverActions: "grafana.panelHoverActions",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
   /** Pass React elements in plugin extension props by reference */
@@ -1434,6 +1436,17 @@ export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Shows panel actions, including the panel menu and maximize/restore, in a single hover popover
+ *
+ * **Details:**
+ * - flag key: `grafana.panelHoverActions`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelHoverActions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelHoverActions", false, options).value;
 };
 
 /**

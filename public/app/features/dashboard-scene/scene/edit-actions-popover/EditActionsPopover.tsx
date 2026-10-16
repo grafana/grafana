@@ -11,7 +11,7 @@ import {
   useInteractions,
   useMergeRefs,
 } from '@floating-ui/react';
-import React, { cloneElement, createContext, useContext, useMemo, useState } from 'react';
+import React, { cloneElement, createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -20,9 +20,12 @@ import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana
 export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
 
 /**
- * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.
+ * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it,
+ * or keep it open while something rendered outside of it (e.g. a dropdown menu) is in use.
  */
-const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ closePopover: () => {} });
+const EditActionsPopoverContext = createContext<{ closePopover: () => void; setKeepOpen: (keepOpen: boolean) => void }>(
+  { closePopover: () => {}, setKeepOpen: () => {} }
+);
 export const useEditActionsPopover = () => useContext(EditActionsPopoverContext);
 
 /**
@@ -42,10 +45,12 @@ type EditActionsPopoverProps = {
   portalRoot?: () => HTMLElement | undefined;
   zIndex?: number;
   shiftPadding?: () => number | { right: number };
+  /** Show the popover outside of edit mode too. */
+  showOutsideEditMode?: boolean;
 };
 
 /**
- * The popover is displayed only while element selection is enabled (edit mode).
+ * The popover is displayed only while element selection is enabled (edit mode), unless `showOutsideEditMode` is set.
  * Pass `disabled` to turn it off without unmounting children.
  */
 export function EditActionsPopover({
@@ -56,17 +61,27 @@ export function EditActionsPopover({
   portalRoot,
   zIndex,
   shiftPadding,
+  showOutsideEditMode = false,
 }: EditActionsPopoverProps) {
   const theme = useTheme2();
   const styles = useStyles2(getPopoverStyles);
   const [isOpen, setIsOpen] = useState(false);
+  // Hover moving into a portal outside the popover (e.g. its dropdown menu) would otherwise close it, unmounting that portal
+  const keepOpenRef = useRef(false);
 
   const isSelectable = Boolean(useContext(ElementSelectionContext)?.enabled);
-  const isEnabled = !disabled && isSelectable;
+  const isEnabled = !disabled && (isSelectable || showOutsideEditMode);
+
+  const onOpenChange = useCallback((open: boolean) => {
+    if (!open && keepOpenRef.current) {
+      return;
+    }
+    setIsOpen(open);
+  }, []);
 
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
-    onOpenChange: setIsOpen,
+    onOpenChange,
     placement,
     middleware: [
       offset(0),
@@ -93,7 +108,18 @@ export function EditActionsPopover({
   // Keep a ref already set on the child (e.g. DashboardGridItem.containerRef).
   const mergedRef = useMergeRefs([refs.setReference, children.props.ref]);
 
-  const popoverContextValue = useMemo(() => ({ closePopover: () => setIsOpen(false) }), []);
+  const popoverContextValue = useMemo(
+    () => ({
+      closePopover: () => {
+        keepOpenRef.current = false;
+        setIsOpen(false);
+      },
+      setKeepOpen: (keepOpen: boolean) => {
+        keepOpenRef.current = keepOpen;
+      },
+    }),
+    []
+  );
 
   return (
     <>

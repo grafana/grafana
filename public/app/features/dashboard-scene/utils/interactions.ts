@@ -9,6 +9,7 @@ import {
 } from '../serialization/DashboardSceneSerializer';
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
+import { type ViewPanelEnterSource, type ViewPanelExitMethod } from './viewPanelTracking';
 
 let isScenesContextSet = false;
 
@@ -204,9 +205,14 @@ export const DashboardInteractions = {
       | 'duplicate'
       | 'delete'
       | 'view'
-      | 'use_library_panel',
+      | 'use_library_panel'
+      | 'maximize'
+      | 'restore'
+      | 'share'
+      | 'explore'
+      | 'more',
     id: number,
-    source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'hover_popover' | 'keyboard',
     panelType?: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
@@ -414,6 +420,21 @@ export const DashboardInteractions = {
 
   viewPanelAction: (properties: { action?: string; value: string }) => {
     reportDashboardInteraction('view_panel_action', properties);
+  },
+
+  // dashboards_view_panel_entered: a panel was maximized into view mode, and through which control
+  viewPanelEntered: (properties: { source: ViewPanelEnterSource; panelType?: string; hoverActions: boolean }) => {
+    reportDashboardInteraction('view_panel_entered', properties);
+  },
+
+  // dashboards_view_panel_exited: a panel left view mode, through which control, and after how long
+  viewPanelExited: (properties: {
+    method: ViewPanelExitMethod;
+    durationMs?: number;
+    panelType?: string;
+    hoverActions: boolean;
+  }) => {
+    reportDashboardInteraction('view_panel_exited', properties);
   },
 
   setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {

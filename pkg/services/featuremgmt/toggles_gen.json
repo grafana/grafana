@@ -2977,6 +2977,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelHoverActions",
+        "resourceVersion": "1791809615601",
+        "creationTimestamp": "2026-10-12T12:53:35Z"
+      },
+      "spec": {
+        "description": "Shows panel actions, including the panel menu and maximize/restore, in a single hover popover",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.panelPluginTransformations",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-18T18:56:48Z"

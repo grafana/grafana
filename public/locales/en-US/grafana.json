@@ -7469,6 +7469,14 @@
       "aria-label-open-options-pane": "Open options pane",
       "tooltip-open-options-pane": "Open options pane"
     },
+    "panel-hover-actions": {
+      "edit": "Edit",
+      "explore": "Explore",
+      "maximize": "View panel",
+      "more": "More actions",
+      "restore": "Back to dashboard",
+      "share": "Share link"
+    },
     "panel-inspect-renderer": {
       "body-panel-plugin-not-loaded": "Make sure the panel you want to inspect is visible and has been displayed before opening inspect.",
       "title-panel-plugin-not-loaded": "Panel plugin not loaded"

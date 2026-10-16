@@ -86,6 +86,11 @@ interface BaseProps {
    */
   showMenuAlways?: boolean;
   /**
+   * If true, hovering the panel does not reveal the menu; it only shows while the panel has keyboard focus.
+   * For hosts that offer the menu in their own hover actions. Defaults to false.
+   */
+  hideMenuOnHover?: boolean;
+  /**
    * Content to display in the sub-header area below the main header.
    * Can contain text, pills, links, buttons, or any other React elements.
    */
@@ -172,6 +177,7 @@ export function PanelChrome({
   onMouseEnter,
   onDragStart,
   showMenuAlways = false,
+  hideMenuOnHover = false,
   subHeaderContent,
   subtitle,
   minHeight,
@@ -206,7 +212,7 @@ export function PanelChrome({
   const subtitleContent = subtitle && <PanelDescription description={subtitle} inSubHeader />;
 
   // hover menu is only shown on hover when not on touch devices
-  const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
+  const showOnHoverClass = showMenuAlways ? 'always-show' : hideMenuOnHover ? 'show-on-focus' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
   const showSubHeader = !collapsed && Boolean(subHeaderContent || subtitleContent);
 
@@ -380,7 +386,8 @@ export function PanelChrome({
 
   // Ignores streaming and loading (cancel query) states for simplicity
   // If you need to cancel streaming / loading panels set a title
-  const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
+  const hasHeaderContentBesidesMenu = title || description || titleItems || dragClass || actions;
+  const hasHeaderContent = hasHeaderContentBesidesMenu || menu;
 
   return (
     <div className={styles.container}>
@@ -420,6 +427,8 @@ export function PanelChrome({
                 onDragStart={onDragStart}
                 offset={hoverHeaderOffset}
                 onOpenMenu={onOpenMenu}
+                hideMenuOnHover={hideMenuOnHover}
+                hasContentBesidesMenu={Boolean(hasHeaderContentBesidesMenu)}
               >
                 {headerContent}
               </HoverWidget>
@@ -578,7 +587,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       },
 
-      '.show-on-hover': {
+      '.show-on-hover, .show-on-focus': {
         opacity: '0',
         visibility: 'hidden',
       },
@@ -591,11 +600,17 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       },
 
-      '&:focus-visible': getFocusStyles(theme),
+      '&:focus-visible': {
+        ...getFocusStyles(theme),
+        '.show-on-focus': {
+          opacity: '1',
+          visibility: 'visible',
+        },
+      },
 
       // The not:(:focus) clause is so that this rule is only applied when decendants are focused (important otherwise the hover header is visible when panel is clicked).
       '&:focus-within:not(:focus)': {
-        '.show-on-hover': {
+        '.show-on-hover, .show-on-focus': {
           visibility: 'visible',
           opacity: '1',
         },

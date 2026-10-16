@@ -113,6 +113,7 @@ import {
   hasActualSaveChanges,
 } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
+import { trackViewPanelTransitions } from '../utils/viewPanelTracking';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
@@ -303,8 +304,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
     const destroyMutationClient = createMutationClient(this, 'dashboard');
+    const viewPanelTracking = trackViewPanelTransitions(this);
 
     return () => {
+      viewPanelTracking.unsubscribe();
       this.cancelPendingViews();
       // A plan preview that's still showing when the scene deactivates (navigated away, tab
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather

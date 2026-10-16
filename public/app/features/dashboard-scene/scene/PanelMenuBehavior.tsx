@@ -43,6 +43,7 @@ import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
+import { markViewPanelEnter } from '../utils/viewPanelTracking';
 
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
@@ -86,6 +87,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         }),
         onClick: () => {
           DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel');
+          markViewPanelEnter('menu');
         },
       });
     }

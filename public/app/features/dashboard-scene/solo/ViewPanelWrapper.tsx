@@ -1,10 +1,13 @@
+import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
+import { useFlagGrafanaPanelHoverActions, useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
 import { type SceneDataProvider, type VizPanel, useSceneObjectState } from '@grafana/scenes';
 import { SceneContext, SceneContextObject } from '@grafana/scenes-react';
+import { useStyles2 } from '@grafana/ui';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
+import { PanelHoverActionsWrapper } from '../scene/edit-actions-popover/PanelHoverActions';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { ToggleViewPanePaneEvent } from '../sidebar/events';
 
@@ -12,6 +15,22 @@ import { FanoutPanel } from './FanoutPanel';
 import { ViewPanelSidePane } from './ViewPanelSidePane';
 
 export function ViewPanelWrapper({ panel, showControlsPane }: { panel: VizPanel; showControlsPane?: boolean }) {
+  const hoverActions = useFlagGrafanaPanelHoverActions();
+  const styles = useStyles2(getStyles);
+  const content = <ViewPanelContent panel={panel} showControlsPane={showControlsPane} />;
+
+  if (!hoverActions || !showControlsPane) {
+    return content;
+  }
+
+  return (
+    <PanelHoverActionsWrapper panel={panel} isViewPanel>
+      <div className={styles.hoverActionsReference}>{content}</div>
+    </PanelHoverActionsWrapper>
+  );
+}
+
+function ViewPanelContent({ panel, showControlsPane }: { panel: VizPanel; showControlsPane?: boolean }) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const { $data } = useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
 
@@ -84,3 +103,13 @@ function usePanelSceneContextObject(panel: VizPanel) {
 
   return context;
 }
+
+const getStyles = () => ({
+  hoverActionsReference: css({
+    display: 'flex',
+    flexGrow: 1,
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  }),
+});

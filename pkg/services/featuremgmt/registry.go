@@ -2570,6 +2570,15 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:         "grafana.panelHoverActions",
+			Description:  "Shows panel actions, including the panel menu and maximize/restore, in a single hover popover",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:            "datasourcesApiServerEnableHealthEndpointRedirect",
 			Description:     "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
 			Stage:           FeatureStageExperimental,
