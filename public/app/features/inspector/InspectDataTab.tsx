@@ -266,6 +266,7 @@ export const InspectDataTab = memo(function InspectDataTab({
                     width={width}
                     height={height}
                     data={dataFrame}
+                    timeZone={timeZone}
                     showTypeIcons={true}
                     transparent={config.theme2.flags.visualDesignRefresh}
                   />

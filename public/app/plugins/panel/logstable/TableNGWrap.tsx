@@ -46,6 +46,7 @@ export function TableNGWrap({
   height,
   width: tableWidth,
   transparent,
+  timeZone,
   fieldConfig,
   onFieldConfigChange,
   replaceVariables,
@@ -128,6 +129,7 @@ export function TableNGWrap({
         data={data.series[getCurrentFrameIndex(data.series, options)]}
         onFilterError={notifyTableFilterError}
         timeRange={data.timeRange}
+        timeZone={timeZone}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
         onDisplayedRowIndicesChange={setDisplayedRowIndices}

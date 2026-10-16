@@ -22,6 +22,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { defaultTableOptions } from '@grafana/schema';
 import { mockClientSize } from '@grafana/test-utils';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
+import { type TableNG } from '@grafana/ui/unstable';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { DownloadFormat, downloadLogs } from 'app/features/logs/utils';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
@@ -33,6 +34,18 @@ import { LogsTable } from './LogsTable';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
+
+let tableNGTimeZone: string | undefined;
+jest.mock('@grafana/ui/unstable', () => {
+  const actual = jest.requireActual('@grafana/ui/unstable');
+  return {
+    ...actual,
+    TableNG: (props: React.ComponentProps<typeof TableNG>) => {
+      tableNGTimeZone = props.timeZone;
+      return <actual.TableNG {...props} />;
+    },
+  };
+});
 
 jest.mock('app/features/logs/utils', () => ({
   ...jest.requireActual('app/features/logs/utils'),
@@ -138,6 +151,12 @@ describe('LogsTable', () => {
 
   beforeAll(() => {
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
+  });
+
+  it('passes panel timezone to TableNG for value filtering', async () => {
+    setUp({ timeZone: 'Pacific/Auckland' });
+    await screen.findByRole('grid');
+    expect(tableNGTimeZone).toBe('Pacific/Auckland');
   });
 
   beforeEach(() => {
