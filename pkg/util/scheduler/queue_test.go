@@ -701,6 +701,36 @@ grafana_resource_server_qos_in_flight 32
 				require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
 				dequeueExecution(t, q)()
 			})
+			t.Run("queued cancellation preserves FIFO", func(t *testing.T) {
+				for _, canceled := range []int{0, 1, 2} {
+					t.Run(fmt.Sprintf("cancel item %d", canceled), func(t *testing.T) {
+						synctest.Test(t, func(t *testing.T) {
+							q := newExecutionTestQueue(t, 1)
+							ctx, cancel := context.WithCancel(t.Context())
+							defer cancel()
+							var order, expected []int
+							for i := range 3 {
+								itemCtx := t.Context()
+								if i == canceled {
+									itemCtx = ctx
+								} else {
+									expected = append(expected, i)
+								}
+								require.NoError(t, q.Enqueue(itemCtx, "a", func() { order = append(order, i) }))
+							}
+							cancel()
+							synctest.Wait()
+							require.Equal(t, 2, q.Len())
+							for range 2 {
+								dequeueExecution(t, q)()
+							}
+							require.Equal(t, expected, order)
+							require.Zero(t, q.Len())
+							require.Zero(t, q.ActiveTenantsLen())
+						})
+					})
+				}
+			})
 			t.Run("cancellation after dispatch skips execution and releases reservation", func(t *testing.T) {
 				q := newExecutionTestQueue(t, 1)
 				ctx, cancel := context.WithCancel(t.Context())

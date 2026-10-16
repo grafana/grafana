@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"context"
 	"errors"
-	"slices"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -33,27 +32,28 @@ type queuedItem struct {
 	ctx        context.Context
 	stopCancel func() bool
 	tenant     *tenantQueue
+	queuedElem *list.Element
 }
 
 type tenantQueue struct {
 	id         string
-	items      []*queuedItem
+	items      list.List
 	inFlight   int
 	activeElem *list.Element
 }
 
 func (tq *tenantQueue) len() int {
-	return len(tq.items)
+	return tq.items.Len()
 }
 func (tq *tenantQueue) clear() {
-	tq.items = nil
+	tq.items.Init()
 	tq.activeElem = nil
 }
 func (tq *tenantQueue) isEmpty() bool {
-	return len(tq.items) == 0
+	return tq.items.Len() == 0
 }
 func (tq *tenantQueue) isFull(maxSize int) bool {
-	return maxSize > 0 && len(tq.items) >= maxSize
+	return maxSize > 0 && tq.items.Len() >= maxSize
 }
 
 type enqueueRequest struct {
@@ -206,9 +206,8 @@ func (q *Queue) scheduleRoundRobin() {
 			break
 		}
 		tq := tenantElem.Value.(*tenantQueue)
-		qi := tq.items[0]
-		tq.items[0] = nil
-		tq.items = tq.items[1:]
+		qi := tq.items.Remove(tq.items.Front()).(*queuedItem)
+		qi.queuedElem = nil
 		qi.stopCancel()
 		tq.inFlight++
 		q.inFlight.Inc()
@@ -255,13 +254,13 @@ func (q *Queue) cleanupTenant(tq *tenantQueue) {
 }
 
 func (q *Queue) cancelItem(qi *queuedItem) {
-	tq := qi.tenant
-	index := slices.Index(tq.items, qi)
-	if index < 0 {
+	if qi.queuedElem == nil {
 		return
 	}
+	tq := qi.tenant
 	qi.stopCancel()
-	tq.items = slices.Delete(tq.items, index, index+1)
+	tq.items.Remove(qi.queuedElem)
+	qi.queuedElem = nil
 	q.recordCancellation(tq.id, qi.ctx.Err())
 	q.queueLength.WithLabelValues(tq.id).Set(float64(tq.len()))
 	q.cleanupTenant(tq)
@@ -284,10 +283,7 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 	}
 	tq, exists := q.tenantQueues[req.tenantID]
 	if !exists {
-		tq = &tenantQueue{
-			id:    req.tenantID,
-			items: make([]*queuedItem, 0, 8),
-		}
+		tq = &tenantQueue{id: req.tenantID}
 		q.tenantQueues[req.tenantID] = tq
 	}
 
@@ -305,8 +301,8 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 		case <-q.dispatcherStoppedChan:
 		}
 	})
-	tq.items = append(tq.items, qi)
-	q.queueLength.WithLabelValues(req.tenantID).Set(float64(len(tq.items)))
+	qi.queuedElem = tq.items.PushBack(qi)
+	q.queueLength.WithLabelValues(req.tenantID).Set(float64(tq.len()))
 
 	if tq.activeElem == nil {
 		tq.activeElem = q.activeTenants.PushBack(tq)
@@ -486,8 +482,10 @@ func (q *Queue) stopping(_ error) error {
 	q.discardedRequests.Reset()
 	q.inFlight.Set(0)
 	for _, tq := range q.tenantQueues {
-		for _, qi := range tq.items {
+		for elem := tq.items.Front(); elem != nil; elem = elem.Next() {
+			qi := elem.Value.(*queuedItem)
 			qi.stopCancel()
+			qi.queuedElem = nil
 		}
 		tq.clear()
 	}
