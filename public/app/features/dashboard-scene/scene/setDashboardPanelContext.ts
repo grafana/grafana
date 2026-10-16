@@ -30,6 +30,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
+import { setupPanelNotices } from './setupPanelNotices';
 
 // How long to wait for the assistant app plugin to report availability before giving up. Preloaded
 // app plugins finish importing before the rest of Grafana boots, so this window is normally
@@ -250,6 +251,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Unreachable while the sample generator never reports an error for this popover to attach to;
   // would need this guard the moment that changes, so it stays guarded directly.
   if (isNewPanelQueryErrorsUIEnabled()) {
+    setupPanelNotices(vizPanel, context);
     context.onOpenInspector = () => {
       if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {
         return;

@@ -12,6 +12,7 @@ import {
   type Scope,
   type VariableModel,
 } from '@grafana/data';
+import type { PanelStatusStore } from '@grafana/data/internal';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
@@ -918,6 +919,16 @@ describe('setDashboardPanelContext', () => {
       expect(forceRenderSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('does not investigate panel-owned notices', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { context } = buildTestScene({});
+      context.notices!.createSource().set([{ id: 'field', severity: 'error', text: 'Choose a numeric field' }]);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+    });
+
     it('does nothing when the panel currently has no errors or notices', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
@@ -956,6 +967,33 @@ describe('setDashboardPanelContext', () => {
       // context" picker) rather than a text snapshot of its errors.
       expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
         data: { name: 'Panel: CPU usage', panelId: '4', panelKey: 'panel-4' },
+      });
+    });
+
+    it('keeps the query-error prompt and live panel reference after host status initializes', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'Query failed' }],
+          },
+        }),
+      });
+      (context.notices as PanelStatusStore).setExternal([
+        { id: 'query', origin: 'query', severity: 'error', text: 'Query failed' },
+      ]);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: 'Investigate and fix the query errors causing this panel to fail.' })
+      );
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: { name: 'Panel: Untitled', panelId: '4', panelKey: 'panel-4' },
       });
     });
 
