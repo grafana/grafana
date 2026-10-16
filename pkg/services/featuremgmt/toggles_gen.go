@@ -1054,14 +1054,6 @@ const (
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
 	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
 
-	// FlagUnifiedStorageClientRequireCallerIdentity
-	// Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity
-	FlagUnifiedStorageClientRequireCallerIdentity = "unifiedStorageClient.requireCallerIdentity"
-
-	// FlagUnifiedStorageClientOnBehalfOf
-	// Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service
-	FlagUnifiedStorageClientOnBehalfOf = "unifiedStorageClient.onBehalfOf"
-
 	// FlagDatasourcesApiServerConnectToHostedGrafanaDatabases
 	// Connect to hosted grafana databases from datasource API servers
 	FlagDatasourcesApiServerConnectToHostedGrafanaDatabases = "datasources.apiServerConnectToHostedGrafanaDatabases"

@@ -13,8 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -127,9 +125,4 @@ func TestLocalResourceClientErrorConversion(t *testing.T) {
 			require.Equal(t, int32(http.StatusNotFound), details[0].(*resourcepb.ErrorResult).Code)
 		})
 	}
-}
-
-func TestResourceClientFlagNamesMatchFeatureToggles(t *testing.T) {
-	require.Equal(t, featuremgmt.FlagUnifiedStorageClientRequireCallerIdentity, resourceclient.FlagUnifiedStorageClientRequireCallerIdentity)
-	require.Equal(t, featuremgmt.FlagUnifiedStorageClientOnBehalfOf, resourceclient.FlagUnifiedStorageClientOnBehalfOf)
 }

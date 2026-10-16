@@ -41,12 +41,12 @@ func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	return resourceclient.NewAuthlessResourceClient(cc)
 }
 
-func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
-	return resourceclient.NewRemoteResourceClient(tracer, conn, indexConn, cfg)
+func NewEmbeddedRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+	return resourceclient.NewEmbeddedRemoteResourceClient(tracer, conn, indexConn, cfg)
 }
 
-func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClientConfig) (*authnlib.GrpcClientInterceptor, error) {
-	return resourceclient.NewAuthnGrpcClientInterceptor(tracer, cfg)
+func NewStandaloneRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+	return resourceclient.NewStandaloneRemoteResourceClient(tracer, conn, indexConn, cfg)
 }
 
 func ProvideInProcExchanger() authnlib.StaticTokenExchanger {
@@ -61,7 +61,7 @@ func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cf
 
 	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
 
-	return NewRemoteResourceClient(tracer, conn, indexConn, RemoteResourceClientConfig{
+	return NewEmbeddedRemoteResourceClient(tracer, conn, indexConn, RemoteResourceClientConfig{
 		Token:            clientCfg.Token,
 		TokenExchangeURL: clientCfg.TokenExchangeURL,
 		Audiences:        []string{"resourceStore"},
