@@ -43,4 +43,5 @@ export { useDataSourcesWithValidRecordingTarget } from './grafana/dataSources/ho
 // API endpoints
 export { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 export { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+export { generatedAPI as rulesAPIv1beta1 } from '@grafana/api-clients/rtkq/rules.alerting/v1beta1';
 export { generatedAPI as historianAPIv0alpha1 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
