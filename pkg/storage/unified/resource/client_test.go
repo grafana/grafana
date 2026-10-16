@@ -3,10 +3,12 @@ package resource
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -48,6 +50,50 @@ func TestLocalResourceClientRetryCodes(t *testing.T) {
 			}
 		})
 	}
+}
+
+type rejectedLocalClientStream struct {
+	grpc.ClientStream
+	sendErr error
+	recvErr error
+}
+
+func (s *rejectedLocalClientStream) SendMsg(any) error { return s.sendErr }
+func (s *rejectedLocalClientStream) RecvMsg(any) error { return s.recvErr }
+
+func TestLocalStreamClientInterceptor(t *testing.T) {
+	rejected := status.Error(codes.ResourceExhausted, "too many blob transfers for tenant")
+	for _, tc := range []struct {
+		name          string
+		clientStreams bool
+		sendErr       error
+		wantErr       error
+	}{
+		{name: "server streaming early rejection", sendErr: io.EOF},
+		{name: "server streaming send succeeds"},
+		{name: "server streaming other error", sendErr: context.Canceled, wantErr: context.Canceled},
+		{name: "client streaming preserves EOF", clientStreams: true, sendErr: io.EOF, wantErr: io.EOF},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			underlying := &rejectedLocalClientStream{sendErr: tc.sendErr, recvErr: rejected}
+			streamer := func(context.Context, *grpc.StreamDesc, *grpc.ClientConn, string, ...grpc.CallOption) (grpc.ClientStream, error) {
+				return underlying, nil
+			}
+			stream, err := localStreamClientInterceptor(t.Context(), &grpc.StreamDesc{ClientStreams: tc.clientStreams, ServerStreams: true}, nil, "test", streamer)
+			require.NoError(t, err)
+			require.ErrorIs(t, stream.SendMsg(&resourcepb.GetBlobRequest{}), tc.wantErr)
+			require.ErrorIs(t, stream.RecvMsg(&resourcepb.GetBlobResponse{}), rejected)
+		})
+	}
+
+	t.Run("stream creation error", func(t *testing.T) {
+		streamer := func(context.Context, *grpc.StreamDesc, *grpc.ClientConn, string, ...grpc.CallOption) (grpc.ClientStream, error) {
+			return nil, rejected
+		}
+		stream, err := localStreamClientInterceptor(t.Context(), &grpc.StreamDesc{ServerStreams: true}, nil, "test", streamer)
+		require.Nil(t, stream)
+		require.ErrorIs(t, err, rejected)
+	})
 }
 
 type missingReadBackend struct{ mockStorageBackend }
