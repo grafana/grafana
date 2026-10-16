@@ -73,6 +73,17 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	defer p.mutex.Unlock()
 
 	p.state = pluginStateStartInit
+	// A failed start must not leave a half-started process running: Exited
+	// would stay false, and the plugin would never be restarted.
+	defer func() {
+		if p.state == pluginStateStartFail {
+			if p.client != nil {
+				p.client.Kill()
+			}
+			p.pluginClient = nil
+			p.clientV3 = nil
+		}
+	}()
 
 	var err error
 	p.client, err = p.clientFactory()
