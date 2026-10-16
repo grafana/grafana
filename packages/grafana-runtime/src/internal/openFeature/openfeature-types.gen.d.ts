@@ -167,6 +167,7 @@ declare module "@openfeature/core" {
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
     | "dataviz.tabularNums"
+    | "grafana.preserveLoginTabTitle"
     | "grafana.customizableMegaMenu"
     | "cujTracking"
     | "grafana.dashboardSettingsRedesign"
