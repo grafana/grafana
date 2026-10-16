@@ -5,6 +5,13 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { getFocusStyles } from '../../themes/mixins';
 import { getInputStyles } from '../Input/Input';
 
+// Vertical padding is tighter at sm so the pills still fit inside the shorter control
+const getVerticalPadding = (size: 'sm' | 'md') => (size === 'sm' ? 0.25 : 0.5);
+
+// Height available to the pills, input and icons inside the wrapper (wrapper height minus padding and 1px borders)
+export const getMultiComboboxInnerHeight = (theme: GrafanaTheme2, size: 'sm' | 'md') =>
+  `calc(${theme.spacing(theme.components.height[size])} - ${theme.spacing(2 * getVerticalPadding(size))} - 2px)`;
+
 export const getMultiComboboxStyles = (
   theme: GrafanaTheme2,
   isOpen: boolean,
@@ -13,9 +20,11 @@ export const getMultiComboboxStyles = (
   width?: number | 'auto',
   minWidth?: number,
   maxWidth?: number,
-  isClearable?: boolean
+  isClearable?: boolean,
+  size: 'sm' | 'md' = 'md'
 ) => {
-  const inputStyles = getInputStyles({ theme, invalid });
+  const inputStyles = getInputStyles({ theme, invalid, size });
+  const innerHeight = getMultiComboboxInnerHeight(theme, size);
   const focusStyles = getFocusStyles(theme);
 
   const wrapperWidth = width && width !== 'auto' ? theme.spacing(width) : '100%';
@@ -36,7 +45,7 @@ export const getMultiComboboxStyles = (
         alignItems: 'center',
         width: '100%',
         gap: theme.spacing(0.5),
-        padding: theme.spacing(0.5),
+        padding: theme.spacing(getVerticalPadding(size), 0.5),
         paddingRight: isClearable ? theme.spacing(5) : 28, // Account for suffix
         '&:focus-within': {
           ...focusStyles,
@@ -48,16 +57,16 @@ export const getMultiComboboxStyles = (
       color: theme.colors.text.secondary,
       display: 'flex',
       marginLeft: theme.spacing(0.5),
-      height: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
-      lineHeight: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
+      height: innerHeight,
+      lineHeight: innerHeight,
     }),
     input: css({
       border: 'none',
       outline: 'none',
       background: 'transparent',
       flexGrow: 1,
-      height: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
-      lineHeight: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
+      height: innerHeight,
+      lineHeight: innerHeight,
       maxWidth: '100%',
       minWidth: 20, // This is a bit arbitrary, but is used to leave some space for clicking. This will override the minWidth property
       '&::placeholder': {
@@ -73,8 +82,8 @@ export const getMultiComboboxStyles = (
       display: 'flex',
       flexDirection: 'row',
       gap: theme.spacing(1),
-      height: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
-      lineHeight: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
+      height: innerHeight,
+      lineHeight: innerHeight,
       marginLeft: theme.spacing(0.5),
     }),
     pillWrapper: css({

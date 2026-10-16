@@ -21,10 +21,10 @@ export const SelectContainer = <Option, isMulti extends boolean, Group extends G
     isDisabled,
     isFocused,
     children,
-    selectProps: { invalid = false },
+    selectProps: { invalid = false, size = 'md' },
   } = props;
 
-  const styles = useStyles2(getSelectContainerStyles, isFocused, isDisabled, invalid);
+  const styles = useStyles2(getSelectContainerStyles, isFocused, isDisabled, invalid, size);
 
   return (
     <components.SelectContainer {...props} className={cx(styles.wrapper, props.className)}>
@@ -33,13 +33,19 @@ export const SelectContainer = <Option, isMulti extends boolean, Group extends G
   );
 };
 
-const getSelectContainerStyles = (theme: GrafanaTheme2, focused: boolean, disabled: boolean, invalid: boolean) => {
-  const styles = getInputStyles({ theme, invalid });
+const getSelectContainerStyles = (
+  theme: GrafanaTheme2,
+  focused: boolean,
+  disabled: boolean,
+  invalid: boolean,
+  size: 'sm' | 'md'
+) => {
+  const styles = getInputStyles({ theme, invalid, size });
 
   return {
     wrapper: cx(
       styles.wrapper,
-      sharedInputStyle(theme, invalid),
+      sharedInputStyle(theme, invalid, size),
       focused && css(getFocusStyles(theme)),
       disabled && styles.inputDisabled,
       css({
@@ -50,7 +56,7 @@ const getSelectContainerStyles = (theme: GrafanaTheme2, focused: boolean, disabl
         flexWrap: 'wrap',
         alignItems: 'stretch',
         justifyContent: 'space-between',
-        minHeight: theme.spacing(theme.components.height.md),
+        minHeight: theme.spacing(theme.components.height[size]),
         height: 'auto',
         maxWidth: '100%',
 

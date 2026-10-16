@@ -18,6 +18,9 @@ const meta: Meta<typeof MultiCombobox> = {
       page: mdx,
     },
   },
+  argTypes: {
+    size: { control: { type: 'radio' }, options: ['sm', 'md'] },
+  },
 };
 
 const loadOptionsAction = action('options called');
@@ -37,6 +40,7 @@ const commonArgs = {
   ],
   value: ['option2'],
   placeholder: 'Select multiple options...',
+  size: 'md' as const,
 };
 
 export default meta;
