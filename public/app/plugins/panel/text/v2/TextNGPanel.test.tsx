@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import {
   CoreApp,
   createTheme,
+  type DataQueryRequest,
+  getDefaultTimeRange,
   type GrafanaTheme2,
   type InterpolateFunction,
   ThemeContext,
@@ -14,6 +16,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
+import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -961,6 +964,39 @@ describe('TextNGPanel', () => {
       expect(content.querySelector('code.language-mermaid')).not.toBeNull();
       expect(jest.mocked(SandboxFrame).mock.calls.at(-1)![0].mermaid).toBeUndefined();
     });
+  });
+
+  it('keeps consent for a repeated copy to that copy, not every copy of the panel', () => {
+    const origin = 'https://images.example.com';
+    const request: DataQueryRequest = {
+      app: CoreApp.Dashboard,
+      dashboardUID: 'repeats',
+      // A repeat clone shares `id` with its source, but the dashboard gives it its own id here.
+      panelId: 1234,
+      requestId: 'A',
+      interval: '1s',
+      intervalMs: 1000,
+      range: getDefaultTimeRange(),
+      scopedVars: {},
+      targets: [],
+      timezone: 'utc',
+      startTime: 0,
+    };
+    const props = createProps((target) => target, {
+      id: 3,
+      data: { ...createData([toDataFrame({ fields: [] })]), request },
+      options: { content: `<img src="${origin}/a.png">`, mode: TextMode.HTML },
+    });
+    setup(props, CoreApp.Dashboard);
+    const frame = () => jest.mocked(SandboxFrame).mock.calls.at(-1)![0];
+
+    act(() => frame().onState({ status: 'ready', resources: [{ directive: 'img-src', origin, urls: [] }] }));
+    expect(getBlockedSummary('repeats')).toEqual([expect.objectContaining({ origin, panelIds: [1234] })]);
+
+    act(() => allowOrigins([{ origin, panelIds: [3] }], 'dashboard', 'repeats'));
+    expect(frame().policy).not.toContain(origin);
+    act(() => allowOrigins([{ origin, panelIds: [1234] }], 'dashboard', 'repeats'));
+    expect(frame().policy).toContain(origin);
   });
 
   it('evaluates handlebars expressions against the query data', () => {
