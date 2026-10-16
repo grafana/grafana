@@ -33,6 +33,7 @@ export type UseRecentQueriesDataOptions = {
    * Start from clean default filters and never persist them. For surfaces without their own
    * filter UI (e.g. a plain recent-queries picker), which would otherwise both inherit the
    * filters remembered by the full Recent Queries view and overwrite them on unmount.
+   * Read on mount; keep this option unchanged for the lifetime of the hook.
    */
   ignoreStoredFilters?: boolean;
 };
