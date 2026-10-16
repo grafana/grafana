@@ -27,6 +27,7 @@ import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/Snapsho
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
+import { consumeDashboardModeAfterSave, setDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -125,6 +126,11 @@ jest.mock('../utils/predefinedVariables', () => ({
     // Preserve null (fetch failure); only default when the mock is unset.
     return result === undefined ? Promise.resolve([]) : result;
   },
+}));
+
+const mockResolveLegacyDatasourceNames = jest.fn();
+jest.mock('../serialization/resolveLegacyDatasourceNames', () => ({
+  resolveLegacyDatasourceNames: (...args: unknown[]) => mockResolveLegacyDatasourceNames(...args),
 }));
 
 const createTestStore = () =>
@@ -243,6 +249,51 @@ beforeEach(() => {
 });
 
 describe('DashboardScenePageStateManager v1', () => {
+  describe('dashboard mode after save navigation', () => {
+    afterEach(() => {
+      setTestFlags({});
+      consumeDashboardModeAfterSave('');
+    });
+
+    it.each(['view', 'edit', 'agent'] as const)(
+      'restores %s once after saving and starts later Assistant edits in the right mode',
+      async (presentation) => {
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+        setupLoadDashboardMock({
+          dashboard: { uid: 'saved-copy', title: 'Saved title', editable: true },
+          meta: { canEdit: true },
+        });
+        setDashboardModeAfterSave('saved-copy', presentation);
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'saved-copy', route: DashboardRoutes.Normal });
+        const dashboard = loader.state.dashboard!;
+        dashboard.onEnterEditMode('assistant');
+        expect(dashboard.state.mode).toBe(presentation === 'view' ? 'agent' : presentation);
+        expect(dashboard.state.isEditing).toBe(true);
+        expect(dashboard.getInitialState()?.title).toBe('Saved title');
+        dashboard.setState({ title: 'Later edit' });
+        dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+        expect(dashboard.state.title).toBe('Saved title');
+
+        loader.clearSceneCache();
+        await loader.loadDashboard({ uid: 'saved-copy', route: DashboardRoutes.Normal });
+        expect(loader.state.dashboard!.state.mode).toBeUndefined();
+        expect(loader.state.dashboard!.state.isEditing).toBeFalsy();
+      }
+    );
+
+    it('drops the handoff when another dashboard is opened first', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      setupLoadDashboardMock({ dashboard: { uid: 'other', editable: true }, meta: { canEdit: true } });
+      setDashboardModeAfterSave('saved-copy', 'view');
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'other', route: DashboardRoutes.Normal });
+      expect(loader.state.dashboard!.state.uid).toBe('other');
+      expect(loader.state.dashboard!.state.isEditing).toBeFalsy();
+      expect(consumeDashboardModeAfterSave('saved-copy')).toBeUndefined();
+    });
+  });
+
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
 
@@ -263,6 +314,16 @@ describe('DashboardScenePageStateManager v1', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(loadDashboardMock.mock.calls.length).toBe(1);
+    });
+
+    it('should resolve legacy datasource names before building the scene', async () => {
+      const dashboard = { uid: 'fake-dash', editable: true };
+      setupLoadDashboardMock({ dashboard, meta: {} });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(mockResolveLegacyDatasourceNames).toHaveBeenCalledWith(expect.objectContaining(dashboard));
     });
 
     it('should not fetch predefined variables for v1 dashboards', async () => {
@@ -2187,6 +2248,24 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
       expect(getDashSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should resolve legacy datasource names for v1 dashboards only', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
+      const dashboard = { uid: 'fake-dash', editable: true };
+      setupLoadDashboardMock({ dashboard, meta: {} });
+
+      const v1Manager = new UnifiedDashboardScenePageStateManager({});
+      await v1Manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      expect(mockResolveLegacyDatasourceNames).toHaveBeenCalledWith(expect.objectContaining(dashboard));
+
+      mockResolveLegacyDatasourceNames.mockClear();
+      setupV1FailureV2Success();
+
+      const v2Manager = new UnifiedDashboardScenePageStateManager({});
+      await v2Manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      expect(v2Manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      expect(mockResolveLegacyDatasourceNames).not.toHaveBeenCalled();
     });
 
     it('should keep v2 manager state in sync after loadDashboard', async () => {

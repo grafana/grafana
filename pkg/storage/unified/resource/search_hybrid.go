@@ -71,7 +71,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, err
 	}
 	namespace := keys[0].Namespace
-	if len(keys) > 1 {
+	// Global callers can supply arbitrary resource names, including rejected targets.
+	if req.RequireHybridEnabled || len(keys) > 1 {
 		group, resource = GlobalSearchGroup, GlobalSearchResource
 	} else {
 		group, resource = keys[0].Group, keys[0].Resource
@@ -161,6 +162,9 @@ func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb
 			if coll.IsExternal && s.externalLexical == nil {
 				return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
 			}
+		}
+		if req.RequireHybridEnabled && !coll.IsExternal && !s.hybridSearchConfig.Enabled(key.Group, key.Resource) {
+			return nil, status.Errorf(codes.InvalidArgument, "hybrid search is not enabled for %s/%s", key.Group, key.Resource)
 		}
 		if err := validateHybridSearchFilters(req.Filters, key, coll.IsExternal); err != nil {
 			return nil, err

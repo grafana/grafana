@@ -4,13 +4,27 @@ import { useDebounce } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, createCodeEditorTheme, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  Icon,
+  Menu,
+  RadioButtonGroup,
+  Stack,
+  useStyles2,
+  useTheme2,
+  CodeMirrorEditor,
+  createCodeEditorTheme,
+  type CodeMirrorEditorLanguage,
+} from '@grafana/ui';
 import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
+import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
+import { type TextSandboxProps } from '../TextSandbox';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
@@ -52,6 +66,7 @@ export interface TextNGEditorProps {
   transparent?: boolean;
   /** Whether the panel has a title set. */
   hasTitle?: boolean;
+  consent?: TextSandboxProps['consent'];
 }
 
 const getLanguageLabels = (): Record<CodeLanguage, string> => ({
@@ -89,6 +104,7 @@ export function TextNGEditor({
   onViewChange,
   transparent,
   hasTitle,
+  consent,
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -151,7 +167,11 @@ export function TextNGEditor({
   const format = getInterpolateFormat(mode, codeLanguage);
   const showPreview = view !== 'write';
 
-  const { content: interpolatedContent, error: previewError } = useMemo(
+  const {
+    content: interpolatedContent,
+    error: previewError,
+    truncated,
+  } = useMemo(
     () =>
       catchTemplateError(() =>
         showPreview
@@ -159,7 +179,7 @@ export function TextNGEditor({
               { content: previewSource, mode, series, renderMode, rowWindow, format },
               replaceVariables
             )
-          : ''
+          : { content: '', truncated: false }
       ),
     [showPreview, previewSource, mode, series, renderMode, rowWindow, format, replaceVariables]
   );
@@ -237,6 +257,7 @@ export function TextNGEditor({
   const showEditor = view !== 'preview';
   const isCode = mode === TextMode.Code;
   const footerPagination = showPreview ? pagination : null;
+  const truncationNotice = truncated ? <TextNGTruncationNotice /> : null;
 
   const renderOutput = (testId: string) => {
     if (previewError) {
@@ -256,6 +277,7 @@ export function TextNGEditor({
       <TextNGHtmlView
         html={previewHtml}
         hasData={Boolean(series?.length)}
+        consent={consent}
         className={cx('markdown-html', styles.fullHeight)}
         testId={testId}
       />
@@ -328,13 +350,14 @@ export function TextNGEditor({
         )}
       </div>
 
-      {(isCode || frameSelector || footerPagination) && (
+      {(isCode || frameSelector || footerPagination || truncationNotice) && (
         <TextNGEditorFooter
           showLineNumbersSwitch={isCode}
           showLineNumbers={showLineNumbers}
           onShowLineNumbersChange={(next) => changeOption({ showLineNumbers: next })}
           frameSelector={frameSelector}
           pagination={footerPagination}
+          notice={truncationNotice}
         />
       )}
     </div>

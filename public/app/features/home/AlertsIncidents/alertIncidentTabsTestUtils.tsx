@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { useState, type Ref } from 'react';
 import { act } from 'test/test-utils';
 
-import { type PluginMeta } from '@grafana/data';
+import { type PluginMeta, store } from '@grafana/data';
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -23,9 +23,14 @@ import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alert
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Labels } from 'app/types/unified-alerting-dto';
 
-import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertIncidentTabs';
+import {
+  ALERTS_INCIDENTS_TAB_STORAGE_KEY,
+  AlertIncidentTabs,
+  type AlertIncidentSwitchHandle,
+} from './AlertIncidentTabs';
 import { type FilterSelection } from './filterSelection';
 import { mockNoIncidentFields } from './mockIncidentsApi';
+import { mockCurrentUserEvents, mockSchedules } from './mockOnCallSchedulesApi';
 import { useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
@@ -125,6 +130,8 @@ export function setupAlertIncidentTabsTests() {
   mockComboboxRect();
 
   beforeEach(async () => {
+    // Tab selection persists across reloads; a reset keeps one test's clicks out of the next test's default.
+    store.delete(ALERTS_INCIDENTS_TAB_STORAGE_KEY);
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
     // Grant alerting permissions by default: reading alerts, and reading rules for the filter's labels.
     jest
@@ -143,6 +150,9 @@ export function setupAlertIncidentTabsTests() {
     mockNoIrmPlugin();
     // No custom fields by default, so the incidents dropdown stays hidden.
     mockNoIncidentFields();
+    // With IRM installed the On call tab loads the user's shifts and schedule lists; none by default.
+    mockCurrentUserEvents({ schedules: [] });
+    mockSchedules({});
     // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
     // so exercise it in the same flag state it renders in production.
     await act(async () => {
