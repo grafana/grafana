@@ -397,3 +397,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-07,grafana.otelLogDetails,experimental,@grafana/observability-logs,false,false,true
 2026-10-16,grafana.announcementBannerDismissible,GA,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-14,datasources.gatewayAuditPolicy,experimental,@grafana/data-sources-plugins,false,false,false
+2026-10-15,grafana.folderPickerFolderEditAccess,experimental,@grafana/grafana-frontend-navigation,false,false,true

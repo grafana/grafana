@@ -11,6 +11,8 @@ export interface UseFoldersQueryProps {
   permission?: PermissionLevel;
   rootFolderUID?: string;
   rootFolderItem?: DashboardsTreeItem;
+  /** Show folders the user can view but not pick, as disabled and read only, instead of hiding them */
+  showReadOnly?: boolean;
 }
 
 export function useFoldersQuery({
@@ -20,6 +22,7 @@ export function useFoldersQuery({
   /* Start tree from this folder instead of root */
   rootFolderUID,
   rootFolderItem,
+  showReadOnly,
 }: UseFoldersQueryProps) {
   const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
   const resultLegacy = useFoldersQueryLegacy({ isBrowsing, openFolders, permission, rootFolderUID, rootFolderItem });
@@ -29,6 +32,7 @@ export function useFoldersQuery({
     permission,
     rootFolderUID,
     rootFolderItem,
+    showReadOnly,
   });
 
   // Running the hooks themselves don't have any side effects, so we can just conditionally use one or the other

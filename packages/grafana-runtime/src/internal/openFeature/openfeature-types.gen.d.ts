@@ -193,7 +193,8 @@ declare module "@openfeature/core" {
     | "grafana.globalHomePreference"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
-    | "datasources.gatewayAuditPolicy";
+    | "datasources.gatewayAuditPolicy"
+    | "grafana.folderPickerFolderEditAccess";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

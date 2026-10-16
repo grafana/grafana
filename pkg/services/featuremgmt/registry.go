@@ -3434,6 +3434,15 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
 		},
+		{
+			Name:         "grafana.folderPickerFolderEditAccess",
+			Description:  "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
