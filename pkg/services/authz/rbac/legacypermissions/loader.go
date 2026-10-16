@@ -93,21 +93,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 		defer func() { metrics.MAccessPermissionsSummary.Observe(time.Since(started).Seconds()) }()
 	}
 	cached := l.cfg.RBAC.PermissionCache && user.HasUniqueId()
-	var permissions []ac.Permission
-	var err error
-	if !cached {
-		permissions, err = l.uncached(ctx, user, settings)
-	} else if settings.enforcementEnabled || options.ReloadCache {
-		permissions, err = l.assemble(ctx, user, options, settings)
-	} else {
-		value, loadErr, _ := l.flight.Do(user.GetCacheKey(), func() (any, error) {
-			return l.assemble(ctx, user, options, settings)
-		})
-		err = loadErr
-		if err == nil {
-			permissions = value.([]ac.Permission)
-		}
-	}
+	permissions, err := l.loadRBAC(ctx, user, options, settings, cached)
 	if settings.enforcementEnabled {
 		metrics.MAccessPermissionsSummary.Observe(time.Since(started).Seconds())
 	}
@@ -131,6 +117,29 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 		return permissions, nil
 	}
 	return MergeUserPermissions(permissions, migrated), nil
+}
+
+func (l *Loader) loadRBAC(ctx context.Context, user identity.Requester, options ac.Options, settings loadSettings, cached bool) ([]ac.Permission, error) {
+	if !settings.enforcementEnabled {
+		// Keep registration from publishing/flushing until every in-flight cache
+		// fill using the previous catalog has completed. Do not hold this lock
+		// across the optional remote Zanzana lookup.
+		l.catalog.registrationMu.RLock()
+		defer l.catalog.registrationMu.RUnlock()
+	}
+	if !cached {
+		return l.uncached(ctx, user, settings)
+	}
+	if settings.enforcementEnabled || options.ReloadCache {
+		return l.assemble(ctx, user, options, settings)
+	}
+	value, err, _ := l.flight.Do(user.GetCacheKey(), func() (any, error) {
+		return l.assemble(ctx, user, options, settings)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return value.([]ac.Permission), nil
 }
 
 func queryFor(orgID int64, p loadSettings) ac.GetUserPermissionsQuery {

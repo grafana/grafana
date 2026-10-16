@@ -17,6 +17,26 @@ func (s *Service) RoleCatalog() *legacypermissions.RoleCatalog {
 	return s.roleCatalog
 }
 
+// updateRoles publishes and invalidates once per complete registration batch.
+// Take the catalog registration lock before rolesMu: a loader can be waiting on
+// a shared cache fill whose legacy reader still needs rolesMu.
+func (s *Service) updateRoles(update func()) {
+	register := func() {
+		s.rolesMu.Lock()
+		defer s.rolesMu.Unlock()
+		update()
+		s.publishRoleCatalogLocked()
+		if s.cache != nil {
+			s.cache.Flush()
+		}
+	}
+	if s.roleCatalog == nil {
+		register()
+		return
+	}
+	s.roleCatalog.WithRegistration(register)
+}
+
 func (s *Service) publishRoleCatalogLocked() {
 	if s.roleCatalog == nil {
 		return
