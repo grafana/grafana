@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/snowflake"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -96,7 +97,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 			_ = db.Close()
 		})
 		kvStore := resource.NewBadgerKV(db)
-		secureValueMetadataStorage = metadata.NewKVSecureValueMetadataStorage(kvStore, clock, tracer, nil)
+		secureValueMetadataStorage = metadata.NewKVSecureValueMetadataStorage(kvStore, snowflake.New(), clock, tracer, nil)
 	default:
 		panic(fmt.Sprintf("unhandled storage type: %+v", setupCfg))
 	}
