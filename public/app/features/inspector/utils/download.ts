@@ -75,7 +75,12 @@ export function downloadDataFrameAsCsv(
      * When excel opens a utf16le csv file it will no longer try to use the system list separator, and instead use \t as the separator.
      */
     const dataFrameCsv = toCSV([dataFrame], { ...csvConfig, useExcelHeader: false, delimiter: '\t' }) + newline;
-    const utf16le = new Uint16Array(Array.from('\ufeff' + dataFrameCsv).map((char) => char.charCodeAt(0)));
+    const utf16le = new ArrayBuffer((dataFrameCsv.length + 1) * 2);
+    const view = new DataView(utf16le);
+    view.setUint16(0, 0xfeff, true);
+    for (let index = 0; index < dataFrameCsv.length; index++) {
+      view.setUint16((index + 1) * 2, dataFrameCsv.charCodeAt(index), true);
+    }
     blob = new Blob([utf16le], {
       type: 'text/csv;charset=utf-16le',
     });
