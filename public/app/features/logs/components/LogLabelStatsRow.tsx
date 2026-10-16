@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { IconButton, type IconSize, useStyles2 } from '@grafana/ui';
 
 import { AsyncIconButton } from './panel/AsyncIconButton';
+import { getIconButtonStyles } from './panel/activeIconButtonStyles';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsStatsRow: css({
@@ -80,6 +81,7 @@ export const LogLabelStatsRow = ({
   isValueActive,
 }: Props) => {
   const style = useStyles2(getStyles);
+  const iconButtonStyles = useStyles2(getIconButtonStyles);
   const percent = `${Math.round(proportion * 100)}%`;
   const barStyle = { width: percent };
   const className = active ? cx([style.logsStatsRow, style.logsStatsRowActive]) : cx([style.logsStatsRow]);
@@ -99,6 +101,7 @@ export const LogLabelStatsRow = ({
           )}
           {exclude && (
             <IconButton
+              className={iconButtonStyles.iconButton}
               name="filter-minus"
               size={iconSize}
               tooltip={t('logs.log-line-details.fields.filter-out', 'Filter out value')}

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 import { type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -18,6 +18,7 @@ import { AsyncIconButton } from './AsyncIconButton';
 import { type LinkModelWithIcon, type LabelWithLinks } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
+import { getIconButtonStyles } from './activeIconButtonStyles';
 import { type LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
@@ -88,7 +89,7 @@ const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(7) : theme.spacing(7.5)} fit-content(30%) 1fr`,
+    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(8.5) : theme.spacing(10)} fit-content(30%) 1fr`,
   }),
 });
 
@@ -270,6 +271,7 @@ const LogLineOTelDetailsField = ({
               )}
               {onClickFilterOutLabel && fieldSupportsFilters && (
                 <IconButton
+                  className={styles.iconButton}
                   name="filter-minus"
                   size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={
@@ -283,11 +285,10 @@ const LogLineOTelDetailsField = ({
                 />
               )}
               <IconButton
-                variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
                 size={fontSize === 'small' ? 'sm' : undefined}
                 tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
-                className={styles.statsIcon}
+                className={cx(styles.iconButton, styles.statsIcon, showFieldsStats && styles.activeIconButton)}
                 disabled={!singleKey}
                 onClick={showStats}
               />
@@ -343,13 +344,12 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   actionIcons: css({
     display: 'flex',
     justifyContent: 'space-between',
-    paddingRight: 2,
-    marginTop: 2,
   }),
   statsIcon: css({
     margin: 0,
     paddingRight: 4,
   }),
+  ...getIconButtonStyles(theme),
   label: css({
     color: theme.colors.text.secondary,
     paddingRight: theme.spacing(1),
