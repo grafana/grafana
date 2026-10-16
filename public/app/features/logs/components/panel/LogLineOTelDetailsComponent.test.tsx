@@ -34,16 +34,17 @@ function createLog() {
   });
 }
 
-function renderDetails(contextOverrides: Partial<LogListContextData> = {}) {
-  const log = createLog();
-
+function renderDetails(
+  contextOverrides: Partial<LogListContextData> = {},
+  { log = createLog(), setPrettifyDetailsJSON = () => undefined, prettifyDetailsJSON = false } = {}
+) {
   return render(
     <LogListContext.Provider value={{ ...defaultValue, logOptionsStorageKey: STORAGE_KEY, ...contextOverrides }}>
       <LogLineDetailsOTelComponent
         log={log}
         logs={[log]}
-        prettifyDetailsJSON={false}
-        setPrettifyDetailsJSON={() => undefined}
+        prettifyDetailsJSON={prettifyDetailsJSON}
+        setPrettifyDetailsJSON={setPrettifyDetailsJSON}
         timeRange={timeRange}
         timeZone="browser"
       />
@@ -89,6 +90,54 @@ describe('LogLineDetailsOTelComponent', () => {
     expect(screen.getByText('checkout')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /HTTP/ })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('GET')).toBeInTheDocument();
+  });
+
+  it('shows the log line in a collapsible section without a category icon', async () => {
+    const user = userEvent.setup();
+    const view = renderDetails({ syntaxHighlighting: false });
+
+    const logLine = screen.getByRole('button', { name: 'Log line' });
+    expect(logLine).toHaveAttribute('aria-expanded', 'false');
+    expect(logLine.querySelectorAll('svg')).toHaveLength(1);
+    expect(logLine.querySelector('svg')).toHaveAttribute('data-testid', 'icon-angle-right');
+    expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Service/ }).querySelectorAll('svg').length).toBeGreaterThan(1);
+
+    await user.click(logLine);
+
+    expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+    expect(screen.getByText('checkout')).toBeInTheDocument();
+
+    view.unmount();
+    renderDetails({ syntaxHighlighting: false });
+
+    expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+  });
+
+  it('prettifies a JSON log line from the log line section', async () => {
+    const user = userEvent.setup();
+    const setPrettifyDetailsJSON = jest.fn();
+    const log = createLogLine({
+      entry: '{"level":"info"}',
+      labels: { 'service.name': 'checkout' },
+    });
+
+    renderDetails({ syntaxHighlighting: false }, { log, prettifyDetailsJSON: false, setPrettifyDetailsJSON });
+
+    expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Log line' }));
+
+    expect(screen.getByText('{"level":"info"}')).toBeInTheDocument();
+    await user.click(screen.getByRole('switch', { name: 'Prettify' }));
+
+    expect(setPrettifyDetailsJSON).toHaveBeenCalledTimes(1);
+    expect(setPrettifyDetailsJSON).toHaveBeenCalledWith(true);
+    expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('{"level":"info"}')).toBeInTheDocument();
   });
 
   it('does not display the synthetic OTel log attributes field', () => {
