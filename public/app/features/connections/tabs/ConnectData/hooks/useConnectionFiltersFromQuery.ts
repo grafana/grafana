@@ -14,7 +14,7 @@ export interface ConnectionFilters {
 
 // Multi-value filters are stored in the URL as a comma-separated list, with 'all' meaning no filter,
 // so links created when these filters were single-select keep working.
-export function parseListFilter(value: unknown): string[] {
+function parseListFilter(value: unknown): string[] {
   const raw = value?.toString() ?? '';
   return raw
     .split(',')
