@@ -368,6 +368,8 @@ export const FlagKeys = {
   TextNewFeatures: "text.newFeatures",
   /** Enables time comparison option in supported panels */
   TimeComparison: "timeComparison",
+  /** Draws configured thresholds on time series panels when a query returns no values */
+  TimeseriesThresholdsWithoutData: "timeseries.thresholdsWithoutData",
   /** Show transformation quick-start cards in empty transformations state */
   TransformationsEmptyPlaceholder: "transformationsEmptyPlaceholder",
   /** Enables unified navbars */
@@ -2325,6 +2327,17 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagTimeComparison = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("timeComparison", true, options).value;
+};
+
+/**
+ * Draws configured thresholds on time series panels when a query returns no values
+ *
+ * **Details:**
+ * - flag key: `timeseries.thresholdsWithoutData`
+ * - default value: `false`
+ */
+export const useFlagTimeseriesThresholdsWithoutData = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("timeseries.thresholdsWithoutData", false, options).value;
 };
 
 /**

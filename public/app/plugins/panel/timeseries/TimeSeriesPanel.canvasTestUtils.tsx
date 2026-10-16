@@ -14,6 +14,8 @@ import {
   LoadingState,
   type PanelData,
   type PanelProps,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
   type TimeRange,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -24,6 +26,7 @@ import {
   removeCanvasTransforms,
 } from '@grafana/test-utils/canvas';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
 import { getPanelProps } from '../test-utils';
@@ -41,6 +44,11 @@ installCanvasPath2DShim();
 // The panel framework runs applyFieldOverrides before rendering; a unit test must do it too, or the
 // custom config (drawStyle, fillOpacity, etc.) never reaches field.config.custom and every case renders
 // identically. The registry carries the time series custom config so those defaults get applied.
+// The app fills the standard registries at startup. Without them, standard options such as thresholds,
+// min and max never reach field.config.
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+
 const graphFieldConfigRegistry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Time series');
 
 const theme = createTheme();

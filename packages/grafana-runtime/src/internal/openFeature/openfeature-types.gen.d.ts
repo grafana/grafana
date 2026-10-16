@@ -160,6 +160,7 @@ declare module "@openfeature/core" {
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
+    | "timeseries.thresholdsWithoutData"
     | "table.refresh"
     | "table.refreshNewFeatures"
     | "table.inspectDataTableNG"
