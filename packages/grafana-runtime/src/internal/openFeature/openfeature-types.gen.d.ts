@@ -20,6 +20,7 @@ declare module "@openfeature/core" {
     | "faroSessionReplay"
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
+    | "grafana.recordedQueriesDisableCreate"
     | "awsAssumeRolePerDatasourceExternalId"
     | "grafanaAPIServerWithExperimentalAPIs"
     | "provisioningFolderMetadata"

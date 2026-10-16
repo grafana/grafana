@@ -3130,6 +3130,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.recordedQueriesDisableCreate",
+        "resourceVersion": "1792177003058",
+        "creationTimestamp": "2026-10-16T18:56:43Z"
+      },
+      "spec": {
+        "description": "Disables creating new recorded queries while preserving access to existing queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.rspackBuild",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-10T08:36:48Z"
@@ -5140,6 +5155,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "recordedQueriesDisableCreate",
+        "resourceVersion": "1791486561005",
+        "creationTimestamp": "2026-10-08T19:09:21Z",
+        "deletionTimestamp": "2026-10-16T18:56:43Z"
+      },
+      "spec": {
+        "description": "Disables creating new recorded queries while preserving access to existing queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
