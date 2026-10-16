@@ -8,7 +8,6 @@ import { type TableNGProps } from '../types';
 import {
   activeFilters,
   matchesTableFilter,
-  readFieldFilters,
   clearFieldFilter,
   clearFrameFilters,
   writeTableFilter,
@@ -43,7 +42,9 @@ export function useRowTransformations(props: TableNGProps) {
     (field: Field, predicate: MatcherConfig, parentIndex?: number) => {
       update((current) => {
         const context = { source, frameKey, frameIndex, field, parentIndex };
-        const selected = readFieldFilters(current, context);
+        const selected = activeFilters(current, frameKey, source).filter((config) =>
+          matchesTableFilter(config, field, parentIndex)
+        );
         // Compound or unfamiliar predicates must survive edits from a simpler editor unchanged.
         if (selected.length > 1 || selected.some((config) => !editableValueFilter(config))) {
           return current;

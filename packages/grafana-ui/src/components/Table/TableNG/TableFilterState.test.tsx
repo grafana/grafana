@@ -114,6 +114,58 @@ it('serializes frame position separately from the opaque scope and hides stale s
   expect(result.current!.getFilters(props.data.fields[0])).toEqual([]);
 });
 
+it.each([false, true])('replaces and clears stale nested filters (compound=%s)', (compound) => {
+  const { props, api } = setup();
+  const original = props.data;
+  const { result, rerender } = renderHook(useTableFilters, {
+    wrapper: ({ children }) => <TableFilterProvider props={props}>{children}</TableFilterProvider>,
+  });
+  act(() =>
+    result.current!.applyFilter(original.fields[0], { id: 'inSet', options: { mode: 'display', values: ['alpha'] } }, 0)
+  );
+  if (compound) {
+    const saved = api.get('table')[0] as FilterByValueConfig;
+    act(() =>
+      api.set('table', [
+        {
+          ...saved,
+          options: {
+            ...saved.options,
+            filters: [...saved.options.filters, { fieldName: 'Other', config: { id: 'isNotNull', options: {} } }],
+          },
+        },
+      ])
+    );
+  }
+
+  props.data = {
+    ...original,
+    fields: original.fields.map((field, index) =>
+      index === 0 ? { ...field, values: ['changed', 'beta', 'gamma'] } : field
+    ),
+  };
+  rerender();
+  expect(result.current!.getFilters(props.data.fields[0], 0)).toEqual([]);
+
+  act(() =>
+    result.current!.applyFilter(
+      props.data.fields[0],
+      { id: 'inSet', options: { mode: 'display', values: ['beta'] } },
+      0
+    )
+  );
+  expect(api.get('table')).toHaveLength(1);
+  expect(result.current!.getFilters(props.data.fields[0], 0)[0].options.filters[0].config.options.values).toEqual([
+    'beta',
+  ]);
+
+  props.data = original;
+  rerender();
+  expect(result.current!.getFilters(original.fields[0], 0)).toEqual([]);
+  act(() => result.current!.clearFilter(original.fields[0], 0));
+  expect(api.get('table')).toEqual([]);
+});
+
 it('restores checkbox controls from JSON and replaces an open draft only when its predicate changes', async () => {
   const { props, api, filter } = setup();
   api.set('table', JSON.parse(JSON.stringify([filter('Name', ['alpha', 'beta'])])));

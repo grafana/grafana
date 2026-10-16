@@ -69,8 +69,11 @@ export function activeFilters(
 }
 
 export function readFieldFilters(configs: readonly DataTransformerConfig[], context: RowFilterContext) {
-  return activeFilters(configs, context.frameKey, context.source).filter((config) =>
-    matchesTableFilter(config, context.field, context.parentIndex)
+  return configs.filter(
+    (config): config is FilterByValueConfig =>
+      isTableFilter(config, context.frameKey) &&
+      !config.disabled &&
+      matchesTableFilter(config, context.field, context.parentIndex)
   );
 }
 
@@ -80,11 +83,19 @@ export function writeTableFilter(
   { source, frameKey, frameIndex, field, parentIndex }: RowFilterContext
 ): readonly DataTransformerConfig[] {
   const selected = readFieldFilters(current, { source, frameKey, frameIndex, field, parentIndex });
-  const previous = selected[0];
+  const parentKey = parentIndex == null ? undefined : getRowIdentity(source, parentIndex);
+  const previous = selected.find(
+    (config) => config.options.target?.parentKey == null || config.options.target.parentKey === parentKey
+  );
+  const target = { frameKey, frameIndex, refId: source.refId, parentIndex, parentKey };
   const next: FilterByValueConfig = previous
     ? {
         ...previous,
-        options: { ...previous.options, filters: [{ ...previous.options.filters[0], config: predicate }] },
+        options: {
+          ...previous.options,
+          target: { ...previous.options.target, ...target },
+          filters: [{ ...previous.options.filters[0], config: predicate }],
+        },
       }
     : {
         id: DataTransformerID.filterByValue,
@@ -92,13 +103,7 @@ export function writeTableFilter(
           type: FilterByValueType.include,
           match: FilterByValueMatch.all,
           missingField: 'ignore',
-          target: {
-            frameKey,
-            frameIndex,
-            refId: source.refId,
-            parentIndex,
-            parentKey: parentIndex == null ? undefined : getRowIdentity(source, parentIndex),
-          },
+          target,
           filters: [
             {
               fieldName: field.state?.displayName ?? field.name,
@@ -108,8 +113,10 @@ export function writeTableFilter(
           ],
         },
       };
-  if (previous) {
-    return current.map((config) => (config === previous ? next : config));
+  const replacement = previous ?? selected[0];
+  if (replacement) {
+    const selectedSet = new Set<DataTransformerConfig>(selected);
+    return current.flatMap((config) => (config === replacement ? [next] : selectedSet.has(config) ? [] : [config]));
   }
   // Child predicates must run before parent rows are removed; all filters precede organization.
   const insertion = current.findIndex(
