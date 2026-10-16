@@ -169,6 +169,12 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		if cfg.IsEnterprise {
 			preinstallPluginsAsync["grafana-assistant-app"] = InstallPlugin{"grafana-assistant-app", "", ""}
 		}
+		// The installer refuses to replace a core plugin, so preinstalling canvas while the core
+		// panel is in use would log a failed install on every startup. A missing setting counts as
+		// external so canvas stays preinstalled once the core panel and its setting are removed.
+		if cfg.PluginSettings["canvas"]["as_external"] != "false" {
+			preinstallPluginsAsync["canvas"] = InstallPlugin{"canvas", "", ""}
+		}
 		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPluginsAsync)
 
 		rawInstallPluginsSync := util.SplitString(pluginsSection.Key("preinstall_sync").MustString(""))

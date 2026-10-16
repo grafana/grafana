@@ -184,12 +184,17 @@ func Test_readPluginSettings(t *testing.T) {
 	})
 
 	t.Run("when plugins.preinstall is defined", func(t *testing.T) {
-		defaultPreinstallPluginsList := make([]InstallPlugin, 0, len(defaultPreinstallPlugins))
-		defaultPreinstallPluginsIDs := make([]string, 0, len(defaultPreinstallPlugins))
+		// Exact capacities keep the appends in the test cases from sharing a backing array.
+		withoutCanvas := make([]InstallPlugin, 0, len(defaultPreinstallPlugins))
+		defaultPreinstallPluginsIDs := make([]string, 0, len(defaultPreinstallPlugins)+1)
 		for _, p := range defaultPreinstallPlugins {
-			defaultPreinstallPluginsList = append(defaultPreinstallPluginsList, p)
+			withoutCanvas = append(withoutCanvas, p)
 			defaultPreinstallPluginsIDs = append(defaultPreinstallPluginsIDs, p.ID)
 		}
+		defaultPreinstallPluginsIDs = append(defaultPreinstallPluginsIDs, "canvas")
+		defaultPreinstallPluginsList := make([]InstallPlugin, 0, len(withoutCanvas)+1)
+		defaultPreinstallPluginsList = append(defaultPreinstallPluginsList, withoutCanvas...)
+		defaultPreinstallPluginsList = append(defaultPreinstallPluginsList, InstallPlugin{ID: "canvas"})
 		tests := []struct {
 			name              string
 			rawInput          string
@@ -199,6 +204,7 @@ func Test_readPluginSettings(t *testing.T) {
 			expectedSync      []InstallPlugin
 			disableAsync      bool
 			disablePlugins    string
+			canvasAsExternal  string
 		}{
 			{
 				name:     "should add the default preinstalled plugin",
@@ -268,7 +274,7 @@ func Test_readPluginSettings(t *testing.T) {
 				rawInput: "grafana-pyroscope-app@4.0.0",
 				expected: func() []InstallPlugin {
 					var plugins []InstallPlugin
-					for _, p := range defaultPreinstallPlugins {
+					for _, p := range defaultPreinstallPluginsList {
 						if p.ID == "grafana-pyroscope-app" {
 							plugins = append(plugins, InstallPlugin{"grafana-pyroscope-app", "4.0.0", ""})
 						} else {
@@ -284,6 +290,32 @@ func Test_readPluginSettings(t *testing.T) {
 				rawInputSync: "plugin1",
 				expected:     defaultPreinstallPluginsList,
 				expectedSync: []InstallPlugin{{ID: "plugin1"}},
+			},
+			{
+				name:     "should add canvas when its as_external setting is missing",
+				expected: defaultPreinstallPluginsList,
+			},
+			{
+				name:             "should add canvas when it is loaded as external",
+				canvasAsExternal: "true",
+				expected:         defaultPreinstallPluginsList,
+			},
+			{
+				name:             "should not add canvas when the core panel is used",
+				canvasAsExternal: "false",
+				expected:         withoutCanvas,
+			},
+			{
+				name:             "should not add canvas when it is disabled",
+				canvasAsExternal: "true",
+				disablePlugins:   "canvas",
+				expected:         withoutCanvas,
+			},
+			{
+				name:             "should honor a pinned canvas version",
+				rawInput:         "canvas@1.2.3",
+				canvasAsExternal: "true",
+				expected:         append(withoutCanvas, InstallPlugin{ID: "canvas", Version: "1.2.3"}),
 			},
 		}
 		for _, tc := range tests {
@@ -307,6 +339,12 @@ func Test_readPluginSettings(t *testing.T) {
 				}
 				if tc.disablePlugins != "" {
 					_, err = sec.NewKey("disable_plugins", tc.disablePlugins)
+					require.NoError(t, err)
+				}
+				if tc.canvasAsExternal != "" {
+					canvasSec, err := cfg.Raw.NewSection("plugin.canvas")
+					require.NoError(t, err)
+					_, err = canvasSec.NewKey("as_external", tc.canvasAsExternal)
 					require.NoError(t, err)
 				}
 
