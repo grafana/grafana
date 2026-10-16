@@ -159,6 +159,24 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleQualityFix",
+        "resourceVersion": "1792163593889",
+        "creationTimestamp": "2026-10-16T14:46:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-16 15:13:13.889637474 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleReviews",
         "resourceVersion": "1791369430263",
         "creationTimestamp": "2026-10-07T09:54:44Z",
@@ -2074,15 +2092,18 @@
     {
       "metadata": {
         "name": "datetime.useLuxon",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-05T19:17:22Z"
+        "resourceVersion": "1791915821598",
+        "creationTimestamp": "2026-08-05T19:17:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-13 18:23:41.598138 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2740,6 +2761,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.extensionSidebarFloating",
+        "resourceVersion": "1791987109868",
+        "creationTimestamp": "2026-10-14T14:11:49Z"
+      },
+      "spec": {
+        "description": "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.filterablePanels",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-21T15:31:42Z"
@@ -3094,6 +3129,21 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.recordedQueriesDisableCreate",
+        "resourceVersion": "1792177003058",
+        "creationTimestamp": "2026-10-16T18:56:43Z"
+      },
+      "spec": {
+        "description": "Disables creating new recorded queries while preserving access to existing queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -5108,6 +5158,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "recordedQueriesDisableCreate",
+        "resourceVersion": "1791486561005",
+        "creationTimestamp": "2026-10-08T19:09:21Z",
+        "deletionTimestamp": "2026-10-16T18:56:43Z"
+      },
+      "spec": {
+        "description": "Disables creating new recorded queries while preserving access to existing queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
