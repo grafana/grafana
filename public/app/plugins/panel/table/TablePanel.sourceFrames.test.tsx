@@ -108,7 +108,7 @@ function panel(
   );
 }
 
-it('keeps row filtering unavailable in panel edit until saved-stack editing is supported', async () => {
+it('offers row filtering in panel edit with saved-stack editing', async () => {
   const sourceSeries = [makeFrame()];
   render(
     panel(
@@ -121,8 +121,8 @@ it('keeps row filtering unavailable in panel edit until saved-stack editing is s
     )
   );
 
-  expect(screen.queryByLabelText('Column options for metric')).not.toBeInTheDocument();
-  expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+  await userEvent.click(screen.getByLabelText('Column options for metric'));
+  expect(screen.getByText('Filter values')).toBeInTheDocument();
 });
 
 it('rebuilds row links with the current data-link processor', async () => {

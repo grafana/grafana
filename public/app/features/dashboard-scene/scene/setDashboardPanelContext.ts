@@ -9,12 +9,13 @@ import {
   dataLayers,
   sceneGraph,
   sceneUtils,
+  SceneDataTransformer,
   type SceneObject,
   type SceneVariables,
   type VizPanel,
 } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
-import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { type AdHocFilterItem, type PanelContext, type PanelRuntimeTransformations } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
 import { annotationServer } from 'app/features/annotations/api';
@@ -29,6 +30,8 @@ import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/u
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
+import { getPanelAdHocTransformations } from './PanelAdHocTransformations';
+import { createSavedPanelTransformations } from './SavedPanelTransformations';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
 
 // How long to wait for the assistant app plugin to report availability before giving up. Preloaded
@@ -48,7 +51,27 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
   });
 
-  context.adHocTransformations = vizPanel.getRuntimeTransformations();
+  const runtimeTransformations = getPanelAdHocTransformations(vizPanel).api;
+  let savedTransformer: SceneDataTransformer | undefined;
+  let savedTransformations: PanelRuntimeTransformations | undefined;
+  Object.defineProperty(context, 'adHocTransformations', {
+    enumerable: true,
+    configurable: true,
+    get: () => {
+      const transformer = vizPanel.state.$data;
+      if (dashboard.state.editPanel?.getPanel() !== vizPanel || !(transformer instanceof SceneDataTransformer)) {
+        return runtimeTransformations;
+      }
+
+      if (transformer !== savedTransformer) {
+        savedTransformer = transformer;
+        savedTransformations = createSavedPanelTransformations(transformer, (owner) =>
+          dashboard.state.editPanel?.getAdHocSourceSeries(owner)
+        );
+      }
+      return savedTransformations;
+    },
+  });
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
