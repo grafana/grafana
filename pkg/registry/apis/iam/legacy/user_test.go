@@ -139,7 +139,8 @@ func TestQueryUsers_RowError(t *testing.T) {
 			store := &legacySQLStore{}
 			args := trivialArgs{SQLTemplate: mocks.NewTestingSQLTemplate()}
 			res, err := store.queryUsers(context.Background(), helper, trivialTemplate, &args, 100)
-			require.Nil(t, res)
+			require.NotNil(t, res)
+			require.Len(t, res.Items, tc.rowIndex)
 			require.ErrorIs(t, err, rowErr)
 			require.NoError(t, mock.ExpectationsWereMet())
 		})

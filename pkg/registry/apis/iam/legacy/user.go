@@ -263,7 +263,7 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 				&u.IsProvisioned, &u.LastSeenAt, &role,
 			)
 			if err != nil {
-				return nil, err
+				return res, err
 			}
 			if name.Valid {
 				u.Name = name.String
@@ -285,7 +285,7 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 			}
 		}
 		if err := rows.Err(); err != nil {
-			return nil, err
+			return res, err
 		}
 	}
 
