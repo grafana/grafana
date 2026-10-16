@@ -300,7 +300,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	for _, query := range originalQueries {
 		var model dataquery.AzureMonitorQuery
 		if err := json.Unmarshal(query.JSON, &model); err != nil {
-			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
 			continue
 		}
 		if !isBatchableModel(model) {
