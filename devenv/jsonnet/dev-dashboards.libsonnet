@@ -148,6 +148,7 @@
     "timeseries-stacking": (import '../dev-dashboards/panel-timeseries/timeseries-stacking.json'),
     "timeseries-stacking2": (import '../dev-dashboards/panel-timeseries/timeseries-stacking2.json'),
     "timeseries-thresholds": (import '../dev-dashboards/panel-timeseries/timeseries-thresholds.json'),
+    "timeseries-thresholds-no-data": (import '../dev-dashboards/panel-timeseries/timeseries-thresholds-no-data.json'),
     "timeseries-time": (import '../dev-dashboards/panel-timeseries/timeseries-time.json'),
     "timeseries-y-ticks-zero-decimals": (import '../dev-dashboards/panel-timeseries/timeseries-y-ticks-zero-decimals.json'),
     "timeseries-yaxis-ticks": (import '../dev-dashboards/panel-timeseries/timeseries-yaxis-ticks.json'),
