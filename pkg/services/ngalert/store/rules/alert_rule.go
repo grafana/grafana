@@ -1840,7 +1840,7 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 // apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in).
 func (st RuleStore) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	if !folder.IsUncheckedDeleteAuthorized(ctx) {
-		return folder.ErrAccessDenied
+		return folder.ErrUncheckedDeleteNotAuthorized
 	}
 
 	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its own,

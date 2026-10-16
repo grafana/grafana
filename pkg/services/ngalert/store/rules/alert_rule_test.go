@@ -680,7 +680,7 @@ func TestIntegration_DeleteInFoldersUnchecked(t *testing.T) {
 	store.AccessControl = acmock.New()
 
 	// Refuses to run without the unchecked-delete marker.
-	require.ErrorIs(t, store.DeleteInFoldersUnchecked(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{}), folder.ErrAccessDenied)
+	require.ErrorIs(t, store.DeleteInFoldersUnchecked(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{}), folder.ErrUncheckedDeleteNotAuthorized)
 
 	ctx := folder.WithUncheckedDeleteAuthorized(context.Background())
 	err := store.DeleteInFoldersUnchecked(ctx, rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})

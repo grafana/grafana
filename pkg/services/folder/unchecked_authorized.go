@@ -1,6 +1,14 @@
 package folder
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+// ErrUncheckedDeleteNotAuthorized means an Unchecked RegistryService method was called without the
+// WithUncheckedDeleteAuthorized marker -- a wiring bug in the caller, not a permission problem, so
+// it's deliberately distinct from ErrAccessDenied.
+var ErrUncheckedDeleteNotAuthorized = errors.New("unchecked delete called without going through a sanctioned entry point")
 
 type uncheckedDeleteAuthorizedKey struct{}
 

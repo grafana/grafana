@@ -110,7 +110,7 @@ func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context,
 // signedInUser.GetOrgID(), since the two aren't guaranteed to match for every caller.
 func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
 	if !folder.IsUncheckedDeleteAuthorized(c) {
-		return folder.ErrAccessDenied
+		return folder.ErrUncheckedDeleteNotAuthorized
 	}
 	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), orgID, folderUID)
 }
