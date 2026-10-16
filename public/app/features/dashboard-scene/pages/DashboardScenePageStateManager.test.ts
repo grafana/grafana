@@ -2369,6 +2369,20 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         expect(manager.state.dashboard?.state.meta.newDashboardUid).toBeUndefined();
       });
 
+      // A superseded or cancelled load returns no dashboard; the proposal must survive it.
+      it('keeps the proposal when the load returns no dashboard', async () => {
+        const manager = new UnifiedDashboardScenePageStateManager({});
+        const kept = proposal(0);
+        jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(kept);
+        jest.spyOn(manager['activeManager'], 'fetchDashboard').mockResolvedValueOnce(null);
+
+        await expect(
+          manager.fetchDashboard({ uid: 'new-dash', route: DashboardRoutes.Normal, pendingChanges: 'chat-1' })
+        ).resolves.toBeNull();
+
+        expect(kept.pending.discard).not.toHaveBeenCalled();
+      });
+
       it('still reports a missing dashboard when its pending changes are to a saved one', async () => {
         const manager = await loadMissingDashboard(3);
 

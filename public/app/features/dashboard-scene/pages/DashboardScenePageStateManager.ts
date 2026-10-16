@@ -1507,7 +1507,8 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       throw error;
     }
     const preview = await loadingPreview;
-    if (preview && proposesNewDashboard(preview.pending)) {
+    // Only a dashboard that loaded shows it exists: a cancelled load also returns null.
+    if (rsp && preview && proposesNewDashboard(preview.pending)) {
       // The dashboard exists, so a proposal to create it no longer applies (it was saved, and the
       // plugin's discard after the save failed). Discard it again, so it isn't offered on every visit.
       clearPendingChangePreview(options.uid, preview.id);
