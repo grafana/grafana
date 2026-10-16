@@ -315,7 +315,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-			attr = ruleSearchReadAttributes(attr)
+			attr = ruleSearchListAttributes(attr)
 			switch attr.GetResource() {
 			case recordingrule.ResourceInfo.GroupResource().Resource:
 				return recordingrule.Authorize(ctx, authz, attr)
@@ -333,16 +333,27 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	)
 }
 
-// ruleSearchReadAttributes restates the compatibility POST as the list it
-// performs. Kubernetes parses /{resource}/searchRules as a create of an object
-// named searchRules, which would otherwise require rule-create permission.
-func ruleSearchReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
-	resourceName := attr.GetResource()
-	isRule := resourceName == alertrule.ResourceInfo.GroupResource().Resource || resourceName == recordingrule.ResourceInfo.GroupResource().Resource
-	if isRule && attr.IsResourceRequest() && attr.GetVerb() == "create" && attr.GetName() == rulesApp.SearchRulesPathSegment && attr.GetSubresource() == "" {
-		return searchauthorizer.AsReadAttributes(attr)
+// The rule kind each search route searches.
+var searchRouteKinds = map[string]string{
+	rulesApp.SearchAlertRulesResource:     alertrule.ResourceInfo.GroupResource().Resource,
+	rulesApp.SearchRecordingRulesResource: recordingrule.ResourceInfo.GroupResource().Resource,
+}
+
+// ruleSearchListAttributes restates a rule search as a list of the rule kind it
+// searches, so it needs exactly the permission listing those rules does.
+// Kubernetes parses each search route as a request on a resource named after
+// the route, which no rule permission would otherwise cover.
+func ruleSearchListAttributes(attr authorizer.Attributes) authorizer.Attributes {
+	kind, ok := searchRouteKinds[attr.GetResource()]
+	if !ok || !attr.IsResourceRequest() {
+		return attr
 	}
-	return attr
+	list, ok := searchauthorizer.AsReadAttributes(attr).(authorizer.AttributesRecord)
+	if !ok {
+		return attr
+	}
+	list.Resource = kind
+	return list
 }
 
 func (a *AppInstaller) AdmissionPlugin() admission.Factory {

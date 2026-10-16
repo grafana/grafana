@@ -71,6 +71,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 import { DashboardPlanningEvent } from './planningEvents';
+import { allowOrigins, getAllowedOrigins } from './sandbox-consent/sandboxConsent';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
@@ -104,6 +105,7 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasEditPermissionInFolders: true,
+    user: { id: 1, orgId: 1 },
   },
 }));
 
@@ -259,6 +261,19 @@ describe('DashboardScene', () => {
 
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
         expect(scene.getEditSessionSource()).toBe('user');
+      });
+
+      it('drops "Allow" left over from an earlier unsaved dashboard', () => {
+        const origin = 'https://images.example.com';
+        allowOrigins([{ origin, panelIds: [1] }], 'dashboard');
+        allowOrigins([{ origin, panelIds: [1] }], 'dashboard', 'dash-1');
+        const scene = buildTestScene({ uid: '' });
+        locationService.push('/dashboard/new');
+
+        scene.activate();
+
+        expect(getAllowedOrigins('', 1)).toEqual([]);
+        expect(getAllowedOrigins('dash-1', 1)).toEqual([origin]);
       });
 
       it('skips the auto-edit entirely when editSource marks a plan preview', () => {
@@ -662,6 +677,22 @@ describe('DashboardScene', () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.title).toEqual('Updated title');
         expect(scene.state.meta.version).toEqual(2);
+      });
+
+      it('Keeps "Allow" given before a new dashboard was first saved', async () => {
+        const origin = 'https://images.example.com';
+        scene.setState({ uid: '' });
+        allowOrigins([{ origin, panelIds: [1] }], 'dashboard');
+
+        await scene.saveCompleted({} as Dashboard, {
+          slug: 'slug',
+          uid: 'new-uid',
+          url: 'sss',
+          version: 1,
+          status: 'aaa',
+        });
+
+        expect(getAllowedOrigins('new-uid', 1)).toEqual([origin]);
       });
 
       it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {

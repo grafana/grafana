@@ -3883,6 +3883,11 @@
     "viz-wrapper": {
       "table": "Tabel"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Lihat apa yang sedang mengirimkan peringatan dan telusuri data historis untuk menyelidiki masalah saat ini atau sebelumnya.",
       "description-alert-rules": "Tentukan syarat yang harus dipenuhi sebelum aturan peringatan menyala",
@@ -6060,6 +6065,9 @@
       "only-overrides-button-tooltip": "Tampilkan penimpaan saja",
       "placeholder-search-options": "Opsi pencarian",
       "visualization-button-tooltip": "Opsi pencarian"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Data sampel",
@@ -10751,6 +10759,7 @@
       "no-rows": "Tidak ada baris",
       "no-values-label": "Tidak ada nilai",
       "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Urutkan berdasarkan kolom {{column}}",
       "sort-by-column-ascending": "Urutkan berdasarkan kolom {{column}}, naik",
@@ -11059,6 +11068,8 @@
       "incident-filter-all": "Semua insiden",
       "incident-filter-label": "Filter insiden berdasarkan label",
       "incident-tab-label": "Insiden",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Tim Anda",
       "title": "Peringatan & insiden",
       "title-alerts": "Peringatan",
@@ -11133,6 +11144,17 @@
       "error-title": "Tidak dapat memuat postingan blog terbaru",
       "read-more": "Baca selengkapnya dari blog Grafana Labs",
       "title": "Terbaru dari blog"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11873,6 +11895,11 @@
       "load-newer": "Memuat log baru...",
       "load-older": "Memuat log yang lebih lama..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Ciutkan label",
       "expand": "Perbesar label"
@@ -11923,6 +11950,7 @@
       "inline-mode": "Tampilkan sebaris",
       "inline-no-scrolls": "Beralih ke tampilan yang diperluas",
       "inline-with-scrolls": "Beralih ke tampilan yang lebih ringkas",
+      "link-fallback-label": "",
       "link-value-tooltip": "Nilai tautan",
       "links-section": "Tautan",
       "log-attributes-field": "Atribut log",
@@ -11932,13 +11960,14 @@
       "move-displayed-field-up": "Pindahkan ke atas",
       "no-details": "Tidak ada bidang untuk ditampilkan.",
       "open-assistant": "Jelaskan baris log di Asisten",
+      "open-value-in": "",
       "pin-line": "Sematkan log",
       "prettify": "Rapikan",
       "remove-displayed-field": "Hapus bidang",
       "remove-log": "Hapus log",
       "scroll-to-logline": "Gulir ke baris log",
       "search": {
-        "no-results": "Tidak ada hasil untuk ditampilkan."
+        "no-results": ""
       },
       "search-placeholder": "Cari nama dan nilai bidang",
       "show-context": "Tampilkan konteks",
@@ -13119,6 +13148,11 @@
       "target-label": "Notebook target",
       "target-new": "Notebook baru",
       "title": "Tambahkan panel ke notebook"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",

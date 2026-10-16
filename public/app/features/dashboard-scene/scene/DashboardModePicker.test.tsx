@@ -10,7 +10,7 @@ import {
   useExtensionSidebarContext,
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import {
-  getExtensionSidebarPresentation,
+  getEffectiveExtensionSidebarPresentation,
   resetExtensionSidebarPresentationForTests,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
@@ -24,6 +24,9 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { DashboardModePicker } from './DashboardModePicker';
 import { type DashboardScene } from './DashboardScene';
 import { getDashboardMode } from './dashboardModes';
+
+// The Assistant's sidebar: the plugin that may float.
+const sidebarPresentation = () => getEffectiveExtensionSidebarPresentation('grafana-assistant-app');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -61,6 +64,7 @@ function sidebarContext(assistant: 'available' | 'missing', docked = false): Ext
     extensionSidebarWidth: 300,
     setExtensionSidebarWidth: jest.fn(),
     presentation: 'docked',
+    floatingHidden: false,
   };
 }
 
@@ -170,7 +174,7 @@ it('opens a closed Assistant sidebar already floating and hands the request to A
   const layoutWhenOpened: string[] = [];
   const publish = jest.spyOn(appEvents, 'publish').mockImplementation((event) => {
     if (event instanceof OpenExtensionSidebarEvent) {
-      layoutWhenOpened.push(getExtensionSidebarPresentation());
+      layoutWhenOpened.push(sidebarPresentation());
     }
     originalPublish(event);
   });
@@ -187,7 +191,7 @@ it('opens a closed Assistant sidebar already floating and hands the request to A
   const listener = jest.fn();
   const unsubscribe = addComposerEnterRequestListener(listener);
   expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
-  expect(getExtensionSidebarPresentation()).toBe('floating');
+  expect(sidebarPresentation()).toBe('floating');
   unsubscribe();
 });
 
@@ -204,7 +208,7 @@ it('asks a listening Assistant straight away without reopening its docked sideba
   expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
   expect(publish.mock.calls.some(([event]) => event instanceof OpenExtensionSidebarEvent)).toBe(false);
   // The session, once Assistant enters it, floats the sidebar; the request itself does not.
-  expect(getExtensionSidebarPresentation()).toBe('docked');
+  expect(sidebarPresentation()).toBe('docked');
   // Choosing Composer does not change the mode itself: Assistant enters through the API.
   expect(scene.state.mode).not.toBe('composer');
   unsubscribe();
@@ -213,13 +217,13 @@ it('asks a listening Assistant straight away without reopening its docked sideba
 it('drops a request Assistant has not taken when the dashboard goes away', async () => {
   const { user } = await openPicker();
   await user.click(composerItem()!);
-  expect(getExtensionSidebarPresentation()).toBe('floating');
+  expect(sidebarPresentation()).toBe('floating');
 
   deactivate();
   deactivate = () => {};
 
   // The floated sidebar goes back to the user's layout.
-  expect(getExtensionSidebarPresentation()).toBe('docked');
+  expect(sidebarPresentation()).toBe('docked');
   const listener = jest.fn();
   const unsubscribe = addComposerEnterRequestListener(listener);
   expect(listener).not.toHaveBeenCalled();

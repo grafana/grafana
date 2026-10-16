@@ -438,6 +438,7 @@ interface UseHeaderHeightOptions {
   /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
 }
 
 export function useHeaderHeight({
@@ -451,6 +452,7 @@ export function useHeaderHeight({
   filter,
   lastColumnExtraPadding = 0,
   hasColumnSidebar = false,
+  reorderable = false,
   hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
@@ -475,6 +477,7 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
+          reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
               filterable: field.config.custom?.filterable,
@@ -494,6 +497,7 @@ export function useHeaderHeight({
       filteredKeys,
       lastColumnExtraPadding,
       hasColumnSidebar,
+      reorderable,
       hasAssistantAction,
     ]
   );
@@ -1056,6 +1060,7 @@ export interface ContentAwareWidths {
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1107,6 +1112,7 @@ interface UseContentAwareWidthsOptions {
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1125,6 +1131,7 @@ export function useContentAwareWidths({
   tableRefreshEnabled = false,
   filter,
   hasColumnSidebar = false,
+  reorderable = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
@@ -1145,6 +1152,7 @@ export function useContentAwareWidths({
             tableRefreshEnabled,
             filter,
             hasColumnSidebar,
+            reorderable,
             noPanelPadding,
             preventHorizontalOverflow,
           }
@@ -1161,6 +1169,7 @@ export function useContentAwareWidths({
       tableRefreshEnabled,
       theme,
       hasColumnSidebar,
+      reorderable,
       noPanelPadding,
       preventHorizontalOverflow,
     ]
@@ -1373,13 +1382,17 @@ export const useReducerEntries = (
 };
 
 interface ColumnViewStateOptions {
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
   hiddenColumns?: ReadonlySet<string>;
   onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
   structureRev?: number;
 }
 
 interface ColumnViewState {
+  columnOrder?: string[];
   hiddenColumns: ReadonlySet<string>;
+  setColumnOrder: (columnOrder: string[]) => void;
   setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
 }
 
@@ -1387,18 +1400,29 @@ const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
 
 // Change handlers select controlled mode because controlled values may initially be empty.
 export function useColumnViewState({
+  columnOrder,
+  onColumnOrderChange,
   hiddenColumns,
   onHiddenColumnsChange,
   structureRev,
 }: ColumnViewStateOptions): ColumnViewState {
+  const [localColumnOrder, setLocalColumnOrder] = useState<string[]>();
   const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
 
   useEffect(() => {
+    if (!onColumnOrderChange) {
+      setLocalColumnOrder(undefined);
+    }
     if (!onHiddenColumnsChange) {
       setLocalHiddenColumns(NO_HIDDEN_COLUMNS);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structureRev]);
+
+  const setColumnOrder = useCallback(
+    (next: string[]) => (onColumnOrderChange ? onColumnOrderChange(next) : setLocalColumnOrder(next)),
+    [onColumnOrderChange]
+  );
 
   const setHiddenColumns = useCallback(
     (next: ReadonlySet<string>) => (onHiddenColumnsChange ? onHiddenColumnsChange(next) : setLocalHiddenColumns(next)),
@@ -1406,7 +1430,9 @@ export function useColumnViewState({
   );
 
   return {
+    columnOrder: onColumnOrderChange ? columnOrder : localColumnOrder,
     hiddenColumns: (onHiddenColumnsChange ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
+    setColumnOrder,
     setHiddenColumns,
   };
 }

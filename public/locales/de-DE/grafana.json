@@ -3919,6 +3919,11 @@
     "viz-wrapper": {
       "table": "Tabelle"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Sehen Sie, was zurzeit warnt, und prüfen Sie historische Daten, um aktuelle oder vergangene Probleme zu untersuchen.",
       "description-alert-rules": "Legen Sie die Bedingung fest, die erfüllt sein muss, bevor eine Warnregel ausgelöst wird",
@@ -6108,6 +6113,9 @@
       "only-overrides-button-tooltip": "Nur Überschreibungen anzeigen",
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Beispieldaten",
@@ -10821,6 +10829,7 @@
       "no-rows": "Keine Zeilen",
       "no-values-label": "Keine Werte",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Nach Spalte {{column}} sortieren",
       "sort-by-column-ascending": "Nach Spalte {{column}} sortieren, aufsteigend",
@@ -11129,6 +11138,8 @@
       "incident-filter-all": "Alle Incidents",
       "incident-filter-label": "Incidents nach Label filtern",
       "incident-tab-label": "Vorfälle",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Ihre Teams",
       "title": "Warnungen und Vorfälle",
       "title-alerts": "Warnungen",
@@ -11205,6 +11216,17 @@
       "error-title": "Neue Blogbeiträge konnten nicht geladen werden",
       "read-more": "Lesen Sie mehr vom Grafana-Labs-Blog",
       "title": "Das Neueste aus dem Blog"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11967,6 +11989,11 @@
       "load-newer": "Neuere Protokolle werden geladen …",
       "load-older": "Ältere Protokolle werden geladen …"
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Labels einklappen",
       "expand": "Labels ausklappen"
@@ -12017,6 +12044,7 @@
       "inline-mode": "Inline anzeigen",
       "inline-no-scrolls": "Zur erweiterten Ansicht wechseln",
       "inline-with-scrolls": "Zur komprimierten Ansicht wechseln",
+      "link-fallback-label": "",
       "link-value-tooltip": "Link-Wert",
       "links-section": "Links",
       "log-attributes-field": "Log-Attribute",
@@ -12026,13 +12054,14 @@
       "move-displayed-field-up": "Nach oben",
       "no-details": "Keine anzuzeigenden Felder.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Log anheften",
       "prettify": "Formatieren",
       "remove-displayed-field": "Feld entfernen",
       "remove-log": "Log entfernen",
       "scroll-to-logline": "Zur Logzeile scrollen",
       "search": {
-        "no-results": "Keine anzuzeigenden Ergebnisse."
+        "no-results": ""
       },
       "search-placeholder": "Feldnamen und Werte durchsuchen",
       "show-context": "Kontext anzeigen",
@@ -13218,6 +13247,11 @@
       "target-label": "Ziel-Notizbuch",
       "target-new": "Neues Notizbuch",
       "title": "Bereich zum Notizbuch hinzufügen"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",

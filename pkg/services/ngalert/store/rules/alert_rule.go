@@ -106,8 +106,7 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 		logger.Debug("Deleted alert rule state", "count", rows)
 
 		var versions []alertRuleVersion
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
+		if st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
 			// Reuses sess so a routed delete needs only one connection. Savepoint-scoped since this
 			// read is best-effort and a failed statement would otherwise abort the whole transaction
 			// on Postgres.

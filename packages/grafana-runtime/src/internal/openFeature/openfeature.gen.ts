@@ -24,6 +24,8 @@ export const FlagKeys = {
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
+  /** Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page. */
+  AlertingRuleQualityFix: "alerting.ruleQualityFix",
   /** Enable assistant reviews on the alert quality page. */
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
@@ -156,6 +158,8 @@ export const FlagKeys = {
   FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Allow admins to make announcement banners dismissible by users */
+  GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables custom dashboard templates for enterprise */
@@ -220,6 +224,8 @@ export const FlagKeys = {
   GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
+  /** Disables creating new recorded queries while preserving access to existing queries */
+  GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
   /** Enables the dedicated Saved queries page and its navigation entry */
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
@@ -439,6 +445,17 @@ export const useFlagAlertingManualAssistantInvestigation = (options?: ReactFlagE
  */
 export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.ruleQuality", false, options).value;
+};
+
+/**
+ * Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleQualityFix`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleQualityFix = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleQualityFix", false, options).value;
 };
 
 /**
@@ -1168,6 +1185,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Allow admins to make announcement banners dismissible by users
+ *
+ * **Details:**
+ * - flag key: `grafana.announcementBannerDismissible`
+ * - default value: `true`
+ */
+export const useFlagGrafanaAnnouncementBannerDismissible = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.announcementBannerDismissible", true, options).value;
+};
+
+/**
  * Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette
  *
  * **Details:**
@@ -1517,6 +1545,17 @@ export const useFlagGrafanaPluginPathNesting = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.queryVarEditorRedesign", true, options).value;
+};
+
+/**
+ * Disables creating new recorded queries while preserving access to existing queries
+ *
+ * **Details:**
+ * - flag key: `grafana.recordedQueriesDisableCreate`
+ * - default value: `false`
+ */
+export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.recordedQueriesDisableCreate", false, options).value;
 };
 
 /**
