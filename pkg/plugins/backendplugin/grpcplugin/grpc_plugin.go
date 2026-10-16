@@ -81,14 +81,10 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	defer p.mutex.Unlock()
 
 	p.state = pluginStateStartInit
+	// A failed start's process must not keep a working access policy token.
 	defer func() {
 		if p.state == pluginStateStartFail {
-			if p.client != nil {
-				p.client.Kill()
-			}
 			p.revokeAccessPolicyToken()
-			p.pluginClient = nil
-			p.clientV3 = nil
 		}
 	}()
 
