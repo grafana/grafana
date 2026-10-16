@@ -830,6 +830,7 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 
 	type setup struct {
 		inst       *PluginInstaller
+		loader     *pluginfakes.FakeLoader
 		pluginsDir string
 		events     []string
 	}
@@ -841,7 +842,7 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 			p.Info.Version = "1.0.0"
 			p.FS = plugins.NewLocalFS(previousDir)
 		})
-		loader := &pluginfakes.FakeLoader{
+		s.loader = &pluginfakes.FakeLoader{
 			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 				s.events = append(s.events, "unload "+p.Info.Version)
 				return p, nil
@@ -861,7 +862,7 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 			},
 		}
 		registry := &pluginfakes.FakePluginRegistry{Store: map[string]*plugins.Plugin{pluginID: previous}}
-		s.inst = New(&config.PluginManagementCfg{}, registry, loader, pluginRepo,
+		s.inst = New(&config.PluginManagementCfg{}, registry, s.loader, pluginRepo,
 			storage.FileSystem(log.NewPrettyLogger("test"), s.pluginsDir), storage.SimpleDirNameGeneratorFunc,
 			&pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		return s
@@ -969,6 +970,37 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 		require.Equal(t, "1.0.0", pluginVersionInDir(t, previousDir))
 		requireOnlyEntries(t, s.pluginsDir)
 	})
+
+	t.Run("unload failure keeps the previous files and discards the staged version", func(t *testing.T) {
+		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
+
+		s := newSetup(t, previousDir, newArchive(t))
+		s.loader.UnloadFunc = func(_ context.Context, _ *plugins.Plugin) (*plugins.Plugin, error) {
+			return nil, errors.New("unload failed")
+		}
+		require.ErrorContains(t, update(s), "unload failed")
+
+		require.Empty(t, s.events)
+		require.Equal(t, "1.0.0", pluginVersionInDir(t, previousDir))
+		requireOnlyEntries(t, s.pluginsDir)
+	})
+
+	t.Run("load failure leaves the new version in place", func(t *testing.T) {
+		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
+
+		s := newSetup(t, previousDir, newArchive(t))
+		s.loader.LoadFunc = func(_ context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+			s.events = append(s.events, "load "+src.(*sources.LocalSource).Paths()[0])
+			return nil, errors.New("load failed")
+		}
+		require.ErrorContains(t, update(s), "load failed")
+
+		targetDir := filepath.Join(s.pluginsDir, pluginID)
+		require.Equal(t, []string{"unload 1.0.0", "load " + targetDir}, s.events)
+		require.Equal(t, "2.0.0", pluginVersionInDir(t, targetDir))
+		require.NoDirExists(t, previousDir)
+		requireOnlyEntries(t, s.pluginsDir, pluginID)
+	})
 }
 
 // extractedDir creates dirName under pluginsDir, standing in for an extracted plugin archive.
@@ -1025,7 +1057,7 @@ func pluginVersionInDir(t *testing.T, dir string) string {
 	return jd.Info.Version
 }
 
-// requireOnlyEntries checks that no staging or backup directories are left behind.
+// requireOnlyEntries checks that no staging directories are left behind.
 func requireOnlyEntries(t *testing.T, dir string, names ...string) {
 	t.Helper()
 	entries, err := os.ReadDir(dir)

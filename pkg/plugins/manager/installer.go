@@ -190,6 +190,7 @@ func (m *PluginInstaller) replace(ctx context.Context, previous *plugins.Plugin,
 		return err
 	}
 	staged.Path = targetDir
+	m.log.Info("Installed plugin update", "pluginId", previous.ID, "path", targetDir)
 
 	if !previousElsewhere {
 		return nil
