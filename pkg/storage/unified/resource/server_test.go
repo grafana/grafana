@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -27,9 +29,12 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -39,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -4666,4 +4672,79 @@ func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
 		"a keys page must respect maxPageSizeBytes; got %d bytes for %d items", size, len(rsp.Items))
 	require.NotEmpty(t, rsp.NextPageToken, "a truncated page must hand back a continue token")
 	require.Less(t, len(rsp.Items), 50, "the byte budget must have truncated the page")
+}
+
+// compileErrAccessClient fails Compile and, once failBatch is set, BatchCheck with a fixed error.
+type compileErrAccessClient struct {
+	callbackAccessClient
+	err       error
+	failBatch atomic.Bool
+}
+
+func (c *compileErrAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	if c.failBatch.Load() {
+		return authlib.BatchCheckResponse{}, c.err
+	}
+	return c.callbackAccessClient.BatchCheck(ctx, id, req)
+}
+
+func (c *compileErrAccessClient) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return nil, nil, c.err
+}
+
+func TestServicePermissionDenialIsForbidden(t *testing.T) {
+	denied := newServicePermissionError(ErrServicePermissionMissing, watchTestGroup, watchTestResource, utils.VerbGet)
+	ac := &compileErrAccessClient{
+		callbackAccessClient: callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }},
+		err:                  denied,
+	}
+	srv := newWatchTestServer(t, watchTestServerOpts{AccessClient: ac})
+	ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+	key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace}
+
+	// Seed one item so List has something to authorize.
+	value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"p1","uid":"uid-p1","namespace":"` + watchTestNamespace + `"},"spec":{"title":"t","interval":"5m","items":[]}}`)
+	created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+		Key:   &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "p1"},
+		Value: value,
+	})
+	require.NoError(t, err)
+	require.Nil(t, created.Error)
+	ac.failBatch.Store(true)
+
+	t.Run("list", func(t *testing.T) {
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{Key: key}})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		require.Equal(t, string(metav1.StatusReasonForbidden), rsp.Error.Reason)
+	})
+
+	t.Run("watch", func(t *testing.T) {
+		err := srv.Watch(&resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: key}}, newMockWatchServer(ctx))
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+	})
+
+	t.Run("watch over grpc", func(t *testing.T) {
+		listener := bufconn.Listen(1 << 20)
+		grpcServer := grpc.NewServer(grpc.ChainStreamInterceptor(func(_ any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, next grpc.StreamHandler) error {
+			return next(srv, contextStream{ServerStream: stream, ctx: ctx})
+		}))
+		resourcepb.RegisterResourceStoreServer(grpcServer, srv)
+		go func() { _ = grpcServer.Serve(listener) }()
+		t.Cleanup(func() { grpcServer.Stop(); _ = listener.Close() })
+		conn, err := grpc.NewClient("passthrough:///watch", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = conn.Close() })
+
+		stream, err := resourcepb.NewResourceStoreClient(conn).Watch(t.Context(), &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: key}})
+		require.NoError(t, err)
+		_, err = stream.Recv()
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+		res := resourceutil.ErrorResultFromGRPCDetails(err)
+		require.NotNil(t, res, "the structured error must reach the client")
+		require.Equal(t, int32(http.StatusForbidden), res.Code)
+		require.Equal(t, string(metav1.StatusReasonForbidden), res.Reason)
+		require.Contains(t, res.Message, "playlist.grafana.app/playlists:get")
+	})
 }

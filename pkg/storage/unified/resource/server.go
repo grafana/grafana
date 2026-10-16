@@ -2441,6 +2441,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		Verb:      utils.VerbGet,
 	})
 	if err != nil {
+		if errors.Is(err, ErrServicePermissionMissing) || errors.Is(err, ErrServiceCannotDelegate) {
+			return errorResultStatus(AsErrorResult(err))
+		}
 		return err
 	}
 	if checker == nil {

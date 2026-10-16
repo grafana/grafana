@@ -523,7 +523,7 @@ func TestTrashListServicePermissionErrors(t *testing.T) {
 					}
 					if path == "store" {
 						require.NoError(t, err)
-						require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
+						require.Equal(t, int32(http.StatusForbidden), resp.Error.GetCode())
 						require.Contains(t, resp.Error.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
 					} else {
 						require.ErrorIs(t, err, ErrServiceCannotDelegate)

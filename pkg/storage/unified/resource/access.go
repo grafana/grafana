@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/http"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
@@ -85,6 +87,31 @@ var ErrServiceCannotDelegate = errors.New("this service's token has no delegated
 // ErrServicePermissionMissing distinguishes a service denial from a user denial.
 var ErrServicePermissionMissing = errors.New("this service's token has no permission for the resource")
 
+// servicePermissionError reports a missing service permission. It is an
+// APIStatus error so it maps to Forbidden wherever it is converted, while
+// errors.Is still matches the sentinel it wraps.
+type servicePermissionError struct {
+	missing    error
+	permission string
+}
+
+func newServicePermissionError(missing error, group, resource, verb string) error {
+	return &servicePermissionError{missing: missing, permission: fmt.Sprintf("%s/%s:%s", group, resource, verb)}
+}
+
+func (e *servicePermissionError) Error() string { return e.missing.Error() + ": " + e.permission }
+
+func (e *servicePermissionError) Unwrap() error { return e.missing }
+
+func (e *servicePermissionError) Status() metav1.Status {
+	return metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Reason:  metav1.StatusReasonForbidden,
+		Message: e.Error(),
+	}
+}
+
 func checkServiceTokenPermissions(id claims.AuthInfo, group, resource, verb string) error {
 	res := authz.CheckServicePermissions(id, group, resource, verb)
 	if res.Allowed {
@@ -101,7 +128,7 @@ func checkServiceTokenPermissions(id claims.AuthInfo, group, resource, verb stri
 	if res.ServiceCall {
 		missing = ErrServicePermissionMissing
 	}
-	return fmt.Errorf("%w: %s/%s:%s", missing, group, resource, verb)
+	return newServicePermissionError(missing, group, resource, verb)
 }
 
 func (c authzLimitedClient) serviceCanDelegate(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
