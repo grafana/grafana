@@ -19,7 +19,7 @@ import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEnt
 import {
   appendIntoSection,
   applyAppSubUrl,
-  arePluginNavItemsEnabled,
+  isPluginNavAvailable,
   buildEntries,
   isClientNavTreeEnabled,
   type NavEntryBuilder,
@@ -50,7 +50,7 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  return applyAppSubUrl(pruneEmptyNavSections(buildNavTree(arePluginNavItemsEnabled() ? getAppPluginMetasSync() : [])));
+  return applyAppSubUrl(pruneEmptyNavSections(buildNavTree(isPluginNavAvailable() ? getAppPluginMetasSync() : [])));
 }
 
 /**

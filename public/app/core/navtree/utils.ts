@@ -15,6 +15,15 @@ export function arePluginNavItemsEnabled(): boolean {
   return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
 }
 
+/**
+ * Whether the app metas are there to be read. The metas endpoint needs a session,
+ * so app.ts skips the fetch without one — and the tree must not then read a cache
+ * nobody filled. Both sites go through this, so they cannot drift apart.
+ */
+export function isPluginNavAvailable(): boolean {
+  return arePluginNavItemsEnabled() && contextSrv.user.orgRole !== '';
+}
+
 export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
 export const isSignedIn = () => contextSrv.isSignedIn;
 export const anonymousOrSignedIn = () => isSignedIn() || config.anonymousEnabled;

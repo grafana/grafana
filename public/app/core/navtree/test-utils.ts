@@ -1,12 +1,15 @@
 import type { AppPluginConfig, NavModelItem, OrgRole, PluginInclude } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
-import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
-/** The role names tests pass, kept in sync with the OrgRole enum values. */
-type OrgRoleName = `${OrgRole}`;
+/**
+ * The role names tests pass, kept in sync with the OrgRole enum values, plus the
+ * empty string a session without an org carries (anonymous, login, snapshots).
+ */
+type OrgRoleName = `${OrgRole}` | '';
 
 export interface NavTestState {
   permissions?: string[];
@@ -77,6 +80,12 @@ export function setupNavTestState({
  * clear it. Only the fields the nav builder reads need supplying.
  */
 export function setupNavTestApps(apps: AppPluginConfig[] = []) {
+  // With nothing to install, leave the cache uninitialised rather than setting an
+  // empty one: that is the state a boot which skipped the metas fetch leaves behind
+  if (apps.length === 0) {
+    clearAppPluginMetas();
+    return;
+  }
   setAppPluginMetas(Object.fromEntries(apps.map((app) => [app.id, app])));
 }
 

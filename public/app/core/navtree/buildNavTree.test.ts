@@ -1,6 +1,7 @@
 import { type NavModelItem } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
+import { mockLogger } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildNavTree, getInitialNavTree } from './buildNavTree';
@@ -657,6 +658,22 @@ describe('getInitialNavTree', () => {
       setupApps([someApp]);
 
       expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
+    });
+
+    // app.ts skips the metas fetch without a session, so the tree must not then
+    // read a cache nobody filled: the sync getter logs an error when it has never
+    // been initialised, and the tree is built once per nav slice
+    it('does not read the metas cache on a signed-out boot', () => {
+      const logger = mockLogger('grafana/runtime.plugins.meta');
+      setup({
+        permissions: [AccessControlAction.PluginsAppAccess],
+        openFeatureFlags: bothFlags,
+        orgRole: '',
+      });
+      setupApps();
+
+      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
+      expect(logger.logError).not.toHaveBeenCalled();
     });
 
     // sortNavTree recurses into the section, and only leaves its order alone

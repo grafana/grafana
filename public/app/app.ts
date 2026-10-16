@@ -85,7 +85,7 @@ import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { arePluginNavItemsEnabled } from './core/navtree/utils';
+import { isPluginNavAvailable } from './core/navtree/utils';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
@@ -251,10 +251,9 @@ export class GrafanaApp {
       // bootdata already carries everywhere except the multi-tenant frontend
       // service, whose reduced boot ships none.
       const bootTasks: Array<Promise<unknown>> = [];
-      // Signed-in too: the metas endpoint 401s without a session, and a login or
-      // public dashboard boot renders chromeless anyway. Same gate as the
-      // preloadPlugins call further down.
-      if (arePluginNavItemsEnabled() && contextSrv.user.orgRole !== '') {
+      // isPluginNavAvailable covers the session too: the metas endpoint 401s
+      // without one, and a login or public dashboard boot renders chromeless anyway
+      if (isPluginNavAvailable()) {
         bootTasks.push(getAppPluginMetas());
       }
       if (
