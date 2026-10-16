@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -68,6 +69,7 @@ import (
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
 	pluginconfig.ProvidePluginManagementConfig,
+	pluginauth.ProvideConfig,
 	pluginconfig.ProvidePluginInstanceConfig,
 	pluginconfig.NewEnvVarsProvider,
 	wire.Bind(new(envvars.Provider), new(*pluginconfig.EnvVarsProvider)),

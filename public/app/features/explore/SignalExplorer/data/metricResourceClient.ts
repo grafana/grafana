@@ -22,6 +22,8 @@ type PromMetricsMetadata = ReturnType<PromLanguageProvider['retrieveMetricsMetad
 export interface Catalog {
   metrics: MetricInfo[];
   truncated: boolean;
+  /** False when the datasource has metric lookups disabled, so a search term must not reach it either. */
+  searchable: boolean;
 }
 
 /**
@@ -188,8 +190,10 @@ function toMetricInfos(names: string[], meta: PromMetricsMetadata, catalog: Read
   });
 }
 
+const catalogKey = (dsRef: DataSourceRef, timeRange: TimeRange) => `cat:${dsKey(dsRef)}:${rangeKey(timeRange)}`;
+
 export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promise<Catalog> {
-  return once(catalogCache, `cat:${dsKey(dsRef)}:${rangeKey(timeRange)}`, async () => {
+  return once(catalogCache, catalogKey(dsRef, timeRange), async () => {
     const lp = await getLP(dsRef);
     await lp.start(timeRange);
     const names = lp.retrieveMetrics() ?? [];
@@ -201,9 +205,11 @@ export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promis
     const capsNames = datasource.hasLabelsMatchAPISupport() && !datasource.hasSearchApiSupport();
     return {
       metrics: toMetricInfos(names, lp.retrieveMetricsMetadata() ?? {}, new Set(names)),
-      // A capped request is answered with exactly `limit` names; zero means uncapped. With lookups
-      // disabled nothing was fetched, and searching would send the requests the setting forbids.
+      // A capped request is answered with exactly `limit` names; zero means uncapped. Fewer names
+      // prove nothing, since a server can cap lower and the language provider drops its warning;
+      // only the row count's wording relies on this. With lookups disabled nothing was fetched.
       truncated: !datasource.lookupsDisabled && (!capsNames || (limit > 0 && names.length >= limit)),
+      searchable: !datasource.lookupsDisabled,
     };
   });
 }
@@ -212,8 +218,8 @@ export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promis
 const SEARCH_CACHE_MAX_ENTRIES = 20;
 
 /**
- * Metric names containing `term`, matched by the datasource rather than against the catalog, which
- * may be missing names the series limit cut off.
+ * Metric names containing `term`, matched by the datasource, since the catalog may be missing names
+ * that a limit, ours or the server's, cut off.
  */
 export function searchCatalog(dsRef: DataSourceRef, timeRange: TimeRange, term: string): Promise<MetricInfo[]> {
   // Lower-cased because the match is case-insensitive: `Quick` and `quick` are the same search.
@@ -226,15 +232,23 @@ export function searchCatalog(dsRef: DataSourceRef, timeRange: TimeRange, term: 
   }
   const result = once(searchCache, key, async () => {
     const lp = await getLP(dsRef);
+    if (lp.datasource.lookupsDisabled) {
+      return [];
+    }
     const [names, catalog] = await Promise.all([
       lp.queryLabelValues(timeRange, '__name__', searchSelector(term)),
-      // Loads the metadata the rows are typed from; already cached whenever the catalog is open.
-      fetchCatalog(dsRef, timeRange),
+      // Loading the catalog loads the metadata the rows are typed from. An expired entry is reused, not
+      // reloaded: nothing refetches on expiry, so it is still the catalog on screen.
+      catalogCache.get(catalogKey(dsRef, timeRange))?.value ?? fetchCatalog(dsRef, timeRange),
     ]);
     // A term like `sum` matches `foo_sum` but not the `foo_bucket` that types it, so the loaded
     // catalog supplies the rest of the family.
-    const known = new Set([...names, ...catalog.metrics.map((metric) => metric.name)]);
-    return toMetricInfos(names, lp.retrieveMetricsMetadata() ?? {}, known);
+    const catalogNames = catalog.metrics.map((metric) => metric.name);
+    const known = new Set([...names, ...catalogNames]);
+    // A failed request resolves to `[]` rather than rejecting, so the catalog's matches are the floor.
+    const q = term.toLowerCase();
+    const local = catalogNames.filter((name) => name.toLowerCase().includes(q));
+    return toMetricInfos([...new Set([...names, ...local])].sort(), lp.retrieveMetricsMetadata() ?? {}, known);
   });
   // A `Map` iterates in insertion order, so the first key is the least recently used search.
   if (searchCache.size > SEARCH_CACHE_MAX_ENTRIES) {
