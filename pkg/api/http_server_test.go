@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/webassets"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -398,56 +397,22 @@ func TestHTTPServer_getListeners(t *testing.T) {
 
 func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
 	staticRoot := t.TempDir()
-	for dir, body := range map[string]string{
-		webassets.BuildDir:       "webpack",
-		webassets.RspackBuildDir: "rspack",
-	} {
-		require.NoError(t, os.MkdirAll(filepath.Join(staticRoot, dir), 0o750))
-		require.NoError(t, os.WriteFile(filepath.Join(staticRoot, dir, "app.js"), []byte(body), 0o644))
-	}
+	require.NoError(t, os.MkdirAll(filepath.Join(staticRoot, webassets.RspackBuildDir), 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(staticRoot, webassets.RspackBuildDir, "app.js"), []byte("rspack"), 0o644))
 
-	assets := []struct {
-		desc         string
-		url          string
-		expectedBody string
-	}{
-		{desc: "webpack assets", url: "/public/build/app.js", expectedBody: "webpack"},
-		{desc: "rspack assets", url: "/public/build/rspack/app.js", expectedBody: "rspack"},
-	}
+	cfg := setting.NewCfg()
+	cfg.Env = setting.Prod
+	cfg.StaticRootPath = staticRoot
 
-	flagStates := []struct {
-		desc         string
-		enabledFlags []string
-	}{
-		{desc: "flag off"},
-		{desc: "flag on", enabledFlags: []string{featuremgmt.FlagGrafanaRspackBuild}},
-	}
+	hs := &HTTPServer{Cfg: cfg}
 
-	for _, flagState := range flagStates {
-		t.Run(flagState.desc, func(t *testing.T) {
-			if len(flagState.enabledFlags) > 0 {
-				featuremgmt.WithEnabledFlags(t, flagState.enabledFlags...)
-			}
+	m := web.New()
+	hs.mapStatic(m, cfg.StaticRootPath, webassets.BuildDir, "public/build")
 
-			cfg := setting.NewCfg()
-			cfg.Env = setting.Prod
-			cfg.StaticRootPath = staticRoot
+	recorder := httptest.NewRecorder()
+	m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/public/build/rspack/app.js", nil))
 
-			hs := &HTTPServer{Cfg: cfg}
-
-			m := web.New()
-			hs.mapStatic(m, cfg.StaticRootPath, webassets.BuildDir, "public/build")
-
-			for _, asset := range assets {
-				t.Run(asset.desc, func(t *testing.T) {
-					recorder := httptest.NewRecorder()
-					m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, asset.url, nil))
-
-					require.Equal(t, http.StatusOK, recorder.Code)
-					require.Equal(t, asset.expectedBody, recorder.Body.String())
-					require.Equal(t, "public, max-age=31536000", recorder.Header().Get("Cache-Control"))
-				})
-			}
-		})
-	}
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Equal(t, "rspack", recorder.Body.String())
+	require.Equal(t, "public, max-age=31536000", recorder.Header().Get("Cache-Control"))
 }
