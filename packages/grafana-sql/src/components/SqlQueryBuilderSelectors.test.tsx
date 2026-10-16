@@ -22,6 +22,33 @@ function ControlledSelectors(props: SqlQueryBuilderSelectorsProps) {
 }
 
 describe('SqlQueryBuilderSelectors', () => {
+  it('reloads schemas and tables when the adapter changes with the same selected schema', async () => {
+    const first = {
+      datasets: jest.fn(async () => ['public', 'first_schema']),
+      tables: jest.fn(async () => ['first_table']),
+    };
+    const second = {
+      datasets: jest.fn(async () => ['public', 'second_schema']),
+      tables: jest.fn(async () => ['second_table']),
+    };
+    const props = { query: { refId: 'A', dataset: 'public' }, onChange: jest.fn() };
+    const { rerender } = render(<SqlQueryBuilderSelectors {...props} db={first} />);
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Table selector' })).toBeEnabled());
+
+    rerender(<SqlQueryBuilderSelectors {...props} db={second} />);
+
+    await waitFor(() => expect(second.tables).toHaveBeenCalledWith('public'));
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Table selector' })).toBeEnabled());
+    await userEvent.click(screen.getByRole('combobox', { name: 'Table selector' }));
+    expect(screen.getByRole('option', { name: 'second_table' })).toBeVisible();
+    expect(screen.queryByRole('option', { name: 'first_table' })).not.toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(screen.getByRole('combobox', { name: 'Dataset selector' }));
+    expect(screen.getByRole('option', { name: 'second_schema' })).toBeVisible();
+    expect(screen.queryByRole('option', { name: 'first_schema' })).not.toBeInTheDocument();
+    expect(props.onChange).not.toHaveBeenCalled();
+  });
+
   it('loads selectable schemas and clears the old table and SQL when the schema changes', async () => {
     const db = buildMockDB();
     const onChange = jest.fn();

@@ -24,7 +24,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange, inputId
 
     const tables = await db.tables(dataset);
     return tables.map(toOption);
-  }, [dataset]);
+  }, [db, dataset]);
 
   return (
     <Select

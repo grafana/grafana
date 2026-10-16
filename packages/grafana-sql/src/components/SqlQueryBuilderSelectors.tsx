@@ -37,7 +37,6 @@ export function SqlQueryBuilderSelectors({
           width={25}
         >
           <DatasetSelector
-            key={`${dataset.mode}:${fixedDataset}`}
             db={db}
             inputId={`sql-dataset-${id}`}
             dataset={query.dataset}

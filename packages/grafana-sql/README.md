@@ -61,6 +61,7 @@ The builder's `SQLQueryBuilderDB` adapter only needs `fields`, `functions`, and
 adapter stable across renders. For a schema-based service, map datasets to schemas
 and use `query.dataset` when resolving columns or generating qualified table names.
 The adapter owns SQL dialect, identifier quoting, and supported function choices.
+Replacing the adapter refreshes selector metadata even if the selected dataset is unchanged.
 
 Dataset selection is independent of SQL dialect:
 

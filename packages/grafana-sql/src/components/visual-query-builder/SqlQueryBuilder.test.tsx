@@ -74,7 +74,12 @@ describe('SqlQueryBuilder', () => {
     try {
       const db = buildMockDB();
       render(
-        <SqlQueryBuilder db={db} query={query} onChange={jest.fn()} queryRowFilter={{ preview: false }}>
+        <SqlQueryBuilder
+          db={db}
+          query={{ ...query, rawSql: 'SELECT duration FROM analytics.events' }}
+          onChange={jest.fn()}
+          queryRowFilter={{ preview: false }}
+        >
           <div role="status">Validation needs the current interval.</div>
         </SqlQueryBuilder>
       );
