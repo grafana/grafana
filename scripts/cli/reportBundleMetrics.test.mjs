@@ -12,23 +12,17 @@ import { readRsdoctorMetrics } from './bundleMetrics/rsdoctor.mts';
 
 const cliPath = fileURLToPath(new URL('./reportBundleMetrics.mts', import.meta.url));
 
-const legacySizeOutput =
-  'default.entrypoints.app.js 21\n' +
-  'default.entrypoints.app.css 5\n' +
-  'default.entrypoints.admin.js 18\n' +
-  'default.entrypoints.admin.css 14\n';
+const sizesOnlyOutput =
+  'default.entrypoints.app.js 42\n' +
+  'default.entrypoints.app.css 12\n' +
+  'default.entrypoints.admin.js 44\n' +
+  'default.entrypoints.admin.css 28\n';
 
 const bundleSizeOutput =
-  'bundleSize.default.entrypoints.app.js 21\n' +
-  'bundleSize.default.entrypoints.app.css 5\n' +
-  'bundleSize.default.entrypoints.admin.js 18\n' +
-  'bundleSize.default.entrypoints.admin.css 14\n';
-
-const rspackBundleSizeOutput =
-  'bundleSize.rspack.entrypoints.app.js 42\n' +
-  'bundleSize.rspack.entrypoints.app.css 12\n' +
-  'bundleSize.rspack.entrypoints.admin.js 44\n' +
-  'bundleSize.rspack.entrypoints.admin.css 28\n';
+  'bundleSize.default.entrypoints.app.js 42\n' +
+  'bundleSize.default.entrypoints.app.css 12\n' +
+  'bundleSize.default.entrypoints.admin.js 44\n' +
+  'bundleSize.default.entrypoints.admin.css 28\n';
 
 const rsdoctorMetrics = {
   initialChunks: 2,
@@ -83,47 +77,11 @@ async function writeAsset(buildDirectory, assetPath, contents) {
   await writeFile(filePath, contents, 'utf8');
 }
 
-async function createBuildFixture(t, { includeRspack = false } = {}) {
+async function createBuildFixture(t) {
   const directory = await mkdtemp(join(tmpdir(), 'bundle-metrics-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
 
-  await Promise.all([
-    writeAsset(directory, 'runtime.js', 'RUNTIME'),
-    writeAsset(directory, 'shared/vendor.js', 'VENDOR'),
-    writeAsset(directory, 'app.js', 'APP-CODE'),
-    writeAsset(directory, 'admin.js', 'ADMIN'),
-    writeAsset(directory, 'shared/theme.css', 'THEME'),
-    writeAsset(directory, 'admin.css', 'ADMIN-CSS'),
-  ]);
-  await writeFile(
-    join(directory, 'assets-manifest.json'),
-    JSON.stringify({
-      entrypoints: {
-        app: {
-          assets: {
-            js: [
-              'public/build/runtime.js',
-              'public/build/shared/vendor.js',
-              'public/build/app.js',
-              'public/build/shared/vendor.js',
-            ],
-            css: ['public/build/shared/theme.css'],
-          },
-        },
-        admin: {
-          assets: {
-            js: ['public/build/runtime.js', 'public/build/shared/vendor.js', 'public/build/admin.js'],
-            css: ['public/build/shared/theme.css', 'public/build/admin.css'],
-          },
-        },
-      },
-    }),
-    'utf8'
-  );
-
-  if (includeRspack) {
-    await writeRspackFixture(directory);
-  }
+  await writeRspackFixture(directory);
 
   return directory;
 }
@@ -279,35 +237,23 @@ describe('reportBundleMetrics', () => {
     await assert.rejects(readRsdoctorMetrics(profileDirectory));
   });
 
-  it('sums de-duplicated default assets and preserves shared assets when the Rspack manifest is absent', async (t) => {
+  it('sums de-duplicated assets while resolving them from the build directory root', async (t) => {
     const buildDirectory = await createBuildFixture(t);
 
     assert.deepEqual(await readBundleSizes(buildDirectory), {
-      'default.entrypoints.app.js': 21,
-      'default.entrypoints.app.css': 5,
-      'default.entrypoints.admin.js': 18,
-      'default.entrypoints.admin.css': 14,
+      'default.entrypoints.app.js': 42,
+      'default.entrypoints.app.css': 12,
+      'default.entrypoints.admin.js': 44,
+      'default.entrypoints.admin.css': 28,
     });
   });
 
-  it('adds de-duplicated Rspack assets while resolving them from the build directory root', async (t) => {
-    const buildDirectory = await createBuildFixture(t, { includeRspack: true });
-
-    assert.deepEqual(await readBundleSizes(buildDirectory), {
-      'default.entrypoints.app.js': 21,
-      'default.entrypoints.app.css': 5,
-      'default.entrypoints.admin.js': 18,
-      'default.entrypoints.admin.css': 14,
-      'rspack.entrypoints.app.js': 42,
-      'rspack.entrypoints.app.css': 12,
-      'rspack.entrypoints.admin.js': 44,
-      'rspack.entrypoints.admin.css': 28,
-    });
-  });
-
-  it('rejects malformed Rspack manifests and referenced Rspack assets that are missing', async (t) => {
-    const buildDirectory = await createBuildFixture(t, { includeRspack: true });
+  it('rejects missing or malformed manifests and referenced assets that are missing', async (t) => {
+    const buildDirectory = await createBuildFixture(t);
     const manifestPath = join(buildDirectory, 'rspack', 'assets-manifest.json');
+
+    await rm(manifestPath);
+    await assert.rejects(readBundleSizes(buildDirectory), /Run 'yarn build' first/);
 
     await writeFile(manifestPath, '{not JSON', 'utf8');
     await assert.rejects(readBundleSizes(buildDirectory));
@@ -320,8 +266,8 @@ describe('reportBundleMetrics', () => {
     await assert.rejects(readBundleSizes(buildDirectory));
   });
 
-  it('reports Rspack size metrics without a profile and reports profile metrics independently', async (t) => {
-    const buildDirectory = await createBuildFixture(t, { includeRspack: true });
+  it('reports size metrics without a profile and reports profile metrics independently', async (t) => {
+    const buildDirectory = await createBuildFixture(t);
     await writeReport(join(buildDirectory, '.rsdoctor'), rsdoctorReport());
 
     let result = spawnSync(process.execPath, [cliPath, buildDirectory], {
@@ -329,7 +275,7 @@ describe('reportBundleMetrics', () => {
       encoding: 'utf8',
     });
     assert.equal(result.status, 0);
-    assert.equal(result.stdout, bundleSizeOutput + rspackBundleSizeOutput);
+    assert.equal(result.stdout, bundleSizeOutput);
     assert.equal(result.stderr, '');
 
     await writeReport(join(buildDirectory, 'rspack', '.rsdoctor'), rsdoctorReport());
@@ -339,16 +285,9 @@ describe('reportBundleMetrics', () => {
       encoding: 'utf8',
     });
     assert.equal(result.status, 0);
-    assert.equal(
-      result.stdout.slice(0, bundleSizeOutput.length + rspackBundleSizeOutput.length),
-      bundleSizeOutput + rspackBundleSizeOutput
-    );
+    assert.equal(result.stdout.slice(0, bundleSizeOutput.length), bundleSizeOutput);
     assert.deepEqual(
-      result.stdout
-        .slice(bundleSizeOutput.length + rspackBundleSizeOutput.length)
-        .trim()
-        .split('\n')
-        .sort(),
+      result.stdout.slice(bundleSizeOutput.length).trim().split('\n').sort(),
       Object.entries(rsdoctorMetrics)
         .map(([name, value]) => `build.rspack.${name} ${value}`)
         .sort()
@@ -356,14 +295,11 @@ describe('reportBundleMetrics', () => {
     assert.equal(result.stderr, '');
   });
 
-  it('emits legacy size rows with a positional build directory despite corrupt Rspack manifests and profiles', async (t) => {
-    const buildDirectory = await createBuildFixture(t, { includeRspack: true });
+  it('emits size rows with a positional build directory despite a corrupt profile', async (t) => {
+    const buildDirectory = await createBuildFixture(t);
     const profileDirectory = join(buildDirectory, 'rspack', '.rsdoctor');
     await mkdir(profileDirectory, { recursive: true });
-    await Promise.all([
-      writeFile(join(buildDirectory, 'rspack', 'assets-manifest.json'), '{not JSON', 'utf8'),
-      writeFile(join(profileDirectory, 'manifest.json'), '{not JSON', 'utf8'),
-    ]);
+    await writeFile(join(profileDirectory, 'manifest.json'), '{not JSON', 'utf8');
 
     const result = spawnSync(process.execPath, [cliPath, '--sizes-only', buildDirectory], {
       cwd: buildDirectory,
@@ -371,7 +307,7 @@ describe('reportBundleMetrics', () => {
     });
 
     assert.equal(result.status, 0);
-    assert.equal(result.stdout, legacySizeOutput);
+    assert.equal(result.stdout, sizesOnlyOutput);
     assert.equal(result.stderr, '');
   });
 });

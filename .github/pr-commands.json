@@ -18,7 +18,7 @@
       "scripts/circle-release-next-packages.sh",
       "scripts/ci-frontend-metrics.sh",
       "scripts/grunt/**/*",
-      "scripts/webpack/**/*",
+      "scripts/rspack/**/*",
       "package.json",
       "tsconfig.json",
       "lerna.json",
