@@ -139,7 +139,7 @@ const defaultPanelOptions: Options = {
 
 // --- Panel rendering ---
 
-function renderTimeSeriesPanel(
+export function renderTimeSeriesPanel(
   dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations'>>,
   optionsOverrides?: Partial<Options>,
   panelPropsOverrides?: Partial<PanelProps<Options>>
