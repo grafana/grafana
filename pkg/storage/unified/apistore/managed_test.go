@@ -2,9 +2,11 @@ package apistore
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -825,4 +827,116 @@ func TestEnsureSameRepoManager(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestManagerNotFound(t *testing.T) {
+	tests := []struct {
+		name        string
+		status      int
+		annotations map[string]string
+		want        bool
+	}{
+		{
+			name:   "repository not found",
+			status: http.StatusNotFound,
+			annotations: map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "my-repo",
+			},
+			want: true,
+		},
+		{
+			name:   "repository exists",
+			status: http.StatusOK,
+			annotations: map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "my-repo",
+			},
+			want: false,
+		},
+		{
+			name:   "lookup fails with a server error",
+			status: http.StatusInternalServerError,
+			annotations: map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "my-repo",
+			},
+			want: false,
+		},
+		{
+			name:        "resource is not managed",
+			status:      http.StatusNotFound,
+			annotations: nil,
+			want:        false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.status)
+				_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Failure","code":` + strconv.Itoa(tt.status) + `}`))
+			}))
+			t.Cleanup(server.Close)
+
+			s := &Storage{configProvider: &fakeRestConfigProvider{host: server.URL}}
+			obj := &dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d", Namespace: "default", Annotations: tt.annotations}}
+			accessor, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+			_, err = s.getManager(context.Background(), accessor)
+			require.Equal(t, tt.want, apierrors.IsNotFound(err))
+		})
+	}
+}
+
+func TestAllowOrphanedUpdate(t *testing.T) {
+	notFound := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Failure","code":404}`))
+	}))
+	t.Cleanup(notFound.Close)
+
+	newObj := func(t *testing.T, mgr utils.ManagerProperties, src utils.SourceProperties) utils.GrafanaMetaAccessor {
+		accessor, err := utils.MetaAccessor(&dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d", Namespace: "default"}})
+		require.NoError(t, err)
+		accessor.SetManagerProperties(mgr)
+		accessor.SetSourceProperties(src)
+		return accessor
+	}
+	repoMgr := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}
+	s := &Storage{configProvider: &fakeRestConfigProvider{host: notFound.URL}}
+	ctx := context.Background()
+
+	t.Run("allows a write that changes nothing but metadata", func(t *testing.T) {
+		old := newObj(t, repoMgr, utils.SourceProperties{})
+		cur := newObj(t, repoMgr, utils.SourceProperties{})
+		require.True(t, s.allowOrphanedUpdate(ctx, errResourceIsManagedInRepository, cur, old, false))
+	})
+	t.Run("rejects a write that changes the content", func(t *testing.T) {
+		old := newObj(t, repoMgr, utils.SourceProperties{})
+		cur := newObj(t, repoMgr, utils.SourceProperties{})
+		require.False(t, s.allowOrphanedUpdate(ctx, errResourceIsManagedInRepository, cur, old, true))
+	})
+	t.Run("rejects a write that changes the manager", func(t *testing.T) {
+		old := newObj(t, repoMgr, utils.SourceProperties{})
+		cur := newObj(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, utils.SourceProperties{})
+		require.False(t, s.allowOrphanedUpdate(ctx, errResourceIsManagedInRepository, cur, old, false))
+	})
+	t.Run("rejects a write that changes the source path", func(t *testing.T) {
+		old := newObj(t, repoMgr, utils.SourceProperties{Path: "a.json"})
+		cur := newObj(t, repoMgr, utils.SourceProperties{Path: "b.json"})
+		require.False(t, s.allowOrphanedUpdate(ctx, errResourceIsManagedInRepository, cur, old, false))
+	})
+	t.Run("ignores other errors", func(t *testing.T) {
+		old := newObj(t, repoMgr, utils.SourceProperties{})
+		require.False(t, s.allowOrphanedUpdate(ctx, errors.New("boom"), old, old, false))
+	})
+	t.Run("does not apply to managers other than a repository", func(t *testing.T) {
+		mgr := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf"}
+		old := newObj(t, mgr, utils.SourceProperties{})
+		_, err := s.getManager(ctx, old)
+		require.NoError(t, err)
+	})
 }
