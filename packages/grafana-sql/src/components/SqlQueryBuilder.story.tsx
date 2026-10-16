@@ -72,7 +72,13 @@ function StandaloneBuilder({ dataset }: { dataset: SQLDatasetSelector }) {
 const meta: Meta<typeof StandaloneBuilder> = {
   title: 'Plugins/SQL query builder',
   component: StandaloneBuilder,
-  parameters: { layout: 'padded' },
+  parameters: {
+    layout: 'padded',
+    a11y: {
+      // shortcut: Exclude Monaco's duplicate live-region landmarks until Monaco fixes their roles.
+      context: { exclude: ['.monaco-aria-container .monaco-status'] },
+    },
+  },
 };
 export default meta;
 
