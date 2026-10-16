@@ -5,6 +5,7 @@ import { type ValueSetOptions } from '@grafana/data/internal';
 
 import { useTableFilters } from '../TableFilterContext';
 import { tableFilterKey } from '../transformations/filterByValue';
+import { createRangePredicate } from '../transformations/rangeFilter';
 import { createValuePredicate, unsupportedFilterReason } from '../transformations/valueFilter';
 import { FilterOperator, type TableRow } from '../types';
 
@@ -117,22 +118,10 @@ export function useFilterPopupState({
       onApplyRange:
         view && field
           ? ({ min, max, includeMissing }) =>
-              view.applyFilter(
-                field,
-                {
-                  id: 'between',
-                  options: {
-                    from: min,
-                    to: max,
-                    inclusive: true,
-                    allowOpenBounds: true,
-                    includeMissing,
-                  } satisfies RangeValueMatcherOptions<number>,
-                },
-                parentIndex
-              )
+              view.applyFilter(field, createRangePredicate({ min, max, includeMissing }), parentIndex)
           : undefined,
       onClear: () => field && view?.clearFilter(field, parentIndex),
+      timeZone: view?.timeZone,
       range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       rows: rowsForPopup,
       filterValue,
