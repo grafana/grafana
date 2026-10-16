@@ -188,7 +188,7 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 		dashboardSvc:           dashboardSvc, // injected so cascade delete can remove dashboards in MT
 		variableSvc:            variableSvc,  // injected so cascade delete can remove variables in MT
 		maxNestedFolderDepth:   maxNestedFolderDepth,
-		contentsDeleter:        contentsDeleter, // injected so cascade delete can remove alert rules and library panels in standalone mode
+		contentsDeleter:        contentsDeleter,                                     // injected so cascade delete can remove alert rules and library panels in standalone mode
 		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 	}
 }

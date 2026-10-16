@@ -203,7 +203,7 @@ func TestIntegration_DeleteLibraryElementsInFolderUnchecked(t *testing.T) {
 
 	scenarioWithPanel(t, "refuses to run without the unchecked-delete marker, and runs once it's set",
 		func(t *testing.T, sc scenarioContext) {
-			orgID := sc.reqContext.SignedInUser.GetOrgID()
+			orgID := sc.reqContext.GetOrgID()
 
 			err := sc.service.DeleteLibraryElementsInFolderUnchecked(context.Background(), orgID, sc.reqContext.SignedInUser, sc.folder.UID)
 			require.ErrorIs(t, err, folder.ErrUncheckedDeleteNotAuthorized)
