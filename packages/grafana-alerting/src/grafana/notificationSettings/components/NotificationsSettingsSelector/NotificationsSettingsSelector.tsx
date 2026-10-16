@@ -37,6 +37,9 @@ export interface NotificationsSettingsSelectorProps {
   allowEmpty?: boolean;
   /** Makes the whole selector read-only, including the mode toggle. */
   disabled?: boolean;
+  /** Hides the muting, grouping and timings section in contact point mode. Values already on the settings are
+   * kept and no longer validated. */
+  hideRoutingOptions?: boolean;
   value: NotificationSettings | null;
   onChange: (value: NotificationSettings | null) => void;
   /** Fires on mount and when validity changes; `false` when the value can't be saved (no receiver unless `allowEmpty`,
@@ -64,6 +67,7 @@ export function NotificationsSettingsSelector({
   onModeChange,
   allowEmpty,
   disabled,
+  hideRoutingOptions,
   value,
   onChange,
   onValidityChange,
@@ -114,6 +118,7 @@ export function NotificationsSettingsSelector({
           onValidityChange={onValidityChange}
           allowEmpty={allowEmpty}
           disabled={disabled}
+          hideRoutingOptions={hideRoutingOptions}
           manageContactPointsHref={manageContactPointsHref}
         />
       ) : (
@@ -136,6 +141,7 @@ interface ContactPointRecipientProps {
   onValidityChange?: (isValid: boolean) => void;
   allowEmpty?: boolean;
   disabled?: boolean;
+  hideRoutingOptions?: boolean;
   manageContactPointsHref?: string;
 }
 
@@ -145,6 +151,7 @@ function ContactPointRecipient({
   onValidityChange,
   allowEmpty,
   disabled,
+  hideRoutingOptions,
   manageContactPointsHref,
 }: ContactPointRecipientProps) {
   const { status, selectorValue } = useResolvedContactPoint(value?.receiver);
@@ -166,8 +173,7 @@ function ContactPointRecipient({
   const isValid =
     (allowEmpty || Boolean(value?.receiver)) &&
     !isReceiverUnavailable &&
-    isValidRoutingTimings(value ?? {}) &&
-    hasValidTimeIntervals;
+    (hideRoutingOptions || (isValidRoutingTimings(value ?? {}) && hasValidTimeIntervals));
 
   useEffect(() => {
     onValidityChange?.(isValid);
@@ -243,7 +249,7 @@ function ContactPointRecipient({
           )}
         />
       )}
-      {unavailableTimeIntervals.length > 0 && (
+      {!hideRoutingOptions && unavailableTimeIntervals.length > 0 && (
         <Alert
           severity="warning"
           title={t(
@@ -269,17 +275,19 @@ function ContactPointRecipient({
           </TextLink>
         )}
       </Stack>
-      <SimplifiedRoutingFields
-        value={timingsValue}
-        onChange={handleTimingsChange}
-        inheritedTimings={defaultTree?.defaults}
-        disabled={disabled}
-        disabledReason={
-          value?.receiver && !isReceiverUnavailable
-            ? undefined
-            : t('alerting.notifications-settings-selector.timings-disabled', 'Select a contact point first')
-        }
-      />
+      {!hideRoutingOptions && (
+        <SimplifiedRoutingFields
+          value={timingsValue}
+          onChange={handleTimingsChange}
+          inheritedTimings={defaultTree?.defaults}
+          disabled={disabled}
+          disabledReason={
+            value?.receiver && !isReceiverUnavailable
+              ? undefined
+              : t('alerting.notifications-settings-selector.timings-disabled', 'Select a contact point first')
+          }
+        />
+      )}
     </Stack>
   );
 }
