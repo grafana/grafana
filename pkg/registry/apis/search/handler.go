@@ -41,6 +41,18 @@ type kindRef struct {
 	version  string
 	resource string
 	kind     string
+
+	// kinds answers what the kind field of a result should say, and is set only by
+	// the global route. That route returns hits of several resource types,
+	// so it cannot name one kind the way a per-kind route does, and a Kubernetes
+	// kind cannot be derived from a group and resource without its manifest.
+	kinds map[schema.GroupResource]string
+}
+
+// spansResourceTypes reports whether results of this route carry their own
+// resource type.
+func (k kindRef) spansResourceTypes() bool {
+	return k.kinds != nil
 }
 
 func (k kindRef) gvr() schema.GroupVersionResource {
@@ -78,6 +90,27 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 				return nil, nil, err
 			}
 			req, ferrs := TranslateSearchQuery(&q, kind.gvr(), namespace, h.provider)
+			return req, ferrs, nil
+		},
+		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
+			return searchResults(res, kind, limit)
+		},
+	)
+}
+
+// GlobalSearchFor returns the POST handler for the search that spans resource
+// types. There is one such endpoint; kinds is only how a result reports the
+// Kubernetes kind of the object it found.
+func (h *Handler) GlobalSearchFor(kinds map[schema.GroupResource]string) http.HandlerFunc {
+	gvr := GlobalSearchGVR()
+	kind := kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kinds: kinds}
+	return h.handle(kind, "search.v1.global", searchv0.KindSearchQuery,
+		func(r *http.Request, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error) {
+			var q searchv0.SearchQuery
+			if err := decodeBody(r, &q); err != nil {
+				return nil, nil, err
+			}
+			req, ferrs := TranslateGlobalSearchQuery(&q, namespace)
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
@@ -138,13 +171,8 @@ func (h *Handler) handle(
 		}
 
 		res, err := h.client.Search(ctx, req)
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
 			errhttp.Write(ctx, err, w)
-			return
-		}
-		// The backend reports failures in the payload, not as a transport error.
-		if res.GetError() != nil {
-			errhttp.Write(ctx, resource.GetError(res.GetError()), w)
 			return
 		}
 

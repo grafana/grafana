@@ -332,6 +332,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   panel: css({
     height: PANEL_HEIGHT,
     position: 'relative',
+    // Inert on screen: only a print/PDF layout reads it, where a split panel is a chart cut in half.
+    breakInside: 'avoid',
+    pageBreakInside: 'avoid',
   }),
   content: css({
     padding: theme.spacing(1, 0),

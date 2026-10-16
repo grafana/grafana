@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -516,6 +517,94 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 		},
 		{
+			name:        "unsupported path with nothing to remove is reported as a warning",
+			description: "Should record a warning for a file that cannot be synced and write nothing",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionIgnored,
+					Path:   "dashboards/Bad & Name.json",
+					Warning: &resources.UnsupportedPathError{
+						Path: "dashboards/Bad & Name.json", Err: errors.New("path contains invalid characters"),
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/Bad & Name.json").Return(false)
+
+				// no WriteResourceFromFile expectation: writing it would fail the test
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupported *resources.UnsupportedPathError
+					return result.Path() == "dashboards/Bad & Name.json" &&
+						result.Action() == repository.FileActionIgnored &&
+						result.Error() == nil &&
+						errors.As(result.Warning(), &unsupported) &&
+						unsupported.Path == "dashboards/Bad & Name.json"
+				})).Return()
+			},
+		},
+		{
+			name:        "a deletion that carries the unsupported-path warning reports it with the removal",
+			description: "Should delete the resource whose file moved to a path that cannot sync, in one result",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionDeleted,
+					Path:   "dashboards/test.json",
+					Existing: &provisioning.ResourceListItem{
+						Name:     "test-dashboard",
+						Resource: "dashboards",
+						Group:    "dashboards",
+						Path:     "dashboards/test.json",
+					},
+					Warning: &resources.UnsupportedPathError{
+						Path: "dashboards/Bad & Name.json", Err: errors.New("path contains invalid characters"),
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("TooManyErrors").Return(nil)
+
+				scheme := runtime.NewScheme()
+				require.NoError(t, metav1.AddMetaToScheme(scheme))
+				listGVK := schema.GroupVersionKind{
+					Group:   resources.DashboardResource.Group,
+					Version: resources.DashboardResource.Version,
+					Kind:    "DashboardList",
+				}
+				scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+				scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+					Group:   resources.DashboardResource.Group,
+					Version: resources.DashboardResource.Version,
+					Kind:    resources.DashboardResource.Resource,
+				}, &metav1.PartialObjectMetadata{})
+				fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+					resources.DashboardResource: listGVK.Kind,
+				})
+				fakeDynamicClient.PrependReactor("delete", "dashboards", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, nil
+				})
+				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+					Group:    "dashboards",
+					Resource: "dashboards",
+				}).Return(fakeDynamicClient.Resource(resources.DashboardResource), schema.GroupVersionKind{
+					Kind:    "Dashboard",
+					Group:   "dashboards",
+					Version: "v1",
+				}, nil)
+
+				// exactly one result: the removal of the old path, carrying the warning
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupported *resources.UnsupportedPathError
+					return result.Path() == "dashboards/test.json" &&
+						result.Name() == "test-dashboard" &&
+						result.Action() == repository.FileActionDeleted &&
+						result.Error() == nil &&
+						errors.As(result.Warning(), &unsupported) &&
+						unsupported.Path == "dashboards/Bad & Name.json"
+				})).Return().Once()
+			},
+		},
+		{
 			name:        "file delete error",
 			description: "Should return an error when deleting a file",
 			changes: []ResourceFileChange{
@@ -874,34 +963,59 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockRepository(t)
-			repoResources := resources.NewMockRepositoryResources(t)
-			clients := resources.NewMockResourceClients(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
-			compareFn := NewMockCompareFn(t)
+			synctest.Test(t, func(t *testing.T) {
+				repo := repository.NewMockRepository(t)
+				repoResources := resources.NewMockRepositoryResources(t)
+				clients := resources.NewMockResourceClients(t)
+				progress := jobs.NewMockJobProgressRecorder(t)
+				compareFn := NewMockCompareFn(t)
 
-			tt.setupMocks(repo, repoResources, clients, progress, compareFn)
-			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
-			repo.On("Config").Return(&provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-				Spec: provisioning.RepositorySpec{
-					Title: "Test Repo",
-				},
+				tt.setupMocks(repo, repoResources, clients, progress, compareFn)
+				compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
+				repo.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+					},
+				})
+
+				progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
+				err := FullSync(t.Context(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled, 0)
+				if tt.expectedError != "" {
+					require.EqualError(t, err, tt.expectedError, tt.description)
+				} else {
+					require.NoError(t, err, tt.description)
+				}
+				if tt.verifyMocks != nil {
+					tt.verifyMocks(t, repoResources)
+				}
 			})
-
-			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled, 0)
-			if tt.expectedError != "" {
-				require.EqualError(t, err, tt.expectedError, tt.description)
-			} else {
-				require.NoError(t, err, tt.description)
-			}
-			if tt.verifyMocks != nil {
-				tt.verifyMocks(t, repoResources)
-			}
 		})
+	}
+}
+
+// unsupportedFiles are files whose path cannot be synced, as Compare returns them.
+func unsupportedFiles(n int) []ResourceFileChange {
+	changes := createdChanges(n)
+	for i := range changes {
+		changes[i].Action = repository.FileActionIgnored
+		changes[i].Warning = &resources.UnsupportedPathError{Path: changes[i].Path, Err: resources.ErrUnsupportedFileExtension}
+	}
+	return changes
+}
+
+// atQuota is a repository whose quota is exceeded with room for 1 more resource.
+func atQuota() *provisioning.Repository {
+	return &provisioning.Repository{
+		Status: provisioning.RepositoryStatus{
+			Conditions: []metav1.Condition{
+				{Type: provisioning.ConditionTypeResourceQuota, Status: metav1.ConditionFalse, Reason: provisioning.ReasonQuotaExceeded},
+			},
+			Quota: provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
+			Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 99}},
+		},
 	}
 }
 
@@ -1135,6 +1249,17 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 				},
 			},
+			expectErr: true,
+		},
+		{
+			name:    "files that cannot be synced are not counted against the quota",
+			changes: unsupportedFiles(5),
+			config:  atQuota(),
+		},
+		{
+			name:      "the same files, if they could be synced, would exceed it",
+			changes:   createdChanges(5),
+			config:    atQuota(),
 			expectErr: true,
 		},
 		{

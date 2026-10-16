@@ -18,10 +18,10 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -621,7 +621,7 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 			RvManager:              rvMgr,
 			DBKeepAlive:            eDB,
 			DisableStorageServices: true,
-			Log:                    log.New("test.kv.retry"),
+			Log:                    logging.DefaultLogger.With("logger", "test.kv.retry"),
 		})
 		require.NoError(t, err)
 

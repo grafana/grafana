@@ -37,7 +37,7 @@ The Grafana Provider is a logical abstraction of an upstream API that you can us
 You must configure it with the following information:
 
 - A Grafana Cloud access policy token that includes the permissions the provider needs to access the Grafana Cloud Provider API.
-- A regional cloud provider API endpoint to establish which Grafana Cloud stack you are accessing.
+- A regional Cloud Provider API endpoint to establish which Grafana Cloud stack you are accessing.
 
 To configure authentication for the Grafana Provider:
 
@@ -61,7 +61,7 @@ To configure authentication for the Grafana Provider:
        - `logs:write`
 
 1. Obtain the regional Cloud Provider API endpoint.
-   - To obtain the regional Cloud provider API endpoint, use your access policy token and the following command to return a list of all of the Grafana stacks you own, along with their respective Cloud Provider API hostnames:
+   - To obtain the regional Cloud Provider API endpoint, use your access policy token and the following command to return a list of all of the Grafana stacks you own, along with their respective Cloud Provider API hostnames:
 
    ```bash
    curl -sH "Authorization: Bearer @@@GRAFANA_CLOUD_ACCESS_POLICY_TOKEN@@@" "https://grafana.com/api/instances" | \
@@ -85,12 +85,12 @@ To configure authentication for the Grafana Provider:
    }
 
    provider "grafana" {
-       cloud_api_url      = "<@@@CLOUD_PROVIDER_API_URL@@@"
+       cloud_provider_url      = "<@@@CLOUD_PROVIDER_URL@@@"
        cloud_access_policy_token     = "@@@CLOUD_ACCESS_POLICY_TOKEN@@@>"
    }
    ```
 
-1. Create a `variables.tf` file and paste the `CLOUD_ACCESS_POLICY_TOKEN` and `CLOUD_PROVIDER_API_URL` variables with your values.
+1. Create a `variables.tf` file and paste the `CLOUD_ACCESS_POLICY_TOKEN` and `CLOUD_PROVIDER_URL` variables with your values.
 1. Run the following Terraform command:
    ```tf
    terraform apply -var-file="variables.tf"
