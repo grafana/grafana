@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	repoKeysSample = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="keys",resource="repositories"}`
+	repoKeysSample    = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="keys",resource="repositories"}`
+	repoObjectsSample = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="objects",resource="repositories"}`
 )
 
 // Nothing publishes watch notifications here, so a created Repository reaches the
@@ -31,12 +32,11 @@ func TestIntegrationProvisioningKeysReList_RepositoryReconciledFromKeys(t *testi
 }
 
 // Reconciling proves the pipeline works; this proves it kept working on keys.
-// Once the repository settles its resource version stops moving, so ticks run on
-// keys; a tick where it did move takes the full list, which is why this waits
-// for several rather than all of them.
+// The store needs identities only, so every tick runs on keys, including ones
+// where the repository changed.
 //
 // The counters are cumulative and the server is shared, so everything is a delta
-// from when this repository settled.
+// from when this repository was created.
 func TestIntegrationProvisioningKeysReList_UsesTheKeysProjectionForRepositories(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -49,16 +49,18 @@ func TestIntegrationProvisioningKeysReList_UsesTheKeysProjectionForRepositories(
 	})
 
 	keysBefore := scrapeMetric(t, helper, repoKeysSample)
+	objectsBefore := scrapeMetric(t, helper, repoObjectsSample)
 
 	const ticks = 3
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		assert.GreaterOrEqual(collect, scrapeMetric(t, helper, repoKeysSample), keysBefore+ticks,
 			"later ticks must run on the keys projection")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+	assert.Equal(t, objectsBefore, scrapeMetric(t, helper, repoObjectsSample), "no tick may fall back to full objects")
 }
 
-// The quota count is the one consumer that needs more than identities: a removed
-// repository has to leave it, or the survivor stays over quota forever.
+// The quota count reads the informer's store: a removed repository has to leave
+// it once it is gone, or the survivor stays over quota forever.
 func TestIntegrationProvisioningKeysReList_DeletedRepositoryLeavesTheQuotaCount(t *testing.T) {
 	helper := sharedHelper(t)
 

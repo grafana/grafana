@@ -210,10 +210,10 @@ func NewRepositoryController(
 func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
 		AddFunc: func(obj interface{}, isInInitialList bool) {
-			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(objectResourceVersion(obj), isInInitialList))
+			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(resourceVersion(obj), isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj)))
+			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(resourceVersion(oldObj), resourceVersion(newObj)))
 		},
 	}
 }
@@ -224,9 +224,9 @@ func repoKeyFunc(obj any) (string, error) {
 	return cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 }
 
-// objectResourceVersion returns the resource version of a delivered object, or ""
-// for a delete tombstone.
-func objectResourceVersion(obj any) string {
+// resourceVersion returns the resource version of a delivered object, or "" for
+// a delete tombstone.
+func resourceVersion(obj any) string {
 	acc, err := meta.Accessor(obj)
 	if err != nil {
 		return ""
