@@ -33,7 +33,8 @@ const HEALTH_MAP: Record<string, StateIconHealth> = {
 export function RuleStatusIcon({ kind, state, health, paused }: RuleStatusIconProps) {
   const normalizedHealth = health?.toLowerCase();
   const normalizedState = state?.toLowerCase();
-  const isPaused = Boolean(paused) || normalizedHealth === 'paused';
+  // The spec decides: status health stays Paused until the next sync after a resume.
+  const isPaused = Boolean(paused);
   const mappedHealth = normalizedHealth ? HEALTH_MAP[normalizedHealth] : undefined;
   const mappedState = normalizedState ? STATE_MAP[normalizedState] : undefined;
 

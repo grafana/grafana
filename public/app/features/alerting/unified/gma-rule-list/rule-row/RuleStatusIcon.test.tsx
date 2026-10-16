@@ -28,10 +28,14 @@ describe('RuleStatusIcon', () => {
     expect(screen.getByLabelText('Paused')).toBeInTheDocument();
   });
 
-  it('shows Paused for health Paused', () => {
-    render(<RuleStatusIcon kind="alert" state="Healthy" health="Paused" />);
-    expect(screen.getByLabelText('Paused')).toBeInTheDocument();
-  });
+  it.each([{ paused: false }, { paused: undefined }])(
+    'ignores a stale health Paused when spec.paused is $paused',
+    ({ paused }) => {
+      render(<RuleStatusIcon kind="alert" state="Healthy" health="Paused" paused={paused} />);
+      expect(screen.getByLabelText('Normal')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Paused')).not.toBeInTheDocument();
+    }
+  );
 
   it('shows the Recording icon for a recording rule with health Recording', () => {
     render(<RuleStatusIcon kind="recording" health="Recording" />);
