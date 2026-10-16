@@ -471,6 +471,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
+	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/tokenexchange"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"

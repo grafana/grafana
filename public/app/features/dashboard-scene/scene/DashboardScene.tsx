@@ -44,6 +44,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardNewLayoutsEnabled, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -70,7 +71,7 @@ import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-import { type DashboardChangeInfo } from '../saving/shared';
+import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
 import {
   type DashboardSceneSerializerLike,
   getDashboardSceneSerializer,
@@ -128,6 +129,7 @@ import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { DashboardPlanningEvent } from './planningEvents';
+import { clearUnsavedDashboardConsent, copyDashboardConsent } from './sandbox-consent/sandboxConsent';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
@@ -249,7 +251,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
-    const isNew = locationService.getLocation().pathname === '/dashboard/new';
+    const { pathname } = locationService.getLocation();
+    const isNew = pathname === '/dashboard/new';
 
     window.__grafanaSceneContext = this;
 
@@ -258,6 +261,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (this.state.isEditing) {
       this._initialUrlState = locationService.getLocation();
       this._changeTracker.startTrackingChanges();
+    }
+
+    if (isNewDashboard(this.state) && (isNew || pathname === DASHBOARD_LIBRARY_ROUTES.Template)) {
+      clearUnsavedDashboardConsent();
     }
 
     if (isNew) {
@@ -515,6 +522,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // Save As / first save mint a new uid; skip the refresh await below so redirect isn't delayed.
     const isNewResource = result.uid !== this.state.uid;
+
+    if (!this.state.uid && result.uid) {
+      copyDashboardConsent('', result.uid);
+    }
 
     this.setState({
       version: result.version,

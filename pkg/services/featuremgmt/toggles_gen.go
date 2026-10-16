@@ -143,6 +143,10 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagLibraryelementsKubernetesLibraryPanels = "libraryelements.kubernetesLibraryPanels"
 
+	// FlagFolderPickerCreatePermission
+	// Allow searching folders by dashboards:create (permission=create). When off, permission=create is treated as edit
+	FlagFolderPickerCreatePermission = "folderPickerCreatePermission"
+
 	// FlagKubernetesFolderCascadeDelete
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
@@ -450,10 +454,6 @@ const (
 	// FlagRolePickerDrawer
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
-
-	// FlagPluginsSriChecks
-	// Enables SRI checks for plugin assets
-	FlagPluginsSriChecks = "pluginsSriChecks"
 
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
@@ -1069,4 +1069,8 @@ const (
 	// FlagDatasourcesApiServerConnectToHostedGrafanaDatabases
 	// Connect to hosted grafana databases from datasource API servers
 	FlagDatasourcesApiServerConnectToHostedGrafanaDatabases = "datasources.apiServerConnectToHostedGrafanaDatabases"
+
+	// FlagDatasourcesGatewayAuditPolicy
+	// Enable support for the query gateway audit policies
+	FlagDatasourcesGatewayAuditPolicy = "datasources.gatewayAuditPolicy"
 )

@@ -493,8 +493,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   panelType?: string;
   /** find dashboards using datasources of a given plugin type */
   dataSourceType?: string;
-  /** permission needed for the resource (view, edit, admin) */
-  permission?: 'view' | 'edit' | 'admin';
+  /** permission needed for the resource (view, edit, admin, create). create is only valid with type=folder */
+  permission?: 'view' | 'edit' | 'admin' | 'create';
   /** sortable field */
   sort?: string;
   /** number of results to return */

@@ -26,15 +26,11 @@ type LegacyCheckRequest struct {
 	Namespace string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	// Subject in authlib TypeID format, for example "user:1" or "service-account:uid".
 	Subject string `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
-	// Legacy RBAC action, for example "dashboards:read". Used when expression is absent.
-	Action string `protobuf:"bytes,3,opt,name=action,proto3" json:"action,omitempty"`
-	// Legacy RBAC scope, for example "dashboards:uid:abc123". Used when expression is absent.
-	Scope string `protobuf:"bytes,4,opt,name=scope,proto3" json:"scope,omitempty"`
 	// Optional contextual team UIDs (used when external-group based team grants are in effect).
 	Teams []string `protobuf:"bytes,5,rep,name=teams,proto3" json:"teams,omitempty"`
 	// Bypass server-side caches when true.
 	SkipCache bool `protobuf:"varint,6,opt,name=skip_cache,json=skipCache,proto3" json:"skip_cache,omitempty"`
-	// Complete check expression. When set, action and scope must be empty.
+	// Required check expression, including for a single permission.
 	Expression *LegacyExpression `protobuf:"bytes,7,opt,name=expression,proto3" json:"expression,omitempty"`
 	// Evaluate without resolving scope attributes or inherited resource scopes,
 	// corresponding to AccessControl.WithoutResolvers.
@@ -83,20 +79,6 @@ func (x *LegacyCheckRequest) GetNamespace() string {
 func (x *LegacyCheckRequest) GetSubject() string {
 	if x != nil {
 		return x.Subject
-	}
-	return ""
-}
-
-func (x *LegacyCheckRequest) GetAction() string {
-	if x != nil {
-		return x.Action
-	}
-	return ""
-}
-
-func (x *LegacyCheckRequest) GetScope() string {
-	if x != nil {
-		return x.Scope
 	}
 	return ""
 }
@@ -702,12 +684,10 @@ var File_legacy_authz_proto protoreflect.FileDescriptor
 
 const file_legacy_authz_proto_rawDesc = "" +
 	"\n" +
-	"\x12legacy_authz.proto\x12\x12authz.extention.v1\"\xa9\x02\n" +
+	"\x12legacy_authz.proto\x12\x12authz.extention.v1\"\xfb\x01\n" +
 	"\x12LegacyCheckRequest\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x18\n" +
-	"\asubject\x18\x02 \x01(\tR\asubject\x12\x16\n" +
-	"\x06action\x18\x03 \x01(\tR\x06action\x12\x14\n" +
-	"\x05scope\x18\x04 \x01(\tR\x05scope\x12\x14\n" +
+	"\asubject\x18\x02 \x01(\tR\asubject\x12\x14\n" +
 	"\x05teams\x18\x05 \x03(\tR\x05teams\x12\x1d\n" +
 	"\n" +
 	"skip_cache\x18\x06 \x01(\bR\tskipCache\x12D\n" +
