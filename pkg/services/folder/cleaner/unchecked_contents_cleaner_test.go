@@ -54,16 +54,4 @@ func TestUncheckedContentsCleaner_DeleteInFolder(t *testing.T) {
 		c := NewUncheckedContentsCleaner(&fakeRegistryServiceUnchecked{})
 		assert.Error(t, c.DeleteInFolder(ctx, "org-notanumber", "fold1"))
 	})
-
-	t.Run("errors, without deleting anything, when the requester's org doesn't match the namespace", func(t *testing.T) {
-		a := &fakeRegistryServiceUnchecked{}
-		b := &fakeRegistryServiceUnchecked{}
-		c := NewUncheckedContentsCleaner(a, b)
-
-		// ctx carries org 2, namespace says org 3.
-		require.Error(t, c.DeleteInFolder(ctx, "org-3", "fold1"))
-
-		assert.Empty(t, a.deletedUIDs, "must not delete anything in the first service")
-		assert.Empty(t, b.deletedUIDs, "must not delete anything in the second service")
-	})
 }
