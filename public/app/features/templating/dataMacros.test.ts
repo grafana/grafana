@@ -75,6 +75,26 @@ describe('dataMacros', () => {
     expect(_templateSrv.replace('${__value.time}', scopedVars)).toBe('');
   });
 
+  it('resolves the source timestamp without changing the calculated value formatting', () => {
+    const dataContext: DataContextScopedVar = {
+      value: {
+        data: [data],
+        frame: data,
+        field: data.fields[0],
+        rowIndex: 1,
+        calculatedValue: {
+          text: '10',
+          numeric: 10,
+          suffix: '%',
+        },
+      },
+    };
+
+    expect(_templateSrv.replace('${__value.text} at ${__value.time}', { __dataContext: dataContext })).toBe(
+      '10% at 10000'
+    );
+  });
+
   it('Should return match when ${__value.*} is used and no dataContext or rowIndex is found', () => {
     const dataContext: DataContextScopedVar = {
       value: {
