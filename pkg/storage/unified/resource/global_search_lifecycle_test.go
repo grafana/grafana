@@ -218,9 +218,8 @@ func TestGlobalIndexesAreIsolatedByNamespace(t *testing.T) {
 	}
 }
 
-// The document builder writes its own resource type's fields, which this index
-// declares none of, so they are dropped before the index sees them. A
-// per-resource index keeps them.
+// A namespace-wide index has no resource-specific fields. Per-resource indexes
+// must still use their own builders.
 func TestGlobalIndexKeepsStandardFieldsOnly(t *testing.T) {
 	storage := &multiTypeStorage{
 		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
@@ -232,13 +231,69 @@ func TestGlobalIndexKeepsStandardFieldsOnly(t *testing.T) {
 	require.NoError(t, err)
 	built := global.(*MockResourceIndex).indexedItems()
 	require.Len(t, built, 1)
-	assert.Empty(t, built[0].Doc.Fields, "the build drops them")
+	assert.Empty(t, built[0].Doc.Fields, "a namespace-wide index builds no resource-specific fields")
 
 	perResource, err := server.build(t.Context(), dashboardType("ns"), 1, "test", false, time.Time{})
 	require.NoError(t, err)
 	kept := perResource.(*MockResourceIndex).indexedItems()
 	require.Len(t, kept, 1)
 	assert.NotEmpty(t, kept[0].Doc.Fields, "a per-resource index keeps its own fields")
+}
+
+func TestGlobalIndexDoesNotResolveTypeSpecificBuilders(t *testing.T) {
+	for _, path := range []string{"build", "rebuild type", "reconcile", "write notification"} {
+		t.Run(path, func(t *testing.T) {
+			storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+				live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+				listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+			}}
+			server, idx := repairServer(t, storage, nil)
+
+			resolved := 0
+			builders := make([]DocumentBuilderInfo, 0, len(GlobalSearchResourceTypes()))
+			for _, gr := range GlobalSearchResourceTypes() {
+				builders = append(builders, DocumentBuilderInfo{
+					GroupResource: gr,
+					Namespaced: func(context.Context, string, BlobSupport) (DocumentBuilder, error) {
+						resolved++
+						return nil, errors.New("type-specific builder must not be resolved")
+					},
+				})
+			}
+			var err error
+			server.builders, err = newBuilderCache(builders, 100, time.Minute)
+			require.NoError(t, err)
+
+			key := GlobalSearchKey("ns")
+			src := dashboardType("ns")
+			switch path {
+			case "build":
+				var built ResourceIndex
+				built, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+				if err == nil {
+					idx = built.(*MockResourceIndex)
+				}
+			case "rebuild type":
+				_, err = server.rebuildResourceType(t.Context(), idx, key, src)
+			case "reconcile":
+				_, err = server.reconcileResourceType(t.Context(), idx, key, src)
+			case "write notification":
+				err = server.writeCurrentState(t.Context(), idx, src, []string{"dash-a"})
+			}
+			require.NoError(t, err)
+			require.Zero(t, resolved, "dashboard builder resolution fetches Sprinkles")
+
+			items := idx.indexedItems()
+			require.Len(t, items, 1)
+			doc := items[0].Doc
+			require.NotNil(t, doc)
+			assert.Equal(t, "dash-a", doc.Title)
+			assert.Equal(t, []string{"tag-a"}, doc.Tags)
+			assert.Equal(t, int64(20), doc.RV)
+			assert.Empty(t, doc.Fields)
+			assert.Empty(t, doc.SelectableFields)
+		})
+	}
 }
 
 // The existing lifecycle metrics have to cover this index too, or a build nobody

@@ -1,9 +1,10 @@
+import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { isValidRecordingRulesTarget } from '@grafana/alerting/internal';
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { useDataSourcesWithValidRecordingTargetByUid } from '@grafana/alerting/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Field, Input, Stack, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -28,16 +29,31 @@ export const AlertRuleNameAndMetric = () => {
     control,
     register,
     watch,
+    getValues,
+    resetField,
     formState: { errors },
     setValue,
   } = useFormContext<RuleFormValues>();
 
   const ruleFormType = watch('type');
+  const isGrafanaRecordingRule = ruleFormType ? isGrafanaRecordingRuleByType(ruleFormType) : false;
+
+  const recordingTargets = useDataSourcesWithValidRecordingTargetByUid();
+
+  const defaultTargetUid = config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID;
+  useEffect(() => {
+    if (!isGrafanaRecordingRule || !defaultTargetUid || getValues('targetDatasourceUid')) {
+      return;
+    }
+    if (recordingTargets.byUid.has(defaultTargetUid)) {
+      resetField('targetDatasourceUid', { defaultValue: defaultTargetUid });
+    }
+  }, [isGrafanaRecordingRule, defaultTargetUid, recordingTargets.byUid, getValues, resetField]);
+
   if (!ruleFormType) {
     return null;
   }
   const isRecording = isRecordingRuleByType(ruleFormType);
-  const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(ruleFormType);
   const isCloudRecordingRule = isCloudRecordingRuleByType(ruleFormType);
   const recordingLabel = isGrafanaRecordingRule ? 'recording rule and metric' : 'recording rule';
   const namePlaceholder = isRecording ? 'recording rule' : 'alert rule';
@@ -120,8 +136,15 @@ export const AlertRuleNameAndMetric = () => {
               'alerting.recording-rules.description-target-data-source',
               'The Prometheus data source to store recording rules in'
             )}
-            error={errors.targetDatasourceUid?.message}
-            invalid={!!errors.targetDatasourceUid?.message}
+            error={
+              errors.targetDatasourceUid?.message ??
+              (recordingTargets.error &&
+                t(
+                  'alerting.recording-rules.target-data-sources-error',
+                  'Failed to load the list of data sources that can store recording rules'
+                ))
+            }
+            invalid={Boolean(errors.targetDatasourceUid?.message || recordingTargets.error)}
             noMargin
           >
             <Controller
@@ -130,9 +153,10 @@ export const AlertRuleNameAndMetric = () => {
                   {...field}
                   current={field.value}
                   noDefault
-                  // Filter with `filter` prop instead of `type` prop to avoid showing the `-- Grafana --` data source
-                  filter={isValidRecordingRulesTarget}
-                  onChange={(ds: DataSourceInstanceSettings) => {
+                  disabled={recordingTargets.isLoading}
+                  isLoading={recordingTargets.isLoading}
+                  filter={(ds) => recordingTargets.byUid.has(ds.uid)}
+                  onChange={(ds) => {
                     setValue('targetDatasourceUid', ds.uid);
                   }}
                 />

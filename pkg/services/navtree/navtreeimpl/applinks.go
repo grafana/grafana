@@ -214,6 +214,18 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 			}
 
+			if s.canCreateAssistantPage(plugin, include, c) {
+				link.Children = append(link.Children, &navtree.NavLink{
+					Id:             "assistant/pages/new",
+					Text:           "New Grafana Page",
+					Icon:           "plus",
+					Url:            s.cfg.AppSubURL + assistantAppHomePath + "/pages/new",
+					PluginID:       assistantAppID,
+					HideFromTabs:   true,
+					IsCreateAction: true,
+				})
+			}
+
 			// Register standalone plugin pages to certain sections using the Grafana config
 			if pathConfig, ok := s.navigationAppPathConfig[include.Path]; ok {
 				link.Id = "standalone-plugin-page-" + include.Path
@@ -311,6 +323,11 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) canCreateAssistantPage(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
+	return plugin.ID == assistantAppID && include.Path == assistantAppHomePath+"/pages" && include.AddToNav &&
+		ac.HasAccess(s.accessControl, c)(ac.EvalPermission("assistant.ext.grafana.app/pages:create"))
 }
 
 func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
@@ -583,7 +600,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 6, Text: "Incident"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7, Text: "OnCall"},
 		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "AI", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
-		"grafana-workflows-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightWorkflows, Text: "Workflows", SubTitle: "Create and manage automated workflows"},
+		"grafana-workflows-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightWorkflows, Text: "Workflows", SubTitle: "Create and manage automated workflows", Icon: "workflows"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},

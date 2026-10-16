@@ -156,6 +156,8 @@ export const FlagKeys = {
   FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Allow admins to make announcement banners dismissible by users */
+  GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables custom dashboard templates for enterprise */
@@ -1161,6 +1163,17 @@ export const useFlagFoldersAppPlatformAPI = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("globalDashboardVariables", false, options).value;
+};
+
+/**
+ * Allow admins to make announcement banners dismissible by users
+ *
+ * **Details:**
+ * - flag key: `grafana.announcementBannerDismissible`
+ * - default value: `true`
+ */
+export const useFlagGrafanaAnnouncementBannerDismissible = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.announcementBannerDismissible", true, options).value;
 };
 
 /**

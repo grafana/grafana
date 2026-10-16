@@ -51,10 +51,8 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			server := &snapshotBlobServer{}
 			channel := &inprocgrpc.Channel{}
 			channel.RegisterService(&resourcepb.BlobStore_ServiceDesc, server)
-			client, err := resourceclient.NewRemoteResourceClient(noop.NewTracerProvider().Tracer("snapshot-test"), channel, channel, resourceclient.RemoteResourceClientConfig{
-				TokenExchanger:        authnlib.NewStaticTokenExchanger("service-token"),
-				RequireCallerIdentity: func(context.Context) bool { return true },
-				OnBehalfOf:            func(context.Context) bool { return false },
+			client, err := resourceclient.NewStandaloneRemoteResourceClient(noop.NewTracerProvider().Tracer("snapshot-test"), channel, channel, resourceclient.RemoteResourceClientConfig{
+				TokenExchanger: authnlib.NewStaticTokenExchanger("service-token"),
 			})
 			require.NoError(t, err)
 			snap := newBlobTestSnapshot()

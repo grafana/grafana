@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -209,29 +210,28 @@ func NewRepositoryController(
 func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
 		AddFunc: func(obj interface{}, isInInitialList bool) {
-			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(objectResourceVersion(obj), isInInitialList))
+			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(resourceVersion(obj), isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj)))
+			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(resourceVersion(oldObj), resourceVersion(newObj)))
 		},
 	}
 }
 
+// repoKeyFunc keys a delivered object of any type: the NATS informer delivers a
+// projection of a Repository, not the whole object.
 func repoKeyFunc(obj any) (string, error) {
-	repo, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return "", fmt.Errorf("expected a Repository but got %T", obj)
-	}
-	return cache.DeletionHandlingMetaNamespaceKeyFunc(repo)
+	return cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 }
 
-// objectResourceVersion returns the resource version of a delivered Repository,
-// or "" for a minimal NATS live event or a delete tombstone.
-func objectResourceVersion(obj any) string {
-	if repo, ok := obj.(*provisioning.Repository); ok {
-		return repo.ResourceVersion
+// resourceVersion returns the resource version of a delivered object, or "" for
+// a delete tombstone.
+func resourceVersion(obj any) string {
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		return ""
 	}
-	return ""
+	return acc.GetResourceVersion()
 }
 
 // Run starts the RepositoryController.

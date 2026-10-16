@@ -127,6 +127,7 @@
     "text-options": (import '../dev-dashboards/panel-text/text-options.json'),
     "text-panel": (import '../dev-dashboards/panel-text/text-panel.json'),
     "text-panel-examples": (import '../dev-dashboards/panel-text/text-panel-examples.json'),
+    "text-theme-macro": (import '../dev-dashboards/panel-text/text-theme-macro.json'),
     "time-compare": (import '../dev-dashboards/scenarios/time-compare.json'),
     "time_zone_support": (import '../dev-dashboards/scenarios/time_zone_support.json'),
     "timeline-align-endtime": (import '../dev-dashboards/panel-timeline/timeline-align-endtime.json'),

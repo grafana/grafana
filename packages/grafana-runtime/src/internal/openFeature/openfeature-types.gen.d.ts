@@ -191,6 +191,7 @@ declare module "@openfeature/core" {
     | "grafana.globalHomePreference"
     | "grafana.extensionSidebarFloating"
     | "grafana.otelLogDetails"
+    | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
