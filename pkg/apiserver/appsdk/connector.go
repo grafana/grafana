@@ -189,6 +189,9 @@ func writeCustomRouteError(_ context.Context, err error, w http.ResponseWriter) 
 	if st.Message == "" {
 		st.Message = err.Error()
 	}
+	if st.Status == "" {
+		st.Status = metav1.StatusFailure
+	}
 	st.Kind = "Status"
 	st.APIVersion = "v1"
 
