@@ -10,6 +10,7 @@ import { createLogLineLinks } from '../logParser';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
+import { TracesDrilldownLinkResolver } from './useTracesDrilldownLinks';
 
 interface LogLineDetailsSummaryProps {
   log: LogListModel;
@@ -43,21 +44,33 @@ export const LogLineDetailsSummary = ({ log }: LogLineDetailsSummaryProps) => {
         <span className={styles.timestamp}>{timestamp}</span>
       </div>
       {links.length > 0 && (
-        <div className={styles.links}>
-          {links.map(({ fieldKey, link }, index) => (
-            <DataLinkButton
-              key={`${link.title}-${index}`}
-              buttonProps={{
-                tooltip:
-                  typeof pinLineButtonTooltipTitle === 'object' && link.onClick ? pinLineButtonTooltipTitle : undefined,
-                variant: 'secondary',
-                fill: 'outline',
-                onClick: () => reportLinkClick(fieldKey),
-              }}
-              link={link}
-            />
-          ))}
-        </div>
+        <TracesDrilldownLinkResolver links={links.map((item) => item.link)}>
+          {(resolvedLinks) => (
+            <div className={styles.links}>
+              {links.map(({ fieldKey }, index) => {
+                const link = resolvedLinks?.[index];
+                if (!link) {
+                  return null;
+                }
+                return (
+                  <DataLinkButton
+                    key={`${link.title}-${index}`}
+                    buttonProps={{
+                      tooltip:
+                        typeof pinLineButtonTooltipTitle === 'object' && link.onClick
+                          ? pinLineButtonTooltipTitle
+                          : undefined,
+                      variant: 'secondary',
+                      fill: 'outline',
+                      onClick: () => reportLinkClick(fieldKey),
+                    }}
+                    link={link}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </TracesDrilldownLinkResolver>
       )}
     </div>
   );

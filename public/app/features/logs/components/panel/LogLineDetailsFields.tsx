@@ -27,6 +27,7 @@ import { AsyncIconButton } from './AsyncIconButton';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel, getNormalizedFieldName } from './processing';
+import { TracesDrilldownLinkResolver } from './useTracesDrilldownLinks';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -137,7 +138,7 @@ interface LogLineDetailsFieldProps {
   fieldIndex?: number;
   getLogs(): LogListModel[];
   isLabel?: boolean;
-  links?: LinkModelWithIcon[];
+  links?: readonly LinkModelWithIcon[];
   log: LogListModel;
 }
 
@@ -386,11 +387,20 @@ const LogLineDetailsField = ({
         </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
-            {singleValue ? (
-              <SingleValue value={values[0]} links={links} prettifyJSON={prettifyJSON} onLinkClick={reportLinkClick} />
-            ) : (
-              <MultipleValue showCopy={true} values={values} links={links} onLinkClick={reportLinkClick} />
-            )}
+            <TracesDrilldownLinkResolver links={links}>
+              {(resolvedLinks) =>
+                singleValue ? (
+                  <SingleValue
+                    value={values[0]}
+                    links={resolvedLinks}
+                    prettifyJSON={prettifyJSON}
+                    onLinkClick={reportLinkClick}
+                  />
+                ) : (
+                  <MultipleValue showCopy={true} values={values} links={resolvedLinks} onLinkClick={reportLinkClick} />
+                )
+              }
+            </TracesDrilldownLinkResolver>
           </div>
         </div>
       </div>
@@ -519,7 +529,7 @@ export const MultipleValue = ({
   showCopy,
   values = [],
 }: {
-  links?: LinkModelWithIcon[];
+  links?: readonly LinkModelWithIcon[];
   onLinkClick?: (link: LinkModelWithIcon) => void;
   showCopy?: boolean;
   values: string[];
@@ -553,7 +563,7 @@ export const SingleValue = ({
   prettifyJSON,
   onLinkClick,
 }: {
-  links?: LinkModelWithIcon[];
+  links?: readonly LinkModelWithIcon[];
   value: string;
   prettifyJSON?: boolean;
   onLinkClick?: (link: LinkModelWithIcon) => void;
@@ -587,7 +597,7 @@ function LinkedValue({
   onLinkClick,
 }: {
   children: ReactNode;
-  links?: LinkModelWithIcon[];
+  links?: readonly LinkModelWithIcon[];
   onLinkClick?: (link: LinkModelWithIcon) => void;
 }) {
   if (links && links.length > 1) {
@@ -649,7 +659,7 @@ const LinkValuesMenu = ({
   onLinkClick,
 }: {
   children: ReactNode;
-  links: LinkModelWithIcon[];
+  links: readonly LinkModelWithIcon[];
   onLinkClick?: (link: LinkModelWithIcon) => void;
 }) => {
   const styles = useStyles2(getValueLinkStyles);
