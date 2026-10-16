@@ -11,7 +11,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -138,10 +137,10 @@ func NewConnectionController(
 func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
 		AddFunc: func(obj interface{}, isInInitialList bool) {
-			cc.enqueue(obj, cc.processed.ClassifyAdd(connectionResourceVersion(obj), isInInitialList))
+			cc.enqueue(obj, cc.processed.ClassifyAdd(resourceVersion(obj), isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			cc.enqueue(newObj, cc.processed.ClassifyUpdate(connectionResourceVersion(oldObj), connectionResourceVersion(newObj)))
+			cc.enqueue(newObj, cc.processed.ClassifyUpdate(resourceVersion(oldObj), resourceVersion(newObj)))
 		},
 	}
 }
@@ -186,17 +185,6 @@ func (cc *ConnectionController) popTrigger(key string) (usinformer.ProcessTrigge
 		delete(cc.triggers, key)
 	}
 	return trigger, ok
-}
-
-// connectionResourceVersion returns the resource version of a delivered object,
-// or "" for a minimal NATS live event or a delete tombstone. The NATS informer
-// delivers an identity, not a Connection.
-func connectionResourceVersion(obj any) string {
-	acc, err := meta.Accessor(obj)
-	if err != nil {
-		return ""
-	}
-	return acc.GetResourceVersion()
 }
 
 // connSpanAttrs returns the resource-identifying attributes stamped on every
