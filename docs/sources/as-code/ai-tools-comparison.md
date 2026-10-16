@@ -32,7 +32,7 @@ If you're a self-managed Grafana user, you have the following AI tools available
   - Some advanced features require the full Grafana Cloud feature set.
   - Assistant is billed per token consumed, including requests made through `gcx`. 
 
-**MCP servers** let an external AI client (for example Claude, Cursor, or VS Code with Copilot) call Grafana as a set of tools that cover the operational loop: dashboards and folders, data sources (Prometheus, Loki, and others), alerting, incidents, OnCall, and more.  
+**MCP servers** let an external AI client (for example Claude, Cursor, or VS Code with Copilot) call Grafana as a set of tools that cover common tasks: dashboards and folders, data sources (Prometheus, Loki, and others), alerting, incidents, OnCall, and more.  
 
   - Clients discover named tools with JSON schemas, the model picks a tool and supplies structured arguments, Grafana runs it under normal identity and RBAC, and the structured result goes back to the model for its next step. 
   - Grafana offers two servers: Cloud MCP (hosted by Grafana) and OSS MCP (you run it).
