@@ -4,7 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Box, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { ContentCarousel } from 'app/core/components/ContentCarousel/ContentCarousel';
 
 import { HomeGrid } from '../HomeGrid';
 import { recommendationsShown } from '../analytics/main';
@@ -15,6 +16,8 @@ import { RecommendationExisting } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
 import { type BaseRow } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
+
+const AUTO_ADVANCE_MS = 5000;
 
 interface RecommendationsViewProps {
   recommendations: RecommendationItem[];
@@ -48,7 +51,6 @@ export function RecommendationsView({
   }, [collapsed]);
 
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   // The carousel follows the solution displayed on the left card (default selection included);
   // undefined = providers still settling (skeleton holds the column), null = settled with none
@@ -63,23 +65,7 @@ export function RecommendationsView({
     setIndex(0);
   }, [activeSolution]);
 
-  // Clamp during render so a shrinking list cannot select an undefined entry.
-  const safeIndex = Math.min(index, items.length - 1);
   const hasRecommendations = items.length > 0;
-  // A single card needs no carousel controls and must not auto-advance onto itself.
-  const showControls = items.length > 1;
-
-  useEffect(() => {
-    if (collapsed || paused || !showControls || selectionPending) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setIndex((safeIndex + 1) % items.length);
-    }, 5000);
-
-    return () => clearTimeout(timeout);
-  }, [collapsed, paused, safeIndex, items.length, showControls, selectionPending]);
 
   useEffect(() => {
     if (items.length && !selectionPending) {
@@ -151,90 +137,29 @@ export function RecommendationsView({
               (selectionPending ? (
                 <RecommendedCardSkeleton />
               ) : (
-                <div
+                <ContentCarousel
                   className={cx(styles.card, styles.recommended)}
-                  role="region"
-                  aria-roledescription={t('home.recommendations.carousel-roledescription', 'carousel')}
-                  aria-label={t('home.recommendations.carousel-label', 'Recommended apps')}
-                >
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
+                  label={t('home.recommendations.carousel-label', 'Recommended apps')}
+                  header={
                     <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
-
-                    {showControls && (
-                      <Stack direction="row" alignItems="center" gap={1}>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          fill="text"
-                          icon="angle-left"
-                          onClick={() => setIndex((safeIndex - 1 + items.length) % items.length)}
-                          aria-label={t('home.recommendations.previous', 'Previous')}
-                        />
-
-                        {items.map((_, i) =>
-                          i === safeIndex ? (
-                            <Button
-                              key={i}
-                              variant="secondary"
-                              size="sm"
-                              fill="solid"
-                              icon={paused ? 'play' : 'pause'}
-                              onClick={() => setPaused(!paused)}
-                              aria-label={
-                                paused
-                                  ? t('home.recommendations.resume', 'Resume')
-                                  : t('home.recommendations.pause', 'Pause')
-                              }
-                              data-paused={paused ? true : undefined}
-                              className={cx(styles.dot, styles.active)}
-                            />
-                          ) : (
-                            <Button
-                              key={i}
-                              variant="secondary"
-                              size="sm"
-                              fill="solid"
-                              onClick={() => setIndex(i)}
-                              aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', {
-                                index: i + 1,
-                              })}
-                              className={styles.dot}
-                            />
-                          )
-                        )}
-
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          fill="text"
-                          icon="angle-right"
-                          onClick={() => setIndex((safeIndex + 1) % items.length)}
-                          aria-label={t('home.recommendations.next', 'Next')}
-                        />
-                      </Stack>
-                    )}
-                  </Stack>
-
-                  <div className={styles.outer}>
-                    <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
-                      {items.map((recommendation, i) => (
-                        <Box
-                          key={recommendation.id}
-                          display="flex"
-                          minWidth="100%"
-                          aria-hidden={i !== safeIndex}
-                          inert={i !== safeIndex}
-                        >
-                          <RecommendationCard
-                            recommendation={recommendation}
-                            startingState={startingState}
-                            solution={activeSolution ?? undefined}
-                          />
-                        </Box>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                  }
+                  getSlideLabel={(index) =>
+                    t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index })
+                  }
+                  items={items}
+                  getKey={(recommendation) => recommendation.id}
+                  renderItem={(recommendation) => (
+                    <RecommendationCard
+                      recommendation={recommendation}
+                      startingState={startingState}
+                      solution={activeSolution ?? undefined}
+                    />
+                  )}
+                  autoAdvanceMs={AUTO_ADVANCE_MS}
+                  autoAdvanceSuspended={collapsed}
+                  index={index}
+                  onIndexChange={setIndex}
+                />
               ))}
           </HomeGrid>
         </div>
@@ -314,75 +239,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       top: theme.spacing(2),
       left: '100%',
       transform: 'translate(-50%, 0)',
-    },
-  }),
-  dot: css({
-    background: theme.colors.background.secondary,
-    lineHeight: 0,
-    padding: 0,
-    width: theme.spacing(1),
-    height: theme.spacing(1),
-    borderRadius: theme.shape.radius.pill,
-    position: 'relative',
-
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: theme.spacing(2),
-      height: theme.spacing(2),
-    },
-
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: theme.transitions.create(['background-color', 'width', 'height'], {
-        duration: theme.transitions.duration.short,
-      }),
-    },
-  }),
-  active: css({
-    '&, &::after': {
-      width: theme.spacing(3),
-    },
-
-    '&, &:hover, &:focus': {
-      background: theme.colors.text.maxContrast,
-      color: theme.colors.background.secondary,
-    },
-
-    '&:hover, &[data-paused]': {
-      height: theme.spacing(2),
-    },
-
-    '& > svg': {
-      margin: '0 auto',
-
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-    },
-
-    '&:not(:hover):not([data-paused])': {
-      '& > svg': {
-        opacity: 0,
-      },
-    },
-  }),
-  outer: css({
-    overflow: 'hidden',
-    flex: 1,
-    margin: theme.spacing(2, 0, 0),
-  }),
-  inner: css({
-    display: 'flex',
-    // Fill the card cell so its CTA stays bottom-aligned with the existing card.
-    height: '100%',
-
-    [theme.transitions.handleMotion('no-preference')]: {
-      transition: theme.transitions.create(['transform']),
     },
   }),
 });

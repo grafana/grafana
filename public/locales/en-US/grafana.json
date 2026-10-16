@@ -5366,6 +5366,16 @@
       }
     }
   },
+  "content-carousel": {
+    "go-to": "Go to slide {{position}}",
+    "next": "Next",
+    "pause": "Pause",
+    "previous": "Previous",
+    "resume": "Resume",
+    "roledescription": "carousel",
+    "slide-label": "{{position}} of {{total}}",
+    "slide-roledescription": "slide"
+  },
   "core": {
     "versionHistory": {
       "comparison": {
@@ -11380,7 +11390,6 @@
         "title": "Explore your service map"
       },
       "carousel-label": "Recommended apps",
-      "carousel-roledescription": "carousel",
       "connect-metrics": {
         "action": "Connect metrics",
         "context": "The foundation of your observability stack",
@@ -11423,7 +11432,6 @@
         "setup-action": "Set up Kubernetes Monitoring",
         "title": "Monitor your Kubernetes fleet"
       },
-      "next": "Next",
       "no-data": {
         "badge": "Getting started",
         "connect": "Connect a data source",
@@ -11436,10 +11444,7 @@
         "title": "No data flowing yet",
         "title-unknown": "We couldn't confirm your data"
       },
-      "pause": "Pause",
-      "previous": "Previous",
       "recommended": "Recommended",
-      "resume": "Resume",
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
