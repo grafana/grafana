@@ -18,6 +18,14 @@ title: AI tools
 weight: 800
 cards:
   items:
+    - title: Grafana Assistant
+      height: 24
+      href: ./grafana-assistant/
+      description: Install Grafana Assistant in self-managed Grafana and connect it to a Grafana Cloud stack.
+    - title: MCP server
+      height: 24
+      href: ./mcp/
+      description: Connect AI assistants and LLM clients to Grafana using the Model Context Protocol.
     - title: gcx CLI
       height: 24
       href: ./grafana-cli/

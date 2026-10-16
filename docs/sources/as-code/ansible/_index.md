@@ -29,7 +29,7 @@ The [Grafana Ansible collection](https://docs.ansible.com/ansible/latest/collect
 - Notification policies
 - API keys
 
-If your resources aren't currently available in the Grafana Ansible collection, you can manage them on Grafana Cloud programmatically by writing Ansible playbooks that use the [Ansible built-in URI module](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html) to call the [HTTP APIs](https://grafana.com/docs/latest/developer-resources/api-reference/http-api/) to manage resources for the Grafana Cloud portal, as well as those within a stack.
+If your resources aren't currently available in the Grafana Ansible collection, you can manage them on Grafana Cloud programmatically by writing Ansible playbooks that use the [Ansible built-in URI module](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html) to call the [HTTP APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/) to manage resources for the Grafana Cloud portal, as well as those within a stack.
 
 ## Learn more
 
