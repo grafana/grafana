@@ -63,6 +63,11 @@ interface NotebookLayoutManagerState extends SceneObjectState {
    * reintroduces the dependency cycle.
    */
   isEditing?: boolean;
+  /**
+   * Set only by NotebookRenderPage. On screen the time picker already shows the range; a PDF has no
+   * picker, so the header carries it instead.
+   */
+  showTimeRange?: boolean;
 }
 
 // Keep typing useful to undo without storing every keystroke as a separate action.
@@ -734,6 +739,29 @@ export class NotebookLayoutManager
     return cell;
   }
 
+  /**
+   * Appends cells built outside the notebook, such as content added from another surface, as one
+   * undoable step. They go above the trailing empty block, which stays the typeable slot at the end.
+   * Returns the index the first one landed on.
+   */
+  public appendCells(cells: NotebookCellItem[], label: string): number {
+    const last = this.state.cells.at(-1);
+    const index = last && isEmptyMarkdown(last.state.content) ? this.state.cells.length - 1 : this.state.cells.length;
+
+    this.executeEdit({
+      label,
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
+      perform: () => {
+        const next = this.state.cells.filter((cell) => !cells.includes(cell));
+        next.splice(Math.min(index, next.length), 0, ...cells);
+        this.setState({ cells: next });
+      },
+      undo: () => this.setState({ cells: this.state.cells.filter((cell) => !cells.includes(cell)) }),
+    });
+
+    return index;
+  }
+
   public removeCell(cell: NotebookCellItem): void {
     const index = this.state.cells.indexOf(cell);
     if (index === -1) {
@@ -750,6 +778,8 @@ export class NotebookLayoutManager
 
   private executeEdit(action: NotebookEditAction): void {
     this.commitPendingEdits();
+    // The title's own pending edit lives on the parent scene, not here.
+    this.notebookScene?.commitTitleEdit();
     const history = this.editHistory;
     if (history) {
       history.execute(action);
@@ -848,9 +878,10 @@ export class NotebookLayoutManager
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { cells, title, tags, isEditing, key } = model.useState();
+  const { cells, title, tags, isEditing, showTimeRange, key } = model.useState();
 
-  const timeRange = sceneGraph.getTimeRange(model).useState();
+  const sceneTimeRange = sceneGraph.getTimeRange(model);
+  const { value: timeRange } = sceneTimeRange.useState();
 
   const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
   const onTitleChange = useCallback((nextTitle: string) => model.setTitleFromHeader(nextTitle), [model]);
@@ -944,8 +975,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
         <NotebookDocumentHeader
           title={title}
           tags={tags}
-          timeFrom={timeRange.from}
-          timeTo={timeRange.to}
+          timeRange={showTimeRange ? timeRange : undefined}
+          timeZone={sceneTimeRange.getTimeZone()}
           isEditing={isEditing}
           onTagsChange={onTagsChange}
           onTitleChange={onTitleChange}

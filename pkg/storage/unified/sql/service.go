@@ -194,8 +194,9 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 
 	if cfg.QOSEnabled {
 		queue := scheduler.NewQueue(&scheduler.QueueOptions{
-			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-			Registerer:       reg,
+			MaxSizePerTenant:       cfg.QOSMaxSizePerTenant,
+			MaxConcurrentPerTenant: cfg.QOSMaxConcurrentPerTenant,
+			Registerer:             reg,
 		})
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
@@ -651,6 +652,7 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.BlobStoreStreaming_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
 		&resourcepb.ResourceIndex_ServiceDesc,
@@ -659,6 +661,9 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		wrapped := s.withErrorResultConversion(desc)
 		if desc == &resourcepb.ResourceStore_ServiceDesc {
 			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+		}
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, nil, resource.BlobStreamServerInterceptor(server))
 		}
 		srv.RegisterService(wrapped, handler)
 	}
@@ -677,7 +682,11 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 
 func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
 	if s.cfg != nil && s.cfg.UnifiedStorageGRPCErrorResultToStatus {
-		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), nil)
+		var streamInterceptor grpc.StreamServerInterceptor
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			streamInterceptor = resource.BlobStreamErrorResultInterceptor()
+		}
+		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
 	}
 	return desc
 }

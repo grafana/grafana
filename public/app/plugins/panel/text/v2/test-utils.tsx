@@ -17,7 +17,7 @@ setTemplateSrv({
 });
 
 /** Panel data carrying the given frames, for the render-mode cases. */
-export function createData(series: DataFrame[] = [{ fields: [], length: 0 }]): Props['data'] {
+export function createData(series: DataFrame[] = []): Props['data'] {
   return {
     state: LoadingState.Done,
     series,

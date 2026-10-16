@@ -23,6 +23,11 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"go.opentelemetry.io/otel/trace"
 	"gocloud.dev/blob/memblob"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -660,7 +665,7 @@ func TestRunInQueue(t *testing.T) {
 			executed <- true
 		}
 
-		err := s.runInQueue(context.Background(), testTenantID, runnable)
+		err := s.runInQueue(context.Background(), testTenantID, "read", runnable)
 		require.NoError(t, err)
 		assert.True(t, <-executed, "runnable should have been executed")
 	})
@@ -673,7 +678,7 @@ func TestRunInQueue(t *testing.T) {
 			executed <- struct{}{}
 		}
 
-		err := s.runInQueue(context.Background(), testTenantID, runnable)
+		err := s.runInQueue(context.Background(), testTenantID, "read", runnable)
 		require.Error(t, err)
 		assert.Equal(t, context.DeadlineExceeded, err)
 		<-executed
@@ -687,7 +692,7 @@ func TestRunInQueue(t *testing.T) {
 			executed <- true
 		}
 
-		err := s.runInQueue(context.Background(), "", runnable)
+		err := s.runInQueue(context.Background(), "", "read", runnable)
 		require.NoError(t, err)
 		assert.True(t, <-executed, "runnable should have been executed with cluster-scoped tenantID")
 	})
@@ -717,7 +722,7 @@ func TestRunInQueue(t *testing.T) {
 			executed = true
 		}
 
-		err = s.runInQueue(context.Background(), testTenantID, runnable)
+		err = s.runInQueue(context.Background(), testTenantID, "read", runnable)
 		require.Error(t, err)
 		require.ErrorIs(t, err, scheduler.ErrTenantQueueFull)
 		require.False(t, executed, "runnable should not have been executed")
@@ -1442,6 +1447,10 @@ type watchTestServerOpts struct {
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
 	NatsWatchMaxAge   time.Duration
+	// WrapKV wraps the backing store, e.g. to stall reads.
+	WrapKV func(KV) KV
+	// NotifierBufferSize overrides the notifier's buffer; zero keeps the default.
+	NotifierBufferSize int
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1452,14 +1461,18 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
+	var kvStore KV = NewBadgerKV(db)
+	if opts.WrapKV != nil {
+		kvStore = opts.WrapKV(kvStore)
+	}
 	watchExpiry := NewWatchExpiry()
 	store, err := NewKVStorageBackend(KVBackendOptions{
-		KvStore:            NewBadgerKV(db),
+		KvStore:            kvStore,
 		EventSubscriber:    opts.EventSubscriber,
 		EventPublisher:     opts.EventPublisher,
 		EnableNatsNotifier: opts.EventSubscriber != nil,
 		WatchInvalidator:   watchExpiry,
-		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond},
+		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond, BufferSize: opts.NotifierBufferSize},
 	})
 	require.NoError(t, err)
 
@@ -2291,15 +2304,37 @@ func TestWatchMaxAgeExpiry(t *testing.T) {
 	})
 }
 
-func TestJitteredWatchMaxAge(t *testing.T) {
-	base := 5 * time.Minute
-	lower := time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction))
-	upper := time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction))
-	for i := 0; i < 1000; i++ {
-		got := jitteredWatchMaxAge(t.Context(), base)
-		require.GreaterOrEqual(t, got, lower)
-		require.LessOrEqual(t, got, upper)
+func TestNextWatchMaxAgeExpiry(t *testing.T) {
+	maxAge := 15 * time.Minute
+	now := time.Unix(1_700_000_000, 123)
+	for _, phase := range []time.Duration{0, time.Nanosecond, 7 * time.Minute, maxAge - time.Nanosecond} {
+		d := nextWatchMaxAgeExpiry(now, maxAge, phase)
+		require.Greater(t, d, time.Duration(0))
+		require.LessOrEqual(t, d, maxAge)
+		require.Equal(t, phase, time.Duration(now.Add(d).UnixNano())%maxAge, "expiry must land on the phase")
 	}
+
+	// A watch started exactly at its boundary, e.g. right after being expired,
+	// waits a full period.
+	boundary := time.Unix(0, int64(3*maxAge+7*time.Minute))
+	require.Equal(t, maxAge, nextWatchMaxAgeExpiry(boundary, maxAge, 7*time.Minute))
+}
+
+func TestWatchMaxAgePhase(t *testing.T) {
+	maxAge := 15 * time.Minute
+	key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: "ns"}
+	user := newWatchTestUser()
+
+	base := watchMaxAgePhase(user, key, maxAge)
+	require.GreaterOrEqual(t, base, time.Duration(0))
+	require.Less(t, base, maxAge)
+	require.Equal(t, base, watchMaxAgePhase(user, key, maxAge))
+
+	other := newWatchTestUser()
+	other.UserUID = "u456"
+	require.NotEqual(t, base, watchMaxAgePhase(other, key, maxAge))
+	otherNS := &resourcepb.ResourceKey{Group: key.Group, Resource: key.Resource, Namespace: "other"}
+	require.NotEqual(t, base, watchMaxAgePhase(user, otherNS, maxAge))
 }
 
 // TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying
@@ -4636,4 +4671,198 @@ func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
 		"a keys page must respect maxPageSizeBytes; got %d bytes for %d items", size, len(rsp.Items))
 	require.NotEmpty(t, rsp.NextPageToken, "a truncated page must hand back a continue token")
 	require.Less(t, len(rsp.Items), 50, "the byte budget must have truncated the page")
+}
+
+func TestResourceServerQOSTenantIsolation(t *testing.T) {
+	access := &callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+		return authlib.CheckResponse{Allowed: true}, nil
+	}}
+	srv := newWatchTestServer(t, watchTestServerOpts{AccessClient: access})
+	ctxFor := func(namespace string) context.Context {
+		return authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+			Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: identity.RoleEditor, Namespace: namespace,
+		})
+	}
+	keys := map[string]*resourcepb.ResourceKey{}
+	for _, namespace := range []string{"slow", "healthy"} {
+		key := &resourcepb.ResourceKey{Namespace: namespace, Group: "playlist.grafana.app", Resource: "playlists", Name: "test-playlist"}
+		value := []byte(fmt.Sprintf(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-playlist","namespace":%q,"uid":"test-uid"},"spec":{"title":"test","interval":"5m","items":[]}}`, namespace))
+		rsp, err := srv.Create(ctxFor(namespace), &resourcepb.CreateRequest{Key: key, Value: value})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		keys[namespace] = key
+	}
+	q := scheduler.NewQueue(&scheduler.QueueOptions{MaxConcurrentPerTenant: 4})
+	startQOSTestService(t, q)
+	worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 32})
+	require.NoError(t, err)
+	startQOSTestService(t, worker)
+	srv.queue = q
+	srv.queueConfig.Timeout = 5 * time.Second
+
+	started := make(chan struct{}, 5)
+	release := make(chan struct{})
+	unblock := sync.OnceFunc(func() { close(release) })
+	t.Cleanup(unblock)
+	access.fn = func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+		if req.Namespace == "slow" {
+			started <- struct{}{}
+			<-release
+		}
+		return authlib.CheckResponse{Allowed: true}, nil
+	}
+	type result struct {
+		rsp *resourcepb.ReadResponse
+		err error
+	}
+	read := func(namespace string) result {
+		rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: keys[namespace]})
+		return result{rsp: rsp, err: err}
+	}
+	assertRead := func(r result) {
+		t.Helper()
+		require.NoError(t, r.err)
+		require.NotNil(t, r.rsp)
+		require.Nil(t, r.rsp.Error)
+		require.NotEmpty(t, r.rsp.Value)
+	}
+	slowResults := make(chan result, 5)
+	for range 5 {
+		go func() { slowResults <- read("slow") }()
+	}
+	for range 4 {
+		awaitQOSTestResult(t, started)
+	}
+	require.Eventually(t, func() bool { return q.Len() == 1 }, time.Second, time.Millisecond)
+	assertRead(read("healthy"))
+	require.Equal(t, 1, q.Len())
+	require.Empty(t, started, "fifth authorization must stay queued")
+	unblock()
+	for range 5 {
+		assertRead(awaitQOSTestResult(t, slowResults))
+	}
+}
+
+func TestResourceServerQOSQueueWaitSpan(t *testing.T) {
+	t.Run("ends before execution", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv, _ := newTestServerWithQueue(t, 10, 2)
+		ctx, parent := tracer.Start(t.Context(), "request")
+		defer parent.End()
+		var spans []sdktrace.ReadOnlySpan
+		var executionSpanContext trace.SpanContext
+		require.NoError(t, srv.runInQueue(ctx, "stack-a", "read", func(ctx context.Context) {
+			spans = recorder.Ended()
+			executionSpanContext = trace.SpanContextFromContext(ctx)
+		}))
+		require.Len(t, spans, 1)
+		require.Equal(t, "resource.server.runInQueue", spans[0].Name())
+		require.Equal(t, parent.SpanContext(), spans[0].Parent())
+		require.Equal(t, parent.SpanContext(), executionSpanContext)
+		require.Contains(t, spans[0].Attributes(), attribute.String("operation", "read"))
+		require.Contains(t, spans[0].Attributes(), attribute.String("stack", "stack-a"))
+	})
+	t.Run("cluster-scoped waits use the queue tenant", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv, _ := newTestServerWithQueue(t, 10, 2)
+		require.NoError(t, srv.runInQueue(t.Context(), "", "read", func(context.Context) {}))
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Contains(t, spans[0].Attributes(), attribute.String("stack", "cs"))
+	})
+	t.Run("ends on queued cancellation", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		q := scheduler.NewQueue(&scheduler.QueueOptions{})
+		startQOSTestService(t, q)
+		srv := &server{queue: q, queueConfig: QueueConfig{Timeout: time.Minute}}
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		result := make(chan error, 1)
+		go func() {
+			result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) { t.Error("canceled work ran") })
+		}()
+		require.Eventually(t, func() bool { return q.Len() == 1 }, time.Second, time.Millisecond)
+		cancel()
+		require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Equal(t, otelcodes.Error, spans[0].Status().Code)
+		require.Len(t, spans[0].Events(), 1)
+		require.Equal(t, "exception", spans[0].Events()[0].Name)
+		require.Eventually(t, func() bool { return q.Len() == 0 }, time.Second, time.Millisecond)
+	})
+	t.Run("execution cancellation leaves the completed wait successful", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv, _ := newTestServerWithQueue(t, 10, 2)
+		srv.queueConfig.Timeout = time.Minute
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		started := make(chan struct{})
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		t.Cleanup(unblock)
+		finished := make(chan struct{})
+		result := make(chan error, 1)
+		go func() {
+			result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) {
+				close(started)
+				<-release
+				close(finished)
+			})
+		}()
+		awaitQOSTestResult(t, started)
+		cancel()
+		require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Equal(t, otelcodes.Unset, spans[0].Status().Code)
+		require.Empty(t, spans[0].Events())
+		unblock()
+		awaitQOSTestResult(t, finished)
+	})
+	t.Run("enqueue failure ends the wait with an error", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv := &server{
+			queue:       scheduler.NewQueue(&scheduler.QueueOptions{}),
+			queueConfig: QueueConfig{Timeout: time.Minute, MaxRetries: 1},
+			log:         log.NewNopLogger(),
+		}
+		err := srv.runInQueue(t.Context(), "stack-a", "read", func(context.Context) { t.Error("rejected work ran") })
+		require.ErrorIs(t, err, scheduler.ErrQueueClosed)
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Equal(t, otelcodes.Error, spans[0].Status().Code)
+		require.Len(t, spans[0].Events(), 1)
+	})
+}
+
+func startQOSTestService(t *testing.T, service services.Service) {
+	t.Helper()
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), service))
+	t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), service)) })
+}
+
+func awaitQOSTestResult[T any](t *testing.T, ch <-chan T) T {
+	t.Helper()
+	select {
+	case result := <-ch:
+		return result
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for QoS test result")
+		var zero T
+		return zero
+	}
+}
+
+func newQOSTestSpanRecorder(t *testing.T) *tracetest.SpanRecorder {
+	t.Helper()
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	original := tracer
+	tracer = provider.Tracer("qos-test")
+	t.Cleanup(func() {
+		tracer = original
+		require.NoError(t, provider.Shutdown(context.Background()))
+	})
+	return recorder
 }

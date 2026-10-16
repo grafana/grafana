@@ -22,7 +22,11 @@ jest.mock('./ExtensionSidebarProvider', () => ({
 const mockUsePluginComponents = jest.mocked(usePluginComponents);
 const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
 
-const MockComponent = () => <div data-testid="working-component">Mock Component</div>;
+const MockComponent = ({ extensionSidebarPresentation }: { extensionSidebarPresentation?: string }) => (
+  <div data-testid="working-component" data-presentation={extensionSidebarPresentation}>
+    Mock Component
+  </div>
+);
 const pluginId = 'test-plugin';
 const extensionPointId = 'grafana/extension-sidebar/v0-alpha';
 
@@ -47,6 +51,8 @@ const extensionSidebarContextMock: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  presentation: 'docked',
+  floatingHidden: false,
 };
 
 const addedComponentRegistryItemMock: AddedComponentRegistryItem = {
@@ -139,5 +145,22 @@ describe('ExtensionSidebar', () => {
     const { container } = render(<ExtensionSidebar />);
     expect(container.firstChild).toBeInTheDocument();
     expect(screen.getByText('Mock Component')).toBeInTheDocument();
+  });
+
+  it('tells the extension its presentation without remounting it', () => {
+    mockUsePluginComponents.mockReturnValue({
+      components: [createComponentWithMeta(addedComponentRegistryItemMock, extensionPointId)],
+      isLoading: false,
+    });
+    mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'floating' });
+
+    const { rerender } = render(<ExtensionSidebar />);
+    const component = screen.getByTestId('working-component');
+    expect(component).toHaveAttribute('data-presentation', 'floating');
+
+    mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'docked' });
+    rerender(<ExtensionSidebar />);
+    expect(screen.getByTestId('working-component')).toBe(component);
+    expect(component).toHaveAttribute('data-presentation', 'docked');
   });
 });

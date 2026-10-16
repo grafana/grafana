@@ -3,15 +3,14 @@ import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
-import { setTemplateSrv } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { setTemplateSrv, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { ConfigureCorrelationSourceForm } from './ConfigureCorrelationSourceForm';
 import { type FormDTO } from './types';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceSettings: jest.fn(),
 }));
 

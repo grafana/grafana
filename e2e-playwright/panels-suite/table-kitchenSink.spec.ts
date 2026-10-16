@@ -346,8 +346,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
       const cell = getCell(table, 1, colIdx);
       await expect(cell.locator('a')).toBeVisible();
-      expect(cell.locator('a')).toHaveAttribute('href');
-      expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
+      await expect(cell.locator('a')).toHaveAttribute('href');
+      await expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
     }
 
     const headerContainer = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer);
@@ -362,7 +362,21 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
         continue;
       }
 
-      await cell.locator('a').click({ force: true });
+      // Inline links can extend past the clipping cell; click the center of their visible intersection.
+      await cell.scrollIntoViewIfNeeded();
+      const position = await cell.evaluate((element) => {
+        const cellBounds = element.getBoundingClientRect();
+        const linkBounds = element.querySelector('a')!.getBoundingClientRect();
+        return {
+          x:
+            (Math.max(cellBounds.left, linkBounds.left) + Math.min(cellBounds.right, linkBounds.right)) / 2 -
+            cellBounds.left,
+          y:
+            (Math.max(cellBounds.top, linkBounds.top) + Math.min(cellBounds.bottom, linkBounds.bottom)) / 2 -
+            cellBounds.top,
+        };
+      });
+      await cell.click({ position });
       await expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).toBeVisible();
 
       await headerContainer.click(); // convenient just to click the header to close the tooltip.

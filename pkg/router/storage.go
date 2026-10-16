@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -42,12 +41,10 @@ func NewRemoteResourceClient(cfg *setting.Cfg, tracer trace.Tracer, reg promethe
 		return nil, fmt.Errorf("error creating token exchange client: %w", err)
 	}
 
-	return unified.NewRemoteResourceClientWithAuth(cfg, tracer, reg, resource.RemoteResourceClientConfig{
-		AllowInsecure:         allowInsecure,
-		Namespace:             clientCfg.TokenNamespace,
-		Audiences:             []string{"resourceStore"},
-		TokenExchanger:        baseExchanger,
-		OnBehalfOf:            func(context.Context) bool { return true },
-		RequireCallerIdentity: func(context.Context) bool { return true },
+	return unified.NewStandaloneRemoteResourceClientWithAuth(cfg, tracer, reg, resource.RemoteResourceClientConfig{
+		AllowInsecure:  allowInsecure,
+		Namespace:      clientCfg.TokenNamespace,
+		Audiences:      []string{"resourceStore"},
+		TokenExchanger: baseExchanger,
 	})
 }

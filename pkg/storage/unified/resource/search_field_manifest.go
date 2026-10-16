@@ -12,9 +12,12 @@ import (
 
 var manifestMergeLogger = log.New("search-manifest-merge")
 
-// ReloadManifests trusts the SDK's embedding declarations. Search fields still
-// require the existing index-specific validation before replacing their view.
+// ReloadManifests updates declarations independently of index validation, so an
+// invalid search field cannot prevent a hybrid opt-out from taking effect.
 func (o SearchOptions) ReloadManifests(builtin, live []*app.ManifestData) error {
+	if o.HybridSearchConfig != nil {
+		o.HybridSearchConfig.Reload(builtin, live)
+	}
 	if o.EmbeddingConfig != nil {
 		o.EmbeddingConfig.Reload(builtin, live)
 	}

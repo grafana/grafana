@@ -7,7 +7,7 @@ import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navig
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
-import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+import { isNotificationHistoryEnabled } from './unified/featureToggles';
 import { proxied } from './unified/plugin-proxy/withRouteProxy';
 import {
   PERMISSIONS_CONTACT_POINTS,
@@ -271,7 +271,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications-history/view/:uuid',
-      component: cfg.featureToggles.alertingNotificationHistoryDetail
+      component: isNotificationHistoryEnabled(cfg)
         ? importAlertingComponent(
             () =>
               import(
@@ -283,14 +283,12 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
-      component: shouldAllowRecoveringDeletedRules()
-        ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
-              )
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
           )
-        : () => <Navigate replace to="/alerting/list" />,
+      ),
     },
     {
       path: '/alerting/import-datasource-managed-rules',

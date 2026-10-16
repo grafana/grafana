@@ -286,7 +286,7 @@ func TestAggregatedDiscoveryMixesProvidersAndFetchesSafely(t *testing.T) {
 	// are still being added on the request goroutine.
 	aggregatedDiscovery(t, router)
 	for range 20 {
-		require.Len(t, aggregatedDiscovery(t, router), 40)
+		require.Len(t, aggregatedDiscovery(t, router), 41) // with the discovery group
 	}
 }
 

@@ -396,9 +396,9 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 	t.Helper()
 	withManifest := manifestFile != ""
 
-	features := slices.Clone(extraFeatures)
+	// Settings are served by the embedded API server even when manifests use the router.
+	features := append(slices.Clone(extraFeatures), featuremgmt.FlagApppluginsRegisterAPIServer)
 	if !slices.Contains(features, featuremgmt.FlagGrafanaUseRouterMiddleware) {
-		features = append(features, featuremgmt.FlagApppluginsRegisterAPIServer)
 		if withManifest {
 			features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
 		}
@@ -406,7 +406,7 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,
-		OpenFeatureAPIEnabled:            true,
+		OpenFeatureStaticProvider:        true,
 		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles:             features,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
