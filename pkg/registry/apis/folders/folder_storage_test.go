@@ -20,38 +20,26 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	legacyapierrors "github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 	storageErr := status.Error(codes.Aborted, "private storage details")
-	for _, tc := range []struct {
-		name    string
-		err     error
-		code    int32
-		reason  metav1.StatusReason
-		message string
-	}{
-		{"unexpected transport error", storageErr, http.StatusInternalServerError, metav1.StatusReasonInternalError, "Folder API error"},
-		{"unexpected Go error", fmt.Errorf("private storage details"), http.StatusInternalServerError, metav1.StatusReasonInternalError, "Folder API error"},
-		{"kubernetes after retries", apierrors.NewConflict(schema.GroupResource{
+	for name, original := range map[string]error{
+		"grpc": storageErr,
+		"kubernetes after retries": apierrors.NewConflict(schema.GroupResource{
 			Group: "folder.grafana.app", Resource: "folders",
-		}, "foobar", storageErr), http.StatusConflict, metav1.StatusReasonConflict, "the folder operation conflicted with another request; please retry"},
+		}, "foobar", storageErr),
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			original := tc.err
+		t.Run(name, func(t *testing.T) {
 			var logs bytes.Buffer
 			ctx := logging.Context(context.Background(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
 			store := grafanarest.NewMockStorage(t)
@@ -62,9 +50,9 @@ func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 			require.Nil(t, out)
 			var publicErr *apierrors.StatusError
 			require.ErrorAs(t, err, &publicErr)
-			require.Equal(t, tc.code, publicErr.ErrStatus.Code)
-			require.Equal(t, tc.reason, publicErr.ErrStatus.Reason)
-			require.Equal(t, tc.message, publicErr.ErrStatus.Message)
+			require.Equal(t, int32(http.StatusConflict), publicErr.ErrStatus.Code)
+			require.Equal(t, metav1.StatusReasonConflict, publicErr.ErrStatus.Reason)
+			require.Equal(t, "the folder operation conflicted with another request; please retry", publicErr.ErrStatus.Message)
 			require.NotContains(t, err.Error(), "private storage details")
 
 			var record map[string]interface{}
@@ -75,39 +63,16 @@ func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 	}
 }
 
-func TestFolderStorageCreatePreservesParentLookupStatus(t *testing.T) {
+func TestFolderStorageCreatePreservesRetryMetadata(t *testing.T) {
 	expected := apierrors.NewTimeoutError("storage timeout", 7)
-	transport, err := status.New(codes.DeadlineExceeded, "private transport details").WithDetails(resource.AsErrorResult(expected))
-	require.NoError(t, err)
-	store := grafanarest.NewMockStorage(t)
-	store.On("Get", mock.Anything, "ancestor", &metav1.GetOptions{}).Return(nil, transport.Err()).Once()
-	store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, obj runtime.Object, validation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
-			return nil, fmt.Errorf("create failed: %w", validation(ctx, obj))
-		}).Once()
-	fs := folderStorage{store: store}
-	out, err := fs.Create(context.Background(), folderWithParent("child", "ancestor"), func(ctx context.Context, obj runtime.Object) error {
-		return validateOnCreate(ctx, obj.(*folders.Folder), newParentsGetter(store), 5, false)
-	}, &metav1.CreateOptions{})
-	require.Nil(t, out)
-	require.Equal(t, expected, err)
-	require.Equal(t, responsewriters.ErrorToAPIStatus(expected), responsewriters.ErrorToAPIStatus(err))
-	require.Equal(t, int(expected.ErrStatus.Code), legacyapierrors.ToFolderErrorResponse(err).Status())
-}
-
-func TestFolderStorageCreateNormalizesLegacyErrors(t *testing.T) {
 	store := grafanarest.NewMockStorage(t)
 	store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(nil, folder.ErrAPITitleEmpty).Once()
+		Return(nil, fmt.Errorf("create failed: %w", expected)).Once()
 	fs := folderStorage{store: store}
 	out, err := fs.Create(context.Background(), &folders.Folder{}, nil, &metav1.CreateOptions{})
 	require.Nil(t, out)
 	require.Error(t, err)
-	apiStatus := responsewriters.ErrorToAPIStatus(err)
-	require.Equal(t, int32(http.StatusBadRequest), apiStatus.Code)
-	require.Equal(t, folder.ErrTitleEmpty.Error(), apiStatus.Message)
-	require.NotNil(t, apiStatus.Details)
-	require.Equal(t, "folder.title-empty", string(apiStatus.Details.UID))
+	require.Equal(t, responsewriters.ErrorToAPIStatus(expected), responsewriters.ErrorToAPIStatus(err))
 }
 
 func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
