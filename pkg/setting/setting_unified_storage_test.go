@@ -10,6 +10,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBlobGarbageCollectionDefaultsAndOverrides(t *testing.T) {
+	cfg := NewCfg()
+	cfg.setUnifiedStorageConfig()
+	require.False(t, cfg.BlobGarbageCollectionEnabled)
+	require.True(t, cfg.BlobGarbageCollectionDryRun)
+
+	cfg.Raw.Section("unified_storage").Key("blob_garbage_collection_enabled").SetValue("true")
+	cfg.Raw.Section("unified_storage").Key("blob_garbage_collection_dry_run").SetValue("false")
+	cfg.setUnifiedStorageConfig()
+	require.True(t, cfg.BlobGarbageCollectionEnabled)
+	require.False(t, cfg.BlobGarbageCollectionDryRun)
+}
+
 func TestResourceVersionMaxWait(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
@@ -170,7 +183,6 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Add unified_storage section for index settings
 		setSectionKey("unified_storage", "index_min_count", "5")
-		cfg.Raw.Section("unified_storage").Key("search_backed_list_resources").SetValue("dashboard.grafana.app/dashboards, folder.grafana.app/folders")
 
 		cfg.setUnifiedStorageConfig()
 
@@ -192,7 +204,6 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Test that index settings are correctly parsed
 		assert.Equal(t, 5, cfg.IndexMinCount)
-		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.SearchBackedListResources)
 	})
 
 	t.Run("authorize_before_fetch_enabled", func(t *testing.T) {
@@ -680,6 +691,30 @@ func TestStorageServicesEnabled(t *testing.T) {
 			cfg.Target = tc.target
 
 			assert.Equal(t, tc.want, cfg.StorageServicesEnabled())
+		})
+	}
+}
+
+func TestQOSMaxConcurrentPerTenant(t *testing.T) {
+	for _, tc := range []struct {
+		name, iniValue, envValue string
+		want                     int
+	}{
+		{name: "default disabled"},
+		{name: "explicit disabled", iniValue: "0"},
+		{name: "enabled", iniValue: "4", want: 4},
+		{name: "environment override", envValue: "4", want: 4},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.envValue != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_QOS_MAX_CONCURRENT_PER_TENANT", tc.envValue)
+			}
+			cfg := NewCfg()
+			if tc.iniValue != "" {
+				cfg.Raw.Section("unified_storage").Key("qos_max_concurrent_per_tenant").SetValue(tc.iniValue)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.QOSMaxConcurrentPerTenant)
 		})
 	}
 }

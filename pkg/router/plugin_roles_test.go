@@ -92,6 +92,31 @@ func TestManifestRoleRegistrationsFromManifest(t *testing.T) {
 	require.Contains(t, actions(t, writer), testRoleGroup+"/testkinds:create")
 }
 
+// A role may grant a kind's custom route, which a route's declared check names
+// as a subresource; the built-in status subresource is not grantable, and
+// neither is anything that is not a single path segment.
+func TestManifestRoleRegistrationsCustomRouteSubresource(t *testing.T) {
+	manifest := roleTestManifest()
+	viewer := app.ManifestRolePermissionSetViewer
+	manifest.Roles = map[string]app.ManifestRole{
+		"testkind:reader": {Kinds: []app.ManifestRoleKind{
+			{Kind: "TestKind", PermissionSet: &viewer},
+			{Kind: "TestKind/render", PermissionSet: &viewer},
+			{Kind: "TestKind/status", PermissionSet: &viewer},
+			{Kind: "TestKind/Scale", PermissionSet: &viewer},
+			{Kind: "TestKind/", PermissionSet: &viewer},
+			{Kind: "TestKind/render/page", PermissionSet: &viewer},
+		}},
+	}
+	manifest.RoleBindings = &app.ManifestRoleBindings{Viewer: []string{"testkind:reader"}}
+
+	roles := byName(t, manifestRoleRegistrations(testRoleGroup, "Example", manifest))
+	require.ElementsMatch(t, []string{
+		testRoleGroup + "/testkinds:get",
+		testRoleGroup + "/testkinds/render:get",
+	}, actions(t, roles["fixed:"+testRoleGroup+":testkind:reader"]))
+}
+
 // Nothing a manifest can say may produce a registration access control refuses,
 // or one that names an action no check ever asks for.
 func TestManifestRoleRegistrationsSkipsUnusable(t *testing.T) {

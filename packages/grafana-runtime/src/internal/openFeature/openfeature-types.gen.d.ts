@@ -36,15 +36,16 @@ declare module "@openfeature/core" {
     | "kubernetesCorrelations"
     | "queryService"
     | "queryServiceWithConnections"
-    | "queryServiceFromUI"
     | "alertingUIUseBackendFilters"
     | "alertingUIUseFullyCompatBackendFilters"
     | "createAlertRuleFromPanel"
     | "dashboardNewLayouts"
     | "dashboards.libraryPanelRepeatFromServerResolution"
     | "dashboards.publicDashboardBadgeFromApi"
+    | "dashboards.libraryPanelHorizontalRepeatFullWidth"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
+    | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"
@@ -108,7 +109,6 @@ declare module "@openfeature/core" {
     | "alertEnrichment"
     | "preferLibraryPanelTitle"
     | "enableAppChromeExtensions"
-    | "enableDashboardEmptyExtensions"
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
@@ -173,6 +173,7 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "assistant.dashboardPlanning"
     | "grafana.multiTenantNavTree"
+    | "grafana.navigationInfoArchRefresh"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
@@ -188,7 +189,10 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.logDetailsDisplayedFieldControls"
-    | "grafana.globalHomePreference";
+    | "grafana.globalHomePreference"
+    | "grafana.otelLogDetails"
+    | "grafana.announcementBannerDismissible"
+    | "datasources.gatewayAuditPolicy";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
