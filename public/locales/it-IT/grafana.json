@@ -3919,6 +3919,11 @@
     "viz-wrapper": {
       "table": "Tabella"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Visualizza gli avvisi correnti ed esplora i dati storici per indagare sui problemi correnti o passati.",
       "description-alert-rules": "Definisci la condizione che deve essere soddisfatta prima che venga attivata una regola di avviso",
@@ -6108,6 +6113,9 @@
       "only-overrides-button-tooltip": "Mostra solo sovrascritture",
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Dati campione",
@@ -10821,6 +10829,7 @@
       "no-rows": "Nessuna riga",
       "no-values-label": "Nessun valore",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Ordina per colonna {{column}}",
       "sort-by-column-ascending": "Ordina per colonna {{column}}, in ordine crescente",
@@ -11129,6 +11138,8 @@
       "incident-filter-all": "Tutti gli incidenti",
       "incident-filter-label": "Filtra gli incidenti per etichetta",
       "incident-tab-label": "Incidenti",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "I tuoi team",
       "title": "Avvisi e incidenti",
       "title-alerts": "Avvisi",
@@ -11205,6 +11216,17 @@
       "error-title": "Impossibile caricare gli articoli recenti del blog",
       "read-more": "Scopri di più sul blog di Grafana Labs",
       "title": "Ultime dal blog"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11967,6 +11989,11 @@
       "load-newer": "Caricamento dei registri più recenti in corso...",
       "load-older": "Caricamento dei registri meno recenti in corso..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Riduci etichette",
       "expand": "Ingrandisci etichette"
@@ -12017,6 +12044,7 @@
       "inline-mode": "Visualizza in linea",
       "inline-no-scrolls": "Passa alla visualizzazione espansa",
       "inline-with-scrolls": "Passa alla visualizzazione ridotta",
+      "link-fallback-label": "",
       "link-value-tooltip": "Collega il valore",
       "links-section": "Collegamenti",
       "log-attributes-field": "Attributi del registro",
@@ -12026,13 +12054,14 @@
       "move-displayed-field-up": "Sposta in alto",
       "no-details": "Nessun campo da visualizzare.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Fissa registro",
       "prettify": "Migliora",
       "remove-displayed-field": "Rimuovi campo",
       "remove-log": "Rimuovi registro",
       "scroll-to-logline": "Scorri fino alla riga del registro",
       "search": {
-        "no-results": "Nessun risultato da visualizzare."
+        "no-results": ""
       },
       "search-placeholder": "Cerca nomi e valori dei campi",
       "show-context": "Mostra contesto",
@@ -13218,6 +13247,11 @@
       "target-label": "Blocco appunti di destinazione",
       "target-new": "Nuovo blocco appunti",
       "title": "Aggiungi pannello al blocco appunti"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",

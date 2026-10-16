@@ -3919,6 +3919,11 @@
     "viz-wrapper": {
       "table": "Tableau"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Visualisez les alertes en cours et explorez les données historiques pour analyser des incidents actuels ou passés.",
       "description-alert-rules": "Définir la condition qui doit être remplie avant qu’une règle d’alerte ne se déclenche",
@@ -6108,6 +6113,9 @@
       "only-overrides-button-tooltip": "Afficher uniquement les remplacements",
       "placeholder-search-options": "Options de recherche",
       "visualization-button-tooltip": "Options de recherche"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Données d’exemple",
@@ -10821,6 +10829,7 @@
       "no-rows": "Aucune ligne",
       "no-values-label": "Aucune valeur",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes",
+      "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Trier par colonne {{column}}",
       "sort-by-column-ascending": "Trier par colonne {{column}}, en ordre croissant",
@@ -11129,6 +11138,8 @@
       "incident-filter-all": "Tous les incidents",
       "incident-filter-label": "Filtrer les incidents par étiquette",
       "incident-tab-label": "Incidents",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Vos équipes",
       "title": "Alertes et incidents",
       "title-alerts": "Alertes",
@@ -11205,6 +11216,17 @@
       "error-title": "Impossible de charger les articles de blog récents",
       "read-more": "En savoir plus sur le blog de Grafana Labs",
       "title": "Les nouveautés du blog"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11967,6 +11989,11 @@
       "load-newer": "Chargement des journaux les plus récents...",
       "load-older": "Chargement des journaux plus anciens..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Réduire les étiquettes",
       "expand": "Développer les étiquettes"
@@ -12017,6 +12044,7 @@
       "inline-mode": "Afficher en ligne",
       "inline-no-scrolls": "Passer à la vue étendue",
       "inline-with-scrolls": "Passer à la vue condensée",
+      "link-fallback-label": "",
       "link-value-tooltip": "Valeur du lien",
       "links-section": "Liens",
       "log-attributes-field": "Attributs du journal",
@@ -12026,13 +12054,14 @@
       "move-displayed-field-up": "Déplacer vers le haut",
       "no-details": "Aucun champ à afficher.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Épingler ce log",
       "prettify": "Mettre en forme",
       "remove-displayed-field": "Supprimer le champ",
       "remove-log": "Supprimer le journal",
       "scroll-to-logline": "Faire défiler jusqu’à la ligne du journal",
       "search": {
-        "no-results": "Aucun résultat à afficher."
+        "no-results": ""
       },
       "search-placeholder": "Rechercher des noms de champs ou des valeurs",
       "show-context": "Afficher le contexte",
@@ -13218,6 +13247,11 @@
       "target-label": "Notebook cible",
       "target-new": "Nouveau notebook",
       "title": "Ajouter le panneau au notebook"
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
