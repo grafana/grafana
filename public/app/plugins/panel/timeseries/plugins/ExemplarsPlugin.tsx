@@ -34,6 +34,7 @@ export const ExemplarsPlugin = ({
 }: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot | undefined>(undefined);
   const [initializedConfig, setInitializedConfig] = useState<UPlotConfigBuilder>();
+  const [drawCount, setDrawCount] = useState(0);
 
   const [lockedExemplar, setLockedExemplar] = useState<ExemplarSelection | undefined>();
   const currentLockedExemplar = useMemo(
@@ -105,12 +106,15 @@ export const ExemplarsPlugin = ({
     }
     openExemplar.onHandled(request.requestId);
     setLockedExemplar({ dataFrame, rowIndex: request.rowIndex });
-  }, [exemplars, visibleSeries, openExemplar, initializedConfig, config, mapExemplarToXYCoords]);
+  }, [exemplars, visibleSeries, openExemplar, initializedConfig, config, mapExemplarToXYCoords, drawCount]);
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
       plotInstance.current = u;
       setInitializedConfig(config);
+    });
+    config.addHook('draw', () => {
+      setDrawCount((count) => count + 1);
     });
   }, [config]);
 

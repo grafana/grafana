@@ -349,6 +349,31 @@ describe('ExemplarsPlugin', () => {
     });
   });
 
+  it('opens a pending request after a draw makes the chart coordinates available', async () => {
+    const openExemplar = createOpenExemplar('navigation-scales', 0);
+    const plot = new uPlot({} as uPlot.Options);
+    valToPos.mockReturnValue(NaN);
+    try {
+      setUp({ openExemplar }, undefined, undefined, false);
+      runPlotHooks(plot);
+
+      expect(screen.getByTestId(selectors.components.UPlotChart.xyCanvas)).toBeVisible();
+      expect(openExemplar.onHandled).not.toHaveBeenCalled();
+      expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+    } finally {
+      valToPos.mockImplementation((_value: number, scaleKey?: string) => (scaleKey === 'x' ? 100 : 50));
+    }
+
+    act(() => {
+      hooks.draw.forEach((hook) => hook(plot));
+    });
+
+    expect(await screen.findByText('2203801e0171aa8b')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+    expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-scales');
+  });
+
   it.each([
     { name: 'missing Time field', field: 'Time', missing: true },
     { name: 'missing Value field', field: 'Value', missing: true },
