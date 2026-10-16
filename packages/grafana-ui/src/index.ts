@@ -49,7 +49,9 @@ export { UnitPicker } from './components/UnitPicker/UnitPicker';
 export { StatsPicker, type StatsPickerProps } from './components/StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './components/RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './components/DateTimePickers/TimeRangePicker';
-export { TimeRangeProvider } from './components/DateTimePickers/TimeRangeContext';
+// TODO: Remove TimeRangeProvider export in next major.
+/** @deprecated See `TimeRangeProvider` — removal planned for the next major version of `@grafana/ui`. */
+export { TimeRangeProvider } from './graveyard/TimeRangeContext/TimeRangeContext';
 export { TimePickerTooltip } from './components/DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './components/DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './components/DateTimePickers/TimeOfDayPicker';

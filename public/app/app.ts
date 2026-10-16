@@ -381,7 +381,7 @@ export class GrafanaApp {
         initializeCrashDetection();
       }
 
-      if (config.featureToggles.dashboardLevelTimeMacros) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardLevelTimeMacros, false)) {
         sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
         sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }

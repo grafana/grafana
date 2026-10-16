@@ -3919,6 +3919,11 @@
     "viz-wrapper": {
       "table": "Tabelle"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Sehen Sie, was zurzeit warnt, und prüfen Sie historische Daten, um aktuelle oder vergangene Probleme zu untersuchen.",
       "description-alert-rules": "Legen Sie die Bedingung fest, die erfüllt sein muss, bevor eine Warnregel ausgelöst wird",
@@ -6108,6 +6113,9 @@
       "only-overrides-button-tooltip": "Nur Überschreibungen anzeigen",
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Beispieldaten",
@@ -10762,13 +10770,21 @@
       "cell-filter-out": "Wert herausfiltern",
       "cell-inspect": "Wert prüfen",
       "cell-inspect-tooltip": "Wert prüfen",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filterwerte",
+      "column-menu-hide": "",
       "column-menu-label": "Spaltenoptionen für {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Filter aktualisieren",
+      "column-visibility": "",
+      "columns": "",
       "copy": "In Zwischenablage kopieren",
       "csv-counts": "Zeilen:{{rows}}, Spalten:{{columns}}",
       "csv-placeholder": "CSV hier eingeben …",
       "edit-column-filter": "Filter bearbeiten bei {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Alle angezeigten Werte zum Filter hinzufügen",
         "blanks": "(Leerzeichen)",
@@ -10802,6 +10818,8 @@
           "count": "Anzahl"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Wert prüfen",
       "loading": "Tabelle wird geladen",
       "nested-table": {
@@ -10811,6 +10829,8 @@
       "no-rows": "Keine Zeilen",
       "no-values-label": "Keine Werte",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "Nach Spalte {{column}} sortieren",
       "sort-by-column-ascending": "Nach Spalte {{column}} sortieren, aufsteigend",
       "sort-by-column-descending": "Nach Spalte {{column}} sortieren, absteigend",
@@ -10820,7 +10840,8 @@
       },
       "tooltip": {
         "trigger": "Tooltip umschalten"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Tags"
@@ -11117,6 +11138,8 @@
       "incident-filter-all": "Alle Incidents",
       "incident-filter-label": "Incidents nach Label filtern",
       "incident-tab-label": "Vorfälle",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Ihre Teams",
       "title": "Warnungen und Vorfälle",
       "title-alerts": "Warnungen",
@@ -11193,6 +11216,17 @@
       "error-title": "Neue Blogbeiträge konnten nicht geladen werden",
       "read-more": "Lesen Sie mehr vom Grafana-Labs-Blog",
       "title": "Das Neueste aus dem Blog"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11955,6 +11989,11 @@
       "load-newer": "Neuere Protokolle werden geladen …",
       "load-older": "Ältere Protokolle werden geladen …"
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Labels einklappen",
       "expand": "Labels ausklappen"
@@ -12005,6 +12044,7 @@
       "inline-mode": "Inline anzeigen",
       "inline-no-scrolls": "Zur erweiterten Ansicht wechseln",
       "inline-with-scrolls": "Zur komprimierten Ansicht wechseln",
+      "link-fallback-label": "",
       "link-value-tooltip": "Link-Wert",
       "links-section": "Links",
       "log-attributes-field": "Log-Attribute",
@@ -12014,13 +12054,14 @@
       "move-displayed-field-up": "Nach oben",
       "no-details": "Keine anzuzeigenden Felder.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Log anheften",
       "prettify": "Formatieren",
       "remove-displayed-field": "Feld entfernen",
       "remove-log": "Log entfernen",
       "scroll-to-logline": "Zur Logzeile scrollen",
       "search": {
-        "no-results": "Keine anzuzeigenden Ergebnisse."
+        "no-results": ""
       },
       "search-placeholder": "Feldnamen und Werte durchsuchen",
       "show-context": "Kontext anzeigen",
@@ -13207,6 +13248,11 @@
       "target-new": "Neues Notizbuch",
       "title": "Bereich zum Notizbuch hinzufügen"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
+    },
     "autosave": {
       "conflict-cancel": "",
       "conflict-confirm": "",
@@ -13871,6 +13917,9 @@
       "label-plugin-id": "Plugin-ID",
       "label-severity": "Schweregrad"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Alle Plugins sind auf dem neuesten Stand"
     },
@@ -13892,6 +13941,10 @@
     "plugin-details-body": {
       "needs-service-account": "Das Plugin {{pluginName}} erfordert ein Dienstkonto für die Abfrage von Grafana. Die folgende Liste enthält die Berechtigungen, die für das Dienstkonto verfügbar sind:",
       "page-not-found": "Die Seite wurde nicht gefunden."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Veraltet"
@@ -16526,6 +16579,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
     "description-page-size": "Anzahl der Zeilen pro Seite. Wenn dies leer ist, basiert die Seitengröße auf der Panel-Höhe.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
@@ -16564,6 +16618,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-page-size": "Seitengröße",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
     "name-styling-from-field": "Gestaltung über das Feld",
     "name-tooltip-from-field": "",
@@ -16727,6 +16782,7 @@
     "editor": {
       "aria-label-content": "Textinhalt",
       "aria-label-mode": "Textmodus: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Zeilennummern",
       "format-bold": "B",
       "format-heading": "H",
@@ -16772,6 +16828,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

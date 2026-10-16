@@ -17,14 +17,16 @@ import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
-import { TABLE } from '../constants';
+import { HEADER_DRAG_HANDLE_WIDTH, TABLE } from '../constants';
 import { getColumnMenuOptions } from '../menuOptions';
-import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
+import { type FilterType, type TableRow, type TableSummaryRow, type TableWarning } from '../types';
 import { getDisplayName, isFieldFilterable, isFieldHideable, isSortableField } from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
+import { TableWarnings } from './TableWarnings';
 
 interface HeaderCellProps {
+  warnings?: readonly TableWarning[];
   onAddToAssistant?: () => void;
   column: Column<TableRow, TableSummaryRow>;
   rows: TableRow[];
@@ -68,6 +70,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   canHideColumn,
   onOpenColumnPanel,
   onAddToAssistant,
+  warnings = [],
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -77,6 +80,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const displayName = getDisplayName(field);
   const filterable = isFieldFilterable(field);
   const hideable = isFieldHideable(field);
+  const reorderable = column.draggable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip ?? field.config.description;
 
@@ -171,6 +175,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
   const label = (
     <>
+      <TableWarnings warnings={warnings} scope="field" />
       {showTypeIcons && (
         <Stack alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
           <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
@@ -224,6 +229,18 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     return (
       // Scope hover styles to this header instead of an ancestor nested-table cell.
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
+        {reorderable && (
+          // Chrome requires an interactive drag target inside the draggable header.
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            className={styles.headerCellDragHandle}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Icon name="draggabledots" aria-hidden="true" />
+          </button>
+        )}
         <Stack direction="row" gap={0.5} alignItems={controlAlignment} grow={1} minWidth={0}>
           {label}
         </Stack>
@@ -292,6 +309,35 @@ const getStyles = memoize(
       gap: theme.spacing(0.5),
       flex: 1,
       minWidth: 0,
+      // Prevent text selection from stealing the column drag gesture.
+      userSelect: 'none',
+    }),
+    // Keep the handle mounted so its width can animate without shifting the label abruptly.
+    headerCellDragHandle: css({
+      label: 'headerCellDragHandle',
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0,
+      background: 'transparent',
+      border: 'none',
+      padding: 0,
+      color: theme.colors.text.secondary,
+      cursor: 'grab',
+      width: 0,
+      opacity: 0,
+      overflow: 'hidden',
+      marginInlineEnd: theme.spacing(-0.5),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['width', 'opacity', 'margin-inline-end'], {
+          duration: theme.transitions.duration.shorter,
+        }),
+      },
+      // The custom class avoids matching the outer cell of a nested table.
+      '.table-ng-header-cell:hover &': {
+        width: HEADER_DRAG_HANDLE_WIDTH,
+        opacity: 1,
+        marginInlineEnd: 0,
+      },
     }),
     // The `table.refresh` differences live in this one rule rather than in a second class composed
     // over it: two rules of equal specificity are resolved by their order in the stylesheet, and this

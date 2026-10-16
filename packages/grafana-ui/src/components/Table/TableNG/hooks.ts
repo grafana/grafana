@@ -438,6 +438,7 @@ interface UseHeaderHeightOptions {
   /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
 }
 
 export function useHeaderHeight({
@@ -451,6 +452,7 @@ export function useHeaderHeight({
   filter,
   lastColumnExtraPadding = 0,
   hasColumnSidebar = false,
+  reorderable = false,
   hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
@@ -475,6 +477,7 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
+          reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
               filterable: field.config.custom?.filterable,
@@ -494,6 +497,7 @@ export function useHeaderHeight({
       filteredKeys,
       lastColumnExtraPadding,
       hasColumnSidebar,
+      reorderable,
       hasAssistantAction,
     ]
   );
@@ -517,33 +521,37 @@ export function useHeaderHeight({
   return headerHeight;
 }
 
-export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
-  // A new result may contain only short values despite having the same schema or value buffers.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const epoch = useMemo(() => ({ disabled: new Set<string>(), pending: new Set<string>() }), [data]);
-  const [version, setVersion] = useState(0);
+function createTextWrapFallbackEpoch(data: DataFrame) {
+  return { data, disabledFields: new Set<string>(), pending: new Set<string>() };
+}
 
-  // Height callbacks run inside the grid's render, after columns have already been built. Collect
-  // discoveries without updating another component during render, then repair all heights and
-  // column styles together before paint. Finishing the scan batches discoveries across columns.
-  // Check every commit: pagination and expansion can expose new values without changing fields.
+export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
+  let [epoch, setEpoch] = useState(() => createTextWrapFallbackEpoch(data));
+  // New results can reuse the schema and value buffers while containing only short values.
+  if (epoch.data !== data) {
+    epoch = createTextWrapFallbackEpoch(data);
+    setEpoch(epoch);
+  }
+
+  // Grid height callbacks discover values during child render. Publish their batch before paint,
+  // including commits caused only by pagination or expansion, then invalidate dependent caches.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     if (epoch.pending.size > 0) {
-      for (const name of epoch.pending) {
-        epoch.disabled.add(name);
-      }
-      epoch.pending.clear();
-      setVersion((value) => value + 1);
+      setEpoch({
+        data: epoch.data,
+        disabledFields: new Set([...epoch.disabledFields, ...epoch.pending]),
+        pending: new Set<string>(),
+      });
     }
   });
 
   return useMemo(
     () => ({
-      disabledFields: new Set(epoch.disabled),
+      disabledFields: epoch.disabledFields,
       shouldDisable: (field: Field, value: unknown) => {
         const name = getDisplayName(field);
-        if (epoch.disabled.has(name) || epoch.pending.has(name)) {
+        if (epoch.disabledFields.has(name) || epoch.pending.has(name)) {
           return true;
         }
         if (value != null && String(value).length > TABLE.MAX_WRAP_TEXT_LENGTH) {
@@ -553,9 +561,7 @@ export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
         return false;
       },
     }),
-    // version publishes discoveries as a new immutable snapshot and invalidates height caches.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [epoch, version]
+    [epoch]
   );
 }
 
@@ -1054,6 +1060,7 @@ export interface ContentAwareWidths {
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1105,6 +1112,7 @@ interface UseContentAwareWidthsOptions {
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1123,6 +1131,7 @@ export function useContentAwareWidths({
   tableRefreshEnabled = false,
   filter,
   hasColumnSidebar = false,
+  reorderable = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
@@ -1143,6 +1152,7 @@ export function useContentAwareWidths({
             tableRefreshEnabled,
             filter,
             hasColumnSidebar,
+            reorderable,
             noPanelPadding,
             preventHorizontalOverflow,
           }
@@ -1159,6 +1169,7 @@ export function useContentAwareWidths({
       tableRefreshEnabled,
       theme,
       hasColumnSidebar,
+      reorderable,
       noPanelPadding,
       preventHorizontalOverflow,
     ]
@@ -1371,13 +1382,17 @@ export const useReducerEntries = (
 };
 
 interface ColumnViewStateOptions {
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
   hiddenColumns?: ReadonlySet<string>;
   onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
   structureRev?: number;
 }
 
 interface ColumnViewState {
+  columnOrder?: string[];
   hiddenColumns: ReadonlySet<string>;
+  setColumnOrder: (columnOrder: string[]) => void;
   setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
 }
 
@@ -1385,18 +1400,29 @@ const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
 
 // Change handlers select controlled mode because controlled values may initially be empty.
 export function useColumnViewState({
+  columnOrder,
+  onColumnOrderChange,
   hiddenColumns,
   onHiddenColumnsChange,
   structureRev,
 }: ColumnViewStateOptions): ColumnViewState {
+  const [localColumnOrder, setLocalColumnOrder] = useState<string[]>();
   const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
 
   useEffect(() => {
+    if (!onColumnOrderChange) {
+      setLocalColumnOrder(undefined);
+    }
     if (!onHiddenColumnsChange) {
       setLocalHiddenColumns(NO_HIDDEN_COLUMNS);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structureRev]);
+
+  const setColumnOrder = useCallback(
+    (next: string[]) => (onColumnOrderChange ? onColumnOrderChange(next) : setLocalColumnOrder(next)),
+    [onColumnOrderChange]
+  );
 
   const setHiddenColumns = useCallback(
     (next: ReadonlySet<string>) => (onHiddenColumnsChange ? onHiddenColumnsChange(next) : setLocalHiddenColumns(next)),
@@ -1404,7 +1430,9 @@ export function useColumnViewState({
   );
 
   return {
+    columnOrder: onColumnOrderChange ? columnOrder : localColumnOrder,
     hiddenColumns: (onHiddenColumnsChange ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
+    setColumnOrder,
     setHiddenColumns,
   };
 }

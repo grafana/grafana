@@ -42,6 +42,7 @@ declare module "@openfeature/core" {
     | "dashboardNewLayouts"
     | "dashboards.libraryPanelRepeatFromServerResolution"
     | "dashboards.publicDashboardBadgeFromApi"
+    | "dashboards.libraryPanelHorizontalRepeatFullWidth"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
     | "grafana.dashboardPreviewMode"
@@ -108,7 +109,6 @@ declare module "@openfeature/core" {
     | "alertEnrichment"
     | "preferLibraryPanelTitle"
     | "enableAppChromeExtensions"
-    | "enableDashboardEmptyExtensions"
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
@@ -189,7 +189,10 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.logDetailsDisplayedFieldControls"
-    | "grafana.globalHomePreference";
+    | "grafana.globalHomePreference"
+    | "grafana.otelLogDetails"
+    | "grafana.announcementBannerDismissible"
+    | "datasources.gatewayAuditPolicy";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
