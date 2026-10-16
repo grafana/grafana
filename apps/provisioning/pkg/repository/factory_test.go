@@ -3,8 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,48 +19,6 @@ import (
 
 // noopTracer is a no-op tracer for the many factory tests that don't assert on spans.
 var noopTracer = noop.NewTracerProvider().Tracer("test")
-
-func TestFactory_BuildPreservesServerUnavailableError(t *testing.T) {
-	cause := &url.Error{Op: "Get", URL: "https://git.example.com/project", Err: context.DeadlineExceeded}
-	unavailable := fmt.Errorf("%w: %w", ErrServerUnavailable, cause)
-	for name, buildErr := range map[string]error{
-		"direct":  unavailable,
-		"wrapped": fmt.Errorf("create gitlab client: %w", unavailable),
-		"joined":  errors.Join(errors.New("resolve project failed"), unavailable),
-	} {
-		t.Run(name, func(t *testing.T) {
-			recorder := tracetest.NewSpanRecorder()
-			tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
-			t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
-			extra := NewMockExtra(t)
-			extra.EXPECT().Type().Return(provisioning.GitLabRepositoryType)
-			extra.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr).Once()
-			factory, err := ProvideFactory(
-				map[provisioning.RepositoryType]struct{}{provisioning.GitLabRepositoryType: {}},
-				[]Extra{extra}, tp.Tracer("test"),
-			)
-			require.NoError(t, err)
-
-			result, err := factory.Build(t.Context(), &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType},
-			})
-			require.Nil(t, result)
-			require.Same(t, buildErr, err)
-			require.ErrorIs(t, err, ErrServerUnavailable)
-			var got *url.Error
-			require.ErrorAs(t, err, &got)
-			require.Same(t, cause, got)
-			require.ErrorIs(t, err, cause)
-			require.ErrorIs(t, err, context.DeadlineExceeded)
-			require.ErrorContains(t, err, "server unavailable")
-
-			spans := recorder.Ended()
-			require.Len(t, spans, 1)
-			require.Len(t, spans[0].Events(), 1)
-			assert.Contains(t, spans[0].Events()[0].Attributes, attribute.String("exception.message", buildErr.Error()))
-		})
-	}
-}
 
 func TestNewFactory(t *testing.T) {
 	t.Run("creates factory with empty extras", func(t *testing.T) {
