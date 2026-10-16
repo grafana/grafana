@@ -104,6 +104,25 @@ export class Controls extends PageObject {
   readonly variables = {
     /** Returns every variable control in the controls bar, in display order (controls menu items are not included) */
     getControls: (): Locator => this.getContainer().getByTestId(this.selectors.pages.Dashboard.SubMenu.submenuItem),
+    getControl: (variableLabel: string): Locator =>
+      this.variables
+        .getControls()
+        .filter({ has: this.variables.getLabel(variableLabel) })
+        .first(),
+    getEditActions: (): Locator => this.getByGrafanaSelector(this.selectors.components.EditActionsPopover.container),
+    clickEditAction: async (
+      variableLabel: string,
+      action: 'Settings' | 'Edit query' | 'Edit values' | 'Duplicate' | 'Delete'
+    ) => {
+      await test.step(`Click "${action}" in the popover for variable "${variableLabel}"`, async () => {
+        const control = this.variables.getControl(variableLabel);
+        const popoverId = await control.getAttribute('data-edit-actions-id');
+        await control.hover();
+        await this.page.locator(`[id="${popoverId}"]`).getByRole('button', { name: action, exact: true }).click();
+      });
+    },
+    getDescriptionIcon: (variableLabel: string): Locator =>
+      this.variables.getLabel(variableLabel).getByLabel('Variable description', { exact: true }),
     /** Returns the variable's label in the submenu */
     getLabel: (variableLabel: string): Locator =>
       this.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(variableLabel)),
