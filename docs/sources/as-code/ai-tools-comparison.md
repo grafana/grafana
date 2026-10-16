@@ -51,7 +51,7 @@ This table summarizes the main points for each tool:
 |**Best for**| Specific questions, dashboards, investigations in the UI | Interactive diagnosis from your AI client with per-user permissions | Self-hosted, private networks, service identity, custom policy | Repeatable work, CI, GitOps, multi-stack changes | 
 |**Cost note**| Per token consumed | Counts toward Assistant usage and active users | Server hosting is yours; Grafana usage rules apply | Free. Cloud products and Assistant requests are billed as usual | 
 
-## When to use which
+## When to use each tool
 
 See the following scenarios to better understand when to use each tool:
 
@@ -64,9 +64,8 @@ See the following scenarios to better understand when to use each tool:
 |Want conversational diagnosis followed by a reviewed change | MCP for diagnosis, `gcx` for the change | Refer to Use them together. | 
 |Use a coding agent needs flexibility to build its own workflows | `gcx` | `gcx` is as a broader, less opinionated toolset. | 
 
-### Use them together
+### Use the tools together
 
 You may use a composite pattern for coding agents: for example, use MCP for conversational discovery and diagnosis, then move durable changes into explicit `gcx` commands and version-controlled files. 
 
-[ai-tools.png](ai-tools.png)
-
+![AI tools cycle](ai-tools.png)
