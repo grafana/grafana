@@ -1454,7 +1454,7 @@ func TestAssistantPagesCreateAction(t *testing.T) {
 			require.Equal(t, "New Grafana Page", action.Text)
 			require.Equal(t, tt.subURL+assistantAppHomePath+"/pages/new", action.Url)
 			require.Equal(t, "plus", action.Icon)
-			require.Equal(t, assistantAppID, action.PluginID)
+			require.Empty(t, action.PluginID)
 			require.True(t, action.IsCreateAction)
 			require.True(t, action.HideFromTabs)
 			appLink := treeRoot.FindById("plugin-page-" + assistantAppID)
