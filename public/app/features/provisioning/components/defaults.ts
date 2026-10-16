@@ -15,5 +15,13 @@ export function getCanPushToConfiguredBranch(repository?: RepositoryView) {
 
 export function getDefaultRef(repository: RepositoryView | undefined, branchPrefix: string, loadedFromRef?: string) {
   const workflow = getDefaultWorkflow(repository, loadedFromRef);
-  return workflow === 'branch' ? generateNewBranchName(branchPrefix) : (repository?.branch ?? '');
+  if (workflow === 'branch') {
+    return generateNewBranchName(branchPrefix);
+  }
+  // Opened from a branch preview, the write default saves back to that branch; the configured branch
+  // is only the target when the repository can't push anywhere else.
+  if (loadedFromRef && loadedFromRef !== repository?.branch && repository?.workflows?.includes('branch')) {
+    return loadedFromRef;
+  }
+  return repository?.branch ?? '';
 }

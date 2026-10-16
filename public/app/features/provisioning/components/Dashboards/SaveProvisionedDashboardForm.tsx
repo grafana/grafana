@@ -210,12 +210,6 @@ export function SaveProvisionedDashboardForm({
       return;
     }
 
-    // TODO: Revisit after we decide on whether to keep the branch selection functionality
-    // If user is updating a dashboard in the original branch, override ref with whatever we loaded from
-    // if (workflow === 'write' && !isNew) {
-    //   ref = loadedFromRef;
-    // }
-
     const message = comment || `Save dashboard: ${dashboard.state.title}`;
 
     const body = rawDashboardJSON
