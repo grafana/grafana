@@ -328,7 +328,20 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
+	revision, err := ecp.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	var storedSecrets map[string]string
+	if storedReceiver, ok := revision.Config.GetGrafanaReceiverMap()[contactPoint.UID]; ok {
+		storedSecrets = storedReceiver.SecureSettings
+	}
 	for k, v := range extractedSecrets {
+		// Encryption is not deterministic, so keep the stored value when the secret is unchanged.
+		if storedValue, ok := storedSecrets[k]; ok && v == rawContactPoint.Settings.GetPath(strings.Split(k, ".")...).MustString() {
+			extractedSecrets[k] = storedValue
+			continue
+		}
 		encryptedValue, err := ecp.encryptValue(v)
 		if err != nil {
 			return err
@@ -349,12 +362,8 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
 	}
-	// save to store
-	revision, err := ecp.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
-	}
 
+	// save to store
 	oldReceiver, newReceiver, fullRemoval, newReceiverCreated := stitchReceiver(revision.Config, mergedReceiver)
 	if oldReceiver == nil {
 		return fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, mergedReceiver.UID)
