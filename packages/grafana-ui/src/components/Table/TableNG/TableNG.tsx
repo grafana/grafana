@@ -115,5 +115,5 @@ export function TableNG(props: TableNGProps) {
     rendered
   );
 
-  return props.rowTransformationsEnabled ? <TableFilterProvider props={props}>{table}</TableFilterProvider> : table;
+  return <TableFilterProvider props={props}>{table}</TableFilterProvider>;
 }

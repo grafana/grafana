@@ -17,9 +17,10 @@ import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
+import { useTableFilters } from '../TableFilterContext';
 import { HEADER_DRAG_HANDLE_WIDTH, TABLE } from '../constants';
 import { getColumnMenuOptions } from '../menuOptions';
-import { type FilterType, type TableRow, type TableSummaryRow, type TableWarning } from '../types';
+import { type TableRow, type TableSummaryRow, type TableWarning } from '../types';
 import { getDisplayName, isFieldFilterable, isFieldHideable, isSortableField } from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
@@ -32,8 +33,6 @@ interface HeaderCellProps {
   rows: TableRow[];
   field: Field;
   direction?: SortDirection;
-  filter: FilterType;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   showTypeIcons?: boolean;
   selectFirstCell: () => void;
   disableKeyboardEvents?: boolean;
@@ -56,10 +55,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   direction,
   disableKeyboardEvents,
   field,
-  filter,
   rows,
   selectFirstCell,
-  setFilter,
   showTypeIcons,
   parentIndex,
   crossFilterRows,
@@ -96,8 +93,6 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null);
   const { isPopoverVisible, setPopoverVisible, popupProps, filterEnabled } = useFilterPopupState({
     name: column.key,
-    filter,
-    setFilter,
     field,
     parentIndex,
     crossFilterRows,
@@ -114,16 +109,12 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     [setPopoverVisible]
   );
 
-  // we have to remove/reset the filter if the column is not filterable
+  const tableFilters = useTableFilters();
   useEffect(() => {
-    if (!filterable && filter[displayName]) {
-      setFilter((filter: FilterType) => {
-        const newFilter = { ...filter };
-        delete newFilter[displayName];
-        return newFilter;
-      });
+    if (!filterable && filterEnabled) {
+      tableFilters?.clearFilter(field, parentIndex);
     }
-  }, [filterable, displayName, filter, setFilter]);
+  }, [filterable, filterEnabled, tableFilters, field, parentIndex]);
 
   if (hideHeader) {
     return null;
@@ -286,8 +277,6 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           <Filter
             name={column.key}
             rows={rows}
-            filter={filter}
-            setFilter={setFilter}
             field={field}
             iconClassName={styles.headerCellIcon}
             parentIndex={parentIndex}

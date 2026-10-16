@@ -10,7 +10,6 @@ import {
   type ActionModel,
   type FieldType,
   type DataFrameWithValue,
-  type SelectableValue,
   type FieldState,
 } from '@grafana/data';
 import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
@@ -48,18 +47,6 @@ export enum FilterOperator {
   LESS_OR_EQUAL = '<=',
   EXPRESSION = 'Expression',
 }
-
-export type FilterType = Record<
-  string,
-  {
-    filteredSet: Set<string>;
-    displayName: string;
-    filtered?: Array<SelectableValue<unknown>>;
-    searchFilter?: string;
-    operator?: SelectableValue<FilterOperator>;
-    parentIndex?: number;
-  }
->;
 
 /* ----------------------------- Table specific types ----------------------------- */
 export interface TableSummaryRow {

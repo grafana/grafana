@@ -60,7 +60,6 @@ import {
 } from './styles';
 import {
   type CellRootRenderer,
-  type FilterType,
   type FromFieldsResult,
   type GetActionsFunctionLocal,
   type InspectCellProps,
@@ -161,7 +160,6 @@ export interface ColumnBuildConfig {
   disableSanitizeHtml?: boolean;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
-  filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
    * `firstColumnInset` style, applied under `noPanelPadding`). It comes out of the cell's content
@@ -186,7 +184,6 @@ export interface ColumnBuildConfig {
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
-  setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
@@ -270,8 +267,6 @@ function buildColumnsFromFields(
     getTextColorForBackground,
     rowHeight,
     rowHeightFn,
-    filter,
-    setFilter,
     setInspectCell,
     gridRef,
     getCellActions,
@@ -667,8 +662,6 @@ function buildColumnsFromFields(
           column={column}
           rows={rawRows}
           field={field}
-          filter={filter}
-          setFilter={setFilter}
           disableKeyboardEvents={disableKeyboardEvents}
           direction={sortDirection}
           showTypeIcons={showTypeIcons}

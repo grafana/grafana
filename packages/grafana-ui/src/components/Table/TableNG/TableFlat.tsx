@@ -205,7 +205,7 @@ export function TableFlat(props: TableNGProps) {
   const frameToRecords = useRowCompiler(data);
   const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
 
-  const { rows: filteredRows, filter, setFilter, filterResult } = useFilteredRows(rows, data.fields);
+  const { rows: filteredRows, filterResult } = useFilteredRows(rows, data.fields);
   const {
     rows: sortedRows,
     sortColumns,
@@ -224,20 +224,9 @@ export function TableFlat(props: TableNGProps) {
         return;
       }
       setHiddenColumns(new Set(hiddenColumns).add(displayName));
-      if (props.rowTransformationsEnabled) {
-        return;
-      }
-      setFilter((current) => {
-        if (!(displayName in current)) {
-          return current;
-        }
-        const next = { ...current };
-        delete next[displayName];
-        return next;
-      });
       setSortColumns((current) => current.filter((sort) => sort.columnKey !== displayName));
     },
-    [canHideAnotherColumn, hiddenColumns, setFilter, setHiddenColumns, setSortColumns, props.rowTransformationsEnabled]
+    [canHideAnotherColumn, hiddenColumns, setHiddenColumns, setSortColumns]
   );
 
   const handleToggleColumnVisibility = useCallback(
@@ -367,7 +356,6 @@ export function TableFlat(props: TableNGProps) {
     hasHeader,
     getActions: getCellActions,
     tableRefreshEnabled,
-    filter,
     hasColumnSidebar,
     reorderable,
     noPanelPadding,
@@ -385,7 +373,6 @@ export function TableFlat(props: TableNGProps) {
     typographyCtx: headerTypographyCtx,
     noPanelPadding,
     tableRefreshEnabled,
-    filter,
     hasColumnSidebar,
     reorderable,
   });
@@ -474,7 +461,6 @@ export function TableFlat(props: TableNGProps) {
     typographyCtx: headerTypographyCtx,
     noPanelPadding,
     tableRefreshEnabled,
-    filter,
     hasColumnSidebar,
     reorderable,
   });
@@ -516,8 +502,6 @@ export function TableFlat(props: TableNGProps) {
       getTextColorForBackground,
       rowHeight,
       rowHeightFn,
-      filter,
-      setFilter,
       setInspectCell,
       gridRef,
       getCellActions,
@@ -551,7 +535,6 @@ export function TableFlat(props: TableNGProps) {
       getTextColorForBackground,
       rowHeight,
       rowHeightFn,
-      filter,
       getCellActions,
       onCellFilterAdded,
       onFieldAddToAssistant,
@@ -563,7 +546,6 @@ export function TableFlat(props: TableNGProps) {
       hoverOverflow,
       disableSanitizeHtml,
       jsonSyntaxHighlightingEnabled,
-      setFilter,
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,

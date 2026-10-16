@@ -164,6 +164,30 @@ it('keeps the filtered rows without adding a clear-all control', () => {
   expect(screen.queryByRole('button', { name: /Clear filters/ })).not.toBeInTheDocument();
 });
 
+it('uses local filter state without row transformations enabled', async () => {
+  const { props } = setup();
+  props.data.fields[0].config.custom = { filterable: true };
+  render(<TableNG {...props} rowTransformationsEnabled={false} rowTransformations={undefined} />);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Filter Name' }));
+  await userEvent.click(screen.getByRole('checkbox', { name: 'alpha' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+
+  expect(screen.getAllByRole('row')).toHaveLength(2);
+  expect(screen.getByRole('gridcell', { name: 'alpha' })).toBeInTheDocument();
+});
+
+it('clears an active filter when its field stops being filterable', () => {
+  const { props, api, filter } = setup();
+  api.set('table', [filter('Name', ['alpha'])]);
+  props.data.fields[0].config.custom = { filterable: false };
+
+  render(<TableNG {...props} />);
+
+  expect(api.get('table')).toEqual([]);
+  expect(screen.getAllByRole('row')).toHaveLength(4);
+});
+
 it('reserves header height and automatic width for a filter on any nested parent', () => {
   const { props, api, filter } = setup();
   const field = props.data.fields[0];

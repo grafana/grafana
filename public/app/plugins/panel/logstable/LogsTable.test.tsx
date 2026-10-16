@@ -171,6 +171,17 @@ describe('LogsTable', () => {
     expect(headers[2].textContent).toEqual('body');
   });
 
+  it('filters log rows through local table transformations', async () => {
+    setUp(undefined, { showControls: false });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Filter level' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'info' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+
+    expect(screen.getByText('log 1')).toBeInTheDocument();
+    expect(screen.queryByText('log 2')).not.toBeInTheDocument();
+  });
+
   it.each([CoreApp.Dashboard, CoreApp.Explore])(
     'keeps JSON fields plain in %s with new table features enabled',
     async (app) => {

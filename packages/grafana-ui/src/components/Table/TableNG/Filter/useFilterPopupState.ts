@@ -6,15 +6,13 @@ import { type ValueSetOptions } from '@grafana/data/internal';
 import { useTableFilters } from '../TableFilterContext';
 import { tableFilterKey } from '../transformations/filterByValue';
 import { createValuePredicate, editableValueFilter } from '../transformations/valueFilter';
-import { FilterOperator, type FilterType, type TableRow } from '../types';
+import { FilterOperator, type TableRow } from '../types';
 
 import { type FilterPopupProps } from './FilterPopup';
 import { operatorSelectableValues } from './utils';
 
 interface UseFilterPopupStateOptions {
   name: string;
-  filter: FilterType;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   field?: Field;
   parentIndex?: number;
   /** Cross-filter rows keyed by filter key. Each entry holds the rows available *before* that filter was applied. */
@@ -42,40 +40,32 @@ interface UseFilterPopupState {
  */
 export function useFilterPopupState({
   name,
-  filter,
-  setFilter,
   field,
   parentIndex,
   crossFilterRows,
   crossFilterTailRows,
 }: UseFilterPopupStateOptions): UseFilterPopupState {
   const view = useTableFilters();
-  const legacyKey = typeof parentIndex === 'number' ? `${name}-${parentIndex}` : name;
   const selected = field ? (view?.getFilters(field, parentIndex) ?? []) : [];
   const snapshot = JSON.stringify(selected);
-  const transformed = Boolean(view);
   const predicate = selected[0]?.options.filters[0]?.config;
   const unsupported = selected.length > 1 || selected.some((config) => !editableValueFilter(config));
   const selection: ValueSetOptions | undefined = predicate?.id === 'inSet' ? predicate.options : undefined;
   const range: RangeValueMatcherOptions<number> | undefined =
     predicate?.id === 'between' ? predicate.options : undefined;
-  const filterKey = view && field ? tableFilterKey(field, parentIndex) : legacyKey;
-  const filterValue = view
-    ? selection?.values.map((value) => ({ value, label: String(value) }))
-    : filter[legacyKey]?.filtered;
+  const filterKey = field ? tableFilterKey(field, parentIndex) : name;
+  const filterValue = selection?.values.map((value) => ({ value, label: String(value) }));
 
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
-  const [searchFilter, setSearchFilter] = useState(filter[legacyKey]?.searchFilter || '');
+  const [searchFilter, setSearchFilter] = useState('');
   const [operator, setOperator] = useState<SelectableValue<FilterOperator>>(
-    filter[legacyKey]?.operator ?? operatorSelectableValues()[FilterOperator.CONTAINS]
+    operatorSelectableValues()[FilterOperator.CONTAINS]
   );
 
   useEffect(() => {
-    if (transformed) {
-      setSearchFilter('');
-      setOperator(operatorSelectableValues()[FilterOperator.CONTAINS]);
-    }
-  }, [snapshot, transformed]);
+    setSearchFilter('');
+    setOperator(operatorSelectableValues()[FilterOperator.CONTAINS]);
+  }, [snapshot]);
 
   // Show options scoped to the current cross-filter state:
   // - Active filter: rows available before that filter was applied (keeps its own options visible).
@@ -86,29 +76,27 @@ export function useFilterPopupState({
   return {
     isPopoverVisible,
     setPopoverVisible,
-    filterEnabled: view ? selected.length > 0 : Boolean(filterValue),
+    filterEnabled: selected.length > 0,
     popupProps: {
-      typed: Boolean(view),
-      stateKey: view ? snapshot : undefined,
+      stateKey: snapshot,
       unsupported,
-      onApplyValues:
-        view && field
-          ? (values) => {
-              if (values.length === 0) {
-                view.clearFilter(field, parentIndex);
-              } else {
-                view.applyFilter(
-                  field,
-                  createValuePredicate(
-                    field,
-                    values.map((item) => item.value),
-                    selection
-                  ),
-                  parentIndex
-                );
-              }
-            }
-          : undefined,
+      onApplyValues: (values) => {
+        if (view && field) {
+          if (values.length === 0) {
+            view.clearFilter(field, parentIndex);
+          } else {
+            view.applyFilter(
+              field,
+              createValuePredicate(
+                field,
+                values.map((item) => item.value),
+                selection
+              ),
+              parentIndex
+            );
+          }
+        }
+      },
       onApplyRange:
         view && field
           ? ({ min, max, includeMissing }) =>
@@ -127,19 +115,16 @@ export function useFilterPopupState({
                 parentIndex
               )
           : undefined,
-      onClear: view && field ? () => view.clearFilter(field, parentIndex) : undefined,
+      onClear: () => field && view?.clearFilter(field, parentIndex),
       range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
-      name,
       rows: rowsForPopup,
       filterValue,
-      setFilter,
       field,
       onClose: () => setPopoverVisible(false),
       searchFilter,
       setSearchFilter,
       operator,
       setOperator,
-      parentIndex,
     },
   };
 }

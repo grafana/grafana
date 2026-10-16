@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { type Dispatch, memo, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,25 +12,22 @@ import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../../FilterInput/FilterInput';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
-import { type FilterOperator, type FilterType, type TableRow } from '../types';
+import { type FilterOperator, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, operatorSelectableValues, valuesToOptions } from './utils';
 
 export interface FilterPopupProps {
-  typed?: boolean;
   stateKey?: string;
   unsupported?: boolean;
-  onApplyValues?: (values: SelectableValue[]) => void;
+  onApplyValues: (values: SelectableValue[]) => void;
   onApplyRange?: (range: { min?: number; max?: number; includeMissing: boolean }) => void;
-  onClear?: () => void;
+  onClear: () => void;
   timeZone?: string;
   range?: { min?: number; max?: number; includeMissing: boolean };
-  name: string;
   rows: TableRow[];
   filterValue?: Array<SelectableValue<unknown>>;
-  setFilter: Dispatch<SetStateAction<FilterType>>;
   onClose: () => void;
   field?: Field;
   searchFilter: string;
@@ -38,21 +35,17 @@ export interface FilterPopupProps {
   operator: SelectableValue<FilterOperator>;
   setOperator: (item: SelectableValue<FilterOperator>) => void;
   buttonElement: HTMLButtonElement | null;
-  parentIndex?: number;
 }
 
 export const FilterPopup = memo((props: FilterPopupProps) => <FilterPopupEditor key={props.stateKey} {...props} />);
 
 const FilterPopupEditor = memo(
   ({
-    typed,
     unsupported,
     onApplyValues,
     onClear,
-    name,
     rows,
     filterValue,
-    setFilter,
     onClose,
     field,
     searchFilter,
@@ -60,7 +53,6 @@ const FilterPopupEditor = memo(
     operator,
     setOperator,
     buttonElement,
-    parentIndex,
   }: FilterPopupProps) => {
     const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
     const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -70,10 +62,6 @@ const FilterPopupEditor = memo(
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const operators = Object.values(operatorSelectableValues());
-    const filterKey = useMemo(
-      () => (typeof parentIndex === 'number' ? `${name}-${parentIndex}` : name),
-      [name, parentIndex]
-    );
 
     // focus the input on mount. autoFocus prop doesn't work on FilterInput, maybe due to the forwarded ref
     useEffect(() => {
@@ -97,45 +85,14 @@ const FilterPopupEditor = memo(
     }, [onClose, buttonElement]);
 
     const onFilter = useCallback(() => {
-      if (onApplyValues) {
-        onApplyValues(values);
-      } else if (values.length !== 0) {
-        // create a Set for faster filtering
-        const filteredSet = new Set(values.map((item) => item.value));
-
-        setFilter((filter: FilterType) => ({
-          ...filter,
-          [filterKey]: {
-            filtered: values,
-            filteredSet,
-            searchFilter,
-            operator,
-            displayName: name,
-            parentIndex,
-          },
-        }));
-      } else {
-        setFilter((filter: FilterType) => {
-          const newFilter = { ...filter };
-          delete newFilter[filterKey];
-          return newFilter;
-        });
-      }
+      onApplyValues(values);
       onClose();
-    }, [filterKey, operator, parentIndex, searchFilter, setFilter, values, name, onClose, onApplyValues]);
+    }, [values, onClose, onApplyValues]);
 
     const onClearFilter = useCallback(() => {
-      if (onClear) {
-        onClear();
-      } else {
-        setFilter((filter: FilterType) => {
-          const newFilter = { ...filter };
-          delete newFilter[filterKey];
-          return newFilter;
-        });
-      }
+      onClear();
       onClose();
-    }, [filterKey, setFilter, onClose, onClear]);
+    }, [onClose, onClear]);
 
     // we can't directly use ClickOutsideWrapper here because the click and keyup
     // events are complex and need to be handled with care to avoid conflicts
