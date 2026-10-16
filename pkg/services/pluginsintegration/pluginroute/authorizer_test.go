@@ -137,6 +137,38 @@ func TestGetAuthorizerAppAccessGatesKinds(t *testing.T) {
 	require.Equal(t, "access denied", reason)
 }
 
+// A plugin acting as itself has no scoped app access, so its token's
+// permissions for the requested group stand in for it.
+func TestGetAuthorizerServiceTokenPermissions(t *testing.T) {
+	b := &manifestBuilder{
+		pluginID:      "test-app",
+		kindPolicies:  kindPolicies(testManifest(t)),
+		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: false}),
+	}
+	service := func(permissions ...string) context.Context {
+		return identity.WithRequester(context.Background(), &identity.StaticRequester{
+			Type: claims.TypeAccessPolicy, UserUID: "example-app", OrgID: 1,
+			AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Permissions: permissions}},
+		})
+	}
+	authorize := func(ctx context.Context, group string) authorizer.Decision {
+		decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{APIGroup: group, Resource: "testkinds", Verb: "list"})
+		require.NoError(t, err)
+		return decision
+	}
+
+	require.Equal(t, authorizer.DecisionAllow, authorize(service("test.ext.grafana.app:*"), "test.ext.grafana.app"))
+	// List needs get, as storage checks it.
+	require.Equal(t, authorizer.DecisionAllow, authorize(service("test.ext.grafana.app/testkinds:get"), "test.ext.grafana.app"))
+	require.Equal(t, authorizer.DecisionDeny, authorize(service("other.ext.grafana.app:*"), "test.ext.grafana.app"),
+		"a token for another group needs app access for this one")
+	require.Equal(t, authorizer.DecisionDeny, authorize(service("plugins.app:access"), "test.ext.grafana.app"),
+		"without app access, an action name grants nothing")
+
+	user := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
+	require.Equal(t, authorizer.DecisionDeny, authorize(user, "test.ext.grafana.app"), "users still need app access")
+}
+
 func TestGetAuthorizerRequiresIdentity(t *testing.T) {
 	b := &manifestBuilder{
 		pluginID:      "test-app",
