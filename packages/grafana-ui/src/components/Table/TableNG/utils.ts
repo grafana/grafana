@@ -920,7 +920,8 @@ export function applySort(
 
 export interface ApplyFilterResult {
   crossFilterOrder: string[];
-  crossFilterRows: Record<string, TableRow[]>;
+  /** Compute a column's cross-filter rows only when its popup opens. */
+  crossFilterRows: Record<string, () => TableRow[]>;
   crossFilterTailRows: TableRow[];
   filteredRows: TableRow[];
 }

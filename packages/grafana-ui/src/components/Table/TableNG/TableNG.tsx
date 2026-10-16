@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useRef } from 'react';
 
-import { cacheFieldDisplayNames, type DataFrame, FieldType } from '@grafana/data';
+import { cacheFieldDisplayNames, type DataFrame, type Field, FieldType } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
@@ -36,12 +36,47 @@ function Safari26Wrapper(props: { children: React.ReactNode }) {
 }
 
 export function TableNG(props: TableNGProps) {
+  const preparedFrames = useRef({
+    structureRev: props.structureRev,
+    cache: new WeakMap<
+      DataFrame,
+      {
+        fields: Field[];
+        values: Array<Field['values']>;
+        configs: Array<Field['config']>;
+        length: number;
+        name?: string;
+        refId?: string;
+        meta?: DataFrame['meta'];
+        prepared: DataFrame;
+      }
+    >(),
+  });
+  if (preparedFrames.current.structureRev !== props.structureRev) {
+    preparedFrames.current.structureRev = props.structureRev;
+    preparedFrames.current.cache = new WeakMap();
+  }
+  const frameCache = preparedFrames.current.cache;
   const data = useMemo(() => {
     if (!props.rowTransformationsEnabled) {
       return props.data;
     }
     const frame = props.data;
     const prepare = (frame: DataFrame): DataFrame => {
+      const hasNestedFrames = frame.fields.some((field) => field.type === FieldType.nestedFrames);
+      const cached = hasNestedFrames ? undefined : frameCache.get(frame);
+      if (
+        cached?.fields === frame.fields &&
+        cached.length === frame.length &&
+        cached.name === frame.name &&
+        cached.refId === frame.refId &&
+        cached.meta === frame.meta &&
+        frame.fields.every(
+          (field, index) => field.values === cached.values[index] && field.config === cached.configs[index]
+        )
+      ) {
+        return cached.prepared;
+      }
       if (!hasCachedDisplayNames(frame)) {
         cacheFieldDisplayNames([frame]);
       }
@@ -60,7 +95,7 @@ export function TableNG(props: TableNGProps) {
       };
       const duplicateNames = duplicates(names);
       const duplicateIdentities = duplicates(identities);
-      return {
+      const prepared = {
         ...frame,
         fields: frame.fields.map((field, index) => ({
           ...field,
@@ -83,9 +118,22 @@ export function TableNG(props: TableNGProps) {
           },
         })),
       };
+      if (!hasNestedFrames) {
+        frameCache.set(frame, {
+          fields: frame.fields,
+          values: frame.fields.map((field) => field.values),
+          configs: frame.fields.map((field) => field.config),
+          length: frame.length,
+          name: frame.name,
+          refId: frame.refId,
+          meta: frame.meta,
+          prepared,
+        });
+      }
+      return prepared;
     };
     return prepare(frame);
-  }, [props.data, props.rowTransformationsEnabled]);
+  }, [props.data, props.rowTransformationsEnabled, frameCache]);
 
   // runs during render (before TableFlat/TableNested read field.state), not after commit —
   // otherwise their own memoized row/column builders capture the pre-cache values and never see

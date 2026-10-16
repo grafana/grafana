@@ -20,14 +20,18 @@ export function useRowTransformations(props: TableNGProps) {
   const { api, owner = '' } = props.rowTransformations ?? {};
   const source = props.data;
   const frameIndex = props.rowTransformations?.frameIndex ?? 0;
-  const frameKey =
-    props.rowTransformations?.frameKey ??
-    JSON.stringify([
-      source.refId,
-      source.name,
-      props.structureRev,
-      source.fields.map((field) => [field.name, field.type, field.labels]),
-    ]);
+  const configuredFrameKey = props.rowTransformations?.frameKey;
+  const frameKey = useMemo(
+    () =>
+      configuredFrameKey ??
+      JSON.stringify([
+        source.refId,
+        source.name,
+        props.structureRev,
+        source.fields.map((field) => [field.name, field.type, field.labels]),
+      ]),
+    [configuredFrameKey, source, props.structureRev]
+  );
 
   const { transformations: configs, update } = useTableTransformations(api, owner, true);
   const filters = useMemo(() => activeFilters(configs, frameKey, source), [configs, frameKey, source]);

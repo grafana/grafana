@@ -39,7 +39,7 @@ interface HeaderCellProps {
   selectFirstCell: () => void;
   disableKeyboardEvents?: boolean;
   parentIndex?: number;
-  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterRows: Record<string, () => TableRow[]>;
   crossFilterTailRows: TableRow[];
   tableRefreshEnabled?: boolean;
   hasColumnSidebar?: boolean;

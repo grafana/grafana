@@ -7,15 +7,7 @@ import { type ApplyFilterResult } from '../utils';
 import { tableFilterKey, matchesTableFilter } from './filterByValue';
 import { tableViewIndices } from './tableFiltering';
 
-function transformTableRows(
-  rows: TableRow[],
-  fields: Field[],
-  filters: readonly FilterByValueConfig[],
-  parentIndex?: number
-): TableRow[] {
-  if (!filters.length) {
-    return rows;
-  }
+function createRowProjector(rows: TableRow[], fields: Field[], parentIndex?: number) {
   const parents = rows.filter((row) => row.__depth === 0);
   const frame: DataFrame = {
     length: parents.length,
@@ -27,13 +19,15 @@ function transformTableRows(
     })),
   };
   cacheFieldDisplayNames([frame]);
-  const indices = tableViewIndices(frame, filters, parentIndex);
   const children = new Map(rows.filter((row) => row.__depth !== 0).map((row) => [row.__index, row]));
-  return indices.flatMap((index) => {
-    const row = parents[index];
-    const child = children.get(row.__index);
-    return child ? [row, child] : [row];
-  });
+  return (filters: readonly FilterByValueConfig[]): TableRow[] => {
+    const indices = tableViewIndices(frame, filters, parentIndex);
+    return indices.flatMap((index) => {
+      const row = parents[index];
+      const child = children.get(row.__index);
+      return child ? [row, child] : [row];
+    });
+  };
 }
 
 export function transformTableFilters(
@@ -42,25 +36,30 @@ export function transformTableFilters(
   filters: readonly FilterByValueConfig[],
   parentIndex?: number
 ): ApplyFilterResult {
-  const scoped = filters.filter((config) => config.options.target?.parentIndex === parentIndex);
-  const entries = fields.flatMap((field) => {
+  const scoped = filters.filter((config) => !config.disabled && config.options.target?.parentIndex === parentIndex);
+  if (!scoped.length) {
+    return { filteredRows: rows, crossFilterOrder: [], crossFilterRows: {}, crossFilterTailRows: rows };
+  }
+  let projector: ReturnType<typeof createRowProjector> | undefined;
+  const projectRows = (selected: readonly FilterByValueConfig[]) => {
+    if (!selected.length) {
+      return rows;
+    }
+    projector ??= createRowProjector(rows, fields, parentIndex);
+    return projector(selected);
+  };
+  const crossFilterRows: Record<string, () => TableRow[]> = {};
+  const crossFilterOrder: string[] = [];
+  for (const field of fields) {
     const selected = scoped.filter((config) => matchesTableFilter(config, field, parentIndex));
-    return selected.length
-      ? [
-          [
-            tableFilterKey(field, parentIndex),
-            transformTableRows(
-              rows,
-              fields,
-              filters.filter((config) => !selected.includes(config)),
-              parentIndex
-            ),
-          ] as const,
-        ]
-      : [];
-  });
-  const crossFilterOrder = entries.map(([key]) => key);
-  const crossFilterRows = Object.fromEntries(entries);
-  const filteredRows = transformTableRows(rows, fields, filters, parentIndex);
+    if (selected.length) {
+      const key = tableFilterKey(field, parentIndex);
+      const otherFilters = scoped.filter((config) => !selected.includes(config));
+      let cached: TableRow[] | undefined;
+      crossFilterRows[key] = () => (cached ??= projectRows(otherFilters));
+      crossFilterOrder.push(key);
+    }
+  }
+  const filteredRows = projectRows(scoped);
   return { filteredRows, crossFilterOrder, crossFilterRows, crossFilterTailRows: filteredRows };
 }

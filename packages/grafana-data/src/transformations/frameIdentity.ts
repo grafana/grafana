@@ -1,7 +1,11 @@
 import { type DataFrame, FieldType } from '../types/dataFrame';
 
 export function getRowIdentity(frame: DataFrame, parentIndex: number): string {
-  return JSON.stringify(
-    frame.fields.filter((field) => field.type !== FieldType.nestedFrames).map((field) => field.values[parentIndex])
-  );
+  const values: unknown[] = [];
+  for (const field of frame.fields) {
+    if (field.type !== FieldType.nestedFrames) {
+      values.push(field.values[parentIndex]);
+    }
+  }
+  return JSON.stringify(values);
 }

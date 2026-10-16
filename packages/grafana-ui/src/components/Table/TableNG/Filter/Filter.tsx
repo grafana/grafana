@@ -24,7 +24,7 @@ interface Props {
   iconClassName?: string;
   parentIndex?: number;
   /** Cross-filter rows keyed by filter key. Each entry holds the rows available *before* that filter was applied.  */
-  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterRows: Record<string, () => TableRow[]>;
   /** Rows surviving all active filters. Used for brand-new (not-yet-active) filter popups. */
   crossFilterTailRows: TableRow[];
 }

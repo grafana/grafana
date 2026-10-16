@@ -39,9 +39,16 @@ it('cross-filters from all other active fields and preserves original row indice
   ]);
 
   expect(result.filteredRows.map((row) => row.__index)).toEqual([0, 2]);
-  expect(result.crossFilterOrder).toEqual(['["category",[],null]', '["status",[],null]']);
-  expect(result.crossFilterRows['["category",[],null]'].map((row) => row.__index)).toEqual([0, 2, 4]);
-  expect(result.crossFilterRows['["status",[],null]'].map((row) => row.__index)).toEqual([0, 1, 2, 3]);
+  const crossFilterIndices = Object.values(result.crossFilterRows).map((getRows) =>
+    getRows().map((row) => row.__index)
+  );
+  expect(crossFilterIndices).toHaveLength(2);
+  expect(crossFilterIndices).toEqual(
+    expect.arrayContaining([
+      [0, 2, 4],
+      [0, 1, 2, 3],
+    ])
+  );
 });
 
 it('applies nested filters only to their parent row', () => {

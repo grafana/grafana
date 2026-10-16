@@ -79,12 +79,16 @@ export function TablePanel(props: Props) {
   const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
   const sourceFrames = sourceSeries ?? frames;
   const sourceFrame = sourceFrames[sourceFrameIndex];
-  const sourceFrameKey = JSON.stringify([
-    sourceFrame?.refId,
-    sourceFrameIndex,
-    sourceFrame?.name,
-    sourceFrame?.fields.map((field) => [field.name, field.type, field.labels]),
-  ]);
+  const sourceFrameKey = useMemo(
+    () =>
+      JSON.stringify([
+        sourceFrame?.refId,
+        sourceFrameIndex,
+        sourceFrame?.name,
+        sourceFrame?.fields.map((field) => [field.name, field.type, field.labels]),
+      ]),
+    [sourceFrame, sourceFrameIndex]
+  );
   // Rebuild against original rows while retaining cross-frame display and data-link context.
   const sourceFramesWithOverrides = useMemo(
     () =>

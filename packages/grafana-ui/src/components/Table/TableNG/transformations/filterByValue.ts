@@ -50,16 +50,21 @@ export function activeFilters(
   frameKey: string,
   source: DataFrame
 ): FilterByValueConfig[] {
+  const parentKeys = new Map<number, string>();
   return configs.filter((config): config is FilterByValueConfig => {
     if (!isTableFilter(config, frameKey) || config.disabled) {
       return false;
     }
     const target = config.options.target;
-    return (
-      target?.parentIndex == null ||
-      target.parentKey == null ||
-      target.parentKey === getRowIdentity(source, target.parentIndex)
-    );
+    if (target?.parentIndex != null && target.parentKey != null) {
+      let currentKey = parentKeys.get(target.parentIndex);
+      if (currentKey === undefined) {
+        currentKey = getRowIdentity(source, target.parentIndex);
+        parentKeys.set(target.parentIndex, currentKey);
+      }
+      return target.parentKey === currentKey;
+    }
+    return true;
   });
 }
 
