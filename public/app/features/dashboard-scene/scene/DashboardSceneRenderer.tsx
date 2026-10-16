@@ -8,6 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
@@ -18,6 +19,7 @@ import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { PlanningControls } from './new-toolbar/PlanningControls';
+import { SandboxConsentBanner } from './sandbox-consent/SandboxConsentBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -32,6 +34,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     isEditing,
     layoutOrchestrator,
     planning,
+    uid,
   } = model.useState();
 
   const scopesServices = useScopesServices();
@@ -141,10 +144,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {editPanel && <editPanel.Component model={editPanel} />}
+        {!editPanel && <SandboxConsentBanner dashboardUid={uid} />}
         {!editPanel && (
           <DashboardSidebarSplitter
             dashboard={model}
-            isEditing={isEditing}
+            isEditing={isFullDashboardEditing(model.state)}
             isPlanning={Boolean(planning)}
             controls={renderControls()}
             body={renderBody()}

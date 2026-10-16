@@ -20,11 +20,24 @@ export interface DashboardMutationAPI {
   getAvailableCommands(): string[];
 }
 
+/**
+ * Lays out the extension sidebar. `docked` is a column next to the page; `floating` lays the sidebar over the
+ * page in its bottom-right corner. The extension reads the current layout from its
+ * `extensionSidebarPresentation` prop; switching never remounts it.
+ */
+export interface ExtensionSidebarAPI {
+  /** Whether `setPresentation('floating')` has an effect in this Grafana. */
+  canFloat(): boolean;
+  /** Sets the layout. `floating` is ignored while `canFloat()` is false. */
+  setPresentation(presentation: 'docked' | 'floating'): void;
+}
+
 interface RestrictedGrafanaApisContextTypeInternal {
   // Add types for restricted Grafana APIs here
   // (Make sure that they are typed as optional properties)
   alertingAlertRuleFormSchema?: ZodSchema;
   dashboardMutationAPI?: DashboardMutationAPI;
+  extensionSidebar?: ExtensionSidebarAPI;
 }
 
 // We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).

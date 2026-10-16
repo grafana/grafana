@@ -19,7 +19,12 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION, NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
-import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
+import {
+  createNotebook,
+  NotebookConflictError,
+  readNotebookResourceVersion,
+  updateNotebook,
+} from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { defaultSpec as defaultNotebookSpec, defaultVisualizationPanelKind } from '../types';
@@ -34,6 +39,7 @@ import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 jest.mock('../api/notebookResource', () => ({
   createNotebook: jest.fn(),
   updateNotebook: jest.fn(),
+  readNotebookResourceVersion: jest.fn(),
   NotebookConflictError: jest.requireActual('../api/notebookResource').NotebookConflictError,
 }));
 
@@ -707,6 +713,48 @@ describe('NotebookAutosave', () => {
     await waiting;
 
     expect(settled).toBe(true);
+  });
+
+  describe('isSavedElsewhere', () => {
+    it('is false before this scene has a version to compare, without asking the server', async () => {
+      const scene = activateEditing();
+
+      expect(await scene.autosave.isSavedElsewhere()).toBe(false);
+      expect(readNotebookResourceVersion).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['the server still holds this version', '5', false],
+      ['someone else saved since', '9', true],
+      ['the server reports no version', undefined, false],
+    ])('compares with the server: %s', async (_label, serverVersion, expected) => {
+      const scene = activateEditing();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue(serverVersion);
+
+      expect(await scene.autosave.isSavedElsewhere()).toBe(expected);
+    });
+
+    // Otherwise this scene's own save, landing during the check, would read as someone else's.
+    it('lets a save of its own that is already running land before comparing', async () => {
+      let finishSave = () => {};
+      jest.mocked(updateNotebook).mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishSave = () => resolve({ generation: 3, resourceVersion: '7' });
+          })
+      );
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue('7');
+      const scene = activateEditing();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      editFirstCell(scene, 'Mine');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      const checking = scene.autosave.isSavedElsewhere();
+      finishSave();
+
+      expect(await checking).toBe(false);
+    });
   });
 
   it('does not raise the conflict prompt once the scene has deactivated, so it cannot appear on a page the user navigated to', async () => {

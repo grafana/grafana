@@ -1,0 +1,484 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "text-theme-macro"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "About the theme macro",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "## The `__theme` macro\n\nReads any value from the current Grafana theme, so content follows light and dark themes without hardcoded colors.\n\nYou are viewing the **${__theme.name}** theme (mode: `${__theme.colors.mode}`). Press `c` then `t` to switch themes and watch every panel on this dashboard update.\n\n| Write | Gets | Example |\n| --- | --- | --- |\n| <code>$&#123;__theme.colors.primary.text&#125;</code> | a color | <span style=\"color: ${__theme.colors.primary.text}\">${__theme.colors.primary.text}</span> |\n| <code>$&#123;__theme.typography.fontFamilyMonospace&#125;</code> | a font stack | <span style=\"font-family: ${__theme.typography.fontFamilyMonospace}\">${__theme.typography.fontFamilyMonospace}</span> |\n| <code>$&#123;__theme.typography.fontSize&#125;</code>px | a number, add the unit yourself | ${__theme.typography.fontSize}px |\n| <code>$&#123;__theme.typography.size.lg&#125;</code> | a px size | <span style=\"font-size: ${__theme.typography.size.lg}\">${__theme.typography.size.lg}</span> |\n| <code>$&#123;__theme.shape.radius.default&#125;</code> | a CSS length | ${__theme.shape.radius.default} |\n\nOnly plain values resolve. Objects (<code>$&#123;__theme.colors&#125;</code>) and functions (<code>$&#123;__theme.spacing&#125;</code>) stay as literal text, so a typo is easy to spot: ${__theme.colors.nope}\n\nThe macro is global: it works in any panel, title, link or query, not only in the Text panel.\n",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Semantic colors",
+          "description": "colors.<color>.<shade>",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 8px; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">\n  <div style=\"width: 88px; flex-shrink: 0\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">main</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">shade</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">text</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">border</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">transparent</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">contrastText</div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 8px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.primary.text}\">primary</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.primary.main}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.primary.shade}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.primary.text}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.primary.border}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.primary.transparent}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.primary.contrastText}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 8px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.secondary.text}\">secondary</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.secondary.main}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.secondary.shade}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.secondary.text}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.secondary.border}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.secondary.transparent}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.secondary.contrastText}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 8px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.info.text}\">info</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.info.main}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.info.shade}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.info.text}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.info.border}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.info.transparent}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.info.contrastText}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 8px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.success.text}\">success</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.success.main}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.success.shade}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.success.text}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.success.border}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.success.transparent}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.success.contrastText}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 8px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.warning.text}\">warning</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.warning.main}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.warning.shade}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.warning.text}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.warning.border}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.warning.transparent}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.warning.contrastText}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 8px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.error.text}\">error</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.error.main}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.error.shade}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.error.text}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.error.border}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.error.transparent}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.colors.error.contrastText}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<p style=\"color: ${__theme.colors.text.secondary}\">\n  Each swatch is <code>$&#123;__theme.colors.&lt;color&gt;.&lt;shade&gt;&#125;</code>.\n</p>\n",
+                "mode": "html"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Surfaces, text and borders",
+          "description": "colors.background, colors.text, colors.border",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "<div style=\"padding: 12px; background: ${__theme.colors.background.canvas}; border: 1px solid ${__theme.colors.border.medium}; border-radius: ${__theme.shape.radius.default}\">\n  <div style=\"font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.text.secondary}; margin-bottom: 8px\">background.canvas</div>\n  <div style=\"padding: 12px; background: ${__theme.colors.background.primary}; border: 1px solid ${__theme.colors.border.medium}; border-radius: ${__theme.shape.radius.default}\">\n    <div style=\"font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.text.secondary}; margin-bottom: 8px\">background.primary</div>\n    <div style=\"padding: 12px; background: ${__theme.colors.background.secondary}; border: 1px solid ${__theme.colors.border.medium}; border-radius: ${__theme.shape.radius.default}\">\n      <div style=\"font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.text.secondary}; margin-bottom: 8px\">background.secondary</div>\n      <div style=\"color: ${__theme.colors.text.primary}\">text.primary</div>\n      <div style=\"color: ${__theme.colors.text.secondary}\">text.secondary</div>\n      <div style=\"color: ${__theme.colors.text.disabled}\">text.disabled</div>\n      <div style=\"color: ${__theme.colors.text.link}\">text.link</div>\n      <div style=\"color: ${__theme.colors.text.maxContrast}\">text.maxContrast</div>\n      <div style=\"display: flex; gap: 8px; align-items: center; margin-top: 12px\">\n        <div style=\"flex-grow: 1; flex-basis: 0; padding: 8px; text-align: center; border: 2px solid ${__theme.colors.border.weak}; border-radius: ${__theme.shape.radius.default}\">border.weak</div>\n        <div style=\"flex-grow: 1; flex-basis: 0; padding: 8px; text-align: center; border: 2px solid ${__theme.colors.border.medium}; border-radius: ${__theme.shape.radius.default}\">border.medium</div>\n        <div style=\"flex-grow: 1; flex-basis: 0; padding: 8px; text-align: center; border: 2px solid ${__theme.colors.border.strong}; border-radius: ${__theme.shape.radius.default}\">border.strong</div>\n      </div>\n    </div>\n  </div>\n</div>\n",
+                "mode": "html"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Typography",
+          "description": "typography.size.<size> and typography.fontWeight<weight>",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "<div style=\"display: flex; gap: 16px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid ${__theme.colors.border.weak}\">\n  <div style=\"width: 160px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">size.xs</div>\n  <div style=\"font-size: ${__theme.typography.size.xs}\">The quick brown fox</div>\n  <div style=\"margin-left: auto; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.typography.size.xs}</div>\n</div>\n<div style=\"display: flex; gap: 16px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid ${__theme.colors.border.weak}\">\n  <div style=\"width: 160px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">size.sm</div>\n  <div style=\"font-size: ${__theme.typography.size.sm}\">The quick brown fox</div>\n  <div style=\"margin-left: auto; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.typography.size.sm}</div>\n</div>\n<div style=\"display: flex; gap: 16px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid ${__theme.colors.border.weak}\">\n  <div style=\"width: 160px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">size.md</div>\n  <div style=\"font-size: ${__theme.typography.size.md}\">The quick brown fox</div>\n  <div style=\"margin-left: auto; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.typography.size.md}</div>\n</div>\n<div style=\"display: flex; gap: 16px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid ${__theme.colors.border.weak}\">\n  <div style=\"width: 160px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">size.lg</div>\n  <div style=\"font-size: ${__theme.typography.size.lg}\">The quick brown fox</div>\n  <div style=\"margin-left: auto; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.typography.size.lg}</div>\n</div>\n<div style=\"display: flex; gap: 16px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid ${__theme.colors.border.weak}\">\n  <div style=\"width: 160px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">fontWeightLight</div>\n  <div style=\"font-weight: ${__theme.typography.fontWeightLight}\">The quick brown fox</div>\n  <div style=\"margin-left: auto; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.typography.fontWeightLight}</div>\n</div>\n<div style=\"display: flex; gap: 16px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid ${__theme.colors.border.weak}\">\n  <div style=\"width: 160px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">fontWeightRegular</div>\n  <div style=\"font-weight: ${__theme.typography.fontWeightRegular}\">The quick brown fox</div>\n  <div style=\"margin-left: auto; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.typography.fontWeightRegular}</div>\n</div>\n<div style=\"display: flex; gap: 16px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid ${__theme.colors.border.weak}\">\n  <div style=\"width: 160px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">fontWeightMedium</div>\n  <div style=\"font-weight: ${__theme.typography.fontWeightMedium}\">The quick brown fox</div>\n  <div style=\"margin-left: auto; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.typography.fontWeightMedium}</div>\n</div>\n<div style=\"display: flex; gap: 16px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid ${__theme.colors.border.weak}\">\n  <div style=\"width: 160px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">fontWeightBold</div>\n  <div style=\"font-weight: ${__theme.typography.fontWeightBold}\">The quick brown fox</div>\n  <div style=\"margin-left: auto; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.typography.fontWeightBold}</div>\n</div>\n<p style=\"margin-top: 12px; font-family: ${__theme.typography.fontFamilyMonospace}\">\n  typography.fontFamilyMonospace: ${__theme.typography.fontFamilyMonospace}\n</p>\n",
+                "mode": "html"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Status list: Handlebars picks the token",
+          "description": "Handlebars runs first, so its output can contain the macro",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "service,status,latency_ms\ncheckout,up,182\npayments,down,0\nsearch,degraded,941\ninventory,up,95\nnotifications,degraded,612\n"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "<p style=\"color: ${__theme.colors.text.secondary}\">\n  Handlebars picks the token, then the macro resolves it: <code>&#123;&#123;#if (eq status \"up\")&#125;&#125; ... $&#123;__theme.colors.success.text&#125;</code>\n</p>\n{{#each data}}\n<div style=\"display: flex; gap: 12px; align-items: center; margin-bottom: 8px; padding: 8px 12px; background: ${__theme.colors.background.secondary}; border: 1px solid ${__theme.colors.border.weak}; border-radius: ${__theme.shape.radius.default}\">\n  <strong style=\"flex-grow: 1\">{{service}}</strong>\n  <span style=\"font-family: ${__theme.typography.fontFamilyMonospace}; color: ${__theme.colors.text.secondary}\">{{latency_ms}} ms</span>\n  {{#if (eq status \"up\")}}\n  <span style=\"padding: 2px 10px; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.success.text}; background: ${__theme.colors.success.transparent}; border: 1px solid ${__theme.colors.success.border}; border-radius: ${__theme.shape.radius.pill}\">up</span>\n  {{/if}}\n  {{#if (eq status \"degraded\")}}\n  <span style=\"padding: 2px 10px; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.warning.text}; background: ${__theme.colors.warning.transparent}; border: 1px solid ${__theme.colors.warning.border}; border-radius: ${__theme.shape.radius.pill}\">degraded</span>\n  {{/if}}\n  {{#if (eq status \"down\")}}\n  <span style=\"padding: 2px 10px; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.error.text}; background: ${__theme.colors.error.transparent}; border: 1px solid ${__theme.colors.error.border}; border-radius: ${__theme.shape.radius.pill}\">down</span>\n  {{/if}}\n</div>\n{{/each}}\n",
+                "mode": "html"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Callouts in Markdown",
+          "description": "colors.<color>.transparent / border / text",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "Inline HTML inside Markdown takes the macro too, so callouts can match Grafana's own alerts.\n\n<div style=\"margin-bottom: 12px; padding: 12px 16px; background: ${__theme.colors.info.transparent}; border: 1px solid ${__theme.colors.info.borderTransparent}; border-left: 4px solid ${__theme.colors.info.border}; border-radius: ${__theme.shape.radius.default}\">\n  <div style=\"color: ${__theme.colors.info.text}; font-weight: 500\">Info</div>\n  <div>Deploys are frozen from Friday 18:00 UTC.</div>\n</div>\n\n<div style=\"margin-bottom: 12px; padding: 12px 16px; background: ${__theme.colors.success.transparent}; border: 1px solid ${__theme.colors.success.borderTransparent}; border-left: 4px solid ${__theme.colors.success.border}; border-radius: ${__theme.shape.radius.default}\">\n  <div style=\"color: ${__theme.colors.success.text}; font-weight: 500\">Resolved</div>\n  <div>Checkout latency is back under the 300 ms SLO.</div>\n</div>\n\n<div style=\"margin-bottom: 12px; padding: 12px 16px; background: ${__theme.colors.warning.transparent}; border: 1px solid ${__theme.colors.warning.borderTransparent}; border-left: 4px solid ${__theme.colors.warning.border}; border-radius: ${__theme.shape.radius.default}\">\n  <div style=\"color: ${__theme.colors.warning.text}; font-weight: 500\">Degraded</div>\n  <div>The EU ingest queue is 12 minutes behind.</div>\n</div>\n\n<div style=\"margin-bottom: 12px; padding: 12px 16px; background: ${__theme.colors.error.transparent}; border: 1px solid ${__theme.colors.error.borderTransparent}; border-left: 4px solid ${__theme.colors.error.border}; border-radius: ${__theme.shape.radius.default}\">\n  <div style=\"color: ${__theme.colors.error.text}; font-weight: 500\">Incident</div>\n  <div>Payments API returns 5xx for 4% of requests.</div>\n</div>\n",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Shape and shadows",
+          "description": "shape.radius and shadows",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "<div style=\"display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 24px\">\n  <div style=\"flex-grow: 1; flex-basis: 0; min-width: 96px; padding: 16px 8px; text-align: center; background: ${__theme.colors.background.secondary}; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; border: 1px solid ${__theme.colors.border.medium}; border-radius: ${__theme.shape.radius.default}\">shape.radius.default</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; min-width: 96px; padding: 16px 8px; text-align: center; background: ${__theme.colors.background.secondary}; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; border: 1px solid ${__theme.colors.border.medium}; border-radius: ${__theme.shape.radius.pill}\">shape.radius.pill</div>\n  <div style=\"width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; background: ${__theme.colors.primary.main}; color: ${__theme.colors.primary.contrastText}; border-radius: ${__theme.shape.radius.circle}; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}\">circle</div>\n</div>\n<div style=\"display: flex; gap: 16px; flex-wrap: wrap; padding: 8px\">\n  <div style=\"flex-grow: 1; flex-basis: 0; min-width: 96px; padding: 16px 8px; text-align: center; background: ${__theme.colors.background.secondary}; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; box-shadow: ${__theme.shadows.z1}; border-radius: ${__theme.shape.radius.default}\">shadows.z1</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; min-width: 96px; padding: 16px 8px; text-align: center; background: ${__theme.colors.background.secondary}; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; box-shadow: ${__theme.shadows.z2}; border-radius: ${__theme.shape.radius.default}\">shadows.z2</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; min-width: 96px; padding: 16px 8px; text-align: center; background: ${__theme.colors.background.secondary}; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; box-shadow: ${__theme.shadows.z3}; border-radius: ${__theme.shape.radius.default}\">shadows.z3</div>\n</div>\n",
+                "mode": "html"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Visualization hues",
+          "description": "visualization.hues.<hue>.shades.<shade>.color",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 6px; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">\n  <div style=\"width: 88px; flex-shrink: 0\">hue</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">shades.0</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">shades.1</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">shades.2</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">shades.3</div>\n  <div style=\"flex-grow: 1; flex-basis: 0\">shades.4</div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 6px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.visualization.hues.0.name}</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.0.shades.0.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.0.shades.1.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.0.shades.2.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.0.shades.3.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.0.shades.4.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 6px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.visualization.hues.1.name}</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.1.shades.0.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.1.shades.1.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.1.shades.2.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.1.shades.3.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.1.shades.4.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 6px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.visualization.hues.2.name}</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.2.shades.0.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.2.shades.1.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.2.shades.2.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.2.shades.3.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.2.shades.4.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 6px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.visualization.hues.3.name}</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.3.shades.0.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.3.shades.1.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.3.shades.2.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.3.shades.3.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.3.shades.4.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 6px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.visualization.hues.4.name}</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.4.shades.0.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.4.shades.1.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.4.shades.2.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.4.shades.3.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.4.shades.4.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<div style=\"display: flex; gap: 8px; align-items: center; margin-bottom: 6px\">\n  <div style=\"width: 88px; flex-shrink: 0; font-family: ${__theme.typography.fontFamilyMonospace}; font-size: ${__theme.typography.size.sm}; color: ${__theme.colors.text.secondary}\">${__theme.visualization.hues.5.name}</div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.5.shades.0.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.5.shades.1.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.5.shades.2.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.5.shades.3.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n  <div style=\"flex-grow: 1; flex-basis: 0; height: 32px; background: ${__theme.visualization.hues.5.shades.4.color}; border-radius: ${__theme.shape.radius.default}\"></div>\n</div>\n<p style=\"margin-top: 12px; color: ${__theme.colors.text.secondary}\">\n  Each swatch is <code>$&#123;__theme.visualization.hues.0.shades.2.color&#125;</code>. Swap <code>color</code> for <code>name</code> to get its name: ${__theme.visualization.hues.0.shades.2.name}. <code>visualization.palette</code> holds names such as <code>semi-dark-yellow</code>, not CSS colors, and named lookups go through a function, so use the hues.\n</p>\n",
+                "mode": "html"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 14,
+              "width": 12,
+              "height": 13,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 14,
+              "width": 12,
+              "height": 13,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 27,
+              "width": 12,
+              "height": 12,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 27,
+              "width": 12,
+              "height": 12,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 39,
+              "width": 12,
+              "height": 9,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 39,
+              "width": 12,
+              "height": 9,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "panel-tests"],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Text panel - theme macro",
+    "variables": [],
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    }
+  }
+}

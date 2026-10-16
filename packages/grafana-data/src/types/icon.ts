@@ -317,6 +317,7 @@ export const availableIconsIndex = {
   'cursor-logo': true,
   'github-copilot-logo': true,
   robot: true,
+  workflows: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

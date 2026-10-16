@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 
 import { RestrictedGrafanaApisProvider } from './RestrictedGrafanaApisProvider';
 import { alertingAlertRuleFormSchemaApi } from './alerting/alertRuleFormSchema';
+import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 import { getRestrictedGrafanaApisAtLoad } from './restrictedGrafanaApis';
 
 // Read once at module load.
@@ -33,7 +34,7 @@ describe('restricted APIs at plugin load', () => {
   });
 
   it('gives an allowlisted plugin the same objects its roots get from the provider', () => {
-    lists({ alertingAlertRuleFormSchema: [PLUGIN], dashboardMutationAPI: [PLUGIN] });
+    lists({ alertingAlertRuleFormSchema: [PLUGIN], dashboardMutationAPI: [PLUGIN], extensionSidebar: [PLUGIN] });
 
     const atLoad = getRestrictedGrafanaApisAtLoad(PLUGIN);
     const { result } = renderHook(() => useRestrictedGrafanaApis(), {
@@ -44,6 +45,8 @@ describe('restricted APIs at plugin load', () => {
 
     expect(atLoad.alertingAlertRuleFormSchema).toBe(alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema);
     expect(atLoad.alertingAlertRuleFormSchema).toBe(result.current.alertingAlertRuleFormSchema);
+    expect(atLoad.extensionSidebar).toBe(extensionSidebarApi);
+    expect(atLoad.extensionSidebar).toBe(result.current.extensionSidebar);
     // It acts on what the plugin's mounted roots show, so it stays with the provider.
     expect(result.current.dashboardMutationAPI).toBeDefined();
     expect(atLoad.dashboardMutationAPI).toBeUndefined();

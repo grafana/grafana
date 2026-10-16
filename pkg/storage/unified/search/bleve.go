@@ -775,6 +775,23 @@ func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath stri
 	}
 }
 
+func openFileIndex(path string) (bleve.Index, error) {
+	idx, err := bleve.OpenUsing(path, map[string]interface{}{
+		"bolt_timeout": boltTimeout,
+		"unsafe_batch": false,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Opening starts background persistence. Keep it within the caller's worker
+	// limit by waiting for an empty batch to reach disk before opening more indexes.
+	if err := idx.Batch(idx.NewBatch()); err != nil {
+		return nil, errors.Join(fmt.Errorf("waiting for opened index to persist: %w", err), idx.Close())
+	}
+	return idx, nil
+}
+
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
@@ -1409,7 +1426,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 		return nil, "", "", fmt.Errorf("copying index to filesystem: %w", err)
 	}
 
-	fileIndex, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+	fileIndex, err := openFileIndex(indexDir)
 	if err != nil {
 		return nil, "", "", fmt.Errorf("opening promoted filesystem index: %w", err)
 	}
@@ -1702,7 +1719,7 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 
 		indexName := ent.Name()
 		indexDir := filepath.Join(resourceDir, indexName)
-		idx, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+		idx, err := openFileIndex(indexDir)
 		if err != nil {
 			// On timeout, the file probably is locked by another process.
 			// This indicates a setup issue that should be fixed rather than worked around by creating a new index file.
@@ -4828,16 +4845,7 @@ func (s *batchAuthzSearcher) initPullIterator() {
 		}
 	}
 
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
+	extractFn := batchCheckItem
 
 	// WithTracer makes FilterAuthorized emit a span around the batched
 	// BatchCheck loop, so the authz phase is visible as a child of this
