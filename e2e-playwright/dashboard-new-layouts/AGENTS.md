@@ -51,6 +51,15 @@ test('example', async ({ gotoDashboardPage, controls, sidebar }) => {
 
 Page objects work identically whether the spec navigates with `gotoDashboardPage({ uid })`, the `dashboardPage` fixture, or `flows.dashboards.importTestDashboard()`: locator resolution depends only on `page`, never on how navigation happened.
 
+For flows that need another browser page, destructure the `createNewDashboardPage` fixture and call `await createNewDashboardPage(url?)`. Each call creates a page in the current browser context and returns `{ page, rows, controls }`, with the page objects bound to that page. The optional URL is opened before the function returns; omitting it leaves the page blank. Creation and navigation appear under the `Create a new dashboard page` test step, and all pages created through the fixture are closed during test teardown. Pages and page objects are created only when the function is called.
+
+```typescript
+test('opens a shared row link', async ({ createNewDashboardPage }) => {
+  const { rows } = await createNewDashboardPage('/d/dashboard-uid?drow=Details');
+  await expect(rows.getToggle('Details')).toHaveAttribute('aria-expanded', 'true');
+});
+```
+
 ### Base class & constructor
 
 All page objects inherit from `PageObject`, which provides the shared constructor. It takes a single `PageObjectArgs` object:
