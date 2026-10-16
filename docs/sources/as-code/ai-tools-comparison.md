@@ -24,7 +24,7 @@ aliases:
 
 # Available AI tools in Grafana 
 
-If you're a Grafana on prem user, you have the following AI tools available to interact with Grafana:
+If you're a self-managed Grafana user, you have the following AI tools available to interact with Grafana:
 
 **Grafana Assistant** is the Grafana AI agent, built into Grafana. Assistant brings a purpose-built LLM into Grafana so operators, developers, and SREs can troubleshoot issues, manage dashboards, and answer product questions in plain language. 
 
