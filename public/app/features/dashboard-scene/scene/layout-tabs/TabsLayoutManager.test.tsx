@@ -56,6 +56,8 @@ function buildTabsLayoutManager(tabs: TabItem[] = []) {
   return tabsLayoutManager;
 }
 
+afterEach(() => setTestFlags({}));
+
 describe('TabsLayoutManager', () => {
   describe('URL sync', () => {
     it('when on top level', () => {
@@ -156,6 +158,20 @@ describe('TabsLayoutManager', () => {
   });
 
   describe('addNewTab', () => {
+    it('disables interaction in the inner layout added during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const manager = new TabsLayoutManager({ tabs: [] });
+      new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+      const layout = AutoGridLayoutManager.createEmpty();
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+
+      manager.addNewTab(new TabItem({ layout }));
+
+      expect(layout.state.layout.state.isDraggable).toBe(false);
+      manager.editModeChanged(true);
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+    });
+
     beforeEach(() => {
       lastUndo = undefined;
     });

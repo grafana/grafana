@@ -66,6 +66,12 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
   it, never one whose data or permissions matter (dashboards, folders, IAM).
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
+- **Standalone authentication (`authenticate`):** a request without a requester needs an access
+  token, from `X-Access-Token` or else from `Authorization` with the `Bearer` scheme
+  (case-insensitive). `X-Access-Token` wins when both are set, because a gateway puts the verified
+  token there while `Authorization` may still carry the caller's original credential. Any other
+  `Authorization` scheme, or an empty `Bearer`, counts as missing. An invalid `X-Access-Token`
+  fails; the router never retries with `Authorization`.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
@@ -135,8 +141,8 @@ earlier ones:
    order wins when multiple targets discover the same group.
 3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
    plugins, without `plugins_group_regex` filtering.
-4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
-   authenticate `X-Access-Token`.
+4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped
+   with a token exchange so plugin calls carry the caller's identity.
 
 Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 `managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
@@ -167,6 +173,12 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   not a stack (such as `*`) or whose stack doesn't exist gets the defaults: the groups polled from
   `st_discovery_url`, served from the snapshot without a request. Group and version discovery
   (`/apis/<g>[/<v>]`, `/openapi/v3/apis/<g>/<v>`) follow the same rule.
+  - A request with `X-Grafana-Aggregator` set came from a stack's aggregator, and forwarding it
+    would loop back to that stack. The fallback answers it with a private 508 Loop Detected
+    before any stack lookup or breaker, and counts it in
+    `grafana_router_stack_fallback_refused_total`; root discovery then serves the defaults.
+    Spoofing the header only switches the fallback off, and groups the router serves directly are
+    unaffected.
 - **The ST discovery cache** (`stackDiscoveryCache`) shares what the fallback fetches among every
   caller that the same stack serves, root discovery included. It is keyed by destination, path,
   query, `Accept` and `Accept-Encoding`, and expires entries after
@@ -297,7 +309,6 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | Key | Meaning |
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
-| `appmanifest_apiserver_url`, `apiserver_url` | Removed. When no other source is configured, either one is a startup error rather than a silent fallback to the dummy loader. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
@@ -312,16 +323,15 @@ priority order. Repeating a section name merges its keys; it does not create ano
 Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
 the corresponding section must contain at least one nonempty setting (for example `audience`)
 in the INI configuration, because Grafana's config loader drops empty sections.
-The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` settings
-remain supported during rollout, including environment overrides. New sections take priority; a
-section with the same target name replaces the entire legacy target (an empty URL disables it).
-Legacy targets keep their previous relative priority: cloud app platform before BaaS.
+The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys are no
+longer read. A deployment that still sets them gets no aggregate target, so configure
+`[router.aggregate.<name>]` sections instead.
 
 | Key | Meaning |
 | --- | --- |
 | `url` | Target base URL. Unset skips the target. |
 | `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
-| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. Not read from the legacy `[cloud_router]` keys. |
+| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
 | `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
 | `ca_file`, `insecure` | Per-target TLS settings. |

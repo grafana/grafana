@@ -1,13 +1,14 @@
 import { act, render, screen } from '@testing-library/react';
 
 import { toDataFrame } from '@grafana/data';
+import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { TextMode } from '../panelcfg.gen';
 
 import { SandboxFrame } from './SandboxFrame';
 import { TextNGHtmlView } from './TextNGHtmlView';
 import { TextNGPanel } from './TextNGPanel';
-import { TextSandbox, type TextSandboxReport } from './TextSandbox';
+import { TextSandbox } from './TextSandbox';
 import { createData, createProps } from './test-utils';
 
 jest.mock('./SandboxFrame');
@@ -45,73 +46,63 @@ it('sanitizes protected HTML before handing it to the frame', () => {
   expect(mount.mock.calls[0][0].html).toBe('<img src="https://example.com/image">');
 });
 
-it('silently reports resources and exposes origin remediation without panel UI', () => {
-  const onStateChange = jest.fn<void, [TextSandboxReport | undefined]>();
-  render(<TextSandbox html='<img src="https://example.com/image">' onStateChange={onStateChange} />);
-  act(() =>
-    mount.mock.calls[0][0].onState({
-      status: 'ready',
-      resources: [{ directive: 'img-src', origin: 'https://example.com' }],
-    })
+it('reports blocked origins to the dashboard from the panel view and stops when it unmounts', () => {
+  const { unmount } = render(
+    <TextSandbox html='<img src="https://report.example.com/a.png">' consent={{ panelId: 4, panelTitle: 'Users' }} />
   );
-  expect(screen.queryByText('https://example.com')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button')).not.toBeInTheDocument();
-  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-  expect(screen.queryByRole('status')).not.toBeInTheDocument();
-  const report = onStateChange.mock.calls.at(-1)![0]!;
-  expect(report.canAllow).toBe(true);
-  act(() => report.allow());
-  expect(mount.mock.calls.at(-1)![0].policy).toContain('img-src data: https://example.com');
-  expect(mount.mock.calls.at(-1)![0].policy).toContain('frame-src https://example.com');
-  expect(mount.mock.calls.at(-1)![0].policy).toContain("script-src 'none'");
-
   act(() =>
     mount.mock.calls.at(-1)![0].onState({
       status: 'ready',
-      resources: [{ directive: 'frame-src', origin: 'https://second.example.com' }],
+      resources: [
+        {
+          directive: 'img-src',
+          origin: 'https://report.example.com',
+          urls: [{ url: 'https://report.example.com/a.png', count: 3 }],
+        },
+        { directive: 'script-src' },
+      ],
     })
   );
-  expect(onStateChange.mock.calls.at(-1)![0]!.state.resources).toEqual([
-    { directive: 'frame-src', origin: 'https://second.example.com' },
+  expect(getBlockedSummary()).toEqual([
+    {
+      origin: 'https://report.example.com',
+      host: 'report.example.com',
+      panels: ['Users'],
+      panelIds: [4],
+      urls: [{ url: 'https://report.example.com/a.png', count: 3 }],
+      count: 3,
+    },
   ]);
-  expect(onStateChange.mock.calls.at(-1)![0]!.canAllow).toBe(true);
-  expect(screen.queryByRole('button')).not.toBeInTheDocument();
-});
-
-it('does not permit remediation for restrictions the panel cannot relax', () => {
-  const onStateChange = jest.fn<void, [TextSandboxReport | undefined]>();
-  render(<TextSandbox html="<p>Content</p>" onStateChange={onStateChange} />);
-  act(() => mount.mock.calls[0][0].onState({ status: 'ready', resources: [{ directive: 'script-src' }] }));
-  const report = onStateChange.mock.calls.at(-1)![0]!;
-  expect(report.canAllow).toBe(false);
-  const policy = mount.mock.calls.at(-1)![0].policy;
-  act(() => report.allow());
-  expect(mount.mock.calls.at(-1)![0].policy).toBe(policy);
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+  unmount();
+  expect(getBlockedSummary()).toEqual([]);
 });
 
-it.each(['refresh', 'unmount', 'new snapshot'] as const)('invalidates remediation after %s', (action) => {
-  const onStateChange = jest.fn<void, [TextSandboxReport | undefined]>();
-  const { rerender, unmount } = render(<TextSandbox html="<p>Content</p>" onStateChange={onStateChange} />);
+it('does not report from previews, which have no panel title to attribute', () => {
+  render(<TextSandbox html='<img src="https://preview.example.com/a.png">' />);
   act(() =>
     mount.mock.calls.at(-1)![0].onState({
       status: 'ready',
-      resources: [{ directive: 'img-src', origin: 'https://example.com' }],
+      resources: [{ directive: 'img-src', origin: 'https://preview.example.com', urls: [] }],
     })
   );
-  const report = onStateChange.mock.calls.at(-1)![0]!;
-  if (action === 'refresh') {
-    rerender(<TextSandbox html="<p>Refreshed</p>" onStateChange={onStateChange} />);
-    expect(onStateChange).toHaveBeenCalledWith(undefined);
-  } else if (action === 'unmount') {
-    unmount();
-    expect(onStateChange).toHaveBeenLastCalledWith(undefined);
-  } else {
-    act(() => mount.mock.calls.at(-1)![0].onState({ status: 'error', resources: [] }));
-  }
-  const count = mount.mock.calls.length;
-  act(() => report.allow());
-  expect(mount.mock.calls).toHaveLength(count);
+  expect(getBlockedSummary()).toEqual([]);
+});
+
+it('loads origins the viewer allowed while keeping scripts blocked', () => {
+  render(
+    <TextSandbox html='<img src="https://allowed.example.com/a.png">' consent={{ panelId: 1, panelTitle: 'Users' }} />
+  );
+  expect(mount.mock.calls.at(-1)![0].policy).not.toContain('https://allowed.example.com');
+
+  act(() => allowOrigins([{ origin: 'https://allowed.example.com', panelIds: [2] }], 'dashboard'));
+  expect(mount.mock.calls.at(-1)![0].policy).not.toContain('https://allowed.example.com');
+  act(() => allowOrigins([{ origin: 'https://allowed.example.com', panelIds: [1] }], 'dashboard'));
+  const policy = mount.mock.calls.at(-1)![0].policy;
+  expect(policy).toContain('img-src data: https://allowed.example.com');
+  expect(policy).toContain('frame-src https://allowed.example.com');
+  expect(policy).toContain("script-src 'none'");
 });
 
 it('silently tracks loading and runtime failures without a consumer', () => {

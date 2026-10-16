@@ -561,6 +561,47 @@ errors instead of implementing a separate fallback.
 The storage service authorizes individual results in both modes. Its embedding
 query rate limit applies only when semantic search is enabled (429 when exceeded).
 
+### Search across resources
+
+Deploy hybrid eligibility checks to all search-api instances before setting
+`[grafana-apiserver] enable_global_hybrid_api = true`; older servers ignore the
+opt-in check. The existing `enable_hybrid_api` switch must also remain enabled.
+Send the same request envelope to
+`POST /apis/search.grafana.app/v0alpha1/namespaces/{namespace}/global/search/hybrid`,
+adding the resource types to search:
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchQuery",
+  "resources": [
+    { "group": "dashboard.grafana.app", "resource": "dashboards" },
+    { "group": "folder.grafana.app", "resource": "folders" },
+    { "group": "assistant.alertrules.ext.grafana.app", "resource": "alertrules" }
+  ],
+  "query": "production",
+  "limit": 10
+}
+```
+
+The search backend requires `search.hybrid: true` in its built-in or watched
+manifest for each internal resource. Externally pushed collections, identified
+by the collection catalog rather than the group name, use existing enrollment
+and authorization rules. API versions are not needed in the resource list.
+
+Storage authorizes individual results; Grafana also checks API authorization for
+locally known resources. Global search cannot run custom authorization from a
+remote app handler. Resources needing it must keep hybrid disabled on all served
+versions unless storage enforces the same policy. Let the opt-out reach all search
+servers before relying on it. Existing direct RPC callers and custom handlers
+are unchanged.
+
+Results are reranked together, and `limit` applies to the combined response.
+Without reranking, resource types are interleaved in request order. Filters apply
+to every requested type; multi-resource queries support only `uid` and `folder`.
+A failure searching any resource fails the request. Each result includes its own
+group and resource; `kind` is empty when no manifest supplies it.
+
 ## Where to look
 
 - `pkg/apis/search/v0alpha1/types.go` and `hybrid.go`: public request and response shapes

@@ -3883,6 +3883,11 @@
     "viz-wrapper": {
       "table": "표"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "현재 알림 내용을 확인하고 과거 데이터를 탐색하여 현재 또는 과거 문제를 조사합니다.",
       "description-alert-rules": "경고 규칙이 발동되기 전에 충족되어야 하는 조건을 정의합니다",
@@ -6060,6 +6065,9 @@
       "only-overrides-button-tooltip": "재정의만 표시",
       "placeholder-search-options": "검색 옵션",
       "visualization-button-tooltip": "검색 옵션"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "샘플 데이터",
@@ -10692,13 +10700,21 @@
       "cell-filter-out": "값 필터링하여 제외",
       "cell-inspect": "값 검사",
       "cell-inspect-tooltip": "값 검사",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "값 필터링",
+      "column-menu-hide": "",
       "column-menu-label": "{{name}}의 열 옵션",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "필터 업데이트",
+      "column-visibility": "",
+      "columns": "",
       "copy": "클립보드로 복사",
       "csv-counts": "행:{{rows}}, 열:{{columns}}",
       "csv-placeholder": "여기에 CSV를 입력하세요...",
       "edit-column-filter": "{{name}}의 필터 편집",
+      "field-warnings": "",
       "filter": {
         "add-all": "표시된 모든 값을 필터에 추가",
         "blanks": "(공백)",
@@ -10732,6 +10748,8 @@
           "count": "개수"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "값 검사",
       "loading": "테이블 로딩",
       "nested-table": {
@@ -10741,6 +10759,8 @@
       "no-rows": "행 없음",
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "{{column}} 열 기준으로 정렬",
       "sort-by-column-ascending": "{{column}} 열 기준으로 오름차순 정렬",
       "sort-by-column-descending": "{{column}} 열 기준으로 내림차순 정렬",
@@ -10750,7 +10770,8 @@
       },
       "tooltip": {
         "trigger": "툴팁 토글"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "태그"
@@ -11047,6 +11068,8 @@
       "incident-filter-all": "모든 인시던트",
       "incident-filter-label": "레이블로 인시던트 필터링",
       "incident-tab-label": "인시던트",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "내 팀",
       "title": "경보 및 인시던트",
       "title-alerts": "경보",
@@ -11121,6 +11144,17 @@
       "error-title": "최근 블로그 게시물을 불러올 수 없습니다",
       "read-more": "Grafana Labs 블로그에서 더 읽어보기",
       "title": "블로그 최근 글"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11861,6 +11895,11 @@
       "load-newer": "최근 로그 로딩 중...",
       "load-older": "이전 로그 로딩 중..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "라벨 접기",
       "expand": "라벨 펼치기"
@@ -11911,6 +11950,7 @@
       "inline-mode": "인라인 표시",
       "inline-no-scrolls": "확장 보기로 전환",
       "inline-with-scrolls": "간략 보기로 전환",
+      "link-fallback-label": "",
       "link-value-tooltip": "링크 값",
       "links-section": "링크",
       "log-attributes-field": "로그 속성",
@@ -11920,13 +11960,14 @@
       "move-displayed-field-up": "위로 이동",
       "no-details": "표시할 필드가 없습니다.",
       "open-assistant": "Assistant에서 로그 줄 설명",
+      "open-value-in": "",
       "pin-line": "로그 고정",
       "prettify": "보기 좋게 정리",
       "remove-displayed-field": "필드 제거",
       "remove-log": "로그 제거",
       "scroll-to-logline": "로그 라인으로 스크롤",
       "search": {
-        "no-results": "표시할 결과가 없습니다."
+        "no-results": ""
       },
       "search-placeholder": "필드 이름 및 값 검색",
       "show-context": "맥락 보기",
@@ -13108,6 +13149,11 @@
       "target-new": "새 노트북",
       "title": "노트북에 패널 추가"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
+    },
     "autosave": {
       "conflict-cancel": "",
       "conflict-confirm": "",
@@ -13771,6 +13817,9 @@
       "label-plugin-id": "플러그인 ID",
       "label-severity": "심각도"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "모든 플러그인이 최신 상태입니다."
     },
@@ -13792,6 +13841,10 @@
     "plugin-details-body": {
       "needs-service-account": "{{pluginName}} 플러그인을 사용하려면 Grafana에 쿼리를 실행하기 위한 서비스 계정이 필요합니다. 다음 목록에는 서비스 계정에서 사용할 수 있는 권한이 포함되어 있습니다.",
       "page-not-found": "페이지를 찾을 수 없습니다."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "사용 중단됨"
@@ -16396,6 +16449,7 @@
     "description-frozen-columns": "테이블의 왼쪽부터 열이 고정되어 있습니다.",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
     "description-page-size": "페이지당 행 수. 비어 있는 경우 페이지 크기는 패널 높이를 기준으로 합니다.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "CSS 속성이 있는 JSON 객체가 포함된 필드",
     "description-tooltip-from-field": "툴팁에서 (숨겨져 있거나 표시된) 필드의 셀을 렌더링합니다.",
     "description-zebra-striping": "한 행씩 번갈아 배경색 적용",
@@ -16434,6 +16488,7 @@
     "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
     "name-page-size": "페이지 크기",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "테이블 머리말 표시",
     "name-styling-from-field": "필드에서 스타일링",
     "name-tooltip-from-field": "필드 툴팁",
@@ -16597,6 +16652,7 @@
     "editor": {
       "aria-label-content": "텍스트 내용",
       "aria-label-mode": "텍스트 모드: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "라인 번호",
       "format-bold": "B",
       "format-heading": "H",
@@ -16642,6 +16698,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

@@ -214,11 +214,6 @@ export interface FeatureToggles {
   */
   queryServiceRewrite?: boolean;
   /**
-  * Routes requests to the new query service
-  * @default false
-  */
-  queryServiceFromUI?: boolean;
-  /**
   * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false
   */
@@ -621,11 +616,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Enables SRI checks for plugin assets
-  * @default false
-  */
-  pluginsSriChecks?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -930,11 +920,6 @@ export interface FeatureToggles {
   * @default false
   */
   enableAppChromeExtensions?: boolean;
-  /**
-  * Set this to true to enable all dashboard empty state extensions registered by plugins.
-  * @default false
-  */
-  enableDashboardEmptyExtensions?: boolean;
   /**
   * Enables use of app platform API for folders
   * @default true

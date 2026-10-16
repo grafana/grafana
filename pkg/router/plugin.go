@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -59,6 +60,7 @@ type PluginDependencies struct {
 	Unified            resource.ResourceClient
 	Decrypter          decrypt.DecryptService
 	TokenExchanger     authn.TokenExchanger       // used for delegation
+	PluginAuth         *pluginauth.Config         // whether Grafana signs plugin tokens itself
 	Tracer             tracing.Tracer             // needed for proxy (legacy)
 	Features           featuremgmt.FeatureToggles // needed for proxy (legacy)
 	Cfg                *setting.Cfg
@@ -92,6 +94,7 @@ func ProvidePluginLoaderDependencies(
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
 	restConfigProvider restcfg.RestConfigProvider,
+	pluginAuth *pluginauth.Config,
 ) PluginLoaderDependencies {
 	return PluginLoaderDependencies{
 		ClientV3Loader: clientV3Loader,
@@ -115,6 +118,7 @@ func ProvidePluginLoaderDependencies(
 			Features:           features,
 			Cfg:                cfg,
 			TokenExchanger:     newClientV3TokenExchanger(cfg),
+			PluginAuth:         pluginAuth,
 		},
 	}
 }
@@ -147,6 +151,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
 	clients RoutesLoaderClients,
+	pluginAuth *pluginauth.Config,
 ) PluginLoaderDependencies {
 	return ProvidePluginLoaderDependencies(
 		pluginClient,
@@ -167,6 +172,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 		reg,
 		builderMetrics,
 		clients.RESTConfigProvider,
+		pluginAuth,
 	)
 }
 
@@ -401,7 +407,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	// Keep authentication outside the breaker: token exchange failures do not
 	// indicate whether the plugin is reachable.
 	clientV3, err = v3.WithAuthentication(clientV3, b.pluginID, []string{b.group.Name},
-		withAuthFailureOutcome(appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.pluginID, b.deps.TokenExchanger)))
+		withAuthFailureOutcome(appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))
 	if err != nil {
 		return nil, err
 	}

@@ -149,57 +149,26 @@ func (b *bleveIndex) loadFolderTreeLocked(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	advanced, err := b.index.Advanced()
-	if err != nil {
-		return err
-	}
-	reader, err := advanced.Reader()
-	if err != nil {
-		return err
-	}
-	defer func() { _ = reader.Close() }()
-	searcher, err := scopeQuery(q, false, 0).Searcher(ctx, reader, b.index.Mapping(), search.SearcherOptions{})
-	if err != nil {
-		return err
-	}
-	defer func() { _ = searcher.Close() }()
-	folders, err := reader.DocValueReader([]string{resource.SEARCH_FIELD_FOLDER})
-	if err != nil {
-		return err
-	}
-
 	// Built aside and kept only once fully read, so a failed load leaves nothing
 	// half loaded.
 	tree := folderTree{parent: map[string]string{}, children: map[string]map[string]struct{}{}}
-	sctx := &search.SearchContext{DocumentMatchPool: search.NewDocumentMatchPool(searcher.DocumentMatchPoolSize(), 0)}
-	for {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		match, err := searcher.Next(sctx)
-		if err != nil {
-			return err
-		}
-		if match == nil {
-			break
-		}
-		id, err := reader.ExternalID(match.IndexInternalID)
-		if err != nil {
-			return err
-		}
+	err = b.visitLiveDocuments(ctx, q, []string{resource.SEARCH_FIELD_FOLDER}, func(_ index.IndexReader, id string, internal index.IndexInternalID, docValues index.DocValueReader) error {
 		var key resourcepb.ResourceKey
 		if err := resource.ReadSearchID(&key, id); err != nil {
 			return err
 		}
 		// A folder at the top holds no folder value at all.
 		folder := ""
-		if err := folders.VisitDocValues(match.IndexInternalID, func(_ string, value []byte) {
+		if err := docValues.VisitDocValues(internal, func(_ string, value []byte) {
 			folder = string(value)
 		}); err != nil {
 			return err
 		}
 		tree.set(key.Name, folder)
-		sctx.DocumentMatchPool.Put(match)
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	b.folders.parent, b.folders.children = tree.parent, tree.children
