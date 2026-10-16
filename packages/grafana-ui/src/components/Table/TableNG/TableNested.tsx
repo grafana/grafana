@@ -100,6 +100,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     showTypeIcons,
     structureRev,
     timeRange,
+    timeZone,
     transparent,
     noPanelPadding = false,
     width,
@@ -470,6 +471,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       jsonSyntaxHighlightingEnabled,
       showTypeIcons,
       timeRange,
+      timeZone,
       tableRefreshEnabled,
       typographyCtx,
     }),
@@ -492,6 +494,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       showTypeIcons,
       theme,
       timeRange,
+      timeZone,
       tableRefreshEnabled,
       typographyCtx,
     ]

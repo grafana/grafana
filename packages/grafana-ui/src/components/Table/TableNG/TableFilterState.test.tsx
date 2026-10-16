@@ -6,6 +6,7 @@ import {
   createTheme,
   DataTransformerID,
   FieldType,
+  formattedValueToString,
   toDataFrame,
   type DataTransformerConfig,
 } from '@grafana/data';
@@ -138,6 +139,32 @@ it('restores checkbox controls from JSON and replaces an open draft only when it
       .slice(1)
       .map((row) => within(row).getAllByRole('gridcell')[0].textContent)
   ).toEqual(['alpha']);
+});
+
+it('stores the panel timezone for a newly selected time value', async () => {
+  const { props, api } = setup();
+  const timeZone = 'Pacific/Auckland';
+  props.data = applyFieldOverrides({
+    data: [
+      toDataFrame({
+        fields: [{ name: 'Time', type: FieldType.time, values: [1767225600000, 1767312000000] }],
+      }),
+    ],
+    fieldConfig: { defaults: {}, overrides: [] },
+    theme: createTheme(),
+    timeZone,
+    replaceVariables: (s) => s,
+  })[0];
+  const field = props.data.fields[0];
+  const selected = formattedValueToString(field.display!(field.values[0]));
+
+  render(<TableNG {...props} timeZone={timeZone} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
+  await userEvent.click(screen.getByRole('checkbox', { name: selected }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+
+  expect(api.get('table')[0].options.filters[0].config.options.timeZone).toBe(timeZone);
+  expect(screen.getAllByRole('row')).toHaveLength(2);
 });
 
 it('shows compound filters without flattening them and permits explicit clearing', async () => {

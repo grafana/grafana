@@ -142,6 +142,8 @@ interface BaseTableProps {
   noValue?: string;
   /** used by SparklineCell when provided */
   timeRange?: TimeRange;
+  /** Timezone used by the field display processors and value-filter matcher. */
+  timeZone?: string;
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;

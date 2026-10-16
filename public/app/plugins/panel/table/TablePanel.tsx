@@ -181,6 +181,7 @@ export function TablePanel(props: Props) {
       onFieldAddToAssistant={onFieldAddToAssistant}
       onCellAddToAssistant={onCellAddToAssistant}
       timeRange={timeRange}
+      timeZone={props.timeZone}
       enableSharedCrosshair={enableSharedCrosshair}
       fieldConfig={fieldConfig}
       getActions={getActions}

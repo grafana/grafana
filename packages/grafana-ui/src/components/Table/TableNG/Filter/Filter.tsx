@@ -20,6 +20,7 @@ interface Props {
   name: string;
   rows: TableRow[];
   field?: Field;
+  timeZone?: string;
   iconClassName?: string;
   parentIndex?: number;
   /** Cross-filter rows keyed by filter key. Each entry holds the rows available *before* that filter was applied.  */
@@ -29,12 +30,13 @@ interface Props {
 }
 
 export const Filter = memo(
-  ({ name, field, iconClassName, parentIndex, crossFilterRows, crossFilterTailRows }: Props) => {
+  ({ name, field, timeZone, iconClassName, parentIndex, crossFilterRows, crossFilterTailRows }: Props) => {
     const ref = useRef<HTMLButtonElement>(null);
     const styles = useStyles2(getStyles);
     const { isPopoverVisible, setPopoverVisible, filterEnabled, popupProps } = useFilterPopupState({
       name,
       field,
+      timeZone,
       parentIndex,
       crossFilterRows,
       crossFilterTailRows,

@@ -21,6 +21,7 @@ function transformTableRows(
     length: parents.length,
     fields: fields.map((field) => ({
       ...field,
+      state: field.state ? { ...field.state } : undefined,
       values: parents.map((row) => field.values[row.__index]),
       ...(field.nanos ? { nanos: parents.map((row) => field.nanos![row.__index]) } : {}),
     })),

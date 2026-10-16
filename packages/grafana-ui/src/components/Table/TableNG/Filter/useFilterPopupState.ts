@@ -14,6 +14,7 @@ import { operatorSelectableValues } from './utils';
 interface UseFilterPopupStateOptions {
   name: string;
   field?: Field;
+  timeZone?: string;
   parentIndex?: number;
   /** Cross-filter rows keyed by filter key. Each entry holds the rows available *before* that filter was applied. */
   crossFilterRows: Record<string, TableRow[]>;
@@ -41,6 +42,7 @@ interface UseFilterPopupState {
 export function useFilterPopupState({
   name,
   field,
+  timeZone,
   parentIndex,
   crossFilterRows,
   crossFilterTailRows,
@@ -90,7 +92,8 @@ export function useFilterPopupState({
               createValuePredicate(
                 field,
                 values.map((item) => item.value),
-                selection
+                selection,
+                timeZone
               ),
               parentIndex
             );

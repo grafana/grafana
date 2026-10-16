@@ -1,10 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { toDataFrame } from '@grafana/data';
-import { FilterByValueMatch, FilterByValueType } from '@grafana/data/internal';
+import { createTheme, FieldType, formattedValueToString, getDisplayProcessor, toDataFrame } from '@grafana/data';
+import { FilterByValueMatch, FilterByValueType, type FilterByValueConfig } from '@grafana/data/internal';
 
 import { clearFrameFilters, writeTableFilter } from './filterByValue';
 import { columnTransformations } from './registry';
+import { tableViewIndices } from './tableFiltering';
 import { useTableTransformations } from './useTableTransformations';
 import { createValuePredicate } from './valueFilter';
 
@@ -73,4 +74,24 @@ it('preserves the saved display configuration when editing selected values', () 
       timeZone: 'UTC',
     },
   });
+});
+
+it('matches displayed time values in the panel timezone', () => {
+  const timeZone = 'Pacific/Auckland';
+  const source = toDataFrame({
+    fields: [{ name: 'Time', type: FieldType.time, values: [1767225600000, 1767312000000] }],
+  });
+  const field = source.fields[0];
+  field.display = getDisplayProcessor({ field, theme: createTheme(), timeZone });
+  const value = formattedValueToString(field.display(field.values[0]));
+  const predicate = createValuePredicate(field, [value], undefined, timeZone);
+  const config = writeTableFilter([], predicate, {
+    source,
+    field,
+    frameKey: 'time-frame',
+    frameIndex: 0,
+  });
+
+  expect(predicate.options.timeZone).toBe(timeZone);
+  expect(tableViewIndices(source, config as FilterByValueConfig[])).toEqual([0]);
 });

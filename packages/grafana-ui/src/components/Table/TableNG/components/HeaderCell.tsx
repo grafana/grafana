@@ -32,6 +32,7 @@ interface HeaderCellProps {
   column: Column<TableRow, TableSummaryRow>;
   rows: TableRow[];
   field: Field;
+  timeZone?: string;
   direction?: SortDirection;
   showTypeIcons?: boolean;
   selectFirstCell: () => void;
@@ -55,6 +56,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   direction,
   disableKeyboardEvents,
   field,
+  timeZone,
   rows,
   selectFirstCell,
   showTypeIcons,
@@ -94,6 +96,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const { isPopoverVisible, setPopoverVisible, popupProps, filterEnabled } = useFilterPopupState({
     name: column.key,
     field,
+    timeZone,
     parentIndex,
     crossFilterRows,
     crossFilterTailRows,
@@ -278,6 +281,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
             name={column.key}
             rows={rows}
             field={field}
+            timeZone={timeZone}
             iconClassName={styles.headerCellIcon}
             parentIndex={parentIndex}
             crossFilterRows={crossFilterRows}

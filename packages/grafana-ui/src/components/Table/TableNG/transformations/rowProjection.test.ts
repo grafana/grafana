@@ -1,4 +1,4 @@
-import { createDataFrame, DataTransformerID, FieldType } from '@grafana/data';
+import { cacheFieldDisplayNames, createDataFrame, DataTransformerID, FieldType } from '@grafana/data';
 import { FilterByValueMatch, FilterByValueType, type FilterByValueConfig } from '@grafana/data/internal';
 
 import { compileFrameToRecords } from '../utils';
@@ -51,4 +51,24 @@ it('applies nested filters only to their parent row', () => {
   expect(transformTableFilters(rows, frame.fields, filters, 8).filteredRows.map((row) => row.__index)).toEqual([
     0, 1, 2, 3, 4,
   ]);
+});
+
+it('does not rewrite cached display names on source fields while projecting rows', () => {
+  const first = createDataFrame({
+    name: 'first',
+    fields: [{ name: 'Value', type: FieldType.number, values: [1, 2] }],
+  });
+  const second = createDataFrame({
+    name: 'second',
+    fields: [{ name: 'Value', type: FieldType.number, values: [3] }],
+  });
+  cacheFieldDisplayNames([first, second]);
+  const state = first.fields[0].state;
+  const displayName = state?.displayName;
+  const sourceRows = compileFrameToRecords(first.fields.map((field) => field.state!.displayName!))(first);
+
+  expect(transformTableFilters(sourceRows, first.fields, [valueFilter('Value', ['1'])]).filteredRows).toHaveLength(1);
+  expect(first.fields[0].state).toBe(state);
+  expect(first.fields[0].state?.displayName).toBe(displayName);
+  expect(first.fields[0].state?.multipleFrames).toBe(true);
 });

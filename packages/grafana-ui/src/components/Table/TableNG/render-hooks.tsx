@@ -191,6 +191,7 @@ export interface ColumnBuildConfig {
   jsonSyntaxHighlightingEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
+  timeZone?: string;
   typographyCtx: TypographyCtx;
 }
 
@@ -289,6 +290,7 @@ function buildColumnsFromFields(
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
     timeRange,
+    timeZone,
     firstColumnExtraPadding = 0,
     lastColumnExtraPadding = 0,
     typographyCtx,
@@ -662,6 +664,7 @@ function buildColumnsFromFields(
           column={column}
           rows={rawRows}
           field={field}
+          timeZone={timeZone}
           disableKeyboardEvents={disableKeyboardEvents}
           direction={sortDirection}
           showTypeIcons={showTypeIcons}
