@@ -276,17 +276,17 @@ export function TableFlat(props: TableNGProps) {
   const hasColumnSidebar = reorderable || sidebarColumns.some((column) => column.hideable);
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
-  const [focusSidebarOnOpen, setFocusSidebarOnOpen] = useState(false);
+  const [sidebarFocusRequest, setSidebarFocusRequest] = useState(0);
   const columnSidebarOpener = useRef<string | null>(null);
   const restoreFocusOnSidebarClose = useRef(false);
   const openColumnSidebar = useCallback((columnKey: string) => {
     columnSidebarOpener.current = columnKey;
-    setFocusSidebarOnOpen(true);
+    setSidebarFocusRequest((current) => current + 1);
     setIsColumnVisibilityPanelOpen(true);
   }, []);
   const closeColumnSidebar = useCallback((restoreFocus = false) => {
     restoreFocusOnSidebarClose.current = restoreFocus;
-    setFocusSidebarOnOpen(false);
+    setSidebarFocusRequest(0);
     setIsColumnVisibilityPanelOpen(false);
   }, []);
   // Follow option changes without overriding local open/close actions on every render.
@@ -294,7 +294,7 @@ export function TableFlat(props: TableNGProps) {
   if (prevShowColumnsSidebar.current !== showColumnsSidebar) {
     prevShowColumnsSidebar.current = showColumnsSidebar;
     setIsColumnVisibilityPanelOpen(showColumnsSidebar);
-    setFocusSidebarOnOpen(false);
+    setSidebarFocusRequest(0);
   }
   const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
   const splitterAvailableWidth = Math.max(width - COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH, 0);
@@ -717,7 +717,7 @@ export function TableFlat(props: TableNGProps) {
       >
         {isColumnVisibilityPanelOpen && (
           <TableSidebar
-            focusOnOpen={focusSidebarOnOpen}
+            focusRequest={sidebarFocusRequest}
             columns={sidebarColumns}
             reorderable={reorderable}
             hiddenColumns={hiddenColumns}

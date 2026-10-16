@@ -22,7 +22,7 @@ export interface SidebarColumn {
 }
 
 interface TableSidebarProps {
-  focusOnOpen?: boolean;
+  focusRequest?: number;
   /** All columns in display order, including hidden columns. */
   columns: SidebarColumn[];
   reorderable?: boolean;
@@ -37,7 +37,7 @@ interface TableSidebarProps {
 }
 
 export function TableSidebar({
-  focusOnOpen = false,
+  focusRequest = 0,
   columns,
   reorderable = false,
   hiddenColumns,
@@ -53,14 +53,21 @@ export function TableSidebar({
   const visibleCount = columns.filter(({ name }) => !hiddenColumns.has(name)).length;
 
   useEffect(() => {
-    if (!focusOnOpen) {
+    if (!focusRequest) {
       return;
     }
 
-    // The column dropdown returns focus to its trigger after closing.
-    const timer = window.setTimeout(() => sidebarRef.current?.focus(), 0);
-    return () => window.clearTimeout(timer);
-  }, [focusOnOpen]);
+    let active = true;
+    // The column dropdown queues focus restoration to its trigger when it closes.
+    queueMicrotask(() => {
+      if (active) {
+        sidebarRef.current?.focus();
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [focusRequest]);
 
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);

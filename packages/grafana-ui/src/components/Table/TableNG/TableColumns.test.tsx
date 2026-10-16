@@ -44,6 +44,24 @@ it('focuses the sidebar after keyboard opening, then tabs to its controls', asyn
   expect(screen.getByRole('button', { name: 'Column options for A' })).toHaveFocus();
 });
 
+it('focuses the sidebar when Manage columns is selected again while it is open', async () => {
+  const user = userEvent.setup();
+  render(<TableNG data={sidebarFocusData} width={800} height={400} tableRefreshEnabled />);
+
+  const opener = screen.getByRole('button', { name: 'Column options for A' });
+  await user.click(opener);
+  await user.click(await screen.findByRole('menuitem', { name: 'Manage columns' }));
+
+  const sidebar = screen.getByRole('group', { name: 'Column visibility' });
+  await waitFor(() => expect(sidebar).toHaveFocus());
+
+  await user.click(opener);
+  await user.click(await screen.findByRole('menuitem', { name: 'Manage columns' }));
+
+  expect(screen.getByRole('group', { name: 'Column visibility' })).toBe(sidebar);
+  await waitFor(() => expect(sidebar).toHaveFocus());
+});
+
 it('preserves horizontal scroll and restores focus to a virtualized column after closing the sidebar', async () => {
   const data = createDataFrame({
     fields: Array.from({ length: 20 }, (_, index) => ({
