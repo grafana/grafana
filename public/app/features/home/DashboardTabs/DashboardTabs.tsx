@@ -104,7 +104,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
   const initialLoading = recent.loading || starredLoading || (mostUsedAvailable && mostUsedLoading);
 
   // Folder names are only needed when some row shows a dashboard.
-  const hasDashboards = hasMostUsed || hasStarred || recent.counts.dashboard > 0;
+  const hasDashboards = hasMostUsed || hasStarred || recent.kinds.includes('dashboard');
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
   const registerTab = useCallback((tab: HomepageTab) => {

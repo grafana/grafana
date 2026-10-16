@@ -24,7 +24,9 @@ export type RecentActivityFilter = PageHistoryKind | '';
 export interface RecentActivity {
   /** Rows after the kind filter, newest first. */
   items: RecentActivityItem[];
-  /** Per kind over the whole history, so the filter options and what analytics report follow it, not the filtered rows. */
+  /** Kinds with rows anywhere in the history, in display order; the kind filter offers exactly these. */
+  kinds: PageHistoryKind[];
+  /** Per kind over the whole history, for what analytics report; the kind filter does not change it. */
   counts: PageKindCounts;
   /** Over the whole history. */
   total: number;
@@ -70,12 +72,14 @@ export function useRecentActivity(): RecentActivity {
   const all = value ?? NO_ITEMS;
   // Stable per fetch, so the tab's "shown" effect keys on the data and not on every render.
   const counts = useMemo(() => countByKind(all), [all]);
+  const kinds = useMemo(() => PAGE_KINDS.filter((kind) => counts[kind] > 0), [counts]);
   // localStorage is untrusted and a filter can outlive its rows (history cleared elsewhere, dashboards
   // deleted); anything but a kind that has rows shows every kind.
-  const filter: RecentActivityFilter = PAGE_KINDS.find((kind) => kind === storedFilter && counts[kind] > 0) ?? '';
+  const filter: RecentActivityFilter = kinds.find((kind) => kind === storedFilter) ?? '';
 
   return {
     items: filter ? all.filter((item) => item.kind === filter) : all,
+    kinds,
     counts,
     total: all.length,
     filter,

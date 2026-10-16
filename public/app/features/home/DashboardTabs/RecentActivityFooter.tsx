@@ -5,7 +5,7 @@ import { Box, RadioButtonGroup, Stack } from '@grafana/ui';
 import { FooterAction, FooterActions } from '../FooterActions';
 import { clearHistoryClicked, recentActivityFilterChanged } from '../analytics/main';
 
-import { PAGE_KINDS, getPageKindMeta } from './recentActivityRows';
+import { getPageKindMeta } from './recentActivityRows';
 import { type RecentActivity, type RecentActivityFilter } from './useRecentActivity';
 
 interface Props {
@@ -17,8 +17,7 @@ interface Props {
  * those kinds on the left; wraps when the card is too narrow for both.
  */
 export function RecentActivityFooter({ recent }: Props) {
-  const { counts, total, filter, setFilter, clear } = recent;
-  const kinds = PAGE_KINDS.filter((kind) => counts[kind] > 0);
+  const { kinds, counts, total, filter, setFilter, clear } = recent;
   const options: Array<SelectableValue<RecentActivityFilter>> = [
     { value: '', label: t('home.recent-activity-tab.filter-all', 'All') },
     ...kinds.map((kind) => ({ value: kind, label: getPageKindMeta(kind).filterLabel })),
