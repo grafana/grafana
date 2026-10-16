@@ -346,6 +346,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-13,grafana.queryVarEditorRedesign,GA,@grafana/dashboards-squad,false,false,true
 2026-07-30,table.paginationPageSize,experimental,@grafana/dataviz-squad,false,false,true
 2026-07-29,table.autoColumnWidths,experimental,@grafana/dataviz-squad,false,false,true
+2026-10-16,timeseries.thresholdsWithoutData,experimental,@grafana/dataviz-squad,false,false,true
 2026-08-18,table.refresh,experimental,@grafana/dataviz-squad,false,false,true
 2026-09-14,table.refreshNewFeatures,experimental,@grafana/dataviz-squad,false,false,true
 2026-08-12,table.inspectDataTableNG,experimental,@grafana/dataviz-squad,false,false,true
