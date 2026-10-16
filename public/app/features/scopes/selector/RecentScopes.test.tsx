@@ -57,6 +57,7 @@ describe('RecentScopes metadata tooltip', () => {
     await user.hover(screen.getByRole('button', { name: /Title with-filters/ }));
 
     expect(await within(await screen.findByRole('tooltip')).findByText('cluster = prod')).toBeInTheDocument();
+    expect(within(screen.getByRole('tooltip')).queryByRole('separator')).not.toBeInTheDocument();
   });
 
   it('shows the description of the node stored with the recent scope', async () => {
@@ -96,6 +97,8 @@ describe('RecentScopes metadata tooltip', () => {
     expect(within(screen.getByRole('tooltip')).getByText('env != dev')).toBeInTheDocument();
     expect(within(screen.getByRole('tooltip')).getByText('First')).toBeInTheDocument();
     expect(within(screen.getByRole('tooltip')).getByText('Second')).toBeInTheDocument();
+    // Only between the sections, not before the first one
+    expect(within(screen.getByRole('tooltip')).getAllByRole('separator')).toHaveLength(1);
   });
 
   it('does not show the description of a category the default path ends on', async () => {

@@ -1,5 +1,14 @@
 import { css } from '@emotion/css';
-import { forwardRef, useEffect, useId, useState, useSyncExternalStore, type JSX, type ReactNode } from 'react';
+import {
+  Fragment,
+  forwardRef,
+  useEffect,
+  useId,
+  useState,
+  useSyncExternalStore,
+  type JSX,
+  type ReactNode,
+} from 'react';
 
 import { type GrafanaTheme2, type ScopeSpecFilter, reverseScopeFilterOperatorMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -188,6 +197,7 @@ const TooltipAnchor = forwardRef<HTMLDivElement, AnchorProps>(function TooltipAn
  * on first interaction and nothing is shown when the scope has neither a description nor filters.
  */
 export function ScopeMetadataTooltip({ sources, highlighted, className, children }: ScopeMetadataTooltipProps) {
+  const styles = useStyles2(getStyles);
   const id = useId();
   const activeId = useSyncExternalStore(subscribeToActiveTooltip, () => activeTooltipId);
   const [active, setActive] = useState(false);
@@ -252,8 +262,11 @@ export function ScopeMetadataTooltip({ sources, highlighted, className, children
   const descriptionId = metadata.length > 0 ? `${id}-description` : undefined;
   const content = (
     <Stack direction="column" gap={1} alignItems="flex-start">
-      {metadata.map(({ scopeId, title, description, filters }) => (
-        <ScopeMetadata key={scopeId} title={title} description={description} filters={filters} />
+      {metadata.map(({ scopeId, title, description, filters }, i) => (
+        <Fragment key={scopeId}>
+          {i > 0 && <hr className={styles.divider} />}
+          <ScopeMetadata title={title} description={description} filters={filters} />
+        </Fragment>
       ))}
     </Stack>
   );
@@ -274,6 +287,12 @@ export function ScopeMetadataTooltip({ sources, highlighted, className, children
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  divider: css({
+    alignSelf: 'stretch',
+    margin: 0,
+    border: 0,
+    borderTop: `1px solid ${theme.colors.border.medium}`,
+  }),
   description: css({
     color: theme.colors.text.secondary,
     maxWidth: 320,
