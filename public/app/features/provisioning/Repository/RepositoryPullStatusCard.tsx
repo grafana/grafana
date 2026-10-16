@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data/';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { type Repository, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { MessageList } from '../Shared/MessageList';
-import { formatRepoUrl, getRepoCommitUrl, getRepoHrefForProvider } from '../utils/git';
+import { formatRepoUrl, getRemoteConfig, getRepoCommitUrl, getRepoHrefForProvider } from '../utils/git';
 import { getStatusColor, getStatusIcon } from '../utils/repositoryStatus';
 import { formatTimestamp } from '../utils/time';
 
@@ -30,7 +31,7 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
   const { url: lastCommitUrl, hasUrl } = getRepoCommitUrl(repo.spec, status?.sync.lastRef);
 
   return (
-    <Card noMargin className={styles.card}>
+    <Card noMargin className={styles.card} data-testid={selectors.pages.Provisioning.RepositoryOverview.pullStatusCard}>
       <Card.Heading>
         <Trans i18nKey="provisioning.repository-overview.pull-status">Pull status</Trans>
       </Card.Heading>
@@ -51,6 +52,17 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
           <div className={styles.spanTwo}>
             <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
           </div>
+
+          {!!status?.sync.lastChecked && (
+            <>
+              <Text color="secondary">
+                <Trans i18nKey="provisioning.repository-overview.last-checked">Last checked:</Trans>
+              </Text>
+              <div className={styles.spanTwo}>
+                <Text variant="body">{formatTimestamp(status.sync.lastChecked)}</Text>
+              </div>
+            </>
+          )}
 
           <div
             className={cx(styles.historicalData, { [styles.historicalDataOverlay]: isWorking })}
@@ -170,18 +182,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-function getRemoteConfig(spec?: RepositorySpec) {
-  switch (spec?.type) {
-    case 'github':
-      return spec.github;
-    case 'gitlab':
-      return spec.gitlab;
-    case 'bitbucket':
-      return spec.bitbucket;
-    case 'git':
-      return spec.git;
-    default:
-      return undefined;
-  }
-}

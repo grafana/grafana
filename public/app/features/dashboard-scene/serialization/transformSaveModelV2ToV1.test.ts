@@ -3,6 +3,7 @@ import path from 'path';
 
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
@@ -56,7 +57,6 @@ jest.mock('@grafana/runtime', () => {
       '-- Mixed --': { type: 'mixed', uid: '-- Mixed --', name: '-- Mixed --', meta: { id: 'mixed' } },
     },
     featureToggles: {
-      dashboardNewLayouts: true,
       unifiedAlertingEnabled: true,
       scopeFilters: false,
       reloadDashboardsOnParamsChange: false,
@@ -115,9 +115,14 @@ const TARGET_VERSIONS = ['v0alpha1', 'v1beta1'] as const;
 
 describe('V2 to V1 Dashboard Transformation Comparison', () => {
   beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   const inputDir = path.join(
@@ -201,7 +206,27 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
 /** Remove metadata fields that differ between backend and frontend transformations */
 function removeMetadata(spec: Dashboard): Partial<Dashboard> {
   const { uid, version, id, ...rest } = spec;
+  stripEmptyPluginVersion(rest);
   return rest;
+}
+
+/**
+ * An empty-string `pluginVersion` and an absent one are equivalent in v1: both mean
+ * "no pinned version, stamp the running plugin's version on load". The frontend v2→v1
+ * transform now drops an empty `vizConfig.version` (leaving `pluginVersion` undefined),
+ * while the backend still emits `""`. Normalize both to keep the comparison focused on
+ * real conversion differences; a non-empty version mismatch is still caught.
+ */
+function stripEmptyPluginVersion(value: unknown): void {
+  if (Array.isArray(value)) {
+    value.forEach(stripEmptyPluginVersion);
+  } else if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    if ('pluginVersion' in obj && !obj.pluginVersion) {
+      delete obj.pluginVersion;
+    }
+    Object.values(obj).forEach(stripEmptyPluginVersion);
+  }
 }
 
 /**

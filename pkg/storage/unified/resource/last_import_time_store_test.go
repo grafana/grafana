@@ -31,6 +31,14 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 	fnsr := NamespacedResource{Namespace: "namespace", Group: "folders", Resource: "folder"}
 	pnsr := NamespacedResource{Namespace: "namespace", Group: "playlists", Resource: "playlist"}
 
+	// Namespaces in a prefix relationship: "org" is a prefix of "org1". Sorting
+	// by the separate namespace/group/resource columns places "org" before
+	// "org1", but byte-wise ordering of the full composite key places
+	// "org1~..." before "org~..." because '~' (0x7E) sorts above '1' (0x31).
+	// All KV backends must agree on the byte-wise order.
+	onsr := NamespacedResource{Namespace: "org", Group: "dashboards", Resource: "dashboard"}
+	o1nsr := NamespacedResource{Namespace: "org1", Group: "dashboards", Resource: "dashboard"}
+
 	now := time.Now().Truncate(time.Second).UTC()
 
 	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: fnsr, LastImportTime: now.Add(-15 * time.Minute)}))
@@ -43,11 +51,34 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 
 	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: pnsr, LastImportTime: now.Add(-20 * time.Minute)}))
 
+	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: onsr, LastImportTime: now.Add(1 * time.Minute)}))
+	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: o1nsr, LastImportTime: now.Add(1 * time.Minute)}))
+
+	lastImportTime, err := store.GetLastImportTime(t.Context(), dnsr, maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.Equal(t, now.Add(2*time.Minute), lastImportTime)
+
+	lastImportTime, err = store.GetLastImportTime(t.Context(), pnsr, maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.True(t, lastImportTime.IsZero())
+
+	lastImportTime, err = store.GetLastImportTime(t.Context(), NamespacedResource{
+		Namespace: "namespace",
+		Group:     "unknown",
+		Resource:  "unknown",
+	}, maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.True(t, lastImportTime.IsZero())
+
+	// Keys are returned in byte-wise order of the full composite key, so
+	// "org1~..." precedes "org~...".
 	// SQLKV only stores a single import time per namespace/group/resource.
 	expectedKeys := []string{
 		fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(2*time.Minute).Unix()),
 		fmt.Sprintf("namespace~folders~folder~%d", now.Add(5*time.Minute).Unix()),
 		fmt.Sprintf("namespace~playlists~playlist~%d", now.Add(-20*time.Minute).Unix()),
+		fmt.Sprintf("org1~dashboards~dashboard~%d", now.Add(1*time.Minute).Unix()),
+		fmt.Sprintf("org~dashboards~dashboard~%d", now.Add(1*time.Minute).Unix()),
 	}
 	if allowDuplicateNamespaceGroupResource {
 		// Regular KV store keeps all previous import times, until they are deleted.
@@ -61,18 +92,44 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 			fmt.Sprintf("namespace~folders~folder~%d", now.Add(5*time.Minute).Unix()),
 
 			fmt.Sprintf("namespace~playlists~playlist~%d", now.Add(-20*time.Minute).Unix()),
+
+			fmt.Sprintf("org1~dashboards~dashboard~%d", now.Add(1*time.Minute).Unix()),
+			fmt.Sprintf("org~dashboards~dashboard~%d", now.Add(1*time.Minute).Unix()),
 		}
 	}
 	require.Equal(t, expectedKeys, collectKeys(t, store.kv.Keys(t.Context(), lastImportTimesSection, ListOptions{})))
 
 	expectedTimes := map[NamespacedResource]LastImportTimeKey{
-		dnsr: {Namespace: dnsr.Namespace, Group: dnsr.Group, Resource: dnsr.Resource, LastImportTime: now.Add(2 * time.Minute)},
-		fnsr: {Namespace: fnsr.Namespace, Group: fnsr.Group, Resource: fnsr.Resource, LastImportTime: now.Add(5 * time.Minute)},
+		dnsr:  {Namespace: dnsr.Namespace, Group: dnsr.Group, Resource: dnsr.Resource, LastImportTime: now.Add(2 * time.Minute)},
+		fnsr:  {Namespace: fnsr.Namespace, Group: fnsr.Group, Resource: fnsr.Resource, LastImportTime: now.Add(5 * time.Minute)},
+		onsr:  {Namespace: onsr.Namespace, Group: onsr.Group, Resource: onsr.Resource, LastImportTime: now.Add(1 * time.Minute)},
+		o1nsr: {Namespace: o1nsr.Namespace, Group: o1nsr.Group, Resource: o1nsr.Resource, LastImportTime: now.Add(1 * time.Minute)},
 	}
 
 	times, _, err := store.ListLastImportTimes(t.Context(), maxLastImportTimeAge)
 	require.NoError(t, err)
 	require.Equal(t, expectedTimes, times)
+
+	for _, maxAge := range []time.Duration{0, maxLastImportTimeAge} {
+		t.Run(fmt.Sprintf("backend list max age %s", maxAge), func(t *testing.T) {
+			backend := &kvStorageBackend{lastImportStore: store, lastImportTimeMaxAge: maxAge}
+			expected := make(map[NamespacedResource]time.Time, len(expectedTimes)+1)
+			for key, entry := range expectedTimes {
+				expected[key] = entry.LastImportTime
+			}
+			if maxAge == 0 {
+				expected[pnsr] = now.Add(-20 * time.Minute)
+			}
+			times, err := backend.ListResourceLastImportTimes(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, expected, times)
+			for _, key := range []NamespacedResource{dnsr, fnsr, pnsr, onsr, o1nsr} {
+				single, err := backend.GetResourceLastImportTime(t.Context(), key)
+				require.NoError(t, err)
+				require.Equal(t, single, times[key])
+			}
+		})
+	}
 
 	deleted, err := store.CleanupLastImportTimes(t.Context(), maxLastImportTimeAge)
 	require.NoError(t, err)
@@ -82,6 +139,8 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 	expectedKeysAfterList := []string{
 		fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(2*time.Minute).Unix()),
 		fmt.Sprintf("namespace~folders~folder~%d", now.Add(5*time.Minute).Unix()),
+		fmt.Sprintf("org1~dashboards~dashboard~%d", now.Add(1*time.Minute).Unix()),
+		fmt.Sprintf("org~dashboards~dashboard~%d", now.Add(1*time.Minute).Unix()),
 	}
 	require.Equal(t, expectedKeysAfterList, collectKeys(t, store.kv.Keys(t.Context(), lastImportTimesSection, ListOptions{})))
 }

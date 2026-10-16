@@ -2,12 +2,16 @@ package snapshot
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,7 +19,12 @@ import (
 	"k8s.io/klog/v2"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // storageWrapper wraps a rest.Storage and hides the not supported interfaces
@@ -27,8 +36,10 @@ import (
 // via the dedicated /snapshots/{name}/deletekey subresource and the dashboard
 // via the dedicated /snapshots/{name}/dashboard subresource
 type storageWrapper struct {
-	inner   rest.Storage
-	options dashv0.SnapshotSharingOptions
+	inner         rest.Storage
+	options       dashv0.SnapshotSharingOptions
+	accessControl ac.AccessControl
+	blobs         resourcepb.BlobStoreClient
 }
 
 var (
@@ -42,8 +53,8 @@ var (
 )
 
 // NewStorageWrapper wraps a storage to hide the rest.Creater interface.
-func NewStorageWrapper(s rest.Storage, options dashv0.SnapshotSharingOptions) rest.Storage {
-	return &storageWrapper{inner: s, options: options}
+func NewStorageWrapper(s rest.Storage, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, blobs resourcepb.BlobStoreClient) rest.Storage {
+	return &storageWrapper{inner: s, options: options, accessControl: accessControl, blobs: blobs}
 }
 
 func (n *storageWrapper) New() runtime.Object   { return n.inner.New() }
@@ -61,19 +72,62 @@ func (n *storageWrapper) Get(ctx context.Context, name string, options *metav1.G
 	if err != nil {
 		return nil, err
 	}
-	return stripSensitiveFields(obj), nil
+	return stripSensitiveFields(obj)
 }
 func (n *storageWrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	obj, err := n.inner.(rest.Lister).List(ctx, options)
 	if err != nil {
 		return nil, err
 	}
-	return stripSensitiveFieldsFromList(obj), nil
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	list, err := stripSensitiveFieldsFromList(obj)
+	if err != nil {
+		return nil, err
+	}
+	if requester.GetOrgRole() != org.RoleAdmin {
+		items := make([]dashv0.Snapshot, 0, len(list.Items))
+		page := list
+		for {
+			for _, snap := range page.Items {
+				if snapshotOwnedBy(&snap, requester) {
+					items = append(items, snap)
+				}
+			}
+			list.Continue = page.Continue
+			if options == nil || options.Limit <= 0 || int64(len(items)) >= options.Limit || page.Continue == "" {
+				break
+			}
+
+			// Consume whole storage pages so the continuation token never skips visible items.
+			pageOptions := options.DeepCopy()
+			pageOptions.Limit = options.Limit - int64(len(items))
+			pageOptions.Continue = page.Continue
+			obj, err := n.inner.(rest.Lister).List(ctx, pageOptions)
+			if err != nil {
+				return nil, err
+			}
+			page, err = stripSensitiveFieldsFromList(obj)
+			if err != nil {
+				return nil, err
+			}
+		}
+		list.Items = items
+		// Storage pagination counts include snapshots hidden by creator filtering.
+		list.RemainingItemCount = nil
+	}
+	return list, nil
 }
 func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	// GET the snapshot from inner storage (retains deleteKey, same as the deletekey subresource)
 	// to check if it's external and retrieve the deleteKey before deleting.
-	obj, err := n.inner.(rest.Getter).Get(ctx, name, &metav1.GetOptions{})
+	lookupCtx, err := snapshotLookupContext(ctx, name)
+	if err != nil {
+		return nil, false, err
+	}
+	obj, err := n.inner.(rest.Getter).Get(lookupCtx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
 	}
@@ -82,21 +136,48 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, fmt.Errorf("expected Snapshot, got %T", obj)
 	}
 
-	// Delete the local snapshot
-	result, deleted, err := n.inner.(rest.GracefulDeleter).Delete(ctx, name, deleteValidation, options)
+	if err := authorizeSnapshotDelete(ctx, snap, n.accessControl, n.blobs); err != nil {
+		return nil, false, err
+	}
+
+	// Unified deletion reads the object again internally. Revalidate that object as
+	// the caller, while keeping storage reads independent of snapshots:read.
+	validate := func(_ context.Context, obj runtime.Object) error {
+		current, ok := obj.(*dashv0.Snapshot)
+		if !ok {
+			return fmt.Errorf("expected Snapshot, got %T", obj)
+		}
+		if err := authorizeSnapshotDelete(ctx, current, n.accessControl, n.blobs); err != nil {
+			return err
+		}
+		if deleteValidation != nil {
+			return deleteValidation(ctx, obj)
+		}
+		return nil
+	}
+	result, deleted, err := n.inner.(rest.GracefulDeleter).Delete(lookupCtx, name, validate, options)
 	if err != nil {
 		return nil, false, err
 	}
 
-	// If external, use the deleteKey to send a DELETE to the external server's delete/{deleteKey} endpoint
+	// If external, send a DELETE to the external server. The endpoint is gated on
+	// externalSnapshotsK8SAPIPush: when on, use the K8s delete subresource; when
+	// off, use the legacy GET /api/snapshots-delete/{key} endpoint.
 	if snap.Spec.External != nil && *snap.Spec.External &&
 		snap.Spec.DeleteKey != nil && n.options.ExternalSnapshotURL != "" {
-		prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
-		deleteURL := strings.TrimRight(n.options.ExternalSnapshotURL, "/") +
-			"/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
-			prefix + "/delete/" + *snap.Spec.DeleteKey
-		if err := deleteExternalSnapshot(deleteURL, n.options.ExternalSnapshotToken); err != nil {
-			return nil, false, err
+		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
+			prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
+			deleteURL := strings.TrimRight(n.options.ExternalSnapshotURL, "/") +
+				"/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
+				prefix + "/delete/" + *snap.Spec.DeleteKey
+			if err := deleteExternalSnapshot(deleteURL, n.options.ExternalSnapshotToken); err != nil {
+				return nil, false, err
+			}
+		} else {
+			deleteURL := strings.TrimRight(n.options.ExternalSnapshotURL, "/") + "/api/snapshots-delete/" + *snap.Spec.DeleteKey
+			if err := deleteExternalSnapshotLegacy(deleteURL); err != nil {
+				return nil, false, err
+			}
 		}
 	}
 
@@ -104,30 +185,34 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 }
 
 // stripSensitiveFields returns a copy of the Snapshot with deleteKey and dashboard removed from the spec.
-func stripSensitiveFields(obj runtime.Object) runtime.Object {
+// It fails closed: a non-Snapshot object (e.g. served by a future default version) returns an error
+// rather than leaking the original object with its sensitive fields intact.
+func stripSensitiveFields(obj runtime.Object) (*dashv0.Snapshot, error) {
 	snap, ok := obj.(*dashv0.Snapshot)
 	if !ok {
-		return obj
+		return nil, fmt.Errorf("expected *%T, got %T", dashv0.Snapshot{}, obj)
 	}
 	out := snap.DeepCopy()
 	out.Spec.DeleteKey = nil
 	out.Spec.Dashboard = nil
-	return out
+	return out, nil
 }
 
 // stripSensitiveFieldsFromList returns a copy of the SnapshotList with deleteKey and dashboard
 // removed from each item's spec. The dashboard payload can be large and is not needed when listing.
-func stripSensitiveFieldsFromList(obj runtime.Object) runtime.Object {
+// It fails closed: a non-SnapshotList object (e.g. served by a future default version) returns an
+// error rather than leaking the original list with its sensitive fields intact.
+func stripSensitiveFieldsFromList(obj runtime.Object) (*dashv0.SnapshotList, error) {
 	list, ok := obj.(*dashv0.SnapshotList)
 	if !ok {
-		return obj
+		return nil, fmt.Errorf("expected *%T, got %T", dashv0.SnapshotList{}, obj)
 	}
 	out := list.DeepCopy()
 	for i := range out.Items {
 		out.Items[i].Spec.DeleteKey = nil
 		out.Items[i].Spec.Dashboard = nil
 	}
-	return out
+	return out, nil
 }
 
 var deleteExternalHTTPClient = &http.Client{Timeout: 5 * time.Second}
@@ -163,5 +248,58 @@ func deleteExternalSnapshot(externalDeleteURL string, token string) error {
 		return dashboardsnapshots.ErrExternalSnapshotAuthFailed.Errorf("external snapshot server returned %d on delete", resp.StatusCode)
 	}
 
+	return dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("unexpected response when deleting external snapshot, status code: %d", resp.StatusCode)
+}
+
+// deleteExternalSnapshotLegacy sends a GET request to the external snapshot
+// server's legacy /api/snapshots-delete/{deleteKey} endpoint. If the passed URL
+// is in the K8s path format (e.g. a snapshot was created when
+// externalSnapshotsK8SAPIPush was on and is now being deleted with it off),
+// the host is extracted and the URL is rebuilt in the legacy format.
+func deleteExternalSnapshotLegacy(externalURL string) error {
+	requestURL := externalURL
+	if !strings.Contains(externalURL, "/api/snapshots-delete/") {
+		parsed, err := url.Parse(externalURL)
+		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+			return fmt.Errorf("invalid external delete URL %q: %w", externalURL, err)
+		}
+		deleteKey := path.Base(strings.TrimRight(parsed.Path, "/"))
+		if deleteKey == "" || deleteKey == "." || deleteKey == "/" {
+			return fmt.Errorf("could not extract delete key from URL %q", externalURL)
+		}
+		requestURL = parsed.Scheme + "://" + parsed.Host + "/api/snapshots-delete/" + deleteKey
+	}
+
+	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := deleteExternalHTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	// Treat 404 as success — the snapshot may have already been deleted
+	// (e.g. double delete, cleanup script). Modern hosts (Grafana >= 9.0) return 404.
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	// Older hosts (Grafana < 9.0) return 500 with this message when the snapshot is
+	// already gone. Treat it as success too so repeat deletes stay idempotent.
+	if resp.StatusCode == http.StatusInternalServerError {
+		var respJSON map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&respJSON); err != nil {
+			return err
+		}
+		if respJSON["message"] == "Failed to get dashboard snapshot" {
+			return nil
+		}
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return dashboardsnapshots.ErrExternalSnapshotAuthFailed.Errorf("external snapshot server returned %d on delete", resp.StatusCode)
+	}
 	return dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("unexpected response when deleting external snapshot, status code: %d", resp.StatusCode)
 }

@@ -61,6 +61,7 @@ func getDatasourcePluginSlugs(baseUrl string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = resp.Body.Close() }()
 	res := &listPluginResponse{}
 	err = json.NewDecoder(resp.Body).Decode(res)
 	if err != nil {
@@ -70,7 +71,6 @@ func getDatasourcePluginSlugs(baseUrl string) ([]string, error) {
 	for _, meta := range res.Items {
 		slugs = append(slugs, meta.Slug)
 	}
-	_ = resp.Body.Close()
 	return slugs, nil
 }
 
@@ -90,6 +90,7 @@ func getDatasourceDetails(slugs []string, baseUrl string) []datasourceDetails {
 			if err != nil {
 				panic(err)
 			}
+			defer func() { _ = r.Body.Close() }()
 
 			datasource := &datasource{}
 			err = json.NewDecoder(r.Body).Decode(datasource)
@@ -98,7 +99,6 @@ func getDatasourceDetails(slugs []string, baseUrl string) []datasourceDetails {
 			}
 			datasource.Json.Slug = slug
 			datasources[i] = datasource.Json
-			_ = r.Body.Close()
 		}(i, slug)
 	}
 

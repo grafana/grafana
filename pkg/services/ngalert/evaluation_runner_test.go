@@ -211,7 +211,7 @@ func TestEvaluationRunner_PersisterIsActive(t *testing.T) {
 	rule := models.RuleGen.GenerateRef()
 	now := clk.Now()
 	results := eval.GenerateResults(1, eval.ResultGen(eval.WithEvaluatedAt(now)))
-	_ = h.ng.stateManager.ProcessEvalResults(h.ctx, now, rule, results, make(data.Labels), nil)
+	_, _ = h.ng.stateManager.ProcessEvalResults(h.ctx, now, rule, results, make(data.Labels), nil)
 
 	var saveCount int
 	for _, op := range fakeStore.RecordedOps() {
@@ -234,6 +234,7 @@ func withStateManager(mgr *state.Manager) alertNGOption {
 
 func createTestAlertNG(sched *testSchedule, coordinator *testEvaluationCoordinator, opts ...alertNGOption) *AlertNG {
 	defaultCfg := state.ManagerCfg{
+		Clock:                     clock.NewMock(),
 		Log:                       log.NewNopLogger(),
 		StatePeriodicSaveInterval: time.Minute,
 	}

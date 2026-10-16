@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -363,7 +363,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			SecretsManagement: setting.SecretsManagerSettings{
 				CurrentEncryptionProvider: "secret_key.v1",
 				ConfiguredKMSProviders: map[string]map[string]string{
-					"secret_key.v1": {"secret_key": uuid.New().String()},
+					"secret_key.v1": {"secret_key": uuid.NewV4().String()},
 				},
 			},
 		}
@@ -389,7 +389,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			SecretsManagement: setting.SecretsManagerSettings{
 				CurrentEncryptionProvider: "secret_key.v2",
 				ConfiguredKMSProviders: map[string]map[string]string{
-					"secret_key.v2": {"secret_key": uuid.New().String()},
+					"secret_key.v2": {"secret_key": uuid.NewV4().String()},
 				},
 			},
 		}
@@ -584,7 +584,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 			// Use the real cache to properly test the caching behavior.
 			// This is important because the test verifies that phantom data keys
 			// (created within a rolled-back transaction) don't cause data corruption.
-			cache := ProvideOSSDataKeyCache(cfg)
+			cache := ProvideOSSDataKeyCache(tracer, cfg)
 
 			svc, err := ProvideEncryptionManager(
 				tracer,
@@ -865,7 +865,7 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a real OSS DEK cache
-	dekCache := ProvideOSSDataKeyCache(cfg)
+	dekCache := ProvideOSSDataKeyCache(tracer, cfg)
 
 	encMgr, err := ProvideEncryptionManager(
 		tracer,

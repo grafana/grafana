@@ -1,0 +1,14 @@
+{
+  "uid": "n1jR8vnnz",
+  "title": "Panel Tests - All Panels (classic)",
+  "schemaVersion": 39,
+  "tags": ["gdev", "panel-tests"],
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Panel",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    }
+  ]
+}

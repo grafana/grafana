@@ -9,6 +9,8 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { trackRuleListNavigation } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { ImportToGMABanner } from '../components/import-to-gma/ImportToGMABanner';
+import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useShowImportToGMARulesBanner';
 import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
 import { NoRulesSplash } from '../components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from '../components/rules/RuleDetails';
@@ -25,8 +27,8 @@ import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRul
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 
-import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { RuleListPageTitle } from './RuleListPageTitle';
+import { RuleListV1DeprecationNotice } from './RuleListV1DeprecationNotice';
 import { RuleListActionButtons } from './components/RuleListActionButtons';
 
 const VIEWS = {
@@ -39,6 +41,10 @@ const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
+/**
+ * @deprecated The old alert rule list is going away in a future release. New work belongs in the
+ * new list (`RuleList.v2`); only fix what's needed here to keep it working until it's removed.
+ */
 const RuleListV1 = () => {
   const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
@@ -118,6 +124,9 @@ const RuleListV1 = () => {
 
   const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
   const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+
+  const showImportToGMABanner = useShowImportToGMARulesBanner();
+
   return (
     // We don't want to show the Loading... indicator for the whole page.
     // We show separate indicators for Grafana-managed and Cloud rules
@@ -129,7 +138,8 @@ const RuleListV1 = () => {
       actions={<RuleListActionButtons hasAlertRulesCreated={hasAlertRulesCreated} />}
     >
       <Stack direction="column">
-        <AlertsActivityBanner />
+        <RuleListV1DeprecationNotice />
+        {showImportToGMABanner && <ImportToGMABanner />}
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (

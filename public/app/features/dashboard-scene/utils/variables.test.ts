@@ -25,7 +25,9 @@ import {
   TestVariable,
 } from '@grafana/scenes';
 import { defaultDashboard, defaultTimePickerConfig, type VariableType } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { adHocBuilder } from 'app/features/variables/shared/testing/builders';
 
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
@@ -33,12 +35,10 @@ import { NEW_LINK } from '../settings/links/utils';
 
 import { createSceneVariableFromVariableModel, createVariablesForSnapshot, getUserDefinedVariables } from './variables';
 
-// mock getDataSourceSrv.getInstanceSettings()
+// mock getDataSourceInstanceSettings()
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn(),
-  }),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('when creating variables objects', () => {
@@ -562,6 +562,27 @@ describe('when creating variables objects', () => {
     });
   });
 
+  describe('when the perPanelNonApplicableDrilldowns flag is on', () => {
+    beforeEach(() => {
+      setTestFlags({ perPanelNonApplicableDrilldowns: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('should enable applicability on adhoc variables', () => {
+      const variable = adHocBuilder()
+        .withName('adhoc')
+        .withDatasource({ uid: 'gdev-prometheus', type: 'prometheus' })
+        .build();
+
+      const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
+
+      expect(migrated.state.applicabilityEnabled).toBe(true);
+    });
+  });
+
   describe('when groupByVariable feature toggle is enabled', () => {
     beforeAll(() => {
       config.featureToggles.groupByVariable = true;
@@ -1044,5 +1065,44 @@ describe('getUserDefinedVariables', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]).toBe(userVar);
+  });
+
+  it('includes dashboard-level variables when called from a section with its own variables', () => {
+    const dashboardVar = new TestVariable({ name: 'instance' });
+    const tabVar = new TestVariable({ name: 'detected_app' });
+
+    const section = new SceneFlexLayout({
+      $variables: new SceneVariableSet({ variables: [tabVar] }),
+      children: [],
+    });
+
+    new EmbeddedScene({
+      $variables: new SceneVariableSet({ variables: [dashboardVar] }),
+      body: section,
+    });
+
+    const result = getUserDefinedVariables(section);
+
+    expect(result.map((v) => v.state.name)).toEqual(['detected_app', 'instance']);
+  });
+
+  it('lets the nearest variable shadow a dashboard-level variable with the same name', () => {
+    const dashboardVar = new TestVariable({ name: 'instance' });
+    const sectionVar = new TestVariable({ name: 'instance' });
+
+    const section = new SceneFlexLayout({
+      $variables: new SceneVariableSet({ variables: [sectionVar] }),
+      children: [],
+    });
+
+    new EmbeddedScene({
+      $variables: new SceneVariableSet({ variables: [dashboardVar] }),
+      body: section,
+    });
+
+    const result = getUserDefinedVariables(section);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(sectionVar);
   });
 });

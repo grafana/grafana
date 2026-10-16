@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -67,25 +68,55 @@ func (k *SqlKV) saveLastImportTime(ctx context.Context, key string) error {
 }
 
 func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield func(string, error) bool) {
-	// This table doesn't have key_path column, and it is always read fully from the beginning.
-	if opt.StartKey != "" || opt.EndKey != "" || opt.Sort != SortOrderAsc || opt.Limit != 0 {
-		yield("", fmt.Errorf("unsupported options, only ascending all-keys list supported: %+v", opt))
+	if opt.Sort != SortOrderAsc || opt.Limit != 0 {
+		yield("", fmt.Errorf("unsupported options, only ascending unlimited list supported: %+v", opt))
 		return
 	}
 
-	query := fmt.Sprintf(
-		"SELECT %s, %s, %s, %s FROM %s ORDER BY %s ASC, %s ASC, %s ASC",
-		k.dialect.QuoteIdent("namespace"),
-		k.dialect.QuoteIdent("group"),
-		k.dialect.QuoteIdent("resource"),
-		k.dialect.QuoteIdent("last_import_time"),
-		k.dialect.QuoteIdent(resourceLastImportTimeTable),
-		k.dialect.QuoteIdent("namespace"),
-		k.dialect.QuoteIdent("group"),
-		k.dialect.QuoteIdent("resource"),
-	)
+	var query string
+	var args []any
+	if opt.StartKey == "" && opt.EndKey == "" {
+		query = fmt.Sprintf(
+			"SELECT %s, %s, %s, %s FROM %s ORDER BY %s ASC, %s ASC, %s ASC",
+			k.dialect.QuoteIdent("namespace"),
+			k.dialect.QuoteIdent("group"),
+			k.dialect.QuoteIdent("resource"),
+			k.dialect.QuoteIdent("last_import_time"),
+			k.dialect.QuoteIdent(resourceLastImportTimeTable),
+			k.dialect.QuoteIdent("namespace"),
+			k.dialect.QuoteIdent("group"),
+			k.dialect.QuoteIdent("resource"),
+		)
+	} else {
+		if opt.EndKey != PrefixRangeEnd(opt.StartKey) {
+			yield("", fmt.Errorf("unsupported last import time key range: %+v", opt))
+			return
+		}
+		ns, group, resource, err := ParseLastImportTimeKeyPrefix(opt.StartKey)
+		if err != nil {
+			yield("", err)
+			return
+		}
 
-	rows, err := k.conn(ctx).QueryContext(ctx, query)
+		placeholders := []string{"?", "?", "?"}
+		if k.dialect.Name() == "postgres" {
+			placeholders = []string{"$1", "$2", "$3"}
+		}
+		query = fmt.Sprintf(
+			"SELECT %s, %s, %s, %s FROM %s WHERE %s = %s AND %s = %s AND %s = %s",
+			k.dialect.QuoteIdent("namespace"),
+			k.dialect.QuoteIdent("group"),
+			k.dialect.QuoteIdent("resource"),
+			k.dialect.QuoteIdent("last_import_time"),
+			k.dialect.QuoteIdent(resourceLastImportTimeTable),
+			k.dialect.QuoteIdent("group"), placeholders[0],
+			k.dialect.QuoteIdent("resource"), placeholders[1],
+			k.dialect.QuoteIdent("namespace"), placeholders[2],
+		)
+		args = []any{group, resource, ns}
+	}
+
+	rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
 	if err != nil {
 		yield("", err)
 		return
@@ -93,6 +124,12 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 	shouldYield := true
 	defer func() { closeRows(rows, yield, shouldYield) }()
 
+	// Keys are composite strings (namespace~group~resource~unixTimestamp). The
+	// SQL ORDER BY sorts by the separate columns, which is not the same as
+	// byte-wise ordering of the assembled key: '~' (0x7E) sorts above letters
+	// and digits, so e.g. "ns1~..." precedes "ns~...". Other KV backends return
+	// keys in full-key byte order, so sort here to match that contract.
+	keys := make([]string, 0)
 	for rows.Next() {
 		var ns, group, resource string
 		var lastImportTime time.Time
@@ -100,14 +137,19 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 			shouldYield = yield("", fmt.Errorf("error reading row: %w", err))
 			return
 		}
-
-		if shouldYield = yield(LastImportTimeKey(ns, group, resource, lastImportTime), nil); !shouldYield {
-			return
-		}
+		keys = append(keys, LastImportTimeKey(ns, group, resource, lastImportTime))
 	}
 
 	if err := rows.Err(); err != nil {
 		shouldYield = yield("", fmt.Errorf("failed to read rows: %w", err))
+		return
+	}
+
+	sort.Strings(keys)
+	for _, key := range keys {
+		if shouldYield = yield(key, nil); !shouldYield {
+			return
+		}
 	}
 }
 
@@ -137,9 +179,21 @@ func (k *SqlKV) deleteLastImportTime(ctx context.Context, key string) error {
 	return nil
 }
 
+func LastImportTimeKeyPrefix(ns, group, resource string) string {
+	return fmt.Sprintf("%s~%s~%s~", ns, group, resource)
+}
+
+func ParseLastImportTimeKeyPrefix(prefix string) (ns, group, resource string, _ error) {
+	parts := strings.Split(strings.TrimSuffix(prefix, "~"), "~")
+	if len(parts) != 3 || !strings.HasSuffix(prefix, "~") {
+		return "", "", "", fmt.Errorf("invalid key prefix %q", prefix)
+	}
+	return parts[0], parts[1], parts[2], nil
+}
+
 func LastImportTimeKey(ns, group, resource string, ts time.Time) string {
 	// We use unix seconds, as SQL implementation uses DATETIME which has seconds precision.
-	return fmt.Sprintf("%s~%s~%s~%d", ns, group, resource, ts.Unix())
+	return fmt.Sprintf("%s%d", LastImportTimeKeyPrefix(ns, group, resource), ts.Unix())
 }
 
 func ParseLastImportTimeKey(key string) (ns, group, resource string, ts time.Time, _ error) {

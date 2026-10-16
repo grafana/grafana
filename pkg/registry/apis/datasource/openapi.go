@@ -9,7 +9,7 @@ import (
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins/openapi"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 )
 
@@ -135,7 +135,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		return oas, nil
 	}
 
-	return openapi.AugmentOpenAPI(oas, openapi.PluginOptions{
+	return definition.AugmentOpenAPI(oas, definition.SettingsResource{
 		Schema:   schema,
 		Resource: ds,
 		SpecName: "DataSourceSpec",

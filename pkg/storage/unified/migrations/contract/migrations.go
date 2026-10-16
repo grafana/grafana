@@ -59,4 +59,8 @@ func (m StorageMode) String() string {
 //  4. Otherwise → Legacy
 type MigrationStatusReader interface {
 	GetStorageMode(ctx context.Context, gr schema.GroupResource) (StorageMode, error)
+
+	// GetFloorVersion returns the oldest apiVersion that may exist in unified storage for a
+	// resource. ok is false when no migration declares a floor, so the guard cannot validate it.
+	GetFloorVersion(gr schema.GroupResource) (version string, ok bool)
 }

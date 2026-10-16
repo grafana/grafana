@@ -10,7 +10,7 @@ interface UseIsProvisionedInstanceOptions {
 
 export function useIsProvisionedInstance(options: UseIsProvisionedInstanceOptions = {}) {
   const { settings, skip: skipQuery } = options;
-  const skip = !config.featureToggles.provisioning || skipQuery;
+  const skip = !config.provisioningEnabled || skipQuery;
 
   const settingsQuery = useGetFrontendSettingsQuery(settings || skip ? skipToken : undefined);
 

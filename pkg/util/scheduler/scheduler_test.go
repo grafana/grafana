@@ -98,6 +98,16 @@ func TestScheduler(t *testing.T) {
 			require.NoError(t, services.StopAndAwaitTerminated(context.Background(), scheduler))
 		})
 
+		t.Run("ExecutionCapAtOrAboveWorkerCount", func(t *testing.T) {
+			for _, limit := range []int{4, 5} {
+				t.Run(fmt.Sprint(limit), func(t *testing.T) {
+					q := NewQueue(&QueueOptions{MaxConcurrentPerTenant: limit})
+					_, err := NewScheduler(q, &Config{NumWorkers: 4})
+					require.NoError(t, err)
+				})
+			}
+		})
+
 		t.Run("NilQueue", func(t *testing.T) {
 			cfg := Config{
 				NumWorkers: 2,
@@ -147,7 +157,7 @@ func TestScheduler(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 
-		for i := 0; i < itemCount; i++ {
+		for i := range itemCount {
 			itemID := i
 			tenantIndex := itemID % 10
 			tenantID := fmt.Sprintf("tenant-%d", tenantIndex)
@@ -198,7 +208,7 @@ func TestScheduler(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
 				processed.Add(1)
 			}))

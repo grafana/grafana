@@ -1,17 +1,26 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { annotationEditActions } from '../settings/annotations/actions';
 
-import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet, isDashboardDataLayerSet, isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 import { DataLayerControl } from './DataLayerControl';
+import { AnnotationEditActions } from './edit-actions-popover/AnnotationEditActions';
+import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
+
+// The annotation query editor pulls in the standard annotation editor and data source
+// picker, so it is loaded on demand when the user opens the query editor.
+const AnnotationQueryEditorModal = lazy(() =>
+  import(/* webpackChunkName: "dashboard-edit-actions" */ '../settings/annotations/AnnotationQueryEditorModal').then(
+    (m) => ({ default: m.AnnotationQueryEditorModal })
+  )
+);
 
 type DashboardDataLayerControlsProps = {
   dashboard: DashboardScene;
@@ -42,11 +51,21 @@ export function DashboardDataLayerControls({ dashboard, inMenu }: DashboardDataL
 
 export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDataLayerProvider; inMenu?: boolean }) {
   const styles = useStyles2(getStyles);
-  const { isSelectable } = useElementSelection(layer.state.key);
+  const [isQueryEditorOpen, setIsQueryEditorOpen] = useState(false);
 
   const onClickEditLayer = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(layer, DashboardScene);
-    dashboard.state.editPane.selectObject(layer);
+    dashboard.state.sidebar.selectObject(layer);
+  }, [layer]);
+
+  const onClickEditLayerQuery = useCallback(() => {
+    setIsQueryEditorOpen(true);
+  }, []);
+
+  const onClickDuplicateLayer = useCallback(() => {
+    if (layer instanceof DashboardAnnotationsDataLayer) {
+      annotationEditActions.duplicateAnnotation(layer);
+    }
   }, [layer]);
 
   const onClickDeleteLayer = useCallback(() => {
@@ -61,16 +80,31 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
   }, [layer]);
 
   const editActions = useMemo(
-    () => <ControlEditActions element={layer} onClickEdit={onClickEditLayer} onClickDelete={onClickDeleteLayer} />,
-    [layer, onClickEditLayer, onClickDeleteLayer]
+    () => (
+      <AnnotationEditActions
+        layer={layer}
+        onClickEdit={onClickEditLayer}
+        onClickEditQuery={onClickEditLayerQuery}
+        onClickDuplicate={onClickDuplicateLayer}
+        onClickDelete={onClickDeleteLayer}
+      />
+    ),
+    [layer, onClickEditLayer, onClickEditLayerQuery, onClickDuplicateLayer, onClickDeleteLayer]
   );
 
   return (
-    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
-      <div className={styles.container}>
-        <DataLayerControl layer={layer} inMenu={inMenu} />
-      </div>
-    </ControlActionsPopover>
+    <>
+      {isQueryEditorOpen && layer instanceof DashboardAnnotationsDataLayer && (
+        <Suspense fallback={null}>
+          <AnnotationQueryEditorModal layer={layer} onClose={() => setIsQueryEditorOpen(false)} />
+        </Suspense>
+      )}
+      <EditActionsPopover content={editActions}>
+        <div className={styles.container}>
+          <DataLayerControl layer={layer} inMenu={inMenu} />
+        </div>
+      </EditActionsPopover>
+    </>
   );
 }
 

@@ -158,6 +158,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 				if len(cfg.GetFinalizers()) == 0 {
 					cfg.SetFinalizers([]string{
 						repository.RemoveOrphanResourcesFinalizer,
+						repository.RemovePendingJobsFinalizer,
 						repository.CleanFinalizer,
 					})
 				}
@@ -232,10 +233,6 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					}
 
 					cfg.Secure.Token.Create = token.Token
-					// HACK: currently, Repository validator does not allow for Connection and token
-					// to be declared together in a new / temporary Repository.
-					// We are therefore removing it in such cases.
-					cfg.Spec.Connection = nil
 				}
 
 				// Create a temporary repository
@@ -244,6 +241,11 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					responder.Error(err)
 					return
 				}
+				// HACK: currently, Repository validator does not allow for Connection and token
+				// to be declared together in a new / temporary Repository. We remove the
+				// connection only after Build so provider extras still see it (e.g. bitbucket
+				// derives the git token user from it).
+				cfg.Spec.Connection = nil
 				repo = tmp
 			}
 		}

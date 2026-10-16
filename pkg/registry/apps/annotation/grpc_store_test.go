@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -14,8 +15,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/utils/ptr"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storev1 "github.com/grafana/grafana/pkg/registry/apps/annotation/storepb/v1"
 )
 
@@ -152,15 +156,18 @@ func (s *mockGRPCServer) ListTags(ctx context.Context, req *storev1.ListTagsRequ
 
 func setupGRPCTest(t *testing.T) (Store, func()) {
 	t.Helper()
+	return setupGRPCTestWithServer(t, newMockGRPCServer(NewMemoryStore()))
+}
 
-	memStore := NewMemoryStore()
+func setupGRPCTestWithServer(t *testing.T, srv storev1.AnnotationStoreServer) (Store, func()) {
+	t.Helper()
 
 	const bufSize = 1024 * 1024
 	lis := bufconn.Listen(bufSize)
 
 	// Create and start mock gRPC server
 	grpcServer := grpc.NewServer()
-	storev1.RegisterAnnotationStoreServer(grpcServer, newMockGRPCServer(memStore))
+	storev1.RegisterAnnotationStoreServer(grpcServer, srv)
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			t.Logf("Server exited with error: %v", err)
@@ -292,9 +299,10 @@ func TestGRPCStore_Delete(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify deletion
-	_, err = store.Get(ctx, namespace, "test-1")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "not found")
+	got, err := store.Get(ctx, namespace, "test-1")
+	require.NoError(t, err)
+	require.NotNil(t, got.DeletionTimestamp, "expected tombstone to survive the gRPC round-trip")
+	assert.False(t, got.DeletionTimestamp.IsZero())
 }
 
 func TestGRPCStore_List(t *testing.T) {
@@ -386,6 +394,49 @@ func TestGRPCStore_List(t *testing.T) {
 		assert.Equal(t, "user:alice", result.Items[0].GetCreatedBy())
 		assert.Equal(t, "user:alice", result.Items[1].GetCreatedBy())
 	})
+
+	t.Run("Deleted filter round-trips and surfaces tombstones", func(t *testing.T) {
+		require.NoError(t, store.Delete(ctx, namespace, "anno-3"))
+
+		findTombstone := func(items []annotationV0.Annotation) *annotationV0.Annotation {
+			for i := range items {
+				if items[i].Name == "anno-3" {
+					return &items[i]
+				}
+			}
+			return nil
+		}
+
+		findLive := func(items []annotationV0.Annotation, name string) *annotationV0.Annotation {
+			for i := range items {
+				if items[i].Name == name && items[i].DeletionTimestamp == nil {
+					return &items[i]
+				}
+			}
+			return nil
+		}
+
+		excluded, err := store.List(ctx, namespace, ListOptions{})
+		require.NoError(t, err)
+		assert.Nil(t, findTombstone(excluded.Items), "tombstone must be hidden by default")
+
+		included, err := store.List(ctx, namespace, ListOptions{Deleted: DeletedInclude})
+		require.NoError(t, err)
+		assert.Len(t, included.Items, 3, "DeletedInclude must return live annotations plus the tombstone")
+		tombstone := findTombstone(included.Items)
+		require.NotNil(t, tombstone, "DeletedInclude must surface the tombstone")
+		require.NotNil(t, tombstone.DeletionTimestamp, "tombstone must carry a deletionTimestamp over the wire")
+		assert.NotNil(t, findLive(included.Items, "anno-1"), "DeletedInclude must also return live annotations")
+		assert.NotNil(t, findLive(included.Items, "anno-2"), "DeletedInclude must also return live annotations")
+
+		only, err := store.List(ctx, namespace, ListOptions{Deleted: DeletedOnly})
+		require.NoError(t, err)
+		require.NotEmpty(t, only.Items, "DeletedOnly must surface the tombstone")
+		for i := range only.Items {
+			assert.NotNil(t, only.Items[i].DeletionTimestamp, "DeletedOnly must return only tombstones")
+		}
+		require.NotNil(t, findTombstone(only.Items), "DeletedOnly must include anno-3")
+	})
 }
 
 func TestGRPCStore_ListTags(t *testing.T) {
@@ -474,5 +525,109 @@ func TestGRPCStore_ErrorCases(t *testing.T) {
 		err := store.Delete(ctx, namespace, "does-not-exist")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
+	})
+}
+
+// recordingGRPCServer records grpc client requests so they can be asserted in tests.
+type recordingGRPCServer struct {
+	*mockGRPCServer
+	creates []*storev1.CreateRequest
+	updates []*storev1.UpdateRequest
+}
+
+func (s *recordingGRPCServer) Create(ctx context.Context, req *storev1.CreateRequest) (*storev1.CreateResponse, error) {
+	s.creates = append(s.creates, req)
+	return s.mockGRPCServer.Create(ctx, req)
+}
+
+func (s *recordingGRPCServer) Update(ctx context.Context, req *storev1.UpdateRequest) (*storev1.UpdateResponse, error) {
+	s.updates = append(s.updates, req)
+	return s.mockGRPCServer.Update(ctx, req)
+}
+func TestGRPCStore_APISendsTimeEnd(t *testing.T) {
+	ns := "org-1"
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+
+	setup := func(t *testing.T) (*k8sRESTAdapter, *recordingGRPCServer, context.Context) {
+		t.Helper()
+		srv := &recordingGRPCServer{mockGRPCServer: newMockGRPCServer(NewMemoryStore())}
+		store, cleanup := setupGRPCTestWithServer(t, srv)
+		t.Cleanup(cleanup)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+		return newTestAdapter(store, allowAll), srv, ctx
+	}
+
+	t.Run("create point sends time_end equal to time", func(t *testing.T) {
+		adapter, srv, ctx := setup(t)
+
+		_, err := adapter.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "point", Time: 1000},
+		}, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		require.Len(t, srv.creates, 1)
+		spec := srv.creates[0].Annotation.Spec
+		require.NotNil(t, spec.TimeEnd)
+		assert.Equal(t, spec.Time, *spec.TimeEnd)
+	})
+
+	t.Run("create range sends caller-supplied time_end", func(t *testing.T) {
+		adapter, srv, ctx := setup(t)
+
+		_, err := adapter.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "range", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "range", Time: 1000, TimeEnd: ptr.To(int64(2000))},
+		}, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		require.Len(t, srv.creates, 1)
+		spec := srv.creates[0].Annotation.Spec
+		require.NotNil(t, spec.TimeEnd)
+		assert.Equal(t, int64(2000), *spec.TimeEnd)
+	})
+
+	t.Run("update point sends stored time_end", func(t *testing.T) {
+		adapter, srv, ctx := setup(t)
+
+		_, err := adapter.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "point", Time: 1000},
+		}, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		got, err := adapter.Get(ctx, "point", &metav1.GetOptions{})
+		require.NoError(t, err)
+		existing := got.(*annotationV0.Annotation)
+		existing.Spec.Text = "updated"
+
+		_, _, err = adapter.Update(ctx, "point", &updatedObjectInfo{obj: existing}, nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		require.Len(t, srv.updates, 1)
+		spec := srv.updates[0].Annotation.Spec
+		require.NotNil(t, spec.TimeEnd)
+		assert.Equal(t, spec.Time, *spec.TimeEnd)
+	})
+
+	t.Run("update omitting time_end on a point sends time_end equal to time", func(t *testing.T) {
+		adapter, srv, ctx := setup(t)
+
+		_, err := adapter.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "point", Time: 1000},
+		}, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		_, _, err = adapter.Update(ctx, "point", &updatedObjectInfo{obj: &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+		}}, nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		require.Len(t, srv.updates, 1)
+		spec := srv.updates[0].Annotation.Spec
+		require.NotNil(t, spec.TimeEnd)
+		assert.Equal(t, spec.Time, *spec.TimeEnd)
 	})
 }

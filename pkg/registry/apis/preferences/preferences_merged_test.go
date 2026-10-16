@@ -8,8 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 )
 
 func TestMergePreferences(t *testing.T) {
@@ -54,6 +55,158 @@ func TestMergePreferences(t *testing.T) {
 				HomeDashboardUID: new("teamB"),
 				Timezone:         new("namespace"),
 				WeekStart:        new("settings.ini"),
+			},
+		},
+		{
+			name: "home dashboard preference suppresses homeURL default",
+			defaults: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new("my-dash"),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new("my-dash"),
+			},
+		},
+		{
+			name: "empty home dashboard UID keeps homeURL default",
+			defaults: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(""),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new(""),
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+			},
+		},
+		{
+			name: "home_page suppresses config-derived custom home dashboard",
+			defaults: preferences.PreferencesSpec{
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+			items: nil,
+			expect: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+		},
+		{
+			name: "config custom home dashboard applies when home_page unset",
+			defaults: preferences.PreferencesSpec{
+				HomeURL:          new(""),
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+			items: nil,
+			expect: preferences.PreferencesSpec{
+				HomeURL:          new(""),
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+		},
+		{
+			name: "home dashboard preference suppresses homeURL even with config custom home",
+			defaults: preferences.PreferencesSpec{
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new("my-dash"),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new("my-dash"),
+			},
+		},
+		{
+			name: "user without home dashboard still gets homeURL default",
+			defaults: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					Theme: new("dark"),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				Theme:   new("dark"),
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+		},
+		{
+			name: "home_page does not suppress a non-synthetic default home dashboard UID",
+			defaults: preferences.PreferencesSpec{
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+				HomeDashboardUID: new("operator-configured-dash"),
+			},
+			items: nil,
+			expect: preferences.PreferencesSpec{
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+				HomeDashboardUID: new("operator-configured-dash"),
+			},
+		},
+		{
+			name: "global home sentinel skips home_page redirect",
+			defaults: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(preferences.GlobalHomeDashboardUID),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+		},
+		{
+			name: "user global home sentinel beats team dashboard and resolves to config home",
+			defaults: preferences.PreferencesSpec{
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(preferences.GlobalHomeDashboardUID),
+				}},
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new("team-dash"),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+		},
+		{
+			name:     "global home sentinel with empty defaults leaves home unset",
+			defaults: preferences.PreferencesSpec{},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(preferences.GlobalHomeDashboardUID),
+				}},
+			},
+			expect: preferences.PreferencesSpec{},
+		},
+		{
+			name: "lower-level global home sentinel loses to a higher-level dashboard",
+			defaults: preferences.PreferencesSpec{
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new("team-dash"),
+				}},
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(preferences.GlobalHomeDashboardUID),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new("team-dash"),
 			},
 		},
 	}

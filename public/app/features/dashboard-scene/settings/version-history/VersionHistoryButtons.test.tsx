@@ -6,6 +6,7 @@ import { VersionsHistoryButtons } from './VersionHistoryButtons';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     showMoreVersionsClicked: jest.fn(),
   },
 }));

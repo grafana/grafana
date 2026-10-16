@@ -3,21 +3,25 @@ import { of } from 'rxjs';
 import { FieldType, LoadingState, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   SceneCanvasText,
   type SceneDataTransformer,
+  SceneFlexItem,
+  SceneFlexLayout,
   sceneGraph,
   SceneGridLayout,
   type SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree } from '../utils/test-utils';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -232,16 +236,307 @@ describe('LibraryPanelBehavior', () => {
     const queryRunner = dataProvider.state?.$data as SceneQueryRunner;
     expect(queryRunner?.state?.dataLayerFilter?.panelId).toBe(dashboardPanelId);
   });
+
+  // Repeat carried on the library panel definition is migrated onto the enclosing DashboardGridItem.
+  // Under dynamic dashboards repeat is owned by the panel instance instead, so the migration is
+  // skipped — except for public and scripted dashboards, whose migrations still run in the frontend.
+  describe('repeat migration', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('migrates repeat onto the grid item for legacy dashboards', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('keeps the grid item width for a horizontal repeat', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.width).toBe(10);
+    });
+
+    it('skips the migration for dynamic dashboards', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBeUndefined();
+    });
+
+    it('still migrates for a public dashboard', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { publicDashboardEnabled: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+    });
+
+    it('still migrates for a scripted dashboard', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { fromScript: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+    });
+
+    it('leaves the grid item alone when the library panel has no repeat', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+      expect(gridItem.state.variableName).toBeUndefined();
+    });
+
+    // The reason getDashboardSceneFor sits inside the DashboardGridItem branch rather than above it.
+    // A notebook cell holding a library panel whose model carries `repeat` has a NotebookCellItem
+    // parent and a NotebookScene root, so hoisting the lookup back out throws
+    // "SceneObject root is not a DashboardScene" and the cell fails to render. Every other case in
+    // this file builds a DashboardScene root, so none of them would catch that.
+    it('does not look up the dashboard when the panel is not in a DashboardGridItem', () => {
+      const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
+      const vizPanel = new VizPanel({ pluginId: 'lib-panel-loading', key: 'panel-1', $behaviors: [behavior] });
+
+      // Stands in for a NotebookCellItem: a non-DashboardGridItem parent under a root that is not a
+      // DashboardScene. Built directly rather than via getLibraryPanel so there is no mock in the path.
+      new SceneFlexLayout({ children: [new SceneFlexItem({ body: vizPanel })] });
+
+      expect(() =>
+        behavior.setPanelFromLibPanel({
+          name: 'LibraryPanel A',
+          uid: '111',
+          type: 'table',
+          version: 1,
+          model: {
+            title: 'LibraryPanel A title',
+            type: 'table',
+            options: {},
+            fieldConfig: { defaults: {}, overrides: [] },
+            targets: [{ refId: 'A' }],
+            // The field that reaches the getDashboardSceneFor call.
+            repeat: 'server',
+            repeatDirection: 'h',
+          },
+        })
+      ).not.toThrow();
+    });
+  });
+
+  describe('repeat migration with dashboards.libraryPanelRepeatFromServerResolution enabled', () => {
+    beforeEach(() => {
+      setTestFlags({ [FlagKeys.DashboardsLibraryPanelRepeatFromServerResolution]: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('migrates repeat onto the grid item when the server did not resolve it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        // only a spec that reached the browser unresolved carries the marker
+        meta: { libraryPanelRepeatUnresolved: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('keeps the grid item width for a horizontal repeat', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { libraryPanelRepeatUnresolved: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.width).toBe(10);
+    });
+
+    it('preserves instance repeat options when library panel repeats are unresolved', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'host',
+        meta: { libraryPanelRepeatUnresolved: true },
+        resolvedRepeat: { variableName: 'region', repeatDirection: 'v', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('region');
+      expect(gridItem.state.repeatDirection).toBe('v');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('skips the migration when the server already resolved it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('migrates when the server did not resolve it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        // only a spec that reached the browser unresolved carries the marker
+        meta: { libraryPanelRepeatUnresolved: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration when the server resolved it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('still migrates for a public dashboard when the server did not resolve it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { publicDashboardEnabled: true, libraryPanelRepeatUnresolved: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration for a public dashboard when the server already resolved it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { publicDashboardEnabled: true },
+        // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('still migrates for a scripted dashboard when the server did not resolve it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { fromScript: true, libraryPanelRepeatUnresolved: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration for a scripted dashboard when the server already resolved it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { fromScript: true },
+        // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('leaves the grid item alone when the library panel has no repeat', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+      expect(gridItem.state.variableName).toBeUndefined();
+    });
+  });
+
+  describe('horizontal repeat width with dashboards.libraryPanelHorizontalRepeatFullWidth enabled', () => {
+    beforeEach(() => {
+      setTestFlags({
+        dashboardNewLayouts: false,
+        [FlagKeys.DashboardsLibraryPanelHorizontalRepeatFullWidth]: true,
+      });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('expands a migrated horizontal repeat to the full grid width', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.width).toBe(24);
+    });
+
+    it('keeps the grid item width for a migrated vertical repeat', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server', repeatDirection: 'v' });
+
+      expect(gridItem.state.repeatDirection).toBe('v');
+      expect(gridItem.state.width).toBe(10);
+    });
+
+    it('re-renders the grid after expanding a migrated horizontal repeat', async () => {
+      const forceRender = jest.spyOn(SceneGridLayout.prototype, 'forceRender');
+
+      await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      // A single clone keeps the grid item's height, so performRepeat does not re-render the grid
+      // and the new width would never be laid out.
+      expect(forceRender).toHaveBeenCalledTimes(1);
+      forceRender.mockRestore();
+    });
+
+    it('expands a horizontal repeat migrated under server resolution', async () => {
+      setTestFlags({
+        [FlagKeys.DashboardsLibraryPanelHorizontalRepeatFullWidth]: true,
+        [FlagKeys.DashboardsLibraryPanelRepeatFromServerResolution]: true,
+      });
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { libraryPanelRepeatUnresolved: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.width).toBe(24);
+    });
+  });
 });
 
 interface BuildTestSceneOptions {
   vizPanelTitle?: string;
   libPanelModelTitle?: string;
   timeFrom?: string;
+  /** Set on the library panel model, to exercise the repeat migration onto the grid item. */
+  repeat?: string;
+  /** Set on the library panel model together with `repeat`. Defaults to 'h'. */
+  repeatDirection?: 'h' | 'v';
+  /** Merged into the dashboard meta, for the public/scripted migration exceptions. */
+  meta?: { publicDashboardEnabled?: boolean; fromScript?: boolean; libraryPanelRepeatUnresolved?: boolean };
+  /**
+   * Seeded on the grid item the way DefaultGridLayoutSerializer builds it from
+   * GridLayoutItemKind.spec.repeat, either preserved from the instance or resolved by the server.
+   */
+  resolvedRepeat?: { variableName: string; repeatDirection?: 'h' | 'v'; maxPerRow?: number };
 }
 
 async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {}) {
-  const { vizPanelTitle = 'Panel A', libPanelModelTitle = 'LibraryPanel A title', timeFrom } = options;
+  const {
+    vizPanelTitle = 'Panel A',
+    libPanelModelTitle = 'LibraryPanel A title',
+    timeFrom,
+    repeat,
+    repeatDirection = 'h',
+    meta,
+    resolvedRepeat,
+  } = options;
 
   const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
 
@@ -265,6 +560,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
       datasource: { uid: 'abcdef' },
       targets: [{ refId: 'A' }],
       ...(timeFrom ? { timeFrom } : {}),
+      ...(repeat ? { repeat, repeatDirection, maxPerRow: 4 } : {}),
     },
     version: 1,
   };
@@ -278,6 +574,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
     width: 10,
     height: 12,
     body: vizPanel,
+    ...resolvedRepeat,
   });
 
   const scene = new DashboardScene({
@@ -285,6 +582,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
     uid: 'dash-1',
     meta: {
       canEdit: true,
+      ...meta,
     },
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({

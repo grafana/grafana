@@ -7,6 +7,21 @@ It provides generic storage for k8s objects, and can store data either within de
 
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
+## Remote blob streaming
+
+The additive `BlobStoreStreaming` service in `proto/blob.proto` supports remote
+uploads and downloads against the existing `resource_blob` SQL table, including
+SQL-backed KV. The unary `BlobStore` service remains unchanged. Streaming uses
+64 KiB chunks, a 64 MiB total-blob limit, two active transfers per tenant per
+server, and a two-minute deadline. Interrupted uploads roll back. CDK and
+file-backed KV do not support streaming yet; snapshot clients still use unary
+calls until a separately deployed client change switches them over.
+
+Uploaded chunks are committed to `resource_blob_upload_chunk` as they arrive. On
+completion the database concatenates them into the `resource_blob` row in one
+statement, so the full value is written once and never has to fit in a client
+packet (such as MySQL's `max_allowed_packet`).
+
 ## Storage Overview
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.
@@ -1336,3 +1351,106 @@ Built-in validators ensure data integrity after migration:
 ### Documentation
 
 For detailed information about migration architecture, validators, and troubleshooting, refer to [migrations/README.md](./migrations/README.md).
+
+# Local NATS watch-event publishing setup
+
+Reproduces the `nats/publish-watch-events` PR end to end: a Grafana **storage
+server** publishes resource watch notifications to an **external NATS** bus, and
+a separate Grafana **main server** generates those events by writing resources
+over unified-storage gRPC.
+
+```
+  ┌──────────────┐  resource writes   ┌────────────────────┐  WatchNotification  ┌────────────┐
+  │ grafana main │ ─── (unified-grpc) ─▶│ grafana storage    │ ─── (NATS pub) ────▶│ nats-server │
+  │  :3000       │      :10000         │ server (publisher) │     :4222           │  (external) │
+  └──────────────┘                     └────────────────────┘                     └────────────┘
+                                                                                         ▲
+                                                                          nats sub ">"  ─┘  (observe)
+```
+
+Only the storage server talks to NATS. Publishing fires from
+`kvStorageBackend.WriteEvent -> publishWatchNotification`, which requires the
+SQL-KV backend (`enable_sqlkv_backend = true`) and the NATS publisher that the
+module server wires for `target = storage-server`.
+
+## Run (4 terminals / background jobs)
+
+```bash
+# 0) build once
+make build-go            # -> ./bin/grafana (copy of ./bin/<os>/<arch>/grafana)
+BIN=./bin/grafana
+
+# 1) external NATS
+nats-server -DV
+
+# 2) observe every subject
+nats sub ">"
+
+# 3) storage server (publisher)
+$BIN server target --homepath . --config .files/storage-server.ini
+
+# 4) main grafana (generator, admin/admin on :3000)
+$BIN server --homepath . --config .files/grafana-main.ini
+```
+
+## Generate an event
+
+Any resource write that goes through unified storage works. A playlist is a
+clean unified-storage resource:
+
+```bash
+curl -s -u admin:admin -X POST \
+  http://localhost:3000/apis/playlist.grafana.app/v0alpha1/namespaces/default/playlists \
+  -H 'Content-Type: application/json' \
+  -d '{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist",
+       "metadata":{"generateName":"p"},
+       "spec":{"title":"demo","interval":"5m","items":[]}}'
+```
+
+The `nats sub` window then shows a message on subject
+`us.watch.v1.playlist.grafana.app.default.playlists` (format:
+`us.watch.v1.{group}.{namespace}.{resource}`).
+The payload is a protobuf `WatchNotification` (binary), so it renders as raw
+bytes — a message appearing on that subject with a non-empty body confirms the
+publish path.
+
+## Notes
+
+- Separate SQLite DBs and data dirs per process avoid lock contention.
+
+### gRPC auth between the two Grafana processes
+
+The main process talks to the storage server over gRPC and must authenticate:
+
+1. `app_mode=development` on both processes (`cfg.Env == Dev`).
+2. Main: `[feature_toggles] enable = appPlatformGrpcClientAuth`. Without it the
+   unified-grpc client uses the legacy interceptor and the storage server
+   rejects the call with `Unauthenticated: missing required token`. With it, in
+   dev mode the client uses an in-process token exchanger and presents a
+   self-signed dev token.
+3. Storage server: `[grpc_server_authentication] unsafe = true`. The main
+   process signs its token with an in-process key this separate process does not
+   share, so a verifying authenticator rejects it with `unrecognized signing
+   key`. `unsafe` (dev-only) skips signature verification and accepts it.
+
+### Why the KV backend
+
+Publishing fires from `kvStorageBackend.WriteEvent`, which is only reached when
+`[unified_storage] enable_sqlkv_backend = true`. The default `sql/backend` path
+does not publish. The NATS publisher itself is only wired by the module server
+(`target = storage-server`), not by a normal `target=all` process.
+
+### Decoding a payload
+
+Payloads are protobuf `WatchNotification` (see
+`pkg/storage/unified/proto/resourcewatch.proto`). Field 1 `type` is the enum
+`UNKNOWN=0, ADDED=1, MODIFIED=2, DELETED=3`. A quick raw capture + hexdump:
+
+```bash
+nats sub "us.watch.v1.playlist.grafana.app.>" --raw --count 1 > /tmp/n.bin & \
+  curl -s -u admin:admin -X POST \
+  http://localhost:3000/apis/playlist.grafana.app/v0alpha1/namespaces/default/playlists \
+  -H 'Content-Type: application/json' \
+  -d '{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"generateName":"d-"},"spec":{"title":"x","interval":"1m","items":[]}}' >/dev/null
+xxd /tmp/n.bin   # 08 01 -> type=ADDED, then group/resource/namespace/name/rv
+```

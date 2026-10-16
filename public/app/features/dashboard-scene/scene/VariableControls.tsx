@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import {
   ControlsLabel,
   type ControlsLayout,
@@ -16,15 +15,28 @@ import {
   useSceneObjectState,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
-import { dashboardEditActions } from '../edit-pane/shared';
+import { duplicateVariable } from '../actions/variable/duplicateVariable';
+import { removeVariable } from '../actions/variable/removeVariable';
+import { isVariableEditable } from '../settings/variables/utils';
+import { getPredefinedOrigin } from '../utils/predefinedVariables';
+import { removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
-import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
-import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
+import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
+import { VariableEditActions } from './edit-actions-popover/VariableEditActions';
 import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
+
+// The editor modal only renders after an explicit edit action, so keep the large
+// variable editors tree out of the initial dashboard bundle.
+const VariableEditorModal = lazy(() =>
+  import(/* webpackChunkName: "variable-editor-modal" */ '../settings/variables/editors/VariableEditorModal').then(
+    (m) => ({ default: m.VariableEditorModal })
+  )
+);
 
 export function VariableControls({
   dashboard,
@@ -35,7 +47,8 @@ export function VariableControls({
 }) {
   const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
-  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+  const isEditingNewLayouts = isEditing && dashboardNewLayoutsEnabled;
   const variables = variablesOverride ?? dashboardVariables;
 
   const visibleVariables = variables.filter(
@@ -51,10 +64,10 @@ export function VariableControls({
           <VariableValueSelectWrapper
             key={variable.state.key}
             variable={variable}
+            isEditing={isEditing}
             isEditingNewLayouts={isEditingNewLayouts}
           />
         ))}
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }
@@ -62,34 +75,77 @@ export function VariableControls({
 interface VariableSelectProps {
   variable: SceneVariable;
   inMenu?: boolean;
+  isEditing?: boolean;
   isEditingNewLayouts?: boolean;
 }
 
-export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayouts }: VariableSelectProps) {
+export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEditingNewLayouts }: VariableSelectProps) {
   const styles = useStyles2(getStyles);
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
+  const predefinedOrigin = getPredefinedOrigin(state.origin);
+  // Snapshot and system variables stay dimmed. Opted-in global and folder variables stay full strength so the value can still be changed.
+  const isReadOnlyControl = Boolean(isEditingNewLayouts) && !isVariableEditable(variable) && !predefinedOrigin;
   const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
-    dashboard.state.editPane.selectObject(variable);
+    dashboard.state.sidebar.selectObject(variable);
   }, [variable]);
+
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+  const onClickEditVariableQuery = useCallback(() => {
+    setIsEditorOpen(true);
+  }, []);
 
   const onClickDeleteVariable = useCallback(() => {
     const set = variable.parent;
     if (set instanceof SceneVariableSet) {
-      dashboardEditActions.removeVariable({ source: set, removedObject: variable });
+      removeVariable({ source: set, removedObject: variable });
     }
+  }, [variable]);
+
+  const onClickDuplicateVariable = useCallback(() => {
+    duplicateVariable(variable);
+  }, [variable]);
+
+  const onClickRemovePredefined = useCallback(() => {
+    void removeOptedInPredefinedVariable(variable);
   }, [variable]);
 
   const editActions = useMemo(
     () => (
-      <ControlEditActions element={variable} onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />
+      <VariableEditActions
+        variable={variable}
+        removeOnly={Boolean(predefinedOrigin)}
+        onClickEdit={onClickEditVariable}
+        onClickEditQuery={onClickEditVariableQuery}
+        onClickDuplicate={onClickDuplicateVariable}
+        onClickDelete={predefinedOrigin ? onClickRemovePredefined : onClickDeleteVariable}
+      />
     ),
-    [variable, onClickDeleteVariable, onClickEditVariable]
+    [
+      variable,
+      predefinedOrigin,
+      onClickDeleteVariable,
+      onClickDuplicateVariable,
+      onClickEditVariableQuery,
+      onClickEditVariable,
+      onClickRemovePredefined,
+    ]
   );
+
+  const onPointerDown = () => {
+    markUserInitiated();
+  };
+
+  const editorModal = isEditorOpen ? (
+    <Suspense fallback={null}>
+      <VariableEditorModal variable={variable} onClose={() => setIsEditorOpen(false)} />
+    </Suspense>
+  ) : null;
 
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
   if (isHidden && variable.UNSAFE_renderAsHidden) {
@@ -103,67 +159,85 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   // For switch variables in menu, we want to show the switch on the left and the label on the right
   if (inMenu && sceneUtils.isSwitchVariable(variable)) {
     return (
-      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
-        <div
-          className={cx(
-            styles.switchMenuContainer,
-            isSelected && 'dashboard-selected-element',
-            isSelectable && !isSelected && 'dashboard-selectable-element'
-          )}
-          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-          onPointerDown={markUserInitiated}
-        >
-          <div className={styles.switchControl}>
-            <variable.Component model={variable} />
+      <>
+        {editorModal}
+        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+          <div
+            className={cx(
+              styles.switchMenuContainer,
+              isSelected && 'dashboard-selected-element',
+              isSelectable && !isSelected && 'dashboard-selectable-element',
+              isReadOnlyControl && styles.readOnlyControl
+            )}
+            data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+            data-dashboard-element-key={variable.state.key}
+            data-dashboard-element-type="variable"
+            onPointerDown={onPointerDown}
+          >
+            <div className={styles.switchControl}>
+              <variable.Component model={variable} />
+            </div>
+            <VariableLabel
+              variable={variable}
+              layout={'vertical'}
+              className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
+            />
           </div>
-          <VariableLabel
-            variable={variable}
-            layout={'vertical'}
-            className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
-          />
-        </div>
-      </ControlActionsPopover>
+        </EditActionsPopover>
+      </>
     );
   }
 
   if (inMenu) {
     return (
-      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
-        <div
-          className={cx(
-            styles.verticalContainer,
-            isSelected && 'dashboard-selected-element',
-            isSelectable && !isSelected && 'dashboard-selectable-element'
-          )}
-          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-          onPointerDown={markUserInitiated}
-        >
-          <VariableLabel
-            variable={variable}
-            layout={'vertical'}
-            className={cx(isSelectable && styles.labelSelectable)}
-          />
-          <variable.Component model={variable} />
-        </div>
-      </ControlActionsPopover>
+      <>
+        {editorModal}
+        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+          <div
+            className={cx(
+              styles.verticalContainer,
+              isSelected && 'dashboard-selected-element',
+              isSelectable && !isSelected && 'dashboard-selectable-element',
+              isReadOnlyControl && styles.readOnlyControl
+            )}
+            data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+            data-dashboard-element-key={variable.state.key}
+            data-dashboard-element-type="variable"
+            onPointerDown={onPointerDown}
+          >
+            <VariableLabel
+              variable={variable}
+              layout={'vertical'}
+              className={cx(isSelectable && styles.labelSelectable)}
+            />
+            <variable.Component model={variable} />
+          </div>
+        </EditActionsPopover>
+      </>
     );
   }
 
   return (
-    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
-      <div
-        className={cx(
-          styles.container,
-          isSelected && 'dashboard-selected-element',
-          isSelectable && !isSelected && 'dashboard-selectable-element'
-        )}
-        data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-        onPointerDown={markUserInitiated}
-      >
-        <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
-        <variable.Component model={variable} />
-      </div>
-    </ControlActionsPopover>
+    <>
+      {editorModal}
+      <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+        <div
+          className={cx(
+            styles.container,
+            isSelected && 'dashboard-selected-element',
+            isSelectable && !isSelected && 'dashboard-selectable-element',
+            isReadOnlyControl && styles.readOnlyControl
+          )}
+          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          data-dashboard-element-key={variable.state.key}
+          data-dashboard-element-type="variable"
+          onPointerDown={onPointerDown}
+        >
+          <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
+          <variable.Component model={variable} />
+        </div>
+      </EditActionsPopover>
+    </>
   );
 }
 
@@ -185,13 +259,11 @@ function VariableLabel({
 
   const labelOrName = state.label || state.name;
   const controlsLayout = layout ?? 'horizontal';
-  const descriptionSuffix =
-    state.description != null && state.description !== '' ? (
-      <VariableDescriptionTooltip
-        description={state.description}
-        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
-      />
-    ) : undefined;
+  const placement = controlsLayout === 'vertical' ? 'top' : 'bottom';
+  const hasDescription = state.description != null && state.description !== '';
+  const suffix = hasDescription ? (
+    <VariableDescriptionTooltip description={state.description!} placement={placement} />
+  ) : undefined;
 
   return (
     <ControlsLabel
@@ -202,7 +274,7 @@ function VariableLabel({
       error={state.error}
       layout={controlsLayout}
       description={undefined}
-      suffix={descriptionSuffix}
+      suffix={suffix}
       className={className}
     />
   );
@@ -287,5 +359,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
+  }),
+  readOnlyControl: css({
+    opacity: 0.65,
+    cursor: 'default',
+    '&:hover': {
+      color: 'inherit',
+    },
   }),
 });

@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 
 import { type DataFrame, type GrafanaTheme2, type LoadingState, type SelectableValue } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { useFlagRawPrometheusTableNg } from '@grafana/runtime/internal';
 import { RadioButtonGroup, Table, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
+import { CommonTableNG } from 'app/features/table/CommonTableNG';
 import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, type TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
@@ -51,6 +53,7 @@ export const RawPrometheusContainerPure = memo(
     showRawPrometheus,
   }: RawPrometheusContainerPureProps) => {
     const styles = useStyles2(getStyles);
+    const useTableNG = useFlagRawPrometheusTableNg();
 
     // If resultsStyle is undefined we won't render the toggle, and the default table will be rendered
     const [resultsStyle, setResultsStyle] = useState<TableResultsStyle | undefined>(
@@ -80,12 +83,6 @@ export const RawPrometheusContainerPure = memo(
       return (
         <div className={styles.spacing}>
           <RadioButtonGroup
-            onClick={() => {
-              const props = {
-                state: resultsStyle === TABLE_RESULTS_STYLE.table ? TABLE_RESULTS_STYLE.raw : TABLE_RESULTS_STYLE.table,
-              };
-              reportInteraction('grafana_explore_prometheus_instant_query_ui_toggle_clicked', props);
-            }}
             size="sm"
             options={ALL_GRAPH_STYLE_OPTIONS}
             value={resultsStyle}
@@ -112,7 +109,20 @@ export const RawPrometheusContainerPure = memo(
       <PanelChrome title={title} actions={label} loadingState={loading}>
         {frames?.length && (
           <>
-            {renderTable && (
+            {renderTable && useTableNG && (
+              // TableNG sizes its root grid via CSS (blockSize: 100%) rather than the height prop, so it
+              // needs a definite-size ancestor to resolve against.
+              <div style={{ width: tableWidth, height }}>
+                <CommonTableNG
+                  ariaLabel={ariaLabel}
+                  data={frames[0]}
+                  width={tableWidth}
+                  height={height}
+                  onCellFilterAdded={onCellFilterAdded}
+                />
+              </div>
+            )}
+            {renderTable && !useTableNG && (
               <Table
                 ariaLabel={ariaLabel}
                 data={frames[0]}

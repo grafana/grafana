@@ -135,10 +135,12 @@ func (p *Provider) PluginContextForApp(ctx context.Context, pluginID string, app
 
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
+		p.logger.FromContext(ctx).Debug("[mt-debug] PluginContextForApp: no requester", "err", err)
 		return ctx, backend.PluginContext{}, err
 	}
 	pCtx := p.GetBasePluginContext(ctx, plugin, user)
 	pCtx.AppInstanceSettings = appSettings
+	p.logger.FromContext(ctx).Debug("[mt-debug] PluginContextForApp", "userIsNil", pCtx.User == nil, "requesterEmail", user.GetEmail())
 
 	ctx = config.WithGrafanaConfig(ctx, pCtx.GrafanaConfig)
 	return ctx, pCtx, nil

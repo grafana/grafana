@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -82,10 +83,8 @@ func (c *CSRF) check(r *http.Request) error {
 	}
 
 	// Skip CSRF checks for "safe" methods
-	for _, method := range safeMethods {
-		if r.Method == method {
-			return nil
-		}
+	if slices.Contains(safeMethods, r.Method) {
+		return nil
 	}
 	// Skip CSRF checks for "safe" endpoints
 	for safeEndpoint := range c.safeEndpoints {

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
@@ -391,6 +392,36 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		require.Equal(t, pluginCtx.GrafanaConfig, capturedRequest.PluginContext.GrafanaConfig)
 		require.Equal(t, "test-ds", capturedRequest.PluginContext.DataSourceInstanceSettings.UID)
 		require.Equal(t, "Test Datasource", capturedRequest.PluginContext.DataSourceInstanceSettings.Name)
+	})
+
+	t.Run("CheckHealth context carries the request namespace", func(t *testing.T) {
+		var gotNamespace string
+		shr := subHealthREST{
+			builder: &DataSourceAPIBuilder{
+				client: mockHealthClient{
+					checkHealthFunc: func(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+						gotNamespace = request.NamespaceValue(ctx)
+						return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "ok"}, nil
+					},
+				},
+				datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
+				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
+			},
+		}
+
+		// The apiserver puts the request namespace in the Connect context. It must reach the
+		// plugin CheckHealth call so the multi-tenant middleware can resolve stack settings;
+		// the inner req.Context() does not carry it (httptest requests use context.Background).
+		ctx := request.WithNamespace(context.Background(), "stacks-10782")
+		responder := &mockHealthResponder{}
+		handler, err := shr.Connect(ctx, "dsname", nil, responder)
+		require.NoError(t, err)
+
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+
+		require.NoError(t, responder.err)
+		require.Equal(t, "stacks-10782", gotNamespace,
+			"the namespace from the apiserver request context must reach the plugin CheckHealth call")
 	})
 
 	t.Run("handler succeeds with full request URL", func(t *testing.T) {

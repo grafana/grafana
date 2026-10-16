@@ -25,6 +25,7 @@ var requiredURL = map[string]bool{
 	datasources.DS_ALERTMANAGER:      true,
 	datasources.DS_JAEGER:            true,
 	datasources.DS_LOKI:              true,
+	datasources.DS_OPENTSDB:          true,
 	datasources.DS_TEMPO:             true,
 	datasources.DS_ZIPKIN:            true,
 	datasources.DS_MYSQL:             true,

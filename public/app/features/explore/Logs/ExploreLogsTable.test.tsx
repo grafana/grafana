@@ -12,6 +12,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { mockClientSize } from '@grafana/test-utils';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 
 import { FIELD_SELECTOR_MIN_WIDTH } from '../../logs/components/fieldSelector/FieldSelector';
@@ -20,16 +21,10 @@ import { extractFieldsTransformer } from '../../transformers/extractFields/extra
 import { ExploreLogsTable } from './ExploreLogsTable';
 import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/mocks';
 
-// Mock TableNG to disable virtualization, otherwise the lack of viewport in our testing env will cause the table to only render a single column
-jest.mock('@grafana/ui/unstable', () => {
-  const actual = jest.requireActual('@grafana/ui/unstable');
-  const MockTableNG = actual.TableNG;
-  return {
-    ...actual,
-    TableNG: (props: React.ComponentProps<typeof MockTableNG>) => (
-      <MockTableNG {...props} enableVirtualization={false} />
-    ),
-  };
+// react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
+// this the table only renders a single column.
+beforeAll(() => {
+  mockClientSize({ width: 800, height: 600 });
 });
 
 const publishMockFn = jest.fn();
@@ -124,7 +119,7 @@ describe('ExploreLogsTable', () => {
   });
 
   const panelData: PanelData = {
-    state: LoadingState.Loading,
+    state: LoadingState.Done,
     series: [getMockLokiFrame()],
     timeRange: {
       from: toUtc('2019-01-01 10:00:00'),
@@ -240,7 +235,7 @@ describe('ExploreLogsTable', () => {
 
     it('Should respect options.frameIndex', async () => {
       const data: PanelData = {
-        state: LoadingState.Loading,
+        state: LoadingState.Done,
         series: [getMockLokiFrame(), getMockLokiFrameDataPlane()],
         timeRange: {
           from: toUtc('2019-01-01 10:00:00'),

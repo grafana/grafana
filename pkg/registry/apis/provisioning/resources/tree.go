@@ -11,6 +11,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 // FolderTree contains the entire set of folders (at a given snapshot in time) of the Grafana instance.
@@ -39,7 +40,7 @@ type folderTree struct {
 }
 
 // In determines if the given folder is in the tree at all. That is, it answers "does the folder even exist in the Grafana instance?"
-// An empty folder string means the root folder, and is special-cased to always return true.
+// An empty folder string (or the canonical "general" sentinel) means the root folder, and is special-cased to always return true.
 func (t *folderTree) In(folder string) bool {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
@@ -48,6 +49,7 @@ func (t *folderTree) In(folder string) bool {
 
 // in is the unlocked implementation of In used by helpers that already hold the mutex.
 func (t *folderTree) in(folder string) bool {
+	folder = foldermodel.ToLegacyFolderUID(folder)
 	_, ok := t.tree[folder]
 	return ok || folder == ""
 }
@@ -91,6 +93,10 @@ func (t *folderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 // dirPath is the internal implementation that assumes the mutex is already held
 // Needed to avoid deadlock when called from other methods that hold locks like Walk()
 func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
+	// Normalize so the canonical "general" root sentinel is treated as "" for
+	// the lookups below; the tree stores root parents as "" internally.
+	folder = foldermodel.ToLegacyFolderUID(folder)
+	baseFolder = foldermodel.ToLegacyFolderUID(baseFolder)
 	// Inline In() logic to avoid deadlock when called from other methods that hold locks
 	folderInTree := t.in(folder)
 	baseFolderInTree := t.in(baseFolder)
@@ -107,7 +113,11 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	}
 
 	fid = t.folders[folder]
-	fid.Path = fid.Title
+	// Derive the path from titles, normalizing each title into a safe segment so
+	// a folder named with characters outside the allowed path set (e.g. "»") is
+	// exported under a sanitized path instead of failing the write. The UID is
+	// used as a fallback so the segment is always non-empty.
+	fid.Path = safepath.SanitizeSegment(fid.Title, folder)
 	ok = baseFolder == ""
 
 	parent := t.tree[folder]
@@ -116,8 +126,13 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 			ok = true
 			break
 		}
-		// FIXME: missing slash here
-		fid.Path = safepath.Join(t.folders[parent].Title, fid.Path)
+		// Only prepend ancestors that are actually part of the tree. A parent that
+		// was skipped (e.g. a managed-folder boundary during a partial export) is
+		// absent from t.folders; using its UID as a segment here would wrongly root
+		// the child under that UID instead of at the highest exported ancestor.
+		if pf, found := t.folders[parent]; found {
+			fid.Path = safepath.Join(safepath.SanitizeSegment(pf.Title, parent), fid.Path)
+		}
 		parent = t.tree[parent]
 	}
 	return fid, ok
@@ -125,6 +140,7 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 
 // Add inserts or updates a folder entry and keeps the UID and path indexes in sync.
 func (t *folderTree) Add(folder Folder, parent string) {
+	parent = foldermodel.ToLegacyFolderUID(parent)
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	_, exists := t.tree[folder.ID]
@@ -223,14 +239,15 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 		return fmt.Errorf("extract meta accessor: %w", err)
 	}
 
+	parent := foldermodel.ToLegacyFolderUID(meta.GetFolder())
 	folder := Folder{
 		Title:    meta.FindTitle(item.GetName()),
 		ID:       item.GetName(),
-		ParentID: meta.GetFolder(),
+		ParentID: parent,
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.tree[folder.ID] = meta.GetFolder()
+	t.tree[folder.ID] = parent
 	t.folders[folder.ID] = folder
 	t.count++
 	return nil
@@ -246,13 +263,14 @@ func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) FolderT
 			continue
 		}
 
-		tree[rf.Name] = rf.Folder
+		parent := foldermodel.ToLegacyFolderUID(rf.Folder)
+		tree[rf.Name] = parent
 		folderIDs[rf.Name] = Folder{
 			Title:        rf.Title,
 			ID:           rf.Name,
 			Path:         rf.Path,
 			MetadataHash: rf.Hash,
-			ParentID:     rf.Folder,
+			ParentID:     parent,
 		}
 		if rf.Path != "" {
 			paths[safepath.EnsureTrailingSlash(rf.Path)] = rf.Name

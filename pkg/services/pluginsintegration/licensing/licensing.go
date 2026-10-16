@@ -46,3 +46,7 @@ func (l *Service) AppURL() string {
 func (l *Service) ContentDeliveryPrefix() string {
 	return l.license.ContentDeliveryPrefix()
 }
+
+func (l *Service) HasValidLicense() bool {
+	return l != nil && l.license != nil && l.license.HasValidLicense()
+}

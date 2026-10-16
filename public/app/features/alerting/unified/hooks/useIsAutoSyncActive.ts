@@ -1,18 +1,15 @@
-import { skipToken } from '@reduxjs/toolkit/query';
+import { useAutoSyncConfigQuery } from '../api/configApi';
+import { deriveSyncSource } from '../utils/autoSync';
 
-import { config } from '@grafana/runtime';
+interface AutoSyncActiveState {
+  isActive: boolean;
+  isLoading: boolean;
+}
 
-import { alertmanagerApi } from '../api/alertmanagerApi';
-import { isAdmin } from '../utils/misc';
+// Fail-open: no data — loading, 404, 403, or a skipped query — derives no UID, so sync reads as
+// inactive. The convert endpoint's IsExternalAMSyncConfiguredForOrg check is the real safety net.
+export function useIsAutoSyncActive(): AutoSyncActiveState {
+  const { data, isLoading } = useAutoSyncConfigQuery();
 
-// GET /api/v1/ngalert/admin_config is gated behind ReqOrgAdmin server-side
-// (pkg/services/ngalert/api/authorization.go), so non-admins cannot read sync
-// state and this hook returns false for them. The convert API's
-// IsExternalAMSyncConfiguredForOrg check is the server-side safety net.
-export function useIsAutoSyncActive(): boolean {
-  const flagOn = config.featureToggles['alerting.syncExternalAlertmanager'] === true;
-  const { data } = alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery(
-    isAdmin() && flagOn ? undefined : skipToken
-  );
-  return Boolean(data?.external_alertmanager_uid);
+  return { isActive: Boolean(deriveSyncSource(data).uid), isLoading };
 }

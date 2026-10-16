@@ -1,6 +1,7 @@
 import { store } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
@@ -23,6 +24,8 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
       scene.addPanel(gridItem.state.body);
     }
 
+    reportInteraction('explore_to_dashboard_panel_applied', { panelCount: model.panels.length }, { silent: true });
+
     if (dto.dashboard.time) {
       const newTimeRange = new SceneTimeRange({ from: dto.dashboard.time.from, to: dto.dashboard.time.to });
       const timeRange = scene.state.$timeRange;
@@ -36,15 +39,15 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
     }
   };
 
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     addPanels();
     return;
   }
 
-  if (scene.state.editPane.isActive) {
+  if (scene.state.sidebar.isActive) {
     addPanels();
   } else {
-    scene.state.editPane.addActivationHandler(() => {
+    scene.state.sidebar.addActivationHandler(() => {
       addPanels();
     });
   }

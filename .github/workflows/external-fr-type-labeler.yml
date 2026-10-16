@@ -1,0 +1,40 @@
+name: Label Enhancement issues
+
+on:
+  issues:
+    types: [typed, opened]
+
+permissions: {}
+
+jobs:
+  label:
+    name: Add feature-request label
+    if: >-
+      github.event.action == 'typed' ||
+      (github.event.action == 'opened' && github.event.issue.type != null)
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Check issue type and add label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          ISSUE_TYPE=$(gh api "repos/$REPO/issues/$ISSUE_NUMBER" --jq '.type.name // empty')
+          echo "Issue type: ${ISSUE_TYPE:-none}"
+
+          if [ "$ISSUE_TYPE" != "Enhancement" ]; then
+            echo "Not an Enhancement issue, skipping"
+            exit 0
+          fi
+
+          LABELS=$(gh api "repos/$REPO/issues/$ISSUE_NUMBER" --jq '[.labels[].name] | join(",")')
+          if echo "$LABELS" | grep -q "type/feature-request"; then
+            echo "Already has type/feature-request label, skipping"
+            exit 0
+          fi
+
+          echo "Adding type/feature-request label"
+          gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-label "type/feature-request"

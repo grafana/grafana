@@ -69,8 +69,8 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
-1. Go to the **Links** tab and then click **Add dashboard link**.
+1. In the sidebar, click **View all settings**.
+1. Go to the **Links** tab and then click **Add dashboard link**. If the dashboard already has links, click **New link**.
 
 {{< shared id="add-dashboard-link" >}}
 
@@ -92,7 +92,7 @@ The default link type is **Dashboards**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Back** and **Exit edit**.
 
 {{< /docs/list >}}
 
@@ -113,8 +113,8 @@ To add a URL link to your dashboard, follow these steps:
 
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
-1. Go to the **Links** tab and then click **Add dashboard link**.
+1. In the sidebar, click **View all settings**.
+1. Go to the **Links** tab and then click **Add dashboard link**. If the dashboard already has links, click **New link**.
 
 {{< shared id="url-dashboard-link" >}}
 
@@ -135,7 +135,7 @@ To add a URL link to your dashboard, follow these steps:
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 {{< /docs/list >}}
 
@@ -145,7 +145,7 @@ To edit, duplicate, or delete dashboard link, follow these steps:
 
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
+1. In the sidebar, click **View all settings**.
 1. Go to the **Links** tab.
 1. Do one of the following:
    - **Edit** - Click the name of the link and update the link settings.
@@ -154,7 +154,7 @@ To edit, duplicate, or delete dashboard link, follow these steps:
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 ## Panel links
 
@@ -183,7 +183,7 @@ Click the icon next to the panel title to see available panel links.
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 ### Update a panel link
 
@@ -199,7 +199,7 @@ Click the icon next to the panel title to see available panel links.
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 ### Delete a panel link
 
@@ -213,4 +213,4 @@ Click the icon next to the panel title to see available panel links.
 1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.

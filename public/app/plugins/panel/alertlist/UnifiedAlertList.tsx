@@ -17,12 +17,14 @@ import {
   LoadingPlaceholder,
   ScrollContainer,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
+import { useRouteProxyActive } from 'app/features/alerting/unified/plugin-proxy/withRouteProxy';
 import {
   fetchAllPromAndRulerRulesAction,
   fetchPromAndRulerRulesAction,
@@ -292,6 +294,12 @@ function StatView({
   styles: ReturnType<typeof getStyles>;
 }) {
   const enhancementsEnabled = Boolean(config.featureToggles.alertingAlertListPanelEnhancements);
+  const theme = useTheme2();
+  // Grafana's rule list stops showing data source managed rules once the plugin is installed, so a
+  // panel pointed at one of those data sources has to link into the plugin instead.
+  const routeProxyActive = useRouteProxyActive();
+  const linksToPluginRules =
+    routeProxyActive && Boolean(options.datasource) && options.datasource !== GRAFANA_DATASOURCE_NAME;
 
   const displayValue = enhancementsEnabled
     ? getStatDisplayValue(
@@ -299,7 +307,7 @@ function StatView({
         options.statColorMode ?? BigValueColorMode.None,
         options.statThresholds ?? STAT_THRESHOLDS_DEFAULT,
         options.statValueMappings ?? [],
-        config.theme2
+        theme
       )
     : { text: `${rules.length}`, numeric: rules.length };
 
@@ -313,13 +321,13 @@ function StatView({
       graphMode={BigValueGraphMode.None}
       textMode={BigValueTextMode.Auto}
       justifyMode={BigValueJustifyMode.Auto}
-      theme={config.theme2}
+      theme={theme}
       value={displayValue}
     />
   );
 
   if (enhancementsEnabled) {
-    const href = buildAlertingListUrl(options, dashboardUid);
+    const href = buildAlertingListUrl(options, dashboardUid, linksToPluginRules);
     return (
       <Link href={href} className={styles.statLink}>
         {bigValue}
@@ -512,13 +520,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   customGroupDetails: css({
     marginBottom: theme.spacing(0.5),
-  }),
-  link: css({
-    wordBreak: 'break-all',
-    color: theme.colors.primary.text,
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
   }),
   hidden: css({
     display: 'none',

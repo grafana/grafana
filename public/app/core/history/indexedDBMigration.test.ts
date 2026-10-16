@@ -23,23 +23,20 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
   getBackendSrv: () => ({ fetch: mockFetch }),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: (nameOrUid: string | { uid: string }) => {
-      const datasources: Record<string, { uid: string; name: string }> = {
-        Prometheus: { uid: 'ds-prom', name: 'Prometheus' },
-        Loki: { uid: 'ds-loki', name: 'Loki' },
-      };
-      if (typeof nameOrUid === 'string') {
-        return datasources[nameOrUid];
-      }
-      return Object.values(datasources).find((ds) => ds.uid === nameOrUid.uid);
-    },
-  }),
   get config() {
     return mockConfig;
   },
+  getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
+    const datasources: Record<string, { uid: string; name: string }> = {
+      Prometheus: { uid: 'ds-prom', name: 'Prometheus' },
+      Loki: { uid: 'ds-loki', name: 'Loki' },
+    };
+    if (typeof nameOrUid === 'string') {
+      return Promise.resolve(datasources[nameOrUid]);
+    }
+    return Promise.resolve(Object.values(datasources).find((ds) => ds.uid === nameOrUid.uid));
+  },
 }));
-
 // Use recent timestamps so retention cleanup does not remove them
 const NOW = new Date('2025-01-15T12:00:00Z').getTime();
 const ONE_HOUR = 3_600_000;

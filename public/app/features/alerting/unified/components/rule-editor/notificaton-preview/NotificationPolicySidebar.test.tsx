@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type RouteWithID } from '@grafana/alerting';
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, type RouteWithID } from '@grafana/alerting';
 
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 
@@ -60,6 +60,18 @@ describe('NotificationPolicySidebar', () => {
     );
     expect(screen.getByText('Notification policy')).toBeInTheDocument();
     expect(screen.queryByText(ROOT_ROUTE_NAME)).not.toBeInTheDocument();
+  });
+
+  it('normalizes the "default" alias to the default policy without surfacing the raw name', () => {
+    render(
+      <NotificationPolicySidebar
+        journeys={[{ journey: singleJourney, policyName: DEFAULT_ROUTING_TREE_NAME_ALIAS }]}
+        labels={labels}
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.getByRole('heading', { name: 'Default policy' })).toBeInTheDocument();
+    expect(screen.queryByText(DEFAULT_ROUTING_TREE_NAME_ALIAS)).not.toBeInTheDocument();
   });
 
   it('renders "Notification policies" title for multiple journeys', () => {

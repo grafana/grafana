@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { colorManipulator, FALLBACK_COLOR, type FieldDisplay } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -38,10 +36,7 @@ export function RadialBar({
 }: RadialBarProps) {
   const theme = useTheme2();
   const colorProps = gradient ? { gradient } : { color: fieldDisplay.display.color ?? FALLBACK_COLOR };
-  const trackColor = useMemo(
-    () => colorManipulator.onBackground(theme.colors.action.hover, theme.colors.background.primary).toHexString(),
-    [theme]
-  );
+  const trackColor = colorManipulator.emphasize(theme.components.panel.background, 0.07);
 
   return (
     <>

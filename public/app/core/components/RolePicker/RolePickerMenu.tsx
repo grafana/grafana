@@ -10,6 +10,7 @@ import { type Role } from 'app/types/accessControl';
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';
 import { MENU_MAX_HEIGHT } from './constants';
+import { getRoleGroupOverride } from './roleGroupExtension';
 import { getStyles } from './styles';
 
 enum GroupType {
@@ -30,6 +31,8 @@ interface RolesCollectionEntry {
   renderedName: string;
   roles: Role[];
 }
+
+const roleNameCollator = new Intl.Collator();
 
 const fixedRoleGroupNames: Record<string, string> = {
   ldap: 'LDAP',
@@ -112,9 +115,9 @@ export const RolePickerMenu = ({
     const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
     const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
     const optionGroups = {
-      fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => a.name.localeCompare(b.name)),
-      custom: convertRolesToGroupOptions(customRoles).sort((a, b) => a.name.localeCompare(b.name)),
-      plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => a.name.localeCompare(b.name)),
+      fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
+      custom: convertRolesToGroupOptions(customRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
+      plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
     };
 
     setRolesCollection({
@@ -293,9 +296,9 @@ export const RolePickerMenu = ({
   );
 };
 
-const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:') && !option.name.startsWith('plugins:');
-const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
-const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:');
+const filterCustomRoles = (option: Role) => !filterFixedRoles(option) && !filterPluginsRoles(option);
+const filterFixedRoles = (option: Role) => getRolePrefix(option) === 'fixed';
+const filterPluginsRoles = (option: Role) => getRolePrefix(option) === 'plugins';
 
 interface GroupsMap {
   [key: string]: { roles: Role[]; name: string };
@@ -328,10 +331,14 @@ const getRoleGroup = (role: Role) => {
 };
 
 const getRoleGroupName = (role: Role) => {
-  return role.group || 'Other';
+  return getRoleGroupOverride(role)?.name ?? (role.group || 'Other');
 };
 
 const getRolePrefix = (role: Role) => {
+  const override = getRoleGroupOverride(role);
+  if (override) {
+    return override.prefix;
+  }
   const prefixEnd = role.name.indexOf(':');
   if (prefixEnd < 0) {
     return 'unknown';
@@ -339,7 +346,7 @@ const getRolePrefix = (role: Role) => {
   return role.name.substring(0, prefixEnd);
 };
 
-const sortRolesByName = (a: Role, b: Role) => a.name.localeCompare(b.name);
+const sortRolesByName = (a: Role, b: Role) => roleNameCollator.compare(a.name, b.name);
 
 const capitalize = (s: string): string => {
   return s.slice(0, 1).toUpperCase() + s.slice(1);

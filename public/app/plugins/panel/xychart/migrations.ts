@@ -19,7 +19,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
 };
 
 function migrateOptions(panel: PanelModel): Options {
-  const { dims, seriesMapping, series: oldSeries, ...cleanedOpts } = panel.options as PrevOptions;
+  const { dims, seriesMapping, series: oldSeries, ...cleanedOpts }: PrevOptions = panel.options;
   const { exclude = [], frame: frameShared, x: xShared }: XYDimensionConfig = dims ?? {};
 
   const custDefaults = panel.fieldConfig.defaults.custom;

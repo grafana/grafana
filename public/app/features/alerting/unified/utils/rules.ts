@@ -1,6 +1,6 @@
 import { capitalize } from 'lodash';
 
-import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { AlertState } from '@grafana/data';
 import {
   type Alert,
@@ -71,7 +71,7 @@ export function ruleUsesDefaultPolicy(notificationSettings?: GrafanaNotification
   if (notificationSettings?.receiver) {
     return false;
   }
-  if (notificationSettings?.policy && notificationSettings.policy !== USER_DEFINED_TREE_NAME) {
+  if (notificationSettings?.policy && !isDefaultRoutingTreeName(notificationSettings.policy)) {
     return false;
   }
   return true;
@@ -151,7 +151,7 @@ export function alertInstanceKey(alert: Alert): string {
   return JSON.stringify(alert.labels);
 }
 
-export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
+export function isRulerNotSupportedResponse(resp: AsyncRequestState<unknown>) {
   return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
 }
 
@@ -334,7 +334,7 @@ export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
 
 export function alertStateToState(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): State {
   let key: PromAlertingRuleState | GrafanaAlertState | AlertState;
-  if (Object.values(AlertState).includes(state as AlertState)) {
+  if (Object.values<string>(AlertState).includes(state)) {
     key = state as AlertState;
   } else {
     key = mapStateWithReasonToBaseState(state as GrafanaAlertStateWithReason | PromAlertingRuleState);

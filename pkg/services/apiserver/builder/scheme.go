@@ -41,12 +41,10 @@ func ProvideCodecFactory(scheme *runtime.Scheme) serializer.CodecFactory {
 	if utilfeature.DefaultFeatureGate.Enabled(features.CBORServingAndStorage) {
 		opts = append(opts, serializer.WithSerializer(cbor.NewSerializerInfo))
 	}
-	if utilfeature.DefaultFeatureGate.Enabled(features.StreamingCollectionEncodingToJSON) {
-		opts = append(opts, serializer.WithStreamingCollectionEncodingToJSON())
-	}
-	if utilfeature.DefaultFeatureGate.Enabled(features.StreamingCollectionEncodingToProtobuf) {
-		opts = append(opts, serializer.WithStreamingCollectionEncodingToProtobuf())
-	}
+	// StreamingCollectionEncodingToJSON/Protobuf graduated to GA in k8s.io/apiserver v0.37
+	// and their feature gates were removed; the behavior is now always on upstream.
+	opts = append(opts, serializer.WithStreamingCollectionEncodingToJSON())
+	opts = append(opts, serializer.WithStreamingCollectionEncodingToProtobuf())
 	if len(opts) != 0 {
 		codecs = serializer.NewCodecFactory(scheme, opts...)
 	}

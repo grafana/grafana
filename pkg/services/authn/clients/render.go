@@ -19,7 +19,7 @@ const (
 	renderCookieName = "renderKey"
 )
 
-var _ authn.ContextAwareClient = new(Render)
+var _ authn.ContextAwareClient = (*Render)(nil)
 
 func ProvideRender(renderService rendering.Service) *Render {
 	return &Render{renderService}
@@ -66,7 +66,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}, nil
 }
 
-func (c *Render) IsEnabled() bool {
+func (c *Render) IsEnabled(context.Context) bool {
 	return true
 }
 

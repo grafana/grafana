@@ -6,13 +6,14 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
+import { deserializeSectionVariables } from '../../serialization/layoutSerializers/sectionVariables';
 
 import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
 import { payloads } from './schemas';
@@ -58,6 +59,7 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           conditionalRendering: row.spec.conditionalRendering
             ? ConditionalRenderingGroup.deserialize(row.spec.conditionalRendering)
             : undefined,
+          $variables: deserializeSectionVariables(row.spec.variables),
         });
 
         const currentRows = [...rowsManager.state.rows];
@@ -84,6 +86,7 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           conditionalRendering: row.spec.conditionalRendering
             ? ConditionalRenderingGroup.deserialize(row.spec.conditionalRendering)
             : undefined,
+          $variables: deserializeSectionVariables(row.spec.variables),
         });
 
         rowsManager = new RowsLayoutManager({ rows: [newRow] });

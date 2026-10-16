@@ -20,7 +20,7 @@ import {
   type SupplementaryQueryType,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import {
@@ -35,9 +35,7 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
   type ExploreItemState,
@@ -50,6 +48,8 @@ import {
 import { createAsyncThunk, type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
+import { withLokiInfiniteScrollBound, type InfiniteScrollTimeRange } from '../../logs/components/infiniteScrollUtils';
+import { SupportingQueryType } from '../../loki-helpers/types';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
 import {
@@ -334,8 +334,8 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
         if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
           // Skip automatic import if explicitly requested (e.g., query library replacement)
           if (!options?.skipAutoImport) {
-            const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
-            const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
+            const queryDatasource = await getDataSourceInstance(oldQuery.datasource);
+            const targetDS = await getDataSourceInstance({ uid: newQuery.datasource?.uid });
             await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
             queriesImported = true;
           }
@@ -398,7 +398,7 @@ export const importQueries = (
       const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
       const groupedImportableQueries = await Promise.all(
         Object.keys(groupedQueries).map(async (key: string) => {
-          const queryDatasource = await getDataSourceSrv().get({ uid: key });
+          const queryDatasource = await getDataSourceInstance({ uid: key });
           return await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
         })
       );
@@ -487,7 +487,7 @@ async function handleHistory(
       if (query.datasource?.uid === datasource.uid) {
         return filterQuery(datasource, query);
       } else {
-        const queryDS = await getDatasourceSrv().get(query.datasource);
+        const queryDS = await getDataSourceInstance(query.datasource);
         return filterQuery(queryDS, query);
       }
     })
@@ -500,11 +500,18 @@ async function handleHistory(
   Always write to local storage. If query history is enabled, we will use local storage for autocomplete only (and want to hide errors)
   If query history is disabled, we will use local storage for query history as well, and will want to show errors
   */
-    dispatch(addHistoryItem(true, datasource.uid, datasource.name, filteredQueries, config.queryHistoryEnabled));
-    if (config.queryHistoryEnabled) {
-      // write to remote if flag enabled
-      dispatch(addHistoryItem(false, datasource.uid, datasource.name, filteredQueries, false));
-    }
+    // Kick off both writes synchronously, then await them before refreshing below. Adding to
+    // history resolves the data source asynchronously, so a non-awaited write can land after
+    // loadRichHistory has already read stale storage.
+    const localWrite = dispatch(
+      addHistoryItem(true, datasource.uid, datasource.name, filteredQueries, config.queryHistoryEnabled)
+    );
+    // write to remote if flag enabled
+    const remoteWrite = config.queryHistoryEnabled
+      ? dispatch(addHistoryItem(false, datasource.uid, datasource.name, filteredQueries, false))
+      : undefined;
+    await localWrite;
+    await remoteWrite;
 
     // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
     // used filters. Instead, we refresh the query history list.
@@ -655,7 +662,6 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
           // Keep scanning for results if this was the last scanning transaction
           if (exploreState!.scanning) {
-            console.log(data.series);
             if (data.state === LoadingState.Done && data.series.length === 0) {
               const range = getShiftedTimeRange(-1, exploreState!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
@@ -712,7 +718,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
 interface RunLoadMoreLogsQueriesOptions {
   exploreId: string;
-  absoluteRange: AbsoluteTimeRange;
+  absoluteRange: InfiniteScrollTimeRange;
 }
 /**
  * Dedicated action to run log queries requesting more results.
@@ -735,12 +741,18 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     const logRefIds = queryResponse.logsFrames.map((frame) => frame.refId);
     const logQueries = queries
       .filter((query) => logRefIds.includes(query.refId))
-      .map((query: DataQuery) => ({
-        ...query,
-        datasource: query.datasource || datasourceInstance?.getRef(),
-        refId: query.refId,
-        supportingQueryType: SupportingQueryType.InfiniteScroll,
-      }));
+      .map((query: DataQuery) =>
+        withLokiInfiniteScrollBound(
+          {
+            ...query,
+            datasource: query.datasource || datasourceInstance?.getRef(),
+            refId: query.refId,
+            supportingQueryType: SupportingQueryType.InfiniteScroll,
+          },
+          absoluteRange,
+          datasourceInstance?.type
+        )
+      );
 
     if (!hasNonEmptyQuery(logQueries) || !datasourceInstance) {
       return;
@@ -808,7 +820,7 @@ const groupDataQueries = async (datasources: DataQuery[], scopedVars: ScopedVars
 
   return await Promise.all(
     Object.values(sets).map(async (targets) => {
-      const datasource = await getDataSourceSrv().get(targets[0].datasource, scopedVars);
+      const datasource = await getDataSourceInstance(targets[0].datasource, scopedVars);
       return {
         datasource,
         targets,

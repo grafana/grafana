@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import { groupBy as _groupBy } from 'lodash';
 import { useState } from 'react';
 import * as React from 'react';
@@ -23,13 +23,17 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
 import type TNil from '../types/TNil';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 
-import AccordianLogs from './SpanDetail/AccordianLogs';
+import AccordionLogs from './SpanDetail/AccordionLogs';
 import { type ViewedBoundsFunctionType } from './utils';
+
+// The critical path is drawn on top of span bars that are coloured per service, so it has to
+// stay legible against arbitrary data colours rather than follow the theme surface.
+const CRITICAL_PATH_BACKGROUND = '#202226';
+const CRITICAL_PATH_EDGE = '#c7d0d9';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -51,6 +55,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '40%',
       top: '30%',
     }),
+    // Decorative light-to-dark gradient within the service hue marking a span as a
+    // pruned summary (an aggregate of many spans spanning a time window), not a
+    // single operation. It does not encode histogram or timing data. The service
+    // color is threaded in via the `--span-summary-color` custom property set on
+    // the bar; `backgroundColor` (set inline, longhand) is the solid fallback if
+    // color-mix is unsupported.
+    barSummary: css({
+      label: 'barSummary',
+      backgroundImage: `linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--span-summary-color), white 30%) 0%,
+        var(--span-summary-color) 38%,
+        color-mix(in srgb, var(--span-summary-color), black 55%) 100%
+      )`,
+    }),
     rpc: css({
       label: 'rpc',
       position: 'absolute',
@@ -60,24 +79,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     label: css({
       label: 'label',
-      color: '#aaa',
-      fontSize: '12px',
-      fontFamily: "'Helvetica Neue', Helvetica, Arial, sans - serif",
-      lineHeight: '1em',
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontFamily: theme.typography.fontFamily,
+      lineHeight: theme.typography.bodySmall.lineHeight,
       whiteSpace: 'nowrap',
       padding: '0 0.5em',
       position: 'absolute',
     }),
     logMarker: css({
       label: 'logMarker',
-      backgroundColor: autoColor(theme, '#2c3235'),
+      backgroundColor: theme.colors.text.primary,
       cursor: 'pointer',
       height: '60%',
       minWidth: '1px',
       position: 'absolute',
       top: '20%',
       '&:hover': {
-        backgroundColor: autoColor(theme, '#464c54'),
+        backgroundColor: theme.colors.text.secondary,
       },
       '&::before, &::after': {
         content: "''",
@@ -97,9 +116,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '11%',
       zIndex: 2,
       overflow: 'hidden',
-      background: autoColor(theme, '#f1f1f1'),
-      borderLeft: `1px solid ${autoColor(theme, '#2c3235')}`,
-      borderRight: `1px solid ${autoColor(theme, '#2c3235')}`,
+      background: CRITICAL_PATH_BACKGROUND,
+      borderLeft: `1px solid ${CRITICAL_PATH_EDGE}`,
+      borderRight: `1px solid ${CRITICAL_PATH_EDGE}`,
     }),
   };
 };
@@ -123,6 +142,10 @@ export type Props = {
   labelClassName?: string;
   longLabel: string;
   shortLabel: string;
+  // Service::operation text revealed on hover. For summary spans it is rendered
+  // as a sibling of the stats label (not merged into it) so the stats stay
+  // permanently visible while the detail expands.
+  labelDetail: string;
   criticalPath: CriticalPathSection[];
 };
 
@@ -142,6 +165,7 @@ function SpanBar({
   color,
   shortLabel,
   longLabel,
+  labelDetail,
   onClick,
   rpc,
   traceStartTime,
@@ -149,9 +173,20 @@ function SpanBar({
   className,
   labelClassName,
 }: Props) {
-  const [label, setLabel] = useState(shortLabel);
-  const setShortLabel = () => setLabel(shortLabel);
-  const setLongLabel = () => setLabel(longLabel);
+  const isSummary = span.aggregation?.isSummary === true;
+
+  const [expanded, setExpanded] = useState(false);
+  const collapse = () => setExpanded(false);
+  const expand = () => setExpanded(true);
+  // Normal spans swap the whole label text on hover. Summary spans instead keep
+  // a fixed stats label and reveal the service::operation detail as a sibling,
+  // so the stats stay permanently visible. The detail goes before the stats
+  // when the label sits left of the bar (bar near the right edge), after it
+  // otherwise.
+  const normalLabel = expanded ? longLabel : shortLabel;
+  // Mirrors the `viewStart > 1 - viewEnd` test that orders longLabel in
+  // SpanBarRow; keep the two in sync so detail/stats order matches longLabel.
+  const detailBeforeStats = viewStart > 1 - viewEnd;
 
   // group logs based on timestamps
   const logGroups = _groupBy(span.logs, (log) => {
@@ -161,36 +196,61 @@ function SpanBar({
   });
   const styles = useStyles2(getStyles);
 
+  // backgroundColor (longhand, not the `background` shorthand) so it does not reset
+  // the barSummary class's background-image; it also acts as the solid fallback.
+  // The summary gradient reads the color from the --span-summary-color custom prop.
+  const barStyle: React.CSSProperties & Record<string, string | number> = {
+    backgroundColor: color,
+    left: toPercent(viewStart),
+    width: toPercent(viewEnd - viewStart),
+    ...(isSummary ? { '--span-summary-color': color } : {}),
+  };
+
   return (
     <div
       className={cx(styles.wrapper, className)}
-      onBlur={setShortLabel}
+      onBlur={collapse}
       onClick={onClick}
-      onFocus={setLongLabel}
-      onMouseOut={setShortLabel}
-      onMouseOver={setLongLabel}
+      onFocus={expand}
+      onMouseOut={collapse}
+      onMouseOver={expand}
       aria-hidden
       data-testid={selectors.components.TraceViewer.spanBar}
     >
       <div
-        aria-label={label}
-        className={cx(styles.bar)}
-        style={{
-          background: color,
-          left: toPercent(viewStart),
-          width: toPercent(viewEnd - viewStart),
-        }}
+        aria-label={isSummary ? shortLabel : normalLabel}
+        className={cx(styles.bar, { [styles.barSummary]: isSummary })}
+        data-testid="SpanBar--bar"
+        style={barStyle}
       >
-        <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
-          {label}
-        </div>
+        {isSummary ? (
+          <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
+            {expanded && detailBeforeStats && (
+              <span>
+                {labelDetail}
+                {' | '}
+              </span>
+            )}
+            <span>{shortLabel}</span>
+            {expanded && !detailBeforeStats && (
+              <span>
+                {' | '}
+                {labelDetail}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
+            {normalLabel}
+          </div>
+        )}
       </div>
       <div>
         {Object.keys(logGroups).map((positionKey) => (
           <Popover
             key={positionKey}
             content={
-              <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
+              <AccordionLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
             <div data-testid="SpanBar--logMarker" className={cx(styles.logMarker)} style={{ left: positionKey }} />

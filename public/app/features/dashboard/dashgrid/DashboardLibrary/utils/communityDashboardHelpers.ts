@@ -275,7 +275,7 @@ export async function onUseCommunityDashboard({
     const constantInputs = parseConstantInputs(dashboardJson.__inputs || []);
 
     // Try auto-mapping datasources
-    const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+    const mappingResult = await tryAutoMapDatasources(dsInputs, datasourceUid);
 
     // Decide whether to show mapping form or navigate directly
     // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
@@ -353,7 +353,7 @@ export async function interpolateDashboardForCompatibilityCheck(
   const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
 
   // 3. Auto-map datasources using existing utility
-  const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+  const mappingResult = await tryAutoMapDatasources(dsInputs, datasourceUid);
 
   // 4. Check if auto-mapping was successful
   // Compatibility check requires all datasource variables to be resolved

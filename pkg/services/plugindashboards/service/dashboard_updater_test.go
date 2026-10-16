@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -195,6 +196,10 @@ func TestDashboardUpdater(t *testing.T) {
 				require.Equal(t, "updated.json", ctx.importDashboardArgs[0].Path)
 				require.Equal(t, int64(2), ctx.importDashboardArgs[0].User.GetOrgID())
 				require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[0].User.GetOrgRole())
+				require.True(t, identity.IsServiceIdentity(ctx.importDashboardContexts[0]))
+				requester, err := identity.GetRequester(ctx.importDashboardContexts[0])
+				require.NoError(t, err)
+				require.Equal(t, requester.GetUID(), ctx.importDashboardArgs[0].User.GetUID())
 				require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
 				require.True(t, ctx.importDashboardArgs[0].Overwrite)
 			})
@@ -322,6 +327,10 @@ func TestDashboardUpdater(t *testing.T) {
 			require.Equal(t, "dashboard1.json", ctx.importDashboardArgs[0].Path)
 			require.Equal(t, int64(2), ctx.importDashboardArgs[0].User.GetOrgID())
 			require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[0].User.GetOrgRole())
+			require.True(t, identity.IsServiceIdentity(ctx.importDashboardContexts[0]))
+			requester, err := identity.GetRequester(ctx.importDashboardContexts[0])
+			require.NoError(t, err)
+			require.Equal(t, requester.GetUID(), ctx.importDashboardArgs[0].User.GetUID())
 			require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
 			require.True(t, ctx.importDashboardArgs[0].Overwrite)
 
@@ -482,6 +491,7 @@ type scenarioContext struct {
 	dashboardPluginService         *dashboardPluginServiceMock
 	dashboardService               *dashboardServiceMock
 	importDashboardArgs            []*dashboardimport.ImportDashboardRequest
+	importDashboardContexts        []context.Context
 	getPluginSettingsByIdArgs      []*pluginsettings.GetPluginSettingByIdQuery
 	updatePluginSettingVersionArgs []*pluginsettings.UpdatePluginSettingVersionCmd
 	dashboardUpdater               *DashboardUpdater
@@ -496,6 +506,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		t:                              t,
 		bus:                            bus.ProvideBus(tracer),
 		importDashboardArgs:            []*dashboardimport.ImportDashboardRequest{},
+		importDashboardContexts:        []context.Context{},
 		getPluginSettingsByIdArgs:      []*pluginsettings.GetPluginSettingByIdQuery{},
 		updatePluginSettingVersionArgs: []*pluginsettings.UpdatePluginSettingVersionCmd{},
 	}
@@ -574,6 +585,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 
 	importDashboard := func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
 		sCtx.importDashboardArgs = append(sCtx.importDashboardArgs, req)
+		sCtx.importDashboardContexts = append(sCtx.importDashboardContexts, ctx)
 
 		return &dashboardimport.ImportDashboardResponse{
 			PluginId: req.PluginId,

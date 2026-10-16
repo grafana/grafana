@@ -69,6 +69,7 @@ When you assign a user a basic organization role (Viewer, Editor, or Admin), the
 | **Machine Learning**             | Read forecasting, outliers, sift        | + Write forecasting, outliers, sift                         | + Full write access                           |
 | **OnCall**                       | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
 | **Private Data Connect**         | —                                       | —                                                           | Full access                                   |
+| **Session Replay**               | View session recordings                 | View session recordings                                     | View session recordings                       |
 | **SLO**                          | Read SLOs                               | Create, edit, delete SLOs                                   | + Modify org preferences                      |
 | **Synthetic Monitoring**         | Read checks, probes, alerts, thresholds | + Create, edit, delete checks, probes, alerts, thresholds   | + Manage access tokens                        |
 
@@ -160,9 +161,10 @@ Plugin ID: `grafana-cmab-app`
 
 Plugin ID: `grafana-dbo11y-app`
 
-| Plugin role                        | Description                                                      |
-| ---------------------------------- | ---------------------------------------------------------------- |
-| `plugins:grafana-dbo11y-app:admin` | Read/write access to everything in Database Observability plugin |
+| Plugin role                         | Description                                                      |
+| ----------------------------------- | ---------------------------------------------------------------- |
+| `plugins:grafana-dbo11y-app:admin`  | Read/write access to everything in Database Observability plugin |
+| `plugins:grafana-dbo11y-app:reader` | Read access to everything in Database Observability plugin       |
 
 ## Easystart / Integrations plugin
 
@@ -357,6 +359,14 @@ Plugin ID: `grafana-pdc-app`
 | ------------------------------------------------ | --------------------- |
 | `plugins:grafana-pdc-app:private-networks-read`  | Read Private Networks |
 | `plugins:grafana-pdc-app:private-networks-write` | Edit Private Networks |
+
+## Session Replay plugin
+
+Plugin ID: `grafana-sessionreplay-app`
+
+| Plugin role                                           | Description                                       |
+| ----------------------------------------------------- | ------------------------------------------------- |
+| `plugins:grafana-sessionreplay-app:recordings-viewer` | View session recordings in Frontend Observability |
 
 ## SLO plugin
 

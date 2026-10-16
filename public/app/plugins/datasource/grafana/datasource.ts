@@ -19,10 +19,11 @@ import {
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
-  getDataSourceSrv,
   getGrafanaLiveSrv,
   getTemplateSrv,
+  locationService,
   type StreamingFrameOptions,
+  getDataSourceInstance,
 } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { annotationServer } from 'app/features/annotations/api';
@@ -213,7 +214,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
-    const params: any = {
+    const params: Record<string, unknown> = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: target.limit,
@@ -239,7 +240,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       const templateSrv = getTemplateSrv();
       const delimiter = '__delimiter__';
       const tags = [];
-      for (const t of params.tags) {
+      for (const t of target.tags) {
         const renderedValues = templateSrv.replace(t, {}, (value: string | string[]) => {
           if (typeof value === 'string') {
             return value;
@@ -252,6 +253,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         }
       }
       params.tags = tags;
+    }
+
+    // Keep manual annotations when alert state history is explicitly disabled.
+    if (locationService.getSearch().get('disableAlertHistory') === 'true') {
+      params.type = 'annotation';
     }
 
     const df = await annotationServer().query(
@@ -268,7 +274,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
 /** Get the GrafanaDatasource instance */
 export async function getGrafanaDatasource() {
-  return (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  const ds = await getDataSourceInstance('-- Grafana --');
+  if (!(ds instanceof GrafanaDatasource)) {
+    throw new Error('Expected the "-- Grafana --" data source to be a GrafanaDatasource instance');
+  }
+  return ds;
 }
 
 export interface FileElement {

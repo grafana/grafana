@@ -277,7 +277,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 								Name:      "nm",
 							},
 						},
-						Response: NewReadResponse(),
+						Response: NewHistoryReadResponse(),
 					},
 				},
 			},
@@ -554,6 +554,30 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				{
 					Name: "resource",
 					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Group:       "dashboard.grafana.app",
+						Resource:    "dashboards",
+					},
+				},
+			},
+			sqlResourceStoredList: {
+				{
+					Name: "global",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+					},
+				},
+				{
+					Name: "namespace",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+					},
+				},
+				{
+					Name: "resource",
+					Data: &sqlStoredResourcesRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
 						Group:       "dashboard.grafana.app",

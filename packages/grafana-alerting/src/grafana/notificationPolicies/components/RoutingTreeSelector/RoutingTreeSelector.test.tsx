@@ -1,13 +1,17 @@
+import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
+
+import { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
-import { render, screen } from '../../../../../tests/test-utils';
-import { USER_DEFINED_TREE_NAME } from '../../consts';
+import { act, render, screen } from '../../../../../tests/test-utils';
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '../../routingTree.utils';
 
 import { RoutingTreeSelector } from './RoutingTreeSelector';
 import {
   routingTreeWithErrorScenario,
   simpleRoutingTreesList,
+  simpleRoutingTreesListDefaultAliasScenario,
   simpleRoutingTreesListScenario,
   singleDefaultTreeList,
   singleDefaultTreeScenario,
@@ -118,6 +122,24 @@ describe('pre-selection', () => {
     // Should display the friendly name "Default policy" in the input
     expect(await screen.findByDisplayValue(/default policy/i)).toBeInTheDocument();
   });
+
+  it('should show "Default policy" when value is an empty string', async () => {
+    const onChangeHandler = jest.fn();
+
+    // Callers that use "" as their own "no name means default" convention (rather than the
+    // tree's raw backend name) should still get the default tree selected.
+    render(<RoutingTreeSelector value="" onChange={onChangeHandler} />);
+
+    expect(await screen.findByDisplayValue(/default policy/i)).toBeInTheDocument();
+  });
+
+  it('should still show a value that is not in the list', async () => {
+    // The tree may have been deleted, or the list may only contain the trees this user can read.
+    // Either way the input must not go blank, or the caller's current value becomes invisible.
+    render(<RoutingTreeSelector value="tree-not-in-the-list" onChange={jest.fn()} />);
+
+    expect(await screen.findByDisplayValue('tree-not-in-the-list')).toBeInTheDocument();
+  });
 });
 
 describe('clearable behavior', () => {
@@ -179,5 +201,50 @@ describe('error handling', () => {
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByText(/failed to load notification policies/i)).toBeInTheDocument();
+  });
+});
+
+describe('default tree presented with the "default" canonical name', () => {
+  beforeEach(() => {
+    server.use(...simpleRoutingTreesListDefaultAliasScenario);
+  });
+
+  it('labels the default tree "Default policy" (not its raw name)', async () => {
+    // The input display value is the option LABEL only (no description), so this unambiguously
+    // distinguishes the friendly "Default policy" label from the raw "default" name.
+    render(<RoutingTreeSelector value={DEFAULT_ROUTING_TREE_NAME_ALIAS} onChange={jest.fn()} />);
+    expect(await screen.findByDisplayValue('Default policy')).toBeInTheDocument();
+  });
+
+  it('force-sorts the default tree first even when a named tree sorts before it alphabetically', async () => {
+    const { user } = render(<RoutingTreeSelector onChange={jest.fn()} />);
+    await user.click(screen.getByRole('combobox'));
+
+    const options = await screen.findAllByRole('option');
+    // `billing` sorts before `default` alphabetically; the default tree is first only if recognised.
+    expect(options[0]).toHaveTextContent(/default policy/i);
+  });
+});
+
+describe('a refetch that fails after a successful load', () => {
+  // This query refetches on mount and on window focus, and RTK Query keeps the last good data
+  // alongside the error. Replacing a working dropdown with a warning would throw away both the list
+  // and the user's visible selection, so the list has to survive a failed refetch.
+  it('keeps showing the list instead of swapping in the error alert', async () => {
+    const { store } = render(<RoutingTreeSelector value="team-platform" onChange={jest.fn()} />);
+    // The shared test store is typed without its thunk middleware (the full type cannot be written out),
+    // so tell TypeScript that dispatch accepts the thunk returned by `initiate`.
+    const dispatch = store.dispatch as ThunkDispatch<unknown, unknown, UnknownAction>;
+
+    expect(await screen.findByDisplayValue('team-platform')).toBeInTheDocument();
+
+    // Now the endpoint starts failing, and something refetches the entry we're subscribed to.
+    server.use(...routingTreeWithErrorScenario);
+    await act(async () => {
+      await dispatch(notificationsAPIv1beta1.endpoints.listRoutingTree.initiate({}, { forceRefetch: true }));
+    });
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue('team-platform')).toBeInTheDocument();
   });
 });

@@ -7,17 +7,12 @@ import { Button } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import {
-  isAdvisorEnabled,
-  useCreateDatasourceAdvisorChecks,
-  useLatestDatasourceCheck,
-} from '../../hooks/useDatasourceAdvisorChecks';
+import { useCreateDatasourceAdvisorChecks, useLatestDatasourceCheck } from '../../hooks/useDatasourceAdvisorChecks';
 
 export function RunAdvisorChecksButton(): JSX.Element | null {
   const notifyApp = useAppNotification();
   const { createChecks, isCreatingChecks, isAvailable } = useCreateDatasourceAdvisorChecks();
   const { check, isLoading: isLatestCheckLoading } = useLatestDatasourceCheck();
-  const advisorEnabled = isAdvisorEnabled();
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const [isWaitingForCheckCompletion, setIsWaitingForCheckCompletion] = useState(false);
 
@@ -46,7 +41,7 @@ export function RunAdvisorChecksButton(): JSX.Element | null {
 
   // Keep the button visible while checks are running, but hide it once
   // onboarding is complete (a check exists and checks are no longer running).
-  if (!advisorEnabled || !isAvailable || !hasAdminRights) {
+  if (!isAvailable || !hasAdminRights) {
     return null;
   }
 

@@ -1,6 +1,7 @@
 import { uniqueId } from 'lodash';
 
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   type AdHocFilterWithLabels,
@@ -13,7 +14,6 @@ import {
   QueryVariable,
   SceneRefreshPicker,
   SceneTimePicker,
-  SceneTimeRange,
   type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
@@ -36,7 +36,6 @@ import {
   defaultQueryVariableKind,
   defaultTextVariableKind,
   defaultSwitchVariableKind,
-  defaultTimeSettingsSpec,
   type GroupByVariableKind,
   type IntervalVariableKind,
   type LibraryPanelKind,
@@ -59,7 +58,7 @@ import {
   AnnoKeyEmbedded,
   AnnoReloadOnParamsChange,
 } from 'app/features/apiserver/types';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithLoadInfo } from 'app/features/dashboard/api/types';
 import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
@@ -80,6 +79,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { applySupportsMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
@@ -87,6 +87,7 @@ import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
+import { buildSceneTimeRange } from './shared/timeSettings';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -110,31 +111,40 @@ export type TypedVariableModelV2 =
   | SwitchVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(
-  dto: DashboardWithAccessInfo<DashboardV2Spec>,
+  dto: DashboardWithLoadInfo<DashboardV2Spec>,
   options?: LoadDashboardOptions
 ): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
-  const annotations = dashboard.annotations ?? [];
-  const found = annotations.some((item) => item.spec.builtIn);
-  if (!found) {
-    annotations.unshift(getGrafanaBuiltInAnnotation());
+  const isSnapshot = Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]);
+
+  // Snapshots embed their annotation results in the per-panel snapshot query data, so we must
+  // not create annotation data layers — those would fire live annotation queries (e.g. the
+  // authorized annotations endpoint, which returns 401 for snapshots). Mirrors the v1
+  // transform's `!oldModel.isSnapshot()` guard.
+  let annotationLayers: DashboardAnnotationsDataLayer[] = [];
+  if (!isSnapshot) {
+    const annotations = dashboard.annotations ?? [];
+    const found = annotations.some((item) => item.spec.builtIn);
+    if (!found) {
+      annotations.unshift(getGrafanaBuiltInAnnotation());
+    }
+
+    annotationLayers = annotations.map((annotation) => {
+      const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
+
+      const layerState = {
+        key: uniqueId('annotations-'),
+        query: annotationQuerySpec,
+        name: annotation.spec.name,
+        isEnabled: Boolean(annotation.spec.enable),
+        isHidden: Boolean(annotation.spec.hide),
+        placement: annotation.spec.placement,
+      };
+
+      return new DashboardAnnotationsDataLayer(layerState);
+    });
   }
-
-  const annotationLayers = annotations.map((annotation) => {
-    const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
-
-    const layerState = {
-      key: uniqueId('annotations-'),
-      query: annotationQuerySpec,
-      name: annotation.spec.name,
-      isEnabled: Boolean(annotation.spec.enable),
-      isHidden: Boolean(annotation.spec.hide),
-      placement: annotation.spec.placement,
-    };
-
-    return new DashboardAnnotationsDataLayer(layerState);
-  });
 
   // Create alert states data layer if unified alerting is enabled
   let alertStatesLayer: AlertStatesDataLayer | undefined;
@@ -164,9 +174,10 @@ export function transformSaveModelSchemaV2ToScene(
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
     folderTitle: metadata.annotations?.[AnnoKeyFolderTitle],
-    isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
+    isSnapshot,
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
+    libraryPanelRepeatUnresolved: dto.libraryPanelRepeatUnresolved,
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),
@@ -188,7 +199,7 @@ export function transformSaveModelSchemaV2ToScene(
     .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
   let templateLayoutManager: DashboardLayoutManager | undefined = undefined;
-  if (config.featureToggles.dashboardDefaultLayoutSelector && dashboard.preferences?.layout) {
+  if (dashboard.preferences?.layout) {
     templateLayoutManager = layoutDeserializerRegistry
       .get(dashboard.preferences.layout.kind)
       .deserialize(dashboard.preferences.layout, {}, false);
@@ -232,15 +243,7 @@ export function transformSaveModelSchemaV2ToScene(
       uid: metadata.name,
       version: metadata.generation,
       body: layoutManager,
-      $timeRange: new SceneTimeRange({
-        // Use defaults when time is empty to match DashboardModel behavior
-        from: dashboard.timeSettings.from || defaultTimeSettingsSpec().from,
-        to: dashboard.timeSettings.to || defaultTimeSettingsSpec().to,
-        fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
-        timeZone: dashboard.timeSettings.timezone,
-        weekStart: dashboard.timeSettings.weekStart,
-        UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
-      }),
+      $timeRange: buildSceneTimeRange(dashboard.timeSettings),
       $variables: getVariables(dashboard, meta.isSnapshot ?? false, options?.defaultVariables),
       $behaviors: [
         new behaviors.CursorSync({
@@ -321,6 +324,9 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
     // Added temporarily to allow skipping non-compatible variables
     .filter(isDefined);
 
+  // Nearest scope wins: a dashboard-local variable shadows a default (e.g. predefined
+  // global/folder) variable of the same name.
+  const localNames = new Set(variableObjects.map((v) => v.state.name));
   const defaultVariableObjects = defaultVariables
     .map((v) => {
       try {
@@ -330,7 +336,8 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
         return null;
       }
     })
-    .filter(isDefined);
+    .filter(isDefined)
+    .filter((v) => !localNames.has(v.state.name));
 
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
@@ -376,13 +383,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled:
-        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
+      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
+      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
       $behaviors: [new ReportInteractionBehavior({})],
-      supportsMultiValueOperators: Boolean(
-        getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
-      ),
+      supportsMultiValueOperators: false,
       collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
         ? (variable.spec.enableGroupBy ?? false)
@@ -391,7 +395,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
     }
-    return new AdHocFiltersVariable(adhocVariableState);
+    const adhocVariable = new AdHocFiltersVariable(adhocVariableState);
+    applySupportsMultiValueOperators(adhocVariable, ds?.type);
+    return adhocVariable;
   }
 
   if (variable.kind === defaultCustomVariableKind().kind) {
@@ -525,9 +531,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled:
-        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
+      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
+      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.spec.defaultValue
@@ -597,7 +602,7 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             v.group
           );
 
-          return new AdHocFiltersVariable({
+          const adhocVariable = new AdHocFiltersVariable({
             name: v.spec.name,
             label: v.spec.label,
             readOnly: true,
@@ -610,15 +615,18 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             baseFilters: v.spec.baseFilters ?? [],
             defaultKeys: v.spec.defaultKeys?.length ? v.spec.defaultKeys : undefined,
             useQueriesAsFilterForOptions: true,
-            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-            supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
+            applicabilityEnabled: getFeatureFlagClient().getBooleanValue(
+              FlagKeys.PerPanelNonApplicableDrilldowns,
+              false
             ),
+            supportsMultiValueOperators: false,
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
               ? (v.spec.enableGroupBy ?? false)
               : false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
+          applySupportsMultiValueOperators(adhocVariable, ds?.type);
+          return adhocVariable;
         }
         // for other variable types we are using the SnapshotVariable
         return createSnapshotVariable(v);

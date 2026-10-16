@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type RuleNamespace } from '../../../types/unified-alerting';
 import { type RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { type ImportMethod } from './components/import-to-gma/Wizard/types';
 import { type Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
 import { type FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { type RulesFilter } from './search/rulesSearchParser';
@@ -70,13 +71,12 @@ export function withPerformanceLogging<TArgs extends unknown[], TReturn>(
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RuleNamespace[]>>(
+export function withPromRulesMetadataLogging<TArgs extends unknown[]>(
   type: string,
-  func: TFunc,
+  func: (...args: TArgs) => Promise<RuleNamespace[]>,
   context: Record<string, string>
 ) {
-  return async (...args: Parameters<TFunc>) => {
+  return async (...args: TArgs) => {
     const startLoadingTs = performance.now();
     const response = await func(...args);
 
@@ -122,13 +122,12 @@ function getPromRulesMetadata(promRules: RuleNamespace[]) {
   return metadata;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RulerRulesConfigDTO>>(
+export function withRulerRulesMetadataLogging<TArgs extends unknown[]>(
   type: string,
-  func: TFunc,
+  func: (...args: TArgs) => Promise<RulerRulesConfigDTO>,
   context: Record<string, string>
 ) {
-  return async (...args: Parameters<TFunc>) => {
+  return async (...args: TArgs) => {
     const startLoadingTs = performance.now();
     const response = await func(...args);
 
@@ -172,10 +171,6 @@ export const trackRuleListNavigation = async (
 
 export const trackAlertRuleFormSaved = (props: { formAction: 'create' | 'update'; ruleType?: RuleFormType }) => {
   reportInteraction('grafana_alerting_rule_creation', props);
-};
-
-export const trackAlertRuleFormCancelled = (props: { formAction: 'create' | 'update' }) => {
-  reportInteraction('grafana_alerting_rule_aborted', props);
 };
 
 export const trackAlertRuleFormError = (
@@ -254,18 +249,20 @@ export const trackDeletedRuleRestoreFail = async () => {
 };
 
 export const trackImportToGMASuccess = async (payload: {
+  importMethod?: ImportMethod;
   notificationsSource?: 'yaml' | 'datasource';
   rulesSource?: 'yaml' | 'datasource';
-  isRootFolder: boolean;
+  isRootFolder?: boolean;
   namespace?: string;
   ruleGroup?: string;
-  pauseRecordingRules: boolean;
-  pauseAlertingRules: boolean;
+  pauseRecordingRules?: boolean;
+  pauseAlertingRules?: boolean;
 }) => {
   reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
 };
 
 export const trackImportToGMAError = async (payload: {
+  importMethod?: ImportMethod;
   notificationsSource?: 'yaml' | 'datasource';
   rulesSource?: 'yaml' | 'datasource';
 }) => {
@@ -376,11 +373,7 @@ export function trackRulesSearchInputCleared(prev: string, next: string) {
   }
 }
 
-function filterMeaningfulValues(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  obj: Record<string, any>,
-  opts?: { pluginsFilterEnabled?: boolean }
-) {
+function filterMeaningfulValues(obj: RulesFilter, opts?: { pluginsFilterEnabled?: boolean }) {
   const { pluginsFilterEnabled = true } = opts ?? {};
   return pickBy(obj, (value, key) => {
     if (value === null || value === undefined || value === '') {
@@ -407,35 +400,6 @@ export type AlertRuleTrackingProps = {
   grafana_version?: string;
   org_id?: number;
 };
-
-// ============================================================================
-// Alerts Activity Banner & View Experience Telemetry
-// ============================================================================
-
-/**
- * Track banner impression - fired once per session when banner is first shown.
- * Note: user_id, org_id, grafana_version, and other common properties are automatically
- * tracked by the analytics infrastructure.
- */
-export function trackAlertsActivityBannerImpression() {
-  reportInteraction('grafana_alerting_alerts_activity_banner_impression');
-}
-
-/**
- * Track when user clicks "Open Alerts Activity" CTA
- */
-export function trackAlertsActivityBannerClickTry() {
-  reportInteraction('grafana_alerting_alerts_activity_banner_click');
-}
-
-/**
- * Track when user dismisses the banner
- */
-export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
-  reportInteraction('grafana_alerting_alerts_activity_banner_dismiss', {
-    dismissed_until: dismissedUntil,
-  });
-}
 
 // ============================================================================
 // View Experience Toggle Telemetry (persistent control near page title)
@@ -472,4 +436,18 @@ export function trackViewExperienceToggleConfirmed(
  */
 export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
   reportInteraction('grafana_alerting_rule_list_page_view', payload);
+}
+
+/**
+ * Track when user clicks the "Create a Watcher" CTA on the Watchers banner
+ */
+export function trackWatchersBannerClick() {
+  reportInteraction('grafana_alerting_watchers_banner_click');
+}
+
+/**
+ * Track when user dismisses the Watchers banner
+ */
+export function trackWatchersBannerDismiss() {
+  reportInteraction('grafana_alerting_watchers_banner_dismiss');
 }

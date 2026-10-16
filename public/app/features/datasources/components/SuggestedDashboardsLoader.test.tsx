@@ -42,9 +42,17 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsM
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn((uid?: string) => (uid ? { uid, type: 'test-datasource', name: 'Test DS' } : null)),
-  }),
+  // The loader uses the hook to expose `datasourceType` as a prop on the modal, and the
+  // async function inside `triggerFetch` to look the same datasource up. Mock both with a
+  // synchronous-by-default behaviour so existing assertions don't have to await an extra
+  // microtask.
+  useDataSourceInstanceSettings: jest.fn((uid?: string) => ({
+    isLoading: false,
+    settings: uid ? { uid, type: 'test-datasource', name: 'Test DS' } : undefined,
+  })),
+  getDataSourceInstanceSettings: jest.fn(async (uid?: string) =>
+    uid ? { uid, type: 'test-datasource', name: 'Test DS' } : undefined
+  ),
 }));
 
 const mockFetchProvisioned = jest.mocked(fetchProvisionedDashboards);

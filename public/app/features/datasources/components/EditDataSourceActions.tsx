@@ -1,12 +1,17 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import {
+  usePluginLinks,
+  useFavoriteDatasources,
+  reportInteraction,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';
-import { trackDsConfigClicked, trackExploreClicked } from '../tracking';
+import { trackDsConfigClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import { BuildDashboardButton } from './BuildDashboardButton';
@@ -18,7 +23,7 @@ interface Props {
 
 const FavoriteButton = ({ uid }: { uid: string }) => {
   const favoriteDataSources = useFavoriteDatasources();
-  const dataSourceInstance = getDataSourceSrv().getInstanceSettings(uid);
+  const { settings: dataSourceInstance } = useDataSourceInstanceSettings(uid);
   const isFavorite = dataSourceInstance ? favoriteDataSources.isFavoriteDatasource(dataSourceInstance.uid) : false;
 
   return (
@@ -76,12 +81,6 @@ export function EditDataSourceActions({ uid }: Props) {
 
   const handleExploreClick = () => {
     trackDsConfigClicked('explore');
-    trackExploreClicked({
-      grafana_version: config.buildInfo.version,
-      datasource_uid: dataSource.uid,
-      plugin_name: dataSource.typeName,
-      path: window.location.pathname,
-    });
   };
 
   const exploreMenu = (

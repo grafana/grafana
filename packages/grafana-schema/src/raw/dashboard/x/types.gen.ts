@@ -620,6 +620,10 @@ export interface Threshold {
    * Nulls currently appear here when serializing -Infinity to JSON.
    */
   value: (number | null);
+  /**
+   * Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+   */
+  valueExpr?: string;
 }
 
 /**
@@ -801,6 +805,10 @@ export interface DataTransformerConfig {
    * Valid options depend on the transformer id
    */
   options: unknown;
+  /**
+   * Unique identifier of the instance of the transformer
+   */
+  refId?: string;
   /**
    * Where to pull DataFrames from as input to transformation
    */

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -28,7 +29,9 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
+	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -68,7 +71,7 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
-	csch, err := checkscheduler.New(cfg, log)
+	csch, err := checkscheduler.New(cfg, log, ctr)
 	if err != nil {
 		return nil, err
 	}
@@ -179,6 +182,40 @@ func New(cfg app.Config) (app.App, error) {
 						},
 					})
 				},
+				{
+					Namespaced: true,
+					Path:       "translations",
+					Method:     "GET",
+				}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
+					logger := log.WithContext(ctx)
+					lang := req.URL.Query().Get("lang")
+					if lang == "" {
+						lang = "en-US"
+					}
+					trans, err := translations.Get(lang)
+					if err != nil {
+						logger.Error("Failed to load translations", "lang", lang, "error", err)
+						// A bad locale is the caller's fault; anything else (e.g. a
+						// malformed embedded translation file) is ours.
+						status := http.StatusInternalServerError
+						if errors.Is(err, translations.ErrInvalidLocale) {
+							status = http.StatusBadRequest
+						}
+						w.Header().Set("Content-Type", "application/json")
+						w.WriteHeader(status)
+						_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+						return err
+					}
+					w.Header().Set("Content-Type", "application/json")
+					return json.NewEncoder(w).Encode(advisorv0alpha1.GetTranslationsResponse{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: fmt.Sprintf("%s/%s", advisorv0alpha1.APIGroup, advisorv0alpha1.APIVersion),
+						},
+						GetTranslationsBody: advisorv0alpha1.GetTranslationsBody{
+							Translations: trans,
+						},
+					})
+				},
 			},
 		},
 	}
@@ -216,12 +253,25 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	}
 }
 
+// InstallerOption customizes the advisor app built by ProvideAppInstaller.
+type InstallerOption func(*checkregistry.AdvisorAppConfig)
+
+// WithLeaderElector makes the multi-tenant check scheduler run only on the
+// replica holding the elector's lease, so replicas don't all discover, clean
+// up and create checks for every tenant at once.
+func WithLeaderElector(elector leaderelection.Elector) InstallerOption {
+	return func(c *checkregistry.AdvisorAppConfig) {
+		c.LeaderElector = elector
+	}
+}
+
 func ProvideAppInstaller(
 	authorizer authorizer.Authorizer,
 	checkRegistry checkregistry.CheckService,
 	cfg *setting.Cfg,
 	orgService org.Service,
 	registerer prometheus.Registerer,
+	opts ...InstallerOption,
 ) (*AdvisorAppInstaller, error) {
 	metrics.MustRegister(registerer)
 	provider := simple.NewAppProvider(advisorapi.LocalManifest(), nil, New)
@@ -231,6 +281,9 @@ func ProvideAppInstaller(
 		PluginConfig:  pluginConfig,
 		StackID:       cfg.StackID,
 		OrgService:    orgService,
+	}
+	for _, opt := range opts {
+		opt(&specificConfig)
 	}
 	appCfg := app.Config{
 		KubeConfig:     rest.Config{},

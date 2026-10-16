@@ -1,4 +1,5 @@
 import { type PanelData } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/plugin-ui';
 
 import { multiResourceCompatibleTypes } from '../../azureMetadata/resourceTypes';
@@ -30,6 +31,77 @@ interface MetricsQueryEditorProps {
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
 
+const supportsMultipleResources = (namespace?: string): boolean =>
+  multiResourceCompatibleTypes[namespace?.toLocaleLowerCase() ?? ''] ?? false;
+
+// isBatchableNamespace reports whether a metric namespace can be queried through the
+// Metrics Batch API. Guest OS metrics ("azure.vm.*") and legacy Windows Azure Diagnostics
+// ("windows azure"/"wad") namespaces are not resource types and are only available via the
+// legacy ARM metrics endpoint, so they cannot be batched. This mirrors isBatchableModel in
+// the backend batch executor (pkg/tsdb/azuremonitor/metrics/batch-executor.go).
+export const isBatchableNamespace = (namespace?: string): boolean => {
+  const ns = namespace?.toLocaleLowerCase().trim() ?? '';
+  return !(ns.startsWith('azure.vm.') || ns.startsWith('windows azure') || ns.startsWith('wad'));
+};
+
+// isResourceRowDisabled decides whether a resource row can be added to the current
+// selection. With the batch API enabled, resources only need to share a metric namespace
+// (they can span subscriptions and regions); otherwise they must also share the same
+// subscription and region and use a multi-resource-compatible namespace.
+export const isResourceRowDisabled = (
+  row: ResourceRow,
+  selectedRows: ResourceRowGroup,
+  batchAPIEnabled?: boolean
+): boolean => {
+  const rowResource = parseResourceDetails(row.uri, row.location);
+  if (batchAPIEnabled && row.type === ResourceRowType.Resource && !isBatchableNamespace(rowResource.metricNamespace)) {
+    return true;
+  }
+
+  // Only disable rows once something is already selected.
+  if (selectedRows.length === 0) {
+    return false;
+  }
+
+  const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
+
+  if (batchAPIEnabled) {
+    // Never grey out subscriptions/resource groups — they're containers that may hold selectable resources.
+    if (row.type === ResourceRowType.Subscription || row.type === ResourceRowType.ResourceGroup) {
+      return false;
+    }
+    return rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase();
+  }
+
+  return (
+    rowResource.subscription !== selectedRowSample.subscription ||
+    rowResource.region !== selectedRowSample.region ||
+    rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase() ||
+    !supportsMultipleResources(rowResource.metricNamespace)
+  );
+};
+
+// getSelectionNotice returns the helper text shown under the resource picker for the
+// current selection. The text differs when the batch API is enabled.
+export const getSelectionNotice = (selectedRows: ResourceRowGroup, batchAPIEnabled?: boolean): string => {
+  if (selectedRows.length === 0) {
+    return '';
+  }
+  if (batchAPIEnabled) {
+    return t(
+      'components.metrics-query-editor.selection-notice-batch',
+      'You can select items of the same resource type across subscriptions and regions. Resources in different subscriptions or regions are queried in separate requests and may fail independently. To select resources of a different resource type, please first uncheck your current selection.'
+    );
+  }
+  const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
+  return supportsMultipleResources(selectedRowSample.metricNamespace)
+    ? t(
+        'components.metrics-query-editor.selection-notice-standard',
+        'You can select items of the same resource type and location. To select resources of a different resource type or location, please first uncheck your current selection.'
+      )
+    : '';
+};
+
 const MetricsQueryEditor = ({
   data,
   query,
@@ -43,47 +115,25 @@ const MetricsQueryEditor = ({
   const metricNames = useMetricNames(query, datasource, onChange, setError);
   const resources =
     query.azureMonitor?.resources?.map((r) => ({
-      subscription: query.subscription,
+      // Prefer each resource's own subscription/region (batch selections can span both) and
+      // fall back to the query-level values for single-resource / non-batch queries.
+      subscription: r.subscription ?? query.subscription,
       resourceGroup: r.resourceGroup,
       metricNamespace: query.azureMonitor?.metricNamespace,
       resourceName: r.resourceName,
-      region: query.azureMonitor?.region,
+      region: r.region ?? query.azureMonitor?.region,
     })) ?? [];
 
-  const supportMultipleResource = (namespace?: string) => {
-    return multiResourceCompatibleTypes[namespace?.toLocaleLowerCase() ?? ''] ?? false;
-  };
+  const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
-  const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
-    if (selectedRows.length === 0) {
-      // Only if there is some resource(s) selected we should disable rows
-      return false;
-    }
+  const selectableMetricNamespaces = batchAPIEnabled
+    ? metricNamespaces.filter((option) => isBatchableNamespace(option.value))
+    : metricNamespaces;
 
-    const rowResource = parseResourceDetails(row.uri, row.location);
-    const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
-    // Only resources:
-    // - in the same subscription
-    // - in the same region
-    // - with the same metric namespace
-    // - with a metric namespace that is compatible with multi-resource queries
-    return (
-      rowResource.subscription !== selectedRowSample.subscription ||
-      rowResource.region !== selectedRowSample.region ||
-      rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase() ||
-      !supportMultipleResource(rowResource.metricNamespace)
-    );
-  };
+  const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) =>
+    isResourceRowDisabled(row, selectedRows, batchAPIEnabled);
 
-  const selectionNotice = (selectedRows: ResourceRowGroup) => {
-    if (selectedRows.length === 0) {
-      return '';
-    }
-    const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
-    return supportMultipleResource(selectedRowSample.metricNamespace)
-      ? 'You can select items of the same resource type and location. To select resources of a different resource type or location, please first uncheck your current selection.'
-      : '';
-  };
+  const selectionNotice = (selectedRows: ResourceRowGroup) => getSelectionNotice(selectedRows, batchAPIEnabled);
 
   return (
     <span data-testid={selectors.components.queryEditor.metricsQueryEditor.container.input}>
@@ -109,7 +159,7 @@ const MetricsQueryEditor = ({
               selectionNotice={selectionNotice}
             />
             <MetricNamespaceField
-              metricNamespaces={metricNamespaces}
+              metricNamespaces={selectableMetricNamespaces}
               query={query}
               datasource={datasource}
               variableOptionGroup={variableOptionGroup}

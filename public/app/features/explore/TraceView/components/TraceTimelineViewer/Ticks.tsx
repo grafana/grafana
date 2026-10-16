@@ -13,13 +13,12 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import type TNil from '../types/TNil';
 import { formatDuration } from '../utils/date';
 
@@ -33,13 +32,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     height: '100%',
     width: '1px',
-    background: autoColor(theme, '#d8d8d8'),
+    background: theme.colors.border.weak,
     '&:last-child': {
       width: 0,
     },
   }),
   TicksTickLabel: css({
     label: 'TicksTickLabel',
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
     left: '0.25rem',
     position: 'absolute',
     whiteSpace: 'nowrap',

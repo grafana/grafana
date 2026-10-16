@@ -35,6 +35,8 @@ type JobSpecApplyConfiguration struct {
 	Move *MoveJobOptionsApplyConfiguration `json:"move,omitempty"`
 	// Options when the action is `fix-folder-metadata`
 	FixFolderMetadata *FixFolderMetadataJobOptionsApplyConfiguration `json:"fixFolderMetadata,omitempty"`
+	// Required when the action is `test`
+	Test *TestJobOptionsApplyConfiguration `json:"test,omitempty"`
 }
 
 // JobSpecApplyConfiguration constructs a declarative configuration of the JobSpec type for use with
@@ -120,5 +122,13 @@ func (b *JobSpecApplyConfiguration) WithMove(value *MoveJobOptionsApplyConfigura
 // If called multiple times, the FixFolderMetadata field is set to the value of the last call.
 func (b *JobSpecApplyConfiguration) WithFixFolderMetadata(value *FixFolderMetadataJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.FixFolderMetadata = value
+	return b
+}
+
+// WithTest sets the Test field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Test field is set to the value of the last call.
+func (b *JobSpecApplyConfiguration) WithTest(value *TestJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+	b.Test = value
 	return b
 }

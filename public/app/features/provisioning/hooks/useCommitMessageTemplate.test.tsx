@@ -1,7 +1,6 @@
 import { useForm, useFormState } from 'react-hook-form';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../utils/commitMessage';
@@ -31,10 +30,12 @@ function Host({
   repository,
   vars,
   defaultComment = '',
+  fallbackMessage,
 }: {
   repository?: RepositoryView;
   vars: CommitTemplateVars;
   defaultComment?: string;
+  fallbackMessage?: string;
 }) {
   const methods = useForm<{ comment?: string }>({ defaultValues: { comment: defaultComment } });
   const { dirtyFields } = useFormState({ control: methods.control });
@@ -44,6 +45,7 @@ function Host({
     comment: methods.watch('comment') ?? '',
     isCommentDirty: Boolean(dirtyFields.comment),
     setComment: (v) => methods.setValue('comment', v, { shouldDirty: false }),
+    fallbackMessage,
   });
   // Mirror the shared field: an enforced repo renders the resolved message read-only; otherwise the
   // registered field is driven by the pre-fill effect. `message` is always surfaced for assertions.
@@ -60,27 +62,7 @@ function Host({
 }
 
 describe('useCommitMessageTemplate', () => {
-  beforeEach(() => {
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
-  it('leaves the field untouched when the flag is off even with a template configured', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    render(<Host repository={makeRepo({ singleResourceMessageTemplate: TEMPLATE })} vars={dashboardVars} />);
-
-    const textarea = screen.getByRole('textbox', { name: /comment/i });
-    expect(textarea).toHaveValue('');
-    expect(textarea).not.toHaveAttribute('readonly');
-  });
-
-  it('pre-fills the field from the rendered template when the flag is on', async () => {
+  it('pre-fills the field from the rendered template', async () => {
     render(<Host repository={makeRepo({ singleResourceMessageTemplate: TEMPLATE })} vars={dashboardVars} />);
 
     const textarea = screen.getByRole('textbox', { name: /comment/i });
@@ -125,15 +107,6 @@ describe('useCommitMessageTemplate', () => {
     expect(textarea).toHaveAttribute('readonly');
   });
 
-  it('does not enforce when the flag is off', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    render(<Host repository={makeRepo({ enforceTemplate: true })} vars={dashboardVars} />);
-
-    const textarea = screen.getByRole('textbox', { name: /comment/i });
-    expect(textarea).toHaveValue('');
-    expect(textarea).not.toHaveAttribute('readonly');
-  });
-
   it('resolves the message to the edited comment for a non-enforced repo', async () => {
     const repository = makeRepo({ singleResourceMessageTemplate: TEMPLATE });
     const { user } = render(<Host repository={repository} vars={dashboardVars} />);
@@ -169,5 +142,76 @@ describe('useCommitMessageTemplate', () => {
     expect(textarea).toHaveAttribute('readonly');
     expect(textarea).not.toHaveValue('should be ignored');
     expect(screen.getByTestId('resolved-message')).toHaveTextContent(expected);
+  });
+
+  describe('bulk fallback message', () => {
+    const bulkVars: CommitTemplateVars = {
+      action: 'delete',
+      resourceID: '',
+      title: '3 resources',
+    };
+
+    it('resolves to the supplied fallback when no template is configured', async () => {
+      render(<Host repository={makeRepo()} vars={bulkVars} fallbackMessage="Delete resources" />);
+
+      await waitFor(() => expect(screen.getByTestId('resolved-message')).toHaveTextContent('Delete resources'));
+      // The single-resource built-in default ("Delete dashboard: ...") must not leak in.
+      expect(screen.getByTestId('resolved-message')).not.toHaveTextContent('Delete dashboard');
+    });
+
+    it('renders the template and ignores the fallback when a template is configured', async () => {
+      render(
+        <Host
+          repository={makeRepo({ singleResourceMessageTemplate: 'chore: {{action}} {{title}}' })}
+          vars={bulkVars}
+          fallbackMessage="Delete resources"
+        />
+      );
+
+      const textarea = screen.getByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('chore: delete 3 resources'));
+      expect(screen.getByTestId('resolved-message')).toHaveTextContent('chore: delete 3 resources');
+    });
+
+    it('renders a {{resourceKind}} placeholder as a generic noun instead of an empty token', async () => {
+      render(
+        <Host
+          repository={makeRepo({ singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' })}
+          vars={bulkVars}
+          fallbackMessage="Delete resources"
+        />
+      );
+
+      const textarea = screen.getByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('feat(resources): delete 3 resources'));
+    });
+
+    it('locks to the fallback message when enforcement is on without a template', async () => {
+      render(
+        <Host repository={makeRepo({ enforceTemplate: true })} vars={bulkVars} fallbackMessage="Delete resources" />
+      );
+
+      const textarea = screen.getByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('Delete resources'));
+      expect(textarea).toHaveAttribute('readonly');
+    });
+
+    it('appends the saved-by trailer exactly once even when the template already includes one', async () => {
+      const repository = makeRepo({
+        singleResourceMessageTemplate: 'chore: {{action}}\n\nGrafana-saved-by: {{userName}}',
+      });
+      render(
+        <Host
+          repository={repository}
+          vars={{ ...bulkVars, userName: 'Ada', userLogin: 'ada' }}
+          fallbackMessage="Delete resources"
+        />
+      );
+
+      await waitFor(() => {
+        const text = screen.getByTestId('resolved-message').textContent ?? '';
+        expect(text.match(/Grafana-saved-by:/g)).toHaveLength(1);
+      });
+    });
   });
 });

@@ -1,11 +1,139 @@
 package setting
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestBlobGarbageCollectionDefaultsAndOverrides(t *testing.T) {
+	cfg := NewCfg()
+	cfg.setUnifiedStorageConfig()
+	require.False(t, cfg.BlobGarbageCollectionEnabled)
+	require.True(t, cfg.BlobGarbageCollectionDryRun)
+
+	cfg.Raw.Section("unified_storage").Key("blob_garbage_collection_enabled").SetValue("true")
+	cfg.Raw.Section("unified_storage").Key("blob_garbage_collection_dry_run").SetValue("false")
+	cfg.setUnifiedStorageConfig()
+	require.True(t, cfg.BlobGarbageCollectionEnabled)
+	require.False(t, cfg.BlobGarbageCollectionDryRun)
+}
+
+func TestResourceVersionMaxWait(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value string
+		want  time.Duration
+	}{
+		{name: "default", want: time.Second},
+		{name: "custom", value: "100ms", want: 100 * time.Millisecond},
+		{name: "backend default", value: "0s"},
+		{name: "disabled", value: "-1s", want: -time.Second},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.value != "" {
+				cfg.Raw.Section("unified_storage").Key("resource_version_max_wait").SetValue(tc.value)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.ResourceVersionMaxWait)
+		})
+	}
+}
+
+func TestKVLeaseTTLBounds(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured time.Duration
+		expected   time.Duration
+	}{
+		{name: "backend default", configured: 0, expected: 0},
+		{name: "below minimum", configured: 9 * time.Second, expected: 10 * time.Second},
+		{name: "at minimum", configured: 10 * time.Second, expected: 10 * time.Second},
+		{name: "above minimum", configured: 11 * time.Second, expected: 11 * time.Second},
+		{name: "at maximum", configured: 10 * time.Minute, expected: 10 * time.Minute},
+		{name: "above maximum", configured: 11 * time.Minute, expected: 10 * time.Minute},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.Raw.Section("unified_storage").Key("kv_lease_ttl").SetValue(tc.configured.String())
+
+			cfg.setUnifiedStorageConfig()
+
+			assert.Equal(t, tc.expected, cfg.KVLeaseTTL)
+		})
+	}
+}
+
+func TestSeededWatchesEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		want       bool
+	}{
+		{name: "default off"},
+		{name: "enabled", configured: "true", want: true},
+		{name: "disabled", configured: "false"},
+		{name: "environment enables", configured: "false", env: "true", want: true},
+		{name: "environment disables", configured: "true", env: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("seeded_watches_enabled").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_SEEDED_WATCHES_ENABLED", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
+		})
+	}
+}
+
+func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
+	cfg := NewCfg()
+	cfg.setUnifiedStorageConfig()
+	require.False(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
+
+	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
+	cfg.setUnifiedStorageConfig()
+	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
+}
+
+func TestSearchClientForwardAuthEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value string
+		env   bool
+		want  bool
+	}{
+		{name: "default"},
+		{name: "enabled", value: "true", want: true},
+		{name: "disabled", value: "false"},
+		{name: "environment override", value: "false", env: true, want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
+			if tc.value != "" {
+				cfg.Raw.Section("unified_storage").Key("search_client_forward_auth_enabled").SetValue(tc.value)
+			}
+			if tc.env {
+				t.Setenv("GF_UNIFIED_STORAGE_SEARCH_CLIENT_FORWARD_AUTH_ENABLED", "true")
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SearchClientForwardAuthEnabled)
+		})
+	}
+}
 
 func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 	t.Run("read unified_storage configs", func(t *testing.T) {
@@ -78,6 +206,18 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 5, cfg.IndexMinCount)
 	})
 
+	t.Run("authorize_before_fetch_enabled", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+		assert.False(t, cfg.AuthorizeBeforeFetchEnabled)
+
+		cfg.Raw.Section("unified_storage").Key("authorize_before_fetch_enabled").SetValue("true")
+		cfg.setUnifiedStorageConfig()
+		assert.True(t, cfg.AuthorizeBeforeFetchEnabled)
+	})
+
 	t.Run("search_ring_extend_replica_set", func(t *testing.T) {
 		setSectionKey := func(cfg *Cfg, value string) {
 			section := cfg.Raw.Section("unified_storage")
@@ -146,6 +286,43 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		})
 	})
 
+	t.Run("search_post_rank_authz", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, key, value string) {
+			section := cfg.Raw.Section("unified_storage")
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("defaults to off with zero tunables", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.False(t, cfg.SearchPostRankAuthz)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzOverFetchFactor)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxWindow)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxCandidates)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzFacetSampleSize)
+		})
+
+		t.Run("reads configured values", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "search_post_rank_authz", "true")
+			setSectionKey(cfg, "search_post_rank_authz_over_fetch_factor", "20")
+			setSectionKey(cfg, "search_post_rank_authz_max_window", "5000")
+			setSectionKey(cfg, "search_post_rank_authz_max_candidates", "12345")
+			setSectionKey(cfg, "search_post_rank_authz_facet_sample_size", "8000")
+			cfg.setUnifiedStorageConfig()
+			assert.True(t, cfg.SearchPostRankAuthz)
+			assert.Equal(t, 20, cfg.SearchPostRankAuthzOverFetchFactor)
+			assert.Equal(t, 5000, cfg.SearchPostRankAuthzMaxWindow)
+			assert.Equal(t, 12345, cfg.SearchPostRankAuthzMaxCandidates)
+			assert.Equal(t, 8000, cfg.SearchPostRankAuthzFacetSampleSize)
+		})
+	})
+
 	t.Run("env vars create unified_storage resource sections without ini file", func(t *testing.T) {
 		// Set env vars for a resource that has NO ini section defined.
 		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_DUALWRITERMODE", "3")
@@ -195,6 +372,51 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 2000000, cfg.MigrationCacheSizeKB)
 		assert.True(t, cfg.MigrationParquetBuffer)
 		assert.Equal(t, 3, cfg.IndexWorkers)
+	})
+
+	t.Run("authorization defaults preserve allowlist behavior", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.False(t, cfg.UnifiedStorageAuthzExemptionEnabled)
+		assert.Empty(t, cfg.UnifiedStorageAuthzExemptResources)
+	})
+
+	t.Run("authorization config reads INI controls", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		section := cfg.Raw.Section("unified_storage")
+		section.Key("authz_exemption_enabled").SetValue("true")
+		section.Key("authz_exempt_resources").SetValue(" example.grafana.app/widgets,querycaching.grafana.app/querycacheconfigs, ")
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.True(t, cfg.UnifiedStorageAuthzExemptionEnabled)
+		assert.Equal(t, []string{
+			"example.grafana.app/widgets",
+			"querycaching.grafana.app/querycacheconfigs",
+		}, cfg.UnifiedStorageAuthzExemptResources)
+	})
+
+	t.Run("authorization config supports unified storage env overrides", func(t *testing.T) {
+		t.Setenv("GF_UNIFIED_STORAGE_AUTHZ_EXEMPTION_ENABLED", "true")
+		t.Setenv("GF_UNIFIED_STORAGE_AUTHZ_EXEMPT_RESOURCES", "example.grafana.app/widgets,querycaching.grafana.app/querycacheconfigs")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.True(t, cfg.UnifiedStorageAuthzExemptionEnabled)
+		assert.Equal(t, []string{
+			"example.grafana.app/widgets",
+			"querycaching.grafana.app/querycacheconfigs",
+		}, cfg.UnifiedStorageAuthzExemptResources)
 	})
 
 	t.Run("chunked writes config defaults", func(t *testing.T) {
@@ -421,6 +643,78 @@ func TestIsTargetEligibleForMigrations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.expected, isTargetEligibleForMigrations(tt.targets))
+		})
+	}
+}
+
+func TestVectorAllowedCollections(t *testing.T) {
+	t.Run("defaults: dashboards internal, no external", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards"}, cfg.VectorAllowedInternalCollections)
+		assert.Empty(t, cfg.VectorAllowedExternalCollections)
+	})
+
+	t.Run("explicit lists are parsed as CSV", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		section := cfg.Raw.Section("unified_storage")
+		_, err = section.NewKey("vector_allowed_internal_collections", "dashboard.grafana.app/dashboards, folder.grafana.app/folders")
+		assert.NoError(t, err)
+		_, err = section.NewKey("vector_allowed_external_collections", "ext.example.com/my-things")
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
+		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
+	})
+}
+
+func TestStorageServicesEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		target []string
+		want   bool
+	}{
+		{target: nil, want: true},
+		{target: []string{"all"}, want: true},
+		{target: []string{"storage-server"}, want: true},
+		{target: []string{"core", "storage-server"}, want: true},
+		{target: []string{"core"}, want: false},
+		{target: []string{"search-server"}, want: false},
+	} {
+		t.Run(strings.Join(tc.target, ","), func(t *testing.T) {
+			cfg := NewCfg()
+			cfg.Target = tc.target
+
+			assert.Equal(t, tc.want, cfg.StorageServicesEnabled())
+		})
+	}
+}
+
+func TestQOSMaxConcurrentPerTenant(t *testing.T) {
+	for _, tc := range []struct {
+		name, iniValue, envValue string
+		want                     int
+	}{
+		{name: "default disabled"},
+		{name: "explicit disabled", iniValue: "0"},
+		{name: "enabled", iniValue: "4", want: 4},
+		{name: "environment override", envValue: "4", want: 4},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.envValue != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_QOS_MAX_CONCURRENT_PER_TENANT", tc.envValue)
+			}
+			cfg := NewCfg()
+			if tc.iniValue != "" {
+				cfg.Raw.Section("unified_storage").Key("qos_max_concurrent_per_tenant").SetValue(tc.iniValue)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.QOSMaxConcurrentPerTenant)
 		})
 	}
 }

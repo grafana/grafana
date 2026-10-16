@@ -37,10 +37,29 @@ describe('PullRequestButtons', () => {
     expect(links[2]).toHaveAttribute('href', 'https://github.com/org/repo/compare/main...branch');
   });
 
-  it('returns null for sync job type', () => {
-    const { container } = render(
-      <PullRequestButtons jobType="sync" urls={{ newPullRequestURL: 'https://example.com' }} />
+  it('renders the open-pull-request link when a PR URL is present', () => {
+    render(<PullRequestButtons urls={{ newPullRequestURL: 'https://github.com/org/repo/compare/main...branch' }} />);
+
+    expect(screen.getByRole('link', { name: /open pull request/i })).toHaveAttribute(
+      'href',
+      'https://github.com/org/repo/compare/main...branch'
     );
-    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('shows only the open-pull-request link for a sync (migrate) job', () => {
+    render(
+      <PullRequestButtons
+        jobType="sync"
+        urls={{
+          newPullRequestURL: 'https://github.com/org/repo/compare/main...branch',
+          compareURL: 'https://github.com/org/repo/compare/main...branch',
+          sourceURL: 'https://github.com/org/repo/tree/branch',
+        }}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: /open pull request/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /view branch/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /compare branch/i })).not.toBeInTheDocument();
   });
 });

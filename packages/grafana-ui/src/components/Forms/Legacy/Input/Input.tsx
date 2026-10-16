@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { PureComponent, ChangeEvent } from 'react';
 import * as React from 'react';
 

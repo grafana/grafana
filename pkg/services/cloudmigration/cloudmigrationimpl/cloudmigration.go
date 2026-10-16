@@ -11,8 +11,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -59,7 +59,7 @@ type Service struct {
 	cancelMutex sync.Mutex
 	cancelFunc  context.CancelFunc
 
-	isSyncSnapshotStatusFromGMSRunning int32
+	isSyncSnapshotStatusFromGMSRunning atomic.Int32
 
 	gmsClient     gmsclient.Client
 	objectStorage objectstorage.ObjectStorage
@@ -143,7 +143,7 @@ func ProvideService(
 		libraryElementsService: libraryElementsService,
 		ngAlert:                ngAlert,
 	}
-	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl, cloudmigration.ResourceDependency)
+	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl, cloudmigration.ResourceDependency(cfg.UnifiedAlerting.IsEnabled()))
 
 	httpClientS3, err := httpClientProvider.New()
 	if err != nil {
@@ -183,8 +183,7 @@ func ProvideService(
 	}
 
 	if err := prom.Register(s.metrics); err != nil {
-		var alreadyRegisterErr prometheus.AlreadyRegisteredError
-		if errors.As(err, &alreadyRegisterErr) {
+		if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 			s.log.Warn("cloud migration metrics already registered")
 		} else {
 			return s, fmt.Errorf("registering cloud migration metrics: %w", err)
@@ -649,11 +648,11 @@ func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, sessio
 	defer span.End()
 
 	// Ensure only one in-flight sync running
-	if !atomic.CompareAndSwapInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0, 1) {
+	if !s.isSyncSnapshotStatusFromGMSRunning.CompareAndSwap(0, 1) {
 		s.log.Info("synchronize snapshot status already running", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
 		return
 	}
-	defer atomic.StoreInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0)
+	defer s.isSyncSnapshotStatusFromGMSRunning.Store(0)
 
 	if !snapshot.ShouldQueryGMS() {
 		return
@@ -884,7 +883,7 @@ func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
 		return anonId, nil
 	}
 
-	anonId = uuid.NewString()
+	anonId = uuid.NewV4().String()
 
 	err = s.kvStore.Set(ctx, "anonymous_id", anonId)
 	if err != nil {

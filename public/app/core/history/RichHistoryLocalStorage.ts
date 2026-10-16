@@ -43,7 +43,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
    * Return history entries based on provided filters, perform migration and clean up entries not matching retention policy.
    */
   async getRichHistory(filters: RichHistorySearchFilters) {
-    const allQueries = getRichHistoryDTOs().map(fromDTO);
+    const allQueries = await Promise.all(getRichHistoryDTOs().map(fromDTO));
     const queries = filters.starred ? allQueries.filter((q) => q.starred === true) : allQueries;
 
     const timeFilter: [number, number] | undefined =
@@ -67,7 +67,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       ...newRichHistoryQuery,
     };
 
-    const newRichHistoryQueryDTO = toDTO(richHistoryQuery);
+    const newRichHistoryQueryDTO = await toDTO(richHistoryQuery);
     const currentRichHistoryDTOs = cleanUp(getRichHistoryDTOs());
 
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
@@ -211,7 +211,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
 function updateRichHistory(
   id: string,
   updateCallback: (richHistoryDTO: RichHistoryLocalStorageDTO) => void
-): RichHistoryQuery {
+): Promise<RichHistoryQuery> {
   const ts = parseInt(id, 10);
   const richHistoryDTOs: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
   const richHistoryDTO = find(richHistoryDTOs, { ts });

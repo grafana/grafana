@@ -1,8 +1,8 @@
 package quota
 
 import (
-	"context"
 	"encoding/base64"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -33,18 +33,16 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	// --- Step 1: create 2 repos with unlimited quota  ---------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo1Name,
-		LocalPath:              repo1Path,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo1Name,
+		LocalPath:  repo1Path,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo2Name,
-		LocalPath:              repo2Path,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo2Name,
+		LocalPath:  repo2Path,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaUnlimited)
@@ -61,6 +59,9 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	// --- Step 3: delete one repo — remaining repo recovers -------------
 	err := helper.Repositories.Resource.Delete(t.Context(), repo2Name, metav1.DeleteOptions{})
 	require.NoError(t, err)
+	// A repository still counts while its finalizers run, so recovery waits for
+	// the deletion to finish.
+	helper.WaitForRepositoryDeleted(t, repo2Name)
 
 	helper.TriggerRepositoryReconciliation(t, repo1Name)
 	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaReached)
@@ -117,7 +118,7 @@ func waitForHealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningT
 // blocked due to namespace quota being exceeded.
 func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	const (
@@ -149,12 +150,12 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		},
 	}}
 
-	_, err := helper.CreateGithubConnection(t, ctx, conn)
+	_, err := helper.CreateGithubConnection(t, conn)
 	require.NoError(t, err, "failed to create GitHub connection")
 
 	// Wait for the connection itself to be reconciled (token acquired).
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		obj, err := helper.Connections.Resource.Get(ctx, connName, metav1.GetOptions{})
+		obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 		if !assert.NoError(c, err) {
 			return
 		}
@@ -196,15 +197,14 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 				},
 			},
 		}}
-		_, err = helper.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+		_, err = helper.Repositories.Resource.Create(t.Context(), repoObj, metav1.CreateOptions{})
 		require.NoError(t, err, "failed to create repository %s", name)
 	}
 
 	// Wait for both repos to receive an initial token from the connection.
 	for _, name := range []string{repoName1, repoName2} {
-		name := name
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			obj, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+			obj, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
 			if !assert.NoError(c, err) {
 				return
 			}
@@ -252,13 +252,13 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		},
 	})
 	require.NoError(t, err)
-	_, err = helper.Repositories.Resource.Patch(ctx, repoName1,
+	_, err = helper.Repositories.Resource.Patch(t.Context(), repoName1,
 		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
 	require.NoError(t, err, "failed to patch repo1 status with near-expiry token")
 
 	// --- Step 5: verify health check AND token refresh happened, repo still blocked
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName1, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName1, metav1.GetOptions{})
 		if !assert.NoError(c, err) {
 			return
 		}
@@ -281,4 +281,102 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 			"token should be refreshed even when the repo is over namespace quota")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"health check and token refresh must run for quota-blocked repositories")
+}
+
+// A repository that is blocked and still over quota is a steady state, not a change, so
+// requeuing it must not test the repository again. Every reconcile that proceeds runs a
+// health check, and that is a call against the customer's git provider -- shared with
+// their syncs and with every repository on the same token. The explicit requeues here
+// stand in for the ones the controller used to generate for itself, by patching its own
+// status on every pass.
+//
+// The subject's health is stamped into the future, so there is no point in the test at
+// which its key could legitimately produce field errors -- however late the queue gets
+// to it, and however long the control's wait runs. The control repository, whose health
+// is aged, shows the controller draining its queue and the sabotage taking effect while
+// that holds. A reconcile the controller never picks up at all would still read as a
+// pass here; the delivery-certain version of this is the unit test, which calls process
+// directly.
+func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const (
+		subject = "ns-steady-subject"
+		control = "ns-steady-control"
+	)
+	subjectPath := filepath.Join(helper.ProvisioningPath, "steady-subject")
+	controlPath := filepath.Join(helper.ProvisioningPath, "steady-control")
+
+	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
+	for name, path := range map[string]string{subject: subjectPath, control: controlPath} {
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       name,
+			LocalPath:  path,
+			SyncTarget: "folder",
+			SkipSync:   true,
+		})
+	}
+
+	// Two repositories against a limit of one: both are over quota and settle into the
+	// blocked steady state, which leaves their health timestamps fresh.
+	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
+	helper.TriggerRepositoryReconciliation(t, subject)
+	helper.TriggerRepositoryReconciliation(t, control)
+	waitForUnhealthyWithNamespaceQuota(t, helper, subject, provisioning.ReasonQuotaExceeded)
+	waitForUnhealthyWithNamespaceQuota(t, helper, control, provisioning.ReasonQuotaExceeded)
+	require.Empty(t, repositoryFieldErrors(t, helper, subject))
+
+	// Remove both directories, so a Test() would report the path as not found. Those
+	// field errors reach status.fieldErrors whatever the quota health override says,
+	// which makes them per-repository evidence that the repository was tested at all.
+	require.NoError(t, os.RemoveAll(subjectPath))
+	require.NoError(t, os.RemoveAll(controlPath))
+
+	// One requeue of the subject, with its health check stamped well into the future so
+	// it stays not-due for the rest of the test however long the control's wait takes.
+	// One is the whole claim -- a steady-state requeue must not test the repository --
+	// and repeating it would not add reconciles anyway, since the work queue drops an
+	// Add for a key that is already queued.
+	patchHealthChecked(t, helper, subject, time.Now().Add(freshHealthMargin))
+
+	// Age only the control's health, so its check is genuinely due.
+	patchHealthChecked(t, helper, control, time.Now().Add(-2*time.Minute))
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		assert.NotEmpty(collect, repositoryFieldErrors(t, helper, control),
+			"a repository whose health check is due must still be tested")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+
+	// Checked last, so the control above has already shown the controller working
+	// through its queue over this window.
+	assert.Empty(t, repositoryFieldErrors(t, helper, subject),
+		"a steady-state requeue must not test the repository: that is a call against the customer's git provider")
+}
+
+// freshHealthMargin keeps a subject's stored health check inside recentUnhealthyDuration
+// for the whole test. It has to outlast the control's wait below: WaitTimeoutDefault is
+// 60s and recentUnhealthyDuration is one minute, so a wall-clock "now" stamp would
+// expire inside that window and let a delayed pickup legitimately test the repository.
+const freshHealthMargin = 10 * time.Minute
+
+// patchHealthChecked stamps the stored health timestamp, which both requeues the
+// repository -- a status write returns through the informer as an update -- and decides
+// whether ShouldCheckHealth reports the check as due.
+func patchHealthChecked(t *testing.T, helper *common.ProvisioningTestHelper, name string, checked time.Time) {
+	t.Helper()
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"health": map[string]any{"checked": checked.UnixMilli()},
+		},
+	})
+	require.NoError(t, err)
+	_, err = helper.Repositories.Resource.Patch(t.Context(), name,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch health timestamp for repository %s", name)
+}
+
+func repositoryFieldErrors(t *testing.T, helper *common.ProvisioningTestHelper, name string) []provisioning.ErrorDetails {
+	t.Helper()
+	obj, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+	require.NoError(t, err)
+	return common.MustFromUnstructured[provisioning.Repository](t, obj).Status.FieldErrors
 }

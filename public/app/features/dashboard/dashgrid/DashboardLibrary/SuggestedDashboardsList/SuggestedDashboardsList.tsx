@@ -5,7 +5,7 @@ import { useAsyncFn, useDebounce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, isFetchError, locationService, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { FilterInput, Grid, Pagination, Stack, useStyles2 } from '@grafana/ui';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -388,11 +388,12 @@ export const SuggestedDashboardsList = ({
     try {
       const interpolatedDashboard = await interpolateDashboardForCompatibilityCheck(dashboard.id, datasourceUid);
 
+      const datasource = await getDataSourceInstanceSettings(datasourceUid);
       const result = await checkDashboardCompatibility(interpolatedDashboard, [
         {
           uid: datasourceUid,
           type: datasourceType,
-          name: getDataSourceSrv().getInstanceSettings(datasourceUid)?.name ?? '',
+          name: datasource?.name ?? '',
         },
       ]);
 

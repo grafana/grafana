@@ -131,7 +131,7 @@ func TestConfigReader(t *testing.T) {
 	t.Run("a mute times file with correct properties and specific org should not error", func(t *testing.T) {
 		file, err := configReader.readConfig(ctx, testFileCorrectProperties_mt)
 		require.NoError(t, err)
-		require.Equal(t, "test", file[0].MuteTimes[0].MuteTime.Name)
+		require.Equal(t, "test", file[0].MuteTimes[0].MuteTime.Title)
 	})
 	t.Run("a mute times file with correct properties and specific org should not error", func(t *testing.T) {
 		file, err := configReader.readConfig(ctx, testFileCorrectPropertiesWithOrg_mt)

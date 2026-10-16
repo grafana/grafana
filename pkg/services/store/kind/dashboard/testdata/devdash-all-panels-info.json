@@ -5,11 +5,6 @@
     "panel-tests",
     "all-panels"
   ],
-  "templateVars": [
-    "query0",
-    "query1",
-    "text"
-  ],
   "datasource": [
     {
       "uid": "default.uid",
@@ -18,161 +13,7 @@
   ],
   "panels": [
     {
-      "id": 34,
-      "title": "",
-      "type": "text",
-      "pluginVersion": "8.1.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 35,
-      "title": "",
-      "type": "text",
-      "pluginVersion": "8.1.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 32,
-      "title": "Row title",
-      "type": "row"
-    },
-    {
-      "id": 41,
-      "title": "State timeline",
-      "type": "state-timeline",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 62,
-      "title": "Size, color mapped to different fields + share view",
-      "type": "geomap",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "title": "Histogram",
-      "type": "histogram",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 28,
-      "title": "Logs",
-      "type": "logs",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 8,
-      "title": "Dashboard list",
-      "type": "dashlist",
-      "pluginVersion": "8.1.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 6,
-      "title": "Alert list",
-      "type": "alertlist",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 26,
-      "title": "Heatmap",
-      "type": "heatmap",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 20,
-      "title": "Bar gauge",
-      "type": "bargauge",
-      "pluginVersion": "8.1.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 24,
-      "title": "Pie chart",
-      "type": "piechart",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 18,
-      "title": "Gauge",
-      "type": "gauge",
-      "pluginVersion": "8.1.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 22,
-      "title": "Tabel",
-      "type": "table",
-      "pluginVersion": "8.1.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 10,
+      "id": 0,
       "title": "Annotation list",
       "type": "annolist",
       "datasource": [
@@ -183,10 +24,9 @@
       ]
     },
     {
-      "id": 16,
-      "title": "Stat",
-      "type": "stat",
-      "pluginVersion": "8.1.0-pre",
+      "id": 0,
+      "title": "News panel",
+      "type": "news",
       "datasource": [
         {
           "uid": "default.uid",
@@ -195,18 +35,7 @@
       ]
     },
     {
-      "id": 2,
-      "title": "Graph NG",
-      "type": "timeseries",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
-      "id": 14,
+      "id": 0,
       "title": "Bar chart",
       "type": "barchart",
       "datasource": [
@@ -217,9 +46,163 @@
       ]
     },
     {
-      "id": 12,
-      "title": "News panel",
-      "type": "news",
+      "id": 0,
+      "title": "Stat",
+      "type": "stat",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Gauge",
+      "type": "gauge",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Graph NG",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Bar gauge",
+      "type": "bargauge",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Tabel",
+      "type": "table",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Pie chart",
+      "type": "piechart",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Heatmap",
+      "type": "heatmap",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Logs",
+      "type": "logs",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "",
+      "type": "text",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "",
+      "type": "text",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Histogram",
+      "type": "histogram",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "State timeline",
+      "type": "state-timeline",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Alert list",
+      "type": "alertlist",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Size, color mapped to different fields + share view",
+      "type": "geomap",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Dashboard list",
+      "type": "dashlist",
       "datasource": [
         {
           "uid": "default.uid",
@@ -228,9 +211,9 @@
       ]
     }
   ],
-  "schemaVersion": 36,
+  "schemaVersion": 0,
   "linkCount": 2,
-  "timeFrom": "now-6h",
-  "timeTo": "now",
+  "timeFrom": "",
+  "timeTo": "",
   "timezone": ""
 }

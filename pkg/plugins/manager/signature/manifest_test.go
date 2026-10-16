@@ -357,7 +357,7 @@ func (f fsPathSeparatorFiles) Files() ([]string, error) {
 		return nil, err
 	}
 	const osSepStr = string(filepath.Separator)
-	for i := 0; i < len(files); i++ {
+	for i := range files {
 		files[i] = strings.ReplaceAll(files[i], osSepStr, f.separator)
 	}
 	return files, nil

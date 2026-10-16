@@ -134,11 +134,12 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
        * for angular components styling
        * */
       '&:checked + span': {
-        background: theme.colors.accent.main,
-        border: `1px solid ${getBorderColor(theme.colors.accent.main)}`,
+        background: theme.components.checkbox.activeBackground,
+        border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackground)}`,
 
         '&:hover': {
-          background: theme.colors.accent.shade,
+          background: theme.components.checkbox.activeBackgroundHover,
+          border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackgroundHover)}`,
         },
 
         '&:after': {
@@ -172,11 +173,12 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
 
     inputIndeterminate: css({
       '&:indeterminate + span': {
-        border: `1px solid ${getBorderColor(theme.colors.accent.main)}`,
-        background: theme.colors.accent.main,
+        border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackground)}`,
+        background: theme.components.checkbox.activeBackground,
 
         '&:hover': {
-          background: theme.colors.accent.shade,
+          background: theme.components.checkbox.activeBackgroundHover,
+          border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackgroundHover)}`,
         },
 
         '&:after': {

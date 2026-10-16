@@ -1,0 +1,278 @@
+{
+  "uid": "faceted-labels-demo",
+  "title": "Faceted labels demo",
+  "tags": ["gdev", "panel-tests"],
+  "editable": true,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Multiple names + labels (both sections)",
+      "description": "Has 'By name' (cpu, mem, disk) and 'By labels' (host, env). Eye icon should appear.",
+      "type": "timeseries",
+      "gridPos": { "h": 14, "w": 12, "x": 0, "y": 0 },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": ["mean"],
+          "enableFacetedFilter": true
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"System\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"cpu\",\"type\":\"number\",\"labels\":{\"host\":\"a\",\"env\":\"prod\"},\"values\":[45,52,48,55,50,47]},{\"name\":\"cpu\",\"type\":\"number\",\"labels\":{\"host\":\"b\",\"env\":\"prod\"},\"values\":[62,58,65,60,63,59]},{\"name\":\"cpu\",\"type\":\"number\",\"labels\":{\"host\":\"c\",\"env\":\"dev\"},\"values\":[30,35,28,33,31,29]},{\"name\":\"mem\",\"type\":\"number\",\"labels\":{\"host\":\"a\",\"env\":\"prod\"},\"values\":[72,74,71,75,73,72]},{\"name\":\"mem\",\"type\":\"number\",\"labels\":{\"host\":\"b\",\"env\":\"prod\"},\"values\":[85,82,88,84,86,83]},{\"name\":\"mem\",\"type\":\"number\",\"labels\":{\"host\":\"c\",\"env\":\"dev\"},\"values\":[55,58,53,57,56,54]},{\"name\":\"disk\",\"type\":\"number\",\"labels\":{\"host\":\"a\",\"env\":\"prod\"},\"values\":[40,40,41,41,42,42]},{\"name\":\"disk\",\"type\":\"number\",\"labels\":{\"host\":\"b\",\"env\":\"dev\"},\"values\":[65,66,65,67,66,68]}]}]"
+        }
+      ],
+      "datasource": { "type": "grafana-testdata-datasource" }
+    },
+    {
+      "id": 2,
+      "title": "Labels only (single metric name)",
+      "description": "All fields named 'latency'. Only 'By labels' section appears (no 'By name').",
+      "type": "timeseries",
+      "gridPos": { "h": 14, "w": 12, "x": 12, "y": 0 },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": ["mean"],
+          "enableFacetedFilter": true
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Latency\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"latency\",\"type\":\"number\",\"labels\":{\"service\":\"gateway\",\"region\":\"us\"},\"values\":[23,25,22,28,24,26]},{\"name\":\"latency\",\"type\":\"number\",\"labels\":{\"service\":\"gateway\",\"region\":\"eu\"},\"values\":[18,21,17,28,19,23]},{\"name\":\"latency\",\"type\":\"number\",\"labels\":{\"service\":\"auth\",\"region\":\"us\"},\"values\":[31,34,29,36,32,30]},{\"name\":\"latency\",\"type\":\"number\",\"labels\":{\"service\":\"auth\",\"region\":\"eu\"},\"values\":[28,32,27,38,30,35]}]}]"
+        }
+      ],
+      "datasource": { "type": "grafana-testdata-datasource" }
+    },
+    {
+      "id": 3,
+      "title": "Names only (no labels)",
+      "description": "Multiple field names (cpu, mem, disk) but no labels. Only 'By name' section appears.",
+      "type": "timeseries",
+      "gridPos": { "h": 14, "w": 8, "x": 0, "y": 28 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true, "enableFacetedFilter": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Metrics\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"cpu\",\"type\":\"number\",\"values\":[45,52,48,55,50,47]},{\"name\":\"mem\",\"type\":\"number\",\"values\":[72,74,71,75,73,72]},{\"name\":\"disk\",\"type\":\"number\",\"values\":[40,40,41,41,42,42]}]}]"
+        }
+      ],
+      "datasource": { "type": "grafana-testdata-datasource" }
+    },
+    {
+      "id": 6,
+      "title": "No filter: single series",
+      "description": "One value field, no labels. Eye icon should NOT appear.",
+      "type": "timeseries",
+      "gridPos": { "h": 14, "w": 8, "x": 8, "y": 28 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true, "enableFacetedFilter": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Simple\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"value\",\"type\":\"number\",\"values\":[10,12,11,14,13,12]}]}]"
+        }
+      ],
+      "datasource": { "type": "grafana-testdata-datasource" }
+    },
+    {
+      "id": 7,
+      "title": "Frame name disambiguation",
+      "description": "Multiple frames all with field named 'value', different frame names. 'By name' shows frame names (Frame1, Frame2).",
+      "type": "timeseries",
+      "gridPos": { "h": 14, "w": 8, "x": 16, "y": 28 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true, "enableFacetedFilter": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Frame1\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"value\",\"type\":\"number\",\"values\":[10,12,11,14,13,12]}]},{\"name\":\"Frame2\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"value\",\"type\":\"number\",\"values\":[20,22,21,24,23,22]}]}]"
+        }
+      ],
+      "datasource": { "type": "grafana-testdata-datasource" }
+    },
+    {
+      "id": 8,
+      "title": "Multi-query, same field name, frame name disambiguation",
+      "description": "Three queries each returning 4 frames (io, ir, oe, ov) with a generic 'Value' field and no labels. 'By name' shows frame names.",
+      "type": "timeseries",
+      "gridPos": { "h": 14, "w": 12, "x": 0, "y": 42 },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": ["mean"],
+          "enableFacetedFilter": true
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"io\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[22,24,21,26,23,25]}]},{\"name\":\"ir\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[20,18,22,19,21,20]}]},{\"name\":\"oe\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[15,17,14,18,16,15]}]},{\"name\":\"ov\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[30,33,28,35,31,32]}]}]"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"io\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[25,27,24,29,26,28]}]},{\"name\":\"ir\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[18,20,17,22,19,21]}]},{\"name\":\"oe\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[12,14,11,16,13,12]}]},{\"name\":\"ov\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[28,31,26,33,29,30]}]}]"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"io\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[20,22,19,24,21,23]}]},{\"name\":\"ir\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[16,18,15,20,17,19]}]},{\"name\":\"oe\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[10,12,9,14,11,10]}]},{\"name\":\"ov\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[26,29,24,31,27,28]}]}]"
+        }
+      ],
+      "datasource": { "type": "grafana-testdata-datasource" }
+    },
+    {
+      "id": 9,
+      "title": "Multi-query, frame names + labels",
+      "description": "Three queries each returning 4 frames (io, ir, oe, ov) with a generic 'Value' field and region/env labels. 'By name' shows frame names, 'By labels' shows region and env.",
+      "type": "timeseries",
+      "gridPos": { "h": 14, "w": 12, "x": 12, "y": 42 },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": ["mean"],
+          "enableFacetedFilter": true
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"io\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"us\",\"env\":\"prod\"},\"values\":[22,24,21,26,23,25]}]},{\"name\":\"ir\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"us\",\"env\":\"prod\"},\"values\":[20,18,22,19,21,20]}]},{\"name\":\"oe\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"eu\",\"env\":\"prod\"},\"values\":[15,17,14,18,16,15]}]},{\"name\":\"ov\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"eu\",\"env\":\"dev\"},\"values\":[30,33,28,35,31,32]}]}]"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"io\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"us\",\"env\":\"dev\"},\"values\":[25,27,24,29,26,28]}]},{\"name\":\"ir\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"eu\",\"env\":\"prod\"},\"values\":[18,20,17,22,19,21]}]},{\"name\":\"oe\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"eu\",\"env\":\"dev\"},\"values\":[12,14,11,16,13,12]}]},{\"name\":\"ov\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"us\",\"env\":\"prod\"},\"values\":[28,31,26,33,29,30]}]}]"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"io\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"eu\",\"env\":\"prod\"},\"values\":[20,22,19,24,21,23]}]},{\"name\":\"ir\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"us\",\"env\":\"dev\"},\"values\":[16,18,15,20,17,19]}]},{\"name\":\"oe\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"us\",\"env\":\"prod\"},\"values\":[10,12,9,14,11,10]}]},{\"name\":\"ov\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"region\":\"eu\",\"env\":\"dev\"},\"values\":[26,29,24,31,27,28]}]}]"
+        }
+      ],
+      "datasource": { "type": "grafana-testdata-datasource" }
+    },
+    {
+      "id": 10,
+      "title": "User-renamed queries (Task Up / Down / Configured)",
+      "description": "Three queries with custom names simulating user-renamed queries. Each returns a single frame with generic 'Value' field. 'By name' shows Task Up, Task Down, Task Configured.",
+      "type": "timeseries",
+      "gridPos": { "h": 14, "w": 12, "x": 0, "y": 56 },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": ["mean"],
+          "enableFacetedFilter": true
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Task Up\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[85,88,82,90,87,86]}]}]"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Task Down\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[5,3,8,2,6,4]}]}]"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Task Configured\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"values\":[42,45,40,48,43,44]}]}]"
+        }
+      ],
+      "datasource": { "type": "grafana-testdata-datasource" }
+    },
+    {
+      "id": 11,
+      "title": "Recommended: frame.name=refId, labels=metric",
+      "description": "frame.name = refId (Task Up/Down/Configured), field.labels = {metric: io/ir/oe/ov}. 'By name' shows tasks, 'By labels' shows metrics.",
+      "type": "timeseries",
+      "gridPos": { "h": 14, "w": 12, "x": 12, "y": 56 },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": ["mean"],
+          "enableFacetedFilter": true
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Task Up\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"io\"},\"values\":[22,24,21,26,23,25]}]},{\"name\":\"Task Up\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"ir\"},\"values\":[20,18,22,19,21,20]}]},{\"name\":\"Task Up\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"oe\"},\"values\":[15,17,14,18,16,15]}]},{\"name\":\"Task Up\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"ov\"},\"values\":[30,33,28,35,31,32]}]}]"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Task Down\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"io\"},\"values\":[5,3,8,2,6,4]}]},{\"name\":\"Task Down\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"ir\"},\"values\":[3,2,5,1,4,3]}]},{\"name\":\"Task Down\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"oe\"},\"values\":[7,5,9,4,8,6]}]},{\"name\":\"Task Down\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"ov\"},\"values\":[2,1,4,1,3,2]}]}]"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "grafana-testdata-datasource" },
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"name\":\"Task Configured\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"io\"},\"values\":[42,45,40,48,43,44]}]},{\"name\":\"Task Configured\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"ir\"},\"values\":[38,41,36,44,39,40]}]},{\"name\":\"Task Configured\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"oe\"},\"values\":[50,53,48,55,51,52]}]},{\"name\":\"Task Configured\",\"fields\":[{\"name\":\"time\",\"type\":\"time\",\"values\":[1700000000000,1700000060000,1700000120000,1700000180000,1700000240000,1700000300000]},{\"name\":\"Value\",\"type\":\"number\",\"labels\":{\"metric\":\"ov\"},\"values\":[45,48,43,50,46,47]}]}]"
+        }
+      ],
+      "datasource": { "type": "grafana-testdata-datasource" }
+    }
+  ],
+  "time": {
+    "from": "2023-11-14T22:13:20.000Z",
+    "to": "2023-11-14T22:24:20.000Z"
+  },
+  "timezone": "browser",
+  "schemaVersion": 39
+}

@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -53,6 +54,11 @@ var testRoutes = map[string]types.AzRoute{
 	},
 	azurePortal: {
 		URL: "https://portal.azure.com",
+	},
+	azureMonitorBatchMetrics: {
+		URL:     "https://metrics.monitor.azure.com",
+		Scopes:  []string{"https://metrics.monitor.azure.com/.default"},
+		Headers: map[string]string{"x-ms-app": "Grafana"},
 	},
 }
 
@@ -97,7 +103,9 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData:                map[string]any{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
-				Services:                map[string]types.DatasourceService{},
+				Services: map[string]types.DatasourceService{
+					azureMonitorBatchMetrics: {URL: testRoutes[azureMonitorBatchMetrics].URL},
+				},
 			},
 			Err: require.NoError,
 		},
@@ -134,6 +142,16 @@ func TestNewInstanceSettings(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "rejects customized cloud whose batch metrics route URL is not absolute",
+			settings: backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Azure Monitor Batch Metrics":{"URL":"metrics.monitor.azure.us"}},"azureAuthType":"clientsecret"}`),
+				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
+				ID:                      51,
+			},
+			expectedModel: nil,
+			Err:           require.Error,
+		},
 	}
 
 	for _, tt := range tests {
@@ -152,8 +170,9 @@ func TestNewInstanceSettings(t *testing.T) {
 				require.Nil(t, instance, "Expected instance to be nil")
 			} else {
 				require.NotNil(t, instance, "Expected instance to be created")
-				if !cmp.Equal(instance, *tt.expectedModel) {
-					t.Errorf("Unexpected instance: %v", cmp.Diff(instance, *tt.expectedModel))
+				opts := []cmp.Option{cmpopts.IgnoreFields(types.DatasourceService{}, "HTTPClient", "Logger")}
+				if !cmp.Equal(instance, *tt.expectedModel, opts...) {
+					t.Errorf("Unexpected instance: %v", cmp.Diff(instance, *tt.expectedModel, opts...))
 				}
 			}
 		})
@@ -673,6 +692,29 @@ func Test_QueryData(t *testing.T) {
 					assert.EqualError(t, res.Responses["test"].Error, tt.ExpectedError.Error())
 				}
 			}
+		})
+	}
+}
+
+func TestNewQueryMux_UnhandledQueryTypeErrorSource(t *testing.T) {
+	tests := []struct {
+		name        string
+		queryType   string
+		expectedSrc backend.ErrorSource
+	}{
+		{name: "empty query type is a downstream error", queryType: "", expectedSrc: backend.ErrorSourceDownstream},
+		{name: "unknown query type is a plugin error", queryType: "Unknown", expectedSrc: backend.ErrorSourcePlugin},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Service{executors: map[string]azDatasourceExecutor{}}
+			res, err := s.newQueryMux().QueryData(context.Background(), &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{{RefID: "A", QueryType: tt.queryType}},
+			})
+			require.NoError(t, err)
+			require.Error(t, res.Responses["A"].Error)
+			require.Contains(t, res.Responses["A"].Error.Error(), "no handler found for query type '"+tt.queryType+"'")
+			require.Equal(t, tt.expectedSrc, res.Responses["A"].ErrorSource)
 		})
 	}
 }

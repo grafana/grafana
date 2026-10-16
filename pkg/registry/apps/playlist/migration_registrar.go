@@ -15,7 +15,11 @@ func PlaylistMigration(migrator migrator.PlaylistMigrator) migrations.MigrationD
 		ID:          "playlists",
 		MigrationID: "playlists migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: playlistGR, LockTables: []string{"playlist", "playlist_item"}},
+			{
+				GroupResource: playlistGR,
+				LockTables:    []string{"playlist", "playlist_item"},
+				FloorVersion:  playlists.APIVersion,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			playlistGR: migrator.MigratePlaylists,

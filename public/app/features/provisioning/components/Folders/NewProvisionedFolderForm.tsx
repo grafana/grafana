@@ -4,18 +4,22 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, Text } from '@grafana/ui';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { AnnoKeySourcePath, type Resource } from 'app/features/apiserver/types';
+import { type Resource } from 'app/features/apiserver/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { RepoViewStatus, type RepositoryViewData } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -23,17 +27,21 @@ import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
+import { validateProvisionedFolderName } from '../utils/folderName';
 import { joinPath } from '../utils/path';
 
-interface FormProps extends Props {
+interface FormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
   folder?: Folder;
-}
-interface Props {
-  parentFolder?: FolderDTO;
   onDismiss?: () => void;
+}
+
+interface Props {
+  onDismiss?: () => void;
+  /** Resolved once by the caller, so this form and the caller always agree on the repository */
+  view: RepositoryViewData;
 }
 
 function FormContent({ initialValues, repository, canPushToConfiguredBranch, folder, onDismiss }: FormProps) {
@@ -49,7 +57,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow] = watch(['workflow']);
+  const [workflow, ref] = watch(['workflow', 'ref']);
 
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
@@ -67,6 +75,30 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    value: ref ?? '',
+    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+  });
+
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
+  const repoLabel = repository?.title || repository?.name;
+  // Rendered as React text, which escapes it already; escaping here too would show "/" as "&#x2F;"
+  const destination = initialValues.path
+    ? t(
+        'browse-dashboards.new-provisioned-folder-form.text-destination-path',
+        'Will be created in {{repository}} under {{path}}',
+        { repository: repoLabel, path: initialValues.path, interpolation: { escapeValue: false } }
+      )
+    : t(
+        'browse-dashboards.new-provisioned-folder-form.text-destination-root',
+        'Will be created at the root of {{repository}}',
+        { repository: repoLabel, interpolation: { escapeValue: false } }
+      );
+
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
     // Fall back to the repository URL if no PR URL is returned, so preview banner link button stay visible
@@ -78,6 +110,9 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     }
     if (info.repoType) {
       params.repo_type = info.repoType;
+    }
+    if (prTitle) {
+      params.pr_title = prTitle;
     }
 
     if (Object.keys(params).length > 0) {
@@ -107,7 +142,6 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setError(
       getProvisionedRequestError(
         error,
-        'folder',
         t('browse-dashboards.new-provisioned-folder-form.error-saving', 'An error occurred while creating folder.')
       )
     );
@@ -115,7 +149,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 
   // Use the repository-type and resource-type aware provisioned request handler
   const { handleSuccess } = useProvisionedRequestHandler<FolderDTO>({
-    folderUID: folder?.metadata.name,
+    // No parent folder at the root, so the root list is the one to refetch
+    folderUID: folder?.metadata.name ?? GENERAL_FOLDER_UID,
     workflow,
     repository,
     resourceType: 'folder',
@@ -126,7 +161,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     },
   });
 
-  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title, workflow, path: basePath }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     if (!title || !repoName) {
@@ -139,7 +174,6 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       return;
     }
 
-    const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
     const path = joinPath(basePath, `${title}/`);
 
     const folderModel = {
@@ -157,6 +191,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
+      source: 'new-folder-form',
     });
 
     try {
@@ -199,6 +234,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             <Input
               {...register('title', {
                 required: t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required'),
+                // This value becomes a directory name in the repository, so it must never carry surrounding spaces
+                setValueAs: (value: string) => value.trim(),
                 validate: validateProvisionedFolderName,
               })}
               placeholder={t(
@@ -209,6 +246,12 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             />
           </Field>
 
+          {repoLabel && (
+            <Text variant="bodySmall" color="secondary">
+              {destination}
+            </Text>
+          )}
+
           <ResourceEditFormSharedFields
             resourceType="folder"
             isNew
@@ -217,6 +260,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             hiddenFields={['path']}
             lockComment={locked}
             commitMessage={message}
+            lockBranch={lockBranch}
           />
 
           {prURL && (
@@ -254,18 +298,22 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   );
 }
 
-export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo, isMissingRepo, isLoading } =
-    useProvisionedFolderFormData({
-      folderUid: parentFolder?.uid,
-      title: '', // Empty title for new folders
-    });
+export function NewProvisionedFolderForm({ onDismiss, view }: Props) {
+  const { canPushToConfiguredBranch, initialValues } = useProvisionedFolderFormData({
+    view,
+    title: '', // Empty title for new folders
+  });
 
   return (
     <ProvisionedFormGate
-      isLoading={isLoading}
-      isMissingRepo={isMissingRepo}
-      isReadOnly={isReadOnlyRepo}
+      isLoading={view.status === RepoViewStatus.Loading}
+      // A deleted or unreachable repository is a dead end of its own, not the same as a location
+      // that was never provisioned, so each gets its own notice rather than the generic banner
+      isOrphaned={view.status === RepoViewStatus.Orphaned}
+      isError={view.status === RepoViewStatus.Error}
+      error={view.error}
+      isMissingRepo={view.isMissingRepo}
+      isReadOnly={view.isReadOnlyRepo}
       readOnlyMessage={t(
         'browse-dashboards.new-folder.read-only-message',
         'To create this folder, please add the resource in your repository directly.'
@@ -273,32 +321,13 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
     >
       {initialValues && (
         <FormContent
-          parentFolder={parentFolder}
           onDismiss={onDismiss}
           initialValues={initialValues}
-          repository={repository}
+          repository={view.repository}
           canPushToConfiguredBranch={canPushToConfiguredBranch}
-          folder={folder}
+          folder={view.folder}
         />
       )}
     </ProvisionedFormGate>
   );
-}
-
-function validateProvisionedFolderName(folderName: string): string | true {
-  if (!folderName || typeof folderName !== 'string') {
-    return t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required');
-  }
-
-  // Backend allows: a-zA-Z0-9 _- (no dots, no forward slash for folder names)
-  const invalidCharRegex = /[^a-zA-Z0-9 _-]/;
-
-  if (invalidCharRegex.test(folderName)) {
-    return t(
-      'browse-dashboards.new-provisioned-folder-form.error-invalid-characters',
-      'Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.'
-    );
-  }
-
-  return true; // Valid
 }

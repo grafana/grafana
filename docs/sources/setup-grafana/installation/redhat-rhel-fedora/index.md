@@ -60,7 +60,6 @@ If you wish to install beta versions of Grafana, substitute the repository URL f
    gpgcheck=1
    gpgkey=https://rpm.grafana.com/gpg.key
    sslverify=1
-   sslcacert=/etc/pki/tls/certs/ca-bundle.crt
    ```
 
 1. To install Grafana OSS, run the following command:

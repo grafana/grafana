@@ -33,10 +33,9 @@ func TestIntegrationProvisioning_FullSync_FolderInvalidUIDChars(t *testing.T) {
 	const illegalUID = "hello world"
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	// Shallow folder with a valid UID — must be created normally despite

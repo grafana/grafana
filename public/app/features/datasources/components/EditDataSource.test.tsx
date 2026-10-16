@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
 import { type DataSourceJsonData, type PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { setPluginComponentsHook, setPluginLinksHook, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
 
@@ -15,17 +15,18 @@ import { EditDataSourceView, type ViewProps } from './EditDataSource';
 
 const onOptionsChange = jest.fn();
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    getDataSourceSrv: jest.fn(() => ({
-      getInstanceSettings: (uid: string) => ({
-        uid,
-        meta: getMockDataSourceMeta(),
-      }),
-    })),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useDataSourceInstanceSettings: jest.fn((uid?: string) => ({
+    isLoading: false,
+    settings: uid
+      ? {
+          uid,
+          meta: getMockDataSourceMeta(),
+        }
+      : undefined,
+  })),
+}));
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
@@ -121,6 +122,17 @@ describe('<EditDataSource>', () => {
       setup({
         dataSource: getMockDataSource({ name: 'My Datasource' }),
         dataSourceSettings: getMockDataSourceSettingsState({ loading: true }),
+      });
+
+      expect(screen.queryByText('Loading ...')).toBeVisible();
+      expect(screen.queryByText('My Datasource')).not.toBeInTheDocument();
+    });
+
+    it('should render a loading indicator while the data source instance settings are being fetched', () => {
+      jest.mocked(useDataSourceInstanceSettings).mockReturnValueOnce({ isLoading: true });
+
+      setup({
+        dataSource: getMockDataSource({ name: 'My Datasource' }),
       });
 
       expect(screen.queryByText('Loading ...')).toBeVisible();

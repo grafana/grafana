@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -240,7 +241,12 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 					continue
 				}
 
-				dash.Tags = append(dash.Tags, iter.ReadString())
+				// An empty tag has nothing to search for or show, and it would still take a
+				// slot in the tag list a user picks from. The reader that indexes deleted
+				// dashboards skips it too, so both report the same tags for one dashboard.
+				if tag := iter.ReadString(); tag != "" {
+					dash.Tags = append(dash.Tags, tag)
+				}
 			}
 
 		case "links":
@@ -408,10 +414,8 @@ var logger = log.New("services.store.kind.dashboard")
 // If the type matches, it returns true, otherwise it skips the element, logs an error, and returns false.
 func checkAndSkipUnexpectedElement(iter *jsoniter.Iterator, jsonPath string, logContext map[string]any, allowedValues ...jsoniter.ValueType) bool {
 	next := iter.WhatIsNext()
-	for _, a := range allowedValues {
-		if next == a {
-			return true
-		}
+	if slices.Contains(allowedValues, next) {
+		return true
 	}
 
 	// Skip unexpected element.
@@ -777,7 +781,15 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 			}
 		case "vizConfig":
 			if iter.WhatIsNext() == jsoniter.ObjectValue {
-				if k, ok := readObjectValueGetString(iter, "kind"); ok && k != "" {
+				vc, _ := iter.Read().(map[string]any)
+				// In the stable v2 envelope the panel plugin id lives in
+				// vizConfig.group; kind is the literal "VizConfig". Older
+				// v2alpha1 dashboards carry the plugin id directly in kind.
+				if g, ok := vc["group"].(string); ok && g != "" {
+					panel.Type = g
+				} else if k, ok := vc["kind"].(string); ok && k != "" && k != "VizConfig" {
+					// Guard the fallback: on a stable v2 panel with a missing or empty
+					// group, kind is the literal "VizConfig" - never index that as a type.
 					panel.Type = k
 				}
 			} else {

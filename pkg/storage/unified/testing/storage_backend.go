@@ -9,9 +9,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,16 +36,17 @@ const (
 	TestList                      = "list"
 	TestBlobSupport               = "blob support"
 	TestGetResourceStats          = "get resource stats"
+	TestListStoredResources       = "list stored resources"
 	TestListHistory               = "list history"
 	TestListHistoryErrorReporting = "list history error reporting"
 	TestListModifiedSince         = "list events since rv"
 	TestListTrash                 = "list trash"
 	TestCreateNewResource         = "create new resource"
 	TestGetResourceLastImportTime = "get resource last import time"
-	TestOptimisticLocking         = "optimistic locking on concurrent writes"
+	TestConcurrentWriteConflicts  = "concurrent write conflicts"
 	TestClusterScopedResources    = "cluster scoped resources"
 	TestErrorResponses            = "error responses"
-	TestReadAtRVBeforeDelete      = "read at RV before delete"
+	TestReadAtRVBeforeDelete      = "read at RV edge cases"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -62,7 +63,7 @@ type TestOptions struct {
 
 // GenerateRandomNSPrefix creates a random namespace prefix for test isolation
 func GenerateRandomNSPrefix() string {
-	uid := uuid.New().String()[:10]
+	uid := uuid.NewV4().String()[:10]
 	return fmt.Sprintf("test-%s", uid)
 }
 
@@ -87,16 +88,17 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestList, runTestIntegrationBackendList},
 		{TestBlobSupport, runTestIntegrationBlobSupport},
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
+		{TestListStoredResources, runTestIntegrationBackendListStoredResources},
 		{TestListHistory, runTestIntegrationBackendListHistory},
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
 		{TestListTrash, runTestIntegrationBackendTrash},
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
 		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 		{TestGetResourceLastImportTime, runTestIntegrationGetResourceLastImportTime},
-		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
+		{TestConcurrentWriteConflicts, runTestIntegrationBackendConcurrentWriteConflicts},
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
-		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVBeforeDelete},
+		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVEdgeCases},
 	}
 
 	for _, tc := range cases {
@@ -105,7 +107,14 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 				t.Skip()
 			}
 
-			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
+			backend := newBackend(context.Background())
+			// Stop background goroutines when the case ends so they don't keep
+			// writing to the (SQLite) DB and contend with later cases.
+			if s, ok := backend.(resource.ResourceServerStopper); ok {
+				t.Cleanup(func() { _ = s.Stop(context.Background()) })
+			}
+
+			tc.fn(t, backend, opts.NSPrefix)
 		})
 	}
 }
@@ -336,6 +345,73 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 }
 
+func runTestIntegrationBackendListStoredResources(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+
+	sortFunc := func(a, b resource.NamespacedResource) int {
+		if a.Namespace != b.Namespace {
+			return strings.Compare(a.Namespace, b.Namespace)
+		}
+		if a.Group != b.Group {
+			return strings.Compare(a.Group, b.Group)
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	}
+
+	ns1 := nsPrefix + "-stored-ns1"
+	ns2 := nsPrefix + "-stored-ns2"
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	_, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item3", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource2"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item4", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns2), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+
+	t.Run("discover resources in ns1", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns1})
+		require.NoError(t, err)
+		slices.SortFunc(got, sortFunc)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns1, Group: "group", Resource: "resource1"},
+			{Namespace: ns1, Group: "group", Resource: "resource2"},
+		}, got)
+	})
+
+	t.Run("discover resources in ns2", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns2})
+		require.NoError(t, err)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns2, Group: "group", Resource: "resource1"},
+		}, got)
+	})
+
+	t.Run("resource filter", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns1, Resource: "resource2"})
+		require.NoError(t, err)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns1, Group: "group", Resource: "resource2"},
+		}, got)
+	})
+
+	t.Run("non-existent namespace is empty", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: nsPrefix + "-stored-missing"})
+		require.NoError(t, err)
+		require.Empty(t, got)
+	})
+
+	t.Run("empty namespace is rejected", func(t *testing.T) {
+		_, err := backend.ListStoredResources(ctx, resource.NamespacedResource{})
+		require.Error(t, err)
+	})
+}
 func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
@@ -539,8 +615,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 
 func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-history-ns"
-	rvCreated, _ := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	ns := nsPrefix + "-ms-ns"
+	rvCreated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
 	require.Greater(t, rvCreated, int64(0))
 	rvUpdated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvCreated))
 	require.NoError(t, err)
@@ -967,7 +1044,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			Name:      "paged-item",
 		}
 
-		var resourceVersions []int64
+		resourceVersions := make([]int64, 0, 10)
 
 		// First create the initial resource
 		initialRV, err := WriteEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns2))
@@ -976,7 +1053,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 
 		// Create 9 more versions with modifications
 		rv := initialRV
-		for i := 0; i < 9; i++ {
+		for range 9 {
 			rv, err = WriteEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns2, rv))
 			require.NoError(t, err)
 			resourceVersions = append(resourceVersions, rv)
@@ -1126,7 +1203,10 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 }
 
 func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	// The deadline must comfortably cover writing the fixture events below on a
+	// loaded CI runner. The List call under test uses its own 1µs timeout, so
+	// this budget only guards setup, not the assertion.
+	ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 	server := newServer(t, backend)
 
 	ns := nsPrefix + "-short"
@@ -1198,22 +1278,22 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			Name:      "nnn",
 		}
 
-		// PutBlob must 404 before the parent exists (see blob.proto).
 		preExisting, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
 			Method:      resourcepb.PutBlobRequest_GRPC,
 			ContentType: "plain/text",
-			Value:       []byte("rejected"),
+			Value:       []byte("before parent"),
+			Folder:      "fff",
 		})
 		require.NoError(t, err)
-		require.NotNil(t, preExisting.Error)
-		require.Equal(t, int32(http.StatusNotFound), preExisting.Error.Code)
+		require.Nil(t, preExisting.Error)
 
 		initial := &unstructured.Unstructured{}
 		initialMeta, err := utils.MetaAccessor(initial)
 		require.NoError(t, err)
 		initialMeta.SetName(key.Name)
 		initialMeta.SetNamespace(key.Namespace)
+		initialMeta.SetFolder("fff")
 		initial.SetAPIVersion(key.Group + "/v1")
 		initial.SetKind("Test")
 		initialVal, err := initial.MarshalJSON()
@@ -1221,6 +1301,10 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: initialVal})
 		require.NoError(t, err)
 		require.Nil(t, created.Error)
+
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: preExisting.Uid}, true)
+		require.NoError(t, err)
+		require.Contains(t, string(found.Value), "before parent")
 
 		b1, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
@@ -1243,7 +1327,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, "b0da48de4ff92e0ad0d836de4d746937", b2.Hash)
 
 		// Check that we can still access both values
-		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
+		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
 		require.NoError(t, err)
 		require.Contains(t, string(found.Value), "hello 11111")
 
@@ -1257,6 +1341,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		meta.SetBlob(&utils.BlobInfo{UID: b2.Uid, Hash: b1.Hash})
 		meta.SetName(key.Name)
 		meta.SetNamespace(key.Namespace)
+		meta.SetFolder("fff")
 		obj.SetAPIVersion(key.Group + "/v1")
 		obj.SetKind("Test")
 		val, err := obj.MarshalJSON()
@@ -1277,6 +1362,70 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 11111")
+	})
+
+	t.Run("replace a blob referenced by the blobs field", func(t *testing.T) {
+		key := &resourcepb.ResourceKey{Namespace: ns, Group: "ggg", Resource: "rrr", Name: "replace"}
+		putBlob := func(value string) *resourcepb.PutBlobResponse {
+			rsp, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
+				Resource:    key,
+				Method:      resourcepb.PutBlobRequest_GRPC,
+				ContentType: "plain/text",
+				Value:       []byte(value),
+			})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+			return rsp
+		}
+		withBlob := func(uid string) []byte {
+			obj := &unstructured.Unstructured{}
+			obj.SetAPIVersion(key.Group + "/v1")
+			obj.SetKind("Test")
+			obj.SetName(key.Name)
+			obj.SetNamespace(key.Namespace)
+			obj.Object[resource.BlobsField] = map[string]any{"logo": map[string]any{"uid": uid}}
+			val, err := obj.MarshalJSON()
+			require.NoError(t, err)
+			return val
+		}
+		getBlob := func(uid string, rv int64) *resourcepb.GetBlobResponse {
+			rsp, err := server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: uid, ResourceVersion: rv})
+			require.NoError(t, err)
+			return rsp
+		}
+
+		v1 := putBlob("logo v1")
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: withBlob(v1.Uid)})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+
+		v2 := putBlob("logo v2")
+		require.NotEqual(t, v1.Uid, v2.Uid)
+		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: withBlob(v2.Uid), ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		rsp := getBlob(v2.Uid, 0)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, "logo v2", string(rsp.Value))
+
+		rsp = getBlob(v1.Uid, 0)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+
+		rsp = getBlob(v1.Uid, created.ResourceVersion)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, "logo v1", string(rsp.Value))
+
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: v1.Uid}, true)
+		require.NoError(t, err)
+		require.Equal(t, "logo v1", string(found.Value))
+
+		otherKey := &resourcepb.ResourceKey{Namespace: ns, Group: "ggg", Resource: "rrr", Name: "nnn"}
+		rsp, err = server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: otherKey, Uid: v2.Uid})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
 	})
 }
 
@@ -1433,7 +1582,7 @@ func WriteEvent(ctx context.Context, store resource.StorageBackend, name string,
 	event := resource.WriteEvent{
 		Type:  action,
 		Value: options.Value,
-		GUID:  uuid.New().String(),
+		GUID:  uuid.NewV4().String(),
 		Key: &resourcepb.ResourceKey{
 			Namespace: options.Namespace,
 			Group:     options.Group,
@@ -1555,7 +1704,7 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 			require.Nil(t, res.Error)
 			expectedItemCount := len(tc.expectedVersions)
 			require.Len(t, res.Items, expectedItemCount)
-			for i := 0; i < expectedItemCount; i++ {
+			for i := range expectedItemCount {
 				require.Equal(t, tc.expectedVersions[i], res.Items[i].ResourceVersion)
 				require.Contains(t, string(res.Items[i].Value), tc.expectedValues[i])
 			}
@@ -1574,9 +1723,29 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
+	assertListedTimes := func(t *testing.T, expected map[resource.NamespacedResource]time.Time) map[resource.NamespacedResource]time.Time {
+		t.Helper()
+		times, err := backend.ListResourceLastImportTimes(ctx)
+		require.NoError(t, err)
+		for key, single := range expected {
+			require.False(t, single.IsZero())
+			require.Equal(t, single, times[key], "resource %s", key)
+		}
+		return times
+	}
+
 	t.Run("no imported times by default", func(t *testing.T) {
-		res := collectLastImportedTimes(t, backend, ctx)
-		require.Empty(t, res)
+		key := resource.NamespacedResource{
+			Namespace: nsPrefix + "-not-imported",
+			Group:     "dashboards",
+			Resource:  "dashboard",
+		}
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, key)
+		require.NoError(t, err)
+		require.True(t, lastImportTime.IsZero())
+		times, err := backend.ListResourceLastImportTimes(ctx)
+		require.NoError(t, err)
+		require.NotContains(t, times, key)
 	})
 
 	t.Run("last imported time after bulk import", func(t *testing.T) {
@@ -1609,8 +1778,9 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		require.Nil(t, resp.Error)
 		require.Empty(t, resp.Rejected)
 
-		result := collectLastImportedTimes(t, backend, ctx)
+		result := collectLastImportedTimes(t, backend, ctx, collections)
 		require.Len(t, result, len(collections))
+		assertListedTimes(t, result)
 
 		now := time.Now()
 
@@ -1650,12 +1820,14 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 		const delta = 5 * time.Second
 		// Verify that last imported times are combination of both bulk imports
-		result1 := collectLastImportedTimes(t, backend, ctx)
+		result1 := collectLastImportedTimes(t, backend, ctx, collections1)
+		assertListedTimes(t, result1)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], firstImport, delta)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
 
 		// Sleep a bit to make sure that the last import time generated for dashboards in ns1 is different from before.
 		// Since we use DATETIME type in SQL, we need to wait at least one second.
+		t.Log("waiting 1s so the second import has a newer timestamp")
 		time.Sleep(1 * time.Second)
 
 		// Do another bulk import, without overwriting existing resources. We import into ns1-dashboards (same as before),
@@ -1682,7 +1854,12 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		secondImport := time.Now()
 
 		// Verify that last imported times are combination of both bulk imports
-		result2 := collectLastImportedTimes(t, backend, ctx)
+		allCollections := make([]*resourcepb.ResourceKey, 0, len(collections1)+len(collections2))
+		allCollections = append(allCollections, collections1...)
+		allCollections = append(allCollections, collections2...)
+		result2 := collectLastImportedTimes(t, backend, ctx, allCollections)
+		times := assertListedTimes(t, result2)
+		require.NotContains(t, times, resource.NamespacedResource{Namespace: ns2, Group: "dashboards", Resource: "dashboard"})
 
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], secondImport, delta)
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
@@ -1694,15 +1871,17 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 		// Last import time for ns1 dashboard has been updated
 		ns1DashboardsKey := resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}
-		require.NotEqual(t, result1[ns1DashboardsKey], result2[ns1DashboardsKey])
+		require.True(t, result2[ns1DashboardsKey].After(result1[ns1DashboardsKey]))
 	})
 }
 
-func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context) map[resource.NamespacedResource]time.Time {
-	result := map[resource.NamespacedResource]time.Time{}
-	for lm, err := range backend.GetResourceLastImportTimes(ctx) {
+func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context, keys []*resourcepb.ResourceKey) map[resource.NamespacedResource]time.Time {
+	result := make(map[resource.NamespacedResource]time.Time, len(keys))
+	for _, key := range keys {
+		nsr := resource.NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, nsr)
 		require.NoError(t, err)
-		result[lm.NamespacedResource] = lm.LastImportTime
+		result[nsr] = lastImportTime
 	}
 	return result
 }
@@ -1735,9 +1914,9 @@ func (s *sliceBulkRequestIterator) RollbackRequested() bool {
 	return false
 }
 
-func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+func runTestIntegrationBackendConcurrentWriteConflicts(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-optimis-lock" // optimistic-locking. need to cut down on characters to not exceed namespace character limit (40)
+	ns := nsPrefix + "-write-conf" // Keep the suffix short enough not to exceed the 40-character namespace limit.
 
 	t.Run("concurrent updates with same RV - only one succeeds", func(t *testing.T) {
 		// Create initial resource with rv0 (no previous RV)
@@ -1756,7 +1935,7 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Start all goroutines concurrently
 		var wg sync.WaitGroup
 		wg.Add(numConcurrent)
-		for i := 0; i < numConcurrent; i++ {
+		for i := range numConcurrent {
 			go func(updateNum int) {
 				defer wg.Done()
 				rv, err := WriteEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_MODIFIED,
@@ -1827,7 +2006,7 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Start all goroutines concurrently
 		var wg sync.WaitGroup
 		wg.Add(numConcurrent)
-		for i := 0; i < numConcurrent; i++ {
+		for i := range numConcurrent {
 			go func(createNum int) {
 				defer wg.Done()
 				rv, err := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
@@ -1933,59 +2112,92 @@ func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resou
 	})
 }
 
-// runTestIntegrationBackendReadAtRVBeforeDelete pins down the read-at-RV
-// behaviour the dashboard restore-from-trash flow depends on: the trash listing
-// surfaces each item's delete-event RV, and the restore flow reads the resource
-// at deleteRV-1 to fetch the live pre-delete state. The sequence has multiple
-// modifications, unrelated traffic on other resources, and a re-add after the
-// delete, so a passing assertion really exercises "find the highest non-deleted
-// RV ≤ requested for this resource" rather than "give me the only live event".
-func runTestIntegrationBackendReadAtRVBeforeDelete(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+// runTestIntegrationBackendReadAtRVEdgeCases pins down ReadResource behavior
+// at exact revision boundaries for create, update, delete, and recreate events.
+// This includes the trash contract the restore flow depends on: trash listings
+// surface each item's delete-event RV, and reading at deleteRV-1 must return the
+// live pre-delete state while reads at and after deleteRV must return not found
+// until the resource is recreated.
+func runTestIntegrationBackendReadAtRVEdgeCases(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{Subject: "testuser"},
 		Rest:   authn.AccessTokenClaims{},
 	}))
-	ns := nsPrefix + "-pre-del-rv"
+	ns := nsPrefix + "-read-rv"
+	key := &resourcepb.ResourceKey{
+		Name:      "target",
+		Namespace: ns,
+		Group:     "group",
+		Resource:  "resource",
+	}
 
-	rvAdd, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	rvCreate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("target-create"))
 	require.NoError(t, err)
 
-	// Unrelated traffic so the target's RVs are not contiguous in the global stream.
 	_, err = WriteEvent(ctx, backend, "noise-a", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 
-	rvMod1, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvAdd))
+	rvUpdate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED,
+		WithNamespaceAndRV(ns, rvCreate), WithValue("target-update"))
 	require.NoError(t, err)
 
 	_, err = WriteEvent(ctx, backend, "noise-b", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 
-	rvMod2, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvMod1))
+	rvDelete, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_DELETED,
+		WithNamespaceAndRV(ns, rvUpdate), WithValue("target-delete"))
 	require.NoError(t, err)
 
-	rvDel, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rvMod2))
-	require.NoError(t, err)
-	require.Greater(t, rvDel, rvMod2)
-
-	// Activity after the delete: other resources, plus a re-add of the same
-	// name. None of this should influence the lookup at rvDel-1.
 	_, err = WriteEvent(ctx, backend, "noise-c", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
-	_, err = WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+
+	rvRecreate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("target-recreate"))
 	require.NoError(t, err)
 
-	resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
-		Key: &resourcepb.ResourceKey{
-			Name:      "target",
-			Namespace: ns,
-			Group:     "group",
-			Resource:  "resource",
-		},
-		ResourceVersion: rvDel - 1,
-	})
-	require.Nil(t, resp.Error)
-	require.Equal(t, rvMod2, resp.ResourceVersion)
-	require.Contains(t, string(resp.Value), "target MODIFIED")
+	_, err = WriteEvent(ctx, backend, "noise-d", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	type readAtRVCase struct {
+		name              string
+		requestRV         int64
+		expectedStatus    int32
+		expectedRV        int64
+		expectedSubstring string
+	}
+
+	cases := []readAtRVCase{
+		{name: "create rv-1", requestRV: rvCreate - 1, expectedStatus: http.StatusNotFound},
+		{name: "create rv", requestRV: rvCreate, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "create rv+1", requestRV: rvCreate + 1, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "update rv-1", requestRV: rvUpdate - 1, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "update rv", requestRV: rvUpdate, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "update rv+1", requestRV: rvUpdate + 1, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "delete rv-1", requestRV: rvDelete - 1, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "delete rv", requestRV: rvDelete, expectedStatus: http.StatusNotFound},
+		{name: "delete rv+1", requestRV: rvDelete + 1, expectedStatus: http.StatusNotFound},
+		{name: "recreate rv-1", requestRV: rvRecreate - 1, expectedStatus: http.StatusNotFound},
+		{name: "recreate rv", requestRV: rvRecreate, expectedRV: rvRecreate, expectedSubstring: "target-recreate"},
+		{name: "recreate rv+1", requestRV: rvRecreate + 1, expectedRV: rvRecreate, expectedSubstring: "target-recreate"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+				Key:             key,
+				ResourceVersion: tc.requestRV,
+			})
+			if tc.expectedStatus != 0 {
+				require.NotNil(t, resp.Error)
+				require.Equal(t, tc.expectedStatus, resp.Error.Code)
+				return
+			}
+			require.Nil(t, resp.Error, "ReadResource error: %v", resp.Error)
+			require.Equal(t, tc.expectedRV, resp.ResourceVersion)
+			require.Contains(t, string(resp.Value), tc.expectedSubstring)
+		})
+	}
 }
 
 // runTestIntegrationBackendErrorResponses tests that the server API returns
@@ -2007,10 +2219,10 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 	kind := "ErrorResource"
 
 	makeValue := func(name string) []byte {
-		return []byte(fmt.Sprintf(
+		return fmt.Appendf(nil,
 			`{"apiVersion":"%s/v0alpha1","kind":"%s","metadata":{"name":"%s","namespace":"%s","uid":"%s"}}`,
-			group, kind, name, ns, uuid.New().String(),
-		))
+			group, kind, name, ns, uuid.NewV4().String(),
+		)
 	}
 
 	t.Run("read nonexistent resource returns 404", func(t *testing.T) {

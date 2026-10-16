@@ -42,6 +42,7 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       instanceState: _pluginInstanceState,
       currentOptions: options,
       currentFieldConfig: fieldConfig,
+      reportInteractionUI: 'panel-edit',
     });
   }, [data, panel, options, fieldConfig, _pluginInstanceState]);
 
@@ -67,9 +68,10 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         searchQuery,
         (newConfig) => {
           panel.onFieldConfigChange(newConfig, true);
-        }
+        },
+        options
       ),
-    [data, searchQuery, panel, fieldConfig]
+    [data, searchQuery, panel, fieldConfig, options]
   );
 
   const isSearching = searchQuery.length > 0;

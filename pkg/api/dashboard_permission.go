@@ -331,9 +331,9 @@ type UpdateDashboardPermissionsByUIDParams struct {
 	// in:body
 	// required:true
 	Body dtos.UpdateDashboardACLCommand
+	// The dashboard UID
 	// in:path
 	// required:true
-	// description: The dashboard UID
 	UID string `json:"uid"`
 }
 

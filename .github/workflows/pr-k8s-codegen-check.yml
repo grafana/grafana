@@ -6,11 +6,14 @@ on:
     branches: [main]
     paths:
       - "pkg/apis/**"
-      - "pkg/aggregator/apis/**"
       - "pkg/apimachinery/apis/**"
       - "hack/**"
       - "apps/**"
       - "*.sum"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:

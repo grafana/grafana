@@ -18,6 +18,7 @@ import { MakeDashboardEditableButton } from './MakeDashboardEditableButton';
 // Mock the DashboardInteractions module
 jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     editButtonClicked: jest.fn(),
     exitEditButtonClicked: jest.fn(),
   },
@@ -57,21 +58,21 @@ describe('MakeDashboardEditableButton', () => {
   });
 
   describe('edit dashboard button tracking', () => {
-    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
+    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.sidebar.outline.collapsed is undefined', async () => {
       render(<MakeDashboardEditableButton dashboard={buildTestScene()} />);
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
       expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: true });
     });
 
-    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {
-      localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'false');
+    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.sidebar.outline.collapsed is false', async () => {
+      localStorageMock.setItem('grafana.dashboard.sidebar.outline.collapsed', 'false');
       render(<MakeDashboardEditableButton dashboard={buildTestScene()} />);
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
       expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: true });
     });
 
-    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.edit-pane.outline.collapsed is true', async () => {
-      localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'true');
+    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.sidebar.outline.collapsed is true', async () => {
+      localStorageMock.setItem('grafana.dashboard.sidebar.outline.collapsed', 'true');
       render(<MakeDashboardEditableButton dashboard={buildTestScene()} />);
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
       expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });

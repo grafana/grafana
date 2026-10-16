@@ -1,21 +1,25 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { CustomVariable, SceneGridLayout, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
-import { DashboardEditPaneRenderer } from '../../edit-pane/DashboardEditPaneRenderer';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { DashboardSidebarRenderer } from '../../sidebar/DashboardSidebarRenderer';
+import { DashboardCrossDashboardVariablesPane } from '../../sidebar/dashboard/DashboardCrossDashboardVariablesPane';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { VariableAddPane, VariableTypeChangePane } from './VariableTypeSelectionPane';
+import { FilterTypeAddPane, VariableAddPane, VariableTypeChangePane } from './VariableTypeSelectionPane';
 
 const defaultDsSettings = {
   name: 'TestDataSource',
@@ -25,6 +29,8 @@ const defaultDsSettings = {
 };
 
 const Wrapper = getWrapper({ renderWithRouter: true });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -65,13 +71,16 @@ function buildTestSceneWithExistingVar(varName: string) {
 describe('VariableAddPane', () => {
   afterEach(() => {
     jest.restoreAllMocks();
+    act(() => {
+      setTestFlags({});
+    });
   });
 
-  it('calls DashboardInteractions.variableTypeSelected when a variable type is clicked', () => {
+  it('calls DashboardInteractions.variableTypeSelected when a variable type is clicked', async () => {
     const variableTypeSelectedSpy = jest.spyOn(DashboardInteractions, 'variableTypeSelected');
     const dashboard = buildTestScene();
     const pane = new VariableAddPane({ sectionOwner: dashboard.getRef() });
-    dashboard.state.editPane.openPane(pane);
+    dashboard.state.sidebar.openPane(pane);
 
     const { getByRole } = render(
       <WrapSidebar>
@@ -81,13 +90,13 @@ describe('VariableAddPane', () => {
 
     getByRole('button', { name: /query/i }).click();
 
-    expect(variableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' });
+    await waitFor(() => expect(variableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' }));
   });
 
-  it('generates a non-conflicting name when an existing variable already exists', () => {
+  it('generates a non-conflicting name when an existing variable already exists', async () => {
     const dashboard = buildTestSceneWithExistingVar('custom0');
     const pane = new VariableAddPane({ sectionOwner: dashboard.getRef() });
-    dashboard.state.editPane.openPane(pane);
+    dashboard.state.sidebar.openPane(pane);
 
     const { getByRole } = render(
       <WrapSidebar>
@@ -95,25 +104,135 @@ describe('VariableAddPane', () => {
       </WrapSidebar>
     );
 
-    getByRole('button', { name: /custom/i }).click();
+    getByRole('button', { name: /^custom/i }).click();
 
-    const dashboardVars = dashboard.state.$variables;
-    expect(dashboardVars).toBeInstanceOf(SceneVariableSet);
-    const vars = (dashboardVars as SceneVariableSet).state.variables;
-    expect(vars).toHaveLength(2);
-    expect(vars[1].state.name).toBe('custom1');
+    await waitFor(() => {
+      const dashboardVars = dashboard.state.$variables;
+      expect(dashboardVars).toBeInstanceOf(SceneVariableSet);
+      const vars = (dashboardVars as SceneVariableSet).state.variables;
+      expect(vars).toHaveLength(2);
+      expect(vars[1].state.name).toBe('custom1');
+    });
+  });
+
+  it('opens the global and folder picker from a tile above the variable types', async () => {
+    act(() => {
+      setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
+    });
+    const user = userEvent.setup();
+    const dashboard = buildTestScene();
+    const pane = new VariableAddPane({ sectionOwner: dashboard.getRef() });
+    dashboard.state.sidebar.openPane(pane);
+
+    render(
+      <WrapSidebar>
+        <pane.Component model={pane} />
+      </WrapSidebar>
+    );
+
+    const tile = screen.getByRole('button', { name: /global or folder variable/i });
+    const queryType = screen.getByRole('button', { name: /^query/i });
+    expect(tile.compareDocumentPosition(queryType) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await user.click(tile);
+
+    expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('cross-dashboard-variables');
+  });
+
+  it('does not offer global or folder variables when adding a section variable', () => {
+    act(() => {
+      setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
+    });
+    const row = new RowItem({ title: 'Row' });
+    const dashboard = new DashboardScene({
+      $variables: new SceneVariableSet({ variables: [] }),
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      isEditing: true,
+      body: new RowsLayoutManager({ rows: [row] }),
+    });
+    activateFullSceneTree(dashboard);
+    const pane = new VariableAddPane({ sectionOwner: row.getRef() });
+    dashboard.state.sidebar.openPane(pane);
+
+    render(
+      <WrapSidebar>
+        <pane.Component model={pane} />
+      </WrapSidebar>
+    );
+
+    expect(screen.queryByRole('button', { name: /global or folder variable/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /query/i })).toBeInTheDocument();
+  });
+});
+
+describe('FilterTypeAddPane', () => {
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
+  it('offers a global or folder tile above local filter types', async () => {
+    act(() => {
+      setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
+    });
+    const user = userEvent.setup();
+    const dashboard = buildTestScene();
+    const pane = new FilterTypeAddPane({});
+    dashboard.state.sidebar.openPane(pane);
+
+    render(
+      <WrapSidebar>
+        <pane.Component model={pane} />
+      </WrapSidebar>
+    );
+
+    const tile = screen.getByRole('button', { name: /global or folder filter variable/i });
+    const filterType = screen.getByRole('button', { name: /^filter/i });
+    expect(tile.compareDocumentPosition(filterType) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^group by/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^query/i })).not.toBeInTheDocument();
+
+    await user.click(tile);
+
+    expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('cross-dashboard-variables');
+    expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(DashboardCrossDashboardVariablesPane);
+    expect((dashboard.state.sidebar.state.openPane as DashboardCrossDashboardVariablesPane).state.filtersOnly).toBe(
+      true
+    );
   });
 });
 
 describe('VariableTypeChangePane', () => {
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
+  it('does not offer global or folder variables when changing type', async () => {
+    act(() => {
+      setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
+    });
+    const { dashboard } = buildDashboardVariableScene();
+    const user = userEvent.setup();
+
+    renderVariableSidebar(dashboard);
+
+    await user.click(await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
+
+    expect(screen.queryByRole('button', { name: /global or folder variable/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Constant' })).toBeInTheDocument();
+  });
+
   it('switches a dashboard variable type and preserves name and label', async () => {
     const { dashboard, variableSet } = buildDashboardVariableScene();
     const variable = variableSet.state.variables[0];
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
-    await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
+    await user.click(await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('constant'))).getByRole(
@@ -128,7 +247,7 @@ describe('VariableTypeChangePane', () => {
     expect(updatedVariable.state.type).toBe('constant');
     expect(updatedVariable.state.name).toBe('service');
     expect(updatedVariable.state.label).toBe('Service');
-    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
+    expect(dashboard.state.sidebar.getSelectedObject()).toBe(updatedVariable);
     expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableNameInput)).toHaveValue(
       'service'
     );
@@ -142,10 +261,10 @@ describe('VariableTypeChangePane', () => {
     const sectionVariable = sectionVariableSet.state.variables[0];
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
-    await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
+    await user.click(await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
+    expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('textbox'))).getByRole(
@@ -161,7 +280,7 @@ describe('VariableTypeChangePane', () => {
     expect(updatedVariable.state.name).toBe('shared');
     expect(updatedVariable.state.label).toBe('Section variable');
     expect(dashboardVariable.state.name).toBe('shared');
-    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
+    expect(dashboard.state.sidebar.getSelectedObject()).toBe(updatedVariable);
   });
 });
 
@@ -175,12 +294,10 @@ function WrapSidebar({ children }: { children: ReactNode }) {
   );
 }
 
-function renderVariableEditPane(dashboard: DashboardScene) {
-  const editPane = dashboard.state.editPane;
-
+function renderVariableSidebar(dashboard: DashboardScene) {
   render(
     <WrapSidebar>
-      <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+      <DashboardSidebarRenderer dashboard={dashboard} />
     </WrapSidebar>
   );
 }
@@ -206,7 +323,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, { force: true });
+  dashboard.state.sidebar.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }
@@ -236,7 +353,7 @@ function buildSectionVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(sectionVariable, { force: true });
+  dashboard.state.sidebar.selectObject(sectionVariable, { force: true });
 
   return { dashboard, dashboardVariable, sectionVariableSet };
 }

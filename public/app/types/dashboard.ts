@@ -51,6 +51,12 @@ export interface DashboardMeta {
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
   publicDashboardEnabled?: boolean;
+  /**
+   * Whether the library panel's repeat options still have to be resolved onto the grid item.
+   * True only when the spec this dashboard scene was built from reached the browser unresolved:
+   * a v1 spec, or a v2 spec converted here by ensureV2Response.
+   */
+  libraryPanelRepeatUnresolved?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
   version?: number;
@@ -108,6 +114,7 @@ export enum DashboardRoutes {
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
   AssistantPreview = 'assistant-preview',
+  Notebook = 'notebook',
 }
 
 export enum DashboardInitPhase {
@@ -118,7 +125,7 @@ export enum DashboardInitPhase {
   Completed = 'Completed',
 }
 
-export interface DashboardInitError {
+interface DashboardInitError {
   message: string;
   error: unknown;
 }

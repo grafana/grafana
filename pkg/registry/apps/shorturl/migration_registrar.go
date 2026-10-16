@@ -15,7 +15,11 @@ func ShortURLMigration(migrator migrator.ShortURLMigrator) migrations.MigrationD
 		ID:          "shorturls",
 		MigrationID: "shorturls migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: shortURLGR, LockTables: []string{"short_url"}},
+			{
+				GroupResource: shortURLGR,
+				LockTables:    []string{"short_url"},
+				FloorVersion:  shorturl.APIVersion,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			shortURLGR: migrator.MigrateShortURLs,

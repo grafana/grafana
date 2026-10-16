@@ -7,11 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -73,16 +70,16 @@ func (du *DashboardUpdater) updateAppDashboards(ctx context.Context) {
 			continue
 		}
 
-		serviceCtx, _ := identity.WithServiceIdentity(ctx, pluginSetting.OrgID)
+		serviceCtx, serviceRequester := identity.WithServiceIdentity(ctx, pluginSetting.OrgID)
 		if pluginDef, exists := du.pluginStore.Plugin(serviceCtx, pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				du.syncPluginDashboards(serviceCtx, pluginDef, pluginSetting.OrgID)
+				du.syncPluginDashboards(serviceCtx, serviceRequester, pluginDef, pluginSetting.OrgID)
 			}
 		}
 	}
 }
 
-func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin pluginstore.Plugin, orgID int64) {
+func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, requester identity.Requester, plugin pluginstore.Plugin, orgID int64) {
 	du.logger.Info("Syncing plugin dashboards to DB", "pluginId", plugin.ID)
 
 	// Get plugin dashboards
@@ -112,7 +109,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 
 		// update updated ones
 		if dash.ImportedRevision != dash.Revision {
-			if err := du.autoUpdateAppDashboard(ctx, dash, orgID); err != nil {
+			if err := du.autoUpdateAppDashboard(ctx, requester, dash, orgID); err != nil {
 				du.logger.Error("Failed to auto update app dashboard", "pluginId", plugin.ID, "error", err)
 				return
 			}
@@ -140,7 +137,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 
 func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
 	du.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
-	ctx, _ = identity.WithServiceIdentity(ctx, event.OrgId)
+	ctx, requester := identity.WithServiceIdentity(ctx, event.OrgId)
 
 	if event.Enabled {
 		p, exists := du.pluginStore.Plugin(ctx, event.PluginId)
@@ -148,7 +145,7 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 			return fmt.Errorf("plugin %s not found. Could not sync plugin dashboards", event.PluginId)
 		}
 
-		du.syncPluginDashboards(ctx, p, event.OrgId)
+		du.syncPluginDashboards(ctx, requester, p, event.OrgId)
 	} else {
 		query := dashboards.GetDashboardsByPluginIDQuery{PluginID: event.PluginId, OrgID: event.OrgId}
 		queryResult, err := du.dashboardPluginService.GetDashboardsByPluginID(ctx, &query)
@@ -167,7 +164,7 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 	return nil
 }
 
-func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDashInfo *plugindashboards.PluginDashboard, orgID int64) error {
+func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, requester identity.Requester, pluginDashInfo *plugindashboards.PluginDashboard, orgID int64) error {
 	req := &plugindashboards.LoadPluginDashboardRequest{
 		PluginID:  pluginDashInfo.PluginId,
 		Reference: pluginDashInfo.Reference,
@@ -179,11 +176,8 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 	du.logger.Info("Auto updating App dashboard", "dashboard", resp.Dashboard.Title, "newRev",
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
 	_, err = du.dashboardImportService.ImportDashboard(ctx, &dashboardimport.ImportDashboardRequest{
-		PluginId: pluginDashInfo.PluginId,
-		User: accesscontrol.BackgroundUser("dashboard_updater", orgID, org.RoleAdmin, []accesscontrol.Permission{
-			{Action: dashboards.ActionDashboardsCreate, Scope: folder.ScopeFoldersAll},
-			{Action: dashboards.ActionDashboardsWrite, Scope: folder.ScopeFoldersAll},
-		}),
+		PluginId:  pluginDashInfo.PluginId,
+		User:      requester,
 		Path:      pluginDashInfo.Reference,
 		Dashboard: resp.Dashboard.Data,
 		Overwrite: true,

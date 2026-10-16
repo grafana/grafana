@@ -2,6 +2,8 @@ package team
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -10,9 +12,12 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/team/folderownership"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
+func ValidateOnCreate(ctx context.Context, teamSearchClient *dualwrite.Selector[SearchBackend], obj *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -38,10 +43,14 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team, egr legacy.Ext
 		return err
 	}
 
+	if err := validateTitleUnique(ctx, teamSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Title); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
+func ValidateOnUpdate(ctx context.Context, teamSearchClient *dualwrite.Selector[SearchBackend], obj, old *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -74,7 +83,72 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team, egr legac
 		return err
 	}
 
+	// Only when the title changes: an update that leaves it alone (e.g. a
+	// members- or externalUID-only change) would otherwise collide with the
+	// team's own name.
+	if obj.Spec.Title != old.Spec.Title {
+		if err := validateTitleUnique(ctx, teamSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Title); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+// validateTitleUnique rejects a team whose title collides with an existing team
+// in the same namespace. Legacy storage enforces this via UNIQUE(org_id, name),
+// but that constraint is absent in unified-only (Mode5), so it's enforced here
+// for parity across modes. Matching is case-insensitive (DoubleEquals routes to
+// the pre-lowered title_phrase field).
+//
+// The lookup runs under the service identity rather than the requester: team
+// read access is often scoped to membership, so a requester-scoped search would
+// miss colliding teams the requester cannot read and let the duplicate through.
+// Legacy's UNIQUE constraint rejects duplicates regardless of visibility, so the
+// elevated lookup (and the existence leak in its 409) is parity with legacy.
+func validateTitleUnique(ctx context.Context, searchClient *dualwrite.Selector[SearchBackend], namespace, name, title string) error {
+	nsInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("parse namespace: %w", err))
+	}
+	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+
+	backend, err := searchClient.Resolve(ctx)
+	if err != nil {
+		return err
+	}
+	resp, err := backend.Search(ctx, SearchQuery{
+		Namespace: namespace,
+		Title:     title,
+		Limit:     2,
+		Page:      1,
+	})
+	if err != nil {
+		return err
+	}
+
+	// A hit on the team itself isn't a conflict: on update the search can match
+	// the team's own indexed title (e.g. a case-only rename). Any hit on a
+	// different team means the title is taken.
+	for _, hit := range resp.Hits {
+		if hit.Name != name {
+			return apierrors.NewConflict(iamv0alpha1.TeamResourceInfo.GroupResource(), name, fmt.Errorf("team name '%s' is already taken", title))
+		}
+	}
+
+	return nil
+}
+
+func ValidateOnDelete(ctx context.Context, searcher resourcepb.ResourceIndexClient, obj *iamv0alpha1.Team) error {
+	err := folderownership.ValidateNoOwnedFolders(ctx, searcher, obj.Namespace, obj.Name)
+	if errors.Is(err, folderownership.ErrTeamOwnsFolders) {
+		return apierrors.NewConflict(
+			iamv0alpha1.TeamResourceInfo.GroupResource(),
+			obj.Name,
+			err,
+		)
+	}
+	return err
 }
 
 // validateExternalGroups rejects empty entries and dup-after-normalize without

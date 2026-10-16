@@ -1,6 +1,6 @@
 import Feature from 'ol/Feature';
-import { createEmpty, extend, isEmpty } from 'ol/extent';
-import { LineString, Point, type Geometry } from 'ol/geom';
+import { isEmpty } from 'ol/extent';
+import { LineString, Point } from 'ol/geom';
 import LayerGroup from 'ol/layer/Group';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -8,12 +8,6 @@ import VectorSource from 'ol/source/Vector';
 import { type MapLayerState } from '../types';
 
 import { getLayerGroupExtent, getLayersExtent } from './getLayersExtent';
-
-type TestVectorLayer = VectorLayer<VectorSource<Feature<Geometry>>>;
-
-function asVectorLayer(state: MapLayerState): TestVectorLayer {
-  return state.layer as TestVectorLayer;
-}
 
 function vectorLayerState(name: string, coordinates: number[][]): MapLayerState {
   const source = new VectorSource();
@@ -25,7 +19,6 @@ function vectorLayerState(name: string, coordinates: number[][]): MapLayerState 
     layer: new VectorLayer({ source }),
     handler: {} as MapLayerState['handler'],
     onChange: jest.fn(),
-    mouseEvents: {} as MapLayerState['mouseEvents'],
     getName: () => name,
   };
 }
@@ -39,10 +32,8 @@ describe('getLayersExtent', () => {
     const layers = [vectorLayerState('a', [[0, 0]]), vectorLayerState('b', [[1000, 2000]])];
     const extent = getLayersExtent(layers, true, false, undefined);
     expect(isEmpty(extent)).toBe(false);
-    const merged = createEmpty();
-    extend(merged, asVectorLayer(layers[0]).getSource()!.getExtent());
-    extend(merged, asVectorLayer(layers[1]).getSource()!.getExtent());
-    expect(extent).toEqual(merged);
+    // bounding box spanning both single-point layers: [minX, minY, maxX, maxY]
+    expect(extent).toEqual([0, 0, 1000, 2000]);
   });
 
   it('should return the source extent for the named layer when allLayers is false', () => {
@@ -53,7 +44,8 @@ describe('getLayersExtent', () => {
       ]),
     ];
     const extent = getLayersExtent(layers, false, false, 'markers');
-    expect(extent).toEqual(asVectorLayer(layers[0]).getSource()!.getExtent());
+    // bounding box of the two points [5,5] and [6,7]
+    expect(extent).toEqual([5, 5, 6, 7]);
   });
 
   it('should use only the last feature extent when lastOnly is true', () => {
@@ -65,9 +57,8 @@ describe('getLayersExtent', () => {
       ]),
     ];
     const extent = getLayersExtent(layers, false, true, 'route');
-    const feats = asVectorLayer(layers[0]).getSource()!.getFeatures();
-    const lastGeom = feats[feats.length - 1].getGeometry()!;
-    expect(extent).toEqual(lastGeom.getExtent());
+    // lastOnly keeps only the final point [20,20] → zero-area extent at that point
+    expect(extent).toEqual([20, 20, 20, 20]);
   });
 });
 

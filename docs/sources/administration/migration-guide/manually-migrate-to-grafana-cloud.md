@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana-cloud/security-and-account-management/migration-guide/manually-migrate-to-grafana-cloud/
 description: Migrate from Grafana OSS/Enterprise to Grafana Cloud manually
 keywords:
   - Grafana Cloud

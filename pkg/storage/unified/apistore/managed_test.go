@@ -7,23 +7,47 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientrest "k8s.io/client-go/rest"
 
-	authnlib "github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	serviceauthn "github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestManagedAuthorizer_ManagerKindConflict(t *testing.T) {
+	_, provisioner, err := identity.WithProvisioningIdentity(t.Context(), "default")
+	require.NoError(t, err)
+	for _, current := range []utils.ManagerProperties{
+		{Kind: utils.ManagerKindTerraform, Identity: "terraform-provider", AllowsEdits: true},
+		{Kind: utils.ManagerKindClassicFP}, //nolint:staticcheck
+	} {
+		t.Run(string(current.Kind), func(t *testing.T) {
+			old, err := utils.MetaAccessor(&unstructured.Unstructured{})
+			require.NoError(t, err)
+			old.SetManagerProperties(current)
+			obj, err := utils.MetaAccessor(&unstructured.Unstructured{})
+			require.NoError(t, err)
+			obj.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "dashboards"})
+
+			err = checkManagerPropertiesOnUpdateSpec(provisioner, obj, old)
+			require.Error(t, err)
+			require.True(t, apierrors.IsForbidden(err))
+			require.True(t, utils.IsForbiddenManagerKindChangeError(err))
+			require.True(t, apierrors.HasStatusCause(err, "ResourceManagerKindConflict"))
+			require.Contains(t, err.Error(), string(current.Kind))
+			require.Contains(t, err.Error(), `to "repo" (identity "dashboards")`)
+		})
+	}
+}
 
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
@@ -143,6 +167,103 @@ func TestManagedAuthorizer(t *testing.T) {
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			// Classic kinds have an unstable or absent identity (a file-provisioning
+			// reader name, or empty for API/converted-Prometheus), so identity changes
+			// within the same classic kind are allowed rather than blocked.
+			name: "classic file-provisioning: identity change is allowed",
+			auth: provisioner,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "reader-b",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "reader-a",
+					},
+				},
+			},
+		},
+		{
+			name: "classic converted-prometheus: identity change is allowed",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicConvertedPrometheus), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "b",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicConvertedPrometheus), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "a",
+					},
+				},
+			},
+		},
+		{
+			// The classic exemption must not open a bypass: switching an existing
+			// non-classic manager to a classic kind is still a kind change and is
+			// blocked by the kind guard before the identity check is reached.
+			name: "changing a repo manager to a classic kind is blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager kind",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "reader-a",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "reader-a",
+					},
+				},
+			},
+		},
+		{
+			// Non-classic managers keep the identity-immutability guarantee.
+			name: "kubectl: identity change is still blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager identity",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+						utils.AnnoKeyManagerIdentity: "b",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+						utils.AnnoKeyManagerIdentity: "a",
 					},
 				},
 			},
@@ -285,14 +406,9 @@ func TestManagedAuthorizer(t *testing.T) {
 		},
 		{
 			name: "audience includes provisioning group",
-			auth: &serviceauthn.Identity{
-				Type: authtypes.TypeAccessPolicy,
-				UID:  "access-policy:random-uid",
-				AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{
-					Claims: jwt.Claims{
-						Audience: []string{provisioning.GROUP},
-					},
-				},
+			auth: &audienceAuthInfo{
+				StaticRequester: &identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: "random-uid"},
+				audience:        []string{provisioning.GROUP},
 			},
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
@@ -484,6 +600,14 @@ func TestManagedResourceCommitMessage(t *testing.T) {
 	}
 }
 
+// audienceAuthInfo reports an access token audience, which StaticRequester does not.
+type audienceAuthInfo struct {
+	*identity.StaticRequester
+	audience []string
+}
+
+func (a *audienceAuthInfo) GetAudience() []string { return a.audience }
+
 // fakeRestConfigProvider returns a rest.Config pointing at an arbitrary host,
 // used so tests can capture proxied REST requests with an httptest.Server.
 type fakeRestConfigProvider struct {
@@ -565,7 +689,7 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 				},
 			}
 
-			err := s.handleManagedResourceRouting(
+			cleanupSafe, err := s.handleManagedResourceRouting(
 				context.Background(),
 				errResourceIsManagedInRepository,
 				tt.action,
@@ -573,8 +697,10 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 				obj,
 				&dashboard.Dashboard{},
 			)
-			// The test server returns 500; surface that as a non-nil error.
+			// The test server returns an error; surface that as a non-nil error.
 			require.Error(t, err)
+			// Once the request is sent the write may have applied, so cleanup is never safe.
+			require.False(t, cleanupSafe, "a sent request must not report cleanupSafe")
 
 			require.Equal(t, tt.wantMethod, captured.method, "HTTP method")
 			require.Contains(t, captured.path, "/namespaces/default/repositories/my-repo/files/dashboards/dash.json",

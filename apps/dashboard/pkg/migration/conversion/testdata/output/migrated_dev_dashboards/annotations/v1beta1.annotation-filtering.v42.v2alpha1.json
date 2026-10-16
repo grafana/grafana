@@ -129,7 +129,6 @@
         "spec": {
           "id": 1,
           "title": "Panel one",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -215,7 +214,6 @@
         "spec": {
           "id": 2,
           "title": "Panel two",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -301,7 +299,6 @@
         "spec": {
           "id": 3,
           "title": "Panel three",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -387,7 +384,6 @@
         "spec": {
           "id": 4,
           "title": "Panel four",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",

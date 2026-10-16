@@ -22,6 +22,7 @@ import { type TraceSpanReference } from '../../types/trace';
 export default class DetailState {
   isTagsOpen: boolean;
   isProcessOpen: boolean;
+  isSummaryAttributesOpen: boolean;
   logs: { isOpen: boolean; openedItems: Set<TraceLog> };
   references: { isOpen: boolean; openedItems: Set<TraceSpanReference> };
   isWarningsOpen: boolean;
@@ -32,14 +33,17 @@ export default class DetailState {
     const {
       isTagsOpen,
       isProcessOpen,
+      isSummaryAttributesOpen,
       isReferencesOpen,
       isWarningsOpen,
       isStackTracesOpen,
       logs,
       references,
     }: DetailState | Record<string, undefined> = oldState || {};
-    this.isTagsOpen = Boolean(isTagsOpen);
-    this.isProcessOpen = Boolean(isProcessOpen);
+    // Span and resource attributes are open by default when a detail panel is first opened.
+    this.isTagsOpen = oldState ? Boolean(isTagsOpen) : true;
+    this.isProcessOpen = oldState ? Boolean(isProcessOpen) : true;
+    this.isSummaryAttributesOpen = Boolean(isSummaryAttributesOpen);
     this.isReferencesOpen = Boolean(isReferencesOpen);
     this.isWarningsOpen = Boolean(isWarningsOpen);
     this.isStackTracesOpen = Boolean(isStackTracesOpen);
@@ -62,6 +66,12 @@ export default class DetailState {
   toggleProcess() {
     const next = new DetailState(this);
     next.isProcessOpen = !this.isProcessOpen;
+    return next;
+  }
+
+  toggleSummaryAttributes() {
+    const next = new DetailState(this);
+    next.isSummaryAttributesOpen = !this.isSummaryAttributesOpen;
     return next;
   }
 

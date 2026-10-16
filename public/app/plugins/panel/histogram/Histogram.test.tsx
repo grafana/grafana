@@ -220,6 +220,15 @@ describe('Histogram', () => {
         expect(screen.queryByTestId(selectors.components.VizLegend.legend)).not.toBeInTheDocument();
       });
 
+      it('does not render legend when displayMode is hidden, even if showLegend is true', () => {
+        setUp(undefined, {
+          legend: { ...defaultLegendOptions, showLegend: true, displayMode: LegendDisplayMode.Hidden },
+        });
+
+        expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+      });
+
       it('renders with combine: false', async () => {
         setUp(undefined, { combine: false });
 
@@ -376,7 +385,67 @@ describe('Histogram', () => {
       expect(min).toBe(0);
       expect(max).toBe(4);
     });
+    it('uses configured bucket width for sparse linear histogram bars', () => {
+      const barsMock = jest.requireMock('uplot').paths.bars as jest.Mock;
+      barsMock.mockClear();
 
+      const frame = createLinearHistogramFrame([0, 9], [1, 10], [5, 1]);
+
+      const hist = buildHistogram([frame], { bucketSize: 3 }, theme);
+      const alignedFrame = histogramFieldsToFrame(hist!);
+
+      setUp(
+        {
+          alignedFrame,
+          rawSeries: [frame],
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      expect(barsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          align: 1,
+          disp: expect.objectContaining({
+            x0: expect.objectContaining({ unit: 1 }),
+            size: expect.objectContaining({ unit: 1 }),
+          }),
+        })
+      );
+
+      const barsConfig = barsMock.mock.calls[0][0];
+      expect(barsConfig.disp.size.values()).toEqual([3]);
+    });
+
+    it('uses size as the bucket size when data and bucket size makes one bucket', () => {
+      const barsMock = jest.requireMock('uplot').paths.bars as jest.Mock;
+      barsMock.mockClear();
+
+      const frame = createLinearHistogramFrame([0], [9], [1]);
+
+      const hist = buildHistogram([frame], { bucketSize: 10 }, theme);
+      const alignedFrame = histogramFieldsToFrame(hist!);
+
+      setUp(
+        {
+          alignedFrame,
+          rawSeries: [frame],
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      expect(barsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          align: 1,
+          disp: expect.objectContaining({
+            x0: expect.objectContaining({ unit: 1 }),
+            size: expect.objectContaining({ unit: 1 }),
+          }),
+        })
+      );
+
+      const barsConfig = barsMock.mock.calls[0][0];
+      expect(barsConfig.disp.size.values()).toEqual([10]);
+    });
     /**
      * x scale range: xScaleMin/xScaleMax from count field config override wanted range.
      */

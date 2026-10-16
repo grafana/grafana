@@ -11,20 +11,28 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -32,9 +40,11 @@ import (
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
 var registeredConfigOptions = []ConfigOption{}
@@ -52,12 +62,15 @@ type ControllerConfig struct {
 	resyncInterval        time.Duration
 	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
+	provisioningRESTCfg   *rest.Config
+	natsSubscriber        *nats.SubscriberService
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	tokenExchangeClient   *authn.TokenExchangeClient
 	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
+	relistProjection      *informer.RelistProjectionMetrics
 	repositoryFactory     repository.Factory
 	repositoryExtras      []repository.Extra
 	RepositoryExtrasFunc  func() ([]repository.Extra, error)
@@ -93,7 +106,6 @@ type ControllerConfig struct {
 // dashboards_server_url =
 // folders_server_url =
 // aggregated_server_url =
-// folders_api_version =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =
@@ -103,6 +115,16 @@ type ControllerConfig struct {
 // local_permitted_prefixes =
 // [provisioning]
 // repository_types =
+// connection_types =
+// [nats]
+// # when enabled, the informers take their watch from NATS instead of the
+// # apiserver watch; operators use an external NATS (no embedded server).
+// enabled =
+// mode = external
+// client_urls =
+// token =
+// subscriber_credentials_file =
+// tls_enabled =
 func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*ControllerConfig, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
@@ -110,8 +132,12 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
-		registry:       registry,
-		Settings:       cfg,
+		registry: registry,
+		Settings: cfg,
+		// Operators run against an external NATS (no embedded server), so a nil
+		// server yields a config that dials the configured client URLs. Each
+		// consuming controller owns the subscriber service lifecycle.
+		natsSubscriber: nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), registry),
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
@@ -175,7 +201,7 @@ func (c *ControllerConfig) UnifiedStorageClient() (resources.ResourceStore, erro
 		TokenExchangeURL: gRPCAuth.Key("token_exchange_url").String(),
 		Namespace:        gRPCAuth.Key("token_namespace").String(),
 	}
-	unified, err := setupUnifiedStorageClient(c.Settings, tracer, resourceClientCfg)
+	unified, err := setupUnifiedStorageClient(c.Settings, tracer, c.Registry(), resourceClientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup unified storage: %w", err)
 	}
@@ -316,14 +342,44 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
 
+	// Propagate W3C trace context on Job updates and Repository/Connection status
+	// patches; otherwise they are leaf spans with no children on the apiserver side.
+	wrapWithTracing(config)
+
 	provisioningClient, err := client.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
 	c.provisioningClient = provisioningClient
+	// Kept for callers that need a route the typed clientset has no method for,
+	// such as the keys-only re-list.
+	c.provisioningRESTCfg = config
 
 	return provisioningClient, nil
+}
+
+// ProvisioningRESTClient returns a REST client for the provisioning apiserver,
+// for endpoints outside the typed clientset. It shares the clientset's config, so
+// building the clientset first is what supplies it.
+func (c *ControllerConfig) ProvisioningRESTClient() (rest.Interface, error) {
+	if _, err := c.ProvisioningClient(); err != nil {
+		return nil, err
+	}
+
+	cfg := rest.CopyConfig(c.provisioningRESTCfg)
+	cfg.GroupVersion = &schema.GroupVersion{Group: provisioning.GROUP, Version: provisioning.VERSION}
+	cfg.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	return rest.RESTClientFor(cfg)
+}
+
+// wrapWithTracing wraps the rest config transport with otelhttp so outbound
+// requests carry W3C trace context. It composes with any existing WrapTransport
+// (e.g. the token-exchange wrapper) rather than replacing it.
+func wrapWithTracing(config *rest.Config) {
+	config.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		return otelhttp.NewTransport(rt)
+	})
 }
 
 func (c *ControllerConfig) ResyncInterval() time.Duration {
@@ -392,6 +448,35 @@ func (c *ControllerConfig) Registry() prometheus.Registerer {
 	return c.registry
 }
 
+// RelistProjectionMetrics returns the process's re-list projection metrics.
+// Memoized because the collectors register on first call; building them twice
+// would panic on the duplicate.
+func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionMetrics {
+	if c.relistProjection == nil {
+		c.relistProjection = informer.NewRelistProjectionMetrics(c.Registry())
+	}
+
+	return c.relistProjection
+}
+
+// ProvisioningKeysLister returns a keys lister for one kind when [provisioning]
+// keys_only_relist is set, and nil otherwise, which keeps the full-object
+// re-list.
+func (c *ControllerConfig) ProvisioningKeysLister(logger logging.Logger, gvr schema.GroupVersionResource) (keysapi.Lister, error) {
+	if !c.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
+		return nil, nil
+	}
+
+	restClient, err := c.ProvisioningRESTClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
+	}
+
+	logger.Info("provisioning re-list will ask for keys only", "transport", "http", "resource", gvr.Resource)
+
+	return keysapi.NewHTTPLister(restClient, gvr), nil
+}
+
 func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 	if c.tracer != nil {
 		return c.tracer, nil
@@ -401,7 +486,7 @@ func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide config: %w", err)
 	}
-	tracingConfig, err := tracing.ProvideTracingConfig(cfgProvider)
+	tracingConfig, err := tracingsetting.ProvideTracingConfig(cfgProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
 	}
@@ -481,7 +566,12 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 		enabledTypes[extra.Type()] = struct{}{}
 	}
 
-	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras)
+	tracer, err := c.Tracer()
+	if err != nil {
+		return nil, err
+	}
+
+	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras, tracer)
 	if err != nil {
 		return nil, fmt.Errorf("create repository factory: %w", err)
 	}
@@ -501,13 +591,17 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		return nil, err
 	}
 
-	// Build enabled types from the extras
-	enabledTypes := make(map[provisioning.ConnectionType]struct{})
-	for _, extra := range extras {
-		enabledTypes[extra.Type()] = struct{}{}
+	types := c.Settings.ProvisioningConnectionTypes
+	if len(types) == 0 {
+		types = defaultConnectionTypes(extras)
 	}
 
-	connectionFactory, err := connection.ProvideFactory(enabledTypes, extras)
+	tracer, err := c.Tracer()
+	if err != nil {
+		return nil, err
+	}
+
+	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)
 	if err != nil {
 		return nil, fmt.Errorf("create connection factory: %w", err)
 	}
@@ -549,6 +643,12 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 }
 
 func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
+	// Folder metadata read metrics are a process-global singleton recorded by the
+	// code that uses them rather than threaded through the returned extras, so they
+	// must be registered regardless of which extras path is taken below — including
+	// the custom RepositoryExtrasFunc path, which returns early.
+	resources.RegisterFolderMetadataMetrics(c.Registry())
+
 	if c.repositoryExtras != nil {
 		return c.repositoryExtras, nil
 	}
@@ -568,6 +668,8 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 		return nil, fmt.Errorf("get decrypt service: %w", err)
 	}
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
+	operationMetrics := repository.RegisterOperationMetrics(c.Registry())
+	clientMetrics := gitrepo.RegisterClientMetrics(c.Registry())
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
@@ -584,17 +686,21 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
-				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
+				webhook = webhooks.ProvideWebhooks(
+					provisioningAppURL,
+					c.Registry(),
+					webhooks.NewConfiguredRateLimiter(
+						provisioningSec.Key("webhook_rate_limit_rps").MustInt(0),
+						provisioningSec.Key("webhook_trusted_ip_header").MustString(""),
+					),
+				)
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, repository.NewIncrementalSyncPolicy(
-				resources.IsFolderMetadataEnabled(c.Settings),
-				provisioningSec.Key("max_incremental_changes").MustInt(100),
-			), allowInsecure))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics, clientMetrics))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
@@ -604,7 +710,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			if len(permittedPrefixes) == 0 {
 				return nil, fmt.Errorf("local_permitted_prefixes is required in [operator] section for local repository type")
 			}
-			extras = append(extras, local.Extra(homePath, permittedPrefixes))
+			extras = append(extras, local.Extra(homePath, permittedPrefixes, operationMetrics))
 		default:
 			return nil, fmt.Errorf("unsupported repository type: %s", t)
 		}
@@ -635,8 +741,14 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 	}
 	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(c.Registry()))
 
+	// http:// OAuth endpoints are only allowed in development or when explicitly opted in,
+	// since the client secret and tokens would otherwise travel in cleartext.
+	allowInsecure := c.Settings.Env == setting.Dev || c.Settings.SectionWithEnvOverrides("provisioning").Key("allow_insecure").MustBool(false)
+
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
+		githuboauth.Extra(decrypter, githubrepo.ProvideFactory()),
+		gitoauth.Extra(decrypter, allowInsecure),
 	}
 
 	c.connectionExtras = extras
@@ -667,6 +779,7 @@ func setupDecryptService(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeC
 		address,
 		secretsTls,
 		secretsSec.Key("grpc_client_load_balancing").MustBool(false),
+		secretsSec.Key("grpc_token_exchanger_namespace_all").MustBool(false),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create decrypt service: %w", err)
@@ -678,15 +791,13 @@ func setupDecryptService(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeC
 // HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
 // search endpoint. But controllers, in general, should not connect directly to unified storage and instead
 // go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resourceClientCfg resource.RemoteResourceClientConfig) (resources.ResourceStore, error) {
+func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, registry prometheus.Registerer, resourceClientCfg resource.RemoteResourceClientConfig) (resources.ResourceStore, error) {
 	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
 	// Connect to Server
 	address := unifiedStorageSec.Key("grpc_address").String()
 	if address == "" {
 		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
 	}
-	// FIXME: These metrics are not going to show up in /metrics
-	registry := prometheus.NewPedanticRegistry()
 	conn, err := unified.GrpcConn(address, registry)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage gRPC connection: %w", err)
@@ -696,10 +807,9 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	indexConn := conn
 	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
 	if indexAddress != "" {
-		// FIXME: These metrics are not going to show up in /metrics. We will also need to wrap these metrics
-		// to start with something else so it doesn't collide with the storage api metrics.
-		registry2 := prometheus.NewPedanticRegistry()
-		indexConn, err = unified.GrpcConn(indexAddress, registry2)
+		// The index connection registers the same client metrics as the storage connection, so
+		// prefix them to avoid a duplicate-registration collision on the shared registry.
+		indexConn, err = unified.GrpcConn(indexAddress, prometheus.WrapRegistererWithPrefix("index_", registry))
 		if err != nil {
 			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
 		}
@@ -709,7 +819,7 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	resourceClientCfg.AllowInsecure = unifiedStorageSec.Key("allow_insecure").MustBool(false)
 	resourceClientCfg.Audiences = unifiedStorageSec.Key("audiences").Strings("|")
 
-	client, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
+	client, err := resource.NewStandaloneRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage client: %w", err)
 	}
@@ -729,4 +839,14 @@ func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
 
 func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	return r.cfg, nil
+}
+
+func defaultConnectionTypes(extras []connection.Extra) []string {
+	types := []string{string(provisioning.GithubConnectionType)}
+	for _, extra := range extras {
+		if extra.Type() == provisioning.GithubEnterpriseConnectionType {
+			types = append(types, string(extra.Type()))
+		}
+	}
+	return types
 }

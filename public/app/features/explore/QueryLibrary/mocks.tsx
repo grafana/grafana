@@ -19,6 +19,7 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
         renderQueryLibraryEditingHeader: jest.fn(),
         queryLibraryEnabled: Boolean(props.queryLibraryEnabled),
         context: 'explore',
+        setContext: jest.fn(),
         triggerAnalyticsEvent: jest.fn(),
         setNewQuery: jest.fn(),
         onSelectQuery: jest.fn(),

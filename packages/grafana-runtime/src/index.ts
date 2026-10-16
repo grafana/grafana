@@ -14,6 +14,7 @@ export {
   reportInteraction,
   reportPageview,
   reportExperimentView,
+  onInteraction,
 } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
 export {
@@ -33,8 +34,8 @@ export {
   type HealthCheckResultDetails,
   HealthStatus,
   type StreamOptionsProvider,
-  isExpressionReference,
 } from './utils/DataSourceWithBackend';
+export { isExpressionReference } from './utils/expressionRef';
 export {
   toDataQueryResponse,
   frameToMetricFindValue,
@@ -97,4 +98,31 @@ export {
 } from './services/pluginMeta/hooks';
 export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
 export { isAppPluginEnabled } from './services/pluginSettings/settings';
-export { useAppPluginEnabled } from './services/pluginSettings/hooks';
+export { useAppPluginEnabled, usePluginSettings } from './services/pluginSettings/hooks';
+export { getPluginSettings } from './services/pluginSettings/getPluginSettings';
+export { updateAppPluginSettings } from './services/pluginSettings/updateAppPluginSettings';
+export { createOpenFeatureOFREPWebProvider, createOpenFeatureLocalStorageProvider } from './utils/openfeature';
+export {
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceSettings,
+  getDataSourceInstanceList,
+  getDefaultDataSourceInstanceListItem,
+  hasDataSourceInstance,
+  reloadDataSourceInstanceSettings,
+} from './services/dataSource/settings';
+export { getDataSourceInstance, registerRuntimeDataSourceInstance } from './services/dataSource/dataSource';
+export { getDataSourceInstanceListItem } from './services/dataSource/listItem';
+export {
+  useDataSourceInstanceSettings,
+  useDataSourceInstance,
+  useDataSourceInstanceList,
+  useDataSourceInstanceListItem,
+  useDefaultDataSourceInstanceListItem,
+  useHasDataSourceInstance,
+  type UseDataSourceInstanceSettingsResult,
+  type UseDataSourceInstanceResult,
+  type UseDataSourceInstanceListResult,
+  type UseDataSourceInstanceListItemResult,
+  type UseDefaultDataSourceInstanceListItemResult,
+  type UseHasDataSourceInstanceResult,
+} from './services/dataSource/hooks';

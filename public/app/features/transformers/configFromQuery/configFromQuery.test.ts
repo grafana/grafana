@@ -89,6 +89,89 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.decimals).toBe(5);
   });
 
+  it.each([
+    ['negative', -3],
+    ['non-integer', 2.5],
+    ['out of the editor range', 42],
+  ])('Skips a decimals mapping with a %s value', (_name, value) => {
+    const decimalsConfig = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1] },
+        { name: 'Decimals', type: FieldType.number, values: [value] },
+      ],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Decimals', handlerKey: 'decimals' }],
+    };
+
+    const results = extractConfigFromQuery(options, [decimalsConfig, seriesA]);
+    expect(results.length).toBe(1);
+    expect(results[0].fields[1].config.decimals).toBeUndefined();
+  });
+
+  function extractColorConfig(value: unknown) {
+    const colorConfig = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1] },
+        { name: 'Color', type: typeof value === 'number' ? FieldType.number : FieldType.string, values: [value] },
+      ],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Color', handlerKey: 'color' }],
+    };
+
+    const results = extractConfigFromQuery(options, [colorConfig, seriesA]);
+    expect(results.length).toBe(1);
+    return results[0].fields[1].config.color;
+  }
+
+  it.each([
+    ['Grafana named color', 'green'],
+    ['Grafana shade', 'dark-red'],
+    ['CSS color name', 'rebeccapurple'],
+    ['hex', '#ff0000'],
+    ['rgb', 'rgb(255, 0, 0)'],
+    ['rgba', 'rgba(255, 0, 0, 0.5)'],
+    ['hsl', 'hsl(120, 100%, 50%)'],
+    ['hsla', 'hsla(120, 100%, 50%, 0.5)'],
+  ])('Maps a %s to a fixed color', (_name, value) => {
+    expect(extractColorConfig(value)).toEqual({ fixedColor: value, mode: 'fixed' });
+  });
+
+  it.each([
+    ['number', -3],
+    ['numeric string', '-3'],
+    ['non-color name', 'notacolor'],
+    ['hex without a hash', 'ff0000'],
+    ['rgb without parentheses', 'rgb 255 0 0'],
+    ['rgb with non-numeric channels', 'rgb(foo)'],
+    ['rgb with no channels', 'rgb()'],
+    ['hex with non-hex digits', '#zz'],
+  ])('Skips a color mapping with a %s value', (_name, value) => {
+    expect(extractColorConfig(value)).toBeUndefined();
+  });
+
+  it('Skips a color mapping that uses the All values reducer', () => {
+    const colorConfig = toDataFrame({
+      fields: [{ name: 'Color', type: FieldType.string, values: ['red', 'yellow', 'orange'] }],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Color', handlerKey: 'color', reducerId: ReducerID.allValues }],
+    };
+
+    const results = extractConfigFromQuery(options, [colorConfig, seriesA]);
+    expect(results[0].fields[1].config.color).toBeUndefined();
+  });
+
   it('With custom reducer', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
@@ -112,6 +195,27 @@ describe('config from data', () => {
     expect(thresholdConfig).toBeDefined();
     expect(thresholdConfig?.color).toBe('orange');
     expect(thresholdConfig?.value).toBe(50);
+  });
+
+  it('With multiple thresholds, steps are sorted ascending by value', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      // 'Max' (50) appears before 'Min' (5) in the frame, so the steps are
+      // pushed out of order. They must be sorted before reaching consumers
+      // that assume ascending steps.
+      configRefId: 'A',
+      mappings: [
+        { fieldName: 'Max', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'orange' } } },
+        { fieldName: 'Min', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'blue' } } },
+      ],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results.length).toBe(1);
+    const steps = results[0].fields[1].config.thresholds?.steps;
+    expect(steps).toEqual([
+      { value: 5, color: 'blue' },
+      { value: 50, color: 'orange' },
+    ]);
   });
 
   it('With custom matcher and displayName mapping', () => {

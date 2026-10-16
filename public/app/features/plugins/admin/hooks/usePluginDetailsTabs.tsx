@@ -7,6 +7,7 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { ASSISTANT_PLUGIN_ID } from '../components/AssistantOverview/constants';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { type CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
 
@@ -177,6 +178,10 @@ export const usePluginDetailsTabs = (
 
 function useDefaultPage(plugin: CatalogPlugin | undefined, pluginConfig: GrafanaPlugin | undefined | null) {
   if (!plugin || !pluginConfig) {
+    return PluginTabIds.OVERVIEW;
+  }
+
+  if (plugin.id === ASSISTANT_PLUGIN_ID) {
     return PluginTabIds.OVERVIEW;
   }
 

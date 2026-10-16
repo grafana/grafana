@@ -17,11 +17,10 @@ import {
   type DataQuery,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
 
+import { LokiQueryDirection } from '../../loki-helpers/types';
 import { initialExploreState } from '../state/main';
 import { makeExplorePaneState } from '../state/utils';
 
@@ -34,7 +33,27 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: (interactionName: string, properties?: Record<string, unknown> | undefined) =>
     reportInteraction(interactionName, properties),
+  getAppEvents: jest.fn(() => ({
+    publish: jest.fn(),
+  })),
+  getDataSourceSrv: jest.fn(() => ({
+    get: () => Promise.resolve(null),
+  })),
+  usePluginLinks: jest.fn().mockReturnValue({
+    links: [],
+    isLoading: false,
+  }),
 }));
+
+// Mock TableNG to disable virtualization, otherwise the lack of viewport in our testing env will cause the table to only render a single column
+jest.mock('@grafana/ui/unstable', () => {
+  const actual = jest.requireActual('@grafana/ui/unstable');
+  const MockTableNG = actual.TableNG;
+  return {
+    ...actual,
+    TableNG: (props: ComponentProps<typeof MockTableNG>) => <MockTableNG {...props} enableVirtualization={false} />,
+  };
+});
 
 const createAndCopyShortLink = jest.fn();
 jest.mock('app/core/utils/shortLinks', () => ({
@@ -43,16 +62,22 @@ jest.mock('app/core/utils/shortLinks', () => ({
 }));
 
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
 
 const setBooleanFlags = (flags: Record<string, boolean>) => {
-  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
-    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
-  });
+  const getFlagValue = (flag: string, defaultValue: boolean) =>
+    Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => getFlagValue(flag, defaultValue));
+  useFlagMock.mockImplementation((flag: string, defaultValue: boolean) => ({
+    value: getFlagValue(flag, defaultValue),
+  }));
 };
 
 jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+  useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
 const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
@@ -79,11 +104,19 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
-    setBooleanFlags({ newLogsPanel: false, logsPanelControls: false });
+    setBooleanFlags({ logsPanelControls: false });
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
     window.HTMLElement.prototype.scroll = jest.fn();
     localStorage.clear();
     jest.clearAllMocks();
+  });
+
+  beforeAll(() => {
+    global.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   });
 
   beforeAll(() => {
@@ -108,6 +141,12 @@ describe('Logs', () => {
       writable: true,
     });
   });
+
+  async function copyPermalinkFromLogMenu(menuIndex = 0) {
+    const menus = await screen.findAllByLabelText('Log menu');
+    await userEvent.click(menus[menuIndex]);
+    await userEvent.click(await screen.findByText('Copy link to log line'));
+  }
 
   const getComponent = (
     partialProps?: Partial<ComponentProps<typeof Logs>>,
@@ -176,13 +215,13 @@ describe('Logs', () => {
     return { ...rendered, store: fakeStore };
   };
 
-  it('should render logs', () => {
+  it('should render logs', async () => {
     setup();
     const logsSection = screen.getByTestId('logRows');
-    let logRows = logsSection.querySelectorAll('tr');
-    expect(logRows.length).toBe(3);
-    expect(logRows[0].textContent).toContain('log message 3');
-    expect(logRows[2].textContent).toContain('log message 1');
+    expect(logsSection).toBeInTheDocument();
+    expect(await screen.findByText('log message 3')).toBeInTheDocument();
+    expect(screen.getByText('log message 2')).toBeInTheDocument();
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
   it('should render no logs found', () => {
@@ -362,14 +401,10 @@ describe('Logs', () => {
 
   it('should flip the order', async () => {
     setup();
-    // Sort toggle is an IconButton; aria-label comes from the tooltip (newest-first → click for oldest-first).
     const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
     await userEvent.click(sortOrderToggle);
-    const logsSection = screen.getByTestId('logRows');
-    let logRows = logsSection.querySelectorAll('tr');
-    expect(logRows.length).toBe(3);
-    expect(logRows[0].textContent).toContain('log message 1');
-    expect(logRows[2].textContent).toContain('log message 3');
+    expect(await screen.findByText('log message 1')).toBeInTheDocument();
+    expect(screen.getByText('log message 3')).toBeInTheDocument();
     expect(fakeRunQueries).not.toHaveBeenCalled();
   });
 
@@ -415,11 +450,7 @@ describe('Logs', () => {
       ];
       setup({ loading: false, panelState, logRows: rows });
 
-      const row = screen.getAllByRole('row');
-      await userEvent.hover(row[0]);
-
-      const linkButton = screen.getByLabelText('Copy shortlink');
-      await userEvent.click(linkButton);
+      await copyPermalinkFromLogMenu(0);
 
       expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_logs_permalink_clicked', {
         datasourceType: 'unknown',
@@ -440,11 +471,7 @@ describe('Logs', () => {
       ];
       setup({ loading: false, panelState, logRows: rows });
 
-      const row = screen.getAllByRole('row');
-      await userEvent.hover(row[0]);
-
-      const linkButton = screen.getByLabelText('Copy shortlink');
-      await userEvent.click(linkButton);
+      await copyPermalinkFromLogMenu(0);
 
       expect(createAndCopyShortLink).toHaveBeenCalledWith(
         expect.stringMatching(
@@ -466,15 +493,11 @@ describe('Logs', () => {
       const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
       setup({ loading: false, panelState, logRows: rows });
 
-      const row = screen.getAllByRole('row');
-      await userEvent.hover(row[3]);
-
-      const linkButton = screen.getByLabelText('Copy shortlink');
-      await userEvent.click(linkButton);
+      await copyPermalinkFromLogMenu(3);
 
       expect(createAndCopyShortLink).toHaveBeenCalledWith(
         expect.stringMatching(
-          'range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%221970-01-01T00:00:00.002Z%22%7D'
+          'range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D'
         )
       );
       expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
@@ -489,18 +512,12 @@ describe('Logs', () => {
       const rows = [makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1, labels: { field: 'field value' } })];
       setup({ loading: false, panelState, logRows: rows });
 
-      expect(await screen.findByText('field=field value')).toBeInTheDocument();
+      expect(await screen.findByText(/field value/)).toBeInTheDocument();
       expect(screen.queryByText(/log message/)).not.toBeInTheDocument();
     });
   });
 
   describe('with table visualisation', () => {
-    beforeEach(() => {
-      setBooleanFlags({
-        newLogsPanel: false,
-      });
-    });
-
     it('should show visualisation type radio group', () => {
       setup();
       const logsSection = screen.getByRole('radio', { name: 'Table' });
@@ -512,15 +529,15 @@ describe('Logs', () => {
       const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
-      const table = screen.getByTestId('logRowsTable');
-      expect(table).toBeInTheDocument();
+      expect(await screen.findByText('Selected fields')).toBeInTheDocument();
+      expect(screen.queryByTestId('logRowsTable')).not.toBeInTheDocument();
     });
 
     it('should use default state from localstorage - table', async () => {
       localStorage.setItem(visualisationTypeKey, 'table');
       setup({});
-      const table = await screen.findByTestId('logRowsTable');
-      expect(table).toBeInTheDocument();
+      expect(await screen.findByText('Selected fields')).toBeInTheDocument();
+      expect(screen.queryByTestId('logRowsTable')).not.toBeInTheDocument();
     });
 
     it('should use default state from localstorage - logs', async () => {
@@ -535,18 +552,15 @@ describe('Logs', () => {
       const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
-      const table = screen.getByTestId('logRowsTable');
-      expect(table).toBeInTheDocument();
+      expect(await screen.findByText('Selected fields')).toBeInTheDocument();
+      expect(screen.queryByTestId('logRowsTable')).not.toBeInTheDocument();
     });
   });
   describe('with table panel visualisation', () => {
     let origResizeObserver = global.ResizeObserver;
-    let originalLogsTablePanelNG = config.featureToggles.logsTablePanelNG;
 
     beforeEach(() => {
       origResizeObserver = global.ResizeObserver;
-      originalLogsTablePanelNG = config.featureToggles.logsTablePanelNG;
-      config.featureToggles.logsTablePanelNG = false;
       // Mock ResizeObserver
       global.ResizeObserver = class ResizeObserver {
         constructor(callback: unknown) {
@@ -564,19 +578,14 @@ describe('Logs', () => {
           // Do nothing
         }
       };
+
+      setBooleanFlags({
+        logsPanelControls: true,
+      });
     });
 
     afterEach(() => {
-      config.featureToggles.logsTablePanelNG = originalLogsTablePanelNG;
       global.ResizeObserver = origResizeObserver;
-    });
-
-    beforeEach(() => {
-      setBooleanFlags({
-        newLogsPanel: false,
-        logsPanelControls: true,
-        logsTablePanelNG: false,
-      });
     });
 
     it('should show table', async () => {
@@ -587,28 +596,11 @@ describe('Logs', () => {
           },
         },
       });
-      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
-      expect(screen.getByTestId('logRowsTable')).toBeInTheDocument();
+      expect(await screen.findByText('Selected fields')).toBeInTheDocument();
+      expect(screen.queryByTestId('logRowsTable')).not.toBeInTheDocument();
     });
 
     it('should show logs', async () => {
-      setup({
-        panelState: {
-          logs: {
-            visualisationType: 'logs',
-          },
-        },
-      });
-
-      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
-      const logs = await screen.findByTestId('logRows');
-      expect(logs).toBeInTheDocument();
-      expect(screen.getByText('log message 3')).toBeVisible();
-    });
-
-    it('should show logs when logsPanelControls is enabled and logsTablePanelNG is true', async () => {
-      config.featureToggles.logsTablePanelNG = true;
-
       setup({
         panelState: {
           logs: {

@@ -24,22 +24,28 @@ type PermissionsQuery struct {
 	IsServerAdmin bool
 }
 
-func NewSQLPermissionStore(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) *SQLPermissionsStore {
-	return &SQLPermissionsStore{sql, tracer}
+func NewSQLPermissionStore(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer, forcePermissionRoleActionIndex bool) *SQLPermissionsStore {
+	return &SQLPermissionsStore{
+		sql:                            sql,
+		tracer:                         tracer,
+		forcePermissionRoleActionIndex: forcePermissionRoleActionIndex,
+	}
 }
 
 var _ PermissionStore = (*SQLPermissionsStore)(nil)
 
 type SQLPermissionsStore struct {
-	sql    legacysql.LegacyDatabaseProvider
-	tracer tracing.Tracer
+	sql                            legacysql.LegacyDatabaseProvider
+	tracer                         tracing.Tracer
+	forcePermissionRoleActionIndex bool
 }
 
 var sqlUserPerms = mustTemplate("permission_query.sql")
 
 type getPermissionsQuery struct {
 	sqltemplate.SQLTemplate
-	Query *PermissionsQuery
+	Query                          *PermissionsQuery
+	ForcePermissionRoleActionIndex bool
 
 	PermissionTable  string
 	UserRoleTable    string
@@ -51,14 +57,15 @@ func (r getPermissionsQuery) Validate() error {
 	return nil
 }
 
-func newGetPermissions(sql *legacysql.LegacyDatabaseHelper, q *PermissionsQuery) getPermissionsQuery {
+func newGetPermissions(sql *legacysql.LegacyDatabaseHelper, q *PermissionsQuery, forcePermissionRoleActionIndex bool) getPermissionsQuery {
 	return getPermissionsQuery{
-		SQLTemplate:      sqltemplate.New(sql.DialectForDriver()),
-		Query:            q,
-		PermissionTable:  sql.Table("permission"),
-		UserRoleTable:    sql.Table("user_role"),
-		TeamRoleTable:    sql.Table("team_role"),
-		BuiltinRoleTable: sql.Table("builtin_role"),
+		SQLTemplate:                    sqltemplate.New(sql.DialectForDriver()),
+		Query:                          q,
+		ForcePermissionRoleActionIndex: forcePermissionRoleActionIndex,
+		PermissionTable:                sql.Table("permission"),
+		UserRoleTable:                  sql.Table("user_role"),
+		TeamRoleTable:                  sql.Table("team_role"),
+		BuiltinRoleTable:               sql.Table("builtin_role"),
 	}
 }
 
@@ -72,7 +79,7 @@ func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns types.N
 	}
 
 	query.OrgID = ns.OrgID
-	req := newGetPermissions(sql, &query)
+	req := newGetPermissions(sql, &query, s.forcePermissionRoleActionIndex)
 	q, err := sqltemplate.Execute(sqlUserPerms, req)
 	if err != nil {
 		return nil, err
@@ -91,7 +98,14 @@ func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns types.N
 	var perms []accesscontrol.Permission
 	for res.Next() {
 		var perm accesscontrol.Permission
-		if err := res.Scan(&perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope); err != nil {
+		perm.Action = query.Action
+		var err error
+		if query.Action == "" {
+			err = res.Scan(&perm.Action, &perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope)
+		} else {
+			err = res.Scan(&perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope)
+		}
+		if err != nil {
 			return nil, err
 		}
 		perms = append(perms, perm)
@@ -126,7 +140,7 @@ func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns types
 		}
 
 		for _, p := range r.Permissions {
-			if p.Action == query.Action {
+			if query.Action == "" || p.Action == query.Action {
 				permissions = append(permissions, p)
 			}
 		}

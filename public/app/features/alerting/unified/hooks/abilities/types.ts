@@ -108,6 +108,11 @@ export enum FolderBulkAction {
   Delete = 'delete-folder',
 }
 
+// this enum lists all of the actions we can perform on a folder
+export enum FolderAction {
+  Create = 'create-folder',
+}
+
 // this enum lists all of the available actions we can perform with enrichments
 export enum EnrichmentAction {
   Read = 'read-enrichment',
@@ -120,6 +125,7 @@ type Action =
   | RuleAction
   | ExternalRuleAction
   | FolderBulkAction
+  | FolderAction
   | EnrichmentAction;
 
 // ── Ability ─────────────────────────────────────────────────────────────

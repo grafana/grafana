@@ -13,20 +13,22 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import { useState } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, type IconName, Tooltip, useStyles2 } from '@grafana/ui';
+import { logError } from '@grafana/runtime';
+import { Button, copyTextToClipboard, type IconName, Tooltip, useStyles2 } from '@grafana/ui';
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   CopyIcon: css({
     backgroundColor: 'transparent',
     border: 'none',
     color: 'inherit',
     overflow: 'hidden',
     '&:focus': {
-      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      backgroundColor: theme.colors.action.focus,
       color: 'inherit',
     },
   }),
@@ -39,23 +41,29 @@ type PropsType = {
   tooltipTitle: string;
 };
 
-export default function CopyIcon({ copyText, icon = 'copy', tooltipTitle }: PropsType) {
+export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTitle }: PropsType) {
   const styles = useStyles2(getStyles);
 
   const [hasCopied, setHasCopied] = useState(false);
 
-  const handleClick = () => {
-    navigator.clipboard.writeText(copyText);
-    setHasCopied(true);
+  const handleClick = async () => {
+    try {
+      await copyTextToClipboard(copyText);
+      setHasCopied(true);
+    } catch (error) {
+      logError(error instanceof Error ? error : new Error(String(error)));
+    }
   };
 
   return (
     <Tooltip content={hasCopied ? t('explore.trace-view.tooltip-copy-icon', 'Copied') : tooltipTitle}>
       <Button
         aria-label={t('explore.trace-view.aria-label-copy', 'Copy to clipboard')}
-        className={cx(styles.CopyIcon)}
+        className={cx(styles.CopyIcon, className)}
         type="button"
         icon={icon}
+        fill="text"
+        size="sm"
         onClick={handleClick}
       />
     </Tooltip>

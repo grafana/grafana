@@ -29,9 +29,7 @@ export interface SearchQuery {
   uid?: string[];
 
   facet?: FacetField[];
-  explain?: boolean;
   panelTitleSearch?: boolean;
-  withAllowedActions?: boolean;
   accessInfo?: boolean;
   limit?: number;
   // Used for pagination. See also offset param.
@@ -50,14 +48,13 @@ export interface DashboardQueryResult {
   url: string; // link to value (unique)
   panel_type: string;
   tags: string[];
+  description?: string;
   location: string; // url that can be split
   ds_uid: string[];
   isDeleted?: boolean;
-  permanentlyDeleteDate?: Date;
+  // When the object was deleted, as an ISO timestamp. Only deleted results carry it.
+  deletionTimestamp?: string;
 
-  // debugging fields
-  score: number;
-  explain: {};
   /**
    * Who manages this resource (e.g. provisioning). From unified search this is
    * the full object { kind, id }; from legacy or other paths it may be just the
@@ -103,6 +100,7 @@ export interface GrafanaSearcher {
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
   getLocationInfo: () => Promise<Record<string, LocationInfo>>;
+  reloadLocationInfo: () => Promise<Record<string, LocationInfo>>;
 
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;

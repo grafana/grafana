@@ -1,6 +1,8 @@
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 
+import { FieldType, toDataFrame } from '@grafana/data';
+
 import { type PlacenameInfo, type Gazetteer } from './gazetteer';
 
 // https://github.com/grafana/worldmap-panel/blob/master/src/data/countries.json
@@ -13,13 +15,26 @@ export interface WorldmapPoint {
 }
 
 export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazetteer {
-  let count = 0;
+  // The field lookup transform reads values out of a frame, so expose the points as one too.
+  // Field names match what frameAsGazetter recognises, so the frame round-trips as a gazetteer.
+  const frame = toDataFrame({
+    fields: [
+      { name: 'id', type: FieldType.string, values: data.map((v) => v.key ?? v.keys?.[0]) },
+      { name: 'name', type: FieldType.string, values: data.map((v) => v.name) },
+      { name: 'lng', type: FieldType.number, values: data.map((v) => v.longitude) },
+      { name: 'lat', type: FieldType.number, values: data.map((v) => v.latitude) },
+    ],
+  });
+
   const values = new Map<string, PlacenameInfo>();
+  let index = 0;
   for (const v of data) {
     const point = new Point(fromLonLat([v.longitude, v.latitude]));
     const info: PlacenameInfo = {
       point: () => point,
       geometry: () => point,
+      frame,
+      index,
     };
     if (v.name) {
       values.set(v.name, info);
@@ -35,7 +50,7 @@ export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazette
         values.set(key.toUpperCase(), info);
       }
     }
-    count++;
+    index++;
   }
   return {
     path,
@@ -46,7 +61,8 @@ export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazette
       }
       return v;
     },
-    count,
+    frame: () => frame,
+    count: frame.length,
     examples: (count) => {
       const first: string[] = [];
       if (values.size < 1) {

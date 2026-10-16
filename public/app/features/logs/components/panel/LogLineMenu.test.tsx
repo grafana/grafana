@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceApi, CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { type DataSourceSrv, getDataSourceSrv, getDataSourceInstance } from '@grafana/runtime';
 
 import * as logsUtils from '../../utils';
 import { createLogLine } from '../mocks/logRow';
@@ -29,8 +29,8 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   isAssistantAvailable: true,
   getDataSourceSrv: jest.fn(),
+  getDataSourceInstance: jest.fn(),
 }));
-
 const theme = createTheme();
 const styles = getStyles(theme);
 const contextProps = {
@@ -53,6 +53,7 @@ describe('LogLineMenu', () => {
     jest.mocked(getDataSourceSrv).mockReturnValue({
       get: jest.fn().mockResolvedValue({}),
     } as unknown as DataSourceSrv);
+    jest.mocked(getDataSourceInstance).mockResolvedValue({} as DataSourceApi);
   });
 
   test('Renders the component', async () => {

@@ -1,17 +1,13 @@
 package search
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -21,12 +17,6 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob"
-	_ "gocloud.dev/blob/azureblob"
-	"gocloud.dev/blob/fileblob"
-	_ "gocloud.dev/blob/gcsblob"
-	"gocloud.dev/blob/memblob"
-	_ "gocloud.dev/blob/s3blob"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -48,26 +38,27 @@ func useFastSnapshotStoreRetries(t *testing.T) {
 	snapshotStoreRetryBackoffConfig.MinBackoff = 0
 	snapshotStoreRetryBackoffConfig.MaxBackoff = 0
 	snapshotStoreRetryBackoffConfig.MaxRetries = 2
-	t.Cleanup(func() { snapshotStoreRetryBackoffConfig = old })
+	oldMeta := snapshotStoreMetadataRetryBackoffConfig
+	snapshotStoreMetadataRetryBackoffConfig.MinBackoff = 0
+	snapshotStoreMetadataRetryBackoffConfig.MaxBackoff = 0
+	t.Cleanup(func() {
+		snapshotStoreRetryBackoffConfig = old
+		snapshotStoreMetadataRetryBackoffConfig = oldMeta
+	})
 }
 
-// testBucket returns a bucket for testing. Uses CDK_TEST_BUCKET_URL if set,
-// otherwise falls back to a local fileblob.
-//
-//	CDK_TEST_BUCKET_URL=gs://my-test-bucket go test ./pkg/storage/unified/search/... -v
-func testBucket(t *testing.T) *blob.Bucket {
-	t.Helper()
-	if bucketURL := os.Getenv("CDK_TEST_BUCKET_URL"); bucketURL != "" {
-		b, err := blob.OpenBucket(context.Background(), bucketURL)
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = b.Close() })
-		return b
-	}
-	dir := t.TempDir()
-	b, err := fileblob.OpenBucket(dir, nil)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = b.Close() })
-	return b
+// Failing a metadata read leaves no candidate, so it waits longer than a file read.
+func TestMetadataRetriesOutlastFileRetries(t *testing.T) {
+	require.Greater(t, snapshotStoreMetadataRetryBackoffConfig.MaxRetries, snapshotStoreRetryBackoffConfig.MaxRetries)
+
+	useFastSnapshotStoreRetries(t)
+	attempts := 0
+	_, err := retryMetadataRemoteIndexStoreValue(t.Context(), "test", nil, func() (struct{}, error) {
+		attempts++
+		return struct{}{}, transientTestError{}
+	})
+	require.Error(t, err)
+	require.Equal(t, snapshotStoreMetadataRetryBackoffConfig.MaxRetries+1, attempts)
 }
 
 func newTestNsResource() resource.NamespacedResource {
@@ -76,23 +67,6 @@ func newTestNsResource() resource.NamespacedResource {
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-}
-
-func newTestRemoteIndexStore(t *testing.T, bucket resource.CDKBucket) *BucketRemoteIndexStore {
-	t.Helper()
-	return newTestRemoteIndexStoreWithLockOwner(t, bucket, newFakeBackend(newConditionalBucket()), "test-owner")
-}
-
-func newTestRemoteIndexStoreWithLockOwner(t *testing.T, bucket resource.CDKBucket, backend lockBackend, owner string) *BucketRemoteIndexStore {
-	t.Helper()
-	opts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
-	return NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
-		Bucket:      bucket,
-		LockBackend: backend,
-		LockOwner:   owner,
-		BuildLock:   opts,
-		CleanupLock: opts,
-	})
 }
 
 // createTestBleveIndex creates a real bleve index with sample documents.
@@ -113,62 +87,21 @@ func createTestBleveIndex(t *testing.T) string {
 	return dir
 }
 
-func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
-	store := newTestRemoteIndexStore(t, testBucket(t))
-	ctx := context.Background()
-	ns := newTestNsResource()
-
-	srcDir := createTestBleveIndex(t)
-	buildStart := time.Now().Add(-2 * time.Hour).UTC().Truncate(time.Second)
-	meta := IndexMeta{
-		BuildVersion:          "11.0.0",
-		LatestResourceVersion: 99,
-		BuildTime:             buildStart,
+// writeTestSnapshotFile writes data as relPath of the snapshot at indexKey.
+// It takes no testing.T so it can run on a helper goroutine.
+func writeTestSnapshotFile(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, data []byte) error {
+	f, err := os.CreateTemp("", "snapshot-file-*")
+	if err != nil {
+		return err
 	}
-
-	indexKey, err := UploadIndexSnapshot(ctx, store, ns, srcDir, meta, testLogger)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
-
-	destDir := filepath.Join(t.TempDir(), "downloaded")
-	gotMeta, err := DownloadIndexSnapshot(ctx, store, ns, indexKey, destDir)
-	require.NoError(t, err)
-	// Manifest paths must be root-relative, forward-slash, and canonical.
-	for k := range gotMeta.Files {
-		require.False(t, strings.HasPrefix(k, "./"), "manifest key %q has ./ prefix", k)
-		require.Equal(t, filepath.ToSlash(filepath.Clean(k)), k, "manifest key %q is not canonical", k)
+	defer func() {
+		_ = f.Close()
+		_ = os.Remove(f.Name())
+	}()
+	if _, err := f.Write(data); err != nil {
+		return err
 	}
-	assert.Equal(t, meta.BuildVersion, gotMeta.BuildVersion)
-	assert.Equal(t, meta.LatestResourceVersion, gotMeta.LatestResourceVersion)
-	assert.True(t, gotMeta.BuildTime.Equal(buildStart),
-		"BuildTime should round-trip: got %s, want %s", gotMeta.BuildTime, buildStart)
-
-	// ListIndexSnapshots must surface the same value.
-	listed, err := ListIndexSnapshots(ctx, store, ns, testLogger)
-	require.NoError(t, err)
-	require.Contains(t, listed, indexKey)
-	assert.True(t, listed[indexKey].BuildTime.Equal(buildStart),
-		"BuildTime should round-trip via ListIndexSnapshots: got %s, want %s",
-		listed[indexKey].BuildTime, buildStart)
-
-	// Open and query the downloaded index
-	idx, err := bleve.Open(destDir)
-	require.NoError(t, err)
-
-	count, err := idx.DocCount()
-	require.NoError(t, err)
-	assert.Equal(t, uint64(3), count)
-
-	result, err := idx.Search(bleve.NewSearchRequest(bleve.NewMatchQuery("Production")))
-	require.NoError(t, err)
-	assert.Equal(t, uint64(1), result.Total)
-	assert.Equal(t, "dash-1", result.Hits[0].ID)
-
-	result2, err := idx.Search(bleve.NewSearchRequest(bleve.NewMatchQuery("ops")))
-	require.NoError(t, err)
-	assert.Equal(t, uint64(2), result2.Total)
-
-	require.NoError(t, idx.Close())
+	return store.WriteSnapshotFile(ctx, ns, indexKey, relPath, f)
 }
 
 // TestRemoteIndexStore_ListIndexes_LegacyMetaWithoutBuildStartTime verifies
@@ -176,23 +109,20 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 // introduced is still accepted by ListIndexSnapshots and surfaces a zero-value
 // BuildTime. Readers must treat zero as "unknown".
 func TestRemoteIndexStore_ListIndexes_LegacyMetaWithoutBuildStartTime(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	t.Cleanup(func() { _ = bucket.Close() })
-	store := newTestRemoteIndexStore(t, bucket)
+	ctx := t.Context()
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 	indexKey := ulid.Make()
 
 	// Hand-crafted manifest with no build_time field at all,
-	// mirroring the on-disk shape of legacy snapshots.
+	// mirroring the stored shape of legacy snapshots.
 	legacyManifest := []byte(`{
 		"build_version": "11.0.0",
 		"upload_timestamp": "2024-01-01T00:00:00Z",
 		"latest_resource_version": 42,
 		"files": {"store/root.bolt": 1}
 	}`)
-	pfx := indexPrefix(ns, indexKey.String())
-	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, legacyManifest, nil))
+	require.NoError(t, store.WriteSnapshotManifest(ctx, ns, indexKey, legacyManifest))
 
 	listed, err := ListIndexSnapshots(ctx, store, ns, testLogger)
 	require.NoError(t, err)
@@ -202,40 +132,6 @@ func TestRemoteIndexStore_ListIndexes_LegacyMetaWithoutBuildStartTime(t *testing
 		listed[indexKey].BuildTime)
 	assert.Equal(t, "11.0.0", listed[indexKey].BuildVersion)
 	assert.Equal(t, int64(42), listed[indexKey].LatestResourceVersion)
-}
-
-func TestRemoteIndexStore_ListAndDeleteIndexes(t *testing.T) {
-	store := newTestRemoteIndexStore(t, testBucket(t))
-	ctx := context.Background()
-	ns := newTestNsResource()
-
-	keys := make([]ulid.ULID, 0, 3)
-	for range 3 {
-		srcDir := createTestBleveIndex(t)
-		meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
-		key, err := UploadIndexSnapshot(ctx, store, ns, srcDir, meta, testLogger)
-		require.NoError(t, err)
-		keys = append(keys, key)
-		t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, key) })
-	}
-
-	indexes, err := ListIndexSnapshots(ctx, store, ns, testLogger)
-	require.NoError(t, err)
-	assert.Len(t, indexes, 3)
-	for _, key := range keys {
-		assert.Contains(t, indexes, key)
-	}
-
-	for _, key := range keys {
-		require.NoError(t, store.DeleteIndex(ctx, ns, key))
-	}
-	indexes, err = ListIndexSnapshots(ctx, store, ns, testLogger)
-	require.NoError(t, err)
-	assert.Empty(t, indexes)
-
-	// Download of a deleted index should fail
-	_, err = DownloadIndexSnapshot(ctx, store, ns, keys[0], filepath.Join(t.TempDir(), "dl"))
-	require.Error(t, err)
 }
 
 func TestValidateIndexSnapshotManifest(t *testing.T) {
@@ -268,13 +164,9 @@ func TestValidateIndexSnapshotManifest(t *testing.T) {
 	}
 }
 
-// --- memblob-only tests (require direct bucket manipulation) ---
-
 func TestRemoteIndexStore_UploadRejectsNonRegularFiles(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
+	ctx := t.Context()
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
@@ -291,13 +183,17 @@ func TestRemoteIndexStore_UploadRejectsNonRegularFiles(t *testing.T) {
 }
 
 func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
+	ctx := t.Context()
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 	key := ulid.Make()
-	pfx := indexPrefix(ns, key.String())
+
+	writeManifest := func(t *testing.T, meta IndexMeta) {
+		t.Helper()
+		metaBytes, err := json.Marshal(meta)
+		require.NoError(t, err)
+		require.NoError(t, store.WriteSnapshotManifest(ctx, ns, key, metaBytes))
+	}
 
 	t.Run("missing snapshot manifest", func(t *testing.T) {
 		_, err := DownloadIndexSnapshot(ctx, store, ns, key, t.TempDir())
@@ -305,90 +201,37 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {
-		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, []byte("{not json"), nil))
+		require.NoError(t, store.WriteSnapshotManifest(ctx, ns, key, []byte("{not json")))
 		_, err := DownloadIndexSnapshot(ctx, store, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "parsing snapshot manifest")
 	})
 
 	t.Run("empty file manifest", func(t *testing.T) {
-		meta := IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{}}
-		metaBytes, err := json.Marshal(meta)
-		require.NoError(t, err)
-		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
-		_, err = DownloadIndexSnapshot(ctx, store, ns, key, t.TempDir())
+		writeManifest(t, IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{}})
+		_, err := DownloadIndexSnapshot(ctx, store, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "empty file manifest")
 	})
 
 	t.Run("non-canonical path", func(t *testing.T) {
-		meta := IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{"store/../store/root.bolt": 100}}
-		metaBytes, err := json.Marshal(meta)
-		require.NoError(t, err)
-		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
-		_, err = DownloadIndexSnapshot(ctx, store, ns, key, t.TempDir())
+		writeManifest(t, IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{"store/../store/root.bolt": 100}})
+		_, err := DownloadIndexSnapshot(ctx, store, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "non-canonical")
 	})
 
 	t.Run("absolute path", func(t *testing.T) {
-		meta := IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{"/etc/passwd": 100}}
-		metaBytes, err := json.Marshal(meta)
-		require.NoError(t, err)
-		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
-		_, err = DownloadIndexSnapshot(ctx, store, ns, key, t.TempDir())
+		writeManifest(t, IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{"/etc/passwd": 100}})
+		_, err := DownloadIndexSnapshot(ctx, store, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid")
 	})
-
-	t.Run("oversized snapshot manifest", func(t *testing.T) {
-		// Write a manifest that exceeds the 1 MiB limit
-		oversized := make([]byte, maxSnapshotManifestSize+1)
-		for i := range oversized {
-			oversized[i] = 'x'
-		}
-		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, oversized, nil))
-		_, err := DownloadIndexSnapshot(ctx, store, ns, key, filepath.Join(t.TempDir(), "dl"))
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "write limit exceeded")
-	})
-}
-
-func TestRemoteIndexStore_DownloadRejectsOversizedFile(t *testing.T) {
-	// A bucket object that exceeds the size advertised in the snapshot manifest
-	// must fail fast — we should not transfer unbounded bytes to disk before
-	// noticing.
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-	ns := newTestNsResource()
-	key := ulid.Make()
-	pfx := indexPrefix(ns, key.String())
-
-	const advertised = 10
-	meta := IndexMeta{
-		BuildVersion: "11.0.0",
-		Files:        map[string]int64{"store/root.bolt": advertised},
-	}
-	metaBytes, err := json.Marshal(meta)
-	require.NoError(t, err)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
-
-	// Plant a file far larger than what the snapshot manifest claims.
-	oversized := bytes.Repeat([]byte("x"), advertised*1000)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", oversized, nil))
-
-	_, err = DownloadIndexSnapshot(ctx, store, ns, key, filepath.Join(t.TempDir(), "dl"))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "exceeds expected size")
 }
 
 func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
+	ctx := t.Context()
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
@@ -396,26 +239,21 @@ func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 	indexKey, err := UploadIndexSnapshot(ctx, store, ns, srcDir, meta, testLogger)
 	require.NoError(t, err)
 
-	// Delete one file from the bucket to simulate partial upload
-	pfx := indexPrefix(ns, indexKey.String())
-	metaRaw, err := bucket.ReadAll(ctx, pfx+snapshotManifestFile)
+	// Delete one data file to simulate a partial upload.
+	gotMeta, err := ReadIndexSnapshotManifest(ctx, store, ns, indexKey)
 	require.NoError(t, err)
-	require.NoError(t, json.Unmarshal(metaRaw, &meta))
-	for relPath := range meta.Files {
-		require.NoError(t, bucket.Delete(ctx, pfx+relPath))
+	for relPath := range gotMeta.Files {
+		require.NoError(t, store.store.Delete(ctx, IndexSnapshotDataSection, store.dataChunkKey(ns, indexKey, relPath, 0)))
 		break
 	}
 
 	_, err = DownloadIndexSnapshot(ctx, store, ns, indexKey, filepath.Join(t.TempDir(), "dl"))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "not found")
+	require.ErrorIs(t, err, ErrSnapshotNotFound)
 }
 
 func TestRemoteIndexStore_UploadRejectsEmptyDirectory(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
+	ctx := t.Context()
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 
 	emptyDir := t.TempDir()
@@ -426,10 +264,8 @@ func TestRemoteIndexStore_UploadRejectsEmptyDirectory(t *testing.T) {
 }
 
 func TestRemoteIndexStore_UploadExcludesMetaJSON(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
+	ctx := t.Context()
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
@@ -440,77 +276,68 @@ func TestRemoteIndexStore_UploadExcludesMetaJSON(t *testing.T) {
 	indexKey, err := UploadIndexSnapshot(ctx, store, ns, srcDir, meta, testLogger)
 	require.NoError(t, err)
 
-	pfx := indexPrefix(ns, indexKey.String())
-	metaBytes, err := bucket.ReadAll(ctx, pfx+snapshotManifestFile)
+	uploaded, err := ReadIndexSnapshotManifest(ctx, store, ns, indexKey)
 	require.NoError(t, err)
-	var uploaded IndexMeta
-	require.NoError(t, json.Unmarshal(metaBytes, &uploaded))
 	require.NotContains(t, uploaded.Files, snapshotManifestFile)
 }
 
-// --- Error injection tests (memblob + errorBucket) ---
-
-type errorBucket struct {
-	resource.CDKBucket
-	uploadErr         error
-	uploadFn          func(key string) error // if set, called before uploadErr
-	manifestUploadErr error                  // fires on Upload only when key is the snapshot manifest object
-	downloadErr       error
-	downloadFn        func(key string) error // if set, called instead of downloadErr
-	deleteErr         error
+// errorStore wraps a RemoteIndexStore and fails selected calls.
+type errorStore struct {
+	RemoteIndexStore
+	writeFileFn      func() error // if set, called before each WriteSnapshotFile
+	writeManifestErr error
+	readFileFn       func() error // if set, called before each ReadSnapshotFile
+	readManifestErr  error
 }
 
-func (e *errorBucket) Upload(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
-	if e.uploadFn != nil {
-		if err := e.uploadFn(key); err != nil {
+func (e *errorStore) WriteSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error {
+	if e.writeFileFn != nil {
+		if err := e.writeFileFn(); err != nil {
 			return err
 		}
 	}
-	if e.uploadErr != nil {
-		return e.uploadErr
-	}
-	if e.manifestUploadErr != nil && strings.HasSuffix(key, "/"+snapshotManifestFile) {
-		return e.manifestUploadErr
-	}
-	return e.CDKBucket.Upload(ctx, key, r, opts)
+	return e.RemoteIndexStore.WriteSnapshotFile(ctx, ns, indexKey, relPath, src)
 }
 
-func (e *errorBucket) Download(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
-	if e.downloadFn != nil {
-		if err := e.downloadFn(key); err != nil {
+func (e *errorStore) WriteSnapshotManifest(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, manifest []byte) error {
+	if e.writeManifestErr != nil {
+		return e.writeManifestErr
+	}
+	return e.RemoteIndexStore.WriteSnapshotManifest(ctx, ns, indexKey, manifest)
+}
+
+func (e *errorStore) ReadSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
+	if e.readFileFn != nil {
+		if err := e.readFileFn(); err != nil {
 			return err
 		}
-	} else if e.downloadErr != nil {
-		return e.downloadErr
 	}
-	return e.CDKBucket.Download(ctx, key, w, opts)
+	return e.RemoteIndexStore.ReadSnapshotFile(ctx, ns, indexKey, relPath, dst, expectedSize)
 }
 
-func (e *errorBucket) Delete(ctx context.Context, key string) error {
-	if e.deleteErr != nil {
-		return e.deleteErr
+func (e *errorStore) ReadSnapshotManifest(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID) ([]byte, error) {
+	if e.readManifestErr != nil {
+		return nil, e.readManifestErr
 	}
-	return e.CDKBucket.Delete(ctx, key)
+	return e.RemoteIndexStore.ReadSnapshotManifest(ctx, ns, indexKey)
 }
 
-func TestRemoteIndexStore_BucketErrors(t *testing.T) {
-	ctx := context.Background()
+func failWith(err error) func() error { return func() error { return err } }
+
+func TestRemoteIndexStore_StoreErrors(t *testing.T) {
+	ctx := t.Context()
 	ns := newTestNsResource()
 
-	uploadSnapshot := func(t *testing.T, bucket *blob.Bucket) ulid.ULID {
+	uploadSnapshot := func(t *testing.T, store RemoteIndexStore) ulid.ULID {
 		t.Helper()
-		store := newTestRemoteIndexStore(t, bucket)
-		srcDir := createTestBleveIndex(t)
-		meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
-		key, err := UploadIndexSnapshot(ctx, store, ns, srcDir, meta, testLogger)
+		key, err := UploadIndexSnapshot(ctx, store, ns, createTestBleveIndex(t),
+			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}, testLogger)
 		require.NoError(t, err)
 		return key
 	}
 
 	t.Run("upload file error", func(t *testing.T) {
-		real := memblob.OpenBucket(nil)
-		defer func() { _ = real.Close() }()
-		store := newTestRemoteIndexStore(t, &errorBucket{CDKBucket: real, uploadErr: fmt.Errorf("upload network timeout")})
+		store := &errorStore{RemoteIndexStore: newTestKVRemoteIndexStore(t), writeFileFn: failWith(fmt.Errorf("upload network timeout"))}
 
 		_, err := UploadIndexSnapshot(ctx, store, ns, createTestBleveIndex(t),
 			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}, testLogger)
@@ -518,29 +345,22 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		require.Contains(t, err.Error(), "upload network timeout")
 	})
 
-	t.Run("snapshot manifest write error", func(t *testing.T) {
-		real := memblob.OpenBucket(nil)
-		defer func() { _ = real.Close() }()
-		store := newTestRemoteIndexStore(t, &errorBucket{CDKBucket: real, manifestUploadErr: fmt.Errorf("write quota exceeded")})
+	t.Run("snapshot manifest write error removes partial upload", func(t *testing.T) {
+		inner := newTestKVRemoteIndexStore(t)
+		store := &errorStore{RemoteIndexStore: inner, writeManifestErr: fmt.Errorf("write quota exceeded")}
 
 		_, err := UploadIndexSnapshot(ctx, store, ns, createTestBleveIndex(t),
 			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}, testLogger)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "write quota exceeded")
+
+		keys, err := inner.ListIndexKeysIncludingIncomplete(ctx, ns)
+		require.NoError(t, err)
+		assert.Empty(t, keys)
 	})
 
 	t.Run("snapshot manifest download error", func(t *testing.T) {
-		real := memblob.OpenBucket(nil)
-		defer func() { _ = real.Close() }()
-		store := newTestRemoteIndexStore(t, &errorBucket{
-			CDKBucket: real,
-			downloadFn: func(key string) error {
-				if strings.HasSuffix(key, "/"+snapshotManifestFile) {
-					return fmt.Errorf("access denied")
-				}
-				return nil
-			},
-		})
+		store := &errorStore{RemoteIndexStore: newTestKVRemoteIndexStore(t), readManifestErr: fmt.Errorf("access denied")}
 
 		_, err := DownloadIndexSnapshot(ctx, store, ns, ulid.Make(), filepath.Join(t.TempDir(), "dl"))
 		require.Error(t, err)
@@ -548,10 +368,9 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 	})
 
 	t.Run("file download error cleans up staging dir", func(t *testing.T) {
-		real := memblob.OpenBucket(nil)
-		defer func() { _ = real.Close() }()
-		key := uploadSnapshot(t, real)
-		store := newTestRemoteIndexStore(t, &errorBucket{CDKBucket: real, downloadErr: fmt.Errorf("connection reset")})
+		inner := newTestKVRemoteIndexStore(t)
+		key := uploadSnapshot(t, inner)
+		store := &errorStore{RemoteIndexStore: inner, readFileFn: failWith(fmt.Errorf("connection reset"))}
 
 		parentDir := t.TempDir()
 		destDir := filepath.Join(parentDir, "downloaded")
@@ -570,26 +389,13 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 	})
 
 	t.Run("download fails if dest already exists", func(t *testing.T) {
-		real := memblob.OpenBucket(nil)
-		defer func() { _ = real.Close() }()
-		key := uploadSnapshot(t, real)
-		store := newTestRemoteIndexStore(t, real)
+		store := newTestKVRemoteIndexStore(t)
+		key := uploadSnapshot(t, store)
 
 		destDir := t.TempDir() // already exists
 		_, err := DownloadIndexSnapshot(ctx, store, ns, key, destDir)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "destination already exists")
-	})
-
-	t.Run("delete error", func(t *testing.T) {
-		real := memblob.OpenBucket(nil)
-		defer func() { _ = real.Close() }()
-		key := uploadSnapshot(t, real)
-		store := newTestRemoteIndexStore(t, &errorBucket{CDKBucket: real, deleteErr: fmt.Errorf("permission denied")})
-
-		err := store.DeleteIndex(ctx, ns, key)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "permission denied")
 	})
 }
 
@@ -625,22 +431,22 @@ func TestRetryRemoteIndexStoreValue_NonRetryable(t *testing.T) {
 
 func TestRemoteIndexStore_RetriesTransientUploadAndDownloadErrors(t *testing.T) {
 	useFastSnapshotStoreRetries(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	ns := newTestNsResource()
 
+	// failFirst returns a hook that fails the first call with a transient error.
+	failFirst := func(attempts *atomic.Int32) func() error {
+		return func() error {
+			if attempts.Add(1) == 1 {
+				return transientTestError{}
+			}
+			return nil
+		}
+	}
+
 	t.Run("upload file", func(t *testing.T) {
-		real := memblob.OpenBucket(nil)
-		defer func() { _ = real.Close() }()
 		var uploadAttempts atomic.Int32
-		store := newTestRemoteIndexStore(t, &errorBucket{
-			CDKBucket: real,
-			uploadFn: func(key string) error {
-				if !strings.HasSuffix(key, "/"+snapshotManifestFile) && uploadAttempts.Add(1) == 1 {
-					return transientTestError{}
-				}
-				return nil
-			},
-		})
+		store := &errorStore{RemoteIndexStore: newTestKVRemoteIndexStore(t), writeFileFn: failFirst(&uploadAttempts)}
 
 		indexKey, err := UploadIndexSnapshot(ctx, store, ns, createTestBleveIndex(t),
 			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}, testLogger)
@@ -653,23 +459,13 @@ func TestRemoteIndexStore_RetriesTransientUploadAndDownloadErrors(t *testing.T) 
 	})
 
 	t.Run("download file", func(t *testing.T) {
-		real := memblob.OpenBucket(nil)
-		defer func() { _ = real.Close() }()
-		seedStore := newTestRemoteIndexStore(t, real)
-		indexKey, err := UploadIndexSnapshot(ctx, seedStore, ns, createTestBleveIndex(t),
+		inner := newTestKVRemoteIndexStore(t)
+		indexKey, err := UploadIndexSnapshot(ctx, inner, ns, createTestBleveIndex(t),
 			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}, testLogger)
 		require.NoError(t, err)
 
 		var downloadAttempts atomic.Int32
-		store := newTestRemoteIndexStore(t, &errorBucket{
-			CDKBucket: real,
-			downloadFn: func(key string) error {
-				if !strings.HasSuffix(key, "/"+snapshotManifestFile) && downloadAttempts.Add(1) == 1 {
-					return transientTestError{}
-				}
-				return nil
-			},
-		})
+		store := &errorStore{RemoteIndexStore: inner, readFileFn: failFirst(&downloadAttempts)}
 
 		destDir := filepath.Join(t.TempDir(), "downloaded")
 		_, err = DownloadIndexSnapshot(ctx, store, ns, indexKey, destDir)
@@ -679,47 +475,9 @@ func TestRemoteIndexStore_RetriesTransientUploadAndDownloadErrors(t *testing.T) 
 	})
 }
 
-func TestRemoteIndexStore_CleanupIncompleteIndexSnapshots(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-	ns := newTestNsResource()
-
-	// Upload a complete index (has a snapshot manifest)
-	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 10}
-	completeKey, err := UploadIndexSnapshot(ctx, store, ns, srcDir, meta, testLogger)
-	require.NoError(t, err)
-
-	// Simulate an incomplete upload: write objects under a ULID prefix without a snapshot manifest
-	incompleteKey := ulid.Make()
-	incompletePfx := indexPrefix(ns, incompleteKey.String())
-	require.NoError(t, bucket.WriteAll(ctx, incompletePfx+"store/root.bolt", []byte("orphaned"), nil))
-	require.NoError(t, bucket.WriteAll(ctx, incompletePfx+"store/00000001.zap", []byte("orphaned"), nil))
-
-	// Cleanup should remove only the incomplete prefix
-	cleaned, err := CleanupIncompleteIndexSnapshots(ctx, store, ns, time.Now(), testLogger)
-	require.NoError(t, err)
-	assert.Equal(t, 1, cleaned)
-
-	// Complete index should still be intact
-	indexes, err := ListIndexSnapshots(ctx, store, ns, testLogger)
-	require.NoError(t, err)
-	assert.Contains(t, indexes, completeKey)
-
-	// Incomplete prefix should be gone
-	iter := bucket.List(&blob.ListOptions{Prefix: incompletePfx})
-	obj, err := iter.Next(ctx)
-	assert.Nil(t, obj)
-	assert.ErrorIs(t, err, io.EOF)
-}
-
 func TestRemoteIndexStore_CleanupIncompleteIndexSnapshots_NoneFound(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
+	ctx := t.Context()
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 
 	// Upload a complete index
@@ -735,10 +493,8 @@ func TestRemoteIndexStore_CleanupIncompleteIndexSnapshots_NoneFound(t *testing.T
 }
 
 func TestRemoteIndexStore_CleanupIncompleteIndexSnapshots_CorruptManifest(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
+	ctx := t.Context()
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 
 	// Upload a valid complete index
@@ -749,9 +505,8 @@ func TestRemoteIndexStore_CleanupIncompleteIndexSnapshots_CorruptManifest(t *tes
 
 	t.Run("invalid JSON manifest", func(t *testing.T) {
 		key := ulid.Make()
-		pfx := indexPrefix(ns, key.String())
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", []byte("data"), nil))
-		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, []byte("{corrupt"), nil))
+		require.NoError(t, writeTestSnapshotFile(ctx, store, ns, key, "store/root.bolt", []byte("data")))
+		require.NoError(t, store.WriteSnapshotManifest(ctx, ns, key, []byte("{corrupt")))
 
 		cleaned, err := CleanupIncompleteIndexSnapshots(ctx, store, ns, time.Now(), testLogger)
 		require.NoError(t, err)
@@ -760,10 +515,9 @@ func TestRemoteIndexStore_CleanupIncompleteIndexSnapshots_CorruptManifest(t *tes
 
 	t.Run("empty files manifest", func(t *testing.T) {
 		key := ulid.Make()
-		pfx := indexPrefix(ns, key.String())
-		require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", []byte("data"), nil))
+		require.NoError(t, writeTestSnapshotFile(ctx, store, ns, key, "store/root.bolt", []byte("data")))
 		emptyMeta, _ := json.Marshal(IndexMeta{BuildVersion: "11.0.0", Files: map[string]int64{}})
-		require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, emptyMeta, nil))
+		require.NoError(t, store.WriteSnapshotManifest(ctx, ns, key, emptyMeta))
 
 		cleaned, err := CleanupIncompleteIndexSnapshots(ctx, store, ns, time.Now(), testLogger)
 		require.NoError(t, err)
@@ -777,386 +531,29 @@ func TestRemoteIndexStore_CleanupIncompleteIndexSnapshots_CorruptManifest(t *tes
 }
 
 func TestRemoteIndexStore_CleanupIncompleteIndexSnapshots_MinAge(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
+	ctx := t.Context()
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 
-	// Create an incomplete prefix with a ULID from 2 hours ago.
+	// Create an incomplete upload with a ULID from 2 hours ago.
 	oldKey, err := ulid.New(ulid.Timestamp(time.Now().Add(-2*time.Hour)), rand.Reader)
 	require.NoError(t, err)
-	oldPfx := indexPrefix(ns, oldKey.String())
-	require.NoError(t, bucket.WriteAll(ctx, oldPfx+"store/root.bolt", []byte("old"), nil))
+	seedIncompleteSnapshot(t, store, ns, oldKey)
 
-	// Create an incomplete prefix with a recent ULID (now).
+	// Create an incomplete upload with a recent ULID (now).
 	recentKey := ulid.Make()
-	recentPfx := indexPrefix(ns, recentKey.String())
-	require.NoError(t, bucket.WriteAll(ctx, recentPfx+"store/root.bolt", []byte("recent"), nil))
+	seedIncompleteSnapshot(t, store, ns, recentKey)
 
-	// Cleanup with a cutoff of 1h ago should only delete the old prefix.
+	// Cleanup with a cutoff of 1h ago should only delete the old upload.
 	cleaned, err := CleanupIncompleteIndexSnapshots(ctx, store, ns, time.Now().Add(-time.Hour), testLogger)
 	require.NoError(t, err)
 	assert.Equal(t, 1, cleaned)
 
-	// Old prefix should be gone.
-	iter := bucket.List(&blob.ListOptions{Prefix: oldPfx})
-	obj, err := iter.Next(ctx)
-	assert.Nil(t, obj)
-	assert.ErrorIs(t, err, io.EOF)
-
-	// Recent prefix should still exist.
-	iter = bucket.List(&blob.ListOptions{Prefix: recentPfx})
-	obj, err = iter.Next(ctx)
-	require.NoError(t, err)
-	assert.NotNil(t, obj)
+	assertNoDataKeys(t, store, ns, oldKey)
+	assert.NotEmpty(t, collectDataKeys(t, store, ns, recentKey))
 }
 
-func TestRemoteIndexStore_LockBuildIndex_AcquireRelease(t *testing.T) {
-	ctx := context.Background()
-	ns := newTestNsResource()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
-
-	lock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
-	require.NoError(t, err)
-
-	select {
-	case <-lock.Lost():
-		t.Fatal("lock should not be lost")
-	default:
-	}
-
-	require.NoError(t, lock.Release())
-}
-
-func TestRemoteIndexStore_LockBuildIndex_Contention(t *testing.T) {
-	ctx := context.Background()
-	ns := newTestNsResource()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-
-	store1 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
-	store2 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-2")
-
-	lock1, err := store1.LockBuildIndex(ctx, ns, "11.5.0")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = lock1.Release() })
-
-	_, err = store2.LockBuildIndex(ctx, ns, "11.5.0")
-	require.ErrorIs(t, err, errLockHeld)
-
-	require.NoError(t, lock1.Release())
-	lock2, err := store2.LockBuildIndex(ctx, ns, "11.5.0")
-	require.NoError(t, err)
-	require.NoError(t, lock2.Release())
-}
-
-func TestRemoteIndexStore_LockBuildIndex_VersionScoped(t *testing.T) {
-	ctx := context.Background()
-	ns := newTestNsResource()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-
-	store1 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
-	store2 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-2")
-
-	lock1, err := store1.LockBuildIndex(ctx, ns, "11.5.0")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = lock1.Release() })
-
-	lock2, err := store2.LockBuildIndex(ctx, ns, "11.6.0")
-	require.NoError(t, err)
-	require.NoError(t, lock2.Release())
-}
-
-func TestRemoteIndexStore_LockBuildIndex_RequiresBuildVersion(t *testing.T) {
-	ctx := context.Background()
-	ns := newTestNsResource()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
-
-	lock, err := store.LockBuildIndex(ctx, ns, "")
-	require.Error(t, err)
-	assert.Nil(t, lock)
-}
-
-func TestRemoteIndexStore_LockBuildIndex_KeyEncodesBuildVersion(t *testing.T) {
-	ns := newTestNsResource()
-	key := buildIndexLockKey(ns, "v11.5.0+security/branch")
-	segment := strings.TrimPrefix(key, resourceSubPath(ns)+"/locks/build-")
-
-	require.NoError(t, validateObjectKey(key))
-	assert.NotEmpty(t, segment)
-	assert.NotContains(t, segment, "/")
-}
-
-func TestRemoteIndexStore_LockBuildIndex_LostAndReleaseAfterLoss(t *testing.T) {
-	ctx := context.Background()
-	ns := newTestNsResource()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
-
-	lock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
-	require.NoError(t, err)
-
-	require.NoError(t, backend.Delete(ctx, buildIndexLockKey(ns, "11.5.0"), "instance-1"))
-
-	select {
-	case <-lock.Lost():
-	case <-time.After(2 * time.Second):
-		t.Fatal("expected lock loss to be detected")
-	}
-
-	err = lock.Release()
-	require.True(t, err == nil || errors.Is(err, errLockNotFound), "expected nil or errLockNotFound, got %v", err)
-	require.NoError(t, lock.Release())
-}
-
-// --- ListNamespaces / ListNamespaceIndexes / LockNamespaceForCleanup ---
-
-func TestRemoteIndexStore_ListNamespaces_Empty(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-
-	got, err := store.ListNamespaces(ctx)
-	require.NoError(t, err)
-	assert.Empty(t, got)
-}
-
-func TestRemoteIndexStore_ListNamespaces(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-
-	// Seed snapshots in three distinct namespaces.
-	for _, ns := range []string{"stack-1", "stack-2", "stack-3"} {
-		nsRes := resource.NamespacedResource{Namespace: ns, Group: "dashboard.grafana.app", Resource: "dashboards"}
-		_, err := UploadIndexSnapshot(ctx, store, nsRes, createTestBleveIndex(t),
-			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1}, testLogger)
-		require.NoError(t, err)
-	}
-
-	got, err := store.ListNamespaces(ctx)
-	require.NoError(t, err)
-	assert.ElementsMatch(t, []string{"stack-1", "stack-2", "stack-3"}, got)
-}
-
-func TestRemoteIndexStore_ListNamespaces_IgnoresStrayObjects(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-
-	// A bare object at the bucket root must not be reported as a namespace.
-	require.NoError(t, bucket.WriteAll(ctx, "stray.txt", []byte("hi"), nil))
-
-	nsRes := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	_, err := UploadIndexSnapshot(ctx, store, nsRes, createTestBleveIndex(t),
-		IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1}, testLogger)
-	require.NoError(t, err)
-
-	got, err := store.ListNamespaces(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, []string{"stack-1"}, got)
-}
-
-func TestRemoteIndexStore_ListNamespaceIndexes(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-
-	resources := []resource.NamespacedResource{
-		{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"},
-		{Namespace: "stack-1", Group: "folder.grafana.app", Resource: "folders"},
-		{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"},
-	}
-	for _, r := range resources {
-		_, err := UploadIndexSnapshot(ctx, store, r, createTestBleveIndex(t),
-			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1}, testLogger)
-		require.NoError(t, err)
-	}
-
-	got, err := store.ListNamespaceResources(ctx, "stack-1")
-	require.NoError(t, err)
-	assert.ElementsMatch(t, []resource.NamespacedResource{
-		{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"},
-		{Namespace: "stack-1", Group: "folder.grafana.app", Resource: "folders"},
-	}, got)
-
-	got, err = store.ListNamespaceResources(ctx, "stack-2")
-	require.NoError(t, err)
-	assert.ElementsMatch(t, []resource.NamespacedResource{
-		{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"},
-	}, got)
-}
-
-func TestRemoteIndexStore_ListNamespaceIndexes_Empty(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-
-	got, err := store.ListNamespaceResources(ctx, "stack-1")
-	require.NoError(t, err)
-	assert.Empty(t, got)
-}
-
-func TestRemoteIndexStore_ListIndexes_SkipsLockSibling(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-	ns := newTestNsResource()
-
-	indexKey, err := UploadIndexSnapshot(ctx, store, ns, createTestBleveIndex(t),
-		IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1}, testLogger)
-	require.NoError(t, err)
-
-	// Plant a `<resource-group>/locks/build-<version>` object directly in the data bucket.
-	// In production the lock backend shares the snapshot bucket, so this prefix
-	// is observable alongside index-key directories. ListIndexSnapshots must skip it.
-	require.NoError(t, bucket.WriteAll(ctx, buildIndexLockKey(ns, "11.0.0"), []byte("{}"), nil))
-
-	indexes, err := ListIndexSnapshots(ctx, store, ns, testLogger)
-	require.NoError(t, err)
-	require.Len(t, indexes, 1)
-	assert.Contains(t, indexes, indexKey)
-}
-
-func TestRemoteIndexStore_ListNamespaceIndexes_SkipsLockSibling(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-
-	nsRes := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	_, err := UploadIndexSnapshot(ctx, store, nsRes, createTestBleveIndex(t),
-		IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1}, testLogger)
-	require.NoError(t, err)
-
-	// Plant a `stack-1/locks/...` object directly in the data bucket. In production
-	// the lock backend shares the snapshot bucket, so this prefix is observable
-	// alongside resource directories. ListNamespaceIndexes must skip it.
-	require.NoError(t, bucket.WriteAll(ctx, "stack-1/locks/cleanup", []byte("{}"), nil))
-
-	got, err := store.ListNamespaceResources(ctx, "stack-1")
-	require.NoError(t, err)
-	assert.Equal(t, []resource.NamespacedResource{nsRes}, got)
-}
-
-func TestRemoteIndexStore_LockNamespaceForCleanup_AcquireRelease(t *testing.T) {
-	ctx := context.Background()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
-
-	lock, err := store.LockNamespaceForCleanup(ctx, "stack-1")
-	require.NoError(t, err)
-	select {
-	case <-lock.Lost():
-		t.Fatal("lock should not be lost")
-	default:
-	}
-	require.NoError(t, lock.Release())
-}
-
-func TestRemoteIndexStore_LockNamespaceForCleanup_Contention(t *testing.T) {
-	ctx := context.Background()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-
-	store1 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
-	store2 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-2")
-
-	lock1, err := store1.LockNamespaceForCleanup(ctx, "stack-1")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = lock1.Release() })
-
-	_, err = store2.LockNamespaceForCleanup(ctx, "stack-1")
-	require.ErrorIs(t, err, errLockHeld)
-
-	// Different namespace must be acquirable independently.
-	lock2, err := store2.LockNamespaceForCleanup(ctx, "stack-2")
-	require.NoError(t, err)
-	require.NoError(t, lock2.Release())
-
-	require.NoError(t, lock1.Release())
-}
-
-func TestRemoteIndexStore_LockNamespaceForCleanup_DistinctFromBuildLock(t *testing.T) {
-	// The cleanup lock must not block the build lock for a resource in the same namespace,
-	// nor vice versa. Both are independently acquirable.
-	ctx := context.Background()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
-	ns := newTestNsResource()
-
-	cleanupLock, err := store.LockNamespaceForCleanup(ctx, ns.Namespace)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = cleanupLock.Release() })
-
-	buildLock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
-	require.NoError(t, err)
-	require.NoError(t, buildLock.Release())
-
-	require.NotEqual(t, cleanupLockKey(ns.Namespace), buildIndexLockKey(ns, "11.5.0"))
-}
-
-// Smoke-tests the LockOptions plumbing. Only TTL is observable in lockInfo;
-// HeartbeatUpdateTimeout behaviour is covered separately on objectStorageLock.
-func TestRemoteIndexStore_BuildAndCleanupLockTTLsWiredIndependently(t *testing.T) {
-	ctx := context.Background()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-
-	buildTTL := 1 * time.Second
-	cleanupTTL := 5 * time.Second
-	store := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
-		Bucket:      bucket,
-		LockBackend: backend,
-		LockOwner:   "instance-1",
-		BuildLock:   LockOptions{TTL: buildTTL, HeartbeatInterval: 200 * time.Millisecond},
-		CleanupLock: LockOptions{TTL: cleanupTTL, HeartbeatInterval: 200 * time.Millisecond},
-	})
-	ns := newTestNsResource()
-
-	buildLock, err := store.LockBuildIndex(ctx, ns, "11.5.0")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = buildLock.Release() })
-
-	info, err := backend.Read(ctx, buildIndexLockKey(ns, "11.5.0"))
-	require.NoError(t, err)
-	require.Equal(t, buildTTL, info.TTL)
-
-	cleanupLock, err := store.LockNamespaceForCleanup(ctx, ns.Namespace)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = cleanupLock.Release() })
-
-	info, err = backend.Read(ctx, cleanupLockKey(ns.Namespace))
-	require.NoError(t, err)
-	require.Equal(t, cleanupTTL, info.TTL)
-}
-
-// hookableStore wraps a real BucketRemoteIndexStore (backed by an in-memory
-// memblob bucket) and adds per-method error injection, call counters,
+// hookableStore wraps a real KVRemoteIndexStore and adds per-method error injection, call counters,
 // mid-call callbacks, and controllable lock loss.
 //
 // Error injection and counters are at the interface-method level
@@ -1167,12 +564,11 @@ func TestRemoteIndexStore_BuildAndCleanupLockTTLsWiredIndependently(t *testing.T
 // keeps test code readable without coupling it to the exact interface
 // shape.
 //
-// Tests seed snapshots by writing directly to the bucket via seedSnapshot or
-// seedDownloadableSnapshot, which lets them pin manifest fields independent
+// Tests seed snapshots by writing directly to the inner store via seedSnapshot
+// or seedDownloadableSnapshot, which lets them pin manifest fields independent
 // of UploadIndexSnapshot's ULID-derived UploadTimestamp.
 type hookableStore struct {
-	inner  *BucketRemoteIndexStore
-	bucket *blob.Bucket
+	inner *KVRemoteIndexStore
 
 	// Error injection. nil means pass through to the inner store.
 	mu                   sync.Mutex
@@ -1205,15 +601,10 @@ type hookableStore struct {
 }
 
 // newHookableStore returns a fresh hookableStore wrapping a real
-// BucketRemoteIndexStore over an in-memory memblob bucket.
+// KVRemoteIndexStore.
 func newHookableStore(t *testing.T) *hookableStore {
 	t.Helper()
-	bucket := memblob.OpenBucket(nil)
-	t.Cleanup(func() { _ = bucket.Close() })
-	return &hookableStore{
-		inner:  newTestRemoteIndexStore(t, bucket),
-		bucket: bucket,
-	}
+	return &hookableStore{inner: newTestKVRemoteIndexStore(t)}
 }
 
 func (s *hookableStore) LockBuildIndex(ctx context.Context, ns resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
@@ -1409,9 +800,9 @@ func (s *hookableStore) getLastLockBuildVersion() string {
 
 // setReadManifestErr installs an error to return on the next
 // ReadSnapshotManifest call for indexKey. Existing snapshot data in the
-// bucket is left in place; only the manifest read for this key fails. Used
+// store is left in place; only the manifest read for this key fails. Used
 // to simulate ErrSnapshotNotFound / ErrInvalidManifest at a specific key
-// without disturbing the bucket.
+// without disturbing the store.
 func (s *hookableStore) setReadManifestErr(indexKey ulid.ULID, err error) {
 	s.mu.Lock()
 	if s.readManifestErrs == nil {
@@ -1448,8 +839,8 @@ func (s *hookableStore) signalLockLost() {
 // hookableLock wraps a real IndexStoreLock so tests can drive lock loss via
 // signalLockLost without depending on real heartbeat timing. The exposed
 // Lost() channel only closes when markLost is called; inner-lock loss is
-// not forwarded, because no test triggers it (real heartbeat loss requires
-// disturbing the bucket entry, which no test does).
+// not forwarded, because no test triggers it (real lease loss requires
+// disturbing the lease entry, which no test does).
 type hookableLock struct {
 	inner       IndexStoreLock
 	lost        chan struct{}
@@ -1477,40 +868,40 @@ func (l *hookableLock) markLost() {
 	l.lostOnce.Do(func() { close(l.lost) })
 }
 
-// seedSnapshot writes a snapshot at indexKey under ns directly to bucket,
-// bypassing store.UploadIndexSnapshot. The snapshot has a single placeholder file
+// seedSnapshot writes a snapshot at indexKey under ns directly to store,
+// bypassing UploadIndexSnapshot. The snapshot has a single placeholder file
 // plus a manifest with the caller-provided meta. Use this when a test only
 // needs the snapshot to be visible to ListIndexSnapshots / ReadIndexSnapshotManifest — the
 // snapshot is not downloadable as a real bleve index.
 //
 // Manifest fields (UploadTimestamp, BuildTime, etc.) are written as-is, so
 // callers can pin arbitrary values independent of indexKey's ULID time.
-func seedSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
+func seedSnapshot(t *testing.T, ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
 	t.Helper()
-	pfx := indexPrefix(ns, indexKey.String())
-	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/data.bin", []byte("x"), nil))
+	require.NoError(t, writeTestSnapshotFile(ctx, store, ns, indexKey, "store/data.bin", []byte("x")))
 	if meta.Files == nil {
 		meta.Files = map[string]int64{"store/data.bin": 1}
 	}
 	metaBytes, err := json.Marshal(meta)
 	require.NoError(t, err)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
+	require.NoError(t, store.WriteSnapshotManifest(ctx, ns, indexKey, metaBytes))
 }
 
 // downloadableSnapshot is a snapshot prepared in memory and ready to be
-// written to a bucket. Building uses testing.T (require.*); publishing
+// written to a store. Building uses testing.T (require.*); publishing
 // returns errors, so the publish step can run on a helper goroutine
 // without violating the testing.TB rule that FailNow must run on the test
 // goroutine.
 type downloadableSnapshot struct {
-	prefix   string
+	ns       resource.NamespacedResource
+	indexKey ulid.ULID
 	files    map[string][]byte
 	manifest []byte
 }
 
 // buildDownloadableSnapshot creates a real (minimal) bleve index for
 // indexKey under ns, walks it into memory, and marshals a manifest. The
-// returned snapshot can be published to any bucket via publish.
+// returned snapshot can be published to any store via publish.
 //
 // The internal buildInfo.BuildTime is taken from meta.BuildTime when
 // non-zero, falling back to meta.UploadTimestamp. This mirrors production:
@@ -1528,9 +919,16 @@ func buildDownloadableSnapshot(t *testing.T, ns resource.NamespacedResource, ind
 	if buildTime.IsZero() {
 		buildTime = meta.UploadTimestamp
 	}
+	// Otherwise the index is rejected after download for missing a required feature.
+	// The manifest keeps meta as given, so "features not recorded" stays testable.
+	indexFeatures := meta.Features
+	if indexFeatures == nil {
+		indexFeatures = resource.CurrentIndexFeatures()
+	}
 	bi, err := json.Marshal(buildInfo{
 		BuildTime:    buildTime.Unix(),
 		BuildVersion: meta.BuildVersion,
+		Features:     indexFeatures,
 	})
 	require.NoError(t, err)
 	require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), bi))
@@ -1566,7 +964,8 @@ func buildDownloadableSnapshot(t *testing.T, ns resource.NamespacedResource, ind
 	require.NoError(t, err)
 
 	return &downloadableSnapshot{
-		prefix:   indexPrefix(ns, indexKey.String()),
+		ns:       ns,
+		indexKey: indexKey,
 		files:    files,
 		manifest: manifest,
 	}
@@ -1575,13 +974,13 @@ func buildDownloadableSnapshot(t *testing.T, ns resource.NamespacedResource, ind
 // publish writes the snapshot's data files first, then the manifest (which
 // is the completion signal). Uses no testing.T, so it is safe to call from
 // a helper goroutine.
-func (s *downloadableSnapshot) publish(ctx context.Context, bucket *blob.Bucket) error {
+func (s *downloadableSnapshot) publish(ctx context.Context, store RemoteIndexStore) error {
 	for rel, data := range s.files {
-		if err := bucket.WriteAll(ctx, s.prefix+rel, data, nil); err != nil {
+		if err := writeTestSnapshotFile(ctx, store, s.ns, s.indexKey, rel, data); err != nil {
 			return fmt.Errorf("writing %s: %w", rel, err)
 		}
 	}
-	return bucket.WriteAll(ctx, s.prefix+snapshotManifestFile, s.manifest, nil)
+	return store.WriteSnapshotManifest(ctx, s.ns, s.indexKey, s.manifest)
 }
 
 // seedDownloadableSnapshot is buildDownloadableSnapshot + publish, for the
@@ -1589,7 +988,7 @@ func (s *downloadableSnapshot) publish(ctx context.Context, bucket *blob.Bucket)
 // need to publish from a helper goroutine, call buildDownloadableSnapshot
 // on the test goroutine and publish from the goroutine via the returned
 // snapshot.
-func seedDownloadableSnapshot(t *testing.T, ctx context.Context, bucket *blob.Bucket, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
+func seedDownloadableSnapshot(t *testing.T, ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
 	t.Helper()
-	require.NoError(t, buildDownloadableSnapshot(t, ns, indexKey, meta).publish(ctx, bucket))
+	require.NoError(t, buildDownloadableSnapshot(t, ns, indexKey, meta).publish(ctx, store))
 }

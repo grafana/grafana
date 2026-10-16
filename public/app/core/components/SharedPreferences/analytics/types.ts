@@ -22,3 +22,13 @@ export interface LanguageChanged extends EventProperty {
   /** The language the user switched to. */
   toLanguage: string;
 }
+
+export interface HomeDashboardChanged extends EventProperty {
+  /** Whether the preference being changed belongs to an org, team, or individual user. */
+  preferenceType: 'org' | 'team' | 'user';
+  /**
+   * Whether a custom home dashboard was set, the reserved "Grafana home" option was chosen
+   * (stops the user > team > org fallback), or the preference was cleared back to the default homepage.
+   */
+  action: 'set' | 'cleared' | 'set_global_home';
+}

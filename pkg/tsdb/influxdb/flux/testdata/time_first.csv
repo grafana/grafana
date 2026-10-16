@@ -1,8 +1,0 @@
-#group,false,false,false,false
-#datatype,string,long,double,dateTime:RFC3339
-#default,_result,,,
-,result,table,_value,_time
-,,0,10,2021-06-01T10:34:37Z
-,,0,20,2021-06-01T10:34:47Z
-,,0,30,2021-06-01T10:34:57Z
-,,0,40,2021-06-01T10:35:07Z

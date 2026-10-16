@@ -16,7 +16,7 @@ export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
       name: authStepText,
       title: authStepText,
       submitOnNext: true,
-      formFields: ['repository.url', 'repository.token', 'repository.tokenUser'],
+      formFields: ['repository.url', 'repository.token', 'repository.tokenUser', 'repository.email'],
     },
     {
       id: 'connection',
@@ -125,7 +125,7 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
   return { status: 'idle' };
 }
 
-const AUTH_TYPE_FIELDS = new Set(['repository.token', 'repository.tokenUser', 'repository.url']);
+const AUTH_TYPE_FIELDS = new Set(['repository.token', 'repository.tokenUser', 'repository.url', 'repository.email']);
 
 function getEarliestErrorStep(fieldErrors: ErrorDetails[]): WizardStep {
   const formErrors = getFormErrors(fieldErrors);

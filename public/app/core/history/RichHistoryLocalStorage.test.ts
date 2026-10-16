@@ -23,10 +23,21 @@ dsMock.init(
   ''
 );
 
+const datasources: Record<string, { uid: string; name: string }> = {
+  'name-of-dev-test': { uid: 'dev-test', name: 'name-of-dev-test' },
+  'name-of-dev-test-2': { uid: 'dev-test-2', name: 'name-of-dev-test-2' },
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => dsMock,
+  getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
+    if (typeof nameOrUid === 'string') {
+      return Promise.resolve(datasources[nameOrUid]);
+    }
+    return Promise.resolve(Object.values(datasources).find((ds) => ds.uid === nameOrUid.uid));
+  },
 }));
 
 let loggerMock: MonitoringLogger;

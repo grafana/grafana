@@ -1,9 +1,10 @@
-import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
+import { type UserEvent } from '@testing-library/user-event';
+import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import * as pluginSettings from '@grafana/runtime/unstable';
+import * as runtime from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -15,6 +16,7 @@ import { mimirDataSource } from '../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupPluginsExtensionsHook } from '../testSetup/plugins';
+import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from '../utils/rule-form';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -27,11 +29,21 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
+jest.setTimeout(60 * 1000);
+
 setupMswServer();
 mimirDataSource();
 
 // Setup plugin extensions hook to prevent setPluginLinksHook errors
 setupPluginsExtensionsHook();
+
+// Paste in one event instead of typing char-by-char, which re-renders the heavy
+// rule-editor form on every keystroke and is the largest CI-amplified cost here.
+async function pasteIntoInput(user: UserEvent, input: HTMLElement, value: string) {
+  await user.click(input);
+  await user.clear(input);
+  await user.paste(value);
+}
 
 describe('RuleEditor cloud', () => {
   beforeAll(() => {
@@ -39,9 +51,12 @@ describe('RuleEditor cloud', () => {
   });
 
   beforeEach(() => {
+    localStorage.removeItem(SIMPLIFIED_QUERY_EDITOR_KEY);
+    localStorage.removeItem(MANUAL_ROUTING_KEY);
+
     // Mock getPluginSettings to ensure labels plugin is not detected
     // This ensures consistent test behavior across OSS and Enterprise environments
-    jest.spyOn(pluginSettings, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
+    jest.spyOn(runtime, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
 
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
@@ -59,8 +74,11 @@ describe('RuleEditor cloud', () => {
   it('can create a new cloud alert', async () => {
     const { user } = renderRuleEditor();
 
+    await ui.inputs.name.find();
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
+
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
-    expect(removeExpressionsButtons).toHaveLength(2);
+    expect(removeExpressionsButtons).toHaveLength(1);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
     expect(await screen.findByText('Data source-managed')).toBeInTheDocument();
@@ -80,17 +98,14 @@ describe('RuleEditor cloud', () => {
     await user.click(dataSourceSelect);
     await user.click(screen.getByText(MIMIR_DATASOURCE_UID));
 
-    await user.type(await ui.inputs.expr.find(), 'up == 1');
+    await pasteIntoInput(user, await ui.inputs.expr.find(), 'up == 1');
 
-    await user.type(ui.inputs.name.get(), 'my great new rule');
+    await pasteIntoInput(user, ui.inputs.name.get(), 'my great new rule');
     await clickSelectOption(ui.inputs.namespace.get(), NAMESPACE_2);
     await clickSelectOption(ui.inputs.group.get(), GROUP_3);
 
-    await user.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await user.type(ui.inputs.annotationValue(1).get(), 'some description');
-
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await user.click(ui.buttons.addLabel.get());
+    await pasteIntoInput(user, ui.inputs.annotationValue(0).get(), 'some summary');
+    await pasteIntoInput(user, ui.inputs.annotationValue(1).get(), 'some description');
 
     // save and check what was sent to backend
     const capture = captureRequests();
@@ -104,8 +119,11 @@ describe('RuleEditor cloud', () => {
   it('should keep existing rule interval duration when attaching new rules', async () => {
     const { user } = renderRuleEditor();
 
+    await ui.inputs.name.find();
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
+
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
-    expect(removeExpressionsButtons).toHaveLength(2);
+    expect(removeExpressionsButtons).toHaveLength(1);
 
     // Needs to wait for feature discovery API call to finish - Check if ruler enabled
     expect(await screen.findByText('Data source-managed')).toBeInTheDocument();
@@ -125,17 +143,14 @@ describe('RuleEditor cloud', () => {
     await user.click(dataSourceSelect);
     await user.click(screen.getByText(MIMIR_DATASOURCE_UID));
 
-    await user.type(await ui.inputs.expr.find(), 'up == 1');
+    await pasteIntoInput(user, await ui.inputs.expr.find(), 'up == 1');
 
-    await user.type(ui.inputs.name.get(), 'my great new rule with 3m interval');
+    await pasteIntoInput(user, ui.inputs.name.get(), 'my great new rule with 3m interval');
     await clickSelectOption(ui.inputs.namespace.get(), NAMESPACE_2);
     await clickSelectOption(ui.inputs.group.get(), GROUP_4);
 
-    await user.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await user.type(ui.inputs.annotationValue(1).get(), 'some description');
-
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await user.click(ui.buttons.addLabel.get());
+    await pasteIntoInput(user, ui.inputs.annotationValue(0).get(), 'some summary');
+    await pasteIntoInput(user, ui.inputs.annotationValue(1).get(), 'some description');
 
     // save and check what was sent to backend
     const capture = captureRequests();

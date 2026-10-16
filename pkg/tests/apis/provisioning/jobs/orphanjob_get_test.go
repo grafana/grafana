@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -20,7 +19,6 @@ import (
 // specifically created for missing or terminating repositories.
 func TestIntegrationProvisioning_OrphanCleanupJobGetEndpoint(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	for _, action := range []provisioning.JobAction{
 		provisioning.JobActionReleaseResources,
@@ -42,7 +40,7 @@ func TestIntegrationProvisioning_OrphanCleanupJobGetEndpoint(t *testing.T) {
 				SubResource("jobs").
 				Body(body).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).StatusCode(&statusCode)
+				Do(t.Context()).StatusCode(&statusCode)
 			require.NoError(t, result.Error(), "admin should be able to create %s job", action)
 			require.Equal(t, http.StatusAccepted, statusCode)
 
@@ -58,7 +56,7 @@ func TestIntegrationProvisioning_OrphanCleanupJobGetEndpoint(t *testing.T) {
 			// because there are no managed resources for a nonexistent repo).
 			var historicJob *unstructured.Unstructured
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				got, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "jobs", jobUID)
+				got, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "jobs", jobUID)
 				if !assert.NoError(collect, err, "GET by UID should succeed for nonexistent repo") {
 					return
 				}
@@ -75,7 +73,7 @@ func TestIntegrationProvisioning_OrphanCleanupJobGetEndpoint(t *testing.T) {
 			})
 
 			t.Run("GET job list returns at least one job", func(t *testing.T) {
-				listResult, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "jobs")
+				listResult, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "jobs")
 				require.NoError(t, err, "GET job list should succeed for nonexistent repo")
 
 				list, err := listResult.ToList()

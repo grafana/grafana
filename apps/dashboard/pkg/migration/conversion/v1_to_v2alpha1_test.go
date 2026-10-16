@@ -751,3 +751,57 @@ func TestV1ToV2alpha1_TimezoneEmptyString(t *testing.T) {
 	assert.Nil(t, v2alpha1Dash.Spec.TimeSettings.Timezone,
 		"timezone: '' from V1 should produce nil Timezone in V2, not 'browser'")
 }
+
+// TestV1ToV2alpha1_AnnotationPanelFilterInt64Ids verifies that v1 dashboards whose
+// annotation panel-filter references a panel id outside the uint32 range survive
+// conversion to v2alpha1.
+func TestV1ToV2alpha1_AnnotationPanelFilterInt64Ids(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	const largePanelID int64 = 23763571993
+
+	v1Dash := &dashv1.Dashboard{
+		Spec: dashv1.DashboardSpec{
+			Object: map[string]interface{}{
+				"title": "Int64 panel id annotation filter",
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":    "Filtered annotation",
+							"enable":  true,
+							"builtIn": false,
+							"datasource": map[string]interface{}{
+								"type": "prometheus",
+								"uid":  "existing-ref-uid",
+							},
+							"filter": map[string]interface{}{
+								"exclude": false,
+								// JSON numbers decode as float64, mirroring the live path.
+								"ids": []interface{}{float64(largePanelID), float64(9999999999)},
+							},
+							"target": map[string]interface{}{
+								"refId": "Anno",
+							},
+							"type": "prometheus",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var v2alpha1Dash dashv2alpha1.Dashboard
+	err = scheme.Convert(v1Dash, &v2alpha1Dash, nil)
+	require.NoError(t, err)
+
+	require.Len(t, v2alpha1Dash.Spec.Annotations, 1)
+	filter := v2alpha1Dash.Spec.Annotations[0].Spec.Filter
+	require.NotNil(t, filter)
+	require.Equal(t, []float64{float64(largePanelID), 9999999999}, filter.Ids)
+}

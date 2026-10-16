@@ -36,7 +36,26 @@ If you've used popular UI and web design tools, then designing canvases will fee
 With all of these dynamic elements, there's almost no limit to what a canvas can display.
 
 {{< admonition type="note" >}}
-We'd love your feedback on the canvas visualization. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fcanvas) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fcanvas&title=Canvas:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+We'd love your feedback on the canvas visualization. Please check out the [open GitHub issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fcanvas) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fcanvas&title=Canvas:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+{{< /admonition >}}
+
+## Plugin information
+
+Starting with Grafana 13.3, the canvas visualization loads as a standalone plugin by default, instead of as a core plugin. The standalone plugin can get updates between Grafana releases. Existing dashboards that use canvas continue to work.
+
+Grafana bundles the standalone plugin, so you don't need to install it. If you use a slim Docker image, install the plugin from **Administration > Plugins and data > Plugins** first.
+
+In Grafana 13.3 and later 13.x releases, you can go back to the core plugin. To do so, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) and restart Grafana:
+
+```ini
+[plugin.canvas]
+as_external = false
+```
+
+Grafana 14.0 will remove the core plugin. After you upgrade to Grafana 14.0, the standalone plugin will be the only canvas plugin, and the `as_external` setting will have no effect.
+
+{{< admonition type="note" >}}
+On Grafana Cloud, the canvas plugin is managed by Grafana and updates automatically.
 {{< /admonition >}}
 
 ## Configure a canvas visualization
@@ -130,7 +149,7 @@ The server element lets you easily represent a single server, a stack of servers
 
 #### Button
 
-The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
+The button element lets you add a basic button to the canvas. Button elements are available when **Experimental element types** is enabled. They support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
 
 {{< admonition type="note" >}}
 A button click will only trigger an API call when [inline editing](#inline-editing) is disabled.
@@ -247,34 +266,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 #### Experimental Element types
 
-Toggle the switch to include experimental element types in the available selections.
-
-#### Pan and zoom
-
-You can enable panning and zooming in a canvas. This allows you to both create and navigate more complex designs.
-
-{{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
-
-Use the following pointer and keyboard strokes:
-
-- **Zoom in** - Scroll up
-- **Zoom out** - Scroll down
-- **Pan** - Middle mouse/wheel + drag OR Control + right-click + drag
-- **Reset** - Double-click
-
-{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" alt="Canvas pan and zoom enablement video" >}}
-
-##### Zoom to content
-
-When you toggle on the **Zoom to content** switch, Grafana automatically adjusts the view to fit all visible elements in your canvas visualization into the viewport, adding a small margin around the edges. This makes it easy to reset your view, present content, or switch between devices without losing your framing. The content will re‑fit even if you resize the panel.
-
-##### Infinite panning
-
-You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
-
-{{< admonition type="note" >}}
-Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
-{{< /admonition >}}
+Toggle the switch to include experimental element types in the available selections, including **Button**, **Wind Turbine**, **Drone Top**, **Drone Front**, and **Drone Side**. This option is on by default.
 
 ### Tooltip options
 
@@ -465,12 +457,13 @@ To add a data link, follow these steps:
    | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
    | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
    | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                                                                    |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | Connection           | Specify how the action's HTTP request is sent. Choose from: **Direct from browser** or routed through a configured data source.                                                                                                             |
+   | Method               | Select from **POST** or **GET**.                                                                                                                                                                                                            |
    | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                             |
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
    | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
    | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                                                                     |
-   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                                                            |
+   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**.                                                                                                            |
    | Body                 | The body of the request.                                                                                                                                                                                                                    |
 
 1. Click **Save** to save changes and close the dialog box.

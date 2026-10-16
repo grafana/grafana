@@ -11,15 +11,16 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
-// preferencesCountValidation enforces strict count parity between the legacy
+// PreferencesCountValidation enforces strict count parity between the legacy
 // preferences table and unified storage, counting exactly what the migrator
 // emits: distinct owners (namespace, valid user, valid team), excluding
 // orphans. See countLegacy.
-func preferencesCountValidation(resource schema.GroupResource) migrations.ValidatorFactory {
+func PreferencesCountValidation(resource schema.GroupResource) migrations.ValidatorFactory {
 	return func(client resourcepb.ResourceIndexClient, driverName string) migrations.Validator {
 		return &preferencesCountValidator{
 			resource:   resource,
@@ -163,7 +164,7 @@ func (v *preferencesCountValidator) countUnified(ctx context.Context, sess *xorm
 		Namespace: summary.Namespace,
 		Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
 	})
-	if err != nil {
+	if err := resource.ErrorFromResponse(statsResp.GetError(), err); err != nil {
 		return 0, err
 	}
 	for _, stat := range statsResp.Stats {

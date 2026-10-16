@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
 
 import { type DataFrame, type TimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { hasVisibleLegendSeries, PlotLegend, type UPlotConfigBuilder } from '@grafana/ui/internal';
+import { hasVisibleLegendSeries, PlotLegend, shouldShowLegend, type UPlotConfigBuilder } from '@grafana/ui/internal';
 import { type TimeSeriesLegendOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 
 import { GraphNG, type GraphNGProps, type PropDiffFn } from '../GraphNG/GraphNG';
@@ -42,21 +41,12 @@ export function TimeSeries(props: TimeSeriesProps) {
 
   const renderLegend = useCallback(
     (uPlotConfig: UPlotConfigBuilder) => {
-      if (!uPlotConfig || (legend && !legend.showLegend) || !hasVisibleLegendSeries(uPlotConfig, frames)) {
+      if (!uPlotConfig || (legend && !shouldShowLegend(legend)) || !hasVisibleLegendSeries(uPlotConfig, frames)) {
         return null;
       }
 
-      const enableFacetedFilter = config.featureToggles.vizLegendFacetedFilter && legend?.enableFacetedFilter;
-      const facetedFilterPinned = config.featureToggles.vizLegendFacetedFilter && legend?.facetedFilterPinned;
       return (
-        <PlotLegend
-          data={frames}
-          config={uPlotConfig}
-          {...legend}
-          enableFacetedFilter={enableFacetedFilter}
-          facetedFilterPinned={facetedFilterPinned}
-          onPinnedToSidebarChange={onPinnedToSidebarChange}
-        />
+        <PlotLegend data={frames} config={uPlotConfig} {...legend} onPinnedToSidebarChange={onPinnedToSidebarChange} />
       );
     },
     [legend, frames, onPinnedToSidebarChange]

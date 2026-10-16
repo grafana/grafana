@@ -6,6 +6,7 @@ import {
   type GetConnectionRepositoriesApiResponse,
   useGetConnectionRepositoriesQuery,
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, Field, Input } from '@grafana/ui';
 
@@ -34,14 +35,15 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
   ]);
 
   const isGitBased = isGitProvider(type);
-  const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
+  const isGitHubAppAuth = isGitProvider(type) && githubAuthType !== 'pat';
+  const listsRepositories = isGitHubAppAuth && type !== 'git';
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const {
     data: connectionRepositories,
     isLoading: repositoriesLoading,
     error: repositoriesError,
   } = useGetConnectionRepositoriesQuery(
-    isGitHubAppAuth && githubAppConnectionName && isSelectedConnectionReady
+    listsRepositories && githubAppConnectionName && isSelectedConnectionReady
       ? { name: githubAppConnectionName }
       : skipToken
   );
@@ -59,10 +61,10 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
       noMargin
       label={gitFields.urlConfig.label}
       description={
-        !isSelectedConnectionReady && isGitHubAppAuth
+        !isSelectedConnectionReady && listsRepositories
           ? t(
               'provisioning.wizard.connection-not-ready',
-              'The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.'
+              'The selected connection is not ready. The list will be refreshed once the connection is ready.'
             )
           : gitFields.urlConfig.description
       }
@@ -77,8 +79,9 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
         rules={gitFields.urlConfig.validation}
         render={({ field: { ref, onChange, ...field } }) => (
           <>
-            {isGitHubAppAuth ? (
+            {listsRepositories ? (
               <Combobox
+                data-testid={selectors.pages.Provisioning.Wizard.repositoryUrlInput}
                 invalid={Boolean(errors?.repository?.url?.message || repositoriesError)}
                 onChange={(option) => onChange(option?.value || '')}
                 placeholder={gitFields.urlConfig.placeholder}
@@ -90,7 +93,13 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
                 {...field}
               />
             ) : (
-              <Input {...field} id="repository-url" placeholder={gitFields.urlConfig.placeholder} onChange={onChange} />
+              <Input
+                {...field}
+                id="repository-url"
+                data-testid={selectors.pages.Provisioning.Wizard.repositoryUrlInput}
+                placeholder={gitFields.urlConfig.placeholder}
+                onChange={onChange}
+              />
             )}
           </>
         )}

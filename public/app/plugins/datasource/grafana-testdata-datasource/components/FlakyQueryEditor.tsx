@@ -1,10 +1,12 @@
 import { type FormEvent } from 'react';
 
+import { type SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, Icon } from '@grafana/ui';
 
 import { type EditorProps } from '../QueryEditor';
+import { type TestDataErrorSource } from '../dataquery';
 
-const ERROR_SOURCE_OPTIONS = [
+const ERROR_SOURCE_OPTIONS: Array<SelectableValue<TestDataErrorSource>> = [
   {
     label: 'Plugin',
     value: 'plugin',
@@ -64,6 +66,29 @@ const FlakyQueryEditor = ({ query, onChange }: EditorProps) => {
               onChange({ ...query, errorSource: v.value });
             }}
             width={16}
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField labelWidth={14} label="Query delay" tooltip="Base delay applied to each request (e.g. 1s, 500ms)">
+          <Input width={8} name="queryDelay" placeholder="5s" value={query.queryDelay} onChange={onInputChange} />
+        </InlineField>
+        <InlineField
+          labelWidth={20}
+          label="Delay variability"
+          tooltip="Randomizes the query delay by +/- this percentage. 100% on a 1s delay sleeps between 0 and 2s"
+        >
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            step={5}
+            width={8}
+            onChange={onInputChange}
+            name="queryDelayVariability"
+            placeholder="0"
+            value={query.queryDelayVariability}
+            suffix={<Icon name="percentage" />}
           />
         </InlineField>
       </InlineFieldRow>

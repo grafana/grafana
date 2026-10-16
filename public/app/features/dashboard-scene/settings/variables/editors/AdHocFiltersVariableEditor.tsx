@@ -9,7 +9,7 @@ import {
   getDataSourceRef,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction, getDataSourceInstance } from '@grafana/runtime';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -47,7 +47,9 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
 
   const groupByOriginFilters = useMemo(() => originalFilters.filter(isGroupByOriginFilter), [originalFilters]);
 
-  const groupByEnabled = config.featureToggles.dashboardUnifiedDrilldownControls && enableGroupBy;
+  const groupByEnabled = Boolean(
+    config.featureToggles.dashboardUnifiedDrilldownControls && enableGroupBy && datasourceRef
+  );
 
   const updateOriginalFilters = useCallback(
     (filters: AdHocFilterWithLabels[]) => {
@@ -59,7 +61,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   );
 
   const originFiltersController = useMemo(() => {
-    if (!config.featureToggles.adHocFilterDefaultValues && !config.featureToggles.dashboardUnifiedDrilldownControls) {
+    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
       return undefined;
     }
 
@@ -100,7 +102,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   };
 
   const { value: datasourceSettings } = useAsync(async () => {
-    return await getDataSourceSrv().get(datasourceRef);
+    return await getDataSourceInstance(datasourceRef);
   }, [datasourceRef]);
 
   const message = datasourceSettings?.getTagKeys
@@ -115,7 +117,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
 
   const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
-    const dsInstance = await getDataSourceSrv().get(dsRef);
+    const dsInstance = await getDataSourceInstance(dsRef);
 
     variable.setState({
       datasource: dsRef,
@@ -154,7 +156,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       datasource={datasourceRef ?? undefined}
       infoText={message}
       allowCustomValue={allowCustomValue}
-      enableGroupBy={enableGroupBy}
+      enableGroupBy={enableGroupBy ?? !datasourceRef}
       onDataSourceChange={onDataSourceChange}
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}

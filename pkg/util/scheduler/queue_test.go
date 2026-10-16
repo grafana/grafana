@@ -8,11 +8,13 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -53,7 +55,7 @@ func TestQueue(t *testing.T) {
 		var processed atomic.Int32
 
 		// Enqueue items
-		for i := 0; i < numItems; i++ {
+		for range numItems {
 			err := q.Enqueue(ctx, tenantID, func() {
 				processed.Add(1)
 			})
@@ -63,17 +65,15 @@ func TestQueue(t *testing.T) {
 		require.Equal(t, 1, q.ActiveTenantsLen(), "Active tenants after enqueue")
 
 		// Dequeue items
-		for i := 0; i < numItems; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+		for range numItems {
+			wg.Go(func() {
 				dequeueCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 				defer cancel()
 				runnable, err := q.Dequeue(dequeueCtx)
 				require.NoError(t, err, "Dequeue should succeed")
 				require.NotNil(t, runnable, "Dequeued runnable should not be nil")
 				runnable()
-			}()
+			})
 		}
 
 		wg.Wait()
@@ -85,14 +85,14 @@ func TestQueue(t *testing.T) {
 		qSimple := NewQueue(QueueOptionsWithDefaults(nil))
 		require.NoError(t, services.StartAndAwaitRunning(ctx, qSimple))
 
-		for i := 0; i < numItems; i++ {
+		for range numItems {
 			err := qSimple.Enqueue(ctx, tenantID, func() {})
 			require.NoError(t, err)
 		}
 		require.Equal(t, numItems, qSimple.Len(), "Queue length after enqueue (simple)")
 		require.Equal(t, 1, qSimple.ActiveTenantsLen(), "Active tenants after enqueue (simple)")
 
-		for i := 0; i < numItems; i++ {
+		for i := range numItems {
 			dequeueCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 			runnable, err := qSimple.Dequeue(dequeueCtx)
 			cancel() // Cancel context after use
@@ -152,7 +152,7 @@ func TestQueue(t *testing.T) {
 		dequeueTimeout := 3 * time.Second
 
 		// Dequeue and execute the four items
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			// Use a more reliable context with longer timeout for CI environments
 			dequeueCtx, cancel := context.WithTimeout(ctx, dequeueTimeout)
 			runnable, err := q.Dequeue(dequeueCtx)
@@ -321,7 +321,7 @@ func TestQueue(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		// Start consumers first (they'll block until items are available)
-		for i := 0; i < numConsumers; i++ {
+		for i := range numConsumers {
 			wg.Add(1)
 			go func(consumerID int) {
 				defer wg.Done()
@@ -356,13 +356,13 @@ func TestQueue(t *testing.T) {
 		}
 
 		// Start producers
-		for i := 0; i < numProducers; i++ {
+		for i := range numProducers {
 			wg.Add(1)
 			go func(producerID int) {
 				defer wg.Done()
 				tenantID := fmt.Sprintf("tenant-%d", producerID%3) // Use 3 different tenants
 
-				for j := 0; j < itemsPerProducer; j++ {
+				for j := range itemsPerProducer {
 					itemID := fmt.Sprintf("p%d-item%d", producerID, j)
 
 					err := q.Enqueue(ctx, tenantID, func() {
@@ -428,7 +428,7 @@ func TestQueue(t *testing.T) {
 		require.NoError(t, err)
 
 		// Enqueue regular items for other tenants
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			wg.Add(1)
 			err := q.Enqueue(ctx, tenantB, func() {
 				defer wg.Done()
@@ -453,9 +453,9 @@ func TestQueue(t *testing.T) {
 		require.NoError(t, err)
 
 		// Start multiple dequeuer goroutines
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			go func() {
-				for j := 0; j < 2; j++ { // Each will dequeue 2 items
+				for range 2 { // Each will dequeue 2 items
 					dequeueCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 					runnable, err := q.Dequeue(dequeueCtx)
 					cancel()
@@ -574,16 +574,14 @@ func TestQueue(t *testing.T) {
 
 		// Start a goroutine to dequeue and run the item
 		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 			runnable, err := q.Dequeue(ctx)
 			require.NoError(t, err)
 			require.NotNil(t, runnable)
 			runnable()
-		}()
+		})
 
 		// Wait for the item to be processed
 		select {
@@ -602,4 +600,428 @@ func TestQueue(t *testing.T) {
 		err = q.Enqueue(context.Background(), "tenant1", func() {})
 		require.ErrorIs(t, err, ErrQueueClosed)
 	})
+
+	t.Run("Execution", func(t *testing.T) {
+		t.Run("AggregateInFlight", func(t *testing.T) {
+			q := newExecutionTestQueue(t, 1)
+			require.Zero(t, testutil.ToFloat64(q.inFlight))
+			work := make([]func(), 0, 32)
+			for i := range 32 {
+				require.NoError(t, q.Enqueue(t.Context(), fmt.Sprintf("tenant-%d", i), func() {}))
+				work = append(work, dequeueExecution(t, q))
+			}
+			require.NoError(t, testutil.CollectAndCompare(q.inFlight, strings.NewReader(`
+# HELP grafana_resource_server_qos_in_flight Number of reserved or executing requests across all tenants
+# TYPE grafana_resource_server_qos_in_flight gauge
+grafana_resource_server_qos_in_flight 32
+`)))
+			for _, fn := range work {
+				fn()
+			}
+			require.Zero(t, q.Len())
+			require.Zero(t, testutil.ToFloat64(q.inFlight))
+		})
+
+		t.Run("TenantIsolation", func(t *testing.T) {
+			q := newExecutionTestQueue(t, 4)
+			startExecutionTestScheduler(t, q, 32)
+
+			release := make(chan struct{})
+			unblock := sync.OnceFunc(func() { close(release) })
+			t.Cleanup(unblock)
+			started := make(chan struct{}, 5)
+			for range 5 {
+				require.NoError(t, q.Enqueue(t.Context(), "slow", func() { started <- struct{}{}; <-release }))
+			}
+			for range 4 {
+				awaitExecutionSignal(t, started)
+			}
+			healthy := make(chan struct{})
+			require.NoError(t, q.Enqueue(t.Context(), "healthy", func() { close(healthy) }))
+			awaitExecutionSignal(t, healthy)
+			require.Equal(t, 1, q.Len())
+			require.Len(t, started, 0, "the fifth request must remain queued")
+			require.Eventually(t, func() bool { return testutil.ToFloat64(q.inFlight) == 4 }, time.Second, time.Millisecond)
+			unblock()
+			awaitExecutionSignal(t, started)
+			require.Eventually(t, func() bool { return testutil.ToFloat64(q.inFlight) == 0 }, time.Second, time.Millisecond)
+		})
+
+		t.Run("FairnessAndFIFO", func(t *testing.T) {
+			q := newExecutionTestQueue(t, 1)
+			var order []string
+			for _, tenant := range []string{"a", "b", "c"} {
+				for i := range 2 {
+					id := fmt.Sprintf("%s%d", tenant, i)
+					require.NoError(t, q.Enqueue(t.Context(), tenant, func() { order = append(order, id) }))
+				}
+			}
+			a := dequeueExecution(t, q)
+			b := dequeueExecution(t, q)
+			c := dequeueExecution(t, q)
+			require.Equal(t, 3, q.Len())
+			b()
+			b2 := dequeueExecution(t, q)
+			b2()
+			a()
+			a2 := dequeueExecution(t, q)
+			a2()
+			c()
+			c2 := dequeueExecution(t, q)
+			c2()
+			require.Equal(t, []string{"b0", "b1", "a0", "a1", "c0", "c1"}, order)
+			require.Zero(t, q.Len())
+			require.Zero(t, q.ActiveTenantsLen())
+			require.Zero(t, testutil.ToFloat64(q.inFlight))
+		})
+
+		t.Run("RoundRobinAmongEligibleTenants", func(t *testing.T) {
+			q := newExecutionTestQueue(t, 2)
+			var order []string
+			for _, tenant := range []string{"a", "b", "c"} {
+				for i := range 2 {
+					id := fmt.Sprintf("%s%d", tenant, i)
+					require.NoError(t, q.Enqueue(t.Context(), tenant, func() { order = append(order, id) }))
+				}
+			}
+			for range 6 {
+				dequeueExecution(t, q)()
+			}
+			require.Equal(t, []string{"a0", "b0", "c0", "a1", "b1", "c1"}, order)
+		})
+
+		t.Run("Cancellation", func(t *testing.T) {
+			t.Run("queued cancellation frees queue space without a worker", func(t *testing.T) {
+				q := newExecutionTestQueue(t, 1)
+				ctx, cancel := context.WithCancel(t.Context())
+				require.NoError(t, q.Enqueue(ctx, "a", func() { t.Error("canceled work ran") }))
+				cancel()
+				require.Eventually(t, func() bool { return q.Len() == 0 && q.ActiveTenantsLen() == 0 }, time.Second, time.Millisecond)
+				require.Equal(t, float64(1), testutil.ToFloat64(q.discardedRequests.WithLabelValues("a", "context_canceled")))
+				require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+				dequeueExecution(t, q)()
+			})
+			t.Run("queued cancellation preserves FIFO", func(t *testing.T) {
+				for _, canceled := range []int{0, 1, 2} {
+					t.Run(fmt.Sprintf("cancel item %d", canceled), func(t *testing.T) {
+						synctest.Test(t, func(t *testing.T) {
+							q := newExecutionTestQueue(t, 1)
+							ctx, cancel := context.WithCancel(t.Context())
+							defer cancel()
+							var order, expected []int
+							for i := range 3 {
+								itemCtx := t.Context()
+								if i == canceled {
+									itemCtx = ctx
+								} else {
+									expected = append(expected, i)
+								}
+								require.NoError(t, q.Enqueue(itemCtx, "a", func() { order = append(order, i) }))
+							}
+							cancel()
+							synctest.Wait()
+							require.Equal(t, 2, q.Len())
+							for range 2 {
+								dequeueExecution(t, q)()
+							}
+							require.Equal(t, expected, order)
+							require.Zero(t, q.Len())
+							require.Zero(t, q.ActiveTenantsLen())
+						})
+					})
+				}
+			})
+			t.Run("cancellation after dispatch skips execution and releases reservation", func(t *testing.T) {
+				q := newExecutionTestQueue(t, 1)
+				ctx, cancel := context.WithCancel(t.Context())
+				require.NoError(t, q.Enqueue(ctx, "a", func() { t.Error("canceled work ran") }))
+				runnable := dequeueExecution(t, q)
+				cancel()
+				require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+				require.Equal(t, float64(1), testutil.ToFloat64(q.inFlight))
+				runnable()
+				require.Equal(t, float64(1), testutil.ToFloat64(q.discardedRequests.WithLabelValues("a", "context_canceled")))
+				dequeueExecution(t, q)()
+				require.Zero(t, q.Len())
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
+			})
+			t.Run("executing cancellation retains capacity until return", func(t *testing.T) {
+				q := newExecutionTestQueue(t, 1)
+				ctx, cancel := context.WithCancel(t.Context())
+				started := make(chan struct{})
+				release := make(chan struct{})
+				unblock := sync.OnceFunc(func() { close(release) })
+				t.Cleanup(unblock)
+				require.NoError(t, q.Enqueue(ctx, "a", func() { close(started); <-release }))
+				fn := dequeueExecution(t, q)
+				finished := make(chan struct{})
+				go func() { fn(); close(finished) }()
+				awaitExecutionSignal(t, started)
+				cancel()
+				require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+				require.NoError(t, q.Enqueue(t.Context(), "b", func() {}))
+				dequeueExecution(t, q)()
+				require.Equal(t, 1, q.Len())
+				require.Equal(t, float64(1), testutil.ToFloat64(q.inFlight))
+				unblock()
+				awaitExecutionSignal(t, finished)
+				dequeueExecution(t, q)()
+			})
+		})
+
+		t.Run("CanceledWaitingWorkerDoesNotConsumeWork", func(t *testing.T) {
+			for _, tc := range []struct {
+				name   string
+				capped bool
+			}{
+				{name: "empty queue"},
+				{name: "tenant at execution cap", capped: true},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					synctest.Test(t, func(t *testing.T) {
+						q := newExecutionTestQueue(t, 1)
+						var executed bool
+						runnable := func() { executed = true }
+						var reserved func()
+						if tc.capped {
+							require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+							reserved = dequeueExecution(t, q)
+							require.NoError(t, q.Enqueue(t.Context(), "a", runnable))
+						}
+
+						ctx, cancel := context.WithCancel(t.Context())
+						defer cancel()
+						result := make(chan dequeueResponse, 1)
+						go func() {
+							fn, err := q.Dequeue(ctx)
+							result <- dequeueResponse{runnable: fn, err: err}
+						}()
+						synctest.Wait()
+						cancel()
+						response := <-result
+						require.ErrorIs(t, response.err, context.Canceled)
+						require.Nil(t, response.runnable)
+
+						if tc.capped {
+							require.Equal(t, 1, q.Len(), "canceling the worker must leave queued work intact")
+							reserved()
+						} else {
+							require.NoError(t, q.Enqueue(t.Context(), "a", runnable))
+						}
+						dequeueExecution(t, q)()
+						require.True(t, executed)
+						require.Zero(t, q.Len())
+					})
+				})
+			}
+		})
+
+		t.Run("CancelOnlyTheRequestedWaitingWorker", func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				q := newExecutionTestQueue(t, 1)
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				results := make([]chan dequeueResponse, 3)
+				for i := range results {
+					results[i] = make(chan dequeueResponse, 1)
+					workerCtx := t.Context()
+					if i == 1 {
+						workerCtx = ctx
+					}
+					go func() {
+						fn, err := q.Dequeue(workerCtx)
+						results[i] <- dequeueResponse{runnable: fn, err: err}
+					}()
+				}
+				synctest.Wait()
+				cancel()
+				canceled := <-results[1]
+				require.ErrorIs(t, canceled.err, context.Canceled)
+				require.Nil(t, canceled.runnable)
+				for _, tenant := range []string{"a", "b"} {
+					require.NoError(t, q.Enqueue(t.Context(), tenant, func() {}))
+				}
+				for _, i := range []int{0, 2} {
+					result := <-results[i]
+					require.NoError(t, result.err)
+					result.runnable()
+				}
+				require.Zero(t, q.Len())
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
+			})
+		})
+
+		t.Run("Completion", func(t *testing.T) {
+			t.Run("completion releases reservation for queued work", func(t *testing.T) {
+				q := newExecutionTestQueue(t, 1)
+				var executions int
+				runnable := func() { executions++ }
+				require.NoError(t, q.Enqueue(t.Context(), "a", runnable))
+				fn := dequeueExecution(t, q)
+				require.NoError(t, q.Enqueue(t.Context(), "a", runnable))
+				require.Equal(t, 1, q.Len())
+				require.Equal(t, float64(1), testutil.ToFloat64(q.inFlight))
+				fn()
+				require.Equal(t, 1, executions)
+				dequeueExecution(t, q)()
+				require.Equal(t, 2, executions)
+				require.Zero(t, q.Len())
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
+			})
+			t.Run("panic releases reservation and propagates", func(t *testing.T) {
+				q := newExecutionTestQueue(t, 1)
+				require.NoError(t, q.Enqueue(t.Context(), "a", func() { panic("failure") }))
+				require.PanicsWithValue(t, "failure", dequeueExecution(t, q))
+				require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+				dequeueExecution(t, q)()
+			})
+			t.Run("shutdown unblocks pending workers and completion", func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					const waitingWorkers = 8
+					q := newExecutionTestQueue(t, 1)
+					require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+					fn := dequeueExecution(t, q)
+					require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+					result := make(chan error, waitingWorkers)
+					for range waitingWorkers {
+						go func() { _, err := q.Dequeue(context.Background()); result <- err }()
+					}
+					synctest.Wait()
+					require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
+					for range waitingWorkers {
+						require.ErrorIs(t, <-result, ErrQueueClosed)
+					}
+					fn()
+					require.Zero(t, testutil.ToFloat64(q.inFlight))
+					require.Empty(t, q.tenantQueues)
+				})
+			})
+		})
+
+		t.Run("CapDisabled", func(t *testing.T) {
+			for _, limit := range []int{-1, 0} {
+				t.Run(fmt.Sprint(limit), func(t *testing.T) {
+					q := newExecutionTestQueue(t, limit)
+					work := make([]func(), 0, 8)
+					for range 8 {
+						require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+						work = append(work, dequeueExecution(t, q))
+					}
+					require.Equal(t, float64(8), testutil.ToFloat64(q.inFlight))
+					for _, fn := range work {
+						fn()
+					}
+					require.Zero(t, q.Len())
+					require.Zero(t, testutil.ToFloat64(q.inFlight))
+				})
+			}
+		})
+
+		t.Run("ConcurrentDispatchCancellation", func(t *testing.T) {
+			q := newExecutionTestQueue(t, 2)
+			startExecutionTestScheduler(t, q, 8)
+			var inFlight, executed atomic.Int32
+			var exceeded atomic.Bool
+			var wg sync.WaitGroup
+			for range 8 {
+				wg.Go(func() {
+					for i := range 100 {
+						ctx := t.Context()
+						cancel := func() {}
+						if i%2 == 0 {
+							ctx, cancel = context.WithCancel(ctx)
+						}
+						err := q.Enqueue(ctx, "a", func() {
+							if inFlight.Add(1) > 2 {
+								exceeded.Store(true)
+							}
+							executed.Add(1)
+							inFlight.Add(-1)
+						})
+						if err != nil {
+							t.Errorf("enqueue: %v", err)
+						}
+						cancel()
+					}
+				})
+			}
+			wg.Wait()
+			require.NoError(t, q.Enqueue(t.Context(), "a", func() { executed.Add(1) }))
+			require.Eventually(t, func() bool { return q.Len() == 0 && testutil.ToFloat64(q.inFlight) == 0 }, 5*time.Second, time.Millisecond)
+			require.False(t, exceeded.Load())
+			require.GreaterOrEqual(t, executed.Load(), int32(401), "all 400 uncanceled requests and the final request must execute")
+		})
+	})
+}
+
+func TestEnqueueContextDiscardReason(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		reason  string
+		timeout time.Duration
+		wantErr error
+	}{
+		{"context_canceled", time.Hour, context.Canceled},
+		{"deadline_exceeded", 0, context.DeadlineExceeded},
+	} {
+		t.Run(tc.reason, func(t *testing.T) {
+			t.Parallel()
+
+			q := NewQueue(QueueOptionsWithDefaults(nil))
+			// Prevent the dispatcher from accepting work so cancellation is deterministic.
+			q.enqueueChan = nil
+			require.NoError(t, services.StartAndAwaitRunning(t.Context(), q))
+			defer func() {
+				require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
+			}()
+
+			ctx, cancel := context.WithTimeout(t.Context(), tc.timeout)
+			cancel()
+
+			const tenantID = "tenant-a"
+			require.ErrorIs(t, q.Enqueue(ctx, tenantID, func() {}), tc.wantErr)
+			for _, reason := range []string{"context_canceled", "deadline_exceeded"} {
+				want := float64(0)
+				if reason == tc.reason {
+					want = 1
+				}
+				require.Equal(t, want, testutil.ToFloat64(q.discardedRequests.WithLabelValues(tenantID, reason)), "reason=%s", reason)
+			}
+		})
+	}
+}
+
+func newExecutionTestQueue(t *testing.T, cap int) *Queue {
+	t.Helper()
+	q := NewQueue(&QueueOptions{MaxConcurrentPerTenant: cap, MaxSizePerTenant: 1000, Registerer: prometheus.NewRegistry()})
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), q))
+	t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q)) })
+	return q
+}
+
+func startExecutionTestScheduler(t *testing.T, q *Queue, workers int) {
+	t.Helper()
+	worker, err := NewScheduler(q, &Config{NumWorkers: workers})
+	require.NoError(t, err)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), worker))
+	t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), worker)) })
+}
+
+func dequeueExecution(t *testing.T, q *Queue) func() {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+	defer cancel()
+	fn, err := q.Dequeue(ctx)
+	require.NoError(t, err)
+	return fn
+}
+
+func awaitExecutionSignal(t *testing.T, ch <-chan struct{}) {
+	t.Helper()
+	select {
+	case <-ch:
+	case <-time.After(5 * time.Second):
+		t.Fatal("execution signal timed out")
+	}
 }

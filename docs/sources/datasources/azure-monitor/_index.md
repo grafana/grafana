@@ -22,12 +22,26 @@ labels:
 menuTitle: Azure Monitor
 title: Azure Monitor data source
 weight: 300
-last_reviewed: 2025-12-04
+review_date: 2026-08-11
 ---
 
 # Azure Monitor data source
 
 The Azure Monitor data source plugin allows you to query and visualize data from Azure Monitor, the Azure service to maximize the availability and performance of applications and services in the Azure Cloud.
+
+## Supported features
+
+| Feature     | Supported |
+| ----------- | --------- |
+| Metrics     | Yes       |
+| Logs        | Yes       |
+| Traces      | Yes       |
+| Alerting    | Yes       |
+| Annotations | Yes       |
+
+{{< admonition type="note" >}}
+The Azure Monitor data source requires Grafana 12.3 or later.
+{{< /admonition >}}
 
 ## Supported Azure clouds
 
@@ -50,7 +64,7 @@ The Azure Monitor data source supports the following Azure services:
 
 ## Get started
 
-The following documents will help you get started with the Azure Monitor data source:
+The following documents help you get started with the Azure Monitor data source:
 
 - [Configure the Azure Monitor data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/) - Set up authentication and connect to Azure
 - [Azure Monitor query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/) - Create and edit queries for Metrics, Logs, Traces, and Resource Graph
@@ -70,10 +84,40 @@ After you have configured the Azure Monitor data source, you can:
 
 ## Pre-built dashboards
 
-The Azure Monitor plugin includes the following pre-built dashboards:
+The Azure Monitor plugin includes pre-built dashboards organized by category:
 
-- **Azure Monitor Overview** - Displays key metrics across your Azure subscriptions and resources.
-- **Azure Storage Account** - Shows storage account metrics including availability, latency, and transactions.
+**Infrastructure monitoring:**
+
+- Azure / Infrastructure / Apps Monitoring
+- Azure / Infrastructure / Compute Monitoring
+- Azure / Infrastructure / Data Monitoring
+- Azure / Infrastructure / Network Monitoring
+- Azure / Infrastructure / Storage and Key Vaults Monitoring
+
+**Azure Insights:**
+
+- Azure / Insights / Applications
+- Azure / Insights / Applications / Performance / Operations
+- Azure / Insights / Applications / Performance / Dependencies
+- Azure / Insights / Applications / Failures / Operations
+- Azure / Insights / Applications / Failures / Dependencies
+- Azure / Insights / Applications / Failures / Exceptions
+- Azure / Insights / Applications Test Availability Geo Map
+- Azure / Insights / CosmosDB
+- Azure / Insights / Data Explorer Clusters
+- Azure / Insights / Key Vaults
+- Azure / Insights / Networks
+- Azure / Insights / SQL Database
+- Azure / Insights / Storage Accounts
+- Azure / Insights / Virtual Machines by Resource Group
+- Azure / Insights / Virtual Machines by Workspace
+
+**Other:**
+
+- Azure / Alert Consumption
+- Azure / Azure PostgreSQL / Flexible Server Monitoring
+- Azure Monitor / Container Insights / Syslog
+- Azure / Resources Overview
 
 To import a pre-built dashboard:
 
@@ -82,8 +126,46 @@ To import a pre-built dashboard:
 1. Click the **Dashboards** tab.
 1. Click **Import** next to the dashboard you want to use.
 
+## Plugin updates
+
+Always ensure that your plugin version is up-to-date so you have access to all current features and improvements. Navigate to **Plugins and data** > **Plugins** to check for updates. Grafana recommends upgrading to the latest Grafana version, and this applies to plugins as well.
+
+{{< admonition type="note" >}}
+Plugins are automatically updated in Grafana Cloud.
+{{< /admonition >}}
+
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to explore and query your Azure Monitor data source, use the `gcx datasources azuremonitor` commands:
+
+```sh
+# Discover subscriptions, resource groups, and resources
+gcx datasources azuremonitor list-subscriptions -d <DATASOURCE_UID>
+gcx datasources azuremonitor list-resource-groups -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID>
+gcx datasources azuremonitor list-resources -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID> --resource-group my-rg
+
+# List the metrics available for a resource
+gcx datasources azuremonitor list-metrics -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID> \
+  --resource-group my-rg --namespace Microsoft.Compute/virtualMachines --resource my-vm
+
+# Run a structured metrics query
+gcx datasources azuremonitor query -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID> \
+  --resource-group my-rg --namespace Microsoft.Compute/virtualMachines --resource my-vm \
+  --metric 'Percentage CPU' --aggregation Average --since 1h
+
+# Query a Log Analytics workspace with KQL
+gcx datasources azuremonitor logs query 'AppRequests | take 10' -d <DATASOURCE_UID> \
+  --subscription <SUBSCRIPTION_ID> --resource-group my-rg --workspace my-workspace
+
+# Query Azure Resource Graph with KQL
+gcx datasources azuremonitor resource-graph query 'Resources | project name, type | limit 10' \
+  -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID>
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Azure Monitor data source and _`<SUBSCRIPTION_ID>`_ with an Azure subscription ID. You can omit the `-d` flag when `datasources.azuremonitor` is configured in your `gcx` context. Metrics queries are structured rather than expression-based, so `--subscription`, `--resource-group`, `--namespace`, `--resource`, and `--metric` are required, while `logs query` and `resource-graph query` take KQL. Data sources configured with **Current User** authentication can't be queried with API tokens or service accounts.
+
 ## Related resources
 
-- [Azure Monitor documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/)
-- [Kusto Query Language (KQL) reference](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/)
+- [Azure Monitor documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/)
+- [Kusto Query Language (KQL) reference](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/)
 - [Grafana community forum](https://community.grafana.com/)

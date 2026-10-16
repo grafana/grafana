@@ -5,7 +5,7 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-import { DashboardEditActionEvent } from '../../edit-pane/shared';
+import { DashboardEditActionEvent } from '../../sidebar/events';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 
@@ -23,8 +23,8 @@ setPluginImportUtils({
 });
 
 const mockGetQueryRunnerFor = jest.fn();
-jest.mock('../../utils/utils', () => ({
-  ...jest.requireActual('../../utils/utils'),
+jest.mock('../../utils/getQueryRunnerFor', () => ({
+  ...jest.requireActual('../../utils/getQueryRunnerFor'),
   getQueryRunnerFor: jest.fn().mockImplementation(() => mockGetQueryRunnerFor()),
 }));
 
@@ -138,7 +138,15 @@ describe('PanelRepeaterGridItem', () => {
     // mimic returning to dashboard
     activateFullSceneTree(scene);
 
-    panel.publishEvent(new DashboardEditActionEvent({ source: panel, perform: () => {}, undo: () => {} }), true);
+    panel.publishEvent(
+      new DashboardEditActionEvent({
+        source: panel,
+        meta: { actionId: 'test.edit' },
+        perform: () => {},
+        undo: () => {},
+      }),
+      true
+    );
 
     await waitFor(() => {
       expect(panel.state.repeatedPanels?.length).toBe(4);

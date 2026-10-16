@@ -1,0 +1,16 @@
+{
+    "apiVersion": "iam.grafana.app/v0alpha1",
+    "kind": "Team",
+    "metadata": {
+        "name": "with-members-and-groups"
+    },
+    "spec": {
+        "title": "Team With Members And Groups",
+        "email": "team@example.com",
+        "members": [
+            {"kind": "User", "name": "user-uid-1", "permission": "admin", "external": false},
+            {"kind": "User", "name": "user-uid-2", "permission": "member", "external": true}
+        ],
+        "externalGroups": ["group-a", "group-b"]
+    }
+}

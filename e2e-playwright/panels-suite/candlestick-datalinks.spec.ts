@@ -4,6 +4,12 @@ const DASHBOARD_UID = 'panel-tests-candlestick';
 
 test.use({
   viewport: { width: 1280, height: 2000 },
+  // The gdev dashboard is dashboard.grafana.app/v2; panels-suite defaults dashboardNewLayouts off,
+  // which renders v2 dashboards via the legacy path where tooltip actions don't wire up. Enable it
+  // so the configured action button renders.
+  featureToggles: {
+    dashboardNewLayouts: true,
+  },
 });
 
 test.describe('Panels test: Candlestick data links', { tag: ['@panels', '@candlestick'] }, () => {

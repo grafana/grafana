@@ -1,11 +1,24 @@
-import { LegacyGraphHoverClearEvent } from '@grafana/data';
-import { behaviors, sceneGraph, SceneTimeRange } from '@grafana/scenes';
+import { createBrowserHistory } from 'history';
+
+import { type GrafanaConfig, LegacyGraphHoverClearEvent, locationUtil, SetPanelAttentionEvent } from '@grafana/data';
+import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
+import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
+import { contextSrv } from 'app/core/services/context_srv';
+import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
+
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { buildShareUrl } from '../sharing/ShareButton/utils';
+import { DashboardInteractions } from '../utils/interactions';
+import { findVizPanelByPathId } from '../utils/pathId';
+import { tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 
 import { DashboardScene } from './DashboardScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
@@ -15,6 +28,14 @@ jest.mock('app/core/app_events', () => ({
   },
 }));
 jest.mock('app/core/services/KeybindingSet');
+jest.mock('../sharing/ShareButton/utils');
+jest.mock('../utils/pathId', () => ({
+  findVizPanelByPathId: jest.fn(),
+}));
+jest.mock('../utils/urlBuilders', () => ({
+  ...jest.requireActual('../utils/urlBuilders'),
+  tryGetExploreUrlForPanel: jest.fn(),
+}));
 const mockOnRefresh = jest.fn();
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
@@ -25,6 +46,12 @@ jest.mock('@grafana/scenes', () => ({
   },
 }));
 
+const localStorageMock = mockLocalStorage();
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
+
 describe('setupKeyboardShortcuts', () => {
   let mockScene: DashboardScene;
   let mockKeybindingSet: jest.Mocked<KeybindingSet>;
@@ -33,6 +60,7 @@ describe('setupKeyboardShortcuts', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockOnRefresh.mockClear();
+    localStorageMock.clear();
 
     // Mock KeybindingSet
     mockKeybindingSet = jest.mocked(new KeybindingSet());
@@ -197,6 +225,155 @@ describe('setupKeyboardShortcuts', () => {
       expect(taBinding).toBeDefined();
       expect(tLeftBinding).toBeDefined();
       expect(tRightBinding).toBeDefined();
+    });
+  });
+
+  describe('p u shortcut (copy panel share link)', () => {
+    let puHandler: () => void;
+    let focusedPanel: VizPanel;
+
+    beforeEach(() => {
+      focusedPanel = new VizPanel({ pluginId: 'timeseries' });
+      jest.mocked(findVizPanelByPathId).mockReturnValue(focusedPanel);
+      jest.spyOn(mockScene, 'showModal');
+
+      setupKeyboardShortcuts(mockScene);
+
+      // Simulate a panel gaining focus so withFocusedPanel resolves a panel.
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+
+      const puBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'p u');
+      expect(puBinding).toBeDefined();
+      puHandler = puBinding![0].onTrigger;
+    });
+
+    it('should copy the panel share link for the focused panel', async () => {
+      await puHandler();
+
+      expect(buildShareUrl).toHaveBeenCalledWith(mockScene, focusedPanel);
+    });
+
+    it('should not open a modal (drawer)', async () => {
+      await puHandler();
+
+      expect(mockScene.showModal).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing when no panel is focused', async () => {
+      jest.clearAllMocks();
+      // Re-setup without dispatching a panel attention event.
+      setupKeyboardShortcuts(mockScene);
+      const puBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'p u');
+      await puBinding![0].onTrigger();
+
+      expect(buildShareUrl).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('while planning', () => {
+    // None of 'p u'/'p e'/'p s'/'i' check isEditing anywhere in their own chain -- each is
+    // reachable during a plan preview by construction, so refuseWhilePlanning covers them here.
+    let focusedPanel: VizPanel;
+
+    beforeEach(() => {
+      focusedPanel = new VizPanel({ pluginId: 'timeseries' });
+      jest.mocked(findVizPanelByPathId).mockReturnValue(focusedPanel);
+      jest.spyOn(mockScene, 'showModal');
+      config.snapshotEnabled = true;
+      contextSrv.isSignedIn = true;
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+      mockScene.setState({
+        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
+      });
+      setupKeyboardShortcuts(mockScene);
+
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+    });
+
+    function getBinding(key: string) {
+      return mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === key)![0].onTrigger;
+    }
+
+    it('refuses the panel share link (p u)', async () => {
+      await getBinding('p u')();
+      expect(buildShareUrl).not.toHaveBeenCalled();
+    });
+
+    it('refuses share embed (p e) and share snapshot (p s)', async () => {
+      await getBinding('p e')();
+      await getBinding('p s')();
+      expect(mockScene.showModal).not.toHaveBeenCalled();
+    });
+
+    it('refuses panel inspect (i)', async () => {
+      await getBinding('i')();
+      expect(mockScene.showModal).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('navigation when Grafana is served from a sub-path', () => {
+    const originalLocationService = locationService;
+    let panel: VizPanel;
+    let scene: DashboardScene;
+
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+      // Mirrors production: the router's browser history applies the sub-path itself.
+      window.history.replaceState({}, '', '/grafana/d/test-uid?editPanel=1');
+      setLocationService(new HistoryWrapper(createBrowserHistory({ basename: '/grafana' })));
+
+      panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
+      scene = new DashboardScene({
+        title: 'Test Dashboard',
+        uid: 'test-uid',
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+      jest.spyOn(scene, 'canEditDashboard').mockReturnValue(true);
+      jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+
+      setupKeyboardShortcuts(scene);
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+    });
+
+    afterEach(() => {
+      setLocationService(originalLocationService);
+      window.history.replaceState({}, '', '/');
+      locationUtil.initialize({
+        config: { appSubUrl: '' } as GrafanaConfig,
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+    });
+
+    function getBinding(key: string) {
+      return mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === key)![0].onTrigger;
+    }
+
+    it('opens Explore (p x) with the sub-path in the browser URL exactly once', async () => {
+      // tryGetExploreUrlForPanel returns an href, which already carries the sub-path.
+      jest.mocked(tryGetExploreUrlForPanel).mockResolvedValue('/grafana/explore?schemaVersion=1');
+
+      await getBinding('p x')();
+
+      expect(window.location.pathname).toBe('/grafana/explore');
+      expect(window.location.search).toBe('?schemaVersion=1');
+    });
+
+    it('exits panel edit (e) with the sub-path in the browser URL exactly once', async () => {
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
+
+      await getBinding('e')();
+
+      expect(window.location.pathname).toBe('/grafana/d/test-uid');
+      expect(window.location.search).toBe('');
     });
   });
 
@@ -399,6 +576,102 @@ describe('setupKeyboardShortcuts', () => {
 
         // Should not call onTimeRangeChange when timespan is 0
         expect(mockTimeRange.onTimeRangeChange).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('copy/paste panel shortcuts', () => {
+    const getBinding = (key: string) =>
+      mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === key)?.[0];
+
+    // Simulate the user hovering/focusing a panel by firing the SetPanelAttentionEvent
+    // that setupKeyboardShortcuts subscribes to (appEvents is mocked, so no event actually flows).
+    function focusPanel(pathId: string) {
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: pathId }));
+    }
+
+    describe('registration', () => {
+      it('registers the copy panel shortcut (p c)', () => {
+        setupKeyboardShortcuts(mockScene);
+        expect(getBinding('p c')).toBeDefined();
+      });
+
+      it('registers the paste panel shortcut (p v) when editing is allowed', () => {
+        jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
+        setupKeyboardShortcuts(mockScene);
+        expect(getBinding('p v')).toBeDefined();
+      });
+
+      it('does not register the paste panel shortcut (p v) when editing is not allowed', () => {
+        jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(false);
+        setupKeyboardShortcuts(mockScene);
+        expect(getBinding('p v')).toBeUndefined();
+      });
+    });
+
+    describe('copy panel (p c)', () => {
+      let panel: VizPanel;
+
+      beforeEach(() => {
+        panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
+        jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+        jest.spyOn(mockScene, 'copyPanel').mockImplementation();
+        jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+      });
+
+      it('copies the focused panel', () => {
+        setupKeyboardShortcuts(mockScene);
+        focusPanel('panel-1');
+
+        getBinding('p c')!.onTrigger();
+
+        expect(mockScene.copyPanel).toHaveBeenCalledWith(panel);
+      });
+
+      it('reports the copy interaction as keyboard-sourced', () => {
+        setupKeyboardShortcuts(mockScene);
+        focusPanel('panel-1');
+
+        getBinding('p c')!.onTrigger();
+
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('copy', expect.any(Number), 'keyboard');
+      });
+
+      it('does nothing when no panel is focused', () => {
+        setupKeyboardShortcuts(mockScene);
+
+        getBinding('p c')!.onTrigger();
+
+        expect(mockScene.copyPanel).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('paste panel (p v)', () => {
+      beforeEach(() => {
+        jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
+        jest.spyOn(mockScene, 'pastePanel').mockImplementation();
+        jest.spyOn(DashboardInteractions, 'trackPastePanelClick').mockImplementation();
+      });
+
+      it('pastes a panel while editing', () => {
+        mockScene.setState({ isEditing: true });
+        localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
+        setupKeyboardShortcuts(mockScene);
+
+        getBinding('p v')!.onTrigger();
+
+        expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
+        expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalledWith('keyboard', 'dashboard', 'keyboard');
+      });
+
+      it('does not paste when not editing', () => {
+        mockScene.setState({ isEditing: false });
+        setupKeyboardShortcuts(mockScene);
+
+        getBinding('p v')!.onTrigger();
+
+        expect(mockScene.pastePanel).not.toHaveBeenCalled();
       });
     });
   });

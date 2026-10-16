@@ -1,6 +1,8 @@
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, userEvent } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { StepperStateProvider } from './StepperState';
 import { WizardStep } from './WizardStep';
 import { StepKey } from './types';
@@ -65,7 +67,7 @@ describe('WizardStep', () => {
       StepKey.Notifications
     );
 
-    const nextButton = screen.getByTestId('wizard-next-button');
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
     await user.click(nextButton);
 
     expect(onNext).toHaveBeenCalledTimes(1);
@@ -84,7 +86,7 @@ describe('WizardStep', () => {
       StepKey.Notifications
     );
 
-    const nextButton = screen.getByTestId('wizard-next-button');
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
     await user.click(nextButton);
 
     expect(onNext).toHaveBeenCalledTimes(1);
@@ -102,7 +104,7 @@ describe('WizardStep', () => {
       StepKey.Notifications
     );
 
-    const nextButton = screen.getByTestId('wizard-next-button');
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
     await user.click(nextButton);
 
     expect(onNext).toHaveBeenCalledTimes(1);
@@ -118,7 +120,7 @@ describe('WizardStep', () => {
       StepKey.Notifications
     );
 
-    expect(screen.getByTestId('wizard-skip-button')).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.skipButton)).toBeInTheDocument();
   });
 
   it('should not render Skip button when canSkip is false', () => {
@@ -129,7 +131,7 @@ describe('WizardStep', () => {
       StepKey.Notifications
     );
 
-    expect(screen.queryByTestId('wizard-skip-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.pages.Alerting.ImportToGMA.skipButton)).not.toBeInTheDocument();
   });
 
   it('should use custom skipLabel when provided', () => {
@@ -153,7 +155,7 @@ describe('WizardStep', () => {
       StepKey.Notifications
     );
 
-    const skipButton = screen.getByTestId('wizard-skip-button');
+    const skipButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.skipButton);
     await user.click(skipButton);
 
     expect(onSkip).toHaveBeenCalledTimes(1);
@@ -216,7 +218,7 @@ describe('WizardStep', () => {
       StepKey.Notifications
     );
 
-    const nextButton = screen.getByTestId('wizard-next-button');
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
     expect(nextButton).toBeDisabled();
   });
 
@@ -228,7 +230,7 @@ describe('WizardStep', () => {
       StepKey.Notifications
     );
 
-    const nextButton = screen.getByTestId('wizard-next-button');
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
     expect(nextButton).toBeEnabled();
   });
 });

@@ -90,7 +90,7 @@ describe('BuildDashboardButton', () => {
 
       const link = screen.getByRole('link', { name: /Build a dashboard/i });
       expect(link).toBeInTheDocument();
-      expect(link).toHaveAttribute('href', 'dashboard/new-with-ds/test-uid');
+      expect(link).toHaveAttribute('href', '/dashboard/new-with-ds/test-uid');
     });
 
     it('should not render the dropdown menu items', () => {
@@ -197,6 +197,7 @@ describe('BuildDashboardButton', () => {
       expect(DashboardLibraryInteractions.entryPointClicked).toHaveBeenCalledWith({
         entryPoint: 'datasource_page_build_button',
         contentKind: 'suggested_dashboards',
+        contentKinds: ['suggested_dashboards'],
       });
       expect(mockOpenModal).toHaveBeenCalledTimes(1);
     });
@@ -209,6 +210,7 @@ describe('BuildDashboardButton', () => {
       expect(DashboardLibraryInteractions.entryPointClicked).toHaveBeenCalledWith({
         entryPoint: 'datasource_list_build_button',
         contentKind: 'suggested_dashboards',
+        contentKinds: ['suggested_dashboards'],
       });
     });
 

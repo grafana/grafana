@@ -52,7 +52,7 @@ See note in the [introduction](#query-and-resource-caching-api) for an explanati
 POST /api/datasources/jZrmlLCGka/cache/enable HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -102,7 +102,7 @@ See note in the [introduction](#query-and-resource-caching-api) for an explanati
 POST /api/datasources/jZrmlLCGka/cache/disable HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -154,7 +154,7 @@ See note in the [introduction](#query-and-resource-caching-api) for an explanati
 POST /api/datasources/jZrmlLCGka/cache/clean HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -204,7 +204,7 @@ See note in the [introduction](#query-and-resource-caching-api) for an explanati
 POST /api/datasources/jZrmlLCGka/cache HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
    "dataSourceID": 1,
@@ -275,7 +275,7 @@ See note in the [introduction](#query-and-resource-caching-api) for an explanati
 GET /api/datasources/jZrmlLCGka/cache HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

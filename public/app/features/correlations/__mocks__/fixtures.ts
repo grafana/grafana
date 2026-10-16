@@ -5,10 +5,6 @@ export const generateCorrMetadata = (uid: string, correlation: CorrelationSpec) 
     'correlations.grafana.app/sourceDS-ref': `${correlation.source.group}.${correlation.source.name}`,
   };
 
-  if (correlation.target?.group !== undefined && correlation.target?.name !== undefined) {
-    labels['correlations.grafana.app/targetDS-ref'] = `${correlation.target?.group}.${correlation.target?.name}`;
-  }
-
   return {
     kind: 'Correlation',
     apiVersion: 'correlations.grafana.app/v0alpha1',

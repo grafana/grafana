@@ -121,13 +121,60 @@ func TestReadDashboard(t *testing.T) {
 	}
 }
 
+// TestReadV2PanelType ensures the panel type is read from the stable v2 envelope,
+// where the plugin id lives in vizConfig.group (kind is the literal "VizConfig"),
+// while still falling back to vizConfig.kind for older v2alpha1 dashboards. A
+// malformed stable panel (kind "VizConfig", no group) must never index as "VizConfig".
+func TestReadV2PanelType(t *testing.T) {
+	json := `{"metadata":{"name":"x"},"spec":{"title":"t","elements":{` +
+		`"p1":{"kind":"Panel","spec":{"id":1,"vizConfig":{"kind":"VizConfig","group":"timeseries","spec":{}}}},` +
+		`"p2":{"kind":"Panel","spec":{"id":2,"vizConfig":{"kind":"text","spec":{}}}},` +
+		`"p3":{"kind":"Panel","spec":{"id":3,"vizConfig":{"kind":"VizConfig","spec":{}}}}}}}`
+
+	dash, err := ReadDashboard(strings.NewReader(json), dsLookupForTests())
+	require.NoError(t, err)
+	require.Len(t, dash.Panels, 3)
+
+	types := map[string]bool{}
+	for _, p := range dash.Panels {
+		types[p.Type] = true
+	}
+	assert.True(t, types["timeseries"], "stable v2 panel should index its vizConfig.group, not %q", "VizConfig")
+	assert.True(t, types["text"], "v2alpha1 panel should fall back to vizConfig.kind")
+	assert.False(t, types["VizConfig"], "panel type must never be the literal VizConfig")
+}
+
+// An empty tag cannot be searched for or shown, and it would still take a slot in
+// the tag list a user picks from. Deleted dashboards are read by a different,
+// generic reader that already skips one, so both have to agree.
+func TestReadDashboardTags(t *testing.T) {
+	read := func(t *testing.T, tags string) []string {
+		t.Helper()
+		json := `{"metadata":{"name":"x"},"spec":{"title":"t","tags":` + tags + `}}`
+		dash, err := ReadDashboard(strings.NewReader(json), dsLookupForTests())
+		require.NoError(t, err)
+		return dash.Tags
+	}
+
+	t.Run("empty tags are skipped", func(t *testing.T) {
+		assert.Equal(t, []string{"prod", "team-a"}, read(t, `["prod","","team-a"]`))
+		assert.Empty(t, read(t, `[""]`))
+	})
+
+	// Whitespace is a tag a user can type and see, so it is kept: only a wholly
+	// empty string is dropped.
+	t.Run("other tags are kept as written", func(t *testing.T) {
+		assert.Equal(t, []string{"prod", " ", "prod"}, read(t, `["prod"," ","prod"]`))
+	})
+}
+
 // TestReadDashboardRecursionLimits ensures that maliciously deep nesting of `spec` or
 // `panels` is bounded so the parser cannot be driven into unbounded recursion.
 func TestReadDashboardRecursionLimits(t *testing.T) {
 	t.Run("deeply nested spec terminates and does not recurse past the limit", func(t *testing.T) {
 		// {"spec":{"spec":{ ... {"title":"deep"} ... }}}
 		json := `{"title":"deep"}`
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			json = `{"spec":` + json + `}`
 		}
 

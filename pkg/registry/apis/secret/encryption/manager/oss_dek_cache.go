@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type namespacedKey struct {
@@ -17,21 +19,29 @@ type namespacedKey struct {
 }
 
 type ossDataKeyCache struct {
+	tracer   trace.Tracer
 	mtx      sync.RWMutex
 	byId     map[namespacedKey]encryption.DataKeyCacheEntry
 	byLabel  map[namespacedKey]encryption.DataKeyCacheEntry
 	cacheTTL time.Duration
 }
 
-func ProvideOSSDataKeyCache(cfg *setting.Cfg) encryption.DataKeyCache {
+func ProvideOSSDataKeyCache(tracer trace.Tracer, cfg *setting.Cfg) encryption.DataKeyCache {
 	return &ossDataKeyCache{
+		tracer:   tracer,
 		byId:     make(map[namespacedKey]encryption.DataKeyCacheEntry),
 		byLabel:  make(map[namespacedKey]encryption.DataKeyCacheEntry),
 		cacheTTL: cfg.SecretsManagement.DataKeysCacheTTL,
 	}
 }
 
-func (c *ossDataKeyCache) GetById(_ context.Context, namespace, id string) (_ encryption.DataKeyCacheEntry, exists bool, err error) {
+func (c *ossDataKeyCache) GetById(ctx context.Context, namespace, id string) (_ encryption.DataKeyCacheEntry, exists bool, err error) {
+	_, span := c.tracer.Start(ctx, "GetById", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("id", id),
+	))
+	defer span.End()
+
 	defer func() {
 		cacheReadsCounter.With(prometheus.Labels{
 			"hit":    strconv.FormatBool(exists),
@@ -58,7 +68,13 @@ func (c *ossDataKeyCache) GetById(_ context.Context, namespace, id string) (_ en
 	return entry, true, nil
 }
 
-func (c *ossDataKeyCache) GetByLabel(_ context.Context, namespace, label string) (_ encryption.DataKeyCacheEntry, exists bool, err error) {
+func (c *ossDataKeyCache) GetByLabel(ctx context.Context, namespace, label string) (_ encryption.DataKeyCacheEntry, exists bool, err error) {
+	_, span := c.tracer.Start(ctx, "ossDataKeyCache.GetByLabel", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("label", label),
+	))
+	defer span.End()
+
 	defer func() {
 		cacheReadsCounter.With(prometheus.Labels{
 			"hit":    strconv.FormatBool(exists),
@@ -84,13 +100,22 @@ func (c *ossDataKeyCache) GetByLabel(_ context.Context, namespace, label string)
 	return entry, true, nil
 }
 
-func (c *ossDataKeyCache) Set(_ context.Context, namespace string, entry encryption.DataKeyCacheEntry) error {
+func (c *ossDataKeyCache) Set(ctx context.Context, namespace string, entry encryption.DataKeyCacheEntry) error {
+	_, span := c.tracer.Start(ctx, "ossDataKeyCache.Set", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("id", entry.Id),
+		attribute.String("label", entry.Label),
+	))
+	defer span.End()
+
 	if err := encryption.ValidateDataKeyCacheEntryNamespace(namespace, entry); err != nil {
 		return err
 	}
 
+	span.AddEvent("will wait for mutex")
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
+	span.AddEvent("mutex acquired")
 
 	entry.Expiration = time.Now().Add(c.cacheTTL)
 
@@ -99,7 +124,10 @@ func (c *ossDataKeyCache) Set(_ context.Context, namespace string, entry encrypt
 	return nil
 }
 
-func (c *ossDataKeyCache) RemoveExpired(_ context.Context) {
+func (c *ossDataKeyCache) RemoveExpired(ctx context.Context) {
+	_, span := c.tracer.Start(ctx, "ossDataKeyCache.RemoveExpired")
+	defer span.End()
+
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -116,7 +144,12 @@ func (c *ossDataKeyCache) RemoveExpired(_ context.Context) {
 	}
 }
 
-func (c *ossDataKeyCache) Flush(_ context.Context, namespace string) {
+func (c *ossDataKeyCache) Flush(ctx context.Context, namespace string) {
+	_, span := c.tracer.Start(ctx, "ossDataKeyCache.Flush", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 

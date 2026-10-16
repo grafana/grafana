@@ -93,8 +93,7 @@ Technically, there is no limit to how many variables you can chain together, but
 
 <!-- If you update or replace the Play dashboards linked in this section, you must also update the text examples to match them -->
 
-The following Grafana Play dashboard contains basic chained variables, only two layers deep. To view the variables and their settings, click **Edit**
-and then **Settings**; then go to the **Variables** tab. This example and an InfluxDB example are expanded in the following section.
+The following Grafana Play dashboard contains basic chained variables, only two layers deep. To view the variables and their settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section. This example and an InfluxDB example are expanded in the following section.
 
 - [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h)
 

@@ -40,6 +40,10 @@ export interface DashboardAPI<G, T> {
   restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO>;
   /** List all deleted dashboards (table format — metadata only, no spec) */
   listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse>;
+  /** Get a single soft-deleted dashboard (full resource incl. spec) via the recently-deleted listing.
+   *  Uses the deletion-aware auth check (deleter-keyed), unlike getDashboard at a resourceVersion.
+   *  Resolves undefined when the dashboard is no longer recently deleted or not visible to this user. */
+  getDeletedDashboard(name: string): Promise<Resource<T> | undefined>;
   /** Get a single dashboard resource by name */
   getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<T>>;
   /** Restore a deleted dashboard by re-creating it */
@@ -60,6 +64,13 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, Status, 'Dashboa
     annotationsPermissions?: AnnotationsPermissions;
     isPublic?: boolean;
   }; // TODO...
+}
+
+// A DashboardWithAccessInfo plus what the client knows about where it came from.
+export interface DashboardWithLoadInfo<T> extends DashboardWithAccessInfo<T> {
+  // Whether a library panel's repeat still has to be resolved onto the grid item.
+  // Only true when this spec was converted to v2 in the browser, which cannot resolve it.
+  libraryPanelRepeatUnresolved?: boolean;
 }
 
 export interface DashboardVersionError extends Error {

@@ -162,8 +162,14 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		}
 	}
 
+	// Alerting resources are only fetched when alerting is enabled. Snapshot
+	// creation rejects alerting types when it is disabled, but a snapshot
+	// created while alerting was enabled could be built after it is disabled,
+	// at which point s.ngAlert.Api is nil and would panic.
+	alertingEnabled := s.cfg.UnifiedAlerting.IsEnabled()
+
 	// Alerts: Mute Timings
-	if resourceTypes.Has(cloudmigration.MuteTimingType) {
+	if alertingEnabled && resourceTypes.Has(cloudmigration.MuteTimingType) {
 		muteTimings, err := s.getAlertMuteTimings(ctx, signedInUser)
 		if err != nil {
 			s.log.Error("Failed to get alert mute timings", "err", err)
@@ -181,7 +187,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Alerts: Notification Templates
-	if resourceTypes.Has(cloudmigration.NotificationTemplateType) {
+	if alertingEnabled && resourceTypes.Has(cloudmigration.NotificationTemplateType) {
 		notificationTemplates, err := s.getNotificationTemplates(ctx, signedInUser)
 		if err != nil {
 			s.log.Error("Failed to get alert notification templates", "err", err)
@@ -199,7 +205,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Alerts: Contact Points
-	if resourceTypes.Has(cloudmigration.ContactPointType) {
+	if alertingEnabled && resourceTypes.Has(cloudmigration.ContactPointType) {
 		contactPoints, err := s.getContactPoints(ctx, signedInUser)
 		if err != nil {
 			s.log.Error("Failed to get alert contact points", "err", err)
@@ -217,7 +223,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Alerts: Notification Policies
-	if resourceTypes.Has(cloudmigration.NotificationPolicyType) {
+	if alertingEnabled && resourceTypes.Has(cloudmigration.NotificationPolicyType) {
 		notificationPolicies, err := s.getNotificationPolicies(ctx, signedInUser)
 		if err != nil {
 			s.log.Error("Failed to get alert notification policies", "err", err)
@@ -236,7 +242,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Alerts: Alert Rule Groups
-	if resourceTypes.Has(cloudmigration.AlertRuleGroupType) {
+	if alertingEnabled && resourceTypes.Has(cloudmigration.AlertRuleGroupType) {
 		alertRuleGroups, err := s.getAlertRuleGroups(ctx, signedInUser)
 		if err != nil {
 			s.log.Error("Failed to get alert rule groups", "err", err)
@@ -254,7 +260,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Alerts: Alert Rules
-	if resourceTypes.Has(cloudmigration.AlertRuleType) {
+	if alertingEnabled && resourceTypes.Has(cloudmigration.AlertRuleType) {
 		alertRules, err := s.getAlertRules(ctx, signedInUser)
 		if err != nil {
 			s.log.Error("Failed to get alert rules", "err", err)

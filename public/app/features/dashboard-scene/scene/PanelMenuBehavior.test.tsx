@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, locationService } from '@grafana/runtime';
-import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { FlagKeys, setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -22,6 +22,8 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { LegendDisplayMode, type VizLegendOptions } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
@@ -36,7 +38,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
-import { panelMenuBehavior } from './PanelMenuBehavior';
+import { panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -98,6 +100,57 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
+  });
+
+  describe('legend toggle', () => {
+    const legend = (overrides: Partial<VizLegendOptions>): VizLegendOptions => ({
+      showLegend: true,
+      displayMode: LegendDisplayMode.List,
+      placement: 'bottom',
+      calcs: [],
+      ...overrides,
+    });
+
+    it.each([
+      { name: 'visible list legend', legend: legend({}), expected: 'Hide legend' },
+      { name: 'showLegend: false', legend: legend({ showLegend: false }), expected: 'Show legend' },
+      {
+        name: 'deprecated hidden display mode',
+        legend: legend({ displayMode: LegendDisplayMode.Hidden }),
+        expected: 'Show legend',
+      },
+    ])('labels the menu item "$expected" for a $name', async ({ legend, expected }) => {
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      panel.setState({ options: { legend } });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      expect(moreSubMenu?.find((i) => /legend/.test(i.text))?.text).toBe(expected);
+    });
+
+    it.each([
+      { name: 'hides a visible legend', legend: legend({}), update: { showLegend: false } },
+      {
+        name: 'shows a legend hidden by showLegend',
+        legend: legend({ showLegend: false }),
+        update: { showLegend: true },
+      },
+      {
+        name: 'shows a legend hidden by the deprecated display mode by switching it to list',
+        legend: legend({ displayMode: LegendDisplayMode.Hidden }),
+        update: { showLegend: true, displayMode: LegendDisplayMode.List },
+      },
+    ])('$name', ({ legend, update }) => {
+      const onOptionsChange = jest.fn();
+      const panel = { state: { options: { legend } }, onOptionsChange } as unknown as VizPanel;
+
+      toggleVizPanelLegend(panel);
+
+      expect(onOptionsChange).toHaveBeenCalledWith({ legend: update });
+    });
   });
 
   it('should have reduced menu options when panel editor is open', async () => {
@@ -978,12 +1031,7 @@ describe('panelMenuBehavior', () => {
       return { menu, panel };
     }
 
-    beforeEach(() => {
-      config.featureToggles.panelStyleActions = true;
-    });
-
     afterEach(() => {
-      config.featureToggles.panelStyleActions = false;
       store.delete(LS_STYLES_COPY_KEY);
     });
 
@@ -1006,13 +1054,6 @@ describe('panelMenuBehavior', () => {
       pasteItem?.onClick?.({} as never);
 
       expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
-    });
-
-    it('should not show styles menu when feature flag is disabled', async () => {
-      config.featureToggles.panelStyleActions = false;
-      const { menu } = await buildTimeseriesTestScene();
-
-      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
     });
 
     it('should not show styles menu for unsupported panel types', async () => {
@@ -1135,6 +1176,64 @@ describe('panelMenuBehavior', () => {
       const stylesMenu = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu;
       expect(stylesMenu).toHaveLength(1);
       expect(stylesMenu?.[0].text).toBe('Copy styles');
+    });
+  });
+
+  describe('choose notebook', () => {
+    afterEach(() => {
+      setTestFlags({});
+      mocks.contextSrv.hasPermission.mockReset();
+    });
+
+    async function itemsWith({ notebooks, permission }: { notebooks: boolean; permission: boolean }) {
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: notebooks });
+      mocks.contextSrv.hasPermission.mockReturnValue(permission);
+
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      return menu.state.items ?? [];
+    }
+
+    it('is hidden when notebooks are disabled', async () => {
+      const items = await itemsWith({ notebooks: false, permission: true });
+
+      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+    });
+
+    it('is hidden without permission to write or create', async () => {
+      const items = await itemsWith({ notebooks: true, permission: false });
+
+      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+    });
+
+    // Adding a panel to a notebook writes to the notebook, so it must not be gated on dashboard
+    // edit mode the way Remove is.
+    it('is offered while reading the dashboard, not only while editing it', async () => {
+      const items = await itemsWith({ notebooks: true, permission: true });
+
+      expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
+        expect.objectContaining({ iconClassName: 'book' })
+      );
+      expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
+    });
+
+    it('sits in its own section immediately above Remove while editing', async () => {
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      mocks.contextSrv.hasPermission.mockReturnValue(true);
+
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      scene.setState({ isEditing: true });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
+      expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
     });
   });
 });

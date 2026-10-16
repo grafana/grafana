@@ -26,7 +26,7 @@ type subResourceREST struct {
 	builder *DataSourceAPIBuilder
 }
 
-var _ = rest.Connecter(&subResourceREST{})
+var _ rest.Connecter = (*subResourceREST)(nil)
 
 func (r *subResourceREST) New() runtime.Object {
 	return &metav1.Status{}
@@ -79,6 +79,9 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
+		if r.builder.cfg.HandlerOrigin != "" {
+			w.Header().Set("X-Grafana-DS-Apiserver", r.builder.cfg.HandlerOrigin)
+		}
 
 		reqCtx, reqSpan := tracing.Start(ctx, "datasource.resource.request",
 			attribute.String("namespace", namespace),

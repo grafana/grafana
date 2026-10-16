@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -22,10 +21,13 @@ import (
 	k8srest "k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -33,6 +35,22 @@ import (
 )
 
 func TestIntegrationSearchDevDashboards(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchDevDashboards)
+}
+
+func TestIntegrationSearchOwnerReferences(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchOwnerReferences)
+}
+
+func TestIntegrationSearchCreatedBy(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchCreatedBy)
+}
+
+func TestIntegrationSearchPermissionFiltering(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchPermissionFiltering)
+}
+
+func testIntegrationSearchDevDashboards(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -42,17 +60,24 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	})
 	defer helper.Shutdown()
 
-	// Create devenv dashboards from legacy API
-	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
-	cfg.GroupVersion = &dashboardV0.GroupVersion
-	adminClient, err := k8srest.RESTClientFor(cfg)
-	require.NoError(t, err)
-	adminClient.Get()
+	// Create the devenv dashboards. The on-disk files are full v2 resource
+	// envelopes (dashboard.grafana.app/v2), so create them through the
+	// dynamic resource client as unstructured objects rather than POSTing to
+	// the legacy /api/dashboards/db endpoint.
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV2.GROUP,
+		Version:  dashboardV2.VERSION,
+		Resource: "dashboards",
+	}
+	dashboardClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
 
 	fileCount := 0
 	devenv := "../../../../devenv/dev-dashboards/panel-timeseries"
-	err = filepath.WalkDir(devenv, func(p string, d fs.DirEntry, e error) error {
-		require.NoError(t, err)
+	err := filepath.WalkDir(devenv, func(p string, d fs.DirEntry, e error) error {
+		require.NoError(t, e)
 		if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
 			return nil
 		}
@@ -67,25 +92,16 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		data, err := os.ReadFile(p)
 		require.NoError(t, err)
 
-		cmd := dashboards.SaveDashboardCommand{
-			Dashboard: &simplejson.Json{},
-			Overwrite: true,
-		}
-		err = cmd.Dashboard.FromDB(data)
-		require.NoError(t, err)
-		cmd.Dashboard.Set("id", nil)
-		cmd.Dashboard.Set("uid", uid)
-		data, err = json.Marshal(cmd)
-		require.NoError(t, err)
+		obj := &unstructured.Unstructured{}
+		require.NoError(t, obj.UnmarshalJSON(data), "file: %s", d.Name())
+		// Override the resource name with the filename-derived UID so the
+		// search snapshots are keyed by a stable, readable identifier.
+		obj.SetName(uid)
+		obj.SetAPIVersion(gvr.GroupVersion().String())
+		obj.SetKind("Dashboard")
 
-		var statusCode int
-		result := adminClient.Post().AbsPath("api", "dashboards", "db").
-			Body(data).
-			SetHeader("Content-type", "application/json").
-			Do(ctx).
-			StatusCode(&statusCode)
-		require.NoError(t, result.Error(), "file: [%d] %s [status:%d]", fileCount, d.Name(), statusCode)
-		require.Equal(t, int(http.StatusOK), statusCode)
+		_, err = dashboardClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err, "file: [%d] %s", fileCount, d.Name())
 		fileCount++
 		return nil
 	})
@@ -103,7 +119,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 
 		var statusCode int
 		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
-			//Param("explain", "true") // helpful to understand which field made things match
 			Param("limit", "1000").
 			Param("type", "dashboard") // Only search dashboards
 
@@ -123,9 +138,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		sr.MaxScore = roundTo(sr.MaxScore, 3)
 		for i := range sr.Hits {
 			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
-			if sr.Hits[i].Explain != nil {
-				roundExplainValues(sr.Hits[i].Explain.Object, 3)
-			}
 		}
 		return sr
 	}
@@ -185,7 +197,24 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			params: map[string]string{
 				"query":            "orange",
 				"panelTitleSearch": "true",
-				"explain":          "true",
+			},
+		},
+		{
+			// Queries below the ngram minimum are matched as prefix wildcards, so
+			// they find titles with a word starting with the query.
+			name: "short-query-word-prefix",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "ze", // should match "Zero Decimals Y Ticks"
+			},
+		},
+		{
+			// The same short query does not match inside a word: "ec" must not
+			// find "Zero Decimals Y Ticks" via "decimals".
+			name: "short-query-mid-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "ec",
 			},
 		},
 	}
@@ -216,7 +245,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	}
 }
 
-func TestIntegrationSearchOwnerReferences(t *testing.T) {
+func testIntegrationSearchOwnerReferences(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -312,7 +341,7 @@ func TestIntegrationSearchOwnerReferences(t *testing.T) {
 	assert.Contains(t, foundHit.OwnerReferences, "iam.grafana.app/User/test-user")
 }
 
-func TestIntegrationSearchCreatedBy(t *testing.T) {
+func testIntegrationSearchCreatedBy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -412,7 +441,7 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 	}
 }
 
-func TestIntegrationSearchPermissionFiltering(t *testing.T) {
+func testIntegrationSearchPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Only run for Unified Storage modes that support search (Mode4+)
@@ -446,7 +475,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 			require.NoError(t, err)
 
 			var statusCode int
-			body := []byte(fmt.Sprintf(`{"uid":"%s","title":"Permission Test Folder"}`, folderUID))
+			body := fmt.Appendf(nil, `{"uid":"%s","title":"Permission Test Folder"}`, folderUID)
 			result := restClient.Post().AbsPath("api", "folders").
 				Body(body).
 				SetHeader("Content-type", "application/json").
@@ -481,7 +510,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 				Param("limit", "1000").
 				Param("type", "folder") // Only search folders
 
-			for _, kv := range strings.Split(params, "&") {
+			for kv := range strings.SplitSeq(params, "&") {
 				if kv == "" {
 					continue
 				}
@@ -674,34 +703,56 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
 }
 
-// bleveInternalDocIDRegex matches the 8-byte internal segment doc ID that bleve
-// includes in explain messages (e.g. "in \x00\x00\x00\x00\x00\x00\x00\r)").
-// The value depends on segment layout and is not stable across runs.
-var bleveInternalDocIDRegex = regexp.MustCompile(` in \x00[^)]*\)`)
+func TestIntegrationSearchCreatePermissionSharedWithMe(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-func roundExplainValues(obj map[string]any, decimals uint32) {
-	for k, val := range obj {
-		switch k {
-		case "value":
-			v, ok := val.(float64)
-			if ok {
-				obj[k] = roundTo(v, decimals)
+	for _, enabled := range []bool{true, false} {
+		t.Run(fmt.Sprintf("folderPickerCreatePermission=%t", enabled), func(t *testing.T) {
+			opts := testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+					"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+				},
 			}
-		case "message":
-			s, ok := val.(string)
-			if ok {
-				obj[k] = bleveInternalDocIDRegex.ReplaceAllString(s, " in <docID>)")
+			if enabled {
+				opts.EnableFeatureToggles = []string{featuremgmt.FlagFolderPickerCreatePermission}
 			}
-		case "children":
-			children, ok := val.([]any)
-			if ok {
-				for _, child := range children {
-					if v, ok := child.(map[string]any); ok {
-						roundExplainValues(v, decimals)
-					}
-				}
+			helper := apis.NewK8sTestHelper(t, opts)
+			defer helper.Shutdown()
+
+			createFolder := func(uid, parent string) {
+				body, err := json.Marshal(map[string]string{"uid": uid, "title": uid, "parentUid": parent})
+				require.NoError(t, err)
+				resp := apis.DoRequest(helper, apis.RequestParams{
+					User: helper.Org1.Admin, Method: http.MethodPost, Path: "/api/folders", Body: body, ContentType: "application/json",
+				}, &struct{}{})
+				require.Equal(t, http.StatusOK, resp.Response.StatusCode)
 			}
-		}
+			createFolder("create-parent", "")
+			createFolder("create-child", "create-parent")
+
+			// Only dashboards:create on the child: no read on it, and no access to its parent.
+			createOnly := helper.CreateUser("create-only", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+				Actions:           []string{dashboards.ActionDashboardsCreate},
+				Resource:          "folders",
+				ResourceAttribute: "uid",
+				ResourceID:        "create-child",
+			}})
+
+			path := fmt.Sprintf("/apis/dashboard.grafana.app/v0alpha1/namespaces/%s/search?type=folder&folder=sharedwithme&permission=create", createOnly.Identity.GetNamespace())
+			resp := apis.DoRequest(helper, apis.RequestParams{User: createOnly, Method: http.MethodGet, Path: path}, &dashboardV0.SearchResults{})
+			require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+
+			found := false
+			for _, hit := range resp.Result.Hits {
+				found = found || hit.Name == "create-child"
+			}
+			// With the toggle off, create falls back to edit, which this user does not have.
+			assert.Equal(t, enabled, found)
+		})
 	}
 }
 

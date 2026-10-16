@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.yaml.in/yaml/v3"
@@ -13,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/dynamic"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -23,7 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -138,6 +142,11 @@ type ParsedResource struct {
 	// Client that can talk to this resource
 	Client dynamic.ResourceInterface
 
+	// FolderScoped reports whether this resource's kind carries the folder annotation
+	// (i.e. lives in folders). Org-scoped kinds such as playlists are not folder-scoped
+	// and must never have a folder annotation stamped onto them.
+	FolderScoped bool
+
 	// The Existing object (same name)
 	// ?? do we need/want the whole thing??
 	Existing *unstructured.Unstructured
@@ -151,6 +160,10 @@ type ParsedResource struct {
 	// that already lives in the cluster (e.g. saved before stricter CUE
 	// schemas were enforced) must remain renameable.
 	SkipStrictValidation bool
+
+	// ForceCreate skips Run()'s own existence check -- for a caller that
+	// already checked once and would otherwise race that check.
+	ForceCreate bool
 
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
@@ -196,11 +209,19 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 	}
 
-	// Remove the internal dashboard UID,version and id if they exist
+	// Remove the internal dashboard UID, version and id if they exist. The
+	// deprecated internal ID is likewise owned by the storage layer, not the
+	// repository file, so strip its label too. Otherwise a repo-authored ID
+	// would ride a create straight past the uniqueness guard, which relies on
+	// an eventually-consistent search index and so lets duplicate IDs through
+	// when several dashboards are created within a single sync operation. With
+	// the label cleared, storage mints a fresh unique ID on create and restores
+	// the previous value on update.
 	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "uid")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "version")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "id") // now managed as a label
+		unstructured.RemoveNestedField(parsed.Obj.Object, "metadata", "labels", utils.LabelKeyDeprecatedInternalID)
 	}
 
 	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)
@@ -232,6 +253,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
 	}
 
+	if errs := validation.IsValidGrafanaName(obj.GetName()); len(errs) > 0 {
+		return nil, NewResourceValidationError(field.Invalid(field.NewPath("metadata", "name"), obj.GetName(), strings.Join(errs, "; ")))
+	}
+
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
 
@@ -250,7 +275,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// are contained in folders. Org-scoped resources (those not folder-scoped in the
 	// configured supported set) must not have a folder annotation stamped onto them:
 	// it would be meaningless and possibly dangling.
-	if info.Path != "" && supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
+	parsed.FolderScoped = supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK)
+	if info.Path != "" && parsed.FolderScoped {
 		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
 	}
 
@@ -300,7 +326,7 @@ func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
 }
 
 // ExistingFolder returns the grafana.app/folder annotation from the existing
-// Grafana object, or "" if Existing is nil or has no folder annotation.
+// Grafana object, or "" when it has no real parent folder.
 func (f *ParsedResource) ExistingFolder() string {
 	if f.Existing == nil {
 		return ""
@@ -309,7 +335,17 @@ func (f *ParsedResource) ExistingFolder() string {
 	if err != nil {
 		return ""
 	}
-	return meta.GetFolder()
+	return foldermodel.ToLegacyFolderUID(meta.GetFolder())
+}
+
+func (f *ParsedResource) IsFolder() bool {
+	return f.GVR.GroupResource() == FolderResource.GroupResource()
+}
+
+// IsPreviewRead classifies a read using its ref; callers must use it only for reads.
+// Folder manifests retain their existing authorization.
+func (f *ParsedResource) IsPreviewRead(configuredBranch string) bool {
+	return !f.IsFolder() && f.Info != nil && f.Info.Ref != "" && f.Info.Ref != configuredBranch
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
@@ -474,8 +510,12 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		return err
 	}
 
-	// If we don't have existing resource from DryRun, fetch it now
-	if f.DryRunResponse == nil {
+	if done, err := f.forceCreate(actionsCtx); done {
+		return err
+	}
+
+	// If we don't have existing resource from DryRun or a prior check, fetch it now
+	if f.DryRunResponse == nil && f.Existing == nil {
 		f.Existing, _ = f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})
 	}
 
@@ -561,6 +601,40 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		fallbackCreateSpan.End()
 	}
 	return err
+}
+
+// forceCreate creates the resource without Run()'s own existence check when
+// ForceCreate is set. done is true when Run should return err as is (created, or
+// failed for a reason other than the resource already existing).
+func (f *ParsedResource) forceCreate(ctx context.Context) (done bool, err error) {
+	if !f.ForceCreate {
+		return false, nil
+	}
+	createFieldValidation := "Strict"
+	if skipsStrictValidation(f.GVR) {
+		createFieldValidation = "Ignore"
+	}
+	f.Action = provisioning.ResourceActionCreate
+	createCtx, createSpan := tracing.Start(ctx, "provisioning.resources.run_resource.force_create")
+	defer createSpan.End()
+	createSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
+	f.Upsert, err = f.Client.Create(createCtx, f.Obj, metav1.CreateOptions{
+		FieldValidation: createFieldValidation,
+	})
+	if err != nil {
+		createSpan.RecordError(err)
+	}
+	if err == nil {
+		return true, nil
+	}
+	// The existence check that set ForceCreate can be wrong (e.g. an
+	// identity/RBAC mismatch reads as NotFound) -- fall through to the
+	// same update path a normal create does on conflict, rather than
+	// failing a resource that turns out to already exist.
+	if !apierrors.IsAlreadyExists(err) {
+		return true, err
+	}
+	return false, nil
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {

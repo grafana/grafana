@@ -12,6 +12,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"pgregory.net/rapid"
+
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
@@ -20,9 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
-	"pgregory.net/rapid"
 )
 
 func TestEncryptedValueStoreImpl(t *testing.T) {
@@ -357,7 +358,7 @@ func TestEncryptedValueStoreUpdateBulk(t *testing.T) {
 		for i := 1; i <= 5; i++ {
 			ev, err := sut.EncryptedValueStorage.Create(ctx, ns, fmt.Sprintf("name-%d", i), int64(i), contracts.EncryptedPayload{
 				DataKeyID:     "key",
-				EncryptedData: []byte(fmt.Sprintf("data-%d", i)),
+				EncryptedData: fmt.Appendf(nil, "data-%d", i),
 			})
 			require.NoError(t, err)
 			created = append(created, ev)

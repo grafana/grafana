@@ -4,8 +4,6 @@ aliases:
   - ../../linking/data-links/ # /docs/grafana/next/linking/data-links/
   - ../../panels/configure-data-links/ # /docs/grafana/next/panels/configure-data-links/
   - ../../reference/datalinks/ # /docs/grafana/next/reference/datalinks/
-  - ../../variables/url-variables/ # /docs/grafana/next/variables/url-variables/
-  - ../../variables/variable-types/url-variables/ # /docs/grafana/next/variables/variable-types/url-variables/
   - ../../panels-visualizations/configure-data-links/ # /docs/grafana/next/panels-visualizations/configure-data-links/
 keywords:
   - grafana
@@ -29,11 +27,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button-api-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/latest/panels-visualizations/visualizations/canvas/#button-api-options
-  global-variables:
+  built-in-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/#__from-and-__to
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/#__from-and-__to
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/global-variables/#__from-and-__to
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/built-in-variables/#__from-and-__to
   heatmap:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
@@ -203,7 +201,7 @@ Variables in data links and actions let you send people to a detailed dashboard 
 To see a list of available variables, enter `$` in the data link or action **URL** field.
 
 {{< admonition type="note" >}}
-These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
+These variables changed in 6.4 so if you have a previous version of Grafana, then use the version picker to select docs for a previous version of Grafana.
 {{< /admonition >}}
 
 Azure Monitor, [CloudWatch](ref:cloudwatch), and [Google Cloud Monitoring](ref:google-cloud-monitoring) have pre-configured data links called _deep links_.
@@ -222,7 +220,7 @@ These variables allow you to include the current time range in the data link or 
 
 When you create data links and actions using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
 
-For more information about these variables, refer to the [Global variables documentation](ref:global-variables).
+For more information about these variables, refer to the [Built-in variables documentation](ref:built-in-variables).
 
 ### Series variables
 
@@ -280,7 +278,18 @@ When linking to another dashboard that uses template variables, select variable 
 | selected multiple values | `var-myvar=value1&var-myvar=value2` |
 | selected `All`           | `var-myvar=All`                     |
 
-If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
+The `queryparam` format generates the ampersand (`&`) _within_ a single multi-value variable, as shown in the previous table.
+However, it doesn't automatically insert an ampersand _between_ different template variables.
+When you combine multiple template variables in one URL, you must add the ampersand yourself:
+
+```text
+/d/xxxx/dashboard-b?${var-server:queryparam}&${var-host:queryparam}
+```
+
+In this example, the ampersand between `${var-server:queryparam}` and `${var-host:queryparam}` is required.
+Without it, the resulting URL is malformed.
+
+If you want to add all of the current dashboard's variables to the URL, use `${__all_variables}`.
 
 When you link to another dashboard, ensure that:
 
@@ -320,13 +329,13 @@ To add a data link, follow these steps:
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
    {{< /tab-content >}}
    {{< tab-content name="Add actions" >}}
 
    {{< admonition type="note">}}
-   Actions are not supported for all visualizations. For the list of supported visualizations, refer to [Supported visualizations](#supported-visualizations-1).
+   Actions aren't supported for all visualizations. For the list of supported visualizations, refer to [Supported visualizations](#supported-visualizations-1).
    {{< /admonition >}}
 
    To add an action, by follow these steps:
@@ -342,7 +351,8 @@ To add a data link, follow these steps:
    | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
    | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | Connection           | Specify how the action's HTTP request is sent. Choose from: **Direct from browser** or routed through a configured data source.                                                                                                             |
+   | Method               | Select from **POST** or **GET**.                                                                                                                                                                                                            |
    | URL                  | The request URL.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                                                                   |
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
    | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
@@ -353,8 +363,21 @@ To add a data link, follow these steps:
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
    {{< /tab-content >}}
    {{< /tabs >}}
 
-If you add multiple data links or actions, you can control the order in which they appear in the visualization. To do this, click and drag the data link or action to the desired position.
+If you add multiple data links or actions, you can control the order in which they appear in the visualization. To reorder items, drag the data link or action to the desired position.
+
+## Panel-to-panel filtering
+
+You can use data links to link back to the dashboard you're on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
+
+To preserve the context of the current dashboard:
+
+- **Time range:** You must explicitly include the current time range in the link.
+- **Variables:** You must enable **Include all variables** to preserve current selections.
+- **Ordering:** Place **Include all variables** before the specific variable you define in the link.
+
+Filters on the current dashboard are automatically preserved.
+Learn more in [Create dashboard URL variables > Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#filters).

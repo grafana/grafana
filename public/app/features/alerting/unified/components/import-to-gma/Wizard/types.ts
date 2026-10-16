@@ -8,6 +8,8 @@ export enum StepKey {
   Review = 'review',
 }
 
+export type ImportMethod = 'stage' | 'legacy-datasource-rules';
+
 export enum StepState {
   Idle = 'idle',
   Visited = 'visited',

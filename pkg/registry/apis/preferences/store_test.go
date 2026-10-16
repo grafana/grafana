@@ -2,6 +2,7 @@ package preferences
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -13,9 +14,11 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -39,7 +42,7 @@ func TestListPreferences(t *testing.T) {
 
 	t.Run("returns user, team (sorted), then namespace prefs in inheritance order", func(t *testing.T) {
 		fake := &fakeStorage{items: allItems}
-		store := &preferencesStorage{Storage: fake}
+		store := &preferencesStorage{Storage: fake, accessClient: claims.FixedAccessClient(true)}
 
 		ctx := identity.WithRequester(context.Background(), userABC)
 		list, err := store.ListPreferences(ctx, nil)
@@ -173,7 +176,7 @@ func TestListPreferences_FieldSelector(t *testing.T) {
 			expect:   []string{"team-x"},
 		},
 		{
-			name:     "filters out team the user does not belong to",
+			name:     "filters out team without membership or read permission",
 			selector: fields.OneTermEqualSelector("metadata.name", "team-zzz"),
 			expect:   []string{},
 		},
@@ -197,7 +200,7 @@ func TestListPreferences_FieldSelector(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &fakeStorage{items: items}
-			store := &preferencesStorage{Storage: fake}
+			store := &preferencesStorage{Storage: fake, accessClient: claims.FixedAccessClient(false)}
 
 			ctx := identity.WithRequester(context.Background(), userABC)
 			list, err := store.ListPreferences(ctx, &internalversion.ListOptions{
@@ -207,6 +210,109 @@ func TestListPreferences_FieldSelector(t *testing.T) {
 			require.Equal(t, tc.expect, names(list))
 		})
 	}
+}
+
+func TestListPreferences_FieldSelector_TeamAccess(t *testing.T) {
+	accessErr := errors.New("access service unavailable")
+	cases := []struct {
+		name         string
+		identityType claims.IdentityType
+		groups       []string
+		allowed      bool
+		checkErr     error
+		wantCheck    bool
+		wantItem     bool
+	}{
+		{
+			name:         "non-member with read permission receives saved preferences",
+			identityType: claims.TypeUser,
+			allowed:      true,
+			wantCheck:    true,
+			wantItem:     true,
+		},
+		{
+			name:         "non-member without read permission cannot read preferences",
+			identityType: claims.TypeUser,
+			wantCheck:    true,
+		},
+		{
+			name:         "permission errors are returned without reading preferences",
+			identityType: claims.TypeUser,
+			checkErr:     accessErr,
+			wantCheck:    true,
+		},
+		{
+			name:         "member reads preferences without an access check",
+			identityType: claims.TypeUser,
+			groups:       []string{"team-uid"},
+			wantItem:     true,
+		},
+		{
+			name:         "non-user remains excluded even with team access",
+			identityType: claims.TypeServiceAccount,
+			groups:       []string{"team-uid"},
+			allowed:      true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			user := &identity.StaticRequester{
+				Type:      tc.identityType,
+				UserUID:   "user-uid",
+				Namespace: "stacks-123",
+				Groups:    tc.groups,
+			}
+			item := newPref("team-team-uid")
+			item.Namespace = user.Namespace
+			item.Spec.HomeDashboardUID = new("saved-dashboard")
+			fake := &fakeStorage{items: map[string]*preferences.Preferences{item.Name: item}}
+			checked := false
+			client := &testAccessClient{
+				check: func(_ context.Context, caller claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+					checked = true
+					require.Same(t, user, caller)
+					require.Equal(t, claims.CheckRequest{
+						Verb:      "get",
+						Group:     "iam.grafana.app",
+						Resource:  "teams",
+						Namespace: "stacks-123",
+						Name:      "team-uid",
+					}, req)
+					require.Empty(t, folder)
+					return claims.CheckResponse{Allowed: tc.allowed}, tc.checkErr
+				},
+			}
+			store := &preferencesStorage{Storage: fake, accessClient: client}
+			ctx := identity.WithRequester(context.Background(), user)
+			ctx = requestK8s.WithNamespace(ctx, user.Namespace)
+			list, err := store.ListPreferences(ctx, &internalversion.ListOptions{
+				FieldSelector: fields.OneTermEqualSelector("metadata.name", item.Name),
+			})
+			require.Equal(t, tc.wantCheck, checked)
+			if tc.checkErr != nil {
+				require.ErrorIs(t, err, tc.checkErr)
+				require.Empty(t, fake.calls)
+				return
+			}
+			require.NoError(t, err)
+			if tc.wantItem {
+				require.Equal(t, []preferences.Preferences{*item}, list.Items)
+			} else {
+				require.Empty(t, list.Items)
+				require.Empty(t, fake.calls)
+			}
+		})
+	}
+}
+
+type testAccessClient struct {
+	claims.AccessClient
+	check func(context.Context, claims.AuthInfo, claims.CheckRequest, string) (claims.CheckResponse, error)
+}
+
+func (c *testAccessClient) Check(ctx context.Context, user claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+	return c.check(ctx, user, req, folder)
 }
 
 func TestListPreferences_Errors(t *testing.T) {
@@ -221,14 +327,21 @@ func TestListPreferences_Errors(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("non-user identity is rejected", func(t *testing.T) {
-		store := &preferencesStorage{Storage: &fakeStorage{}}
+	t.Run("non-user identity only receives namespace preferences", func(t *testing.T) {
+		fake := &fakeStorage{items: map[string]*preferences.Preferences{
+			"user-sa-1": newPref("user-sa-1"),
+			"team-a":    newPref("team-a"),
+			"namespace": newPref("namespace"),
+		}}
+		store := &preferencesStorage{Storage: fake}
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Type:    claims.TypeServiceAccount,
 			UserUID: "sa-1",
+			Groups:  []string{"a"},
 		})
-		_, err := store.ListPreferences(ctx, nil)
-		require.ErrorContains(t, err, "only users may list preferences")
+		list, err := store.ListPreferences(ctx, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"namespace"}, names(list))
 	})
 
 	t.Run("user without identifier is rejected", func(t *testing.T) {
@@ -300,12 +413,119 @@ func TestListPreferences_Errors(t *testing.T) {
 	})
 }
 
-// fakeStorage is a minimal grafanarest.Storage implementation that only
-// supports Get; ListPreferences only ever calls Get on the wrapped store.
+func TestPreferencesStorage_Update(t *testing.T) {
+	ctx := requestK8s.WithNamespace(context.Background(), "default")
+
+	// setTheme mimics the apiserver's merge-patch transformer: it requires
+	// the current object to carry a UID (the real transformer returns 404
+	// otherwise) and applies a single-field change on top of it.
+	setTheme := func(theme string) rest.UpdatedObjectInfo {
+		return rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
+			old, ok := oldObj.(*preferences.Preferences)
+			if !ok {
+				return nil, fmt.Errorf("expected preferences, got %T", oldObj)
+			}
+			if old.UID == "" {
+				return nil, k8serrors.NewNotFound(
+					schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+					old.Name,
+				)
+			}
+			patched := old.DeepCopy()
+			patched.Spec.Theme = new(theme)
+			return patched, nil
+		})
+	}
+
+	newStore := func(fake *fakeStorage) *preferencesStorage {
+		return &preferencesStorage{Storage: fake, gvk: preferences.PreferencesResourceInfo.GroupVersionKind()}
+	}
+
+	t.Run("creates preferences that do not exist yet", func(t *testing.T) {
+		fake := &fakeStorage{items: map[string]*preferences.Preferences{}}
+		store := newStore(fake)
+
+		obj, created, err := store.Update(ctx, "user-abc", setTheme("dark"), nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.True(t, created)
+
+		p, ok := obj.(*preferences.Preferences)
+		require.True(t, ok)
+		require.Equal(t, "user-abc", p.Name)
+		require.Equal(t, "default", p.Namespace)
+		require.Equal(t, new("dark"), p.Spec.Theme)
+
+		require.Equal(t, []string{"user-abc"}, fake.created)
+		require.Empty(t, fake.updated)
+	})
+
+	t.Run("updates preferences that already exist", func(t *testing.T) {
+		existing := newPref("user-abc")
+		existing.UID = "existing-uid"
+		existing.Spec.Theme = new("light")
+		fake := &fakeStorage{items: map[string]*preferences.Preferences{"user-abc": existing}}
+		store := newStore(fake)
+
+		obj, created, err := store.Update(ctx, "user-abc", setTheme("dark"), nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.False(t, created)
+
+		p, ok := obj.(*preferences.Preferences)
+		require.True(t, ok)
+		require.Equal(t, new("dark"), p.Spec.Theme)
+
+		require.Empty(t, fake.created)
+		require.Equal(t, []string{"user-abc"}, fake.updated)
+	})
+
+	t.Run("falls back to update when losing a create race", func(t *testing.T) {
+		// The first Update reports NotFound but Create collides with
+		// AlreadyExists, as if another request created the preferences in
+		// between; the retried Update must then succeed
+		existing := newPref("user-abc")
+		existing.UID = "existing-uid"
+		fake := &fakeStorage{
+			items: map[string]*preferences.Preferences{"user-abc": existing},
+			createErr: k8serrors.NewAlreadyExists(
+				schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+				"user-abc",
+			),
+		}
+		store := &preferencesStorage{
+			Storage: &failFirstUpdateStorage{fakeStorage: fake},
+			gvk:     preferences.PreferencesResourceInfo.GroupVersionKind(),
+		}
+
+		obj, created, err := store.Update(ctx, "user-abc", setTheme("dark"), nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.False(t, created)
+
+		p, ok := obj.(*preferences.Preferences)
+		require.True(t, ok)
+		require.Equal(t, new("dark"), p.Spec.Theme)
+		require.Equal(t, []string{"user-abc"}, fake.updated)
+	})
+
+	t.Run("non-NotFound errors from Update bubble up", func(t *testing.T) {
+		fake := &forbiddenStorage{}
+		store := &preferencesStorage{Storage: fake, gvk: preferences.PreferencesResourceInfo.GroupVersionKind()}
+
+		_, _, err := store.Update(ctx, "user-abc", setTheme("dark"), nil, nil, false, &metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.True(t, k8serrors.IsForbidden(err))
+	})
+}
+
+// fakeStorage is a minimal grafanarest.Storage implementation supporting
+// Get, Create and Update -- everything the preferencesStorage wrapper calls
+// on the wrapped store.
 type fakeStorage struct {
 	grafanarest.Storage
-	items map[string]*preferences.Preferences
-	calls []string
+	items     map[string]*preferences.Preferences
+	calls     []string
+	created   []string
+	updated   []string
+	createErr error
 }
 
 func (f *fakeStorage) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -317,6 +537,50 @@ func (f *fakeStorage) Get(_ context.Context, name string, _ *metav1.GetOptions) 
 		schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
 		name,
 	)
+}
+
+func (f *fakeStorage) New() runtime.Object {
+	return &preferences.Preferences{}
+}
+
+func (f *fakeStorage) Create(_ context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+	if f.createErr != nil {
+		return nil, f.createErr
+	}
+	p, ok := obj.(*preferences.Preferences)
+	if !ok {
+		return nil, fmt.Errorf("expected preferences, got %T", obj)
+	}
+	if _, exists := f.items[p.Name]; exists {
+		return nil, k8serrors.NewAlreadyExists(
+			schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+			p.Name,
+		)
+	}
+	f.created = append(f.created, p.Name)
+	f.items[p.Name] = p
+	return p, nil
+}
+
+func (f *fakeStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	old, exists := f.items[name]
+	if !exists {
+		return nil, false, k8serrors.NewNotFound(
+			schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+			name,
+		)
+	}
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, false, err
+	}
+	p, ok := obj.(*preferences.Preferences)
+	if !ok {
+		return nil, false, fmt.Errorf("expected preferences, got %T", obj)
+	}
+	f.updated = append(f.updated, name)
+	f.items[name] = p
+	return p, false, nil
 }
 
 func newPref(name string) *preferences.Preferences {
@@ -341,4 +605,37 @@ type errorStorage struct {
 
 func (e *errorStorage) Get(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
 	return &preferences.PreferencesList{}, nil
+}
+
+// failFirstUpdateStorage fails the first Update with NotFound but otherwise
+// behaves like the wrapped fakeStorage, simulating a concurrent create
+// between the failed optimistic update and the upsert's Create call.
+type failFirstUpdateStorage struct {
+	*fakeStorage
+	failed bool
+}
+
+func (n *failFirstUpdateStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	if !n.failed {
+		n.failed = true
+		return nil, false, k8serrors.NewNotFound(
+			schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+			name,
+		)
+	}
+	return n.fakeStorage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+// forbiddenStorage fails Update with a non-NotFound error to verify such
+// errors are not treated as "missing, create it".
+type forbiddenStorage struct {
+	grafanarest.Storage
+}
+
+func (f *forbiddenStorage) Update(_ context.Context, name string, _ rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, k8serrors.NewForbidden(
+		schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+		name,
+		fmt.Errorf("nope"),
+	)
 }

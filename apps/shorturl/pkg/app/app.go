@@ -21,6 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
+// Config carries the app-specific configuration for the shorturl app.
+type Config struct {
+	// AppURL is Grafana's configured root URL (root_url), including any subpath
+	// configured via serve_from_sub_path. It is used to build absolute redirect
+	// URLs for the goto subresource so the redirect preserves the subpath.
+	AppURL string
+}
+
 func New(cfg app.Config) (app.App, error) {
 	cfg.KubeConfig.APIPath = "apis"
 	tmp, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
@@ -29,6 +37,15 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, fmt.Errorf("unable to create client")
 	}
 	client := shorturlv1beta1.NewShortURLClient(tmp)
+
+	// Grafana's configured root URL. When the app runs in-process this is the
+	// authoritative base for redirects; it includes the subpath. We derive the
+	// base from the request path only as a fallback (e.g. standalone deployments
+	// where SpecificConfig is not provided).
+	var configuredAppURL string
+	if specificConfig, ok := cfg.SpecificConfig.(*Config); ok && specificConfig != nil {
+		configuredAppURL = strings.TrimSuffix(specificConfig.AppURL, "/")
+	}
 
 	simpleConfig := simple.AppConfig{
 		Name:       "shorturl",
@@ -59,9 +76,9 @@ func New(cfg app.Config) (app.App, error) {
 						Method: "GET",
 						Path:   "goto",
 					}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
-						appURL, _, found := strings.Cut(req.URL.Path, "/apis/") // This will be settings.AppURL
-						if !found {
-							return fmt.Errorf("unable to parse request URL")
+						appURL, err := resolveAppURL(configuredAppURL, req.URL.Path)
+						if err != nil {
+							return err
 						}
 						id := resource.Identifier{
 							Namespace: req.ResourceIdentifier.Namespace,
@@ -120,6 +137,25 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
+}
+
+// resolveAppURL returns the base URL used to build short URL redirects.
+//
+// It prefers Grafana's configured root URL (which includes any subpath from
+// serve_from_sub_path) so the redirect preserves the subpath. The request path
+// is only a fallback for deployments where the configured URL is unavailable:
+// for the in-process loopback call the path is "/apis/..." with the subpath
+// already stripped, so relying on it there would drop the subpath from the
+// redirect Location.
+func resolveAppURL(configuredAppURL, requestPath string) (string, error) {
+	if configuredAppURL != "" {
+		return configuredAppURL, nil
+	}
+	base, _, found := strings.Cut(requestPath, "/apis/")
+	if !found {
+		return "", fmt.Errorf("unable to parse request URL")
+	}
+	return base, nil
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {

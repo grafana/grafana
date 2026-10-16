@@ -143,4 +143,16 @@ describe('fieldColorModeRegistry', () => {
     const calcFn = getCalculator({ mode: FieldColorModeId.Shades, seriesIndex: 1, fixedColor: color });
     expect(calcFn(70, 0, undefined)).not.toEqual(color);
   });
+
+  it.each([
+    [FieldColorModeId.PaletteCategoricalNext, '#D97E9B'],
+    [FieldColorModeId.PaletteCategoricalNext2, '#63B564'],
+    [FieldColorModeId.PaletteCategoricalNext3, '#63B564'],
+  ])('Experimental categorical palette %s is registered and assigns by series index', (mode, firstColor) => {
+    const registered = fieldColorModeRegistry.getIfExists(mode);
+    expect(registered).toBeDefined();
+
+    const calcFn = getCalculator({ mode, seriesIndex: 0, name: 'series1' });
+    expect(calcFn(70, 0, undefined)).toEqual(firstColor);
+  });
 });

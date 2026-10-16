@@ -3,9 +3,8 @@ import { css } from '@emotion/css';
 import { AlertLabels, type RouteMatchResult, type RouteWithID } from '@grafana/alerting';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Text, useStyles2 } from '@grafana/ui';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { arrayLabelsToObject } from '../../../utils/labels';
 import { Spacer } from '../../Spacer';
 

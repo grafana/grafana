@@ -17,7 +17,6 @@ export const BreadcrumbActions = ({ dashboard }: { dashboard: DashboardScene }) 
   const isEditingDashboard = Boolean(isEditing);
   const isEditingPanel = Boolean(editPanel);
   const hasUid = Boolean(uid);
-  const canEdit = Boolean(meta.canEdit);
   const canStar = Boolean(meta.canStar);
   const isSnapshot = Boolean(meta.isSnapshot);
   const isEmbedded = Boolean(meta.isEmbedded);
@@ -43,7 +42,9 @@ export const BreadcrumbActions = ({ dashboard }: { dashboard: DashboardScene }) 
         key: 'managed-dashboard-badge',
         component: ManagedDashboardNavBarBadge,
         group: 'actions',
-        condition: dashboard.isManaged() && canEdit,
+        // Visible to viewers too, so they know the dashboard is externally managed;
+        // the badge itself gates its actions (source/repo links) by permission.
+        condition: dashboard.isManaged(),
       },
       {
         key: 'open-snapshot-origin-button',

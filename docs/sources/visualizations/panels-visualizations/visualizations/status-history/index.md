@@ -42,7 +42,7 @@ Once you've [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERS
 
 {{< youtube id="a9wZHM0mdxo" >}}
 
-{{< docs/play title="Grafana State Timeline & Status History" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s" >}}
+{{< docs/play title="Grafana State Timeline & Status History" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1" >}}
 
 ## Supported data formats
 
@@ -105,12 +105,12 @@ Use these options to refine the visualization.
 
 | Option | Description                                                                                     |
 | ------ | ----------------------------------------------------------------------------------------------- |
-| Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
-| Row height  | Controls the height of boxes. 1 = maximum space and 0 = minimum space. |
-| Column width | Controls the width of boxes. 1 = maximum space and 0 = minimum space. |
+| Show values  | Controls whether values are rendered inside the status cells. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
+| Row height  | Controls the height of boxes. `1` creates the largest boxes, and `0` creates the smallest boxes with more gap. |
+| Column width | Controls the width of boxes. `1` creates the widest boxes, and `0` creates the narrowest boxes with more gap. |
 | Page size (enable pagination) | The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. This is useful when you have many series. |
-| Line width | Controls line width of state regions. |
-| Fill opacity | Controls value alignment inside state regions. |
+| Line width | Controls line width of status cells. This is a field option and can be set in field defaults or overrides. |
+| Fill opacity | Controls the fill opacity of status cells. This is a field option and can be set in field defaults or overrides. |
 
 <!-- prettier-ignore-end -->
 

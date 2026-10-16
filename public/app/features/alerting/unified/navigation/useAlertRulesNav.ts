@@ -5,7 +5,9 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
-import { shouldAllowRecoveringDeletedRules } from '../featureToggles';
+import { isAdmin } from '../utils/environment';
+
+import { useAlertRulesExtensionTabs } from './extensions';
 
 /**
  * Returns the correct navId for alerting pages based on the alertingNavigationV2 feature toggle.
@@ -18,6 +20,7 @@ export function getAlertRulesNavId(): string {
 export function useAlertRulesNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
+  const extensionTabs = useAlertRulesExtensionTabs();
 
   // Check if V2 navigation is enabled
   const useV2Nav = config.featureToggles.alertingNavigationV2;
@@ -48,10 +51,11 @@ export function useAlertRulesNav() {
       active: location.pathname === '/alerting/list',
       parentItem: alertRulesNav,
     },
+    ...extensionTabs,
   ];
 
   // Add Recently deleted tab if user has permission
-  if (shouldAllowRecoveringDeletedRules()) {
+  if (isAdmin()) {
     tabs.push({
       id: 'alert-rules-recently-deleted',
       text: t('alerting.navigation.recently-deleted', 'Recently deleted'),

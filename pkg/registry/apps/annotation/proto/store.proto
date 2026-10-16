@@ -35,12 +35,16 @@ message Annotation {
   string namespace = 2;
   string created_by = 3;
   AnnotationSpec spec = 4;
+  optional int64 deleted_at = 5;
 }
 
 // AnnotationSpec contains the annotation specification fields
 message AnnotationSpec {
   string text = 1;
   int64 time = 2;
+  // TimeEnd is optional, but the Grafana API will always normalize it to the
+  // same value as Time for point annotations, so in practice it is never omitted.
+  // Future versions of the proto may make this field explicitly required.
   optional int64 time_end = 3;
   optional string dashboard_uid = 4;
   optional int64 panel_id = 5;
@@ -64,6 +68,12 @@ message ListRequest {
   ListOptions options = 2;
 }
 
+enum DeletedFilter {
+  DELETED_EXCLUDE = 0; // live only (default)
+  DELETED_INCLUDE = 1; // live and tombstones
+  DELETED_ONLY = 2; // tombstones only
+}
+
 message ListOptions {
   string dashboard_uid = 1;
   int64 panel_id = 2;
@@ -76,6 +86,9 @@ message ListOptions {
   repeated string scopes = 9;
   bool scopes_match_any = 10;
   string created_by = 11;
+  // deleted controls whether soft-deleted annotations are included.
+  // A server that does not soft-delete ignores it.
+  DeletedFilter deleted = 12;
 }
 
 message ListResponse {
@@ -127,6 +140,7 @@ message ListTagsRequest {
 message TagListOptions {
   string prefix = 1;
   int32 limit = 2;
+  string contains = 3;
 }
 
 message ListTagsResponse {

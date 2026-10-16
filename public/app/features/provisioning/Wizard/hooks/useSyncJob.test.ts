@@ -13,7 +13,29 @@ import { useSyncJob } from './useSyncJob';
 setupProvisioningMswServer();
 
 describe('useSyncJob', () => {
-  it('starts a migrate job and exposes the created job', async () => {
+  it.each(['folder', 'folderless'] as const)(
+    'sets generateNewFolderIDs on a %s-target migrate job so folders are recreated',
+    async (syncTarget) => {
+      let body: unknown;
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+          body = await request.json();
+          return HttpResponse.json(createJob());
+        })
+      );
+
+      const { result } = renderHook(() => useSyncJob({ repoName: 'repo-1' }), { wrapper: getWrapper({}) });
+
+      await act(() => result.current.startJob(true, { syncTarget }));
+
+      await waitFor(() => {
+        expect(result.current.job).toBeDefined();
+        expect(body).toEqual(expect.objectContaining({ action: 'migrate', migrate: { generateNewFolderIDs: true } }));
+      });
+    }
+  );
+
+  it('does not set generateNewFolderIDs for instance sync so the originals are taken over', async () => {
     let body: unknown;
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
@@ -24,13 +46,11 @@ describe('useSyncJob', () => {
 
     const { result } = renderHook(() => useSyncJob({ repoName: 'repo-1' }), { wrapper: getWrapper({}) });
 
-    await act(() => result.current.startJob(true));
+    await act(() => result.current.startJob(true, { syncTarget: 'instance' }));
 
     await waitFor(() => {
       expect(result.current.job).toBeDefined();
-      // generateNewFolderIDs is always sent so migrated folders are recreated
-      // rather than taking over the originals.
-      expect(body).toEqual(expect.objectContaining({ action: 'migrate', migrate: { generateNewFolderIDs: true } }));
+      expect(body).toEqual(expect.objectContaining({ action: 'migrate', migrate: { generateNewFolderIDs: false } }));
     });
   });
 

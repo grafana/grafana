@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { LazyLoader, type VizPanel } from '@grafana/scenes';
+import { LazyLoader, type SceneGridRow, type VizPanel } from '@grafana/scenes';
 import { Box, Spinner } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -12,11 +12,14 @@ export interface SoloPanelContextValue {
   matches: (VizPanel: VizPanel) => boolean;
   matchFound: boolean;
   matchedPanels?: VizPanel[];
+  showControlsPane?: boolean;
+  renderRow?: (row: SceneGridRow, header: React.ReactNode) => React.ReactNode;
 }
 
 export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
   public matchFound = false;
   public matchedPanels: VizPanel[] = [];
+  public showControlsPane = true;
 
   public constructor(public keyPath: string) {}
 
@@ -44,6 +47,7 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
 export class SoloPanelContextForPanelEdit implements SoloPanelContextValue {
   public matchFound = false;
   public matchedPanels: VizPanel[] = [];
+  public showControlsPane = false;
 
   public constructor(panel: VizPanel) {
     this.matchFound = true;
@@ -85,7 +89,9 @@ export function renderMatchingSoloPanels(
           </LazyLoader>
         );
       } else {
-        matches.push(<ViewPanelWrapper panel={panel} key={panel.state.key} />);
+        matches.push(
+          <ViewPanelWrapper panel={panel} key={panel.state.key} showControlsPane={soloPanelContext.showControlsPane} />
+        );
       }
     }
   }

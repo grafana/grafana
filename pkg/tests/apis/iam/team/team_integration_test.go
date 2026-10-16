@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -13,19 +14,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// go test --tags "pro" -timeout 120s -run ^TestIntegrationTeams$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationTeams(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationTeams)
+}
+
+// go test --tags "pro" -timeout 120s -run ^TestIntegrationTeams$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
+func testIntegrationTeams(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -44,11 +53,17 @@ func TestIntegrationTeams(t *testing.T) {
 			})
 
 			doTeamCRUDTestsUsingTheNewAPIs(t, helper)
+			doTeamTitleUniquenessTests(t, helper)
+			doTeamListFilteringTest(t, helper)
 			doTeamSpecMembersTests(t, helper)
 			doTeamSpecExternalGroupsOSSTests(t, helper)
 
-			if mode < 3 {
+			if mode < rest.Mode3 {
 				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
+				doTeamScopedPermissionTests(t, helper)
+			}
+			if mode < rest.Mode4 {
+				doTeamDeleteCascadesLegacyMembersTest(t, helper)
 			}
 		})
 	}
@@ -285,6 +300,230 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
+// doTeamTitleUniquenessTests verifies the admission-level title uniqueness
+// check end to end. Legacy storage also enforces UNIQUE(org_id, name), but in
+// unified-only mode there is no DB constraint — the 409 must come from
+// validation, so this runs in every dual-write mode.
+func doTeamTitleUniquenessTests(t *testing.T, helper *apis.K8sTestHelper) {
+	newTeam := func(generateName, title string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "iam.grafana.app/v0alpha1",
+			"kind":       "Team",
+			"metadata":   map[string]interface{}{"generateName": generateName},
+			"spec":       map[string]interface{}{"title": title},
+		}}
+	}
+
+	mustCreate := func(t *testing.T, ctx context.Context, teamClient *apis.K8sResourceClient, generateName, title string) *unstructured.Unstructured {
+		created, err := teamClient.Resource.Create(ctx, newTeam(generateName, title), metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+		return created
+	}
+
+	requireConflict := func(t *testing.T, err error, title string) {
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, fmt.Sprintf("team name '%s' is already taken", title))
+	}
+
+	t.Run("should reject creating a team with a duplicate title", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		mustCreate(t, ctx, teamClient, "team-dup-title-a-", "Duplicate Title Team")
+
+		_, err := teamClient.Resource.Create(ctx, newTeam("team-dup-title-b-", "Duplicate Title Team"), metav1.CreateOptions{})
+		requireConflict(t, err, "Duplicate Title Team")
+	})
+
+	t.Run("should reject creating a team with a case-variant of an existing title", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		mustCreate(t, ctx, teamClient, "team-dup-case-a-", "Case Variant Team")
+
+		_, err := teamClient.Resource.Create(ctx, newTeam("team-dup-case-b-", "cASE vARIANT tEAM"), metav1.CreateOptions{})
+		requireConflict(t, err, "cASE vARIANT tEAM")
+	})
+
+	t.Run("should reject renaming a team to a taken title but allow a free one", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		mustCreate(t, ctx, teamClient, "team-rename-target-", "Rename Target Team")
+		source := mustCreate(t, ctx, teamClient, "team-rename-source-", "Rename Source Team")
+
+		toUpdate, err := teamClient.Resource.Get(ctx, source.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		toUpdate.Object["spec"].(map[string]interface{})["title"] = "Rename Target Team"
+		_, err = teamClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		requireConflict(t, err, "Rename Target Team")
+
+		toUpdate, err = teamClient.Resource.Get(ctx, source.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		toUpdate.Object["spec"].(map[string]interface{})["title"] = "Rename Free Team"
+		updated, err := teamClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "Rename Free Team", updated.Object["spec"].(map[string]interface{})["title"])
+	})
+}
+
+// doTeamListFilteringTest verifies that a nameless collection list is allowed at
+// the API layer (allowListAuthorizer) and that the backend filters the result to
+// only the teams the caller can read. This guards the list-filtering behavior end
+// to end across both the legacy and unified storage backends.
+func doTeamListFilteringTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("list returns only the teams the user can read", func(t *testing.T) {
+		ctx := context.Background()
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		// Create the teams through the k8s API so they land in the store backing
+		// the current dual-writer mode.
+		visible := createNamedTeam(t, ctx, helper, adminClient, "list-filter-visible", "Visible Team", "list-filter-visible@example.com")
+		hidden := createNamedTeam(t, ctx, helper, adminClient, "list-filter-hidden", "Hidden Team", "list-filter-hidden@example.com")
+		t.Cleanup(func() {
+			cleanupCtx := context.Background()
+			_ = adminClient.Resource.Delete(cleanupCtx, visible.GetName(), metav1.DeleteOptions{})
+			_ = adminClient.Resource.Delete(cleanupCtx, hidden.GetName(), metav1.DeleteOptions{})
+		})
+
+		visibleID := visible.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, visibleID, "team should expose its internal ID label")
+
+		// A user with no basic role and read access to only the "visible" team.
+		// The AuthZ server resolves an id scope (teams:id:N) to a uid scope
+		// (teams:uid:X) via the legacy identity store (see rbac.newTeamNameResolver).
+		// FIXME: In unified-only mode (Mode5) the team is never written to the legacy
+		// team table, so id resolution finds nothing; granting the uid scope too
+		// (already in resolved form) keeps the test valid across all modes.
+		lister := helper.CreateUser("team-list-filter-user", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{accesscontrol.ActionTeamsRead},
+				Resource:          "teams",
+				ResourceAttribute: "id",
+				ResourceID:        visibleID,
+			},
+			{
+				Actions:           []string{accesscontrol.ActionTeamsRead},
+				Resource:          "teams",
+				ResourceAttribute: "uid",
+				ResourceID:        visible.GetName(),
+			},
+		})
+
+		listerClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      lister,
+			Namespace: helper.Namespacer(lister.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		// The nameless list must succeed (200) rather than 403, even though the
+		// user cannot read every team in the group.
+		list, err := listerClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		names := make([]string, 0, len(list.Items))
+		for _, item := range list.Items {
+			names = append(names, item.GetName())
+		}
+		require.Contains(t, names, visible.GetName(), "user should see the team they can read")
+		require.NotContains(t, names, hidden.GetName(), "user must not see teams they cannot read")
+	})
+}
+
+func createNamedTeam(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, name, title, email string) *unstructured.Unstructured {
+	t.Helper()
+	obj := createTeamObject(helper, name, title, email)
+	created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, created)
+	return created
+}
+
+// doTeamDeleteCascadesLegacyMembersTest verifies that deleting a team cleans up
+// its legacy team_member rows. Only meaningful when legacy storage is written
+// (dual-write mode < 4), so the caller gates on mode.
+func doTeamDeleteCascadesLegacyMembersTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("delete team cascades legacy team_member rows", func(t *testing.T) {
+		ctx := context.Background()
+		env := helper.GetEnv()
+
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		editorUID := helper.Org1.Editor.Identity.GetIdentifier()
+		viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
+
+		created, err := teamClient.Resource.Create(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "iam.grafana.app/v0alpha1",
+			"kind":       "Team",
+			"metadata":   map[string]interface{}{"generateName": "team-del-cascade-"},
+			"spec": map[string]interface{}{
+				"title":       "Team del cascade",
+				"email":       "del-cascade@example.com",
+				"provisioned": false,
+				"externalUID": "",
+				"members": []map[string]interface{}{
+					{"kind": "User", "name": editorUID, "permission": "member", "external": false},
+					{"kind": "User", "name": viewerUID, "permission": "admin", "external": false},
+				},
+			},
+		}}, metav1.CreateOptions{})
+		require.NoError(t, err)
+		teamUID := created.GetName()
+
+		// Resolve the team's legacy int64 id before deletion. Orphaned
+		// team_member rows keep this team_id even though the team row is gone,
+		// so we must capture it now and count by id rather than joining back
+		// to the team table.
+		var teamID int64
+		rows, err := env.SQLStore.GetSqlxSession().Query(ctx, "SELECT id FROM team WHERE uid = ?", teamUID)
+		require.NoError(t, err)
+		require.True(t, rows.Next())
+		require.NoError(t, rows.Scan(&teamID))
+		require.NoError(t, rows.Close())
+
+		countMembers := func() int {
+			var n int
+			r, err := env.SQLStore.GetSqlxSession().Query(ctx, "SELECT COUNT(*) FROM team_member WHERE team_id = ?", teamID)
+			require.NoError(t, err)
+			require.True(t, r.Next())
+			require.NoError(t, r.Scan(&n))
+			require.NoError(t, r.Close())
+			return n
+		}
+
+		require.Equal(t, 2, countMembers(), "expected legacy team_member rows to exist before delete")
+
+		require.NoError(t, teamClient.Resource.Delete(ctx, teamUID, metav1.DeleteOptions{}))
+
+		require.Equal(t, 0, countMembers(), "team_member rows must be cleaned up after team delete")
+	})
+}
+
 func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	t.Run("should create team using legacy APIs and get/update/delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
@@ -509,7 +748,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		var wg sync.WaitGroup
 		errs := make([]error, parallel)
 		start := make(chan struct{})
-		for i := 0; i < parallel; i++ {
+		for i := range parallel {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
@@ -790,4 +1029,151 @@ func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper) 
 		require.Equal(t, int32(400), se.ErrStatus.Code)
 		require.Contains(t, se.ErrStatus.Message, "duplicate")
 	})
+}
+
+func doTeamScopedPermissionTests(t *testing.T, helper *apis.K8sTestHelper) {
+	const updatedName = "Updated scoped resource"
+
+	t.Run("legacy API permissions are scoped to the target", func(t *testing.T) {
+		cases := teamPermissionCases()
+
+		for i, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				targetID, otherID := createScopedTeamTargets(t, helper, i)
+				grantedID := targetID
+				if tc.wrongTarget {
+					grantedID = otherID
+				}
+
+				grants := []resourcepermissions.SetResourcePermissionCommand{
+					{
+						Actions:           tc.actions,
+						Resource:          "teams",
+						ResourceAttribute: "id",
+						ResourceID:        grantedID,
+					},
+				}
+				caller := helper.CreateUser(fmt.Sprintf("team-scope-%d", i), apis.Org1, org.RoleNone, grants)
+
+				path := fmt.Sprintf("/api/teams/%s", targetID)
+				before := readScopedTeamAsAdmin(t, helper, path)
+
+				get := apis.DoRequest(helper, apis.RequestParams{User: caller, Path: path}, &struct{}{})
+				expected := http.StatusForbidden
+				if tc.read {
+					expected = http.StatusOK
+				}
+				require.Equal(t, expected, get.Response.StatusCode, string(get.Body))
+
+				body, err := json.Marshal(map[string]interface{}{"name": updatedName, "email": ""})
+				require.NoError(t, err)
+				update := apis.DoRequest(helper, apis.RequestParams{
+					User:   caller,
+					Method: http.MethodPut,
+					Path:   path,
+					Body:   body,
+				}, &struct{}{})
+				expected = http.StatusForbidden
+				if tc.write {
+					expected = http.StatusOK
+				}
+				require.Equal(t, expected, update.Response.StatusCode, string(update.Body))
+
+				after := readScopedTeamAsAdmin(t, helper, path)
+				if tc.write {
+					require.Equal(t, updatedName, after["name"])
+				} else {
+					require.Equal(t, before, after)
+				}
+
+				deleted := apis.DoRequest(helper, apis.RequestParams{
+					User:   caller,
+					Method: http.MethodDelete,
+					Path:   path,
+				}, &struct{}{})
+				require.Equal(t, http.StatusForbidden, deleted.Response.StatusCode, string(deleted.Body))
+
+				stillExists := readScopedTeamAsAdmin(t, helper, path)
+				require.Equal(t, after, stillExists)
+			})
+		}
+	})
+}
+
+type teamPermissionCase struct {
+	name        string
+	actions     []string
+	read        bool
+	write       bool
+	wrongTarget bool
+}
+
+func teamPermissionCases() []teamPermissionCase {
+	return []teamPermissionCase{
+		{name: "no permissions"},
+		{
+			name:    "read only",
+			actions: []string{accesscontrol.ActionTeamsRead},
+			read:    true,
+		},
+		{
+			name:    "write only",
+			actions: []string{accesscontrol.ActionTeamsWrite},
+			write:   true,
+		},
+		{
+			name:    "read and write",
+			actions: []string{accesscontrol.ActionTeamsRead, accesscontrol.ActionTeamsWrite},
+			read:    true,
+			write:   true,
+		},
+		{name: "permission management only", actions: []string{accesscontrol.ActionTeamsPermissionsWrite}},
+		{
+			name: "different target",
+			actions: []string{
+				accesscontrol.ActionTeamsRead,
+				accesscontrol.ActionTeamsWrite,
+				accesscontrol.ActionTeamsPermissionsWrite,
+			},
+			wrongTarget: true,
+		},
+	}
+}
+
+func readScopedTeamAsAdmin(t *testing.T, helper *apis.K8sTestHelper, path string) map[string]interface{} {
+	t.Helper()
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.Admin,
+		Path: path,
+	}, &map[string]interface{}{})
+	require.Equal(t, http.StatusOK, response.Response.StatusCode, string(response.Body))
+
+	return *response.Result
+}
+
+func createScopedTeamTargets(t *testing.T, helper *apis.K8sTestHelper, index int) (string, string) {
+	t.Helper()
+
+	ctx := context.Background()
+	admin := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvrTeams,
+	})
+	suffixes := []string{"target", "other"}
+	ids := make([]string, 0, len(suffixes))
+	for _, suffix := range suffixes {
+		name := fmt.Sprintf("scope-%d-%s", index, suffix)
+		title := fmt.Sprintf("Scope %d %s", index, suffix)
+		created := createNamedTeam(t, ctx, helper, admin, name, title, "")
+		t.Cleanup(func() {
+			require.NoError(t, admin.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
+		})
+
+		id := created.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, id)
+		ids = append(ids, id)
+	}
+
+	return ids[0], ids[1]
 }

@@ -1083,8 +1083,8 @@ func (rs *Rows) ScanStructByIndex(dest ...interface{}) error {
 
 	var i = 0
 	for _, vvv := range vvvs {
-		for j := 0; j < vvv.NumField(); j++ {
-			newDest[i] = vvv.Field(j).Addr().Interface()
+		for _, field := range vvv.Fields() {
+			newDest[i] = field.Addr().Interface()
 			i = i + 1
 		}
 	}
@@ -1160,7 +1160,7 @@ func (rs *Rows) ScanSlice(dest interface{}) error {
 
 	newDest := make([]interface{}, len(cols))
 
-	for j := 0; j < len(cols); j++ {
+	for j := range cols {
 		if j >= vvv.Len() {
 			newDest[j] = reflect.New(vvv.Type().Elem()).Interface()
 		} else {
@@ -2153,24 +2153,24 @@ func SQLType2Type(st SQLType) reflect.Type {
 	name := strings.ToUpper(st.Name)
 	switch name {
 	case Bit, TinyInt, SmallInt, MediumInt, Int, Integer, Serial:
-		return reflect.TypeOf(1)
+		return reflect.TypeFor[int]()
 	case BigInt, BigSerial:
-		return reflect.TypeOf(int64(1))
+		return reflect.TypeFor[int64]()
 	case Float, Real:
-		return reflect.TypeOf(float32(1))
+		return reflect.TypeFor[float32]()
 	case Double:
-		return reflect.TypeOf(float64(1))
+		return reflect.TypeFor[float64]()
 	case Char, NChar, Varchar, NVarchar, TinyText, Text, NText, MediumText, LongText, Enum, Set, Uuid, Clob, SysName:
-		return reflect.TypeOf("")
+		return reflect.TypeFor[string]()
 	case TinyBlob, Blob, LongBlob, Bytea, Binary, MediumBlob, VarBinary, UniqueIdentifier:
-		return reflect.TypeOf([]byte{})
+		return reflect.TypeFor[[]byte]()
 	case Bool:
 		return reflect.TypeOf(true)
 	case DateTime, Date, Time, TimeStamp, TimeStampz, SmallDateTime, Year:
 		return reflect.TypeOf(c_TIME_DEFAULT)
 	case Decimal, Numeric, Money, SmallMoney:
-		return reflect.TypeOf("")
+		return reflect.TypeFor[string]()
 	default:
-		return reflect.TypeOf("")
+		return reflect.TypeFor[string]()
 	}
 }

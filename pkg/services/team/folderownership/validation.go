@@ -1,0 +1,69 @@
+package folderownership
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+)
+
+// ErrTeamOwnsFolders prevents deletion until folder ownership is removed.
+var ErrTeamOwnsFolders = errors.New("team owns one or more folders")
+
+// ValidateNoOwnedFolders checks whether a team is referenced as a folder owner.
+func ValidateNoOwnedFolders(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace, teamUID string) error {
+	if searcher == nil {
+		logging.FromContext(ctx).Warn("Skipping team folder-ownership check: no folder searcher configured", "teamUID", teamUID)
+		return nil
+	}
+
+	folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
+	ownerReference := fmt.Sprintf("iam.grafana.app/Team/%s", teamUID)
+
+	// This is a referential-integrity check, so it must include folders the requester cannot list.
+	searchCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+	resp, err := searcher.Search(searchCtx, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: namespace,
+				Group:     folderGVR.Group,
+				Resource:  folderGVR.Resource,
+			},
+			Fields: []*resourcepb.Requirement{{
+				Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+				Operator: "=",
+				Values:   []string{ownerReference},
+			}},
+		},
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		Limit:        1,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	})
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		logging.FromContext(ctx).Error("Failed to search folders owned by team", "namespace", namespace, "teamUID", teamUID, "error", err)
+		return err
+	}
+	if resp == nil {
+		return fmt.Errorf("search for folders owned by team %q returned no response", teamUID)
+	}
+
+	hasRows := false
+	switch resp.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		hasRows = len(resp.GetResults().GetRows()) > 0
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		hasRows = len(resp.GetRows()) > 0
+	default:
+		return fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
+	}
+	if resp.TotalHits > 0 || hasRows {
+		return fmt.Errorf("%w: team %q; remove folder ownership before deleting the team", ErrTeamOwnsFolders, teamUID)
+	}
+
+	return nil
+}

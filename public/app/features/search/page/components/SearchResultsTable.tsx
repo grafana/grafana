@@ -338,6 +338,10 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       userSelect: 'text',
       whiteSpace: 'nowrap',
     }),
+    nameCell: css({
+      // Gap between name and description tooltip
+      gap: theme.spacing(0.5),
+    }),
     typeCell: css({
       gap: theme.spacing(0.5),
     }),
@@ -373,9 +377,6 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'nowrap',
       gap: '4px',
       overflow: 'hidden',
-    }),
-    explainItem: css({
-      cursor: 'pointer',
     }),
     tagList: css({
       justifyContent: 'flex-start',

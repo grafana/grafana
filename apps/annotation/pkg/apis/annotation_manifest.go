@@ -49,8 +49,303 @@ var appManifestData = app.ManifestData{
 					},
 				},
 			},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
+					"/graphite": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "createGraphite",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Required: true,
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"data": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"tags": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Description: "tags accepts either an array of strings or a single space-separated string",
+																	},
+																},
+																"what": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"when": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"integer"},
+																	},
+																},
+															},
+															Required: []string{
+																"what",
+																"tags",
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																		"metadata": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				Properties: map[string]spec.Schema{
+																					"annotations": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"object"},
+																							AdditionalProperties: &spec.SchemaOrBool{
+																								Schema: &spec.Schema{
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																							},
+																						},
+																					},
+																					"creationTimestamp": {
+																						SchemaProps: spec.SchemaProps{
+																							Type:   []string{"string"},
+																							Format: "date-time",
+																						},
+																					},
+																					"deletionGracePeriodSeconds": {
+																						SchemaProps: spec.SchemaProps{
+																							Type:   []string{"integer"},
+																							Format: "int64",
+																						},
+																					},
+																					"deletionTimestamp": {
+																						SchemaProps: spec.SchemaProps{
+																							Type:   []string{"string"},
+																							Format: "date-time",
+																						},
+																					},
+																					"finalizers": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"array"},
+																							Items: &spec.SchemaOrArray{
+																								Schema: &spec.Schema{
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									}},
+																							},
+																						},
+																					},
+																					"generateName": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"generation": {
+																						SchemaProps: spec.SchemaProps{
+																							Type:   []string{"integer"},
+																							Format: "int64",
+																						},
+																					},
+																					"labels": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"object"},
+																							AdditionalProperties: &spec.SchemaOrBool{
+																								Schema: &spec.Schema{
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																							},
+																						},
+																					},
+																					"managedFields": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"array"},
+																							Items: &spec.SchemaOrArray{
+																								Schema: &spec.Schema{
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"object"},
+																										Properties: map[string]spec.Schema{
+																											"apiVersion": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												},
+																											},
+																											"fieldsType": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												},
+																											},
+																											"fieldsV1": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"object"},
+																												},
+																											},
+																											"manager": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												},
+																											},
+																											"operation": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												},
+																											},
+																											"subresource": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												},
+																											},
+																											"time": {
+																												SchemaProps: spec.SchemaProps{
+																													Type:   []string{"string"},
+																													Format: "date-time",
+																												},
+																											},
+																										},
+																									}},
+																							},
+																						},
+																					},
+																					"name": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"namespace": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"ownerReferences": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"array"},
+																							Items: &spec.SchemaOrArray{
+																								Schema: &spec.Schema{
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"object"},
+																										Properties: map[string]spec.Schema{
+																											"apiVersion": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												},
+																											},
+																											"blockOwnerDeletion": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"boolean"},
+																												},
+																											},
+																											"controller": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"boolean"},
+																												},
+																											},
+																											"kind": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												},
+																											},
+																											"name": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												},
+																											},
+																											"uid": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"string"},
+																												},
+																											},
+																										},
+																										Required: []string{
+																											"apiVersion",
+																											"kind",
+																											"name",
+																											"uid",
+																										},
+																									}},
+																							},
+																						},
+																					},
+																					"resourceVersion": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"selfLink": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"uid": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																				},
+																			},
+																			VendorExtensible: spec.VendorExtensible{
+																				Extensions: spec.Extensions{
+																					"x-grafana-app-uses-kubernetes-object-metadata": true,
+																				},
+																			},
+																		},
+																		"spec": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				AdditionalProperties: &spec.SchemaOrBool{
+																					Allows: true,
+																				},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"spec",
+																		"apiVersion",
+																		"kind",
+																		"metadata",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
 					"/search": {
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
@@ -190,6 +485,13 @@ var appManifestData = app.ManifestData{
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{},
 			},
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/graphite\":{\"post\":{\"operationId\":\"createGraphite\",\"requestBody\":{\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"what\",\"tags\"],\"properties\":{\"data\":{\"type\":\"string\"},\"tags\":{\"description\":\"tags accepts either an array of strings or a single space-separated string\",\"oneOf\":[{\"type\":\"string\"},{\"type\":\"array\",\"items\":{\"type\":\"string\"}}]},\"what\":{\"type\":\"string\"},\"when\":{\"type\":\"integer\"}},\"additionalProperties\":false}}},\"required\":true},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"spec\",\"apiVersion\",\"kind\",\"metadata\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{\"annotations\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"creationTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"deletionGracePeriodSeconds\":{\"type\":\"integer\",\"format\":\"int64\"},\"deletionTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"finalizers\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"generateName\":{\"type\":\"string\"},\"generation\":{\"type\":\"integer\",\"format\":\"int64\"},\"labels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"managedFields\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"fieldsType\":{\"type\":\"string\"},\"fieldsV1\":{\"type\":\"object\"},\"manager\":{\"type\":\"string\"},\"operation\":{\"type\":\"string\"},\"subresource\":{\"type\":\"string\"},\"time\":{\"type\":\"string\",\"format\":\"date-time\"}}}},\"name\":{\"type\":\"string\"},\"namespace\":{\"type\":\"string\"},\"ownerReferences\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"name\",\"uid\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"blockOwnerDeletion\":{\"type\":\"boolean\"},\"controller\":{\"type\":\"boolean\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}}}},\"resourceVersion\":{\"type\":\"string\"},\"selfLink\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}},\"x-grafana-app-uses-kubernetes-object-metadata\":true},\"spec\":{\"type\":\"object\",\"additionalProperties\":true}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/search\":{\"get\":{\"operationId\":\"getSearch\",\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"items\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"items\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"additionalProperties\":{}}},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/tags\":{\"get\":{\"operationId\":\"getTags\",\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"tags\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"tag\",\"count\"],\"properties\":{\"count\":{\"type\":\"number\"},\"tag\":{\"type\":\"string\"}},\"additionalProperties\":false}}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 	},
 }
@@ -214,8 +516,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/search|GET": v0alpha1.GetSearchResponse{},
-	"v0alpha1||<namespace>/tags|GET":   v0alpha1.GetTagsResponse{},
+	"v0alpha1||<namespace>/graphite|POST": v0alpha1.CreateGraphiteResponse{},
+	"v0alpha1||<namespace>/search|GET":    v0alpha1.GetSearchResponse{},
+	"v0alpha1||<namespace>/tags|GET":      v0alpha1.GetTagsResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -240,7 +543,9 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
-var customRouteToGoRequestBodyType = map[string]any{}
+var customRouteToGoRequestBodyType = map[string]any{
+	"v0alpha1||<namespace>/graphite|POST": v0alpha1.CreateGraphiteRequestBody{},
+}
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {

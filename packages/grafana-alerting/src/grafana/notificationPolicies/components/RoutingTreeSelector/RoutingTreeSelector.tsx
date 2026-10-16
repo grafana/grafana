@@ -1,14 +1,12 @@
 import { type ComponentProps, useMemo } from 'react';
 
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { t } from '@grafana/i18n';
 import { Alert, Combobox, type ComboboxOption, MultiCombobox } from '@grafana/ui';
 
 import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
-import { USER_DEFINED_TREE_NAME } from '../../consts';
-import { useListRoutingTrees } from '../../hooks/useRoutingTrees';
-
-const collator = new Intl.Collator('en', { sensitivity: 'accent' });
+import { useRoutingTrees } from '../../hooks/useRoutingTrees';
+import { buildRoutingTreeOptions, findRoutingTreeByName } from '../../routingTree.utils';
 
 type SingleSelectProps = CustomComboBoxProps<RoutingTree> & { multi?: false };
 type MultiSelectProps = Omit<ComponentProps<typeof MultiCombobox<string>>, 'options' | 'loading' | 'onChange'> & {
@@ -20,10 +18,6 @@ export type RoutingTreeSelectorProps = SingleSelectProps | MultiSelectProps;
 
 /**
  * Routing Tree Combobox which lists all available notification policy trees.
- *
- * When the `alertingMultiplePolicies` feature toggle is enabled on the backend,
- * this shows all available routing trees. Otherwise, it shows only the default
- * "user-defined" tree.
  *
  * The default routing tree (named "user-defined") is displayed as "Default policy"
  * and is always listed first.
@@ -47,58 +41,13 @@ export type RoutingTreeSelectorProps = SingleSelectProps | MultiSelectProps;
  * ```
  */
 function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
-  const {
-    currentData: routingTrees,
-    isLoading,
-    isError,
-  } = useListRoutingTrees({}, { refetchOnFocus: true, refetchOnMountOrArgChange: true });
+  const { trees, isLoading, isError } = useRoutingTrees();
+  const options = useMemo(() => buildRoutingTreeOptions(trees), [trees]);
 
-  // Build a lookup map from option value → RoutingTree for resolving onChange
-  const { options, treeLookup } = useMemo(() => {
-    if (!routingTrees?.items) {
-      const empty: { options: Array<ComboboxOption<string>>; treeLookup: Map<string, RoutingTree> } = {
-        options: [],
-        treeLookup: new Map(),
-      };
-      return empty;
-    }
-
-    const lookup = new Map<string, RoutingTree>();
-    const opts: Array<ComboboxOption<string>> = routingTrees.items
-      .map((tree) => {
-        const name = tree.metadata.name ?? '';
-        const isDefault = name === USER_DEFINED_TREE_NAME;
-
-        lookup.set(name, tree);
-
-        return {
-          label: isDefault ? t('alerting.routing-tree-selector.default-policy', 'Default policy') : name,
-          value: name,
-          description: isDefault
-            ? t(
-                'alerting.routing-tree-selector.default-policy-desc',
-                'Routes alerts using the default notification policy tree'
-              )
-            : t('alerting.routing-tree-selector.custom-policy-desc', 'Route alerts through the {{name}} policy tree', {
-                name,
-              }),
-        } satisfies ComboboxOption<string>;
-      })
-      .sort((a, b) => {
-        // Default policy always first
-        if (a.value === USER_DEFINED_TREE_NAME) {
-          return -1;
-        }
-        if (b.value === USER_DEFINED_TREE_NAME) {
-          return 1;
-        }
-        return collator.compare(a.label, b.label);
-      });
-
-    return { options: opts, treeLookup: lookup };
-  }, [routingTrees?.items]);
-
-  if (isError) {
+  // Only give up when we have nothing to show. A failed refetch (this query refetches on mount and
+  // on window focus) sets isError while the last good list is still in the cache, and replacing a
+  // working dropdown with a warning would lose the user's current selection along with the list.
+  if (isError && options.length === 0) {
     return (
       <Alert
         severity="warning"
@@ -111,10 +60,10 @@ function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
     const { multi: _, onChange, ...rest } = props;
 
     const handleChange = (selectedOptions: Array<ComboboxOption<string>>) => {
-      const trees = selectedOptions
-        .map((opt) => treeLookup.get(opt.value))
+      const selectedTrees = selectedOptions
+        .map((opt) => findRoutingTreeByName(trees, opt.value))
         .filter((tree): tree is RoutingTree => tree != null);
-      onChange(trees);
+      onChange(selectedTrees);
     };
 
     // @ts-expect-error TypeScript cannot narrow rest-spread from discriminated unions with conditional width types
@@ -128,7 +77,7 @@ function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
     }
 
     if (selectedOption) {
-      const tree = treeLookup.get(selectedOption.value);
+      const tree = findRoutingTreeByName(trees, selectedOption.value);
       if (!tree) {
         console.warn(`RoutingTreeSelector: could not find routing tree for value "${selectedOption.value}"`);
         return;
@@ -138,7 +87,16 @@ function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
     }
   };
 
-  return <Combobox {...props} loading={isLoading} options={options} onChange={handleChange} />;
+  // The combobox picks the selected option by matching value strings exactly, and our option
+  // values are the tree's real name (like "user-defined"). But some callers pass "" instead to
+  // mean "the default tree", so look the name up to get whatever the real one is. Don't touch
+  // undefined/null though - those mean "nothing picked yet", not "default".
+  const resolvedValue =
+    typeof props.value === 'string'
+      ? (findRoutingTreeByName(trees, props.value)?.metadata.name ?? props.value)
+      : props.value;
+
+  return <Combobox {...props} value={resolvedValue} loading={isLoading} options={options} onChange={handleChange} />;
 }
 
 export { RoutingTreeSelector };

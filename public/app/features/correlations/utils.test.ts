@@ -19,13 +19,11 @@ import * as utils from './utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn().mockReturnValue({
-    get: jest.fn().mockResolvedValue({
-      name: 'getTest',
-      getRef: () => {
-        return { type: 'testTypeFromLookup', uid: 'testUidFromLookup' };
-      },
-    }),
+  getDataSourceInstance: jest.fn().mockResolvedValue({
+    name: 'getTest',
+    getRef: () => {
+      return { type: 'testTypeFromLookup', uid: 'testUidFromLookup' };
+    },
   }),
 }));
 

@@ -84,7 +84,14 @@ func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) erro
 		}
 
 		if !has {
-			_, err := sess.Table("ngalert_configuration").Insert(cmd.AdminConfiguration)
+			// Partial writes (e.g. UID-only) can arrive before any row exists; send_alerts_to is
+			// NOT NULL and "no row" behaves as internal-only, so default a copy to internal.
+			cfg := *cmd.AdminConfiguration
+			if cfg.SendAlertsTo == nil {
+				internal := ngmodels.InternalAlertmanager
+				cfg.SendAlertsTo = &internal
+			}
+			_, err := sess.Table("ngalert_configuration").Insert(&cfg)
 			return err
 		}
 

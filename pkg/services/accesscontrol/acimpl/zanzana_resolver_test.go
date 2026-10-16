@@ -2,6 +2,7 @@ package acimpl
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"strings"
 	"sync"
@@ -12,10 +13,89 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
+
+type verbErroringZanzanaClient struct {
+	fakeZanzanaClient
+	failVerb string
+	allResp  *authzv1.ListResponse
+}
+
+func (c *verbErroringZanzanaClient) List(_ context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	if req.GetVerb() == c.failVerb {
+		return nil, errors.New("failed to perform list request")
+	}
+	return c.allResp, nil
+}
+
+func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
+	client := &verbErroringZanzanaClient{
+		failVerb: utils.VerbCreate,
+		allResp:  &authzv1.ListResponse{All: true},
+	}
+	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
+
+	usr := &identity.StaticRequester{
+		Type:    claims.TypeUser,
+		UserID:  1,
+		UserUID: "u1",
+		OrgID:   1,
+	}
+
+	perms, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	require.NoError(t, err)
+
+	require.Contains(t, permScopes(perms, "dashboards:read"), ac.Scope("dashboards", "*"))
+	require.Contains(t, permScopes(perms, "folders:read"), ac.Scope("folders", "*"))
+	require.Empty(t, permScopes(perms, "dashboards:create"))
+	require.Empty(t, permScopes(perms, "folders:create"))
+}
+
+func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
+	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
+		listResp: &authzv1.ListResponse{},
+	}}
+	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
+	usr := &identity.StaticRequester{
+		Type:      claims.TypeUser,
+		UserID:    1,
+		UserUID:   "u1",
+		OrgID:     1,
+		Namespace: "stacks-123",
+	}
+
+	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	require.NoError(t, err)
+	require.NotEmpty(t, client.listCalls)
+	for _, call := range client.listCalls {
+		require.Equal(t, "stacks-123", call.Namespace)
+	}
+}
+
+func TestResolveCurrentUserPermissions_DerivesNamespaceFromOrgWhenRequesterNamespaceIsEmpty(t *testing.T) {
+	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
+		listResp: &authzv1.ListResponse{},
+	}}
+	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
+	usr := &identity.StaticRequester{
+		Type:    claims.TypeUser,
+		UserID:  1,
+		UserUID: "u1",
+		OrgID:   2,
+	}
+
+	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	require.NoError(t, err)
+	require.NotEmpty(t, client.listCalls)
+	for _, call := range client.listCalls {
+		require.Equal(t, claims.OrgNamespaceFormatter(int64(2)), call.Namespace)
+	}
+}
 
 // capturingZanzanaClient records every ListRequest it receives so tests can
 // assert on the group / resource / verb / subject sent to Zanzana.
@@ -61,13 +141,13 @@ func legacyFilter(perms []ac.Permission, action, scope string) []ac.Permission {
 
 // zanzanaResolve runs the Zanzana list → legacy permission mapping for one action.
 func zanzanaResolve(resp *authzv1.ListResponse, action, scope string) ([]ac.Permission, error) {
-	group, resource, verb := common.TranslateActionToListParams(action)
+	group, resource, subresource, verb := common.TranslateActionToListParams(action)
 	if group == "" || resource == "" {
 		return nil, nil
 	}
 	fake := &fakeZanzanaClient{listResp: resp}
 	r := &ZanzanaPermissionResolver{client: fake}
-	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, group, resource, verb, action, scope)
+	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, group, resource, subresource, verb, action, scope)
 }
 
 func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(t *testing.T) {
@@ -128,7 +208,7 @@ func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
 }
 
 func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
-	group, resource, verb := common.TranslateActionToListParams("dashboards:read")
+	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
 	fake := &fakeZanzanaClient{
 		listResp: &authzv1.ListResponse{
 			Folders: []string{"keep-me", "drop-me"},
@@ -143,6 +223,7 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 		nil,
 		group,
 		resource,
+		subresource,
 		verb,
 		"dashboards:read",
 		ac.Scope("folders", "uid", "keep-me"),
@@ -157,7 +238,7 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 // Scope filter edge cases not covered by TestLegacyZanzanaParity (dashboard-namespace filter
 // with All=true; UID prefix must not false-positive).
 func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
-	group, resource, verb := common.TranslateActionToListParams("dashboards:read")
+	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
 
 	t.Run("All=true keeps dashboards wildcard when scope is dashboards namespace", func(t *testing.T) {
 		fake := &fakeZanzanaClient{
@@ -172,6 +253,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 			nil,
 			group,
 			resource,
+			subresource,
 			verb,
 			"dashboards:read",
 			ac.Scope("dashboards", "uid", "some-dash"),
@@ -199,6 +281,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 			nil,
 			group,
 			resource,
+			subresource,
 			verb,
 			"dashboards:read",
 			ac.Scope("dashboards", "uid", "abc"),
@@ -212,7 +295,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 }
 
 func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
-	group, resource, verb := common.TranslateActionToListParams("dashboards:read")
+	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
 
 	t.Run("wildcard query scope matches only wildcards, not individual items", func(t *testing.T) {
 		fake := &fakeZanzanaClient{
@@ -232,6 +315,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 			nil,
 			group,
 			resource,
+			subresource,
 			verb,
 			"dashboards:read",
 			ac.Scope("dashboards", "uid", "*"),
@@ -253,6 +337,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 			nil,
 			group,
 			resource,
+			subresource,
 			verb,
 			"dashboards:read",
 			ac.Scope("dashboards", "uid", "*"),
@@ -332,11 +417,11 @@ func TestSearchPermissionsForIdentity_UnsupportedAction_ReturnsEmpty(t *testing.
 		42,
 		"user-uid",
 		false,
-		ac.SearchOptions{Action: "users:read"},
+		ac.SearchOptions{Action: "unsupported:read"},
 	)
 	require.NoError(t, err)
 
-	// users:read is not in the Zanzana translation table, so no List call
+	// unsupported:read is not in the Zanzana translation table, so no List call
 	// should be made and the result should be empty.
 	require.Empty(t, result)
 	require.Empty(t, fake.listCalls, "should not call Zanzana List for untranslatable actions")
@@ -824,6 +909,50 @@ func TestListPermissions_TeamActions(t *testing.T) {
 	})
 }
 
+// TestListPermissions_UserActions verifies user actions produce legacy id-based scopes.
+// Most user actions are scoped to the global.users kind; users.permissions:read is the org-level
+// exception scoped to the users kind. Without a scope resolver (nil in unit tests), items fall
+// back to the Zanzana resource scope users:uid:<name>.
+func TestListPermissions_UserActions(t *testing.T) {
+	// Server-level actions are scoped to global.users.
+	for _, action := range []string{"users:read", "users:write", "users:delete", "users.permissions:write"} {
+		t.Run(action+" All=true produces global.users:id:* wildcard", func(t *testing.T) {
+			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, action, "")
+			require.NoError(t, err)
+			require.Equal(t, []ac.Permission{
+				{Action: action, Scope: "global.users:id:*"},
+			}, perms)
+		})
+	}
+
+	t.Run("users.permissions:read is the org-level exception scoped to users:id:*", func(t *testing.T) {
+		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "users.permissions:read", "")
+		require.NoError(t, err)
+		require.Equal(t, []ac.Permission{
+			{Action: "users.permissions:read", Scope: "users:id:*"},
+		}, perms)
+	})
+
+	// The org.users:* family is org-scoped (users kind), like users.permissions:read.
+	for _, action := range []string{"org.users:read", "org.users:write", "org.users:remove"} {
+		t.Run(action+" All=true produces users:id:* wildcard", func(t *testing.T) {
+			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, action, "")
+			require.NoError(t, err)
+			require.Equal(t, []ac.Permission{
+				{Action: action, Scope: "users:id:*"},
+			}, perms)
+		})
+	}
+
+	t.Run("items fall back to uid scope when scope resolver is nil", func(t *testing.T) {
+		perms, err := zanzanaResolve(&authzv1.ListResponse{Items: []string{"user-abc"}}, "users:read", "")
+		require.NoError(t, err)
+		require.Equal(t, []ac.Permission{
+			{Action: "users:read", Scope: "users:uid:user-abc"},
+		}, perms)
+	})
+}
+
 // TestListPermissions_PermissionManagementActionsScoping pins how *.permissions:*
 // actions translate: scoped by their base resource, and for dashboards either
 // dashboard-scoped (direct grant) or folder-scoped (inherited from the folder).
@@ -855,6 +984,65 @@ func TestListPermissions_PermissionManagementActionsScoping(t *testing.T) {
 			perms, err := zanzanaResolve(tc.resp, tc.action, "")
 			require.NoError(t, err)
 			require.ElementsMatch(t, tc.wantScopes, permScopes(perms, tc.action))
+		})
+	}
+}
+
+// Return different UIDs per subresource so tests fail if the resolver
+// omits or sends the wrong Subresource in a List request.
+type datasourceSubresourceZanzanaClient struct {
+	fakeZanzanaClient
+}
+
+func (c *datasourceSubresourceZanzanaClient) List(_ context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	if req.Group != "datasource.grafana.app" || req.Resource != "datasources" {
+		return &authzv1.ListResponse{}, nil
+	}
+	switch req.Subresource {
+	case "":
+		if req.Verb == "get" || req.Verb == "update" {
+			return &authzv1.ListResponse{Items: []string{"base-only"}}, nil
+		}
+	case "caching":
+		return &authzv1.ListResponse{Items: []string{"cache-only"}}, nil
+	case "query":
+		return &authzv1.ListResponse{Items: []string{"query-only"}}, nil
+	}
+	return &authzv1.ListResponse{}, nil
+}
+
+func TestResolveCurrentUserPermissions_KeepsDatasourceSubresourcesSeparate(t *testing.T) {
+	r := NewZanzanaPermissionResolver(&datasourceSubresourceZanzanaClient{}, &usertest.FakeUserService{}, nil, false)
+	usr := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, UserUID: "u1", OrgID: 1}
+	perms, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	require.NoError(t, err)
+	for action, uid := range map[string]string{
+		"datasources:read":          "base-only",
+		"datasources:write":         "base-only",
+		"datasources.caching:read":  "cache-only",
+		"datasources.caching:write": "cache-only",
+		"datasources:query":         "query-only",
+	} {
+		require.Equal(t, []string{"datasources:uid:" + uid}, permScopes(perms, action), action)
+	}
+}
+
+func TestSearchUsersPermissions_KeepsDatasourceSubresourcesSeparate(t *testing.T) {
+	r := NewZanzanaPermissionResolver(&datasourceSubresourceZanzanaClient{}, &usertest.FakeUserService{
+		ExpectedUser: &user.User{ID: 1, UID: "u1"},
+	}, nil, false)
+	usr := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, UserUID: "u1", OrgID: 1}
+	for action, uid := range map[string]string{
+		"datasources:read":          "base-only",
+		"datasources:write":         "base-only",
+		"datasources.caching:read":  "cache-only",
+		"datasources.caching:write": "cache-only",
+		"datasources:query":         "query-only",
+	} {
+		t.Run(action, func(t *testing.T) {
+			perms, err := r.SearchUsersPermissions(context.Background(), usr, 1, ac.SearchOptions{UserID: 1, Action: action})
+			require.NoError(t, err)
+			require.Equal(t, []ac.Permission{{Action: action, Scope: "datasources:uid:" + uid}}, perms[1])
 		})
 	}
 }

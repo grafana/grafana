@@ -47,7 +47,7 @@ Gets all existing LBAC rules for the data source with the given `uid`.
 GET /api/datasources/uid/my_datasource/lbac/teams HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**
@@ -97,7 +97,7 @@ Deleting a team from the list will remove the team's LBAC rules. You have to sub
 PUT /api/datasources/uid/my_datasource/lbac/teams
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "rules": [

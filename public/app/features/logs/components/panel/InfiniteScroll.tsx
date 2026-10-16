@@ -2,12 +2,20 @@ import { type ReactNode, useCallback, useEffect, useRef, useState, type MouseEve
 import { usePrevious } from 'react-use';
 import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'react-window';
 
-import { type AbsoluteTimeRange, LogsSortOrder, type TimeRange } from '@grafana/data';
+import { LoadingState, LogsSortOrder, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
 
-import { canScrollBottom, canScrollTop, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
+import {
+  canScrollBottom,
+  canScrollTop,
+  getVisibleRange,
+  type InfiniteScrollTimeRange,
+  loadMoreRangeFromVisible,
+  ScrollDirection,
+  shouldLoadMore,
+} from '../infiniteScrollUtils';
 
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
@@ -26,7 +34,7 @@ export interface Props {
   displayedFields: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteScrollMode: InfiniteScrollMode;
-  loading?: boolean;
+  loadingState?: LoadingState;
   loadMore?: LoadMoreLogsType;
   logs: LogListModel[];
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
@@ -43,15 +51,15 @@ export interface Props {
 type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll-top' | 'pre-scroll-bottom' | 'loading';
 export type InfiniteScrollMode = 'interval' | 'unlimited';
 export type LoadMoreLogsType =
-  | ((range: AbsoluteTimeRange) => void)
-  | ((range: AbsoluteTimeRange, scrollDirection: ScrollDirection) => void);
+  | ((range: InfiniteScrollTimeRange) => void)
+  | ((range: InfiniteScrollTimeRange, scrollDirection: ScrollDirection) => void);
 
 export const InfiniteScroll = ({
   children,
   displayedFields,
   handleOverflow,
   infiniteScrollMode,
-  loading,
+  loadingState,
   loadMore,
   logs,
   onClick,
@@ -76,26 +84,50 @@ export const InfiniteScroll = ({
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
   const noScrollRef = useRef<undefined | boolean>(undefined);
+  const loadMoreCountRef = useRef<number | null>(null);
+  const settledRef = useRef(false);
+  // The request backing a load-more is in flight while its state is Loading or Streaming.
+  const requestInFlight = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
+  const prevInFlight = usePrevious(requestInFlight);
 
   useEffect(() => {
-    // Logs have not changed, ignore effect
-    if (!prevLogs || prevLogs === logs) {
-      return;
-    }
-    // New logs are from infinite scrolling
-    if (infiniteLoaderState === 'loading') {
-      // out-of-bounds if no new logs returned
-      setInfiniteLoaderState(
-        logs.length === prevLogs.length && infiniteScrollMode === 'interval' ? 'out-of-bounds' : 'idle'
-      );
-      if (scrollToLogLineRef.current) {
-        setAutoScroll(true);
-      }
-    } else {
+    // Fresh logs from a new query (not infinite scrolling): reset paging, scroll, and clear a stale
+    // 'out-of-bounds' so re-running the query re-enables scrolling instead of latching end-of-range.
+    if (prevLogs && prevLogs !== logs && infiniteLoaderState !== 'loading') {
       lastLogOfPage.current = [];
       setAutoScroll(true);
+      if (infiniteLoaderState !== 'idle') {
+        setInfiniteLoaderState('idle');
+      }
+      return;
     }
-  }, [infiniteLoaderState, infiniteScrollMode, logs, prevLogs]);
+    if (infiniteLoaderState === 'loading') {
+      // Only resolve after the in-flight -> settled transition, ignoring the transient Done cancelQueries sets at the start.
+      if (prevInFlight && !requestInFlight) {
+        settledRef.current = true;
+      }
+      if (!settledRef.current) {
+        return;
+      }
+      if (loadingState === LoadingState.Error) {
+        settledRef.current = false;
+        loadMoreCountRef.current = null;
+        setInfiniteLoaderState('idle');
+        return;
+      }
+      // New logs have been returned from the load-more request.
+      if (prevLogs !== logs) {
+        const startCount = loadMoreCountRef.current;
+        settledRef.current = false;
+        loadMoreCountRef.current = null;
+        const outOfBounds = startCount !== null && logs.length === startCount && infiniteScrollMode === 'interval';
+        setInfiniteLoaderState(outOfBounds ? 'out-of-bounds' : 'idle');
+        if (scrollToLogLineRef.current) {
+          setAutoScroll(true);
+        }
+      }
+    }
+  }, [infiniteLoaderState, infiniteScrollMode, loadingState, requestInFlight, prevInFlight, logs, prevLogs]);
 
   useEffect(() => {
     if (prevSortOrder && prevSortOrder !== sortOrder) {
@@ -104,19 +136,20 @@ export const InfiniteScroll = ({
   }, [prevSortOrder, sortOrder]);
 
   useEffect(() => {
-    if (autoScroll && !loading) {
+    if (autoScroll && !requestInFlight) {
       setInitialScrollPosition(scrollToLogLineRef.current);
       scrollToLogLineRef.current = undefined;
       setAutoScroll(false);
     }
-  }, [autoScroll, loading, setInitialScrollPosition]);
+  }, [autoScroll, requestInFlight, setInitialScrollPosition]);
 
   const onLoadMore = useCallback(
     (scrollDirection: ScrollDirection) => {
+      const visibleRange = getVisibleRange(logs);
       const newRange =
         scrollDirection === ScrollDirection.Bottom
-          ? canScrollBottom(getVisibleRange(logs), timeRange, timeZone, sortOrder)
-          : canScrollTop(getVisibleRange(logs), timeRange, timeZone, sortOrder);
+          ? canScrollBottom(visibleRange, timeRange, timeZone, sortOrder)
+          : canScrollTop(visibleRange, timeRange, timeZone, sortOrder);
       if (!newRange && infiniteScrollMode === 'interval') {
         setInfiniteLoaderState('out-of-bounds');
         return;
@@ -127,8 +160,10 @@ export const InfiniteScroll = ({
         scrollToLogLineRef.current = logs[0];
         lastLogOfPage.current.push(logs[0].uid);
       }
+      // Snapshot the row count so the completion effect can tell whether new rows arrived.
+      loadMoreCountRef.current = logs.length;
       setInfiniteLoaderState('loading');
-      loadMore?.(newRange ?? getVisibleRange(logs), scrollDirection);
+      loadMore?.(newRange ?? loadMoreRangeFromVisible(visibleRange, scrollDirection, sortOrder), scrollDirection);
 
       reportInteraction('grafana_logs_infinite_scrolling', {
         direction: scrollDirection,
@@ -274,7 +309,7 @@ export const InfiniteScroll = ({
     [infiniteLoaderState, logs, scrollElement]
   );
 
-  const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uid : index.toString()), [logs]);
+  const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uniqueKey : index.toString()), [logs]);
 
   const itemCount = logs.length && loadMore && infiniteLoaderState !== 'idle' ? logs.length + 1 : logs.length;
 

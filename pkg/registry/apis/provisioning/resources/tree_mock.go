@@ -260,6 +260,62 @@ func (_c *MockFolderTree_Get_Call) RunAndReturn(run func(string) (Folder, bool))
 	return _c
 }
 
+// GetByPath provides a mock function with given fields: path
+func (_m *MockFolderTree) GetByPath(path string) (Folder, bool) {
+	ret := _m.Called(path)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByPath")
+	}
+
+	var r0 Folder
+	var r1 bool
+	if rf, ok := ret.Get(0).(func(string) (Folder, bool)); ok {
+		return rf(path)
+	}
+	if rf, ok := ret.Get(0).(func(string) Folder); ok {
+		r0 = rf(path)
+	} else {
+		r0 = ret.Get(0).(Folder)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) bool); ok {
+		r1 = rf(path)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+
+	return r0, r1
+}
+
+// MockFolderTree_GetByPath_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByPath'
+type MockFolderTree_GetByPath_Call struct {
+	*mock.Call
+}
+
+// GetByPath is a helper method to define mock.On call
+//   - path string
+func (_e *MockFolderTree_Expecter) GetByPath(path interface{}) *MockFolderTree_GetByPath_Call {
+	return &MockFolderTree_GetByPath_Call{Call: _e.mock.On("GetByPath", path)}
+}
+
+func (_c *MockFolderTree_GetByPath_Call) Run(run func(path string)) *MockFolderTree_GetByPath_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockFolderTree_GetByPath_Call) Return(_a0 Folder, _a1 bool) *MockFolderTree_GetByPath_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockFolderTree_GetByPath_Call) RunAndReturn(run func(string) (Folder, bool)) *MockFolderTree_GetByPath_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // In provides a mock function with given fields: folder
 func (_m *MockFolderTree) In(folder string) bool {
 	ret := _m.Called(folder)

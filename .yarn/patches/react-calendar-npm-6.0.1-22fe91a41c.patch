@@ -1,0 +1,16 @@
+diff --git a/dist/Tile.js b/dist/Tile.js
+index fe301036ba80727138e62bebe4df48f5c02b6869..5054a73453a09e5908543f5d25e2fb342a4008c9 100644
+--- a/dist/Tile.js
++++ b/dist/Tile.js
+@@ -11,7 +11,10 @@ export default function Tile(props) {
+         const args = { activeStartDate, date, view };
+         return typeof tileContentProps === 'function' ? tileContentProps(args) : tileContentProps;
+     }, [activeStartDate, date, tileContentProps, view]);
+-    return (_jsxs("button", { className: clsx(classes, tileClassName), disabled: (minDate && minDateTransform(minDate) > date) ||
++    // Grafana patch: the selected tile is marked with a CSS class only, so screen readers cannot
++    // tell it apart from the other tiles. Mirrors the closed upstream PR 940.
++    const isSelected = (classes || []).some((className) => className.endsWith('--active') || className.endsWith('--hasActive'));
++    return (_jsxs("button", { "aria-pressed": isSelected, className: clsx(classes, tileClassName), disabled: (minDate && minDateTransform(minDate) > date) ||
+             (maxDate && maxDateTransform(maxDate) < date) ||
+             (tileDisabled === null || tileDisabled === void 0 ? void 0 : tileDisabled({ activeStartDate, date, view })), onClick: onClick ? (event) => onClick(date, event) : undefined, onFocus: onMouseOver ? () => onMouseOver(date) : undefined, onMouseOver: onMouseOver ? () => onMouseOver(date) : undefined, style: style, type: "button", children: [formatAbbr ? _jsx("abbr", { "aria-label": formatAbbr(locale, date), children: children }) : children, tileContent] }));
+ }

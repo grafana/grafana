@@ -37,7 +37,7 @@ describe('FilterList', () => {
       expect(screen.getByRole('checkbox', { name: 'cherry' })).toBeInTheDocument();
     });
 
-    it('only shows options whose label matches the search string', () => {
+    it('filters options by label regex match', () => {
       const options: SelectableValue[] = [
         { value: 'apple', label: 'apple' },
         { value: 'apricot', label: 'apricot' },
@@ -74,7 +74,7 @@ describe('FilterList', () => {
       expect(screen.queryByRole('checkbox', { name: 'apple' })).not.toBeInTheDocument();
     });
 
-    it('shows "No values" label when no options match the search', () => {
+    it('shows "No values" when no options match', () => {
       const options: SelectableValue[] = [{ value: 'apple', label: 'apple' }];
       render(
         <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="zzz" operator={containsOp()} />
@@ -83,9 +83,33 @@ describe('FilterList', () => {
     });
   });
 
-  describe('numeric comparison operators', () => {
-    it('EQUALS shows only the item with the matching numeric value', () => {
-      const options = numericOptions([10, 20, 30]);
+  describe('comparison operators (smoke tests — logic covered in filterExpression.test.ts)', () => {
+    it.each([
+      [FilterOperator.EQUALS, [20]],
+      [FilterOperator.NOT_EQUALS, [10, 30]],
+      [FilterOperator.GREATER, [30]],
+      [FilterOperator.GREATER_OR_EQUAL, [20, 30]],
+      [FilterOperator.LESS, [10]],
+      [FilterOperator.LESS_OR_EQUAL, [10, 20]],
+    ] as Array<[FilterOperator, number[]]>)('%s shows only matching options', (operator, visible) => {
+      const all = [10, 20, 30];
+      render(
+        <FilterList
+          options={numericOptions(all)}
+          values={[]}
+          onChange={jest.fn()}
+          searchFilter="20"
+          operator={op(operator)}
+        />
+      );
+      for (const n of all) {
+        const el = screen.queryByRole('checkbox', { name: String(n) });
+        visible.includes(n) ? expect(el).toBeInTheDocument() : expect(el).not.toBeInTheDocument();
+      }
+    });
+
+    it('excludes options with undefined value', () => {
+      const options: SelectableValue[] = [{ label: 'no-value' }, { value: '20', label: '20' }];
       render(
         <FilterList
           options={options}
@@ -95,98 +119,16 @@ describe('FilterList', () => {
           operator={op(FilterOperator.EQUALS)}
         />
       );
-      expect(screen.queryByRole('checkbox', { name: '10' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: 'no-value' })).not.toBeInTheDocument();
       expect(screen.getByRole('checkbox', { name: '20' })).toBeInTheDocument();
-      expect(screen.queryByRole('checkbox', { name: '30' })).not.toBeInTheDocument();
-    });
-
-    it('NOT_EQUALS excludes the item with the matching value', () => {
-      const options = numericOptions([10, 20, 30]);
-      render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="20"
-          operator={op(FilterOperator.NOT_EQUALS)}
-        />
-      );
-      expect(screen.getByRole('checkbox', { name: '10' })).toBeInTheDocument();
-      expect(screen.queryByRole('checkbox', { name: '20' })).not.toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: '30' })).toBeInTheDocument();
-    });
-
-    it('GREATER shows only values strictly greater than the threshold', () => {
-      const options = numericOptions([10, 20, 30]);
-      render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="20"
-          operator={op(FilterOperator.GREATER)}
-        />
-      );
-      expect(screen.queryByRole('checkbox', { name: '10' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('checkbox', { name: '20' })).not.toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: '30' })).toBeInTheDocument();
-    });
-
-    it('GREATER_OR_EQUAL shows values >= the threshold', () => {
-      const options = numericOptions([10, 20, 30]);
-      render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="20"
-          operator={op(FilterOperator.GREATER_OR_EQUAL)}
-        />
-      );
-      expect(screen.queryByRole('checkbox', { name: '10' })).not.toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: '20' })).toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: '30' })).toBeInTheDocument();
-    });
-
-    it('LESS shows only values strictly less than the threshold', () => {
-      const options = numericOptions([10, 20, 30]);
-      render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="20"
-          operator={op(FilterOperator.LESS)}
-        />
-      );
-      expect(screen.getByRole('checkbox', { name: '10' })).toBeInTheDocument();
-      expect(screen.queryByRole('checkbox', { name: '20' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('checkbox', { name: '30' })).not.toBeInTheDocument();
-    });
-
-    it('LESS_OR_EQUAL shows values <= the threshold', () => {
-      const options = numericOptions([10, 20, 30]);
-      render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="20"
-          operator={op(FilterOperator.LESS_OR_EQUAL)}
-        />
-      );
-      expect(screen.getByRole('checkbox', { name: '10' })).toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: '20' })).toBeInTheDocument();
-      expect(screen.queryByRole('checkbox', { name: '30' })).not.toBeInTheDocument();
     });
   });
 
-  describe('EXPRESSION operator', () => {
-    it('evaluates a JS expression where $ is the column value', () => {
-      const options = numericOptions([5, 15, 25]);
+  describe('EXPRESSION operator (smoke tests — logic covered in filterExpression.test.ts)', () => {
+    it('filters options using a compound && expression', () => {
       render(
         <FilterList
-          options={options}
+          options={numericOptions([5, 15, 25])}
           values={[]}
           onChange={jest.fn()}
           searchFilter="$ > 10 && $ < 20"
@@ -198,16 +140,43 @@ describe('FilterList', () => {
       expect(screen.queryByRole('checkbox', { name: '25' })).not.toBeInTheDocument();
     });
 
-    it('shows "No values" when the expression throws a syntax error', () => {
-      const options = numericOptions([10, 20]);
-      // "$ ===" is a valid regex (won't throw new RegExp) but an invalid JS expression
-      // ("return $ ===;" throws SyntaxError in the Function constructor).
+    it('shows "No values" for an unparseable expression', () => {
+      render(
+        <FilterList
+          options={numericOptions([10, 20])}
+          values={[]}
+          onChange={jest.fn()}
+          searchFilter="$ ==="
+          operator={op(FilterOperator.EXPRESSION)}
+        />
+      );
+      expect(screen.getByText('No values')).toBeInTheDocument();
+    });
+
+    it('shows "No values" and does not fall back to regex when expression is invalid', () => {
+      render(
+        <FilterList
+          options={[
+            { value: '1', label: 'foo' },
+            { value: '2', label: 'foobar' },
+          ]}
+          values={[]}
+          onChange={jest.fn()}
+          searchFilter="foo"
+          operator={op(FilterOperator.EXPRESSION)}
+        />
+      );
+      expect(screen.getByText('No values')).toBeInTheDocument();
+    });
+
+    it('returns false when option.value is undefined', () => {
+      const options: SelectableValue[] = [{ label: 'no-value' }];
       render(
         <FilterList
           options={options}
           values={[]}
           onChange={jest.fn()}
-          searchFilter="$ ==="
+          searchFilter="$ > 0"
           operator={op(FilterOperator.EXPRESSION)}
         />
       );
@@ -251,7 +220,7 @@ describe('FilterList', () => {
       expect(onChange.mock.calls[0][0]).toEqual([]);
     });
 
-    it('only removes the currently visible items when deselecting, preserving hidden selections', async () => {
+    it('preserves hidden selections when deselecting visible items', async () => {
       const user = userEvent.setup();
       const options: SelectableValue[] = [
         { value: 'apple', label: 'apple' },
@@ -259,7 +228,6 @@ describe('FilterList', () => {
         { value: 'banana', label: 'banana' },
       ];
       const onChange = jest.fn();
-      // All three are selected, but search filters to only "ap*" items
       render(
         <FilterList options={options} values={options} onChange={onChange} searchFilter="ap" operator={containsOp()} />
       );
@@ -267,7 +235,6 @@ describe('FilterList', () => {
       const selectAll = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll);
       await user.click(selectAll.querySelector('input')!);
 
-      // banana should be preserved because it was not visible
       const remaining: SelectableValue[] = onChange.mock.calls[0][0];
       expect(remaining.map((v) => v.value)).toEqual(['banana']);
     });

@@ -7,19 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
-type HelpFlags1 uint64
-
-func (f HelpFlags1) HasFlag(flag HelpFlags1) bool { return f&flag != 0 }
-func (f *HelpFlags1) AddFlag(flag HelpFlags1)     { *f |= flag }
-
-const (
-	HelpFlagGettingStartedPanelDismissed HelpFlags1 = 1 << iota
-	HelpFlagDashboardHelp1
-	HelpFlagEnterpriseAuth1
-	HelpFlagSyntheticMonitoring1
-	HelpFlagIRM1
-)
-
 type UpdateEmailActionType string
 
 const (
@@ -40,7 +27,6 @@ type User struct {
 	Company       string
 	EmailVerified bool
 	Theme         string
-	HelpFlags1    HelpFlags1 `xorm:"help_flags1"`
 	IsDisabled    bool
 
 	IsAdmin          bool
@@ -106,7 +92,6 @@ type UpdateUserCommand struct {
 	OldPassword *Password `json:"-"`
 	// If OrgID is included update current org for user
 	OrgID            *int64             `json:"-"`
-	HelpFlags1       *HelpFlags1        `json:"-"`
 	IsProvisioned    *bool              `json:"-"`
 	OrgRole          *string            `json:"-"`
 	ExternalAuthInfo []ExternalAuthInfo `json:"-"`
@@ -115,6 +100,9 @@ type UpdateUserCommand struct {
 type UpdateUserLastSeenAtCommand struct {
 	UserID int64
 	OrgID  int64
+
+	// LastSeenAt is the previously observed timestamp, used to avoid a redundant lookup.
+	LastSeenAt time.Time
 }
 
 type ListUserResult struct {
@@ -166,6 +154,7 @@ type UserSearchHitDTO struct {
 
 type GetUserProfileQuery struct {
 	UserID int64
+	UID    string
 }
 
 type UserProfileDTO struct {
@@ -212,14 +201,18 @@ type BatchDisableUsersCommand struct {
 
 type GetSignedInUserQuery struct {
 	UserID int64 `xorm:"user_id"`
-	Login  string
-	Email  string
-	OrgID  int64 `xorm:"org_id"`
+
+	// UserUID selects the Kubernetes user directly; legacy lookups still use UserID.
+	UserUID string
+	Login   string
+	Email   string
+	OrgID   int64 `xorm:"org_id"`
+	// SkipTeamLookup returns identity fields without populating TeamIDs or TeamUIDs.
+	SkipTeamLookup bool
 }
 
 type AnalyticsSettings struct {
-	Identifier         string
-	IntercomIdentifier string
+	Identifier string
 }
 
 func (u *User) NameOrFallback() string {

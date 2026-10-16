@@ -6,6 +6,7 @@ import {
   type DashboardCursorSync,
   type DataFrame,
   type DataLinkPostProcessor,
+  type DataTransformerConfig,
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
@@ -13,6 +14,30 @@ import {
 import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
+
+/** Runtime transformations supplied by a panel host, grouped by owner. @alpha */
+export interface PanelRuntimeTransformations {
+  /** Returns the same immutable snapshot until this owner changes. */
+  get(owner: string): readonly DataTransformerConfig[];
+  /** Replaces one owner's transformations. An empty list removes the owner. */
+  set(owner: string, transformations: readonly DataTransformerConfig[]): void;
+  /** Returns data before this owner's transformations. */
+  getSourceSeries(owner: string): readonly DataFrame[];
+  /** Subscribes to changes for one owner. Returns an unsubscribe function. */
+  subscribe(owner: string, callback: () => void): () => void;
+}
+
+/** Reactive view of one owner's runtime transformations. @alpha */
+export interface AdHocTransformationsState {
+  /** Transformations currently applied after the panel's saved transformations. */
+  transformations: readonly DataTransformerConfig[];
+
+  /** Data before this owner's transformations, including columns they hide. */
+  sourceSeries: readonly DataFrame[];
+
+  /** Replaces this owner's transformations. Pass `[]` to clear them. */
+  setTransformations(transformations: readonly DataTransformerConfig[]): void;
+}
 
 /** @alpha */
 export interface PanelContext {
@@ -64,6 +89,17 @@ export interface PanelContext {
    */
   onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
 
+  /**
+   * Used by the panel header status popover to open the errors and notices view.
+   */
+  onOpenInspector?: () => void;
+
+  /**
+   * Used by the panel header status popover to trigger an AI-assisted investigation of the
+   * panel's query errors and notices.
+   */
+  onInvestigateErrors?: () => void;
+
   /** For instance state that can be shared between panel & options UI  */
   instanceState?: any;
 
@@ -87,6 +123,9 @@ export interface PanelContext {
    * @deprecated Please use DataLinksContext instead. This property will be removed in next major.
    */
   dataLinkPostProcessor?: DataLinkPostProcessor;
+
+  /** Present when the panel host supports ad-hoc transformations. @alpha */
+  adHocTransformations?: PanelRuntimeTransformations;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({

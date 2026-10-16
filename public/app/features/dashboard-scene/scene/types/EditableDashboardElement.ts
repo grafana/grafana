@@ -5,6 +5,12 @@ import { type SceneObject } from '@grafana/scenes';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 /**
+ * Where an edit action was triggered from, so tracking can tell the sidebar apart from the
+ * hover popover shown on the canvas.
+ */
+export type EditActionSource = 'edit_pane' | 'edit_popover';
+
+/**
  * Interface for elements that have options
  */
 export interface EditableDashboardElement {
@@ -17,9 +23,9 @@ export interface EditableDashboardElement {
   getEditableElementInfo(): EditableDashboardElementInfo;
 
   /**
-   * Hook that returns edit pane options
+   * Hook that returns sidebar options
    */
-  useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[];
+  useSidebarOptions?(isNewElement: boolean): OptionsPaneCategoryDescriptor[];
 
   /**
    * Panel Actions
@@ -32,6 +38,11 @@ export interface EditableDashboardElement {
   renderTopButton?(): ReactNode;
 
   /**
+   * When true, header actions that change or remove the element are hidden.
+   */
+  isReadOnly?: boolean;
+
+  /**
    * Supports delete action
    */
   onDelete?(): void;
@@ -40,6 +51,11 @@ export interface EditableDashboardElement {
    * Should confirm delete action
    */
   onConfirmDelete?(): void;
+
+  /**
+   * Opts a read-only element out of this dashboard. Shown as Remove.
+   */
+  onRemove?(): void;
 
   /**
    * Supports duplicate action
@@ -75,6 +91,12 @@ export interface EditableDashboardElement {
    * Used to change name from outline
    */
   onChangeName?(name: string): { errorMessage?: string } | void;
+
+  /**
+   * Called when an outline rename commits (blur / Enter) without validation error.
+   * Use for side effects that must not run on every keystroke (e.g. dropping shadowed predefined variables).
+   */
+  onCommitName?(): void;
 
   /**
    * Container objects can have children

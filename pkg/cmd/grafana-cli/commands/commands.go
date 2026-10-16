@@ -15,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
+
+	// Registers the OSS dependency-injection entrypoints (server.InitializeForCLI etc.)
+	// via bootstrap/wire's init(); without this side-effect import they are nil.
+	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 )
 
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.Runner) error) func(context *cli.Context) error {
@@ -234,9 +238,34 @@ var adminCommands = []*cli.Command{
 		Usage:  "Run schema migrations against the database configured in --config.",
 		Action: runDbCommand(logLastMigration),
 	},
+	{
+		Name:   "resource-db-migrate",
+		Usage:  "Run the unified storage resource schema migrations against the database configured in --config. ",
+		Action: resourceDbMigrateCommand,
+	},
 }
 
 var Commands = []*cli.Command{
+	{
+		Name:  "write-openapi",
+		Usage: "write-openapi <manifest.json> [--api-version <version>] -o <path>",
+		Description: "Render OpenAPI v3 from one app-sdk manifest file without starting Grafana. " +
+			"Reads plugin.json beside the manifest when present; no Grafana configuration is needed.\n\n" +
+			"   Use --api-version to write one version to --output or stdout. Otherwise every served " +
+			"version is written to the --output directory as <group>-<version>.json.",
+		Action: writeOpenAPICommand,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "api-version",
+				Usage: "Manifest API version to render; defaults to all served versions",
+			},
+			&cli.StringFlag{
+				Name:    "output",
+				Aliases: []string{"o"},
+				Usage:   "File to write one version to, or directory to write every version to",
+			},
+		},
+	},
 	{
 		Name:        "plugins",
 		Usage:       "Manage plugins for grafana",

@@ -14,10 +14,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,6 +46,94 @@ import (
 var testData embed.FS
 
 func TestIntegrationAlertRulePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationAlertRulePermissions)
+}
+
+func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationAlertRuleNestedPermissions)
+}
+
+func TestIntegrationAlertRulePostExport(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationAlertRulePostExport)
+}
+
+func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationAlertRuleEditorSettings)
+}
+
+func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationAlertRuleConflictingTitle)
+}
+
+func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRulerRulesFilterByDashboard)
+}
+
+func TestIntegrationRuleGroupSequence(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRuleGroupSequence)
+}
+
+func TestIntegrationRuleCreate(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRuleCreate)
+}
+
+func TestIntegrationRuleUpdate(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRuleUpdate)
+}
+
+func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationAlertAndGroupsQuery)
+}
+
+func TestIntegrationRulerAccess(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRulerAccess)
+}
+
+func TestIntegrationEval(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationEval)
+}
+
+func TestIntegrationQuota(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationQuota)
+}
+
+func TestIntegrationDeleteFolderWithRules(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDeleteFolderWithRules)
+}
+
+func TestIntegrationAlertRuleCRUD(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationAlertRuleCRUD)
+}
+
+func TestIntegrationRulePause(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRulePause)
+}
+
+func TestIntegrationHysteresisRule(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationHysteresisRule)
+}
+
+func TestIntegrationRuleNotificationSettings(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRuleNotificationSettings)
+}
+
+func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRuleUpdateAllDatabases)
+}
+
+func TestIntegrationRuleVersions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRuleVersions)
+}
+
+func TestIntegrationRuleSoftDelete(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRuleSoftDelete)
+}
+
+func TestIntegrationRulePermanentlyDelete(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationRulePermanentlyDelete)
+}
+
+func testIntegrationAlertRulePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -353,7 +441,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	})
 }
 
-func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
+func testIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -713,21 +801,16 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	})
 }
 
-func TestIntegrationAlertRulePostExport(t *testing.T) {
+func testIntegrationAlertRulePostExport(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
-	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
+	dir, configPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 	})
-
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, configPath)
 	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
-
-	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
@@ -736,8 +819,9 @@ func TestIntegrationAlertRulePostExport(t *testing.T) {
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
-	// Create the namespace we'll save our alerts to.
-	apiClient.CreateFolder(t, "folder1", "folder1")
+	folderUID := util.GenerateShortUID()
+	apiClient.CreateFolder(t, folderUID, folderUID)
+	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, folderUID) })
 
 	var group1 apimodels.PostableRuleGroupConfig
 
@@ -751,7 +835,7 @@ func TestIntegrationAlertRulePostExport(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, json.Unmarshal(getGroup1Raw, &expected))
 
-		status, actualRaw := apiClient.PostRulesExportWithStatus(t, "folder1", &group1, &apimodels.ExportQueryParams{
+		status, actualRaw := apiClient.PostRulesExportWithStatus(t, folderUID, &group1, &apimodels.ExportQueryParams{
 			Download: false,
 			Format:   "json",
 		})
@@ -776,14 +860,14 @@ func TestIntegrationAlertRulePostExport(t *testing.T) {
 
 		require.Empty(t, diff)
 
-		require.Equal(t, actual.Groups[0].Folder, "folder1")
+		require.Equal(t, actual.Groups[0].Folder, folderUID)
 	})
 
 	t.Run("should return 403 when no access to folder", func(t *testing.T) {
-		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, folderUID)
 		apiClient.ReloadCachedPermissions(t)
 
-		status, _ := apiClient.PostRulesExportWithStatus(t, "folder1", &group1, &apimodels.ExportQueryParams{
+		status, _ := apiClient.PostRulesExportWithStatus(t, folderUID, &group1, &apimodels.ExportQueryParams{
 			Download: false,
 			Format:   "json",
 		})
@@ -791,7 +875,7 @@ func TestIntegrationAlertRulePostExport(t *testing.T) {
 	})
 }
 
-func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
+func testIntegrationAlertRuleEditorSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -965,7 +1049,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 	})
 }
 
-func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
+func testIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -1048,7 +1132,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	})
 }
 
-func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
+func testIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -1423,7 +1507,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 	}
 }
 
-func TestIntegrationRuleGroupSequence(t *testing.T) {
+func testIntegrationRuleGroupSequence(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -1533,7 +1617,7 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 	})
 }
 
-func TestIntegrationRuleCreate(t *testing.T) {
+func testIntegrationRuleCreate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -1670,7 +1754,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 	}
 }
 
-func TestIntegrationRuleUpdate(t *testing.T) {
+func testIntegrationRuleUpdate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -1881,7 +1965,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, status)
 			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 
-			group.Rules[0].GrafanaManagedAlert.Title = uuid.NewString()
+			group.Rules[0].GrafanaManagedAlert.Title = uuid.NewV4().String()
 			resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 
 			if status == http.StatusAccepted {
@@ -1947,7 +2031,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	})
 }
 
-func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
+func testIntegrationAlertAndGroupsQuery(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -2108,7 +2192,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 	}
 }
 
-func TestIntegrationRulerAccess(t *testing.T) {
+func testIntegrationRulerAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -2223,7 +2307,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 	}
 }
 
-func TestIntegrationEval(t *testing.T) {
+func testIntegrationEval(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -2506,7 +2590,7 @@ func TestIntegrationEval(t *testing.T) {
 	}
 }
 
-func TestIntegrationQuota(t *testing.T) {
+func testIntegrationQuota(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -2721,7 +2805,7 @@ func TestIntegrationQuota(t *testing.T) {
 	})
 }
 
-func TestIntegrationDeleteFolderWithRules(t *testing.T) {
+func testIntegrationDeleteFolderWithRules(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -2890,7 +2974,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 	// TODO(@leonorfmartins): write tests for uni store when we are able to support it
 }
 
-func TestIntegrationAlertRuleCRUD(t *testing.T) {
+func testIntegrationAlertRuleCRUD(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -4176,12 +4260,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
-			require.JSONEq(t, `{"message":"rules deleted"}`, string(b))
+			require.JSONEq(t, `{"deleted":1,"message":"rules deleted","skipped":0}`, string(b))
 		})
 	}
 }
 
-func TestIntegrationRulePause(t *testing.T) {
+func testIntegrationRulePause(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
@@ -4314,7 +4398,7 @@ func TestIntegrationRulePause(t *testing.T) {
 	}
 }
 
-func TestIntegrationHysteresisRule(t *testing.T) {
+func testIntegrationHysteresisRule(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
@@ -4391,7 +4475,7 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 	assert.EqualValuesf(t, 1, d.Values["B"], body)
 }
 
-func TestIntegrationRuleNotificationSettings(t *testing.T) {
+func testIntegrationRuleNotificationSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -4661,7 +4745,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 	})
 }
 
-func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
+func testIntegrationRuleUpdateAllDatabases(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -4714,7 +4798,7 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 	})
 }
 
-func TestIntegrationRuleVersions(t *testing.T) {
+func testIntegrationRuleVersions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -4805,7 +4889,7 @@ func TestIntegrationRuleVersions(t *testing.T) {
 	})
 }
 
-func TestIntegrationRuleSoftDelete(t *testing.T) {
+func testIntegrationRuleSoftDelete(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -4816,7 +4900,6 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagAlertRuleRestore},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -4917,7 +5000,7 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 	})
 }
 
-func TestIntegrationRulePermanentlyDelete(t *testing.T) {
+func testIntegrationRulePermanentlyDelete(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testinfra.SQLiteIntegrationTest(t)
@@ -4928,7 +5011,6 @@ func TestIntegrationRulePermanentlyDelete(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagAlertRuleRestore},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)

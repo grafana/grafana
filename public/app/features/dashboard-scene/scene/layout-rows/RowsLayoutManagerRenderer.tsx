@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, type BeforeCapture, type DropResult } from '@hello-pangea/dnd';
+import { type BeforeCapture, type DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -7,12 +7,15 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
 
+import { reorderRows } from '../../actions/layout/reorderRows';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, getLayoutOrchestratorFor } from '../../utils/utils';
 import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { type RowItem } from './RowItem';
@@ -27,6 +30,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const { hasCopiedRow } = useClipboardState();
   const soloPanelContext = useSoloPanelContext();
   const orchestrator = getLayoutOrchestratorFor(model);
+  const isMultiSelection = useIsMultiSelection();
+  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext);
 
   // Only act as a drop target when empty (no rows)
   const showAsDropTarget = rows.length === 0;
@@ -54,7 +59,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
         return;
       }
 
-      model.moveRow(result.draggableId, result.source.index, result.destination.index);
+      reorderRows(model, result.source.index, result.destination.index);
     },
     [model, orchestrator]
   );
@@ -84,7 +89,13 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
             ))}
             {dropProvided.placeholder}
             {isEditing && !isClone && (
-              <div className={cx(layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
+              <div
+                className={cx(
+                  layoutControlsStyles.controls,
+                  'dashboard-canvas-controls',
+                  isMultiSelection && layoutControlsStyles.controlsHidden
+                )}
+              >
                 <Button
                   icon="plus"
                   variant="secondary"

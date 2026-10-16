@@ -26,7 +26,13 @@ const INPUT_DIR = "testdata/input"
 const OUTPUT_DIR = "testdata/output"
 const SINGLE_VERSION_OUTPUT_DIR = "testdata/output/single_version"
 const LATEST_VERSION_OUTPUT_DIR = "testdata/output/latest_version"
-const DEV_DASHBOARDS_INPUT_DIR = "../../../../devenv/dev-dashboards"
+
+// DEV_DASHBOARDS_INPUT_DIR points at the preserved v1 gdev dashboard corpus rather
+// than devenv/dev-dashboards. The provisioned devenv set is now v2-schema (no top-level
+// schemaVersion), so it can no longer exercise the v1->latest migration path. The corpus
+// is the original v1 set, preserved here so this test continues to cover the v1->latest
+// migration path over real dashboards.
+const DEV_DASHBOARDS_INPUT_DIR = "testdata/v1_dev_dashboards"
 const DEV_DASHBOARDS_OUTPUT_DIR = "testdata/dev-dashboards-output"
 
 func TestMigrate(t *testing.T) {

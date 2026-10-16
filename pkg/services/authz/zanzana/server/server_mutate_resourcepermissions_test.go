@@ -1,8 +1,11 @@
 package server
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
 
@@ -11,6 +14,77 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+const (
+	lifecycleDatasourceGroup    = "datasource.grafana.app"
+	lifecycleDatasourceResource = "datasources"
+)
+
+func datasourcePermissionOperation(delete bool, kind, subject, verb, uid string) *v1.MutateOperation {
+	permission := &v1.Permission{
+		Kind: kind,
+		Name: subject,
+		Verb: verb,
+	}
+	resource := &v1.Resource{
+		Group:    lifecycleDatasourceGroup,
+		Resource: lifecycleDatasourceResource,
+		Name:     uid,
+	}
+
+	if delete {
+		return &v1.MutateOperation{
+			Operation: &v1.MutateOperation_DeletePermission{
+				DeletePermission: &v1.DeletePermissionOperation{
+					Resource:   resource,
+					Permission: permission,
+				},
+			},
+		}
+	}
+
+	return &v1.MutateOperation{
+		Operation: &v1.MutateOperation_CreatePermission{
+			CreatePermission: &v1.CreatePermissionOperation{
+				Resource:   resource,
+				Permission: permission,
+			},
+		},
+	}
+}
+
+func datasourceTupleIdentity(subject, relation, uid, subresource string) string {
+	object := fmt.Sprintf("resource:%s/%s/%s", lifecycleDatasourceGroup, lifecycleDatasourceResource, uid)
+	if subresource != "" {
+		object = fmt.Sprintf("resource:%s/%s/%s/%s", lifecycleDatasourceGroup, lifecycleDatasourceResource, subresource, uid)
+	}
+	return fmt.Sprintf("%s|%s|%s", subject, relation, object)
+}
+
+func requireDatasourceTupleIdentities(t *testing.T, srv *Server, subject, uid string, expected ...string) {
+	t.Helper()
+
+	var actual []string
+	for _, object := range []string{
+		fmt.Sprintf("resource:%s/%s/%s", lifecycleDatasourceGroup, lifecycleDatasourceResource, uid),
+		fmt.Sprintf("resource:%s/%s/query/%s", lifecycleDatasourceGroup, lifecycleDatasourceResource, uid),
+		fmt.Sprintf("resource:%s/%s/caching/%s", lifecycleDatasourceGroup, lifecycleDatasourceResource, uid),
+	} {
+		res, err := srv.Read(newContextWithNamespace(), &v1.ReadRequest{
+			Namespace: "default",
+			TupleKey: &v1.ReadRequestTupleKey{
+				User:   subject,
+				Object: object,
+			},
+		})
+		require.NoError(t, err)
+		for _, tuple := range res.Tuples {
+			actual = append(actual, fmt.Sprintf("%s|%s|%s", tuple.Key.User, tuple.Key.Relation, tuple.Key.Object))
+		}
+	}
+
+	require.ElementsMatch(t, expected, actual)
+}
 
 func setupMutateResourcePermissions(t *testing.T, srv *Server) *Server {
 	t.Helper()
@@ -116,4 +190,149 @@ func TestIntegrationServerMutateResourcePermissions(t *testing.T) {
 		require.Equal(t, common.RelationGet, res.Tuples[0].Key.Relation)
 		require.Equal(t, "resource:dashboard.grafana.app/dashboards/1", res.Tuples[0].Key.Object)
 	})
+}
+
+func TestIntegrationServerMutateDatasourcePermissionLifecycle(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv := setupOpenFGAServer(t)
+	setupMutateResourcePermissions(t, srv)
+
+	mutate := func(t *testing.T, operations ...*v1.MutateOperation) {
+		t.Helper()
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
+			Namespace:  "default",
+			Operations: operations,
+		})
+		require.NoError(t, err)
+	}
+
+	t.Run("user permission lifecycle", func(t *testing.T) {
+		const (
+			uid     = "lifecycle-user"
+			subject = "user:query-user"
+		)
+
+		mutate(t, datasourcePermissionOperation(false, string(iamv0.ResourcePermissionSpecPermissionKindUser), "query-user", "Query", uid))
+		requireDatasourceTupleIdentities(t, srv, subject, uid,
+			datasourceTupleIdentity(subject, common.RelationSetView, uid, ""),
+			datasourceTupleIdentity(subject, common.RelationCreate, uid, "query"),
+		)
+
+		mutate(t,
+			datasourcePermissionOperation(true, string(iamv0.ResourcePermissionSpecPermissionKindUser), "query-user", "Query", uid),
+			datasourcePermissionOperation(false, string(iamv0.ResourcePermissionSpecPermissionKindUser), "query-user", "Edit", uid),
+		)
+		requireDatasourceTupleIdentities(t, srv, subject, uid,
+			datasourceTupleIdentity(subject, common.RelationSetEdit, uid, ""),
+			datasourceTupleIdentity(subject, common.RelationCreate, uid, "query"),
+		)
+
+		mutate(t,
+			datasourcePermissionOperation(true, string(iamv0.ResourcePermissionSpecPermissionKindUser), "query-user", "Edit", uid),
+			datasourcePermissionOperation(false, string(iamv0.ResourcePermissionSpecPermissionKindUser), "query-user", "Admin", uid),
+		)
+		requireDatasourceTupleIdentities(t, srv, subject, uid,
+			datasourceTupleIdentity(subject, common.RelationSetAdmin, uid, ""),
+			datasourceTupleIdentity(subject, common.RelationCreate, uid, "query"),
+			datasourceTupleIdentity(subject, common.RelationGet, uid, "caching"),
+			datasourceTupleIdentity(subject, common.RelationCreate, uid, "caching"),
+			datasourceTupleIdentity(subject, common.RelationUpdate, uid, "caching"),
+			datasourceTupleIdentity(subject, common.RelationDelete, uid, "caching"),
+		)
+
+		mutate(t,
+			datasourcePermissionOperation(true, string(iamv0.ResourcePermissionSpecPermissionKindUser), "query-user", "Admin", uid),
+			datasourcePermissionOperation(false, string(iamv0.ResourcePermissionSpecPermissionKindUser), "query-user", "Query", uid),
+		)
+		requireDatasourceTupleIdentities(t, srv, subject, uid,
+			datasourceTupleIdentity(subject, common.RelationSetView, uid, ""),
+			datasourceTupleIdentity(subject, common.RelationCreate, uid, "query"),
+		)
+
+		const teamSubject = "team:query-team#member"
+		mutate(t,
+			datasourcePermissionOperation(true, string(iamv0.ResourcePermissionSpecPermissionKindUser), "query-user", "Query", uid),
+			datasourcePermissionOperation(false, string(iamv0.ResourcePermissionSpecPermissionKindTeam), "query-team", "Query", uid),
+		)
+		requireDatasourceTupleIdentities(t, srv, subject, uid)
+		requireDatasourceTupleIdentities(t, srv, teamSubject, uid,
+			datasourceTupleIdentity(teamSubject, common.RelationSetView, uid, ""),
+			datasourceTupleIdentity(teamSubject, common.RelationCreate, uid, "query"),
+		)
+
+		mutate(t, datasourcePermissionOperation(true, string(iamv0.ResourcePermissionSpecPermissionKindTeam), "query-team", "Query", uid))
+		requireDatasourceTupleIdentities(t, srv, teamSubject, uid)
+	})
+
+	for _, test := range []struct {
+		name     string
+		kind     iamv0.ResourcePermissionSpecPermissionKind
+		subject  string
+		zSubject string
+	}{
+		{
+			name:     "service account",
+			kind:     iamv0.ResourcePermissionSpecPermissionKindServiceAccount,
+			subject:  "sa-lifecycle",
+			zSubject: "service-account:sa-lifecycle",
+		},
+		{
+			name:     "basic role",
+			kind:     iamv0.ResourcePermissionSpecPermissionKindBasicRole,
+			subject:  "Editor",
+			zSubject: "role:basic_editor#assignee",
+		},
+	} {
+		t.Run(test.name+" create and delete", func(t *testing.T) {
+			uid := "lifecycle-" + strings.ReplaceAll(test.name, " ", "-")
+			mutate(t, datasourcePermissionOperation(false, string(test.kind), test.subject, "Query", uid))
+			requireDatasourceTupleIdentities(t, srv, test.zSubject, uid,
+				datasourceTupleIdentity(test.zSubject, common.RelationSetView, uid, ""),
+				datasourceTupleIdentity(test.zSubject, common.RelationCreate, uid, "query"),
+			)
+
+			mutate(t, datasourcePermissionOperation(true, string(test.kind), test.subject, "Query", uid))
+			requireDatasourceTupleIdentities(t, srv, test.zSubject, uid)
+		})
+	}
+}
+
+func TestIntegrationDatasourceAdminCachingRevocation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, nextPermission := range []string{"Edit", "Query", ""} {
+		t.Run("Admin to "+nextPermission, func(t *testing.T) {
+			srv := setupOpenFGAServer(t)
+			setupMutateResourcePermissions(t, srv)
+			kind := string(iamv0.ResourcePermissionSpecPermissionKindUser)
+			mutate := func(operations ...*v1.MutateOperation) {
+				_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
+					Namespace: "default", Operations: operations,
+				})
+				require.NoError(t, err)
+			}
+			checkCaching := func(allowed bool) {
+				for _, group := range []string{lifecycleDatasourceGroup, "prometheus.datasource.grafana.app"} {
+					for _, uid := range []string{"ds1", "ds2"} {
+						for _, verb := range []string{"get", "list", "watch", "create", "update", "patch", "delete", "deletecollection"} {
+							result, err := srv.Check(newContextWithNamespace(), &authzv1.CheckRequest{
+								Namespace: "default", Subject: "user:caching-user",
+								Group: group, Resource: "datasources", Subresource: "caching", Name: uid, Verb: verb,
+							})
+							require.NoError(t, err)
+							require.Equal(t, allowed && uid == "ds1", result.GetAllowed(), "%s %s %s", group, uid, verb)
+						}
+					}
+				}
+			}
+			mutate(datasourcePermissionOperation(false, kind, "caching-user", "Admin", "ds1"))
+			checkCaching(true)
+			operations := []*v1.MutateOperation{datasourcePermissionOperation(true, kind, "caching-user", "Admin", "ds1")}
+			if nextPermission != "" {
+				operations = append(operations, datasourcePermissionOperation(false, kind, "caching-user", nextPermission, "ds1"))
+			}
+			mutate(operations...)
+			checkCaching(false)
+		})
+	}
 }

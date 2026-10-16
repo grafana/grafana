@@ -25,6 +25,8 @@ interface Props {
 
 type GroupedRules = Map<PromAlertingRuleState, CombinedRule[]>;
 
+const collator = new Intl.Collator();
+
 export const RuleListStateView = ({ namespaces }: Props) => {
   const [ref, { width }] = useMeasure<HTMLUListElement>();
 
@@ -52,7 +54,7 @@ export const RuleListStateView = ({ namespaces }: Props) => {
       )
     );
 
-    result.forEach((rules) => rules.sort((a, b) => a.name.localeCompare(b.name)));
+    result.forEach((rules) => rules.sort((a, b) => collator.compare(a.name, b.name)));
 
     return result;
   }, [namespaces]);

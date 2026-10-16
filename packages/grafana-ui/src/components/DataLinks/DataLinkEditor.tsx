@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useId, type ChangeEvent } from 'react';
+import { memo, useId } from 'react';
 
 import { type VariableSuggestion, type GrafanaTheme2, type DataLink } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -7,7 +7,6 @@ import { t, Trans } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Field } from '../Forms/Field';
 import { getLabelStyles } from '../Forms/Label';
-import { Input } from '../Input/Input';
 import { Switch } from '../Switch/Switch';
 
 import { DataLinkInput } from './DataLinkInput';
@@ -26,13 +25,14 @@ export const DataLinkEditor = memo(
     const styles = useStyles2(getStyles);
     const labelStyles = useStyles2(getLabelStyles);
     const id = useId();
+    const titleId = useId();
 
     const onUrlChange = (url: string, callback?: () => void) => {
       onChange(index, { ...value, url }, callback);
     };
 
-    const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
-      onChange(index, { ...value, title: event.target.value });
+    const onTitleChange = (title: string) => {
+      onChange(index, { ...value, title });
     };
 
     const onOpenInNewTabChanged = () => {
@@ -45,11 +45,21 @@ export const DataLinkEditor = memo(
 
     return (
       <div className={styles.listItem}>
-        <Field label={t('grafana-ui.data-link-editor.title-label', 'Title')}>
-          <Input
+        <Field
+          label={
+            <div className={labelStyles.label} id={titleId}>
+              <Trans i18nKey="grafana-ui.data-link-editor.title-label">Title</Trans>
+            </div>
+          }
+        >
+          <DataLinkInput
+            aria-labelledby={titleId}
             id="link-title"
-            value={value.title}
+            interpolationMode="text"
+            monospace={false}
+            value={value.title ?? ''}
             onChange={onTitleChange}
+            suggestions={suggestions}
             placeholder={t('grafana-ui.data-link-editor.title-placeholder', 'Show details')}
           />
         </Field>

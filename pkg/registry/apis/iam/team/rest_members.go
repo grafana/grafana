@@ -2,7 +2,6 @@ package team
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -18,7 +17,6 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -28,14 +26,13 @@ var (
 	_ rest.Connecter       = (*TeamMembersREST)(nil)
 )
 
-func NewTeamMembersREST(getter rest.Getter, tracer trace.Tracer, features featuremgmt.FeatureToggles) *TeamMembersREST {
-	return &TeamMembersREST{getter: getter, tracer: tracer, features: features}
+func NewTeamMembersREST(getter rest.Getter, tracer trace.Tracer) *TeamMembersREST {
+	return &TeamMembersREST{getter: getter, tracer: tracer}
 }
 
 type TeamMembersREST struct {
-	getter   rest.Getter
-	tracer   trace.Tracer
-	features featuremgmt.FeatureToggles
+	getter rest.Getter
+	tracer trace.Tracer
 }
 
 // New implements rest.Storage.
@@ -64,13 +61,6 @@ func (s *TeamMembersREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//nolint:staticcheck // not migrated to OpenFeature
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsApi) {
-			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
-				name, errors.New("functionality not available")))
-			return
-		}
-
 		ctx, span := s.tracer.Start(r.Context(), "team.members")
 		defer span.End()
 
@@ -134,10 +124,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Ob
 		if offset > total {
 			offset = total
 		}
-		end := offset + limit
-		if end > total {
-			end = total
-		}
+		end := min(offset+limit, total)
 		window := t.Spec.Members[offset:end]
 
 		items := make([]iamv0alpha1.GetTeamMembersTeamUser, len(window))

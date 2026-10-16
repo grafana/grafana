@@ -68,8 +68,8 @@ func col2NewCols(columns ...string) []string {
 	for _, col := range columns {
 		col = strings.Replace(col, "`", "", -1)
 		col = strings.Replace(col, `"`, "", -1)
-		ccols := strings.Split(col, ",")
-		for _, c := range ccols {
+		ccols := strings.SplitSeq(col, ",")
+		for c := range ccols {
 			newColumns = append(newColumns, strings.TrimSpace(c))
 		}
 	}

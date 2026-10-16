@@ -98,6 +98,9 @@ const mountSmokeTransformations = [
   'Group to nested tables',
   'Format time',
   'Grouping to matrix',
+  // Merge is a no-op on this single-frame panel, but it must still be pickable — its
+  // editor renders the "no effect on a single frame" notice instead of being disabled.
+  'Merge series/tables',
 ];
 
 test.describe('Query Editor Next: Transformation editor mount smoke', { tag: ['@panels', '@queryEditorNext'] }, () => {
@@ -132,12 +135,6 @@ interface ApplicabilityCase {
 }
 
 const applicabilityCases: ApplicabilityCase[] = [
-  {
-    panelId: PANEL_MULTI_FIELD_TIME_SERIES,
-    transformationName: 'Merge series/tables',
-    inputDescription: 'a single-series input',
-    tooltipSubstring: 'at least 2 data series',
-  },
   {
     panelId: PANEL_NO_TIME_FIELD,
     transformationName: 'Format time',

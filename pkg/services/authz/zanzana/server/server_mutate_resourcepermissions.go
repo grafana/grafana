@@ -19,17 +19,17 @@ func (s *Server) mutateResourcePermissions(ctx context.Context, store *zanzana.S
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_CreatePermission:
-			tuple, err := zanzana.GetResourcePermissionWriteTuple(op.CreatePermission)
+			tuples, err := zanzana.GetResourcePermissionWriteTuples(op.CreatePermission)
 			if err != nil {
 				return err
 			}
-			writeTuples = append(writeTuples, tuple)
+			writeTuples = append(writeTuples, tuples...)
 		case *authzextv1.MutateOperation_DeletePermission:
-			tuple, err := zanzana.GetResourcePermissionDeleteTuple(op.DeletePermission)
+			tuples, err := zanzana.GetResourcePermissionDeleteTuples(op.DeletePermission)
 			if err != nil {
 				return err
 			}
-			deleteTuples = append(deleteTuples, tuple)
+			deleteTuples = append(deleteTuples, tuples...)
 		default:
 			s.logger.Debug("unsupported mutate operation", "operation", op)
 		}

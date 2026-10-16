@@ -12,10 +12,10 @@ const datasourceSrv = new DatasourceSrvMock(defaultDs, {
   dataSource1: ds1,
   dataSource2: ds2,
 });
-const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
+const getDataSourceInstanceMock = jest.fn((ref) => datasourceSrv.get(ref));
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => getDataSourceSrvMock(),
+  getDataSourceInstance: (ref: string) => getDataSourceInstanceMock(ref),
 }));
 
 describe('useDatasourcesFromTargets', () => {

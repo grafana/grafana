@@ -1,5 +1,5 @@
 // Libraries
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { PureComponent } from 'react';
 import * as React from 'react';
 import { default as ReactSelect, components, MenuListProps } from 'react-select';

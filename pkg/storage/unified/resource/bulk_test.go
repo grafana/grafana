@@ -289,6 +289,7 @@ func (s *testBulkProcessServer) RecvMsg(any) error {
 const errPanicBulkProcess = "panic from ProcessBulk"
 
 type panicBulkBackend struct {
+	UnimplementedStorageBackend
 	sendDone chan bool
 }
 
@@ -344,6 +345,6 @@ func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource,
 	return nil, nil
 }
 
-func (b *panicBulkBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return nil
+func (b *panicBulkBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
+	panic("not implemented")
 }

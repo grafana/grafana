@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import createMockRaf from 'mock-raf';
 import uPlot from 'uplot';
 
 import { type FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
@@ -10,7 +9,6 @@ import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { type SeriesProps } from './config/UPlotSeriesBuilder';
 import { preparePlotData2, getStackingGroups } from './utils';
 
-const mockRaf = createMockRaf();
 const setDataMock = jest.fn();
 const setSizeMock = jest.fn();
 const initializeMock = jest.fn();
@@ -62,7 +60,7 @@ describe('UPlotChart', () => {
     initializeMock.mockClear();
     destroyMock.mockClear();
 
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(mockRaf.raf);
+    jest.spyOn(window, 'requestAnimationFrame');
   });
 
   it('destroys uPlot instance when component unmounts', () => {
@@ -109,6 +107,23 @@ describe('UPlotChart', () => {
       );
 
       expect(setDataMock).toBeCalledTimes(1);
+    });
+
+    it('updates uPlot data when dimensions also change', () => {
+      const { data, config } = mockData();
+
+      const { rerender } = render(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={100} height={100} />
+      );
+
+      data.fields[1].values[0] = 1;
+
+      rerender(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={200} height={200} />
+      );
+
+      expect(setDataMock).toBeCalledTimes(1);
+      expect(setSizeMock).toBeCalledTimes(1);
     });
   });
 

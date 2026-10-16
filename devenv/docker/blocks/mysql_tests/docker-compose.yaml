@@ -4,6 +4,15 @@
       args:
         - mysql_version=${mysql_version}
     platform: linux/amd64
+    # Durability-relaxing flags safe for ephemeral test databases: skip redo-log
+    # fsyncs, the doublewrite buffer, and binary logging to cut write overhead.
+    command:
+      [
+        "mysqld",
+        "--innodb-flush-log-at-trx-commit=0",
+        "--innodb-doublewrite=0",
+        "--skip-log-bin",
+      ]
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana_tests

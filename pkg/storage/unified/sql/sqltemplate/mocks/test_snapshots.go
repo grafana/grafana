@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -41,6 +42,12 @@ func (t *testingSQLTemplate) Arg(x any) string {
 		if !ok {
 			return fmt.Sprintf("%v", x)
 		}
+	}
+
+	// Snapshots must not depend on the Go version: with JSON v2 (default since
+	// Go 1.27) %v prints json.RawMessage as text, before that as a byte list.
+	if raw, ok := x.(json.RawMessage); ok {
+		return fmt.Sprintf("'%s'", raw)
 	}
 
 	return fmt.Sprintf("'%v'", x) // single quotes
@@ -137,7 +144,7 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 								clean := sqltemplate.RemoveEmptyLines(got)
 
 								update := false
-								fname := fmt.Sprintf("%s--%s-%s.sql", dialect.DialectName(), tname, input.Name)
+								fname := fmt.Sprintf("%s--%s-%s.sql", dialect.DialectName(), tname, strings.ReplaceAll(input.Name, " ", "_"))
 								fpath := filepath.Join(setup.RootDir, fname)
 
 								// We can ignore the gosec G304 because this is only for tests

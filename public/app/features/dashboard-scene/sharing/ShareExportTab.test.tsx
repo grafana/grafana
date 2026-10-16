@@ -1,10 +1,18 @@
-import { config } from '@grafana/runtime';
+import saveAs from 'file-saver';
+
 import { SceneTimeRange } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
   defaultQueryGroupKind,
   defaultVizConfigSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import {
+  AnnoKeyFolder,
+  AnnoKeyFolderTitle,
+  AnnoKeyFolderUrl,
+  AnnoKeyGrantPermissions,
+} from 'app/features/apiserver/types';
 import * as dashboardApiModule from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -15,6 +23,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { ShareExportTab } from './ShareExportTab';
 
+jest.mock('file-saver', () => jest.fn());
 jest.mock('app/features/dashboard/api/dashboard_api');
 
 const mockV1Spec: DashboardDataDTO = {
@@ -148,7 +157,7 @@ describe('ShareExportTab', () => {
   let makeExportableV2Spy: jest.SpyInstance;
 
   beforeEach(() => {
-    config.featureToggles.dashboardNewLayouts = false;
+    setTestFlags({ dashboardNewLayouts: false });
 
     makeExportableV1Spy = jest.spyOn(exporters, 'makeExportableV1').mockImplementation(async (dashboard) => dashboard);
     makeExportableV2Spy = jest.spyOn(exporters, 'makeExportableV2').mockImplementation(async (spec) => spec);
@@ -158,11 +167,12 @@ describe('ShareExportTab', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    setTestFlags({});
   });
 
   describe('V2Resource export mode', () => {
     beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
 
     it('should default to V2Resource when dashboardNewLayouts is enabled', async () => {
@@ -207,6 +217,58 @@ describe('ShareExportTab', () => {
       if ('metadata' in result.json) {
         expect(result.json.metadata).not.toHaveProperty('resourceVersion');
         expect(result.json.metadata).not.toHaveProperty('namespace');
+      }
+    });
+
+    it('should strip folder annotations when sharing externally is off', async () => {
+      mockGetDashboardAPI(mockV1Spec, {
+        ...mockV2ResourceResponse,
+        metadata: {
+          ...mockV2ResourceResponse.metadata,
+          annotations: {
+            [AnnoKeyFolder]: 'folder-uid',
+            [AnnoKeyFolderTitle]: 'My Folder',
+            [AnnoKeyFolderUrl]: '/dashboards/f/my-folder',
+            [AnnoKeyGrantPermissions]: 'default',
+          },
+        },
+      });
+
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource, isSharingExternally: false });
+
+      const result = await tab.getExportableDashboardJson();
+
+      expect('metadata' in result.json && result.json.metadata?.annotations).toEqual({
+        [AnnoKeyGrantPermissions]: 'default',
+      });
+    });
+
+    it('should strip folder annotations when sharing externally is on', async () => {
+      mockGetDashboardAPI(mockV1Spec, {
+        ...mockV2ResourceResponse,
+        metadata: {
+          ...mockV2ResourceResponse.metadata,
+          annotations: {
+            [AnnoKeyFolder]: 'folder-uid',
+            [AnnoKeyFolderTitle]: 'My Folder',
+            [AnnoKeyFolderUrl]: '/dashboards/f/my-folder',
+            [AnnoKeyGrantPermissions]: 'default',
+          },
+        },
+      });
+
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource, isSharingExternally: true });
+
+      const result = await tab.getExportableDashboardJson();
+
+      if ('metadata' in result.json) {
+        const annotations = result.json.metadata?.annotations ?? {};
+        expect(annotations[AnnoKeyFolder]).toBeUndefined();
+        expect(annotations[AnnoKeyFolderTitle]).toBeUndefined();
+        expect(annotations[AnnoKeyFolderUrl]).toBeUndefined();
+        expect(annotations[AnnoKeyGrantPermissions]).toBeUndefined();
       }
     });
 
@@ -324,6 +386,67 @@ describe('ShareExportTab', () => {
       const result = await tab.getExportableDashboardJson();
       expect(result.json).toHaveProperty('error');
     });
+  });
+
+  describe('onSaveAsFile filename', () => {
+    afterEach(() => {
+      jest.mocked(saveAs).mockClear();
+    });
+
+    it('should use dashboard title for classic export filename', async () => {
+      const tab = buildV1DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.Classic });
+
+      await tab.onSaveAsFile();
+
+      expect(saveAs).toHaveBeenCalledTimes(1);
+      const [, filename] = jest.mocked(saveAs).mock.calls[0];
+      expect(filename).toMatch(/^Test Dashboard V1-\d+\.json$/);
+    });
+
+    it('should use dashboard title from spec for v2 resource export filename', async () => {
+      setTestFlags({ dashboardNewLayouts: true });
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource });
+
+      await tab.onSaveAsFile();
+
+      expect(saveAs).toHaveBeenCalledTimes(1);
+      const [, filename] = jest.mocked(saveAs).mock.calls[0];
+      expect(filename).toMatch(/^Test Dashboard V2-\d+\.json$/);
+    });
+  });
+
+  it('downloads a YAML resource after loading the YAML serializer', async () => {
+    setTestFlags({ dashboardNewLayouts: true });
+    const tab = buildV2DashboardScenario();
+    tab.setState({ exportFormat: ExportFormat.V2Resource, isViewingYAML: true });
+    jest.mocked(saveAs).mockClear();
+
+    await tab.onSaveAsFile();
+
+    expect(saveAs).toHaveBeenCalledTimes(1);
+    const [blob, filename] = jest.mocked(saveAs).mock.calls[0];
+    expect(filename).toMatch(/^Test Dashboard V2-\d+\.yaml$/);
+    if (!(blob instanceof Blob)) {
+      throw new Error('Expected the exported resource to be a Blob');
+    }
+    const text = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(blob);
+    });
+    expect(text).toMatch(/^apiVersion: dashboard\.grafana\.app\/v2beta1$/m);
+    const { load } = await import('js-yaml');
+    expect(load(text)).toEqual(
+      expect.objectContaining({
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'Dashboard',
+        metadata: expect.objectContaining({ name: 'test-uid-v2' }),
+        spec: mockV2Spec,
+      })
+    );
   });
 
   describe('Export mode state management', () => {
