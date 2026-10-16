@@ -36,6 +36,7 @@ function getConnectionPluginType(connection: DataSourceConnection): string {
  * - the default is the connection labelled `default`, else `-- Grafana --`
  */
 export function toListSnapshot(connections: DataSourceConnection[], metas: DataSourcePluginMeta[]): MappedListSnapshot {
+  const API_VERSION = 'v0alpha1';
   const metaByType = new Map<string, DataSourcePluginMeta>();
   for (const meta of metas) {
     for (const alias of meta.aliasIDs ?? []) {
@@ -65,7 +66,7 @@ export function toListSnapshot(connections: DataSourceConnection[], metas: DataS
       uid: connection.name,
       name: connection.title,
       type: meta.id,
-      apiVersion: connection.version,
+      apiVersion: API_VERSION,
       meta,
     });
   }
