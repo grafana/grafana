@@ -99,6 +99,28 @@ func buildInitialConditionsPatch(generation int64, newConditions []metav1.Condit
 	}
 }
 
+// RebindConditionGeneration refreshes the ObservedGeneration embedded in any
+// already-built condition patch op (from BuildConditionPatchOpsFromExisting)
+// to the given generation. Each condition's ObservedGeneration is a snapshot
+// taken when the op was built; if a spec backfill op is added to the same
+// patch afterward, it bumps the resource's generation on write (secure-only
+// changes don't), so the already-built ops must be rebound to the value the
+// write will actually produce or they'd report the pre-backfill generation
+// even as /status/observedGeneration advances to the new one.
+func RebindConditionGeneration(ops []map[string]interface{}, generation int64) {
+	for _, op := range ops {
+		switch value := op["value"].(type) {
+		case metav1.Condition:
+			value.ObservedGeneration = generation
+			op["value"] = value
+		case []metav1.Condition:
+			for i := range value {
+				value[i].ObservedGeneration = generation
+			}
+		}
+	}
+}
+
 func indexOfConditionType(conditions []metav1.Condition, conditionType string) int {
 	for i, c := range conditions {
 		if c.Type == conditionType {
