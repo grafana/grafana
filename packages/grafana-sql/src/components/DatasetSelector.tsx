@@ -7,7 +7,8 @@ import { Select } from '@grafana/ui';
 import { type DB, type ResourceSelectorProps, type SQLDialect, toOption } from '../types';
 
 export interface DatasetSelectorProps extends ResourceSelectorProps {
-  db: DB;
+  db: Pick<DB, 'datasets'>;
+  mode?: 'select' | 'fixed';
   dataset: string | undefined;
   preconfiguredDataset: string;
   dialect: SQLDialect;
@@ -18,23 +19,18 @@ export interface DatasetSelectorProps extends ResourceSelectorProps {
 export const DatasetSelector = ({
   dataset,
   db,
+  mode,
   dialect,
   onChange,
   inputId,
   preconfiguredDataset,
 }: DatasetSelectorProps) => {
-  /*
-    The behavior of this component - for MSSQL and MySQL datasources - is based on whether the user chose to create a datasource
-    with or without a default database (preconfiguredDataset). If the user configured a default database, this selector
-    should only allow that single preconfigured database option to be selected. If the user chose to NOT assign/configure a default database,
-    then the user should be able to use this component to choose between multiple databases available to the datasource.
-  */
-  // `hasPreconfigCondition` is true if either 1) the sql datasource has a preconfigured default database,
-  // OR if 2) the datasource is Postgres. In either case the only option available to the user is the preconfigured database.
-  const hasPreconfigCondition = !!preconfiguredDataset || dialect === 'postgres';
+  // An explicit mode decouples dataset selection from the dialect. Otherwise retain
+  // the legacy single-database behavior for configured databases and PostgreSQL.
+  const hasPreconfigCondition = mode ? mode === 'fixed' : !!preconfiguredDataset || dialect === 'postgres';
 
   const state = useAsync(async () => {
-    // If a default database is already configured for a MSSQL or MySQL data source, OR the data source is Postgres, no need to fetch other databases.
+    // Fixed datasets do not need to enumerate other databases.
     if (hasPreconfigCondition) {
       // Set the current database to the preconfigured database.
       onChange(toOption(preconfiguredDataset));

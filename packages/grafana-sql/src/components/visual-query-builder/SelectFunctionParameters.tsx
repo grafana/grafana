@@ -7,7 +7,7 @@ import { EditorField } from '@grafana/plugin-ui';
 import { InlineLabel, Input, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorExpressionType } from '../../expressions';
-import { type DB, type SQLExpression, type SQLQuery } from '../../types';
+import { type SQLQueryBuilderDB, type SQLExpression, type SQLQuery } from '../../types';
 import { getColumnValue } from '../../utils/sql.utils';
 
 import { SelectColumn } from './SelectColumn';
@@ -17,7 +17,7 @@ interface Props {
   query: SQLQuery;
   onSqlChange: (sql: SQLExpression) => void;
   currentColumnIndex: number;
-  db: DB;
+  db: SQLQueryBuilderDB;
   columns: Array<SelectableValue<string>>;
 }
 

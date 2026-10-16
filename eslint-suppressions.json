@@ -377,11 +377,6 @@
       "count": 1
     }
   },
-  "packages/grafana-sql/src/components/visual-query-builder/VisualEditor.tsx": {
-    "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Cascader/styles.ts": {
     "@grafana/no-unreduced-motion": {
       "count": 17

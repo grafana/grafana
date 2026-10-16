@@ -8,7 +8,7 @@ import { Select } from '@grafana/ui';
 import { type DB, type ResourceSelectorProps } from '../types';
 
 export interface TableSelectorProps extends ResourceSelectorProps {
-  db: DB;
+  db: Pick<DB, 'tables'>;
   table: string | undefined;
   dataset: string | undefined;
   onChange: (v: SelectableValue) => void;
