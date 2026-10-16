@@ -122,10 +122,6 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
               }
               trailing={
                 <Stack gap={0.5} alignItems="center">
-                  <span className={styles.kind}>
-                    <Badge text={badge} color={color} />
-                  </span>
-                  <TimeAgoCell date={item.lastVisited} />
                   <span className={styles.star}>
                     {item.kind === 'dashboard' && (
                       <StarToolbarButton
@@ -137,6 +133,10 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
                       />
                     )}
                   </span>
+                  <span className={styles.kind}>
+                    <Badge text={badge} color={color} />
+                  </span>
+                  <TimeAgoCell date={item.lastVisited} />
                 </Stack>
               }
             />
@@ -162,7 +162,7 @@ const getStyles = (theme: GrafanaTheme2, compact: boolean) => ({
     minWidth: theme.spacing(10),
   }),
   // Only dashboards can be starred. The slot is the button's size on every row so the badge and time columns
-  // line up and rows stay one height whether the button is there or not.
+  // start at the same place and rows stay one height whether the button is there or not.
   star: css({
     display: 'inline-flex',
     flexShrink: 0,
