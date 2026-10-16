@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -40,7 +41,9 @@ func TestSDKLocalTokenRoundTrip(t *testing.T) {
 		t.Setenv(name, "")
 	}
 	cfg := &setting.Cfg{Raw: ini.Empty(), ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}}}
-	grafana := clients.ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
+	localAuth, err := pluginauth.ProvideConfig(cfg)
+	require.NoError(t, err)
+	grafana := clients.ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest(), localAuth)
 	signer := newTestServer(t)
 	capToken, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
 	require.NoError(t, err)

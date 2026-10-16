@@ -59,9 +59,10 @@ func TestSignLocalAccessToken(t *testing.T) {
 	exchanger, err := newLocalExchanger()
 	require.NoError(t, err)
 	policy := LocalAccessPolicy{
-		PluginID:    "example-app",
-		Audiences:   []string{"example.ext.grafana.app", "grafana"},
-		Permissions: []string{"example.ext.grafana.app:*", "dashboard.grafana.app/dashboards:get"},
+		PluginID:             "example-app",
+		Audiences:            []string{"example.ext.grafana.app", "grafana"},
+		Permissions:          []string{"example.ext.grafana.app:*", "dashboard.grafana.app/dashboards:get"},
+		DelegatedPermissions: []string{"plugins.app:access", "example.ext.grafana.app:*", "dashboard.grafana.app/dashboards:get"},
 	}
 	// Grafana's API verifies these tokens with the local key and its own audience.
 	grafana := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: []string{"grafana"}}, exchanger.keys)
@@ -95,7 +96,7 @@ func TestSignLocalAccessToken(t *testing.T) {
 		claims, err := sign(authnlib.TokenExchangeRequest{Namespace: "default", Audiences: []string{"grafana"}, SubjectToken: inbound("example-app", "default")})
 		require.NoError(t, err)
 		require.Equal(t, "access-policy:example-app", claims.Subject)
-		require.Equal(t, policy.Permissions, claims.Rest.DelegatedPermissions)
+		require.Equal(t, policy.DelegatedPermissions, claims.Rest.DelegatedPermissions)
 		require.Empty(t, claims.Rest.Permissions)
 		require.True(t, claims.Rest.IsOnBehalfOfUser())
 		require.Equal(t, "access-policy:grafana", claims.Rest.Actor.Subject, "the delegation chain is kept")

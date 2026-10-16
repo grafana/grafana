@@ -17,7 +17,7 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -37,6 +37,12 @@ func TestPolicyFor(t *testing.T) {
 		PluginID:  "example-app",
 		Audiences: []string{"grafana", "example.ext.grafana.app", "dashboard.grafana.app", "folder.grafana.app"},
 		Permissions: []string{
+			"example.ext.grafana.app:*",
+			"dashboard.grafana.app/dashboards:get",
+			"dashboard.grafana.app/dashboards:list",
+			"folder.grafana.app/folders:get",
+		},
+		DelegatedPermissions: []string{
 			"plugins.app:access",
 			"example.ext.grafana.app:*",
 			"dashboard.grafana.app/dashboards:get",
@@ -44,11 +50,13 @@ func TestPolicyFor(t *testing.T) {
 			"folder.grafana.app/folders:get",
 		},
 	}, policy)
+	require.NotContains(t, policy.Permissions, "plugins.app:access", "unscoped app access would grant every app plugin's API")
 
 	require.Empty(t, policyFor("example-app", []string{"grafana"}, nil).Permissions, "a plugin without a manifest may do nothing")
 
 	noGroup := policyFor("example-app", []string{"grafana"}, &app.ManifestData{ExtraPermissions: testManifest.ExtraPermissions})
-	require.Equal(t, []string{"plugins.app:access"}, noGroup.Permissions, "a manifest without a group requests nothing")
+	require.Empty(t, noGroup.Permissions, "a manifest without a group requests nothing")
+	require.Equal(t, []string{"plugins.app:access"}, noGroup.DelegatedPermissions)
 
 	core := policyFor("example-app", []string{"grafana"}, &app.ManifestData{Group: "dashboard.grafana.app"})
 	require.NotContains(t, core.Permissions, "dashboard.grafana.app:*", "a manifest does not own a core group")
@@ -225,12 +233,12 @@ func TestProvideServiceLocalAPIURL(t *testing.T) {
 			cfg.Raw.Section("plugins").Key("local_api_url").SetValue(tc.override)
 			routes := &exchangeRoutes{}
 			// As at startup: an invalid override fails the plugin configuration.
-			pluginCfg, err := pluginconfig.ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+			pluginAuth, err := pluginauth.ProvideConfig(cfg)
 			if err != nil {
 				require.False(t, tc.registered)
 				return
 			}
-			s := ProvideService(cfg, pluginCfg, routes)
+			s := ProvideService(cfg, pluginAuth, routes)
 			require.Equal(t, tc.registered, routes.registered)
 			if !tc.registered {
 				return

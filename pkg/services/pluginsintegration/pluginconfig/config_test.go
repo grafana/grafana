@@ -7,8 +7,8 @@ import (
 
 	"gopkg.in/ini.v1"
 
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -47,7 +47,7 @@ func TestProvidePluginInstanceConfigMarketplaceLicenseDirectory(t *testing.T) {
 		MarketplaceLicenseDirectory: "/var/lib/grafana/marketplace-licenses",
 	}
 
-	pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 	require.Equal(t, cfg.MarketplaceLicenseDirectory, pluginCfg.MarketplaceLicenseDirectory)
 }
@@ -68,47 +68,9 @@ func TestProvidePluginInstanceConfigOpenFeature(t *testing.T) {
 		OpenFeature: openFeature,
 	}
 
-	pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 	require.Equal(t, openFeature, pluginCfg.OpenFeature)
-}
-
-func TestProvidePluginInstanceConfigLocalPluginTokens(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
-	for _, tc := range []struct {
-		name, token, url, jwksURL string
-		hostEnv                   string
-		disabled                  bool
-		want                      bool
-	}{
-		{name: "no token exchange", want: true},
-		{name: "local plugin auth disabled", disabled: true, want: false},
-		{name: "token exchange", token: "cap-token", url: "https://auth.example.com/v1/sign-access-token", want: false},
-		{name: "misconfigured token exchange", token: "cap-token", want: false},
-		{name: "real JWKS URL", jwksURL: "https://auth.example.com/v1/keys", want: false},
-		{name: "host " + v3.EnvVarSigningKeys, hostEnv: v3.EnvVarSigningKeys, want: false},
-		{name: "host " + v3.EnvVarSigningKeysURL, hostEnv: v3.EnvVarSigningKeysURL, want: false},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.hostEnv != "" {
-				t.Setenv(tc.hostEnv, "from-host")
-			}
-			cfg := &setting.Cfg{Protocol: setting.HTTPScheme, HTTPPort: "3000", Raw: ini.Empty(), ExtJWTAuth: setting.ExtJWTSettings{JWKSUrl: tc.jwksURL, Audiences: []string{"grafana"}}}
-			section := cfg.Raw.Section("plugins")
-			section.Key("v3_cap_token").SetValue(tc.token)
-			section.Key("v3_token_exchange_url").SetValue(tc.url)
-			if tc.disabled {
-				section.Key("enable_local_plugin_auth").SetValue("false")
-			}
-
-			pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
-			require.NoError(t, err)
-			require.Equal(t, tc.want, pluginCfg.LocalPluginTokens)
-			if !tc.want {
-				require.Empty(t, pluginCfg.LocalAPIURL)
-			}
-		})
-	}
 }
 
 func newTestServerConfig() *setting.Cfg {
@@ -119,29 +81,16 @@ func newTestServerConfig() *setting.Cfg {
 	return cfg
 }
 
-func TestProvidePluginInstanceConfigLocalAPIURL(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
-	for _, tc := range []struct {
-		name, override, jwksURL, want string
-		wantError                     bool
-	}{
-		{name: "unsupported listener gets no API access", want: ""},
-		{name: "explicit override", override: "https://grafana.internal:8443", want: "https://grafana.internal:8443"},
-		{name: "invalid override", override: "/relative", wantError: true},
-		{name: "external signer does not need local endpoint", jwksURL: "https://auth.example.com/keys"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			cfg := newTestServerConfig()
-			cfg.Protocol = setting.HTTPSScheme
-			cfg.ExtJWTAuth.JWKSUrl = tc.jwksURL
-			cfg.Raw.Section("plugins").Key("local_api_url").SetValue(tc.override)
-			pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
-			if tc.wantError {
-				require.ErrorContains(t, err, "[plugins] local_api_url")
-				return
-			}
-			require.NoError(t, err)
-			require.Equal(t, tc.want, pluginCfg.LocalAPIURL)
-		})
-	}
+func TestProvidePluginInstanceConfigPluginAuth(t *testing.T) {
+	cfg := newTestServerConfig()
+	pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(),
+		&pluginauth.Config{Enabled: true, APIURL: "http://127.0.0.1:3000", LoopbackOnly: true})
+	require.NoError(t, err)
+	require.True(t, pluginCfg.LocalPluginTokens)
+	require.Equal(t, "http://127.0.0.1:3000", pluginCfg.LocalAPIURL)
+
+	pluginCfg, err = ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
+	require.NoError(t, err)
+	require.False(t, pluginCfg.LocalPluginTokens, "without a decision, Grafana does not sign plugin tokens")
+	require.Empty(t, pluginCfg.LocalAPIURL)
 }

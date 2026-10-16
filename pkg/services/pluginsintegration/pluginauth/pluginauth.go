@@ -1,5 +1,6 @@
-// Package pluginauth decides whether Grafana signs the access tokens between
-// itself and the plugins it starts, for when no token signer is configured.
+// Package pluginauth decides, once at startup, whether Grafana signs the
+// access tokens between itself and the plugins it starts, for when no token
+// signer is configured. Every consumer reads the decision from Config.
 package pluginauth
 
 import (
@@ -14,6 +15,7 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,25 +29,75 @@ const TokenExchangePath = "/api/internal/plugin-token-exchange"
 // grafanaAudience is the audience app plugins request for Grafana's API.
 const grafanaAudience = "grafana"
 
-// ErrNoLocalAPIURL is returned by LocalAPIURL when no [plugins] local_api_url
-// is set and none can be inferred from the listener. Plugins then get no
-// credentials for Grafana's API, while Grafana still authenticates its own
-// requests to them.
-var ErrNoLocalAPIURL = errors.New("local plugin API: no URL reaches this Grafana process")
+// Config is how Grafana authenticates the plugins it starts when no token signer
+// is configured.
+type Config struct {
+	// Enabled is set when Grafana signs plugin access tokens itself (see
+	// v3.LocalTokenExchanger and v3.SignLocalAccessToken).
+	Enabled bool
+	// APIURL is where app plugins reach this Grafana process for its API and the
+	// token exchange. It is "" when they get no credentials for Grafana's API.
+	APIURL string
+	// LoopbackOnly is set when APIURL is a loopback address, so the token
+	// exchange refuses callers that are not on loopback.
+	LoopbackOnly bool
+}
 
-// LocalAPIURL resolves the plugin API endpoint. An explicit override must reach
+// LocalTokens reports whether Grafana signs plugin access tokens itself. A nil
+// Config does not.
+func (c *Config) LocalTokens() bool {
+	return c != nil && c.Enabled
+}
+
+// LocalAPIURL returns where app plugins reach this Grafana process, or "" when
+// they get no credentials for Grafana's API.
+func (c *Config) LocalAPIURL() string {
+	if c == nil {
+		return ""
+	}
+	return c.APIURL
+}
+
+// ProvideConfig makes the decision from cfg. An invalid [plugins]
+// local_api_url is an error. A URL that cannot be inferred is logged, and
+// leaves plugins without API credentials while Grafana still authenticates its
+// own requests to them.
+func ProvideConfig(cfg *setting.Cfg) (*Config, error) {
+	c := &Config{Enabled: localPluginAuthEnabled(cfg)}
+	if !c.Enabled {
+		return c, nil
+	}
+	apiURL, err := localAPIURL(cfg)
+	switch {
+	case errors.Is(err, errNoLocalAPIURL):
+		log.New("plugins.auth").Warn("App plugins get no credentials for Grafana's API", "error", err)
+		return c, nil
+	case err != nil:
+		return nil, err
+	}
+	u, _ := url.Parse(apiURL) // localAPIURL has validated it.
+	c.APIURL = apiURL
+	c.LoopbackOnly = isLoopbackHost(u.Hostname())
+	return c, nil
+}
+
+// errNoLocalAPIURL is returned by localAPIURL when no [plugins] local_api_url
+// is set and none can be inferred from the listener.
+var errNoLocalAPIURL = errors.New("local plugin API: no URL reaches this Grafana process")
+
+// localAPIURL resolves the plugin API endpoint. An explicit override must reach
 // this Grafana process: its access policy tokens and signing key are process-local.
 // Otherwise only an HTTP listener reachable on loopback can be inferred safely,
-// and any other listener returns ErrNoLocalAPIURL. An invalid override returns
+// and any other listener returns errNoLocalAPIURL. An invalid override returns
 // another error.
-func LocalAPIURL(cfg *setting.Cfg) (string, error) {
+func localAPIURL(cfg *setting.Cfg) (string, error) {
 	if cfg == nil {
 		return "", cannotInferLocalAPIURL("missing server configuration")
 	}
 	// The app SDK requests this audience for every call to Grafana's API, and
 	// the exchange only grants the audiences Grafana accepts.
 	if !slices.Contains(cfg.ExtJWTAuth.Audiences, grafanaAudience) {
-		return "", fmt.Errorf("%w: [auth.extended_jwt] audiences must include %q for plugins to call Grafana's API", ErrNoLocalAPIURL, grafanaAudience)
+		return "", fmt.Errorf("%w: [auth.extended_jwt] audiences must include %q for plugins to call Grafana's API", errNoLocalAPIURL, grafanaAudience)
 	}
 	var endpoint string
 	if cfg.Raw != nil {
@@ -69,7 +121,7 @@ func invalidLocalAPIURL(reason string) error {
 }
 
 func cannotInferLocalAPIURL(reason string) error {
-	return fmt.Errorf("%w: %s; configure [plugins] local_api_url to reach this Grafana process directly", ErrNoLocalAPIURL, reason)
+	return fmt.Errorf("%w: %s; configure [plugins] local_api_url to reach this Grafana process directly", errNoLocalAPIURL, reason)
 }
 
 // inferLocalAPIURL derives a loopback URL from a plain HTTP listener on a
@@ -86,7 +138,7 @@ func inferLocalAPIURL(cfg *setting.Cfg) (string, error) {
 	if addr := strings.Trim(cfg.HTTPAddr, "[]"); addr != "" {
 		switch {
 		case net.ParseIP(addr).IsUnspecified():
-		case IsLoopbackHost(addr):
+		case isLoopbackHost(addr):
 			host = addr
 		default:
 			return "", cannotInferLocalAPIURL("the HTTP listener is not bound to loopback or all interfaces")
@@ -99,14 +151,14 @@ func inferLocalAPIURL(cfg *setting.Cfg) (string, error) {
 	return u.String(), nil
 }
 
-// IsLoopbackHost reports whether host, an IP address or host name without a
+// isLoopbackHost reports whether host, an IP address or host name without a
 // port, names this machine's loopback interface.
-func IsLoopbackHost(host string) bool {
+func isLoopbackHost(host string) bool {
 	return strings.EqualFold(host, "localhost") || net.ParseIP(host).IsLoopback()
 }
 
 // validateLocalAPIURL checks that endpoint can name this process. An inferred
-// endpoint that enforce_domain would redirect returns ErrNoLocalAPIURL.
+// endpoint that enforce_domain would redirect returns errNoLocalAPIURL.
 func validateLocalAPIURL(cfg *setting.Cfg, endpoint string, explicit bool) error {
 	u, err := url.Parse(endpoint)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" || u.User != nil ||
@@ -132,14 +184,14 @@ func validateLocalAPIURL(cfg *setting.Cfg, endpoint string, explicit bool) error
 	return nil
 }
 
-// LocalPluginAuthEnabled reports whether Grafana signs plugin access tokens
+// localPluginAuthEnabled reports whether Grafana signs plugin access tokens
 // itself (see v3.LocalTokenExchanger and v3.SignLocalAccessToken): the
 // appplugins.loadAppManifest feature toggle is enabled, [plugins]
 // enable_local_plugin_auth is not false, neither v3_cap_token nor
 // v3_token_exchange_url is set, and no real signing keys are configured (see
 // v3.RealSigningKeysConfigured). With only one of the exchange settings, the
 // exchange is misconfigured and no tokens are signed at all.
-func LocalPluginAuthEnabled(cfg *setting.Cfg) bool {
+func localPluginAuthEnabled(cfg *setting.Cfg) bool {
 	if cfg == nil {
 		return false
 	}

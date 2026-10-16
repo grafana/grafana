@@ -17,6 +17,7 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,9 +30,10 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 		}
 	}
 	policy := v3.LocalAccessPolicy{
-		PluginID:    "example-app",
-		Audiences:   []string{"grafana"},
-		Permissions: []string{"dashboard.grafana.app/dashboards:get"},
+		PluginID:             "example-app",
+		Audiences:            []string{"grafana"},
+		Permissions:          []string{"dashboard.grafana.app/dashboards:get"},
+		DelegatedPermissions: []string{"dashboard.grafana.app/dashboards:get"},
 	}
 	sign := func(t *testing.T, req authlib.TokenExchangeRequest) string {
 		t.Helper()
@@ -44,7 +46,7 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 	}
 
 	t.Run("enabled without configuration, and authenticates the plugin", func(t *testing.T) {
-		client := ProvideExtendedJWT(cfgWith(""), tracing.InitializeTracerForTest())
+		client := localExtendedJWT(t, cfgWith(""))
 		require.True(t, client.IsEnabled(context.Background()))
 
 		token := sign(t, authlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
@@ -65,7 +67,7 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 		inbound, err := exchanger.Exchange(context.Background(), authlib.TokenExchangeRequest{Namespace: "default", Audiences: []string{"example-app"}, SubjectToken: idToken})
 		require.NoError(t, err)
 
-		client := ProvideExtendedJWT(cfgWith(""), tracing.InitializeTracerForTest())
+		client := localExtendedJWT(t, cfgWith(""))
 		_, err = client.Authenticate(context.Background(), request(inbound.Token))
 		require.Error(t, err, "tokens for plugins are not valid for Grafana")
 
@@ -76,12 +78,12 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 		require.Equal(t, "u1", identity.UID)
 		require.Equal(t, "default", identity.Namespace)
 		require.Equal(t, "access-policy:example-app", identity.AuthID)
-		require.Equal(t, policy.Permissions, identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions,
+		require.Equal(t, policy.DelegatedPermissions, identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions,
 			"the caller's permissions are limited to what the plugin may do")
 	})
 
 	t.Run("leaves other ES256 tokens to other clients", func(t *testing.T) {
-		client := ProvideExtendedJWT(cfgWith(""), tracing.InitializeTracerForTest())
+		client := localExtendedJWT(t, cfgWith(""))
 		local := sign(t, authlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
 		require.True(t, client.Test(context.Background(), request(local)))
 
@@ -92,19 +94,19 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 	t.Run("not trusted when local plugin auth is disabled", func(t *testing.T) {
 		cfg := cfgWith("")
 		cfg.Raw.Section("plugins").Key("enable_local_plugin_auth").SetValue("false")
-		client := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
+		client := localExtendedJWT(t, cfg)
 		require.False(t, client.IsEnabled(context.Background()))
 	})
 
 	t.Run("not trusted without audiences", func(t *testing.T) {
 		cfg := cfgWith("")
 		cfg.ExtJWTAuth.Audiences = nil
-		client := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
+		client := localExtendedJWT(t, cfg)
 		require.False(t, client.IsEnabled(context.Background()))
 	})
 
 	t.Run("not trusted with a real signer", func(t *testing.T) {
-		client := ProvideExtendedJWT(cfgWith("https://auth.example.com/jwks"), tracing.InitializeTracerForTest())
+		client := localExtendedJWT(t, cfgWith("https://auth.example.com/jwks"))
 		require.False(t, client.IsEnabled(context.Background()))
 	})
 }
@@ -119,7 +121,8 @@ func TestExtendedJWT_localPluginOrganizations(t *testing.T) {
 	require.NoError(t, err)
 	policy := v3.LocalAccessPolicy{
 		PluginID: "example-app", Audiences: []string{"grafana"},
-		Permissions: []string{"dashboard.grafana.app/dashboards:get"},
+		Permissions:          []string{"dashboard.grafana.app/dashboards:get"},
+		DelegatedPermissions: []string{"dashboard.grafana.app/dashboards:get"},
 	}
 	for _, tc := range []struct {
 		name       string
@@ -149,7 +152,7 @@ func TestExtendedJWT_localPluginOrganizations(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			testCfg := *cfg
 			testCfg.StackID = tc.stackID
-			client := ProvideExtendedJWT(&testCfg, tracing.InitializeTracerForTest())
+			client := localExtendedJWT(t, &testCfg)
 			req := authlib.TokenExchangeRequest{Namespace: tc.namespace, Audiences: []string{"grafana"}}
 			if tc.obo {
 				id := generateIDToken(t, idTokenClaims{Claims: jwt.Claims{Subject: "user:42", Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}, Rest: authlib.IDTokenClaims{Identifier: "u42", Type: claims.TypeUser, Namespace: tc.namespace}}, pk, jose.ES256)
@@ -171,8 +174,17 @@ func TestExtendedJWT_localPluginOrganizations(t *testing.T) {
 			if tc.obo {
 				require.Equal(t, "42", identity.ID)
 				require.Equal(t, "u42", identity.UID)
-				require.Equal(t, policy.Permissions, identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions)
+				require.Equal(t, policy.DelegatedPermissions, identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions)
 			}
 		})
 	}
+}
+
+// localExtendedJWT builds the client with the local plugin auth decision for
+// cfg, as Wire does.
+func localExtendedJWT(t *testing.T, cfg *setting.Cfg) *ExtendedJWT {
+	t.Helper()
+	pluginAuth, err := pluginauth.ProvideConfig(cfg)
+	require.NoError(t, err)
+	return ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest(), pluginAuth)
 }

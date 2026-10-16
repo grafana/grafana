@@ -41,7 +41,7 @@ func NewClientV3TokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error
 // whose tokens verify with the keys Grafana passes to the plugin processes it
 // starts (see v3.LocalSigningKeys). Plugins started elsewhere reject them.
 // Otherwise it is nil, and requests carry no identity.
-func ClientV3TokenExchanger(cfg *setting.Cfg, pluginID string, exchanger authnlib.TokenExchanger) authnlib.TokenExchanger {
+func ClientV3TokenExchanger(cfg *setting.Cfg, pluginAuth *pluginauth.Config, pluginID string, exchanger authnlib.TokenExchanger) authnlib.TokenExchanger {
 	if exchanger != nil {
 		insecure := cfg != nil && cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] == "true"
 		if insecure && cfg.Env == setting.Dev {
@@ -49,15 +49,10 @@ func ClientV3TokenExchanger(cfg *setting.Cfg, pluginID string, exchanger authnli
 		}
 		return exchanger
 	}
-	jwksURL := ""
-	if cfg != nil {
-		jwksURL = cfg.ExtJWTAuth.JWKSUrl
-	}
-	if v3.RealSigningKeysConfigured(jwksURL) {
-		clientV3AuthLogger.Warn("Signing keys are configured without a plugin token exchange; plugin requests carry no caller identity", "pluginId", pluginID)
-		return nil
-	}
-	if cfg != nil && !pluginauth.LocalPluginAuthEnabled(cfg) {
+	if !pluginAuth.LocalTokens() {
+		if cfg == nil || v3.RealSigningKeysConfigured(cfg.ExtJWTAuth.JWKSUrl) {
+			return nil
+		}
 		// Plugins get no keys to verify local tokens, so send them only to a
 		// plugin that skips verification in development, as before local signing.
 		insecure := cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] == "true"

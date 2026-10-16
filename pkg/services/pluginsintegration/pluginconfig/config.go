@@ -1,13 +1,11 @@
 package pluginconfig
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
@@ -97,22 +95,7 @@ type PluginInstanceCfg struct {
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
-func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
-	localTokens := pluginauth.LocalPluginAuthEnabled(cfg)
-	var localAPIURL string
-	if localTokens {
-		var err error
-		localAPIURL, err = pluginauth.LocalAPIURL(cfg)
-		switch {
-		case errors.Is(err, pluginauth.ErrNoLocalAPIURL):
-			// Grafana still authenticates its requests to plugins; only the
-			// plugins' own calls to Grafana's API are unavailable.
-			log.New("plugins.config").Warn("App plugins get no credentials for Grafana's API", "error", err)
-		case err != nil:
-			return nil, err
-		}
-	}
-
+func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles, pluginAuth *pluginauth.Config) (*PluginInstanceCfg, error) {
 	aws := settingProvider.Section("aws")
 	allowedAuth := cfg.AWSAllowedAuthProviders
 	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {
@@ -139,8 +122,8 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Tracing:                             tracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),
 		DevMode:                             cfg.Env == setting.Dev,
-		LocalPluginTokens:                   localTokens,
-		LocalAPIURL:                         localAPIURL,
+		LocalPluginTokens:                   pluginAuth.LocalTokens(),
+		LocalAPIURL:                         pluginAuth.LocalAPIURL(),
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
 		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),

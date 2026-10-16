@@ -135,10 +135,13 @@ Pass the handler's context to the SDK client to act on behalf of the caller;
 background requests act as the plugin. No `insecure_skip_authentication` setting
 is needed.
 
-The local policy grants app access, the plugin's own `*.ext.grafana.app` groups,
-and the manifest's `extraPermissions.accessKinds`. Delegated requests are also
-limited by the caller's permissions and organization. Cloud deployment policy
-overrides are not imported into this local policy.
+The local policy grants the plugin's own `*.ext.grafana.app` group and the
+manifest's `extraPermissions.accessKinds`. A plugin acting as itself reaches an
+app plugin's API group when its token's permissions name that group, since
+unscoped app access would cover every app plugin. Requests on behalf of a caller
+also delegate app access (`plugins.app:access`), and are limited by the caller's
+own permissions and organization. Cloud deployment policy overrides are not
+imported into this local policy.
 
 Local signing requires the `appplugins.loadAppManifest` feature toggle, since
 the local policy comes from the plugin's app manifest. Setting `[plugins]

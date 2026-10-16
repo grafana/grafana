@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -45,6 +46,7 @@ func ProvideRegistration(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProvider setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
+	pluginAuth *pluginauth.Config,
 ) (Registration, error) {
 	logger := log.New("authn.registration")
 
@@ -100,8 +102,8 @@ func ProvideRegistration(
 	}
 
 	// Also enabled without [auth.extended_jwt] for the tokens of the local
-	// plugin token exchange (see pluginauth.LocalPluginAuthEnabled).
-	if extJWT := clients.ProvideExtendedJWT(cfg, tracer); extJWT.IsEnabled(ctx) {
+	// plugin token exchange (see pluginauth.Config).
+	if extJWT := clients.ProvideExtendedJWT(cfg, tracer, pluginAuth); extJWT.IsEnabled(ctx) {
 		authnSvc.RegisterClient(extJWT)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -86,13 +87,28 @@ func (b *manifestBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 			}
 
-			decision, reason, err := b.accessChecker(ctx, user, b.pluginID)
-			if decision != authorizer.DecisionAllow {
-				return decision, reason, err
+			if !serviceTokenGrants(ctx, attr) {
+				decision, reason, err := b.accessChecker(ctx, user, b.pluginID)
+				if decision != authorizer.DecisionAllow {
+					return decision, reason, err
+				}
 			}
 			return b.authorizeKind(ctx, attr)
 		},
 	)
+}
+
+// serviceTokenGrants reports whether the request comes from a service (access
+// policy) identity whose token permissions grant the requested group, resource
+// and verb. That stands in for app access, which a service can only hold for
+// every app plugin at once, and is what the storage layer checks for it next.
+func serviceTokenGrants(ctx context.Context, attr authorizer.Attributes) bool {
+	authInfo, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return false
+	}
+	result := authz.CheckServicePermissions(authInfo, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
+	return result.ServiceCall && result.Allowed
 }
 
 // authorizeKind applies to a manifest kind the rules apiextensions applies to a

@@ -1,6 +1,6 @@
 // Package tokenexchange serves the local token exchange that the plugins
 // Grafana starts call to get access tokens for Grafana's API, for when no
-// token signer is configured (see pluginauth.LocalPluginAuthEnabled).
+// token signer is configured (see pluginauth.Config).
 package tokenexchange
 
 import (
@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"slices"
 	"strings"
 
@@ -24,7 +23,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -44,16 +42,14 @@ type Service struct {
 
 // ProvideService registers the token exchange at pluginauth.TokenExchangePath
 // when Grafana signs plugin access tokens itself.
-func ProvideService(cfg *setting.Cfg, pluginCfg *pluginconfig.PluginInstanceCfg, rr routing.RouteRegister) *Service {
+func ProvideService(cfg *setting.Cfg, pluginAuth *pluginauth.Config, rr routing.RouteRegister) *Service {
 	s := &Service{
 		cfg: cfg,
 		log: log.New("plugins.tokenexchange"),
 	}
-	// Serve the exchange exactly when plugins are given its URL. The plugin
-	// configuration has already decided both, and reported why not.
-	if pluginCfg != nil && pluginCfg.LocalAPIURL != "" {
-		u, _ := url.Parse(pluginCfg.LocalAPIURL) // LocalAPIURL has validated the URL.
-		s.loopbackOnly = pluginauth.IsLoopbackHost(u.Hostname())
+	// Serve the exchange exactly when plugins are given its URL.
+	if pluginAuth.LocalAPIURL() != "" {
+		s.loopbackOnly = pluginAuth.LoopbackOnly
 		// Callers authenticate with their access policy token, not as a Grafana
 		// user, so the route is not behind sign-in.
 		rr.Post(pluginauth.TokenExchangePath, routing.Wrap(s.signAccessToken))
@@ -118,13 +114,15 @@ func isLoopback(remoteAddr string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
-// policyFor returns what pluginID may sign, from its app manifests: everything
-// in its own API groups, and the access kinds it requests in extraPermissions,
+// policyFor returns what pluginID may sign, from its app manifest: everything
+// in its own API group, and the access kinds it requests in extraPermissions,
 // for Grafana's audiences and those groups.
 //
-// It also grants app access (plugins.app:access), which Grafana checks before
-// serving any app plugin's API group, the plugin's own included. On behalf of
-// a caller, it only lets through the app access the caller has.
+// Tokens on behalf of a caller also delegate app access (plugins.app:access),
+// which Grafana checks before serving any app plugin's API group. Delegated
+// permissions only narrow the caller's own, so the caller's app access applies.
+// The plugin's own tokens don't get it: unscoped, it would grant every app
+// plugin's API. Grafana lets them into the groups their permissions name.
 func policyFor(pluginID string, grafanaAudiences []string, manifest *app.ManifestData) v3.LocalAccessPolicy {
 	policy := v3.LocalAccessPolicy{PluginID: pluginID}
 	add := func(list *[]string, value string) {
@@ -138,7 +136,7 @@ func policyFor(pluginID string, grafanaAudiences []string, manifest *app.Manifes
 	if manifest == nil {
 		return policy
 	}
-	policy.Permissions = []string{pluginaccesscontrol.ActionAppAccess}
+	policy.DelegatedPermissions = []string{pluginaccesscontrol.ActionAppAccess}
 	if manifest.Group == "" {
 		return policy
 	}
@@ -156,5 +154,6 @@ func policyFor(pluginID string, grafanaAudiences []string, manifest *app.Manifes
 			}
 		}
 	}
+	policy.DelegatedPermissions = append(policy.DelegatedPermissions, policy.Permissions...)
 	return policy
 }

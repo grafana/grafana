@@ -27,9 +27,11 @@ type LocalAccessPolicy struct {
 	PluginID string
 	// Audiences are the audiences the plugin may request.
 	Audiences []string
-	// Permissions are granted to the plugin's own tokens, and delegated to its
-	// tokens on behalf of a caller.
+	// Permissions are granted to the plugin's own tokens.
 	Permissions []string
+	// DelegatedPermissions are delegated to its tokens on behalf of a caller,
+	// where they only narrow what the caller may do.
+	DelegatedPermissions []string
 }
 
 // ErrLocalAccessDenied is returned by SignLocalAccessToken for a request that
@@ -149,7 +151,7 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 		claims.Permissions = policy.Permissions
 	} else {
 		// Like a token exchange, the restriction narrows only what is delegated.
-		permissions := policy.Permissions
+		permissions := policy.DelegatedPermissions
 		if len(req.RestrictedDelegatedPermissions) > 0 {
 			permissions = slices.DeleteFunc(slices.Clone(permissions), func(p string) bool {
 				return !slices.Contains(req.RestrictedDelegatedPermissions, p)

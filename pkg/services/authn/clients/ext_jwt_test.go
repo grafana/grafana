@@ -1022,7 +1022,7 @@ func setupTestCtx(cfg *setting.Cfg) *testEnv {
 		}
 	}
 
-	extJwtClient := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
+	extJwtClient := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest(), nil)
 
 	return &testEnv{
 		s: extJwtClient,

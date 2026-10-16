@@ -481,7 +481,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
 		cfg := newTestServerConfig()
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
@@ -498,7 +498,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		p.SkipHostEnvVars = true
 
 		cfg := newTestServerConfig()
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
 
@@ -929,7 +929,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 			AppURL: "https://myorg.com/",
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
@@ -1113,7 +1113,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			},
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		pCfg.LocalPluginTokens = false
 
@@ -1160,7 +1160,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			},
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		pCfg.LocalPluginTokens = false
 
@@ -1220,7 +1220,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			},
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		pCfg.LocalPluginTokens = false
 
@@ -1387,7 +1387,7 @@ func TestPluginEnvVarsProvider_azureHostEnvVars(t *testing.T) {
 				},
 			}
 
-			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 			require.NoError(t, err)
 
 			provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))

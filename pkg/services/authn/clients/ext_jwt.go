@@ -47,7 +47,7 @@ var (
 	)
 )
 
-func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
+func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer, pluginAuth *pluginauth.Config) *ExtendedJWT {
 	logger := log.New(authn.ClientExtendedJWT)
 	var keys authlib.KeyRetriever = authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
@@ -57,7 +57,7 @@ func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
 	localKeys := false
 	// Without audiences the verifier skips the audience check, and would then
 	// accept the tokens Grafana sends to plugins.
-	if pluginauth.LocalPluginAuthEnabled(cfg) && len(cfg.ExtJWTAuth.Audiences) > 0 {
+	if pluginAuth.LocalTokens() && len(cfg.ExtJWTAuth.Audiences) > 0 {
 		local, err := v3.LocalKeyRetriever()
 		if err != nil {
 			logger.Error("Failed to get the local plugin signing key", "error", err)
