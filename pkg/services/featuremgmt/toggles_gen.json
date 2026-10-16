@@ -5282,7 +5282,8 @@
       "metadata": {
         "name": "restrictedPluginApis",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-31T22:56:50Z"
+        "creationTimestamp": "2025-07-31T22:56:50Z",
+        "deletionTimestamp": "2026-10-16T13:40:44Z"
       },
       "spec": {
         "description": "Enables sharing a list of APIs with a list of plugins",

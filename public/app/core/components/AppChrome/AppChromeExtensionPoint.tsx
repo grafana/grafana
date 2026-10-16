@@ -1,15 +1,17 @@
 import type { JSX } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
-import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { useFlagEnableAppChromeExtensions } from '@grafana/runtime/internal';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 export function AppChromeExtensionPoint(): JSX.Element | null {
   const { chrome } = useGrafana();
   const state = chrome.useState();
+  const isEnabled = useFlagEnableAppChromeExtensions();
 
-  if (config.featureToggles.enableAppChromeExtensions !== true) {
+  if (!isEnabled) {
     return null;
   }
 

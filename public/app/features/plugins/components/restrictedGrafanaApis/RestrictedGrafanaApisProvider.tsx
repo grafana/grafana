@@ -6,12 +6,10 @@ import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/
 
 import { dashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
 
-const restrictedGrafanaApis: RestrictedGrafanaApisContextType = config.featureToggles.restrictedPluginApis
-  ? {
-      alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
-      dashboardMutationAPI: dashboardMutationApi,
-    }
-  : {};
+const restrictedGrafanaApis: RestrictedGrafanaApisContextType = {
+  alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
+  dashboardMutationAPI: dashboardMutationApi,
+};
 
 // This Provider is a wrapper around `RestrictedGrafanaApisContextProvider` from `@grafana/data`.
 // The reason for this is that like this we only need to define the configuration once (here) and can use it in multiple places (app root page, extensions).
