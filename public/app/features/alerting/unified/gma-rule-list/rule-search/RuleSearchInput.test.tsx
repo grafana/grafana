@@ -4,6 +4,7 @@ import { render, screen } from 'test/test-utils';
 
 import { RuleSearchInput } from './RuleSearchInput';
 import { alertTokens } from './alertTokens';
+import { getCriteriaIssues } from './criteriaIssues';
 import { parse } from './parser';
 import { serialize } from './serializer';
 import { type TokenDefinition } from './tokens';
@@ -196,5 +197,25 @@ describe('RuleSearchInput', () => {
 
     expect(screen.getByText('Notification policy')).toBeInTheDocument();
     expect(screen.getByText("Filtering by the default policy isn't available yet.")).toBeInTheDocument();
+  });
+
+  it('NAV-5: says which filters failed and what would work instead', () => {
+    const issues = getCriteriaIssues(parse('state:error', alertTokens), 'alert');
+    render(<RuleSearchInput query="state:error" onApply={jest.fn()} tokens={alertTokens} issues={issues} />);
+
+    expect(screen.getByText('Some filters could not be applied: state')).toBeInTheDocument();
+    expect(screen.getByText('state:error is not a valid filter. Use health:error.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /search/i })).toHaveAccessibleDescription(
+      expect.stringContaining('Use health:error.')
+    );
+  });
+
+  it('shows the label suffix beside the label without changing the input name', () => {
+    render(
+      <RuleSearchInput query="" onApply={jest.fn()} tokens={alertTokens} labelSuffix={<span>applied name</span>} />
+    );
+
+    expect(screen.getByText('applied name')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /search/i })).not.toHaveAccessibleName(/applied name/);
   });
 });

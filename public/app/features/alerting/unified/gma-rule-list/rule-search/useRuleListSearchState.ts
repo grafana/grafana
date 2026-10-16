@@ -36,7 +36,8 @@ export function searchParamsForCriteria(next: Criteria, view: string | null, had
   } else if (hadNonFolderFilters) {
     nextView = undefined;
   }
-  return { search: search.length > 0 ? search : undefined, view: nextView };
+  // An empty `search=` is kept so a reload stays unfiltered instead of reapplying the default saved search.
+  return { search, view: nextView };
 }
 
 /**

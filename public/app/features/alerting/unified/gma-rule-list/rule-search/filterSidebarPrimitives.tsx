@@ -23,56 +23,79 @@ export interface LabelMatchersEditorProps {
   onChange: (labels: LabelMatcher[]) => void;
 }
 
-/** No suggestions yet (no bounded, authorized backend source). A new row stays local until it has a key. */
+/**
+ * No suggestions yet (no bounded, authorized backend source). Rows live here, so one that is still being typed stays
+ * visible while only complete rows reach `onChange`; an incomplete row would otherwise empty the list mid-edit.
+ */
 export function LabelMatchersEditor({ labels, onChange }: LabelMatchersEditorProps) {
-  const [newRow, setNewRow] = useState<LabelMatcher>();
+  const [rows, setRows] = useState<LabelMatcher[]>(labels);
+  const [seenLabels, setSeenLabels] = useState(labels);
+
+  // Labels that differ from our own complete rows come from elsewhere (URL, saved search, Clear), so they replace the rows.
+  if (labels !== seenLabels) {
+    setSeenLabels(labels);
+    if (!sameMatchers(labels, rows.filter(isCompleteMatcher))) {
+      setRows(labels);
+    }
+  }
+
+  const commit = (next: LabelMatcher[]) => {
+    setRows(next);
+    const complete = next.filter(isCompleteMatcher);
+    if (!sameMatchers(complete, labels)) {
+      onChange(complete);
+    }
+  };
 
   const updateRow = (index: number, next: LabelMatcher) => {
-    // An applied row cannot lose its key.
+    const replaced = rows.map((row, i) => (i === index ? next : row));
     if (next.key) {
-      onChange(labels.map((row, i) => (i === index ? next : row)));
+      commit(replaced);
+    } else if (!rows[index].key) {
+      // A row without a key yet keeps its operator and value as a draft.
+      setRows(replaced);
     }
+    // A row that has a key cannot lose it; removing the row is a separate action.
   };
 
-  const updateNewRow = (next: LabelMatcher) => {
-    if (next.key) {
-      setNewRow(undefined);
-      onChange([...labels, next]);
-    } else {
-      setNewRow(next);
-    }
-  };
+  const hasKeylessRow = rows.some((row) => !row.key);
 
   return (
     <Stack direction="column" gap={1}>
-      {labels.map((label, index) => (
+      {rows.map((row, index) => (
         <LabelMatcherRow
           key={index}
-          matcher={label}
+          matcher={row}
           onChange={(next) => updateRow(index, next)}
-          onRemove={() => onChange(labels.filter((_, i) => i !== index))}
+          onRemove={() => commit(rows.filter((_, i) => i !== index))}
         />
       ))}
-      {/* Keyed like the applied row it becomes, so entering a key keeps focus. */}
-      {newRow && (
-        <LabelMatcherRow
-          key={labels.length}
-          matcher={newRow}
-          onChange={updateNewRow}
-          onRemove={() => setNewRow(undefined)}
-        />
-      )}
       <Button
         size="sm"
         variant="secondary"
         fill="outline"
         icon="plus"
-        disabled={Boolean(newRow)}
-        onClick={() => setNewRow({ key: '', operator: 'equal', value: '' })}
+        disabled={hasKeylessRow}
+        onClick={() => setRows([...rows, { key: '', operator: 'equal', value: '' }])}
       >
         {t('alerting.gma-rule-list.search.label-add', 'Add label filter')}
       </Button>
     </Stack>
+  );
+}
+
+/** A key with a value, or a key with an operator that takes none. */
+function isCompleteMatcher(matcher: LabelMatcher): boolean {
+  return Boolean(matcher.key) && (VALUELESS_OPERATORS.has(matcher.operator) || Boolean(matcher.value));
+}
+
+function sameMatchers(a: LabelMatcher[], b: LabelMatcher[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every(
+      (matcher, i) =>
+        matcher.key === b[i].key && matcher.operator === b[i].operator && (matcher.value ?? '') === (b[i].value ?? '')
+    )
   );
 }
 

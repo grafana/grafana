@@ -6,6 +6,8 @@ export interface CriteriaIssue {
   /** The token key as typed. */
   key: string;
   reason: CriteriaIssueReason;
+  /** The token exactly as typed, for unsupported tokens, so the message can say what would work. */
+  raw?: string;
 }
 
 const DATASOURCE_UID_PATTERN = /^[a-zA-Z0-9_-]+$/;
@@ -14,7 +16,11 @@ const EXPRESSION_DATASOURCE_UIDS = new Set(['__expr__', '-100', '__ml__']);
 
 /** Callers must show these tokens as invalid and skip the request; builders never fix them up silently. */
 export function getCriteriaIssues(criteria: Criteria, kind: 'alert' | 'recording'): CriteriaIssue[] {
-  const issues: CriteriaIssue[] = criteria.invalid.map((token) => ({ key: token.key, reason: 'unsupported' }));
+  const issues: CriteriaIssue[] = criteria.invalid.map((token) => ({
+    key: token.key,
+    reason: 'unsupported',
+    raw: token.raw,
+  }));
 
   const invalid = (key: string) => issues.push({ key, reason: 'invalid' });
 

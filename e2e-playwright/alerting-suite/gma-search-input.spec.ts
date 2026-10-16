@@ -79,7 +79,8 @@ test.describe('Search input draft text', () => {
       await list.clearFiltersButton.click();
 
       await expect(list.searchInput).toHaveValue('');
-      await expect.poll(() => new URL(page.url()).searchParams.get('search')).toBeNull();
+      // An empty search, not a missing one, so a reload doesn't reapply the default saved search.
+      await expect.poll(() => new URL(page.url()).searchParams.get('search')).toBe('');
     });
   }
 });

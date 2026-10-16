@@ -1,6 +1,7 @@
 import { useId } from 'react';
 
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
+import { Stack, Text } from '@grafana/ui';
 
 import { type SidebarControl } from './FilterSidebar';
 import { type Criteria } from './criteria';
@@ -33,7 +34,14 @@ export function useCommonFilterControls(
     },
     [TOKEN_KEYS.namespace]: {
       controlId: folderPickerId,
-      note: invalidNamespace && <InvalidTokenNote />,
+      note: (
+        <Stack direction="column" gap={0.5}>
+          {invalidNamespace && <InvalidTokenNote />}
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="alerting.gma-rule-list.search.folder-direct-hint">Rules directly in this folder</Trans>
+          </Text>
+        </Stack>
+      ),
       render: () => (
         <FolderMultiFilter
           id={folderPickerId}

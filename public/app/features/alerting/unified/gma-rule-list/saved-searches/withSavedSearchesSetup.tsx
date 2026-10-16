@@ -25,9 +25,9 @@ const trackDefaultSearchApplied = createAutoApplyTracker();
 const pendingSetups = new Map<SavedSearchKind, Promise<string[]>>();
 
 /**
- * Renders `Page` only once the legacy copy has run and, with no search in the URL, the default saved search is in the
- * URL. The page never knows a saved search was applied and never requests unfiltered results. Suspends to the route's
- * boundary.
+ * Renders `Page` only once the legacy copy has run and, with no `search` parameter in the URL, the default saved search
+ * is in the URL. An empty `search=` is a deliberate unfiltered list and keeps it. The page never knows a saved search
+ * was applied and never requests unfiltered results. Suspends to the route's boundary.
  */
 export function withSavedSearchesSetup<P extends {}>(kind: SavedSearchKind, Page: ComponentType<P>): ComponentType<P> {
   function SavedSearchesSetupProxy(props: P) {
@@ -64,7 +64,7 @@ function useSavedSearchesSetup(kind: SavedSearchKind): void {
 /** Never rejects. Resolves to the filter names dropped while migrating the default. */
 async function setUpSavedSearches(kind: SavedSearchKind): Promise<string[]> {
   const params = new URLSearchParams(locationService.getLocation().search);
-  const applyDefault = !params.get('search');
+  const applyDefault = !params.has('search');
 
   try {
     await copyLegacySavedSearchesOnce(legacyRuleListNameResolvers);

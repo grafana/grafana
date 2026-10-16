@@ -25,8 +25,8 @@ describe('getCriteriaIssues', () => {
       ],
     };
     expect(getCriteriaIssues(criteria, 'alert')).toEqual([
-      { key: 'foo', reason: 'unsupported' },
-      { key: 'label', reason: 'unsupported' },
+      { key: 'foo', reason: 'unsupported', raw: 'foo:bar' },
+      { key: 'label', reason: 'unsupported', raw: 'label:' },
     ]);
   });
 

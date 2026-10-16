@@ -790,6 +790,39 @@ describe('AlertRulesPage search and filters', () => {
     expect(urlSearchParams().get('search')).toBe('label:team=api');
   });
 
+  // SEARCH-3
+  it('keeps a label row with only a key in the sidebar without changing the URL or the request, and sends it once it has a value', async () => {
+    const user = userEvent.setup();
+    await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
+    await screen.findByText('CPU high');
+    const requestsBefore = ruleSearchBodies.length;
+
+    await user.click(screen.getByRole('button', { name: 'Add label filter' }));
+    await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
+
+    expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('team');
+    expect(urlSearchParams().has('search')).toBe(false);
+    expect(ruleSearchBodies).toHaveLength(requestsBefore);
+
+    await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api{Enter}');
+
+    await waitFor(() =>
+      expect(whereOf(ruleSearchBodies.at(-1))).toEqual({
+        filter: { field: 'labels', operator: 'In', values: ['team=api'] },
+      })
+    );
+    expect(urlSearchParams().get('search')).toBe('label:team=api');
+  });
+
+  // NAV-5
+  it('explains an unsupported filter in the search input and sends no request', async () => {
+    await renderPage({ historyOptions: { initialEntries: ['/?search=state%3Aerror'] } });
+
+    expect(await screen.findByText('state:error is not a valid filter. Use health:error.')).toBeInTheDocument();
+    expect(screen.getByText('Fix the invalid filter to see results')).toBeInTheDocument();
+    expect(ruleSearchBodies).toEqual([]);
+  });
+
   // SEARCH-7
   it('applying a non-folder filter switches to List, disables Folders with its tooltip, and clearing returns to Folders', async () => {
     const user = userEvent.setup();
@@ -1015,6 +1048,91 @@ describe('AlertRulesPage search and filters', () => {
       await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
       expect(urlSearchParams().get('search')).toBe('namespace:folder-1');
       expect(ruleSearchBodies).toEqual([]);
+    });
+
+    it('does not apply the default saved search for an empty search parameter', async () => {
+      await seedDefaultSearch('cpu paused:false');
+
+      await renderPage({ historyOptions: { initialEntries: ['/?search='] } });
+
+      expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Saved searches' })).toBeEnabled());
+      expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('');
+      expect(urlSearchParams().get('search')).toBe('');
+      expect(ruleSearchBodies).toEqual([]);
+    });
+
+    it('Clear filters writes an empty search parameter, so the default is not applied again on reload', async () => {
+      const user = userEvent.setup();
+      await seedDefaultSearch('cpu paused:false');
+      await renderPage();
+      expect(await screen.findByText('CPU high')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+      expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
+      expect(locationService.getLocation().search).toBe('?search=');
+      expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
+    });
+
+    // SAVE-4
+    describe('applied saved search indicator', () => {
+      async function seedSearches(searches: Array<{ name: string; query: string; isDefault: boolean }>) {
+        await new UserStorage('alerting').setItem(
+          'alertRulesSavedSearches',
+          JSON.stringify(searches.map((search, i) => ({ id: `saved-${i}`, createdAt: 1, ...search })))
+        );
+      }
+
+      it('names the default, with its star and "(default)", when it was applied on load', async () => {
+        await seedSearches([{ name: 'My default', query: 'cpu paused:false', isDefault: true }]);
+
+        await renderPage();
+
+        expect(await screen.findByText('My default (default)')).toBeInTheDocument();
+        expect(document.querySelector('[data-testid="icon-favorite"]')).toBeInTheDocument();
+      });
+
+      it('names a saved search applied from the menu with a bookmark and no "(default)"', async () => {
+        const user = userEvent.setup();
+        await seedSearches([{ name: 'Running rules', query: 'cpu paused:false', isDefault: false }]);
+        await renderPage();
+        await screen.findByRole('link', { name: 'Team Alerts' });
+        expect(screen.queryByText('Running rules')).not.toBeInTheDocument();
+
+        await user.click(await screen.findByRole('button', { name: 'Saved searches' }));
+        await user.click(await screen.findByRole('link', { name: 'Running rules' }));
+        await screen.findByText('CPU high');
+
+        expect(await screen.findAllByText('Running rules')).not.toHaveLength(0);
+        expect(screen.queryByText('Running rules (default)')).not.toBeInTheDocument();
+        expect(document.querySelector('[data-testid="icon-bookmark"]')).toBeInTheDocument();
+      });
+
+      it('names a saved search when a typed query happens to match it, and drops the name once it is edited', async () => {
+        const user = userEvent.setup();
+        await seedSearches([{ name: 'Running rules', query: 'cpu paused:false', isDefault: false }]);
+        await renderPage({ historyOptions: { initialEntries: ['/?view=list'] } });
+        await screen.findByText('CPU high');
+
+        const input = screen.getByRole('textbox', { name: 'Search' });
+        await user.type(input, 'paused:false cpu{Enter}');
+        expect(await screen.findByText('Running rules')).toBeInTheDocument();
+
+        await user.type(input, ' extra{Enter}');
+        await waitFor(() => expect(screen.queryByText('Running rules')).not.toBeInTheDocument());
+      });
+
+      it('drops the name when the filters are cleared', async () => {
+        const user = userEvent.setup();
+        await seedSearches([{ name: 'My default', query: 'cpu paused:false', isDefault: true }]);
+        await renderPage();
+        expect(await screen.findByText('My default (default)')).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+        await waitFor(() => expect(screen.queryByText('My default (default)')).not.toBeInTheDocument());
+      });
     });
 
     it('shows the Folders view when there is no default saved search', async () => {

@@ -1573,10 +1573,14 @@
         "recording-rules_one": "{{formatted}} recording rule",
         "recording-rules_other": "{{formatted}} recording rules"
       },
+      "saved-searches": {
+        "applied-default": "{{name}} (default)"
+      },
       "search": {
         "clear-filters": "Clear filters",
         "contact-point-placeholder": "Select contact point",
         "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
+        "folder-direct-hint": "Rules directly in this folder",
         "folders-disabled": "Clear filters to browse by folder",
         "health-any": "Any",
         "health-error": "Error",
@@ -1605,6 +1609,9 @@
         "help-filter-type": "Filter type",
         "help-intro": "Search syntax allows you to query rules by the filters below.",
         "help-title": "Search help",
+        "hint-unknown-key": "Unknown filter {{key}}. Valid filters: {{keys}}.",
+        "hint-use-instead": "{{typed}} is not a valid filter. Use {{suggestion}}.",
+        "hint-valid-values": "{{key}} accepts: {{values}}.",
         "invalid-tokens": "Some filters could not be applied: {{tokens}}",
         "label": "Search",
         "label-add": "Add label filter",

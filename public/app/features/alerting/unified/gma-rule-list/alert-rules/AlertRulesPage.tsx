@@ -12,7 +12,8 @@ import { type Criteria, createEmptyCriteria } from '../rule-search/criteria';
 import { parse } from '../rule-search/parser';
 import { serialize } from '../rule-search/serializer';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
-import { RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { RuleListSavedSearchIndicator } from '../saved-searches/RuleListSavedSearchIndicator';
+import { RuleListSavedSearches, useRuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
 import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { trackRuleListPageView } from '../shared/analytics';
 
@@ -48,6 +49,7 @@ function AlertRulesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const savedSearches = useRuleListSavedSearches('alert');
   const query = serialize(criteria);
   const hasActiveFilters = query !== serialize(createEmptyCriteria());
 
@@ -71,10 +73,22 @@ function AlertRulesPage() {
         <Stack direction="column" gap={2}>
           <Stack direction="row" gap={2} alignItems="center">
             <Box grow={1} minWidth={0}>
-              <RuleSearchInput query={query} onApply={onApplyQuery} tokens={alertTokens} issues={issues} />
+              <RuleSearchInput
+                query={query}
+                onApply={onApplyQuery}
+                tokens={alertTokens}
+                issues={issues}
+                labelSuffix={
+                  <RuleListSavedSearchIndicator
+                    kind="alert"
+                    query={query}
+                    savedSearches={savedSearches.savedSearches}
+                  />
+                }
+              />
             </Box>
             <Box shrink={0}>
-              <RuleListSavedSearches kind="alert" />
+              <RuleListSavedSearches kind="alert" savedSearches={savedSearches} />
             </Box>
             <Box shrink={0}>
               <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />

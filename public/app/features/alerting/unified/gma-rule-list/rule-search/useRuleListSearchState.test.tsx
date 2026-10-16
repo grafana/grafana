@@ -71,7 +71,7 @@ describe('useRuleListSearchState', () => {
     });
 
     expect(result.current.mode).toBe('folders');
-    expect(locationService.getLocation().search).toBe('');
+    expect(locationService.getLocation().search).toBe('?search=');
   });
 
   it('SEARCH-7: a List chosen with no filters is kept when the folder filter changes', () => {
@@ -131,14 +131,21 @@ describe('useRuleListSearchState', () => {
     expect(new URLSearchParams(locationService.getLocation().search).get('search')).toBe('namespace:folder-1 cpu');
   });
 
-  it('reset clears the search URL param', () => {
+  it('SAVE-3: reset writes an empty search param, so a reload stays unfiltered', () => {
     const { result } = renderAt('/alerting/rules/alert?search=cpu');
 
     act(() => {
       result.current.reset();
     });
 
-    expect(locationService.getLocation().search).not.toContain('search=');
+    expect(new URLSearchParams(locationService.getLocation().search).get('search')).toBe('');
+  });
+
+  it('SAVE-3: an empty search param still means Folders mode', () => {
+    const { result } = renderAt('/alerting/rules/alert?search=');
+
+    expect(result.current.mode).toBe('folders');
+    expect(result.current.criteria).toEqual(createEmptyCriteria());
   });
 
   it('surfaces criteria issues from getCriteriaIssues (panelId without dashboard)', () => {

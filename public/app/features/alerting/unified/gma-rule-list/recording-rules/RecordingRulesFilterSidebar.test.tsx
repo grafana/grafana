@@ -55,6 +55,12 @@ describe('RecordingRulesFilterSidebar', () => {
     expect(screen.getByRole('textbox', { name: 'Recorded metric' })).toHaveValue('cpu_usage');
   });
 
+  it('SEARCH-3: the folder control says it matches rules directly in the folder', () => {
+    render(<ControlledSidebar />);
+
+    expect(screen.getByText('Rules directly in this folder')).toBeInTheDocument();
+  });
+
   it('SEARCH-3: selecting a folder calls onChange with that folder as the namespace criterion', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();

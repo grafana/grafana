@@ -12,7 +12,8 @@ import { parse } from '../rule-search/parser';
 import { recordingTokens } from '../rule-search/recordingTokens';
 import { serialize } from '../rule-search/serializer';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
-import { RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { RuleListSavedSearchIndicator } from '../saved-searches/RuleListSavedSearchIndicator';
+import { RuleListSavedSearches, useRuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
 import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { trackRuleListPageView } from '../shared/analytics';
 
@@ -57,6 +58,7 @@ function RecordingRulesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const savedSearches = useRuleListSavedSearches('recording');
   const query = serialize(criteria);
   const hasActiveFilters = query !== serialize(createEmptyCriteria());
 
@@ -79,10 +81,22 @@ function RecordingRulesPage() {
         <Stack direction="column" gap={2}>
           <Stack direction="row" gap={2} alignItems="center">
             <Box grow={1} minWidth={0}>
-              <RuleSearchInput query={query} onApply={onApplyQuery} tokens={recordingTokens} issues={issues} />
+              <RuleSearchInput
+                query={query}
+                onApply={onApplyQuery}
+                tokens={recordingTokens}
+                issues={issues}
+                labelSuffix={
+                  <RuleListSavedSearchIndicator
+                    kind="recording"
+                    query={query}
+                    savedSearches={savedSearches.savedSearches}
+                  />
+                }
+              />
             </Box>
             <Box shrink={0}>
-              <RuleListSavedSearches kind="recording" />
+              <RuleListSavedSearches kind="recording" savedSearches={savedSearches} />
             </Box>
             <Box shrink={0}>
               <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />

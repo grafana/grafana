@@ -326,6 +326,42 @@ describe('AlertRulesFilterSidebar', () => {
     );
   });
 
+  it('SEARCH-3: a label row with a key but no value stays visible and is not sent until it has a value', async () => {
+    const { user, onChange } = renderSidebar();
+
+    await user.click(screen.getByRole('button', { name: 'Add label filter' }));
+    await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
+
+    expect(screen.getByRole('textbox', { name: 'Label key' })).toHaveValue('team');
+    expect(onChange).not.toHaveBeenCalled();
+
+    await user.type(screen.getByRole('textbox', { name: 'Label value' }), 'api{Enter}');
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ labels: [{ key: 'team', operator: 'equal', value: 'api' }] })
+    );
+  });
+
+  it('SEARCH-3: a label row with a key and the exists operator is sent without a value', async () => {
+    const { user, onChange } = renderSidebar();
+
+    await user.click(screen.getByRole('button', { name: 'Add label filter' }));
+    await user.type(screen.getByRole('textbox', { name: 'Label key' }), 'team{Enter}');
+    await user.click(screen.getByRole('combobox', { name: 'Label operator' }));
+    await user.click(await screen.findByRole('option', { name: 'exists' }));
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ labels: [{ key: 'team', operator: 'exists', value: undefined }] })
+    );
+  });
+
+  it('SEARCH-3: the folder control says it matches rules directly in the folder', () => {
+    renderSidebar();
+
+    expect(screen.getByText('Rules directly in this folder')).toBeInTheDocument();
+  });
+
   it('SEARCH-3: removing the new label row before it has a key leaves the criteria untouched', async () => {
     const { user, onChange } = renderSidebar();
 

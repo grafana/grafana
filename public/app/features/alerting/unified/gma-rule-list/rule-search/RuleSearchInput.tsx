@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
 
 import { PopupCard } from '../../components/HoverCard';
 
+import { getIssueHints } from './criteriaIssueHints';
 import { type CriteriaIssue } from './criteriaIssues';
 import { parse } from './parser';
 import { serialize } from './serializer';
@@ -16,6 +17,8 @@ export interface RuleSearchInputProps {
   tokens: TokenDefinition[];
   issues?: CriteriaIssue[];
   debounceMs?: number;
+  /** Shown on the label line, after the help icon. */
+  labelSuffix?: ReactNode;
 }
 
 const DEFAULT_DEBOUNCE_MS = 400;
@@ -29,6 +32,7 @@ export function RuleSearchInput({
   tokens,
   issues = [],
   debounceMs = DEFAULT_DEBOUNCE_MS,
+  labelSuffix,
 }: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
   // A `query` equal to the canonical form of this text is an echo of our own apply.
@@ -80,24 +84,28 @@ export function RuleSearchInput({
 
   const invalidKeys = [...new Set(issues.map((issue) => issue.key))];
   const hasIssues = invalidKeys.length > 0;
+  const hints = getIssueHints(issues, tokens);
 
   return (
     <Stack direction="column" gap={0.5} width="100%">
-      <Label htmlFor={INPUT_ID}>
-        <Stack gap={0.5} alignItems="center">
-          <span>
-            <Trans i18nKey="alerting.gma-rule-list.search.label">Search</Trans>
-          </span>
-          <PopupCard content={<SearchHelp tokens={tokens} />}>
-            <Icon
-              name="info-circle"
-              size="sm"
-              tabIndex={0}
-              title={t('alerting.gma-rule-list.search.help-title', 'Search help')}
-            />
-          </PopupCard>
-        </Stack>
-      </Label>
+      <Stack gap={0.5} alignItems="center">
+        <Label htmlFor={INPUT_ID}>
+          <Stack gap={0.5} alignItems="center">
+            <span>
+              <Trans i18nKey="alerting.gma-rule-list.search.label">Search</Trans>
+            </span>
+            <PopupCard content={<SearchHelp tokens={tokens} />}>
+              <Icon
+                name="info-circle"
+                size="sm"
+                tabIndex={0}
+                title={t('alerting.gma-rule-list.search.help-title', 'Search help')}
+              />
+            </PopupCard>
+          </Stack>
+        </Label>
+        {labelSuffix}
+      </Stack>
       <FilterInput
         id={INPUT_ID}
         value={draft}
@@ -119,11 +127,18 @@ export function RuleSearchInput({
         aria-describedby={hasIssues ? ISSUES_DESCRIPTION_ID : undefined}
       />
       {hasIssues && (
-        <Text id={ISSUES_DESCRIPTION_ID} color="error" variant="bodySmall" element="p">
-          <Trans i18nKey="alerting.gma-rule-list.search.invalid-tokens">
-            Some filters could not be applied: {{ tokens: invalidKeys.join(', ') }}
-          </Trans>
-        </Text>
+        <Stack id={ISSUES_DESCRIPTION_ID} direction="column" gap={0}>
+          <Text color="error" variant="bodySmall" element="p">
+            <Trans i18nKey="alerting.gma-rule-list.search.invalid-tokens">
+              Some filters could not be applied: {{ tokens: invalidKeys.join(', ') }}
+            </Trans>
+          </Text>
+          {hints.map((hint) => (
+            <Text key={hint} color="error" variant="bodySmall" element="p">
+              {hint}
+            </Text>
+          ))}
+        </Stack>
       )}
     </Stack>
   );
