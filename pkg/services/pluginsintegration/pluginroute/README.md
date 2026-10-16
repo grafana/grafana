@@ -132,6 +132,71 @@ declares GET but not HEAD is sent to the plugin as the GET it declared, with the
 response body dropped. A route that declares a check is refused when no access
 client is configured.
 
+## Local plugin authentication
+
+Without an external token signer, Grafana signs v3 requests with an in-memory
+key and passes its public key to the plugin as `GRAFANA_JWKS`. App plugins that
+ship an `app-sdk-manifest.json` also receive `API_ACCESS_ROUTER_URL`,
+`API_ACCESS_TOKEN_EXCHANGE_URL`, and a process-specific `API_ACCESS_CAP_TOKEN`. The app SDK's `BuildKubeConfig` uses
+these to call Grafana through the same token-exchange transport used in Cloud.
+Pass the handler's context to the SDK client to act on behalf of the caller;
+background requests act as the plugin. No `insecure_skip_authentication` setting
+is needed.
+
+The local policy grants the plugin's own `*.ext.grafana.app` group and the
+manifest's `extraPermissions.accessKinds`. A plugin acting as itself reaches an
+app plugin's API group when its token's permissions name that group, since
+unscoped app access would cover every app plugin. Requests on behalf of a caller
+also delegate app access (`plugins.app:access`), and are limited by the caller's
+own permissions and organization. Cloud deployment policy overrides are not
+imported into this local policy.
+
+Local signing requires the `appplugins.loadAppManifest` feature toggle, since
+the local policy comes from the plugin's app manifest. Setting `[plugins]
+enable_local_plugin_auth = false`, either `[plugins]
+v3_cap_token` or `v3_token_exchange_url`, `[auth.extended_jwt] jwks_url`, or the
+`GRAFANA_JWKS` or `GRAFANA_JWKS_URL` environment variable disables local signing.
+Inherited `API_ACCESS_*` URL, CAP token or bearer token overrides prevent
+automatic local API credentials from being injected; forwarded basic-auth
+credentials don't, because the app SDK prefers token exchange. Use an app SDK version that supports the JWKS
+and token-exchange environment variables, and keep the `grafana` audience in
+`[auth.extended_jwt] audiences` (the default).
+
+The key and credentials belong to one Grafana process. Restarting Grafana
+invalidates them; stopping, replacing, or failing to start a plugin revokes that
+plugin process's exchange credential. This local signer does not provide shared
+credentials across Grafana replicas. With a plain HTTP listener on all
+interfaces or loopback, plugins reach their own Grafana process on loopback,
+so each replica's plugins work behind a load balancer, and the token exchange
+(`/api/internal/plugin-token-exchange`) refuses callers that are not on
+loopback. The port comes from `[server] http_port`. The loopback check is
+defense in depth: a reverse proxy on the same host makes its callers look local,
+so the process-specific CAP token is what authenticates a plugin. Plugin API
+access also needs `grafana` in `[auth.extended_jwt] audiences`, the default.
+
+Override automatic detection with `[plugins] local_api_url` (or
+`GF_PLUGINS_LOCAL_API_URL`):
+
+```ini
+[plugins]
+local_api_url = https://grafana-instance.internal:8443/grafana
+```
+
+The override supplies the complete base URL, including its port and any subpath,
+for both API requests and token exchange. It must reach the Grafana process that
+started the plugin; a load-balanced public URL cannot provide that guarantee.
+An explicit non-loopback endpoint still requires the process's CAP token, but
+accepts non-loopback peers so a specific-interface listener or local proxy can
+be used. HTTPS uses normal certificate verification.
+
+With local signing enabled, Grafana cannot infer the endpoint for HTTPS,
+sockets, specific non-loopback addresses, a dynamic port, or `[server]
+enforce_domain` with another domain. It then logs a warning and gives app
+plugins no API credentials; Grafana's own requests to plugins are still
+authenticated. Set the override to enable plugin API access. An invalid
+override, or one whose host conflicts with `enforce_domain`, is a configuration
+error at startup. Grafana never falls back to the public `root_url`. External
+token-exchange configurations do not use this setting.
 
 ## Admission hooks
 

@@ -94,13 +94,27 @@ func (b *manifestBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 			}
 
-			decision, reason, err := b.accessChecker(ctx, requester, b.pluginID)
-			if decision != authorizer.DecisionAllow {
-				return decision, reason, err
+			if !serviceTokenGrants(requester, attr) {
+				decision, reason, err := b.accessChecker(ctx, requester, b.pluginID)
+				if decision != authorizer.DecisionAllow {
+					return decision, reason, err
+				}
 			}
 			return b.authorizeKind(requester, attr)
 		},
 	)
+}
+
+// serviceTokenGrants reports whether requester is an access policy whose token
+// permissions grant the request. That stands in for app access, which an
+// access policy can only hold for every app plugin at once. authorizeKind then
+// holds it to the same permissions.
+func serviceTokenGrants(requester identity.Requester, attr authorizer.Attributes) bool {
+	if !authlib.IsIdentityType(requester.GetIdentityType(), authlib.TypeAccessPolicy) {
+		return false
+	}
+	decision, _, _ := authorizeTokenPermissions(requester, attr)
+	return decision == authorizer.DecisionAllow
 }
 
 // authorizeKind applies to a manifest kind the rules apiextensions applies to a
