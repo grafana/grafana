@@ -287,6 +287,7 @@ var Basic = wire.NewSet(
 	ngstore.ProvideDBStore,
 	ngprovenance.ProvideProvenanceStore,
 	ngrules.ProvideRuleStore,
+	wire.Bind(new(ngrules.Store), new(*ngrules.RuleStore)),
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
