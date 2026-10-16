@@ -20,6 +20,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
+import { toggleRowCollapse } from '../../actions/layout/toggleRowCollapse';
 import { DashboardStateChangedEvent } from '../../sidebar/events';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -56,6 +57,29 @@ describe('RowItemRepeater', () => {
       act(() => {
         setTestFlags({});
       });
+    });
+
+    it('keeps repeated rows expanded when collapsing the source row through edit history', async () => {
+      const { scene, rowToRepeat } = renderScene({ variableQueryTime: 0 });
+      await waitFor(() => expect(rowToRepeat.state.repeatedRows).toHaveLength(2));
+      act(() => {
+        scene.onEnterEditMode();
+        scene.state.sidebar.activate();
+      });
+      const repeats = rowToRepeat.state.repeatedRows!;
+
+      act(() => toggleRowCollapse(rowToRepeat));
+      expect(rowToRepeat.getCollapsedState()).toBe(true);
+      expect(rowToRepeat.state.repeatedRows!.map((row) => row.getCollapsedState())).toEqual([false, false]);
+      expect(rowToRepeat.state.repeatedRows![0]).toBe(repeats[0]);
+
+      act(() => scene.state.sidebar.undoAction());
+      expect(rowToRepeat.getCollapsedState()).toBe(false);
+      expect(rowToRepeat.state.repeatedRows![0]).toBe(repeats[0]);
+
+      act(() => scene.state.sidebar.redoAction());
+      expect(rowToRepeat.getCollapsedState()).toBe(true);
+      expect(rowToRepeat.state.repeatedRows!.map((row) => row.getCollapsedState())).toEqual([false, false]);
     });
 
     it('Should repeat row', async () => {
