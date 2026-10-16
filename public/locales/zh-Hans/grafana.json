@@ -3883,6 +3883,11 @@
     "viz-wrapper": {
       "table": "表格"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "查看当前的警报并浏览历史数据，以调查当前或过去的问题。",
       "description-alert-rules": "定义警报规则触发前必须满足的条件",
@@ -6060,6 +6065,9 @@
       "only-overrides-button-tooltip": "仅显示覆盖",
       "placeholder-search-options": "搜索选项",
       "visualization-button-tooltip": "搜索选项"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "示例数据",
@@ -10692,13 +10700,21 @@
       "cell-filter-out": "筛除值",
       "cell-inspect": "检查值",
       "cell-inspect-tooltip": "检查值",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "筛选值",
+      "column-menu-hide": "",
       "column-menu-label": "{{name}} 的列选项",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "更新筛选条件",
+      "column-visibility": "",
+      "columns": "",
       "copy": "复制到剪贴板",
       "csv-counts": "行：{{rows}}，列：{{columns}}",
       "csv-placeholder": "在此处输入 CSV...",
       "edit-column-filter": "编辑 {{name}} 的筛选条件",
+      "field-warnings": "",
       "filter": {
         "add-all": "将所有显示的值添加到筛选条件",
         "blanks": "（空白）",
@@ -10732,6 +10748,8 @@
           "count": "数量"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "检查值",
       "loading": "正在加载表格",
       "nested-table": {
@@ -10741,6 +10759,8 @@
       "no-rows": "没有行",
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "按列 {{column}} 排序",
       "sort-by-column-ascending": "按列 {{column}} 升序排序",
       "sort-by-column-descending": "按列 {{column}} 降序排序",
@@ -10750,7 +10770,8 @@
       },
       "tooltip": {
         "trigger": "切换工具提示"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "标签"
@@ -11047,6 +11068,8 @@
       "incident-filter-all": "所有事件",
       "incident-filter-label": "按标签筛选事件",
       "incident-tab-label": "事故",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "您的团队",
       "title": "警报和事故",
       "title-alerts": "警报",
@@ -11121,6 +11144,17 @@
       "error-title": "无法加载近期博客文章",
       "read-more": "阅读 Grafana Labs 博客的更多内容",
       "title": "博客的最新内容"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11861,6 +11895,11 @@
       "load-newer": "正在加载新日志…",
       "load-older": "正在加载旧日志…"
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "收起标签",
       "expand": "展开标签"
@@ -11911,6 +11950,7 @@
       "inline-mode": "内联显示",
       "inline-no-scrolls": "切换到展开视图",
       "inline-with-scrolls": "切换到精简视图",
+      "link-fallback-label": "",
       "link-value-tooltip": "链接值",
       "links-section": "关联",
       "log-attributes-field": "日志属性",
@@ -11920,13 +11960,14 @@
       "move-displayed-field-up": "上移",
       "no-details": "没有要显示的字段。",
       "open-assistant": "在助手中解释日志行",
+      "open-value-in": "",
       "pin-line": "固定日志",
       "prettify": "美化",
       "remove-displayed-field": "移除字段",
       "remove-log": "移除日志",
       "scroll-to-logline": "滚动到日志行",
       "search": {
-        "no-results": "没有要显示的结果。"
+        "no-results": ""
       },
       "search-placeholder": "搜索字段名称和值",
       "show-context": "显示上下文",
@@ -13108,6 +13149,11 @@
       "target-new": "新笔记本",
       "title": "将面板添加到笔记本"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
+    },
     "autosave": {
       "conflict-cancel": "",
       "conflict-confirm": "",
@@ -13771,6 +13817,9 @@
       "label-plugin-id": "插件 Id",
       "label-severity": "严重程度"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "所有插件都是最新的"
     },
@@ -13792,6 +13841,10 @@
     "plugin-details-body": {
       "needs-service-account": "{{pluginName}} 插件需要一个服务账户才能查询 Grafana。以下列表包含服务账户可用的权限：",
       "page-not-found": "无法找到页面。"
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "已弃用"
@@ -16396,6 +16449,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-page-size": "每页行数。为空时，页面大小基于面板高度。",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "包含具有 CSS 属性的 JSON 对象的字段",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "每隔一行交替背景颜色",
@@ -16434,6 +16488,7 @@
     "name-max-height": "",
     "name-min-column-width": "最小列宽",
     "name-page-size": "页面大小",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "显示表格表头",
     "name-styling-from-field": "字段中的样式",
     "name-tooltip-from-field": "",
@@ -16597,6 +16652,7 @@
     "editor": {
       "aria-label-content": "文本内容",
       "aria-label-mode": "文本模式：{{mode}}",
+      "feedback": "",
       "footer-line-numbers": "行号",
       "format-bold": "B",
       "format-heading": "H",
@@ -16642,6 +16698,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

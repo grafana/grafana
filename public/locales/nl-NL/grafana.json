@@ -3919,6 +3919,11 @@
     "viz-wrapper": {
       "table": "Tabel"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Bekijk welke waarschuwingen momenteel actief zijn en verken historische gegevens om huidige of eerdere problemen te onderzoeken.",
       "description-alert-rules": "Definieer de voorwaarde waaraan moet worden voldaan voordat een waarschuwingsregel geactiveerd wordt",
@@ -6108,6 +6113,9 @@
       "only-overrides-button-tooltip": "Alleen overschrijvingen weergeven",
       "placeholder-search-options": "Zoekopties",
       "visualization-button-tooltip": "Zoekopties"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Voorbeeldgegevens",
@@ -10762,13 +10770,21 @@
       "cell-filter-out": "Waarde uitfilteren",
       "cell-inspect": "Waarde inspecteren",
       "cell-inspect-tooltip": "Waarde inspecteren",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filter waarden",
+      "column-menu-hide": "",
       "column-menu-label": "Kolomopties voor {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Filter updaten",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Naar klembord kopiëren",
       "csv-counts": "Rijen:{{rows}}, kolommen:{{columns}}",
       "csv-placeholder": "Voer hier csv in ...",
       "edit-column-filter": "Filter bewerken op {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Voeg alle weergegeven waarden toe aan het filter",
         "blanks": "(Lege velden)",
@@ -10802,6 +10818,8 @@
           "count": "Telling"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Waarde inspecteren",
       "loading": "Tabel laden",
       "nested-table": {
@@ -10811,6 +10829,8 @@
       "no-rows": "Geen rijen",
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "Sorteren op kolom {{column}}",
       "sort-by-column-ascending": "Sorteren op kolom {{column}}, oplopend",
       "sort-by-column-descending": "Sorteren op kolom {{column}}, aflopend",
@@ -10820,7 +10840,8 @@
       },
       "tooltip": {
         "trigger": "Tooltip in-/uitschakelen"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Tags"
@@ -11117,6 +11138,8 @@
       "incident-filter-all": "Alle incidenten",
       "incident-filter-label": "Incidenten filteren op label",
       "incident-tab-label": "Incidenten",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Je teams",
       "title": "Waarschuwingen en incidenten",
       "title-alerts": "Waarschuwingen",
@@ -11193,6 +11216,17 @@
       "error-title": "Kon recente blogberichten niet laden",
       "read-more": "Lees meer op het Grafana Labs-blog",
       "title": "Laatste blogberichten"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11955,6 +11989,11 @@
       "load-newer": "Nieuwere logboeken worden geladen...",
       "load-older": "Oudere logboeken worden geladen..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Labels samenvouwen",
       "expand": "Labels uitvouwen"
@@ -12005,6 +12044,7 @@
       "inline-mode": "Inline weergave",
       "inline-no-scrolls": "Overschakelen naar uitgevouwen weergave",
       "inline-with-scrolls": "Overschakelen naar verkorte weergave",
+      "link-fallback-label": "",
       "link-value-tooltip": "Linkwaarde",
       "links-section": "Links",
       "log-attributes-field": "Logattributen",
@@ -12014,13 +12054,14 @@
       "move-displayed-field-up": "Naar boven verplaatsen",
       "no-details": "Weer te geven velden.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Logboek vastzetten",
       "prettify": "Verfraaien",
       "remove-displayed-field": "Veld verwijderen",
       "remove-log": "Log verwijderen",
       "scroll-to-logline": "Naar logregel scrollen",
       "search": {
-        "no-results": "Geen resultaten om weer te geven."
+        "no-results": ""
       },
       "search-placeholder": "Zoekveldnamen en -waarden",
       "show-context": "Context tonen",
@@ -13207,6 +13248,11 @@
       "target-new": "Nieuw notitieboek",
       "title": "Paneel aan notitieboek toevoegen"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
+    },
     "autosave": {
       "conflict-cancel": "",
       "conflict-confirm": "",
@@ -13871,6 +13917,9 @@
       "label-plugin-id": "Plug-in-id",
       "label-severity": "Ernst"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Alle plug-ins zijn up-to-date"
     },
@@ -13892,6 +13941,10 @@
     "plugin-details-body": {
       "needs-service-account": "De plug-in {{pluginName}} heeft een serviceaccount nodig om Grafana te kunnen bevragen. De volgende lijst bevat de toestemmingen die beschikbaar zijn voor het serviceaccount:",
       "page-not-found": "Pagina niet gevonden."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Verouderd"
@@ -16526,6 +16579,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "description-page-size": "Aantal rijen per pagina. Wanneer leeg, is het paginaformaat gebaseerd op de paneelhoogte.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Een veld met JSON-objecten met CSS-eigenschappen",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "De achtergrondkleur van elke tweede rij afwisselen",
@@ -16564,6 +16618,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minimale kolombreedte",
     "name-page-size": "Paginaformaat",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Header tabel tonen",
     "name-styling-from-field": "Styling vanuit veld",
     "name-tooltip-from-field": "",
@@ -16727,6 +16782,7 @@
     "editor": {
       "aria-label-content": "Tekstinhoud",
       "aria-label-mode": "Tekstmodus: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Regelnummers",
       "format-bold": "B",
       "format-heading": "H",
@@ -16772,6 +16828,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

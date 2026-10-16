@@ -1,16 +1,9 @@
-import { BASE_URL as v0alphaBaseURL } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { getBackendSrv } from '@grafana/runtime';
-import { type SearchAPIResponse, type SearchHit } from 'app/features/search/service/unified';
-
-// Core unified-storage hybrid (lexical + semantic, RRF-fused) search, exposed
-// as a sibling of the lexical `/search` route. Gated behind the
-// dashboard.vectorSearch feature toggle and only functional when the vector
-// backend is configured (501 otherwise).
-const DASHBOARD_HYBRID_SEARCH_URL = `${v0alphaBaseURL}/search/hybrid`;
+import { type HybridSearchResultItem } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
+import { dispatch } from 'app/types/store';
 
 export interface HybridSearchOptions {
   limit?: number;
-  abortSignal?: AbortSignal;
 }
 
 /**
@@ -20,18 +13,23 @@ export interface HybridSearchOptions {
  */
 export async function searchDashboardsHybrid(
   query: string,
-  { limit, abortSignal }: HybridSearchOptions = {}
-): Promise<SearchHit[]> {
-  // Using the BackendSrv instead of RTK here, because the API isn't officially published yet and even the open spec
-  // gen is behind feature flag.
-  const response = await getBackendSrv().get<SearchAPIResponse>(
-    DASHBOARD_HYBRID_SEARCH_URL,
-    { query, ...(limit !== undefined && { limit }) },
-    undefined,
-    // This runs in the background on palette keystrokes; an unconfigured backend
-    // returns 501 and a feature-flagged-off instance returns 404 — neither
-    // should spam error toasts
-    { showErrorAlert: false, abortSignal }
+  { limit }: HybridSearchOptions = {}
+): Promise<HybridSearchResultItem[]> {
+  const request = dispatch(
+    dashboardAPIv0alpha1.endpoints.listDashboardHybridSearchV0Alpha1.initiate(
+      {
+        hybridSearchQuery: {
+          apiVersion: 'search.grafana.app/v0alpha1',
+          kind: 'HybridSearchQuery',
+          query,
+          ...(limit !== undefined && { limit }),
+        },
+      },
+      // Refresh repeat searches so recently saved dashboards can appear immediately.
+      { subscribe: false, forceRefetch: true }
+    )
   );
-  return response.hits ?? [];
+
+  const response = await request.unwrap();
+  return response.items ?? [];
 }

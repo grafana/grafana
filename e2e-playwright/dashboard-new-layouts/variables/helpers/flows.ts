@@ -2,10 +2,9 @@ import test, { expect, type Page } from '@playwright/test';
 
 import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { flows } from '../helpers';
-import { type Controls, type Panels } from '../page-objects';
-
-import variablePersistenceDashboard from './fixtures/VariablePersistenceDashboard.json';
+import { flows } from '../../helpers';
+import { type Controls, type Panels } from '../../page-objects';
+import variablePersistenceDashboard from '../fixtures/VariablePersistenceDashboard.json';
 
 export async function importVariableTestDashboard(
   page: Page,

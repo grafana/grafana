@@ -14,6 +14,8 @@ replace github.com/grafana/grafana/pkg/infra/log => ../../pkg/infra/log
 
 replace github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
 
+replace github.com/grafana/grafana/pkg/infra/tracing => ../../pkg/infra/tracing
+
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
 require (
@@ -80,7 +82,6 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/diegoholiveira/jsonlogic/v3 v3.7.4 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
@@ -128,7 +129,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20261007180837-e51b976f5df2 // indirect
+	github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grafana/grafana-app-sdk/plugin v0.60.15 // indirect
@@ -285,4 +286,4 @@ require (
 )
 
 // Use our fork of the upstream Alertmanager.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623
