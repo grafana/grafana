@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -55,6 +56,15 @@ func ClientV3TokenExchanger(cfg *setting.Cfg, pluginID string, exchanger authnli
 	if v3.RealSigningKeysConfigured(jwksURL) {
 		clientV3AuthLogger.Warn("Signing keys are configured without a plugin token exchange; plugin requests carry no caller identity", "pluginId", pluginID)
 		return nil
+	}
+	if cfg != nil && !pluginauth.LocalPluginAuthEnabled(cfg) {
+		// Plugins get no keys to verify local tokens, so send them only to a
+		// plugin that skips verification in development, as before local signing.
+		insecure := cfg.PluginSettings[pluginID][pluginSettingInsecureSkipAuthentication] == "true"
+		if !insecure || cfg.Env != setting.Dev {
+			return nil
+		}
+		clientV3AuthLogger.Warn("Plugin requests use unverifiable local tokens; use only for local development", "pluginId", pluginID)
 	}
 	local, err := v3.LocalTokenExchanger()
 	if err != nil {

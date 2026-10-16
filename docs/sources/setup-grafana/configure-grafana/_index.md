@@ -2784,6 +2784,16 @@ Default is `false`.
 
 Set to `true` if you want to test alpha plugins that are not yet ready for general usage. Default is `false`.
 
+#### `enable_local_plugin_auth`
+
+Set to `false` to stop Grafana from signing access tokens for the backend plugins it starts when no external plugin token signer is configured.
+Default is `true`.
+Local signing also requires the `appplugins.loadAppManifest` feature toggle, which is off by default.
+
+With local signing, Grafana passes each plugin process the public key that verifies Grafana's requests, and gives app plugins with an app manifest credentials to call the Grafana API.
+When you set this to `false`, plugins get neither, and the Grafana API doesn't accept locally signed plugin tokens.
+Plugins that verify requests then reject requests from Grafana, unless they skip authentication for local development.
+
 #### `local_api_url`
 
 The URL that app plugins started by this Grafana process use to call the Grafana API and to get access tokens for it.

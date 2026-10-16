@@ -100,7 +100,7 @@ func ProvideRegistration(
 	}
 
 	// Also enabled without [auth.extended_jwt] for the tokens of the local
-	// plugin token exchange (see pluginauth.LocalTokens).
+	// plugin token exchange (see pluginauth.LocalPluginAuthEnabled).
 	if extJWT := clients.ProvideExtendedJWT(cfg, tracer); extJWT.IsEnabled(ctx) {
 		authnSvc.RegisterClient(extJWT)
 	}

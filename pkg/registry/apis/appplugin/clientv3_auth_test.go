@@ -10,6 +10,7 @@ import (
 
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,6 +50,7 @@ func TestNewClientV3TokenExchanger(t *testing.T) {
 }
 
 func TestClientV3TokenExchanger(t *testing.T) {
+	pluginauthtest.EnableAppManifests(t)
 	configured := authnlib.NewStaticTokenExchanger("token")
 	cfgFor := func(env string) *setting.Cfg {
 		cfg := setting.NewCfg()
@@ -74,6 +76,18 @@ func TestClientV3TokenExchanger(t *testing.T) {
 		require.Nil(t, ClientV3TokenExchanger(cfg, "other-app", nil))
 		require.Equal(t, configured, ClientV3TokenExchanger(cfg, "other-app", configured))
 	})
+	t.Run("not when local plugin auth is disabled", func(t *testing.T) {
+		disabled := func(env string) *setting.Cfg {
+			cfg := cfgFor(env)
+			cfg.Raw.Section("plugins").Key("enable_local_plugin_auth").SetValue("false")
+			return cfg
+		}
+		require.Nil(t, ClientV3TokenExchanger(disabled(setting.Dev), "other-app", nil), "plugins get no keys to verify local tokens")
+		require.Nil(t, ClientV3TokenExchanger(disabled(setting.Prod), "insecure-app", nil))
+		require.Same(t, local, ClientV3TokenExchanger(disabled(setting.Dev), "insecure-app", nil),
+			"a development plugin that skips verification still sees the caller, as before local signing")
+		require.Equal(t, configured, ClientV3TokenExchanger(disabled(setting.Dev), "other-app", configured))
+	})
 	for _, key := range []string{v3.EnvVarSigningKeys, v3.EnvVarSigningKeysURL} {
 		t.Run("not with "+key+" in the environment", func(t *testing.T) {
 			t.Setenv(key, "from-host")
@@ -95,4 +109,18 @@ func TestInvalidClientV3TokenExchanger(t *testing.T) {
 	dev.Env = setting.Dev
 	dev.PluginSettings = config.PluginSettings{"insecure-app": {"insecure_skip_authentication": "true"}}
 	require.Equal(t, invalid, ClientV3TokenExchanger(dev, "insecure-app", invalid))
+}
+
+func TestClientV3TokenExchangerWithoutAppManifests(t *testing.T) {
+	// Without the appplugins.loadAppManifest feature toggle, requests to plugins
+	// carry no identity, as before local signing, unless a development plugin
+	// skips verification.
+	cfg := setting.NewCfg()
+	require.Nil(t, ClientV3TokenExchanger(cfg, "other-app", nil))
+
+	cfg.Env = setting.Dev
+	cfg.PluginSettings = config.PluginSettings{"insecure-app": {"insecure_skip_authentication": "true"}}
+	local, err := v3.LocalTokenExchanger()
+	require.NoError(t, err)
+	require.Same(t, local, ClientV3TokenExchanger(cfg, "insecure-app", nil))
 }

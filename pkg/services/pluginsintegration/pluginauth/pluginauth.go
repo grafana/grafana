@@ -3,6 +3,7 @@
 package pluginauth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -11,7 +12,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -125,21 +129,39 @@ func validateLocalAPIURL(cfg *setting.Cfg, endpoint string, explicit bool) error
 	return nil
 }
 
-// LocalTokens reports whether Grafana signs plugin access tokens itself (see
-// v3.LocalTokenExchanger and v3.SignLocalAccessToken): neither [plugins]
-// v3_cap_token nor v3_token_exchange_url is set, and no real signing keys are
-// configured (see v3.RealSigningKeysConfigured). With only one of the exchange
-// settings, the exchange is misconfigured and no tokens are signed at all.
-func LocalTokens(cfg *setting.Cfg) bool {
+// LocalPluginAuthEnabled reports whether Grafana signs plugin access tokens
+// itself (see v3.LocalTokenExchanger and v3.SignLocalAccessToken): the
+// appplugins.loadAppManifest feature toggle is enabled, [plugins]
+// enable_local_plugin_auth is not false, neither v3_cap_token nor
+// v3_token_exchange_url is set, and no real signing keys are configured (see
+// v3.RealSigningKeysConfigured). With only one of the exchange settings, the
+// exchange is misconfigured and no tokens are signed at all.
+func LocalPluginAuthEnabled(cfg *setting.Cfg) bool {
 	if cfg == nil {
+		return false
+	}
+	// The local access policy comes from the plugin's app manifest.
+	// NOTE: When this check is removed, we need to make a loud announcement in the release notes
+	if !appManifestsEnabled() {
 		return false
 	}
 	if cfg.Raw != nil {
 		section := cfg.SectionWithEnvOverrides("plugins")
+		// An explicit opt-out, for installs that don't want plugins to get
+		// credentials or Grafana to trust a key held in memory.
+		if !section.Key("enable_local_plugin_auth").MustBool(true) {
+			return false
+		}
+		// Explicitly configured CAP token used to make requests into plugins
 		if strings.TrimSpace(section.Key("v3_cap_token").MustString("")) != "" ||
 			strings.TrimSpace(section.Key("v3_token_exchange_url").MustString("")) != "" {
 			return false
 		}
 	}
 	return !v3.RealSigningKeysConfigured(cfg.ExtJWTAuth.JWKSUrl)
+}
+
+func appManifestsEnabled() bool {
+	ctx := context.Background()
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsLoadAppManifest, false, openfeature.TransactionContext(ctx))
 }

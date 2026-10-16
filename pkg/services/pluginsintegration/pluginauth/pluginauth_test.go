@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -110,4 +111,33 @@ func TestLocalAPIURLRequiresGrafanaAudience(t *testing.T) {
 		require.ErrorIs(t, err, ErrNoLocalAPIURL, "plugins would get credentials Grafana's API never accepts")
 		require.Empty(t, got)
 	}
+}
+
+func TestLocalPluginAuthEnabled(t *testing.T) {
+	pluginauthtest.EnableAppManifests(t)
+	cfgWith := func(enabled string) *setting.Cfg {
+		cfg := &setting.Cfg{Raw: ini.Empty()}
+		if enabled != "" {
+			cfg.Raw.Section("plugins").Key("enable_local_plugin_auth").SetValue(enabled)
+		}
+		return cfg
+	}
+	require.True(t, LocalPluginAuthEnabled(cfgWith("")), "on by default without a token signer")
+	require.True(t, LocalPluginAuthEnabled(cfgWith("true")))
+	require.False(t, LocalPluginAuthEnabled(cfgWith("false")))
+	require.False(t, LocalPluginAuthEnabled(nil))
+
+	// A loaded configuration, which logs the environment override it applies.
+	cfg := setting.NewCfg()
+	cfg.Raw.Section("plugins").Key("enable_local_plugin_auth").SetValue("true")
+	t.Setenv("GF_PLUGINS_ENABLE_LOCAL_PLUGIN_AUTH", "false")
+	require.False(t, LocalPluginAuthEnabled(cfg), "the environment overrides the file")
+}
+
+func TestLocalPluginAuthRequiresAppManifests(t *testing.T) {
+	// Without the appplugins.loadAppManifest feature toggle, the default.
+	require.False(t, LocalPluginAuthEnabled(&setting.Cfg{Raw: ini.Empty()}))
+
+	pluginauthtest.EnableAppManifests(t)
+	require.True(t, LocalPluginAuthEnabled(&setting.Cfg{Raw: ini.Empty()}))
 }

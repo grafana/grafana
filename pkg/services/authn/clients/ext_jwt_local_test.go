@@ -19,10 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestExtendedJWT_localPluginTokens(t *testing.T) {
+	pluginauthtest.EnableAppManifests(t)
 	cfgWith := func(jwksURL string) *setting.Cfg {
 		return &setting.Cfg{
 			Raw:        ini.Empty(),
@@ -96,6 +98,13 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 		require.False(t, client.Test(context.Background(), request(other)), "a token the local key cannot verify must not stop a session from authenticating")
 	})
 
+	t.Run("not trusted when local plugin auth is disabled", func(t *testing.T) {
+		cfg := cfgWith("")
+		cfg.Raw.Section("plugins").Key("enable_local_plugin_auth").SetValue("false")
+		client := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
+		require.False(t, client.IsEnabled(context.Background()))
+	})
+
 	t.Run("not trusted without audiences", func(t *testing.T) {
 		cfg := cfgWith("")
 		cfg.ExtJWTAuth.Audiences = nil
@@ -122,6 +131,7 @@ func signIDToken(t *testing.T, subject string, idClaims authlib.IDTokenClaims) s
 }
 
 func TestExtendedJWT_localPluginOrganizations(t *testing.T) {
+	pluginauthtest.EnableAppManifests(t)
 	cfg := &setting.Cfg{
 		Raw:        ini.Empty(),
 		ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}},

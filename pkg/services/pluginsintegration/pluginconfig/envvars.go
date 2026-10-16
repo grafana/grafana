@@ -328,8 +328,6 @@ var apiAccessHostEnvVars = []string{
 	"API_ACCESS_TOKEN_EXCHANGE_URL",
 	"API_ACCESS_CAP_TOKEN",
 	"API_ACCESS_BEARER_TOKEN",
-	"API_ACCESS_USERNAME",
-	"API_ACCESS_PASSWORD",
 }
 
 // apiAccessEnvVars passes an app plugin the credentials for Grafana's API when

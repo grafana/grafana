@@ -98,7 +98,7 @@ type PluginInstanceCfg struct {
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
 func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
-	localTokens := pluginauth.LocalTokens(cfg)
+	localTokens := pluginauth.LocalPluginAuthEnabled(cfg)
 	var localAPIURL string
 	if localTokens {
 		var err error

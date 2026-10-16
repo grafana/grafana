@@ -9,6 +9,7 @@ import (
 
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -74,12 +75,15 @@ func TestProvidePluginInstanceConfigOpenFeature(t *testing.T) {
 }
 
 func TestProvidePluginInstanceConfigLocalPluginTokens(t *testing.T) {
+	pluginauthtest.EnableAppManifests(t)
 	for _, tc := range []struct {
 		name, token, url, jwksURL string
 		hostEnv                   string
+		disabled                  bool
 		want                      bool
 	}{
 		{name: "no token exchange", want: true},
+		{name: "local plugin auth disabled", disabled: true, want: false},
 		{name: "token exchange", token: "cap-token", url: "https://auth.example.com/v1/sign-access-token", want: false},
 		{name: "misconfigured token exchange", token: "cap-token", want: false},
 		{name: "real JWKS URL", jwksURL: "https://auth.example.com/v1/keys", want: false},
@@ -94,10 +98,16 @@ func TestProvidePluginInstanceConfigLocalPluginTokens(t *testing.T) {
 			section := cfg.Raw.Section("plugins")
 			section.Key("v3_cap_token").SetValue(tc.token)
 			section.Key("v3_token_exchange_url").SetValue(tc.url)
+			if tc.disabled {
+				section.Key("enable_local_plugin_auth").SetValue("false")
+			}
 
 			pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 			require.NoError(t, err)
 			require.Equal(t, tc.want, pluginCfg.LocalPluginTokens)
+			if !tc.want {
+				require.Empty(t, pluginCfg.LocalAPIURL)
+			}
 		})
 	}
 }
@@ -111,6 +121,7 @@ func newTestServerConfig() *setting.Cfg {
 }
 
 func TestProvidePluginInstanceConfigLocalAPIURL(t *testing.T) {
+	pluginauthtest.EnableAppManifests(t)
 	for _, tc := range []struct {
 		name, override, jwksURL, want string
 		wantError                     bool

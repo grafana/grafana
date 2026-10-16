@@ -224,6 +224,13 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 	t.Run("not passed to other plugins", func(t *testing.T) {
 		assert.False(t, hasAPIAccess(envVars(true, &plugins.Plugin{JSONData: plugins.JSONData{ID: "example-datasource", Type: plugins.TypeDataSource}})))
 	})
+	t.Run("host basic-auth credentials don't block local API access", func(t *testing.T) {
+		// The app SDK prefers token exchange over basic auth, so Grafana's
+		// credentials work alongside forwarded ones.
+		t.Setenv("API_ACCESS_USERNAME", "admin")
+		t.Setenv("API_ACCESS_PASSWORD", "admin")
+		assert.NotEmpty(t, capToken(envVars(true, app(false))))
+	})
 	t.Run("host API access takes precedence", func(t *testing.T) {
 		t.Setenv("API_ACCESS_ROUTER_URL", "https://grafana.example.com")
 		assert.False(t, hasAPIAccess(envVars(true, app(false))), "the host environment is forwarded")

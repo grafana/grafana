@@ -15,26 +15,27 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	appplugin "github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/ini.v1"
 	"k8s.io/client-go/rest"
 
+	appplugin "github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Exercise the SDK's actual HTTP transport: its audiences, caller context and
 // authentication headers must all agree with the local exchange and Grafana.
 func TestSDKLocalTokenRoundTrip(t *testing.T) {
+	pluginauthtest.EnableAppManifests(t)
 	for _, name := range []string{
 		v3.EnvVarSigningKeys, v3.EnvVarSigningKeysURL,
-		"API_ACCESS_BEARER_TOKEN", "API_ACCESS_USERNAME", "API_ACCESS_PASSWORD",
-		"API_ACCESS_CA_FILE", "API_ACCESS_INSECURE_TLS",
+		"API_ACCESS_BEARER_TOKEN", "API_ACCESS_CA_FILE", "API_ACCESS_INSECURE_TLS",
 	} {
 		t.Setenv(name, "")
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana-app-sdk/app"
 )
 
@@ -37,7 +38,7 @@ var ErrLocalAccessDenied = errors.New("local plugin token exchange: access denie
 
 // LocalAccessPolicyTokenPrefix starts every local access policy token, so the
 // API key client can leave them alone.
-const LocalAccessPolicyTokenPrefix = "gl_local_plugin_"
+const LocalAccessPolicyTokenPrefix = "g_local_plugin_"
 
 // localAccessPolicyHolder is what a local access policy token was issued to.
 type localAccessPolicyHolder struct {

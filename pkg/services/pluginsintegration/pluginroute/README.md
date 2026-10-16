@@ -140,11 +140,14 @@ and the manifest's `extraPermissions.accessKinds`. Delegated requests are also
 limited by the caller's permissions and organization. Cloud deployment policy
 overrides are not imported into this local policy.
 
-Setting either `[plugins] v3_cap_token` or `v3_token_exchange_url`,
-`[auth.extended_jwt] jwks_url`, or the `GRAFANA_JWKS` or `GRAFANA_JWKS_URL`
-environment variable disables local signing. Inherited
-`API_ACCESS_*` URL or credential overrides prevent automatic local API
-credentials from being injected. Use an app SDK version that supports the JWKS
+Local signing requires the `appplugins.loadAppManifest` feature toggle, since
+the local policy comes from the plugin's app manifest. Setting `[plugins]
+enable_local_plugin_auth = false`, either `[plugins]
+v3_cap_token` or `v3_token_exchange_url`, `[auth.extended_jwt] jwks_url`, or the
+`GRAFANA_JWKS` or `GRAFANA_JWKS_URL` environment variable disables local signing.
+Inherited `API_ACCESS_*` URL, CAP token or bearer token overrides prevent
+automatic local API credentials from being injected; forwarded basic-auth
+credentials don't, because the app SDK prefers token exchange. Use an app SDK version that supports the JWKS
 and token-exchange environment variables, and keep the `grafana` audience in
 `[auth.extended_jwt] audiences` (the default).
 

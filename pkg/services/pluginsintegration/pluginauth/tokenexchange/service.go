@@ -1,6 +1,6 @@
 // Package tokenexchange serves the local token exchange that the plugins
 // Grafana starts call to get access tokens for Grafana's API, for when no
-// token signer is configured (see pluginauth.LocalTokens).
+// token signer is configured (see pluginauth.LocalPluginAuthEnabled).
 package tokenexchange
 
 import (
@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	authnlib "github.com/grafana/authlib/authn"
+
 	"github.com/grafana/grafana-app-sdk/app"
 
 	"github.com/grafana/grafana/pkg/api/response"
