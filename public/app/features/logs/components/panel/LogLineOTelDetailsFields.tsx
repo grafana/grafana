@@ -187,7 +187,7 @@ const LogLineOTelDetailsField = ({
     (value: string) => {
       onClickFilterLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
         datasourceType: log.datasourceType,
         filterType: 'include',
         logRowUid: log.uid,
@@ -200,7 +200,7 @@ const LogLineOTelDetailsField = ({
     (value: string) => {
       onClickFilterOutLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
         datasourceType: log.datasourceType,
         filterType: 'exclude',
         logRowUid: log.uid,
