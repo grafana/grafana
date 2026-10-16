@@ -158,6 +158,7 @@
 /pkg/infra/serverlock/ @grafana/grafana-backend-services-squad
 /pkg/infra/slugify/ @grafana/grafana-app-platform-squad
 /pkg/infra/tracing/ @grafana/grafana-backend-services-squad
+/pkg/infra/tracingsetting/ @grafana/grafana-backend-services-squad
 /pkg/infra/usagestats/ @grafana/grafana-backend-services-squad
 /pkg/middleware/ @grafana/grafana-backend-services-squad
 /pkg/mocks/ @grafanabot

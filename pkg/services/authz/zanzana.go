@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/leaderelection/kvlease"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -418,7 +419,7 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide config: %w", err)
 	}
-	tracingCfg, err := tracing.ProvideTracingConfig(cfgProvider)
+	tracingCfg, err := tracingsetting.ProvideTracingConfig(cfgProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
 	}
