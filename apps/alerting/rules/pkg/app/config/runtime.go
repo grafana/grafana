@@ -44,6 +44,9 @@ type RuntimeConfig struct {
 	// RuleSequence (if any) owns a rule UID. The default implementation is a
 	// watch-backed in-memory index that provides O(1) lookups.
 	MembershipResolver RuleSequenceMembershipResolver
+	// AllowDeletingSequenceMembers permits org cleanup to remove rules even when
+	// the watch-backed membership index has not observed sequence deletion yet.
+	AllowDeletingSequenceMembers func(context.Context) (bool, error)
 	// WatchNamespace scopes the RuleSequence informer to one namespace. Empty
 	// watches all namespaces (on-prem default); in cloud it must be the stack
 	// namespace, else the all-namespace watch is rejected as a mismatch.
