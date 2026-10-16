@@ -14,6 +14,7 @@ import { useLogListContext } from './LogListContext';
 import { getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsErrorProps {
+  className?: string;
   fields: FieldDef[];
   labels: LabelWithLinks[];
 }
@@ -23,7 +24,7 @@ interface ErrorDisplayItem {
   value: string;
 }
 
-export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps) => {
+export const LogLineDetailsError = ({ className, fields, labels }: LogLineDetailsErrorProps) => {
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
 
@@ -48,7 +49,7 @@ export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps
   }
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${className ? className : ''}`}>
       <div className={styles.header}>
         <Icon name="exclamation-circle" className={styles.icon} />
         <span>{t('logs.log-details.error.error-details', 'Error details')}</span>
