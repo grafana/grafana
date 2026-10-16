@@ -237,15 +237,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:            "provisioningFolderMetadata",
-			Description:     "Allow setting folder metadata for provisioned folders",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, React: true},
-		},
-		{
 			Name:            "provisioningExport",
 			Description:     "Enable export functionality for provisioned resources",
 			Stage:           FeatureStageExperimental,

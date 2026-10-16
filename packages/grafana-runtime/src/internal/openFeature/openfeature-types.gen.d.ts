@@ -22,7 +22,6 @@ declare module "@openfeature/core" {
     | "queryHistory.recentQueriesUI"
     | "awsAssumeRolePerDatasourceExternalId"
     | "grafanaAPIServerWithExperimentalAPIs"
-    | "provisioningFolderMetadata"
     | "provisioningExport"
     | "provisioning.userAttribution"
     | "reportingHeaderSettings"

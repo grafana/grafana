@@ -9,7 +9,6 @@ import (
 )
 
 var env = common.NewSharedGitEnv(
-	common.WithoutProvisioningFolderMetadata,
 	common.WithConnectionTypes([]string{"github", "gitOAuth"}),
 	func(opts *testinfra.GrafanaOpts) {
 		// Backend attribution must work even while the retained frontend flag is disabled.
