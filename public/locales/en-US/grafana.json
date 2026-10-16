@@ -329,6 +329,11 @@
     "users-create": {
       "create-button": "Create user"
     },
+    "users-export": {
+      "download": "Download table as CSV",
+      "error": "Failed to export users. Please try again.",
+      "exporting": "Exporting…"
+    },
     "users-list": {
       "create-button": "New user"
     },
