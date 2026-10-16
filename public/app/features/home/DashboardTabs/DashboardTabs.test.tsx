@@ -313,7 +313,7 @@ describe('DashboardTabs', () => {
       );
     });
   });
-  it('renders extension tabs from plugins', async () => {
+  describe('extension tabs', () => {
     const extensionComponents = [
       createDashboardTabsExtensionComponent(
         'grafana-setupguide-app',
@@ -328,19 +328,50 @@ describe('DashboardTabs', () => {
         'Plugin Tab 3',
         <div>Content for Plugin Tab 3</div>
       ),
+      createDashboardTabsExtensionComponent(
+        'grafana-assistant-app',
+        'assistant-tab',
+        'Assistant',
+        <div>Content for the Assistant tab</div>
+      ),
     ];
 
-    const { user } = render(<DashboardTabs extensionComponents={extensionComponents} />);
+    it('renders the setup guide and assistant tabs, not those of other plugins', async () => {
+      const { user } = render(<DashboardTabs extensionComponents={extensionComponents} />);
 
-    expect(await screen.findByRole('tab', { name: 'Plugin Tab 1' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Plugin Tab 1', selected: true })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Plugin Tab 2' })).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Plugin Tab 3' })).not.toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Plugin Tab 1' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Plugin Tab 1', selected: true })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Plugin Tab 2' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Assistant' })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Plugin Tab 3' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('tab', { name: 'Plugin Tab 1' }));
-    expect(await screen.findByText('Content for Plugin Tab 1')).toBeInTheDocument();
+      await user.click(screen.getByRole('tab', { name: 'Plugin Tab 1' }));
+      expect(await screen.findByText('Content for Plugin Tab 1')).toBeInTheDocument();
 
-    expect(screen.getByRole('tab', { name: 'Plugin Tab 2' })).toHaveAttribute('href', '/test');
+      await user.click(screen.getByRole('tab', { name: 'Assistant' }));
+      expect(await screen.findByText('Content for the Assistant tab')).toBeInTheDocument();
+      expect(screen.queryByText('Content for Plugin Tab 1')).not.toBeInTheDocument();
+
+      expect(screen.getByRole('tab', { name: 'Plugin Tab 2' })).toHaveAttribute('href', '/test');
+    });
+
+    it('renders only the assistant tabs on the redesigned homepage', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.growthHomepage': true });
+      });
+
+      const { user } = render(<DashboardTabs extensionComponents={extensionComponents} />);
+
+      // Nothing else has content, so the card lands on the one extension tab it honors.
+      expect(await screen.findByRole('tab', { name: 'Assistant', selected: true })).toBeInTheDocument();
+      expect(screen.getByText('Content for the Assistant tab')).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Plugin Tab 1' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Plugin Tab 2' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Plugin Tab 3' })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('tab', { name: /recent/i }));
+      expect(screen.queryByText('Content for the Assistant tab')).not.toBeInTheDocument();
+    });
   });
 
   describe('empty Recent tab analytics', () => {

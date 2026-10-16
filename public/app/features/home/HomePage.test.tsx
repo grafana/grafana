@@ -315,33 +315,50 @@ describe('HomePage', () => {
     expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
   });
 
-  it('does not render HomepageTabs extension tabs on the redesigned homepage', async () => {
+  it('renders assistant tabs but not setup guide tabs on the redesigned homepage', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
 
-    const tabComponent = createComponentWithMeta(
-      {
-        pluginId: 'grafana-setupguide-app',
-        title: 'Plugin tab',
-        component: (({ register }: HomepageTabExtensionProps) => {
-          useEffect(() => register({ id: 'plugin-tab', label: 'Plugin tab' }), [register]);
-          return null;
-        }) as React.ComponentType,
-      },
-      PluginExtensionPoints.HomepageTabs
-    );
+    const tabComponent = (pluginId: string, id: string, label: string) =>
+      createComponentWithMeta(
+        {
+          pluginId,
+          title: label,
+          component: (({ register }: HomepageTabExtensionProps) => {
+            useEffect(() => register({ id, label }), [register]);
+            return null;
+          }) as React.ComponentType,
+        },
+        PluginExtensionPoints.HomepageTabs
+      );
+    const tabComponents = [
+      tabComponent('grafana-setupguide-app', 'plugin-tab', 'Plugin tab'),
+      tabComponent('grafana-assistant-app', 'assistant-tab', 'Assistant'),
+    ];
 
     setPluginComponentsHook(({ extensionPointId }) => ({
       isLoading: false,
-      components: extensionPointId === PluginExtensionPoints.HomepageTabs ? [tabComponent] : [],
+      components: extensionPointId === PluginExtensionPoints.HomepageTabs ? tabComponents : [],
     }));
 
     render(<HomePage />);
 
-    // Built-in tabs still render once the tab list settles...
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
-    // ...but the redesigned homepage ignores the HomepageTabs extension point.
+    expect(await screen.findByRole('tab', { name: 'Assistant' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    // The whole redesigned page is the getting-started surface, so the setup guide's tabs stay off it.
     expect(screen.queryByRole('tab', { name: 'Plugin tab' })).not.toBeInTheDocument();
+  });
+
+  it('renders a skeleton while the tab extensions are loading on the redesigned homepage', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: extensionPointId === PluginExtensionPoints.HomepageTabs,
+      components: [],
+    }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /recent/i })).not.toBeInTheDocument();
   });
 
   it('starts card placement while extensions are still loading and hands it to the overview', async () => {

@@ -6,7 +6,7 @@ import { type ComponentTypeWithExtensionMeta, type GrafanaTheme2 } from '@grafan
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
-import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
@@ -35,6 +35,15 @@ const MAX_RECENT = 20;
 const MAX_MOST_USED = 20;
 const MAX_STARRED = 30;
 const DEFAULT_TAB_IDS = [RECENT_TAB_ID, MOST_USED_TAB_ID, STARRED_TAB_ID];
+
+/**
+ * Plugins whose HomepageTabs components get a tab. The setup guide's (Learn, Getting started) stay off the
+ * redesigned homepage, where the whole page is the getting-started surface.
+ */
+const TAB_PLUGIN_IDS = {
+  default: [SETUPGUIDE_PLUGIN_ID, ASSISTANT_PLUGIN_ID],
+  redesign: [ASSISTANT_PLUGIN_ID],
+};
 
 function DashboardExtensionTab({
   Component,
@@ -189,6 +198,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
   const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => !tab.href)];
   const linkTabs = extensionTabs.filter((tab) => tab.href);
   const listDensity = redesignEnabled ? 'compact' : 'default';
+  const tabPluginIds = redesignEnabled ? TAB_PLUGIN_IDS.redesign : TAB_PLUGIN_IDS.default;
 
   const renderContent = () => (
     <>
@@ -264,9 +274,9 @@ export function DashboardTabs({ extensionComponents }: Props) {
         </TabContent>
       )}
 
-      {/* Render extension component tabs without background + scroller */}
+      {/* Extension tabs render their own content, without the built-in tabs' background and scroller. */}
       {extensionComponents
-        .filter((Component) => Component.meta.pluginId === SETUPGUIDE_PLUGIN_ID)
+        .filter((Component) => tabPluginIds.includes(Component.meta.pluginId))
         .map((Component, i) => (
           <DashboardExtensionTab key={i} Component={Component} registerTab={registerTab} activeTab={activeTab} />
         ))}
