@@ -233,6 +233,8 @@ export interface OptionPaneRenderProps2 {
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
   reportInteractionUI: 'panel-edit' | 'view-panel';
+  onOptionsChange?: (options: Record<string, unknown>) => void;
+  onFieldConfigChange?: (fieldConfig: FieldConfigSource) => void;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
@@ -261,7 +263,11 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       // Merged rather than replaced, so an editor that drops a key from an object value keeps the old
       // key — clearing requires setting it to undefined. Documented on StandardEditorProps.onChange.
       // Switching to replace here would break editors that emit partial values for their own path.
-      panel.onOptionsChange(newOptions);
+      if (props.onOptionsChange) {
+        props.onOptionsChange(newOptions);
+      } else {
+        panel.onOptionsChange(newOptions);
+      }
       // Record interaction for analytics
       DashboardInteractions.setVisualOption({
         ui: props.reportInteractionUI,
@@ -314,10 +320,17 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            panel.onFieldConfigChange(
-              updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom),
-              true
+            const newFieldConfig = updateDefaultFieldConfigValue(
+              currentFieldConfig,
+              fieldOption.path,
+              v,
+              fieldOption.isCustom
             );
+            if (props.onFieldConfigChange) {
+              props.onFieldConfigChange(newFieldConfig);
+            } else {
+              panel.onFieldConfigChange(newFieldConfig, true);
+            }
 
             // Record interaction for analytics
             DashboardInteractions.setVisualOption({
