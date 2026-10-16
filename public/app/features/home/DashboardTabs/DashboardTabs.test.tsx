@@ -520,8 +520,8 @@ describe('DashboardTabs', () => {
       expect(window.localStorage.getItem(FILTER_KEY)).toBe('explore');
       expect(jest.mocked(recentActivityFilterChanged)).toHaveBeenCalledWith({ filter: 'explore' });
       expect(jest.mocked(pageHistorySrv.getEntries)).toHaveBeenCalledTimes(1);
-      // The counter and the options follow the whole history, not the filtered rows.
-      expect(screen.getByRole('tab', { name: /recent.*2/i })).toBeInTheDocument();
+      // The counter says what the list shows; the options follow the whole history.
+      expect(screen.getByRole('tab', { name: /recent.*1/i })).toBeInTheDocument();
       expect(filter.getByRole('radio', { name: 'Dashboards' })).toBeInTheDocument();
     });
 
