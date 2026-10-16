@@ -142,6 +142,28 @@ describe('adding to a notebook that is open', () => {
     ]);
   });
 
+  // Its autosave has stopped by then, so inserting into it would report an add that is never saved.
+  it('writes through the API when the notebook closes while the add is loading', async () => {
+    const scene = openNotebook();
+    const loadMetas = jest.requireActual('@grafana/runtime/internal').getPanelPluginMetasMap;
+    jest.mocked(getPanelPluginMetasMap).mockImplementationOnce(async () => {
+      deactivations.splice(0).forEach((deactivate) => deactivate());
+      return loadMetas();
+    });
+    jest.mocked(updateNotebookSpec).mockResolvedValue(notebookSpec());
+
+    await addToExistingNotebook(
+      'nb-1',
+      [{ kind: 'markdown', text: 'Latency rose.' }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE,
+      'user'
+    );
+
+    expect(updateNotebookSpec).toHaveBeenCalledTimes(1);
+    expect(cellContents(scene)).toEqual([{ kind: 'Markdown', spec: { text: '## Intro' } }]);
+    expect(updateNotebook).not.toHaveBeenCalled();
+  });
+
   it("keeps a reader's own time range out of the notebook it saves", async () => {
     const scene = openNotebook();
     const savedTimeSettings = transformNotebookSceneToSaveModel(scene).timeSettings;

@@ -53,8 +53,9 @@ async function appendToExistingNotebook(
   source: AppendedCellSource
 ): Promise<Appended> {
   const scene = findActiveNotebookScene(uid);
-  if (scene) {
-    return appendThroughScene(scene, cells, source);
+  const appended = scene && (await appendThroughScene(scene, cells, source));
+  if (appended) {
+    return appended;
   }
 
   let firstPosition = 0;
@@ -65,11 +66,12 @@ async function appendToExistingNotebook(
   return { spec, firstPosition };
 }
 
+/** Undefined when the scene stopped being shown while the add was loading; nothing is changed then. */
 async function appendThroughScene(
   scene: NotebookScene,
   cells: AppendedElement[],
   source: AppendedCellSource
-): Promise<Appended> {
+): Promise<Appended | undefined> {
   // Lazy so a dashboard or Explore caller with no notebook open never loads the scene write path.
   const [{ transformNotebookToScene }, { transformNotebookSceneToSaveModel }] = await Promise.all([
     import('../serialization/transformNotebookToScene'),
@@ -82,6 +84,11 @@ async function appendThroughScene(
 
   // The transform below builds panel cells synchronously.
   await getPanelPluginMetasMap();
+
+  // Its autosave stops when it deactivates, so cells inserted now would never be saved.
+  if (!scene.isActive) {
+    return undefined;
+  }
 
   // No await from here on, so an edit or another add that landed during the loads is built on. The new
   // cells are built by the same transform as a saved notebook and inserted as copies; everything else in
