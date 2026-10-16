@@ -15,7 +15,7 @@ import {
   updateNotebookSpec,
 } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
-import { findActiveNotebookScene } from '../scene/activeNotebookScenes';
+import { findActiveNotebookScene } from '../scene/sceneContextStack';
 import {
   defaultSpec as defaultNotebookSpec,
   type NotebookElement,

@@ -41,8 +41,8 @@ import { changedCellTimeRange, changesTimeSettings, NotebookAutosave } from './N
 import { NOTEBOOK_EDIT_KIND, NotebookEditHistory, type NotebookEditAction } from './NotebookEditHistory';
 import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
-import { registerActiveNotebookScene } from './activeNotebookScenes';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
+import { claimSceneContext, releaseSceneContext } from './sceneContextStack';
 
 export interface NotebookSceneState extends SceneObjectState {
   title: string;
@@ -78,24 +78,6 @@ export interface NotebookSceneState extends SceneObjectState {
   isDraft?: boolean;
 }
 
-/**
- * Notebooks currently holding the global scene context, most recently activated last, and whatever
- * held it before the first of them.
- *
- * A stack rather than each activation remembering its own predecessor, because deactivation order is
- * not activation order: more than one notebook can be mounted at a time — an embedded one over
- * whatever else is open — and the naive version got both ends wrong. An older notebook closing used
- * to hand the context back while a newer one was still live, and the last one closing handed it to
- * an already-deactivated sibling, leaving panel interpolation and TimeSrv resolving against a dead
- * scene. Splicing by identity is correct for any order.
- *
- * Only notebooks are tracked. A dashboard deactivating still restores unconditionally and can take
- * the context from a live notebook; that is a pre-existing behaviour of DashboardScene and is
- * deliberately left alone here.
- */
-const sceneContextStack: NotebookScene[] = [];
-let beforeFirstSceneContext: SceneObject | undefined;
-
 // Matches CONTENT_EDIT_COALESCE_MS in NotebookLayoutManager: the same run-of-keystrokes-into-one-step
 // coalescing, for the title instead of a cell's content.
 const TITLE_EDIT_COALESCE_MS = 800;
@@ -105,26 +87,6 @@ interface PendingTitleEdit {
   after: string;
   action: NotebookEditAction;
   timer?: ReturnType<typeof setTimeout>;
-}
-
-function claimSceneContext(scene: NotebookScene): void {
-  if (sceneContextStack.length === 0) {
-    beforeFirstSceneContext = window.__grafanaSceneContext;
-  }
-  sceneContextStack.push(scene);
-  window.__grafanaSceneContext = scene;
-}
-
-function releaseSceneContext(scene: NotebookScene): void {
-  const index = sceneContextStack.lastIndexOf(scene);
-  if (index !== -1) {
-    sceneContextStack.splice(index, 1);
-  }
-  // The newest notebook still mounted, or whatever held it before any of them.
-  window.__grafanaSceneContext = sceneContextStack[sceneContextStack.length - 1] ?? beforeFirstSceneContext;
-  if (sceneContextStack.length === 0) {
-    beforeFirstSceneContext = undefined;
-  }
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
@@ -216,7 +178,6 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       });
 
       const destroyMutationClient = createMutationClient(this, 'notebook');
-      const unregisterActiveScene = registerActiveNotebookScene(this);
       // Read once, at activation: a document does not become a draft, or stop being one, while it is
       // mounted. Its host decides that before handing it over.
       const stopAutosave = this.state.isDraft ? undefined : this.autosave.start();
@@ -235,7 +196,6 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         this.commitTitleEdit();
         stopAutosave?.();
         destroyMutationClient();
-        unregisterActiveScene();
         timeRangeSub.unsubscribe();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();

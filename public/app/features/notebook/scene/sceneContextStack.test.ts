@@ -6,7 +6,7 @@ import { notebookResourceFor } from '../api/notebookResource';
 import { NOTEBOOKS_FLAG, notebookSpec } from '../mutation-api/test-utils';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 
-import { findActiveNotebookScene } from './activeNotebookScenes';
+import { findActiveNotebookScene } from './sceneContextStack';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
