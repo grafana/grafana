@@ -794,15 +794,18 @@
     {
       "metadata": {
         "name": "alertingTriage",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-31T22:56:50Z"
+        "resourceVersion": "1792148124753",
+        "creationTimestamp": "2025-07-31T22:56:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-16 10:55:24.753973 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the alerting triage feature",
-        "stage": "experimental",
+        "description": "Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.",
+        "stage": "deprecated",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
