@@ -5,6 +5,8 @@ export interface ResolvedContactPoint {
   selectorValue: string | null;
   /** The list loaded and no contact point has this receiver's title - e.g. it was deleted. */
   isNotFound: boolean;
+  /** The list hasn't loaded yet, so a null `selectorValue` doesn't mean the receiver is unset. */
+  isResolving: boolean;
   isError: boolean;
 }
 
@@ -17,7 +19,8 @@ export function useResolvedContactPoint(receiver?: string): ResolvedContactPoint
   const selectorValue = contactPoint ? (contactPoint.metadata.uid ?? contactPoint.spec.title) : null;
 
   const isNotFound = Boolean(receiver) && Boolean(currentData) && !contactPoint;
+  const isResolving = !currentData && !isError;
 
   // A refetch that fails keeps the last good list, which is still a valid answer.
-  return { selectorValue, isNotFound, isError: isError && !currentData };
+  return { selectorValue, isNotFound, isResolving, isError: isError && !currentData };
 }
