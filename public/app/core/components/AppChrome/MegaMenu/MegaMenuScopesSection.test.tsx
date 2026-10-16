@@ -2,8 +2,9 @@ import { act, render, screen } from 'test/test-utils';
 
 import { setBackendSrv, useScopes } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setMockUserPreferences, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
@@ -99,6 +100,8 @@ describe('MegaMenu scopes dashboards section', () => {
     });
     jest.clearAllMocks();
     window.localStorage.clear();
+    contextSrv.isSignedIn = false;
+    contextSrv.user.isSignedIn = false;
   });
 
   it('is absent when the flag is off, regardless of scopes state', async () => {
@@ -132,14 +135,19 @@ describe('MegaMenu scopes dashboards section', () => {
 
   it('renders between the pinned box and the nav list when canCustomise is true', async () => {
     setTestFlags({ [FLAG]: true, [CUSTOMISE_FLAG]: true });
+    contextSrv.isSignedIn = true;
+    contextSrv.user.isSignedIn = true;
+    setMockUserPreferences({ navbar: { bookmarkUrls: ['/explore'] } });
     mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
     mockUseScopesServices.mockReturnValue(makeScopesServices());
 
     renderMegaMenu();
 
+    const pinnedBox = await screen.findByRole('list', { name: 'Pinned items' });
     const scopesHeading = await screen.findByText('Suggested dashboards');
     const navList = screen.getByRole('list', { name: 'Navigation' });
 
+    expect(pinnedBox.compareDocumentPosition(scopesHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(scopesHeading.compareDocumentPosition(navList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
