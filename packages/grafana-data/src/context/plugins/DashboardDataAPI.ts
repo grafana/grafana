@@ -204,13 +204,11 @@ export type DashboardDataEvent =
 
 /**
  * Read-only access to the dashboard currently open, in plain serializable data, for plugins that reason about
- * what a dashboard shows.
- *
- * Should be accessed via {@link getDashboardDataService}.
+ * what a dashboard shows. Shared with allowlisted plugins as the `dashboardDataAPI` restricted API.
  *
  * @alpha
  */
-export interface DashboardDataService {
+export interface DashboardDataAPI {
   /** Undefined when the current page isn't a scenes dashboard. */
   getDashboard(): DashboardInfo | undefined;
   /** Panels whose data can be captured, in layout order: panels with queries, excluding repeat clones. */
@@ -236,24 +234,4 @@ export interface DashboardDataService {
    * range, variable, filter, layout, edit mode, and save changes; `deactivated` fires when that dashboard is left.
    */
   subscribe(listener: (event: DashboardDataEvent) => void): () => void;
-}
-
-let singletonInstance: DashboardDataService | undefined;
-
-/**
- * Used by Grafana when a dashboard page loads to set the DashboardDataService.
- *
- * @internal
- */
-export function setDashboardDataService(instance: DashboardDataService) {
-  singletonInstance = instance;
-}
-
-/**
- * Used to retrieve the {@link DashboardDataService}. Undefined until a dashboard page has loaded.
- *
- * @alpha
- */
-export function getDashboardDataService(): DashboardDataService | undefined {
-  return singletonInstance;
 }

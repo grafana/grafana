@@ -1,4 +1,4 @@
-import { type DashboardSourceResolution, type DashboardUnavailableSource } from '@grafana/runtime';
+import { type DashboardSourceResolution, type DashboardUnavailableSource } from '@grafana/data';
 
 import { type SourcePanel } from './sources';
 
