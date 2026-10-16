@@ -5,7 +5,7 @@ go 1.27.2
 require (
 	github.com/go-kit/log v0.2.1
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261014190105-b2d4b285cf1e
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261016084910-872cc7b7a069
 	github.com/grafana/grafana/pkg/infra/log v0.0.0-20261014190105-b2d4b285cf1e
 	github.com/grafana/otel-profiling-go v0.6.0
 	github.com/stretchr/testify v1.12.1
