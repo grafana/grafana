@@ -1,3 +1,5 @@
+import { type GrafanaConfig, locationUtil, type NavModelItem } from '@grafana/data';
+
 import { classifyPage, pageKey, recordableSearch } from './classifyPage';
 
 /** Explore's v1 search for the given panes (left pane first), with any extra params appended. */
@@ -5,10 +7,10 @@ function exploreSearch(panes: Record<string, unknown>, extra = '') {
   return `?schemaVersion=1&panes=${encodeURIComponent(JSON.stringify(panes))}${extra}`;
 }
 
-/** Classifies a URL given as `pathname[?search]`. */
-const classify = (url: string) => {
+/** Classifies a URL given as `pathname[?search]`; without a nav tree unless the test is about one. */
+const classify = (url: string, navTree: NavModelItem[] = []) => {
   const [pathname, search = ''] = url.split(/(?=\?)/);
-  return classifyPage(pathname, search);
+  return classifyPage(pathname, search, navTree);
 };
 
 describe('classifyPage', () => {
@@ -30,10 +32,9 @@ describe('classifyPage', () => {
       { kind: 'app', pathname: '/a/grafana-assistant-app/investigations/abc-def' },
     ],
     ['/a/grafana-k8s-app/navigation/cluster', { kind: 'app', pathname: '/a/grafana-k8s-app/navigation/cluster' }],
-    ['/alerting/list', { kind: 'alerting', pathname: '/alerting/list' }],
-    ['/alerting/list/', { kind: 'alerting', pathname: '/alerting/list' }],
     ['/alerting/grafana/abc/view', { kind: 'alerting', pathname: '/alerting/grafana/abc/view' }],
-    ['/alerting', { kind: 'alerting', pathname: '/alerting' }],
+    ['/alerting/grafana/abc/view/', { kind: 'alerting', pathname: '/alerting/grafana/abc/view' }],
+    ['/alerting/list', { kind: 'alerting', pathname: '/alerting/list' }],
   ])('classifies %s', (url, expected) => {
     expect(classify(url)).toEqual(expected);
   });
@@ -63,6 +64,72 @@ describe('classifyPage', () => {
     '/admin/users',
   ])('ignores %s', (url) => {
     expect(classify(url)).toBeNull();
+  });
+
+  describe('pages with nothing to resume', () => {
+    const navTree: NavModelItem[] = [
+      { text: 'Alerting', url: '/alerting', children: [{ text: 'Alert rules', url: '/alerting/list' }] },
+      {
+        text: 'IRM',
+        url: '/a/grafana-irm-app',
+        children: [{ text: 'Incidents', url: '/a/grafana-irm-app/incidents' }],
+      },
+    ];
+
+    it.each([
+      '/alerting',
+      '/alerting/list',
+      '/alerting/list/',
+      '/alerting/list?orgId=1',
+      '/alerting/list?returnTo=%2Fd%2Fabc',
+      '/alerting/list?search=',
+      '/a/grafana-irm-app/incidents',
+    ])('ignores %s: the menu opens it the same way', (url) => {
+      expect(classify(url, navTree)).toBeNull();
+    });
+
+    it.each([
+      '/alerting/new',
+      '/alerting/new/alerting',
+      '/alerting/new/alerting?returnTo=%2Falerting%2Flist',
+      '/alerting/new/recording?orgId=1',
+      '/alerting/silence/new',
+      '/alerting/notifications/receivers/new',
+      '/a/grafana-irm-app/incidents/new',
+    ])('ignores %s: a create form reopens blank', (url) => {
+      expect(classify(url)).toBeNull();
+    });
+
+    it.each([
+      ['/alerting/list?search=firing', { kind: 'alerting', pathname: '/alerting/list' }],
+      ['/alerting/list?orgId=1&view=grouped', { kind: 'alerting', pathname: '/alerting/list' }],
+      ['/a/grafana-irm-app/incidents?status=active', { kind: 'app', pathname: '/a/grafana-irm-app/incidents' }],
+      ['/alerting/grafana/abc/view', { kind: 'alerting', pathname: '/alerting/grafana/abc/view' }],
+      ['/a/grafana-irm-app/incidents/5987', { kind: 'app', pathname: '/a/grafana-irm-app/incidents/5987' }],
+      // Prefilled from a panel: the URL carries what the form will show.
+      ['/alerting/new/alerting?defaults=%7B%7D', { kind: 'alerting', pathname: '/alerting/new/alerting' }],
+      // An id that happens to be "new" is not a create form.
+      ['/alerting/grafana/new/view', { kind: 'alerting', pathname: '/alerting/grafana/new/view' }],
+    ])('keeps %s: state in the URL, or a page the menu does not link to', (url, expected) => {
+      expect(classify(url, navTree)).toEqual(expected);
+    });
+
+    it('matches nav urls that carry the app sub url', () => {
+      const subUrl = (appSubUrl: string) =>
+        locationUtil.initialize({
+          config: { appSubUrl } as GrafanaConfig,
+          getTimeRangeForUrl: jest.fn(),
+          getVariablesUrlParams: jest.fn(),
+        });
+      subUrl('/grafana');
+      try {
+        const prefixed: NavModelItem[] = [{ text: 'Alert rules', url: '/grafana/alerting/list' }];
+        expect(classify('/alerting/list', prefixed)).toBeNull();
+        expect(classify('/alerting/list?search=firing', prefixed)).not.toBeNull();
+      } finally {
+        subUrl('');
+      }
+    });
   });
 });
 
