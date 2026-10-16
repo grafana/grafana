@@ -386,7 +386,47 @@ export type DashboardLibraryPanelKind = {
   kind: string;
   spec: DashboardLibraryPanelKindSpec;
 };
+export type DashboardConditionalRenderingDataSpec = {
+  value: boolean;
+};
+export type DashboardConditionalRenderingDataKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingDataSpec;
+};
+export type DashboardConditionalRenderingTimeRangeSizeSpec = {
+  value: string;
+};
+export type DashboardConditionalRenderingTimeRangeSizeKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingTimeRangeSizeSpec;
+};
+export type DashboardConditionalRenderingVariableSpec = {
+  operator: string;
+  value: string;
+  variable: string;
+};
+export type DashboardConditionalRenderingVariableKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingVariableSpec;
+};
+export type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind =
+  {
+    ConditionalRenderingDataKind?: DashboardConditionalRenderingDataKind;
+    ConditionalRenderingTimeRangeSizeKind?: DashboardConditionalRenderingTimeRangeSizeKind;
+    ConditionalRenderingVariableKind?: DashboardConditionalRenderingVariableKind;
+  };
+export type DashboardConditionalRenderingGroupSpec = {
+  condition: string;
+  items: DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind[];
+  visibility: string;
+};
+export type DashboardConditionalRenderingGroupKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingGroupSpec;
+};
 export type DashboardPanelQuerySpec = {
+  /** When set, the query only runs while the group evaluates to visible */
+  conditionalRendering?: DashboardConditionalRenderingGroupKind;
   hidden: boolean;
   query: DashboardDataQueryKind;
   refId: string;
@@ -651,44 +691,6 @@ export type DashboardPanelKind = {
 export type DashboardPanelKindOrLibraryPanelKind = {
   LibraryPanelKind?: DashboardLibraryPanelKind;
   PanelKind?: DashboardPanelKind;
-};
-export type DashboardConditionalRenderingDataSpec = {
-  value: boolean;
-};
-export type DashboardConditionalRenderingDataKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingDataSpec;
-};
-export type DashboardConditionalRenderingTimeRangeSizeSpec = {
-  value: string;
-};
-export type DashboardConditionalRenderingTimeRangeSizeKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingTimeRangeSizeSpec;
-};
-export type DashboardConditionalRenderingVariableSpec = {
-  operator: string;
-  value: string;
-  variable: string;
-};
-export type DashboardConditionalRenderingVariableKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingVariableSpec;
-};
-export type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind =
-  {
-    ConditionalRenderingDataKind?: DashboardConditionalRenderingDataKind;
-    ConditionalRenderingTimeRangeSizeKind?: DashboardConditionalRenderingTimeRangeSizeKind;
-    ConditionalRenderingVariableKind?: DashboardConditionalRenderingVariableKind;
-  };
-export type DashboardConditionalRenderingGroupSpec = {
-  condition: string;
-  items: DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind[];
-  visibility: string;
-};
-export type DashboardConditionalRenderingGroupKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingGroupSpec;
 };
 export type DashboardElementReference = {
   kind: string;

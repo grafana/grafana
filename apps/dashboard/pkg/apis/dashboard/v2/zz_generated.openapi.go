@@ -3327,12 +3327,18 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelQuerySpec(ref common.ReferenceCa
 							Format:  "",
 						},
 					},
+					"conditionalRendering": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When set, the query only runs while the group evaluates to visible",
+							Ref:         ref(DashboardConditionalRenderingGroupKind{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"query", "refId", "hidden"},
 			},
 		},
 		Dependencies: []string{
-			DashboardDataQueryKind{}.OpenAPIModelName()},
+			DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardDataQueryKind{}.OpenAPIModelName()},
 	}
 }
 
