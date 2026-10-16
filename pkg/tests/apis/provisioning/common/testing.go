@@ -1817,6 +1817,24 @@ func runGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTest
 	return buildProvisioningHelper(t, k8sHelper, provisioningPath), shutdownFunc
 }
 
+// isRetriableDeleteError reports whether deleting the same resource again can succeed. Forbidden,
+// bad, invalid and unsupported requests fail the same way every time, so retrying them only burns
+// the cleanup timeout. Cleanup force-deletes folders, which skips the empty-folder check that
+// would otherwise reject a delete with a bad request while the search index catches up.
+func isRetriableDeleteError(err error) bool {
+	switch {
+	case apierrors.IsForbidden(err),
+		apierrors.IsUnauthorized(err),
+		apierrors.IsBadRequest(err),
+		apierrors.IsInvalid(err),
+		apierrors.IsMethodNotSupported(err),
+		apierrors.IsUnsupportedMediaType(err):
+		return false
+	default:
+		return true
+	}
+}
+
 // deleteAndWait deletes all resources from a dynamic client and polls until
 // none remain. It retries deletes on each iteration to handle transient
 // resource-version conflicts from concurrent controller updates. deleteOpts is
@@ -1835,6 +1853,9 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 	for _, item := range list.Items {
 		if err := client.Delete(ctx, item.GetName(), deleteOpts); err != nil && !apierrors.IsNotFound(err) {
 			lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
+			if !isRetriableDeleteError(err) {
+				return lastErr
+			}
 		}
 	}
 
@@ -1854,6 +1875,9 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 		for _, item := range remaining.Items {
 			if err := client.Delete(ctx, item.GetName(), deleteOpts); err != nil && !apierrors.IsNotFound(err) {
 				lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
+				if !isRetriableDeleteError(err) {
+					return lastErr
+				}
 			}
 		}
 		select {
