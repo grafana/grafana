@@ -35,17 +35,24 @@ const (
 	kvSectionSecureValues = "secret/securevalues"
 )
 
+var (
+	gcTombstone       = []byte{}
+	casKeyPlaceholder = []byte{}
+)
+
 type kvSecureValueMetadataStorage struct {
 	kv           resource.KV
+	snowflake    contracts.Snowflake
 	clock        contracts.Clock
 	tracer       trace.Tracer
 	leaseManager *lease.Manager
 	metrics      *metrics.StorageMetrics
 }
 
-func NewKVSecureValueMetadataStorage(kv resource.KV, clock contracts.Clock, tracer trace.Tracer, reg prometheus.Registerer) contracts.SecureValueMetadataStorage {
+func NewKVSecureValueMetadataStorage(kv resource.KV, snowflake contracts.Snowflake, clock contracts.Clock, tracer trace.Tracer, reg prometheus.Registerer) contracts.SecureValueMetadataStorage {
 	return &kvSecureValueMetadataStorage{
 		kv:           kv,
+		snowflake:    snowflake,
 		clock:        clock,
 		tracer:       tracer,
 		leaseManager: lease.NewManager(kv, "secrets_kv_secure_value_store", "storage", nil),
@@ -246,7 +253,7 @@ func (s *kvSecureValueMetadataStorage) readValue(ctx context.Context, key string
 		return nil, fmt.Errorf("failed to get value: %w", err)
 	}
 
-	value, err := parseSecureValue(reader)
+	value, err := parse[secureValueKV](reader)
 	if err != nil {
 		return nil, fmt.Errorf("parsing secure value: %w", err)
 	}
@@ -350,13 +357,12 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 		s.metrics.KVSecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	// TODO: versions could be reused
-	latestVersion, createdBy, createdAt, err := s.getLatestVersion(ctx, sv.Namespace, sv.Name)
+	_, createdBy, createdAt, err := s.getLatestVersion(ctx, sv.Namespace, sv.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest version: %w", err)
 	}
 
-	newVersion := latestVersion + 1
+	newVersion := s.snowflake.Generate()
 	sv.Status.Version = newVersion
 
 	now := s.clock.Now().UTC().Unix()
@@ -377,20 +383,21 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 
 	value.UpdatedBy = actorUID
 
-	// Save the new version (it starts as inactive)
-	key := makeKey(sv.Namespace, sv.Name, sv.Status.Version)
-
 	buffer, err := json.Marshal(value)
 	if err != nil {
 		return nil, fmt.Errorf("json marshaling secure value: %w", err)
 	}
 
-	// Use Batch with BatchOpCreate to make the operation fail if the key already exists
 	if err := s.kv.Batch(ctx, kvSectionSecureValues, []kv.BatchOp{
 		{
 			Mode:  kv.BatchOpCreate,
-			Key:   key,
+			Key:   makeSecretKey(sv.Namespace, sv.Name, sv.Status.Version),
 			Value: buffer,
+		},
+		{
+			Mode:  kv.BatchOpCreate,
+			Key:   makeGcKey(sv.Status.Version, sv.Namespace, sv.Name, sv.Status.Version),
+			Value: gcTombstone,
 		},
 	}); err != nil {
 		return nil, fmt.Errorf("writing secure value to kv store: %w", err)
@@ -430,7 +437,7 @@ func (s *kvSecureValueMetadataStorage) Delete(ctx context.Context, in []contract
 
 	keys := make([]string, 0, len(in))
 	for _, in := range in {
-		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
+		keys = append(keys, makeSecretKey(in.Namespace.String(), in.Name, in.Version))
 	}
 
 	// TODO: batch max ops
@@ -503,7 +510,7 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 			return nil, fmt.Errorf("fetching batch from kv store: %w", err)
 		}
 
-		value, err := parseSecureValue(keyValue.Value)
+		value, err := parse[secureValueKV](keyValue.Value)
 		if err != nil {
 			return nil, fmt.Errorf("parsing secure value: %w", err)
 		}
@@ -629,7 +636,7 @@ func (s *kvSecureValueMetadataStorage) List(ctx context.Context, namespace xkube
 		if err != nil {
 			return nil, fmt.Errorf("BatchGet returned error: %w", err)
 		}
-		value, err := parseSecureValue(kv.Value)
+		value, err := parse[secureValueKV](kv.Value)
 		if err != nil {
 			return nil, fmt.Errorf("parsing secure value: %w", err)
 		}
@@ -739,7 +746,7 @@ func (s *kvSecureValueMetadataStorage) SetExternalID(ctx context.Context, namesp
 		s.metrics.KVSecureValueSetExternalIDDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	key := makeKey(namespace.String(), name, version)
+	key := makeSecretKey(namespace.String(), name, version)
 
 	value, err := s.readValue(ctx, key)
 	if err != nil {
@@ -763,65 +770,89 @@ func (s *kvSecureValueMetadataStorage) SetVersionToActive(ctx context.Context, n
 	))
 	defer span.End()
 
-	prefix := makePrefix(namespace.String(), name)
-	targetKey := makeKey(namespace.String(), name, version)
+	var ops []kv.BatchOp
 
-	keys := make([]string, 0)
-
-	// First, deactivate all versions, this mimics the SQL behavior which happens in a single update query
-	// TODO: unbounded
-	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
-		StartKey: prefix,
-		EndKey:   resource.PrefixRangeEnd(prefix),
-	}) {
-		if err != nil {
-			return fmt.Errorf("listing keys in the kv store: %w", err)
-		}
-
-		keys = append(keys, key)
+	reader, err := s.kv.Get(ctx, kvSectionSecureValues, makeSecretKey(namespace.String(), name, version))
+	if err != nil {
+		return fmt.Errorf("fetching secure value: %w", err)
+	}
+	secureValueJson, err := io.ReadAll(reader)
+	if err != nil {
+		return fmt.Errorf("reading secure value: %w", err)
 	}
 
-	ops := make([]kv.BatchOp, 0)
-	// TODO: race condition
-	for keyValue, err := range s.kv.BatchGet(ctx, kvSectionSecureValues, keys) {
+	// TODO: cas
+	activeSecureValue, err := s.getActiveVersion(ctx, namespace.String(), name)
+	// There's not active version
+	if errors.Is(err, resource.ErrNotFound) {
+		ops = []kv.BatchOp{
+			{
+				Mode:  kv.BatchOpCreate,
+				Key:   makeActiveSecretKey(namespace.String(), name),
+				Value: secureValueJson,
+			},
+			{
+				Mode:  kv.BatchOpCreate,
+				Key:   makeActiveSecretCasKey(namespace.String(), name),
+				Value: casKeyPlaceholder,
+			},
+			{
+				Mode: kv.BatchOpDelete,
+				Key:  makeGcKey(activeSecureValue.Version, namespace.String(), name, version),
+			},
+		}
+	} else {
+		// There's an active version, replace it.
+
+		activeSecureValueJson, err := json.Marshal(activeSecureValue)
 		if err != nil {
-			return fmt.Errorf("BatchGet returned error: %w", err)
+			return fmt.Errorf("json marshaling active secure value: %w", err)
 		}
 
-		value, err := parseSecureValue(keyValue.Value)
-		if err != nil {
-			return fmt.Errorf("parsing secure value: %w", err)
+		var secureValue secureValueKV
+		if err := json.Unmarshal(secureValueJson, &secureValue); err != nil {
+			return fmt.Errorf("json unmarshaling secure value: %w", err)
 		}
 
-		// If this is the version we're looking for, set it to active
-		if keyValue.Key == targetKey {
-			value.Active = true
-			buffer, err := json.Marshal(value)
-			if err != nil {
-				return fmt.Errorf("json marshaling secure value: %w", err)
-			}
-			ops = append(ops, kv.BatchOp{
+		ops = []kv.BatchOp{
+			// Mark this secure value as the active one
+			{
 				Mode:  kv.BatchOpUpdate,
-				Key:   keyValue.Key,
-				Value: buffer,
-			})
-		} else if value.Active {
-			// Set other active versions to inactive
-			value.Active = false
-			buffer, err := json.Marshal(value)
-			if err != nil {
-				return fmt.Errorf("json marshaling secure value: %w", err)
-			}
-			ops = append(ops, kv.BatchOp{
+				Key:   makeActiveSecretKey(namespace.String(), name),
+				Value: secureValueJson,
+			},
+			// CAS on the active secure value key. Update to make sure it still exists
+			{
 				Mode:  kv.BatchOpUpdate,
-				Key:   keyValue.Key,
-				Value: buffer,
-			})
+				Key:   makeActiveSecretCasKey(namespace.String(), name),
+				Value: casKeyPlaceholder,
+			},
+			// Delete old version
+			{
+				Mode: kv.BatchOpDelete,
+				Key:  makeActiveSecretCasKey(namespace.String(), name),
+			},
+			// The previously active version is now inactive and can be garbage collected
+			{
+				Mode:  kv.BatchOpCreate,
+				Key:   makeGcKey(activeSecureValue.Created, namespace.String(), name, activeSecureValue.Version),
+				Value: gcTombstone,
+			},
+			// The secure value is now active, delete the GC key so the GC worker doesn't delete the secure value
+			{
+				Mode:  kv.BatchOpUpdate,
+				Key:   makeSecretKey(namespace.String(), name, activeSecureValue.Version),
+				Value: activeSecureValueJson,
+			},
+			{
+				Mode: kv.BatchOpDelete,
+				Key:  makeGcKey(secureValue.Created, secureValue.Namespace, secureValue.Name, secureValue.Version),
+			},
 		}
 	}
 
 	if err := s.kv.Batch(ctx, kvSectionSecureValues, ops); err != nil {
-		return fmt.Errorf("executing batch: %w", err)
+		return fmt.Errorf("executing kv batch operations: %w", err)
 	}
 
 	return nil
@@ -835,7 +866,7 @@ func (s *kvSecureValueMetadataStorage) SetVersionToInactive(ctx context.Context,
 	))
 	defer span.End()
 
-	key := makeKey(namespace.String(), name, version)
+	key := makeSecretKey(namespace.String(), name, version)
 
 	// TODO: Race condition
 	value, err := s.readValue(ctx, key)
@@ -849,6 +880,22 @@ func (s *kvSecureValueMetadataStorage) SetVersionToInactive(ctx context.Context,
 	value.Active = false
 
 	return s.writeValue(ctx, key, value)
+}
+
+func (s *kvSecureValueMetadataStorage) getActiveVersion(ctx context.Context, namespace string, name string) (secureValueKV, error) {
+	s.tracer.Start(ctx, "KVSecureValueMetadataStorage.getActiveVersion", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("name", name),
+	))
+	reader, err := s.kv.Get(ctx, kvSectionSecureValues, makeActiveSecretKey(namespace, name))
+	if err != nil {
+		return secureValueKV{}, fmt.Errorf("fetching active secure value version: %w", err)
+	}
+	parsed, err := parse[secureValueKV](reader)
+	if err != nil {
+		return secureValueKV{}, fmt.Errorf("parsing secure value: %w", err)
+	}
+	return parsed, nil
 }
 
 func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in []contracts.SecureValueIdentifier) (_ map[string]int, err error) {
@@ -873,7 +920,7 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 
 	keys := make([]string, 0, len(in))
 	for _, in := range in {
-		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
+		keys = append(keys, makeSecretKey(in.Namespace.String(), in.Name, in.Version))
 	}
 
 	count := make(map[string]int, len(keys))
@@ -883,7 +930,7 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 		if err != nil {
 			return nil, fmt.Errorf("batch getting gc metadata: %w", err)
 		}
-		parsed, err := parseSecureValue(kvValue.Value)
+		parsed, err := parse[secureValueKV](kvValue.Value)
 		if err != nil {
 			return nil, fmt.Errorf("parsing secure value gc metadata: %w", err)
 		}
@@ -920,21 +967,21 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 	return count, nil
 }
 
-// Parses secure value and closes the reader.
-func parseSecureValue(reader io.ReadCloser) (secureValueKV, error) {
+func parse[T any](reader io.ReadCloser) (T, error) {
 	defer func() {
 		_ = reader.Close()
 	}()
 
 	data, err := io.ReadAll(reader)
 	if err != nil {
-		return secureValueKV{}, fmt.Errorf("failed to read value: %w", err)
+		var zero T
+		return zero, fmt.Errorf("failed to read value: %w", err)
 	}
 
-	var value secureValueKV
+	var value T
 
 	if err := json.Unmarshal(data, &value); err != nil {
-		return secureValueKV{}, fmt.Errorf("failed to unmarshal value: %w", err)
+		return value, fmt.Errorf("failed to unmarshal value: %w", err)
 	}
 
 	return value, nil
@@ -1017,8 +1064,22 @@ func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Conte
 	return nil
 }
 
-func makeKey(namespace, name string, version int64) string {
+func makeSecretKey(namespace, name string, version int64) string {
 	// Add padding to version to ensure lexical sorting works correctly.
 	// The maximum int64 has 19 digits (math.MaxInt64)
 	return fmt.Sprintf("%s/%s/%019d", namespace, name, version)
+}
+
+func makeActiveSecretKey(namespace, name string) string {
+	return fmt.Sprintf("active/secure_values/%s/%s", namespace, name)
+}
+
+func makeActiveSecretCasKey(namespace, name string) string {
+	return fmt.Sprintf("cas/active/%s/%s", namespace, name)
+}
+
+func makeGcKey(timestamp int64, namespace, name string, version int64) string {
+	// Add padding to version to ensure lexical sorting works correctly.
+	// The maximum int64 has 19 digits (math.MaxInt64)
+	return fmt.Sprintf("%019d/%s/%s/%019d", timestamp, namespace, name, version)
 }
