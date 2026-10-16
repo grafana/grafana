@@ -250,7 +250,8 @@
       "metadata": {
         "name": "alertingAIFeedback",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-23T12:38:09Z"
+        "creationTimestamp": "2025-07-23T12:38:09Z",
+        "deletionTimestamp": "2026-10-16T15:56:49Z"
       },
       "spec": {
         "description": "Enable AI-generated feedback from the Grafana UI.",
@@ -264,7 +265,8 @@
       "metadata": {
         "name": "alertingAIGenAlertRules",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-16T16:42:42Z"
+        "creationTimestamp": "2025-07-16T16:42:42Z",
+        "deletionTimestamp": "2026-10-16T15:56:49Z"
       },
       "spec": {
         "description": "Enable AI-generated alert rules.",
@@ -292,7 +294,8 @@
       "metadata": {
         "name": "alertingAIImproveAlertRules",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-16T16:42:42Z"
+        "creationTimestamp": "2025-07-16T16:42:42Z",
+        "deletionTimestamp": "2026-10-16T15:56:49Z"
       },
       "spec": {
         "description": "Enable AI-improve alert rules labels and annotations.",
