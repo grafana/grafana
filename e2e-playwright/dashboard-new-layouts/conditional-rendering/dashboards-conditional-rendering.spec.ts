@@ -353,10 +353,11 @@ test.describe(
       await controls.enterEditMode();
 
       // the row is on the canvas and greyed
-      const rowA = await expectRowVisibility('Row A', rows, 'visible');
+      await expectRowVisibility('Row A', rows, 'visible');
 
-      const rowAHiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: rowA.title });
+      const rowAHiddenWrapper = rows.getContainer('Row A');
       await expect(rowAHiddenWrapper).toBeVisible();
+      await expect(rowAHiddenWrapper).toHaveClass(/\bdashboard-visible-hidden-element\b/);
 
       // the row is selectable
       await rowAHiddenWrapper.hover();
