@@ -1,5 +1,5 @@
 import { type AppPluginConfig, type NavModelItem, PluginIncludeType } from '@grafana/data';
-import { getAppPluginMetas, invalidateCachedPromisesCache, setAppPluginMetas } from '@grafana/runtime/internal';
+import { getAppPluginMetas, invalidateCachedPromisesCache, clearAppPluginMetas } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { mockPluginMeta, setMockPluginMetas, type MockPluginMeta } from '@grafana/test-utils/unstable';
 
@@ -176,7 +176,7 @@ describe('applyPluginNav', () => {
       invalidateCachedPromisesCache();
       // getAppPluginMetas keeps the mapped apps in module state and only fetches
       // when that is empty, so clear it or each test reuses the previous fixture
-      setAppPluginMetas({});
+      clearAppPluginMetas();
       setMockPluginMetas(metas);
       return getAppPluginMetas();
     }

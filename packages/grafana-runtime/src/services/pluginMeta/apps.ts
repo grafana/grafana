@@ -12,8 +12,7 @@ import type { AppPluginMetas, PluginMetasResponse } from './types';
 
 let apps: AppPluginMetas = {};
 // Tracked separately from whether `apps` holds anything: an instance with no app
-// plugins is a legitimately empty cache, and deriving this from the cache size
-// would re-fetch on every read and report that cache as never initialized.
+// plugins is a legitimately empty cache.
 let didInit = false;
 
 function initialized(): boolean {
@@ -113,7 +112,14 @@ export function setAppPluginMetas(override: AppPluginMetas): void {
   }
 
   setApps(structuredClone(override));
-  // Tests clear the cache with {} to make the next getAppPluginMetas() fetch again,
-  // so an empty override has to read back as "never initialised"
-  didInit = Object.keys(apps).length > 0;
+}
+
+/** Empties the cache, so the next read fetches again. Tests only. */
+export function clearAppPluginMetas(): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('clearAppPluginMetas() function can only be called from tests.');
+  }
+
+  apps = {};
+  didInit = false;
 }

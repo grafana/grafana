@@ -6,6 +6,7 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getLogger, setLogger } from '../logging/registry';
 
 import {
+  clearAppPluginMetas,
   getAppPluginMeta,
   getAppPluginMetas,
   getAppPluginMetasSync,
@@ -34,7 +35,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 
   describe('and apps is not initialized', () => {
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
       jest.resetAllMocks();
       initPluginMetasMock.mockResolvedValue({ items: [getGrafanaExploretracesApp()!] });
     });
@@ -272,7 +273,7 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
 
   describe('and apps is not initialized', () => {
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
       jest.resetAllMocks();
     });
 

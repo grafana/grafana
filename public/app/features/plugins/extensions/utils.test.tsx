@@ -3,7 +3,7 @@ import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy, type PluginMeta } from '@grafana/data';
 import { config, type AppPluginConfig } from '@grafana/runtime';
-import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -1125,7 +1125,7 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
     });
 
     test('should return the app plugin configs based on the provided plugin ids', async () => {
@@ -1176,7 +1176,7 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
     });
 
     test('should return the app plugin ids that register extensions to a link extension point', async () => {
@@ -1389,7 +1389,7 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
     });
 
     test('should only return the app plugin id that exposes the component, if that component does not depend on anything', async () => {
@@ -1562,7 +1562,7 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
     });
 
     it('should return empty map when no plugins have extensions for the point', async () => {

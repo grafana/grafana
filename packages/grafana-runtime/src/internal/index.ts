@@ -39,6 +39,7 @@ export {
 export * from '../internal/openFeature/openfeature.gen';
 
 export {
+  clearAppPluginMetas,
   getAppPluginMeta,
   getAppPluginMetas,
   getAppPluginMetasSync,
