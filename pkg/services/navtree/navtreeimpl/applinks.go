@@ -215,12 +215,13 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			}
 
 			if s.canCreateAssistantPage(plugin, include, c) {
+				// no plugin id: the frontend registers a catch-all app route for every plugin nav item,
+				// which would make the top-level pages section own every assistant app url
 				link.Children = append(link.Children, &navtree.NavLink{
 					Id:             "assistant/pages/new",
 					Text:           "New Grafana Page",
 					Icon:           "plus",
 					Url:            s.cfg.AppSubURL + assistantAppHomePath + "/pages/new",
-					PluginID:       assistantAppID,
 					HideFromTabs:   true,
 					IsCreateAction: true,
 				})
