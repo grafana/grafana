@@ -181,9 +181,10 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         },
       },
 
-      '&:focus, &:focus-visible': getFocusStyles(theme),
+      // The solid fill (:before) extends past the button and would cover its focus ring, so the ring goes on the fill
+      '&:focus, &:focus-visible': solid ? { '&:before': getFocusStyles(theme) } : getFocusStyles(theme),
 
-      '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
+      '&:focus:not(:focus-visible)': solid ? { '&:before': getMouseFocusStyles(theme) } : getMouseFocusStyles(theme),
 
       '&:hover:before': {
         backgroundColor: hoverColor,
