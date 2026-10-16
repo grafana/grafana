@@ -156,7 +156,8 @@ export function DashboardTabs({ extensionComponents }: Props) {
     {
       id: RECENT_TAB_ID,
       label: t('home.dashboard-tabs.recent', 'Recent'),
-      counter: recent.total,
+      // What the list shows; the whole history is one filter option away.
+      counter: recent.items.length,
     },
     ...(mostUsedAvailable
       ? [
