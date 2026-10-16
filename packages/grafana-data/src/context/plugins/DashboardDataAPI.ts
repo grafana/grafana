@@ -181,7 +181,11 @@ export interface CapturedAnnotation {
 export interface DashboardPanelCapture {
   /** The range the panels were captured over. */
   timeRange: { from: string; to: string };
-  /** Interpolated values by variable name, with a variable capture's value applied. */
+  /**
+   * Interpolated values by variable name, with a variable capture's value applied. Only the variables the requested
+   * panels use: those their titles and queries reference, and ad hoc filters and group by, which apply without a
+   * reference. Constants are left out.
+   */
   variables: Record<string, string>;
   /** Section references that resolve to no panels. Removed panels are reported as `missing` panels instead. */
   missingRefs: DashboardUnavailableSource[];

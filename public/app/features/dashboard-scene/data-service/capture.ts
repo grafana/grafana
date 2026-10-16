@@ -10,13 +10,22 @@ import {
   LoadingState,
   type PanelData,
 } from '@grafana/data';
-import { MultiValueVariable, sceneGraph, type VariableValueOption } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  ConstantVariable,
+  GroupByVariable,
+  MultiValueVariable,
+  sceneGraph,
+  type SceneVariable,
+  type VariableValueOption,
+  type VizPanel,
+} from '@grafana/scenes';
 
 import { type DashboardSceneLike } from '../scene/types/dashboard';
 
 import { expandSourceRefs, resolveSourceRefs, sectionRef } from './sections';
 import { getPanelData, getSectionLabel, getSourcePanels, loadPanels, type SourcePanel } from './sources';
-import { loadVariantData, type PanelVariant, usesDashboardQueries, usesVariable } from './variants';
+import { getVariableNames, loadVariantData, type PanelVariant, usesDashboardQueries, usesVariable } from './variants';
 
 type PanelResult = Pick<CapturedPanel, 'status' | 'error' | 'frames'>;
 
@@ -29,13 +38,31 @@ export function toSectionInfo(source: SourcePanel): DashboardSectionInfo[] {
   }));
 }
 
-export function getVariableValues(dashboard: DashboardSceneLike): Record<string, string> {
+export function getVariableValues(
+  dashboard: DashboardSceneLike,
+  include: (variable: SceneVariable) => boolean = () => true
+): Record<string, string> {
   const values: Record<string, string> = {};
   for (const variable of sceneGraph.getVariables(dashboard)?.state.variables ?? []) {
-    const name = variable.state.name;
-    values[name] = sceneGraph.interpolate(dashboard, `\${${name}}`);
+    if (include(variable)) {
+      const name = variable.state.name;
+      values[name] = sceneGraph.interpolate(dashboard, `\${${name}}`);
+    }
   }
   return values;
+}
+
+/**
+ * The variables the panels' titles and queries reference, and the ad hoc filters and group by that apply to queries
+ * without a reference. Constants are fixed configuration rather than a selection, so they are left out.
+ */
+function isUsedBy(panels: VizPanel[]): (variable: SceneVariable) => boolean {
+  const names = new Set(
+    panels.flatMap((panel) => [...(panel.variableDependency?.getNames() ?? []), ...getVariableNames(panel)])
+  );
+  return (variable) =>
+    !(variable instanceof ConstantVariable) &&
+    (variable instanceof AdHocFiltersVariable || variable instanceof GroupByVariable || names.has(variable.state.name));
 }
 
 function toFrames(series: DataFrame[]): CapturedFrame[] {
@@ -193,7 +220,7 @@ export async function capturePanels(
     const source = panel.status === 'done' ? byKey.get(panel.key) : undefined;
     return (source && sceneGraph.getData(source.panel).state.data) ?? [];
   });
-  const variables = getVariableValues(dashboard);
+  const variables = getVariableValues(dashboard, isUsedBy(keys.flatMap((key) => byKey.get(key)?.panel ?? [])));
   return {
     timeRange: { from, to },
     variables: variable ? { ...variables, [variable.name]: variable.value } : variables,
