@@ -20,19 +20,12 @@ export type AppendedCellSource = NotebookLayoutItemKind['spec']['source'];
 const MAX_SLUG_LENGTH = 50;
 
 /**
- * Appends a panel to a notebook spec, minting the element name and panel id it needs to coexist with
- * what is already there.
+ * Appends cells in order, minting the element names and panel ids they need to coexist with what is
+ * already there. Names and panel ids stay unique across the batch as well as the notebook.
  *
- * Pure and spec-level on purpose: the caller is on a dashboard or in Explore, so there is no
- * NotebookScene to mutate — the target notebook is fetched, appended to, and written back. Once cells
- * can be inserted in-scene, NotebookLayoutManager can call this too rather than growing a second
- * generator (see the note in serialization/transformNotebookSceneToSaveModel.ts).
+ * Pure and spec-level on purpose: a caller on a dashboard or in Explore has no NotebookScene to mutate,
+ * so the target notebook is fetched, appended to, and written back.
  */
-export function appendPanelToNotebook(spec: NotebookSpec, panel: PanelElement): NotebookSpec {
-  return appendElementsToNotebook(spec, [{ kind: 'panel', panel }]);
-}
-
-/** Appends cells in order. Names and panel ids stay unique across the batch as well as the notebook. */
 export function appendElementsToNotebook(
   spec: NotebookSpec,
   appended: AppendedElement[],

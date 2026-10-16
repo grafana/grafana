@@ -171,7 +171,7 @@ describe('addPanelToExistingNotebook', () => {
     ).rejects.toThrow('notebook is too large');
   });
 
-  // The notebook is not open, so no layout manager sees this cell. appendPanelToNotebook puts the
+  // The notebook is not open, so no layout manager sees this cell. appendElementsToNotebook puts the
   // panel at the end, so the position is the last index. The panel goes along so the event can say
   // what was added.
   it('reports the added cell with the caller entry point, the index it landed on and the panel', async () => {
