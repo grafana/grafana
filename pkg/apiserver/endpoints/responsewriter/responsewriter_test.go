@@ -239,6 +239,8 @@ func TestResponseAdapter(t *testing.T) {
 		started := make(chan struct{})
 		gaveUp := make(chan struct{})
 		handlerDone := make(chan struct{})
+		// ignore the lint error because this test never receives a response: the caller gives up first.
+		//nolint:bodyclose
 		fn := grafanaresponsewriter.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			defer close(handlerDone)
 			close(started)
