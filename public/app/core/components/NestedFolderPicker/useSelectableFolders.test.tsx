@@ -43,8 +43,8 @@ describe('useSelectableFolders', () => {
     renderHook(() => useSelectableFolders({ general: responseFor('a', 'b'), a: responseFor('c') }, true));
 
     expect(mockInitiate).toHaveBeenCalledTimes(2);
-    expect(mockInitiate).toHaveBeenCalledWith({ type: 'folder', permission: 'edit', name: ['a', 'b'], limit: 2 });
-    expect(mockInitiate).toHaveBeenCalledWith({ type: 'folder', permission: 'edit', name: ['c'], limit: 1 });
+    expect(mockInitiate).toHaveBeenCalledWith({ type: 'folder', permission: 'create', name: ['a', 'b'], limit: 2 });
+    expect(mockInitiate).toHaveBeenCalledWith({ type: 'folder', permission: 'create', name: ['c'], limit: 1 });
   });
 
   it('only checks a parent again when its children change', () => {
@@ -57,7 +57,7 @@ describe('useSelectableFolders', () => {
 
     rerender({ responses: { general: responseFor('a', 'b') } });
     expect(mockInitiate).toHaveBeenCalledTimes(2);
-    expect(mockInitiate).toHaveBeenLastCalledWith({ type: 'folder', permission: 'edit', name: ['a', 'b'], limit: 2 });
+    expect(mockInitiate).toHaveBeenLastCalledWith({ type: 'folder', permission: 'create', name: ['a', 'b'], limit: 2 });
   });
 
   it('does not check anything when disabled or when a parent has no children', () => {

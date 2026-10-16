@@ -146,7 +146,7 @@ describe('useFoldersQueryAppPlatform', () => {
 
       expect(mockInitiate).toHaveBeenCalledWith({
         type: 'folder',
-        permission: 'edit',
+        permission: 'create',
         name: ['editable', 'view-only'],
         limit: 2,
       });

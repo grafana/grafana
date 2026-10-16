@@ -635,7 +635,7 @@ describe('NestedFolderPicker', () => {
         http.get(searchRoute, ({ request }) => {
           const url = new URL(request.url);
           const names = url.searchParams.getAll('name');
-          if (url.searchParams.get('permission') !== 'edit' || names.length === 0) {
+          if (url.searchParams.get('permission') !== 'create' || names.length === 0) {
             return undefined;
           }
 

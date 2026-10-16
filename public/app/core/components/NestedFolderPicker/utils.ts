@@ -4,11 +4,10 @@ import { type ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 
 /**
- * Search args that return which of the named folders the user can pick.
- * Picking needs `dashboards:create` in the folder, but the search API can only check `folders:write` for now.
+ * Search args that return which of the named folders the user can create dashboards in, and so can pick.
  */
 export function getSelectableFoldersArgs(names: string[]): SearchDashboardsAndFoldersApiArg {
-  return { type: 'folder', permission: 'edit', name: names, limit: names.length };
+  return { type: 'folder', permission: 'create', name: names, limit: names.length };
 }
 
 export const getRootFolderItem = (): DashboardsTreeItem => ({
