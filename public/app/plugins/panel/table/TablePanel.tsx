@@ -17,7 +17,6 @@ import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSourceFrameIndex } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
-import { useStructureRev } from 'app/features/explore/Graph/useStructureRev';
 import {
   TABLE_TRANSFORMATIONS_OWNER,
   useAdHocColumnState,
@@ -79,7 +78,13 @@ export function TablePanel(props: Props) {
     : undefined;
   const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : -1;
   const sourceFrames = sourceSeries ?? frames;
-  const sourceStructureRev = useStructureRev(sourceFrames);
+  const sourceFrame = sourceFrames[sourceFrameIndex];
+  const sourceFrameKey = JSON.stringify([
+    sourceFrame?.refId,
+    sourceFrameIndex,
+    sourceFrame?.name,
+    sourceFrame?.fields.map((field) => [field.name, field.type, field.labels]),
+  ]);
   // Rebuild against original rows while retaining cross-frame display and data-link context.
   const sourceFramesWithOverrides = useMemo(
     () =>
@@ -158,7 +163,7 @@ export function TablePanel(props: Props) {
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,
-              frameKey: JSON.stringify([sourceFrames[sourceFrameIndex]?.refId, sourceFrameIndex, sourceStructureRev]),
+              frameKey: sourceFrameKey,
               frameIndex: sourceFrameIndex,
             }
           : undefined

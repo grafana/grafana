@@ -7,7 +7,7 @@ import { type ApplyFilterResult } from '../utils';
 import { tableFilterKey, matchesTableFilter } from './filterByValue';
 import { tableViewIndices } from './tableFiltering';
 
-export function transformTableRows(
+function transformTableRows(
   rows: TableRow[],
   fields: Field[],
   filters: readonly FilterByValueConfig[],

@@ -41,7 +41,7 @@ export function matchesTableFilter(config: FilterByValueConfig, field: Field, pa
   );
 }
 
-export function isTableFilter(config: DataTransformerConfig, frameKey: string): config is FilterByValueConfig {
+function isTableFilter(config: DataTransformerConfig, frameKey: string): config is FilterByValueConfig {
   return config.id === DataTransformerID.filterByValue && config.options.target?.frameKey === frameKey;
 }
 

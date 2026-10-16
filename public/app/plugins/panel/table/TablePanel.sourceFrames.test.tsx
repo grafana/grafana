@@ -240,7 +240,13 @@ it('writes row filters with the matched source index and scope', async () => {
     expect.objectContaining({
       id: 'filterByValue',
       options: expect.objectContaining({
-        target: { refId: 'B', frameIndex: 1, frameKey: '["B",1,1]', parentIndex: undefined, parentKey: undefined },
+        target: {
+          refId: 'B',
+          frameIndex: 1,
+          frameKey: '["B",1,"B",[["label","string",null]]]',
+          parentIndex: undefined,
+          parentKey: undefined,
+        },
       }),
     }),
   ]);
