@@ -351,28 +351,9 @@ func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureTog
 	return searchClient, nil
 }
 
-// NewRemoteResourceClientFromConfig creates a unified-storage client using the
-// storage and optional search-server addresses from [grafana-apiserver].
-func NewRemoteResourceClientFromConfig(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-	tracer tracing.Tracer,
-	reg prometheus.Registerer,
-) (resource.ResourceClient, error) {
-	return newRemoteResourceClientFromConfig(cfg, reg, func(conn, indexConn grpc.ClientConnInterface) (resource.ResourceClient, error) {
-		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
-	})
-}
-
-// NewRemoteResourceClientWithAuth creates a remote client with explicit authentication,
-// retaining the configured storage/search connections, keepalive, and instrumentation.
-func NewRemoteResourceClientWithAuth(cfg *setting.Cfg, tracer trace.Tracer, reg prometheus.Registerer, auth resource.RemoteResourceClientConfig) (resource.ResourceClient, error) {
-	return newRemoteResourceClientFromConfig(cfg, reg, func(conn, indexConn grpc.ClientConnInterface) (resource.ResourceClient, error) {
-		return resource.NewRemoteResourceClient(tracer, conn, indexConn, auth)
-	})
-}
-
-func newRemoteResourceClientFromConfig(cfg *setting.Cfg, reg prometheus.Registerer, newClient func(grpc.ClientConnInterface, grpc.ClientConnInterface) (resource.ResourceClient, error)) (resource.ResourceClient, error) {
+// NewStandaloneRemoteResourceClientWithAuth creates a standalone remote client with explicit
+// authentication, using the storage and optional search-server addresses from [grafana-apiserver].
+func NewStandaloneRemoteResourceClientWithAuth(cfg *setting.Cfg, tracer trace.Tracer, reg prometheus.Registerer, auth resource.RemoteResourceClientConfig) (resource.ResourceClient, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	address := apiserverCfg.Key("address").MustString("")
 	if address == "" {
@@ -396,7 +377,7 @@ func newRemoteResourceClientFromConfig(cfg *setting.Cfg, reg prometheus.Register
 		indexConn = searchConn
 	}
 
-	client, err := newClient(storageConn, indexConn)
+	client, err := resource.NewStandaloneRemoteResourceClient(tracer, storageConn, indexConn, auth)
 	if err != nil {
 		_ = storageConn.Close()
 		if searchConn != nil {
@@ -435,12 +416,12 @@ func newSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, forw
 		return resourcepb.NewResourceIndexClient(cc), nil
 	}
 
-	// Mirror NewRemoteResourceClient so exchanges preserve the caller's ID token.
+	// Mirror NewStandaloneRemoteResourceClient so exchanges preserve the caller's identity.
 	if grpcClientAuth {
 		clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
-		clientInt, err := resource.NewAuthnGrpcClientInterceptor(
+		clientInt, err := resourceclient.NewAuthnGrpcClientInterceptor(
 			otel.Tracer("github.com/grafana/grafana/pkg/storage/unified"),
-			resource.RemoteResourceClientConfig{
+			resourceclient.RemoteResourceClientConfig{
 				Token:            clientCfg.Token,
 				TokenExchangeURL: clientCfg.TokenExchangeURL,
 				Audiences:        []string{"resourceStore"},
@@ -448,6 +429,7 @@ func newSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, forw
 				AllowInsecure:    cfg.Env == setting.Dev,
 				IsDev:            cfg.Env == setting.Dev,
 			},
+			resourceclient.ModeStandalone,
 		)
 		if err != nil {
 			_ = conn.Close()

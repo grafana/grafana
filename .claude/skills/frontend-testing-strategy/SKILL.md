@@ -1,6 +1,6 @@
 ---
 name: frontend-testing-strategy
-description: Write unit and E2E tests for Grafana frontend code (React/TypeScript, any package or feature area) to the conventions this repo expects. Use when adding, backfilling, or reviewing frontend tests; when a test only asserts "it rendered" or "it's defined"; when reviewing AI-generated tests for slop; or when a frontend test is flaky. For visualization panels and grafana-ui viz components specifically, also load the `panel-testing-strategy` skill.
+description: Write and run unit and E2E tests for Grafana frontend code (React/TypeScript, any package or feature area) to the conventions this repo expects. Use when running Playwright E2E tests; when adding, backfilling, or reviewing frontend tests; when a test only asserts "it rendered" or "it's defined"; when reviewing AI-generated tests for slop; or when a frontend test is flaky. For visualization panels and grafana-ui viz components specifically, also load the `panel-testing-strategy` skill.
 ---
 
 # Frontend testing strategy
@@ -10,6 +10,18 @@ Write tests for Grafana frontend code that pass review on the first pass. Goals:
 actually exercises the target code path; and stabilize the known flake classes. Several codeowner
 paths are opted into the gating `check-frontend-test-coverage.yml` check, so coverage that drops
 fails CI.
+
+## Running Playwright E2E tests
+
+Use `yarn e2e:playwright <spec>` with `GRAFANA_URL` unset by default. The harness starts
+its own lightweight Grafana server on port 3001; this is more efficient than starting a
+separate development instance. Do not start `make run` or another Grafana server just to
+run E2E tests.
+
+Only set `GRAFANA_URL` to use a custom server when the task specifically needs one, such as
+debugging a particular running instance or testing a deployment. State that reason before
+using the override. Setting `GRAFANA_URL` disables the harness-managed server, so the target
+instance must already be running and accessible.
 
 ## Resolve the target
 
@@ -404,5 +416,5 @@ of this one), the `add-e2e-selectors` skill, `contribute/style-guides/testing.md
 
 - `yarn test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
   asserted value is broken (mutate the expected value once to confirm it's not a no-op).
-- For E2E: `yarn e2e:playwright <spec>` (it starts its own server).
+- For E2E: `yarn e2e:playwright <spec>` — follow "Running Playwright E2E tests" above.
 - `yarn typecheck` if selectors or casts were added.

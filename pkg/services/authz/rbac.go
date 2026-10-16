@@ -74,6 +74,7 @@ func ProvideAuthZClients(
 	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
+	actionResolver accesscontrol.ActionResolver,
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 	eventualResourceClient *resource.EventualClient,
@@ -111,6 +112,7 @@ func ProvideAuthZClients(
 		}
 		return newAuthZClients(accessClient, rbacClient), nil
 	default:
+		serverCfg := readEmbeddedRBACServerSettings(cfg)
 		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
 		if !ok {
 			return nil, errors.New("access control service does not support local user permission evaluation")
@@ -139,11 +141,11 @@ func ProvideAuthZClients(
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
-				store.NewSQLPermissionStore(sql, tracer),
+				store.NewSQLPermissionStore(sql, tracer, serverCfg.ForcePermissionRoleActionIndex),
 			),
 			userPermissionsEvaluator,
 			nil,
-			nil,
+			actionResolver,
 			log.New("authz-grpc-server"),
 			tracer,
 			reg,
@@ -398,7 +400,7 @@ func RegisterRBACAuthZService(
 		db,
 		folderStore,
 		legacy.NewLegacySQLStores(db),
-		store.NewSQLPermissionStore(db, tracer),
+		store.NewSQLPermissionStore(db, tracer, cfg.ForcePermissionRoleActionIndex),
 		nil,
 		userPermissionsResolver,
 		actionResolver,

@@ -3919,6 +3919,11 @@
     "viz-wrapper": {
       "table": "Tabell"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "Se vilka larm som är aktiva just nu och utforska historiska data för att undersöka nuvarande eller tidigare problem.",
       "description-alert-rules": "Definiera villkoret som måste uppfyllas innan en larmregel utlöses",
@@ -6108,6 +6113,9 @@
       "only-overrides-button-tooltip": "Visa endast åsidosättningar",
       "placeholder-search-options": "Sökalternativ",
       "visualization-button-tooltip": "Sökalternativ"
+    },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
     },
     "plan-placeholder-badge": {
       "text": "Testdata",
@@ -10762,13 +10770,21 @@
       "cell-filter-out": "Filtrera bort värde",
       "cell-inspect": "Inspektera värde",
       "cell-inspect-tooltip": "Inspektera värde",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "Filtrera värden",
+      "column-menu-hide": "",
       "column-menu-label": "Kolumnalternativ för {{name}}",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "Uppdatera filter",
+      "column-visibility": "",
+      "columns": "",
       "copy": "Kopiera till klippbordet",
       "csv-counts": "Rader:{{rows}}, Kolumner:{{columns}}",
       "csv-placeholder": "Ange CSV här…",
       "edit-column-filter": "Redigera filter på {{name}}",
+      "field-warnings": "",
       "filter": {
         "add-all": "Lägg till alla visade värden i filtret",
         "blanks": "(Tomma)",
@@ -10802,6 +10818,8 @@
           "count": "Räknare"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "Inspektera värde",
       "loading": "Läser in tabell",
       "nested-table": {
@@ -10811,6 +10829,8 @@
       "no-rows": "Inga rader",
       "no-values-label": "Inga värden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "Sortera efter kolumnen {{column}}",
       "sort-by-column-ascending": "Sortera efter kolumn {{column}}, stigande",
       "sort-by-column-descending": "Sortera efter kolumnen {{column}}, fallande",
@@ -10820,7 +10840,8 @@
       },
       "tooltip": {
         "trigger": "Växla verktygstips"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "Taggar"
@@ -11117,6 +11138,8 @@
       "incident-filter-all": "Alla händelser",
       "incident-filter-label": "Filtrera incidenter efter etikett",
       "incident-tab-label": "Incidenter",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "Dina team",
       "title": "Larm och incidenter",
       "title-alerts": "Larm",
@@ -11193,6 +11216,17 @@
       "error-title": "Kunde inte ladda senaste blogginlägg",
       "read-more": "Läs mer från Grafana Labs blogg",
       "title": "Senaste från bloggen"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11955,6 +11989,11 @@
       "load-newer": "Laddar nyare loggar ...",
       "load-older": "Laddar äldre loggar ..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "Dölj etiketter",
       "expand": "Expandera etiketter"
@@ -12005,6 +12044,7 @@
       "inline-mode": "Visa inline",
       "inline-no-scrolls": "Byt till expanderad vy",
       "inline-with-scrolls": "Byt till komprimerad vy",
+      "link-fallback-label": "",
       "link-value-tooltip": "Länkvärde",
       "links-section": "Länkar",
       "log-attributes-field": "Loggattribut",
@@ -12014,13 +12054,14 @@
       "move-displayed-field-up": "Flytta upp",
       "no-details": "Fält som ska visas.",
       "open-assistant": "",
+      "open-value-in": "",
       "pin-line": "Fäst logg",
       "prettify": "Gör snyggare",
       "remove-displayed-field": "Ta bort fält",
       "remove-log": "Ta bort logg",
       "scroll-to-logline": "Skrolla till loggrad",
       "search": {
-        "no-results": "Inga resultat att visa."
+        "no-results": ""
       },
       "search-placeholder": "Sök fältnamn och värden",
       "show-context": "Visa sammanhang",
@@ -13207,6 +13248,11 @@
       "target-new": "Ny anteckningsbok",
       "title": "Lägg till panel i anteckningsbok"
     },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
+    },
     "autosave": {
       "conflict-cancel": "",
       "conflict-confirm": "",
@@ -13871,6 +13917,9 @@
       "label-plugin-id": "Tilläggs-ID",
       "label-severity": "Allvarlighetsgrad"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "Alla tillägg är uppdaterade"
     },
@@ -13892,6 +13941,10 @@
     "plugin-details-body": {
       "needs-service-account": "Tillägget {{pluginName}} kräver ett servicekonto för att kunna fråga Grafana. Följande lista innehåller de behörigheter som är tillgängliga för servicekontot:",
       "page-not-found": "Sidan hittades inte."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Föråldrat"
@@ -16526,6 +16579,7 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
     "description-page-size": "Antal rader per sida. När den är tom baseras sidstorleken på panelens höjd.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "Ett fält som innehåller JSON-objekt med CSS-egenskaper",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Växla bakgrundsfärg varannan rad",
@@ -16564,6 +16618,7 @@
     "name-max-height": "",
     "name-min-column-width": "Minsta kolumnbredd",
     "name-page-size": "Sidstorlek",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "Visa tabellsidhuvud",
     "name-styling-from-field": "Styling från fält",
     "name-tooltip-from-field": "",
@@ -16727,6 +16782,7 @@
     "editor": {
       "aria-label-content": "Textinnehåll",
       "aria-label-mode": "Textläge: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "Radnummer",
       "format-bold": "B",
       "format-heading": "H",
@@ -16772,6 +16828,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {

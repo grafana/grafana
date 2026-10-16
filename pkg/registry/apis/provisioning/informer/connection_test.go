@@ -15,7 +15,7 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
 func conn(namespace, name string) *provisioningapis.Connection {
@@ -56,15 +56,6 @@ func names(t *testing.T, objs []runtime.Object) []string {
 	return out
 }
 
-// The keys the informer's Store diffs on have to survive the projection: it keys
-// on namespace/name and compares resourceVersion, so losing any of the three
-// would make every re-list look like a change, or like no change at all.
-// recordProjection captures what the re-list reported it used, which is what the
-// keys_only_relist rollout is read by.
-func recordProjection(seen *[]bool) func(bool) {
-	return func(keysOnly bool) { *seen = append(*seen, keysOnly) }
-}
-
 func TestConnectionList_KeysOnly(t *testing.T) {
 	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{
 		{Namespace: "ns1", Name: "a", ResourceVersion: "10"},
@@ -74,11 +65,12 @@ func TestConnectionList_KeysOnly(t *testing.T) {
 	// can tell the two paths apart.
 	client := fake.NewClientset(conn(testNamespace, "from-full-list"))
 
-	var seen []bool
-	objs, listRV, err := connectionList(client.ProvisioningV0alpha1(), testNamespace, keys, recordProjection(&seen))(t.Context())
+	recorder, reg := newTestRecorder(connGVR)
+	objs, listRV, err := connectionList(client.ProvisioningV0alpha1(), testNamespace, keys, recorder)(t.Context())
 	require.NoError(t, err)
 
-	assert.Equal(t, []bool{true}, seen, "the tick must report that keys served it")
+	assert.Equal(t, float64(1), projectionCount(t, reg, connGVR, "keys"), "the tick must report that keys served it")
+	assert.Zero(t, projectionCount(t, reg, connGVR, "objects"))
 	assert.Equal(t, int64(100), listRV, "the snapshot version the Store arbitrates against")
 	assert.Equal(t, []string{"a", "b"}, names(t, objs))
 
@@ -94,11 +86,12 @@ func TestConnectionList_FallsBackWhenKeysOnlyUnsupported(t *testing.T) {
 	keys := &stubKeysLister{err: keysapi.ErrUnsupported}
 	client := fake.NewClientset(conn(testNamespace, "from-full-list"))
 
-	var seen []bool
-	objs, _, err := connectionList(client.ProvisioningV0alpha1(), testNamespace, keys, recordProjection(&seen))(t.Context())
+	recorder, reg := newTestRecorder(connGVR)
+	objs, _, err := connectionList(client.ProvisioningV0alpha1(), testNamespace, keys, recorder)(t.Context())
 	require.NoError(t, err, "an unsupported projection is not a reason to fail the tick")
 
-	assert.Equal(t, []bool{false}, seen, "the fallback must report objects, or the rollout reads as keys")
+	assert.Equal(t, float64(1), projectionCount(t, reg, connGVR, "objects"), "the fallback must report objects, or the rollout reads as keys")
+	assert.Zero(t, projectionCount(t, reg, connGVR, "keys"))
 	assert.Equal(t, 1, keys.called, "the keys path is tried first")
 	assert.Equal(t, []string{"from-full-list"}, names(t, objs), "the full list served the tick")
 }
@@ -110,10 +103,11 @@ func TestConnectionList_SurfacesOtherErrors(t *testing.T) {
 	keys := &stubKeysLister{err: boom}
 	client := fake.NewClientset(conn(testNamespace, "from-full-list"))
 
-	var seen []bool
-	objs, _, err := connectionList(client.ProvisioningV0alpha1(), testNamespace, keys, recordProjection(&seen))(t.Context())
+	recorder, reg := newTestRecorder(connGVR)
+	objs, _, err := connectionList(client.ProvisioningV0alpha1(), testNamespace, keys, recorder)(t.Context())
 	require.ErrorIs(t, err, boom)
-	assert.Empty(t, seen, "a failed tick used no projection")
+	assert.Zero(t, projectionCount(t, reg, connGVR, "keys"), "a failed tick used no projection")
+	assert.Zero(t, projectionCount(t, reg, connGVR, "objects"), "a failed tick used no projection")
 	assert.Nil(t, objs, "a failed tick must not deliver a partial set, which the Store would read as deletions")
 }
 
@@ -121,7 +115,7 @@ func TestConnectionList_SurfacesOtherErrors(t *testing.T) {
 func TestConnectionList_NilListerUsesFullObjects(t *testing.T) {
 	client := fake.NewClientset(conn(testNamespace, "a"), conn(testNamespace, "b"))
 
-	objs, _, err := connectionList(client.ProvisioningV0alpha1(), testNamespace, nil, nil)(t.Context())
+	objs, _, err := connectionList(client.ProvisioningV0alpha1(), testNamespace, nil, RelistRecorder{})(t.Context())
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []string{"a", "b"}, names(t, objs))
 }
@@ -129,72 +123,84 @@ func TestConnectionList_NilListerUsesFullObjects(t *testing.T) {
 // The rollout is read off this counter, so the labels it reports are part of the
 // contract: a dashboard filtering projection="keys" has to see the keys path and
 // only the keys path.
-func TestRelistProjectionRecorder_ReportsTheProjection(t *testing.T) {
+func TestRelistProjectionMetrics_ReportsTheProjection(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	// The job delta source already owns the delivery metrics on this registry; the
-	// projection counter is the connection re-list's own, so it does not collide.
+	// projection collectors are separate, so they do not collide.
 	_ = newInformerMetrics(reg)
-	record := newRelistProjectionRecorder(reg, provisioningapis.ConnectionResourceInfo.GroupVersionResource())
+	recorder := NewRelistProjectionMetrics(reg).Recorder(connGVR)
 
-	record(true)
-	record(true)
-	record(false)
+	recorder.Projection(true)
+	recorder.Projection(true)
+	recorder.Projection(false)
+	recorder.Drift(2)
 
-	assert.Equal(t, float64(2), projectionCount(t, reg, "keys"))
-	assert.Equal(t, float64(1), projectionCount(t, reg, "objects"))
+	assert.Equal(t, float64(2), projectionCount(t, reg, connGVR, "keys"))
+	assert.Equal(t, float64(1), projectionCount(t, reg, connGVR, "objects"))
+	assert.Equal(t, float64(2), driftCount(t, reg, connGVR))
 }
 
 // The group is part of the series identity: the keys projection is a
 // unified-storage feature that any group can report here, so a query that reads
 // only the resource name would silently sum two of them together.
-func TestRelistProjectionRecorder_LabelsTheGroup(t *testing.T) {
+//
+// Binding the recorder also creates both projections at zero, so the fallback
+// series exists before anything falls back.
+func TestRelistProjectionMetrics_LabelsTheGroup(t *testing.T) {
 	reg := prometheus.NewRegistry()
-	gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
-	newRelistProjectionRecorder(reg, gvr)(true)
+	NewRelistProjectionMetrics(reg).Recorder(connGVR).Projection(true)
 
-	assert.Equal(t, map[string]string{
-		"group":      gvr.Group,
-		"resource":   gvr.Resource,
-		"projection": "keys",
-	}, projectionLabels(t, reg))
+	assert.ElementsMatch(t, []map[string]string{
+		{"group": connGVR.Group, "resource": connGVR.Resource, "projection": "keys"},
+		{"group": connGVR.Group, "resource": connGVR.Resource, "projection": "objects"},
+	}, projectionLabelSets(t, reg))
+
+	assert.Equal(t, float64(1), projectionCount(t, reg, connGVR, "keys"))
+	assert.Zero(t, projectionCount(t, reg, connGVR, "objects"), "present, and zero until it fires")
 }
 
-func projectionCount(t *testing.T, reg *prometheus.Registry, projection string) float64 {
+// The collectors are shared by every delta source, so one registry has to serve
+// them all; registering per source would panic on the second.
+func TestRelistProjectionMetrics_SharedAcrossResources(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	metrics := NewRelistProjectionMetrics(reg)
+
+	metrics.Recorder(connGVR).Projection(true)
+	metrics.Recorder(repoGVR).Projection(false)
+	metrics.Recorder(repoGVR).Drift(2)
+
+	assert.Equal(t, float64(1), projectionCount(t, reg, connGVR, "keys"))
+	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
+	assert.Zero(t, projectionCount(t, reg, connGVR, "objects"), "the resources must not share a series")
+	assert.Equal(t, float64(2), driftCount(t, reg, repoGVR))
+	assert.Zero(t, driftCount(t, reg, connGVR))
+}
+
+// A delta source built without metrics records nothing rather than panicking.
+func TestRelistRecorder_ZeroValueDiscards(t *testing.T) {
+	var recorder RelistRecorder
+	recorder.Projection(true)
+	recorder.Drift(2)
+}
+
+// projectionLabelSets returns the label sets of every projection series in reg.
+func projectionLabelSets(t *testing.T, reg *prometheus.Registry) []map[string]string {
 	t.Helper()
 	families, err := reg.Gather()
 	require.NoError(t, err)
 
+	var out []map[string]string
 	for _, mf := range families {
 		if mf.GetName() != "grafana_provisioning_informer_relist_projection_total" {
 			continue
 		}
 		for _, m := range mf.GetMetric() {
+			labels := map[string]string{}
 			for _, l := range m.GetLabel() {
-				if l.GetName() == "projection" && l.GetValue() == projection {
-					return m.GetCounter().GetValue()
-				}
+				labels[l.GetName()] = l.GetValue()
 			}
+			out = append(out, labels)
 		}
 	}
-	return 0
-}
-
-// projectionLabels returns the labels of the single projection series in reg.
-func projectionLabels(t *testing.T, reg *prometheus.Registry) map[string]string {
-	t.Helper()
-	families, err := reg.Gather()
-	require.NoError(t, err)
-
-	for _, mf := range families {
-		if mf.GetName() != "grafana_provisioning_informer_relist_projection_total" {
-			continue
-		}
-		require.Len(t, mf.GetMetric(), 1, "the test records one series")
-		labels := map[string]string{}
-		for _, l := range mf.GetMetric()[0].GetLabel() {
-			labels[l.GetName()] = l.GetValue()
-		}
-		return labels
-	}
-	return nil
+	return out
 }

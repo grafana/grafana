@@ -49,8 +49,9 @@ import (
 func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m,
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
-		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"), // These don't stop when index is closed.
-		goleak.IgnoreAnyFunction("net/http.(*http2clientConnReadLoop).run"),               // HTTP/2 keep-alive from cloud provider SDKs in integration tests.
+		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"),          // These don't stop when index is closed.
+		goleak.IgnoreTopFunction("github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1"), // Search-server expirable LRU cleanup goroutine.
+		goleak.IgnoreAnyFunction("net/http.(*http2clientConnReadLoop).run"),                        // HTTP/2 keep-alive from cloud provider SDKs in integration tests.
 	)
 }
 
@@ -1526,6 +1527,64 @@ func TestInMemoryIndexSegmentsOnlyHoldTheirOwnDocuments(t *testing.T) {
 		// the other index's documents it takes over 13 KiB.
 		require.Less(t, memoryUsed(t, idx)-before, uint64(10*4<<10))
 	})
+}
+
+func TestOpenFileIndexWaitsForPersistence(t *testing.T) {
+	for _, unsafeBatch := range []bool{false, true} {
+		t.Run(fmt.Sprintf("unsafe_batch=%t", unsafeBatch), func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "index")
+			idx, err := bleve.NewUsing(path, bleve.NewIndexMapping(), scorch.Name, bleve.Config.DefaultKVStore, map[string]interface{}{"unsafe_batch": unsafeBatch})
+			require.NoError(t, err)
+
+			flush := func() {
+				t.Helper()
+				done := make(chan error, 1)
+				batch := idx.NewBatch()
+				batch.SetPersistedCallback(func(err error) { done <- err })
+				require.NoError(t, idx.Batch(batch))
+				select {
+				case err := <-done:
+					require.NoError(t, err)
+				case <-time.After(10 * time.Second):
+					t.Fatal("timed out waiting for test index to persist")
+				}
+			}
+
+			require.NoError(t, idx.Index("doc", map[string]string{"title": "persisted document"}))
+			flush()
+			require.NoError(t, setRV(idx, 42))
+			require.NoError(t, idx.SetInternal([]byte("test_metadata"), []byte("unchanged")))
+			flush()
+			advanced, err := idx.Advanced()
+			require.NoError(t, err)
+			epochs, err := advanced.(*scorch.Scorch).RootBoltSnapshotEpochs()
+			require.NoError(t, err)
+			previousEpoch := slices.Max(epochs)
+			require.NoError(t, idx.Close())
+
+			reopened, err := openFileIndex(path)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, reopened.Close()) })
+
+			advanced, err = reopened.Advanced()
+			require.NoError(t, err)
+			epochs, err = advanced.(*scorch.Scorch).RootBoltSnapshotEpochs()
+			require.NoError(t, err)
+			// A new persisted epoch proves the barrier reached disk before open returned.
+			require.Greater(t, slices.Max(epochs), previousEpoch)
+
+			rv, err := getRV(reopened)
+			require.NoError(t, err)
+			require.Equal(t, int64(42), rv)
+			metadata, err := reopened.GetInternal([]byte("test_metadata"))
+			require.NoError(t, err)
+			require.Equal(t, []byte("unchanged"), metadata)
+			result, err := reopened.Search(bleve.NewSearchRequest(bleve.NewMatchQuery("persisted")))
+			require.NoError(t, err)
+			require.Equal(t, uint64(1), result.Total)
+			require.Equal(t, "doc", result.Hits[0].ID)
+		})
+	}
 }
 
 // A local index whose build info cannot be read is discarded: there is no way to

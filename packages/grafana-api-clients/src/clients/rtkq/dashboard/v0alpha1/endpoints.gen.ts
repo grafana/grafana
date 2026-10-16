@@ -187,6 +187,7 @@ const injectedRtkApi = api
             query: queryArg.query,
             type: queryArg['type'],
             folder: queryArg.folder,
+            name: queryArg.name,
             facet: queryArg.facet,
             facetLimit: queryArg.facetLimit,
             tags: queryArg.tags,
@@ -478,6 +479,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   type?: 'folder' | 'dashboard';
   /** search/list within a folder (not recursive) */
   folder?: string;
+  /** only include resources with these names (UIDs) */
+  name?: string[];
   /** count distinct terms for selected fields */
   facet?: string[];
   /** maximum number of terms to return per facet (default 50, max 1000) */
@@ -490,8 +493,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   panelType?: string;
   /** find dashboards using datasources of a given plugin type */
   dataSourceType?: string;
-  /** permission needed for the resource (view, edit, admin) */
-  permission?: 'view' | 'edit' | 'admin';
+  /** permission needed for the resource (view, edit, admin, create). create is only valid with type=folder */
+  permission?: 'view' | 'edit' | 'admin' | 'create';
   /** sortable field */
   sort?: string;
   /** number of results to return */

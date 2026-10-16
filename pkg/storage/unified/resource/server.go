@@ -271,17 +271,18 @@ type StorageBackend interface {
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
-	// WatchWrittenKeys delivers the key of each write to the given resource
-	// types, straight from the bus: without its body and in no particular order,
-	// so without the delay WatchWriteEvents holds events for to put them in
-	// order. It suits a consumer that re-reads what it is told about. Delivery is
+	// WatchWrittenKeys delivers the key and resource version of each write to
+	// the given resource types, straight from the bus: only Key and
+	// ResourceVersion are set, without the body, and in no particular order, so
+	// without the delay WatchWriteEvents holds events for to put them in order.
+	// It suits a consumer that re-reads what it is told about. Delivery is
 	// at-most-once, so onLost is called when keys may have been lost: with the
 	// namespace of a key dropped because the consumer was not keeping up, or with
 	// an empty namespace, meaning any, once a lost connection is restored. It must
 	// not block. The channel is never closed; cancel ctx to stop.
 	// ErrWrittenKeysUnsupported means the backend, or its configuration, cannot
 	// do this at all.
-	WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error)
+	WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *WrittenEvent, error)
 
 	// ListModifiedSince will return all resources that have changed since the given resource version.
 	// If a resource has changes, only the latest change will be returned.
@@ -428,6 +429,9 @@ type SearchOptions struct {
 	// stored in an index's IndexBuildInfo. May be nil.
 	SearchFields *SearchFieldsRegistry
 
+	// HybridSearchConfig shares the manifest watcher's current hybrid opt-ins.
+	HybridSearchConfig *HybridSearchConfigRegistry
+
 	// EmbeddingConfig is shared with the manifest watcher; consumers must read
 	// it after the initial poll and retain the registry to observe later reloads.
 	EmbeddingConfig *EmbeddingConfigRegistry
@@ -535,8 +539,6 @@ type ResourceServerOptions struct {
 
 	QuotasConfig QuotasConfig
 
-	SearchBackedListConfig SearchBackedListConfig
-
 	// BookmarkFrequency controls how often periodic bookmark events are sent to
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
 	BookmarkFrequency time.Duration
@@ -568,11 +570,9 @@ type ResourceServerOptions struct {
 	// HybridSearch then returns RRF ordering and min_relevance is a no-op.
 	Reranker *rerank.Reranker
 
-	// VectorReconciler, when non-nil, is launched after Init; the server
-	// attaches its own broadcaster to it before starting Run so the
-	// reconciler's watch path lights up. The reconciler owns the
-	// backfiller and runs it. nil = reconciler feature off.
-	VectorReconciler BroadcasterConsumer
+	// VectorReconciler, when non-nil, is launched after Init. The reconciler
+	// owns the backfiller and runs it. nil = reconciler feature off.
+	VectorReconciler Runnable
 
 	// UsageStatsEnabled turns on the usage stats ingestion path (RecordEvent /
 	// GetResourceDailyStats). It requires a KV-backed StorageBackend so the
@@ -586,14 +586,6 @@ type ResourceServerOptions struct {
 // would cycle.
 type Runnable interface {
 	Run(ctx context.Context) error
-}
-
-// BroadcasterConsumer is a Runnable that wants the server's write-events
-// broadcaster attached before Run. The server sets this up once
-// initWatcher has populated its broadcaster.
-type BroadcasterConsumer interface {
-	Runnable
-	UseBroadcaster(b Broadcaster[*WrittenEvent])
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -704,6 +696,14 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		return nil, err
 	}
 
+	if b, ok := opts.Backend.(*kvStorageBackend); ok {
+		if external, ok := blobstore.(*cdkBlobSupport); ok {
+			b.blobGCMu.Lock()
+			b.blobGC = NewBlobGarbageCollector(NewCDKBlobGCStore(external.bucket, external.root), b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
+			b.blobGCMu.Unlock()
+		}
+	}
+
 	logger := log.New("resource-server")
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
@@ -732,7 +732,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		storageEnabled:                 true,
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
-		searchBackedListResources:      opts.SearchBackedListConfig,
 		manifestSearchFields:           opts.Search.SearchFields,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
@@ -821,25 +820,24 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 var _ ResourceServer = (*server)(nil)
 
 type server struct {
-	log                       log.Logger
-	backend                   StorageBackend
-	vectorBackend             vector.VectorBackend
-	bulkBatchOptions          BulkBatchOptions
-	blob                      BlobSupport
-	blobTransfers             *blobTransfers
-	secure                    secrets.InlineSecureValueSupport
-	search                    *searchServer
-	searchClient              resourcepb.ResourceIndexClient
-	diagnostics               resourcepb.DiagnosticsServer //nolint:staticcheck
-	access                    claims.AccessClient
-	writeHooks                WriteAccessHooks
-	now                       func() int64
-	mostRecentRV              atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics            *StorageMetrics
-	grpcErrorResultToStatus   bool
-	overridesService          *OverridesService
-	quotasConfig              QuotasConfig
-	searchBackedListResources SearchBackedListConfig
+	log                     log.Logger
+	backend                 StorageBackend
+	vectorBackend           vector.VectorBackend
+	bulkBatchOptions        BulkBatchOptions
+	blob                    BlobSupport
+	blobTransfers           *blobTransfers
+	secure                  secrets.InlineSecureValueSupport
+	search                  *searchServer
+	searchClient            resourcepb.ResourceIndexClient
+	diagnostics             resourcepb.DiagnosticsServer //nolint:staticcheck
+	access                  claims.AccessClient
+	writeHooks              WriteAccessHooks
+	now                     func() int64
+	mostRecentRV            atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics          *StorageMetrics
+	grpcErrorResultToStatus bool
+	overridesService        *OverridesService
+	quotasConfig            QuotasConfig
 	// Kind declarations from the manifests, refreshed by the manifest watcher. List
 	// reads the selectable fields from it before asking an index about a selector.
 	// May be nil.
@@ -883,7 +881,7 @@ type server struct {
 
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
-	vectorWriteReconciler BroadcasterConsumer
+	vectorWriteReconciler Runnable
 	embeddingBuilders     embed.BuilderProvider
 	indexersWG            sync.WaitGroup
 
@@ -934,14 +932,9 @@ func (s *server) Init(ctx context.Context) error {
 }
 
 // startVectorIndexers launches the vector reconciler (which owns and runs
-// the backfiller). Optional: nil = feature off. The reconciler gets the
-// server's broadcaster via UseBroadcaster before Run so its watch path
-// lights up.
+// the backfiller). Optional: nil = feature off.
 func (s *server) startVectorIndexers() {
 	if s.vectorWriteReconciler != nil {
-		if s.broadcaster != nil {
-			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
-		}
 		s.indexersWG.Go(func() {
 			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
 				s.log.Error("vector reconciler stopped", "err", err)
