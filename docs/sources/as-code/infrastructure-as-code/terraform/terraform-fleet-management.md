@@ -31,11 +31,12 @@ Follow the Alloy steps, the OpenTelemetry Collector steps, or both if you're man
 Before you begin, ensure you have the following:
 
 - A Grafana Cloud account, as shown in [Get started](https://grafana.com/docs/grafana-cloud/get-started/)
-- [Terraform](https://www.terraform.io/downloads) installed on your machine
 - Administrator permissions in your Grafana instance
+- [Terraform](https://www.terraform.io/downloads) installed on your machine
 - One of the following collectors installed on your machine:
   - [Alloy](https://grafana.com/docs/alloy/latest/set-up/install/)
-  - A supported OpenTelemetry Collector distribution that includes the [OpAMP extension](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/opampextension) (for example, `otelcol-contrib`), along with the [OpAMP Supervisor](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/cmd/opampsupervisor)
+  - A supported OpenTelemetry Collector distribution that includes the [OpAMP extension](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/opampextension) (for example, `otelcol-contrib`)
+    If using the OpenTelemetry Collector, you must also install the [OpAMP Supervisor](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/cmd/opampsupervisor).
 
 {{< admonition type="note" >}}
 All of the following Terraform configuration files should be saved in the same directory.
@@ -145,6 +146,11 @@ This Terraform configuration configures the [Grafana provider](https://registry.
 
 Alloy and the OpenTelemetry Collector need properly scoped access to read remote configuration from Fleet Management and write telemetry to Grafana Cloud.
 
+The Terraform provider creates the `alloy_token` for you when you run `terraform apply` later in this guide.
+
+OpenTelemetry Collectors require an access token _before_ you can successfully apply the Terraform configurations.
+You create the `otel_token` manually in this step, **but you won't need it until later in the guide**.
+
 ### Alloy
 
 This Terraform configuration creates the following:
@@ -225,6 +231,15 @@ This Terraform configuration creates the following:
    }
    ```
 
+1. Create a Collector access policy and token.
+   To create a new one, refer to [Grafana Cloud Access Policies](https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/).
+   Add your stack to the realms list.
+   The scope needed for the examples in this guide is:
+   - `set:otel-data-write`
+
+   **Save the token to a secure file.**
+   You must enter it later in this guide when you [apply the Terraform configuration](#apply-the-terraform-configuration).
+
 ## Create a configuration file for your collector
 
 In this step, you create a local configuration file for Alloy or the OpAMP Supervisor.
@@ -284,7 +299,6 @@ This Terraform configuration creates a Supervisor configuration file that connec
    capabilities:
      reports_effective_config: true
      accepts_remote_config: true
-     reports_remote_config: true
 
    agent:
      executable: '<OTELCOL_EXECUTABLE_PATH>'
@@ -307,7 +321,7 @@ This Terraform configuration creates a Supervisor configuration file that connec
      content = templatefile(
        "supervisor.yaml.tftpl",
        {
-         collector_id   = <COLLECTOR_ID>
+         collector_id   = "<COLLECTOR_ID>"
          fm_auth_base64 = base64encode("${local.fm_id}:${grafana_cloud_access_policy_token.otel_token.token}"),
          fm_url         = local.fm_url,
        },
@@ -491,19 +505,21 @@ This pipeline collects host metrics with the [`hostmetrics` receiver](https://gi
            statements:
              - set(attributes["host.name"], resource.attributes["host.name"])
              - set(attributes["os.type"], resource.attributes["os.type"])
-     batch:
 
    exporters:
      otlp_http/grafana_cloud:
        endpoint: '<OTLP_ENDPOINT>'
        headers:
          Authorization: 'Basic $${env:GCLOUD_BASIC_AUTH_BASE64}'
+       sending_queue:
+         enabled: true
+         batch: {}
 
    service:
      pipelines:
        metrics/hostmetrics:
          receivers: [hostmetrics]
-         processors: [resourcedetection, transform/add_host_metric_attributes, batch]
+         processors: [resourcedetection, transform/add_host_metric_attributes]
          exporters: [otlp_http/grafana_cloud]
    ```
 
@@ -541,13 +557,17 @@ In a terminal, run the following commands from the directory where all of the co
    terraform plan
    ```
 
+   If you're following the OTel path, enter the `otel_token` when prompted.
+   You generated this token at the [Create an access policy and token for your collector](#create-an-access-policy-and-token-for-your-collector) step.
+
 1. Apply the configuration:
 
    ```shell
    terraform apply
    ```
 
-   If you're following the OTel path, enter `yes` when Terraform asks to change the `otel_token` value.
+   If you're following the OTel path, enter the `otel_token` again.
+   Enter `yes` when Terraform asks to change the `otel_token` value.
 
 ## Run the collector
 
@@ -579,7 +599,7 @@ The pipelines used in this guide won't work without it.
 1. Start the Supervisor:
 
    ```shell
-   opampsupervisor --config=supervisor.yaml
+   ./opampsupervisor --config=supervisor.yaml
    ```
 
 ## Validation
@@ -588,15 +608,15 @@ After you apply the changes in the Terraform configurations and run your collect
 
 - A collector is added to the Fleet Management **Inventory tab**, showing the `collector_type` you configured (`ALLOY` or `OTEL`):
 
-  {{< figure alt="The Inventory screen in the Fleet Management interface in Grafana Cloud which shows that a new collector called `prod_collector` is registered with attribute `env=PROD`, has a healthy status, and was last modified a few seconds ago." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-collector.png" >}}
+  {{< figure alt="The Inventory screen in the Fleet Management interface in Grafana Cloud which shows that a new OpenTelemetry Collector called `otelcol-contrib` is registered with attribute `env=PROD`, has a healthy status, and was last modified a few minutes ago." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-collector-otel.png" >}}
 
 - A pipeline is added to the Fleet Management **Remote configuration tab**:
 
-  {{< figure alt="The Remote configuration screen in the Fleet Management interface in Grafana Cloud which shows that a new configuration pipeline called `profiling` is active and was last modified a few seconds ago." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-pipeline.png" >}}
+  {{< figure alt="The Remote configuration screen in the Fleet Management interface in Grafana Cloud which shows that a new OpenTelemetry configuration pipeline called `otel_host_metrics` is active." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-pipeline-otel.png" >}}
 
-- Telemetry is being exported to Grafana Cloud. For example, Alloy profiles are visible in Grafana Cloud Profiles:
+- Telemetry is being exported to Grafana Cloud. For example, host metrics are visible in Grafana Cloud Metrics:
 
-  {{< figure alt="A dashboard in Grafana Cloud which shows Alloy profiling data, including graphs for CPU and memory." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-profiles.png" >}}
+  {{< figure alt="A dashboard in Grafana Cloud which shows OTLP host metrics data, including a graph for memory usage." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-host-metrics.png" >}}
 
 ## Summary
 
