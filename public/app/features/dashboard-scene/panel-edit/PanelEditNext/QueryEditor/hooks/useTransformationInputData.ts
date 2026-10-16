@@ -4,10 +4,9 @@ import { type DataFrame } from '@grafana/data';
 
 import { type Transformation } from '../types';
 
-import { frameMatcherFor } from './frameMatcher';
 import {
   NO_CONFIGS,
-  isInterpolatable,
+  frameMatcherFor,
   precedingTransformations,
   useInterpolatedConfigs,
   useTransformedFrames,
@@ -61,7 +60,7 @@ export function useTransformationInputData({
     // applies that filter itself and merges the rest back afterwards — so the editor has to be shown
     // the same narrowed set. Otherwise an Organize editor sits behind a filter that picks one frame
     // and still reports on all of them.
-    const matcher = isInterpolatable(interpolatedSelf) ? frameMatcherFor(interpolatedSelf) : undefined;
+    const matcher = frameMatcherFor(interpolatedSelf);
 
     return matcher ? precedingOutput.filter((frame) => matcher(frame)) : precedingOutput;
   }, [interpolatedSelf, precedingOutput]);
