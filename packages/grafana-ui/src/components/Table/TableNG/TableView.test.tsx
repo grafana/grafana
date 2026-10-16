@@ -126,7 +126,7 @@ it('filters locally while preserving existing sorting and source indices on refr
   await waitFor(() => expect(displayedNames()).toEqual(['alpha', 'beta']));
   expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([1, 2]);
   await user.click(screen.getByRole('button', { name: 'Filter Value' }));
-  await user.click(screen.getByRole('button', { name: 'Clear' }));
+  await user.click(screen.getByRole('button', { name: 'Clear filter' }));
   expect(displayedNames()).toEqual(['alpha', 'beta', 'gamma', 'outlier']);
 });
 
@@ -162,8 +162,8 @@ it('computes each distribution using all other filters, independent of insertion
     },
   ]);
   expect(result.filteredRows.map((row) => row.__index)).toEqual([2]);
-  expect(result.crossFilterRows[tableFilterKey(frame.fields[0])].map((row) => row.__index)).toEqual([0, 2]);
-  expect(result.crossFilterRows[tableFilterKey(frame.fields[1])].map((row) => row.__index)).toEqual([1, 2]);
+  expect(result.crossFilterRows[tableFilterKey(frame.fields[0])]().map((row) => row.__index)).toEqual([0, 2]);
+  expect(result.crossFilterRows[tableFilterKey(frame.fields[1])]().map((row) => row.__index)).toEqual([1, 2]);
 });
 
 it('offers typed filters on child fields and leaves sibling parents intact', async () => {

@@ -1,11 +1,13 @@
 import { toDataFrame } from '@grafana/data';
 
-import { readFieldFilters, writeTableFilter } from './filterByValue';
+import { activeFilters, writeTableFilter } from './filterByValue';
 import { createRangePredicate, editableRangeFilter } from './rangeFilter';
 import { createValuePredicate, unsupportedFilterReason } from './valueFilter';
 
 const source = toDataFrame({ fields: [{ name: 'time', values: [1000, 2000] }] });
 const context = { source, field: source.fields[0], frameKey: 'A', frameIndex: 0 };
+const readFilters = (configs: Parameters<typeof activeFilters>[0]) =>
+  activeFilters(configs, context.frameKey, context.source);
 
 it.each([
   { min: undefined, max: 2000, includeMissing: true },
@@ -23,9 +25,9 @@ it.each([
     },
   });
   const configs = writeTableFilter([], predicate, context);
-  expect(readFieldFilters(configs, context)[0].options.filters[0].config).toEqual(predicate);
-  expect(editableRangeFilter(readFieldFilters(configs, context)[0])).toBe(true);
-  expect(unsupportedFilterReason(readFieldFilters(configs, context))).toBeUndefined();
+  expect(readFilters(configs)[0].options.filters[0].config).toEqual(predicate);
+  expect(editableRangeFilter(readFilters(configs)[0])).toBe(true);
+  expect(unsupportedFilterReason(readFilters(configs))).toBeUndefined();
 });
 
 it('switches an editable value selection to a range without duplicating the filter or changing its target', () => {
@@ -58,8 +60,8 @@ it.each([{ inclusive: false }, { allowOpenBounds: false }, { includeMissing: und
   (options) => {
     const predicate = createRangePredicate({ min: 1000, max: 2000, includeMissing: false });
     const configs = writeTableFilter([], { ...predicate, options: { ...predicate.options, ...options } }, context);
-    expect(editableRangeFilter(readFieldFilters(configs, context)[0])).toBe(false);
-    expect(unsupportedFilterReason(readFieldFilters(configs, context))).toBe('uneditable');
+    expect(editableRangeFilter(readFilters(configs)[0])).toBe(false);
+    expect(unsupportedFilterReason(readFilters(configs))).toBe('uneditable');
   }
 );
 
