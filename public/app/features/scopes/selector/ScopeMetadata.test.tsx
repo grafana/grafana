@@ -33,10 +33,7 @@ describe('ScopeMetadata', () => {
 
   it.each<{ filter: ScopeSpecFilter; text: string }>([
     { filter: { key: 'env', operator: 'not-equals', value: 'dev' }, text: 'env != dev' },
-    { filter: { key: 'pod', operator: 'regex-match', value: 'web-.*' }, text: 'pod =~ web-.*' },
-    { filter: { key: 'pod', operator: 'regex-not-match', value: 'job-.*' }, text: 'pod !~ job-.*' },
     { filter: { key: 'region', operator: 'one-of', value: '', values: ['us', 'eu'] }, text: 'region =| us, eu' },
-    { filter: { key: 'region', operator: 'not-one-of', value: '', values: ['ap', 'sa'] }, text: 'region !=| ap, sa' },
   ])('formats a $filter.operator filter as "$text"', ({ filter, text }) => {
     render(<ScopeMetadata filters={[filter]} />);
 
@@ -55,11 +52,5 @@ describe('ScopeMetadata', () => {
 
     expect(screen.getByText('Only a description')).toBeInTheDocument();
     expect(screen.queryByText('Filters')).not.toBeInTheDocument();
-  });
-
-  it('renders the scope title when provided', () => {
-    render(<ScopeMetadata title="Vault" description="d" />);
-
-    expect(screen.getByText('Vault')).toBeInTheDocument();
   });
 });

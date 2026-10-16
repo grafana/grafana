@@ -21,9 +21,14 @@ const scopes = [
   scope('with-filters', { filters: [{ key: 'cluster', operator: 'equals', value: 'prod' }] }),
   scope('with-path', { defaultPath: ['', 'category', 'path-node'] }),
   scope('bare'),
+  scope('orphan', { filters: [{ key: 'env', operator: 'equals', value: 'qa' }], defaultPath: ['', 'category'] }),
   scope('other', { filters: [{ key: 'env', operator: 'not-equals', value: 'dev' }] }),
 ];
 const nodes = [
+  {
+    metadata: { name: 'category' },
+    spec: { nodeType: 'container' as const, title: 'Category', description: 'Category description', parentName: '' },
+  },
   leafNode('path-node', 'with-path', 'Found through the default path'),
   leafNode('stored-node', 'with-filters', 'Found through the stored node'),
 ];
@@ -91,6 +96,43 @@ describe('RecentScopes metadata tooltip', () => {
     expect(within(screen.getByRole('tooltip')).getByText('env != dev')).toBeInTheDocument();
     expect(within(screen.getByRole('tooltip')).getByText('First')).toBeInTheDocument();
     expect(within(screen.getByRole('tooltip')).getByText('Second')).toBeInTheDocument();
+  });
+
+  it('does not show the description of a category the default path ends on', async () => {
+    const { user } = await renderExpanded([set('orphan')]);
+
+    await user.hover(screen.getByRole('button', { name: /Title orphan/ }));
+
+    expect(await within(await screen.findByRole('tooltip')).findByText('env = qa')).toBeInTheDocument();
+    expect(screen.queryByText('Category description')).not.toBeInTheDocument();
+  });
+
+  it('does not apply the stored node to every scope of a recent set with several scopes', async () => {
+    const { user } = await renderExpanded([
+      {
+        scopeIds: ['with-filters', 'other'],
+        scopes: [
+          { id: 'with-filters', title: 'First' },
+          { id: 'other', title: 'Second' },
+        ],
+        scopeNodeId: 'stored-node',
+      },
+    ]);
+
+    await user.hover(screen.getByRole('button', { name: /First, Second/ }));
+
+    expect(await within(await screen.findByRole('tooltip')).findByText('env != dev')).toBeInTheDocument();
+    expect(screen.queryByText('Found through the stored node')).not.toBeInTheDocument();
+  });
+
+  it('describes the recent scope button by its metadata', async () => {
+    const { user } = await renderExpanded([set('with-filters')]);
+    const button = screen.getByRole('button', { name: /Title with-filters/ });
+
+    await user.hover(button);
+    await screen.findByRole('tooltip');
+
+    expect(document.getElementById(button.getAttribute('aria-describedby')!)).toHaveTextContent('cluster = prod');
   });
 
   it('shows no tooltip for a recent scope without a description or filters', async () => {

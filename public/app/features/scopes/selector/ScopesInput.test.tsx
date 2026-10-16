@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { type Scope, type ScopeNode } from '@grafana/data';
@@ -67,16 +67,11 @@ describe('ScopesTooltip', () => {
       },
     };
 
-    it('shows the node description and scope filters', () => {
+    it('shows the node description and scope filters, separated from the Remove all button by a divider', () => {
       renderTooltip({ nodes: metadataNodes, scopes: metadataScopes });
 
       expect(screen.getByText('Production cluster')).toBeInTheDocument();
       expect(screen.getByText('cluster = prod')).toBeInTheDocument();
-    });
-
-    it('separates the metadata from the Remove all button with a divider', () => {
-      renderTooltip({ nodes: metadataNodes, scopes: metadataScopes });
-
       expect(screen.getByRole('separator')).toBeInTheDocument();
       expect(screen.getByTestId('scopes-selector-input-clear')).toBeInTheDocument();
     });
@@ -102,19 +97,17 @@ describe('ScopesTooltip', () => {
 
       // One before each metadata section, plus the one above Remove all
       expect(screen.getAllByRole('separator')).toHaveLength(3);
+      // Each section is labelled with the name of its scope
+      expect(screen.getByText('Test Node')).toBeInTheDocument();
+      expect(screen.getByText('Second Node')).toBeInTheDocument();
     });
 
-    it('shows no divider when the Remove all button is hidden', () => {
-      renderTooltip({ nodes: metadataNodes, scopes: metadataScopes, onRemoveAllClick: undefined });
+    it.each<{ desc: string; overrides: Partial<ScopesTooltipProps>; withMetadata: boolean }>([
+      { desc: 'the Remove all button is hidden', overrides: { onRemoveAllClick: undefined }, withMetadata: true },
+      { desc: 'there is no metadata above the Remove all button', overrides: {}, withMetadata: false },
+    ])('shows no divider when $desc', ({ overrides, withMetadata }) => {
+      renderTooltip(withMetadata ? { nodes: metadataNodes, scopes: metadataScopes, ...overrides } : overrides);
 
-      expect(screen.getByText('Production cluster')).toBeInTheDocument();
-      expect(screen.queryByRole('separator')).not.toBeInTheDocument();
-    });
-
-    it('shows no divider when there is no metadata above the Remove all button', () => {
-      renderTooltip();
-
-      expect(screen.getByTestId('scopes-selector-input-clear')).toBeInTheDocument();
       expect(screen.queryByRole('separator')).not.toBeInTheDocument();
     });
   });
@@ -148,5 +141,31 @@ describe('ScopesTooltip', () => {
     );
 
     expect(await screen.findByText('Staging cluster')).toBeInTheDocument();
+  });
+
+  it('replaces a cached description once the loaded node turns out not to belong to the scope', async () => {
+    const category: ScopeNode = {
+      metadata: { name: 'node-1' },
+      spec: { nodeType: 'container', title: 'Category', parentName: '', description: 'Category description' },
+    };
+    const scope1: Scope = {
+      metadata: { name: 'scope-1' },
+      spec: { title: 'Test Scope', filters: [{ key: 'env', operator: 'equals', value: 'qa' }] },
+    };
+
+    renderWithScopesServices(
+      <ScopesTooltip
+        nodes={{ 'node-1': category }}
+        scopes={{ 'scope-1': scope1 }}
+        appliedScopes={appliedScopes}
+        onRemoveAllClick={jest.fn()}
+        disabled={false}
+      />,
+      { scopes: [scope1], nodes: [category] }
+    );
+
+    expect(screen.getByText('Category description')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Category description')).not.toBeInTheDocument());
+    expect(screen.getByText('env = qa')).toBeInTheDocument();
   });
 });
