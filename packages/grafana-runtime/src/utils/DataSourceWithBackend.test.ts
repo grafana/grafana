@@ -25,6 +25,7 @@ import {
   standardStreamOptionsProvider,
   toStreamingDataResponse,
 } from './DataSourceWithBackend';
+import { TracedError } from './TracedError';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 
 interface MyQuery extends DataQuery {
@@ -202,7 +203,10 @@ describe('DataSourceWithBackend', () => {
     const { ds } = createMockDatasource();
     // backend_srv rejects like this when response.json() fails, e.g. because the body is larger
     // than the browser's maximum string length
-    const parseError = new SyntaxError('Unexpected end of JSON input');
+    const parseError = new TracedError(
+      'Failed to parse the response body as JSON: Unexpected end of JSON input.',
+      new SyntaxError('Unexpected end of JSON input')
+    );
     const fetchSpy = jest.spyOn(backendSrv, 'fetch').mockReturnValueOnce(throwError(() => parseError));
 
     try {
@@ -217,7 +221,7 @@ describe('DataSourceWithBackend', () => {
 
       expect(response.state).toBe(LoadingState.Error);
       expect(response.data).toEqual([]);
-      expect(response.error?.message).toBe('Unexpected end of JSON input');
+      expect(response.error?.message).toBe('Failed to parse the response body as JSON: Unexpected end of JSON input.');
     } finally {
       fetchSpy.mockRestore();
     }

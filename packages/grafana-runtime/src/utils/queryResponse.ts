@@ -18,6 +18,7 @@ import {
 import { type FetchError, type FetchResponse } from '../services';
 
 import { type HealthCheckResultDetails } from './DataSourceWithBackend';
+import { TracedError } from './TracedError';
 import { toDataQueryError } from './toDataQueryError';
 
 export const cachedResponseNotice: QueryResultMetaNotice = { severity: 'info', text: 'Cached response' };
@@ -62,13 +63,16 @@ export function toDataQueryResponse(
     | { data: BackendDataSourceResponse | undefined }
     | FetchResponse<BackendDataSourceResponse | undefined>
     | DataQueryError
-    | Error,
+    | TracedError,
   queries?: DataQuery[]
 ): DataQueryResponse {
-  // A thrown Error has no HTTP shape, so the checks below would let it fall through as an empty
-  // successful response and hide the failure behind "No data". This happens, for example, when the
-  // browser rejects response.json() because the body exceeds its maximum string length.
-  if (res instanceof Error) {
+  // backend_srv rejects with a TracedError when a successful response body cannot be parsed, e.g.
+  // because it exceeds the browser's maximum string length. It has no HTTP shape, so the checks
+  // below would turn it into an empty successful response and hide the failure behind "No data".
+  // Other thrown errors are deliberately left on that path: DataSourceWithBackend.query also routes
+  // errors from frame decoding here, and surfacing those would change behavior for every backend
+  // data source.
+  if (res instanceof TracedError) {
     return { data: [], state: LoadingState.Error, error: toDataQueryError(res) };
   }
 
