@@ -63,8 +63,9 @@ type enqueueRequest struct {
 }
 
 type dequeueRequest struct {
-	ctx      context.Context
-	respChan chan dequeueResponse
+	ctx         context.Context
+	respChan    chan dequeueResponse
+	pendingElem *list.Element
 }
 
 type dequeueResponse struct {
@@ -98,13 +99,13 @@ type Queue struct {
 	logger log.Logger
 
 	enqueueChan           chan enqueueRequest
-	dequeueChan           chan dequeueRequest
+	dequeueChan           chan *dequeueRequest
 	lenChan               chan lenRequest
 	activeTenantsLenChan  chan activeTenantsLenRequest
 	dispatcherStoppedChan chan struct{}
 	completionChan        chan *tenantQueue
-	// A nil item signals cancellation of pending dequeue requests.
-	cancellationChan chan *queuedItem
+	cancelItemChan        chan *queuedItem
+	cancelDequeueChan     chan *dequeueRequest
 
 	// tenantQueues stores the queues for each tenant
 	tenantQueues map[string]*tenantQueue
@@ -145,12 +146,13 @@ func NewQueue(opts *QueueOptions) *Queue {
 		logger: opts.Logger,
 
 		enqueueChan:           make(chan enqueueRequest),
-		dequeueChan:           make(chan dequeueRequest),
+		dequeueChan:           make(chan *dequeueRequest),
 		lenChan:               make(chan lenRequest),
 		activeTenantsLenChan:  make(chan activeTenantsLenRequest),
 		dispatcherStoppedChan: make(chan struct{}),
 		completionChan:        make(chan *tenantQueue),
-		cancellationChan:      make(chan *queuedItem),
+		cancelItemChan:        make(chan *queuedItem),
+		cancelDequeueChan:     make(chan *dequeueRequest),
 
 		tenantQueues:           make(map[string]*tenantQueue),
 		activeTenants:          list.New(),
@@ -188,9 +190,8 @@ func (q *Queue) scheduleRoundRobin() {
 	for q.pendingDequeueRequests.Len() > 0 {
 		reqElem := q.pendingDequeueRequests.Front()
 		req := reqElem.Value.(*dequeueRequest)
-		if err := req.ctx.Err(); err != nil {
-			q.pendingDequeueRequests.Remove(reqElem)
-			req.respChan <- dequeueResponse{err: err}
+		if req.ctx.Err() != nil {
+			q.cancelDequeue(req)
 			continue
 		}
 		var tenantElem *list.Element
@@ -213,6 +214,7 @@ func (q *Queue) scheduleRoundRobin() {
 		q.inFlight.Inc()
 		q.queueLength.WithLabelValues(tq.id).Set(float64(tq.len()))
 		q.pendingDequeueRequests.Remove(reqElem)
+		req.pendingElem = nil
 		req.respChan <- dequeueResponse{runnable: q.wrapRunnable(qi)}
 		q.cleanupTenant(tq)
 		if tq.activeElem != nil {
@@ -298,7 +300,10 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 	qi.enqueuedAt = time.Now()
 	qi.tenant = tq
 	qi.stopCancel = context.AfterFunc(qi.ctx, func() {
-		q.sendCancellation(qi)
+		select {
+		case q.cancelItemChan <- qi:
+		case <-q.dispatcherStoppedChan:
+		}
 	})
 	tq.items = append(tq.items, qi)
 	q.queueLength.WithLabelValues(req.tenantID).Set(float64(len(tq.items)))
@@ -310,8 +315,17 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 	req.respChan <- nil
 }
 
-func (q *Queue) handleDequeueRequest(req dequeueRequest) {
-	q.pendingDequeueRequests.PushBack(&req)
+func (q *Queue) handleDequeueRequest(req *dequeueRequest) {
+	req.pendingElem = q.pendingDequeueRequests.PushBack(req)
+}
+
+func (q *Queue) cancelDequeue(req *dequeueRequest) {
+	if req.pendingElem == nil {
+		return
+	}
+	q.pendingDequeueRequests.Remove(req.pendingElem)
+	req.pendingElem = nil
+	req.respChan <- dequeueResponse{err: req.ctx.Err()}
 }
 
 func (q *Queue) handleLenRequest(req lenRequest) {
@@ -349,33 +363,16 @@ func (q *Queue) dispatcherLoop(ctx context.Context) error {
 			tq.inFlight--
 			q.inFlight.Dec()
 			q.cleanupTenant(tq)
-		case qi := <-q.cancellationChan:
-			if qi != nil {
-				q.cancelItem(qi)
-			} else {
-				for elem := q.pendingDequeueRequests.Front(); elem != nil; {
-					next := elem.Next()
-					req := elem.Value.(*dequeueRequest)
-					if err := req.ctx.Err(); err != nil {
-						q.pendingDequeueRequests.Remove(elem)
-						req.respChan <- dequeueResponse{err: err}
-					}
-					elem = next
-				}
-			}
+		case qi := <-q.cancelItemChan:
+			q.cancelItem(qi)
+		case req := <-q.cancelDequeueChan:
+			q.cancelDequeue(req)
 		case req := <-q.lenChan:
 			q.handleLenRequest(req)
 
 		case req := <-q.activeTenantsLenChan:
 			req.respChan <- q.activeTenants.Len()
 		}
-	}
-}
-
-func (q *Queue) sendCancellation(qi *queuedItem) {
-	select {
-	case q.cancellationChan <- qi:
-	case <-q.dispatcherStoppedChan:
 	}
 }
 
@@ -425,7 +422,7 @@ func (q *Queue) Dequeue(ctx context.Context) (func(), error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	req := dequeueRequest{ctx: ctx, respChan: make(chan dequeueResponse, 1)}
+	req := &dequeueRequest{ctx: ctx, respChan: make(chan dequeueResponse, 1)}
 	select {
 	case q.dequeueChan <- req:
 	case <-ctx.Done():
@@ -434,7 +431,10 @@ func (q *Queue) Dequeue(ctx context.Context) (func(), error) {
 		return nil, ErrQueueClosed
 	}
 	stop := context.AfterFunc(ctx, func() {
-		q.sendCancellation(nil)
+		select {
+		case q.cancelDequeueChan <- req:
+		case <-q.dispatcherStoppedChan:
+		}
 	})
 	defer stop()
 	// Once accepted, the dispatcher owns cancellation and delivery. Returning on

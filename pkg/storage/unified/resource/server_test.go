@@ -4791,6 +4791,49 @@ func TestResourceServerQOSQueueWaitSpan(t *testing.T) {
 		require.Equal(t, "exception", spans[0].Events()[0].Name)
 		require.Eventually(t, func() bool { return q.Len() == 0 }, time.Second, time.Millisecond)
 	})
+	t.Run("execution cancellation leaves the completed wait successful", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv, _ := newTestServerWithQueue(t, 10, 2)
+		srv.queueConfig.Timeout = time.Minute
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		started := make(chan struct{})
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		t.Cleanup(unblock)
+		finished := make(chan struct{})
+		result := make(chan error, 1)
+		go func() {
+			result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) {
+				close(started)
+				<-release
+				close(finished)
+			})
+		}()
+		awaitQOSTestResult(t, started)
+		cancel()
+		require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Equal(t, otelcodes.Unset, spans[0].Status().Code)
+		require.Empty(t, spans[0].Events())
+		unblock()
+		awaitQOSTestResult(t, finished)
+	})
+	t.Run("enqueue failure ends the wait with an error", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv := &server{
+			queue:       scheduler.NewQueue(&scheduler.QueueOptions{}),
+			queueConfig: QueueConfig{Timeout: time.Minute, MaxRetries: 1},
+			log:         log.NewNopLogger(),
+		}
+		err := srv.runInQueue(t.Context(), "stack-a", "read", func(context.Context) { t.Error("rejected work ran") })
+		require.ErrorIs(t, err, scheduler.ErrQueueClosed)
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Equal(t, otelcodes.Error, spans[0].Status().Code)
+		require.Len(t, spans[0].Events(), 1)
+	})
 }
 
 func startQOSTestService(t *testing.T, service services.Service) {

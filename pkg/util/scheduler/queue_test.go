@@ -786,6 +786,41 @@ grafana_resource_server_qos_in_flight 32
 			}
 		})
 
+		t.Run("CancelOnlyTheRequestedWaitingWorker", func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				q := newExecutionTestQueue(t, 1)
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				results := make([]chan dequeueResponse, 3)
+				for i := range results {
+					results[i] = make(chan dequeueResponse, 1)
+					workerCtx := t.Context()
+					if i == 1 {
+						workerCtx = ctx
+					}
+					go func() {
+						fn, err := q.Dequeue(workerCtx)
+						results[i] <- dequeueResponse{runnable: fn, err: err}
+					}()
+				}
+				synctest.Wait()
+				cancel()
+				canceled := <-results[1]
+				require.ErrorIs(t, canceled.err, context.Canceled)
+				require.Nil(t, canceled.runnable)
+				for _, tenant := range []string{"a", "b"} {
+					require.NoError(t, q.Enqueue(t.Context(), tenant, func() {}))
+				}
+				for _, i := range []int{0, 2} {
+					result := <-results[i]
+					require.NoError(t, result.err)
+					result.runnable()
+				}
+				require.Zero(t, q.Len())
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
+			})
+		})
+
 		t.Run("Completion", func(t *testing.T) {
 			t.Run("completion releases reservation for queued work", func(t *testing.T) {
 				q := newExecutionTestQueue(t, 1)

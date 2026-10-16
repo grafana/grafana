@@ -3077,11 +3077,20 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 	_, waitSpan := tracer.Start(queueCtx, "resource.server.runInQueue", trace.WithAttributes(
 		attribute.String("operation", operation), attribute.String("stack", tenantID),
 	))
-	defer waitSpan.End()
+	var finishWaitOnce sync.Once
+	finishWait := func(err error) {
+		finishWaitOnce.Do(func() {
+			if err != nil {
+				_ = tracing.Error(waitSpan, err)
+			}
+			waitSpan.End()
+		})
+	}
+	defer finishWait(nil)
 
 	done := make(chan struct{})
 	wrappedRunnable := func() {
-		waitSpan.End()
+		finishWait(nil)
 		defer close(done)
 		runnable(queueCtx)
 	}
@@ -3103,7 +3112,9 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 		s.log.Warn("failed to enqueue runnable, retrying", "tenantID", tenantID, "error", err)
 		if !boff.Ongoing() {
 			// Backoff finished (retries exhausted or context canceled).
-			return tracing.Errorf(waitSpan, "failed to enqueue for tenant %s: %w", tenantID, err)
+			err = fmt.Errorf("failed to enqueue for tenant %s: %w", tenantID, err)
+			finishWait(err)
+			return err
 		}
 		boff.Wait()
 	}
@@ -3113,7 +3124,9 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 	case <-done:
 		return nil // Completed successfully.
 	case <-queueCtx.Done():
-		return tracing.Error(waitSpan, queueCtx.Err()) // Timed out or canceled while waiting for execution.
+		err := queueCtx.Err()
+		finishWait(err)
+		return err
 	}
 }
 
