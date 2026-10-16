@@ -11,25 +11,25 @@ type SelectableFoldersSelector = ReturnType<typeof dashboardAPIv0alpha1.endpoint
 type FolderChildrenResponse = { data?: { hits: Array<{ name: string }> } };
 
 /**
- * Checks which of each parent's loaded child folders the user can pick, once the children have loaded.
- * Returns the names that can be picked, keyed by parent UID. A parent is missing until its check has finished.
+ * Checks which folders in each loaded response the user can pick, once the response has loaded.
+ * Returns the names that can be picked, keyed like the responses. A key is missing until its check has finished.
  */
-export function useSelectableFolders(responseByParent: Record<string, FolderChildrenResponse>, enabled: boolean) {
+export function useSelectableFolders(responsesByKey: Record<string, FolderChildrenResponse>, enabled: boolean) {
   const dispatch = useDispatch();
 
   const [selectors, setSelectors] = useState<Record<string, SelectableFoldersSelector>>({});
-  // The child names last checked per parent, so a changed response is checked again
+  // The names last checked per key, so a changed response is checked again
   const requestedNamesRef = useRef<Record<string, string>>({});
   const requestsRef = useRef<Array<{ unsubscribe: () => void }>>([]);
 
   const selectableSelector = useMemo(() => {
-    const parents = Object.keys(selectors);
+    const keys = Object.keys(selectors);
     return createSelector(
-      parents.map((parent) => selectors[parent]),
+      keys.map((key) => selectors[key]),
       (...responses) => {
         let isLoading = false;
         let error: unknown = undefined;
-        const selectableByParent: Record<string, Set<string>> = {};
+        const selectableByKey: Record<string, Set<string>> = {};
 
         responses.forEach((response, index) => {
           if (response.status === QueryStatus.pending) {
@@ -40,11 +40,11 @@ export function useSelectableFolders(responseByParent: Record<string, FolderChil
           }
           // A failed check leaves the set empty, so the folders show as read only rather than selectable
           if (response.status === QueryStatus.fulfilled || response.status === QueryStatus.rejected) {
-            selectableByParent[parents[index]] = new Set(response.data?.hits.map((hit) => hit.name));
+            selectableByKey[keys[index]] = new Set(response.data?.hits.map((hit) => hit.name));
           }
         });
 
-        return { isLoading, error, selectableByParent };
+        return { isLoading, error, selectableByKey };
       }
     );
   }, [selectors]);
@@ -56,22 +56,22 @@ export function useSelectableFolders(responseByParent: Record<string, FolderChil
       return;
     }
 
-    for (const [parentName, response] of Object.entries(responseByParent)) {
+    for (const [key, response] of Object.entries(responsesByKey)) {
       const names = response.data?.hits.map((hit) => hit.name);
-      if (!names?.length || requestedNamesRef.current[parentName] === names.join(',')) {
+      if (!names?.length || requestedNamesRef.current[key] === names.join(',')) {
         continue;
       }
-      requestedNamesRef.current[parentName] = names.join(',');
+      requestedNamesRef.current[key] = names.join(',');
 
       const args = getSelectableFoldersArgs(names);
       const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
       requestsRef.current = requestsRef.current.concat([subscription]);
       setSelectors((prev) => ({
         ...prev,
-        [parentName]: dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select(args),
+        [key]: dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select(args),
       }));
     }
-  }, [enabled, responseByParent, dispatch]);
+  }, [enabled, responsesByKey, dispatch]);
 
   useEffect(() => {
     return () => {

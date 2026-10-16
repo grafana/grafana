@@ -39,7 +39,7 @@ describe('useSelectableFolders', () => {
     mockSelect.mockImplementation((args) => selectorReturning({ status: QueryStatus.pending, originalArgs: args }));
   });
 
-  it('checks the loaded children of each parent', () => {
+  it('checks the folders in each loaded response', () => {
     renderHook(() => useSelectableFolders({ general: responseFor('a', 'b'), a: responseFor('c') }, true));
 
     expect(mockInitiate).toHaveBeenCalledTimes(2);
@@ -47,7 +47,7 @@ describe('useSelectableFolders', () => {
     expect(mockInitiate).toHaveBeenCalledWith({ type: 'folder', permission: 'create', name: ['c'], limit: 1 });
   });
 
-  it('only checks a parent again when its children change', () => {
+  it('only checks a response again when its folders change', () => {
     const { rerender } = renderHook(({ responses }) => useSelectableFolders(responses, true), {
       initialProps: { responses: { general: responseFor('a') } },
     });
@@ -60,7 +60,7 @@ describe('useSelectableFolders', () => {
     expect(mockInitiate).toHaveBeenLastCalledWith({ type: 'folder', permission: 'create', name: ['a', 'b'], limit: 2 });
   });
 
-  it('does not check anything when disabled or when a parent has no children', () => {
+  it('does not check anything when disabled or when a response has no folders', () => {
     renderHook(() => useSelectableFolders({ general: responseFor('a'), empty: responseFor() }, false));
     renderHook(() => useSelectableFolders({ empty: responseFor() }, true));
 
@@ -74,7 +74,7 @@ describe('useSelectableFolders', () => {
 
     const { result } = renderHook(() => useSelectableFolders({ general: responseFor('a') }, true));
 
-    expect(result.current.selectableByParent.general).toEqual(new Set());
+    expect(result.current.selectableByKey.general).toEqual(new Set());
     expect(result.current.error).toEqual(new Error('Forbidden'));
   });
 
