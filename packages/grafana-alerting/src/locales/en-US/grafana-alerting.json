@@ -35,6 +35,7 @@
       "contact-points-error": "Could not load contact points",
       "manage-contact-points": "View or create contact points",
       "routing-tree-not-found": "The previously selected notification policy could not be found — it may have been deleted",
+      "routing-tree-reset": "Use the default policy",
       "routing-trees-error": "Could not load notification policies",
       "time-intervals-unavailable": "Some selected mute or active time intervals no longer exist or cannot be used: {{names}}",
       "timings-disabled": "Select a contact point first"

@@ -122,7 +122,7 @@ describe('NotificationsSettingsSelector', () => {
     renderPicker({ mode: 'notificationPolicy', value: { type: 'NamedRoutingTree', routingTree: 'deleted-tree' } });
 
     expect(await screen.findByText(/could not be found/i)).toBeInTheDocument();
-    expect(screen.getByText(/default policy/i)).toBeInTheDocument();
+    expect(screen.getByText('Default policy')).toBeInTheDocument();
   });
 
   it('does not preview the default policy for a routing tree that no longer exists', async () => {
@@ -209,6 +209,27 @@ describe('a saved receiver that no longer exists', () => {
 });
 
 describe('a saved routing tree', () => {
+  it('lets the user fall back to the default policy when the saved tree is missing', async () => {
+    const onChange = jest.fn();
+    const { user } = renderPicker({
+      mode: 'notificationPolicy',
+      value: { type: 'NamedRoutingTree', routingTree: 'deleted-tree' },
+      onChange,
+    });
+
+    await user.click(await screen.findByRole('button', { name: /use the default policy/i }));
+
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('does not offer the fallback for an existing tree', async () => {
+    renderPicker({ mode: 'notificationPolicy', value: { type: 'NamedRoutingTree', routingTree: 'deployment-tools' } });
+
+    await screen.findByRole('button', { name: /reset to default policy/i });
+
+    expect(screen.queryByRole('button', { name: /use the default policy/i })).not.toBeInTheDocument();
+  });
+
   it('reports invalid once it is confirmed missing', async () => {
     const onValidityChange = jest.fn();
     renderPicker({
