@@ -54,7 +54,7 @@ type Service interface {
 	DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error)
 	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
 	DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error
-	DeleteLibraryElementsInFolderUnchecked(c context.Context, signedInUser identity.Requester, folderUID string) error
+	DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error
 	GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error)
 }
 
@@ -106,9 +106,10 @@ func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context,
 
 // DeleteLibraryElementsInFolderUnchecked is DeleteLibraryElementsInFolder without the edit-
 // permission check, for callers that have already authorized the requester through a different
-// mechanism (e.g. a standalone folder apiserver's cascade delete).
-func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, signedInUser identity.Requester, folderUID string) error {
-	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), signedInUser.GetOrgID(), folderUID)
+// mechanism (e.g. a standalone folder apiserver's cascade delete). orgID is explicit rather than
+// signedInUser.GetOrgID(), since the two aren't guaranteed to match for every caller.
+func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
+	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), orgID, folderUID)
 }
 
 // GetAll gets all library elements with support to query filters.

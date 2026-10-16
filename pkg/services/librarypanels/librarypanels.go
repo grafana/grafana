@@ -179,7 +179,7 @@ func (lps LibraryPanelService) DeleteInFolders(ctx context.Context, orgID int64,
 // standalone folder apiserver's cascade delete).
 func (lps LibraryPanelService) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, folderUID := range folderUIDs {
-		if err := lps.LibraryElementService.DeleteLibraryElementsInFolderUnchecked(ctx, user, folderUID); err != nil {
+		if err := lps.LibraryElementService.DeleteLibraryElementsInFolderUnchecked(ctx, orgID, user, folderUID); err != nil {
 			return err
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/fake"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -60,6 +62,34 @@ func TestIntegrationLibraryPanelFolderOperations(t *testing.T) {
 				model.GetLibraryElementCommand{UID: sc.initialResult.Result.UID, FolderName: sc.folder.Title})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 		})
+}
+
+// recordingLibraryElementService wraps the fake to capture DeleteLibraryElementsInFolderUnchecked's args.
+type recordingLibraryElementService struct {
+	*fake.LibraryElementService
+	gotOrgID  int64
+	gotFolder string
+	calls     int
+}
+
+func (r *recordingLibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
+	r.calls++
+	r.gotOrgID = orgID
+	r.gotFolder = folderUID
+	return nil
+}
+
+func TestLibraryPanelService_DeleteInFoldersUnchecked(t *testing.T) {
+	// orgID must win over signedInUser.GetOrgID(), which can differ for some callers.
+	elementSvc := &recordingLibraryElementService{LibraryElementService: &fake.LibraryElementService{}}
+	lps := LibraryPanelService{LibraryElementService: elementSvc}
+
+	requester := &identity.StaticRequester{OrgID: 99}
+	require.NoError(t, lps.DeleteInFoldersUnchecked(context.Background(), 7, []string{"fold1"}, requester))
+
+	assert.Equal(t, 1, elementSvc.calls)
+	assert.Equal(t, int64(7), elementSvc.gotOrgID, "must use the orgID argument, not signedInUser.GetOrgID()")
+	assert.Equal(t, "fold1", elementSvc.gotFolder)
 }
 
 func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {

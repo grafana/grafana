@@ -2,6 +2,7 @@ package cleaner
 
 import (
 	"context"
+	"fmt"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -39,6 +40,11 @@ func (c *UncheckedContentsCleaner) DeleteInFolder(ctx context.Context, namespace
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return err
+	}
+
+	// Fail loudly instead of fanning out to each service under a different org.
+	if user.GetOrgID() != ns.OrgID {
+		return fmt.Errorf("requester org %d does not match namespace %q org %d", user.GetOrgID(), namespace, ns.OrgID)
 	}
 
 	for _, r := range c.services {
