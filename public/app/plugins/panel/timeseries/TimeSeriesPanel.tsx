@@ -1,3 +1,4 @@
+import memoizeOne from 'memoize-one';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -63,6 +64,7 @@ export const TimeSeriesPanel = ({
     experimentalOpenExemplar,
   } = usePanelContext();
   const theme = useTheme2();
+  const getVisibleExemplarLabels = useMemo(() => memoizeOne(getVisibleLabels), []);
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
@@ -246,7 +248,7 @@ export const TimeSeriesPanel = ({
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
                 <ExemplarsPlugin
                   openExemplar={experimentalOpenExemplar}
-                  visibleSeries={getVisibleLabels(uplotConfig, frames)}
+                  visibleSeries={getVisibleExemplarLabels(uplotConfig, frames)}
                   config={uplotConfig}
                   exemplars={data.annotations ?? noAnnotations}
                   timeZone={timeZone}

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -124,7 +124,34 @@ describe('TimeSeriesPanel', () => {
     expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeInTheDocument();
   });
 
-  it('opens a retained exemplar request when annotations arrive after the chart initializes', async () => {
+  it('does not retry a pending exemplar request on an unrelated panel render', async () => {
+    const props = getPanelProps({ ...defaultOptions, legend: { ...defaultOptions.legend, showLegend: false } });
+    props.data.series = [validFrame];
+    const getRequest = jest.fn(() => undefined);
+    const context = {
+      eventsScope: 'test',
+      eventBus: new EventBusSrv(),
+      experimentalOpenExemplar: { getRequest, onHandled: jest.fn() },
+    };
+    const { rerender } = render(
+      <PanelContextProvider value={context}>
+        <TimeSeriesPanel {...props} />
+      </PanelContextProvider>
+    );
+    await act(() => Promise.resolve());
+    await waitFor(() => expect(getRequest).toHaveBeenCalledWith([]));
+    const attempts = getRequest.mock.calls.length;
+
+    rerender(
+      <PanelContextProvider value={context}>
+        <TimeSeriesPanel {...props} title="Updated panel title" />
+      </PanelContextProvider>
+    );
+
+    expect(getRequest).toHaveBeenCalledTimes(attempts);
+  });
+
+  it('opens a retained exemplar request when annotations arrive late and follows series visibility updates', async () => {
     const from = Date.UTC(2026, 9, 15, 10);
     const to = Date.UTC(2026, 9, 15, 11);
     const props = getPanelProps(
@@ -194,6 +221,28 @@ describe('TimeSeriesPanel', () => {
     expect(chart.querySelector('.u-over')).toBe(plotOverlay);
     expect(onHandled).toHaveBeenCalledTimes(1);
     expect(onHandled).toHaveBeenCalledWith('late-annotations');
+
+    const hiddenSeries = {
+      ...series,
+      fields: series.fields.map((field) => ({
+        ...field,
+        config: { ...field.config, custom: { ...field.config.custom, hideFrom: { viz: true } } },
+      })),
+    };
+    rerender(
+      <PanelContextProvider value={context}>
+        <TimeSeriesPanel {...props} data={{ ...props.data, series: [hiddenSeries], annotations: [exemplar] }} />
+      </PanelContextProvider>
+    );
+    expect(screen.queryByText('late-annotation-trace')).not.toBeInTheDocument();
+
+    rerender(
+      <PanelContextProvider value={context}>
+        <TimeSeriesPanel {...props} data={{ ...props.data, annotations: [exemplar] }} />
+      </PanelContextProvider>
+    );
+    expect(await screen.findByText('late-annotation-trace')).toBeVisible();
+    expect(onHandled).toHaveBeenCalledTimes(1);
   });
 
   it('should show error view when series is empty', () => {
