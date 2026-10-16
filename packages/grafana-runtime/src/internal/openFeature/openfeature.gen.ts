@@ -182,6 +182,8 @@ export const FlagKeys = {
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
+  /** Lets Grafana Assistant float the extension sidebar over the page instead of docking it */
+  GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Offers the reserved Grafana home option in the home dashboard preference */
@@ -1308,6 +1310,17 @@ export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.exploreMetricsSidebar", false, options).value;
+};
+
+/**
+ * Lets Grafana Assistant float the extension sidebar over the page instead of docking it
+ *
+ * **Details:**
+ * - flag key: `grafana.extensionSidebarFloating`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.extensionSidebarFloating", false, options).value;
 };
 
 /**

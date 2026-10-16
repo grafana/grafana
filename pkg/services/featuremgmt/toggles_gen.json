@@ -2758,6 +2758,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.extensionSidebarFloating",
+        "resourceVersion": "1791987109868",
+        "creationTimestamp": "2026-10-14T14:11:49Z"
+      },
+      "spec": {
+        "description": "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.filterablePanels",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-21T15:31:42Z"

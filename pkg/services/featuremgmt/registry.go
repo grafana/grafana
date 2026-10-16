@@ -3409,6 +3409,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.extensionSidebarFloating",
+			Description: "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.otelLogDetails",
 			Description: "Enables a new version of log details optimized for displaying OTel logs",
 			Stage:       FeatureStageExperimental,
@@ -3434,6 +3442,7 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
 		},
+
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
