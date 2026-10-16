@@ -244,6 +244,29 @@ describe('useFoldersQueryAppPlatform', () => {
       expect(mockPageInitiate).not.toHaveBeenCalled();
     });
 
+    it('keeps the server order across pages, so a new page only appends', () => {
+      // A server title sort can differ from the browser's collation, e.g. on case
+      const firstPage = [
+        ...folderHits('first', PAGE_SIZE - 1),
+        { name: 'upper', title: 'Zebra', folder: 'general', resource: 'folders' },
+      ];
+      const secondPage = [{ name: 'lower', title: 'apple', folder: 'general', resource: 'folders' }];
+      mockSelectorResult = {
+        isLoading: false,
+        selectableByKey: {
+          'general@0': new Set(firstPage.map((hit) => hit.name)),
+          [`general@${PAGE_SIZE}`]: new Set(['lower']),
+        },
+        pagesByParent: { general: [rootPage(0, firstPage), rootPage(PAGE_SIZE, secondPage)] },
+      };
+
+      const { result } = renderReadOnlyHook();
+
+      const uids = result.current.items.map((treeItem) => treeItem.item.uid);
+      expect(uids.indexOf('lower')).toBeGreaterThan(uids.indexOf('upper'));
+      expect(uids.slice(-2)).toEqual(['upper', 'lower']);
+    });
+
     it('shows a later page only once its own check is done', () => {
       const firstPage = folderHits('first', PAGE_SIZE);
       const secondPage = folderHits('second', 2);

@@ -170,7 +170,10 @@ export function useFoldersQueryAppPlatform({
       const { hits, selectable, isFullyShown } = getShownPages(parentUid, pages);
 
       let folders = [...hits];
-      folders.sort((a, b) => collator.compare(a.title, b.title));
+      // Paged children keep the server's title order, so each new page only appends to the rows already shown
+      if (!showReadOnly) {
+        folders.sort((a, b) => collator.compare(a.title, b.title));
+      }
 
       // Add virtual "Shared with me" folder under the top-level "Dashboards" root.
       // This is backed by the same search endpoint, using `folder=sharedwithme`.
