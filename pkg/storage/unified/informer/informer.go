@@ -455,8 +455,8 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			// the relist metrics and re-dispatching OnAdd. MODIFIED is deliberately not
 			// written through: it carries only namespace/name, so a soft-delete
 			// (delivered as MODIFIED with a deletionTimestamp) would overwrite the
-			// stored object's real deletionTimestamp with a nil one and mislead the
-			// staleness-tolerant readers of the snapshot (the repository quota count).
+			// stored object's real deletionTimestamp with a nil one and mislead any
+			// reader of the snapshot that relies on it.
 			//
 			// Stamp the notification's resource version onto the minimal object so
 			// the store records it: a re-list whose snapshot predates this add must
@@ -511,7 +511,7 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 	// are the keys to dispatch as adds/updates/deletes, with objects a live write
 	// already delivered here filtered out.
 	added, updated, removed := n.store.Replace(objs, listRV)
-	n.log.Debug("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
+	n.log.Info("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
 		"count", len(objs), "added", len(added), "updated", len(updated), "removed", len(removed))
 
 	for _, obj := range added {

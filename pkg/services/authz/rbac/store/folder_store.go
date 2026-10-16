@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -270,7 +271,7 @@ func (s *APIFolderStore) listFoldersViaList(ctx context.Context, ns types.Namesp
 
 		folder := Folder{UID: object.GetName()}
 		parent := object.GetFolder()
-		if parent != "" {
+		if !foldermodel.IsRootFolderUID(parent) {
 			folder.ParentUID = &parent
 		}
 

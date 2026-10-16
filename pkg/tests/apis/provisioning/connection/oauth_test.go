@@ -94,31 +94,7 @@ func newGithubOAuthConnection(name, clientID string) *unstructured.Unstructured 
 
 func authorizeConnection(t *testing.T, helper *common.ProvisioningTestHelper, name string) {
 	t.Helper()
-	body, err := json.Marshal(&provisioning.ConnectionAuthorizeRequest{
-		Spec: provisioning.ConnectionAuthorizeRequestSpec{
-			Code:        "test-authorization-code",
-			RedirectURI: "https://grafana.example.com/callback",
-		},
-	})
-	require.NoError(t, err)
-
-	var statusCode int
-	result := helper.AdminREST.Post().
-		Namespace("default").
-		Resource("connections").
-		Name(name).
-		SubResource("authorize").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(t.Context()).
-		StatusCode(&statusCode)
-	require.NoError(t, result.Error(), "authorize should succeed")
-	require.Equal(t, http.StatusOK, statusCode)
-
-	var res provisioning.ConnectionAuthorizeRequest
-	require.NoError(t, result.Into(&res))
-	assert.True(t, res.Status.Authorized, "response should report authorized")
-	assert.Empty(t, res.Spec.Code, "authorization code should not be echoed back")
+	helper.AuthorizeConnection(t, name, "test-authorization-code", "https://grafana.example.com/callback")
 }
 
 func TestIntegrationProvisioning_OAuthConnectionCRUDL(t *testing.T) {

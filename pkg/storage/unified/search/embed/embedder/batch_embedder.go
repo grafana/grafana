@@ -22,6 +22,14 @@ type BatchEmbedder struct {
 	embedder Embedder
 }
 
+// ResourceInput keeps an object's metadata with its chunks so provider batches
+// can cross object boundaries without changing the per-object write boundary.
+type ResourceInput struct {
+	Namespace       string
+	ResourceVersion int64
+	Items           []embed.Item
+}
+
 // NewBatchEmbedder constructs a BatchEmbedder around a configured Embedder.
 func NewBatchEmbedder(e Embedder) *BatchEmbedder {
 	return &BatchEmbedder{embedder: e}
@@ -39,22 +47,43 @@ func (b *BatchEmbedder) Embed(
 	contentVersion int,
 	items []embed.Item,
 ) ([]vector.Vector, error) {
-	// Filter empties up-front so output indices line up with the embedded
-	// texts.
-	kept := make([]embed.Item, 0, len(items))
-	for _, it := range items {
-		if it.Content == "" {
-			continue
-		}
-		kept = append(kept, it)
+	vectors, err := b.EmbedResources(ctx, resource, contentVersion, []ResourceInput{{
+		Namespace:       namespace,
+		ResourceVersion: rv,
+		Items:           items,
+	}})
+	if err != nil {
+		return nil, err
 	}
-	if len(kept) == 0 {
-		return nil, nil
-	}
+	return vectors[0], nil
+}
 
-	texts := make([]string, len(kept))
-	for i, it := range kept {
-		texts[i] = it.Content
+// EmbedResources batches chunks across objects of one resource type and builder
+// version. Results retain input object order, including nil entries for objects
+// without content, so callers can save each object atomically.
+func (b *BatchEmbedder) EmbedResources(
+	ctx context.Context,
+	resource string,
+	contentVersion int,
+	resources []ResourceInput,
+) ([][]vector.Vector, error) {
+	itemCount := 0
+	for _, input := range resources {
+		itemCount += len(input.Items)
+	}
+	texts := make([]string, 0, itemCount)
+	counts := make([]int, len(resources))
+	for i, input := range resources {
+		for _, it := range input.Items {
+			if it.Content != "" {
+				texts = append(texts, it.Content)
+				counts[i]++
+			}
+		}
+	}
+	vectors := make([][]vector.Vector, len(resources))
+	if len(texts) == 0 {
+		return vectors, nil
 	}
 
 	out, err := b.embedder.EmbedText(ctx, EmbedTextInput{
@@ -65,25 +94,35 @@ func (b *BatchEmbedder) Embed(
 	if err != nil {
 		return nil, fmt.Errorf("embed batch: %w", err)
 	}
-	if len(out.Embeddings) != len(kept) {
-		return nil, fmt.Errorf("embedder returned %d embeddings for %d texts", len(out.Embeddings), len(kept))
+	if len(out.Embeddings) != len(texts) {
+		return nil, fmt.Errorf("embedder returned %d embeddings for %d texts", len(out.Embeddings), len(texts))
 	}
 
-	vectors := make([]vector.Vector, len(kept))
-	for i, it := range kept {
-		vectors[i] = vector.Vector{
-			Namespace:       namespace,
-			Resource:        resource,
-			UID:             it.UID,
-			Title:           it.Title,
-			Subresource:     it.Subresource,
-			ResourceVersion: rv,
-			Folder:          it.Folder,
-			Content:         it.Content,
-			Metadata:        it.Metadata,
-			Embedding:       out.Embeddings[i].Dense,
-			Model:           b.embedder.Model,
-			ContentVersion:  contentVersion,
+	embeddingIndex := 0
+	for i, input := range resources {
+		if counts[i] == 0 {
+			continue
+		}
+		vectors[i] = make([]vector.Vector, 0, counts[i])
+		for _, it := range input.Items {
+			if it.Content == "" {
+				continue
+			}
+			vectors[i] = append(vectors[i], vector.Vector{
+				Namespace:       input.Namespace,
+				Resource:        resource,
+				UID:             it.UID,
+				Title:           it.Title,
+				Subresource:     it.Subresource,
+				ResourceVersion: input.ResourceVersion,
+				Folder:          it.Folder,
+				Content:         it.Content,
+				Metadata:        it.Metadata,
+				Embedding:       out.Embeddings[embeddingIndex].Dense,
+				Model:           b.embedder.Model,
+				ContentVersion:  contentVersion,
+			})
+			embeddingIndex++
 		}
 	}
 	return vectors, nil

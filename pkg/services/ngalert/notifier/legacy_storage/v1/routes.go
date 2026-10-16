@@ -17,8 +17,7 @@ import (
 )
 
 type ManagedRoute struct {
-	Name    string
-	Version string
+	ResourceMetadata
 
 	Receiver       string
 	GroupBy        []string
@@ -27,14 +26,11 @@ type ManagedRoute struct {
 	RepeatInterval *model.Duration
 	Routes         []*Route
 
-	Provenance models.Provenance
-	Origin     models.ResourceOrigin
+	Origin models.ResourceOrigin
 }
 
 func (r *ManagedRoute) GetUID() string {
-	// Canonicalize so the default tree has a single stable identity regardless of whether
-	// it was addressed by its canonical name or the legacy alias. This identity backs RBAC scopes.
-	return models.CanonicalizeRoutingTreeName(r.Name)
+	return string(r.UID)
 }
 
 func (r *ManagedRoute) ResourceType() string {
@@ -42,17 +38,28 @@ func (r *ManagedRoute) ResourceType() string {
 }
 
 func (r *ManagedRoute) ResourceID() string {
-	if models.IsDefaultRoutingTreeName(r.Name) {
+	if models.IsDefaultRoutingTreeName(r.GetUID()) {
 		// Backwards compatibility with the legacy default (root) routing tree.
 		return ""
 	}
-	return r.Name
+	return r.GetUID()
+}
+
+// RouteUID derives a route's stable identity from its name, canonicalizing the default tree's
+// legacy alias so both spellings resolve to the same identity. Unlike other resource UIDs, this
+// is not hashed: it is used verbatim as an RBAC scope suffix and provenance-store key, so it must
+// keep producing the same value it always has.
+func RouteUID(name string) ResourceUID {
+	return ResourceUID(models.CanonicalizeRoutingTreeName(name))
 }
 
 func NewManagedRoute(name string, r *Route) *ManagedRoute {
 	return &ManagedRoute{
-		Name:    name,
-		Version: CalculateRouteFingerprint(*r),
+		ResourceMetadata: ResourceMetadata{
+			UID:        RouteUID(name),
+			Version:    CalculateRouteFingerprint(*r),
+			Provenance: models.Provenance(r.Provenance),
+		},
 
 		Receiver:       r.Receiver,
 		GroupBy:        r.GroupByStr,
@@ -61,8 +68,7 @@ func NewManagedRoute(name string, r *Route) *ManagedRoute {
 		RepeatInterval: r.RepeatInterval,
 		Routes:         r.Routes,
 
-		Provenance: models.Provenance(r.Provenance),
-		Origin:     models.ResourceOriginGrafana,
+		Origin: models.ResourceOriginGrafana,
 	}
 }
 
@@ -71,19 +77,19 @@ type ManagedRoutes []*ManagedRoute
 func (m ManagedRoutes) Sort() {
 	// Sort the keys of the map to ensure consistent ordering. Always ensure that the default routing tree is last.
 	slices.SortFunc(m, func(a, b *ManagedRoute) int {
-		if models.IsDefaultRoutingTreeName(a.Name) {
+		if models.IsDefaultRoutingTreeName(a.GetUID()) {
 			return 1
 		}
-		if models.IsDefaultRoutingTreeName(b.Name) {
+		if models.IsDefaultRoutingTreeName(b.GetUID()) {
 			return -1
 		}
-		return strings.Compare(a.Name, b.Name)
+		return strings.Compare(a.GetUID(), b.GetUID())
 	})
 }
 
-func (m ManagedRoutes) Contains(name string) bool {
+func (m ManagedRoutes) Contains(uid string) bool {
 	for _, r := range m {
-		if r.Name == name {
+		if r.GetUID() == uid {
 			return true
 		}
 	}

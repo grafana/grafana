@@ -109,7 +109,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	if a, ok := accesses[managedRoute.GetUID()]; ok {
 		access = &a
 	}
-	return ConvertToK8sResource(info.OrgID, &managedRoute, s.namespacer, access)
+	return ConvertToK8sResource(info.OrgID, &managedRoute, name, s.namespacer, access)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -156,7 +156,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if a, ok := accesses[created.GetUID()]; ok {
 		access = &a
 	}
-	return ConvertToK8sResource(info.OrgID, created, s.namespacer, access)
+	return ConvertToK8sResource(info.OrgID, created, created.GetUID(), s.namespacer, access)
 }
 
 func (s *legacyStorage) Update(
@@ -217,7 +217,7 @@ func (s *legacyStorage) Update(
 	if a, ok := accesses[updated.GetUID()]; ok {
 		access = &a
 	}
-	obj, err = ConvertToK8sResource(info.OrgID, updated, s.namespacer, access)
+	obj, err = ConvertToK8sResource(info.OrgID, updated, name, s.namespacer, access)
 	return obj, false, err
 }
 

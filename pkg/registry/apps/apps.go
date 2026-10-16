@@ -76,8 +76,7 @@ func ProvideAppInstallers(
 	if advisorAppInstaller != nil {
 		installers = append(installers, advisorAppInstaller)
 	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingHistorian) && alertingHistorianAppInstaller != nil {
+	if alertingHistorianAppInstaller != nil {
 		installers = append(installers, alertingHistorianAppInstaller)
 	}
 

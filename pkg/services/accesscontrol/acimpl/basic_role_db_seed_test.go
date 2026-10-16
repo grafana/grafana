@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
@@ -37,6 +38,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 		sql,
 		permreg.ProvidePermissionRegistry(),
 		nil,
+		iam.Features{},
 	)
 
 	require.NoError(t, svc.DeclareFixedRoles(accesscontrol.RoleRegistration{
@@ -97,6 +99,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 		sql,
 		permreg.ProvidePermissionRegistry(),
 		nil,
+		iam.Features{},
 	)
 	require.NoError(t, svc2.DeclareFixedRoles(accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{

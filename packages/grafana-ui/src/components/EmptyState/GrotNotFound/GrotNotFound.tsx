@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type SVGProps, useEffect, useRef } from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -16,9 +16,10 @@ const MAX_ARM_TRANSLATION = 5;
 export interface Props {
   width?: SVGProps<SVGElement>['width'];
   height?: SVGProps<SVGElement>['height'];
+  className?: SVGProps<SVGElement>['className'];
 }
 
-export const GrotNotFound = ({ width = 'auto', height }: Props) => {
+export const GrotNotFound = ({ width = 'auto', height, className }: Props) => {
   const svgRef = useRef<SVGElement>(null);
   const styles = useStyles2(getStyles);
 
@@ -56,7 +57,9 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
     };
   }, []);
 
-  return <SVG innerRef={svgRef} src={notFoundSvg} className={styles.svg} height={height} width={width} />;
+  return (
+    <SVG innerRef={svgRef} src={notFoundSvg} className={cx(styles.svg, className)} height={height} width={width} />
+  );
 };
 
 GrotNotFound.displayName = 'GrotNotFound';

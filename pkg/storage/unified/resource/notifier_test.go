@@ -12,20 +12,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupTestNotifier(t *testing.T) (*pollingNotifier, *eventStore) {
 	eventStore := newEventStore(setupBadgerKV(t))
-	notifier := newNotifier(eventStore, notifierOptions{log: log.NewNopLogger()})
+	notifier := newNotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
 	return notifier.(*pollingNotifier), eventStore
 }
 
 func setupTestNotifierSqlKv(t *testing.T) (*pollingNotifier, *eventStore) {
 	eventStore := newEventStore(setupSqlKV(t))
-	notifier := newNotifier(eventStore, notifierOptions{log: log.NewNopLogger()})
+	notifier := newNotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
 	return notifier.(*pollingNotifier), eventStore
 }
 
@@ -38,7 +38,7 @@ func TestIntegrationNewNotifier(t *testing.T) {
 }
 
 func TestNewNotifierSelection(t *testing.T) {
-	nop := log.NewNopLogger()
+	nop := &logging.NoOpLogger{}
 
 	t.Run("nats notifier when requested with an enabled subscriber", func(t *testing.T) {
 		n := newNotifier(nil, notifierOptions{
@@ -518,7 +518,7 @@ func TestIntegrationNotifier_Watch_EventPages(t *testing.T) {
 }
 
 func TestChannelNotifier(t *testing.T) {
-	log := log.NewNopLogger()
+	log := &logging.NoOpLogger{}
 
 	var eventCount int64
 	newEvent := func() Event {

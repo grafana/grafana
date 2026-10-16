@@ -42,7 +42,6 @@ import {
   logError,
 } from '@grafana/runtime';
 import {
-  getPanelPluginMetas,
   getFeatureFlagClient,
   FlagKeys,
   initDataSourceInstanceSettings,
@@ -96,6 +95,7 @@ import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl
 import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { pageHistorySrv } from './core/services/pageHistory/pageHistorySrv';
 import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
@@ -105,7 +105,7 @@ import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/Dashbo
 import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
-import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
+import { LazyPanelDataErrorView } from './features/panel/components/LazyPanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
@@ -231,7 +231,7 @@ export class GrafanaApp {
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
       setDataSourcePicker(RuntimeDataSourcePickerShim);
-      setPanelDataErrorView(PanelDataErrorView);
+      setPanelDataErrorView(LazyPanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
@@ -338,15 +338,6 @@ export class GrafanaApp {
         preloadPlugins(await getAppPluginsToPreload());
       }
 
-      // this will fail if the user is not logged in
-      // but we need to call it unconditionally for public dashboards + snapshots
-      // otherwise getPanelPluginsMetasMapSync will throw an error
-      // currently it falls back to config.panels which makes this "work" temporarily
-      // TODO remove usage of getPanelPluginsMetasMapSync in favour of getPanelPluginsMetasMap
-      //   - this will allow us to remove this call entirely
-      // TODO ensure this can be called anonymously for public dashboards/snapshots
-      await getPanelPluginMetas();
-
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
@@ -361,6 +352,7 @@ export class GrafanaApp {
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
+      pageHistorySrv.start(chromeService);
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);
@@ -389,7 +381,7 @@ export class GrafanaApp {
         initializeCrashDetection();
       }
 
-      if (config.featureToggles.dashboardLevelTimeMacros) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardLevelTimeMacros, false)) {
         sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
         sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }

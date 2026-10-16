@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -219,4 +221,47 @@ func TestEmbeddingConfigRegistry_CopiesInputsAndResults(t *testing.T) {
 	again, ok := registry.For(embeddingTestGVR("v1", "widgets"))
 	require.True(t, ok)
 	assert.Equal(t, want, again)
+}
+
+func TestEmbeddingConfigRegistry_SnapshotCopies(t *testing.T) {
+	field := app.ManifestVersionKindEmbedField{Name: "title", Path: "spec.title"}
+	registry := NewEmbeddingConfigRegistry([]*app.ManifestData{embeddingTestManifest(1,
+		embeddingTestVersion("v1", field), embeddingTestVersion("v2"))})
+	snapshot := registry.Snapshot()
+	require.Len(t, snapshot, 2)
+	gvr := embeddingTestGVR("v1", "widgets")
+	snapshot[gvr].Fields[0].Path = "spec.changed"
+	delete(snapshot, embeddingTestGVR("v2", "widgets"))
+	current := registry.Snapshot()
+	require.Len(t, current, 2)
+	assert.Equal(t, []app.ManifestVersionKindEmbedField{field}, current[gvr].Fields)
+	assert.Nil(t, current[embeddingTestGVR("v2", "widgets")].Fields)
+	registry.Reload()
+	assert.Empty(t, registry.Snapshot())
+	assert.Len(t, current, 2)
+}
+
+func TestEmbeddingConfigRegistry_SnapshotConsistentDuringReload(t *testing.T) {
+	manifest := func(revision int) *app.ManifestData {
+		field := app.ManifestVersionKindEmbedField{Name: fmt.Sprint(revision), Path: "spec.title"}
+		return embeddingTestManifest(revision, embeddingTestVersion("v1", field), embeddingTestVersion("v2", field))
+	}
+	registry := NewEmbeddingConfigRegistry([]*app.ManifestData{manifest(1)})
+	var writer sync.WaitGroup
+	writer.Add(1)
+	go func() {
+		defer writer.Done()
+		for revision := 2; revision < 100; revision++ {
+			registry.Reload([]*app.ManifestData{manifest(revision)})
+		}
+	}()
+	defer writer.Wait()
+	for range 100 {
+		snapshot := registry.Snapshot()
+		require.Len(t, snapshot, 2)
+		v1 := snapshot[embeddingTestGVR("v1", "widgets")]
+		assert.Equal(t, v1, snapshot[embeddingTestGVR("v2", "widgets")])
+		require.Len(t, v1.Fields, 1)
+		assert.Equal(t, fmt.Sprint(v1.ReembedVersion), v1.Fields[0].Name)
+	}
 }

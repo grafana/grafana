@@ -17,6 +17,10 @@ type OSSLicensingService struct {
 	HooksService *hooks.HooksService
 }
 
+func (*OSSLicensingService) HasValidLicense() bool {
+	return false
+}
+
 func (*OSSLicensingService) Expiry() int64 {
 	return 0
 }

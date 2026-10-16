@@ -35,6 +35,8 @@ You can configure SAML authentication in Grafana with different methods. While t
 {{< admonition type="caution" >}}
 Configuration in the API or UI takes precedence over the configuration in the Grafana configuration file. SAML settings from the API will override any SAML configuration set in the Grafana configuration file.
 
+Stored settings keep overriding the file until you remove them, and nothing in the UI says so, which most often surprises people during credential rotation. If a configuration file change appears to have no effect, refer to [Check for stored settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/#check-for-stored-settings).
+
 For more information on how Grafana determines the order of precedence for its settings, refer to the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/).
 {{< /admonition >}}
 

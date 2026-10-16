@@ -138,7 +138,7 @@ func TestToFolderErrorResponse(t *testing.T) {
 		{
 			name:  "folder with same uid exists",
 			input: folder.ErrSameUIDExists,
-			want:  response.Error(http.StatusConflict, folder.ErrSameUIDExists.Error(), nil),
+			want:  response.Error(http.StatusConflict, "a folder with the same UID already exists", folder.ErrSameUIDExists),
 		},
 		// --- 412 Precondition Failed ---
 		{

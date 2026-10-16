@@ -43,7 +43,7 @@ describe('FlameGraphTopTableContainer', () => {
     mockTableSize();
 
     setup();
-    const rows = screen.getAllByRole('row');
+    const rows = await screen.findAllByRole('row');
     expect(rows).toHaveLength(16);
 
     const columnHeaders = screen.getAllByRole('columnheader');
@@ -77,7 +77,7 @@ describe('FlameGraphTopTableContainer', () => {
 
     const { mocks } = setup();
 
-    const searchButtons = screen.getAllByLabelText(/Search for symbol/);
+    const searchButtons = await screen.findAllByLabelText(/Search for symbol/);
     expect(searchButtons.length > 0).toBeTruthy();
     await userEvents.click(searchButtons[0]);
 

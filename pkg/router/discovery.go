@@ -1,16 +1,18 @@
 package router
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"sort"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/handler3"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // cachedDoc is a pre-marshaled JSON response body plus its key-derived ETag.
@@ -20,6 +22,8 @@ import (
 type cachedDoc struct {
 	body []byte
 	etag string
+	// contentType defaults to application/json.
+	contentType string
 }
 
 // quoteETag wraps an opaque value as an HTTP entity tag per RFC 7232 §2.3.
@@ -31,16 +35,20 @@ func quoteETag(s string) string {
 // each backend's APIGroup. No
 // backend round-trip: this is pure local synthesis, called once per
 // reconcile cycle alongside the handler snapshot.
-func buildAPIGroupList(backends []Backend) cachedDoc {
+func buildAPIGroupList(ctx context.Context, backends []Backend) cachedDoc {
 	sorted := sortedManifestBackends(backends)
 
-	groups := make([]metav1.APIGroup, 0, len(sorted))
+	groups := make([]metav1.APIGroup, 0, len(sorted)+1)
 	var hashInput strings.Builder
 	for _, b := range sorted {
 		group := b.Group()
 		groups = append(groups, group)
 		fmt.Fprintf(&hashInput, "%s=%s;", group.Name, b.Key())
 	}
+	// The router serves the discovery group itself, so it has no backend.
+	groups = append(groups, discoveryAPIGroup)
+	sort.Slice(groups, func(i, j int) bool { return groups[i].Name < groups[j].Name })
+	fmt.Fprintf(&hashInput, "%s=%s;", discoveryGroup, discoveryGroupVersion.GroupVersion)
 
 	list := metav1.APIGroupList{
 		TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"},
@@ -50,7 +58,7 @@ func buildAPIGroupList(backends []Backend) cachedDoc {
 	if err != nil {
 		// list is a fixed, well-typed struct: Marshal cannot fail in practice.
 		// Fall back to an empty-but-valid document rather than serving garbage.
-		slog.Error("router: failed to marshal APIGroupList", "error", err)
+		logging.FromContext(ctx).Error("router: failed to marshal APIGroupList", "error", err)
 		body = []byte(`{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`)
 	}
 	return cachedDoc{body: body, etag: quoteETag(hashHex(hashInput.String()))}
@@ -76,7 +84,7 @@ func hashHex(s string) string {
 // path -> {serverRelativeURL} map (never a merged schema — see AGENTS.md
 // "Discovery endpoints" / the design spec's "no cross-group merge" decision).
 // One entry per served group/version, hash-busted by that group's key.
-func buildOpenAPIV3Index(backends []Backend) cachedDoc {
+func buildOpenAPIV3Index(ctx context.Context, backends []Backend) cachedDoc {
 	sorted := sortedManifestBackends(backends)
 
 	paths := make(map[string]handler3.OpenAPIV3DiscoveryGroupVersion, len(sorted))
@@ -92,10 +100,15 @@ func buildOpenAPIV3Index(backends []Backend) cachedDoc {
 		}
 	}
 
+	// The router serves the discovery group's document itself.
+	discoveryPath, discoveryURL := discoveryOpenAPIEntry()
+	paths[discoveryPath] = handler3.OpenAPIV3DiscoveryGroupVersion{ServerRelativeURL: discoveryURL}
+	fmt.Fprintf(&hashInput, "%s=%s;", discoveryPath, discoveryURL)
+
 	doc := handler3.OpenAPIV3Discovery{Paths: paths}
 	body, err := json.Marshal(doc)
 	if err != nil {
-		slog.Error("router: failed to marshal OpenAPIV3Discovery", "error", err)
+		logging.FromContext(ctx).Error("router: failed to marshal OpenAPIV3Discovery", "error", err)
 		body = []byte(`{"paths":{}}`)
 	}
 	return cachedDoc{body: body, etag: quoteETag(hashHex(hashInput.String()))}

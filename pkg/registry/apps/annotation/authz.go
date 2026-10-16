@@ -71,9 +71,10 @@ func canAccessAnnotations(ctx context.Context, tracer trace.Tracer, accessClient
 	}
 
 	checks := make([]authtypes.BatchCheckItem, 0, len(items))
+	correlationIDs := make([]string, len(items))
+	idByKey := make(map[string]string)
 	for i, anno := range items {
 		var item authtypes.BatchCheckItem
-		item.CorrelationID = strconv.Itoa(i)
 		item.Verb = verb
 
 		if anno.Spec.DashboardUID == nil || *anno.Spec.DashboardUID == "" {
@@ -88,10 +89,21 @@ func canAccessAnnotations(ctx context.Context, tracer trace.Tracer, accessClient
 			item.Folder = folderByDash[*anno.Spec.DashboardUID]
 		}
 
+		// Deduplicate checks for the same dashboard across multiple annotations.
+		key := item.Resource + "/" + item.Name
+		if id, ok := idByKey[key]; ok {
+			correlationIDs[i] = id
+			continue
+		}
+		item.CorrelationID = strconv.Itoa(len(checks))
+		idByKey[key] = item.CorrelationID
+		correlationIDs[i] = item.CorrelationID
+
 		checks = append(checks, item)
 	}
+	span.SetAttributes(attribute.Int("unique_check_count", len(checks)))
 
-	allowed := make([]bool, len(items))
+	allowedByID := make(map[string]bool, len(checks))
 	for start := 0; start < len(checks); start += authtypes.MaxBatchCheckItems {
 		end := min(start+authtypes.MaxBatchCheckItems, len(checks))
 		res, err := accessClient.BatchCheck(ctx, authInfo, authtypes.BatchCheckRequest{
@@ -102,17 +114,19 @@ func canAccessAnnotations(ctx context.Context, tracer trace.Tracer, accessClient
 			return nil, apierrors.NewInternalError(fmt.Errorf("batch authz check failed: %w", err))
 		}
 		for id, result := range res.Results {
-			if idx, err := strconv.Atoi(id); err == nil {
-				allowed[idx] = result.Allowed
-			}
+			allowedByID[id] = result.Allowed
 		}
 	}
 
+	// Map authorization results back to the original items based on their correlation IDs
+	allowed := make([]bool, len(items))
+	for i, id := range correlationIDs {
+		allowed[i] = allowedByID[id]
+	}
 	return allowed, nil
 }
 
 // resolveDashboardFolders maps dashboard UID -> parent folder UID for unique dashboards in items.
-// TODO: cache results (TTL LRU by namespace+UID) and run lookups in parallel. Folder rarely changes.
 func resolveDashboardFolders(ctx context.Context, tracer trace.Tracer, folderResolver DashboardFolderResolver, namespace string, items []annotationV0.Annotation) (map[string]string, error) {
 	ctx, span := tracer.Start(ctx, "annotation.authz.resolveDashboardFolders")
 	defer span.End()

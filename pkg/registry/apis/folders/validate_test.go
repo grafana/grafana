@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -481,7 +483,7 @@ func TestValidateCreate(t *testing.T) {
 
 			getter := newParentsGetter(mockStorage, maxDepth)
 
-			err := validateOnCreate(ctx, tt.folder, getter, maxDepth)
+			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
 			if tt.expectedErr == nil {
 				require.NoError(t, err)
@@ -490,6 +492,45 @@ func TestValidateCreate(t *testing.T) {
 				require.Contains(t, err.Error(), tt.expectedErr.Error())
 			}
 		})
+	}
+}
+
+func TestValidateCreateDetachedParent(t *testing.T) {
+	for _, dryRun := range []bool{false, true} {
+		for _, ancestorMissing := range []bool{false, true} {
+			t.Run(fmt.Sprintf("dryRun=%t/ancestorMissing=%t", dryRun, ancestorMissing), func(t *testing.T) {
+				storage := grafanarest.NewMockStorage(t)
+				parentName := "missing"
+				if ancestorMissing {
+					parentName = "parent"
+					storage.On("Get", mock.Anything, parentName, &metav1.GetOptions{}).Return(&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        parentName,
+							Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
+						},
+					}, nil).Once()
+				}
+				storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
+					Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
+
+				obj := &folders.Folder{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "orphan",
+						Annotations: map[string]string{utils.AnnoKeyFolder: parentName},
+					},
+					Spec: folders.FolderSpec{Title: "orphan"},
+				}
+				err := validateOnCreate(context.Background(), obj, newParentsGetter(storage, 5), 5, dryRun)
+				if dryRun {
+					require.NoError(t, err)
+					return
+				}
+				require.Error(t, err)
+				require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+				require.Equal(t, int32(http.StatusBadRequest), responsewriters.ErrorToAPIStatus(err).Code)
+				require.ErrorContains(t, err, "missing")
+			})
+		}
 	}
 }
 
@@ -1109,11 +1150,13 @@ func TestValidateDelete(t *testing.T) {
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
 				Error: &resourcepb.ErrorResult{
-					Reason: "error",
+					Reason:  string(metav1.StatusReasonInternalError),
+					Code:    http.StatusInternalServerError,
+					Message: "stats unavailable",
 				},
 			},
 		},
-		expectedErr: "could not verify if folder is empty",
+		expectedErr: "stats unavailable",
 	}, {
 		name: "folder not empty with gracePeriodSeconds=0 is allowed",
 		folder: &folders.Folder{
@@ -1537,7 +1580,7 @@ func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
 }
 
 var (
-	_ = resourcepb.ResourceIndexClient(&mockSearchClient{})
+	_ resourcepb.ResourceIndexClient = (*mockSearchClient)(nil)
 )
 
 type mockSearchClient struct {
@@ -1691,6 +1734,41 @@ func TestCheckMoveAccess(t *testing.T) {
 			newParent: folder.GeneralFolderUID,
 			oldParent: oldParentUID,
 			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
+		},
+		{
+			// Empty root parent passes through as-is; RBAC applies create-time
+			// empty->general itself, so the create probe matches the empty folder.
+			name:      "move to empty root: destination-create checked at empty parent",
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			oldParent: oldParentUID,
+			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.LegacyRootFolderUID)}, //nolint:staticcheck
+		},
+		{
+			name:      "move to empty root detects Editor to Admin escalation",
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			oldParent: oldParentUID,
+			allows: []allow{
+				allowFolder(utils.VerbCreate, "", folder.LegacyRootFolderUID), //nolint:staticcheck
+				canUpdateOnSourceUnderOld,
+				allowFolder(utils.VerbUpdate, sourceUID, folder.LegacyRootFolderUID),         //nolint:staticcheck
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.LegacyRootFolderUID), //nolint:staticcheck
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			// Regression: a general-scoped setperms grant must NOT inflate the tier
+			// of an empty-parent root folder. Old tier is None, so gaining Editor
+			// (update) under the new parent is a real None->Editor escalation. The
+			// old empty->general normalization masked this as Admin.
+			name:      "move from empty root: general grant does not inflate old tier",
+			newParent: newParentUID,
+			oldParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.GeneralFolderUID), // scoped to general: intentionally ignored for an empty-parent root folder
+				canUpdateOnSourceUnderNew,
+			},
+			expectedErr: "folders.accessEscalation",
 		},
 		{
 			name:        "move to root denied without create at root",

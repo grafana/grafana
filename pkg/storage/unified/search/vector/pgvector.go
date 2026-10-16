@@ -569,6 +569,25 @@ func (b *pgvectorBackend) UpdateContentVersion(ctx context.Context, namespace, m
 	return err
 }
 
+func (b *pgvectorBackend) UpdateFolder(ctx context.Context, namespace, model, resource, uid, folder string) error {
+	if model == "" {
+		return fmt.Errorf("model must not be empty")
+	}
+	if err := b.validateResource(ctx, resource); err != nil {
+		return err
+	}
+	req := &sqlVectorCollectionUpdateFolderRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    resource,
+		Namespace:   namespace,
+		Model:       model,
+		UID:         uid,
+		Folder:      folder,
+	}
+	_, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionUpdateFolder, req)
+	return err
+}
+
 func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource string,
 	embedding []float32, limit int, filters ...SearchFilter) (results []VectorSearchResult, retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Search")
@@ -641,13 +660,14 @@ func (b *pgvectorBackend) ListIncompleteBackfillJobs(ctx context.Context, model 
 	out := make([]BackfillJob, 0, len(rows))
 	for _, r := range rows {
 		out = append(out, BackfillJob{
-			ID:          r.ID,
-			Model:       r.Model,
-			Resource:    r.Resource,
-			StoppingRV:  r.StoppingRV,
-			LastSeenKey: r.LastSeenKey.String,
-			IsComplete:  r.IsComplete,
-			LastError:   r.LastError.String,
+			ID:             r.ID,
+			Model:          r.Model,
+			Resource:       r.Resource,
+			StoppingRV:     r.StoppingRV,
+			ContentVersion: r.ContentVersion,
+			LastSeenKey:    r.LastSeenKey.String,
+			IsComplete:     r.IsComplete,
+			LastError:      r.LastError.String,
 		})
 	}
 	return out, nil

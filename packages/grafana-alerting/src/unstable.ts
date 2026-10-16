@@ -14,10 +14,16 @@ export {
 } from './grafana/contactPoints/utils';
 
 // Notification Policies / Routing Trees
-export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
+export { useRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
-export { isDefaultRoutingTreeName, isDefaultRoutingTree } from './grafana/notificationPolicies/routingTrees';
+export {
+  buildRoutingTreeOptions,
+  findRoutingTreeByName,
+  getRoutingTreeDisplayName,
+  isDefaultRoutingTreeName,
+  isDefaultRoutingTree,
+} from './grafana/notificationPolicies/routingTree.utils';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
@@ -28,6 +34,11 @@ export { AlertLabels, type AlertLabelsProps } from './grafana/rules/components/l
 // Matchers
 export { type LabelMatcher, type Label } from './grafana/matchers/types';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';
+
+// Data sources
+// These bundle the discovery code, which imports @grafana/runtime/unstable (>=13.2, a declared peer).
+export { getDataSourcesWithValidRecordingTarget } from './grafana/dataSources/narrowings';
+export { useDataSourcesWithValidRecordingTarget } from './grafana/dataSources/hooks';
 
 // API endpoints
 export { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';

@@ -906,7 +906,7 @@
           "Connection"
         ],
         "summary": "List external repositories",
-        "description": "List repositories available from the external git provider through this connection",
+        "description": "List repositories available from the external git provider through this connection. Returns 501 Not Implemented for connection types that cannot list repositories",
         "operationId": "getConnectionRepositories",
         "responses": {
           "200": {
@@ -4529,6 +4529,9 @@
             "description": "The connection description",
             "type": "string"
           },
+          "gitOAuth": {
+            "description": "Generic git OAuth app connection configuration Only applicable when provider is \"gitOAuth\""
+          },
           "github": {
             "description": "GitHub connection configuration Only applicable when provider is \"github\""
           },
@@ -4547,11 +4550,12 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"gitOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucketOAuth",
+              "gitOAuth",
               "github",
               "githubEnterprise",
               "githubEnterpriseOAuth",
@@ -4636,6 +4640,35 @@
             "description": "Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
             "type": "array",
             "items": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.DeletionStatus": {
+        "description": "DeletionStatus reports the progress of an in-progress deletion and the problem blocking it. It is populated while the repository is Terminating and its finalizers run, so a client can explain the holdup and force-remove the blocking finalizer.",
+        "type": "object",
+        "properties": {
+          "cause": {
+            "description": "Cause classifies the blocking error. It may be absent on older statuses.\n\nPossible enum values:\n - `\"system\"` indicates an infrastructure or unclassified failure.\n - `\"user\"` indicates a failure that requires user intervention.",
+            "type": "string",
+            "enum": [
+              "system",
+              "user"
+            ]
+          },
+          "finalizer": {
+            "description": "Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer.",
+            "type": "string"
+          },
+          "message": {
+            "description": "Message is a human-readable explanation of what went wrong, suitable for showing to users.",
+            "type": "string"
+          },
+          "state": {
+            "description": "State is the phase of the deletion.\n\nPossible enum values:\n - `\"Blocked\"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the \"in progress\" signal — so no separate Working state is needed.",
+            "type": "string",
+            "enum": [
+              "Blocked"
+            ]
           }
         }
       },
@@ -4937,6 +4970,33 @@
           "url": {
             "description": "The repository URL (e.g. `https://gitlab.com/example/test`).",
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.GitOAuthConnectionConfig": {
+        "description": "GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to authenticate pure git repositories.",
+        "type": "object",
+        "required": [
+          "authURL",
+          "tokenURL"
+        ],
+        "properties": {
+          "authURL": {
+            "description": "The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).",
+            "type": "string",
+            "default": ""
+          },
+          "scopes": {
+            "description": "The OAuth scopes to request, granting git read and write access.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenURL": {
+            "description": "The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -5698,8 +5758,11 @@
             "x-kubernetes-patch-strategy": "merge"
           },
           "deleteError": {
-            "description": "Error information during repository deletion (if any)",
+            "description": "Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string.",
             "type": "string"
+          },
+          "deletion": {
+            "description": "Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating."
           },
           "fieldErrors": {
             "description": "FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec.",
@@ -5890,6 +5953,7 @@
               "type": "string",
               "enum": [
                 "bitbucketOAuth",
+                "gitOAuth",
                 "github",
                 "githubEnterprise",
                 "githubEnterpriseOAuth",
@@ -6377,6 +6441,11 @@
             "description": "The ID for the job that ran this sync",
             "type": "string"
           },
+          "lastChecked": {
+            "description": "When the controller last attempted a sync or an interval check (Unix milliseconds).",
+            "type": "integer",
+            "format": "int64"
+          },
           "lastRef": {
             "description": "The repository ref when the last successful sync ran",
             "type": "string"
@@ -6774,20 +6843,20 @@
             "type": "string"
           },
           "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
             "type": "integer",
             "format": "int64",
             "default": 0
           },
           "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
             "type": "string",
             "default": ""
           }
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -6835,13 +6904,13 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
           }
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search.",
+        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
         "type": "object",
         "required": [
           "metadata",

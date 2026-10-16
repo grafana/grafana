@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/react';
+import { createBrowserHistory } from 'history';
 
 import {
   CoreApp,
@@ -14,6 +15,7 @@ import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
+  type SceneObject,
   SceneTimeRange,
   SceneQueryRunner,
   SceneVariableSet,
@@ -39,20 +41,26 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
+import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
 import { toControlSourceRef } from '../utils/predefinedVariables';
-import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { createDeferred } from '../utils/test-utils';
+import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { DashboardFiltersOverviewDrawer } from './dashboard-filters-overview/DashboardFiltersOverviewDrawer';
+import { dashboardViews } from './dashboardViewRegistry';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
@@ -61,7 +69,8 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 import { DashboardPlanningEvent } from './planningEvents';
-import { type DashboardSceneState } from './types/dashboard';
+import { allowOrigins, getAllowedOrigins } from './sandbox-consent/sandboxConsent';
+import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
 
@@ -89,16 +98,12 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
-
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasEditPermissionInFolders: true,
+    user: { id: 1, orgId: 1 },
   },
 }));
 
@@ -156,6 +161,33 @@ describe('DashboardScene', () => {
 
         // @ts-expect-error it is a private property
         expect(scene._changesWorker).toBeUndefined();
+      });
+    });
+
+    describe('Edit session history', () => {
+      it('clears history on entering edit mode and preserves it on repeated enters', () => {
+        const scene = buildTestScene();
+        const sidebar = scene.state.sidebar;
+        const action = {
+          source: scene,
+          meta: { actionId: 'test.edit' } as const,
+          perform: jest.fn(),
+          undo: jest.fn(),
+        };
+        sidebar.setState({ undoStack: [action], redoStack: [action] });
+
+        scene.onEnterEditMode();
+
+        expect(sidebar.state.undoStack).toHaveLength(0);
+        expect(sidebar.state.redoStack).toHaveLength(0);
+
+        sidebar.setState({ undoStack: [action], redoStack: [action] });
+
+        scene.onEnterEditMode();
+        scene.onEnterEditMode();
+
+        expect(sidebar.state.undoStack).toEqual([action]);
+        expect(sidebar.state.redoStack).toEqual([action]);
       });
     });
 
@@ -227,6 +259,19 @@ describe('DashboardScene', () => {
 
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
         expect(scene.getEditSessionSource()).toBe('user');
+      });
+
+      it('drops "Allow" left over from an earlier unsaved dashboard', () => {
+        const origin = 'https://images.example.com';
+        allowOrigins([{ origin, panelIds: [1] }], 'dashboard');
+        allowOrigins([{ origin, panelIds: [1] }], 'dashboard', 'dash-1');
+        const scene = buildTestScene({ uid: '' });
+        locationService.push('/dashboard/new');
+
+        scene.activate();
+
+        expect(getAllowedOrigins('', 1)).toEqual([]);
+        expect(getAllowedOrigins('dash-1', 1)).toEqual([origin]);
       });
 
       it('skips the auto-edit entirely when editSource marks a plan preview', () => {
@@ -358,9 +403,24 @@ describe('DashboardScene', () => {
         expect(scene.state.meta.version).toEqual(2);
       });
 
+      it('Keeps "Allow" given before a new dashboard was first saved', async () => {
+        const origin = 'https://images.example.com';
+        scene.setState({ uid: '' });
+        allowOrigins([{ origin, panelIds: [1] }], 'dashboard');
+
+        await scene.saveCompleted({} as Dashboard, {
+          slug: 'slug',
+          uid: 'new-uid',
+          url: 'sss',
+          version: 1,
+          status: 'aaa',
+        });
+
+        expect(getAllowedOrigins('new-uid', 1)).toEqual([origin]);
+      });
+
       it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
-        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         scene.setState({ meta: { ...scene.state.meta, canSave: true } });
 
@@ -390,13 +450,12 @@ describe('DashboardScene', () => {
         } finally {
           publishSpy.mockRestore();
           hasActualSaveChangesSpy.mockRestore();
-          config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+          setTestFlags({});
         }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
-        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         scene.setState({ meta: { ...scene.state.meta, canSave: false } });
 
@@ -416,7 +475,7 @@ describe('DashboardScene', () => {
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        setTestFlags({});
       });
 
       it('Should start the detect changes worker', () => {
@@ -734,6 +793,8 @@ describe('DashboardScene', () => {
       });
 
       it('Should create and add a new panel to the dashboard', async () => {
+        // addPanel parents the panel through the edit-action bus when new layouts are on, and this scene never activates the sidebar.
+        setTestFlags({ dashboardNewLayouts: false });
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
 
@@ -742,6 +803,7 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
         expect(panel.state.key).toBe('panel-7');
+        setTestFlags({});
       });
 
       it('Should select new row', () => {
@@ -752,6 +814,8 @@ describe('DashboardScene', () => {
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
+        // With new layouts on, a panel with no grid parent throws instead of returning.
+        setTestFlags({ dashboardNewLayouts: false });
         const vizPanel = new VizPanel({
           title: 'Panel Title',
           key: 'panel-5',
@@ -761,9 +825,12 @@ describe('DashboardScene', () => {
         scene.copyPanel(vizPanel);
 
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+        setTestFlags({});
       });
 
       it('Should fail to copy a library panel if it does not have a grid item parent', () => {
+        // With new layouts on, a panel with no grid parent throws instead of returning.
+        setTestFlags({ dashboardNewLayouts: false });
         const libVizPanel = new VizPanel({
           title: 'Library Panel',
           pluginId: 'table',
@@ -774,6 +841,7 @@ describe('DashboardScene', () => {
         scene.copyPanel(libVizPanel);
 
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+        setTestFlags({});
       });
 
       it('Should copy a panel', () => {
@@ -816,6 +884,8 @@ describe('DashboardScene', () => {
       });
 
       it('Should paste a library viz panel', () => {
+        // New layouts paste through the layout manager, which does not use the buildGridItemForPanel mock.
+        setTestFlags({ dashboardNewLayouts: false });
         store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
         jest.mocked(buildGridItemForPanel).mockReturnValue(
           new DashboardGridItem({
@@ -836,6 +906,7 @@ describe('DashboardScene', () => {
         expect(addedPanel).toBeDefined();
         expect(addedPanel.state.key).toBe('panel-7');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+        setTestFlags({});
       });
 
       it('Should do nothing when pasting with an empty clipboard', () => {
@@ -1998,6 +2069,505 @@ describe('DashboardScene', () => {
 
       expect(restoreSpy).toHaveBeenCalledWith(scene, version);
       expect(result).toBe(true);
+    });
+  });
+
+  describe('lazy overlays', () => {
+    beforeEach(() => {
+      locationService.push('/d/dash-1/test');
+    });
+
+    it('opens the filters overview through modal loading', async () => {
+      const scene = buildTestScene();
+      const opening = scene.openFiltersOverview();
+      expect(scene.state.loadingView).toBe('overlay');
+
+      await opening;
+
+      expect(scene.state.overlay).toBeInstanceOf(DashboardFiltersOverviewDrawer);
+      expect(scene.state.loadingView).toBeUndefined();
+    });
+
+    it('does not open the filters overview after closing its loading drawer', async () => {
+      const scene = buildTestScene();
+      const opening = scene.openFiltersOverview();
+      expect(scene.state.loadingView).toBe('overlay');
+
+      scene.closeModal();
+      await opening;
+
+      expect(scene.state.loadingView).toBeUndefined();
+      expect(scene.state.overlay).toBeUndefined();
+    });
+
+    it('does not restore an old loading indicator when discarding an edit session', async () => {
+      const scene = buildTestScene();
+      const pending = createDeferred<SceneObject>();
+      const opening = scene.showModalAsync(() => pending.promise);
+      expect(scene.state.loadingView).toBe('overlay');
+      scene.onEnterEditMode();
+      scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+      expect(scene.state.loadingView).toBeUndefined();
+
+      pending.resolve(new SceneGridLayout({ children: [] }));
+      await opening;
+      expect(scene.state.overlay).toBeUndefined();
+    });
+
+    it.each(['older first', 'newer first'])('only opens the latest request when loads finish %s', async (order) => {
+      const scene = buildTestScene();
+      const older = new SceneGridLayout({ children: [] });
+      const newer = new SceneGridLayout({ children: [] });
+      let resolveOlder!: (modal: SceneObject) => void;
+      let resolveNewer!: (modal: SceneObject) => void;
+      const first = scene.showModalAsync(() => new Promise((resolve) => (resolveOlder = resolve)));
+      const second = scene.showModalAsync(() => new Promise((resolve) => (resolveNewer = resolve)));
+
+      if (order === 'older first') {
+        resolveOlder(older);
+        await first;
+        expect(scene.state.overlay).toBeUndefined();
+        resolveNewer(newer);
+      } else {
+        resolveNewer(newer);
+        await second;
+        resolveOlder(older);
+      }
+
+      await Promise.all([first, second]);
+      expect(scene.state.overlay).toBe(newer);
+    });
+
+    it.each(
+      Object.entries<(scene: DashboardScene, deactivate: () => void) => void | (() => void)>({
+        close: (scene) => scene.closeModal(),
+        'overlay replacement': (scene) => {
+          scene.showModal(new SceneGridLayout({ children: [] }));
+          scene.closeModal();
+        },
+        'navigation away and back': () => {
+          locationService.push('/dashboards');
+          locationService.push('/d/dash-1/test');
+        },
+        'editor URL change': () => locationService.partial({ inspect: 'panel-1' }),
+        'edit mode change': (scene) => {
+          scene.onEnterEditMode();
+          scene.exitEditMode({ skipConfirm: true });
+        },
+        'layout replacement': (scene) => scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true),
+        'save drawer close': (scene) => new SaveDashboardDrawer({ dashboardRef: scene.getRef() }).onClose(),
+        'panel view URL sync': (scene) => scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' }),
+        'share state replacement': (scene) => scene.setState({ shareView: 'snapshot' }),
+        'inspect state replacement': (scene) => scene.setState({ inspectPanelKey: 'panel-1' }),
+        'deactivation and reactivation': (scene, deactivate) => {
+          deactivate();
+          return scene.activate();
+        },
+      })
+    )('discards a pending overlay after %s', async (_name, run) => {
+      const scene = buildTestScene();
+      const deactivate = scene.activate();
+      const modal = new SceneGridLayout({ children: [] });
+      let resolveLoad!: (modal: SceneObject) => void;
+      const opening = scene.showModalAsync(() => new Promise((resolve) => (resolveLoad = resolve)));
+      const cleanup = run(scene, deactivate) ?? deactivate;
+
+      resolveLoad(modal);
+      await opening;
+      expect(scene.state.overlay).toBeUndefined();
+
+      await scene.showModalAsync(async () => modal);
+      expect(scene.state.overlay).toBe(modal);
+      cleanup();
+    });
+
+    it.each(['time and variables', 'identical URL'])('allows %s URL updates while loading', async (update) => {
+      const scene = buildTestScene();
+      const modal = new SceneGridLayout({ children: [] });
+      let resolveLoad!: (modal: SceneObject) => void;
+      const opening = scene.showModalAsync(() => new Promise((resolve) => (resolveLoad = resolve)));
+
+      if (update === 'time and variables') {
+        locationService.partial({ from: 'now-1h', 'var-server': 'server-2' });
+      } else {
+        locationService.replace('/d/dash-1/test');
+      }
+
+      resolveLoad(modal);
+      await opening;
+      expect(scene.state.overlay).toBe(modal);
+    });
+
+    it('does not overwrite an explicitly opened library panel drawer', async () => {
+      const scene = buildTestScene();
+      const opening = scene.showModalAsync(async () => new SceneGridLayout({ children: [] }));
+
+      scene.onShowAddLibraryPanelDrawer();
+      const drawer = scene.state.overlay;
+      expect(drawer).toBeDefined();
+      await opening;
+      expect(scene.state.overlay).toBe(drawer);
+    });
+
+    it('cancels a pending drawer when an existing consumer restores a full snapshot', async () => {
+      const scene = buildTestScene();
+      const pending = createDeferred<SceneObject>();
+      const opening = scene.showModalAsync(() => pending.promise);
+      const body = DefaultGridLayoutManager.createEmpty();
+
+      scene.setState({ ...scene.state, body, title: 'Restored dashboard' });
+      pending.resolve(new SceneGridLayout({ children: [] }));
+      await opening;
+
+      expect(scene.state.title).toBe('Restored dashboard');
+      expect(scene.state.body).toBe(body);
+      expect(scene.state.loadingView).toBeUndefined();
+      expect(scene.state.overlay).toBeUndefined();
+    });
+
+    it('allows ordinary dashboard data updates while loading', async () => {
+      const scene = buildTestScene();
+      const modal = new SceneGridLayout({ children: [] });
+      let resolveLoad!: (modal: SceneObject) => void;
+      const opening = scene.showModalAsync(() => new Promise((resolve) => (resolveLoad = resolve)));
+
+      scene.setState({ title: 'Updated title', isDirty: true });
+      resolveLoad(modal);
+      await opening;
+
+      expect(scene.state.overlay).toBe(modal);
+      expect(scene.state.title).toBe('Updated title');
+    });
+
+    it('keeps a newer pending request cancellable after an older request finishes', async () => {
+      const scene = buildTestScene();
+      const modal = new SceneGridLayout({ children: [] });
+      let resolveOlder!: (modal: SceneObject) => void;
+      let resolveNewer!: (modal: SceneObject) => void;
+      const first = scene.showModalAsync(() => new Promise((resolve) => (resolveOlder = resolve)));
+      const second = scene.showModalAsync(() => new Promise((resolve) => (resolveNewer = resolve)));
+
+      resolveOlder(modal);
+      await first;
+      scene.closeModal();
+      resolveNewer(modal);
+      await second;
+
+      expect(scene.state.overlay).toBeUndefined();
+      await scene.showModalAsync(async () => modal);
+      expect(scene.state.overlay).toBe(modal);
+    });
+
+    it('cancels pending drawer and pane requests before the panel editor import completes', async () => {
+      const scene = buildTestScene();
+      const modal = new SceneGridLayout({ children: [] });
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      const deactivateSidebar = scene.state.sidebar.activate();
+      // This continuation runs before the panel editor's dynamic import resolves.
+      const opening = scene.showModalAsync(async () => modal);
+      const paneRequest = scene.state.sidebar.beginPaneRequest();
+      const editing = openPanelEditor(scene, panel);
+      expect(paneRequest.aborted).toBe(true);
+      expect(scene.state.editPanel).toBeUndefined();
+
+      await opening;
+      expect(scene.state.overlay === modal).toBe(false);
+      await editing;
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+      deactivateSidebar();
+    });
+
+    it('preserves pending drawer and sidebar loads when URL sync clears already-closed settings', async () => {
+      const scene = buildTestScene();
+      const deactivateSidebar = scene.state.sidebar.activate();
+      const modal = new SceneGridLayout({ children: [] });
+      const opening = scene.showModalAsync(async () => modal);
+      const paneRequest = scene.state.sidebar.beginPaneRequest();
+
+      scene.urlSync?.updateFromUrl({ editview: null });
+
+      expect(scene.state.loadingView).toBe('overlay');
+      expect(paneRequest.aborted).toBe(false);
+      await opening;
+      expect(scene.state.overlay).toBe(modal);
+      deactivateSidebar();
+    });
+
+    it('propagates a load failure and allows a later request', async () => {
+      const scene = buildTestScene();
+      await expect(
+        scene.showModalAsync(async () => {
+          throw new Error('Chunk load failed');
+        })
+      ).rejects.toThrow('Chunk load failed');
+
+      const modal = new SceneGridLayout({ children: [] });
+      await scene.showModalAsync(async () => modal);
+      expect(scene.state.overlay).toBe(modal);
+    });
+
+    it.each(['save', 'share'])('does not let a pending %s drawer overwrite a newer modal', async (drawer) => {
+      const scene = buildTestScene();
+      scene.onEnterEditMode();
+      const opening = drawer === 'save' ? scene.openSaveDrawer({}) : openShareDrawer(scene, { shareView: 'link' });
+      const modal = new SceneGridLayout({ children: [] });
+      scene.showModal(modal);
+
+      await opening;
+      expect(scene.state.overlay).toBe(modal);
+    });
+  });
+
+  describe('lazy view cleanup', () => {
+    it('keeps a request started by loading completion cancellable', async () => {
+      const scene = buildTestScene();
+      const pending = createDeferred<SceneObject>();
+      let newer: Promise<void> | undefined;
+      const subscription = scene.subscribeToState((state, previous) => {
+        if (previous.loadingView && !state.loadingView && !newer) {
+          newer = scene.showModalAsync(() => pending.promise);
+        }
+      });
+      try {
+        await scene.showModalAsync(async () => undefined);
+        expect(scene.state.loadingView).toBe('overlay');
+        scene.closeModal();
+        pending.resolve(new SceneGridLayout({ children: [] }));
+        await newer;
+        expect(scene.state.loadingView).toBeUndefined();
+        expect(scene.state.overlay).toBeUndefined();
+        const modal = new SceneGridLayout({ children: [] });
+        await scene.showModalAsync(async () => modal);
+        expect(scene.state.overlay).toBe(modal);
+      } finally {
+        subscription.unsubscribe();
+      }
+    });
+
+    it('keeps browser Back and Forward updating the scene after repeated view commits', async () => {
+      const previousUrl = window.location.href;
+      window.history.replaceState({}, '', '/d/dash-1/test');
+      const history = createBrowserHistory();
+      const getHistory = jest.spyOn(locationService, 'getHistory').mockReturnValue(history);
+      const getLocation = jest.spyOn(locationService, 'getLocation').mockImplementation(() => history.location);
+      const scene = buildTestScene();
+      const unlisten = history.listen((location) => {
+        scene.urlSync?.updateFromUrl({ viewPanel: new URLSearchParams(location.search).get('viewPanel') });
+      });
+      try {
+        for (let i = 0; i < 3; i++) {
+          const modal = new SceneGridLayout({ children: [] });
+          await scene.showModalAsync(async () => modal);
+          expect(scene.state.overlay).toBe(modal);
+          scene.closeModal();
+        }
+        history.push('/d/dash-1/test?viewPanel=panel-1');
+        history.push('/d/dash-1/test?viewPanel=panel-2');
+        expect(scene.state.viewPanel).toBe('panel-2');
+
+        history.goBack();
+        await waitFor(() => expect(scene.state.viewPanel).toBe('panel-1'));
+        history.goForward();
+        await waitFor(() => expect(scene.state.viewPanel).toBe('panel-2'));
+      } finally {
+        unlisten();
+        getHistory.mockRestore();
+        getLocation.mockRestore();
+        window.history.replaceState({}, '', previousUrl);
+      }
+    });
+
+    it.each(['success', 'undefined', 'rejection', 'cancellation', 'commit failure'])(
+      'releases the history listener once after %s and allows another view',
+      async (outcome) => {
+        const scene = buildTestScene();
+        const history = locationService.getHistory();
+        const originalListen = history.listen.bind(history);
+        const disposers: jest.Mock[] = [];
+        const listen = jest.spyOn(history, 'listen').mockImplementation((listener) => {
+          const dispose = jest.fn(originalListen(listener));
+          disposers.push(dispose);
+          return dispose;
+        });
+        const pending = createDeferred<SceneObject | undefined>();
+        const modal = new SceneGridLayout({ children: [] });
+        const opening = scene.loadView({ key: 'overlay', load: () => pending.promise });
+        const commit = jest.spyOn(scene, 'setState');
+        try {
+          if (outcome === 'commit failure') {
+            commit.mockImplementationOnce(() => {
+              throw new Error('Commit failed');
+            });
+          }
+          if (outcome === 'cancellation') {
+            scene.cancelPendingViews();
+          }
+          if (outcome === 'rejection') {
+            pending.reject(new Error('Load failed'));
+          } else {
+            pending.resolve(outcome === 'undefined' ? undefined : modal);
+          }
+          if (outcome === 'rejection' || outcome === 'commit failure') {
+            await expect(opening).rejects.toThrow(outcome === 'rejection' ? 'Load failed' : 'Commit failed');
+          } else {
+            await opening;
+          }
+          expect(disposers).toHaveLength(1);
+          expect(disposers[0]).toHaveBeenCalledTimes(1);
+          expect(scene.state.loadingView).toBeUndefined();
+          expect(scene.state.overlay).toBe(outcome === 'success' ? modal : undefined);
+
+          await scene.showModalAsync(async () => modal);
+          expect(scene.state.overlay).toBe(modal);
+          expect(disposers[1]).toHaveBeenCalledTimes(1);
+        } finally {
+          commit.mockRestore();
+          listen.mockRestore();
+        }
+      }
+    );
+
+    it.each(['older first', 'newer first'])(
+      'preserves the newer editor when an older load rejects %s',
+      async (order) => {
+        const scene = buildTestScene();
+        const older = createDeferred<ReturnType<typeof buildPanelEditScene>>();
+        const newer = createDeferred<ReturnType<typeof buildPanelEditScene>>();
+        const first = scene.loadView({ key: 'editPanel', load: () => older.promise });
+        const second = scene.loadView({ key: 'editPanel', load: () => newer.promise });
+        const editor = buildPanelEditScene(findVizPanelByKey(scene, 'panel-2')!);
+        if (order === 'newer first') {
+          newer.resolve(editor);
+          await second;
+        }
+        older.reject(new Error('Old chunk failed'));
+        await expect(first).rejects.toThrow('Old chunk failed');
+        if (order === 'older first') {
+          expect(scene.state.loadingView).toBe('editPanel');
+          newer.resolve(editor);
+          await second;
+        }
+        expect(scene.state.editPanel).toBe(editor);
+        expect(scene.state.loadingView).toBeUndefined();
+      }
+    );
+  });
+
+  describe('lazy panel editor', () => {
+    beforeEach(() => {
+      locationService.push('/d/dash-1/test?editPanel=panel-1');
+    });
+
+    it('keeps the newer editor loading when a superseded request resolves', async () => {
+      const scene = buildTestScene();
+      const first = createDeferred<ReturnType<typeof buildPanelEditScene>>();
+      const second = createDeferred<ReturnType<typeof buildPanelEditScene>>();
+      const older = scene.loadView({ key: 'editPanel', load: () => first.promise });
+      const newer = scene.loadView({ key: 'editPanel', load: () => second.promise });
+      first.resolve(buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!));
+      await older;
+      expect(scene.state.loadingView).toBe('editPanel');
+      expect(scene.state.editPanel).toBeUndefined();
+      const panel = findVizPanelByKey(scene, 'panel-2')!;
+      second.resolve(buildPanelEditScene(panel));
+      await newer;
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+      expect(scene.state.loadingView).toBeUndefined();
+    });
+
+    it('clears panel editor loading after a failed import and allows another request', async () => {
+      const scene = buildTestScene();
+      const pending = createDeferred<never>();
+      const opening = scene.loadView({ key: 'editPanel', load: () => pending.promise });
+      expect(scene.state.loadingView).toBe('editPanel');
+      pending.reject(new Error('Chunk load failed'));
+      await expect(opening).rejects.toThrow('Chunk load failed');
+      expect(scene.state.loadingView).toBeUndefined();
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      await openPanelEditor(scene, panel);
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+      expect(scene.state.loadingView).toBeUndefined();
+    });
+
+    it.each(
+      Object.entries<(scene: DashboardScene, deactivate: () => void) => void>({
+        close: (scene) => scene.cancelPendingViews(),
+        'editor URL removal': () => locationService.partial({ editPanel: null }),
+        'navigation away and back': () => {
+          locationService.push('/dashboards');
+          locationService.push('/d/dash-1/test?editPanel=panel-1');
+        },
+        rebuild: (scene) => scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true),
+        deactivation: (_scene, deactivate) => deactivate(),
+      })
+    )('does not reopen the editor after %s while its chunk loads', async (_name, run) => {
+      const scene = buildTestScene({ isEditing: true });
+      const deactivate = scene.activate();
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      const editing = openPanelEditor(scene, panel);
+
+      run(scene, deactivate);
+      expect(scene.state.loadingView).toBeUndefined();
+      await editing;
+
+      expect(scene.state.editPanel).toBeUndefined();
+      const modal = new SceneGridLayout({ children: [] });
+      await scene.showModalAsync(async () => modal);
+      expect(scene.state.overlay).toBe(modal);
+      if (scene.isActive) {
+        deactivate();
+      }
+    });
+
+    it('does not cancel a newer pending drawer when the editor chunk arrives', async () => {
+      const scene = buildTestScene();
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      const editing = openPanelEditor(scene, panel);
+      const pending = createDeferred<SceneObject>();
+      const opening = scene.showModalAsync(() => pending.promise);
+
+      await editing;
+
+      expect(scene.state.loadingView).toBe('overlay');
+      expect(scene.state.editPanel).toBeUndefined();
+      const modal = new SceneGridLayout({ children: [] });
+      pending.resolve(modal);
+      await opening;
+      expect(scene.state.overlay).toBe(modal);
+    });
+
+    it('opens only the most recently requested panel and preserves new-panel state', async () => {
+      const scene = buildTestScene();
+      const firstPanel = findVizPanelByKey(scene, 'panel-1')!;
+      const secondPanel = findVizPanelByKey(scene, 'panel-2')!;
+      const openedPanels: string[] = [];
+      const subscription = scene.subscribeToState(({ editPanel }, previous) => {
+        if (editPanel && editPanel !== previous.editPanel) {
+          openedPanels.push(editPanel.getUrlKey());
+        }
+      });
+      const first = openPanelEditor(scene, firstPanel);
+      const second = openPanelEditor(scene, secondPanel, true);
+
+      await Promise.all([first, second]);
+      subscription.unsubscribe();
+
+      expect(openedPanels).toEqual(['2']);
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(secondPanel);
+      expect(scene.state.editPanel?.state.isNewPanel).toBe(true);
+    });
+
+    it('allows data-only edits and time-range URL changes while the editor loads', async () => {
+      const scene = buildTestScene();
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      const editing = openPanelEditor(scene, panel);
+      scene.setState({ title: 'Updated title' });
+      locationService.partial({ from: 'now-6h', to: 'now', 'var-server': 'server-b' });
+
+      await editing;
+
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+      expect(scene.state.title).toBe('Updated title');
     });
   });
 
@@ -3324,7 +3894,7 @@ describe('DashboardScene', () => {
       const onBuild = jest.fn();
       const onDismiss = jest.fn();
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Kafka overview', panelCount: 2, onBuild, onDismiss },
+        planning: { planId: 'plan-1', planTitle: 'Kafka overview', onBuild, onDismiss },
       });
       const events: unknown[] = [];
       const sub = appEvents.subscribe(DashboardPlanningEvent, (event) => events.push(event.payload));
@@ -3574,6 +4144,27 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
     },
   };
 }
+
+// Compiler-only assertions: invalid calls must be checked by TypeScript, never executed by Jest.
+void ((scene: DashboardScene, snapshot: DashboardSceneState, panel: VizPanel) => {
+  scene.setState(snapshot);
+  scene.setState({ title: 'Renamed', isEditing: true });
+  const consumer: DashboardSceneLike = scene;
+  consumer.setState(snapshot);
+
+  scene.loadView(dashboardViews.editPanel(panel, true));
+  scene.loadView(dashboardViews.overlay.filters());
+  // @ts-expect-error Unregistered fields cannot own a view request.
+  scene.loadView({ key: 'title', load: async () => 'Renamed' });
+  // @ts-expect-error Loading bookkeeping cannot own a view request.
+  scene.loadView({ key: 'loadingView', load: async () => true });
+  // @ts-expect-error The result must match the registered target field.
+  scene.loadView({ key: 'editPanel', load: async () => 'not a panel editor' });
+  // @ts-expect-error Registered loaders retain their argument types.
+  dashboardViews.editPanel('not a panel');
+  // @ts-expect-error Synchronous state keys are not exposed as loaders.
+  dashboardViews.body();
+});
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({

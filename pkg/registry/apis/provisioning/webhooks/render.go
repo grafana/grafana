@@ -15,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -143,12 +144,9 @@ func (c *renderConnector) Connect(
 			MustProxyBytes: true,
 			Uid:            blobID,
 		})
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to get rendered preview", "namespace", namespace, "repository", name, "blob", blobID, "error", err)
 			responder.Error(err)
-			return
-		}
-		if rsp.Error != nil {
-			responder.Error(resource.GetError(rsp.Error))
 			return
 		}
 

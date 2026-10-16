@@ -49,7 +49,9 @@ export { UnitPicker } from './components/UnitPicker/UnitPicker';
 export { StatsPicker, type StatsPickerProps } from './components/StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './components/RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './components/DateTimePickers/TimeRangePicker';
-export { TimeRangeProvider } from './components/DateTimePickers/TimeRangeContext';
+// TODO: Remove TimeRangeProvider export in next major.
+/** @deprecated See `TimeRangeProvider` — removal planned for the next major version of `@grafana/ui`. */
+export { TimeRangeProvider } from './graveyard/TimeRangeContext/TimeRangeContext';
 export { TimePickerTooltip } from './components/DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './components/DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './components/DateTimePickers/TimeOfDayPicker';
@@ -67,11 +69,8 @@ export {
 } from './components/DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './components/DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './components/List/List';
-export {
-  InteractiveTable,
-  type FetchDataArgs,
-  type FetchDataFunc,
-} from './components/InteractiveTable/InteractiveTable';
+export { InteractiveTable } from './components/InteractiveTable/InteractiveTableLazy';
+export type { FetchDataArgs, FetchDataFunc } from './components/InteractiveTable/InteractiveTable';
 export { TagsInput } from './components/TagsInput/TagsInput';
 export { AutoSaveField } from './components/AutoSaveField/AutoSaveField';
 export { Pagination } from './components/Pagination/Pagination';
@@ -83,6 +82,30 @@ export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/
 /** @deprecated Slate is being removed from `@grafana/ui`. Migrate to `QueryInput`; this export may be removed in a future release. */
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { QueryInput, type QueryInputProps } from './components/QueryInput/QueryInput';
+export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export { CODE_MIRROR_LANGUAGES } from './components/CodeMirror/languages';
+export { createCodeEditorTheme } from './components/CodeMirror/theme';
+export { signatureHelp } from './components/CodeMirror/signatureHelp';
+export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
+export { applyVariableReference, createVariableCompletionSource } from './components/CodeMirror/variableCompletion';
+export type { VariableCompletionDisplay, VariableCompletionOptions } from './components/CodeMirror/variableCompletion';
+export type {
+  CodeMirrorBasicSetup,
+  CodeMirrorCompletion,
+  CodeMirrorCompletionContext,
+  CodeMirrorCompletionMode,
+  CodeMirrorCompletionResult,
+  CodeMirrorCompletionSource,
+  CodeMirrorEditorLanguage,
+  CodeMirrorEditorProps,
+  CodeMirrorEditorTheme,
+  CodeMirrorExtension,
+  CodeMirrorSqlDialect,
+  SignatureHelp,
+  SignatureHelpProvider,
+  SignatureInformation,
+  SignatureParameter,
+} from './components/CodeMirror/types';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
 export { ReactMonacoDiffEditorLazy as ReactMonacoDiffEditor } from './components/Monaco/ReactMonacoDiffEditorLazy';
@@ -141,7 +164,7 @@ export {
   BigValueJustifyMode,
   BigValueTextMode,
 } from './components/BigValue/BigValueTypes';
-export { Sparkline } from './components/Sparkline/Sparkline';
+export { Sparkline, type SparklineHoverEvent } from './components/Sparkline/Sparkline';
 
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {
@@ -180,8 +203,11 @@ export {
   type PanelChromeLoadingIndicatorProps,
   PanelContextProvider,
   type PanelContext,
+  type PanelRuntimeTransformations,
+  type AdHocTransformationsState,
   PanelContextRoot,
   usePanelContext,
+  useAdHocTransformations,
 } from './components/PanelChrome';
 export {
   VizLayout,
