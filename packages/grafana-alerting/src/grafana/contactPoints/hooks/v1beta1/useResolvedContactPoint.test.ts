@@ -49,6 +49,25 @@ describe('useResolvedContactPoint', () => {
     expect(result.current.isNotFound).toBe(false);
   });
 
+  it('is resolving until the list has loaded', async () => {
+    const { result } = renderResolved('slack-oncall');
+
+    expect(result.current.isResolving).toBe(true);
+    expect(result.current.selectorValue).toBeNull();
+
+    await waitFor(() => expect(result.current.isResolving).toBe(false));
+    expect(result.current.selectorValue).toBe('uid-1');
+  });
+
+  it('is not resolving when the list failed to load', async () => {
+    server.use(listReceiverHandler(() => new HttpResponse(null, { status: 500 })));
+
+    const { result } = renderResolved('slack-oncall');
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.isResolving).toBe(false);
+  });
+
   it('is not "not found" when the list failed to load', async () => {
     server.use(listReceiverHandler(() => new HttpResponse(null, { status: 500 })));
 
