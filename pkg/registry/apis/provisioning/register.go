@@ -413,7 +413,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
-	builder.SetRepoValidatorOptions(repoValidatorOpts...)
+	builder.repoValidatorOpts = repoValidatorOpts
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -460,7 +460,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
-	v1beta1Builder.SetRepoValidatorOptions(repoValidatorOpts...)
+	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
