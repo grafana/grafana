@@ -54,8 +54,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   logStatsActions: css({
     position: 'absolute',
     display: 'inline-block',
-    left: theme.spacing(-5.5),
-    top: theme.spacing(0.75),
+    left: theme.spacing(-7.5),
+    top: 0,
   }),
 });
 
