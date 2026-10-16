@@ -59,6 +59,8 @@ interface Props {
   dropIndicator?: NotebookCellDropIndicator;
   /** Forwarded to this cell's add button, which passes this cell's own `index` — an insert above it. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
+  /** "New from Saved Queries": forwarded to this cell's add button, offset the same way as `onAdd`. */
+  onAddSavedQuery?: (index: number) => void;
   /**
    * Supplied by the layout, which owns the cells list. Optional so the frame stays renderable on its
    * own; the actions bar is left out entirely when they are absent, rather than shown doing nothing.
@@ -103,6 +105,7 @@ export function NotebookCellFrame({
   isDragActive,
   dropIndicator,
   onAdd,
+  onAddSavedQuery,
   onDuplicate,
   onDelete,
   onAdvance,
@@ -207,7 +210,14 @@ export function NotebookCellFrame({
             </div>
           )}
 
-          {isEditing && <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_CONTROLS_CLASS} />}
+          {isEditing && (
+            <NotebookCellAddButton
+              index={index}
+              onAdd={onAdd}
+              onAddSavedQuery={onAddSavedQuery}
+              className={NOTEBOOK_CELL_CONTROLS_CLASS}
+            />
+          )}
 
           {isEditing && onDuplicate && onDelete && (
             <>
