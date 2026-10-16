@@ -8,7 +8,7 @@ import { IconButton } from '../../../IconButton/IconButton';
 import { Menu } from '../../../Menu/Menu';
 import { type MenuItemProps } from '../../../Menu/MenuItem';
 import { useOpenLayersContext } from '../../geo';
-import { type CellOption, getCellMenuOptions } from '../cellMenuOptions';
+import { type CellOption } from '../cellMenuOptions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellActionsProps } from '../types';
 import { buildInspectValue } from '../utils';
 
@@ -23,12 +23,21 @@ export const TableCellActions = memo(
     showFilters,
     tableRefreshEnabled,
     onAddToAssistant,
-    groups = getCellMenuOptions({ cellInspect, showFilters, hasAssistantAction: Boolean(onAddToAssistant) }),
+    groups,
   }: TableCellActionsProps) => {
     const { formatGeometry } = useOpenLayersContext();
 
     if (tableRefreshEnabled) {
-      if (groups.length === 0) {
+      const availableGroups = groups
+        .map((group) =>
+          group.filter(
+            (option) =>
+              (option !== 'assistant' || onAddToAssistant) &&
+              ((option !== 'filterFor' && option !== 'filterOut') || onCellFilterAdded)
+          )
+        )
+        .filter((group) => group.length > 0);
+      if (availableGroups.length === 0) {
         return null;
       }
       const items = {
@@ -78,8 +87,8 @@ export const TableCellActions = memo(
             placement="bottom-end"
             overlay={
               <Menu ariaLabel={menuLabel}>
-                {groups.map((group, index) => (
-                  <Fragment key={group[0]}>
+                {availableGroups.map((group, index) => (
+                  <Fragment key={index}>
                     {index > 0 && <Menu.Divider />}
                     {group.map((option) => (
                       <Menu.Item key={option} {...items[option]} />

@@ -517,6 +517,14 @@ function buildColumnsFromFields(
       // cell types are going to just pass down the max cell height as a numeric height for those cells.
       const height = rowHeightFn(props.row);
 
+      const actionProps = tableRefreshEnabled
+        ? {
+            tableRefreshEnabled: true as const,
+            groups: cellMenuOptions,
+            onAddToAssistant: showAssistant ? () => onCellAddToAssistant?.(frame, field, rowIdx) : undefined,
+          }
+        : { tableRefreshEnabled: false as const, cellInspect: inspect, showFilters };
+
       let cellResult = (
         <>
           <CellType
@@ -539,17 +547,13 @@ function buildColumnsFromFields(
           />
           {cellMenuOptions.length > 0 && (
             <TableCellActions
-              groups={cellMenuOptions}
-              tableRefreshEnabled={tableRefreshEnabled}
+              {...actionProps}
               field={field}
               value={value}
               displayName={displayName}
-              cellInspect={inspect}
-              showFilters={showFilters}
               className={cellActionClassName}
               setInspectCell={setInspectCell}
               onCellFilterAdded={onCellFilterAdded}
-              onAddToAssistant={showAssistant ? () => onCellAddToAssistant?.(frame, field, rowIdx) : undefined}
             />
           )}
         </>

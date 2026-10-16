@@ -222,19 +222,21 @@ export type InspectCellProps = {
   preformatted?: boolean;
 };
 
-export interface TableCellActionsProps {
-  groups?: CellOption[][];
+interface TableCellActionsBaseProps {
   onAddToAssistant?: () => void;
-  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   displayName: string;
-  cellInspect: boolean;
-  showFilters: boolean;
   setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }
+
+export type TableCellActionsProps = TableCellActionsBaseProps &
+  (
+    | { tableRefreshEnabled: true; groups: CellOption[][]; cellInspect?: never; showFilters?: never }
+    | { tableRefreshEnabled?: false; groups?: never; cellInspect: boolean; showFilters: boolean }
+  );
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {

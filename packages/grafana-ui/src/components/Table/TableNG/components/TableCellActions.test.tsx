@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type Field, FieldType } from '@grafana/data';
 
 import { TableCellInspectorMode } from '../../TableCellInspector';
+import { getCellMenuOptions } from '../cellMenuOptions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellActionsProps } from '../types';
 
 import { TableCellActions } from './TableCellActions';
@@ -15,16 +16,34 @@ function setup(overrides: Partial<TableCellActionsProps> = {}) {
     values: ['a', 'b', 'c'],
     config: {},
   };
-  const props: TableCellActionsProps = {
+  const base = {
     field,
     value: 'hello',
     displayName: 'Field1',
-    cellInspect: true,
-    showFilters: true,
     setInspectCell: jest.fn(),
     onCellFilterAdded: jest.fn(),
-    ...overrides,
   };
+  const props: TableCellActionsProps = overrides.tableRefreshEnabled
+    ? {
+        ...base,
+        ...overrides,
+        tableRefreshEnabled: true,
+        groups:
+          overrides.groups ??
+          getCellMenuOptions({
+            cellInspect: true,
+            showFilters: true,
+            hasAssistantAction: Boolean(overrides.onAddToAssistant),
+          }),
+      }
+    : {
+        ...base,
+        ...overrides,
+        tableRefreshEnabled: false,
+        groups: undefined,
+        cellInspect: overrides.cellInspect ?? true,
+        showFilters: overrides.showFilters ?? true,
+      };
   render(<TableCellActions {...props} />);
   return props;
 }
@@ -50,7 +69,7 @@ describe('TableCellActions', () => {
 
     it('invokes Assistant from an Assistant-only menu by keyboard', async () => {
       const onAddToAssistant = jest.fn();
-      setup({ tableRefreshEnabled: true, cellInspect: false, showFilters: false, onAddToAssistant });
+      setup({ tableRefreshEnabled: true, groups: [['assistant']], onAddToAssistant });
       await userEvent.tab();
       await userEvent.keyboard('{Enter}');
       expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Add to Assistant']);
@@ -76,6 +95,17 @@ describe('TableCellActions', () => {
         '',
         'Add to Assistant',
       ]);
+    });
+
+    it('omits actions without callbacks, including empty groups', async () => {
+      setup({
+        tableRefreshEnabled: true,
+        groups: [['assistant'], ['filterFor', 'filterOut'], ['inspect']],
+        onCellFilterAdded: undefined,
+      });
+      await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Inspect value']);
+      expect(screen.getByRole('menu').children).toHaveLength(1);
     });
 
     it('preserves inline actions when refresh is disabled even with an Assistant callback', () => {
@@ -107,7 +137,10 @@ describe('TableCellActions', () => {
       [true, false, ['Inspect value']],
       [false, true, ['Filter for value', 'Filter out value']],
     ])('offers only enabled actions (inspect=%s, filters=%s)', async (cellInspect, showFilters, labels) => {
-      setup({ tableRefreshEnabled: true, cellInspect, showFilters });
+      setup({
+        tableRefreshEnabled: true,
+        groups: getCellMenuOptions({ cellInspect, showFilters, hasAssistantAction: false }),
+      });
       await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
       expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(labels);
     });
@@ -132,11 +165,10 @@ describe('TableCellActions', () => {
         <div onClick={parentClick}>
           <TableCellActions
             tableRefreshEnabled
+            groups={[['inspect']]}
             field={{ name: 'value', type: FieldType.string, values: [], config: {} }}
             value="hello"
             displayName="value"
-            cellInspect
-            showFilters={false}
             setInspectCell={setInspectCell}
           />
         </div>
