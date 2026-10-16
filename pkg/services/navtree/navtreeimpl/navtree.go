@@ -561,9 +561,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 				Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
 			})
 		}
-	}
 
-	if c.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",
