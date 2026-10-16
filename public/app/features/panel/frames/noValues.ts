@@ -88,6 +88,23 @@ function hasDrawableThresholds(config: FieldConfig<GraphFieldConfig>): boolean {
   return thresholds.steps.slice(1).some((step) => Number.isFinite(step.value));
 }
 
+/**
+ * The value range of a field's absolute thresholds, used as the y range of a scale with no values.
+ * Percentage thresholds only draw with an explicit min and max, which already fix the range.
+ */
+export function getThresholdsExtent(config: FieldConfig): [number, number] | undefined {
+  if (config.thresholds?.mode !== ThresholdsMode.Absolute) {
+    return undefined;
+  }
+
+  const values = config.thresholds.steps
+    .slice(1)
+    .map((step) => step.value)
+    .filter(Number.isFinite);
+
+  return values.length ? [Math.min(...values), Math.max(...values)] : undefined;
+}
+
 const PLACEHOLDER_META_KEY = 'noValuesPlaceholder';
 
 interface PlaceholderFrameOptions {

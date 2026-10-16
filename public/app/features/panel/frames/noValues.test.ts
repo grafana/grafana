@@ -15,7 +15,12 @@ import {
 import { type GraphFieldConfig, GraphThresholdsStyleMode } from '@grafana/schema';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
-import { buildNoValuesPlaceholderFrame, getNoValuesShape, isNoValuesPlaceholderFrame } from './noValues';
+import {
+  buildNoValuesPlaceholderFrame,
+  getNoValuesShape,
+  getThresholdsExtent,
+  isNoValuesPlaceholderFrame,
+} from './noValues';
 
 describe('getNoValuesShape', () => {
   const lineThresholds: FieldConfig<GraphFieldConfig> = {
@@ -210,5 +215,33 @@ describe('buildNoValuesPlaceholderFrame', () => {
   it('is marked as a placeholder', () => {
     expect(isNoValuesPlaceholderFrame(build())).toBe(true);
     expect(isNoValuesPlaceholderFrame(createDataFrame({ fields: [] }))).toBe(false);
+  });
+});
+
+describe('getThresholdsExtent', () => {
+  const steps = (...values: number[]) => [
+    { value: -Infinity, color: 'green' },
+    ...values.map((value) => ({ value, color: 'red' })),
+  ];
+
+  it('spans the non-base absolute steps', () => {
+    expect(getThresholdsExtent({ thresholds: { mode: ThresholdsMode.Absolute, steps: steps(80, 20, 50) } })).toEqual([
+      20, 80,
+    ]);
+  });
+
+  it('gives a flat extent for a single step', () => {
+    expect(getThresholdsExtent({ thresholds: { mode: ThresholdsMode.Absolute, steps: steps(80) } })).toEqual([80, 80]);
+  });
+
+  it.each<{ name: string; config: FieldConfig }>([
+    { name: 'there are no thresholds', config: {} },
+    { name: 'there is only the base step', config: { thresholds: { mode: ThresholdsMode.Absolute, steps: steps() } } },
+    {
+      name: 'the thresholds are percentages',
+      config: { thresholds: { mode: ThresholdsMode.Percentage, steps: steps(80) } },
+    },
+  ])('returns undefined when $name', ({ config }) => {
+    expect(getThresholdsExtent(config)).toBeUndefined();
   });
 });
