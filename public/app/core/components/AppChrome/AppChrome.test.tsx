@@ -239,6 +239,35 @@ describe('AppChrome', () => {
         expect(screen.queryByTestId('scopes-dashboards-container')).not.toBeInTheDocument();
       });
     });
+
+    it('gates the drawer container and left padding on the scopesDashboardsMegaMenu flag when there is real scoped content', async () => {
+      // dashboards/scopeNavigations are deliberately left empty: a non-empty combination would make
+      // useAutoOpenMegaMenuForScopedContent open the mega menu once the flag below flips on, and the
+      // mega menu renders its own ScopesDashboardsMegaMenuSection with this exact same test id, which
+      // would make the "absent" assertion below meaningless. forScopeNames alone is still enough to
+      // exercise the drawer/padding gate, which doesn't care about dashboard content at all.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ dashboards: [], scopeNavigations: [] }));
+
+      setup(<Page navId="child1">Children</Page>);
+
+      const mainContent = document.getElementById('pageContent')!;
+
+      await screen.findByTestId('scopes-dashboards-container');
+      await waitFor(() => {
+        expect(parseFloat(getComputedStyle(mainContent).paddingLeft)).toBeGreaterThan(0);
+      });
+
+      await act(async () => {
+        setTestFlags({ 'grafana.scopesDashboardsMegaMenu': true });
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('scopes-dashboards-container')).not.toBeInTheDocument();
+      });
+      await waitFor(() => {
+        expect(parseFloat(getComputedStyle(mainContent).paddingLeft) || 0).toBe(0);
+      });
+    });
   });
 
   describe('scopes dashboards mega menu section', () => {
@@ -447,6 +476,46 @@ describe('AppChrome', () => {
       });
 
       expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
+    it('never opens the mega menu in kiosk mode, even with content', async () => {
+      // AppChrome only mounts AutoOpenMegaMenuForScopedContent when !chromeless, so kiosk mode
+      // (chromeless: true) must prevent the auto-open effect from ever running at all.
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
+      );
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      act(() => {
+        context.chrome.update({ kioskMode: KioskMode.Full });
+      });
+
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
+    it('does not force-close the mega menu when the scope is cleared while it is open', async () => {
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      // Scope cleared - forScopeNames empties out, so hasScopedDashboardsContent goes false. The
+      // hook only ever opens the menu, never closes it, so this must not force it shut again.
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
+      );
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
     });
 
     it('does not open the mega menu when the flag is off, even with content', async () => {
