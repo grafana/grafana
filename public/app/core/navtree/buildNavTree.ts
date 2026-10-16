@@ -2,9 +2,9 @@ import { cloneDeep } from 'lodash';
 
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
+import { withPluginNav } from './buildPluginNav';
 import { getRegisteredNavEntries } from './registry';
 import { adminNavEntry } from './sections/admin.navEntry';
 import { connectionsNavEntry } from './sections/connections.navEntry';
@@ -19,41 +19,25 @@ import {
   appendIntoSection,
   applyAppSubUrl,
   buildEntries,
+  isClientNavTreeEnabled,
   type NavEntryBuilder,
   pruneEmptyNavSections,
   sortNavTree,
 } from './utils';
 
 /**
- * Whether to build the nav tree client-side. Gated on grafana.multiTenantNavTree
- * alone: this builds only the static sections, which need no plugin data. App
- * plugin nav is folded in by a later PR, gated separately on plugins.useMTPlugins
- * (the metas API it depends on additionally needs pluginStoreServiceLoading and
- * pluginInstallAPISync server-side).
+ * The entry point used by the redux slices: returns the client-built tree when
+ * the flag is on, or the server-provided tree otherwise.
  *
- * The backend (setIndexViewData in pkg/api/index.go) only stops building the
- * server tree once plugins.useMTPlugins is also on, so bootData keeps carrying a
- * server-built tree as a fallback throughout the static-only phase.
+ * This runs during configureStore, which app.ts calls only after it has awaited
+ * both the app plugin metas and the user's permissions — the app plugin section
+ * needs the first, and the permission gates need the second. That is why the
+ * metas can be read synchronously further down.
  *
- * Known gap (fix parked): nothing guarantees the client reaches the same
- * verdict the server did. app.ts skips OpenFeature init for signed-out and
- * anonymous sessions, and for signed-in sessions a failed or slow OFREP fetch
- * resolves against NOOP_PROVIDER, which silently returns the `false` default.
- * getInitialNavTree then falls back to the bootdata tree. During the
- * static-only phase that tree is a real server-built one (harmless), but once
- * plugins.useMTPlugins is also on the server stops building it and ships an
- * empty tree — then the menu is empty AND navIndex is {}, making every <Page>
- * render a not-found header. The fix is to have the server publish its
- * decision at boot time (a bootdata boolean alongside the tree) and key off
- * that, rather than re-evaluating the flag here.
- */
-function isClientNavTreeEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false);
-}
-
-/**
- * The entry point used by the redux slices: returns the client-built static
- * tree when the flag is on, or the server-provided tree otherwise.
+ * Prune after buildNavTree has sorted, not before: pruning first removes
+ * siblings, and the index fallback in sortNavTree would then number the
+ * remaining unweighted ones differently. applyAppSubUrl goes last of all, and
+ * runs exactly once over the finished tree.
  */
 export function getInitialNavTree(): NavModelItem[] {
   if (!isClientNavTreeEnabled()) {
@@ -63,19 +47,16 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  const staticTree = applyAppSubUrl(buildStaticNavTree());
-  // Empty sections (cfg/access without children) are pruned like the server
-  // prunes them after its enterprise hooks run.
-  return pruneEmptyNavSections(staticTree);
+  return applyAppSubUrl(pruneEmptyNavSections(buildNavTree()));
 }
 
 /**
  * The static sections of the nav tree: each entry declares the gate that makes
  * it visible and how to build it. Home is not listed — it is unconditional and
  * seeds the tree. The entries are defined in ./sections; this module only
- * composes them.
+ * composes them. App plugin sections are folded in afterwards, by withPluginNav.
  */
-const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
+const NAV_ENTRIES: NavEntryBuilder[] = [
   starredNavEntry,
   dashboardsNavEntry,
   exploreNavEntry,
@@ -90,14 +71,25 @@ const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
 ];
 
 /**
- * Builds the static (non-plugin) portion of the nav tree, sorted, with urls
- * app-sub-url relative: callers apply the prefix once via applyAppSubUrl at
- * the end of their pipeline. Nav items registered via addNavEntries (e.g. by
- * the enterprise bundle) are appended into their target sections.
+ * The static sections, with nav items registered via addNavEntries (e.g. by the
+ * enterprise bundle) appended into their target sections. Unsorted, and empty
+ * attachment shells are left in place — the caller sorts and getInitialNavTree
+ * prunes. Exported so tests can build the tree the plugin pass receives.
  */
-export function buildStaticNavTree(): NavModelItem[] {
-  const tree = [getHomeNode(), ...buildEntries(STATIC_NAV_ENTRIES)];
-  return sortNavTree(applyRegisteredNavEntries(tree));
+export function buildStaticSections(): NavModelItem[] {
+  return applyRegisteredNavEntries([getHomeNode(), ...buildEntries(NAV_ENTRIES)]);
+}
+
+/**
+ * Builds the nav tree, sorted, with urls app-sub-url relative: callers apply
+ * the prefix once via applyAppSubUrl at the end of their pipeline.
+ *
+ * The plugin pass runs between the two: after the static sections, because apps
+ * are placed into sections those entries own, and before the sort, because the
+ * weights it sets only take effect there.
+ */
+export function buildNavTree(): NavModelItem[] {
+  return sortNavTree(withPluginNav(buildStaticSections()));
 }
 
 /** Appends registered extension items into their parent sections. Returns a new tree. */

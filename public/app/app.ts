@@ -42,6 +42,7 @@ import {
   logError,
 } from '@grafana/runtime';
 import {
+  getAppPluginMetas,
   getFeatureFlagClient,
   FlagKeys,
   initDataSourceInstanceSettings,
@@ -84,8 +85,7 @@ import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { navTreeInitialized } from './core/reducers/navBarTree';
-import { navIndexInitialized } from './core/reducers/navModel';
+import { arePluginNavItemsEnabled } from './core/navtree/utils';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
@@ -139,7 +139,6 @@ import { createSwitchVariableAdapter } from './features/variables/switch/adapter
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
-import { dispatch } from './store/store';
 
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
@@ -246,22 +245,27 @@ export class GrafanaApp {
       // We must wait for translations to load because some preloaded store state requires translating
       await initI18nPromise;
 
-      // Important that extension reducers are initialized before store
-      addExtensionReducers();
-      configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
-
-      // The multi-tenant frontend service ships a reduced boot with no user
-      // permissions, so fetch them before anything permission-gated renders. The
-      // nav tree needs rebuilding either way: configureStore built it with an
-      // empty permission set, and its sections are permission-gated.
+      // configureStore builds the nav tree, so whatever that build reads has to
+      // land first. Fetched in parallel, because neither depends on the other, and
+      // each only when it is actually needed: the metas feed the plugin items, and
+      // the permissions its sections and plugin access checks are gated on — which
+      // bootdata already carries everywhere except the multi-tenant frontend
+      // service, whose reduced boot ships none.
+      const bootTasks: Array<Promise<unknown>> = [];
+      if (arePluginNavItemsEnabled()) {
+        bootTasks.push(getAppPluginMetas());
+      }
       if (
         isFrontendService() &&
         getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)
       ) {
-        await contextSrv.fetchUserPermissions();
-        dispatch(navTreeInitialized());
-        dispatch(navIndexInitialized());
+        bootTasks.push(contextSrv.fetchUserPermissions());
       }
+      await Promise.all(bootTasks);
+
+      // Important that extension reducers are initialized before store
+      addExtensionReducers();
+      configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
 
       initExtensions();
 

@@ -1,8 +1,47 @@
 import { type NavModelItem, userHasAnyPermission } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { NavID, type NavId } from './constants';
+
+/**
+ * Whether to build the nav tree client-side. Gated on grafana.multiTenantNavTree
+ * alone: this covers the static sections, which need no plugin data. Folding in
+ * app plugin nav is gated separately on plugins.useMTPlugins, below (the metas
+ * API it depends on additionally needs pluginStoreServiceLoading and
+ * pluginInstallAPISync server-side).
+ *
+ * The backend (setIndexViewData in pkg/api/index.go) only stops building the
+ * server tree once plugins.useMTPlugins is also on, so bootData keeps carrying a
+ * server-built tree as a fallback throughout the static-only phase.
+ *
+ * Known gap (fix parked): nothing guarantees the client reaches the same
+ * verdict the server did. A failed or slow OFREP fetch resolves against
+ * NOOP_PROVIDER, which silently returns the `false` default, and
+ * getInitialNavTree then falls back to the bootdata tree.
+ *
+ * That only bites when both flags are on server-side: the bootdata tree is a
+ * real server-built one until then, so falling back to it is harmless. Once
+ * plugins.useMTPlugins is on the server ships an empty tree instead, and the
+ * menu is empty AND navIndex is {}, making every <Page> render a not-found
+ * header. The fix is to have the server publish its decision at boot time (a
+ * bootdata boolean alongside the tree) and key off that, rather than
+ * re-evaluating the flag here.
+ */
+export function isClientNavTreeEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false);
+}
+
+/**
+ * Whether app plugin nav items should be fetched and folded into the tree. On
+ * top of the client-build gate this additionally requires plugins.useMTPlugins:
+ * without it the pluginMeta service never fetches, so grafana.multiTenantNavTree
+ * alone renders the static tree only.
+ */
+export function arePluginNavItemsEnabled(): boolean {
+  return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
+}
 
 export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
 export const isSignedIn = () => contextSrv.isSignedIn;
@@ -43,6 +82,9 @@ const PRUNABLE_ADMIN_SECTIONS: NavId[] = [NavID.cfgGeneral, NavID.cfgPlugins, Na
 // Top-level sections built unconditionally as attachment targets, pruned when
 // nothing attached. Mirrors the server's RemoveEmptyConnectionsSection and
 // RemoveEmptyDrilldownSection, plus Administration once its subsections go.
+//
+// "More apps" is not here: like the server, the client creates that section only
+// once it has an app to put in it, so it is never empty.
 const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown];
 
 /** Depth-first search of a nav tree by item id */
@@ -157,3 +199,6 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
     })
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
 }
+
+/** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
+export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;

@@ -11,13 +11,18 @@ import { getPluginMetasUrl, initPluginMetas } from './plugins';
 import type { AppPluginMetas, PluginMetasResponse } from './types';
 
 let apps: AppPluginMetas = {};
+// Tracked separately from whether `apps` holds anything: an instance with no app
+// plugins is a legitimately empty cache, and deriving this from the cache size
+// would both re-fetch on every read and make getAppPluginMetasSync() throw.
+let didInit = false;
 
 function initialized(): boolean {
-  return Boolean(Object.keys(apps).length);
+  return didInit;
 }
 
 function setApps(input: AppPluginMetas) {
   apps = input;
+  didInit = true;
 }
 
 function setMetas(metas: PluginMetasResponse | null) {
@@ -52,6 +57,20 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
     await initAppPluginMetas();
   }
 
+  return Object.values(structuredClone(apps));
+}
+
+/**
+ * Get the installed app plugins.
+ * This is a synchronous function that should only be used as an escape hatch in cases where the caller is guaranteed to be called after the app plugins have been initialized.
+ * In other cases, getAppPluginMetas() should be used instead to ensure the app plugins have been initialized before accessing them.
+ * @throws Error if the app plugins have not been initialized yet
+ * @returns the installed app plugins
+ */
+export function getAppPluginMetasSync(): AppPluginConfig[] {
+  if (!initialized() && process.env.NODE_ENV === 'development') {
+    throw new Error('getAppPluginMetasSync() was called before app plugins cache was initialized!');
+  }
   return Object.values(structuredClone(apps));
 }
 
@@ -90,4 +109,7 @@ export function setAppPluginMetas(override: AppPluginMetas): void {
   }
 
   setApps(structuredClone(override));
+  // Tests clear the cache with {} to make the next getAppPluginMetas() fetch again,
+  // so an empty override has to read back as "never initialised"
+  didInit = Object.keys(apps).length > 0;
 }

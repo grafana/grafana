@@ -1,23 +1,23 @@
-import { type NavModelItem } from '@grafana/data';
+import { type NavModelItem, PluginIncludeType } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { buildStaticNavTree } from './buildStaticNavTree';
+import { buildNavTree, getInitialNavTree } from './buildNavTree';
 import { NavID } from './constants';
 import { addNavEntries, clearRegisteredNavEntries } from './registry';
-import { navIds as ids, setupNavTestState as setup } from './test-utils';
+import { navIds as ids, setupNavTestApps as setupApps, setupNavTestState as setup } from './test-utils';
 import { applyAppSubUrl, findNavById as findById, pruneEmptyNavSections, sortNavTree } from './utils';
 
 const DASHBOARD_READER = [AccessControlAction.DashboardsRead];
 const ALERT_RULES_READER = [AccessControlAction.AlertingRuleRead];
 
-describe('buildStaticNavTree', () => {
+describe('buildNavTree', () => {
   describe('sections', () => {
     it('builds the minimal tree for a user with no permissions', () => {
       setup();
       // Connections and cfg are attachment-parent shells here; pruneEmptyNavSections removes them
-      const tree = buildStaticNavTree();
+      const tree = buildNavTree();
 
       expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.connections, NavID.cfg, NavID.profile, NavID.help]);
     });
@@ -27,7 +27,7 @@ describe('buildStaticNavTree', () => {
         permissions: [...DASHBOARD_READER, ...ALERT_RULES_READER, AccessControlAction.DataSourcesExplore],
       });
 
-      expect(ids(buildStaticNavTree())).toEqual([
+      expect(ids(buildNavTree())).toEqual([
         NavID.home,
         NavID.bookmarks,
         NavID.starred,
@@ -46,20 +46,20 @@ describe('buildStaticNavTree', () => {
       const notebookReader = [AccessControlAction.NotebooksRead, AccessControlAction.DataSourcesExplore];
       setup({ permissions: notebookReader, openFeatureFlags: { 'dashboard.notebooks': true } });
 
-      const treeIds = ids(buildStaticNavTree());
+      const treeIds = ids(buildNavTree());
       expect(treeIds.indexOf(NavID.notebooks)).toBe(treeIds.indexOf(NavID.drilldown) + 1);
 
       setup({ permissions: notebookReader });
-      expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
+      expect(findById(buildNavTree(), NavID.notebooks)).toBeUndefined();
 
       // Without notebooks:read there is no entry
       setup({ permissions: [], openFeatureFlags: { 'dashboard.notebooks': true } });
-      expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
+      expect(findById(buildNavTree(), NavID.notebooks)).toBeUndefined();
     });
 
     it('omits signed-in-only sections for anonymous users', () => {
       setup({ isSignedIn: false, config: { anonymousEnabled: true } });
-      const tree = buildStaticNavTree();
+      const tree = buildNavTree();
 
       expect(findById(tree, NavID.profile)).toBeUndefined();
       expect(findById(tree, NavID.bookmarks)).toBeUndefined();
@@ -68,12 +68,12 @@ describe('buildStaticNavTree', () => {
     it('points home at the login page when signed out and anonymous access is disabled', () => {
       setup({ isSignedIn: false, config: { anonymousEnabled: false } });
 
-      expect(findById(buildStaticNavTree(), NavID.home)?.url).toBe('/login');
+      expect(findById(buildNavTree(), NavID.home)?.url).toBe('/login');
     });
 
     it('prefixes urls with the app sub url', () => {
       setup({ permissions: DASHBOARD_READER, config: { appSubUrl: '/grafana' } });
-      const tree = applyAppSubUrl(buildStaticNavTree());
+      const tree = applyAppSubUrl(buildNavTree());
 
       expect(findById(tree, NavID.starred)?.url).toBe('/grafana/dashboards?starred');
       expect(findById(tree, NavID.dashboards)?.url).toBe('/grafana/dashboards');
@@ -88,7 +88,7 @@ describe('buildStaticNavTree', () => {
         openFeatureFlags: { 'grafana.dashboardGlobalVariables': true },
       });
 
-      const children = ids(findById(buildStaticNavTree(), NavID.dashboards)?.children ?? []);
+      const children = ids(findById(buildNavTree(), NavID.dashboards)?.children ?? []);
       expect(children).toContain('dashboards/variables');
     });
   });
@@ -97,7 +97,7 @@ describe('buildStaticNavTree', () => {
     it('shows the section for public dashboard views without permissions', () => {
       setup({ isSignedIn: false, config: { publicDashboardAccessToken: 'abc' } });
 
-      expect(findById(buildStaticNavTree(), NavID.dashboards)).toBeDefined();
+      expect(findById(buildNavTree(), NavID.dashboards)).toBeDefined();
     });
 
     it('builds children based on permissions and config', () => {
@@ -109,7 +109,7 @@ describe('buildStaticNavTree', () => {
         ],
       });
 
-      expect(ids(findById(buildStaticNavTree(), NavID.dashboards)?.children ?? [])).toEqual([
+      expect(ids(findById(buildNavTree(), NavID.dashboards)?.children ?? [])).toEqual([
         'dashboards/playlists',
         'dashboards/snapshots',
         'dashboards/library-panels',
@@ -125,7 +125,7 @@ describe('buildStaticNavTree', () => {
         permissions: [AccessControlAction.DashboardsRead, AccessControlAction.SnapshotsRead],
         config: { snapshotEnabled: false },
       });
-      const tree = buildStaticNavTree();
+      const tree = buildNavTree();
 
       expect(findById(findById(tree, NavID.dashboards)?.children ?? [], 'dashboards/snapshots')).toBeUndefined();
     });
@@ -133,13 +133,13 @@ describe('buildStaticNavTree', () => {
     it('gates playlists on the playlists RBAC permission when the toggle is on', () => {
       // playlistsRBAC is an OpenFeature flag, not a config toggle
       setup({ permissions: DASHBOARD_READER, openFeatureFlags: { playlistsRBAC: true } });
-      const withoutPermission = buildStaticNavTree();
+      const withoutPermission = buildNavTree();
 
       setup({
         permissions: [AccessControlAction.DashboardsRead, AccessControlAction.PlaylistsRead],
         openFeatureFlags: { playlistsRBAC: true },
       });
-      const withPermission = buildStaticNavTree();
+      const withPermission = buildNavTree();
 
       expect(
         findById(findById(withoutPermission, NavID.dashboards)?.children ?? [], 'dashboards/playlists')
@@ -162,10 +162,7 @@ describe('buildStaticNavTree', () => {
       ({ orgRole, isGrafanaAdmin, visible }) => {
         setup({ orgRole, isGrafanaAdmin, permissions: DASHBOARD_READER });
 
-        const playlists = findById(
-          findById(buildStaticNavTree(), NavID.dashboards)?.children ?? [],
-          'dashboards/playlists'
-        );
+        const playlists = findById(findById(buildNavTree(), NavID.dashboards)?.children ?? [], 'dashboards/playlists');
         expect(Boolean(playlists)).toBe(visible);
       }
     );
@@ -175,11 +172,11 @@ describe('buildStaticNavTree', () => {
     it('is omitted when unified alerting is disabled', () => {
       setup({ permissions: ALERT_RULES_READER, config: { unifiedAlertingEnabled: false } });
 
-      expect(findById(buildStaticNavTree(), NavID.alerting)).toBeUndefined();
+      expect(findById(buildNavTree(), NavID.alerting)).toBeUndefined();
     });
 
     it('shows the history item only when state history queries are served by Loki', () => {
-      const history = () => findById(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [], 'alerts-history');
+      const history = () => findById(findById(buildNavTree(), NavID.alerting)?.children ?? [], 'alerts-history');
       const withStateHistory = (stateHistory?: { backend?: string; primary?: string }) => {
         setup({ permissions: ALERT_RULES_READER });
         config.unifiedAlerting = { ...config.unifiedAlerting, stateHistory };
@@ -203,7 +200,7 @@ describe('buildStaticNavTree', () => {
 
     it('is omitted when no alerting child is accessible', () => {
       setup();
-      expect(findById(buildStaticNavTree(), NavID.alerting)).toBeUndefined();
+      expect(findById(buildNavTree(), NavID.alerting)).toBeUndefined();
     });
 
     it('uses legacy ids without the V2 navigation toggle', () => {
@@ -217,7 +214,7 @@ describe('buildStaticNavTree', () => {
         openFeatureFlags: { alertingNavigationV2: false },
       });
 
-      expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toEqual([
+      expect(ids(findById(buildNavTree(), NavID.alerting)?.children ?? [])).toEqual([
         'alert-list',
         'receivers',
         'am-routes',
@@ -236,7 +233,7 @@ describe('buildStaticNavTree', () => {
         openFeatureFlags: { alertingNavigationV2: true },
       });
 
-      expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toEqual([
+      expect(ids(findById(buildNavTree(), NavID.alerting)?.children ?? [])).toEqual([
         'alert-rules',
         'notification-config',
         'silences',
@@ -250,7 +247,7 @@ describe('buildStaticNavTree', () => {
         openFeatureFlags: { alertingNavigationV2: true, alertingTriage: true },
       });
 
-      const children = ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? []);
+      const children = ids(findById(buildNavTree(), NavID.alerting)?.children ?? []);
       expect(children).toContain('alert-activity');
       expect(children).not.toContain('groups');
     });
@@ -258,20 +255,20 @@ describe('buildStaticNavTree', () => {
     it('adds admin-only items for org admins', () => {
       setup({ permissions: ALERT_RULES_READER, orgRole: 'Admin' });
 
-      expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toContain('alerting-admin');
+      expect(ids(findById(buildNavTree(), NavID.alerting)?.children ?? [])).toContain('alerting-admin');
     });
   });
 
   describe('connections section', () => {
     it('is always present as a plugin attachment parent', () => {
       setup();
-      expect(findById(buildStaticNavTree(), NavID.connections)?.children).toEqual([]);
+      expect(findById(buildNavTree(), NavID.connections)?.children).toEqual([]);
     });
 
     it('adds datasource children with configuration page access', () => {
       setup({ permissions: [AccessControlAction.DataSourcesRead, AccessControlAction.DataSourcesWrite] });
 
-      expect(ids(findById(buildStaticNavTree(), NavID.connections)?.children ?? [])).toEqual([
+      expect(ids(findById(buildNavTree(), NavID.connections)?.children ?? [])).toEqual([
         'connections-add-new-connection',
         'connections-datasources',
       ]);
@@ -280,14 +277,14 @@ describe('buildStaticNavTree', () => {
     it('withholds datasource children on read-only access', () => {
       setup({ permissions: [AccessControlAction.DataSourcesRead] });
 
-      expect(findById(buildStaticNavTree(), NavID.connections)?.children).toEqual([]);
+      expect(findById(buildNavTree(), NavID.connections)?.children).toEqual([]);
     });
   });
 
   describe('administration section', () => {
     it('always contains the subsection shells so plugin pages and enterprise items can inject into them', () => {
       setup();
-      const tree = buildStaticNavTree();
+      const tree = buildNavTree();
 
       expect(findById(tree, NavID.cfg)).toBeDefined();
       expect(ids(findById(tree, NavID.cfg)?.children ?? [])).toEqual([
@@ -313,7 +310,7 @@ describe('buildStaticNavTree', () => {
         ],
       });
 
-      const cfg = findById(buildStaticNavTree(), NavID.cfg);
+      const cfg = findById(buildNavTree(), NavID.cfg);
       expect(ids(cfg?.children ?? [])).toEqual([NavID.cfgGeneral, NavID.cfgPlugins, NavID.cfgAccess, 'authentication']);
       expect(ids(findById(cfg?.children ?? [], NavID.cfgGeneral)?.children ?? [])).toEqual([
         'upgrading',
@@ -337,7 +334,7 @@ describe('buildStaticNavTree', () => {
       });
       config.buildInfo = { ...config.buildInfo, edition: GrafanaEdition.Enterprise };
 
-      const general = findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgGeneral);
+      const general = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgGeneral);
       expect(ids(general?.children ?? [])).toEqual(['org-settings', 'server-settings', 'global-orgs']);
     });
 
@@ -348,27 +345,27 @@ describe('buildStaticNavTree', () => {
       };
 
       setup({ orgRole: 'Admin', config: { provisioningEnabled: true } });
-      expect(provisioning(buildStaticNavTree())).toBeDefined();
+      expect(provisioning(buildNavTree())).toBeDefined();
 
       // A Grafana server admin passes regardless of org role, like Go's HasRole
       setup({ orgRole: 'Viewer', isGrafanaAdmin: true, config: { provisioningEnabled: true } });
-      expect(provisioning(buildStaticNavTree())).toBeDefined();
+      expect(provisioning(buildNavTree())).toBeDefined();
 
       setup({ orgRole: 'Admin' });
-      expect(provisioning(buildStaticNavTree())).toBeUndefined();
+      expect(provisioning(buildNavTree())).toBeUndefined();
     });
 
     it('requires server admin for the organizations item', () => {
       setup({ permissions: [AccessControlAction.OrgsRead], isGrafanaAdmin: false });
 
-      const general = findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgGeneral);
+      const general = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgGeneral);
       expect(findById(general?.children ?? [], 'global-orgs')).toBeUndefined();
     });
 
     it('shows the plugins page for org admins without plugin permissions', () => {
       setup({ orgRole: 'Admin' });
 
-      const plugins = findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
+      const plugins = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
       expect(ids(plugins?.children ?? [])).toContain('plugins');
     });
 
@@ -376,13 +373,13 @@ describe('buildStaticNavTree', () => {
       setup();
       config.buildInfo.env = 'development';
 
-      const plugins = findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
+      const plugins = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
       expect(ids(plugins?.children ?? [])).toContain('extensions');
     });
 
     it('shows the extensions page outside dev only with the toggle and plugin write access', () => {
       const pluginsPageChildren = () =>
-        ids(findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins)?.children ?? []);
+        ids(findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins)?.children ?? []);
 
       setup({ permissions: [AccessControlAction.PluginsWrite] });
       expect(pluginsPageChildren()).not.toContain('extensions');
@@ -402,7 +399,7 @@ describe('buildStaticNavTree', () => {
     it('adds support bundles with config and permission', () => {
       setup({ permissions: [AccessControlAction.ActionSupportBundlesRead], config: { supportBundlesEnabled: true } });
 
-      expect(ids(findById(buildStaticNavTree(), NavID.help)?.children ?? [])).toEqual(['support-bundles']);
+      expect(ids(findById(buildNavTree(), NavID.help)?.children ?? [])).toEqual(['support-bundles']);
     });
   });
 });
@@ -410,7 +407,7 @@ describe('buildStaticNavTree', () => {
 describe('pruneEmptyNavSections', () => {
   it('removes empty connections, cfg/access and cfg shells like the server does', () => {
     setup();
-    const tree = pruneEmptyNavSections(buildStaticNavTree());
+    const tree = pruneEmptyNavSections(buildNavTree());
 
     expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.profile, NavID.help]);
   });
@@ -420,9 +417,9 @@ describe('pruneEmptyNavSections', () => {
   // a top-level item that opens an empty landing page.
   it('removes the drilldown shell when no drilldown apps attached', () => {
     setup({ permissions: [AccessControlAction.DataSourcesExplore] });
-    const tree = pruneEmptyNavSections(buildStaticNavTree());
+    const tree = pruneEmptyNavSections(buildNavTree());
 
-    expect(findById(buildStaticNavTree(), NavID.drilldown)).toBeDefined();
+    expect(findById(buildNavTree(), NavID.drilldown)).toBeDefined();
     expect(findById(tree, NavID.drilldown)).toBeUndefined();
     // Explore is a leaf, not an attachment shell, so it survives
     expect(findById(tree, NavID.explore)).toBeDefined();
@@ -437,7 +434,7 @@ describe('pruneEmptyNavSections', () => {
         AccessControlAction.OrgUsersRead,
       ],
     });
-    const tree = pruneEmptyNavSections(buildStaticNavTree());
+    const tree = pruneEmptyNavSections(buildNavTree());
 
     expect(ids(tree)).toContain(NavID.connections);
     expect(ids(tree)).toContain(NavID.cfg);
@@ -450,7 +447,7 @@ describe('pruneEmptyNavSections', () => {
     // Plugins and data have no visible children for an editor with this
     // permission set
     setup({ orgRole: 'Editor', permissions: [AccessControlAction.OrgUsersRead] });
-    const cfg = findById(pruneEmptyNavSections(buildStaticNavTree()), NavID.cfg);
+    const cfg = findById(pruneEmptyNavSections(buildNavTree()), NavID.cfg);
 
     expect(cfg).toBeDefined();
     expect(ids(cfg?.children ?? [])).not.toContain(NavID.cfgGeneral);
@@ -487,7 +484,7 @@ describe('registered nav entries', () => {
       entry: { build: () => ({ text: 'Announcement banner', id: 'banner-settings' }) },
     });
 
-    const general = findById(buildStaticNavTree(), NavID.cfgGeneral);
+    const general = findById(buildNavTree(), NavID.cfgGeneral);
     expect(ids(general?.children ?? [])).toContain('banner-settings');
   });
 
@@ -498,7 +495,7 @@ describe('registered nav entries', () => {
       entry: { build: () => ({ text: 'Enterprise thing', id: 'enterprise-thing', sortWeight: 1 }) },
     });
 
-    expect(ids(buildStaticNavTree())).toContain('enterprise-thing');
+    expect(ids(buildNavTree())).toContain('enterprise-thing');
   });
 
   it('respects the entry gate', () => {
@@ -508,7 +505,7 @@ describe('registered nav entries', () => {
       entry: { when: () => false, build: () => ({ text: 'Hidden', id: 'hidden-entry' }) },
     });
 
-    expect(findById(buildStaticNavTree(), 'hidden-entry')).toBeUndefined();
+    expect(findById(buildNavTree(), 'hidden-entry')).toBeUndefined();
   });
 
   it('warns and skips entries whose parent does not exist', () => {
@@ -519,7 +516,7 @@ describe('registered nav entries', () => {
       entry: { build: () => ({ text: 'Orphan', id: 'orphan-entry' }) },
     });
 
-    expect(findById(buildStaticNavTree(), 'orphan-entry')).toBeUndefined();
+    expect(findById(buildNavTree(), 'orphan-entry')).toBeUndefined();
     expect(warn).toHaveBeenCalledWith('[navtree] registered nav entry parent not found', 'no-such-section');
     warn.mockRestore();
   });
@@ -539,12 +536,151 @@ describe('registered nav entries', () => {
       },
     });
 
-    const tree = buildStaticNavTree();
+    const tree = buildNavTree();
 
     expect(findById(tree, 'exploding-entry')).toBeUndefined();
     expect(findById(tree, NavID.dashboards)).toBeDefined();
     expect(findById(tree, NavID.home)).toBeDefined();
     expect(error).toHaveBeenCalledWith('[navtree] nav entry failed to build', expect.any(Error));
     error.mockRestore();
+  });
+});
+
+describe('getInitialNavTree', () => {
+  // The plugin merge is the other place that prunes, and it needs
+  // plugins.useMTPlugins on top of the client-build flag. With that off it never
+  // runs, so the tree this returns is the one the user gets.
+  const clientBuildOnly = { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': false };
+
+  it('prunes the connections and administration shells when the plugin merge is disabled', () => {
+    setup({ openFeatureFlags: clientBuildOnly });
+
+    const tree = getInitialNavTree();
+
+    expect(findById(tree, NavID.connections)).toBeUndefined();
+    expect(findById(tree, NavID.cfg)).toBeUndefined();
+  });
+
+  // Drilldown is filled only by drilldown app plugins, so with the merge off it
+  // is always empty — and it takes the same permission that makes Explore (and
+  // Correlations, which keeps Administration alive) visible
+  it('prunes the drilldown shell when the plugin merge is disabled', () => {
+    setup({ permissions: [AccessControlAction.DataSourcesExplore], openFeatureFlags: clientBuildOnly });
+
+    const tree = getInitialNavTree();
+
+    expect(findById(tree, NavID.drilldown)).toBeUndefined();
+    expect(findById(tree, NavID.explore)).toBeDefined();
+  });
+
+  it('returns the bootdata tree when the client build is off', () => {
+    setup();
+    config.bootData = { ...config.bootData, navTree: [{ id: 'server-built', text: 'Server built' }] };
+
+    expect(ids(getInitialNavTree())).toEqual(['server-built']);
+  });
+
+  // The apps section reads the app metas synchronously: app.ts fills the cache
+  // and fetches the user's permissions before the store is configured, and this
+  // is where both land in the tree.
+  describe('apps section', () => {
+    const bothFlags = { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': true };
+    const appWithPage = (id: string, name: string) => ({
+      id,
+      name,
+      includes: [{ type: PluginIncludeType.page, name: 'Overview', path: `/a/${id}/overview`, addToNav: true }],
+    });
+    const someApp = appWithPage('some-app', 'Some app');
+
+    afterEach(() => {
+      setupApps();
+    });
+
+    it('builds More apps from the app metas in the cache', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
+      setupApps([someApp]);
+
+      const apps = findById(getInitialNavTree(), NavID.apps);
+
+      expect(apps?.text).toBe('More apps');
+      expect(ids(apps?.children ?? [])).toEqual(['plugin-page-some-app']);
+    });
+
+    it('omits the section when the plugin nav is disabled', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: clientBuildOnly });
+      setupApps([someApp]);
+
+      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
+    });
+
+    // In a fully multi-tenant deployment the permissions come from the AuthZ API
+    // rather than bootdata, so a user without app access must get no plugin items
+    it('omits the section for a user without app access', () => {
+      setup({ openFeatureFlags: bothFlags });
+      setupApps([someApp]);
+
+      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
+    });
+
+    // The section is built every time and pruned when empty, where the server
+    // builds it only once it has an app to put in it. Same end state.
+    it('prunes the section when no app has nav children', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
+      setupApps([
+        {
+          id: 'hidden-app',
+          name: 'Hidden app',
+          includes: [{ type: PluginIncludeType.page, name: 'Hidden', path: '/a/hidden-app', addToNav: false }],
+        },
+      ]);
+
+      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
+    });
+
+    it('prunes the empty shells but keeps the apps section', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
+      setupApps([someApp]);
+
+      const tree = getInitialNavTree();
+
+      expect(findById(tree, NavID.connections)).toBeUndefined();
+      expect(findById(tree, NavID.apps)).toBeDefined();
+    });
+
+    // The builder returns sub-url relative urls and getInitialNavTree applies the
+    // prefix, so a node the builder created must come out prefixed exactly once
+    it('applies the app sub url once to the apps section', () => {
+      setup({
+        permissions: [AccessControlAction.PluginsAppAccess],
+        openFeatureFlags: bothFlags,
+        config: { appSubUrl: '/grafana' },
+      });
+      setupApps([someApp]);
+
+      expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
+    });
+
+    // withPluginNav catches, so without its flag gate first an uninitialised
+    // cache would cost the section and log instead of failing loudly
+    it('does not read the app metas cache when the plugin nav is disabled', () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: clientBuildOnly });
+      setupApps();
+
+      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
+      expect(error).not.toHaveBeenCalled();
+      error.mockRestore();
+    });
+
+    // sortNavTree recurses into the section, and only leaves its order alone
+    // because every app link carries the same weight
+    it('keeps the apps in title order through the whole pipeline', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
+      setupApps([appWithPage('c-app', 'Charlie'), appWithPage('a-app', 'Alpha'), appWithPage('b-app', 'Bravo')]);
+
+      const apps = findById(getInitialNavTree(), NavID.apps);
+
+      expect((apps?.children ?? []).map((child) => child.text)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+    });
   });
 });
