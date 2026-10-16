@@ -1,6 +1,7 @@
 package apierrors
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -29,22 +30,8 @@ var stableDashboardErrSentinels = []error{
 	dashboards.ErrDashboardUidTooLong,
 }
 
-type folderErrorMapping struct {
-	code     int
-	message  string
-	response response.Response
-}
-
-func newFolderErrorMapping(code int, message string, err error) folderErrorMapping {
-	return folderErrorMapping{code: code, message: message, response: response.Error(code, message, err)}
-}
-
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
-	return mapFolderError(err).response
-}
-
-func mapFolderError(err error) folderErrorMapping {
 	// --- Dashboard errors ---
 	var dashboardErr dashboardaccess.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
@@ -57,7 +44,7 @@ func mapFolderError(err error) folderErrorMapping {
 				}
 			}
 		}
-		return newFolderErrorMapping(dashboardErr.StatusCode, msg, err)
+		return response.Error(dashboardErr.StatusCode, msg, err)
 	}
 
 	// --- 400 Bad Request ---
@@ -68,47 +55,39 @@ func mapFolderError(err error) folderErrorMapping {
 		if _, ok := errors.AsType[errutil.Error](err); ok {
 			for _, s := range stableFolderErrSentinels {
 				if errors.Is(err, s) {
-					return newFolderErrorMapping(http.StatusBadRequest, s.Error(), nil)
+					return response.Error(http.StatusBadRequest, s.Error(), nil)
 				}
 			}
 		}
-		return newFolderErrorMapping(http.StatusBadRequest, err.Error(), nil)
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
 	// --- 403 Forbidden ---
 	if errors.Is(err, folder.ErrAccessDenied) {
-		return newFolderErrorMapping(http.StatusForbidden, "Access denied", err)
+		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
 	// --- 404 Not Found ---
 	if errors.Is(err, folder.ErrFolderNotFound) ||
 		errors.Is(err, dashboards.ErrFolderNotFound) {
-		message := dashboards.ErrFolderNotFound.Error()
-		return folderErrorMapping{
-			code: http.StatusNotFound, message: message,
-			response: response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": message}),
-		}
+		return response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error()})
 	}
 
 	statusErr := storageStatusError(err)
 
 	// --- 409 Conflict ---
 	if isFolderAlreadyExists(err, statusErr) {
-		return newFolderErrorMapping(http.StatusConflict, "a folder with the same UID already exists", err)
+		return response.Error(http.StatusConflict, "a folder with the same UID already exists", err)
 	}
 
 	// --- 412 Precondition Failed ---
 	if errors.Is(err, folder.ErrVersionMismatch) {
-		message := folder.ErrVersionMismatch.Error()
-		return folderErrorMapping{
-			code: http.StatusPreconditionFailed, message: message,
-			response: response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": message}),
-		}
+		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error()})
 	}
 
 	// A storage conflict can be write contention rather than a confirmed duplicate UID.
 	if statusErr != nil && (statusErr.ErrStatus.Code == http.StatusConflict || k8sErrors.IsConflict(statusErr)) {
-		return newFolderErrorMapping(http.StatusConflict, "the folder operation conflicted with another request; please retry", err)
+		return response.Error(http.StatusConflict, "the folder operation conflicted with another request; please retry", err)
 	}
 
 	// --- Kubernetes status errors ---
@@ -117,15 +96,10 @@ func mapFolderError(err error) folderErrorMapping {
 		if message == "" {
 			message = getDefaultMessageForStatus(int(statusErr.ErrStatus.Code))
 		}
-		return newFolderErrorMapping(int(statusErr.ErrStatus.Code), message, err)
+		return response.Error(int(statusErr.ErrStatus.Code), message, err)
 	}
 
-	message := fmt.Sprintf("Folder API error: %s", err.Error())
-	resp := response.ErrOrFallback(http.StatusInternalServerError, message, err)
-	if publicErr, ok := errors.AsType[errutil.Error](resp.Err()); ok {
-		message = publicErr.Public().Message
-	}
-	return folderErrorMapping{code: resp.Status(), message: message, response: resp}
+	return response.ErrOrFallback(http.StatusInternalServerError, fmt.Sprintf("Folder API error: %s", err.Error()), err)
 }
 
 func isFolderAlreadyExists(err error, statusErr *k8sErrors.StatusError) bool {
@@ -133,61 +107,77 @@ func isFolderAlreadyExists(err error, statusErr *k8sErrors.StatusError) bool {
 		k8sErrors.IsAlreadyExists(err) || (statusErr != nil && k8sErrors.IsAlreadyExists(statusErr))
 }
 
+// ToFolderStatusError adapts folder-create errors for the apiserver.
+// Transport errors are translated by apistore before reaching this boundary.
 func ToFolderStatusError(err error) k8sErrors.StatusError {
-	mapped := mapFolderError(err)
-	statusErr := k8sErrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: mapped.message,
-			Code:    int32(mapped.code),
-		},
+	if original, ok := errors.AsType[*k8sErrors.StatusError](err); ok {
+		result := *original
+		switch {
+		case k8sErrors.IsAlreadyExists(original):
+			result.ErrStatus.Code = http.StatusConflict
+			result.ErrStatus.Reason = metav1.StatusReasonAlreadyExists
+			result.ErrStatus.Message = "a folder with the same UID already exists"
+		case original.ErrStatus.Code == http.StatusConflict || k8sErrors.IsConflict(original):
+			result.ErrStatus.Code = http.StatusConflict
+			result.ErrStatus.Reason = metav1.StatusReasonConflict
+			result.ErrStatus.Message = "the folder operation conflicted with another request; please retry"
+		case result.ErrStatus.Message == "":
+			result.ErrStatus.Message = getDefaultMessageForStatus(int(result.ErrStatus.Code))
+		}
+		return result
 	}
 
-	// folderStorage.Create wraps errors in a StatusError before the legacy API consumes them.
-	// Keep AlreadyExists distinct from other 409s so duplicates do not become retry conflicts.
+	defaultErr := k8sErrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Reason:  metav1.StatusReasonInternalError,
+		Message: "Folder API error",
+		Code:    http.StatusInternalServerError,
+	}}
+	grafanaErr, isGrafanaError := errors.AsType[errutil.Error](err)
+	if !isGrafanaError && !isLegacyFolderError(err) {
+		return defaultErr
+	}
+
+	// Reuse legacy message mapping so /api/folders responses remain compatible.
+	resp := ToFolderErrorResponse(err)
+	var body struct {
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(resp.Body(), &body); err != nil || body.Message == "" {
+		return defaultErr
+	}
+	statusErr := k8sErrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    int32(resp.Status()),
+		Message: body.Message,
+	}}
+	if isGrafanaError {
+		// Provisioning identifies Grafana validation errors by the message ID in Details.UID.
+		statusErr.ErrStatus.Details = grafanaErr.Status().Details
+	}
 	if statusErr.ErrStatus.Code == http.StatusConflict {
 		statusErr.ErrStatus.Reason = metav1.StatusReasonConflict
-		if isFolderAlreadyExists(err, storageStatusError(err)) {
+		if isFolderAlreadyExists(err, nil) {
 			statusErr.ErrStatus.Reason = metav1.StatusReasonAlreadyExists
 		}
 	}
-
-	// Preserve the structured errutil message ID in Status.Details.UID so
-	// downstream consumers (e.g. provisioning's IsFolderValidationAPIError)
-	// can match the rejection without relying on the human-readable message.
-	// errutil.Error.Status() is the source of truth for the message ID; if
-	// the underlying error is one, copy its Details across.
-	if grafanaErr, ok := errors.AsType[errutil.Error](err); ok {
-		if details := grafanaErr.Status().Details; details != nil {
-			statusErr.ErrStatus.Details = details
-		}
-	}
-
-	original, ok := errors.AsType[*k8sErrors.StatusError](err)
-	if !ok {
-		return statusErr
-	}
-
-	// Do not attach storage metadata when legacy normalization changed the error's meaning.
-	// Correcting a reason-only conflict's default 500 code does not change its meaning.
-	sameCode := original.ErrStatus.Code == statusErr.ErrStatus.Code
-	sameReason := statusErr.ErrStatus.Reason != "" && original.ErrStatus.Reason == statusErr.ErrStatus.Reason
-	if !sameCode && !sameReason {
-		return statusErr
-	}
-
-	if statusErr.ErrStatus.Reason == "" {
-		statusErr.ErrStatus.Reason = original.ErrStatus.Reason
-	}
-	if details := original.ErrStatus.Details; details != nil {
-		if statusErr.ErrStatus.Details == nil {
-			statusErr.ErrStatus.Details = details.DeepCopy()
-		} else if statusErr.ErrStatus.Details.RetryAfterSeconds == 0 {
-			statusErr.ErrStatus.Details = statusErr.ErrStatus.Details.DeepCopy()
-			statusErr.ErrStatus.Details.RetryAfterSeconds = details.RetryAfterSeconds
-		}
-	}
-
 	return statusErr
+}
+
+func isLegacyFolderError(err error) bool {
+	if _, ok := errors.AsType[dashboardaccess.DashboardErr](err); ok {
+		return true
+	}
+	for _, sentinel := range []error{
+		folder.ErrTitleEmpty, folder.ErrInvalidUID, folder.ErrFolderCannotBeParentOfItself,
+		folder.ErrAccessDenied, folder.ErrFolderNotFound, dashboards.ErrFolderNotFound,
+		folder.ErrSameUIDExists, folder.ErrVersionMismatch,
+	} {
+		if errors.Is(err, sentinel) {
+			return true
+		}
+	}
+	return false
 }
 
 func getDefaultMessageForStatus(statusCode int) string {
