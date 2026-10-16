@@ -505,7 +505,7 @@ func TestMigrationProxy(t *testing.T) {
 
 	t.Run("FindTags", func(t *testing.T) {
 		t.Run("converts the tag counts from the new store", func(t *testing.T) {
-			client := &fakeTagClient{tags: []annotationV0.GetTagsV0alpha1BodyTags{
+			client := &fakeTagClient{tags: []annotationV0.GetTagsV0alpha1ResponseTags{
 				{Tag: "outage", Count: 3},
 				{Tag: "region:eu", Count: 1},
 			}}
@@ -534,12 +534,12 @@ func TestMigrationProxy(t *testing.T) {
 type fakeTagClient struct {
 	annotationClient
 
-	tags       []annotationV0.GetTagsV0alpha1BodyTags
+	tags       []annotationV0.GetTagsV0alpha1ResponseTags
 	err        error
 	tagQueries []*annotations.TagsQuery
 }
 
-func (f *fakeTagClient) ListTags(_ context.Context, _ int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error) {
+func (f *fakeTagClient) ListTags(_ context.Context, _ int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1ResponseTags, error) {
 	f.tagQueries = append(f.tagQueries, query)
 	return f.tags, f.err
 }

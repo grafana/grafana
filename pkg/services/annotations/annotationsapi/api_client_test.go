@@ -360,7 +360,7 @@ func TestAnnotationAPIClient_Requests(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, tags, 1)
 		assert.Equal(t, "outage", tags[0].Tag)
-		assert.Equal(t, float64(3), tags[0].Count)
+		assert.Equal(t, int64(3), tags[0].Count)
 
 		require.Len(t, *seen, 1)
 		req := (*seen)[0]

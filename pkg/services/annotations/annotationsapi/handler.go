@@ -172,7 +172,7 @@ func (h *MigrationProxy) FindTags(ctx context.Context, orgID int64, query *annot
 	for _, tag := range tags {
 		result = append(result, &annotations.TagsDTO{
 			Tag:   tag.Tag,
-			Count: int64(tag.Count),
+			Count: tag.Count,
 		})
 	}
 	return annotations.FindTagsResult{Tags: result}, nil
