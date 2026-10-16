@@ -53,9 +53,13 @@ async function appendToExistingNotebook(
   source: AppendedCellSource
 ): Promise<Appended> {
   const scene = findActiveNotebookScene(uid);
-  const appended = scene && (await appendThroughScene(scene, cells, source));
-  if (appended) {
-    return appended;
+  if (scene) {
+    const appended = await appendThroughScene(scene, cells, source);
+    if (appended) {
+      return appended;
+    }
+    // Its teardown flushed any pending edits; let that save land first, or the two writes would conflict.
+    await scene.autosave.awaitInFlightSave();
   }
 
   let firstPosition = 0;
@@ -78,16 +82,18 @@ async function appendThroughScene(
     import('../serialization/transformNotebookSceneToSaveModel'),
   ]);
 
-  if (await scene.autosave.isSavedElsewhere()) {
-    throw new OpenNotebookConflictError();
-  }
+  const savedElsewhere = await scene.autosave.isSavedElsewhere();
 
   // The transform below builds panel cells synchronously.
   await getPanelPluginMetasMap();
 
-  // Its autosave stops when it deactivates, so cells inserted now would never be saved.
+  // Its autosave stops when it deactivates, so cells inserted now would never be saved. Checked before
+  // the conflict, which only matters to a scene that is still showing.
   if (!scene.isActive) {
     return undefined;
+  }
+  if (savedElsewhere) {
+    throw new OpenNotebookConflictError();
   }
 
   // No await from here on, so an edit or another add that landed during the loads is built on. The new

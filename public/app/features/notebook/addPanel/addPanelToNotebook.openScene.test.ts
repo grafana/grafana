@@ -164,6 +164,62 @@ describe('adding to a notebook that is open', () => {
     expect(updateNotebook).not.toHaveBeenCalled();
   });
 
+  it('lets the closing save land before writing through the API, so the two do not conflict', async () => {
+    const scene = openNotebook();
+    const loadMetas = jest.requireActual('@grafana/runtime/internal').getPanelPluginMetasMap;
+    let closingSaveLanded = false;
+    jest.mocked(updateNotebook).mockImplementationOnce(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => {
+            closingSaveLanded = true;
+            resolve({ generation: 3, resourceVersion: '7' });
+          }, 0)
+        )
+    );
+    jest.mocked(getPanelPluginMetasMap).mockImplementationOnce(async () => {
+      scene.onEnterEditMode();
+      scene.state.body.setCellContent(scene.state.body.state.cells[0], {
+        kind: 'Markdown',
+        spec: { text: '## Edited before closing' },
+      });
+      deactivations.splice(0).forEach((deactivate) => deactivate());
+      return loadMetas();
+    });
+    let landedBeforeApiWrite: boolean | undefined;
+    jest.mocked(updateNotebookSpec).mockImplementation(async () => {
+      landedBeforeApiWrite = closingSaveLanded;
+      return notebookSpec();
+    });
+
+    await addToExistingNotebook(
+      'nb-1',
+      [{ kind: 'markdown', text: 'Latency rose.' }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE,
+      'user'
+    );
+
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
+    expect(landedBeforeApiWrite).toBe(true);
+  });
+
+  it('writes through the API rather than report a conflict for a notebook that closed', async () => {
+    const scene = openNotebook();
+    scene.autosave.setState({ savedResourceVersion: '5' });
+    jest.mocked(readNotebookResourceVersion).mockResolvedValue('9');
+    const loadMetas = jest.requireActual('@grafana/runtime/internal').getPanelPluginMetasMap;
+    jest.mocked(getPanelPluginMetasMap).mockImplementationOnce(async () => {
+      deactivations.splice(0).forEach((deactivate) => deactivate());
+      return loadMetas();
+    });
+    jest.mocked(updateNotebookSpec).mockResolvedValue(notebookSpec());
+
+    await expect(
+      addToExistingNotebook('nb-1', [{ kind: 'markdown', text: 'Latency rose.' }], NOTEBOOK_ENTRY_POINT.EXPLORE, 'user')
+    ).resolves.toMatchObject({ uid: 'nb-1' });
+    expect(updateNotebookSpec).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps a reader's own time range out of the notebook it saves", async () => {
     const scene = openNotebook();
     const savedTimeSettings = transformNotebookSceneToSaveModel(scene).timeSettings;
