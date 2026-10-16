@@ -416,10 +416,8 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 
 	openFeatureSect, err := cfg.NewSection("feature_toggles.openfeature")
 	require.NoError(t, err)
-	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
-	require.NoError(t, err)
 
-	if opts.OpenFeatureAPIEnabled {
+	if opts.OpenFeatureStaticProvider {
 		_, err = openFeatureSect.NewKey("provider", "static")
 		require.NoError(t, err)
 		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
@@ -1257,7 +1255,7 @@ type GrafanaOpts struct {
 	NATSClientPort                      int
 	NATSClusterPort                     int
 	SecretsManagerEnableDBMigrations    bool
-	OpenFeatureAPIEnabled               bool
+	OpenFeatureStaticProvider           bool
 	DisableAuthZClientCache             bool
 	ZanzanaReconciliationInterval       time.Duration
 	ZanzanaReconcilerMode               setting.ZanzanaReconcilerMode
