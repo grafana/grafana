@@ -27,6 +27,7 @@ interface UseFilterPopupState {
   setPopoverVisible: React.Dispatch<React.SetStateAction<boolean>>;
   /** Whether this column currently has an active filter, for styling the control that opens the popup. */
   filterEnabled: boolean;
+  unsupportedReason?: 'multiple' | 'uneditable';
   /** Everything `FilterPopup` needs except the element it anchors to, which the caller owns. */
   popupProps: Omit<FilterPopupProps, 'buttonElement'>;
 }
@@ -51,7 +52,12 @@ export function useFilterPopupState({
   const selected = field ? (view?.getFilters(field, parentIndex) ?? []) : [];
   const snapshot = JSON.stringify(selected);
   const predicate = selected[0]?.options.filters[0]?.config;
-  const unsupported = selected.length > 1 || selected.some((config) => !editableValueFilter(config));
+  const unsupportedReason =
+    selected.length > 1
+      ? 'multiple'
+      : selected.some((config) => !editableValueFilter(config))
+        ? 'uneditable'
+        : undefined;
   const selection: ValueSetOptions | undefined = predicate?.id === 'inSet' ? predicate.options : undefined;
   const range: RangeValueMatcherOptions<number> | undefined =
     predicate?.id === 'between' ? predicate.options : undefined;
@@ -67,7 +73,10 @@ export function useFilterPopupState({
   useEffect(() => {
     setSearchFilter('');
     setOperator(operatorSelectableValues()[FilterOperator.CONTAINS]);
-  }, [snapshot]);
+    if (unsupportedReason) {
+      setPopoverVisible(false);
+    }
+  }, [snapshot, unsupportedReason]);
 
   // Show options scoped to the current cross-filter state:
   // - Active filter: rows available before that filter was applied (keeps its own options visible).
@@ -79,9 +88,9 @@ export function useFilterPopupState({
     isPopoverVisible,
     setPopoverVisible,
     filterEnabled: selected.length > 0,
+    unsupportedReason,
     popupProps: {
       stateKey: snapshot,
-      unsupported,
       onApplyValues: (values) => {
         if (view && field) {
           if (values.length === 0) {

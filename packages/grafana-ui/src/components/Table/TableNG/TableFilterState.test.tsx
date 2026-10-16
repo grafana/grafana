@@ -11,6 +11,7 @@ import {
   type DataTransformerConfig,
 } from '@grafana/data';
 import { FilterByValueMatch, FilterByValueType, type FilterByValueConfig } from '@grafana/data/internal';
+import { faro, LogLevel } from '@grafana/faro-web-sdk';
 import { mockClientSize } from '@grafana/test-utils';
 
 import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext';
@@ -167,19 +168,57 @@ it('stores the panel timezone for a newly selected time value', async () => {
   expect(screen.getAllByRole('row')).toHaveLength(2);
 });
 
-it('shows compound filters without flattening them and permits explicit clearing', async () => {
+it.each([false, true])(
+  'hides compound filters in the header without removing them (refresh=%s)',
+  async (tableRefreshEnabled) => {
+    const { props, api, filter } = setup();
+    const compound = filter('Name', ['alpha', 'beta']);
+    compound.options.filters.push({ fieldName: 'Other', config: { id: 'inSet', options: { values: ['x'] } } });
+    api.set('table', [compound]);
+    render(
+      <TableNG
+        {...props}
+        tableRefreshEnabled={tableRefreshEnabled}
+        onFieldAddToAssistant={tableRefreshEnabled ? jest.fn() : undefined}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Filter Name' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit filter on Name' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(3);
+    expect(api.get('table')).toEqual([compound]);
+    expect(screen.queryByRole('button', { name: 'Filter Other' })).not.toBeInTheDocument();
+    if (tableRefreshEnabled) {
+      await userEvent.click(screen.getByRole('button', { name: 'Column options for Name' }));
+      expect(screen.queryByRole('menuitem', { name: 'Filter values' })).not.toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Add to Assistant' })).toBeInTheDocument();
+    } else {
+      expect(screen.queryByRole('button', { name: 'Column options for Name' })).not.toBeInTheDocument();
+    }
+  }
+);
+
+it('hides an unfamiliar predicate while keeping it active', () => {
   const { props, api, filter } = setup();
-  const compound = filter('Name', ['alpha', 'beta']);
-  compound.options.filters.push({ fieldName: 'Other', config: { id: 'inSet', options: { values: ['x'] } } });
-  api.set('table', [compound]);
-  render(<TableNG {...props} />);
-  const user = userEvent.setup();
-  await user.click(screen.getByRole('button', { name: 'Filter Name' }));
-  expect(screen.getByRole('status')).toHaveTextContent('This filter cannot be edited here.');
-  expect(api.get('table')[0]).toBe(compound);
-  await user.click(screen.getByRole('button', { name: 'Clear filter' }));
+  const opaque = filter('Name', ['alpha']);
+  opaque.options.filters[0].config = { id: 'isNotNull', options: {} };
+  api.set('table', [opaque]);
+  const warning = jest.spyOn(faro.api, 'pushLog').mockImplementation(() => {});
+
+  const { rerender } = render(<TableNG {...props} />);
+
+  expect(screen.queryByRole('button', { name: 'Filter Name' })).not.toBeInTheDocument();
   expect(screen.getAllByRole('row')).toHaveLength(4);
-  expect(api.get('table')).toEqual([]);
+  expect(api.get('table')).toEqual([opaque]);
+  expect(warning).toHaveBeenCalledWith(['Table filter is not editable in the header; filter control hidden.'], {
+    level: LogLevel.WARN,
+    context: { source: 'TableNG.HeaderCell', reason: 'uneditable' },
+  });
+
+  rerender(<TableNG {...props} />);
+  expect(warning).toHaveBeenCalledTimes(1);
+  warning.mockRestore();
 });
 
 it('keeps the filtered rows without adding a clear-all control', () => {
@@ -213,6 +252,19 @@ it('clears an active filter when its field stops being filterable', () => {
 
   expect(api.get('table')).toEqual([]);
   expect(screen.getAllByRole('row')).toHaveLength(4);
+});
+
+it('does not clear an opaque filter when its field is not filterable', () => {
+  const { props, api, filter } = setup();
+  const opaque = filter('Name', ['alpha']);
+  opaque.options.filters[0].config = { id: 'isNotNull', options: {} };
+  api.set('table', [opaque]);
+  props.data.fields[0].config.custom = { filterable: false };
+
+  render(<TableNG {...props} />);
+
+  expect(api.get('table')).toEqual([opaque]);
+  expect(screen.queryByRole('button', { name: 'Filter Name' })).not.toBeInTheDocument();
 });
 
 it('reserves header height and automatic width for a filter on any nested parent', () => {

@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { faro, LogLevel } from '@grafana/faro-web-sdk';
 import { t } from '@grafana/i18n';
 import { type Column, type SortDirection } from '@grafana/react-data-grid';
 
@@ -83,17 +84,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip ?? field.config.description;
 
-  const columnOptions = getColumnMenuOptions({
-    filterable,
-    hideable: hideable && Boolean(onHideColumn),
-    hasColumnSidebar: Boolean(hasColumnSidebar && onOpenColumnPanel),
-    hasAssistantAction: Boolean(onAddToAssistant),
-  });
-
   // The menu item and active-filter icon share this popup.
   const filterIconRef = useRef<HTMLButtonElement>(null);
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null);
-  const { isPopoverVisible, setPopoverVisible, popupProps, filterEnabled } = useFilterPopupState({
+  const { isPopoverVisible, setPopoverVisible, popupProps, filterEnabled, unsupportedReason } = useFilterPopupState({
     name: column.key,
     field,
     timeZone,
@@ -102,7 +96,23 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     crossFilterTailRows,
   });
 
-  const hasActiveFilter = filterable && filterEnabled;
+  const showFilterControl = filterable && !unsupportedReason;
+  const columnOptions = getColumnMenuOptions({
+    filterable: showFilterControl,
+    hideable: hideable && Boolean(onHideColumn),
+    hasColumnSidebar: Boolean(hasColumnSidebar && onOpenColumnPanel),
+    hasAssistantAction: Boolean(onAddToAssistant),
+  });
+  const hasActiveFilter = showFilterControl && filterEnabled;
+
+  useEffect(() => {
+    if (filterable && unsupportedReason) {
+      faro?.api?.pushLog(['Table filter is not editable in the header; filter control hidden.'], {
+        level: LogLevel.WARN,
+        context: { source: 'TableNG.HeaderCell', reason: unsupportedReason },
+      });
+    }
+  }, [filterable, unsupportedReason]);
 
   const openFilter = useCallback(
     (anchor: HTMLButtonElement | null) => {
@@ -114,10 +124,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
   const tableFilters = useTableFilters();
   useEffect(() => {
-    if (!filterable && filterEnabled) {
+    if (!filterable && filterEnabled && !unsupportedReason) {
       tableFilters?.clearFilter(field, parentIndex);
     }
-  }, [filterable, filterEnabled, tableFilters, field, parentIndex]);
+  }, [filterable, filterEnabled, unsupportedReason, tableFilters, field, parentIndex]);
 
   if (hideHeader) {
     return null;
@@ -275,7 +285,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       {/* eslint-enable jsx-a11y/no-static-element-interactions */}
       {label}
 
-      {filterable && (
+      {showFilterControl && (
         <Stack alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
           <Filter
             name={column.key}

@@ -20,7 +20,6 @@ import { calculateUniqueFieldValues, getFilteredOptions, operatorSelectableValue
 
 export interface FilterPopupProps {
   stateKey?: string;
-  unsupported?: boolean;
   onApplyValues: (values: SelectableValue[]) => void;
   onApplyRange?: (range: { min?: number; max?: number; includeMissing: boolean }) => void;
   onClear: () => void;
@@ -41,7 +40,6 @@ export const FilterPopup = memo((props: FilterPopupProps) => <FilterPopupEditor 
 
 const FilterPopupEditor = memo(
   ({
-    unsupported,
     onApplyValues,
     onClear,
     rows,
@@ -115,21 +113,6 @@ const FilterPopupEditor = memo(
     const filterInputPlaceholder = t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values');
     const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
     const styles = useStyles2(getStyles);
-
-    if (unsupported) {
-      return (
-        <div className={styles.filterContainer} ref={containerRef}>
-          <div role="status">
-            {t(
-              'grafana-ui.table.filter.unsupported',
-              'This filter cannot be edited here. Clear it to create a new filter.'
-            )}
-          </div>
-          <Button onClick={onClearFilter}>{t('grafana-ui.table.filter.clear', 'Clear filter')}</Button>
-          <Button onClick={onClose}>{t('grafana-ui.table.filter.cancel', 'Cancel')}</Button>
-        </div>
-      );
-    }
 
     return (
       <div
