@@ -3,8 +3,8 @@ import { type Locator } from '@playwright/test';
 import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
-  featureToggles: {
-    canvasPanelPanZoom: true,
+  openFeature: {
+    flags: { canvasPanelPanZoom: true },
   },
 });
 test.describe('Canvas Panel - Scene Tests', () => {
@@ -20,6 +20,30 @@ test.describe('Canvas Panel - Scene Tests', () => {
   test('should create and render canvas panel with scene elements', async ({ page }) => {
     const canvasElement = page.getByRole('button', { name: 'Double click to set field' });
     await expect(canvasElement).toBeVisible();
+  });
+
+  test('selects multiple elements with a marquee and clears the selection', async ({ page }) => {
+    await page.getByRole('button', { name: 'Duplicate', exact: true }).click();
+    const elements = page.getByRole('button', { name: 'Double click to set field' });
+    await expect(elements).toHaveCount(2);
+    await expect(page.getByRole('treeitem', { selected: true })).toHaveCount(0);
+    const first = await elements.first().boundingBox();
+    const last = await elements.last().boundingBox();
+    expect(first).not.toBeNull();
+    expect(last).not.toBeNull();
+    // A marquee selects both overlapping elements without a separate drag and Shift-click sequence.
+    await page.mouse.move(Math.min(first!.x, last!.x) - 10, Math.min(first!.y, last!.y) - 10);
+    await page.mouse.down();
+    await page.mouse.move(
+      Math.max(first!.x + first!.width, last!.x + last!.width) + 10,
+      Math.max(first!.y + first!.height, last!.y + last!.height) + 10,
+      { steps: 10 }
+    );
+    await page.mouse.up();
+    await expect(page.getByRole('treeitem', { selected: true })).toHaveCount(2);
+    await page.getByRole('button', { name: 'Clear selection', exact: true }).click();
+    await expect(page.getByRole('treeitem', { selected: true })).toHaveCount(0);
+    await expect(elements).toHaveCount(2);
   });
 
   test('should handle scene pan and zoom when enabled', async ({ page }) => {
