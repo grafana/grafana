@@ -41,6 +41,7 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -2547,6 +2548,119 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 			assert.Equal(t, metav1.ConditionFalse, ready.Status)
 			assert.Equal(t, tt.wantReason, ready.Reason)
 			assert.Equal(t, repo.Generation, ready.ObservedGeneration)
+		})
+	}
+}
+
+func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
+	wrappedErr := fmt.Errorf("get repository metadata: %w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded)
+	serviceErr := apierrors.NewServiceUnavailable("service unavailable")
+	patchErr := errors.New("status write failed")
+	for _, tt := range []struct {
+		name          string
+		branchErr     error
+		patchErr      error
+		initial       bool
+		wantUnhealthy bool
+		wantErr       error
+	}{
+		{name: "initial outage", branchErr: repository.ErrServerUnavailable, initial: true, wantUnhealthy: true},
+		{name: "wrapped outage after healthy", branchErr: wrappedErr, wantUnhealthy: true},
+		{name: "status write failure", branchErr: wrappedErr, patchErr: patchErr, wantUnhealthy: true, wantErr: patchErr},
+		{name: "generic service unavailable still returns error", branchErr: serviceErr, wantErr: serviceErr},
+		{name: "unclassified deadline still returns error", branchErr: context.DeadlineExceeded, wantErr: context.DeadlineExceeded},
+		{name: "caller cancellation still returns error", branchErr: context.Canceled, wantErr: context.Canceled},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  &provisioning.GitRepositoryConfig{URL: "https://git.example.com/repo.git"},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					Conditions: []metav1.Condition{{
+						Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue,
+						Reason: provisioning.ReasonAvailable, ObservedGeneration: 1,
+					}},
+				},
+			}
+			if tt.initial {
+				repo.Generation = 1
+				repo.Status = provisioning.RepositoryStatus{}
+			}
+
+			mockNamespaceLister := &MockRepositoryNamespaceLister{}
+			mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+			getter := informer.NewCachedRepositoryGetter(&MockRepositoryLister{namespaceLister: mockNamespaceLister})
+			gitRepo := git.NewMockGitRepository(t)
+			gitRepo.EXPECT().GetCurrentBranch().Return("").Once()
+			gitRepo.EXPECT().GetDefaultBranch(mock.Anything).Return("", tt.branchErr).Once()
+			factory := repository.NewMockFactory(t)
+			factory.EXPECT().Build(mock.Anything, mock.Anything).Return(gitRepo, nil).Once()
+			patcher := &capturePatcher{err: tt.patchErr}
+			reg := prometheus.NewPedanticRegistry()
+			rc := &RepositoryController{
+				repos:            getter,
+				quotaGetter:      quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+				quotaChecker:     NewRepositoryQuotaChecker(getter),
+				healthChecker:    NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+				repoFactory:      factory,
+				statusPatcher:    patcher,
+				reconcileMetrics: registerReconcileErrorMetrics(reg),
+				logger:           logging.DefaultLogger,
+				tracer:           tracing.InitializeTracerForTest(),
+			}
+
+			_, err := rc.process("default/test-repo")
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err, "an unavailable default branch must finish reconciliation after updating health")
+			}
+			phase := reconcilePhaseBranch
+			if tt.patchErr != nil {
+				phase = reconcilePhaseStatus
+			}
+			assert.Equal(t, 1.0, reconcileErrorCount(t, reg, phase, reconcileCauseSystem))
+			_, branchPatched := patcher.findPatchOp("/spec/git/branch")
+			assert.False(t, branchPatched)
+			_, generationPatched := patcher.findPatchOp("/status/observedGeneration")
+			assert.False(t, generationPatched)
+
+			healthOp, found := patcher.findPatchOp("/status/health")
+			require.Equal(t, tt.wantUnhealthy, found)
+			if !tt.wantUnhealthy {
+				require.ErrorContains(t, err, "failed to get default branch")
+				return
+			}
+			health, ok := healthOp["value"].(provisioning.HealthStatus)
+			require.True(t, ok)
+			assert.False(t, health.Healthy)
+			assert.Equal(t, provisioning.HealthFailureHealth, health.Error)
+			assert.Positive(t, health.Checked)
+			assert.Equal(t, []string{tt.branchErr.Error()}, health.Message)
+
+			var ready metav1.Condition
+			if tt.initial {
+				conditionOp, found := patcher.findPatchOp("/status/conditions")
+				require.True(t, found)
+				conditions := conditionOp["value"].([]metav1.Condition)
+				require.Len(t, conditions, 1)
+				ready = conditions[0]
+			} else {
+				conditionOp, found := patcher.findPatchOp("/status/conditions/0")
+				require.True(t, found)
+				ready = conditionOp["value"].(metav1.Condition)
+			}
+			assert.Equal(t, provisioning.ConditionTypeReady, ready.Type)
+			assert.Equal(t, metav1.ConditionFalse, ready.Status)
+			assert.Equal(t, provisioning.ReasonServiceUnavailable, ready.Reason)
+			assert.Equal(t, repo.Generation, ready.ObservedGeneration)
+			assert.Equal(t, tt.branchErr.Error(), ready.Message)
 		})
 	}
 }
