@@ -454,6 +454,11 @@
       "title-search-alert-rule": "Search alert rule",
       "title-select-alert-instances": "Select alert instances"
     },
+    "alert-instance-silence-action": {
+      "silence": "Silence",
+      "subtitle": "Configure a silence to stop notifications from this alert instance.",
+      "title": "Silence alert instance"
+    },
     "alert-instance-state-filter": {
       "state": "State"
     },
@@ -3419,6 +3424,7 @@
       "schedule": "Schedule"
     },
     "silence-grafana-rule-drawer": {
+      "subtitle": "Configure silences to stop notifications from a particular alert rule.",
       "title-silence-alert-rule": "Silence alert rule"
     },
     "silence-period": {
