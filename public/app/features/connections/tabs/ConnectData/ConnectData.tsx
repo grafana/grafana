@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagConnectionsFilterSidebar } from '@grafana/runtime/internal';
 import {
   LoadingPlaceholder,
   EmptyState,
@@ -93,7 +93,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export function AddNewConnection() {
-  if (config.featureToggles.connectionsFilterSidebar) {
+  const isFilterSidebarEnabled = useFlagConnectionsFilterSidebar();
+
+  if (isFilterSidebarEnabled) {
     return <AddNewConnectionWithSidebar />;
   }
 

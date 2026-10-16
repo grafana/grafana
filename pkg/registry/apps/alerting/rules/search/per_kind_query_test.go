@@ -322,6 +322,64 @@ func TestPerKindTranslateQuery_labelsFilterLeaf(t *testing.T) {
 	})
 }
 
+// TestTranslateQuery_regexLeaf covers the labels regex leaf: unified gets the
+// pattern verbatim as a regex/notregex requirement, and the legacy backend
+// evaluates it in memory with Prometheus matcher semantics.
+func TestPerKindTranslateQuery_regexLeaf(t *testing.T) {
+	t.Run("lowers to a regex requirement per leaf", func(t *testing.T) {
+		q := query()
+		q.Where = perKindAndNode(
+			perKindRegexLeaf(fieldLabels, "team=a|b", false),
+			perKindRegexLeaf(fieldLabels, "env=prod.*", true),
+		)
+		req := buildUnifiedRequest(translate(t, q))
+		assert.Equal(t, []*resourcepb.Requirement{
+			{Key: fieldLabels, Operator: string(resource.OperatorRegex), Values: []string{"team=a|b"}},
+			{Key: fieldLabels, Operator: string(resource.OperatorNotRegex), Values: []string{"env=prod.*"}},
+		}, req.Options.Fields)
+	})
+
+	t.Run("legacy matching", func(t *testing.T) {
+		withTeam := func(v string) *ngmodels.AlertRule {
+			return &ngmodels.AlertRule{Labels: map[string]string{"team": v}}
+		}
+		noTeam := &ngmodels.AlertRule{Labels: map[string]string{"env": "prod"}}
+		for _, tc := range []struct {
+			name    string
+			pattern string
+			negate  bool
+			rule    *ngmodels.AlertRule
+			want    bool
+		}{
+			{"alternation matches", "team=a|b", false, withTeam("b"), true},
+			{"alternation misses", "team=a|b", false, withTeam("c"), false},
+			{"anchored to the whole value", "team=a", false, withTeam("ab"), false},
+			{"outer anchors are redundant", "team=^a$", false, withTeam("a"), true},
+			{"case-sensitive by default", "team=A", false, withTeam("a"), false},
+			{"leading (?i) folds the value", "team=(?i)A", false, withTeam("a"), true},
+			{"dot matches newline", "team=a.*", false, withTeam("a\nb"), true},
+			{"missing label matches a pattern matching empty", "team=.*", false, noTeam, true},
+			{"missing label matches the empty pattern", "team=", false, noTeam, true},
+			{"empty pattern misses a set label", "team=", false, withTeam("a"), false},
+			{"missing label misses a pattern requiring a value", "team=.+", false, noTeam, false},
+			{"alternation cannot escape the key", "team=a|env=prod", false, noTeam, false},
+			{"negated miss matches", "team=a", true, withTeam("b"), true},
+			{"negated match misses", "team=a", true, withTeam("a"), false},
+			{"negated keeps a missing label", "team=a", true, noTeam, true},
+			{"negated match-all drops a missing label", "team=.*", true, noTeam, false},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				q := query()
+				regex := perKindRegexLeaf(fieldLabels, tc.pattern, tc.negate)
+				q.Where = &regex
+				matchers, err := compileLabelRegexes(translate(t, q).Regexes)
+				require.NoError(t, err)
+				assert.Equal(t, tc.want, matchLabelRegexes(tc.rule, matchers))
+			})
+		}
+	})
+}
+
 // TestTranslateQuery_sort covers the sort lowering. An absent sort becomes title
 // ascending so free-text order does not change with the storage mode.
 func TestPerKindTranslateQuery_sort(t *testing.T) {

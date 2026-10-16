@@ -6,13 +6,12 @@ import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { getRoutingTreeDisplayName } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Alert,
   Badge,
   Box,
   Button,
-  CodeEditor,
   Icon,
   LoadingPlaceholder,
   Modal,
@@ -36,7 +35,6 @@ import {
   trackImportToGMAWizardStarted,
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
-import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { ALERTING_IMPORT_SETTINGS_URL } from '../../settings/navigation';
@@ -58,6 +56,9 @@ import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
 import { getPauseRulesLabel, isAutoSyncCommitted, isAutoSyncSelected } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
+import { PreviewContentModal } from './preview/PreviewContentModal';
+import { useNotificationsPreview } from './preview/useNotificationsPreview';
+import { formatPreviewError, usePreviewContent } from './preview/usePreviewContent';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { type DryRunValidationResult } from './types';
@@ -154,8 +155,6 @@ function AutoSyncActiveBlock() {
   // who can reach the wizard: the sync worker mirrors only the Alertmanager configuration, and the
   // convert endpoint rejects notification imports alone.
   const canManageAutoSync = contextSrv.hasRole(OrgRole.Admin);
-  const isRulesImportEnabled = Boolean(config.featureToggles.alertingMigrationUI);
-
   return (
     <Alert severity="warning" title={t('alerting.import-to-gma.autosync-active-block.title', 'Auto-sync is enabled')}>
       <Stack direction="column" gap={1} alignItems="flex-start">
@@ -173,11 +172,9 @@ function AutoSyncActiveBlock() {
           </Text>
         )}
         <Stack direction="row" gap={2} alignItems="center" wrap="wrap">
-          {isRulesImportEnabled && (
-            <TextLink href={createRelativeUrl(ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES)} icon="upload">
-              {t('alerting.import-to-gma.autosync-active-block.import-rules', 'Import alert rules')}
-            </TextLink>
-          )}
+          <TextLink href={createRelativeUrl(ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES)} icon="upload">
+            {t('alerting.import-to-gma.autosync-active-block.import-rules', 'Import alert rules')}
+          </TextLink>
           {canManageAutoSync && (
             <TextLink href={ALERTING_IMPORT_SETTINGS_URL} icon="cog">
               {t('alerting.import-to-gma.autosync-active-block.go-to-settings', 'Go to Alerting settings')}
@@ -883,18 +880,20 @@ interface ReviewStepProps {
   rulesFromDatasource?: RulerRulesConfigDTO;
 }
 
+// True when a source is 'yaml' and its file has actually been uploaded (not just selected as the source type).
+// Typed as a guard so callers get `file` narrowed to `File` afterwards, instead of a bare boolean.
+function hasYamlUpload(source: string, file: File | null): file is File {
+  return source === 'yaml' && file !== null;
+}
+
 function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFromDatasource }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
   const { setActiveStep } = useStepperState();
 
-  const [showNotificationsPreview, setShowNotificationsPreview] = useState(false);
-  const [showRulesPreview, setShowRulesPreview] = useState(false);
-  const [notificationsPreviewContent, setNotificationsPreviewContent] = useState<string>('');
-  const [rulesPreviewContent, setRulesPreviewContent] = useState<string>('');
-  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
-  const [isLoadingRules, setIsLoadingRules] = useState(false);
-
   const willImportNotifications = formData.step1Completed && !formData.step1Skipped;
+  const notificationsPreview = useNotificationsPreview(formData, { enabled: willImportNotifications });
+  const rulesPreview = usePreviewContent('');
+
   const willImportRules = formData.step2Completed && !formData.step2Skipped;
   const nothingToImport = !willImportNotifications && !willImportRules;
   const willEnableAutoSync = isAutoSyncCommitted(
@@ -907,56 +906,27 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
     setActiveStep(StepKey.Rules);
   };
 
-  // Load notifications preview content
-  const handlePreviewNotifications = useCallback(async () => {
-    setIsLoadingNotifications(true);
-    setShowNotificationsPreview(true);
-
-    try {
-      let content = '';
-      if (formData.notificationsSource === 'yaml' && formData.notificationsYamlFile) {
-        content = await formData.notificationsYamlFile.text();
-      } else if (formData.notificationsSource === 'datasource' && formData.notificationsDatasourceName) {
-        const config = await fetchAlertManagerConfig(formData.notificationsDatasourceName);
-        content = JSON.stringify(config.alertmanager_config, null, 2);
-      }
-      setNotificationsPreviewContent(content);
-    } catch (err) {
-      setNotificationsPreviewContent(
-        t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
-          error: err instanceof Error ? err.message : String(err),
-        })
-      );
-    } finally {
-      setIsLoadingNotifications(false);
-    }
-  }, [formData.notificationsSource, formData.notificationsYamlFile, formData.notificationsDatasourceName]);
-
-  // Load rules preview content
-  const handlePreviewRules = useCallback(async () => {
-    setIsLoadingRules(true);
-    setShowRulesPreview(true);
-
-    try {
-      let content = '';
-      if (formData.rulesSource === 'yaml' && formData.rulesYamlFile) {
-        content = await formData.rulesYamlFile.text();
+  // Load rules preview content. Rule definitions (expr/labels/annotations) don't carry secrets,
+  // unlike notifier configs, so this is shown as-is rather than run through redactPreviewSecrets.
+  const handlePreviewRules = useCallback(() => {
+    rulesPreview.show(async () => {
+      if (hasYamlUpload(formData.rulesSource, formData.rulesYamlFile)) {
+        return formData.rulesYamlFile.text();
       } else if (formData.rulesSource === 'datasource' && rulesFromDatasource) {
         // Apply filters if set
         const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, formData.namespace, formData.ruleGroup);
-        content = JSON.stringify(filteredConfig, null, 2);
+        return JSON.stringify(filteredConfig, null, 2);
       }
-      setRulesPreviewContent(content);
-    } catch (err) {
-      setRulesPreviewContent(
-        t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
-          error: err instanceof Error ? err.message : String(err),
-        })
-      );
-    } finally {
-      setIsLoadingRules(false);
-    }
-  }, [formData.rulesSource, formData.rulesYamlFile, formData.namespace, formData.ruleGroup, rulesFromDatasource]);
+      return '';
+    }, formatPreviewError);
+  }, [
+    rulesPreview,
+    formData.rulesSource,
+    formData.rulesYamlFile,
+    formData.namespace,
+    formData.ruleGroup,
+    rulesFromDatasource,
+  ]);
 
   // Calculate rules count
   const rulesCount = useMemo(() => {
@@ -1016,7 +986,8 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                     variant="secondary"
                     size="sm"
                     icon="eye"
-                    onClick={handlePreviewNotifications}
+                    onClick={notificationsPreview.open}
+                    disabled={notificationsPreview.schemasLoading}
                     aria-label={t('alerting.import-to-gma.review.preview-config-aria', 'Preview configuration')}
                   >
                     {t('alerting.import-to-gma.review.preview', 'Preview')}
@@ -1099,84 +1070,31 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
 
       {/* Notifications Preview Modal */}
       <PreviewContentModal
-        isOpen={showNotificationsPreview}
+        isOpen={notificationsPreview.isOpen}
         title={t('alerting.import-to-gma.preview.notifications-title', 'Notifications Config Preview')}
-        content={notificationsPreviewContent}
-        isLoading={isLoadingNotifications}
+        content={notificationsPreview.content}
+        isLoading={notificationsPreview.isLoading}
         language={formData.notificationsSource === 'yaml' ? 'yaml' : 'json'}
-        onDismiss={() => setShowNotificationsPreview(false)}
+        onDismiss={notificationsPreview.dismiss}
+        reveal={{
+          isRevealed: notificationsPreview.isRevealed,
+          canReveal: notificationsPreview.canReveal,
+          onToggle: notificationsPreview.toggleReveal,
+        }}
       />
 
       {/* Rules Preview Modal */}
       <PreviewContentModal
-        isOpen={showRulesPreview}
+        isOpen={rulesPreview.isOpen}
         title={t('alerting.import-to-gma.preview.rules-title', 'Alert Rules Preview')}
-        content={rulesPreviewContent}
-        isLoading={isLoadingRules}
+        content={rulesPreview.content}
+        isLoading={rulesPreview.isLoading}
         language={formData.rulesSource === 'yaml' ? 'yaml' : 'json'}
-        onDismiss={() => setShowRulesPreview(false)}
+        onDismiss={rulesPreview.hide}
       />
     </Stack>
   );
 }
-
-// Preview Content Modal Component
-interface PreviewContentModalProps {
-  isOpen: boolean;
-  title: string;
-  content: string;
-  isLoading: boolean;
-  language: 'yaml' | 'json';
-  onDismiss: () => void;
-}
-
-function PreviewContentModal({ isOpen, title, content, isLoading, language, onDismiss }: PreviewContentModalProps) {
-  const styles = useStyles2(getPreviewModalStyles);
-
-  return (
-    <Modal isOpen={isOpen} title={title} onDismiss={onDismiss} className={styles.modal}>
-      {isLoading ? (
-        <Stack direction="row" gap={2} alignItems="center" justifyContent="center">
-          <Spinner />
-          <Text>{t('alerting.import-to-gma.preview.loading', 'Loading content...')}</Text>
-        </Stack>
-      ) : (
-        <div className={styles.editorContainer}>
-          <CodeEditor
-            width="100%"
-            height={500}
-            language={language}
-            value={content}
-            monacoOptions={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              lineNumbers: 'on',
-              readOnly: true,
-              wordWrap: 'on',
-            }}
-          />
-        </div>
-      )}
-      <Modal.ButtonRow>
-        <Button variant="secondary" onClick={onDismiss}>
-          {t('alerting.common.close', 'Close')}
-        </Button>
-      </Modal.ButtonRow>
-    </Modal>
-  );
-}
-
-const getPreviewModalStyles = (theme: GrafanaTheme2) => ({
-  modal: css({
-    width: '900px',
-    maxWidth: '90vw',
-  }),
-  editorContainer: css({
-    border: `1px solid ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.default,
-    overflow: 'hidden',
-  }),
-});
 
 // Confirm Import Modal Component
 interface ConfirmImportModalProps {

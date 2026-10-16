@@ -173,12 +173,14 @@ linters:
         storage-unified-apistore:
           list-mode: lax
           files:
-            - ./pkg/storage/unified/apistore/*
-            - ./pkg/storage/unified/apistore/**/*
+            - '**/pkg/storage/unified/apistore/*'
+            - '**/pkg/storage/unified/apistore/**/*'
           allow:
             - github.com/grafana/grafana/pkg/apimachinery
             - github.com/grafana/grafana/pkg/apiserver
-            - github.com/grafana/grafana/pkg/unified/resource
+            - github.com/grafana/grafana/pkg/storage/unified/apistore
+            - github.com/grafana/grafana/pkg/storage/unified/resourceclient
+            - github.com/grafana/grafana/pkg/storage/unified/resourcepb
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: pkg/storage/unified/apistore is not allowed to import grafana core
@@ -229,6 +231,11 @@ linters:
       - linters:
           - staticcheck
         text: 'SA1019: "?go\.opentelemetry\.io/otel/exporters/jaeger"? is deprecated:'
+      # Keep testing the legacy hybrid request format while older clients use it.
+      - linters:
+          - staticcheck
+        path: _test\.go$
+        text: 'SA1019: .*resourcepb\.HybridSearchRequest\)\.(Key|GetKey) is deprecated:'
       - linters:
           - staticcheck
         text: use fake service and real access control evaluator instead

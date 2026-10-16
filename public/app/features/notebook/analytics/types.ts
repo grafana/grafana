@@ -61,15 +61,16 @@ export interface NotebookLoadedProperties extends EventProperty, NotebookShape {
 }
 
 /**
- * The surface a notebook came from, for every event that has to name one. `EXPLORE` and
- * `DASHBOARD_PANEL` are the two callers of the add-panel modal, which creates a notebook outright
- * instead of opening a blank one, so only `created` sends them. Nothing sends `ASSISTANT` or
- * `WORKSPACE` yet.
+ * The surface a notebook came from, for every event that has to name one. `EXPLORE`,
+ * `DASHBOARD_PANEL`, and `PLUGIN` are the callers of the add-panel modal, which creates a notebook
+ * outright instead of opening a blank one, so only `created` sends them. Nothing sends `ASSISTANT`
+ * or `WORKSPACE` yet.
  */
 export const NOTEBOOK_ENTRY_POINT = {
   NOTEBOOK_LIST: 'notebook_list',
   EXPLORE: 'explore',
   DASHBOARD_PANEL: 'dashboard_panel',
+  PLUGIN: 'plugin',
   ASSISTANT: 'assistant',
   WORKSPACE: 'workspace',
 } as const;
@@ -80,14 +81,14 @@ export type NotebookEntryPoint = (typeof NOTEBOOK_ENTRY_POINT)[keyof typeof NOTE
  * How an edit session began. `TOGGLE` is the Edit control inside an open notebook. `NAVIGATION` is
  * an arrival at `?edit=true`, such as the list's Edit action, a pasted link, or a reload. `NEW` is
  * a notebook with no uid yet. It wins over the other two: a notebook that does not exist yet is
- * the more useful fact.
- *
- * Nothing sends an assistant value. The assistant writes cells without entering edit mode.
+ * the more useful fact. `ASSISTANT` is the mutation API rewriting the open document, same as
+ * DashboardScene's own `'assistant'` edit source.
  */
 export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   TOGGLE: 'toggle',
   NAVIGATION: 'navigation',
   NEW: 'new',
+  ASSISTANT: 'assistant',
 } as const;
 
 export type NotebookEditSessionSource =
@@ -359,4 +360,18 @@ export interface NotebookAddFailedProperties extends EventProperty {
   target: NotebookAddTarget;
   /** Why the attempt failed. */
   reason: NotebookAddFailedReason;
+}
+
+export const NOTEBOOK_INCIDENT_ACTION = {
+  DECLARE: 'declare',
+  ATTACH: 'attach',
+} as const;
+
+export type NotebookIncidentAction = (typeof NOTEBOOK_INCIDENT_ACTION)[keyof typeof NOTEBOOK_INCIDENT_ACTION];
+
+export interface NotebookIncidentActionClickedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which IRM action was picked: declaring an incident, or attaching to an existing one. */
+  action: NotebookIncidentAction;
 }

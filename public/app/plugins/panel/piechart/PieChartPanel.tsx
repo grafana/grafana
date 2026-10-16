@@ -21,6 +21,7 @@ import {
   VizLegend,
   type VizLegendItem,
 } from '@grafana/ui';
+import { shouldShowLegend } from '@grafana/ui/internal';
 
 import { PieChart, computeGradientFills } from './PieChart';
 import { type PieChartLegendOptions, PieChartLegendValues, type Options } from './panelcfg.gen';
@@ -124,7 +125,7 @@ export function PieChartPanel(props: Props) {
 function getLegend(props: Props, displayValues: FieldDisplay[], gradientFills?: Map<FieldDisplay, string>) {
   const legendOptions = props.options.legend ?? defaultLegendOptions;
 
-  if (legendOptions.showLegend === false) {
+  if (!shouldShowLegend(legendOptions)) {
     return undefined;
   }
 
