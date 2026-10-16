@@ -27,8 +27,6 @@ Use this data source to create dashboards, explore SQL data, and monitor MySQL-b
 
 Watch this video to learn more about using the Grafana MySQL data source plugin: {{< youtube id="p_RDHfHS-P8">}}
 
-{{< docs/play title="MySQL Overview" url="https://play.grafana.org/d/edyh1ib7db6rkb/mysql-overview" >}}
-
 ## Supported databases
 
 This data source supports the following MySQL-compatible databases:

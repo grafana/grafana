@@ -78,10 +78,6 @@ After you configure the PostgreSQL data source, you can:
 - Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to investigate your PostgreSQL data without building a dashboard.
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
 
-To see the PostgreSQL data source in action, explore the demo dashboard on Grafana Play:
-
-{{< docs/play title="PostgreSQL Overview" url="https://play.grafana.org/d/ddvpgdhiwjvuod/postgresql-overview" >}}
-
 ## Related data sources
 
 The following databases use the PostgreSQL wire protocol and may work with this data source:
