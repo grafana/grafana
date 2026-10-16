@@ -9,7 +9,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
-import { NotebookConflictError } from '../api/notebookResource';
+import { NotebookConflictError, NotebookUnavailableError } from '../api/notebookResource';
 import { defaultPanelKind, type PanelKind, type Spec as NotebookSpec } from '../types';
 
 import {
@@ -118,6 +118,25 @@ function captureCreate(name: string | null = 'nb2'): CapturedRequest {
 }
 
 describe('addPanelToExistingNotebook', () => {
+  it.each([403, 404])('reports an unavailable destination when reading returns %i', async (status) => {
+    server.use(http.get(NOTEBOOK_URL, () => HttpResponse.json({ message: 'Unavailable' }, { status })));
+
+    await expect(
+      addPanelToExistingNotebook('nb1', panel('Latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false)
+    ).rejects.toBeInstanceOf(NotebookUnavailableError);
+  });
+
+  it('reports an unavailable destination when writing returns 403', async () => {
+    server.use(
+      http.get(NOTEBOOK_URL, () => HttpResponse.json(existingNotebook())),
+      http.put(NOTEBOOK_URL, () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 }))
+    );
+
+    await expect(
+      addPanelToExistingNotebook('nb1', panel('Latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false)
+    ).rejects.toBeInstanceOf(NotebookUnavailableError);
+  });
+
   it('writes back the fetched notebook with the panel appended', async () => {
     const captured = captureWrite();
 

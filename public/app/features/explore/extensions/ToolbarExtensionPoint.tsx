@@ -10,6 +10,7 @@ import {
 import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useRecentNotebookVersion } from 'app/features/notebook/addPanel/recentNotebook';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type ExplorePanelData } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
@@ -37,12 +38,13 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { exploreId, extensionsToShow } = props;
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const context = useExtensionPointContext(props);
+  const recentNotebookVersion = useRecentNotebookVersion();
+  const context = useExtensionPointContext(props, recentNotebookVersion);
   // TODO: Pull it up to avoid calling it twice
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
     context: context,
-    limitPerPlugin: 3,
+    limitPerPlugin: recentNotebookVersion ? 4 : 3,
   });
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = Boolean(useSelector(selectExploreItem)?.queries?.length);
@@ -96,9 +98,13 @@ export type PluginExtensionExploreContext = {
   timeZone: TimeZone;
   shouldShowAddCorrelation: boolean;
   panelsState?: ExplorePanelsState;
+  recentNotebookVersion?: string;
 };
 
-function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
+function useExtensionPointContext(
+  props: Props,
+  recentNotebookVersion: string | undefined
+): PluginExtensionExploreContext {
   const { exploreId, timeZone } = props;
   const isCorrelationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = isCorrelationDetails?.editorMode || false;
@@ -118,6 +124,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       timeZone: getTimeZone({ timeZone }),
       shouldShowAddCorrelation: canWriteCorrelations && !isCorrelationsEditorMode && isLeftPane && numUniqueIds === 1,
       panelsState,
+      recentNotebookVersion,
     };
   }, [
     canWriteCorrelations,
@@ -129,6 +136,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
     queries,
     queryResponse,
     range.raw,
+    recentNotebookVersion,
     timeZone,
   ]);
 }
