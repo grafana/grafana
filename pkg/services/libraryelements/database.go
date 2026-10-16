@@ -803,13 +803,12 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 		return err
 	}
-	// Attach the requester so a routed LegacyDatabaseProvider can resolve the target database.
-	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), signedInUser.GetOrgID(), folderUID)
+	return l.DeleteLibraryElementsInFolderUnchecked(folder.WithUncheckedDeleteAuthorized(c), signedInUser.GetOrgID(), signedInUser, folderUID)
 }
 
 // deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without
-// checking folder permissions; callers must have already confirmed the folder is gone. Elements
-// still connected to a dashboard are kept and block the delete (as in the permission-checked path).
+// checking folder permissions. Elements still connected to a dashboard are kept and block the
+// delete (as in the permission-checked path).
 func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
 	conn := l.SQLStore
 	libraryElementTable := "library_element"
@@ -836,7 +835,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 
 	serviceCtx, _ := identity.WithServiceIdentity(c, orgID)
 	for _, elem := range elements {
-		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
+		connectedDashboards, err := l.ConnectedDashboardsFinder.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
 		if err != nil {
 			return err
 		}

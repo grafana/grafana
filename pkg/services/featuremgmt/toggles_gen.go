@@ -155,6 +155,10 @@ const (
 	// Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise
 	FlagKubernetesFolderCountsLegacyStorage = "kubernetesFolderCountsLegacyStorage"
 
+	// FlagKubernetesFolderCascadeDeleteContents
+	// Enable folder.grafana.app cascade delete to also remove alert rules and library panels from a tenant's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise
+	FlagKubernetesFolderCascadeDeleteContents = "kubernetesFolderCascadeDeleteContents"
+
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
