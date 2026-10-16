@@ -159,6 +159,24 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleQualityFix",
+        "resourceVersion": "1792163593889",
+        "creationTimestamp": "2026-10-16T14:46:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-16 15:13:13.889637474 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleReviews",
         "resourceVersion": "1791369430263",
         "creationTimestamp": "2026-10-07T09:54:44Z",
