@@ -365,7 +365,7 @@ func TestTimeIntervalFingerprint(t *testing.T) {
 
 	t.Run("matches the version set by NewTimeInterval", func(t *testing.T) {
 		base := baseInterval()
-		created := NewTimeInterval(base.Title, base.TimeIntervals, models.ProvenanceNone)
+		created := NewTimeInterval(TimeIntervalUID(base.Title), base.Title, base.TimeIntervals, models.ProvenanceNone)
 		assert.Equal(t, TimeIntervalFingerprint(base), created.Version)
 	})
 }
