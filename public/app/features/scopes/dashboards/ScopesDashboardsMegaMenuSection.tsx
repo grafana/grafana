@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
+import { useId } from 'react';
 import { Observable } from 'rxjs';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Button, LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
@@ -26,9 +28,11 @@ interface Props {
  * the user deliberately opened.
  */
 export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const scopes = useScopes();
   const scopeServices = useScopesServices();
+  const headingId = useId();
 
   useObservable(
     scopeServices?.scopesDashboardsService.stateObservable ?? new Observable(),
@@ -52,8 +56,8 @@ export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
 
   return (
     <>
-      <div className={styles.box}>
-        <div className={styles.heading}>
+      <div className={styles.box} role="group" aria-labelledby={headingId}>
+        <div className={styles.heading} id={headingId}>
           <Text variant="bodySmall" color="secondary" weight="medium">
             {t('scopes.dashboards.megaMenuSectionHeading', 'Suggested dashboards')}
           </Text>
@@ -84,6 +88,7 @@ export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
               subScopePath={[]}
               onFolderUpdate={updateFolder}
               onNavigate={onNavigate}
+              megaMenuStyle
             />
           ) : (
             <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
@@ -105,8 +110,7 @@ export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
     // Matches MegaMenu's own pinnedBox margin, so this section insets the same way the pinned box
     // does rather than carrying its own one-off spacing.
