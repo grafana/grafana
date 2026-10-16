@@ -80,6 +80,10 @@ After you configure the PostgreSQL data source, you can:
 - Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to investigate your PostgreSQL data without building a dashboard.
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
 
+To see the PostgreSQL data source in action, explore the demo dashboard on Grafana Play:
+
+{{< docs/play title="PostgreSQL Overview" url="https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard" >}}
+
 ## Plugin updates
 
 Starting with Grafana v13.2, the PostgreSQL data source is a standalone plugin, preinstalled in both Grafana OSS and Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog and installs the latest version on each server restart.

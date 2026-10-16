@@ -57,7 +57,10 @@ When you create a dashboard link, you can include the time range and current tem
 
 Dashboard links can also be used as shortcuts to external systems, such as submitting [a GitHub issue with the current dashboard name](https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests).
 
-To see an example of dashboard links in action, check out [Dashboard links with variables](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1).
+To see an example of dashboard links in action, check out:
+
+- [Dashboard links with variables](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1)
+- [Prometheus repeat](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard)
 
 After you've added a dashboard link, it appears in the upper right corner of your dashboard.
 

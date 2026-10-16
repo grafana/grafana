@@ -93,9 +93,10 @@ Technically, there is no limit to how many variables you can chain together, but
 
 <!-- If you update or replace the Play dashboards linked in this section, you must also update the text examples to match them -->
 
-The following Grafana Play dashboard contains basic chained variables, only two layers deep. To view the variables and their settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section. This example and an InfluxDB example are expanded in the following section.
+The following Grafana Play dashboards contain basic chained variables, only two layers deep. To view the variables and their settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section. Both examples are expanded in the following section.
 
 - [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h)
+- [InfluxDB Templated](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard)
 
 While the examples are data source-specific, the concepts can be applied broadly.
 
@@ -163,7 +164,7 @@ apps.fakesite.web_server_01.cpu.*
 
 #### InfluxDB example explained
 
-In this example, you have several data centers. Each data center has a different subset of hosts.
+In this example, you have several data centers. Each data center has a different subset of hosts. It's based on the [InfluxDB Templated](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard) dashboard.
 
 In this example, when the user changes the value of the `datacenter` variable, it changes the drop-down options returned by the `host` variable. The `host` variable uses the **Multi-value** option and **Include all option**, allowing users to select some or all options presented at any time. The `datacenter` does not use either option, so you can only select one data center at a time.
 
