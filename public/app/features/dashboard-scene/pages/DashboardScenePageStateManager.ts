@@ -62,7 +62,6 @@ import {
 
 import {
   clearPendingChangePreview,
-  getPendingChangePreview,
   isPreviewingPendingChanges,
   loadPendingChangePreview,
   type PendingChangePreview,
@@ -129,19 +128,13 @@ interface DashboardCacheEntry<T> {
 }
 
 /**
- * The pending changes a load shows instead of the saved dashboard, if any (see withPendingChanges).
- * Such a scene never goes through the scene cache: it shares the saved dashboard's version.
+ * The pending changes each preview response shows instead of the saved dashboard (see
+ * withPendingChanges and newDashboardPreview). Kept with the response rather than read from the
+ * preview registry when it is turned into a scene: a load of the same dashboard started meanwhile
+ * replaces the registry's entry. Such a scene never goes through the scene cache: it shares the
+ * saved dashboard's version.
  */
-function shownPendingChanges(options: LoadDashboardOptions): PendingChangePreview | undefined {
-  const view =
-    options.route === DashboardRoutes.Normal
-      ? 'page'
-      : options.route === DashboardRoutes.Embedded
-        ? 'embedded'
-        : undefined;
-  const preview = view ? getPendingChangePreview(view, options.uid) : undefined;
-  return preview?.previewing ? preview : undefined;
-}
+const shownPendingChanges = new WeakMap<object, PendingChangePreview>();
 
 export interface LoadDashboardOptions {
   uid: string;
@@ -1154,7 +1147,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // Provisioning previews are cached under the file path (options.uid for this route), which
     // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
     // preview when the same file is revisited at a different ref.
-    const pendingChanges = shownPendingChanges(options);
+    const pendingChanges = rsp ? shownPendingChanges.get(rsp) : undefined;
     const skipSceneCache =
       options.route === DashboardRoutes.Public ||
       options.route === DashboardRoutes.Provisioning ||
@@ -1515,8 +1508,12 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
     const preview = await loadingPreview;
     if (preview && proposesNewDashboard(preview.pending)) {
-      // The dashboard exists, so a proposal to create it no longer applies.
+      // The dashboard exists, so a proposal to create it no longer applies (it was saved, and the
+      // plugin's discard after the save failed). Discard it again, so it isn't offered on every visit.
       clearPendingChangePreview(options.uid, preview.id);
+      Promise.resolve()
+        .then(() => preview.pending.discard())
+        .catch(() => {});
       return rsp;
     }
     return this.withPendingChanges(rsp, options, preview);
@@ -1529,7 +1526,9 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   private async newDashboardPreview(preview: PendingChangePreview): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
     const created = await buildNewDashboardSaveModelV2();
     // Editable unless the proposal says otherwise, so it can be saved.
-    return { ...created, spec: { editable: true, ...structuredClone(preview.pending.proposed) } };
+    const previewRsp = { ...created, spec: { editable: true, ...structuredClone(preview.pending.proposed) } };
+    shownPendingChanges.set(previewRsp, preview);
+    return previewRsp;
   }
 
   /**
@@ -1558,6 +1557,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
         spec: structuredClone(preview.pending.proposed),
         access: { ...saved.access, canEdit: false, canSave: false, canDelete: false },
       };
+      shownPendingChanges.set(previewRsp, preview);
       return previewRsp;
     } catch {
       preview.previewing = false;

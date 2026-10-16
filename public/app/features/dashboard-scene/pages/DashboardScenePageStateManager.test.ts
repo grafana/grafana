@@ -2330,11 +2330,10 @@ describe('UnifiedDashboardScenePageStateManager', () => {
           loadDashboard: jest.fn().mockRejectedValue(notFound),
           loadSnapshot: jest.fn(),
         } as unknown as DashboardLoaderSrvV2;
-        const preview = proposal(baseGeneration);
-        jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(preview);
-        jest
-          .mocked(getPendingChangePreview)
-          .mockImplementation((view, uid) => (uid === 'new-dash' ? preview : undefined));
+        jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(proposal(baseGeneration));
+        // A load of the same dashboard started meanwhile has replaced the registry's entry: the
+        // scene is built from the preview the response carries.
+        jest.mocked(getPendingChangePreview).mockReturnValue(undefined);
 
         await manager.loadDashboard({ uid: 'new-dash', route: DashboardRoutes.Normal, pendingChanges: 'chat-1' });
         jest
@@ -2358,10 +2357,13 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         setTestFlags({ dashboardNewLayouts: false });
         setupV1FailureV2Success();
         const manager = new UnifiedDashboardScenePageStateManager({});
-        jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(proposal(0));
+        const spent = proposal(0);
+        jest.mocked(loadPendingChangePreview).mockResolvedValueOnce(spent);
 
         await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal, pendingChanges: 'chat-1' });
 
+        // The proposal is discarded, so it isn't offered on the next visit.
+        expect(spent.pending.discard).toHaveBeenCalled();
         expect(manager.state.dashboard?.state.uid).toBe('fake-dash');
         expect(manager.state.dashboard?.state.title).not.toBe('Proposed');
         expect(manager.state.dashboard?.state.meta.newDashboardUid).toBeUndefined();
