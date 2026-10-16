@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,9 +16,11 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -42,7 +45,7 @@ func TestIntegrationV1beta1(t *testing.T) {
 				UnifiedAlertingDisableExecuteAlerts: true,
 			})
 			common.CreateTestFolder(t, helper, "test-folder")
-			runV1beta1Tests(t, helper)
+			runV1beta1Tests(t, helper, mode)
 		})
 	}
 }
@@ -77,6 +80,17 @@ func (c versionClient) update(ctx context.Context, resource string, obj map[stri
 	return decode(raw, err)
 }
 
+func (c versionClient) updateStatus(ctx context.Context, resource string, obj map[string]any) (map[string]any, error) {
+	obj["apiVersion"] = c.gv.String()
+	body, err := json.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+	name := obj["metadata"].(map[string]any)["name"].(string)
+	raw, err := c.rc.Put().AbsPath(c.path(resource, name, "status")...).Body(body).DoRaw(ctx)
+	return decode(raw, err)
+}
+
 func (c versionClient) get(ctx context.Context, resource, name string) (map[string]any, error) {
 	raw, err := c.rc.Get().AbsPath(c.path(resource, name)...).DoRaw(ctx)
 	return decode(raw, err)
@@ -97,6 +111,21 @@ func decode(raw []byte, err error) (map[string]any, error) {
 	}
 	var out map[string]any
 	return out, json.Unmarshal(raw, &out)
+}
+
+// readUnified reads a rule straight from unified storage, bypassing the dual writer.
+func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string) map[string]any {
+	t.Helper()
+	ctx, _ := identity.WithServiceIdentity(context.Background(), helper.Org1.OrgID)
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: v1beta1.GroupVersion.Group, Resource: resource, Name: name}
+	var out map[string]any
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		rsp, err := helper.GetEnv().ResourceClient.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(c, err)
+		require.Nil(c, rsp.Error)
+		require.NoError(c, json.Unmarshal(rsp.Value, &out))
+	}, 5*time.Second, 50*time.Millisecond)
+	return out
 }
 
 func field(t *testing.T, obj map[string]any, path ...string) any {
@@ -191,7 +220,7 @@ func recordingRuleBody(t *testing.T) map[string]any {
 	})
 }
 
-func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper) {
+func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.DualWriterMode) {
 	ctx := context.Background()
 	alpha := versionClient{rc: helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion), gv: v0alpha1.GroupVersion}
 	beta := versionClient{rc: helper.Org1.Admin.RESTClient(t, &v1beta1.GroupVersion), gv: v1beta1.GroupVersion}
@@ -253,6 +282,46 @@ func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, beta.delete(ctx, alertRules, name))
 		_, err = alpha.get(ctx, alertRules, name)
 		require.True(t, apierrors.IsNotFound(err), "expected not found, got %v", err)
+	})
+
+	// Modes 1-3 keep status in legacy storage and mirror it to unified storage.
+	t.Run("status written as either version is stored and mirrored", func(t *testing.T) {
+		for _, tc := range []struct {
+			resource string
+			body     func(*testing.T) map[string]any
+			status   map[string]any
+		}{
+			{alertRules, alertRuleBody, map[string]any{"state": "Firing", "health": "OK"}},
+			{recordingRules, recordingRuleBody, map[string]any{"health": "Error", "lastError": "boom"}},
+		} {
+			for _, c := range []versionClient{alpha, beta} {
+				t.Run(tc.resource+"/"+c.gv.Version, func(t *testing.T) {
+					created, err := beta.create(ctx, tc.resource, tc.body(t))
+					require.NoError(t, err)
+					name := field(t, created, "metadata", "name").(string)
+					t.Cleanup(func() { _ = beta.delete(ctx, tc.resource, name) })
+
+					if mode >= grafanarest.Mode1 && mode <= grafanarest.Mode3 {
+						// Wait for the dual writer's unified copy, which is what gets mirrored to.
+						readUnified(t, helper, tc.resource, name)
+					}
+
+					obj, err := c.get(ctx, tc.resource, name)
+					require.NoError(t, err)
+					obj["status"] = tc.status
+					_, err = c.updateStatus(ctx, tc.resource, obj)
+					require.NoError(t, err)
+
+					got, err := c.get(ctx, tc.resource, name)
+					require.NoError(t, err)
+					require.Equal(t, tc.status, got["status"])
+
+					if mode >= grafanarest.Mode1 && mode <= grafanarest.Mode3 {
+						require.Equal(t, tc.status, readUnified(t, helper, tc.resource, name)["status"])
+					}
+				})
+			}
+		}
 	})
 
 	t.Run("lists are served in either version", func(t *testing.T) {
