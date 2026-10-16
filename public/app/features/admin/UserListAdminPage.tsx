@@ -1,8 +1,6 @@
-import { css } from '@emotion/css';
 import { type ComponentType, useEffect } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
@@ -14,6 +12,7 @@ import { type UserFilter } from 'app/types/user';
 
 import { EnterpriseAuthFeaturesCard } from './EnterpriseAuthFeaturesCard';
 import { UsersTable } from './Users/UsersTable';
+import { getToolbarStyles } from './Users/getToolbarStyles';
 import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
 
 export interface FilterProps {
@@ -66,7 +65,7 @@ const UserListAdminPageUnConnected = ({
   changeSort,
   isLoading,
 }: Props) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getToolbarStyles);
 
   useEffect(() => {
     fetchUsers();
@@ -74,42 +73,38 @@ const UserListAdminPageUnConnected = ({
 
   return (
     <Page.Contents>
-      <div className={styles.actionBar} data-testid={selectors.container}>
-        <div className={styles.row}>
-          <div className={styles.search}>
-            <FilterInput
-              placeholder={t(
-                'admin.user-list-admin-page-un-connected.placeholder-search-login-email',
-                'Search user by login, email, or name.'
-              )}
-              autoFocus={true}
-              value={query}
-              onChange={changeQuery}
-              escapeRegex={false}
-            />
-          </div>
-          <div className={styles.filter}>
-            <RadioButtonGroup
-              options={[
-                { label: t('admin.user-list-admin-page-un-connected.label.all-users', 'All users'), value: false },
-                {
-                  label: t('admin.user-list-admin-page-un-connected.label.active-last-days', 'Active last 30 days'),
-                  value: true,
-                },
-              ]}
-              onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
-              value={filters.find((f) => f.name === 'activeLast30Days')?.value}
-            />
-          </div>
-          {extraFilters.map((FilterComponent, index) => (
-            <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.extraFilter} />
-          ))}
-          {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
-            <LinkButton href="admin/users/create" variant="primary">
-              <Trans i18nKey="admin.users-list.create-button">New user</Trans>
-            </LinkButton>
+      <div className={styles.toolbar} data-testid={selectors.container}>
+        <FilterInput
+          className={styles.search}
+          placeholder={t(
+            'admin.user-list-admin-page-un-connected.placeholder-search-login-email',
+            'Search user by login, email, or name.'
           )}
-        </div>
+          autoFocus={true}
+          value={query}
+          onChange={changeQuery}
+          escapeRegex={false}
+        />
+        <RadioButtonGroup
+          options={[
+            { label: t('admin.user-list-admin-page-un-connected.label.all-users', 'All users'), value: false },
+            {
+              label: t('admin.user-list-admin-page-un-connected.label.active-last-days', 'Active last 30 days'),
+              value: true,
+            },
+          ]}
+          onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
+          value={filters.find((f) => f.name === 'activeLast30Days')?.value}
+          className={styles.filter}
+        />
+        {extraFilters.map((FilterComponent, index) => (
+          <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.extraFilter} />
+        ))}
+        {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
+          <LinkButton href="admin/users/create" variant="primary">
+            <Trans i18nKey="admin.users-list.create-button">New user</Trans>
+          </LinkButton>
+        )}
       </div>
       {!isLoading && users.length === 0 ? (
         <EmptyState message={t('users.empty-state.message', 'No users found')} variant="not-found" />
@@ -129,42 +124,3 @@ const UserListAdminPageUnConnected = ({
 };
 
 export const UserListAdminPageContent = connector(UserListAdminPageUnConnected);
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    // FilterInput is width 100%, so as a flex item its base size is the whole row.
-    // Give that growth to a wrapper that can shrink, and keep the status filter at
-    // its content width. RadioButtonGroup ellipsizes when it is allowed to shrink.
-    search: css({
-      flex: '1 1 240px',
-      minWidth: theme.spacing(20),
-    }),
-    filter: css({
-      flex: '0 0 auto',
-      minWidth: 'max-content',
-    }),
-    extraFilter: css({
-      flex: '0 0 auto',
-    }),
-    actionBar: css({
-      marginBottom: theme.spacing(2),
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: theme.spacing(2),
-      [theme.breakpoints.down('sm')]: {
-        flexWrap: 'wrap',
-      },
-    }),
-    row: css({
-      display: 'flex',
-      alignItems: 'center',
-      textAlign: 'left',
-      marginBottom: theme.spacing(0.5),
-      flexGrow: 1,
-      minWidth: 0,
-      width: '100%',
-      gap: theme.spacing(1),
-      flexWrap: 'wrap',
-    }),
-  };
-};
