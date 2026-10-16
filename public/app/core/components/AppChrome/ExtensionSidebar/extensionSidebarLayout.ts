@@ -22,6 +22,12 @@ const DEFAULT_PRESENTATION: Record<LayoutSurface, ExtensionSidebarPresentation> 
 const PRESENTATION_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarPresentationBySurface';
 
 /**
+ * Plugins that draw their own floating surface and drag handle, and can dock again through the restricted
+ * `extensionSidebar` API. Any other sidebar plugin always docks.
+ */
+const FLOATING_EXTENSION_SIDEBAR_PLUGINS = ['grafana-assistant-app'];
+
+/**
  * The layout the user asked for per surface, through the restricted `extensionSidebar` API. Floating only applies
  * while `grafana.extensionSidebarFloating` is on; `ExtensionSidebarContextProvider` resolves the effective layout.
  *
@@ -70,11 +76,30 @@ export function setExtensionSidebarPresentation(
   reportInteraction('grafana_extension_sidebar_presentation_changed', { from, to: presentation, surface });
 }
 
-/** The layout the open sidebar shows on the current page: floating only while the flag allows it. */
-export function getEffectiveExtensionSidebarPresentation(): ExtensionSidebarPresentation {
-  return canFloatExtensionSidebar() && getRequestedExtensionSidebarPresentation() === 'floating'
+/**
+ * The layout `pluginId`'s sidebar shows on the current page, given the requested one: floating only while the
+ * flag allows it and only for a plugin that supports it.
+ */
+export function resolveExtensionSidebarPresentation(
+  requestedPresentation: ExtensionSidebarPresentation,
+  canFloat: boolean,
+  pluginId: string | undefined
+): ExtensionSidebarPresentation {
+  return canFloat &&
+    requestedPresentation === 'floating' &&
+    pluginId !== undefined &&
+    FLOATING_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId)
     ? 'floating'
     : 'docked';
+}
+
+/** The layout `pluginId`'s sidebar shows on the current page. */
+export function getEffectiveExtensionSidebarPresentation(pluginId: string | undefined): ExtensionSidebarPresentation {
+  return resolveExtensionSidebarPresentation(
+    getRequestedExtensionSidebarPresentation(),
+    canFloatExtensionSidebar(),
+    pluginId
+  );
 }
 
 /** The requested layout for the current page, before the feature flag applies. */

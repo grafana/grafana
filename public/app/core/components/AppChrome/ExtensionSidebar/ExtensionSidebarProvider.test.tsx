@@ -44,6 +44,12 @@ const mockPluginMeta = {
   addedLinks: [],
 };
 
+const mockPathfinderMeta = {
+  pluginId: 'grafana-pathfinder-app',
+  addedComponents: [mockComponent],
+  addedLinks: [],
+};
+
 // Mock the store
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -66,6 +72,10 @@ jest.mock('@grafana/runtime', () => ({
     links: [
       {
         pluginId: mockPluginMeta.pluginId,
+        title: mockComponent.title,
+      },
+      {
+        pluginId: mockPathfinderMeta.pluginId,
         title: mockComponent.title,
       },
     ],
@@ -508,12 +518,14 @@ describe('ExtensionSidebarProvider', () => {
     const PresentationComponent = () => (
       <div data-testid="presentation">{useExtensionSidebarContext().presentation}</div>
     );
-    const renderPresentation = () =>
+    const renderPresentation = (pluginId = mockPluginMeta.pluginId) => {
+      (store.get as jest.Mock).mockReturnValue(getComponentIdFromComponentMeta(pluginId, mockComponent.title));
       render(
         <ExtensionSidebarContextProvider>
           <PresentationComponent />
         </ExtensionSidebarContextProvider>
       );
+    };
 
     afterEach(async () => {
       resetExtensionSidebarPresentationForTests();
@@ -623,6 +635,28 @@ describe('ExtensionSidebarProvider', () => {
 
       act(() => setExtensionSidebarPresentation('floating'));
       expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+    });
+
+    it('docks a plugin that does not support floating, even when floating is requested', async () => {
+      useAsyncMock.mockReturnValue({
+        loading: false,
+        value: new Map([
+          [mockPluginMeta.pluginId, mockPluginMeta],
+          [mockPathfinderMeta.pluginId, mockPathfinderMeta],
+        ]),
+      });
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true });
+      });
+      renderPresentation(mockPathfinderMeta.pluginId);
+
+      act(() => setExtensionSidebarPresentation('floating'));
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_extension_sidebar_changed',
+        expect.objectContaining({ opened: true, pluginId: mockPathfinderMeta.pluginId, presentation: 'docked' })
+      );
     });
 
     it('stays docked when floating is requested with the flag off', () => {

@@ -50,7 +50,7 @@ describe('extensionSidebarApi', () => {
       extensionSidebarApi.setPresentation('floating');
 
       expect(getRequestedExtensionSidebarPresentation()).toBe('docked');
-      expect(getEffectiveExtensionSidebarPresentation()).toBe('docked');
+      expect(getEffectiveExtensionSidebarPresentation('grafana-assistant-app')).toBe('docked');
     });
   });
 });

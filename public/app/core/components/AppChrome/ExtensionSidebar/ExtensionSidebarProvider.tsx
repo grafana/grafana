@@ -25,6 +25,7 @@ import {
   holdFloatingExtensionSidebar,
   isFloatingExtensionSidebarHeld,
   releaseFloatingExtensionSidebarHolds,
+  resolveExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
@@ -115,8 +116,6 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
   // Turning the flag off docks a floating sidebar.
   const canFloat = useFlagGrafanaExtensionSidebarFloating();
-  const presentation: ExtensionSidebarPresentation =
-    canFloat && requestedPresentation === 'floating' ? 'floating' : 'docked';
   const floatingHeld = useSyncExternalStore(subscribeToExtensionSidebarPresentation, isFloatingExtensionSidebarHeld);
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
@@ -183,6 +182,11 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     }
   }
   const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
+  const presentation: ExtensionSidebarPresentation = resolveExtensionSidebarPresentation(
+    requestedPresentation,
+    canFloat,
+    getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId
+  );
   const floatingHidden = dockedComponentId !== undefined && presentation === 'floating' && floatingHeld;
 
   useEffect(() => {
@@ -274,13 +278,14 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     const opened = dockedComponentId !== undefined;
     // we either want to track opened events, or closed events when we have a previous component
     if (opened || storedComponentMeta) {
+      const pluginId = (opened ? componentMeta : storedComponentMeta)?.pluginId;
       reportInteraction('grafana_extension_sidebar_changed', {
         opened: opened,
         componentTitle: (opened ? componentMeta : storedComponentMeta)?.componentTitle,
-        pluginId: (opened ? componentMeta : storedComponentMeta)?.pluginId,
+        pluginId,
         fromLocalstorage: storedComponentId === dockedComponentId,
         // Read here rather than from state, so a layout switch alone does not report an open or close.
-        presentation: getEffectiveExtensionSidebarPresentation(),
+        presentation: getEffectiveExtensionSidebarPresentation(pluginId),
       });
     }
     if (dockedComponentId) {
