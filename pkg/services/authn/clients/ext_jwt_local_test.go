@@ -2,9 +2,6 @@ package clients
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"net/http"
 	"testing"
 	"time"
@@ -19,12 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestExtendedJWT_localPluginTokens(t *testing.T) {
-	pluginauthtest.EnableAppManifests(t)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	cfgWith := func(jwksURL string) *setting.Cfg {
 		return &setting.Cfg{
 			Raw:        ini.Empty(),
@@ -64,7 +61,7 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 		require.NoError(t, err)
 		// The token Grafana sends the plugin with a request from user u1. The
 		// local exchanger takes the caller from Grafana's own ID token.
-		idToken := signIDToken(t, "user:u1", authlib.IDTokenClaims{Identifier: "u1", Type: claims.TypeUser, Namespace: "default"})
+		idToken := generateIDToken(t, idTokenClaims{Claims: jwt.Claims{Subject: "user:u1", Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}, Rest: authlib.IDTokenClaims{Identifier: "u1", Type: claims.TypeUser, Namespace: "default"}}, pk, jose.ES256)
 		inbound, err := exchanger.Exchange(context.Background(), authlib.TokenExchangeRequest{Namespace: "default", Audiences: []string{"example-app"}, SubjectToken: idToken})
 		require.NoError(t, err)
 
@@ -88,13 +85,7 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 		local := sign(t, authlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
 		require.True(t, client.Test(context.Background(), request(local)))
 
-		key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-		require.NoError(t, err)
-		signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
-			(&jose.SignerOptions{}).WithType(jose.ContentType(authlib.TokenTypeAccess)).WithHeader("kid", "other"))
-		require.NoError(t, err)
-		other, err := jwt.Signed(signer).Claims(jwt.Claims{Subject: "access-policy:other", Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}).Serialize()
-		require.NoError(t, err)
+		other := generateToken(t, accessTokenClaims{Claims: jwt.Claims{Subject: "access-policy:other", Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}}, pk, jose.ES256)
 		require.False(t, client.Test(context.Background(), request(other)), "a token the local key cannot verify must not stop a session from authenticating")
 	})
 
@@ -118,20 +109,8 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 	})
 }
 
-func signIDToken(t *testing.T, subject string, idClaims authlib.IDTokenClaims) string {
-	t.Helper()
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	require.NoError(t, err)
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
-		(&jose.SignerOptions{}).WithType(jose.ContentType(authlib.TokenTypeID)).WithHeader("kid", "test"))
-	require.NoError(t, err)
-	token, err := jwt.Signed(signer).Claims(jwt.Claims{Subject: subject, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}).Claims(idClaims).Serialize()
-	require.NoError(t, err)
-	return token
-}
-
 func TestExtendedJWT_localPluginOrganizations(t *testing.T) {
-	pluginauthtest.EnableAppManifests(t)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	cfg := &setting.Cfg{
 		Raw:        ini.Empty(),
 		ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}},
@@ -173,7 +152,7 @@ func TestExtendedJWT_localPluginOrganizations(t *testing.T) {
 			client := ProvideExtendedJWT(&testCfg, tracing.InitializeTracerForTest())
 			req := authlib.TokenExchangeRequest{Namespace: tc.namespace, Audiences: []string{"grafana"}}
 			if tc.obo {
-				id := signIDToken(t, "user:42", authlib.IDTokenClaims{Identifier: "u42", Type: claims.TypeUser, Namespace: tc.namespace})
+				id := generateIDToken(t, idTokenClaims{Claims: jwt.Claims{Subject: "user:42", Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}, Rest: authlib.IDTokenClaims{Identifier: "u42", Type: claims.TypeUser, Namespace: tc.namespace}}, pk, jose.ES256)
 				inbound, err := exchanger.Exchange(context.Background(), authlib.TokenExchangeRequest{Namespace: tc.namespace, Audiences: []string{"example-app"}, SubjectToken: id})
 				require.NoError(t, err)
 				req.SubjectToken = inbound.Token

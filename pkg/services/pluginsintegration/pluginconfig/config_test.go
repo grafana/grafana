@@ -9,7 +9,6 @@ import (
 
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -75,7 +74,7 @@ func TestProvidePluginInstanceConfigOpenFeature(t *testing.T) {
 }
 
 func TestProvidePluginInstanceConfigLocalPluginTokens(t *testing.T) {
-	pluginauthtest.EnableAppManifests(t)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	for _, tc := range []struct {
 		name, token, url, jwksURL string
 		hostEnv                   string
@@ -121,7 +120,7 @@ func newTestServerConfig() *setting.Cfg {
 }
 
 func TestProvidePluginInstanceConfigLocalAPIURL(t *testing.T) {
-	pluginauthtest.EnableAppManifests(t)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	for _, tc := range []struct {
 		name, override, jwksURL, want string
 		wantError                     bool

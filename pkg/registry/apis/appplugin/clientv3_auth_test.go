@@ -10,7 +10,7 @@ import (
 
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -50,7 +50,7 @@ func TestNewClientV3TokenExchanger(t *testing.T) {
 }
 
 func TestClientV3TokenExchanger(t *testing.T) {
-	pluginauthtest.EnableAppManifests(t)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	configured := authnlib.NewStaticTokenExchanger("token")
 	cfgFor := func(env string) *setting.Cfg {
 		cfg := setting.NewCfg()

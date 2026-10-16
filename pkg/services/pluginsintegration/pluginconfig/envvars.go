@@ -324,9 +324,9 @@ func (p *EnvVarsProvider) signingKeysEnvVars(plugin *plugins.Plugin) []string {
 // how the app SDK calls Grafana's API. go-plugin forwards the host environment
 // after the variables Grafana sets, so host values would win over them.
 var apiAccessHostEnvVars = []string{
-	"API_ACCESS_ROUTER_URL",
-	"API_ACCESS_TOKEN_EXCHANGE_URL",
-	"API_ACCESS_CAP_TOKEN",
+	v3.EnvVarRouterURL,
+	v3.EnvVarTokenExchangeURL,
+	v3.EnvVarAccessPolicyToken,
 	"API_ACCESS_BEARER_TOKEN",
 }
 
@@ -340,11 +340,9 @@ var apiAccessHostEnvVars = []string{
 // process, so each process gets its own token, which the plugin's process
 // manager revokes when that process stops or is replaced.
 func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
-	if !p.cfg.LocalPluginTokens || plugin.Type != plugins.TypeApp {
-		return nil
-	}
+	// LocalAPIURL is only set when Grafana signs plugin tokens itself.
 	apiURL := strings.TrimRight(p.cfg.LocalAPIURL, "/")
-	if apiURL == "" {
+	if apiURL == "" || plugin.Type != plugins.TypeApp {
 		return nil
 	}
 	if !plugin.SkipHostEnvVars && slices.ContainsFunc(apiAccessHostEnvVars, func(key string) bool { return os.Getenv(key) != "" }) {
@@ -370,8 +368,8 @@ func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
 		return nil
 	}
 	return []string{
-		p.envVar("API_ACCESS_ROUTER_URL", apiURL),
-		p.envVar("API_ACCESS_TOKEN_EXCHANGE_URL", apiURL+pluginauth.TokenExchangePath),
+		p.envVar(v3.EnvVarRouterURL, apiURL),
+		p.envVar(v3.EnvVarTokenExchangeURL, apiURL+pluginauth.TokenExchangePath),
 		p.envVar(v3.EnvVarAccessPolicyToken, token),
 	}
 }

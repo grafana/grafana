@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -114,7 +114,7 @@ func TestLocalAPIURLRequiresGrafanaAudience(t *testing.T) {
 }
 
 func TestLocalPluginAuthEnabled(t *testing.T) {
-	pluginauthtest.EnableAppManifests(t)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	cfgWith := func(enabled string) *setting.Cfg {
 		cfg := &setting.Cfg{Raw: ini.Empty()}
 		if enabled != "" {
@@ -138,6 +138,6 @@ func TestLocalPluginAuthRequiresAppManifests(t *testing.T) {
 	// Without the appplugins.loadAppManifest feature toggle, the default.
 	require.False(t, LocalPluginAuthEnabled(&setting.Cfg{Raw: ini.Empty()}))
 
-	pluginauthtest.EnableAppManifests(t)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	require.True(t, LocalPluginAuthEnabled(&setting.Cfg{Raw: ini.Empty()}))
 }

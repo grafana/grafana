@@ -139,7 +139,11 @@ func TestPluginEnvVarsProvider_signingKeysEnvVars(t *testing.T) {
 
 func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 	envVars := func(localTokens bool, plugin *plugins.Plugin) []string {
-		cfg := &PluginInstanceCfg{LocalPluginTokens: localTokens, LocalAPIURL: "http://localhost:3000", GrafanaAppURL: "http://localhost:3000/", Features: featuremgmt.WithFeatures()}
+		cfg := &PluginInstanceCfg{LocalPluginTokens: localTokens, GrafanaAppURL: "http://localhost:3000/", Features: featuremgmt.WithFeatures()}
+		// As ProvidePluginInstanceConfig sets it: only when Grafana signs tokens itself.
+		if localTokens {
+			cfg.LocalAPIURL = "http://localhost:3000"
+		}
 		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
 		return provider.PluginEnvVars(context.Background(), plugin)
 	}
@@ -155,20 +159,13 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 	hasAPIAccess := func(env []string) bool {
 		return slices.ContainsFunc(env, func(v string) bool { return strings.HasPrefix(v, "API_ACCESS_") })
 	}
-	capToken := func(env []string) string {
-		for _, v := range env {
-			if token, ok := strings.CutPrefix(v, "API_ACCESS_CAP_TOKEN="); ok {
-				return token
-			}
-		}
-		return ""
-	}
+	capToken := v3.LocalAccessPolicyTokenFromEnv
 
 	t.Run("passed to app plugins when Grafana signs tokens itself", func(t *testing.T) {
 		env := envVars(true, app(false))
 		assert.Contains(t, env, "API_ACCESS_ROUTER_URL=http://localhost:3000")
 		assert.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=http://localhost:3000"+pluginauth.TokenExchangePath)
-		pluginID, ok := v3.LocalAccessPolicyPluginID(capToken(env))
+		pluginID, _, ok := v3.LookupLocalAccessPolicyToken(capToken(env))
 		require.True(t, ok)
 		assert.Equal(t, "example-app", pluginID)
 	})
@@ -192,12 +189,11 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 		require.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=https://grafana.internal:8443/grafana"+pluginauth.TokenExchangePath)
 	})
 	t.Run("binds the started plugin's own manifest to its token", func(t *testing.T) {
-		pluginID, manifests, ok := v3.LookupLocalAccessPolicyToken(capToken(envVars(true, app(false))))
+		pluginID, manifest, ok := v3.LookupLocalAccessPolicyToken(capToken(envVars(true, app(false))))
 		require.True(t, ok)
 		require.Equal(t, "example-app", pluginID)
-		require.Len(t, manifests, 1)
-		require.Equal(t, "example.ext.grafana.app", manifests[0].Group)
-		require.Equal(t, "dashboards", manifests[0].ExtraPermissions.AccessKinds[0].Resource)
+		require.Equal(t, "example.ext.grafana.app", manifest.Group)
+		require.Equal(t, "dashboards", manifest.ExtraPermissions.AccessKinds[0].Resource)
 	})
 	t.Run("not passed to app plugins without a manifest", func(t *testing.T) {
 		// A token on behalf of its caller would still carry the caller's org role.

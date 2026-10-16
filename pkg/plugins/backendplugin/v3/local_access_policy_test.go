@@ -12,23 +12,23 @@ import (
 )
 
 func TestLocalAccessPolicyToken(t *testing.T) {
-	first, err := IssueLocalAccessPolicyToken("first-app")
+	first, err := IssueLocalAccessPolicyToken("first-app", nil)
 	require.NoError(t, err)
 	require.False(t, strings.HasPrefix(first, "glsa_"), "the API key client must not look it up")
-	pluginID, ok := LocalAccessPolicyPluginID(first)
+	pluginID, _, ok := LookupLocalAccessPolicyToken(first)
 	require.True(t, ok)
 	require.Equal(t, "first-app", pluginID)
 
 	// Each process of a plugin gets its own token.
-	second, err := IssueLocalAccessPolicyToken("first-app")
+	second, err := IssueLocalAccessPolicyToken("first-app", nil)
 	require.NoError(t, err)
 	require.NotEqual(t, first, second)
 
 	// Revoking one process's token leaves the others working.
 	RevokeLocalAccessPolicyToken(first)
-	_, ok = LocalAccessPolicyPluginID(first)
+	_, _, ok = LookupLocalAccessPolicyToken(first)
 	require.False(t, ok)
-	_, ok = LocalAccessPolicyPluginID(second)
+	_, _, ok = LookupLocalAccessPolicyToken(second)
 	require.True(t, ok)
 	RevokeLocalAccessPolicyToken("")
 
@@ -38,20 +38,20 @@ func TestLocalAccessPolicyToken(t *testing.T) {
 	manifest := &app.ManifestData{Group: "first.ext.grafana.app"}
 	withManifest, err := IssueLocalAccessPolicyToken("first-app", manifest)
 	require.NoError(t, err)
-	pluginID, manifests, ok := LookupLocalAccessPolicyToken(withManifest)
+	pluginID, got, ok := LookupLocalAccessPolicyToken(withManifest)
 	require.True(t, ok)
 	require.Equal(t, "first-app", pluginID)
-	require.Equal(t, []*app.ManifestData{manifest}, manifests, "the token carries its process's manifests")
+	require.Same(t, manifest, got, "the token carries its process's manifest")
 	RevokeLocalAccessPolicyToken(withManifest)
-	_, manifests, ok = LookupLocalAccessPolicyToken(withManifest)
+	_, got, ok = LookupLocalAccessPolicyToken(withManifest)
 	require.False(t, ok)
-	require.Empty(t, manifests)
+	require.Nil(t, got)
 
-	_, ok = LocalAccessPolicyPluginID(second + "x")
+	_, _, ok = LookupLocalAccessPolicyToken(second + "x")
 	require.False(t, ok)
-	_, ok = LocalAccessPolicyPluginID("")
+	_, _, ok = LookupLocalAccessPolicyToken("")
 	require.False(t, ok)
-	_, err = IssueLocalAccessPolicyToken("")
+	_, err = IssueLocalAccessPolicyToken("", nil)
 	require.Error(t, err)
 }
 

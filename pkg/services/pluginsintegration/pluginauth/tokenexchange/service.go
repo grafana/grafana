@@ -51,9 +51,9 @@ func ProvideService(cfg *setting.Cfg, pluginCfg *pluginconfig.PluginInstanceCfg,
 	}
 	// Serve the exchange exactly when plugins are given its URL. The plugin
 	// configuration has already decided both, and reported why not.
-	if pluginCfg != nil && pluginCfg.LocalPluginTokens && pluginCfg.LocalAPIURL != "" {
+	if pluginCfg != nil && pluginCfg.LocalAPIURL != "" {
 		u, _ := url.Parse(pluginCfg.LocalAPIURL) // LocalAPIURL has validated the URL.
-		s.loopbackOnly = strings.EqualFold(u.Hostname(), "localhost") || net.ParseIP(u.Hostname()).IsLoopback()
+		s.loopbackOnly = pluginauth.IsLoopbackHost(u.Hostname())
 		// Callers authenticate with their access policy token, not as a Grafana
 		// user, so the route is not behind sign-in.
 		rr.Post(pluginauth.TokenExchangePath, routing.Wrap(s.signAccessToken))
@@ -64,11 +64,13 @@ func ProvideService(cfg *setting.Cfg, pluginCfg *pluginconfig.PluginInstanceCfg,
 // exchangeResponse is the response of the auth API's sign-access-token
 // endpoint, which authlib's token exchange client decodes.
 type exchangeResponse struct {
-	Status string `json:"status"`
-	Data   *struct {
-		Token string `json:"token"`
-	} `json:"data,omitempty"`
-	Error string `json:"error,omitempty"`
+	Status string        `json:"status"`
+	Data   *exchangeData `json:"data,omitempty"`
+	Error  string        `json:"error,omitempty"`
+}
+
+type exchangeData struct {
+	Token string `json:"token"`
 }
 
 func errorResponse(status int, message string) response.Response {
@@ -85,7 +87,7 @@ func (s *Service) signAccessToken(c *contextmodel.ReqContext) response.Response 
 		return errorResponse(http.StatusUnauthorized, "an access policy token is required")
 	}
 	// The token carries the manifests of the plugin process it was issued to.
-	pluginID, manifests, ok := v3.LookupLocalAccessPolicyToken(bearer)
+	pluginID, manifest, ok := v3.LookupLocalAccessPolicyToken(bearer)
 	if !ok {
 		return errorResponse(http.StatusUnauthorized, "invalid access policy token")
 	}
@@ -95,7 +97,7 @@ func (s *Service) signAccessToken(c *contextmodel.ReqContext) response.Response 
 		return errorResponse(http.StatusBadRequest, "invalid request body")
 	}
 
-	policy := policyFor(pluginID, s.cfg.ExtJWTAuth.Audiences, manifests)
+	policy := policyFor(pluginID, s.cfg.ExtJWTAuth.Audiences, manifest)
 	token, err := v3.SignLocalAccessToken(c.Req.Context(), policy, req)
 	if err != nil {
 		s.log.Warn("Refused to sign a plugin access token", "pluginId", pluginID, "error", err)
@@ -104,10 +106,7 @@ func (s *Service) signAccessToken(c *contextmodel.ReqContext) response.Response 
 		}
 		return errorResponse(http.StatusBadRequest, err.Error())
 	}
-	rsp := exchangeResponse{Status: "success", Data: &struct {
-		Token string `json:"token"`
-	}{Token: token}}
-	return response.JSON(http.StatusOK, rsp)
+	return response.JSON(http.StatusOK, exchangeResponse{Status: "success", Data: &exchangeData{Token: token}})
 }
 
 func isLoopback(remoteAddr string) bool {
@@ -126,7 +125,7 @@ func isLoopback(remoteAddr string) bool {
 // It also grants app access (plugins.app:access), which Grafana checks before
 // serving any app plugin's API group, the plugin's own included. On behalf of
 // a caller, it only lets through the app access the caller has.
-func policyFor(pluginID string, grafanaAudiences []string, manifests []*app.ManifestData) v3.LocalAccessPolicy {
+func policyFor(pluginID string, grafanaAudiences []string, manifest *app.ManifestData) v3.LocalAccessPolicy {
 	policy := v3.LocalAccessPolicy{PluginID: pluginID}
 	add := func(list *[]string, value string) {
 		if value != "" && !slices.Contains(*list, value) {
@@ -136,23 +135,20 @@ func policyFor(pluginID string, grafanaAudiences []string, manifests []*app.Mani
 	for _, audience := range grafanaAudiences {
 		add(&policy.Audiences, audience)
 	}
-	if len(manifests) == 0 {
+	if manifest == nil {
 		return policy
 	}
 	policy.Permissions = []string{pluginaccesscontrol.ActionAppAccess}
-	for _, manifest := range manifests {
-		if manifest == nil || manifest.Group == "" {
-			continue
-		}
-		add(&policy.Audiences, manifest.Group)
-		// Only a plugin group is the plugin's own. A manifest naming another
-		// group, such as a core one, must request it as an access kind.
-		if name, ok := strings.CutSuffix(manifest.Group, pluginGroupSuffix); ok && name != "" {
-			add(&policy.Permissions, manifest.Group+":*")
-		}
-		if manifest.ExtraPermissions == nil {
-			continue
-		}
+	if manifest.Group == "" {
+		return policy
+	}
+	add(&policy.Audiences, manifest.Group)
+	// Only a plugin group is the plugin's own. A manifest naming another group,
+	// such as a core one, must request it as an access kind.
+	if name, ok := strings.CutSuffix(manifest.Group, pluginGroupSuffix); ok && name != "" {
+		add(&policy.Permissions, manifest.Group+":*")
+	}
+	if manifest.ExtraPermissions != nil {
 		for _, kind := range manifest.ExtraPermissions.AccessKinds {
 			add(&policy.Audiences, kind.Group)
 			for _, action := range kind.Actions {

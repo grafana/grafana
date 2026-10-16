@@ -118,8 +118,8 @@ func newLocalExchanger() (*localExchanger, error) {
 
 // Exchange implements [authnlib.TokenExchanger].
 func (e *localExchanger) Exchange(_ context.Context, req authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
-	if req.Namespace == "" || len(req.Audiences) == 0 {
-		return nil, errors.New("local plugin token exchange: namespace and audiences are required")
+	if err := validateExchangeRequest(req); err != nil {
+		return nil, err
 	}
 	claims := authnlib.AccessTokenClaims{Namespace: req.Namespace}
 	if req.SubjectToken != "" {
@@ -134,6 +134,13 @@ func (e *localExchanger) Exchange(_ context.Context, req authnlib.TokenExchangeR
 		return nil, err
 	}
 	return &authnlib.TokenExchangeResponse{Token: token}, nil
+}
+
+func validateExchangeRequest(req authnlib.TokenExchangeRequest) error {
+	if req.Namespace == "" || len(req.Audiences) == 0 {
+		return errors.New("local plugin token exchange: namespace and audiences are required")
+	}
+	return nil
 }
 
 // actorFromSubjectToken returns the delegation chain for the new token: the

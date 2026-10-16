@@ -84,12 +84,9 @@ func inferLocalAPIURL(cfg *setting.Cfg) (string, error) {
 	}
 	host := "127.0.0.1"
 	if addr := strings.Trim(cfg.HTTPAddr, "[]"); addr != "" {
-		ip := net.ParseIP(addr)
 		switch {
-		case ip != nil && ip.IsUnspecified():
-		case ip != nil && ip.IsLoopback():
-			host = addr
-		case addr == "localhost":
+		case net.ParseIP(addr).IsUnspecified():
+		case IsLoopbackHost(addr):
 			host = addr
 		default:
 			return "", cannotInferLocalAPIURL("the HTTP listener is not bound to loopback or all interfaces")
@@ -100,6 +97,12 @@ func inferLocalAPIURL(cfg *setting.Cfg) (string, error) {
 		u.Path = strings.TrimSuffix(cfg.AppSubURL, "/")
 	}
 	return u.String(), nil
+}
+
+// IsLoopbackHost reports whether host, an IP address or host name without a
+// port, names this machine's loopback interface.
+func IsLoopbackHost(host string) bool {
+	return strings.EqualFold(host, "localhost") || net.ParseIP(host).IsLoopback()
 }
 
 // validateLocalAPIURL checks that endpoint can name this process. An inferred

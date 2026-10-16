@@ -86,16 +86,14 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 			if p.client != nil {
 				p.client.Kill()
 			}
-			localv3.RevokeLocalAccessPolicyToken(p.accessPolicyToken)
-			p.accessPolicyToken = ""
+			p.revokeAccessPolicyToken()
 			p.pluginClient = nil
 			p.clientV3 = nil
 		}
 	}()
 
 	// A restart replaces the process, so the previous one's token must stop working.
-	localv3.RevokeLocalAccessPolicyToken(p.accessPolicyToken)
-	p.accessPolicyToken = ""
+	p.revokeAccessPolicyToken()
 
 	var err error
 	p.client, p.accessPolicyToken, err = p.clientFactory()
@@ -142,6 +140,13 @@ func loadClientV3(rpcClient plugin.ClientProtocol) v3.Client {
 	return client
 }
 
+// revokeAccessPolicyToken revokes the access policy token passed to the current
+// process. Callers hold p.mutex.
+func (p *grpcPlugin) revokeAccessPolicyToken() {
+	localv3.RevokeLocalAccessPolicyToken(p.accessPolicyToken)
+	p.accessPolicyToken = ""
+}
+
 func (p *grpcPlugin) Stop(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -150,8 +155,7 @@ func (p *grpcPlugin) Stop(_ context.Context) error {
 		p.client.Kill()
 	}
 	// The process's access policy token must not outlive it.
-	localv3.RevokeLocalAccessPolicyToken(p.accessPolicyToken)
-	p.accessPolicyToken = ""
+	p.revokeAccessPolicyToken()
 	p.state = pluginStateStopped
 	return nil
 }

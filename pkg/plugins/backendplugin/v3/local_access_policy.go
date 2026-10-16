@@ -42,8 +42,8 @@ const LocalAccessPolicyTokenPrefix = "g_local_plugin_"
 
 // localAccessPolicyHolder is what a local access policy token was issued to.
 type localAccessPolicyHolder struct {
-	pluginID  string
-	manifests []*app.ManifestData
+	pluginID string
+	manifest *app.ManifestData
 }
 
 var localAccessPolicyTokens = struct {
@@ -51,9 +51,14 @@ var localAccessPolicyTokens = struct {
 	byToken map[string]localAccessPolicyHolder
 }{byToken: map[string]localAccessPolicyHolder{}}
 
-// EnvVarAccessPolicyToken names the environment variable that passes a
-// plugin process its access policy token for the local token exchange.
-const EnvVarAccessPolicyToken = "API_ACCESS_CAP_TOKEN"
+// The environment variables that give a plugin process its credentials for
+// Grafana's API: the URL to call it at, the token exchange, and the access
+// policy token for the exchange. The app SDK reads them in BuildKubeConfig.
+const (
+	EnvVarRouterURL         = "API_ACCESS_ROUTER_URL"
+	EnvVarTokenExchangeURL  = "API_ACCESS_TOKEN_EXCHANGE_URL"
+	EnvVarAccessPolicyToken = "API_ACCESS_CAP_TOKEN"
+)
 
 // IssueLocalAccessPolicyToken returns a new secret that authenticates pluginID
 // to the local token exchange: the local stand-in for a cloud access policy
@@ -61,9 +66,9 @@ const EnvVarAccessPolicyToken = "API_ACCESS_CAP_TOKEN"
 // starts the plugin's process, passes it only to that process, and revokes it
 // when the process stops or is replaced (see RevokeLocalAccessPolicyToken).
 //
-// manifests are the app manifests of that process's plugin. The exchange builds
-// the token's policy from them, not from other copies of the plugin on disk.
-func IssueLocalAccessPolicyToken(pluginID string, manifests ...*app.ManifestData) (string, error) {
+// manifest is the app manifest of that process's plugin. The exchange builds
+// the token's policy from it, not from other copies of the plugin on disk.
+func IssueLocalAccessPolicyToken(pluginID string, manifest *app.ManifestData) (string, error) {
 	if pluginID == "" {
 		return "", errors.New("local plugin token exchange: a plugin ID is required")
 	}
@@ -75,7 +80,7 @@ func IssueLocalAccessPolicyToken(pluginID string, manifests ...*app.ManifestData
 
 	localAccessPolicyTokens.Lock()
 	defer localAccessPolicyTokens.Unlock()
-	localAccessPolicyTokens.byToken[token] = localAccessPolicyHolder{pluginID: pluginID, manifests: slices.Clone(manifests)}
+	localAccessPolicyTokens.byToken[token] = localAccessPolicyHolder{pluginID: pluginID, manifest: manifest}
 	return token, nil
 }
 
@@ -98,20 +103,13 @@ func LocalAccessPolicyTokenFromEnv(env []string) string {
 	return ""
 }
 
-// LocalAccessPolicyPluginID returns the plugin that token authenticates, as
-// issued by IssueLocalAccessPolicyToken and not since revoked.
-func LocalAccessPolicyPluginID(token string) (string, bool) {
-	pluginID, _, ok := LookupLocalAccessPolicyToken(token)
-	return pluginID, ok
-}
-
-// LookupLocalAccessPolicyToken returns the plugin and app manifests token was
+// LookupLocalAccessPolicyToken returns the plugin and app manifest token was
 // issued with by IssueLocalAccessPolicyToken, if it has not since been revoked.
-func LookupLocalAccessPolicyToken(token string) (pluginID string, manifests []*app.ManifestData, ok bool) {
+func LookupLocalAccessPolicyToken(token string) (pluginID string, manifest *app.ManifestData, ok bool) {
 	localAccessPolicyTokens.Lock()
 	defer localAccessPolicyTokens.Unlock()
 	holder, ok := localAccessPolicyTokens.byToken[token]
-	return holder.pluginID, holder.manifests, ok
+	return holder.pluginID, holder.manifest, ok
 }
 
 // SignLocalAccessToken signs an access token for the plugin of policy, as a
@@ -135,8 +133,8 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 	if policy.PluginID == "" {
 		return "", errors.New("local plugin token exchange: a plugin ID is required")
 	}
-	if req.Namespace == "" || len(req.Audiences) == 0 {
-		return "", errors.New("local plugin token exchange: namespace and audiences are required")
+	if err := validateExchangeRequest(req); err != nil {
+		return "", err
 	}
 	if req.Subject != nil {
 		return "", fmt.Errorf("%w: signing for an asserted subject is not supported", ErrLocalAccessDenied)

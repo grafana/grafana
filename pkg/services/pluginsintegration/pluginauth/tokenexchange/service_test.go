@@ -17,7 +17,6 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -33,7 +32,7 @@ var testManifest = &app.ManifestData{
 }
 
 func TestPolicyFor(t *testing.T) {
-	policy := policyFor("example-app", []string{"grafana"}, []*app.ManifestData{testManifest, {Group: ""}, nil})
+	policy := policyFor("example-app", []string{"grafana"}, testManifest)
 	require.Equal(t, v3.LocalAccessPolicy{
 		PluginID:  "example-app",
 		Audiences: []string{"grafana", "example.ext.grafana.app", "dashboard.grafana.app", "folder.grafana.app"},
@@ -48,7 +47,10 @@ func TestPolicyFor(t *testing.T) {
 
 	require.Empty(t, policyFor("example-app", []string{"grafana"}, nil).Permissions, "a plugin without a manifest may do nothing")
 
-	core := policyFor("example-app", []string{"grafana"}, []*app.ManifestData{{Group: "dashboard.grafana.app"}})
+	noGroup := policyFor("example-app", []string{"grafana"}, &app.ManifestData{ExtraPermissions: testManifest.ExtraPermissions})
+	require.Equal(t, []string{"plugins.app:access"}, noGroup.Permissions, "a manifest without a group requests nothing")
+
+	core := policyFor("example-app", []string{"grafana"}, &app.ManifestData{Group: "dashboard.grafana.app"})
 	require.NotContains(t, core.Permissions, "dashboard.grafana.app:*", "a manifest does not own a core group")
 }
 
@@ -103,7 +105,7 @@ func TestSignAccessToken(t *testing.T) {
 	})
 
 	t.Run("rejects the token of a stopped plugin process", func(t *testing.T) {
-		stopped, err := v3.IssueLocalAccessPolicyToken("stopped-app")
+		stopped, err := v3.IssueLocalAccessPolicyToken("stopped-app", nil)
 		require.NoError(t, err)
 		v3.RevokeLocalAccessPolicyToken(stopped)
 		_, err = exchange(stopped, authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
@@ -134,7 +136,7 @@ func TestSignAccessToken(t *testing.T) {
 	})
 
 	t.Run("a plugin without a manifest gets no permissions", func(t *testing.T) {
-		otherCAP, err := v3.IssueLocalAccessPolicyToken("other-app")
+		otherCAP, err := v3.IssueLocalAccessPolicyToken("other-app", nil)
 		require.NoError(t, err)
 		token, err := exchange(otherCAP, authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"grafana"}})
 		require.NoError(t, err)
@@ -204,7 +206,7 @@ func TestSignAccessTokenLoopbackOnly(t *testing.T) {
 }
 
 func TestProvideServiceLocalAPIURL(t *testing.T) {
-	pluginauthtest.EnableAppManifests(t)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	for _, tc := range []struct {
 		name, override, jwksURL string
 		registered              bool

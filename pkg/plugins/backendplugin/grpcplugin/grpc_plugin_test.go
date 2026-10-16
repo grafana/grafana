@@ -21,14 +21,14 @@ func TestGrpcPluginAccessPolicyTokenLifetime(t *testing.T) {
 		descriptor: PluginDescriptor{pluginID: "lifetime-test-app"},
 		// Stands in for starting a process with the environment Grafana builds.
 		clientFactory: func() (*plugin.Client, string, error) {
-			token, err := localv3.IssueLocalAccessPolicyToken("lifetime-test-app")
+			token, err := localv3.IssueLocalAccessPolicyToken("lifetime-test-app", nil)
 			require.NoError(t, err)
 			issued = append(issued, token)
 			return nil, token, errNoProcess
 		},
 	}
 	valid := func(token string) bool {
-		_, ok := localv3.LocalAccessPolicyPluginID(token)
+		_, _, ok := localv3.LookupLocalAccessPolicyToken(token)
 		return ok
 	}
 
@@ -39,10 +39,10 @@ func TestGrpcPluginAccessPolicyTokenLifetime(t *testing.T) {
 	require.False(t, valid(issued[0]), "a restart revokes the replaced process's token")
 	require.False(t, valid(issued[1]), "a failed restart revokes its token immediately")
 
-	other, err := localv3.IssueLocalAccessPolicyToken("lifetime-test-app")
+	other, err := localv3.IssueLocalAccessPolicyToken("lifetime-test-app", nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { localv3.RevokeLocalAccessPolicyToken(other) })
-	p.accessPolicyToken, err = localv3.IssueLocalAccessPolicyToken("lifetime-test-app")
+	p.accessPolicyToken, err = localv3.IssueLocalAccessPolicyToken("lifetime-test-app", nil)
 	require.NoError(t, err)
 	current := p.accessPolicyToken
 	require.NoError(t, p.Stop(context.Background()))
@@ -57,7 +57,7 @@ func TestGrpcPluginRevokesTokenWhenProcessCannotStart(t *testing.T) {
 		versionedPlugins: pluginSet,
 	}, log.NewTestLogger(), noop.NewTracerProvider().Tracer("test"), func() []string {
 		var err error
-		token, err = localv3.IssueLocalAccessPolicyToken("missing-app")
+		token, err = localv3.IssueLocalAccessPolicyToken("missing-app", nil)
 		require.NoError(t, err)
 		t.Cleanup(func() { localv3.RevokeLocalAccessPolicyToken(token) })
 		return []string{localv3.EnvVarAccessPolicyToken + "=" + token}
@@ -65,7 +65,7 @@ func TestGrpcPluginRevokesTokenWhenProcessCannotStart(t *testing.T) {
 	require.NoError(t, err)
 	require.Error(t, p.Start(context.Background()))
 	require.NotEmpty(t, token)
-	_, valid := localv3.LocalAccessPolicyPluginID(token)
+	_, _, valid := localv3.LookupLocalAccessPolicyToken(token)
 	require.False(t, valid)
 	require.Empty(t, p.accessPolicyToken)
 	require.Equal(t, pluginStateStartFail, p.state)

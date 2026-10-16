@@ -25,14 +25,14 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/pluginauthtest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Exercise the SDK's actual HTTP transport: its audiences, caller context and
 // authentication headers must all agree with the local exchange and Grafana.
 func TestSDKLocalTokenRoundTrip(t *testing.T) {
-	pluginauthtest.EnableAppManifests(t)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	for _, name := range []string{
 		v3.EnvVarSigningKeys, v3.EnvVarSigningKeysURL,
 		"API_ACCESS_BEARER_TOKEN", "API_ACCESS_CA_FILE", "API_ACCESS_INSECURE_TLS",
