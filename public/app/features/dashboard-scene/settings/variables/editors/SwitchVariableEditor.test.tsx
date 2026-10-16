@@ -160,6 +160,52 @@ describe('SwitchVariableEditor', () => {
 describe('SwitchVariableEditor undo/redo', () => {
   const { valuePairTypeSelect, enabledValueInput } = selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable;
 
+  it('does not record switching Custom true/false to the equivalent preset', async () => {
+    mockBoundingClientRect();
+    const variable = new SwitchVariable({ name: 'test', value: 'true', enabledValue: 'true', disabledValue: 'false' });
+    const sidebar = addToEditedDashboard(variable);
+    const user = userEvent.setup();
+    render(<SwitchVariableEditor variable={variable} inline={true} />);
+    await user.click(screen.getByTestId(valuePairTypeSelect));
+    await user.click(await screen.findByRole('option', { name: 'Custom' }));
+    await user.click(screen.getByTestId(valuePairTypeSelect));
+    await user.click(await screen.findByRole('option', { name: 'True / False' }));
+    expect(screen.getByTestId(valuePairTypeSelect)).toHaveDisplayValue('True / False');
+    expect(variable.state).toMatchObject({ value: 'true', enabledValue: 'true', disabledValue: 'false' });
+    expect(sidebar.state.undoStack).toHaveLength(0);
+  });
+
+  it('keeps Custom mode when undo restores preset values', async () => {
+    mockBoundingClientRect();
+    const variable = new SwitchVariable({ name: 'test', value: 'true', enabledValue: 'true', disabledValue: 'false' });
+    const sidebar = addToEditedDashboard(variable);
+    const user = userEvent.setup();
+    render(<SwitchVariableEditor variable={variable} inline={true} />);
+    await user.click(screen.getByTestId(valuePairTypeSelect));
+    await user.click(await screen.findByRole('option', { name: 'Custom' }));
+    await user.clear(screen.getByTestId(enabledValueInput));
+    await user.type(screen.getByTestId(enabledValueInput), 'on');
+    await user.tab();
+    act(() => sidebar.undoAction());
+    expect(variable.state).toMatchObject({ value: 'true', enabledValue: 'true', disabledValue: 'false' });
+    expect(screen.getByTestId(valuePairTypeSelect)).toHaveDisplayValue('Custom');
+    expect(screen.getByTestId(enabledValueInput)).toHaveValue('true');
+    act(() => sidebar.redoAction());
+    expect(screen.getByTestId(enabledValueInput)).toHaveValue('on');
+  });
+
+  it('does not record custom value edits on the settings page', async () => {
+    const variable = new SwitchVariable({ name: 'test', value: 'on', enabledValue: 'on', disabledValue: 'off' });
+    const sidebar = addToEditedDashboard(variable);
+    const user = userEvent.setup();
+    render(<SwitchVariableEditor variable={variable} />);
+    await user.clear(screen.getByTestId(enabledValueInput));
+    await user.type(screen.getByTestId(enabledValueInput), 'active');
+    await user.tab();
+    expect(variable.state).toMatchObject({ value: 'active', enabledValue: 'active' });
+    expect(sidebar.state.undoStack).toHaveLength(0);
+  });
+
   it('records a value pair type change made inline as one undoable action', async () => {
     mockBoundingClientRect();
     const variable = new SwitchVariable({ name: 'test', value: 'true', enabledValue: 'true', disabledValue: 'false' });
