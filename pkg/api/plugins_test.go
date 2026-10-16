@@ -354,6 +354,272 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 }
 
+// buildAddressedAssetScenario wires getBuildAddressedPluginAsset against a real
+// in-memory registry (which supports retained-build resolution and eviction) and a
+// real filestore, then drives the handler through httptest via the scenario context.
+func buildAddressedAssetScenario(t *testing.T, url string, reg registry.Service, fn scenarioFunc) {
+	t.Helper()
+
+	store, err := pluginstore.NewPluginStoreForTest(reg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+	require.NoError(t, err)
+
+	cfg := setting.NewCfg()
+	// Assert the production caching behaviour by default (immutable build-addressed
+	// assets); NewCfg defaults Env to development. The dev no-cache path is covered by
+	// its own test.
+	cfg.Env = setting.Prod
+	hs := HTTPServer{
+		Cfg:             cfg,
+		pluginStore:     store,
+		pluginFileStore: filestore.ProvideService(reg),
+		log:             log.NewNopLogger(),
+		// Needed because a non-build (legacy nested) path falls through to the
+		// active-build asset serving, which consults the CDN service.
+		pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
+			PluginSettings: setting.NewCfg().PluginSettings,
+		}),
+	}
+
+	sc := setupScenarioContext(t, url)
+	sc.defaultHandler = func(c *contextmodel.ReqContext) {
+		sc.context = c
+		hs.getBuildAddressedPluginAsset(c)
+	}
+	sc.m.Get("/public/plugins/:pluginId/:buildHash/*", sc.defaultHandler)
+
+	fn(sc)
+}
+
+func TestGetBuildAddressedPluginAsset(t *testing.T) {
+	const (
+		pluginID  = "test-app"
+		assetName = "module.js"
+		// Build hashes are 64-char hex (sha256); the handler tells a build-addressed
+		// request from a legacy nested path by this shape.
+		oldHash     = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		newHash     = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+		unknownHash = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+	)
+	ctx := context.Background()
+
+	oldContent := []byte("old build module contents")
+	newContent := []byte("new build module contents — different bytes and length")
+
+	newRegistry := func(t *testing.T) *registry.InMemory {
+		reg := registry.NewInMemory()
+
+		active := createPlugin(
+			plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: "2.0.0"}},
+			plugins.ClassExternal,
+			plugins.NewInMemoryFS(map[string][]byte{assetName: newContent}),
+		)
+		require.NoError(t, reg.Add(ctx, active))
+		require.NoError(t, reg.AddBuild(ctx, newHash, active))
+
+		retained := createPlugin(
+			plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: "1.0.0"}},
+			plugins.ClassExternal,
+			plugins.NewInMemoryFS(map[string][]byte{assetName: oldContent}),
+		)
+		require.NoError(t, reg.AddBuild(ctx, oldHash, retained))
+
+		return reg
+	}
+
+	t.Run("Retained build asset returns 200 with that build's bytes and immutable cache header", func(t *testing.T) {
+		reg := newRegistry(t)
+		url := fmt.Sprintf("/public/plugins/%s/%s/%s", pluginID, oldHash, assetName)
+		buildAddressedAssetScenario(t, url, reg, func(sc *scenarioContext) {
+			callGetPluginAsset(sc)
+
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			require.Equal(t, oldContent, sc.resp.Body.Bytes())
+			require.Equal(t, fmt.Sprintf("%d", len(oldContent)), sc.resp.Header().Get("Content-Length"))
+			require.Equal(t, "public, max-age=31536000, immutable", sc.resp.Header().Get("Cache-Control"))
+		})
+	})
+
+	t.Run("In dev mode the build-addressed asset is not cached as immutable", func(t *testing.T) {
+		reg := newRegistry(t)
+		store, err := pluginstore.NewPluginStoreForTest(reg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		require.NoError(t, err)
+
+		cfg := setting.NewCfg()
+		cfg.Env = setting.Dev
+		hs := HTTPServer{
+			Cfg:             cfg,
+			pluginStore:     store,
+			pluginFileStore: filestore.ProvideService(reg),
+			log:             log.NewNopLogger(),
+			pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
+				PluginSettings: setting.NewCfg().PluginSettings,
+			}),
+		}
+
+		url := fmt.Sprintf("/public/plugins/%s/%s/%s", pluginID, oldHash, assetName)
+		sc := setupScenarioContext(t, url)
+		sc.defaultHandler = func(c *contextmodel.ReqContext) {
+			sc.context = c
+			hs.getBuildAddressedPluginAsset(c)
+		}
+		sc.m.Get("/public/plugins/:pluginId/:buildHash/*", sc.defaultHandler)
+		callGetPluginAsset(sc)
+
+		require.Equal(t, http.StatusOK, sc.resp.Code)
+		// In dev, files change in place, so the asset must not be pinned immutable.
+		require.NotEqual(t, buildAssetImmutableCacheControl, sc.resp.Header().Get("Cache-Control"))
+		require.Contains(t, sc.resp.Header().Get("Cache-Control"), "no-cache")
+	})
+
+	t.Run("Active build addressed by its buildHash returns 200 with the active bytes", func(t *testing.T) {
+		reg := newRegistry(t)
+		url := fmt.Sprintf("/public/plugins/%s/%s/%s", pluginID, newHash, assetName)
+		buildAddressedAssetScenario(t, url, reg, func(sc *scenarioContext) {
+			callGetPluginAsset(sc)
+
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			require.Equal(t, newContent, sc.resp.Body.Bytes())
+			require.Equal(t, fmt.Sprintf("%d", len(newContent)), sc.resp.Header().Get("Content-Length"))
+		})
+	})
+
+	t.Run("Evicted build returns 410 Gone (not 404)", func(t *testing.T) {
+		reg := newRegistry(t)
+		// Evict the old retained build via the GC seam.
+		require.NoError(t, reg.RemoveBuild(ctx, pluginID, oldHash))
+
+		url := fmt.Sprintf("/public/plugins/%s/%s/%s", pluginID, oldHash, assetName)
+		buildAddressedAssetScenario(t, url, reg, func(sc *scenarioContext) {
+			callGetPluginAsset(sc)
+
+			require.Equal(t, http.StatusGone, sc.resp.Code)
+			// The 410 must not be cached, or a miss would stick and keep failing against
+			// replicas that still have the build.
+			require.Equal(t, "no-store", sc.resp.Header().Get("Cache-Control"))
+		})
+	})
+
+	t.Run("Retained build missing the requested file returns 404, not 410", func(t *testing.T) {
+		// The build is current (not evicted); only this file is absent. A 410 would make
+		// the client treat a live build as stale and reload.
+		reg := newRegistry(t)
+		url := fmt.Sprintf("/public/plugins/%s/%s/%s", pluginID, oldHash, "no-such-file.js")
+		buildAddressedAssetScenario(t, url, reg, func(sc *scenarioContext) {
+			callGetPluginAsset(sc)
+
+			require.Equal(t, http.StatusNotFound, sc.resp.Code)
+		})
+	})
+
+	t.Run("Build hash this replica never had returns 410 (HA/rollout skew), not 404", func(t *testing.T) {
+		// The core HA case: a client pinned to a build that was never installed on this
+		// replica (not evicted here — just never present). It must be treated as a
+		// build-addressed miss → 410 so the client reloads, not 404 → a hard failure.
+		reg := newRegistry(t)
+		url := fmt.Sprintf("/public/plugins/%s/%s/%s", pluginID, unknownHash, assetName)
+		buildAddressedAssetScenario(t, url, reg, func(sc *scenarioContext) {
+			callGetPluginAsset(sc)
+
+			require.Equal(t, http.StatusGone, sc.resp.Code)
+			require.Equal(t, "no-store", sc.resp.Header().Get("Cache-Control"))
+		})
+	})
+
+	t.Run("Non-hash segment falls through to legacy serving (404 for a missing active file)", func(t *testing.T) {
+		// "neverexisted" is not a build hash, so it is a legacy nested path served from the
+		// active build; the file does not exist there, so a plain 404.
+		reg := newRegistry(t)
+		url := fmt.Sprintf("/public/plugins/%s/%s/%s", pluginID, "assets", "missing.js")
+		buildAddressedAssetScenario(t, url, reg, func(sc *scenarioContext) {
+			callGetPluginAsset(sc)
+
+			require.Equal(t, http.StatusNotFound, sc.resp.Code)
+		})
+	})
+
+	t.Run("Unknown plugin via a build hash returns 410", func(t *testing.T) {
+		// A pinned build hash for a plugin this replica cannot resolve — treat as a
+		// build-addressed miss (reload) rather than a hard 404.
+		reg := newRegistry(t)
+		url := fmt.Sprintf("/public/plugins/%s/%s/%s", "no-such-plugin", oldHash, assetName)
+		buildAddressedAssetScenario(t, url, reg, func(sc *scenarioContext) {
+			callGetPluginAsset(sc)
+
+			require.Equal(t, http.StatusGone, sc.resp.Code)
+		})
+	})
+
+	t.Run("Nested legacy asset path is served from the active build, not treated as a build hash", func(t *testing.T) {
+		// /public/plugins/:id/img/logo.svg also matches this route with buildHash="img".
+		// Because "img" is not a known build, it must fall through to legacy serving so
+		// plugin logos/screenshots/nested assets keep working (regression for the greedy
+		// build-addressed route).
+		logoContent := []byte("<svg>logo</svg>")
+		// The in-memory FS keys on the cleaned path, which uses the OS separator
+		// (CleanRelativePath goes through filepath.Clean), so build the key with
+		// filepath.Join to keep this test cross-platform.
+		reg := registry.NewInMemory()
+		active := createPlugin(
+			plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: "2.0.0"}},
+			plugins.ClassExternal,
+			plugins.NewInMemoryFS(map[string][]byte{
+				assetName:                        newContent,
+				filepath.Join("img", "logo.svg"): logoContent,
+			}),
+		)
+		require.NoError(t, reg.Add(ctx, active))
+		require.NoError(t, reg.AddBuild(ctx, newHash, active))
+
+		url := fmt.Sprintf("/public/plugins/%s/img/logo.svg", pluginID)
+		buildAddressedAssetScenario(t, url, reg, func(sc *scenarioContext) {
+			callGetPluginAsset(sc)
+
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			require.Equal(t, logoContent, sc.resp.Body.Bytes())
+			// Served via the legacy (active-build) path, not the immutable build cache.
+			require.NotEqual(t, buildAssetImmutableCacheControl, sc.resp.Header().Get("Cache-Control"))
+		})
+	})
+
+	t.Run("Legacy route still serves the active build unchanged", func(t *testing.T) {
+		reg := newRegistry(t)
+		// The legacy handler resolves the active build via plugin.Info.Version, so
+		// register the active build under its version (as the loader does in prod).
+		active, ok := reg.Build(ctx, pluginID, newHash)
+		require.True(t, ok)
+		require.NoError(t, reg.AddBuild(ctx, active.Info.Version, active))
+
+		store, err := pluginstore.NewPluginStoreForTest(reg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		require.NoError(t, err)
+
+		hs := HTTPServer{
+			Cfg:             setting.NewCfg(),
+			pluginStore:     store,
+			pluginFileStore: filestore.ProvideService(reg),
+			log:             log.NewNopLogger(),
+			pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
+				PluginSettings: setting.NewCfg().PluginSettings,
+			}),
+		}
+
+		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, assetName)
+		sc := setupScenarioContext(t, url)
+		sc.defaultHandler = func(c *contextmodel.ReqContext) {
+			sc.context = c
+			hs.getPluginAssets(c)
+		}
+		sc.m.Get("/public/plugins/:pluginId/*", sc.defaultHandler)
+
+		callGetPluginAsset(sc)
+
+		require.Equal(t, http.StatusOK, sc.resp.Code)
+		require.Equal(t, newContent, sc.resp.Body.Bytes())
+		// Legacy route keeps its own cache behaviour and never emits the immutable
+		// build-addressed directive.
+		require.NotEqual(t, buildAssetImmutableCacheControl, sc.resp.Header().Get("Cache-Control"))
+	})
+}
+
 func TestMakePluginResourceRequest(t *testing.T) {
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
@@ -1046,5 +1312,97 @@ func Test_UpdatePluginSetting(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, res.StatusCode)
 		require.NoError(t, res.Body.Close())
+	})
+}
+
+func TestGetPluginBuildInfo(t *testing.T) {
+	const (
+		pID          = "test-app"
+		pVersion     = "2.0.0"
+		instanceID   = "replica-7"
+		assetName    = "module.js"
+		assetContent = "build module contents"
+	)
+	ctx := context.Background()
+
+	// A real in-memory registry so the buildHash is computed over actual asset
+	// bytes (not an empty fake) and is deterministic for assertion.
+	newRegistry := func(t *testing.T) *registry.InMemory {
+		reg := registry.NewInMemory()
+		p := createPlugin(
+			plugins.JSONData{ID: pID, Name: pID, Type: "app", Info: plugins.Info{Version: pVersion}},
+			plugins.ClassExternal,
+			plugins.NewInMemoryFS(map[string][]byte{assetName: []byte(assetContent)}),
+		)
+		require.NoError(t, reg.Add(ctx, p))
+		return reg
+	}
+
+	setupServer := func(t *testing.T, reg registry.Service) *webtest.Server {
+		return SetupAPITestServer(t, func(hs *HTTPServer) {
+			store, err := pluginstore.NewPluginStoreForTest(reg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+			require.NoError(t, err)
+
+			cfg := setting.NewCfg()
+			cfg.InstanceID = instanceID
+			hs.Cfg = cfg
+			hs.pluginStore = store
+			hs.pluginFileStore = filestore.ProvideService(reg)
+			hs.log = log.NewNopLogger()
+
+			pCfg := &config.PluginManagementCfg{}
+			pluginCDN := pluginscdn.ProvideService(pCfg)
+			sig := signature.ProvideService(pCfg, statickey.New())
+			calc := modulehash.NewCalculator(pCfg, reg, pluginCDN, sig)
+			hs.pluginAssets = pluginassets.ProvideService(calc)
+		})
+	}
+
+	t.Run("authenticated request returns build info including buildHash", func(t *testing.T) {
+		reg := newRegistry(t)
+		server := setupServer(t, reg)
+
+		// Expected buildHash is the deterministic content digest of the plugin FS.
+		p, ok := reg.Plugin(ctx, pID, pVersion)
+		require.True(t, ok)
+		expectedHash, err := modulehash.BuildHash(p.FS)
+		require.NoError(t, err)
+		require.NotEmpty(t, expectedHash)
+
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/plugins/"+pID+"/build"), userWithPermissions(1, []ac.Permission{}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, res.StatusCode)
+
+		var result dtos.PluginBuildInfo
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+		require.NoError(t, res.Body.Close())
+
+		assert.Equal(t, pID, result.PluginID)
+		assert.Equal(t, pVersion, result.Version)
+		assert.Equal(t, expectedHash, result.BuildHash)
+		assert.Equal(t, instanceID, result.ServedByReplica)
+	})
+
+	t.Run("unauthenticated request is rejected with 401", func(t *testing.T) {
+		reg := newRegistry(t)
+		server := setupServer(t, reg)
+
+		req := server.NewGetRequest("/api/plugins/" + pID + "/build")
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
+		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
+	})
+
+	t.Run("unknown plugin returns 404", func(t *testing.T) {
+		reg := newRegistry(t)
+		server := setupServer(t, reg)
+
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/plugins/no-such-plugin/build"), userWithPermissions(1, []ac.Permission{}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
+		require.Equal(t, http.StatusNotFound, res.StatusCode)
 	})
 }
