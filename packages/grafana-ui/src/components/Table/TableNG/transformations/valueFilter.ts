@@ -28,3 +28,12 @@ export function editableValueFilter(config: FilterByValueConfig) {
     predicate.config.options.mode === 'display'
   );
 }
+
+export function unsupportedFilterReason(
+  configs: readonly FilterByValueConfig[]
+): 'multiple' | 'uneditable' | undefined {
+  if (configs.length > 1) {
+    return 'multiple';
+  }
+  return configs.some((config) => !editableValueFilter(config)) ? 'uneditable' : undefined;
+}

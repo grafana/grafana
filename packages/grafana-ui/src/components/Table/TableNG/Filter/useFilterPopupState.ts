@@ -5,7 +5,7 @@ import { type ValueSetOptions } from '@grafana/data/internal';
 
 import { useTableFilters } from '../TableFilterContext';
 import { tableFilterKey } from '../transformations/filterByValue';
-import { createValuePredicate, editableValueFilter } from '../transformations/valueFilter';
+import { createValuePredicate, unsupportedFilterReason } from '../transformations/valueFilter';
 import { FilterOperator, type TableRow } from '../types';
 
 import { type FilterPopupProps } from './FilterPopup';
@@ -52,12 +52,7 @@ export function useFilterPopupState({
   const selected = field ? (view?.getFilters(field, parentIndex) ?? []) : [];
   const snapshot = JSON.stringify(selected);
   const predicate = selected[0]?.options.filters[0]?.config;
-  const unsupportedReason =
-    selected.length > 1
-      ? 'multiple'
-      : selected.some((config) => !editableValueFilter(config))
-        ? 'uneditable'
-        : undefined;
+  const unsupportedReason = unsupportedFilterReason(selected);
   const selection: ValueSetOptions | undefined = predicate?.id === 'inSet' ? predicate.options : undefined;
   const range: RangeValueMatcherOptions<number> | undefined =
     predicate?.id === 'between' ? predicate.options : undefined;

@@ -1301,6 +1301,8 @@ export interface ContentAwareColWidthsOptions {
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
   isFiltered?: (field: Field) => boolean;
+  headerFilterState?: (field: Field, parentCount?: number) => { controlVisible: boolean; filterEnabled: boolean };
+  filterParentCount?: number;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
@@ -1433,6 +1435,7 @@ export interface HeaderAffordanceOptions {
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
   isFiltered: boolean;
+  filterable?: boolean;
   reorderable?: boolean;
 }
 
@@ -1449,11 +1452,12 @@ export function getHeaderAffordanceWidth(
     showTypeIcons,
     tableRefreshEnabled,
     isFiltered,
+    filterable,
     hasColumnOptions = false,
     reorderable = false,
   }: HeaderAffordanceOptions
 ): number {
-  const isFilterable = isFieldFilterable(field);
+  const isFilterable = filterable ?? isFieldFilterable(field);
   let width = 0;
   width += showTypeIcons ? HEADER_ICON_SPACE : 0;
   // reserved on every sortable column, not just the currently-sorted one, so a wrapped header doesn't
@@ -1769,6 +1773,8 @@ export function computeContentAwareColWidths(
     tableRefreshEnabled = false,
     theme,
     isFiltered,
+    headerFilterState,
+    filterParentCount,
     sampleSize,
     hasColumnSidebar = false,
     reorderable = false,
@@ -1806,16 +1812,19 @@ export function computeContentAwareColWidths(
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme };
   for (const i of autoIdxs) {
     const field = fields[i];
+    const filterState = headerFilterState?.(field, filterParentCount);
+    const filterable = isFieldFilterable(field) && (filterState?.controlVisible ?? true);
     // A hidden header row has no label to fit, so it doesn't bound the column at all.
     const headerWidth = hasHeader
       ? measureHeaderWidth(field, headerTypographyCtx, {
           showTypeIcons,
           tableRefreshEnabled,
-          isFiltered: isFiltered?.(field) ?? false,
+          isFiltered: filterable && (filterState?.filterEnabled ?? isFiltered?.(field) ?? false),
+          filterable,
           reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
-              filterable: isFieldFilterable(field),
+              filterable,
               hideable: isFieldHideable(field),
               hasColumnSidebar,
               hasAssistantAction,

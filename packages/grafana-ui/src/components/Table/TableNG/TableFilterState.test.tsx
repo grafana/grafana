@@ -284,8 +284,9 @@ it('reserves header height and automatic width for a filter on any nested parent
         enabled: true,
         typographyCtx,
         tableRefreshEnabled: true,
+        filterParentCount: 2,
       });
-      return useContentAwareWidths({ enabled: true, typographyCtx, tableRefreshEnabled: true });
+      return useContentAwareWidths({ enabled: true, typographyCtx, tableRefreshEnabled: true, filterParentCount: 2 });
     },
     { wrapper: ({ children }) => <TableFilterProvider props={props}>{children}</TableFilterProvider> }
   );
@@ -296,4 +297,70 @@ it('reserves header height and automatic width for a filter on any nested parent
       headerTypographyCtx: { ...typographyCtx, measureWidth: () => 200 },
     })
   ).toEqual([279]);
+});
+
+it.each([false, true])('does not reserve header space for an opaque filter (refresh=%s)', (tableRefreshEnabled) => {
+  const { props, api, filter } = setup();
+  const field = props.data.fields[0];
+  field.config.custom = { wrapHeaderText: true, filterable: true };
+  const opaque = filter('Name', ['alpha']);
+  opaque.options.filters[0].config = { id: 'isNotNull', options: {} };
+  api.set('table', [opaque]);
+  const measureHeight = jest.fn(() => 20);
+  const typographyCtx = { ...createTypographyContext(14, 'sans-serif'), measureHeight };
+  const { result } = renderHook(
+    () => {
+      useHeaderHeight({
+        fields: [field],
+        columnWidths: [100],
+        enabled: true,
+        typographyCtx,
+        tableRefreshEnabled,
+      });
+      return useContentAwareWidths({ enabled: true, typographyCtx, tableRefreshEnabled });
+    },
+    { wrapper: ({ children }) => <TableFilterProvider props={props}>{children}</TableFilterProvider> }
+  );
+
+  expect(measureHeight).toHaveBeenCalledWith('Name', 65, field, -1, TABLE.HEADER_LINE_HEIGHT);
+  expect(
+    computeContentAwareColWidths([field], 0, {
+      ...result.current!,
+      headerTypographyCtx: { ...typographyCtx, measureWidth: () => 200 },
+    })
+  ).toEqual([235]);
+});
+
+it('reserves nested filter control space when another parent remains editable', () => {
+  const { props, api, filter } = setup();
+  const field = props.data.fields[0];
+  field.config.custom = { wrapHeaderText: true, filterable: true };
+  const opaque = filter('Name', ['alpha']);
+  opaque.options.target = { ...opaque.options.target!, parentIndex: 0 };
+  opaque.options.filters[0].config = { id: 'isNotNull', options: {} };
+  api.set('table', [opaque]);
+  const measureHeight = jest.fn(() => 20);
+  const typographyCtx = { ...createTypographyContext(14, 'sans-serif'), measureHeight };
+  const { result } = renderHook(
+    () => {
+      useHeaderHeight({
+        fields: [field],
+        columnWidths: [100],
+        enabled: true,
+        typographyCtx,
+        tableRefreshEnabled: true,
+        filterParentCount: 2,
+      });
+      return useContentAwareWidths({ enabled: true, typographyCtx, tableRefreshEnabled: true, filterParentCount: 2 });
+    },
+    { wrapper: ({ children }) => <TableFilterProvider props={props}>{children}</TableFilterProvider> }
+  );
+
+  expect(measureHeight).toHaveBeenCalledWith('Name', 43, field, -1, TABLE.HEADER_LINE_HEIGHT);
+  expect(
+    computeContentAwareColWidths([field], 0, {
+      ...result.current!,
+      headerTypographyCtx: { ...typographyCtx, measureWidth: () => 200 },
+    })
+  ).toEqual([257]);
 });

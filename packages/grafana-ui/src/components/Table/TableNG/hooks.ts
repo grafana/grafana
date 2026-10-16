@@ -33,7 +33,7 @@ import { type MatcherScope } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { useTableFilters, useIsFieldFiltered } from './TableFilterContext';
+import { useTableFilters, useHeaderFilterState } from './TableFilterContext';
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
@@ -71,6 +71,7 @@ import {
   compileFrameToRecords,
   createTypographyContext,
   extractPixelValue,
+  isFieldFilterable,
 } from './utils';
 
 export function useFilteredRows(rows: TableRow[], fields: Field[]) {
@@ -434,6 +435,7 @@ interface UseHeaderHeightOptions {
   tableRefreshEnabled?: boolean;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
+  filterParentCount?: number;
 }
 
 export function useHeaderHeight({
@@ -448,13 +450,10 @@ export function useHeaderHeight({
   hasColumnSidebar = false,
   reorderable = false,
   hasAssistantAction = false,
+  filterParentCount,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
-  const isFiltered = useIsFieldFiltered();
-  const filteredKeys = useMemo(
-    () => new Set(fields.filter((field) => isFiltered?.(field)).map(getDisplayName)),
-    [isFiltered, fields]
-  );
+  const headerFilterState = useHeaderFilterState();
 
   const columnAvailableWidths = useMemo(
     () =>
@@ -464,6 +463,8 @@ export function useHeaderHeight({
         }
 
         const field = fields[idx];
+        const filterState = headerFilterState?.(field, filterParentCount);
+        const filterable = isFieldFilterable(field) && (filterState?.controlVisible ?? true);
         let width = c - CELL_HORIZONTAL_CHROME;
         if (idx === fields.length - 1) {
           width -= lastColumnExtraPadding;
@@ -474,11 +475,12 @@ export function useHeaderHeight({
         width -= getHeaderAffordanceWidth(field, {
           showTypeIcons,
           tableRefreshEnabled,
-          isFiltered: filteredKeys.has(getDisplayName(field)),
+          isFiltered: filterable && (filterState?.filterEnabled ?? false),
+          filterable,
           reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
-              filterable: field.config.custom?.filterable,
+              filterable,
               hideable: field.config.custom?.hideable,
               hasColumnSidebar,
               hasAssistantAction,
@@ -492,7 +494,8 @@ export function useHeaderHeight({
       showTypeIcons,
       noPanelPadding,
       tableRefreshEnabled,
-      filteredKeys,
+      headerFilterState,
+      filterParentCount,
       lastColumnExtraPadding,
       hasColumnSidebar,
       reorderable,
@@ -1057,6 +1060,8 @@ export interface ContentAwareWidths {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   isFiltered?: (field: Field) => boolean;
+  headerFilterState?: (field: Field, parentCount?: number) => { controlVisible: boolean; filterEnabled: boolean };
+  filterParentCount?: number;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
   noPanelPadding?: boolean;
@@ -1112,6 +1117,7 @@ interface UseContentAwareWidthsOptions {
   reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
+  filterParentCount?: number;
 }
 
 /**
@@ -1131,8 +1137,9 @@ export function useContentAwareWidths({
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
+  filterParentCount,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
-  const isFiltered = useIsFieldFiltered();
+  const headerFilterState = useHeaderFilterState();
   const theme = useTheme2();
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
   return useMemo(
@@ -1147,7 +1154,8 @@ export function useContentAwareWidths({
             hasHeader,
             getActions,
             tableRefreshEnabled,
-            isFiltered,
+            headerFilterState,
+            filterParentCount,
             hasColumnSidebar,
             reorderable,
             noPanelPadding,
@@ -1162,7 +1170,8 @@ export function useContentAwareWidths({
       showTypeIcons,
       hasHeader,
       getActions,
-      isFiltered,
+      headerFilterState,
+      filterParentCount,
       tableRefreshEnabled,
       theme,
       hasColumnSidebar,

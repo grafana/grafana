@@ -298,8 +298,11 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   // Nested frames carry their own header visibility, so the nested columns can't reuse the outer
   // table's measurement options verbatim.
   const nestedContentAwareWidths = useMemo(
-    () => (contentAwareWidths ? { ...contentAwareWidths, hasHeader: hasNestedHeaders } : undefined),
-    [contentAwareWidths, hasNestedHeaders]
+    () =>
+      contentAwareWidths
+        ? { ...contentAwareWidths, hasHeader: hasNestedHeaders, filterParentCount: data.length }
+        : undefined,
+    [contentAwareWidths, hasNestedHeaders, data.length]
   );
 
   const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
@@ -317,6 +320,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
     tableRefreshEnabled,
+    filterParentCount: data.length,
   });
 
   const defaultRowHeight = useMemo(

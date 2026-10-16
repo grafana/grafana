@@ -10,6 +10,7 @@ import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext
 
 import { matchesTableFilter } from './transformations/filterByValue';
 import { useRowTransformations } from './transformations/useRowTransformations';
+import { unsupportedFilterReason } from './transformations/valueFilter';
 import { type TableNGProps } from './types';
 
 export interface TableRowTransformations {
@@ -27,13 +28,37 @@ interface FilterContext {
 }
 const TableFilterContext = createContext<FilterContext | undefined>(undefined);
 export const useTableFilters = () => useContext(TableFilterContext);
-export function useIsFieldFiltered() {
+export function useHeaderFilterState() {
   const filters = useTableFilters()?.filters;
   return useMemo(
     () =>
       filters
-        ? (field: Field) =>
-            filters.some((config) => matchesTableFilter(config, field, config.options.target?.parentIndex))
+        ? (field: Field, parentCount?: number) => {
+            const selectedByParent = new Map<number | undefined, FilterByValueConfig[]>();
+            for (const config of filters) {
+              const parentIndex = config.options.target?.parentIndex;
+              if (
+                (parentCount === undefined
+                  ? parentIndex === undefined
+                  : parentIndex !== undefined && parentIndex >= 0 && parentIndex < parentCount) &&
+                matchesTableFilter(config, field, parentIndex)
+              ) {
+                const selected = selectedByParent.get(parentIndex) ?? [];
+                selected.push(config);
+                selectedByParent.set(parentIndex, selected);
+              }
+            }
+            let controlVisible =
+              parentCount === undefined ? !selectedByParent.has(undefined) : selectedByParent.size < parentCount;
+            let filterEnabled = false;
+            for (const selected of selectedByParent.values()) {
+              if (!unsupportedFilterReason(selected)) {
+                controlVisible = true;
+                filterEnabled = true;
+              }
+            }
+            return { controlVisible, filterEnabled };
+          }
         : undefined,
     [filters]
   );
