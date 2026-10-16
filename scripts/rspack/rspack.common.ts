@@ -108,10 +108,8 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
       trustedTypes: { policyName: 'grafana#rspack' },
       // Enable es module output
       module: true,
-      // Lazy chunks load through <script> tags rather than import(), which can't carry an
-      // integrity attribute and would leave them unchecked when SRI checks are enabled.
-      chunkFormat: 'array-push',
-      chunkLoading: 'jsonp',
+      chunkFormat: 'module',
+      chunkLoading: 'import',
       workerChunkLoading: 'import',
       crossOriginLoading: 'anonymous',
     },
