@@ -2,7 +2,14 @@ import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/re
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
 import { preloadPlugins } from 'app/features/plugins/pluginPreloader';
 
-import { loadPendingChangePreview } from './pendingChangePreview';
+import {
+  finishSavingNewDashboard,
+  getPendingChangePreview,
+  loadPendingChangePreview,
+  previewedDashboardUid,
+  setShowOriginal,
+  withoutPendingChangesPreview,
+} from './pendingChangePreview';
 
 jest.mock('app/features/plugins/extensions/registry/setup', () => ({ getPluginExtensionRegistries: jest.fn() }));
 jest.mock('app/features/plugins/extensions/utils', () => ({
@@ -64,5 +71,39 @@ describe('loadPendingChangePreview', () => {
     jest.mocked(preloadPlugins).mockRejectedValueOnce(new Error('failed to load'));
     jest.mocked(getAppPluginConfigs).mockResolvedValue([]);
     await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toBeUndefined();
+  });
+});
+
+describe('a new dashboard proposed as pending changes', () => {
+  const proposal = () => ({ ...pending, baseGeneration: 0, discard: jest.fn(async () => undefined) });
+
+  it('is always previewed: there is no saved dashboard to show instead', async () => {
+    registerLoaders(async () => proposal());
+    setShowOriginal('new-dash', 'chat-1', true);
+
+    await expect(loadPendingChangePreview('page', 'new-dash', 'chat-1')).resolves.toMatchObject({ previewing: true });
+    setShowOriginal('new-dash', 'chat-1', false);
+  });
+
+  it('is found by the uid it was proposed under while its scene has none', () => {
+    expect(previewedDashboardUid({ uid: '', meta: { newDashboardUid: 'new-dash' } })).toBe('new-dash');
+    expect(previewedDashboardUid({ uid: 'abc', meta: {} })).toBe('abc');
+    expect(previewedDashboardUid({ uid: '', meta: {} })).toBeUndefined();
+  });
+
+  it('is discarded in the plugin and forgotten once it was saved', async () => {
+    const proposed = proposal();
+    registerLoaders(async () => proposed);
+    await loadPendingChangePreview('page', 'new-dash', 'chat-1');
+
+    await finishSavingNewDashboard('new-dash');
+
+    expect(proposed.discard).toHaveBeenCalledTimes(1);
+    expect(getPendingChangePreview('page', 'new-dash')).toBeUndefined();
+  });
+
+  it('leaves the page URL without its preview', () => {
+    expect(withoutPendingChangesPreview('?pendingChanges=chat-1&orgId=1')).toBe('?orgId=1');
+    expect(withoutPendingChangesPreview('?pendingChanges=chat-1')).toBe('');
   });
 });

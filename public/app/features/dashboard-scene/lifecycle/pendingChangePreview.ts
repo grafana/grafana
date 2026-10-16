@@ -3,6 +3,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
 import { preloadPlugins } from 'app/features/plugins/pluginPreloader';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 /**
  * Pending changes preview. Grafana doesn't store pending changes: the plugin that proposed
@@ -12,6 +13,10 @@ import { preloadPlugins } from 'app/features/plugins/pluginPreloader';
  * an id. **Show original** switches to the saved dashboard; the choice is kept per dashboard
  * and id for the browser tab, so a reload keeps it. The page and the embedded view each keep
  * their own preview, so the same dashboard can be open in both.
+ *
+ * Pending changes based on version 0 propose a new dashboard under a uid nothing has yet. It
+ * opens as an unsaved dashboard, and saving it creates it under that uid (`newDashboardUid` in
+ * the scene's meta), after which the plugin is told to discard the proposal.
  */
 
 /** Plugins register a DashboardPendingChangesLoader here (addFunction). */
@@ -24,7 +29,7 @@ type ApplyPendingChangesResult = { applied: true } | { applied: false; currentGe
 
 /** One set of pending changes to a dashboard, as its plugin supplies them. */
 export interface DashboardPendingChanges {
-  /** The dashboard version the changes start from. */
+  /** The dashboard version the changes start from: 0 proposes a new dashboard. */
   baseGeneration: number;
   /** The full proposed v2 dashboard spec. */
   proposed: DashboardV2Spec;
@@ -33,9 +38,10 @@ export interface DashboardPendingChanges {
   /**
    * Saves the changes to the dashboard as the requester, then forgets them. Without force,
    * reports the dashboard's current version instead when it moved on from baseGeneration.
+   * Not called for a new dashboard, which the requester saves instead.
    */
   apply(options: { force: boolean }): Promise<ApplyPendingChangesResult>;
-  /** Forgets the changes; the dashboard isn't affected. */
+  /** Forgets the changes; the dashboard isn't affected. Also called once a new dashboard was saved. */
   discard(): Promise<void>;
   /** Opens where the changes were made, to bring them up to date with the dashboard. */
   update?(): void;
@@ -88,6 +94,16 @@ export function setShowOriginal(uid: string, id: string, showOriginal: boolean) 
   } catch {
     // Without session storage the choice lasts until the next reload.
   }
+}
+
+/** Whether the pending changes propose a new dashboard rather than change a saved one. */
+export function proposesNewDashboard(pending: Pick<DashboardPendingChanges, 'baseGeneration'>): boolean {
+  return pending.baseGeneration === 0;
+}
+
+/** The dashboard a scene previews pending changes to: its uid, or the uid a new one is proposed under. */
+export function previewedDashboardUid({ uid, meta }: { uid?: string; meta: DashboardMeta }): string | undefined {
+  return uid || meta.newDashboardUid || undefined;
 }
 
 /** The pending changes state of a dashboard as last loaded in this view, if it has any. */
@@ -178,7 +194,8 @@ export async function loadPendingChangePreview(
   for (const load of loaders) {
     const pending = await askLoader(load, { uid, id });
     if (pending) {
-      const preview = { id, pending, previewing: !isShowingOriginal(uid, id) };
+      // A new dashboard has no saved original to show instead.
+      const preview = { id, pending, previewing: proposesNewDashboard(pending) || !isShowingOriginal(uid, id) };
       previews.set(previewKey(view, uid), preview);
       return preview;
     }
@@ -194,4 +211,30 @@ export function clearPendingChangePreview(uid: string, id: string) {
     }
   }
   setShowOriginal(uid, id, false);
+}
+
+/** A dashboard page search string without the pending changes preview. */
+export function withoutPendingChangesPreview(search: string): string {
+  const params = new URLSearchParams(search);
+  params.delete(PENDING_CHANGES_QUERY_PARAM);
+  const rest = params.toString();
+  return rest ? `?${rest}` : '';
+}
+
+/**
+ * After the requester saved a new dashboard proposed as pending changes: the proposal is the
+ * dashboard now, so the plugin discards it. A failed discard is harmless, since pending changes
+ * to version 0 no longer apply once the dashboard exists.
+ */
+export async function finishSavingNewDashboard(uid: string): Promise<void> {
+  const preview = getPendingChangePreview('page', uid) ?? getPendingChangePreview('embedded', uid);
+  if (!preview) {
+    return;
+  }
+  clearPendingChangePreview(uid, preview.id);
+  try {
+    await preview.pending.discard();
+  } catch {
+    // See above.
+  }
 }

@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
-import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, type GrafanaTheme2, locationUtil, urlUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Alert, Button, ConfirmModal, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Icon, LinkButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -18,7 +18,10 @@ import {
   clearPendingChangePreview,
   type DashboardPendingChanges,
   getPendingChangePreview,
+  PENDING_CHANGES_QUERY_PARAM,
   type PendingChangesView,
+  previewedDashboardUid,
+  proposesNewDashboard,
   setShowOriginal,
 } from './pendingChangePreview';
 import { useChangeHighlights } from './useChangeHighlights';
@@ -38,13 +41,14 @@ interface Props {
 /**
  * Shown on a dashboard opened with pending changes (see pendingChangePreview.ts): while
  * previewing them, with Compare, Apply, and Discard; while viewing the saved dashboard, with a
- * way back to the preview.
+ * way back to the preview. Pending changes that propose a new dashboard are a draft, with Save.
  */
 export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload }: Props) {
   const visualRefresh = useFlagGrafanaVisualDesignRefresh();
   // With the visual refresh, a dashboard page is a card inset from the page edge; line up with it.
   const inset: BannerInset = placement === 'page' ? (visualRefresh ? 'card' : 'page') : 'embedded';
-  const { uid, isEditing } = dashboard.useState();
+  const { uid: sceneUid, meta, isEditing } = dashboard.useState();
+  const uid = previewedDashboardUid({ uid: sceneUid, meta });
 
   if (!uid || isEditing) {
     return null;
@@ -54,6 +58,19 @@ export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload
   const preview = getPendingChangePreview(placement, uid);
   if (!preview) {
     return null;
+  }
+  if (proposesNewDashboard(preview.pending)) {
+    return (
+      <NewDashboardBanner
+        dashboard={dashboard}
+        uid={uid}
+        id={preview.id}
+        pending={preview.pending}
+        placement={placement}
+        inset={inset}
+        reload={load}
+      />
+    );
   }
   return preview.previewing ? (
     <PendingChangesBanner
@@ -282,6 +299,90 @@ function PendingChangesBanner({ dashboard, uid, id, pending, inset, reload }: Pe
             } catch {
               appEvents.emit(AppEvents.alertError, [
                 t('dashboard-scene.lifecycle.discard-pending-failed', "Couldn't discard the changes. Try again."),
+              ]);
+            }
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+interface NewDashboardProps extends PendingChangesProps {
+  placement: PendingChangesView;
+}
+
+/**
+ * While the scene shows a new dashboard proposed as pending changes: Save, through the dashboard's
+ * own save form, which creates it under the uid it was proposed for, or Discard. The embedded view
+ * can't save, so it links to the dashboard page instead.
+ */
+function NewDashboardBanner({ dashboard, uid, id, pending, placement, inset, reload }: NewDashboardProps) {
+  const styles = useStyles2(getStyles, inset);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const save = () => {
+    dashboard.onEnterEditMode();
+    dashboard.openSaveDrawer({});
+  };
+
+  return (
+    <>
+      <LifecycleAlert
+        className={styles.banner}
+        heading={t('dashboard-scene.lifecycle.draft-title', 'Draft')}
+        actions={
+          <>
+            <Button variant="destructive" fill="outline" size="sm" onClick={() => setConfirmDiscard(true)}>
+              <Trans i18nKey="dashboard-scene.lifecycle.discard">Discard</Trans>
+            </Button>
+            {placement === 'page' ? (
+              <Button variant="primary" size="sm" onClick={save}>
+                <Trans i18nKey="dashboard-scene.lifecycle.save">Save</Trans>
+              </Button>
+            ) : (
+              <LinkButton
+                variant="primary"
+                size="sm"
+                href={locationUtil.assureBaseUrl(urlUtil.renderUrl(`/d/${uid}`, { [PENDING_CHANGES_QUERY_PARAM]: id }))}
+              >
+                <Trans i18nKey="dashboard-scene.lifecycle.open-to-save">Open to save</Trans>
+              </LinkButton>
+            )}
+          </>
+        }
+      >
+        {pending.source
+          ? t(
+              'dashboard-scene.lifecycle.draft-body-source',
+              'Previewing a new dashboard {{source}}, only you can see it until you save it.',
+              { source: pending.source }
+            )
+          : t(
+              'dashboard-scene.lifecycle.draft-body',
+              'Previewing a new dashboard, only you can see it until you save it.'
+            )}
+      </LifecycleAlert>
+      {confirmDiscard && (
+        <ConfirmModal
+          isOpen
+          title={t('dashboard-scene.lifecycle.discard-draft-title', 'Discard this draft?')}
+          body={t('dashboard-scene.lifecycle.discard-draft-body', 'It was never saved, so nothing else changes.')}
+          confirmText={t('dashboard-scene.lifecycle.discard', 'Discard')}
+          onDismiss={() => setConfirmDiscard(false)}
+          onConfirm={async () => {
+            setConfirmDiscard(false);
+            try {
+              await pending.discard();
+              clearPendingChangePreview(uid, id);
+              if (placement === 'page') {
+                // Nothing is left to show here.
+                locationService.push('/dashboards');
+              } else {
+                await reload();
+              }
+            } catch {
+              appEvents.emit(AppEvents.alertError, [
+                t('dashboard-scene.lifecycle.discard-draft-failed', "Couldn't discard the draft. Try again."),
               ]);
             }
           }}

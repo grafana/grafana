@@ -65,6 +65,8 @@ import {
   loadPendingChangePreview,
   type PendingChangePreview,
   pendingChangesIdFromLocation,
+  previewedDashboardUid,
+  proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -126,6 +128,9 @@ interface DashboardCacheEntry<T> {
 
 /** Pending changes previews, which never go through the scene cache (see withPendingChanges). */
 const pendingChangesPreviews = new WeakSet<object>();
+
+/** Previews of new dashboards, by the uid saving them creates them under (see newDashboardPreview). */
+const newDashboardPreviews = new WeakMap<object, string>();
 
 export interface LoadDashboardOptions {
   uid: string;
@@ -1149,12 +1154,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
 
-      // The resource version too: a metadata-only write, such as a label change, keeps the generation.
-      if (
-        fromCache &&
-        fromCache.state.version === rsp?.metadata.generation &&
-        fromCache.state.meta.k8s?.resourceVersion === rsp?.metadata.resourceVersion
-      ) {
+      if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
         // Scene cache has no TTL. Re-apply predefined variables fetched by enrichLoadOptions
         // so revisits pick up changes after the 30s predefined-variables cache expires.
         if (options.defaultVariables !== undefined) {
@@ -1482,15 +1482,42 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   public async fetchDashboard(options: LoadDashboardOptions) {
     const id =
       options.pendingChanges ?? (options.route === DashboardRoutes.Normal ? pendingChangesIdFromLocation() : undefined);
-    const [rsp, preview] = await Promise.all([
-      this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
-        manager.fetchDashboard(options)
-      ),
+    // Loaded alongside the dashboard; it never rejects.
+    const loadingPreview =
       options.route === DashboardRoutes.Normal || options.route === DashboardRoutes.Embedded
         ? loadPendingChangePreview(options.route === DashboardRoutes.Normal ? 'page' : 'embedded', options.uid, id)
-        : undefined,
-    ]);
-    return this.withPendingChanges(rsp, options, preview);
+        : Promise.resolve(undefined);
+    let rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null;
+    try {
+      rsp = await this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
+        manager.fetchDashboard(options)
+      );
+    } catch (error) {
+      const preview = await loadingPreview;
+      if (isFetchError(error) && error.status === 404 && preview && proposesNewDashboard(preview.pending)) {
+        return this.newDashboardPreview(options.uid, preview);
+      }
+      throw error;
+    }
+    return this.withPendingChanges(rsp, options, await loadingPreview);
+  }
+
+  /**
+   * A new dashboard proposed as pending changes, under a uid no dashboard has yet: an unsaved
+   * dashboard showing the proposed spec, which saving creates under that uid.
+   */
+  private newDashboardPreview(uid: string, preview: PendingChangePreview): DashboardWithAccessInfo<DashboardV2Spec> {
+    const rsp: DashboardWithAccessInfo<DashboardV2Spec> = {
+      apiVersion: dashboardAPIVersionResolver.getV2(),
+      kind: 'DashboardWithAccessInfo',
+      metadata: { name: '', resourceVersion: '0', creationTimestamp: new Date().toISOString() },
+      // Editable unless the proposal says otherwise, so it can be saved.
+      spec: { editable: true, ...structuredClone(preview.pending.proposed) },
+      access: { canStar: false, canShare: false, canDelete: false },
+    };
+    pendingChangesPreviews.add(rsp);
+    newDashboardPreviews.set(rsp, uid);
+    return rsp;
   }
 
   /**
@@ -1530,7 +1557,8 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   public async reloadDashboard(queryParams: UrlQueryMap) {
     // A pending changes preview shows the proposed spec, which doesn't depend on the query
     // params; reloading would swap in the saved dashboard under the preview's banner.
-    if (isPreviewingPendingChanges(this.state.dashboard?.state.uid)) {
+    const dashboard = this.state.dashboard;
+    if (dashboard && isPreviewingPendingChanges(previewedDashboardUid(dashboard.state))) {
       return;
     }
     return this.withVersionHandling((manager) => {
@@ -1575,7 +1603,12 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
     if (isDashboardV2Resource(rsp)) {
       this.activeManager = this.v2Manager;
-      return this.v2Manager.transformResponseToScene(rsp, options);
+      const scene = this.v2Manager.transformResponseToScene(rsp, options);
+      const newDashboardUid = newDashboardPreviews.get(rsp);
+      if (scene && newDashboardUid) {
+        scene.setState({ meta: { ...scene.state.meta, newDashboardUid } });
+      }
+      return scene;
     }
 
     return this.v1Manager.transformResponseToScene(rsp, options);

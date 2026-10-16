@@ -15,6 +15,7 @@ import {
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
+import { finishSavingNewDashboard, withoutPendingChangesPreview } from '../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
@@ -44,13 +45,17 @@ export function useSaveDashboard(isCopy = false) {
           });
         }
 
+        // A new dashboard proposed as pending changes is created under the uid it was proposed for.
+        const newDashboardUid = options.isNew ? scene.state.meta.newDashboardUid : undefined;
+
         const result = await saveDashboardRtkQuery({
           dashboard: saveModel,
           folderUid: options.folderUid,
           message: options.message,
           overwrite: options.overwrite,
           showErrorAlert: false,
-          k8s: options.k8s,
+          k8s: newDashboardUid ? { ...options.k8s, name: newDashboardUid } : options.k8s,
+          ...(newDashboardUid ? { create: true } : {}),
         });
 
         if ('error' in result) {
@@ -73,6 +78,10 @@ export function useSaveDashboard(isCopy = false) {
         const diffCount = scene.getDashboardChanges().diffCount;
 
         await scene.saveCompleted(saveModel, resultData, options.folderUid);
+
+        if (newDashboardUid) {
+          await finishSavingNewDashboard(newDashboardUid);
+        }
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
@@ -98,10 +107,12 @@ export function useSaveDashboard(isCopy = false) {
 
         const currentLocation = locationService.getLocation();
         const newUrl = locationUtil.stripBaseFromUrl(resultData.url);
+        // A saved proposal is a regular dashboard now, so the page stops previewing it.
+        const search = newDashboardUid ? withoutPendingChangesPreview(currentLocation.search) : currentLocation.search;
 
-        if (newUrl !== currentLocation.pathname) {
+        if (newUrl !== currentLocation.pathname || search !== currentLocation.search) {
           setTimeout(() => {
-            locationService.push({ pathname: newUrl, search: currentLocation.search });
+            locationService.push({ pathname: newUrl, search });
           });
         }
 

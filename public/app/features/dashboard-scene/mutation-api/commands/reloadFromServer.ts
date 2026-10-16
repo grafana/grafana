@@ -9,7 +9,11 @@
 import { locationService } from '@grafana/runtime';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import { PENDING_CHANGES_QUERY_PARAM, pendingChangesIdFromLocation } from '../../lifecycle/pendingChangePreview';
+import {
+  PENDING_CHANGES_QUERY_PARAM,
+  pendingChangesIdFromLocation,
+  previewedDashboardUid,
+} from '../../lifecycle/pendingChangePreview';
 
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
@@ -25,7 +29,8 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
 
   handler: async (payload, context) => {
     const { scene } = context;
-    const uid = scene.state.uid;
+    // A new dashboard proposed as pending changes reloads by the uid it was proposed under.
+    const uid = previewedDashboardUid(scene.state);
     if (!uid) {
       return { success: false, error: 'The open dashboard has not been saved yet.', changes: [] };
     }
