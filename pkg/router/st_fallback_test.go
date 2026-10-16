@@ -237,6 +237,21 @@ func TestSingleTenantFallbackServeHTTP(t *testing.T) {
 	}
 }
 
+func TestSingleTenantFallbackRefusesAggregatorRequests(t *testing.T) {
+	// Any stack lookup fails the test, and every path looks up the stack
+	// before it forwards or touches a breaker.
+	st := newTestSingleTenantFallback(t)
+	for _, path := range []string{"/apis/example/v1/namespaces/stacks-123/widgets", "/apis/example/v1", "/openapi/v3/apis/example/v1"} {
+		req := requestWithNamespace(http.MethodGet, path, "stacks-123")
+		req.Header.Set(aggregatorOriginHeader, "true")
+		recorder := httptest.NewRecorder()
+		st.ServeHTTP(recorder, req)
+		require.Equal(t, http.StatusNotFound, recorder.Code, path)
+		require.Equal(t, "private", recorder.Header().Get("Cache-Control"), path)
+	}
+	require.EqualValues(t, 3, st.fallbackRefused.Load())
+}
+
 func TestSingleTenantFallbackConcurrentLookups(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		st := newTestSingleTenantFallback(t)
