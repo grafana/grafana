@@ -507,10 +507,6 @@ const (
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
 	FlagAlertingRuleQuality = "alerting.ruleQuality"
 
-	// FlagAlertingRuleQualityFix
-	// Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.
-	FlagAlertingRuleQualityFix = "alerting.ruleQualityFix"
-
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"

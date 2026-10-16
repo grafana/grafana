@@ -1500,7 +1500,7 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{Go: true, React: true},
+			Generate:     Generate{React: true},
 		},
 		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
