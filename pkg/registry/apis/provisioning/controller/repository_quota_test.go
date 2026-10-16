@@ -12,8 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // MockRepositoryNamespaceLister is a mock implementation of listers.RepositoryNamespaceLister
@@ -304,4 +306,27 @@ func TestRepositoryQuotaConditions_CountsDeletingRepos(t *testing.T) {
 				tt.expectedMessageFmt, condition.Message, tt.activeRepos, tt.deletingRepos, tt.maxRepos)
 		})
 	}
+}
+
+// Under round-robin NATS delivery, a replica can reconcile a repository whose
+// live ADDED went to another replica, so its store does not hold it yet. Reading
+// the repository must make the quota check count it; otherwise a repository
+// blocked over quota elsewhere reads as within quota here and gets unblocked.
+func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *testing.T) {
+	ctx := context.Background()
+	existing := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "existing", ResourceVersion: "1"}}
+	added := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "added-elsewhere", ResourceVersion: "2"}}
+
+	// This replica's store has seen only the older repository.
+	store := usinformer.NewStore()
+	store.Update(ctx, &metav1.PartialObjectMetadata{ObjectMeta: existing.ObjectMeta})
+	getter := informer.NewClientRepositoryGetter(fake.NewClientset(existing, added).ProvisioningV0alpha1(), store)
+
+	_, err := getter.Get(ctx, "ns", added.Name)
+	require.NoError(t, err)
+
+	condition, err := NewRepositoryQuotaChecker(getter).RepositoryQuotaConditions(ctx, "ns", provisioning.QuotaStatus{MaxRepositories: 1})
+	require.NoError(t, err)
+	assert.Equal(t, provisioning.ReasonQuotaExceeded, condition.Reason)
+	assert.Equal(t, "namespace quota exceeded: 2/1 repositories", condition.Message)
 }

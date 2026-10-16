@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -94,7 +95,8 @@ func (g cachedRepositoryGetter) CountRepositories(_ context.Context, namespace s
 
 // NewClientRepositoryGetter backs Get with the API client, fresh for the
 // reconcile, and the count with the NATS informer's store, which avoids an API
-// LIST on every quota check.
+// LIST on every quota check. Each Get is written back into the store (or evicted
+// on NotFound), so the count includes the repository the reconcile just read.
 func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache) RepositoryGetter {
 	return clientRepositoryGetter{client: c, store: store}
 }
@@ -105,7 +107,19 @@ type clientRepositoryGetter struct {
 }
 
 func (g clientRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	return g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
+	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		g.store.Delete(ctx, namespace, name)
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	// Under round-robin delivery the live ADDED may have reached another
+	// replica, and live MODIFIED events are not stored, so this store may not
+	// hold the repository yet. The quota check that follows has to count it.
+	g.store.Update(ctx, identity(repo.Namespace, repo.Name, repo.ResourceVersion))
+	return repo, nil
 }
 
 // CountRepositories walks the cluster-wide store. It holds identities only and

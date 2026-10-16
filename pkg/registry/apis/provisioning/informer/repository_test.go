@@ -108,6 +108,23 @@ func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
 	assert.True(t, apierrors.IsNotFound(err))
 }
 
+// A reconcile Get writes the identity it read into the store and evicts on
+// NotFound, so the count reflects the repository under reconciliation even when
+// this replica never stored it.
+func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
+	store := usinformer.NewStore()
+	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), store)
+
+	_, err := g.Get(context.Background(), "ns", "fresh")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "an identity, not the whole object")
+
+	store.Update(context.Background(), identity("ns", "gone", "3"))
+	_, err = g.Get(context.Background(), "ns", "gone")
+	require.True(t, apierrors.IsNotFound(err))
+	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "a vanished repository leaves the store")
+}
+
 // The count reads only the requested namespace out of the cluster-wide store, and
 // it agrees with the cached getter: a repository awaiting its finalizers counts,
 // which is what lets the store hold identities alone.
