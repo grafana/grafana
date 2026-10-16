@@ -7,7 +7,7 @@ import { useFlagGrafanaEnableScopesFirstMode } from '@grafana/runtime/internal';
 import { getInputStyles, Icon, LinkButton, Spinner, Tooltip, useStyles2, Text, Stack } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
-import { ScopeMetadata, hasScopeMetadata } from './ScopeMetadata';
+import { ScopeMetadata, hasScopeMetadata, useScopeMetadata } from './ScopeMetadata';
 import { getPathOfNode } from './scopesTreeUtils';
 import { type NodesMap, type ScopesMap, type SelectedScope } from './types';
 import { useScopeNode } from './useScopeNode';
@@ -162,6 +162,12 @@ export interface ScopesTooltipProps {
 
 export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disabled }: ScopesTooltipProps) {
   const styles = useStyles2(getStyles);
+  // The cached nodes and scopes only cover what was loaded before, so load the rest the way the selector does. Only
+  // the first applied scope is guaranteed a scopeNodeId, the others are resolved through their default path.
+  const loadedMetadata = useScopeMetadata(
+    appliedScopes.map((s) => ({ scopeId: s.scopeId, nodeId: s.scopeNodeId })),
+    appliedScopes.length > 0
+  );
   if (appliedScopes.length === 0) {
     return t('scopes.selector.input.tooltip', 'Select scope');
   }
@@ -180,12 +186,16 @@ export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, 
   const parentPaths = nicePath && nicePath.length > 0 ? nicePath.join(' > ') + ' > ' : '';
 
   const metadata = appliedScopes
-    .map((s, i) => ({
-      scopeId: s.scopeId,
-      title: appliedScopes.length > 1 ? scopeNames[i] : undefined,
-      description: s.scopeNodeId ? nodes[s.scopeNodeId]?.spec.description : undefined,
-      filters: scopes[s.scopeId]?.spec.filters,
-    }))
+    .map((s, i) => {
+      const loaded = loadedMetadata.find((m) => m.scopeId === s.scopeId);
+      return {
+        scopeId: s.scopeId,
+        title: appliedScopes.length > 1 ? scopeNames[i] : undefined,
+        // What is cached is shown right away, and replaced by the loaded values once they arrive
+        description: loaded ? loaded.description : s.scopeNodeId ? nodes[s.scopeNodeId]?.spec.description : undefined,
+        filters: loaded ? loaded.filters : scopes[s.scopeId]?.spec.filters,
+      };
+    })
     .filter(hasScopeMetadata);
   const showRemoveAll = !disabled && onRemoveAllClick;
 

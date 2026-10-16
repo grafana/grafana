@@ -204,6 +204,41 @@ describe('ScopesTreeItem metadata tooltip', () => {
     expect(within(screen.getByRole('tooltip')).queryByText('cluster = prod')).not.toBeInTheDocument();
   });
 
+  it('shows the keyboard highlighted tooltip again when the pointer leaves another scope', async () => {
+    const Harness = () => (
+      <>
+        <ScopesTreeItem
+          anyChildExpanded={false}
+          loadingNodeName={undefined}
+          treeNode={{ scopeNodeId: 'full', expanded: false, query: '' }}
+          scopeNodes={scopeNodes}
+          selected={false}
+          selectedScopes={[]}
+          highlighted={true}
+        />
+        <ScopesTreeItem
+          anyChildExpanded={false}
+          loadingNodeName={undefined}
+          treeNode={{ scopeNodeId: 'filtersOnly', expanded: false, query: '' }}
+          scopeNodes={scopeNodes}
+          selected={false}
+          selectedScopes={[]}
+          highlighted={false}
+        />
+      </>
+    );
+    const { user } = renderWithScopesServices(<Harness />, { scopes, nodes });
+    expect(await within(await screen.findByRole('tooltip')).findByText('cluster = prod')).toBeInTheDocument();
+
+    await user.hover(screen.getByTestId('scopes-tree-filtersOnly'));
+    expect(await within(await screen.findByRole('tooltip')).findByText('region =~ us-.*')).toBeInTheDocument();
+
+    await user.unhover(screen.getByTestId('scopes-tree-filtersOnly'));
+
+    expect(await within(await screen.findByRole('tooltip')).findByText('cluster = prod')).toBeInTheDocument();
+    expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+  });
+
   it('does not let Escape reach ancestors while it dismisses the tooltip', async () => {
     const onKeyDown = jest.fn();
     const { user } = renderWithScopesServices(

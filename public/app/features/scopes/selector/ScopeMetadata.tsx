@@ -64,7 +64,7 @@ export interface ScopeMetadataSource {
   title?: string;
 }
 
-interface LoadedScopeMetadata extends ScopeMetadataProps {
+export interface LoadedScopeMetadata extends ScopeMetadataProps {
   scopeId: string;
 }
 
@@ -80,15 +80,58 @@ async function loadScopeMetadata(
   return { scopeId, title, description, filters: scope?.spec.filters };
 }
 
+/**
+ * Loads the description and filters of the given scopes while `enabled`, through the cached selector service.
+ * Returns nothing until the load has finished, and also when it fails.
+ */
+export function useScopeMetadata(sources: ScopeMetadataSource[], enabled: boolean): LoadedScopeMetadata[] {
+  const service = useScopesServices()?.scopesSelectorService;
+  const [loaded, setLoaded] = useState<LoadedScopeMetadata[]>([]);
+  const sourcesKey = sources.map((s) => `${s.scopeId}|${s.nodeId ?? ''}|${s.title ?? ''}`).join(',');
+
+  useEffect(() => {
+    if (!enabled || !service) {
+      return;
+    }
+    let cancelled = false;
+    Promise.all(sources.map((source) => loadScopeMetadata(service, source)))
+      .then((result) => {
+        if (!cancelled) {
+          setLoaded(result);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoaded([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+    // sourcesKey stands in for sources, which is a new array on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, service, sourcesKey]);
+
+  return loaded;
+}
+
 // Only the tooltip that was interacted with last is shown, so a hovered tooltip gives way when the keyboard highlight
-// moves to another scope, and the other way around.
+// moves to another scope, and the other way around. When the pointer leaves the tooltip that took over, the one for
+// the keyboard highlight is shown again.
 let activeTooltipId: string | undefined;
+let highlightedTooltipId: string | undefined;
 const activeTooltipListeners = new Set<() => void>();
 
 function setActiveTooltipId(id: string | undefined) {
   if (activeTooltipId !== id) {
     activeTooltipId = id;
     activeTooltipListeners.forEach((listener) => listener());
+  }
+}
+
+function releaseActiveTooltip(id: string) {
+  if (activeTooltipId === id) {
+    setActiveTooltipId(highlightedTooltipId);
   }
 }
 
@@ -145,48 +188,30 @@ const TooltipAnchor = forwardRef<HTMLDivElement, AnchorProps>(function TooltipAn
  * on first interaction and nothing is shown when the scope has neither a description nor filters.
  */
 export function ScopeMetadataTooltip({ sources, highlighted, className, children }: ScopeMetadataTooltipProps) {
-  const service = useScopesServices()?.scopesSelectorService;
   const id = useId();
   const activeId = useSyncExternalStore(subscribeToActiveTooltip, () => activeTooltipId);
   const [active, setActive] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const [loaded, setLoaded] = useState<LoadedScopeMetadata[]>([]);
 
-  const sourcesKey = sources.map((s) => `${s.scopeId}|${s.nodeId ?? ''}|${s.title ?? ''}`).join(',');
   const interacted = active || Boolean(highlighted);
-
-  useEffect(() => {
-    if (!interacted || !service) {
-      return;
-    }
-    let cancelled = false;
-    Promise.all(sources.map((source) => loadScopeMetadata(service, source)))
-      .then((result) => {
-        if (!cancelled) {
-          setLoaded(result);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLoaded([]);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-    // sourcesKey stands in for sources, which is a new array on every render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interacted, service, sourcesKey]);
+  const loaded = useScopeMetadata(sources, interacted);
 
   const metadata = loaded.filter(hasScopeMetadata);
   const open = interacted && activeId === id && !dismissed && metadata.length > 0;
 
   useEffect(() => {
-    if (highlighted) {
-      // A tooltip dismissed with Escape comes back when the highlight returns to the item
-      setDismissed(false);
-      setActiveTooltipId(id);
+    if (!highlighted) {
+      return;
     }
+    // A tooltip dismissed with Escape comes back when the highlight returns to the item
+    setDismissed(false);
+    highlightedTooltipId = id;
+    setActiveTooltipId(id);
+    return () => {
+      if (highlightedTooltipId === id) {
+        highlightedTooltipId = undefined;
+      }
+    };
   }, [highlighted, id]);
 
   useEffect(() => {
@@ -219,6 +244,8 @@ export function ScopeMetadataTooltip({ sources, highlighted, className, children
     if (value) {
       setDismissed(false);
       setActiveTooltipId(id);
+    } else {
+      releaseActiveTooltip(id);
     }
   };
 

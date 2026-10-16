@@ -1,8 +1,13 @@
 import { screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
+
+import { type Scope, type ScopeNode } from '@grafana/data';
 
 import { ScopesTooltip, type ScopesTooltipProps } from './ScopesInput';
+import { renderWithScopesServices } from './tooltipTestUtils';
 import { type NodesMap, type ScopesMap, type SelectedScope } from './types';
+
+testWithFeatureToggles({ enable: ['scopeFilters'] });
 
 const nodes: NodesMap = {
   'node-1': {
@@ -112,5 +117,36 @@ describe('ScopesTooltip', () => {
       expect(screen.getByTestId('scopes-selector-input-clear')).toBeInTheDocument();
       expect(screen.queryByRole('separator')).not.toBeInTheDocument();
     });
+  });
+
+  it('loads the description of applied scopes that were not picked from a cached node', async () => {
+    const second: Scope = {
+      metadata: { name: 'scope-2' },
+      spec: { title: 'Second Scope', defaultPath: ['root', 'node-2'] },
+    };
+    const secondNode: ScopeNode = {
+      metadata: { name: 'node-2' },
+      spec: {
+        nodeType: 'leaf',
+        title: 'Second Node',
+        parentName: 'root',
+        linkType: 'scope',
+        linkId: 'scope-2',
+        description: 'Staging cluster',
+      },
+    };
+
+    renderWithScopesServices(
+      <ScopesTooltip
+        nodes={nodes}
+        scopes={scopesMap}
+        appliedScopes={[{ scopeId: 'scope-1', scopeNodeId: 'node-1' }, { scopeId: 'scope-2' }]}
+        onRemoveAllClick={jest.fn()}
+        disabled={false}
+      />,
+      { scopes: [second], nodes: [secondNode] }
+    );
+
+    expect(await screen.findByText('Staging cluster')).toBeInTheDocument();
   });
 });
