@@ -1,8 +1,11 @@
+import * as z from 'zod';
+
 import { locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
+import { payloads, renderPlanPreviewPayloadSchema } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
@@ -111,14 +114,19 @@ describe('dashboardMutationApi', () => {
     it('advertises the building phase of RENDER_PLAN only while its flag is on', () => {
       const building = { planId: 'plan-1', title: 'Plan', sections: [], phase: 'building' };
 
-      const withoutFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN')!.safeParse(building);
-      expect(withoutFlag.success).toBe(true);
-      expect(withoutFlag.data).not.toHaveProperty('phase');
+      const withoutFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
+      expect(withoutFlag).toBe(renderPlanPreviewPayloadSchema);
+      const parsed = withoutFlag!.safeParse(building);
+      expect(parsed.success).toBe(true);
+      expect(parsed.data).not.toHaveProperty('phase');
+      // Callers may inspect the schema itself rather than parse with it.
+      expect(z.toJSONSchema(renderPlanPreviewPayloadSchema, { io: 'input' }).properties).not.toHaveProperty('phase');
 
       setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
-      const withFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN')!.safeParse(building);
-      expect(withFlag.data).toHaveProperty('phase', 'building');
-      setTestFlags({});
+      const withFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
+      expect(withFlag).toBe(payloads.renderPlan);
+      expect(withFlag!.safeParse(building).data).toHaveProperty('phase', 'building');
+      expect(z.toJSONSchema(payloads.renderPlan, { io: 'input' }).properties).toHaveProperty('phase');
     });
 
     it('is case-insensitive', () => {
@@ -137,7 +145,6 @@ describe('dashboardMutationApi', () => {
         const schema = dashboardMutationApi.getPayloadSchema(cmd.name);
         expect(schema).toBe(cmd.payloadSchema);
       }
-      setTestFlags({});
     });
 
     it('answers for every command a real client exposes', () => {
