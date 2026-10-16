@@ -17,6 +17,13 @@ import { DashboardMutationClient } from '../DashboardMutationClient';
 
 import { renderPlanContractFixture, renderPlanNestedTabsContractFixture } from './renderPlanContractFixture';
 
+// A dashboard built from a spec carries the built-in annotation layer, which looks up its
+// datasource on activation. Nothing here queries data, so that lookup never settles.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({ get: () => new Promise(() => {}), getInstanceSettings: () => undefined }),
+}));
+
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
   getPanelPluginFromCache: (id: string) => getPanelPlugin({ id }),
@@ -30,6 +37,10 @@ function setup(overrides: Partial<DashboardSceneState> = {}) {
   cleanUpPreviousScene = scene.activate();
   const client = new DashboardMutationClient(scene);
   return { scene, client };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 afterEach(() => {
@@ -255,6 +266,27 @@ describe('RENDER_PLAN', () => {
     expect((variable as CustomVariable).state.query.length).toBeGreaterThan(0);
   });
 
+  it('shows a loading screen instead of the plan once it is building, with nothing left to decide', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, variables: ['cluster'] } });
+
+    const result = await client.execute({
+      type: 'RENDER_PLAN',
+      payload: { ...plan, variables: ['cluster'], phase: 'building' },
+    });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.title).toBe('Kafka overview');
+    expect(scene.state.body.getVizPanels()).toHaveLength(0);
+    expect(sceneGraph.getVariables(scene).state.variables).toHaveLength(0);
+    expect(scene.state.planning).toEqual({ phase: 'building', planId: 'plan-1', planTitle: 'Kafka overview' });
+    expect(scene.state.isEditing).toBeFalsy();
+
+    const ended = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1' } });
+    expect(ended.success).toBe(true);
+    expect(scene.state.planning).toBeUndefined();
+  });
+
   it('refuses when the scene is no longer open', async () => {
     const { scene, client } = setup();
     cleanUpPreviousScene();
@@ -453,7 +485,10 @@ describe('RENDER_PLAN', () => {
     // A second render replaces the first plan before the stale closure ever fires.
     await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, planId: 'plan-2', title: 'Replacement' } });
 
-    expect(() => stalePlanning?.onBuild()).not.toThrow();
+    if (stalePlanning?.phase !== 'preview') {
+      throw new Error('Expected a preview to be rendered');
+    }
+    expect(() => stalePlanning.onBuild()).not.toThrow();
     expect(scene.state.planning?.planId).toBe('plan-2');
   });
 
@@ -501,6 +536,90 @@ describe('other mutation commands, while a plan preview is active', () => {
   // A planning scene is not a mutation target: DashboardMutationClient refuses every mutating
   // command except RENDER_PLAN/END_PLANNING (see DashboardMutationClient.test.ts). Covered here
   // too, so RENDER_PLAN's own test suite proves the isPlanning() it sets actually blocks a write.
+  it('lets the first build write replace a building screen, keeping the screen up until it lands', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+    const phaseWhenPanelsLanded: Array<string | undefined> = [];
+    const subscription = scene.subscribeToState((state, prev) => {
+      if (state.body !== prev.body || state.body.getVizPanels().length > 0) {
+        phaseWhenPanelsLanded.push(state.planning?.phase);
+      }
+    });
+
+    const result = await client.execute({
+      type: 'ADD_PANEL',
+      payload: {
+        panel: {
+          kind: 'Panel',
+          spec: {
+            title: 'New panel',
+            vizConfig: { group: 'timeseries', spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } } },
+            data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+          },
+        },
+      },
+    });
+    subscription.unsubscribe();
+
+    expect(result.success).toBe(true);
+    expect(scene.state.body.getVizPanels().map((panel) => panel.state.title)).toEqual(['New panel']);
+    expect(phaseWhenPanelsLanded[0]).toBe('building');
+    expect(scene.state.planning).toBeUndefined();
+  });
+
+  it('keeps the building screen up when the first build write is rejected', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+
+    const result = await client.execute({ type: 'ADD_PANEL', payload: { panel: { invalid: true } } });
+
+    expect(result.success).toBe(false);
+    expect(scene.state.planning?.phase).toBe('building');
+  });
+
+  it('does not bring the building screen back when the first write is discarded', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+    await client.execute({
+      type: 'ADD_PANEL',
+      payload: {
+        panel: {
+          kind: 'Panel',
+          spec: {
+            title: 'New panel',
+            vizConfig: { group: 'timeseries', spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } } },
+            data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+          },
+        },
+      },
+    });
+    expect(scene.state.isEditing).toBe(true);
+
+    scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+
+    expect(scene.state.planning).toBeUndefined();
+  });
+
+  it('does not bring the building screen back when the first APPLY_SPEC is undone', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+    const current = await client.execute({ type: 'GET_SPEC', payload: {} });
+    if (!current.success || !isRecord(current.data) || !isRecord(current.data.spec)) {
+      throw new Error('Expected GET_SPEC to return the current spec');
+    }
+
+    const applied = await client.execute({
+      type: 'APPLY_SPEC',
+      payload: { spec: { ...current.data.spec, title: 'Built dashboard' } },
+    });
+    expect(applied.success).toBe(true);
+    expect(scene.state.planning).toBeUndefined();
+
+    scene.state.sidebar.undoAction();
+
+    expect(scene.state.planning).toBeUndefined();
+  });
+
   it('ADD_PANEL is refused, not applied', async () => {
     const { scene, client } = setup();
     await client.execute({ type: 'RENDER_PLAN', payload: plan });

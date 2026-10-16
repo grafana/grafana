@@ -113,6 +113,7 @@ describe('RowItemRenderer', () => {
   it('hides the copy link button while previewing a dashboard plan (planning)', () => {
     renderRow({
       planning: {
+        phase: 'preview',
         planId: 'plan-1',
         planTitle: 'Dashboard plan',
         onBuild: () => {},

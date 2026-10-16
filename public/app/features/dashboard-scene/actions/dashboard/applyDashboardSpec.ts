@@ -46,7 +46,10 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     key: scene.state.key,
     sidebar: scene.state.sidebar,
   });
-  const { loadingView: previousLoading, ...previousState } = scene.state;
+  // A plan's building screen is still up during the build's first write; undoing that write must
+  // not restore it, since nothing would be left to end it. Leaving `planning` out of the merge
+  // keeps whatever is current.
+  const { loadingView: previousLoading, planning: previousPlanning, ...previousState } = scene.state;
 
   // `setState` merges, so an open panel editor would survive the swap still driving the
   // VizPanel and layout item of the tree we just discarded: edits made through it never reach

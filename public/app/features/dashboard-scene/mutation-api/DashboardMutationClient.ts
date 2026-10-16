@@ -49,6 +49,10 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
    * and END_PLANNING. The single point every dashboard command passes through, so a future
    * command is refused without its own guard.
    *
+   * A building screen is the exception: the build's first write replaces it. The write runs with
+   * the loading screen still up and planning ends once it lands, so the screen gives way
+   * straight to the result instead of to an empty dashboard while the write is applied.
+   *
    * Does not add conversation scoping to the mutation API -- a caller still acts on whatever
    * scene is mounted, regardless of conversation. Only closes that gap for a plan preview.
    */
@@ -56,6 +60,17 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
     const type = mutation.type.toUpperCase();
 
     if (this.scene.isPlanning() && !PLANNING_ALLOWED_COMMANDS.has(type) && !this.isReadOnly(type)) {
+      const { planning } = this.scene.state;
+      if (planning?.phase === 'building') {
+        const result = await super.execute(mutation);
+        // Only a write that landed replaces the screen: a rejected one leaves an empty dashboard
+        // behind it while the build retries. A concurrent write that landed first has already
+        // ended it, and END_PLANNING ends it if the build never lands one.
+        if (result.success && this.scene.state.planning === planning) {
+          this.scene.setState({ planning: undefined });
+        }
+        return result;
+      }
       return {
         success: false,
         error: 'This dashboard is a plan preview and is read-only until it is built or dismissed.',
