@@ -92,6 +92,10 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 	count, err := getter.CountRepositories(context.Background(), testNamespace)
 	require.NoError(t, err)
 	assert.Equal(t, 2, count, "scoped to the namespace, and a repository awaiting its finalizers still counts")
+
+	confirmed, err := getter.ConfirmRepositoryCount(context.Background(), testNamespace)
+	require.NoError(t, err)
+	assert.Equal(t, count, confirmed, "the apiserver watch reaches every replica, so the lister already is the confirmation")
 }
 
 // The client getter reads the reconcile's object fresh from the API.
@@ -123,6 +127,21 @@ func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 	_, err = g.Get(context.Background(), "ns", "gone")
 	require.True(t, apierrors.IsNotFound(err))
 	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "a vanished repository leaves the store")
+}
+
+// The confirmed count lists the API, so it sees repositories this replica's store
+// never received.
+func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
+	client := fake.NewClientset(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), usinformer.NewStore())
+
+	cached, err := g.CountRepositories(context.Background(), "ns-a")
+	require.NoError(t, err)
+	assert.Zero(t, cached, "the store has seen none of them")
+
+	confirmed, err := g.ConfirmRepositoryCount(context.Background(), "ns-a")
+	require.NoError(t, err)
+	assert.Equal(t, 2, confirmed, "scoped to the namespace")
 }
 
 // The count reads only the requested namespace out of the cluster-wide store, and

@@ -36,6 +36,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -4346,6 +4347,56 @@ func TestRepositoryController_process_BlockedOverQuotaSteadyStateIsNotATrigger(t
 			assert.True(t, isQuotaExceeded(repo.Status.Conditions))
 		})
 	}
+}
+
+// Under round-robin NATS delivery a replica's store can lack a repository whose
+// live ADDED went to another replica. Its cached count then reads the namespace
+// as within quota, but releasing the block on that would let an over-quota
+// repository sync, and replicas disagreeing would flip it back and forth. The
+// count is confirmed against the API first, so the block holds.
+func TestRepositoryController_process_BlockedRepositoryStaysBlockedWhenTheCacheLags(t *testing.T) {
+	namespace, repoName := "default", "test-repo"
+
+	repo := blockedOverQuotaRepo(namespace, repoName, time.Now(), false)
+	addedElsewhere := blockedOverQuotaRepo(namespace, "added-elsewhere", time.Now(), false)
+	rc, patcher, stub, _ := newQuotaController(t, 1, repo)
+
+	// This replica's store has never seen the second repository; the API has both.
+	getter := informer.NewClientRepositoryGetter(fake.NewClientset(repo, addedElsewhere).ProvisioningV0alpha1(), usinformer.NewStore())
+	rc.repos = getter
+	rc.quotaChecker = NewRepositoryQuotaChecker(getter)
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Empty(t, patcher.ops, "the block must not be released on a count the API contradicts")
+	assert.Zero(t, stub.testCalls.Load(), "a steady-state blocked repository is not reconciled")
+	assert.True(t, isQuotaExceeded(repo.Status.Conditions))
+}
+
+// The confirmation is an API LIST, so it runs only to release a block: a
+// repository the cached count already holds over quota needs none.
+func TestRepositoryController_process_ConfirmsOnlyToReleaseABlock(t *testing.T) {
+	namespace, repoName := "default", "test-repo"
+
+	repo := blockedOverQuotaRepo(namespace, repoName, time.Now(), false)
+	other := blockedOverQuotaRepo(namespace, "other-repo", time.Now(), false)
+	rc, patcher, _, _ := newQuotaController(t, 1, repo)
+
+	store := usinformer.NewStore()
+	store.Update(context.Background(), &metav1.PartialObjectMetadata{ObjectMeta: other.ObjectMeta})
+	clientset := fake.NewClientset(repo, other)
+	getter := informer.NewClientRepositoryGetter(clientset.ProvisioningV0alpha1(), store)
+	rc.repos = getter
+	rc.quotaChecker = NewRepositoryQuotaChecker(getter)
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	for _, action := range clientset.Actions() {
+		assert.NotEqual(t, "list", action.GetVerb(), "the cached count already holds the block")
+	}
+	assert.Empty(t, patcher.ops, "still over quota, so the block stays as it is")
 }
 
 // Dropping the steady-state trigger must not strand a blocked repository. Quota is
