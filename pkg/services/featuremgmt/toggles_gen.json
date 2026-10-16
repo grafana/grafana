@@ -1476,6 +1476,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.notebooksContentSearch",
+        "resourceVersion": "1790408137376",
+        "creationTimestamp": "2026-09-26T07:35:37Z"
+      },
+      "spec": {
+        "description": "Search saved notebook markdown and code after the unified search server supports content indexing",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.recentlyDeletedViaTrash",
         "resourceVersion": "1791194326048",
         "creationTimestamp": "2026-08-26T10:13:23Z",
