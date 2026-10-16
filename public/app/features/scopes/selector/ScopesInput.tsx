@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { Fragment } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -192,7 +193,10 @@ export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, 
     <Stack direction="column" gap={1} alignItems="flex-start">
       <span className={styles.tooltipPath}>{parentPaths + scopeNames.join(', ')}</span>
       {metadata.map(({ scopeId, title, description, filters }) => (
-        <ScopeMetadata key={scopeId} title={title} description={description} filters={filters} />
+        <Fragment key={scopeId}>
+          {appliedScopes.length > 1 && <hr className={styles.divider} />}
+          <ScopeMetadata title={title} description={description} filters={filters} />
+        </Fragment>
       ))}
       {showRemoveAll && (
         <>

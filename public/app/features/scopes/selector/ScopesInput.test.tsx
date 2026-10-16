@@ -76,6 +76,29 @@ describe('ScopesTooltip', () => {
       expect(screen.getByTestId('scopes-selector-input-clear')).toBeInTheDocument();
     });
 
+    it('puts a divider before the metadata of each scope when several scopes are applied', () => {
+      renderTooltip({
+        appliedScopes: [
+          { scopeId: 'scope-1', scopeNodeId: 'node-1' },
+          { scopeId: 'scope-2', scopeNodeId: 'node-2' },
+        ],
+        nodes: {
+          ...metadataNodes,
+          'node-2': {
+            metadata: { name: 'node-2' },
+            spec: { nodeType: 'leaf', title: 'Second Node', parentName: '', description: 'Staging cluster' },
+          },
+        },
+        scopes: {
+          ...metadataScopes,
+          'scope-2': { metadata: { name: 'scope-2' }, spec: { title: 'Second Scope' } },
+        },
+      });
+
+      // One before each metadata section, plus the one above Remove all
+      expect(screen.getAllByRole('separator')).toHaveLength(3);
+    });
+
     it('shows no divider when the Remove all button is hidden', () => {
       renderTooltip({ nodes: metadataNodes, scopes: metadataScopes, onRemoveAllClick: undefined });
 
