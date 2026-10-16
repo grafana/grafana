@@ -3,6 +3,7 @@ import { useId, useMemo } from 'react';
 
 import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs, type StandardEditorContext } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type GraphFieldConfig, type TableSparklineCellOptions } from '@grafana/schema';
 import { Field, useStyles2 } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/internal';
@@ -41,6 +42,7 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
         path: 'showTooltip',
         name: t('table.name-sparkline-show-tooltip', 'Show hover tooltip'),
         defaultValue: false,
+        showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
       });
     },
   };
