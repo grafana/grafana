@@ -140,6 +140,19 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     optionSelected: css({
       background: theme.colors.action.selected,
+      ...(!visualRefreshEnabled && {
+        '&::before': {
+          backgroundImage: theme.colors.gradients.brandVertical,
+          borderRadius: theme.shape.radius.default,
+          content: '" "',
+          display: 'block',
+          height: '100%',
+          position: 'absolute',
+          width: theme.spacing(0.5),
+          left: 0,
+          top: 0,
+        },
+      }),
     }),
     selectedIcon: css({
       label: 'combobox-selected-icon',
