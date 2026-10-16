@@ -186,5 +186,5 @@ func localExtendedJWT(t *testing.T, cfg *setting.Cfg) *ExtendedJWT {
 	t.Helper()
 	pluginAuth, err := pluginauth.ProvideConfig(cfg)
 	require.NoError(t, err)
-	return ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest(), pluginAuth)
+	return ProvideExtendedJWTWithPluginAuth(cfg, tracing.InitializeTracerForTest(), pluginAuth)
 }

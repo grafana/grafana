@@ -43,7 +43,7 @@ func TestSDKLocalTokenRoundTrip(t *testing.T) {
 	cfg := &setting.Cfg{Raw: ini.Empty(), ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}}}
 	localAuth, err := pluginauth.ProvideConfig(cfg)
 	require.NoError(t, err)
-	grafana := clients.ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest(), localAuth)
+	grafana := clients.ProvideExtendedJWTWithPluginAuth(cfg, tracing.InitializeTracerForTest(), localAuth)
 	signer := newTestServer(t)
 	capToken, err := v3.IssueLocalAccessPolicyToken("example-app", testManifest)
 	require.NoError(t, err)

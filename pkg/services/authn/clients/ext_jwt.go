@@ -47,7 +47,16 @@ var (
 	)
 )
 
-func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer, pluginAuth *pluginauth.Config) *ExtendedJWT {
+// ProvideExtendedJWT returns the client for access tokens from the signer
+// configured in [auth.extended_jwt].
+func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
+	return ProvideExtendedJWTWithPluginAuth(cfg, tracer, nil)
+}
+
+// ProvideExtendedJWTWithPluginAuth returns the client that, when pluginAuth
+// says Grafana signs plugin access tokens itself, also trusts the local plugin
+// signing key, and is then enabled without [auth.extended_jwt].
+func ProvideExtendedJWTWithPluginAuth(cfg *setting.Cfg, tracer trace.Tracer, pluginAuth *pluginauth.Config) *ExtendedJWT {
 	logger := log.New(authn.ClientExtendedJWT)
 	var keys authlib.KeyRetriever = authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
