@@ -206,7 +206,8 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		jobObj = &provisioning.Job{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State)
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
+		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionIgnored)
 
 		common.RequireRepoFolderUID(t, helper.Folders, repoName, stableUID)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/dashboard.json", stableUID)
@@ -308,7 +309,8 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 		require.Empty(t, jobObj.Status.Errors)
-		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State)
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
+		requireInvalidFolderMetadataWarning(t, jobObj, "team/", repository.FileActionIgnored)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/root.json", folderUID)
 		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"root-dash": {Title: "Root Dashboard", SourcePath: "team/root.json", Folder: folderUID},

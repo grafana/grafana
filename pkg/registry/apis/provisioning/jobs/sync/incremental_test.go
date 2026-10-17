@@ -1655,17 +1655,6 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 		}
 		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
 		allowFolderTreeSeed(repoResources, &provisioning.ResourceList{})
-		progress.On("SetTotal", mock.Anything, 1).Return()
-		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
-		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
-		progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
-		repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "new-ref").
-			Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
-		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Action() == repository.FileActionCreated && result.Path() == "dashboards/test.json"
-		})).Return()
-		progress.On("TooManyErrors").Return(nil)
-
 		mockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry(nil), fmt.Errorf("read tree failed"))
 
 		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)

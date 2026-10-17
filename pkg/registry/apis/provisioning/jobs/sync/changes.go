@@ -371,7 +371,7 @@ func augmentChangesForFolderMetadata(
 	}
 
 	// Detect folders whose _folder.json was deleted.
-	deletedChanges, deletedAffected := detectDeletedFolderMetadata(target, sourceFolders, foldersWithMetadata, pathsWithChanges)
+	deletedChanges, deletedAffected := detectDeletedFolderMetadata(repo, target, sourceFolders, foldersWithMetadata, pathsWithChanges)
 	for _, change := range deletedChanges {
 		pathsWithChanges[change.Path] = true
 	}
@@ -503,8 +503,9 @@ func mergeAffectedFolders(dst, src map[string]bool) map[string]bool {
 
 // detectDeletedFolderMetadata finds folders in target that had metadata (non-empty Hash)
 // but whose _folder.json is now absent from source (while the directory still exists).
-// It emits FileActionUpdated with FolderRenamed=true.
+// FolderRenamed is set only when falling back to a different UID.
 func detectDeletedFolderMetadata(
+	repo repository.Reader,
 	target *provisioning.ResourceList,
 	sourceFolders, foldersWithMetadata map[string]bool,
 	pathsWithChanges map[string]bool,
@@ -534,14 +535,17 @@ func detectDeletedFolderMetadata(
 			continue // this path is already marked for update
 		}
 
+		renamed := item.Name != resources.ParseFolder(path, repo.Config().Name).ID
 		changes = append(changes, ResourceFileChange{
 			Action:        repository.FileActionUpdated,
 			Path:          path,
 			Existing:      item,
-			FolderRenamed: true,
+			FolderRenamed: renamed,
 			Reason:        provisioning.ReasonFolderMetadataDeleted,
 		})
-		affectedFolders[path] = true
+		if renamed {
+			affectedFolders[path] = true
+		}
 	}
 	return changes, affectedFolders
 }

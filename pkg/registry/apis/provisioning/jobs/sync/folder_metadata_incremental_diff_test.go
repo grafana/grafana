@@ -1486,3 +1486,60 @@ func TestIsFolderRelocating(t *testing.T) {
 		})
 	}
 }
+
+func TestFolderMetadataIncrementalDiffBuilder_IgnoresRootMetadata(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		change repository.VersionedFileChange
+		nested bool
+	}{
+		{name: "create", change: repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "_folder.json"}},
+		{name: "update", change: repository.VersionedFileChange{Action: repository.FileActionUpdated, Path: "_folder.json"}},
+		{name: "delete", change: repository.VersionedFileChange{Action: repository.FileActionDeleted, Path: "_folder.json"}},
+		{name: "rename from root", change: repository.VersionedFileChange{Action: repository.FileActionRenamed, Path: "team/_folder.json", PreviousPath: "_folder.json"}, nested: true},
+		{name: "rename to root", change: repository.VersionedFileChange{Action: repository.FileActionRenamed, Path: "_folder.json", PreviousPath: "team/_folder.json"}, nested: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := newCompositeRepoWithConfig(t)
+			tc.change.Ref = "current-ref"
+			if tc.change.Path == "team/_folder.json" {
+				expectFolderMetadataReadTimes(repo, "team/", "current-ref", "new-team", 1)
+			} else if tc.nested {
+				repo.MockReader.EXPECT().Read(mock.Anything, "team/", "current-ref").Return(&repository.FileInfo{}, nil).Once()
+			}
+			target := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{
+				{Name: "wrapper", Path: "", Group: resources.FolderResource.Group},
+				{Name: "old-team", Path: "team", Group: resources.FolderResource.Group},
+				{Name: "dashboard", Path: "team/dashboard.json", Group: "dashboard.grafana.app"},
+			}}
+			diff, relocations, replaced, invalid, err := NewFolderMetadataIncrementalDiffBuilder(repo).
+				BuildIncrementalDiff(t.Context(), "current-ref", []repository.VersionedFileChange{tc.change}, target)
+			require.NoError(t, err)
+			require.Empty(t, invalid)
+			require.Empty(t, relocations)
+			if tc.nested {
+				require.ElementsMatch(t, []repository.VersionedFileChange{
+					{Action: repository.FileActionUpdated, Path: "team/", Ref: "current-ref"},
+					{Action: repository.FileActionUpdated, Path: "team/dashboard.json", Ref: "current-ref"},
+				}, diff)
+				require.Len(t, replaced, 1)
+				require.Equal(t, "old-team", replaced[0].OldUID)
+			} else {
+				require.Empty(t, diff)
+				require.Empty(t, replaced)
+			}
+		})
+	}
+}
+
+func TestFolderMetadataIncrementalDiffBuilder_RootMetadataCannotRelocateWrapper(t *testing.T) {
+	repo := newCompositeRepoWithConfig(t)
+	expectFolderMetadataReadTimes(repo, "team/", "current-ref", "wrapper", 1)
+	diff, relocations, replaced, _, err := NewFolderMetadataIncrementalDiffBuilder(repo).BuildIncrementalDiff(t.Context(), "current-ref",
+		[]repository.VersionedFileChange{{Action: repository.FileActionRenamed, Path: "team/_folder.json", PreviousPath: "_folder.json", Ref: "current-ref"}},
+		&provisioning.ResourceList{Items: []provisioning.ResourceListItem{{Name: "wrapper", Group: resources.FolderResource.Group}}})
+	require.NoError(t, err)
+	require.Equal(t, []repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "team/", Ref: "current-ref"}}, diff)
+	require.Empty(t, relocations)
+	require.Empty(t, replaced)
+}

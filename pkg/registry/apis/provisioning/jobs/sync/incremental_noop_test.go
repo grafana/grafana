@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -40,6 +41,9 @@ func TestIncrementalSync_NoopFolderMetadata(t *testing.T) {
 				t.Run(tt.name, func(t *testing.T) {
 					repo := newCompositeRepoWithConfig(t)
 					repoResources := resources.NewMockRepositoryResources(t)
+					repoResources.EXPECT().List(mock.Anything).Return(&provisioning.ResourceList{Items: []provisioning.ResourceListItem{
+						{Name: "stable-uid", Path: "team", Group: resources.FolderResource.Group},
+					}}, nil).Once()
 					progress := jobs.NewMockJobProgressRecorder(t)
 					quotaTracker := newPermissiveMockQuotaTracker(t)
 					if refs.previous != refs.current {

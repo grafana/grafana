@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationProvisioning_IncrementalSync_NoopFolderMetadata(t *testing.T) {
+func TestIntegrationProvisioning_IncrementalSync_FolderMetadataWarnings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	for _, tc := range []struct {
@@ -51,22 +51,35 @@ func TestIntegrationProvisioning_IncrementalSync_NoopFolderMetadata(t *testing.T
 			repoName := "noop-meta-" + tc.name
 			files := map[string][]byte{
 				"team/dashboard.json": common.DashboardJSON("noop-dash", "Noop Dashboard", 1),
+				"unrelated.json":      common.DashboardJSON("unrelated-dash", "Unrelated Dashboard", 1),
 			}
 			if tc.metadata != nil {
 				files["team/_folder.json"] = tc.metadata
+			}
+			if tc.name == "invalid" {
+				files["other/_folder.json"] = invalidFolderMetadataJSON("Other Broken Team")
+				files["other/.keep"] = []byte{}
 			}
 			_, local := helper.CreateGitRepo(t, repoName, files)
 			common.SyncAndWait(t, helper, common.Repo(repoName), common.Expect(common.HasNoErrors(), common.HasState(tc.state)))
 			folderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, tc.folderTitle)
 
+			unrelatedTitle := "Unrelated Dashboard"
 			for _, noop := range []struct {
-				name        string
-				emptyCommit bool
-				message     string
+				name          string
+				emptyCommit   bool
+				editDashboard bool
+				editMetadata  bool
+				message       string
 			}{
 				{name: "same ref", message: "same commit as last time"},
 				{name: "empty commit", emptyCommit: true, message: "no changes detected between commits"},
+				{name: "unrelated dashboard edit", editDashboard: true},
+				{name: "one changed and one unchanged invalid manifest", editMetadata: true},
 			} {
+				if noop.editMetadata && tc.name != "invalid" {
+					continue
+				}
 				t.Run(noop.name, func(t *testing.T) {
 					if noop.emptyCommit {
 						_, err := local.Git("commit", "--allow-empty", "-m", "advance ref without changing files")
@@ -78,21 +91,51 @@ func TestIntegrationProvisioning_IncrementalSync_NoopFolderMetadata(t *testing.T
 						require.NoError(t, err)
 					}
 
+					if noop.editDashboard {
+						unrelatedTitle = "Edited Dashboard"
+						require.NoError(t, local.UpdateFile("unrelated.json", string(common.DashboardJSON("unrelated-dash", "Edited Dashboard", 2))))
+						_, err := local.Git("add", ".")
+						require.NoError(t, err)
+						_, err = local.Git("commit", "-m", "edit unrelated dashboard")
+						require.NoError(t, err)
+						_, err = local.Git("push")
+						require.NoError(t, err)
+					}
+
+					if noop.editMetadata {
+						require.NoError(t, local.UpdateFile("team/_folder.json", string(invalidFolderMetadataJSON("Still Broken"))))
+						_, err := local.Git("add", ".")
+						require.NoError(t, err)
+						_, err = local.Git("commit", "-m", "edit one invalid manifest")
+						require.NoError(t, err)
+						_, err = local.Git("push")
+						require.NoError(t, err)
+					}
+
 					common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental,
 						common.Expect(common.HasNoErrors(), common.HasState(tc.state), func(t *testing.T, job *unstructured.Unstructured) {
 							jobObj := common.MustFromUnstructured[provisioning.Job](t, job)
-							require.Equal(t, noop.message, jobObj.Status.Message)
+							if noop.message != "" {
+								require.Equal(t, noop.message, jobObj.Status.Message)
+							}
 							if tc.warning == "" {
 								require.Empty(t, jobObj.Status.Warnings)
 							} else {
 								common.RequireJobWarningContains(t, jobObj, tc.warning)
 								common.RequireJobWarningContains(t, jobObj, "team/")
+								expectedWarnings := 1
+								if tc.name == "invalid" {
+									expectedWarnings = 2
+									common.RequireJobWarningContains(t, jobObj, "other/")
+								}
+								require.Len(t, jobObj.Status.Warnings, expectedWarnings)
 							}
 						}))
 					helper.WaitForConditionReason(t, repoName, provisioning.ConditionTypePullStatus, tc.reason)
 					common.RequireRepoFolderUID(t, helper.Folders, repoName, folderUID)
 					common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
-						"noop-dash": {Title: "Noop Dashboard", SourcePath: "team/dashboard.json", Folder: folderUID},
+						"noop-dash":      {Title: "Noop Dashboard", SourcePath: "team/dashboard.json", Folder: folderUID},
+						"unrelated-dash": {Title: unrelatedTitle, SourcePath: "unrelated.json"},
 					})
 				})
 			}
