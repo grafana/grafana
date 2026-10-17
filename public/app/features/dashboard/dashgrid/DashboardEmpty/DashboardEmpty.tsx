@@ -13,6 +13,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { canManuallyEditDashboard } from 'app/features/dashboard-scene/scene/dashboardModes';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
+import { TilingLayoutManager } from 'app/features/dashboard-scene/scene/layout-tiling/TilingLayoutManager';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -129,6 +130,7 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
 const LayoutPickerEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   const { body } = dashboard.useState();
   const isAutoGrid = body instanceof AutoGridLayoutManager;
+  const isTiling = body instanceof TilingLayoutManager;
 
   const onSelectAutoGrid = () => {
     dashboard.switchLayout(AutoGridLayoutManager.createEmpty());
@@ -138,6 +140,11 @@ const LayoutPickerEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   const onSelectCustomGrid = () => {
     dashboard.switchLayout(DefaultGridLayoutManager.createEmpty());
     dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
+  };
+
+  // Tiling is only available on the top level, so it is not made the default layout for new tabs and rows.
+  const onSelectTiling = () => {
+    dashboard.switchLayout(TilingLayoutManager.createEmpty());
   };
 
   return (
@@ -179,16 +186,19 @@ const LayoutPickerEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
             />
             <FilterPill
               label={t('dashboard.empty.custom-grid', 'Custom grid')}
-              selected={!isAutoGrid}
+              selected={!isAutoGrid && !isTiling}
               onClick={onSelectCustomGrid}
             />
+            <FilterPill label={t('dashboard.empty.tiling', 'Tiling')} selected={isTiling} onClick={onSelectTiling} />
           </Stack>
         </Box>
         <Box marginTop={1} paddingX={4}>
           <Text element="p" textAlignment="center" color="secondary">
             {isAutoGrid
               ? t('dashboard.empty.auto-grid-description', 'Panels resize to fit and form uniform grids')
-              : t('dashboard.empty.custom-grid-description', 'Position and size each panel individually')}
+              : isTiling
+                ? t('dashboard.empty.tiling-description', 'Dock, tab, float and resize panels like in an IDE')
+                : t('dashboard.empty.custom-grid-description', 'Position and size each panel individually')}
           </Text>
         </Box>
       </Box>
