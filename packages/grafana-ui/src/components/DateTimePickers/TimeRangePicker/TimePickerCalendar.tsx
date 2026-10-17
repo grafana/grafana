@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
+import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { createRef, type FormEvent, memo } from 'react';
+import { type FormEvent, memo, useRef } from 'react';
 
 import { type DateTime, type GrafanaTheme2, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -15,15 +16,9 @@ import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
 import { Header } from './CalendarHeader';
 
-const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    container: css({
-      top: 0,
-      position: 'absolute',
-      [`${isReversed ? 'left' : 'right'}`]: '546px', // lmao
-    }),
-
     modalContainer: css({
       label: 'modalContainer',
       margin: '0 auto',
@@ -69,14 +64,22 @@ export interface TimePickerCalendarProps {
   isFullscreen: boolean;
   timeZone?: TimeZone;
   isReversed?: boolean;
+  anchorElement: HTMLElement | null;
 }
 
 function TimePickerCalendar(props: TimePickerCalendarProps) {
   const theme = useTheme2();
   const { modalBackdrop } = useStyles2(getModalStyles);
-  const styles = getStyles(theme, props.isReversed);
+  const styles = getStyles(theme);
   const { isOpen, isFullscreen: isFullscreenProp, onClose } = props;
-  const ref = createRef<HTMLElement>();
+  const ref = useRef<HTMLElement>(null);
+  const { refs, floatingStyles } = useFloating({
+    elements: { reference: props.anchorElement },
+    placement: props.isReversed ? 'right-start' : 'left-start',
+    strategy: 'fixed',
+    middleware: [flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
   const { dialogProps } = useDialog(
     {
       'aria-label': selectors.components.TimePicker.calendar.label,
@@ -116,7 +119,9 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   if (!showInModal) {
     return (
       <FocusScope contain restoreFocus autoFocus>
-        <div className={styles.container}>{calendar}</div>
+        <div ref={refs.setFloating} style={floatingStyles}>
+          {calendar}
+        </div>
       </FocusScope>
     );
   }

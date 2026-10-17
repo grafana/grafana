@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { type RefObject, useCallback, useEffect } from 'react';
+import { useController, useForm } from 'react-hook-form';
 
 import {
   type DateTime,
@@ -18,16 +18,15 @@ import { type TimeZone } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Button } from '../../Button/Button';
-import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
-import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { type WeekStart } from '../WeekStartPicker';
 import { isValid } from '../utils';
 
-import TimePickerCalendar from './TimePickerCalendar';
+import { TimeRangeFields } from './TimeRangeFields';
 
 interface Props {
+  calendarAnchor: RefObject<HTMLElement | null>;
   isFullscreen: boolean;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
@@ -68,16 +67,15 @@ export const TimeRangeContent = (props: Props) => {
     fiscalYearStartMonth,
     onError,
     weekStart,
+    calendarAnchor,
   } = props;
   const style = useStyles2(getStyles);
-  const [isOpen, setOpen] = useState(false);
 
   const {
     handleSubmit,
-    register,
+    control,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<FormState>({
     defaultValues: {
       from: valueAsString(value.raw.from, timeZone),
@@ -85,16 +83,52 @@ export const TimeRangeContent = (props: Props) => {
     },
   });
 
-  const fromFieldId = useId();
-  const toFieldId = useId();
+  const { field: fromField } = useController({
+    name: 'from',
+    control,
+    rules: {
+      required: ERROR_MESSAGES.default(),
+      validate: (value, formValues) => {
+        if (!isValid(value, false, timeZone)) {
+          return ERROR_MESSAGES.default();
+        }
+        if (
+          !!formValues.to &&
+          isValid(formValues.to, true, timeZone) &&
+          isRangeInvalid(value, formValues.to, timeZone)
+        ) {
+          return ERROR_MESSAGES.range();
+        }
+        return true;
+      },
+    },
+  });
+  const { field: toField } = useController({
+    name: 'to',
+    control,
+    rules: {
+      required: ERROR_MESSAGES.default(),
+      validate: (value, formValues) => {
+        if (!isValid(value, true, timeZone)) {
+          return ERROR_MESSAGES.default();
+        }
+        if (
+          !!formValues.from &&
+          isValid(formValues.from, false, timeZone) &&
+          isRangeInvalid(formValues.from, value, timeZone)
+        ) {
+          return ERROR_MESSAGES.range();
+        }
+        return true;
+      },
+    },
+  });
 
   // Synchronize internal state with external value
   useEffect(() => {
     setValue('from', valueAsString(value.raw.from, timeZone));
     setValue('to', valueAsString(value.raw.to, timeZone));
   }, [value.raw.from, value.raw.to, setValue, timeZone]);
-
-  const onOpen = () => setOpen(true);
 
   const onApply = useCallback(() => {
     handleSubmit((data) => {
@@ -111,12 +145,6 @@ export const TimeRangeContent = (props: Props) => {
     },
     [setValue, timeZone]
   );
-
-  const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      onApply();
-    }
-  };
 
   const onCopy = () => {
     const rawSource: RawTimeRange = value.raw;
@@ -158,82 +186,39 @@ export const TimeRangeContent = (props: Props) => {
     </div>
   );
 
-  const icon = (
-    <Button
-      aria-label={t('time-picker.range-content.open-input-calendar', 'Open calendar')}
-      data-testid={selectors.components.TimePicker.calendar.openButton}
-      icon="calendar-alt"
-      variant="secondary"
-      type="button"
-      onClick={onOpen}
-    />
-  );
-
   return (
     <div>
-      <div className={style.fieldContainer}>
-        <Field
-          label={t('time-picker.range-content.from-input', 'From')}
-          invalid={!!errors.from}
-          error={errors.from?.message}
-        >
-          <Input
-            {...register('from', {
-              required: ERROR_MESSAGES.default(),
-
-              validate: (value, formValues) => {
-                if (!isValid(value, false, timeZone)) {
-                  return ERROR_MESSAGES.default();
-                }
-                if (
-                  !!formValues.to &&
-                  isValid(formValues.to, true, timeZone) &&
-                  isRangeInvalid(value, formValues.to, timeZone)
-                ) {
-                  return ERROR_MESSAGES.range();
-                }
-                return true;
-              },
-            })}
-            id={fromFieldId}
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={submitOnEnter}
-            addonAfter={icon}
-            autoComplete="off"
-            data-testid={selectors.components.TimePicker.fromField}
-          />
-        </Field>
-        {fyTooltip}
-      </div>
-      <div className={style.fieldContainer}>
-        <Field label={t('time-picker.range-content.to-input', 'To')} invalid={!!errors.to} error={errors.to?.message}>
-          <Input
-            {...register('to', {
-              required: ERROR_MESSAGES.default(),
-              validate: (value, formValues) => {
-                if (!isValid(value, true, timeZone)) {
-                  return ERROR_MESSAGES.default();
-                }
-                if (
-                  !!formValues.from &&
-                  isValid(formValues.from, false, timeZone) &&
-                  isRangeInvalid(formValues.from, value, timeZone)
-                ) {
-                  return ERROR_MESSAGES.range();
-                }
-                return true;
-              },
-            })}
-            id={toFieldId}
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={submitOnEnter}
-            addonAfter={icon}
-            autoComplete="off"
-            data-testid={selectors.components.TimePicker.toField}
-          />
-        </Field>
-        {fyTooltip}
-      </div>
+      <TimeRangeFields
+        fieldSuffix={fyTooltip}
+        calendarAnchor={calendarAnchor}
+        onSubmit={onApply}
+        from={{
+          value: fromField.value,
+          onChange: fromField.onChange,
+          onBlur: fromField.onBlur,
+          inputRef: fromField.ref,
+          error: errors.from?.message,
+          testId: selectors.components.TimePicker.fromField,
+        }}
+        to={{
+          value: toField.value,
+          onChange: toField.onChange,
+          onBlur: toField.onBlur,
+          inputRef: toField.ref,
+          error: errors.to?.message,
+          testId: selectors.components.TimePicker.toField,
+        }}
+        calendar={{
+          isFullscreen,
+          from: dateTimeParse(fromField.value, { timeZone }),
+          to: dateTimeParse(toField.value, { timeZone }),
+          onApply,
+          onChange,
+          timeZone,
+          isReversed,
+          weekStart,
+        }}
+      />
       <div className={style.buttonsContainer}>
         <Button
           data-testid={selectors.components.TimePicker.copyTimeRange}
@@ -255,19 +240,6 @@ export const TimeRangeContent = (props: Props) => {
           <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
         </Button>
       </div>
-
-      <TimePickerCalendar
-        isFullscreen={isFullscreen}
-        isOpen={isOpen}
-        from={dateTimeParse(watch('from'), { timeZone })}
-        to={dateTimeParse(watch('to'), { timeZone })}
-        onApply={onApply}
-        onClose={() => setOpen(false)}
-        onChange={onChange}
-        timeZone={timeZone}
-        isReversed={isReversed}
-        weekStart={weekStart}
-      />
     </div>
   );
 };
@@ -295,9 +267,6 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    fieldContainer: css({
-      display: 'flex',
-    }),
     buttonsContainer: css({
       display: 'flex',
       gap: theme.spacing(0.5),
