@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Fragment } from 'react';
+import { Fragment, type Ref } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -20,6 +20,8 @@ export interface ScopesInputProps {
   loading: boolean;
   onInputClick: () => void;
   onRemoveAllClick: () => void;
+  /** Ref to the input element, used to anchor the selector popover underneath it */
+  inputRef?: Ref<HTMLElement>;
 }
 
 /**
@@ -33,6 +35,7 @@ export function ScopesInput({
   loading,
   onInputClick,
   onRemoveAllClick,
+  inputRef,
 }: ScopesInputProps) {
   const firstScope = appliedScopes[0];
   const scope = scopes[firstScope?.scopeId];
@@ -93,7 +96,7 @@ export function ScopesInput({
   };
 
   return (
-    <Tooltip content={tooltipContent} interactive>
+    <Tooltip content={tooltipContent} interactive ref={inputRef}>
       <button
         type="button"
         className={styles.fakeInput}
