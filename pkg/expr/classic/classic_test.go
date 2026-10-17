@@ -559,7 +559,9 @@ func TestConditionsCmd(t *testing.T) {
 			},
 		},
 		expected: func() mathexp.Results {
-			v := newNumber(nil)
+			// A is NoData but B fires: OR means the rule fires, matching legacy
+			// alerting's behavior of checking firing before nodata (#92974).
+			v := newNumber(new(1.0))
 			v.SetMeta([]EvalMatch{{Metric: "NoData"}, {Value: new(5.0)}})
 			return newResults(v)
 		},
@@ -590,7 +592,9 @@ func TestConditionsCmd(t *testing.T) {
 			},
 		},
 		expected: func() mathexp.Results {
-			v := newNumber(nil)
+			// A fires and B is NoData: OR means the rule fires, matching legacy
+			// alerting's behavior of checking firing before nodata (#92974).
+			v := newNumber(new(1.0))
 			v.SetMeta([]EvalMatch{{Value: new(5.0)}, {Metric: "NoData"}})
 			return newResults(v)
 		},
