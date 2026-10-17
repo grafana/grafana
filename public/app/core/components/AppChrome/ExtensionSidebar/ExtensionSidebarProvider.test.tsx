@@ -10,10 +10,10 @@ import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionS
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import {
-  claimFloatingExtensionSidebar,
   holdFloatingExtensionSidebar,
   onExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarFloatingOverride,
   setExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import {
@@ -669,20 +669,17 @@ describe('ExtensionSidebarProvider', () => {
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
     });
 
-    it('floats while a claim holds, with the flag off', () => {
+    it('floats while the override is on, with the flag off', () => {
       renderPresentation();
 
-      let release = () => {};
-      act(() => {
-        release = claimFloatingExtensionSidebar();
-      });
+      act(() => setExtensionSidebarFloatingOverride(true));
       expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
 
-      act(() => release());
+      act(() => setExtensionSidebarFloatingOverride(false));
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
     });
 
-    it('docks a plugin that does not support floating, even while a claim holds', () => {
+    it('docks a plugin that does not support floating, even while the override is on', () => {
       useAsyncMock.mockReturnValue({
         loading: false,
         value: new Map([
@@ -692,9 +689,7 @@ describe('ExtensionSidebarProvider', () => {
       });
       renderPresentation(mockPathfinderMeta.pluginId);
 
-      act(() => {
-        claimFloatingExtensionSidebar();
-      });
+      act(() => setExtensionSidebarFloatingOverride(true));
 
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
     });

@@ -27,29 +27,21 @@ const PRESENTATION_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarPrese
  */
 const FLOATING_EXTENSION_SIDEBAR_PLUGINS = ['grafana-assistant-app'];
 
-interface FloatingClaim {
-  /**
-   * Called when the user docks the sidebar while the claim holds. The claim is already withdrawn: the
-   * user's choice wins, and whatever took the claim carries on docked.
-   */
-  onDocked?: () => void;
-}
-
 /**
  * Two inputs decide the layout:
  * - the layout the user asked for per surface, through the restricted `extensionSidebar` API. Floating only
  *   applies while `grafana.extensionSidebarFloating` is on.
- * - claims that float the sidebar for a while whatever the user asked for, such as a Composer session. They
- *   do not need the flag. Releasing the last one brings the user's layout back.
+ * - an override that floats the sidebar for a while whatever the user asked for, such as a Composer session.
+ *   It does not need the flag. Turning it off brings the user's layout back.
  * Either way, only a plugin that supports floating floats. `ExtensionSidebarContextProvider` resolves the
  * effective layout.
  *
  * Module state on purpose: there is one extension sidebar per page, and plugins reach it only through the
  * restricted API, not an app event any plugin could publish. The requested layout is loaded lazily from local
- * storage; claims are never persisted.
+ * storage; the override is never persisted, since whatever turned it on is gone after a reload.
  */
 let requested: Partial<Record<LayoutSurface, ExtensionSidebarPresentation>> | undefined;
-const claims = new Set<FloatingClaim>();
+let floatingOverride = false;
 const listeners = new Set<() => void>();
 const closeListeners = new Set<() => void>();
 
@@ -72,15 +64,15 @@ function currentPath(): string {
   return locationService.getLocation().pathname;
 }
 
-/** Whether the user may float the extension sidebar. Claims float it regardless. */
+/** Whether the user may float the extension sidebar. The override floats it regardless. */
 export function canFloatExtensionSidebar(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaExtensionSidebarFloating, false);
 }
 
 /**
  * Sets the requested layout for the current page's surface. Floating is ignored while
- * `canFloatExtensionSidebar()` is false. Docking also withdraws every claim, calling its `onDocked`, so a docked
- * sidebar never stays floated by one.
+ * `canFloatExtensionSidebar()` is false. Docking also turns the override off: the user's choice wins, and
+ * whatever turned it on carries on docked.
  */
 export function setExtensionSidebarPresentation(
   presentation: ExtensionSidebarPresentation,
@@ -89,12 +81,14 @@ export function setExtensionSidebarPresentation(
   if (presentation === 'floating' && !canFloatExtensionSidebar()) {
     return;
   }
-  const ended = presentation === 'docked' ? [...claims] : [];
+  const endsOverride = presentation === 'docked' && floatingOverride;
   const from = getRequestedExtensionSidebarPresentation(path);
-  if (presentation === from && ended.length === 0) {
+  if (presentation === from && !endsOverride) {
     return;
   }
-  ended.forEach((claim) => claims.delete(claim));
+  if (endsOverride) {
+    floatingOverride = false;
+  }
   if (presentation !== from) {
     const surface = getSurface(path);
     requested = { ...getRequested(), [surface]: presentation };
@@ -102,42 +96,36 @@ export function setExtensionSidebarPresentation(
     reportInteraction('grafana_extension_sidebar_presentation_changed', { from, to: presentation, surface });
   }
   notify();
-  ended.forEach((claim) => claim.onDocked?.());
 }
 
 /**
- * Floats the sidebar until the returned release is called, or until the user docks it. Releasing brings back
- * the layout the user asked for: the one from before the claim, or the last one they chose since.
+ * Floats the sidebar while on, until it is turned off or the user docks it. Turning it off brings back the
+ * layout the user asked for: the one from before, or the last one they chose since.
  */
-export function claimFloatingExtensionSidebar(claim: FloatingClaim = {}): () => void {
-  // A fresh entry, so the same options object can back two claims.
-  const entry: FloatingClaim = { ...claim };
-  claims.add(entry);
-  notify();
-  return () => {
-    if (claims.delete(entry)) {
-      notify();
-    }
-  };
+export function setExtensionSidebarFloatingOverride(on: boolean): void {
+  if (floatingOverride !== on) {
+    floatingOverride = on;
+    notify();
+  }
 }
 
-/** Whether a claim floats the sidebar right now. Subscribe with `subscribeToExtensionSidebarPresentation`. */
-export function isExtensionSidebarFloatingClaimed(): boolean {
-  return claims.size > 0;
+/** Whether the override floats the sidebar right now. Subscribe with `subscribeToExtensionSidebarPresentation`. */
+export function isExtensionSidebarFloatingOverridden(): boolean {
+  return floatingOverride;
 }
 
 /**
  * The layout `pluginId`'s sidebar shows on the current page, given the requested one: floating only for a plugin
- * that supports it, and then while a claim holds or while the flag allows the requested floating.
+ * that supports it, and then while the override is on or while the flag allows the requested floating.
  */
 export function resolveExtensionSidebarPresentation(
   requestedPresentation: ExtensionSidebarPresentation,
   canFloat: boolean,
   pluginId: string | undefined,
-  floatingClaimed = false
+  floatingOverridden = false
 ): ExtensionSidebarPresentation {
   const supportsFloating = pluginId !== undefined && FLOATING_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId);
-  return supportsFloating && (floatingClaimed || (canFloat && requestedPresentation === 'floating'))
+  return supportsFloating && (floatingOverridden || (canFloat && requestedPresentation === 'floating'))
     ? 'floating'
     : 'docked';
 }
@@ -148,11 +136,11 @@ export function getEffectiveExtensionSidebarPresentation(pluginId: string | unde
     getRequestedExtensionSidebarPresentation(),
     canFloatExtensionSidebar(),
     pluginId,
-    isExtensionSidebarFloatingClaimed()
+    isExtensionSidebarFloatingOverridden()
   );
 }
 
-/** The requested layout for the current page, before the feature flag and the claims apply. */
+/** The requested layout for the current page, before the feature flag and the override apply. */
 export function getRequestedExtensionSidebarPresentation(path: string = currentPath()): ExtensionSidebarPresentation {
   const surface = getSurface(path);
   return getRequested()[surface] ?? DEFAULT_PRESENTATION[surface];
@@ -218,7 +206,7 @@ export function isFloatingExtensionSidebarHeld(): boolean {
 /** @internal Resets the layout between tests. */
 export function resetExtensionSidebarPresentationForTests(): void {
   requested = {};
-  claims.clear();
+  floatingOverride = false;
   floatingHolds.clear();
   listeners.clear();
 }

@@ -24,7 +24,7 @@ import {
   getEffectiveExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
-  isExtensionSidebarFloatingClaimed,
+  isExtensionSidebarFloatingOverridden,
   isFloatingExtensionSidebarHeld,
   notifyExtensionSidebarClosed,
   releaseFloatingExtensionSidebarHolds,
@@ -117,11 +117,11 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     subscribeToExtensionSidebarPresentation,
     getRequestedExtensionSidebarPresentation
   );
-  const floatingClaimed = useSyncExternalStore(
+  const floatingOverridden = useSyncExternalStore(
     subscribeToExtensionSidebarPresentation,
-    isExtensionSidebarFloatingClaimed
+    isExtensionSidebarFloatingOverridden
   );
-  // Turning the flag off docks a sidebar the user floated; a claim (Composer) floats it regardless.
+  // Turning the flag off docks a sidebar the user floated; the override (Composer) floats it regardless.
   const canFloat = useFlagGrafanaExtensionSidebarFloating();
   const floatingHeld = useSyncExternalStore(subscribeToExtensionSidebarPresentation, isFloatingExtensionSidebarHeld);
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
@@ -193,7 +193,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     requestedPresentation,
     canFloat,
     getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId,
-    floatingClaimed
+    floatingOverridden
   );
   const floatingHidden = dockedComponentId !== undefined && presentation === 'floating' && floatingHeld;
 

@@ -218,7 +218,7 @@ describe('the outstanding request', () => {
 });
 
 describe('a listener that declines', () => {
-  it('ends the request at once, releasing its floating claim', () => {
+  it('ends the request at once and stops floating the sidebar', () => {
     const decline = listen(
       undefined,
       jest.fn(() => false)

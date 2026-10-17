@@ -16,7 +16,10 @@
  */
 
 import { config } from '@grafana/runtime';
-import { claimFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
+import {
+  isExtensionSidebarFloatingOverridden,
+  setExtensionSidebarFloatingOverride,
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 
 import { dashboardComposerEnabled } from '../scene/dashboardModes';
@@ -55,11 +58,11 @@ let held: { target: ComposerTarget; at: number } | undefined;
 let outstanding: { target: ComposerTarget; timer: ReturnType<typeof setTimeout> } | undefined;
 /**
  * A request that floats the extension sidebar until Composer takes over, so a sidebar the picker opens never
- * paints docked first. The session takes its own claim when it starts; a failure, expiry or teardown
- * releases this one, so the user is never left with an empty floating box. `docked` records that the user
- * docked the sidebar while it waited: the entry still goes ahead, docked.
+ * paints docked first. A session that starts floating keeps the override on; a failure, expiry or teardown
+ * turns it off, so the user is never left with an empty floating box. If the user docks the sidebar while it
+ * waits, the override is off and the entry still goes ahead, docked.
  */
-let floated: { target: ComposerTarget; release: () => void; docked: boolean } | undefined;
+let floated: { target: ComposerTarget } | undefined;
 
 /**
  * Registers a listener for Composer entry requests on the document types in `options.resources`, or on
@@ -113,17 +116,8 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
   clearPendingComposerEnterRequest();
   outstanding = { target, timer: setTimeout(clearPendingComposerEnterRequest, PENDING_REQUEST_TTL_MS) };
   if (float) {
-    const request = {
-      target,
-      release: claimFloatingExtensionSidebar({
-        // The user's choice wins: the claim is gone, and the session this request starts stays docked.
-        onDocked: () => {
-          request.docked = true;
-        },
-      }),
-      docked: false,
-    };
-    floated = request;
+    floated = { target };
+    setExtensionSidebarFloatingOverride(true);
   }
   notifyChange();
   if (!listener) {
@@ -134,8 +128,8 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
 }
 
 /**
- * Ends the request still outstanding, so it never fires late, and releases its floating claim (navigation,
- * scene teardown, a newer request, expiry).
+ * Ends the request still outstanding, so it never fires late, and stops floating the sidebar for it
+ * (navigation, scene teardown, a newer request, expiry).
  */
 export function clearPendingComposerEnterRequest(): void {
   const hadRequest = outstanding !== undefined;
@@ -164,13 +158,17 @@ export function subscribeToComposerEnterRequests(listener: () => void): () => vo
 }
 
 /**
- * Ends the request on `uid` once an entry attempt on it is over, releasing its floating claim. A session that
- * started holds its own claim by then, so the sidebar keeps floating; after a failure it goes back to the
- * user's layout.
+ * Ends the request on `uid` once an entry attempt on it is over. With `keepFloating`, a session started
+ * floating and takes the override over, so the sidebar keeps floating; otherwise it goes back to the user's
+ * layout.
  */
-export function settleComposerEnterRequest(uid: string): void {
+export function settleComposerEnterRequest(uid: string, { keepFloating = false } = {}): void {
   if (floated?.target.uid === uid) {
-    releaseFloatedSidebar();
+    if (keepFloating) {
+      floated = undefined;
+    } else {
+      releaseFloatedSidebar();
+    }
   }
   if (outstanding?.target.uid === uid) {
     dropOutstanding();
@@ -180,12 +178,14 @@ export function settleComposerEnterRequest(uid: string): void {
 
 /** Whether the user docked the sidebar while the request on `uid` waited, so its session should not float. */
 export function wasComposerEnterRequestDocked(uid: string): boolean {
-  return floated?.target.uid === uid && floated.docked;
+  return floated?.target.uid === uid && !isExtensionSidebarFloatingOverridden();
 }
 
 function releaseFloatedSidebar(): void {
-  floated?.release();
-  floated = undefined;
+  if (floated) {
+    floated = undefined;
+    setExtensionSidebarFloatingOverride(false);
+  }
 }
 
 function dropOutstanding(): void {
@@ -214,7 +214,7 @@ function updateSupported(before: readonly ComposerResource[]): void {
 
 /**
  * Hands the held request to the first listener to register, once. One that does not support its resource
- * releases it instead: the claim goes and the picker shows what the dashboard is in.
+ * releases it instead: the sidebar stops floating and the picker shows what the dashboard is in.
  */
 function deliverHeldRequest(listener: EnterRequestListener, resources: ReadonlySet<ComposerResource>): void {
   const request = held;
@@ -231,7 +231,7 @@ function deliverHeldRequest(listener: EnterRequestListener, resources: ReadonlyS
 
 /**
  * Hands `target` to `listener`. A listener that returns `false` declines it: the request ends at once (its
- * floating claim goes, and the picker or switch stops showing it pending) and is offered to nobody else.
+ * sidebar stops floating for it, and the picker or switch stops showing it pending) and is offered to nobody else.
  * Anything else leaves it outstanding until an entry attempt settles it or it expires. Returns whether the
  * request stands.
  */

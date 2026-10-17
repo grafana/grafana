@@ -9,8 +9,8 @@
  */
 
 import {
-  claimFloatingExtensionSidebar,
   onExtensionSidebarClosed,
+  setExtensionSidebarFloatingOverride,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { canEnterComposer } from 'app/features/dashboard-scene/composer/composerAccess';
 import {
@@ -92,22 +92,25 @@ export const composerApi: ComposerAPI = {
     // The sidebar is the host's concern, not the session's. Composer is a mode of the Assistant, not a
     // layout: entering floats the sidebar, the user may dock it and stay in Composer, and ending the session
     // brings back the layout from before it, or the user's last choice since. Closing the sidebar ends it.
+    // Docked while the picker's request waited: the entry proceeds docked.
+    const floating = presentation === 'floating' && !wasComposerEnterRequestDocked(uid);
     if (presentation === 'floating') {
       const enteredSession = session;
-      // Docked while the picker's request waited: the entry proceeds docked.
-      const release = wasComposerEnterRequestDocked(uid) ? () => {} : claimFloatingExtensionSidebar();
+      if (floating) {
+        setExtensionSidebarFloatingOverride(true);
+      }
       const stopOnClose = onExtensionSidebarClosed(() => enteredSession.exit());
       session.signal.addEventListener(
         'abort',
         () => {
           stopOnClose();
-          release();
+          setExtensionSidebarFloatingOverride(false);
         },
         { once: true }
       );
     }
-    // After the session's claim, so a sidebar the picker floated never docks in between.
-    settleComposerEnterRequest(uid);
+    // The session takes the request's override over, so a sidebar the picker floated never docks in between.
+    settleComposerEnterRequest(uid, { keepFloating: floating });
     return session;
   },
 };

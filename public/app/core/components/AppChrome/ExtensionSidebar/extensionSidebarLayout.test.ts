@@ -3,15 +3,16 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   canFloatExtensionSidebar,
-  claimFloatingExtensionSidebar,
   getEffectiveExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
+  isExtensionSidebarFloatingOverridden,
   isFloatingExtensionSidebarHeld,
   notifyExtensionSidebarClosed,
   onExtensionSidebarClosed,
   releaseFloatingExtensionSidebarHolds,
   resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarFloatingOverride,
   setExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
@@ -133,64 +134,62 @@ describe('extensionSidebarLayout', () => {
     ]);
   });
 
-  describe('floating claims', () => {
-    it('float the sidebar with the flag off until the last one is released', () => {
-      const releaseFirst = claimFloatingExtensionSidebar();
-      const releaseSecond = claimFloatingExtensionSidebar();
+  describe('the floating override', () => {
+    it('floats the sidebar with the flag off until it is turned off', () => {
+      setExtensionSidebarFloatingOverride(true);
       expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
 
-      releaseFirst();
-      releaseFirst();
-      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
-
-      releaseSecond();
+      setExtensionSidebarFloatingOverride(false);
       expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('docked');
     });
 
-    it('float only a plugin that supports floating', () => {
-      claimFloatingExtensionSidebar();
+    it('floats only a plugin that supports floating', () => {
+      setExtensionSidebarFloatingOverride(true);
 
       expect(getEffectiveExtensionSidebarPresentation('other-app')).toBe('docked');
       expect(getEffectiveExtensionSidebarPresentation(undefined)).toBe('docked');
     });
 
-    it("bring back the user's layout when released", () => {
+    it("brings back the user's layout when turned off", () => {
       setTestFlags({ [FLOATING_FLAG]: true });
       setExtensionSidebarPresentation('floating');
-      const releaseFloating = claimFloatingExtensionSidebar();
-      releaseFloating();
+      setExtensionSidebarFloatingOverride(true);
+      setExtensionSidebarFloatingOverride(false);
       expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
 
       setExtensionSidebarPresentation('docked');
-      const releaseDocked = claimFloatingExtensionSidebar();
+      setExtensionSidebarFloatingOverride(true);
       expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
-      releaseDocked();
+      setExtensionSidebarFloatingOverride(false);
       expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('docked');
     });
 
-    it('are withdrawn when the user docks the sidebar, after it has docked', () => {
+    it('turns off when the user docks the sidebar, even if already docked as requested', () => {
       setExtensionSidebarPresentation('docked');
-      const seen: string[] = [];
-      const onDocked = jest.fn(() => seen.push(getEffectiveExtensionSidebarPresentation(ASSISTANT)));
-      claimFloatingExtensionSidebar({ onDocked });
+      setExtensionSidebarFloatingOverride(true);
 
-      // Already docked as requested, docking still withdraws the claim.
       setExtensionSidebarPresentation('docked');
 
-      expect(onDocked).toHaveBeenCalledTimes(1);
-      expect(seen).toEqual(['docked']);
-      setExtensionSidebarPresentation('docked');
-      expect(onDocked).toHaveBeenCalledTimes(1);
+      expect(isExtensionSidebarFloatingOverridden()).toBe(false);
+      expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('docked');
     });
 
-    it('are not ended by a floating request the flag ignores', () => {
-      const onDocked = jest.fn();
-      claimFloatingExtensionSidebar({ onDocked });
+    it('stays on for a floating request the flag ignores', () => {
+      setExtensionSidebarFloatingOverride(true);
 
       setExtensionSidebarPresentation('floating');
 
-      expect(onDocked).not.toHaveBeenCalled();
+      expect(isExtensionSidebarFloatingOverridden()).toBe(true);
       expect(getEffectiveExtensionSidebarPresentation(ASSISTANT)).toBe('floating');
+    });
+
+    it('is not saved', () => {
+      const key = 'grafana.navigation.extensionSidebarPresentationBySurface';
+      const saved = window.localStorage.getItem(key);
+
+      setExtensionSidebarFloatingOverride(true);
+
+      expect(window.localStorage.getItem(key)).toBe(saved);
     });
   });
 
