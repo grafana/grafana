@@ -2,6 +2,7 @@ import {
   buildSubScopePath,
   deserializeFolderPath,
   getDashboardPathForComparison,
+  isCrossOriginUrl,
   isCurrentPath,
   serializeFolderPath,
 } from './scopeNavgiationUtils';
@@ -34,6 +35,26 @@ describe('scopeNavgiationUtils', () => {
   it('should return the correct path for a navigation with hash', () => {
     expect(isCurrentPath('/d/dashboardId/slug', '/d/dashboardId#hash')).toBe(true);
     expect(isCurrentPath('/d/dashboardId', '/d/dashboardId#hash')).toBe(true);
+  });
+
+  describe('isCrossOriginUrl', () => {
+    it('should return false for same-origin paths', () => {
+      expect(isCrossOriginUrl('/d/dashboardId')).toBe(false);
+      expect(isCrossOriginUrl('/a/grafana-metricsdrilldown-app?from=now-1h')).toBe(false);
+      expect(isCrossOriginUrl('d/dashboardId')).toBe(false);
+      expect(isCrossOriginUrl(`${window.location.origin}/d/dashboardId`)).toBe(false);
+    });
+
+    it('should return true for absolute and protocol-relative URLs to other origins', () => {
+      expect(isCrossOriginUrl('https://example.com/path')).toBe(true);
+      expect(isCrossOriginUrl('//example.com/path')).toBe(true);
+    });
+
+    it('should return true for backslash paths that browsers resolve to another origin', () => {
+      expect(isCrossOriginUrl('/\\example.com')).toBe(true);
+      expect(isCrossOriginUrl('\\\\example.com')).toBe(true);
+      expect(isCrossOriginUrl('/\\/example.com')).toBe(true);
+    });
   });
 
   describe('deserializeFolderPath', () => {

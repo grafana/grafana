@@ -64,6 +64,19 @@ export function serializeFolderPath(path: string[]): string {
   return encodeURIComponent(path.join(','));
 }
 
+/**
+ * Whether `to` resolves to a different origin than the current page.
+ * Resolved with `new URL()` rather than checked by prefix: browsers treat `\` like `/`, so `/\example.com`
+ * resolves to https://example.com without starting with `http` or `//`.
+ */
+export function isCrossOriginUrl(to: string): boolean {
+  try {
+    return new URL(to, window.location.origin).origin !== window.location.origin;
+  } catch {
+    return true;
+  }
+}
+
 // Pathname comes from location.pathname
 export function isCurrentPath(pathname: string, to: string): boolean {
   const isDashboard = to.startsWith('/d/');
