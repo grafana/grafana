@@ -177,6 +177,9 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		logger.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
+	if s.info.RoleAttributeStrict && s.info.SkipOrgRoleSync {
+		logger.Warn("RoleAttributeStrict and skipOrgRoleSync are both set, role mapping will not be evaluated and users will not be denied access, consider setting one or the other")
+	}
 
 	if !s.info.SkipOrgRoleSync {
 		directlyMappedRole, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, userInfo.Groups)

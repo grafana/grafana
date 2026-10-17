@@ -498,6 +498,7 @@ func validateInfo(info *social.OAuthInfo, oldInfo *social.OAuthInfo, requester i
 		validation.RequiredValidator(info.ClientId, "Client Id"),
 		validation.AllowAssignGrafanaAdminValidator(info, oldInfo, requester),
 		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator,
+		validation.SkipOrgRoleSyncRoleAttributeStrictValidator,
 		validation.OrgAttributePathValidator(info, oldInfo, requester),
 		validation.OrgMappingValidator(info, oldInfo, requester),
 		validation.LoginPromptValidator,
