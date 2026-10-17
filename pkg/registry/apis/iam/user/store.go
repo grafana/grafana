@@ -229,10 +229,10 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		UID:        name,
 		Pagination: common.Pagination{Limit: 1},
 	})
-	if found == nil || err != nil {
-		return nil, userResource.NewNotFound(name)
+	if err != nil {
+		return nil, err
 	}
-	if len(found.Items) < 1 {
+	if found == nil || len(found.Items) < 1 {
 		return nil, userResource.NewNotFound(name)
 	}
 
