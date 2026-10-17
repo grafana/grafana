@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "A tartalom betöltése nem sikerült: {{error}}",
+        "hide-secrets": "",
         "loading": "Tartalom betöltése…",
         "notifications-title": "Értesítési konfiguráció előnézete",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Riasztási szabályok előnézete"
       },
       "recording-rules": "Felvételkészítési szabályok",
@@ -2743,7 +2747,8 @@
     "recording-rules": {
       "description-target-data-source": "A felvételi szabályok tárolására szolgáló Prometheus-adatforrás",
       "label-target-data-source": "Céladatforrás",
-      "target-data-source-required": "Először jelöljön ki egy céladatforrást"
+      "target-data-source-required": "Először jelöljön ki egy céladatforrást",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Válassza ki a névteret és a csoportot a felvételkészítési szabályhoz.",
@@ -6037,6 +6042,24 @@
       "tooltip-next": "Következő",
       "tooltip-previous": "Előző"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Asszisztens-sémaszerkesztés"
@@ -6155,6 +6178,9 @@
           "no-template-variables-found": "Nem található sablonváltozó"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Mégse",
@@ -7598,6 +7624,33 @@
       "body-restore-version": "Biztosan visszaállítja az irányítópultot a(z) {{version}} verzióra? Az összes nem mentett módosítás elveszik.",
       "confirmText-restore-version": "Igen, visszaállítás erre a verzióra: {{version}}",
       "title-restore-version": "Verzió visszaállítása"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Mentés",
@@ -10089,6 +10142,7 @@
             "name-humidity": "Páratartalom (%H)",
             "name-locale": "Helyi formátum",
             "name-number": "Szám",
+            "name-ordinal": "",
             "name-percent-1": "Százalék (0,0–1,0)",
             "name-percent-100": "Százalék (0–100)",
             "name-pixels": "Pixelek száma",
@@ -10214,7 +10268,9 @@
           },
           "name": "Mennyiség"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13225,6 +13281,7 @@
       "created-by-me": "Általam létrehozott",
       "error-conflict": "Ez a jegyzetfüzet megváltozott, miközben Ön elemeket adott hozzá. Próbálja meg újra hozzáadni a panelt a legújabb verzióhoz.",
       "error-generic": "Nem sikerült hozzáadni a panelt a jegyzetfüzethez",
+      "error-open-conflict": "",
       "list-error": "A jegyzetfüzetek betöltése nem sikerült",
       "list-error-body": "Valami hiba történt a jegyzetfüzetei betöltése során. Próbálja újra, vagy hozzon létre egy újat.",
       "list-no-matches": "Egyetlen jegyzetfüzet sem felel meg ezeknek a szűrőknek.",
@@ -13233,6 +13290,8 @@
       "list-truncated": "Nem minden jegyzetfüzet jelenik meg. Szűkítse a keresést, hogy megtalálja a többit.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Keresés cím szerint",
       "sort-alphabetical": "Betűrendben (A–Z)",
       "sort-label": "Jegyzetfüzetek rendezése",
@@ -13240,13 +13299,15 @@
       "sort-updated": "Nemrég frissített",
       "submit": "Hozzáadás a jegyzetfüzethez",
       "success": "Panel hozzáadva ehhez: {{title}}",
+      "success-cells": "",
       "success-link": "Jegyzetfüzet megtekintése",
       "tag-placeholder": "Szűrés címke alapján",
       "target-description": "Válassza ki a panel hozzáadásának helyét.",
       "target-existing": "Meglévő jegyzetfüzet",
       "target-label": "Céljegyzetfüzet",
       "target-new": "Új jegyzetfüzet",
-      "title": "Panel hozzáadása a jegyzetfüzethez"
+      "title": "Panel hozzáadása a jegyzetfüzethez",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16620,6 +16681,7 @@
     "name-page-size": "Lapméret",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Stílus a mezőből",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "Elemleírás elhelyezkedése",
