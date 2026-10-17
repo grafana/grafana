@@ -292,7 +292,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
 
-	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
+	b.parents = newParentsGetter(b.storage) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
 		parents: b.parents,

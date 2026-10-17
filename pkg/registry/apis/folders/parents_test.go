@@ -26,11 +26,11 @@ func TestParents(t *testing.T) {
 			name   string
 			folder string
 		}
-		getter      map[string]*folders.Folder
-		setupFn     func(*grafanarest.MockStorage) // called after the getter is registered
-		expected    *folders.FolderInfoList
-		expectedErr string
-		maxDepth    int // defaults to 5 unless set
+		getter            map[string]*folders.Folder
+		setupFn           func(*grafanarest.MockStorage) // called after the getter is registered
+		expected          *folders.FolderInfoList
+		expectedErr       string
+		expectedLookupErr string
 	}{
 		{
 			name: "no parents",
@@ -63,7 +63,8 @@ func TestParents(t *testing.T) {
 			}},
 		},
 		{
-			name: "error in parent",
+			name:              "error in parent",
+			expectedLookupErr: "custom error message",
 			request: input{
 				name:   "test",
 				folder: "parent", // NOTE that parent is not found
@@ -79,7 +80,8 @@ func TestParents(t *testing.T) {
 			}},
 		},
 		{
-			name: "parent is not a folder",
+			name:              "parent is not a folder",
+			expectedLookupErr: "expected folder, found: *unstructured.Unstructured",
 			request: input{
 				name:   "test",
 				folder: "parent", // not a folder
@@ -144,12 +146,7 @@ func TestParents(t *testing.T) {
 				}
 			}
 
-			maxDepth := tt.maxDepth
-			if maxDepth == 0 {
-				maxDepth = 5
-			}
-
-			getter := newParentsGetter(m, maxDepth)
+			getter := newParentsGetter(m)
 			parents, err := getter(context.TODO(), &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.request.name,
@@ -159,11 +156,19 @@ func TestParents(t *testing.T) {
 			})
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
-				require.NotNil(t, parents)
-				require.ElementsMatch(t, tt.expected.Items, parents.Items)
 			} else {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.expectedErr)
+				require.ErrorContains(t, err, tt.expectedErr)
+			}
+			if tt.expectedLookupErr == "" {
+				require.NoError(t, parents.LookupError)
+			} else {
+				require.ErrorContains(t, parents.LookupError, tt.expectedLookupErr)
+			}
+			if tt.expected == nil {
+				require.Nil(t, parents.Hierarchy)
+			} else {
+				require.NotNil(t, parents.Hierarchy)
+				require.ElementsMatch(t, tt.expected.Items, parents.Hierarchy.Items)
 			}
 		})
 	}

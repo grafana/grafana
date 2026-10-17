@@ -68,11 +68,11 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		info, err := r.parents(ctx, folderObj)
+		result, err := r.parents(ctx, folderObj)
 		if err != nil {
 			responder.Error(tracing.Error(span, err))
 			return
 		}
-		responder.Object(http.StatusOK, info)
+		responder.Object(http.StatusOK, result.Hierarchy)
 	}), nil
 }

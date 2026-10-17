@@ -254,7 +254,7 @@ func TestFolderParentsHandlerTracing(t *testing.T) {
 				}
 				return f, nil
 			}}
-			handler := &subParentsREST{getter: getter, parents: newParentsGetter(getter, 5)}
+			handler := &subParentsREST{getter: getter, parents: newParentsGetter(getter)}
 			responder := &recordingResponder{}
 			h, err := handler.Connect(ctx, "folder", nil, responder)
 			require.NoError(t, err)
@@ -313,7 +313,8 @@ func TestFolderParentsGetterTracing(t *testing.T) {
 			case "sharedwithme":
 				f.Name = folder.SharedWithMeFolderUID
 			}
-			info, err := newParentsGetter(getter, 5)(ctx, f)
+			result, err := newParentsGetter(getter)(ctx, f)
+			info := result.Hierarchy
 			traversal := folderSpan(t, recorder, "folders.getParents")
 			require.Len(t, recorder.Ended(), 1)
 			require.Equal(t, parent.SpanContext().SpanID(), traversal.Parent().SpanID())

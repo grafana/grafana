@@ -148,10 +148,16 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	// note: `parents` will include itself as the last item
-	parents, err := getter(ctx, f)
+	result, err := getter(ctx, f)
 	if err != nil {
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
+	if result.LookupError != nil {
+		// Normalize transport errors and return APIStatus directly so the API
+		// server preserves retryable status codes and retry hints.
+		return resource.StatusErrorFromResponse(nil, result.LookupError)
+	}
+	parents := result.Hierarchy
 
 	// Git Sync previews use dry-run creates with parents that may only exist
 	// on a repository branch. Require a complete chain only when persisting.
@@ -223,11 +229,11 @@ func validateOnUpdate(ctx context.Context,
 
 	// k6 folders stay together, so folders under k6 may not be moved out either
 	if !folder.IsRootFolderUID(oldFolder.GetFolder()) {
-		oldInfo, err := parents(ctx, old)
+		result, err := parents(ctx, old)
 		if err != nil {
 			return err
 		}
-		if hasK6Ancestor(oldInfo, obj.Name) {
+		if hasK6Ancestor(result.Hierarchy, obj.Name) {
 			return folder.ErrBadRequest.Errorf("k6 project may not be moved")
 		}
 	}
@@ -252,10 +258,11 @@ func validateOnUpdate(ctx context.Context,
 	if !ok {
 		return fmt.Errorf("expected folder, found %T", parentObj)
 	}
-	info, err := parents(ctx, parent)
+	result, err := parents(ctx, parent)
 	if err != nil {
 		return err
 	}
+	info := result.Hierarchy
 
 	// nothing may be moved into the k6 tree, at any depth
 	if hasK6Ancestor(info, obj.Name) {
@@ -467,12 +474,12 @@ func canSkipChildrenCheck(ctx context.Context, oldFolder utils.GrafanaMetaAccess
 		return false
 	}
 
-	oldInfo, err := parents(ctx, oldParent)
+	result, err := parents(ctx, oldParent)
 	if err != nil {
 		return false
 	}
 
-	oldParentDepth := len(oldInfo.Items)
+	oldParentDepth := len(result.Hierarchy.Items)
 	levelDifference := newParentDepth - oldParentDepth
 	return levelDifference <= 0
 }

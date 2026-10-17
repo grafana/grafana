@@ -107,63 +107,77 @@ func isFolderAlreadyExists(err error, statusErr *k8sErrors.StatusError) bool {
 		k8sErrors.IsAlreadyExists(err) || (statusErr != nil && k8sErrors.IsAlreadyExists(statusErr))
 }
 
+// ToFolderStatusError adapts folder-create errors for the apiserver.
+// Transport errors are translated by apistore before reaching this boundary.
 func ToFolderStatusError(err error) k8sErrors.StatusError {
+	if original, ok := errors.AsType[*k8sErrors.StatusError](err); ok {
+		result := *original
+		switch {
+		case k8sErrors.IsAlreadyExists(original):
+			result.ErrStatus.Code = http.StatusConflict
+			result.ErrStatus.Reason = metav1.StatusReasonAlreadyExists
+			result.ErrStatus.Message = "a folder with the same UID already exists"
+		case original.ErrStatus.Code == http.StatusConflict || k8sErrors.IsConflict(original):
+			result.ErrStatus.Code = http.StatusConflict
+			result.ErrStatus.Reason = metav1.StatusReasonConflict
+			result.ErrStatus.Message = "the folder operation conflicted with another request; please retry"
+		case result.ErrStatus.Message == "":
+			result.ErrStatus.Message = getDefaultMessageForStatus(int(result.ErrStatus.Code))
+		}
+		return result
+	}
+
+	defaultErr := k8sErrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Reason:  metav1.StatusReasonInternalError,
+		Message: "Folder API error",
+		Code:    http.StatusInternalServerError,
+	}}
+	grafanaErr, isGrafanaError := errors.AsType[errutil.Error](err)
+	if !isGrafanaError && !isLegacyFolderError(err) {
+		return defaultErr
+	}
+
+	// Reuse legacy message mapping so /api/folders responses remain compatible.
 	resp := ToFolderErrorResponse(err)
-	defaultErr := k8sErrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "Folder API error",
-			Code:    http.StatusInternalServerError,
-		},
+	var body struct {
+		Message string `json:"message"`
 	}
-
-	normResp, ok := resp.(*response.NormalResponse)
-	if !ok {
+	if err := json.Unmarshal(resp.Body(), &body); err != nil || body.Message == "" {
 		return defaultErr
 	}
-
-	var dat map[string]interface{}
-	if err := json.Unmarshal(normResp.Body(), &dat); err != nil {
-		return defaultErr
+	statusErr := k8sErrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    int32(resp.Status()),
+		Message: body.Message,
+	}}
+	if isGrafanaError {
+		// Provisioning identifies Grafana validation errors by the message ID in Details.UID.
+		statusErr.ErrStatus.Details = grafanaErr.Status().Details
 	}
-
-	m, ok := dat["message"]
-	if !ok {
-		return defaultErr
-	}
-
-	message, ok := m.(string)
-	if !ok {
-		return defaultErr
-	}
-
-	statusErr := k8sErrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: message,
-			Code:    int32(normResp.Status()),
-		},
-	}
-
-	// folderStorage.Create wraps errors in a StatusError before the legacy API consumes them.
-	// Keep AlreadyExists distinct from other 409s so duplicates do not become retry conflicts.
 	if statusErr.ErrStatus.Code == http.StatusConflict {
 		statusErr.ErrStatus.Reason = metav1.StatusReasonConflict
-		if isFolderAlreadyExists(err, storageStatusError(err)) {
+		if isFolderAlreadyExists(err, nil) {
 			statusErr.ErrStatus.Reason = metav1.StatusReasonAlreadyExists
 		}
 	}
+	return statusErr
+}
 
-	// Preserve the structured errutil message ID in Status.Details.UID so
-	// downstream consumers (e.g. provisioning's IsFolderValidationAPIError)
-	// can match the rejection without relying on the human-readable message.
-	// errutil.Error.Status() is the source of truth for the message ID; if
-	// the underlying error is one, copy its Details across.
-	if grafanaErr, ok := errors.AsType[errutil.Error](err); ok {
-		if details := grafanaErr.Status().Details; details != nil {
-			statusErr.ErrStatus.Details = details
+func isLegacyFolderError(err error) bool {
+	if _, ok := errors.AsType[dashboardaccess.DashboardErr](err); ok {
+		return true
+	}
+	for _, sentinel := range []error{
+		folder.ErrTitleEmpty, folder.ErrInvalidUID, folder.ErrFolderCannotBeParentOfItself,
+		folder.ErrAccessDenied, folder.ErrFolderNotFound, dashboards.ErrFolderNotFound,
+		folder.ErrSameUIDExists, folder.ErrVersionMismatch,
+	} {
+		if errors.Is(err, sentinel) {
+			return true
 		}
 	}
-
-	return statusErr
+	return false
 }
 
 func getDefaultMessageForStatus(statusCode int) string {
