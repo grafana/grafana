@@ -248,11 +248,17 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
 		tracing:              tracing.InitializeTracerForTest(),
 	}
+	require.Nil(t, b.teamLBACApiInstaller.GetTeamLBACUsageRoutes(nil))
+	decision, _, err := b.teamLBACApiInstaller.GetTeamLBACUsageAuthorizer().Authorize(context.Background(), authorizer.AttributesRecord{
+		ResourceRequest: true, Resource: "teamlbacusage", Verb: "list", Namespace: "org-1",
+	})
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionDeny, decision)
 	storage := map[string]rest.Storage{
 		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
 	}
 
-	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
+	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
 	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
 }

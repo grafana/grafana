@@ -1702,8 +1702,12 @@
       },
       "preview": {
         "error": "Kan inhoud niet laden: {{error}}",
+        "hide-secrets": "",
         "loading": "Inhoud laden...",
         "notifications-title": "Voorbeeldweergave van meldingsconfiguratie",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Voorbeeld van waarschuwingsregels"
       },
       "recording-rules": "Opnameregels",
@@ -2743,7 +2747,8 @@
     "recording-rules": {
       "description-target-data-source": "De Prometheus-gegevensbron om opnameregels in op te slaan",
       "label-target-data-source": "Doelgegevensbron",
-      "target-data-source-required": "Selecteer eerst een doelgegevensbron"
+      "target-data-source-required": "Selecteer eerst een doelgegevensbron",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Selecteer de namespace en groep voor je opnameregel.",
@@ -6037,6 +6042,24 @@
       "tooltip-next": "Volgende",
       "tooltip-previous": "Vorige"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Schema van Assistant bewerken"
@@ -6155,6 +6178,9 @@
           "no-template-variables-found": "Geen sjabloonvariabelen gevonden"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Annuleren",
@@ -7598,6 +7624,33 @@
       "body-restore-version": "Weet je zeker dat je het dashboard naar versie {{version}} wilt herstellen? Alle niet opgeslagen wijzigingen zullen verloren gaan.",
       "confirmText-restore-version": "Herstellen naar versie {{version}}",
       "title-restore-version": "Versie herstellen"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Opslaan",
@@ -10089,6 +10142,7 @@
             "name-humidity": "Vochtigheid (%H)",
             "name-locale": "Lokale opmaak",
             "name-number": "Nummer",
+            "name-ordinal": "",
             "name-percent-1": "Procent (0,0-1,0)",
             "name-percent-100": "Procent (0-100)",
             "name-pixels": "Pixels",
@@ -10214,7 +10268,9 @@
           },
           "name": "Volume"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13225,6 +13281,7 @@
       "created-by-me": "Aangemaakt door mij",
       "error-conflict": "Dit notitieboek is gewijzigd terwijl je er iets aan toevoegde. Probeer het paneel opnieuw toe te voegen aan de nieuwste versie.",
       "error-generic": "Kan het paneel niet toevoegen aan het notitieboek",
+      "error-open-conflict": "",
       "list-error": "Kan notitieboeken niet laden",
       "list-error-body": "Er ging iets mis bij het laden van je notitieboeken. Probeer het opnieuw of maak in plaats daarvan een nieuw notitieboek.",
       "list-no-matches": "Er komen geen notitieboeken overeen met deze filters.",
@@ -13233,6 +13290,8 @@
       "list-truncated": "Niet elk notitieboek wordt weergegeven. Verfijn de zoekopdracht om andere te vinden.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Zoeken op titel",
       "sort-alphabetical": "Alfabetisch (a-z)",
       "sort-label": "Notitieboeken sorteren",
@@ -13240,13 +13299,15 @@
       "sort-updated": "Recent bijgewerkt",
       "submit": "Aan notitieboek toevoegen",
       "success": "Paneel toegevoegd aan {{title}}",
+      "success-cells": "",
       "success-link": "Notitieboek bekijken",
       "tag-placeholder": "Filteren op tag",
       "target-description": "Kies waar je het paneel wilt toevoegen.",
       "target-existing": "Bestaand notitieboek",
       "target-label": "Doelnotitieboek",
       "target-new": "Nieuw notitieboek",
-      "title": "Paneel aan notitieboek toevoegen"
+      "title": "Paneel aan notitieboek toevoegen",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16620,6 +16681,7 @@
     "name-page-size": "Paginaformaat",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Header tabel tonen",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Styling vanuit veld",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",

@@ -1716,8 +1716,12 @@
       },
       "preview": {
         "error": "Не удалось загрузить контент: {{error}}",
+        "hide-secrets": "",
         "loading": "Загрузка контента…",
         "notifications-title": "Предварительный просмотр конфигурации уведомлений",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "Предварительный просмотр правил оповещения"
       },
       "recording-rules": "Правила записи",
@@ -2785,7 +2789,8 @@
     "recording-rules": {
       "description-target-data-source": "Источник данных Prometheus для хранения правил записи.",
       "label-target-data-source": "Целевой источник данных",
-      "target-data-source-required": "Выберите целевой источник данных"
+      "target-data-source-required": "Выберите целевой источник данных",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Выберите пространство имен и группу для правила записи.",
@@ -6131,6 +6136,24 @@
       "tooltip-next": "Далее",
       "tooltip-previous": "Назад"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Редактирование схемы с помощью Assistant"
@@ -6251,6 +6274,9 @@
           "no-template-variables-found": "Переменные шаблона не найдены"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "Отмена",
@@ -7700,6 +7726,47 @@
       "body-restore-version": "Действительно восстановить дашборд до версии {{version}}? Все несохраненные изменения будут потеряны.",
       "confirmText-restore-version": "Да, восстановить до версии {{version}}",
       "title-restore-version": "Восстановление версии"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_one": "",
+      "allowed-always_few": "",
+      "allowed-always_many": "",
+      "allowed-always_other": "",
+      "allowed-panels_one": "",
+      "allowed-panels_few": "",
+      "allowed-panels_many": "",
+      "allowed-panels_other": "",
+      "banner-title_one": "",
+      "banner-title_few": "",
+      "banner-title_many": "",
+      "banner-title_other": "",
+      "resources_one": "",
+      "resources_few": "",
+      "resources_many": "",
+      "resources_other": "",
+      "resources-at-least_one": "",
+      "resources-at-least_few": "",
+      "resources-at-least_many": "",
+      "resources-at-least_other": "",
+      "sources_one": "",
+      "sources_few": "",
+      "sources_many": "",
+      "sources_other": "",
+      "url-count_one": "",
+      "url-count_few": "",
+      "url-count_many": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "Сохранить",
@@ -10229,6 +10296,7 @@
             "name-humidity": "Влажность (%H)",
             "name-locale": "Формат локали",
             "name-number": "Число",
+            "name-ordinal": "",
             "name-percent-1": "Процент (0,0–1,0)",
             "name-percent-100": "Процент (0–100)",
             "name-pixels": "Пиксели",
@@ -10354,7 +10422,11 @@
           },
           "name": "Объем"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_one": "",
+      "ordinal-suffix_ordinal_many": "",
+      "ordinal-suffix_ordinal_few": "",
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13423,6 +13495,7 @@
       "created-by-me": "Создано мной",
       "error-conflict": "Пока вы добавляли данные в этот блокнот, он был изменен. Попробуйте еще раз добавить панель в последнюю версию.",
       "error-generic": "Не удалось добавить панель в блокнот",
+      "error-open-conflict": "",
       "list-error": "Не удалось загрузить блокноты",
       "list-error-body": "Ошибка при загрузке блокнотов. Создайте новый или повторите попытку.",
       "list-no-matches": "Ни один запрос не соответствует выбранным фильтрам.",
@@ -13431,6 +13504,8 @@
       "list-truncated": "Отображаются не все блокноты. Уточните поисковый запрос, чтобы найти остальные.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "Поиск по заголовку",
       "sort-alphabetical": "В алфавитном порядке (А–Я)",
       "sort-label": "Сортировать блокноты",
@@ -13438,13 +13513,15 @@
       "sort-updated": "Недавно обновленные",
       "submit": "Добавить в блокнот",
       "success": "Панель добавлена в {{title}}",
+      "success-cells": "",
       "success-link": "Просмотр блокнота",
       "tag-placeholder": "Фильтр по меткам",
       "target-description": "Выберите место для добавления панели.",
       "target-existing": "Существующий блокнот",
       "target-label": "Целевой блокнот",
       "target-new": "Новый блокнот",
-      "title": "Добавьте панель в блокнот"
+      "title": "Добавьте панель в блокнот",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16880,6 +16957,7 @@
     "name-page-size": "Размер страницы",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "Показать заголовок таблицы",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Стилевое оформление из поля",
     "name-tooltip-from-field": "Подсказка из поля",
     "name-tooltip-placement": "Размещение подсказки",

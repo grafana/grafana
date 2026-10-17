@@ -1695,8 +1695,12 @@
       },
       "preview": {
         "error": "無法載入內容：{{error}}",
+        "hide-secrets": "",
         "loading": "正在載入內容…",
         "notifications-title": "通知設定預覽",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "警示規則預覽"
       },
       "recording-rules": "錄製規則",
@@ -2722,7 +2726,8 @@
     "recording-rules": {
       "description-target-data-source": "Prometheus 資料來源用於儲存紀錄規則",
       "label-target-data-source": "目標資料來源",
-      "target-data-source-required": "請選擇目標資料來源"
+      "target-data-source-required": "請選擇目標資料來源",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "選擇您的錄製規則的命名空間和群組。",
@@ -5990,6 +5995,24 @@
       "tooltip-next": "繼續",
       "tooltip-previous": "上一個"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "助理結構描述編輯"
@@ -6107,6 +6130,9 @@
           "no-template-variables-found": "找不到範本變數"
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "取消",
@@ -7547,6 +7573,26 @@
       "body-restore-version": "確定要將儀表板還原到版本{{version}}嗎？所有未儲存變更將會遺失。",
       "confirmText-restore-version": "是，還原至版本 {{version}}",
       "title-restore-version": "還原版本"
+    },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_other": "",
+      "allowed-panels_other": "",
+      "banner-title_other": "",
+      "resources_other": "",
+      "resources-at-least_other": "",
+      "sources_other": "",
+      "url-count_other": ""
     },
     "save-button": {
       "save": "儲存",
@@ -10019,6 +10065,7 @@
             "name-humidity": "濕度 (%H)",
             "name-locale": "地區格式",
             "name-number": "次數",
+            "name-ordinal": "",
             "name-percent-1": "百分比 (0.0-1.0)",
             "name-percent-100": "百分比 (0-100)",
             "name-pixels": "像素",
@@ -10144,7 +10191,8 @@
           },
           "name": "量"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -13126,6 +13174,7 @@
       "created-by-me": "由我建立",
       "error-conflict": "您新增內容時，此筆記本已發生變更。請再試一次，將面板新增至最新版本。",
       "error-generic": "無法將面板新增至筆記本",
+      "error-open-conflict": "",
       "list-error": "無法載入筆記本",
       "list-error-body": "載入您的筆記本時發生錯誤。請再試一次，或改為建立新的筆記本。",
       "list-no-matches": "沒有符合這些篩選條件的筆記本。",
@@ -13134,6 +13183,8 @@
       "list-truncated": "並非所有筆記本都會顯示。請縮小搜尋範圍以尋找其他筆記本。",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "依標題搜尋",
       "sort-alphabetical": "依字母順序 (A–Z)",
       "sort-label": "排序筆記本",
@@ -13141,13 +13192,15 @@
       "sort-updated": "最近更新",
       "submit": "新增至筆記本",
       "success": "已將面板新增至 {{title}}",
+      "success-cells": "",
       "success-link": "檢視筆記本",
       "tag-placeholder": "依標籤篩選",
       "target-description": "選擇要新增面板的位置。",
       "target-existing": "現有筆記本",
       "target-label": "目標筆記本",
       "target-new": "新筆記本",
-      "title": "將面板新增至筆記本"
+      "title": "將面板新增至筆記本",
+      "undo-label": ""
     },
     "add-to-notebook-form": {
       "title": {
@@ -16490,6 +16543,7 @@
     "name-page-size": "頁面大小",
     "name-show-columns-sidebar": "",
     "name-show-table-header": "顯示表格頁首",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "欄位的樣式",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
