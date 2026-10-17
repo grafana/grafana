@@ -135,7 +135,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace(), identity.WithServiceIdentityName(r.repo.Config().GetName()))
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
@@ -172,7 +172,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace, identity.WithServiceIdentityName(r.repo.Config().GetName()))
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
@@ -295,7 +295,7 @@ func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWrit
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid folder resource: %v", err))
 	}
 
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace, identity.WithServiceIdentityName(r.repo.Config().GetName()))
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
@@ -403,7 +403,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace(), identity.WithServiceIdentityName(r.repo.Config().GetName()))
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity %w", err)
 	}
@@ -588,7 +588,7 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 
 	// For branch operations, we just perform the repository move without updating Grafana DB
 	// Always use the provisioning identity when writing
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace, identity.WithServiceIdentityName(r.repo.Config().GetName()))
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
@@ -697,7 +697,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace(), identity.WithServiceIdentityName(r.repo.Config().GetName()))
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
@@ -769,7 +769,7 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace, identity.WithServiceIdentityName(r.repo.Config().GetName()))
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
