@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
@@ -53,8 +53,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
   ) => {
     const theme = useTheme2();
     const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-    const hasTitle = Boolean(title);
-    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
+    const styles = useStyles2(getStyles, severity, Boolean(children), bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
       error: 'alert',
       warning: 'alert',
@@ -80,15 +79,13 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           alignItems="stretch"
           boxShadow={elevated ? 'z3' : undefined}
         >
-          <Box display="flex" paddingY={0.5} paddingRight={2}>
-            <div className={styles.iconBox}>
-              <Icon
-                size={visualRefreshEnabled ? 'lg' : 'xl'}
-                name={getIconFromSeverity(severity)}
-                className={styles.icon}
-              />
-            </div>
-          </Box>
+          <div className={styles.iconBox}>
+            <Icon
+              size={visualRefreshEnabled ? 'lg' : 'xl'}
+              name={getIconFromSeverity(severity)}
+              className={styles.icon}
+            />
+          </div>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
             <Box flex={1} minWidth="50%">
@@ -143,8 +140,7 @@ const getIconFromSeverity = (severity: AlertVariant): IconName => {
 const getStyles = (
   theme: GrafanaTheme2,
   severity: AlertVariant,
-  hasTitle: boolean,
-  elevated?: boolean,
+  hasContent: boolean,
   bottomSpacing?: number,
   topSpacing?: number
 ) => {
@@ -180,10 +176,13 @@ const getStyles = (
         alignSelf: 'flex-start',
         display: 'inline-flex',
         borderRadius: theme.shape.radius.default,
+        margin: theme.spacing(0.5, 2, 0.5, 0),
       },
       visualRefreshEnabled && {
         backgroundColor: `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`,
         padding: theme.spacing(1),
+        // Alerts with only title we reduce margin around iconbox a bit to get a tigher alert box
+        margin: hasContent ? theme.spacing(0.5, 2, 0, 0) : theme.spacing(0, 2, 0, 0),
       }
     ),
     icon: css(
