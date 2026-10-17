@@ -2,8 +2,9 @@ import { t } from '@grafana/i18n';
 
 import { Menu } from '../Menu/Menu';
 
-import { allPanels, detachView, insertViewsIntoPanel } from './model/document';
-import { createId, findNode, insertBeside } from './model/tree';
+import { addViewsToPanel, detachView } from './model/document';
+import { listVisiblePanels } from './model/locate';
+import { createId, findNode, insertBesideNode } from './model/tree';
 import { type LayoutDocument, type PanelNode, type Side } from './model/types';
 import { type TilingLayoutApi, type TilingMenuEntry, type TilingMenuItem, type TilingPanelInfo } from './types';
 
@@ -22,8 +23,8 @@ interface BuildMenuOptions {
 
 function moveViewToPanel(doc: LayoutDocument, viewId: string, panelId: string): LayoutDocument {
   const detached = detachView(doc, viewId);
-  const target = allPanels(detached).find((p) => p.panel.id === panelId);
-  return target ? insertViewsIntoPanel(detached, panelId, [viewId], target.panel.views.length, viewId) : doc;
+  const target = listVisiblePanels(detached).find((p) => p.panel.id === panelId);
+  return target ? addViewsToPanel(detached, panelId, [viewId], target.panel.views.length, viewId) : doc;
 }
 
 function splitViewOut(doc: LayoutDocument, viewId: string, panelId: string, side: Side): LayoutDocument {
@@ -32,7 +33,7 @@ function splitViewOut(doc: LayoutDocument, viewId: string, panelId: string, side
     return doc;
   }
   const panel: PanelNode = { kind: 'panel', id: createId('panel'), views: [viewId], selected: viewId };
-  return { ...detached, root: insertBeside(detached.root, panelId, side, panel) };
+  return { ...detached, root: insertBesideNode(detached.root, panelId, side, panel) };
 }
 
 /** The built-in panel menu: what drag and drop can do, reachable from the keyboard. */
@@ -77,7 +78,7 @@ export function buildPanelMenu({
     });
   }
 
-  const destinations: TilingMenuEntry[] = allPanels(doc)
+  const destinations: TilingMenuEntry[] = listVisiblePanels(doc)
     .filter((p) => p.panel.id !== panel.id)
     .map((p) => ({
       id: `move:${p.panel.id}`,

@@ -1,7 +1,7 @@
 import type * as React from 'react';
 import { createContext, useContext } from 'react';
 
-import { type LayoutMetrics, type PanelRegion } from './model/types';
+import { type LayoutMetrics, type PanelMode } from './model/types';
 import { type TilingStyles } from './styles';
 import { type TilingPanelInfo, type TilingTabRenderProps, type TilingViewInfo } from './types';
 
@@ -16,8 +16,8 @@ export interface TilingInternals {
   renderTab?: (props: TilingTabRenderProps) => React.ReactNode;
   renderTabBarActions?: (panel: TilingPanelInfo) => React.ReactNode;
   isViewClosable: (view: TilingViewInfo) => boolean;
-  onTabPointerDown: (e: React.PointerEvent, panelId: string, viewId: string, region: PanelRegion) => void;
-  onPanelPointerDown: (e: React.PointerEvent, panelId: string, region: PanelRegion) => void;
+  onTabPointerDown: (e: React.PointerEvent, panelId: string, viewId: string, region: PanelMode) => void;
+  onPanelPointerDown: (e: React.PointerEvent, panelId: string, region: PanelMode) => void;
   onFloatResizeStart: (e: React.PointerEvent, panelId: string, dir: ResizeDirection) => void;
   selectView: (viewId: string, focusTab?: boolean) => void;
   focusView: (viewId: string) => void;

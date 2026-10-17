@@ -13,7 +13,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { TilingLayout } from './TilingLayout';
 import { TilingTab } from './TilingTab';
 import { useTilingLayout, useTilingView } from './context';
-import { createTilingDocument, tilingLayout as L } from './model/builder';
+import { createTilingDocument, tilingLayout as L } from './model/spec';
 import { type LayoutDocument } from './model/types';
 import { type TilingMenuEntry, type TilingPanelInfo, type TilingTabRenderProps, type TilingViewInfo } from './types';
 

@@ -24,31 +24,29 @@ import { PanelFrame } from './PanelFrame';
 import { ViewSurface } from './ViewSurface';
 import { TilingLayoutContext } from './context';
 import { type ResizeDirection, TilingInternalContext, type TilingInternals } from './internalContext';
+import { equalizeAtDivider, moveDivider } from './model/dividers';
 import {
   closeView as closeViewInDoc,
-  dockFloating,
+  dockFloatingPanel,
   emptyDocument,
   floatPanel as floatPanelInDoc,
-  hide as hideInDoc,
-  locatePanel,
-  locateView,
+  hidePanel as hideInDoc,
   openView as openViewInDoc,
-  raiseFloating,
-  resolvePanel,
-  restore as restoreInDoc,
+  bringFloatingToFront,
+  restorePanel as restoreInDoc,
   sanitizeDocument,
   selectView as selectViewInDoc,
-  setFloatingRect,
+  setFloatingPanelRect,
 } from './model/document';
-import { type FloatingHitRect } from './model/hitTest';
-import { type ComputedLayout, computeFramedLayout, insetRect, type Seam } from './model/layout';
-import { evenSplit, resizeSplit } from './model/resize';
-import { containsNode, DROP_SLOT_ID, findNode, findParent, listPanels } from './model/tree';
+import { type FloatingPanelRect } from './model/findDropTarget';
+import { type LayoutGeometry, computeZoomedGeometry, insetRect, type SplitDivider } from './model/geometry';
+import { findPanel, findPanelByIdOrView, findPanelOfView } from './model/locate';
+import { containsNode, DROP_PREVIEW_ID, findNode, findParentSplit, collectPanels } from './model/tree';
 import {
   type LayoutDocument,
   type LayoutNode,
   type PanelNode,
-  type PanelRegion,
+  type PanelMode,
   type Rect,
   type ViewParams,
 } from './model/types';
@@ -126,7 +124,7 @@ interface ViewPlacement {
 }
 
 interface ResizeSession {
-  seam: Seam;
+  divider: SplitDivider;
   /** Offset from the pointer to the divider's position along its axis. */
   grab: number;
   startPointer: number;
@@ -222,8 +220,8 @@ export function TilingLayout(props: TilingLayoutProps) {
   // UI state.
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [focusedViewId, setFocusedViewId] = useState<string | null>(null);
-  const [framedId, setFramedId] = useState<string | null>(null);
-  const restoreFrameRef = useRef<string | null>(null);
+  const [zoomedId, setZoomedId] = useState<string | null>(null);
+  const restoreZoomRef = useRef<string | null>(null);
   const [cameraMoving, setCameraMoving] = useState(false);
   const [resize, setResize] = useState<ResizeSession | null>(null);
   const [floatResize, setFloatResize] = useState<{ panelId: string; rect: Rect } | null>(null);
@@ -245,14 +243,14 @@ export function TilingLayout(props: TilingLayoutProps) {
 
   const viewport: Rect = useMemo(() => ({ x: 0, y: 0, w: size.w, h: size.h }), [size]);
   const bounds = useMemo(() => insetRect(viewport, metrics.gap), [viewport, metrics.gap]);
-  const effectiveFramed = framedId && findNode(doc.root, framedId) ? framedId : null;
-  const framedRef = useLatest(effectiveFramed);
+  const effectiveZoomed = zoomedId && findNode(doc.root, zoomedId) ? zoomedId : null;
+  const zoomedRef = useLatest(effectiveZoomed);
   const focusedRef = useLatest(focusedViewId);
   const viewportRef = useLatest(viewport);
 
   const getLayout = useCallback(
-    (d: LayoutDocument): ComputedLayout => computeFramedLayout(d.root, bounds, metrics, framedRef.current),
-    [bounds, metrics, framedRef]
+    (d: LayoutDocument): LayoutGeometry => computeZoomedGeometry(d.root, bounds, metrics, zoomedRef.current),
+    [bounds, metrics, zoomedRef]
   );
   const toPx = useCallback(
     (r: Rect): Rect => ({
@@ -268,7 +266,7 @@ export function TilingLayout(props: TilingLayoutProps) {
     [viewport]
   );
   const getFloatingRects = useCallback(
-    (d: LayoutDocument): FloatingHitRect[] =>
+    (d: LayoutDocument): FloatingPanelRect[] =>
       d.floating.map((f) => ({ panelId: f.panel.id, rect: toPx(f.rect), z: f.z })),
     [toPx]
   );
@@ -285,9 +283,9 @@ export function TilingLayout(props: TilingLayoutProps) {
     [propsRef]
   );
 
-  const setFramed = useCallback(
+  const setZoomed = useCallback(
     (id: string | null) => {
-      setFramedId((prev) => {
+      setZoomedId((prev) => {
         if (prev !== id) {
           propsRef.current.onMaximizeChange?.(id);
         }
@@ -304,23 +302,23 @@ export function TilingLayout(props: TilingLayoutProps) {
     }
     const timer = setTimeout(() => setCameraMoving(false), MOTION.camera + 50);
     return () => clearTimeout(timer);
-  }, [cameraMoving, framedId]);
+  }, [cameraMoving, zoomedId]);
 
   /** Zooms out when a panel lands outside the maximized node, so it stays in view. */
   const widenFrameFor = useCallback(
     (d: LayoutDocument, panelId: string) => {
-      const framed = framedRef.current;
-      if (!framed) {
+      const zoomed = zoomedRef.current;
+      if (!zoomed) {
         return;
       }
-      const framedNode = findNode(d.root, framed);
+      const zoomedNode = findNode(d.root, zoomed);
       const isDocked = findNode(d.root, panelId) !== undefined;
-      if (isDocked && (!framedNode || !containsNode(framedNode, panelId))) {
-        restoreFrameRef.current = null;
-        setFramed(null);
+      if (isDocked && (!zoomedNode || !containsNode(zoomedNode, panelId))) {
+        restoreZoomRef.current = null;
+        setZoomed(null);
       }
     },
-    [framedRef, setFramed]
+    [zoomedRef, setZoomed]
   );
 
   // Imperative API.
@@ -331,7 +329,7 @@ export function TilingLayout(props: TilingLayoutProps) {
     };
     const infoOf = (id: string): TilingViewInfo => {
       const record = docRef.current.views[id] ?? {};
-      const location = locateView(docRef.current, id);
+      const location = findPanelOfView(docRef.current, id);
       return {
         id,
         title: titleOf(id),
@@ -346,17 +344,17 @@ export function TilingLayout(props: TilingLayoutProps) {
 
     const focusView = (id: string) => {
       let d = docRef.current;
-      let location = locateView(d, id);
+      let location = findPanelOfView(d, id);
       if (!location) {
         return;
       }
       if (location.region === 'hidden') {
         d = restoreInDoc(d, location.panel.id);
-        location = locateView(d, id);
+        location = findPanelOfView(d, id);
       }
       d = selectViewInDoc(d, id);
       if (location?.region === 'floating') {
-        d = raiseFloating(d, location.panel.id);
+        d = bringFloatingToFront(d, location.panel.id);
       }
       commit(d);
       setFocus(id);
@@ -370,18 +368,18 @@ export function TilingLayout(props: TilingLayoutProps) {
         return false;
       }
       const target = id ?? focusedRef.current;
-      const location = target ? resolvePanel(docRef.current, target) : undefined;
+      const location = target ? findPanelByIdOrView(docRef.current, target) : undefined;
       if (!location || location.region !== 'docked') {
         return false;
       }
       const panelId = location.panel.id;
-      if (framedRef.current === panelId) {
-        const back = restoreFrameRef.current;
-        restoreFrameRef.current = null;
-        setFramed(back && findNode(docRef.current.root, back) ? back : null);
+      if (zoomedRef.current === panelId) {
+        const back = restoreZoomRef.current;
+        restoreZoomRef.current = null;
+        setZoomed(back && findNode(docRef.current.root, back) ? back : null);
       } else {
-        restoreFrameRef.current = framedRef.current;
-        setFramed(panelId);
+        restoreZoomRef.current = zoomedRef.current;
+        setZoomed(panelId);
       }
       return true;
     };
@@ -393,7 +391,7 @@ export function TilingLayout(props: TilingLayoutProps) {
         const next = openViewInDoc(docRef.current, id, record, placement);
         commit(next);
         setFocus(id);
-        const location = locateView(next, id);
+        const location = findPanelOfView(next, id);
         if (location) {
           widenFrameFor(next, location.panel.id);
         }
@@ -407,12 +405,12 @@ export function TilingLayout(props: TilingLayoutProps) {
         if (!options?.force && guard && !(await guard(info))) {
           return false;
         }
-        const before = locateView(docRef.current, id);
+        const before = findPanelOfView(docRef.current, id);
         const next = closeViewInDoc(docRef.current, id);
         commit(next);
         propsRef.current.onViewClose?.(info);
         if (focusedRef.current === id) {
-          const panel = before ? locatePanel(next, before.panel.id) : undefined;
+          const panel = before ? findPanel(next, before.panel.id) : undefined;
           setFocus(panel?.panel.selected ?? null);
         }
         return true;
@@ -423,7 +421,7 @@ export function TilingLayout(props: TilingLayoutProps) {
         if (propsRef.current.floating === false) {
           return;
         }
-        const location = resolvePanel(docRef.current, id);
+        const location = findPanelByIdOrView(docRef.current, id);
         if (!location) {
           return;
         }
@@ -448,7 +446,7 @@ export function TilingLayout(props: TilingLayoutProps) {
         }
         commit(floatPanelInDoc(docRef.current, id, target));
       },
-      dockPanel: (panelId) => commit(dockFloating(docRef.current, panelId)),
+      dockPanel: (panelId) => commit(dockFloatingPanel(docRef.current, panelId)),
       hide: (id) => commit(hideInDoc(docRef.current, id)),
       restore: (panelId) => {
         const entry = docRef.current.hidden.find((h) => h.panel.id === panelId);
@@ -461,13 +459,13 @@ export function TilingLayout(props: TilingLayoutProps) {
       },
       toggleMaximize,
       stepOut: () => {
-        const framed = framedRef.current;
-        if (!framed) {
+        const zoomed = zoomedRef.current;
+        if (!zoomed) {
           return;
         }
-        restoreFrameRef.current = null;
-        const parent = findParent(docRef.current.root, framed)?.parent;
-        setFramed(parent && parent.id !== docRef.current.root?.id ? parent.id : null);
+        restoreZoomRef.current = null;
+        const parent = findParentSplit(docRef.current.root, zoomed)?.parent;
+        setZoomed(parent && parent.id !== docRef.current.root?.id ? parent.id : null);
       },
       setViewTitle: (id, title) => {
         const record = docRef.current.views[id];
@@ -484,7 +482,7 @@ export function TilingLayout(props: TilingLayoutProps) {
     };
     // Everything read here goes through refs, so the API object stays stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commit, setFocus, setFramed, widenFrameFor, getLayout, getFloatingRects, toFraction]);
+  }, [commit, setFocus, setZoomed, widenFrameFor, getLayout, getFloatingRects, toFraction]);
 
   useImperativeHandle(ref, () => api, [api]);
 
@@ -525,14 +523,14 @@ export function TilingLayout(props: TilingLayoutProps) {
     getViewport: () => viewportRef.current,
     getLayout,
     getFloatingRects,
-    getFramedId: () => framedRef.current,
+    getZoomedId: () => zoomedRef.current,
     onCommit: onDropCommit,
     onDragStart: () => setMenu(null),
   });
 
   // Divider resizing.
   const onResizeStart = useCallback(
-    (e: React.PointerEvent, seam: Seam) => {
+    (e: React.PointerEvent, divider: SplitDivider) => {
       const root = docRef.current.root;
       if (e.button !== 0 || !root) {
         return;
@@ -540,33 +538,39 @@ export function TilingLayout(props: TilingLayoutProps) {
       e.preventDefault();
       const axisPos = (ev: { clientX: number; clientY: number }) => {
         const r = rootRef.current!.getBoundingClientRect();
-        return seam.axis === 'x' ? ev.clientX - r.left : ev.clientY - r.top;
+        return divider.axis === 'x' ? ev.clientX - r.left : ev.clientY - r.top;
       };
-      const seamPos = (s: Seam) => (s.axis === 'x' ? s.rect.x : s.rect.y);
+      const dividerPos = (s: SplitDivider) => (s.axis === 'x' ? s.rect.x : s.rect.y);
       const start = axisPos(e);
-      const session: ResizeSession = { seam, grab: start - seamPos(seam), startPointer: start, startRoot: root, root };
+      const session: ResizeSession = {
+        divider,
+        grab: start - dividerPos(divider),
+        startPointer: start,
+        startRoot: root,
+        root,
+      };
       setResize(session);
 
       const onMove = (ev: PointerEvent) => {
         const pos = axisPos(ev);
         if (propsRef.current.keepPushed === false) {
           const startLayout = getLayout({ ...docRef.current, root: session.startRoot });
-          session.root = resizeSplit(
+          session.root = moveDivider(
             session.startRoot,
             startLayout,
             metrics,
-            seam.splitId,
-            seam.index,
+            divider.splitId,
+            divider.index,
             pos - session.startPointer
           );
         } else {
           const layout = getLayout({ ...docRef.current, root: session.root });
-          const current = layout.seams.find((s) => s.splitId === seam.splitId && s.index === seam.index);
+          const current = layout.dividers.find((s) => s.splitId === divider.splitId && s.index === divider.index);
           if (!current) {
             return;
           }
-          const delta = pos - session.grab - seamPos(current);
-          session.root = resizeSplit(session.root, layout, metrics, seam.splitId, seam.index, delta);
+          const delta = pos - session.grab - dividerPos(current);
+          session.root = moveDivider(session.root, layout, metrics, divider.splitId, divider.index, delta);
         }
         setResize({ ...session });
       };
@@ -585,20 +589,20 @@ export function TilingLayout(props: TilingLayoutProps) {
   );
 
   const onResizeBy = useCallback(
-    (seam: Seam, delta: number) => {
+    (divider: SplitDivider, delta: number) => {
       const d = docRef.current;
       if (d.root) {
-        commit({ ...d, root: resizeSplit(d.root, getLayout(d), metrics, seam.splitId, seam.index, delta) });
+        commit({ ...d, root: moveDivider(d.root, getLayout(d), metrics, divider.splitId, divider.index, delta) });
       }
     },
     [commit, getLayout, metrics]
   );
 
   const onEven = useCallback(
-    (seam: Seam) => {
+    (divider: SplitDivider) => {
       const d = docRef.current;
       if (d.root) {
-        commit({ ...d, root: evenSplit(d.root, seam.splitId, seam.index) });
+        commit({ ...d, root: equalizeAtDivider(d.root, divider.splitId, divider.index) });
       }
     },
     [commit]
@@ -643,7 +647,7 @@ export function TilingLayout(props: TilingLayoutProps) {
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
         window.removeEventListener('pointercancel', onUp);
-        commit(setFloatingRect(docRef.current, panelId, toFraction(rect)));
+        commit(setFloatingPanelRect(docRef.current, panelId, toFraction(rect)));
         setFloatResize(null);
       };
       window.addEventListener('pointermove', onMove);
@@ -659,11 +663,11 @@ export function TilingLayout(props: TilingLayoutProps) {
     displayDoc = { ...displayDoc, root: resize.root };
   }
   if (!drag && floatResize) {
-    displayDoc = setFloatingRect(displayDoc, floatResize.panelId, floatResize.rect);
+    displayDoc = setFloatingPanelRect(displayDoc, floatResize.panelId, floatResize.rect);
   }
   const layout = useMemo(
-    () => computeFramedLayout(displayDoc.root, bounds, metrics, effectiveFramed),
-    [displayDoc.root, bounds, metrics, effectiveFramed]
+    () => computeZoomedGeometry(displayDoc.root, bounds, metrics, effectiveZoomed),
+    [displayDoc.root, bounds, metrics, effectiveZoomed]
   );
   const cache = useSignatureCache<TilingViewInfo | TilingPanelInfo | TilingViewApi>();
 
@@ -672,7 +676,7 @@ export function TilingLayout(props: TilingLayoutProps) {
     return props.getViewTitle?.(id, record) ?? record?.title ?? id;
   };
 
-  const viewInfo = (id: string, panel: PanelNode, region: PanelRegion): TilingViewInfo => {
+  const viewInfo = (id: string, panel: PanelNode, region: PanelMode): TilingViewInfo => {
     const record = displayDoc.views[id] ?? {};
     const title = titleOf(id);
     const selected = panel.selected === id;
@@ -690,11 +694,11 @@ export function TilingLayout(props: TilingLayoutProps) {
     })) as TilingViewInfo;
   };
 
-  const panelInfo = (panel: PanelNode, region: PanelRegion): TilingPanelInfo => {
+  const panelInfo = (panel: PanelNode, region: PanelMode): TilingPanelInfo => {
     const views = panel.views.map((v) => viewInfo(v, panel, region));
     const selectedView = views.find((v) => v.id === panel.selected) ?? views[0];
     const focused = focusedViewId !== null && panel.views.includes(focusedViewId);
-    const maximized = effectiveFramed === panel.id;
+    const maximized = effectiveZoomed === panel.id;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return cache(`panel:${panel.id}`, [...views, focused, maximized, region], () => ({
       id: panel.id,
@@ -707,9 +711,9 @@ export function TilingLayout(props: TilingLayoutProps) {
   };
 
   const frames: FramePlacement[] = [];
-  for (const panel of listPanels(displayDoc.root)) {
+  for (const panel of collectPanels(displayDoc.root)) {
     const rect = layout.rects.get(panel.id);
-    if (panel.id === DROP_SLOT_ID || panel.id === drag?.hiddenPanelId || !rect) {
+    if (panel.id === DROP_PREVIEW_ID || panel.id === drag?.hiddenPanelId || !rect) {
       continue;
     }
     const z = panel.id === settlingPanelId ? Z.settling : Z.docked;
@@ -762,7 +766,7 @@ export function TilingLayout(props: TilingLayoutProps) {
       lastRectsRef.current.set(id, placement.rect);
     }
     const location =
-      locateView(displayDoc, id) ??
+      findPanelOfView(displayDoc, id) ??
       (drag?.lifted?.panel.views.includes(id) ? { panel: drag.lifted.panel, region: drag.lifted.region } : undefined);
     const info = location ? viewInfo(id, location.panel, location.region) : undefined;
     if (!info) {
@@ -800,7 +804,7 @@ export function TilingLayout(props: TilingLayoutProps) {
     slotRect = frames.find((f) => f.panel.id === targetId && !f.lifted)?.rect;
     slotKind = 'tab';
   } else if (drag?.dropKind === 'dock') {
-    slotRect = layout.rects.get(DROP_SLOT_ID);
+    slotRect = layout.rects.get(DROP_PREVIEW_ID);
     slotKind = 'dock';
   }
   const slotZ =
@@ -877,14 +881,14 @@ export function TilingLayout(props: TilingLayoutProps) {
     const viewEl = target?.closest<HTMLElement>('[data-tiling-view]');
     const panelEl = target?.closest<HTMLElement>('[data-tiling-panel]');
     const panelId = viewEl
-      ? locateView(docRef.current, viewEl.dataset.tilingView!)?.panel.id
+      ? findPanelOfView(docRef.current, viewEl.dataset.tilingView!)?.panel.id
       : panelEl?.dataset.tilingPanel;
     if (!panelId) {
       return;
     }
-    const location = locatePanel(docRef.current, panelId);
+    const location = findPanel(docRef.current, panelId);
     if (location?.region === 'floating') {
-      commit(raiseFloating(docRef.current, panelId));
+      commit(bringFloatingToFront(docRef.current, panelId));
     }
     if (viewEl) {
       setFocus(viewEl.dataset.tilingView!);
@@ -900,20 +904,20 @@ export function TilingLayout(props: TilingLayoutProps) {
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     const inContent = e.target instanceof Element && e.target.closest('[data-tiling-view]') !== null;
-    const focusedPanel = focusedViewId ? locateView(doc, focusedViewId) : undefined;
+    const focusedPanel = focusedViewId ? findPanelOfView(doc, focusedViewId) : undefined;
     if (e.key === 'Enter' && e.shiftKey && isModKey(e)) {
       if (api.toggleMaximize()) {
         e.preventDefault();
       }
       return;
     }
-    if (e.key === 'Escape' && effectiveFramed && !inContent && !menu) {
+    if (e.key === 'Escape' && effectiveZoomed && !inContent && !menu) {
       e.preventDefault();
       api.stepOut();
       return;
     }
     if (e.key === 'F6') {
-      const panels = [...listPanels(doc.root), ...doc.floating.map((f) => f.panel)];
+      const panels = [...collectPanels(doc.root), ...doc.floating.map((f) => f.panel)];
       if (!panels.length) {
         return;
       }
@@ -938,14 +942,14 @@ export function TilingLayout(props: TilingLayoutProps) {
   };
 
   const contextValue: TilingLayoutContextValue = useMemo(
-    () => ({ ...api, document: doc, focusedViewId, maximizedId: effectiveFramed }),
-    [api, doc, focusedViewId, effectiveFramed]
+    () => ({ ...api, document: doc, focusedViewId, maximizedId: effectiveZoomed }),
+    [api, doc, focusedViewId, effectiveZoomed]
   );
 
   // Menu.
   let menuContent: ReactNode = null;
   if (menu) {
-    const location = locatePanel(doc, menu.panelId);
+    const location = findPanel(doc, menu.panelId);
     if (location && location.region !== 'hidden') {
       const info = panelInfo(location.panel, location.region);
       const close = () => setMenu(null);
@@ -998,7 +1002,7 @@ export function TilingLayout(props: TilingLayoutProps) {
           data-dragging={drag ? '' : undefined}
           data-drop={dropKind}
           data-resizing={resize || floatResize ? '' : undefined}
-          data-maximized={effectiveFramed ?? undefined}
+          data-maximized={effectiveZoomed ?? undefined}
           style={rootStyle}
           onPointerDownCapture={onPointerDownCapture}
           onFocusCapture={onFocusCapture}
@@ -1038,11 +1042,11 @@ export function TilingLayout(props: TilingLayoutProps) {
               .filter((f) => f.panel.region === 'floating' && !f.lifted)
               .map((f) => <FloatResizeHandles key={f.panel.id} panelId={f.panel.id} rect={f.rect} z={f.z + 1} />)}
           {!drag &&
-            layout.seams.map((seam) => (
+            layout.dividers.map((divider) => (
               <Divider
-                key={`${seam.splitId}:${seam.index}`}
-                seam={seam}
-                active={resize?.seam.splitId === seam.splitId && resize.seam.index === seam.index}
+                key={`${divider.splitId}:${divider.index}`}
+                divider={divider}
+                active={resize?.divider.splitId === divider.splitId && resize.divider.index === divider.index}
                 onResizeStart={onResizeStart}
                 onResizeBy={onResizeBy}
                 onEven={onEven}

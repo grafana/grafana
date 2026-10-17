@@ -1,4 +1,4 @@
-import { type ComputedLayout, minAlong, sizeAlong } from './layout';
+import { type LayoutGeometry, minAlong, sizeAlong } from './geometry';
 import { findSplitPath, replaceNode, setSplitWeights } from './tree';
 import { type LayoutMetrics, type LayoutNode, type SplitNode } from './types';
 
@@ -9,9 +9,9 @@ import { type LayoutMetrics, type LayoutNode, type SplitNode } from './types';
  * to the edge of the split, and from there pushes the split's own edge into the panels around it, up to the
  * edge of the workspace. Everything that doesn't have to move keeps its size.
  */
-export function resizeSplit(
+export function moveDivider(
   root: LayoutNode,
-  layout: ComputedLayout,
+  layout: LayoutGeometry,
   metrics: LayoutMetrics,
   splitId: string,
   index: number,
@@ -79,7 +79,7 @@ export function resizeSplit(
 }
 
 /** Gives the two children on either side of a divider the same size. */
-export function evenSplit(root: LayoutNode, splitId: string, index: number): LayoutNode {
+export function equalizeAtDivider(root: LayoutNode, splitId: string, index: number): LayoutNode {
   return replaceNode(root, splitId, (node) => {
     if (node.kind !== 'split' || index < 0 || index >= node.children.length - 1) {
       return node;

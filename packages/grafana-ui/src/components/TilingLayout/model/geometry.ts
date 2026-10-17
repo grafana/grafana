@@ -2,7 +2,7 @@ import { findNode } from './tree';
 import { type Axis, type LayoutMetrics, type LayoutNode, type Rect } from './types';
 
 /** The gap between children `index` and `index + 1` of a split. Seams are both resize handles and drop targets. */
-export interface Seam {
+export interface SplitDivider {
   splitId: string;
   axis: Axis;
   index: number;
@@ -11,10 +11,10 @@ export interface Seam {
   rect: Rect;
 }
 
-export interface ComputedLayout {
+export interface LayoutGeometry {
   /** Pixel rects of every node, relative to the workspace. */
   rects: Map<string, Rect>;
-  seams: Seam[];
+  dividers: SplitDivider[];
 }
 
 export interface Size {
@@ -47,7 +47,7 @@ export function sizeAlong(rect: Rect, axis: Axis): number {
  * Splits `total` by weight while keeping every child at or above its minimum. Children with room to spare
  * give it up first. When even the minimums don't fit, children shrink in proportion to their minimums.
  */
-export function distribute(total: number, weights: number[], mins: number[]): number[] {
+export function distributeByWeight(total: number, weights: number[], mins: number[]): number[] {
   const n = weights.length;
   const minTotal = mins.reduce((a, b) => a + b, 0);
   if (minTotal >= total) {
@@ -83,15 +83,15 @@ export function distribute(total: number, weights: number[], mins: number[]): nu
   return sizes;
 }
 
-export function computeLayout(root: LayoutNode | null, bounds: Rect, metrics: LayoutMetrics): ComputedLayout {
-  const layout: ComputedLayout = { rects: new Map(), seams: [] };
+export function computeGeometry(root: LayoutNode | null, bounds: Rect, metrics: LayoutMetrics): LayoutGeometry {
+  const layout: LayoutGeometry = { rects: new Map(), dividers: [] };
   if (root) {
     place(root, bounds, metrics, layout);
   }
   return layout;
 }
 
-function place(node: LayoutNode, rect: Rect, metrics: LayoutMetrics, out: ComputedLayout) {
+function place(node: LayoutNode, rect: Rect, metrics: LayoutMetrics, out: LayoutGeometry) {
   out.rects.set(node.id, rect);
   if (node.kind !== 'split') {
     return;
@@ -101,7 +101,7 @@ function place(node: LayoutNode, rect: Rect, metrics: LayoutMetrics, out: Comput
   const length = sizeAlong(rect, axis);
   const start = axis === 'x' ? rect.x : rect.y;
   const available = length - gap * (children.length - 1);
-  const sizes = distribute(
+  const sizes = distributeByWeight(
     available,
     node.weights,
     children.map((c) => minAlong(c, axis, metrics))
@@ -115,7 +115,7 @@ function place(node: LayoutNode, rect: Rect, metrics: LayoutMetrics, out: Comput
     const childRect: Rect =
       axis === 'x' ? { x: from, y: rect.y, w: to - from, h: rect.h } : { x: rect.x, y: from, w: rect.w, h: to - from };
     if (i > 0) {
-      out.seams.push({
+      out.dividers.push({
         splitId: node.id,
         axis,
         index: i - 1,
@@ -143,25 +143,25 @@ export function insetRect(rect: Rect, inset: number): Rect {
 }
 
 /**
- * Lays the tree out so that the node `framedId` fills `bounds`, like a camera zoomed in on it. The rest
+ * Lays the tree out so that the node `zoomedId` fills `bounds`, like a camera zoomed in on it. The rest
  * of the layout keeps its proportions and extends past the bounds.
  */
-export function computeFramedLayout(
+export function computeZoomedGeometry(
   root: LayoutNode | null,
   bounds: Rect,
   metrics: LayoutMetrics,
-  framedId: string | null
-): ComputedLayout {
-  const overview = computeLayout(root, bounds, metrics);
-  const framed = framedId ? overview.rects.get(framedId) : undefined;
-  if (!root || !framed || !findNode(root, framedId!) || framed.w <= 0 || framed.h <= 0) {
+  zoomedId: string | null
+): LayoutGeometry {
+  const overview = computeGeometry(root, bounds, metrics);
+  const framed = zoomedId ? overview.rects.get(zoomedId) : undefined;
+  if (!root || !framed || !findNode(root, zoomedId!) || framed.w <= 0 || framed.h <= 0) {
     return overview;
   }
   // Lay out at a larger virtual size so the framed node gets roughly the full bounds and every gap stays
   // the same size on screen, then map the framed node onto the bounds exactly.
   const virtual: Rect = { x: 0, y: 0, w: (bounds.w * bounds.w) / framed.w, h: (bounds.h * bounds.h) / framed.h };
-  const zoomed = computeLayout(root, virtual, metrics);
-  const target = zoomed.rects.get(framedId!)!;
+  const zoomed = computeGeometry(root, virtual, metrics);
+  const target = zoomed.rects.get(zoomedId!)!;
   const sx = bounds.w / target.w;
   const sy = bounds.h / target.h;
   const map = (r: Rect): Rect => {
@@ -173,7 +173,7 @@ export function computeFramedLayout(
   };
   const rects = new Map<string, Rect>();
   zoomed.rects.forEach((r, id) => rects.set(id, map(r)));
-  return { rects, seams: zoomed.seams.map((s) => ({ ...s, rect: map(s.rect) })) };
+  return { rects, dividers: zoomed.dividers.map((s) => ({ ...s, rect: map(s.rect) })) };
 }
 
 export function rectContains(rect: Rect, x: number, y: number): boolean {

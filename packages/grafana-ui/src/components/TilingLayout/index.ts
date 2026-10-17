@@ -7,9 +7,9 @@ export {
   tilingLayout,
   type LayoutSpec as TilingLayoutSpec,
   type FloatingSpec as TilingFloatingSpec,
-} from './model/builder';
+} from './model/spec';
 export { emptyDocument as emptyTilingDocument, sanitizeDocument as sanitizeTilingDocument } from './model/document';
-export type { OpenPlacement as TilingOpenPlacement } from './model/document';
+export type { ViewPlacement as TilingOpenPlacement } from './model/document';
 export type {
   LayoutDocument as TilingLayoutDocument,
   LayoutNode as TilingLayoutNode,

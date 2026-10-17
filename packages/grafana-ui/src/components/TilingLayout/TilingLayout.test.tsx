@@ -5,7 +5,7 @@ import { useRef, useState } from 'react';
 import { TilingLayout } from './TilingLayout';
 import { TilingTab } from './TilingTab';
 import { useTilingView } from './context';
-import { createTilingDocument, tilingLayout as L } from './model/builder';
+import { createTilingDocument, tilingLayout as L } from './model/spec';
 import { type LayoutDocument, type PanelNode, type SplitNode } from './model/types';
 
 let mounts: Record<string, number> = {};

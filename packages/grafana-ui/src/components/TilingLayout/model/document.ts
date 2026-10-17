@@ -1,12 +1,12 @@
+import { findPanel, findPanelByIdOrView, findPanelOfView } from './locate';
 import {
   createId,
   findNode,
-  findParent,
-  insertAtRootEdge,
-  insertBeside,
-  listPanels,
-  mapPanels,
-  normalize,
+  findParentSplit,
+  insertAtLayoutEdge,
+  insertBesideNode,
+  mapTreePanels,
+  normalizeTree,
   removeNode,
 } from './tree';
 import {
@@ -14,9 +14,8 @@ import {
   type HiddenPanel,
   type LayoutDocument,
   type PanelNode,
-  type PanelRegion,
   type Rect,
-  type RestoreTarget,
+  type RestoreAnchor,
   type Side,
   type ViewRecord,
 } from './types';
@@ -25,61 +24,9 @@ export function emptyDocument(): LayoutDocument {
   return { root: null, floating: [], hidden: [], views: {} };
 }
 
-export interface PanelLocation {
-  panel: PanelNode;
-  region: PanelRegion;
-}
-
-export function locatePanel(doc: LayoutDocument, panelId: string): PanelLocation | undefined {
-  const docked = findNode(doc.root, panelId);
-  if (docked?.kind === 'panel') {
-    return { panel: docked, region: 'docked' };
-  }
-  const floating = doc.floating.find((f) => f.panel.id === panelId);
-  if (floating) {
-    return { panel: floating.panel, region: 'floating' };
-  }
-  const hidden = doc.hidden.find((h) => h.panel.id === panelId);
-  if (hidden) {
-    return { panel: hidden.panel, region: 'hidden' };
-  }
-  return undefined;
-}
-
-export function locateView(doc: LayoutDocument, viewId: string): PanelLocation | undefined {
-  for (const panel of listPanels(doc.root)) {
-    if (panel.views.includes(viewId)) {
-      return { panel, region: 'docked' };
-    }
-  }
-  for (const f of doc.floating) {
-    if (f.panel.views.includes(viewId)) {
-      return { panel: f.panel, region: 'floating' };
-    }
-  }
-  for (const h of doc.hidden) {
-    if (h.panel.views.includes(viewId)) {
-      return { panel: h.panel, region: 'hidden' };
-    }
-  }
-  return undefined;
-}
-
-/** Resolves a panel id or a view id to the panel holding it. */
-export function resolvePanel(doc: LayoutDocument, id: string): PanelLocation | undefined {
-  return locatePanel(doc, id) ?? locateView(doc, id);
-}
-
-export function allPanels(doc: LayoutDocument): PanelLocation[] {
-  return [
-    ...listPanels(doc.root).map((panel) => ({ panel, region: 'docked' as const })),
-    ...doc.floating.map((f) => ({ panel: f.panel, region: 'floating' as const })),
-  ];
-}
-
 /** Applies `fn` to the panel wherever it lives. Returning a panel without views removes it. */
 export function updatePanel(doc: LayoutDocument, panelId: string, fn: (panel: PanelNode) => PanelNode): LayoutDocument {
-  const location = locatePanel(doc, panelId);
+  const location = findPanel(doc, panelId);
   if (!location) {
     return doc;
   }
@@ -92,7 +39,7 @@ export function updatePanel(doc: LayoutDocument, panelId: string, fn: (panel: Pa
   };
   switch (location.region) {
     case 'docked':
-      return { ...doc, root: mapPanels(doc.root, apply) };
+      return { ...doc, root: mapTreePanels(doc.root, apply) };
     case 'floating':
       return {
         ...doc,
@@ -118,7 +65,7 @@ function sanitizePanel(panel: PanelNode): PanelNode {
 
 /** Removes a view from its panel without forgetting it. The neighbouring tab becomes selected. */
 export function detachView(doc: LayoutDocument, viewId: string): LayoutDocument {
-  const location = locateView(doc, viewId);
+  const location = findPanelOfView(doc, viewId);
   if (!location) {
     return doc;
   }
@@ -138,7 +85,7 @@ export function closeView(doc: LayoutDocument, viewId: string): LayoutDocument {
 }
 
 export function closeOtherViews(doc: LayoutDocument, panelId: string, keepViewId: string): LayoutDocument {
-  const location = locatePanel(doc, panelId);
+  const location = findPanel(doc, panelId);
   if (!location) {
     return doc;
   }
@@ -147,7 +94,7 @@ export function closeOtherViews(doc: LayoutDocument, panelId: string, keepViewId
 
 /** Removes a whole panel from wherever it lives. */
 export function detachPanel(doc: LayoutDocument, panelId: string): LayoutDocument {
-  const location = locatePanel(doc, panelId);
+  const location = findPanel(doc, panelId);
   if (!location) {
     return doc;
   }
@@ -162,14 +109,14 @@ export function detachPanel(doc: LayoutDocument, panelId: string): LayoutDocumen
 }
 
 export function selectView(doc: LayoutDocument, viewId: string): LayoutDocument {
-  const location = locateView(doc, viewId);
+  const location = findPanelOfView(doc, viewId);
   if (!location || location.panel.selected === viewId) {
     return doc;
   }
   return updatePanel(doc, location.panel.id, (panel) => ({ ...panel, selected: viewId }));
 }
 
-export function insertViewsIntoPanel(
+export function addViewsToPanel(
   doc: LayoutDocument,
   panelId: string,
   viewIds: string[],
@@ -184,25 +131,25 @@ export function insertViewsIntoPanel(
   });
 }
 
-export function moveTab(doc: LayoutDocument, viewId: string, toIndex: number): LayoutDocument {
-  const location = locateView(doc, viewId);
+export function reorderTab(doc: LayoutDocument, viewId: string, toIndex: number): LayoutDocument {
+  const location = findPanelOfView(doc, viewId);
   if (!location) {
     return doc;
   }
-  return insertViewsIntoPanel(doc, location.panel.id, [viewId], toIndex, location.panel.selected);
+  return addViewsToPanel(doc, location.panel.id, [viewId], toIndex, location.panel.selected);
 }
 
-function topZ(doc: LayoutDocument): number {
+function frontZ(doc: LayoutDocument): number {
   return doc.floating.reduce((z, f) => Math.max(z, f.z), 0);
 }
 
-export function addFloating(doc: LayoutDocument, panel: PanelNode, rect: Rect): LayoutDocument {
-  return { ...doc, floating: [...doc.floating, { panel, rect, z: topZ(doc) + 1 }] };
+export function addFloatingPanel(doc: LayoutDocument, panel: PanelNode, rect: Rect): LayoutDocument {
+  return { ...doc, floating: [...doc.floating, { panel, rect, z: frontZ(doc) + 1 }] };
 }
 
-export function raiseFloating(doc: LayoutDocument, panelId: string): LayoutDocument {
+export function bringFloatingToFront(doc: LayoutDocument, panelId: string): LayoutDocument {
   const entry = doc.floating.find((f) => f.panel.id === panelId);
-  const z = topZ(doc);
+  const z = frontZ(doc);
   if (!entry || (entry.z === z && doc.floating.filter((f) => f.z === z).length === 1)) {
     return doc;
   }
@@ -212,7 +159,7 @@ export function raiseFloating(doc: LayoutDocument, panelId: string): LayoutDocum
   };
 }
 
-export function setFloatingRect(doc: LayoutDocument, panelId: string, rect: Rect): LayoutDocument {
+export function setFloatingPanelRect(doc: LayoutDocument, panelId: string, rect: Rect): LayoutDocument {
   return {
     ...doc,
     floating: doc.floating.map((f) => (f.panel.id === panelId ? { ...f, rect } : f)),
@@ -224,14 +171,14 @@ export function setFloatingRect(doc: LayoutDocument, panelId: string, rect: Rect
  * the workspace.
  */
 export function floatPanel(doc: LayoutDocument, id: string, rect: Rect): LayoutDocument {
-  const location = locatePanel(doc, id);
+  const location = findPanel(doc, id);
   if (location) {
     if (location.region === 'floating') {
-      return setFloatingRect(doc, id, rect);
+      return setFloatingPanelRect(doc, id, rect);
     }
-    return addFloating(detachPanel(doc, id), location.panel, rect);
+    return addFloatingPanel(detachPanel(doc, id), location.panel, rect);
   }
-  const viewLocation = locateView(doc, id);
+  const viewLocation = findPanelOfView(doc, id);
   if (!viewLocation) {
     return doc;
   }
@@ -239,11 +186,11 @@ export function floatPanel(doc: LayoutDocument, id: string, rect: Rect): LayoutD
     return floatPanel(doc, viewLocation.panel.id, rect);
   }
   const panel: PanelNode = { kind: 'panel', id: createId('panel'), views: [id], selected: id };
-  return addFloating(detachView(doc, id), panel, rect);
+  return addFloatingPanel(detachView(doc, id), panel, rect);
 }
 
 /** Docks a floating panel along the right edge of the layout. */
-export function dockFloating(doc: LayoutDocument, panelId: string, side: Side = 'right'): LayoutDocument {
+export function dockFloatingPanel(doc: LayoutDocument, panelId: string, side: Side = 'right'): LayoutDocument {
   const entry = doc.floating.find((f) => f.panel.id === panelId);
   if (!entry) {
     return doc;
@@ -251,16 +198,16 @@ export function dockFloating(doc: LayoutDocument, panelId: string, side: Side = 
   return {
     ...doc,
     floating: doc.floating.filter((f) => f !== entry),
-    root: insertAtRootEdge(doc.root, side, entry.panel),
+    root: insertAtLayoutEdge(doc.root, side, entry.panel),
   };
 }
 
-function restoreTargetFor(doc: LayoutDocument, panelId: string): RestoreTarget {
+function restoreAnchorFor(doc: LayoutDocument, panelId: string): RestoreAnchor {
   const floating = doc.floating.find((f) => f.panel.id === panelId);
   if (floating) {
     return { kind: 'floating', rect: floating.rect };
   }
-  const location = findParent(doc.root, panelId);
+  const location = findParentSplit(doc.root, panelId);
   if (!location) {
     return { kind: 'root' };
   }
@@ -278,26 +225,26 @@ function restoreTargetFor(doc: LayoutDocument, panelId: string): RestoreTarget {
  * Hides a panel, or a single tab when the id is a view that shares its panel. Views stay in the
  * document and the panel remembers how to come back.
  */
-export function hide(doc: LayoutDocument, id: string): LayoutDocument {
-  const location = locatePanel(doc, id);
+export function hidePanel(doc: LayoutDocument, id: string): LayoutDocument {
+  const location = findPanel(doc, id);
   if (location) {
     if (location.region === 'hidden') {
       return doc;
     }
-    const restore = restoreTargetFor(doc, id);
-    const hidden: HiddenPanel = { panel: location.panel, restore };
+    const restoreAt = restoreAnchorFor(doc, id);
+    const hidden: HiddenPanel = { panel: location.panel, restore: restoreAt };
     const next = detachPanel(doc, id);
     return { ...next, hidden: [...next.hidden, hidden] };
   }
-  const viewLocation = locateView(doc, id);
+  const viewLocation = findPanelOfView(doc, id);
   if (!viewLocation || viewLocation.region === 'hidden') {
     return doc;
   }
   if (viewLocation.panel.views.length === 1) {
-    return hide(doc, viewLocation.panel.id);
+    return hidePanel(doc, viewLocation.panel.id);
   }
   const panel: PanelNode = { kind: 'panel', id: createId('panel'), views: [id], selected: id };
-  const restore: RestoreTarget = {
+  const restore: RestoreAnchor = {
     kind: 'tab',
     panelId: viewLocation.panel.id,
     index: viewLocation.panel.views.indexOf(id),
@@ -309,7 +256,7 @@ export function hide(doc: LayoutDocument, id: string): LayoutDocument {
 const DEFAULT_FLOAT_RECT: Rect = { x: 0.25, y: 0.2, w: 0.5, h: 0.6 };
 
 /** Puts a hidden panel back where it was, or floats it when that spot no longer exists. */
-export function restore(doc: LayoutDocument, panelId: string): LayoutDocument {
+export function restorePanel(doc: LayoutDocument, panelId: string): LayoutDocument {
   const entry = doc.hidden.find((h) => h.panel.id === panelId);
   if (!entry) {
     return doc;
@@ -319,29 +266,29 @@ export function restore(doc: LayoutDocument, panelId: string): LayoutDocument {
 
   switch (target.kind) {
     case 'floating':
-      return addFloating(base, panel, target.rect);
+      return addFloatingPanel(base, panel, target.rect);
     case 'root':
-      return base.root ? addFloating(base, panel, DEFAULT_FLOAT_RECT) : { ...base, root: panel };
+      return base.root ? addFloatingPanel(base, panel, DEFAULT_FLOAT_RECT) : { ...base, root: panel };
     case 'tab': {
-      const host = locatePanel(base, target.panelId);
+      const host = findPanel(base, target.panelId);
       if (host && host.region !== 'hidden') {
-        return insertViewsIntoPanel(base, target.panelId, panel.views, target.index, panel.selected);
+        return addViewsToPanel(base, target.panelId, panel.views, target.index, panel.selected);
       }
-      return addFloating(base, panel, DEFAULT_FLOAT_RECT);
+      return addFloatingPanel(base, panel, DEFAULT_FLOAT_RECT);
     }
     case 'beside': {
       if (base.root && findNode(base.root, target.nodeId)) {
         return {
           ...base,
-          root: insertBeside(base.root, target.nodeId, target.side, panel, { shareOfTarget: target.share }),
+          root: insertBesideNode(base.root, target.nodeId, target.side, panel, { shareOfTarget: target.share }),
         };
       }
-      return addFloating(base, panel, DEFAULT_FLOAT_RECT);
+      return addFloatingPanel(base, panel, DEFAULT_FLOAT_RECT);
     }
   }
 }
 
-export type OpenPlacement =
+export type ViewPlacement =
   | { kind: 'tab'; panelId: string; index?: number }
   | { kind: 'beside'; nodeId: string; side: Side }
   | { kind: 'edge'; side: Side }
@@ -352,32 +299,32 @@ export function openView(
   doc: LayoutDocument,
   viewId: string,
   record: ViewRecord,
-  placement: OpenPlacement = { kind: 'edge', side: 'right' }
+  placement: ViewPlacement = { kind: 'edge', side: 'right' }
 ): LayoutDocument {
   const withRecord: LayoutDocument = { ...detachView(doc, viewId), views: { ...doc.views, [viewId]: record } };
   const panel: PanelNode = { kind: 'panel', id: createId('panel'), views: [viewId], selected: viewId };
 
   switch (placement.kind) {
     case 'tab': {
-      const host = resolvePanel(withRecord, placement.panelId);
+      const host = findPanelByIdOrView(withRecord, placement.panelId);
       if (host) {
         const index = placement.index ?? host.panel.views.length;
-        return insertViewsIntoPanel(withRecord, host.panel.id, [viewId], index, viewId);
+        return addViewsToPanel(withRecord, host.panel.id, [viewId], index, viewId);
       }
       break;
     }
     case 'beside':
       if (withRecord.root && findNode(withRecord.root, placement.nodeId)) {
-        return { ...withRecord, root: insertBeside(withRecord.root, placement.nodeId, placement.side, panel) };
+        return { ...withRecord, root: insertBesideNode(withRecord.root, placement.nodeId, placement.side, panel) };
       }
       break;
     case 'float':
-      return addFloating(withRecord, panel, placement.rect ?? cascadeRect(withRecord));
+      return addFloatingPanel(withRecord, panel, placement.rect ?? cascadeRect(withRecord));
     case 'edge':
       break;
   }
   const side = placement.kind === 'edge' ? placement.side : 'right';
-  return { ...withRecord, root: insertAtRootEdge(withRecord.root, side, panel) };
+  return { ...withRecord, root: insertAtLayoutEdge(withRecord.root, side, panel) };
 }
 
 function cascadeRect(doc: LayoutDocument): Rect {
@@ -398,7 +345,7 @@ export function sanitizeDocument(doc: LayoutDocument): LayoutDocument {
     });
     return sanitizePanel({ ...panel, views });
   };
-  const root = normalize(mapPanels(doc.root, cleanPanel) ?? null);
+  const root = normalizeTree(mapTreePanels(doc.root, cleanPanel) ?? null);
   const floating: FloatingPanel[] = (doc.floating ?? [])
     .map((f) => ({ ...f, panel: cleanPanel(f.panel) }))
     .filter((f) => f.panel.views.length > 0);

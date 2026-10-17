@@ -50,7 +50,7 @@ export interface FloatingPanel {
   z: number;
 }
 
-export type RestoreTarget =
+export type RestoreAnchor =
   | { kind: 'beside'; nodeId: string; side: Side; share: number }
   | { kind: 'floating'; rect: Rect }
   | { kind: 'tab'; panelId: string; index: number }
@@ -58,7 +58,7 @@ export type RestoreTarget =
 
 export interface HiddenPanel {
   panel: PanelNode;
-  restore: RestoreTarget;
+  restore: RestoreAnchor;
 }
 
 /** The complete, serializable state of a tiling layout. */
@@ -69,7 +69,7 @@ export interface LayoutDocument {
   views: Record<string, ViewRecord>;
 }
 
-export type PanelRegion = 'docked' | 'floating' | 'hidden';
+export type PanelMode = 'docked' | 'floating' | 'hidden';
 
 export interface LayoutMetrics {
   gap: number;
@@ -81,8 +81,8 @@ export interface LayoutMetrics {
 /** Where a dragged panel or view lands. */
 export type DropTarget =
   | { kind: 'tab'; panelId: string; index: number }
-  | { kind: 'edge'; panelId: string; side: Side }
-  | { kind: 'seam'; splitId: string; axis: Axis; prevId?: string; nextId?: string }
-  | { kind: 'frame'; side: Side }
+  | { kind: 'panel-edge'; panelId: string; side: Side }
+  | { kind: 'divider'; splitId: string; axis: Axis; prevId?: string; nextId?: string }
+  | { kind: 'layout-edge'; side: Side }
   | { kind: 'root' }
   | { kind: 'float'; rect: Rect };

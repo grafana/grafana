@@ -1,5 +1,5 @@
 import { sanitizeDocument } from './document';
-import { createId, normalize } from './tree';
+import { createId, normalizeTree } from './tree';
 import { type Axis, type LayoutDocument, type LayoutNode, type PanelNode, type Rect, type ViewRecord } from './types';
 
 export interface ViewSpec {
@@ -90,7 +90,7 @@ export function createTilingDocument(spec: LayoutSpec | null, floating: Floating
     return toPanel(s);
   };
 
-  const root = spec ? normalize(toNode(spec)) : null;
+  const root = spec ? normalizeTree(toNode(spec)) : null;
   const floats = floating.map((f, i) => ({ panel: toPanel(f.panel), rect: f.rect, z: i + 1 }));
   return sanitizeDocument({ root, floating: floats, hidden: [], views });
 }

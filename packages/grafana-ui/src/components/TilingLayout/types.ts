@@ -2,8 +2,8 @@ import { type ReactNode } from 'react';
 
 import { type IconName } from '../../types/icon';
 
-import { type OpenPlacement } from './model/document';
-import { type LayoutDocument, type PanelRegion, type Rect, type ViewParams, type ViewRecord } from './model/types';
+import { type ViewPlacement } from './model/document';
+import { type LayoutDocument, type PanelMode, type Rect, type ViewParams, type ViewRecord } from './model/types';
 
 export interface TilingViewInfo<P extends object = ViewParams> {
   id: string;
@@ -11,7 +11,7 @@ export interface TilingViewInfo<P extends object = ViewParams> {
   type?: string;
   params: P;
   panelId: string | null;
-  region: PanelRegion | null;
+  region: PanelMode | null;
   /** The view is the selected tab of its panel. */
   selected: boolean;
   /** The view has focus within the layout. */
@@ -20,7 +20,7 @@ export interface TilingViewInfo<P extends object = ViewParams> {
 
 export interface TilingPanelInfo {
   id: string;
-  region: PanelRegion;
+  region: PanelMode;
   views: TilingViewInfo[];
   selectedView: TilingViewInfo;
   /** The panel holds the focused view. */
@@ -64,7 +64,7 @@ export interface TilingLayoutApi {
   getDocument: () => LayoutDocument;
   /** Applies a change to the document. */
   update: (fn: (doc: LayoutDocument) => LayoutDocument) => void;
-  openView: (id: string, record: ViewRecord, placement?: OpenPlacement) => void;
+  openView: (id: string, record: ViewRecord, placement?: ViewPlacement) => void;
   /** Closes a view, consulting `onBeforeViewClose` unless forced. Resolves to whether it closed. */
   closeView: (id: string, options?: { force?: boolean }) => Promise<boolean>;
   selectView: (id: string) => void;

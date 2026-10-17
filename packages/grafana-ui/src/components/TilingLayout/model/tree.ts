@@ -1,7 +1,7 @@
 import { type Axis, type LayoutNode, type PanelNode, type Side, type SplitNode } from './types';
 
 /** Id of the placeholder panel used to preview where a drag will land. */
-export const DROP_SLOT_ID = '__tiling-drop-slot__';
+export const DROP_PREVIEW_ID = '__tiling-drop-slot__';
 
 let idCounter = 0;
 
@@ -10,11 +10,11 @@ export function createId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${idCounter.toString(36)}`;
 }
 
-export function sideAxis(side: Side): Axis {
+export function axisOfSide(side: Side): Axis {
   return side === 'left' || side === 'right' ? 'x' : 'y';
 }
 
-export function isStartSide(side: Side): boolean {
+export function isLeadingSide(side: Side): boolean {
   return side === 'left' || side === 'top';
 }
 
@@ -36,7 +36,7 @@ export function findNode(root: LayoutNode | null, id: string): LayoutNode | unde
   return undefined;
 }
 
-export function findParent(root: LayoutNode | null, id: string): { parent: SplitNode; index: number } | undefined {
+export function findParentSplit(root: LayoutNode | null, id: string): { parent: SplitNode; index: number } | undefined {
   if (!root || root.kind !== 'split') {
     return undefined;
   }
@@ -45,7 +45,7 @@ export function findParent(root: LayoutNode | null, id: string): { parent: Split
     return { parent: root, index };
   }
   for (const child of root.children) {
-    const found = findParent(child, id);
+    const found = findParentSplit(child, id);
     if (found) {
       return found;
     }
@@ -72,14 +72,14 @@ export function findSplitPath(root: LayoutNode | null, id: string): SplitNode[] 
   return undefined;
 }
 
-export function listPanels(root: LayoutNode | null, out: PanelNode[] = []): PanelNode[] {
+export function collectPanels(root: LayoutNode | null, out: PanelNode[] = []): PanelNode[] {
   if (!root) {
     return out;
   }
   if (root.kind === 'panel') {
     out.push(root);
   } else {
-    root.children.forEach((c) => listPanels(c, out));
+    root.children.forEach((c) => collectPanels(c, out));
   }
   return out;
 }
@@ -116,7 +116,7 @@ export function removeNode(root: LayoutNode | null, id: string): LayoutNode | nu
   if (root.id === id) {
     return null;
   }
-  return normalize(removeNodeRaw(root, id));
+  return normalizeTree(removeNodeRaw(root, id));
 }
 
 function removeNodeRaw(node: LayoutNode, id: string): LayoutNode {
@@ -164,13 +164,13 @@ function fixWeights(weights: number[], count: number): number[] {
  * Removes empty panels and splits, collapses single-child splits into their child, flattens a split
  * nested directly in a split on the same axis, and repairs invalid weights.
  */
-export function normalize(node: LayoutNode | null): LayoutNode | null {
+export function normalizeTree(node: LayoutNode | null): LayoutNode | null {
   if (!node) {
     return null;
   }
   if (node.kind === 'panel') {
     if (node.views.length === 0) {
-      return node.id === DROP_SLOT_ID ? node : null;
+      return node.id === DROP_PREVIEW_ID ? node : null;
     }
     if (!node.views.includes(node.selected)) {
       return { ...node, selected: node.views[0] };
@@ -181,7 +181,7 @@ export function normalize(node: LayoutNode | null): LayoutNode | null {
   let split: SplitNode = { ...node, weights: fixWeights(node.weights, node.children.length) };
   // Drop empty children first, handing their space to a neighbour.
   for (let i = split.children.length - 1; i >= 0; i--) {
-    const next = normalize(split.children[i]);
+    const next = normalizeTree(split.children[i]);
     if (next === null) {
       split = removeChildAt(split, i);
     } else if (next !== split.children[i]) {
@@ -216,7 +216,7 @@ export function normalize(node: LayoutNode | null): LayoutNode | null {
 }
 
 /** Inserts a child at `index`. The new child gets 1/(n+1) of the split and the others keep their ratios. */
-export function insertIntoSplit(split: SplitNode, index: number, node: LayoutNode, weight?: number): SplitNode {
+export function insertChild(split: SplitNode, index: number, node: LayoutNode, weight?: number): SplitNode {
   const total = split.weights.reduce((a, b) => a + b, 0);
   const children = [...split.children];
   const weights = [...split.weights];
@@ -225,7 +225,7 @@ export function insertIntoSplit(split: SplitNode, index: number, node: LayoutNod
   return { ...split, children, weights };
 }
 
-export interface InsertBesideOptions {
+export interface InsertBesideNodeOptions {
   /** Fraction of the target's space the new node takes. Defaults to an even share. */
   shareOfTarget?: number;
 }
@@ -234,30 +234,30 @@ export interface InsertBesideOptions {
  * Places `node` next to the node with `targetId`. When the target's parent runs along the same axis, the
  * node is inserted into that parent. Otherwise the target is split in two.
  */
-export function insertBeside(
+export function insertBesideNode(
   root: LayoutNode,
   targetId: string,
   side: Side,
   node: LayoutNode,
-  options: InsertBesideOptions = {}
+  options: InsertBesideNodeOptions = {}
 ): LayoutNode {
-  const axis = sideAxis(side);
-  const start = isStartSide(side);
+  const axis = axisOfSide(side);
+  const start = isLeadingSide(side);
   const share = options.shareOfTarget;
-  const location = findParent(root, targetId);
+  const location = findParentSplit(root, targetId);
 
   if (location && location.parent.axis === axis) {
     const { parent, index } = location;
     const result = replaceNode(root, parent.id, () => {
       if (share === undefined) {
-        return insertIntoSplit(parent, start ? index : index + 1, node);
+        return insertChild(parent, start ? index : index + 1, node);
       }
       const targetWeight = parent.weights[index];
       const updated = { ...parent, weights: [...parent.weights] };
       updated.weights[index] = targetWeight * (1 - share);
-      return insertIntoSplit(updated, start ? index : index + 1, node, targetWeight * share);
+      return insertChild(updated, start ? index : index + 1, node, targetWeight * share);
     });
-    return normalize(result) ?? node;
+    return normalizeTree(result) ?? node;
   }
 
   const s = share ?? 0.5;
@@ -268,18 +268,18 @@ export function insertBeside(
     children: start ? [node, target] : [target, node],
     weights: start ? [s, 1 - s] : [1 - s, s],
   }));
-  return normalize(result) ?? node;
+  return normalizeTree(result) ?? node;
 }
 
 /** Inserts `node` along one edge of the whole layout. */
-export function insertAtRootEdge(root: LayoutNode | null, side: Side, node: LayoutNode): LayoutNode {
+export function insertAtLayoutEdge(root: LayoutNode | null, side: Side, node: LayoutNode): LayoutNode {
   if (!root) {
     return node;
   }
-  const axis = sideAxis(side);
-  const start = isStartSide(side);
+  const axis = axisOfSide(side);
+  const start = isLeadingSide(side);
   if (root.kind === 'split' && root.axis === axis) {
-    return normalize(insertIntoSplit(root, start ? 0 : root.children.length, node)) ?? node;
+    return normalizeTree(insertChild(root, start ? 0 : root.children.length, node)) ?? node;
   }
   const split: SplitNode = {
     kind: 'split',
@@ -288,10 +288,10 @@ export function insertAtRootEdge(root: LayoutNode | null, side: Side, node: Layo
     children: start ? [node, root] : [root, node],
     weights: [1, 1],
   };
-  return normalize(split) ?? node;
+  return normalizeTree(split) ?? node;
 }
 
-export function mapPanels(root: LayoutNode | null, fn: (panel: PanelNode) => PanelNode | null): LayoutNode | null {
+export function mapTreePanels(root: LayoutNode | null, fn: (panel: PanelNode) => PanelNode | null): LayoutNode | null {
   if (!root) {
     return null;
   }
@@ -308,7 +308,7 @@ export function mapPanels(root: LayoutNode | null, fn: (panel: PanelNode) => Pan
     return changed ? { ...node, children } : node;
   };
   const next = visit(root);
-  return next === root ? root : normalize(next);
+  return next === root ? root : normalizeTree(next);
 }
 
 /** Replaces the weights of the given splits. */

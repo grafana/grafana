@@ -1,17 +1,18 @@
 import type * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { detachPanel, detachView, locatePanel, moveTab, selectView } from './model/document';
-import { applyDrop, createDropSlot } from './model/drop';
-import { type FloatingHitRect, hitTest, targetKey } from './model/hitTest';
-import { type ComputedLayout, insetRect, rectContains } from './model/layout';
-import { createId, DROP_SLOT_ID, findNode } from './model/tree';
+import { detachPanel, detachView, reorderTab, selectView } from './model/document';
+import { applyDrop, createDropPreviewPanel } from './model/drop';
+import { type FloatingPanelRect, findDropTarget, dropTargetKey } from './model/findDropTarget';
+import { type LayoutGeometry, insetRect, rectContains } from './model/geometry';
+import { findPanel } from './model/locate';
+import { createId, DROP_PREVIEW_ID, findNode } from './model/tree';
 import {
   type DropTarget,
   type LayoutDocument,
   type LayoutMetrics,
   type PanelNode,
-  type PanelRegion,
+  type PanelMode,
   type Point,
   type Rect,
 } from './model/types';
@@ -26,7 +27,7 @@ export type DropKind = 'dock' | 'tab' | 'float' | 'none';
 export interface DragView {
   /** The document to lay out while dragging: the original, or a preview with the drop slot. */
   displayDoc: LayoutDocument;
-  lifted?: { panel: PanelNode; rect: Rect; region: PanelRegion };
+  lifted?: { panel: PanelNode; rect: Rect; region: PanelMode };
   /** A panel of `displayDoc` that is lifted and must not be drawn in place. */
   hiddenPanelId?: string;
   sourceSlotRect?: Rect;
@@ -48,16 +49,16 @@ export interface DragControllerOptions {
   metrics: LayoutMetrics;
   getDoc: () => LayoutDocument;
   getViewport: () => Rect;
-  getLayout: (doc: LayoutDocument) => ComputedLayout;
-  getFloatingRects: (doc: LayoutDocument) => FloatingHitRect[];
-  getFramedId: () => string | null;
+  getLayout: (doc: LayoutDocument) => LayoutGeometry;
+  getFloatingRects: (doc: LayoutDocument) => FloatingPanelRect[];
+  getZoomedId: () => string | null;
   onCommit: (commit: DropCommit) => void;
   onDragStart?: () => void;
 }
 
 type Source =
-  | { kind: 'panel'; panelId: string; region: PanelRegion }
-  | { kind: 'view'; viewId: string; panelId: string; region: PanelRegion };
+  | { kind: 'panel'; panelId: string; region: PanelMode }
+  | { kind: 'view'; viewId: string; panelId: string; region: PanelMode };
 
 interface TabMeasure {
   id: string;
@@ -80,7 +81,7 @@ interface Session {
 interface LiftState {
   base: LayoutDocument;
   payload: PanelNode;
-  region: PanelRegion;
+  region: PanelMode;
   startRect: Rect;
   grab: Point;
   compactOnly: boolean;
@@ -169,7 +170,7 @@ export function useDragController(options: DragControllerOptions) {
     if (!target || target.kind === 'tab' || target.kind === 'float') {
       return lift.base;
     }
-    return applyDrop(lift.base, createDropSlot(), target);
+    return applyDrop(lift.base, createDropPreviewPanel(), target);
   };
 
   const publish = useCallback(() => {
@@ -273,7 +274,7 @@ export function useDragController(options: DragControllerOptions) {
 
   const hitTestLift = (session: Session) => {
     const lift = session.lift!;
-    const { metrics, getViewport, getLayout, getFloatingRects, getFramedId } = optionsRef.current;
+    const { metrics, getViewport, getLayout, getFloatingRects, getZoomedId } = optionsRef.current;
     const viewport = getViewport();
     const displayDoc = lift.displayDoc;
     const layout = getLayout(displayDoc);
@@ -283,11 +284,11 @@ export function useDragController(options: DragControllerOptions) {
     const current = lift.current;
     // A dock slot displaces its neighbours, so while the pointer is inside it the target holds.
     const slotRect =
-      current && current.kind !== 'float' && current.kind !== 'tab' ? layout.rects.get(DROP_SLOT_ID) : undefined;
+      current && current.kind !== 'float' && current.kind !== 'tab' ? layout.rects.get(DROP_PREVIEW_ID) : undefined;
     if (current && slotRect && rectContains(insetRect(slotRect, -metrics.gap), x, y)) {
       result = current;
     } else {
-      const hit = hitTest({
+      const hit = findDropTarget({
         point: session.pointer,
         viewport,
         doc: displayDoc,
@@ -304,9 +305,9 @@ export function useDragController(options: DragControllerOptions) {
       result = hit === 'self' ? null : hit;
     }
 
-    const framedId = getFramedId();
-    if (result?.kind === 'frame' && framedId && findNode(displayDoc.root, framedId)) {
-      result = { kind: 'edge', panelId: framedId, side: result.side };
+    const zoomedId = getZoomedId();
+    if (result?.kind === 'layout-edge' && zoomedId && findNode(displayDoc.root, zoomedId)) {
+      result = { kind: 'panel-edge', panelId: zoomedId, side: result.side };
     }
     if (!result && lift.isFloatMove && rectContains(viewport, x, y)) {
       result = { kind: 'float', rect: toFraction(lift.rect, viewport) };
@@ -316,8 +317,8 @@ export function useDragController(options: DragControllerOptions) {
     }
     lift.candidate = result;
 
-    const key = targetKey(result);
-    if (key === targetKey(lift.current)) {
+    const key = dropTargetKey(result);
+    if (key === dropTargetKey(lift.current)) {
       if (lift.pending !== undefined) {
         clearTimeout(lift.settleTimer);
         lift.pending = undefined;
@@ -329,7 +330,7 @@ export function useDragController(options: DragControllerOptions) {
       }
       return;
     }
-    if (lift.pending === undefined || key !== targetKey(lift.pending)) {
+    if (lift.pending === undefined || key !== dropTargetKey(lift.pending)) {
       clearTimeout(lift.settleTimer);
       lift.pending = result;
       lift.settleTimer = setTimeout(settle, MOTION.settle);
@@ -373,7 +374,7 @@ export function useDragController(options: DragControllerOptions) {
     const isFloatMove = source.region === 'floating' && source.kind === 'panel';
 
     if (source.kind === 'panel') {
-      const location = locatePanel(original, source.panelId);
+      const location = findPanel(original, source.panelId);
       if (!location) {
         return;
       }
@@ -505,7 +506,7 @@ export function useDragController(options: DragControllerOptions) {
       if (!cancelled && session.mode === 'reorder' && session.reorder && session.source.kind === 'view') {
         const { index, origIndex } = session.reorder;
         if (index !== origIndex) {
-          const doc = selectView(moveTab(session.original, session.source.viewId, index), session.source.viewId);
+          const doc = selectView(reorderTab(session.original, session.source.viewId, index), session.source.viewId);
           onCommit({ doc, panelId: session.source.panelId, focusViewId: session.source.viewId, announce: false });
         }
       } else if (!cancelled && session.mode === 'lift' && session.lift) {
@@ -562,7 +563,7 @@ export function useDragController(options: DragControllerOptions) {
           // Content must not swallow the pointer while dragging.
           window.getSelection()?.removeAllRanges();
           optionsRef.current.onDragStart?.();
-          const location = locatePanel(session.original, source.panelId);
+          const location = findPanel(session.original, source.panelId);
           if (source.kind === 'view' && location && location.panel.views.length > 1) {
             if (!beginReorder(session, source)) {
               beginLift(session, source, true);
@@ -617,14 +618,14 @@ export function useDragController(options: DragControllerOptions) {
   useEffect(() => () => cleanup(), [cleanup]);
 
   const onTabPointerDown = useCallback(
-    (e: React.PointerEvent, panelId: string, viewId: string, region: PanelRegion) => {
+    (e: React.PointerEvent, panelId: string, viewId: string, region: PanelMode) => {
       startSession(e, { kind: 'view', viewId, panelId, region });
     },
     [startSession]
   );
 
   const onPanelPointerDown = useCallback(
-    (e: React.PointerEvent, panelId: string, region: PanelRegion) => {
+    (e: React.PointerEvent, panelId: string, region: PanelMode) => {
       startSession(e, { kind: 'panel', panelId, region });
     },
     [startSession]
