@@ -55,6 +55,7 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { findAdjacentVizPanel, focusVizPanel } from '../layouts-shared/utils';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -236,7 +237,7 @@ export class DefaultGridLayoutManager
     clearClipboard();
   }
 
-  public removePanel(panel: VizPanel) {
+  public removePanel(panel: VizPanel, options?: { skipFocus?: boolean }) {
     const gridItem = panel.parent!;
 
     if (!(gridItem instanceof DashboardGridItem)) {
@@ -244,6 +245,8 @@ export class DefaultGridLayoutManager
     }
 
     const layout = this.state.grid;
+    const getPanelFromGridChild = (child: SceneGridItemLike) =>
+      child instanceof DashboardGridItem ? child.state.body : undefined;
 
     let row: SceneGridRow | undefined;
 
@@ -254,14 +257,23 @@ export class DefaultGridLayoutManager
     }
 
     if (row) {
+      const adjacentPanel = findAdjacentVizPanel(gridItem, row.state.children, getPanelFromGridChild);
       row.setState({ children: row.state.children.filter((child) => child !== gridItem) });
       layout.forceRender();
+      if (!options?.skipFocus) {
+        focusVizPanel(adjacentPanel);
+      }
       return;
     }
+
+    const adjacentPanel = findAdjacentVizPanel(gridItem, layout.state.children, getPanelFromGridChild);
 
     if (!isDashboardNewLayoutsEnabled()) {
       // No undo/redo support in legacy edit mode
       layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+      if (!options?.skipFocus) {
+        focusVizPanel(adjacentPanel);
+      }
       return;
     }
 
@@ -269,7 +281,12 @@ export class DefaultGridLayoutManager
       meta: { actionId: 'panel.remove', scope: 'custom-grid' },
       removedObject: gridItem.state.body,
       source: this,
-      perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
+      perform: () => {
+        layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+        if (!options?.skipFocus) {
+          focusVizPanel(adjacentPanel);
+        }
+      },
       undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
     });
   }
