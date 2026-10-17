@@ -8,7 +8,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -99,36 +98,9 @@ func (s *TeamRemoveMemberREST) Connect(ctx context.Context, name string, _ runti
 
 		nsCtx := common.WithSubresourceNamespace(ctx)
 
-		obj, err := s.getter.Get(nsCtx, name, &metav1.GetOptions{})
-		if err != nil {
+		if _, err := RemoveUserMember(nsCtx, s.getter, s.updater, name, body.Name); err != nil {
 			responder.Error(err)
 			return
-		}
-		t, ok := obj.(*iamv0alpha1.Team)
-		if !ok {
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("team store returned unexpected type %T", obj)))
-			return
-		}
-		removeIdx := -1
-		for i, m := range t.Spec.Members {
-			if m.Kind == "User" && m.Name == body.Name {
-				removeIdx = i
-				break
-			}
-		}
-		if removeIdx >= 0 {
-			t.Spec.Members = append(t.Spec.Members[:removeIdx], t.Spec.Members[removeIdx+1:]...)
-			// 409 surfaces unchanged; SQL deadlocks (which arrive as 500
-			// from unified storage) are converted so RetryOnConflict catches them.
-			if _, _, err := s.updater.Update(nsCtx, name, rest.DefaultUpdatedObjectInfo(t),
-				nil, nil, false, &metav1.UpdateOptions{}); err != nil {
-				if isRetryableTxnError(err) {
-					responder.Error(apierrors.NewConflict(teamResource.GroupResource(), name, err))
-					return
-				}
-				responder.Error(err)
-				return
-			}
 		}
 
 		// 200 OK whether or not a row existed; the request is idempotent.

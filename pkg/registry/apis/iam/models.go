@@ -114,7 +114,9 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Getters for existence validation during TeamBinding create
 	teamGetter rest.Getter
-	userGetter rest.Getter
+	// teamStorage is the Team storage behind the dual-writer, used for member removal.
+	teamStorage user.TeamStorage
+	userGetter  rest.Getter
 
 	// authInfoStorage is set when the AuthInfo API is registered; the user delete cascades to it.
 	authInfoStorage rest.Storage
