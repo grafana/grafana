@@ -358,9 +358,10 @@ function toDecimalsOrUndefined(value: unknown) {
 // Run the value through the same two steps and skip it if they throw. A looser
 // check such as tinycolor accepts formats like 'ff0000' that still crash.
 // decomposeColor only checks the prefix, so 'rgb(foo)' parses to NaN channels
-// without throwing; skip those too.
+// without throwing; skip those too. getColorByName turns an empty name into the
+// fallback gray, which would pass, so reject it before that.
 function isValidColor(value: unknown): value is string {
-  if (typeof value !== 'string') {
+  if (typeof value !== 'string' || value === '') {
     return false;
   }
 

@@ -153,6 +153,8 @@ describe('config from data', () => {
     ['rgb with non-numeric channels', 'rgb(foo)'],
     ['rgb with no channels', 'rgb()'],
     ['hex with non-hex digits', '#zz'],
+    ['empty string', ''],
+    ['whitespace', '  '],
   ])('Skips a color mapping with a %s value', (_name, value) => {
     expect(extractColorConfig(value)).toBeUndefined();
   });
@@ -448,8 +450,8 @@ describe('thresholds from data', () => {
   it('Falls back to red when the color is missing or invalid', () => {
     const steps = extractSteps(
       [
-        { name: 'threshold', type: FieldType.number, values: [1, 2, 3, 4] },
-        { name: 'color', type: FieldType.string, values: ['blue', 'notacolor', 'ff0000'] },
+        { name: 'threshold', type: FieldType.number, values: [1, 2, 3, 4, 5] },
+        { name: 'color', type: FieldType.string, values: ['blue', 'notacolor', 'ff0000', ''] },
       ],
       rowMappings
     );
@@ -459,6 +461,7 @@ describe('thresholds from data', () => {
       { value: 2, color: 'red' },
       { value: 3, color: 'red' },
       { value: 4, color: 'red' },
+      { value: 5, color: 'red' },
     ]);
   });
 
