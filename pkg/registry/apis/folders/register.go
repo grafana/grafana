@@ -34,6 +34,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -459,7 +460,18 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
 
 	// the resource permission will likely already exist with admin can admin, so we will need to update it
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
+	if existing, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
+		// Only add the defaults nobody granted when the record may predate this call: the folder
+		// reached the root by a move, or its record was pre-seeded on create. Replacing the whole
+		// list would drop the grants it already carries.
+		if apistore.KeepExistingPermissions(ctx) {
+			if err := resourcepermission.AddMissingPermissions(ctx, client, existing, permissions); err != nil {
+				logger.Error("failed to add missing folder permissions", "error", err)
+				return fmt.Errorf("add missing folder permissions: %w", err)
+			}
+			return nil
+		}
+
 		_, err := client.Update(ctx, &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]any{
