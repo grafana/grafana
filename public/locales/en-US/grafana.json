@@ -10909,6 +10909,26 @@
       "placeholder-new-tag": "New tag (enter key to add)",
       "remove": "Remove tag: {{name}}"
     },
+    "tiling-layout": {
+      "add-as-tab": "Add as tab",
+      "close-view": "Close {{title}}",
+      "divider": "Resize panels",
+      "label": "Tiling layout",
+      "menu": {
+        "close": "Close {{title}}",
+        "close-others": "Close other tabs",
+        "dock": "Dock",
+        "float": "Float",
+        "hide": "Hide",
+        "maximize": "Maximize",
+        "move": "Move {{title}} to",
+        "restore": "Restore size",
+        "split-below": "New split below",
+        "split-right": "New split right"
+      },
+      "moved": "Moved",
+      "panel-menu": "Panel menu"
+    },
     "time-sync-button": {
       "aria-label-sync": "Sync times",
       "aria-label-unsync": "Unsync times"
