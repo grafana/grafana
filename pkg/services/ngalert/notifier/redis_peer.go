@@ -122,6 +122,9 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		PoolSize:  poolSize,
 		TLSConfig: tlsClientConfig,
 
+		// Options specific to cluster mode.
+		IsClusterMode: cfg.clusterMode,
+
 		// Options specific to Sentinel mode.
 		MasterName:       cfg.masterName,
 		SentinelUsername: cfg.sentinelUsername,
