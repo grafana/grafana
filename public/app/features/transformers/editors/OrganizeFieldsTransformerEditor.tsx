@@ -26,7 +26,8 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 
-import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
+import { getDistinctLabels } from '../transformerDataUtils';
+import { getAllFieldNamesFromDataFrames, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 

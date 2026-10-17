@@ -4,7 +4,8 @@ import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { PanelModel } from '../../dashboard/state/PanelModel';
-import { containsVariable, variableRegex, variableRegexExec } from '../utils';
+import { containsVariable, variableRegexExec } from '../utils';
+import { variableRegex } from '../variableRegex';
 
 import { type UsagesToNetwork } from './types';
 

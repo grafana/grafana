@@ -1,7 +1,7 @@
 import { type ScopedVars, type TimeRange, type TypedVariableModel, type VariableOption } from '@grafana/data';
 import { type TemplateSrv } from '@grafana/runtime';
 
-import { variableRegex } from '../variables/utils';
+import { variableRegex } from '../variables/variableRegex';
 
 /**
  * Mock for TemplateSrv where you can just supply map of key and values and it will do the interpolation based on that.

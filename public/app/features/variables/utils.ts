@@ -21,6 +21,7 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './consta
 import { getVariablesState } from './state/selectors';
 import { type KeyedVariableIdentifier, type VariableIdentifier, type VariablePayload } from './state/types';
 import { TransactionStatus } from './types';
+import { variableRegex } from './variableRegex';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -29,7 +30,6 @@ import { TransactionStatus } from './types';
  * \[\[(\w+?)(?::(\w+))?\]\]                  [[var2]] or [[var2:fmt2]]
  * \${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}   ${var3} or ${var3.fieldPath} or ${var3:fmt3} (or ${var3.fieldPath:fmt3} but that is not a separate capture group)
  */
-export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 // Helper function since lastIndex is not reset
 export const variableRegexExec = (variableString: string) => {
