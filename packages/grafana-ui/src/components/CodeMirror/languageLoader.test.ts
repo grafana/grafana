@@ -1,3 +1,5 @@
+import { type CompletionSource } from '@codemirror/autocomplete';
+
 import { CODE_MIRROR_LANGUAGES } from './languages';
 import { type CodeMirrorEditorLanguage } from './types';
 
@@ -112,6 +114,108 @@ describe('loadLanguageExtension', () => {
       const extension = await loadLanguageExtension('typescript');
 
       expect(extension).toHaveProperty('language', typescriptLanguage);
+    });
+  });
+
+  it('loads and memoizes HTML extensions with and without on* event handler completions independently', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+
+      const defaultHtml = await loadLanguageExtension('html');
+      const filtered = await loadLanguageExtension('html', { htmlAutocompleteEventHandlers: false });
+      const defaultAgain = await loadLanguageExtension('html', { htmlAutocompleteEventHandlers: true });
+
+      expect(defaultHtml).not.toBe(filtered);
+      expect(defaultAgain).toBe(defaultHtml);
+    });
+  });
+
+  it('defaults htmlAutocompleteEventHandlers to true and includes on* event handlers in HTML completions', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { CompletionContext } = await import('@codemirror/autocomplete');
+      const { EditorState } = await import('@codemirror/state');
+
+      const extension = await loadLanguageExtension('html');
+      const state = EditorState.create({
+        doc: '<div on',
+        extensions: extension ? [extension] : [],
+      });
+      const context = new CompletionContext(state, 7, true);
+      const results = await Promise.all(
+        state.languageDataAt<CompletionSource>('autocomplete', 7).map((source) => source(context))
+      );
+      const completions = results.flatMap((result) => (result && 'options' in result ? result.options : []));
+
+      expect(completions.some((option) => option.label === 'onclick')).toBe(true);
+      expect(completions.some((option) => option.label.startsWith('on'))).toBe(true);
+    });
+  });
+
+  it('drops on* event handler attributes when htmlAutocompleteEventHandlers is false', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { CompletionContext } = await import('@codemirror/autocomplete');
+      const { EditorState } = await import('@codemirror/state');
+
+      const extension = await loadLanguageExtension('html', { htmlAutocompleteEventHandlers: false });
+      const state = EditorState.create({
+        doc: '<div on',
+        extensions: extension ? [extension] : [],
+      });
+      const context = new CompletionContext(state, 7, true);
+      const results = await Promise.all(
+        state.languageDataAt<CompletionSource>('autocomplete', 7).map((source) => source(context))
+      );
+      const completions = results.flatMap((result) => (result && 'options' in result ? result.options : []));
+
+      expect(completions.some((option) => option.label.startsWith('on'))).toBe(false);
+      expect(completions.some((option) => option.label === 'onclick')).toBe(false);
+      expect(completions.some((option) => option.label === 'id')).toBe(true);
+      expect(completions.some((option) => option.label === 'class')).toBe(true);
+    });
+  });
+
+  it('preserves HTML tag completions when htmlAutocompleteEventHandlers is false', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { CompletionContext } = await import('@codemirror/autocomplete');
+      const { EditorState } = await import('@codemirror/state');
+
+      const extension = await loadLanguageExtension('html', { htmlAutocompleteEventHandlers: false });
+      const state = EditorState.create({
+        doc: '<d',
+        extensions: extension ? [extension] : [],
+      });
+      const context = new CompletionContext(state, 2, true);
+      const results = await Promise.all(
+        state.languageDataAt<CompletionSource>('autocomplete', 2).map((source) => source(context))
+      );
+      const completions = results.flatMap((result) => (result && 'options' in result ? result.options : []));
+
+      expect(completions.some((option) => option.label === 'div')).toBe(true);
+    });
+  });
+
+  it('preserves valid attribute value completions such as "on" when htmlAutocompleteEventHandlers is false', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { CompletionContext } = await import('@codemirror/autocomplete');
+      const { EditorState } = await import('@codemirror/state');
+
+      const extension = await loadLanguageExtension('html', { htmlAutocompleteEventHandlers: false });
+      const state = EditorState.create({
+        doc: '<input autocomplete="o',
+        extensions: extension ? [extension] : [],
+      });
+      const context = new CompletionContext(state, 22, true);
+      const results = await Promise.all(
+        state.languageDataAt<CompletionSource>('autocomplete', 22).map((source) => source(context))
+      );
+      const completions = results.flatMap((result) => (result && 'options' in result ? result.options : []));
+
+      expect(completions.some((option) => option.label === 'on')).toBe(true);
+      expect(completions.some((option) => option.label === 'off')).toBe(true);
     });
   });
 });
