@@ -1,8 +1,13 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import { SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
+import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -12,7 +17,8 @@ import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSe
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { SidebarCategoryType } from '../types';
 
-import { getOutlineSettingsTarget } from './DashboardOutlineNode';
+import { DashboardOutline } from './DashboardOutline';
+import { DashboardOutlineNode, getOutlineSettingsTarget } from './DashboardOutlineNode';
 
 function buildDashboard(state = {}) {
   return new DashboardScene({
@@ -103,5 +109,50 @@ describe('getOutlineSettingsTarget', () => {
       // A variable set with no recognized parent (e.g. not attached to a dashboard/row/tab)
       expect(getOutlineSettingsTarget(new SceneVariableSet({ variables: [] }))).toBeUndefined();
     });
+  });
+});
+
+describe('panel navigation', () => {
+  it.each([
+    { name: 'auto-grid', Item: AutoGridItem },
+    { name: 'custom-grid', Item: DashboardGridItem },
+  ])('scrolls to and highlights a $name panel on every outline click', async ({ Item }) => {
+    const user = userEvent.setup();
+    const panel = new VizPanel({ key: 'panel-1', title: 'Requests' });
+    const item = new Item({ key: 'grid-item-1', body: panel });
+    const dashboard = buildDashboard();
+    const element = document.createElement('div');
+    const cancel = jest.fn();
+    element.animate = jest.fn().mockReturnValue({ cancel });
+    element.scrollIntoView = jest.fn();
+    element.dataset.griditemKey = 'grid-item-1';
+    item.containerRef.current = element;
+    document.body.appendChild(element);
+
+    try {
+      render(
+        <DashboardOutlineNode
+          sceneObject={panel}
+          sidebar={dashboard.state.sidebar}
+          outline={new DashboardOutline()}
+          isEditing={false}
+          depth={1}
+          index={0}
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Requests' }));
+      expect(element.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center', inline: 'center' });
+      expect(element.animate).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ outline: '1px solid #3d71d9' })]),
+        { duration: 2400 }
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Requests' }));
+      expect(cancel).toHaveBeenCalledTimes(1);
+      expect(element.animate).toHaveBeenCalledTimes(2);
+    } finally {
+      element.remove();
+    }
   });
 });
