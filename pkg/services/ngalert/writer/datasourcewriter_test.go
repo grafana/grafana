@@ -3,22 +3,22 @@ package writer
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -378,9 +378,11 @@ func TestDatasourceWriter(t *testing.T) {
 		require.NotNil(t, mockProvider.lastOptions)
 		// Options.SigV4 must be non-nil because sigV4Auth=true is set in JSONData
 		// and SigV4AuthEnabled=true is provided through the Grafana plugin context.
+		// Service must be "aps" — the SDK leaves it empty and AWS rejects empty service names.
 		require.NotNil(t, mockProvider.lastOptions.SigV4)
 		require.Equal(t, "us-east-1", mockProvider.lastOptions.SigV4.Region)
 		require.Equal(t, "default", mockProvider.lastOptions.SigV4.AuthType)
+		require.Equal(t, amazonPrometheusSigV4Service, mockProvider.lastOptions.SigV4.Service)
 	})
 
 	t.Run("datasource uses correct backend type in metrics", func(t *testing.T) {
