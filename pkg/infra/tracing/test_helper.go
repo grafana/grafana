@@ -4,6 +4,8 @@ import (
 	"go.opentelemetry.io/otel"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type TracerForTestOption func(tp *tracesdk.TracerProvider)
@@ -26,7 +28,7 @@ func InitializeTracerForTest(opts ...TracerForTestOption) Tracer {
 
 	cfg := NewEmptyTracingConfig()
 	cfg.Propagation = "jaeger,w3c"
-	ots := &TracingService{cfg: cfg, tracerProvider: tp}
+	ots := &TracingService{cfg: cfg, tracerProvider: tp, log: log.NewNopLogger()}
 	_ = ots.initOpentelemetryTracer()
 	return ots
 }
