@@ -135,7 +135,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 					return apimodels.RedactedValue
 				})
 			}
-			contactPoints = append(contactPoints, GrafanaIntegrationConfigToEmbeddedContactPoint(gr, recv.Provenance))
+			contactPoints = append(contactPoints, GrafanaIntegrationConfigToEmbeddedContactPoint(gr, recv.Provenance()))
 		}
 	}
 

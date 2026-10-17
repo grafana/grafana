@@ -269,7 +269,7 @@ receivers:
 		require.NoError(t, err)
 		for _, tmpl := range cfg.Templates {
 			if tmpl.Title == "promoted.tmpl" {
-				require.Equal(t, models.ProvenanceNone, tmpl.Provenance,
+				require.Equal(t, models.ProvenanceNone, tmpl.Provenance(),
 					"promoted template must have ProvenanceNone, not provisioned")
 				return
 			}
@@ -619,7 +619,7 @@ receivers:
 		cfg, err := Load([]byte(raw.AlertmanagerConfiguration))
 		require.NoError(t, err)
 		for _, tmpl := range cfg.Templates {
-			require.NotEqual(t, definitions.Provenance(models.ProvenanceConvertedPrometheus), tmpl.Provenance,
+			require.NotEqual(t, models.ProvenanceConvertedPrometheus, tmpl.Provenance(),
 				"template %q must not have converted_prometheus provenance after promotion", tmpl.Title)
 		}
 	})

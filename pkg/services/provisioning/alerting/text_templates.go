@@ -30,7 +30,7 @@ func (c *defaultTextTemplateProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, template := range file.Templates {
-			template.Data.Provenance = models.ProvenanceFile
+			template.Data.Manager = models.ProvenanceToManagerProperties(models.ProvenanceFile)
 			_, err := c.templateService.UpsertTemplate(ctx, template.OrgID, template.Data)
 			if err != nil {
 				return err

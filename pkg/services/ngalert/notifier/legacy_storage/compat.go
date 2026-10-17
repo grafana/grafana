@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
@@ -60,9 +61,9 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (v1.PostableApiReceiver, 
 
 	return v1.PostableApiReceiver{
 		ResourceMetadata: v1.ResourceMetadata{
-			UID:        v1.ResourceUID(r.UID),
-			Version:    r.Version,
-			Provenance: r.Provenance,
+			UID:     v1.ResourceUID(r.UID),
+			Version: r.Version,
+			Manager: r.Manager,
 		},
 		Name:                    r.Name,
 		GrafanaManagedReceivers: integrations,
@@ -79,32 +80,27 @@ func PostableApiReceiverToReceiver(postable v1.PostableApiReceiver, origin model
 		Version:      postable.Version,
 		Name:         postable.GetName(),
 		Integrations: integrations,
-		Provenance:   postable.Provenance,
+		Manager:      postable.Manager,
 		Origin:       origin,
 	}
 	return r, nil
 }
 
-// GetReceiverProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
-func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *v1.PostableApiReceiver, origin models.ResourceOrigin) models.Provenance {
+// GetReceiverManager determines the ManagerProperties of a v1.PostableApiReceiver from those of its
+// integrations.
+func GetReceiverManager(storedManagers map[string]utils.ManagerProperties, r *v1.PostableApiReceiver, origin models.ResourceOrigin) utils.ManagerProperties {
 	if origin == models.ResourceOriginImported {
-		return models.ProvenanceConvertedPrometheus
+		return models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus)
 	}
-
-	if len(r.GrafanaManagedReceivers) == 0 || len(storedProvenances) == 0 {
-		return models.ProvenanceNone
-	}
-
-	// Current provisioning works on the integration level, so we need some way to determine the provenance of the
-	// entire receiver. All integrations in a receiver should have the same provenance, but we don't want to rely on
-	// this assumption in case the first provenance is None and a later one is not. To this end, we return the first
-	// non-zero provenance we find.
-	for _, contactPoint := range r.GrafanaManagedReceivers {
-		if p, exists := storedProvenances[contactPoint.UID]; exists && p != models.ProvenanceNone {
-			return p
+	// Provisioning works on the integration level. All integrations in a receiver should have the same manager,
+	// but we don't want to rely on this assumption in case the first one is unknown and a later one is not. To
+	// this end, we return the first known manager we find.
+	for _, integration := range r.GrafanaManagedReceivers {
+		if m, exists := storedManagers[integration.UID]; exists && m.Kind != utils.ManagerKindUnknown {
+			return m
 		}
 	}
-	return models.ProvenanceNone
+	return utils.ManagerProperties{}
 }
 
 func PostableGrafanaReceiversToIntegrations(postables []*v1.PostableGrafanaReceiver) ([]*models.Integration, error) {
@@ -168,7 +164,7 @@ func ManagedRouteToRoute(r *v1.ManagedRoute) v1.Route {
 		GroupInterval:  r.GroupInterval,
 		RepeatInterval: r.RepeatInterval,
 		Routes:         r.Routes,
-		Provenance:     v1.Provenance(r.Provenance),
+		Provenance:     v1.Provenance(r.Provenance()),
 
 		// These are deceptively necessary since they are normally generated during unmarshalling and assumed to be
 		// present in upstream alertmanager code. We can't assume we'll be unmarshalling the route again, so we need to

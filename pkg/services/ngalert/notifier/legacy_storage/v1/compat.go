@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -164,7 +165,16 @@ func InhibitionRulesToModel(in definitions.ManagedInhibitionRules) map[ResourceU
 }
 
 func InhibitionRuleToModel(in definitions.InhibitionRule) InhibitionRule {
-	return NewInhibitionRule(in.Name, MatchersToModel(in.SourceMatchers), MatchersToModel(in.TargetMatchers), in.Equal, models.Provenance(in.Provenance))
+	ir := NewInhibitionRule(in.Name, MatchersToModel(in.SourceMatchers), MatchersToModel(in.TargetMatchers), in.Equal, models.Provenance(in.Provenance))
+	// Rules stored before the manager fields existed only carry a provenance, from which
+	// NewInhibitionRule derives the manager.
+	if in.ManagerKind != "" {
+		ir.Manager = utils.ManagerProperties{
+			Kind:     utils.ParseManagerKindString(in.ManagerKind),
+			Identity: in.ManagerIdentity,
+		}
+	}
+	return ir
 }
 
 func MatchersToModel(in common.Matchers) []Matcher {
@@ -360,15 +370,22 @@ func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) 
 	if err != nil {
 		errs = append(errs, fmt.Errorf("invalid target matchers: %w", err))
 	}
-	return &definitions.InhibitionRule{
+	out := &definitions.InhibitionRule{
 		Name: string(in.UID),
 		InhibitRule: definitions.InhibitRule{
 			SourceMatchers: sourceMatchers,
 			TargetMatchers: targetMatchers,
 			Equal:          slices.Clone(in.Equal),
 		},
-		Provenance: definition.Provenance(in.Provenance),
-	}, errors.Join(errs...)
+		Provenance: definition.Provenance(in.Provenance()),
+	}
+	// Only store the manager when the provenance cannot express it, so that rules managed through
+	// provenance alone keep their existing stored form.
+	if in.Manager.Kind != utils.ManagerKindUnknown && in.Manager != models.ProvenanceToManagerProperties(in.Provenance()) {
+		out.ManagerKind = string(in.Manager.Kind)
+		out.ManagerIdentity = in.Manager.Identity
+	}
+	return out, errors.Join(errs...)
 }
 
 func MatchersToDB(in []Matcher) (common.Matchers, error) {

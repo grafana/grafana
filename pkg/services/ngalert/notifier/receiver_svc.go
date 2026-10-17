@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -108,6 +109,8 @@ type provisoningStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
+	GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
+	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
 type transactionManager interface {
@@ -344,7 +347,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
-	if err := rs.provenanceValidator(ctx, existing.Provenance, callerProvenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance(), callerProvenance); err != nil {
 		return err
 	}
 
@@ -392,7 +395,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
-	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
+	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance()); err != nil {
 		return nil, err
 	}
 	if err := rs.checkAllowedIntegrations(r); err != nil {
@@ -438,7 +441,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 			return err
 		}
 		rs.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, createdReceiver.GetUID())
-		return rs.setReceiverProvenance(ctx, orgID, &createdReceiver)
+		return rs.setReceiverManager(ctx, orgID, &createdReceiver)
 	})
 	if err != nil {
 		return nil, err
@@ -518,7 +521,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := rs.provenanceValidator(ctx, existing.Provenance, r.Provenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance(), r.Provenance()); err != nil {
 		return nil, err
 	}
 
@@ -565,7 +568,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// If the name of the receiver changed, we must update references to it in both routes and notification settings.
 		if existing.Name != r.Name {
-			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision, existing.Name, r.Name, r.Provenance)
+			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision, existing.Name, r.Name, r.Provenance())
 			if err != nil {
 				return err
 			}
@@ -590,7 +593,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 			return err
 		}
 
-		return rs.setReceiverProvenance(ctx, orgID, &updatedReceiver)
+		return rs.setReceiverManager(ctx, orgID, &updatedReceiver)
 	})
 	if err != nil {
 		return nil, err
@@ -789,10 +792,11 @@ func removedIntegrations(old, new *models.Receiver) []*models.Integration {
 	return removed
 }
 
-func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int64, receiver *models.Receiver) error {
-	// Add provenance for all integrations in the receiver.
+// setReceiverManager persists the receiver's manager on every one of its integrations, since
+// provenance is tracked per integration.
+func (rs *ReceiverService) setReceiverManager(ctx context.Context, orgID int64, receiver *models.Receiver) error {
 	for _, integration := range receiver.Integrations {
-		if err := rs.provisioningStore.SetProvenance(ctx, integration, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
+		if err := rs.provisioningStore.SetManagerProperties(ctx, integration, orgID, receiver.Manager); err != nil {
 			return err
 		}
 	}
@@ -814,12 +818,12 @@ func (rs *ReceiverService) assignProvenance(ctx context.Context, orgID int64, re
 		return nil
 	}
 
-	provenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
+	managers, err := rs.provisioningStore.GetAllManagerProperties(ctx, orgID, (&models.Integration{}).ResourceType())
 	if err != nil {
 		return err
 	}
 
-	rev.AssignReceiverProvenances(provenances)
+	rev.AssignReceiverManagers(managers)
 	return nil
 }
 
