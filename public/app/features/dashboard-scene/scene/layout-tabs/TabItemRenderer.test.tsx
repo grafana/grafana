@@ -1,7 +1,8 @@
 import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { SceneTimeRange } from '@grafana/scenes';
+import { locationService } from '@grafana/runtime';
+import { SceneTimeRange, UrlSyncContextProvider } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../DashboardScene';
@@ -37,6 +38,28 @@ describe('TabItemRenderer', () => {
     act(() => {
       setTestFlags({});
     });
+  });
+
+  it('switches normal dashboard tabs through URL synchronization', async () => {
+    const tabs = new TabsLayoutManager({
+      tabs: [new TabItem({ title: 'Overview' }), new TabItem({ title: 'Details' })],
+    });
+    const scene = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: tabs,
+    });
+    const { user } = await act(async () =>
+      render(
+        <UrlSyncContextProvider scene={scene}>
+          <scene.Component model={scene} />
+        </UrlSyncContextProvider>
+      )
+    );
+
+    await user.click(await screen.findByRole('tab', { name: 'Details' }));
+
+    expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'true');
+    expect(new URLSearchParams(locationService.getLocation().search).get('dtab')).toBe('Details');
   });
 
   it('stamps data-dashboard-element-key and data-dashboard-element-type on the tab', async () => {
