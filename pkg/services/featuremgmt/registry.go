@@ -2042,12 +2042,12 @@ var (
 		},
 		{
 			Name:         "alertingTriage",
-			Description:  "Enables the alerting triage feature",
-			Stage:        FeatureStageExperimental,
+			Description:  "Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.",
+			Stage:        FeatureStageDeprecated,
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // changes navtree in backend
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true", // enabled by default: the page still needs state history to write to Prometheus
 		},
 		{
 			Name:        "graphiteBackendMode",

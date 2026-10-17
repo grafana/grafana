@@ -56,7 +56,7 @@ export const FlagKeys = {
   AlertingRuleRecoverDeleted: "alertingRuleRecoverDeleted",
   /** Use the new k8s API for fetching integration type schemas */
   AlertingSyncNotifiersApiMigration: "alertingSyncNotifiersApiMigration",
-  /** Enables the alerting triage feature */
+  /** Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it. */
   AlertingTriage: "alertingTriage",
   /** Enables the UI to use certain backend-side filters */
   AlertingUIUseBackendFilters: "alertingUIUseBackendFilters",
@@ -622,14 +622,14 @@ export const useFlagAlertingSyncNotifiersApiMigration = (options?: ReactFlagEval
 };
 
 /**
- * Enables the alerting triage feature
+ * Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.
  *
  * **Details:**
  * - flag key: `alertingTriage`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagAlertingTriage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingTriage", false, options).value;
+  return useFlag("alertingTriage", true, options).value;
 };
 
 /**
