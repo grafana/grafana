@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -54,7 +55,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "dashboards/test-dashboard.json",
+							utils.AnnoKeySourcePath:      "dashboards/test-dashboard.json",
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -79,12 +82,42 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-folder",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "folders/test-folder",
+							utils.AnnoKeySourcePath:      "folders/test-folder",
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
 			},
 			expectedPath: "folders/test-folder/", // Trailing slash added for folder resources
+		},
+		{
+			name:         "resource managed by a different repository is not found",
+			resourceName: "test-dashboard",
+			gvk: schema.GroupVersionKind{
+				Group: "dashboard.grafana.app",
+				Kind:  "Dashboard",
+			},
+			expectedGVR: schema.GroupVersionResource{
+				Group:    "dashboard.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "dashboards",
+			},
+			resourceObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "test-dashboard",
+						"namespace": "test-namespace",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeySourcePath:      "dashboards/test-dashboard.json",
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "some-other-repo",
+						},
+					},
+				},
+			},
+			expectedError:    "resource not found: dashboard.grafana.app/dashboards/test-dashboard",
+			expectedSentinel: ErrResourceNotFound,
 		},
 		{
 			name:         "ForKind fails",
@@ -144,11 +177,14 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 					"metadata": map[string]interface{}{
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
-						// No annotations
+						// No annotations - can't be verified as managed by this
+						// repository, so this is not found rather than a data
+						// integrity error.
 					},
 				},
 			},
-			expectedError: "resource dashboard.grafana.app/dashboards/test-dashboard has no source path annotation",
+			expectedError:    "resource not found: dashboard.grafana.app/dashboards/test-dashboard",
+			expectedSentinel: ErrResourceNotFound,
 		},
 		{
 			name:         "resource has empty annotations",
@@ -171,7 +207,8 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "resource dashboard.grafana.app/dashboards/test-dashboard has no source path annotation",
+			expectedError:    "resource not found: dashboard.grafana.app/dashboards/test-dashboard",
+			expectedSentinel: ErrResourceNotFound,
 		},
 		{
 			name:         "resource has empty source path annotation",
@@ -191,7 +228,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "", // Empty path
+							utils.AnnoKeySourcePath:      "", // Empty path
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -216,7 +255,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "nested-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "team-a/subfolder/nested-dashboard.json",
+							utils.AnnoKeySourcePath:      "team-a/subfolder/nested-dashboard.json",
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -241,7 +282,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-folder",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "folders/test-folder", // No trailing slash
+							utils.AnnoKeySourcePath:      "folders/test-folder", // No trailing slash
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -266,7 +309,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-folder-2",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "folders/test-folder-2/", // Already has trailing slash
+							utils.AnnoKeySourcePath:      "folders/test-folder-2/", // Already has trailing slash
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -291,7 +336,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "dashboards/test-dashboard", // No trailing slash
+							utils.AnnoKeySourcePath:      "dashboards/test-dashboard", // No trailing slash
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -406,17 +453,12 @@ func TestRepositoryResources_FindResourcePathAnnotations(t *testing.T) {
 			expectedPath: "folders/legacy/",
 		},
 		{
-			name:          "no annotations",
-			expectedError: "has no source path annotation",
-			expectedKeys:  []string{},
-		},
-		{
-			name:          "empty annotations",
-			annotations:   map[string]string{},
-			expectedError: "has no source path annotation",
-			expectedKeys:  []string{},
-		},
-		{
+			// "No annotations at all" and "empty annotations" are covered by
+			// TestRepositoryResources_FindResourcePath's "resource has no
+			// annotations"/"resource has empty annotations" cases instead: with
+			// the manager-identity guard, neither can ever be a managed resource
+			// missing its source path (this function's focus) - they're always
+			// "not found" before reaching that check.
 			name: "empty modern and legacy paths",
 			annotations: map[string]string{
 				utils.AnnoKeySourcePath: "",
@@ -424,29 +466,29 @@ func TestRepositoryResources_FindResourcePathAnnotations(t *testing.T) {
 			},
 			folder:        true,
 			expectedError: "has no source path annotation",
-			expectedKeys:  []string{"grafana.app/repoPath", utils.AnnoKeySourcePath},
+			expectedKeys:  []string{utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity, "grafana.app/repoPath", utils.AnnoKeySourcePath},
 		},
 		{
 			name:          "checksum without path",
 			annotations:   map[string]string{utils.AnnoKeySourceChecksum: "private-annotation-value"},
 			expectedError: "has no source path annotation",
-			expectedKeys:  []string{utils.AnnoKeySourceChecksum},
+			expectedKeys:  []string{utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity, utils.AnnoKeySourceChecksum},
 		},
 		{
 			name:          "legacy checksum without path",
 			annotations:   map[string]string{"grafana.app/repoHash": "private-annotation-value"},
 			expectedError: "has no source path annotation",
-			expectedKeys:  []string{"grafana.app/repoHash"},
+			expectedKeys:  []string{utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity, "grafana.app/repoHash"},
 		},
 		{
-			name: "custom annotations log no keys",
+			name: "custom annotations excluded from log",
 			annotations: map[string]string{
 				"z.example/key":         "private-annotation-value-z",
 				"a.example/key":         "private-annotation-value-a",
 				"grafana.app/customKey": "private-annotation-value-custom",
 			},
 			expectedError: "has no source path annotation",
-			expectedKeys:  []string{},
+			expectedKeys:  []string{utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity},
 			excludedKeys:  []string{"a.example/key", "grafana.app/customKey", "z.example/key"},
 		},
 		{
@@ -495,13 +537,23 @@ func TestRepositoryResources_FindResourcePathAnnotations(t *testing.T) {
 			}
 			obj := &unstructured.Unstructured{}
 			obj.SetName("test-resource")
-			obj.SetAnnotations(tt.annotations)
+			// Every case needs a manager identity matching r.repoName so
+			// FindResourcePath's cross-repo guard doesn't short-circuit before
+			// reaching the source-path checks this test exercises - merged on
+			// top of (and overriding) each case's own annotations.
+			annotations := maps.Clone(tt.annotations)
+			if annotations == nil {
+				annotations = map[string]string{}
+			}
+			annotations[utils.AnnoKeyManagerKind] = string(utils.ManagerKindRepo)
+			annotations[utils.AnnoKeyManagerIdentity] = "test-repo"
+			obj.SetAnnotations(annotations)
 			original := obj.DeepCopy()
 			mockClients := NewMockResourceClients(t)
 			mockClient := &MockDynamicResourceInterface{}
 			mockClients.On("ForKind", mock.Anything, gvk).Return(mockClient, gvr, nil).Once()
 			mockClient.On("Get", mock.Anything, obj.GetName(), metav1.GetOptions{}, mock.Anything).Return(obj, nil).Once()
-			r := &repositoryResources{ResourcesManager: &ResourcesManager{clients: mockClients}}
+			r := &repositoryResources{ResourcesManager: &ResourcesManager{clients: mockClients}, repoName: "test-repo"}
 
 			var buf bytes.Buffer
 			logger := logging.NewSLogLogger(slog.NewJSONHandler(&buf, nil))

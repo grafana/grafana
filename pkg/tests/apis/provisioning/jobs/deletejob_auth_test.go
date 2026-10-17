@@ -91,10 +91,17 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 	})
 
 	t.Run("viewer cannot create delete job", func(t *testing.T) {
+		// Targets a path that still exists (both dashboard.json and editor-dash.json
+		// were already deleted by the earlier subtests) so the denial below is a
+		// genuine permission check, not a "file not found" side effect of running
+		// after those subtests.
+		helper.CopyToProvisioningPath(t, "../testdata/all-panels.json", "viewer-blocked.json")
+		helper.SyncAndWait(t, repo, nil)
+
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
 			Delete: &provisioning.DeleteJobOptions{
-				Paths: []string{"dashboard.json"},
+				Paths: []string{"viewer-blocked.json"},
 			},
 		})
 

@@ -110,7 +110,18 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		}
 	}
 
-	if opts.Ref == "" {
+	// Only resync if at least one target survived resolution. paths is the resolved,
+	// deduplicated list the closure above built, so an empty one means every named
+	// resource resolved to not-found (absent from Grafana, or managed by another
+	// repository) and was skipped - git is untouched and the named resources do not
+	// exist, so there is nothing for a sync to reconcile. Since this full sync is the
+	// same side effect as the admin-only manual pull, running it for such a job would
+	// hand a zero-change pull trigger to anyone who can delete a single file.
+	//
+	// The predicate is "attempted", not "deleted": a delete that reports
+	// ErrFileNotFound leaves git unchanged but means git and Grafana disagree, which
+	// is exactly what the sync is here to fix.
+	if opts.Ref == "" && len(paths) > 0 {
 		progress.ResetResults(true)
 		progress.SetMessage(ctx, "pull resources")
 
