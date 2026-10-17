@@ -134,6 +134,7 @@ func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userI
 	// Map external settings
 	if snap.Spec.External != nil && *snap.Spec.External {
 		cmd.External = true
+		cmd.ExternalDeleteURL = snap.GetExternalDeleteURL()
 		if snap.Spec.ExternalUrl != nil {
 			cmd.ExternalURL = *snap.Spec.ExternalUrl
 		}
