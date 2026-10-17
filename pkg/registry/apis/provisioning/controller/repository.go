@@ -895,9 +895,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	ctx := logging.Context(context.Background(), logger)
 
 	// phase tracks how far reconciliation has progressed so a failure is counted
-	// under the stage it occurred in. The user-caused paths that surface their
-	// error on status and return nil (token/build/delete/hook) can't rely on the
-	// returned error, so they stash it in swallowedErr/swallowedPhase.
+	// under the stage it occurred in. Paths that surface an error on status and
+	// return nil (token/build/branch/delete/hook) can't rely on the returned error,
+	// so they stash it in swallowedErr/swallowedPhase.
 	//
 	// The deferred recorder counts exactly one failure per reconcile and prefers
 	// the error actually returned to the workqueue over a swallowed one: a
@@ -1013,9 +1013,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// retryable delete error (see isRetryableProcessError) is preferred so the
 		// worker's queue predicate -- which consults the same helper -- fast-retries
 		// it; anything else is re-attempted on the next informer resync while the
-		// finalizer stays stuck.
+		// finalizer stays stuck. Provider-reported unreachable repositories also
+		// wait for that resync, even when the underlying error is retryable.
 		switch {
-		case isRetryableProcessError(err):
+		case !errors.Is(err, repository.ErrServerUnavailable) && isRetryableProcessError(err):
 			return repoType, err
 		case patchErr != nil:
 			// The status write itself failed: count it under the status phase.
@@ -1250,20 +1251,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
-			buildHealthStatus := provisioning.HealthStatus{
-				Healthy: false,
-				Error:   provisioning.HealthFailureHealth,
-				Checked: time.Now().UnixMilli(),
-				Message: []string{err.Error()},
-			}
-			patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, buildHealthStatus)...)
+			patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err)...)
 
-			// Patch status so user can see errors
-			readyCondition := buildReadyConditionWithReason(buildHealthStatus, classifyBuildFailureReason(err))
-			if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-				obj.Status.Conditions, obj.GetGeneration(), readyCondition,
-			); conditionPatchOps != nil {
-				patchOperations = append(patchOperations, conditionPatchOps...)
+			if errors.Is(err, repository.ErrServerUnavailable) {
+				swallowedErr, swallowedPhase = err, reconcilePhaseBuild
+				logger.Warn("unable to reach repository while building", "error", err)
+				return repoType, nil
 			}
 
 			if rc.isUserCaused(err) {
@@ -1288,6 +1281,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			defaultBranch, err := branchHandler.GetDefaultBranch(branchCtx)
 			branchSpan.End()
 			if err != nil {
+				if errors.Is(err, repository.ErrServerUnavailable) {
+					patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err)...)
+					swallowedErr, swallowedPhase = err, reconcilePhaseBranch
+					logger.Warn("unable to reach repository while getting default branch", "error", err)
+					return repoType, nil
+				}
 				return repoType, fmt.Errorf("failed to get default branch: %w", err)
 			}
 
@@ -1548,6 +1547,20 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	return hookOps, nil, suppressWebhooks, nil
+}
+
+func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repository, err error) []map[string]interface{} {
+	healthStatus := provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{err.Error()},
+	}
+	ops := rc.healthPatchIfChanged(obj, healthStatus)
+	readyCondition := buildReadyConditionWithReason(healthStatus, classifyBuildFailureReason(err))
+	return append(ops, BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+	)...)
 }
 
 func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.HealthStatus) []map[string]interface{} {
