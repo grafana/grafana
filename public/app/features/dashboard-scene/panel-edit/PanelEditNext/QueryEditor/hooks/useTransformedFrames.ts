@@ -10,6 +10,7 @@ import {
   type DataTransformerConfig,
   type FrameMatcher,
   getFrameMatchers,
+  type PanelData,
   transformDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -268,23 +269,39 @@ function logTransformationFailure(err: unknown) {
   console.error('Failed to replay transformations for the panel editor', err);
 }
 
+/** The frames a transformation runs over follow its topic: annotation ones never receive series. */
+export function transformationTopic(transformation: Transformation): DataTopic {
+  return transformation.transformConfig.topic === DataTopic.Annotations ? DataTopic.Annotations : DataTopic.Series;
+}
+
+/**
+ * The query frames `transformation` runs over, matching {@link precedingTransformations}. Returns the
+ * panel data's own arrays, or a shared empty one, so callers get a stable identity across renders.
+ */
+export function framesForTopic(data: PanelData | undefined, transformation: Transformation | null): DataFrame[] {
+  const frames =
+    transformation && transformationTopic(transformation) === DataTopic.Annotations ? data?.annotations : data?.series;
+  return frames ?? NO_FRAMES;
+}
+
 /**
  * What the pipeline runs ahead of `selected`: the user's transformations up to it.
  *
- * Annotation-topic entries are left out, because the pipeline routes those to `data.annotations` in
- * a separate pass — replaying them over the series would apply a transformation to frames it never
- * receives.
+ * Only entries sharing `selected`'s topic are kept, because the pipeline routes each topic through its
+ * own pass — series transformations over `data.series`, annotation ones over `data.annotations`.
+ * Replaying the other topic's entries would apply a transformation to frames it never receives.
  *
  * A `selected` the list does not contain is treated as first rather than sliced by its `-1` index,
  * which would silently drop the list's last entry.
  */
 export function precedingTransformations(selected: Transformation, all: Transformation[]): TransformationConfigs {
+  const topic = transformationTopic(selected);
   const selectedIndex = all.findIndex(({ transformId }) => transformId === selected.transformId);
 
   const preceding = all
     .slice(0, Math.max(selectedIndex, 0))
     .map(({ transformConfig }) => transformConfig)
-    .filter((config) => config.topic == null || config.topic === DataTopic.Series);
+    .filter((config) => (config.topic ?? DataTopic.Series) === topic);
 
   return preceding.length === 0 ? NO_CONFIGS : preceding;
 }
