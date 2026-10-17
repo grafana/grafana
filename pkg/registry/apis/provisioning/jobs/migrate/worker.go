@@ -51,7 +51,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	if !enabled {
 		// A disabled feature is an expected configuration state, not a failure:
 		// complete the job in a warning state so it is not logged or alerted as an error.
-		return jobs.AsWarning(errors.New("migrate functionality is disabled"))
+		return jobs.AsWarning(errors.New("migrate jobs require the provisioningExport feature flag"))
 	}
 
 	logger := logging.FromContext(ctx).With("options", options)
