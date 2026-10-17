@@ -30,7 +30,7 @@ func TestListConnector_StorageErrors(t *testing.T) {
 			lister.EXPECT().List(mock.Anything, "default", "repo").Return(nil, tc.err).Once()
 			responder := &testResponder{}
 			ctx := request.WithNamespace(context.Background(), "default")
-			handler, err := NewListConnector(nil, lister).Connect(ctx, "repo", nil, responder)
+			handler, err := NewListConnector(nil, lister, nil).Connect(ctx, "repo", nil, responder)
 			require.NoError(t, err)
 			req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
 			req.Header.Set("Accept", "application/json")
