@@ -419,6 +419,15 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		return merge.MergeResult{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 	}
 
+	if promote {
+		// Configurations stored before strict import validation may carry unknown fields that promotion would drop.
+		for _, c := range cfg.ExtraConfigs {
+			if err := c.ValidateStrict(); err != nil {
+				return merge.MergeResult{}, err
+			}
+		}
+	}
+
 	mergedConfig, mergeResult, err := merge.MergeExtraConfig(ctx, cfg)
 	if err != nil {
 		return merge.MergeResult{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
