@@ -468,6 +468,24 @@ func TestDatasourceWriterGetRemoteWriteURL(t *testing.T) {
 			},
 			"https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-abc123/api/v1/remote_write",
 		},
+		{
+			"victoriametrics single-node",
+			datasources.DataSource{
+				Type:     datasources.DS_VICTORIA_METRICS,
+				JsonData: simplejson.MustJson([]byte(`{}`)),
+				URL:      "http://example.com:8428",
+			},
+			"http://example.com:8428/api/v1/write",
+		},
+		{
+			"victoriametrics with prometheus prefix",
+			datasources.DataSource{
+				Type:     datasources.DS_VICTORIA_METRICS,
+				JsonData: simplejson.MustJson([]byte(`{}`)),
+				URL:      "http://example.com:8428/prometheus",
+			},
+			"http://example.com:8428/prometheus/api/v1/write",
+		},
 	}
 
 	for _, tt := range tc {
@@ -477,6 +495,31 @@ func TestDatasourceWriterGetRemoteWriteURL(t *testing.T) {
 			require.Equal(t, tt.url, res.String())
 		})
 	}
+}
+
+func TestDatasourceWriterVictoriaMetrics(t *testing.T) {
+	series := []map[string]string{{"foo": "1"}, {"foo": "2"}, {"foo": "3"}, {"foo": "4"}}
+	frames := frameGenFromLabels(t, data.FrameTypeNumericWide, series)
+
+	testDS := setupDataSources(t)
+	testDS.Reset()
+
+	vmDS, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		Name:     "vm-1",
+		UID:      "vm-1",
+		Type:     datasources.DS_VICTORIA_METRICS,
+		JsonData: simplejson.MustJson([]byte(`{}`)),
+	})
+	vmDS.URL = testDS.prom1.srv.URL
+	testDS.prom1.ExpectedPath = "/api/v1/write"
+
+	cfg := DatasourceWriterConfig{Timeout: time.Second * 5}
+	met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
+	writer := NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
+
+	err := writer.WriteDatasource(context.Background(), "vm-1", "metric", time.Now(), frames, 1, map[string]string{})
+	require.NoError(t, err)
+	assert.Equal(t, 1, testDS.prom1.RequestsCount)
 }
 
 func TestDatasourceWriterManagedPrometheus(t *testing.T) {
