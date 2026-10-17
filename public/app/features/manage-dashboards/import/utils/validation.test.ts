@@ -42,10 +42,12 @@ const v2Dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
 };
 
 describe('validateUid', () => {
+  const getUnifiedDashboardDTO = jest.fn().mockResolvedValue(legacyDashboard);
+
   beforeAll(() => {
     setDashboardAPI({
       unified: {
-        getDashboardDTO: jest.fn().mockResolvedValue(legacyDashboard),
+        getDashboardDTO: getUnifiedDashboardDTO,
         deleteDashboard: jest.fn(),
         saveDashboard: jest.fn(),
         listDeletedDashboards: jest.fn(),
@@ -70,6 +72,12 @@ describe('validateUid', () => {
       },
     });
   });
+  it('should not fetch the dashboard when the uid is empty', async () => {
+    getUnifiedDashboardDTO.mockClear();
+    await expect(validateUid('')).resolves.toBe(true);
+    expect(getUnifiedDashboardDTO).not.toHaveBeenCalled();
+  });
+
   describe('Dashboards API v1', () => {
     beforeEach(() => {
       // validateUid calls getDashboardAPI() with no format, so the flag selects the v2 mock.
