@@ -34,9 +34,10 @@ import {
 import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getConfig } from 'app/core/config';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';
-import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
+import { downloadDataFrameAsCsv, downloadLogsModelAsTxt, logsModelToTxt } from '../inspector/utils/download';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { getDataframeFields } from './components/logParser';
@@ -508,6 +509,24 @@ export enum DownloadFormat {
   CSV = 'csv',
 }
 
+function rowsForTextExport(logRows: LogRowModel[], fields: string[]) {
+  const shouldInjectLogLineBodyField = fields.length > 0 && fields.includes(LOG_LINE_BODY_FIELD_NAME);
+  if (!shouldInjectLogLineBodyField) {
+    return logRows;
+  }
+  return logRows.map((row) => ({
+    ...row,
+    labels: {
+      ...row.labels,
+      [LOG_LINE_BODY_FIELD_NAME]: row.entry,
+    },
+  }));
+}
+
+export const copyLogs = (logRows: LogRowModel[], meta?: LogsMetaItem[], fields: string[] = []) => {
+  copyStringToClipboard(logsModelToTxt({ meta, rows: rowsForTextExport(logRows, fields) }, fields));
+};
+
 export const downloadLogs = async (
   format: DownloadFormat,
   logRows: LogRowModel[],
@@ -516,17 +535,7 @@ export const downloadLogs = async (
 ) => {
   switch (format) {
     case DownloadFormat.Text:
-      const shouldInjectLogLineBodyField = fields.length > 0 && fields.includes(LOG_LINE_BODY_FIELD_NAME);
-      const rowsForDownload = shouldInjectLogLineBodyField
-        ? logRows.map((row) => ({
-            ...row,
-            labels: {
-              ...row.labels,
-              [LOG_LINE_BODY_FIELD_NAME]: row.entry,
-            },
-          }))
-        : logRows;
-      downloadLogsModelAsTxt({ meta, rows: rowsForDownload }, '', fields);
+      downloadLogsModelAsTxt({ meta, rows: rowsForTextExport(logRows, fields) }, '', fields);
       break;
     case DownloadFormat.Json:
       const jsonLogs = logRowsToReadableJson(logRows, fields);
