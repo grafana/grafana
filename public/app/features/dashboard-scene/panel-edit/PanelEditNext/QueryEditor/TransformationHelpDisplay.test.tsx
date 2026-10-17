@@ -122,13 +122,13 @@ describe('TransformationHelpDisplay', () => {
     const context = {
       selectedTransformation: makeTransformation(),
       transformToggles: { ...mockTransformToggles, showHelp: true },
-    } as ReturnType<typeof QueryEditorContext.useQueryEditorUIContext>;
-    jest.spyOn(QueryEditorContext, 'useQueryEditorUIContext').mockReturnValue(context);
+    } as unknown as ReturnType<typeof QueryEditorContext.useQueryEditorUIContext>;
+    const contextSpy = jest.spyOn(QueryEditorContext, 'useQueryEditorUIContext').mockReturnValue(context);
     const { rerender } = render(<TransformationHelpDisplay />);
 
     await screen.findByText('Previous help content');
 
-    context.selectedTransformation = makeTransformation(nextRegistryItem);
+    contextSpy.mockReturnValue({ ...context, selectedTransformation: makeTransformation(nextRegistryItem) });
     rerender(<TransformationHelpDisplay />);
 
     expect(screen.queryByText('Previous help content')).not.toBeInTheDocument();

@@ -14,7 +14,6 @@ const fallbackHelpHtml = renderMarkdown(FALLBACK_DOCS_LINK);
  */
 export function TransformationHelpDisplay() {
   const { selectedTransformation, transformToggles } = useQueryEditorUIContext();
-  const transformationId = selectedTransformation?.registryItem?.id;
   const [helpContent, setHelpContent] = useState<{ transformationId: string; html: string }>();
 
   useEffect(() => {
@@ -47,7 +46,8 @@ export function TransformationHelpDisplay() {
     return null;
   }
 
-  const helpHtml = helpContent?.transformationId === transformationId ? helpContent.html : fallbackHelpHtml;
+  const helpHtml =
+    helpContent?.transformationId === selectedTransformation.registryItem.id ? helpContent.html : fallbackHelpHtml;
 
   return (
     <Drawer
