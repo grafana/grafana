@@ -148,6 +148,7 @@ Adjust how the gauge is displayed.
 | Show labels | Control whether threshold and neutral labels are shown outside of the gauge. |
 | Endpoint marker | Choose how to mark the current value endpoint. Choose from **Point**, **Glow**, or **None**. **Glow** is available only in dark mode. This option only applies when the **Bar style** is **Rounded**. |
 | Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - Color transitions are represented with gradients for color schemes where the gauge color differs by value. This effect is on by default.</li><li>**Bar glow** - Adds a glowing shadow outside the gauge bar.</li><li>**Center glow** - The color representing the current gauge value is visible in the center of the gauge.</li></ul> |
+| Scale | Choose how values are spaced along the gauge:<ul><li>**Linear** - Values are spaced evenly. This is the default.</li><li>**Logarithmic** - Each tenfold increase takes up the same length of the gauge, which keeps values that span many orders of magnitude readable. Thresholds and labels use the same scale. Requires a **Min** greater than 0; otherwise, the gauge uses a linear scale.</li></ul> |
 
 <!-- prettier-ignore-end -->
 

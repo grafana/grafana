@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import {
   type DisplayValue,
@@ -10,7 +10,7 @@ import {
   getDisplayProcessor,
   createTheme,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode, ScaleDistribution } from '@grafana/schema';
 
 import {
   BarGauge,
@@ -412,6 +412,147 @@ describe('BarGauge', () => {
       const styles = getBasicAndGradientStyles(props);
       expect(styles.bar.background).toBe('rgb(from #FF0000 r g b / 0.35)');
       expect(styles.value.color).toBe('#FF0000');
+    });
+  });
+
+  describe('log scale', () => {
+    function getLogProps(propOverrides?: Partial<Props>): Props {
+      const props = getProps(propOverrides);
+      props.field = {
+        ...props.field,
+        min: 1,
+        max: 10000,
+        custom: { scaleDistribution: { type: ScaleDistribution.Log } },
+      };
+      return props;
+    }
+
+    it('fills half the bar for the geometric midpoint of the range', () => {
+      const props = getLogProps({ value: getValue(100), orientation: VizOrientation.Vertical });
+      // 270px = 300px height minus the 30px value row
+      expect(getBasicAndGradientStyles(props).bar.height).toBe('135px');
+    });
+
+    it('positions absolute threshold colors at their log position', () => {
+      const props = getLogProps({ value: getValue(10000), orientation: VizOrientation.Vertical });
+      props.field.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 100, color: 'orange' },
+          { value: 1000, color: 'red' },
+        ],
+      };
+      expect(getBarGradient(props, 400)).toBe('linear-gradient(0deg, #73BF69, #73BF69 100px, #FF9830 250px, #F2495C)');
+    });
+
+    it('positions percentage threshold colors at the log position of the value they resolve to', () => {
+      const props = getLogProps({ value: getValue(10000), orientation: VizOrientation.Vertical });
+      // 50% and 90% of 1..10000 resolve to 5000.5 and 9000.1
+      props.field.thresholds = {
+        mode: ThresholdsMode.Percentage,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'orange' },
+          { value: 90, color: 'red' },
+        ],
+      };
+      expect(getBarGradient(props, 400)).toBe('linear-gradient(0deg, #73BF69, #73BF69 185px, #FF9830 383px, #F2495C)');
+    });
+
+    it('samples retro LCD cell colors at log-spaced values', () => {
+      const display = jest.fn((value: unknown) => ({ numeric: Number(value), text: String(value), color: green }));
+      // 70px height leaves room for 4 cells of 12px
+      const props = getLogProps({
+        displayMode: BarGaugeDisplayMode.Lcd,
+        orientation: VizOrientation.Vertical,
+        height: 70,
+        value: getValue(150),
+        display,
+      });
+      render(<BarGauge {...props} />);
+      expect(display.mock.calls.map(([value]) => value)).toEqual([1, 10, 100, 1000]);
+    });
+  });
+
+  describe('scale labels', () => {
+    // the canvas mock used in tests measures text as 1px per character
+
+    it('reserves a label row under a horizontal bar', () => {
+      const dims = calculateBarAndValueDimensions(
+        getProps({ height: 100, width: 500, value: getValue(1), showScaleLabels: true })
+      );
+
+      expect(dims.scaleLabels.map((label) => label.text)).toEqual(['0', '100', '70', '90']);
+      expect(dims.scaleLabelsSize).toBe(18);
+      expect(dims.maxBarHeight).toBe(82);
+      expect(dims.valueHeight).toBe(82);
+    });
+
+    it('hides the labels when a horizontal bar is too short to fit them', () => {
+      const dims = calculateBarAndValueDimensions(
+        getProps({ height: 30, width: 500, value: getValue(1), showScaleLabels: true })
+      );
+
+      expect(dims.scaleLabels).toEqual([]);
+      expect(dims.maxBarHeight).toBe(30);
+    });
+
+    it('reserves a label column beside a vertical bar and keeps the value above the bar', () => {
+      // widest label is '100': 3px of text plus a 4px gap on each side
+      const dims = calculateBarAndValueDimensions(
+        getProps({
+          height: 300,
+          width: 100,
+          orientation: VizOrientation.Vertical,
+          value: getValue(1),
+          showScaleLabels: true,
+        })
+      );
+
+      expect(dims.scaleLabelsSize).toBe(11);
+      expect(dims.maxBarWidth).toBe(89);
+      expect(dims.valueWidth).toBe(89);
+    });
+
+    it('hides the labels when a vertical bar is too narrow to fit them', () => {
+      const dims = calculateBarAndValueDimensions(
+        getProps({
+          height: 300,
+          width: 20,
+          orientation: VizOrientation.Vertical,
+          value: getValue(1),
+          showScaleLabels: true,
+        })
+      );
+
+      expect(dims.scaleLabels).toEqual([]);
+      expect(dims.maxBarWidth).toBe(20);
+    });
+
+    it('aligns retro LCD labels with the cells rather than the full bar width', () => {
+      // 400px bar: 33 cells of 4px plus 8px spacing cover 396px, so the max label ends there
+      render(
+        <BarGauge
+          {...getProps({
+            height: 100,
+            width: 500,
+            value: getValue(1),
+            displayMode: BarGaugeDisplayMode.Lcd,
+            showScaleLabels: true,
+          })}
+        />
+      );
+
+      expect(screen.getByText('100')).toHaveStyle({ left: '393px' });
+      expect(screen.getByText('70')).toBeInTheDocument();
+    });
+
+    it('does not render labels when the option is off', () => {
+      render(<BarGauge {...getProps({ height: 100, width: 500, value: getValue(1) })} />);
+
+      expect(screen.getByText('1')).toBeInTheDocument();
+      expect(screen.queryByText('70')).not.toBeInTheDocument();
     });
   });
 });

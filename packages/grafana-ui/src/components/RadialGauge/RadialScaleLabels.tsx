@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { measureText } from '../../utils/measureText';
 
 import { type RadialGaugeDimensions } from './types';
-import { getFieldConfigMinMax, drawRadialArcPath, getFieldDisplayProcessor } from './utils';
+import { getFieldConfigMinMax, drawRadialArcPath, getFieldDisplayProcessor, getValuePercentageForValue } from './utils';
 
 interface RadialScaleLabelsProps {
   fieldDisplay: FieldDisplay;
@@ -78,7 +78,7 @@ export const RadialScaleLabels = memo(
       const isLast = value === maxLabelValue;
       const isFirst = value === minLabelValue;
 
-      const fraction = (value - min) / (max - min);
+      const fraction = getValuePercentageForValue(fieldDisplay, value);
       let offset = fraction * pathLength;
 
       const measure = measureText(text, fontSize, theme.typography.fontWeightMedium);

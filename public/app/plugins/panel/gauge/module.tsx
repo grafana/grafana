@@ -3,17 +3,19 @@ import { t } from '@grafana/i18n';
 import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
+import { addGaugeScaleOption, addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
 import { EffectsEditor } from './EffectsEditor';
 import { GaugePanel } from './GaugePanel';
 import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './migrations';
-import { defaultGaugePanelEffects, defaultOptions, type Options } from './panelcfg.gen';
+import { defaultGaugePanelEffects, defaultOptions, type FieldConfig, type Options } from './panelcfg.gen';
 import { gaugePresetsSupplier } from './presets';
 import { gaugeSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<Options>(GaugePanel)
-  .useFieldConfig({})
+export const plugin = new PanelPlugin<Options, FieldConfig>(GaugePanel)
+  .useFieldConfig({
+    useCustomConfig: (builder) => addGaugeScaleOption(builder, [t('gauge.category-radial-bar', 'Gauge')]),
+  })
   .setPanelOptions((builder) => {
     const category = [t('gauge.category-radial-bar', 'Gauge')];
 

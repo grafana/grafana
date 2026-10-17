@@ -9,10 +9,9 @@ import { RadialArcPath } from './RadialArcPath';
 import { type RadialShape, type RadialGaugeDimensions, type GradientStop } from './types';
 import {
   getAngleBetweenSegments,
-  getFieldConfigMinMax,
   getFieldDisplayProcessor,
   getOptimalSegmentCount,
-  getValuePercentageForValue,
+  getValueForValuePercentage,
 } from './utils';
 
 export interface RadialBarSegmentedProps {
@@ -46,14 +45,14 @@ export const RadialBarSegmented = memo(
     const theme = useTheme2();
     const segments: React.ReactNode[] = [];
     const segmentCountAdjusted = getOptimalSegmentCount(dimensions, segmentSpacing, segmentCount, angleRange);
-    const [min, max] = getFieldConfigMinMax(fieldDisplay);
     const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, segmentCount, angleRange);
     const segmentArcLengthDeg = angleRange / segmentCountAdjusted - angleBetweenSegments;
     const displayProcessor = getFieldDisplayProcessor(fieldDisplay);
 
     for (let i = 0; i < segmentCountAdjusted; i++) {
-      const value = min + ((max - min) / segmentCountAdjusted) * i;
-      const segmentAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
+      const segmentPercent = i / segmentCountAdjusted;
+      const value = getValueForValuePercentage(fieldDisplay, segmentPercent);
+      const segmentAngle = segmentPercent * angleRange;
       const isTrack = segmentAngle < startValueAngle || segmentAngle >= startValueAngle + endValueAngle;
       const segmentStartAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
       const segmentColor = isTrack ? theme.colors.border.medium : (displayProcessor(value).color ?? FALLBACK_COLOR);
