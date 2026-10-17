@@ -23,6 +23,16 @@ export interface LayerEditorOptions {
   basemaps: boolean; // only basemaps
 }
 
+// Modes offered when a layer doesn't declare its own `locationModes` -- Wkt is
+// excluded by default since its geometry can be any type, and most layer
+// renderers (e.g. markers, route) only know how to draw points.
+const DEFAULT_GEOMAP_LOCATION_MODES = [
+  FrameGeometrySourceMode.Auto,
+  FrameGeometrySourceMode.Coords,
+  FrameGeometrySourceMode.Geohash,
+  FrameGeometrySourceMode.Lookup,
+];
+
 export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<MapLayerOptions> {
   return {
     category: opts.category,
@@ -111,7 +121,14 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           }
         }
 
-        addLocationFields('Location', 'location.', builder, options.location, data);
+        addLocationFields(
+          'Location',
+          'location.',
+          builder,
+          options.location,
+          data,
+          layer.locationModes ?? DEFAULT_GEOMAP_LOCATION_MODES
+        );
       }
       if (handler.registerOptionsUI) {
         handler.registerOptionsUI(builder, context);
