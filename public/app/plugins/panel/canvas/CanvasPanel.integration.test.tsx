@@ -900,6 +900,11 @@ describe('Canvas', () => {
       await user.keyboard('can only edit fields with no mapping');
       expect(input).toHaveValue('can only edit fields with no mapping');
 
+      // Rerender while editing should not invoke save before edit completion
+      const prevCallsCount = onOptionsChange.mock.calls.length;
+      rerender(canvasPanelElement({ renderCounter: 2 }, eventBus));
+      expect(onOptionsChange.mock.calls.length).toBe(prevCallsCount);
+
       // TextEdit exits edit mode on Enter
       await user.keyboard('{Enter}');
 
