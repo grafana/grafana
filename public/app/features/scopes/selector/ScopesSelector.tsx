@@ -175,7 +175,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     treeContainer: css({
       display: 'flex',
       flexDirection: 'column',
-      maxHeight: '100%',
+      // Takes the remaining height so the buttons stay pinned to the bottom while the tree changes size
+      flex: 1,
+      minHeight: 0,
       overflowY: 'hidden',
       // Fix for top level search outline overflow due to scrollbars
       paddingLeft: theme.spacing(0.5),
@@ -183,7 +185,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     buttonsContainer: css({
       display: 'flex',
       gap: theme.spacing(1),
-      marginTop: theme.spacing(8),
+      flexShrink: 0,
+      marginTop: theme.spacing(2),
     }),
   };
 };
