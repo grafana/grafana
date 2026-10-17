@@ -87,14 +87,6 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     if (plugin.enterprise || enterprisePlugin) {
       plugin.category = 'enterprise';
       plugin.unlicensed = !featureEnabled('enterprise.plugins');
-      plugin.info.links = enterprisePlugin?.info?.links || plugin.info.links;
-    }
-
-    // Fix link name
-    if (plugin.info.links) {
-      for (const link of plugin.info.links) {
-        link.name = 'Learn more';
-      }
     }
 
     const category = categories.find((item) => item.id === plugin.category) || categoryIndex['other'];
