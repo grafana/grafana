@@ -123,11 +123,13 @@ const statPanelStyleConfig: PanelStyleConfig = {
 };
 
 /**
- * Style config for the gauge panel. No custom field config — styling
- * comes from standard fieldConfig properties and panel-level options.
+ * Style config for the gauge panel.
  *
  * fieldConfig.defaults:
  *   color – color scheme
+ *
+ * fieldConfig.defaults.custom:
+ *   scaleDistribution – bar scale (linear or log)
  *
  * options:
  *   orientation         – panel orientation
@@ -151,7 +153,7 @@ const statPanelStyleConfig: PanelStyleConfig = {
 const gaugePanelStyleConfig: PanelStyleConfig = {
   fieldConfig: {
     defaultsProps: ['color'],
-    customProps: [],
+    customProps: ['scaleDistribution'],
   },
   options: {
     props: [

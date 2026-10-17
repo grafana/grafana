@@ -12,6 +12,8 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 
+import { getGaugeScaleDistribution, getScaledPercent, getValueForScaledPercent } from '../../utils/gaugeScale';
+
 import { type RadialGaugeDimensions } from './types';
 
 const DEFAULT_THRESHOLDS: ThresholdsConfig = {
@@ -49,7 +51,12 @@ export function getFieldConfigMinMax(fieldDisplay: FieldDisplay) {
 
 export function getValuePercentageForValue(fieldDisplay: FieldDisplay, value = fieldDisplay.display.numeric) {
   const [min, max] = getFieldConfigMinMax(fieldDisplay);
-  return (value - min) / (max - min);
+  return getScaledPercent(value, min, max, getGaugeScaleDistribution(fieldDisplay.field));
+}
+
+export function getValueForValuePercentage(fieldDisplay: FieldDisplay, percent: number) {
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+  return getValueForScaledPercent(percent, min, max, getGaugeScaleDistribution(fieldDisplay.field));
 }
 
 export function getValueAngleForValue(
@@ -284,10 +291,12 @@ export function getThresholdPercentageValue(
   fieldDisplay: FieldDisplay
 ): number {
   if (thresholdsMode === ThresholdsMode.Percentage) {
-    return threshold.value / 100;
+    // The display processor resolves percentage thresholds against the linear range, so on a log
+    // scale they must be placed at that resolved value or the bar color would not match the value color.
+    const [min, max] = getFieldConfigMinMax(fieldDisplay);
+    return getValuePercentageForValue(fieldDisplay, min + (max - min) * (threshold.value / 100));
   }
-  const [min, max] = getFieldConfigMinMax(fieldDisplay);
-  return (threshold.value - min) / (max - min);
+  return getValuePercentageForValue(fieldDisplay, threshold.value);
 }
 
 export function getFormattedThresholds(
