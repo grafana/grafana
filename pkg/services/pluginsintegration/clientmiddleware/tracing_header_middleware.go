@@ -11,14 +11,15 @@ import (
 	"golang.org/x/text/transform"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/query"
 )
 
 // NewTracingHeaderMiddleware creates a new backend.HandlerMiddleware that will
 // populate useful tracing headers on outgoing backend.Handler and HTTP
 // requests.
-// Tracing headers are X-Datasource-Uid, X-Dashboard-Uid,
-// X-Panel-Id, X-Grafana-Org-Id.
+// Tracing headers include datasource/dashboard/panel metadata and the
+// X-Grafana-Source attribution header.
 func NewTracingHeaderMiddleware() backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &TracingHeaderMiddleware{
@@ -32,9 +33,26 @@ type TracingHeaderMiddleware struct {
 }
 
 func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.ForwardHTTPHeaders) {
+	if req == nil {
+		return
+	}
+
+	// Dashboard/Explore source is supplied by the frontend. Alert evaluations are
+	// server-side and must override any client-provided source value.
+	source := query.GrafanaSourceAPI
+	if req.GetHTTPHeader(models.FromAlertHeaderName) == "true" {
+		source = query.GrafanaSourceAlerting
+	} else {
+		switch req.GetHTTPHeader(query.HeaderGrafanaSource) {
+		case query.GrafanaSourceDashboard, query.GrafanaSourceExplore, query.GrafanaSourceAlerting:
+			source = req.GetHTTPHeader(query.HeaderGrafanaSource)
+		}
+	}
+	req.SetHTTPHeader(query.HeaderGrafanaSource, source)
+
 	reqCtx := contexthandler.FromContext(ctx)
-	// If no HTTP request context then skip middleware.
-	if req == nil || reqCtx == nil || reqCtx.Req == nil {
+	// If no HTTP request context then skip the HTTP tracing headers.
+	if reqCtx == nil || reqCtx.Req == nil {
 		return
 	}
 
@@ -49,6 +67,16 @@ func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.
 		query.HeaderDashboardTitle,
 		query.HeaderPanelTitle,
 		query.HeaderCallerID,
+	}
+
+	if req.GetHTTPHeader(query.HeaderGrafanaSource) == query.GrafanaSourceAPI {
+		switch incomingSource := reqCtx.Req.Header.Get(query.HeaderGrafanaSource); incomingSource {
+		case query.GrafanaSourceDashboard, query.GrafanaSourceExplore, query.GrafanaSourceAlerting:
+			req.SetHTTPHeader(query.HeaderGrafanaSource, incomingSource)
+		}
+	}
+	if reqCtx.Req.Header.Get(models.FromAlertHeaderName) == "true" {
+		req.SetHTTPHeader(query.HeaderGrafanaSource, query.GrafanaSourceAlerting)
 	}
 
 	for _, headerName := range headersList {
