@@ -106,6 +106,8 @@ export interface EditableDashboardElement {
 
 export interface EditableDashboardElementInfo {
   instanceName: string;
+  /** Raw name to edit when the display name is a label. */
+  nameForEditing?: string;
   typeName: string;
   icon: IconName;
   isHidden?: boolean;

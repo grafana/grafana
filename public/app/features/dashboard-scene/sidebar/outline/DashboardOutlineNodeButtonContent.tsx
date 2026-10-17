@@ -45,7 +45,7 @@ export function DashboardOutlineNodeButtonContent({
       <input
         ref={renameInputRef}
         type="text"
-        value={elementInfo.instanceName}
+        value={elementInfo.nameForEditing ?? elementInfo.instanceName}
         className={styles.outlineInput}
         onChange={onChangeName}
         onBlur={onInputBlur}

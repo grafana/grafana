@@ -20,7 +20,8 @@ export function useOutlineRename(editableElement: EditableDashboardElement, isEd
       return;
     }
 
-    setState({ isRenaming: true, originalName: editableElement.getEditableElementInfo().instanceName });
+    const { nameForEditing, instanceName } = editableElement.getEditableElementInfo();
+    setState({ isRenaming: true, originalName: nameForEditing ?? instanceName });
   };
 
   const onInputBlur = () => {

@@ -168,6 +168,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
         typeName: t('dashboard.sidebar.elements.filter', 'Filter'),
         icon: 'filter',
         instanceName,
+        nameForEditing: name,
         tooltip,
         isHidden: this.variable.state.hide === VariableHide.hideVariable,
       };
@@ -177,6 +178,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       typeName: t('dashboard.sidebar.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
       icon: 'gf-variable',
       instanceName,
+      nameForEditing: name,
       tooltip,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
     };
