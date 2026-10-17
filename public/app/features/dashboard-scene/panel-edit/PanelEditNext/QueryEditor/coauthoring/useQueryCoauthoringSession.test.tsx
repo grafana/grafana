@@ -14,18 +14,13 @@ import {
   buildAssistantHandoffPrompt,
 } from './queryCoauthoringPrompts';
 
-const mockGenerate = jest.fn().mockResolvedValue(undefined);
+const mockGenerate = jest.fn().mockImplementation(() => new Promise<void>(() => undefined));
 const mockCancel = jest.fn();
 const mockReset = jest.fn();
-const mockIdentifySelection = jest.fn().mockResolvedValue(undefined);
-const mockCancelIdentification = jest.fn();
-const mockResetIdentification = jest.fn();
 const mockOpenAssistant = jest.fn();
 const mockPost = jest.fn();
 const mockReportInteraction = jest.fn();
 let mockIsGenerating = false;
-let mockIsIdentifying = false;
-let mockInlineAssistantHookCall = 0;
 let mockAssistantAvailable = true;
 let mockAssistantLoading = false;
 
@@ -59,26 +54,14 @@ jest.mock('@grafana/assistant', () => ({
     closeAssistant: undefined,
     toggleAssistant: undefined,
   }),
-  useInlineAssistant: () => {
-    const isIdentificationHook = mockInlineAssistantHookCall++ % 2 === 0;
-    return isIdentificationHook
-      ? {
-          generate: mockIdentifySelection,
-          isGenerating: mockIsIdentifying,
-          content: '',
-          error: null,
-          cancel: mockCancelIdentification,
-          reset: mockResetIdentification,
-        }
-      : {
-          generate: mockGenerate,
-          isGenerating: mockIsGenerating,
-          content: '',
-          error: null,
-          cancel: mockCancel,
-          reset: mockReset,
-        };
-  },
+  useInlineAssistant: () => ({
+    generate: mockGenerate,
+    isGenerating: mockIsGenerating,
+    content: '',
+    error: null,
+    cancel: mockCancel,
+    reset: mockReset,
+  }),
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -201,25 +184,239 @@ describe('useQueryCoauthoringSession', () => {
     jest.clearAllMocks();
     mockPost.mockResolvedValue({ id: 'feedback-id' });
     mockIsGenerating = false;
-    mockIsIdentifying = false;
-    mockInlineAssistantHookCall = 0;
     mockAssistantAvailable = true;
     mockAssistantLoading = false;
   });
-  it('allows prompt entry while identifying and ignores a late explanation after submission', async () => {
-    mockIsIdentifying = true;
-    const { user } = await setup();
-    const identificationRequest = mockIdentifySelection.mock.calls[0][0];
 
-    expect(screen.getByRole('status')).toHaveTextContent('Reading highlighted query...');
-    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
+  it('restores the clarification and entered answer after Assistant becomes available again', async () => {
+    const { user, rerender, queryCoauthoringProps, readInvocation } = await setup();
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Group the requests');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Which label should I group by?'));
+    await user.type(screen.getByRole('textbox', { name: 'Add extra detail' }), 'Use handler');
 
-    expect(mockCancelIdentification).toHaveBeenCalled();
-    expect(mockGenerate).toHaveBeenCalledTimes(1);
+    mockAssistantAvailable = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
+    expect(screen.getByText('Assistant unavailable')).toBeInTheDocument();
 
-    act(() => identificationRequest.onComplete('This late explanation should be ignored.'));
-    expect(screen.queryByText(/late explanation/i)).not.toBeInTheDocument();
+    mockAssistantAvailable = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(await screen.findByText('Which label should I group by?')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toHaveValue('Use handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockGenerate.mock.calls[1][0].prompt).toBe('Use handler');
+    expect(readInvocation).toHaveBeenCalledTimes(2);
+  });
+
+  it('restores the same proposal after a context reload fails and Retry succeeds without reverting its preview', async () => {
+    const { user, rerender, queryCoauthoringProps, readInvocation, onPreview, onRevertPreview, onAccept } =
+      await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] });
+      request.onComplete('');
+    });
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    readInvocation.mockRejectedValueOnce(new Error('Context unavailable'));
+    mockAssistantAvailable = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
+    mockAssistantAvailable = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('Use an increase.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(readInvocation).toHaveBeenCalledTimes(3);
+    expect(onPreview).toHaveBeenCalledTimes(1);
+    expect(onRevertPreview).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(onAccept).toHaveBeenCalledWith({ refId: 'A', expr: 'increase(http_requests_total[5m])' });
+  });
+
+  it('reverts the proposal to the baseline when closing the Assistant-unavailable cover', async () => {
+    const { user, rerender, queryCoauthoringProps, onPreview, onRevertPreview, dismissInvocation } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] });
+      request.onComplete('');
+    });
+    mockAssistantAvailable = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByText('Assistant unavailable')).toBeInTheDocument();
+    expect(onPreview).toHaveBeenCalledTimes(1);
+    expect(onRevertPreview).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    expect(onRevertPreview).toHaveBeenCalledTimes(1);
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels generation on Assistant unavailability and retries failed context loading at the submitted prompt', async () => {
+    const { user, rerender, queryCoauthoringProps, readInvocation, stagePreview, onPreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+    const cancelCalls = mockCancel.mock.calls.length;
+    mockAssistantAvailable = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
+    mockIsGenerating = false;
+    readInvocation.mockRejectedValueOnce(new Error('Context unavailable'));
+    mockAssistantAvailable = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Use increase');
+    await act(async () => {
+      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Late proposal.'] });
+      request.onComplete('');
+    });
+    expect(stagePreview).not.toHaveBeenCalled();
+    expect(onPreview).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
+  });
+
+  it('restores the clarification question and submitted answer when generation is stopped', async () => {
+    const { user, rerender, queryCoauthoringProps } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Which label should I group by?'));
+    await user.type(screen.getByRole('textbox', { name: 'Add extra detail' }), 'Use handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    await user.click(screen.getByRole('button', { name: 'Stop' }));
+    mockIsGenerating = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByText('Which label should I group by?')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toHaveValue('Use handler');
+  });
+
+  it('shows a retryable error when Explain settles its generation flag without an answer callback', async () => {
+    const { user, rerender, queryCoauthoringProps } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const request = mockGenerate.mock.calls[0][0];
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Explaining query…');
+    mockIsGenerating = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(await screen.findByText('Assistant could not explain this query. Try again.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue(
+      'Explain the focused part of this existing PromQL query.'
+    );
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() => {
+      request.onComplete('A stale answer.');
+      mockGenerate.mock.calls[1][0].onComplete('The current request rate.');
+    });
+    expect(screen.getByText('The current request rate.')).toBeInTheDocument();
+    expect(screen.queryByText('A stale answer.')).not.toBeInTheDocument();
+  });
+
+  it('shows a retryable error when Explain resolves without invoking either completion callback', async () => {
+    const generation = deferred<void>();
+    mockGenerate.mockReturnValueOnce(generation.promise);
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Explaining query…');
+    await act(async () => generation.resolve());
+    expect(await screen.findByText('Assistant could not explain this query. Try again.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue(
+      'Explain the focused part of this existing PromQL query.'
+    );
+  });
+
+  it('keeps the current Explain answer when its callback, generation flag, and promise settle together', async () => {
+    const generation = deferred<void>();
+    mockGenerate.mockReturnValueOnce(generation.promise);
+    const { user, rerender, queryCoauthoringProps } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const request = mockGenerate.mock.calls[0][0];
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    await act(async () => {
+      mockIsGenerating = false;
+      request.onComplete('The current completed explanation.');
+      generation.resolve();
+    });
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByText('The current completed explanation.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Ask a follow up' })).toBeInTheDocument();
+    expect(screen.queryByText('Assistant could not explain this query. Try again.')).not.toBeInTheDocument();
+  });
+
+  it.each(['prompt', 'Explain'])(
+    'restores the submitted-from %s after Stop despite late Assistant generation signals',
+    async (prior) => {
+      const { user, rerender, queryCoauthoringProps } = await setup();
+      await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+      if (prior === 'Explain') {
+        act(() => mockGenerate.mock.calls[0][0].onComplete('The original explanation.'));
+        await user.type(screen.getByRole('textbox', { name: 'Ask a follow up' }), 'Why use rate?');
+        await user.keyboard('{Enter}');
+      }
+      const stoppedRequest = mockGenerate.mock.calls.at(-1)[0];
+      mockIsGenerating = true;
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      mockCancel.mockImplementationOnce(() => {
+        mockIsGenerating = false;
+      });
+      await user.click(screen.getByRole('button', { name: 'Stop' }));
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      mockIsGenerating = true;
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      if (prior === 'Explain') {
+        expect(screen.getByText('The original explanation.')).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: 'Ask a follow up' })).toHaveValue('Why use rate?');
+      } else {
+        expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue(
+          'Explain the focused part of this existing PromQL query.'
+        );
+      }
+      if (prior === 'Explain') {
+        act(() => screen.getByRole('textbox', { name: 'Ask a follow up' }).focus());
+        await user.keyboard('{Enter}');
+      } else {
+        await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+      }
+      const currentRequest = mockGenerate.mock.calls.at(-1)[0];
+      act(() => {
+        stoppedRequest.onComplete('A cancelled explanation.');
+        currentRequest.onComplete('The recovered explanation.');
+      });
+      mockIsGenerating = false;
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      expect(screen.getByText('The recovered explanation.')).toBeInTheDocument();
+      expect(screen.queryByText('A cancelled explanation.')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Stop' })).not.toBeInTheDocument();
+    }
+  );
+
+  it('preserves entered text when invocation loading finishes without an Assistant request', async () => {
+    const initial = await setup();
+    initial.unmount();
+    const invocation = deferred<{ baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }>();
+    initial.readInvocation.mockReturnValue(invocation.promise);
+    render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
+    const input = screen.getByRole('textbox', { name: 'Describe a query change' });
+    await initial.user.type(input, 'Use increase');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeDisabled();
+    await act(async () => invocation.resolve({ baseline: initial.baseline, context: initial.context }));
+    expect(input).toHaveValue('Use increase');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeEnabled();
+    expect(mockGenerate).not.toHaveBeenCalled();
   });
 
   it('does not start generation after dismissal wins the context-read race', async () => {
@@ -268,7 +465,7 @@ describe('useQueryCoauthoringSession', () => {
 
     render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
 
-    expect(await screen.findByRole('alert', { name: 'Could not read the selected query context' })).toBeInTheDocument();
+    expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
     expect(initial.onBaseline).not.toHaveBeenCalled();
   });
 
