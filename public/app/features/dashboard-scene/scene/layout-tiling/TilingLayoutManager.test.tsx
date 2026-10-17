@@ -5,6 +5,7 @@ import { DashboardScene } from '../DashboardScene';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { TilingLayoutManager } from './TilingLayoutManager';
+import { TilingLayoutPanelChrome } from './TilingLayoutPanelChrome';
 
 function buildPanel(id: number, title = `Panel ${id}`) {
   return new VizPanel({ key: `panel-${id}`, title, pluginId: 'timeseries' });
@@ -52,6 +53,17 @@ describe('TilingLayoutManager', () => {
     expect(getDockedViewIds(manager).sort()).toEqual(['panel-1', 'panel-2', 'panel-3']);
     expect(document.views['panel-2']).toEqual({ title: 'Panel 2', type: 'viz' });
     expect(manager.getVizPanels()).toBe(panels);
+  });
+
+  it('renders the panels with the tiling chrome instead of PanelChrome', () => {
+    const initial = buildPanel(1);
+    const { manager } = setup([initial]);
+    const added = buildPanel(2);
+
+    manager.addPanel(added);
+
+    expect(initial.state.chrome).toBe(TilingLayoutPanelChrome);
+    expect(added.state.chrome).toBe(TilingLayoutPanelChrome);
   });
 
   it('removes the panel and its view', () => {

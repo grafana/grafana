@@ -34,6 +34,8 @@ import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
+import { TilingLayoutPanelChrome } from './TilingLayoutPanelChrome';
+
 interface TilingLayoutManagerState extends SceneObjectState {
   /** Flat list of all panels. Their placement is described by the document, keyed by VizPanel key. */
   panels: VizPanel[];
@@ -50,6 +52,7 @@ export class TilingLayoutManager extends SceneObjectBase<TilingLayoutManagerStat
   public static Component = TilingLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
+  public readonly isTilingLayoutManager = true;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
@@ -72,6 +75,8 @@ export class TilingLayoutManager extends SceneObjectBase<TilingLayoutManagerStat
       panels: state.panels ?? [],
       document: state.document ?? emptyTilingDocument(),
     });
+
+    this.state.panels.forEach(applyTilingChrome);
   }
 
   public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
@@ -100,6 +105,7 @@ export class TilingLayoutManager extends SceneObjectBase<TilingLayoutManagerStat
 
     vizPanel.setState({ key });
     vizPanel.clearParent();
+    applyTilingChrome(vizPanel);
 
     const { panels, document } = this.state;
     const nextDocument = openTilingView(
@@ -247,6 +253,13 @@ function usePanelTitleVersion(panels: VizPanel[]): number {
   }, [panels]);
 
   return version;
+}
+
+/** The title and menu of a panel are rendered by the TilingLayout, so the panel must not render its own. */
+function applyTilingChrome(panel: VizPanel) {
+  if (panel.state.chrome !== TilingLayoutPanelChrome) {
+    panel.setState({ chrome: TilingLayoutPanelChrome });
+  }
 }
 
 function getViewRecord(panel: VizPanel) {
