@@ -9,13 +9,12 @@ keywords:
   - profiling
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: Template variables
 title: Parca template variables
 weight: 400
-review_date: 2026-04-10
+review_date: 2026-10-08
 ---
 
 # Parca template variables
