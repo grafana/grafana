@@ -115,8 +115,16 @@ function fieldNameFallback(fields: Set<string>) {
       );
     };
   } else if (fields.has('Time') || fields.has('time')) {
-    fallback = (field: Field, frame: DataFrame) => {
-      return frame.meta?.typeVersion == null && field.type === FieldType.time;
+    const timeNames = ['Time', 'time'].filter((name) => fields.has(name));
+    fallback = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      return (
+        frame.meta?.typeVersion == null &&
+        field.type === FieldType.time &&
+        // A field that already carries the name is matched directly, so other time fields must not be pulled in
+        !frame.fields.some(
+          (f) => timeNames.includes(f.name) || timeNames.includes(getFieldDisplayName(f, frame, allFrames))
+        )
+      );
     };
   }
 
