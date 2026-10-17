@@ -1,6 +1,14 @@
 import { LocalStorageProvider } from '@openfeature/localstorage-provider';
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
-import { OpenFeature, ProviderEvents, NOOP_PROVIDER, type EventDetails, MultiProvider } from '@openfeature/react-sdk';
+import {
+  OpenFeature,
+  ProviderEvents,
+  NOOP_PROVIDER,
+  type EventDetails,
+  MultiProvider,
+  type Provider,
+  type Hook,
+} from '@openfeature/react-sdk';
 
 import { config } from '../../config';
 import { logError } from '../../utils/logging';
@@ -34,6 +42,7 @@ function checkDefaultProvider(event?: EventDetails) {
 // to ensure tests work correctly.
 const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 const GRAFANA_OPEN_FEATURE_LOCALSTORAGE_PREFIX = 'grafana.openfeature.';
+let meticulousReportingHook: Hook | undefined;
 
 // Allow direct access to a singleton localStorage provider,
 //  to allow the feature control developer UI to override flags via the provider
@@ -66,10 +75,31 @@ export async function initOpenFeature() {
 
   const lsProvider = getLocalStorageProvider();
   const ofProvider = getOFREPWebProvider();
+  let meticulousProvider: Provider | undefined;
+
+  if (window.Meticulous != null) {
+    try {
+      const { MeticulousProvider, createMeticulousReportingHook } = await import(
+        /* webpackChunkName: "meticulous-openfeature" */ './meticulous'
+      );
+      meticulousProvider = new MeticulousProvider();
+      meticulousReportingHook ??= createMeticulousReportingHook(GRAFANA_CORE_OPEN_FEATURE_DOMAIN);
+      if (!OpenFeature.getHooks().includes(meticulousReportingHook)) {
+        // Report the final value after all providers resolve, including caller defaults.
+        OpenFeature.addHooks(meticulousReportingHook);
+      }
+    } catch (error) {
+      console.error('Failed to load Meticulous OpenFeature integration', error);
+    }
+  }
 
   await OpenFeature.setProviderAndWait(
     GRAFANA_CORE_OPEN_FEATURE_DOMAIN,
-    new MultiProvider([{ provider: lsProvider }, { provider: ofProvider }]),
+    new MultiProvider([
+      ...(meticulousProvider ? [{ provider: meticulousProvider }] : []),
+      { provider: lsProvider },
+      { provider: ofProvider },
+    ]),
     {
       targetingKey: config.namespace,
       ...config.openFeatureContext,
