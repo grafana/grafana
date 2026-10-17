@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
@@ -552,6 +552,12 @@ const getContentStyle = (
   return { contentStyle, innerWidth, innerHeight };
 };
 
+const streamingPulse = keyframes({
+  '0%': { opacity: 1 },
+  '50%': { opacity: 0.4 },
+  '100%': { opacity: 1 },
+});
+
 const getStyles = (theme: GrafanaTheme2) => {
   const { background, borderColor } = theme.components.panel;
 
@@ -667,7 +673,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-streaming',
       marginRight: 0,
       color: theme.colors.success.text,
-
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${streamingPulse} 2s ease-in-out infinite`,
+      },
+    
       '&:hover': {
         color: theme.colors.success.text,
       },
