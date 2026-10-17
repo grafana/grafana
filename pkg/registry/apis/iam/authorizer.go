@@ -85,6 +85,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[legacyiamv0.SSOSettingResourceInfo.GetName()] = newSSOSettingAuthorizer(accessClient)
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
+	resourceAuthorizer["teamlbacusage"] = teamLbacApiInstaller.GetTeamLBACUsageAuthorizer()
 	// TODO: Implement fine-grained authorization for external group mapping search on the search level
 	resourceAuthorizer["searchExternalGroupMappings"] = serviceIdentityAuthorizer
 
