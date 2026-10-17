@@ -3,13 +3,20 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
-import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
-import { ColorScheme, ColorSchemeDiff } from './types';
+import {
+  byPackageGradient,
+  bySpaceGradient,
+  byValueGradient,
+  diffColorBlindGradient,
+  diffDefaultGradient,
+} from './FlameGraph/colors';
+import { ColorScheme, ColorSchemeDiff, DataSourceType } from './types';
 
 type ColorSchemeButtonProps = {
   value: ColorScheme | ColorSchemeDiff;
   onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
   isDiffMode: boolean;
+  dataSource?: DataSourceType;
 };
 
 export function ColorSchemeButton(props: ColorSchemeButtonProps) {
@@ -18,6 +25,9 @@ export function ColorSchemeButton(props: ColorSchemeButtonProps) {
     <Menu>
       <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
       <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
+      {props.dataSource === DataSourceType.PprofPyroscope && (
+        <Menu.Item label="By kernel/user space" onClick={() => props.onChange(ColorScheme.SpaceBased)} />
+      )}
     </Menu>
   );
 
@@ -26,6 +36,7 @@ export function ColorSchemeButton(props: ColorSchemeButtonProps) {
     {
       [ColorScheme.ValueBased]: styles.colorDotByValue,
       [ColorScheme.PackageBased]: styles.colorDotByPackage,
+      [ColorScheme.SpaceBased]: styles.colorDotBySpace,
       [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
       [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
     }[props.value] || styles.colorDotByValue;
@@ -98,6 +109,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   colorDotByPackage: css({
     label: 'colorDotByPackage',
     background: byPackageGradient,
+  }),
+  colorDotBySpace: css({
+    label: 'colorDotBySpace',
+    background: bySpaceGradient,
   }),
   colorDotDiffDefault: css({
     label: 'colorDotDiffDefault',
