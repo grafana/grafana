@@ -37,7 +37,7 @@ import {
   setLocationService,
   setPluginLinksHook,
 } from '@grafana/runtime';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
@@ -101,8 +101,6 @@ export function setupExplore(options?: SetupOptions): {
   container: HTMLElement;
   location: LocationService;
 } {
-  setTestFlags({});
-
   const previousBackendSrv = getBackendSrv();
   setBackendSrv({
     datasourceRequest: jest.fn().mockRejectedValue(undefined),

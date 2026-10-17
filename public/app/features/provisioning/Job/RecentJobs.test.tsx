@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -28,12 +28,6 @@ function setup(jobs: Job[]) {
 }
 
 describe('RecentJobs', () => {
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   describe('with the userAttribution flag enabled', () => {
     beforeEach(() => {
       setTestFlags({ 'provisioning.userAttribution': true });

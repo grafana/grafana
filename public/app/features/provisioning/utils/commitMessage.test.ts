@@ -141,7 +141,6 @@ describe('appendSavedByTrailer', () => {
   it('skips the trailer when user attribution is enabled', () => {
     setTestFlags({ 'provisioning.userAttribution': true });
     expect(appendSavedByTrailer('Save dashboard: Latency', userVars)).toBe('Save dashboard: Latency');
-    setTestFlags({});
   });
 
   it('uses login alone when name is missing', () => {

@@ -109,13 +109,11 @@ describe('HomePage', () => {
   const originalNamespace = config.namespace;
 
   afterEach(async () => {
+    // Let the renders still in flight settle before the mocks and config below are put back,
+    // otherwise work from one test lands in the middle of the next one.
+    await act(async () => {});
     config.buildInfo = { ...originalBuildInfo };
     config.namespace = originalNamespace;
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
-    await act(async () => {
-      setTestFlags({});
-    });
     jest.restoreAllMocks();
   });
 

@@ -313,9 +313,6 @@ describe('ThresholdsEditor', () => {
     // reset in afterAll rather than afterEach: RTL's cleanup runs after this
     // block's afterEach, so resetting per-test would emit a flag change into a
     // still-mounted component and trip the act() warning
-    afterAll(() => {
-      setTestFlags();
-    });
 
     it('can add thresholds', async () => {
       setup();

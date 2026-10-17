@@ -309,8 +309,6 @@ describe('Plugins/Helpers', () => {
             managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
           })
         ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned } });
-
-        setTestFlags({});
       });
     });
 
@@ -328,7 +326,6 @@ describe('Plugins/Helpers', () => {
         ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned } });
 
         config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
-        setTestFlags({});
       });
 
       test('should return true if plugin is set as managed from grafana-com and grafana is in cloud', () => {
@@ -345,7 +342,6 @@ describe('Plugins/Helpers', () => {
         ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned } });
 
         config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
-        setTestFlags({});
       });
 
       test('should use grafana-com data directly when managedPluginsV2 is enabled', () => {
@@ -357,8 +353,6 @@ describe('Plugins/Helpers', () => {
             managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
           })
         ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned } });
-
-        setTestFlags({});
       });
     });
   });
@@ -901,7 +895,6 @@ describe('Plugins/Helpers', () => {
         });
 
         config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
-        setTestFlags({});
       });
     });
   });

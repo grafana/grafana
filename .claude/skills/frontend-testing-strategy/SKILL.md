@@ -278,14 +278,15 @@ Use `setTestFlags` from `@grafana/test-utils/unstable` instead — it drives the
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-beforeAll(() => {
+beforeEach(() => {
   setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
 });
-
-afterAll(() => {
-  setTestFlags({});
-});
 ```
+
+Each call replaces the whole flag config, and the jest setup resets flags before every test, so
+set them in `beforeEach` (or in the test itself) - never in `beforeAll`, and never reset them
+yourself. Setting flags before `render` needs no `act()`; only flipping a flag while a component
+is mounted does.
 
 For classic `featuremgmt` toggles (not OpenFeature flags), use `testWithFeatureToggles`
 (`config.featureToggles`) instead of mocking `@grafana/runtime`.

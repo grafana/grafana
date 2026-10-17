@@ -65,7 +65,6 @@ describe('getExploreExtensionConfigs', () => {
   describe('configure function for "add to notebook" extension', () => {
     afterEach(() => {
       contextSrvMock.hasPermission.mockRestore();
-      setTestFlags({});
     });
 
     function notebookExtension() {

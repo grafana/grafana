@@ -48,7 +48,6 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
   });
 
   afterEach(() => {
-    setTestFlags({});
     jest.restoreAllMocks();
   });
 

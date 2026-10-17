@@ -17,12 +17,8 @@ import { type ViewMode } from './viewMode';
 
 jest.mock('../SandboxFrame');
 
-beforeAll(() => {
+beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
-});
-
-afterAll(() => {
-  setTestFlags({});
 });
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;

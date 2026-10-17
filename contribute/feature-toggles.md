@@ -234,7 +234,7 @@ class FooSrv {
 
 #### In tests
 
-When writing tests, use `setTestFlags` from `@grafana/test-utils/unstable` to set the feature flags for the duration of the test.
+When writing tests, use `setTestFlags` from `@grafana/test-utils/unstable` to set the feature flags for the duration of the test. Each call replaces the whole flag config, and the jest setup resets flags before every test, so set them in `beforeEach` (or in the test itself) and don't reset them yourself.
 
 If you're testing a component that uses the feature flag React hooks, you may need to use the `render` function from `test/test-utils` to ensure the React context is set up correctly.
 
@@ -243,17 +243,19 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { render } from 'test/test-utils';
 
-beforeAll(() => {
+beforeEach(() => {
   setTestFlags({
     [FlagKeys.GrafanaNewPreferencesPage]: true,
   });
-})
+});
 
 test("The new page works", () => {
   render(<MyComponent />);
   // ...
 });
 ```
+
+Setting flags needs no `act()` wrapping as long as it happens before `render`. Only a flag flipped while a component is mounted - to test how it reacts to the change - has to be wrapped.
 
 ## Enabling toggles in development
 

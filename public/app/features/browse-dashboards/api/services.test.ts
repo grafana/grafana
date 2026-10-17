@@ -79,10 +79,6 @@ describe('browse-dashboards services', () => {
       config.sharedWithMeFolderUID = 'sharedwithme';
     });
 
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     describe('old API (foldersAppPlatformAPI = false)', () => {
       beforeEach(() => {
         setTestFlags({ foldersAppPlatformAPI: false });

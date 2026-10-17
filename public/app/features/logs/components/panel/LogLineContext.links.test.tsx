@@ -46,7 +46,6 @@ const getLastLogListProps = () => jest.mocked(LogList).mock.calls.at(-1)?.[0];
 
 describe('LogLineContext data links', () => {
   beforeEach(() => {
-    setTestFlags({});
     jest.mocked(LogList).mockClear();
   });
 

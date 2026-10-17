@@ -1,5 +1,5 @@
 import { HttpResponse } from 'msw';
-import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -98,11 +98,6 @@ describe('MegaMenu', () => {
 
   afterEach(async () => {
     window.localStorage.clear();
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
-    await act(async () => {
-      setTestFlags({});
-    });
     jest.clearAllMocks();
   });
 

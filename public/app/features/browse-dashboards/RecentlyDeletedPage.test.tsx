@@ -180,14 +180,8 @@ describe('RecentlyDeletedPage when trash is unavailable', () => {
     setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: true });
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     mockIsTrashUnavailable.mockReturnValue(false);
-    // setTestFlags fires OpenFeature events that update React state; wrap in act() since the
-    // component may still be mounted when this runs (RTL cleanup is a separate afterEach).
-    // Only this flag is reset, so other suites sharing the worker keep theirs.
-    await act(async () => {
-      setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: false });
-    });
   });
 
   it('replaces the empty state, so the page does not also claim nothing was deleted', async () => {
