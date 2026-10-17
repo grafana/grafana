@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -290,6 +292,69 @@ func TestRepositorySecureValues_DecryptTimeout(t *testing.T) {
 		require.NotErrorIs(t, err, ErrTokenNotFound)
 		require.ErrorIs(t, err, ErrSecretDecryptFailed)
 	})
+}
+
+func TestRepositorySecureValues_DecryptSpan(t *testing.T) {
+	cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: v0alpha1.InlineSecureValue{Name: "secret"}}}
+
+	tests := []struct {
+		name    string
+		svc     decrypt.DecryptService
+		wantErr bool
+	}{
+		{name: "records a span on success", svc: &ctxCapturingDecryptService{}},
+		{name: "records the error on the span when decrypt fails", svc: &ctxCapturingDecryptService{err: fmt.Errorf("boom")}, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exporter := tracetest.NewInMemoryExporter()
+			tp := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+			ctx, parent := tp.Tracer("test").Start(context.Background(), "parent")
+
+			_, err := ProvideDecrypter(tt.svc, nil)(cfg).Token(ctx)
+			parent.End()
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			span := findSpan(t, exporter.GetSpans(), "provisioning.repository.decrypt")
+			require.Equal(t, parent.SpanContext().TraceID(), span.SpanContext.TraceID(), "decrypt span should join the active trace")
+			require.Equal(t, parent.SpanContext().SpanID(), span.Parent.SpanID(), "decrypt span should be a child of the active span")
+			require.Equal(t, "secret", spanAttrString(span, "secret.name"))
+			require.Equal(t, "token", spanAttrString(span, "secret.type"))
+
+			if tt.wantErr {
+				require.Len(t, span.Events, 1)
+				require.Equal(t, "exception", span.Events[0].Name)
+			} else {
+				require.Empty(t, span.Events)
+			}
+		})
+	}
+}
+
+func findSpan(t *testing.T, spans tracetest.SpanStubs, name string) tracetest.SpanStub {
+	t.Helper()
+	for _, s := range spans {
+		if s.Name == name {
+			return s
+		}
+	}
+	require.FailNowf(t, "span not found", "no span named %q among %d exported spans", name, len(spans))
+	return tracetest.SpanStub{}
+}
+
+func spanAttrString(s tracetest.SpanStub, key string) string {
+	for _, kv := range s.Attributes {
+		if string(kv.Key) == key {
+			return kv.Value.AsString()
+		}
+	}
+	return ""
 }
 
 type ctxCapturingDecryptService struct {
