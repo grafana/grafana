@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, Stack, Text, Icon, Box } from '@grafana/ui';
 
+import { ScopeMetadataTooltip } from './ScopeMetadata';
 import { type RecentScopeSet } from './types';
 
 interface RecentScopesProps {
@@ -37,26 +38,55 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
         <Stack direction="column" gap={1} id={contentId}>
           {expanded &&
             recentScopes.map((recentScopeSet) => (
-              <button
-                className={styles.recentScopeButton}
+              <RecentScopeButton
                 key={recentScopeSet.scopeIds.join(',')}
-                onClick={() => {
-                  onSelect(recentScopeSet.scopeIds, recentScopeSet.scopeNodeId);
-                }}
-              >
-                <Text truncate>{recentScopeSet.scopes.map((s) => s.title).join(', ')}</Text>
-                {recentScopeSet.parentNodeTitle && (
-                  <Text truncate variant="body" color="secondary">
-                    {recentScopeSet.parentNodeTitle}
-                  </Text>
-                )}
-              </button>
+                recentScopeSet={recentScopeSet}
+                onSelect={onSelect}
+              />
             ))}
         </Stack>
       </Box>
     </fieldset>
   );
 };
+
+interface RecentScopeButtonProps {
+  recentScopeSet: RecentScopeSet;
+  onSelect: RecentScopesProps['onSelect'];
+}
+
+function RecentScopeButton({ recentScopeSet, onSelect }: RecentScopeButtonProps) {
+  const styles = useStyles2(getStyles);
+  const multiple = recentScopeSet.scopes.length > 1;
+
+  // A stored scopeNodeId belongs to a single scope, so with several scopes each one resolves its own node.
+  const sources = recentScopeSet.scopes.map(({ id, title }) => ({
+    scopeId: id,
+    title: multiple ? title : undefined,
+    nodeId: multiple ? undefined : recentScopeSet.scopeNodeId,
+  }));
+
+  return (
+    <ScopeMetadataTooltip sources={sources}>
+      {(descriptionId) => (
+        <button
+          className={styles.recentScopeButton}
+          aria-describedby={descriptionId}
+          onClick={() => {
+            onSelect(recentScopeSet.scopeIds, recentScopeSet.scopeNodeId);
+          }}
+        >
+          <Text truncate>{recentScopeSet.scopes.map((s) => s.title).join(', ')}</Text>
+          {recentScopeSet.parentNodeTitle && (
+            <Text truncate variant="body" color="secondary">
+              {recentScopeSet.parentNodeTitle}
+            </Text>
+          )}
+        </button>
+      )}
+    </ScopeMetadataTooltip>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   recentScopeButton: css({
