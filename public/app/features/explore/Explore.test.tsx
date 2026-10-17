@@ -18,6 +18,7 @@ import { usePluginLinks } from '@grafana/runtime';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
+import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { Explore, type Props } from './Explore';
 import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
@@ -247,10 +248,20 @@ describe('Explore', () => {
   });
 
   describe('Content Outline', () => {
+    const originalLocation = window.location;
+
+    const setLocationSearch = (search: string) => {
+      Object.defineProperty(window, 'location', {
+        value: { ...originalLocation, search },
+        writable: true,
+      });
+    };
+
     afterEach(() => {
       act(() => {
         setTestFlags({});
       });
+      Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
     });
 
     it('should retrieve the last visible state from local storage', async () => {
@@ -262,6 +273,39 @@ describe('Explore', () => {
       const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
       expect(showContentOutlineButton).not.toBeInTheDocument();
       getBoolMock.mockRestore();
+    });
+
+    it('renders the outline by default when no contentOutline URL param is present', async () => {
+      setup();
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      expect(screen.queryByRole('button', { name: 'Collapse outline' })).toBeInTheDocument();
+    });
+
+    it('hides the outline when contentOutline=false is set in the URL, without touching the saved preference', async () => {
+      setLocationSearch('?contentOutline=false');
+      const setMock = jest.spyOn(store, 'set');
+      setup();
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      expect(screen.queryByRole('button', { name: 'Collapse outline' })).not.toBeInTheDocument();
+      expect(setMock).not.toHaveBeenCalledWith(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, expect.anything());
+      setMock.mockRestore();
+    });
+
+    it('reveals the outline and persists the choice when the toolbar toggle is clicked while contentOutline=false is set', async () => {
+      setLocationSearch('?contentOutline=false');
+      const setMock = jest.spyOn(store, 'set');
+      setup();
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      expect(screen.queryByRole('button', { name: 'Collapse outline' })).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByTestId(selectors.pages.Explore.toolbar.contentOutline));
+
+      expect(await screen.findByRole('button', { name: 'Collapse outline' })).toBeInTheDocument();
+      expect(setMock).toHaveBeenCalledWith(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, true);
+      setMock.mockRestore();
     });
 
     it('shows an expandable query card when a Mixed datasource contains a managed Prometheus flavor query', async () => {
