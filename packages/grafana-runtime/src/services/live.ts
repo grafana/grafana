@@ -23,12 +23,19 @@ export { StreamingFrameAction, type StreamingFrameOptions } from '@grafana/data'
 /**
  * @alpha
  */
+export interface LiveMathExpressionOptions {
+  sourceRefId: string;
+  resultRefId: string;
+  expression: string;
+}
+
 export interface LiveDataStreamOptions {
   addr: LiveChannelAddress;
   frame?: DataFrameJSON; // initial results
   key?: string;
   buffer?: Partial<StreamingFrameOptions>;
   filter?: LiveDataFilter;
+  mathExpression?: LiveMathExpressionOptions;
 }
 
 /**
