@@ -7,7 +7,7 @@ import { useLocalStorage } from 'react-use';
 import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { setBookmark } from 'app/core/reducers/navBarTree';
@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { contextSrv } from '../../../services/context_srv';
 
 import { getNavExperimentPayload, reportNavExperimentViewOnce, setNavExperimentVariant } from './navExperiment';
+import { CustomizableNavFeedbackEvent } from './navFeedback';
 import {
   enrichWithInteractionTracking,
   findByUrl,
@@ -91,6 +92,7 @@ const usePinning = ({
 }): CustomisationDimension & {
   pinnedItems: string[];
   effectivePinnedUrls: string[];
+  appliedPinnedUrls: string[];
   draftPinnedUrls: string[];
   isLoading: boolean;
   isPinned: (url?: string) => boolean;
@@ -195,6 +197,7 @@ const usePinning = ({
   return {
     pinnedItems,
     effectivePinnedUrls,
+    appliedPinnedUrls: pinnedUrls,
     draftPinnedUrls,
     isLoading,
     isPinned,
@@ -256,6 +259,7 @@ const useSectionOrdering = ({
   baseItems: NavModelItem[];
 }): CustomisationDimension & {
   effectiveSectionOrder: string[];
+  appliedSectionOrder: string[];
   draftSectionOrder: string[];
   isLoading: boolean;
   onReorderSection: (fromIndex: number, toIndex: number) => void;
@@ -277,7 +281,16 @@ const useSectionOrdering = ({
   const reset = useCallback(() => setDraftSectionOrder([]), []);
   const commit = useCallback(() => setSectionOrder(draftSectionOrder), [draftSectionOrder, setSectionOrder]);
 
-  return { effectiveSectionOrder, draftSectionOrder, isLoading, onReorderSection, syncFromApplied, reset, commit };
+  return {
+    effectiveSectionOrder,
+    appliedSectionOrder,
+    draftSectionOrder,
+    isLoading,
+    onReorderSection,
+    syncFromApplied,
+    reset,
+    commit,
+  };
 };
 
 /**
@@ -329,6 +342,7 @@ export const useNavCustomization = () => {
   const {
     pinnedItems,
     effectivePinnedUrls,
+    appliedPinnedUrls,
     draftPinnedUrls,
     isLoading: pinningLoading,
     isPinned,
@@ -350,6 +364,7 @@ export const useNavCustomization = () => {
   } = useHiddenSections({ baseItems });
   const {
     effectiveSectionOrder,
+    appliedSectionOrder,
     draftSectionOrder,
     isLoading: orderingLoading,
     onReorderSection,
@@ -468,6 +483,19 @@ export const useNavCustomization = () => {
     resetOrdering();
   }, [resetPinning, resetHiding, resetOrdering]);
 
+  // Publish the current (applied) customisation on the app event bus. The grafana-setupguide-app
+  // plugin listens for this to trigger the "Customisable navigation feedback" survey.
+  const onGiveFeedback = useCallback(() => {
+    reportInteraction('grafana_nav_customise_feedback', { ...getNavExperimentPayload() });
+    getAppEvents().publish(
+      new CustomizableNavFeedbackEvent({
+        hiddenItems: appliedHiddenIds,
+        pinnedItems: appliedPinnedUrls,
+        sectionOrder: appliedSectionOrder,
+      })
+    );
+  }, [appliedHiddenIds, appliedPinnedUrls, appliedSectionOrder]);
+
   return {
     canCustomise,
     isLoading,
@@ -488,5 +516,6 @@ export const useNavCustomization = () => {
     onResetToDefault,
     onReorderPinned,
     onReorderSection,
+    onGiveFeedback,
   };
 };

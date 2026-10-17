@@ -1,6 +1,8 @@
 import { t } from '@grafana/i18n';
 import { Button, IconButton, Stack } from '@grafana/ui';
 
+import { MegaMenuFeedbackButton } from './MegaMenuFeedbackButton';
+
 interface Props {
   /** There is staged customisation to clear — show the Reset control */
   canReset?: boolean;
@@ -10,14 +12,24 @@ interface Props {
   onCancelEdit?: () => void;
   /** Save the staged customisation and leave customise mode */
   onSaveEdit?: () => void;
+  /** Open the navigation feedback survey */
+  onGiveFeedback?: () => void;
   /** The save is in flight — show a spinner on Done and lock the controls */
   saving?: boolean;
 }
 
-/** The mega menu header controls shown while customising: Reset / Cancel / Done. */
-export function MegaMenuCustomiseControls({ canReset, onResetToDefault, onCancelEdit, onSaveEdit, saving }: Props) {
+/** The mega menu footer controls shown while customising: Give feedback / Reset / Cancel / Done. */
+export function MegaMenuCustomiseControls({
+  canReset,
+  onResetToDefault,
+  onCancelEdit,
+  onSaveEdit,
+  onGiveFeedback,
+  saving,
+}: Props) {
   return (
     <Stack alignItems="center" gap={1}>
+      {onGiveFeedback && <MegaMenuFeedbackButton onClick={onGiveFeedback} />}
       {canReset && (
         <IconButton
           name="history"
