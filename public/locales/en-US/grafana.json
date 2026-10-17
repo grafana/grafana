@@ -6515,7 +6515,7 @@
           "custom-all-value": "Custom all value",
           "custom-all-value-description": "A wildcard regex or other value to represent All",
           "include-all": "Include All value",
-          "include-all-description": "Enables a single option that represent all values",
+          "include-all-description": "Enables a single option that represents all values",
           "multi-value": "Multi-value"
         },
         "type-category": "{{type}} options"
