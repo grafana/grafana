@@ -1,7 +1,19 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { useSplitter, type UseSplitterOptions } from './useSplitter';
+
+function Splitter(options: UseSplitterOptions) {
+  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter(options);
+
+  return (
+    <div {...containerProps}>
+      <div {...primaryProps} />
+      <div {...splitterProps} />
+      <div {...secondaryProps} />
+    </div>
+  );
+}
 
 interface TestProps extends UseSplitterOptions {
   primaryWidth: number;
@@ -71,23 +83,169 @@ async function dragSplitterBy(pixels: number) {
 }
 
 describe('useSplitter', () => {
-  it('keeps responding to drags when the primary pane has been collapsed to zero', async () => {
-    const onResizing = jest.fn();
+  describe('flex sizing (default)', () => {
+    it('splits both panes by flexGrow and pins neither to pixels', () => {
+      const { result } = renderHook(() => useSplitter({ direction: 'row', initialSize: 0.5 }));
+      const { style: primary } = result.current.primaryProps;
+      const { style: secondary } = result.current.secondaryProps;
 
-    render(<TestSplitter direction="row" primaryWidth={0} containerWidth={1000} onResizing={onResizing} />);
+      expect(primary.flexGrow).toBe(0.5);
+      expect(secondary.flexGrow).toBe(0.5);
+      expect(primary.flexBasis).toBeUndefined();
+      expect(secondary.flexBasis).toBeUndefined();
+    });
 
-    await dragSplitterBy(200);
+    it('ignores pixelPane when usePixels is not set', () => {
+      const { result } = renderHook(() => useSplitter({ direction: 'row', pixelPane: 'primary', initialSize: 0.5 }));
+      const { style: primary } = result.current.primaryProps;
 
-    expect(onResizing).toHaveBeenCalled();
+      expect(primary.flexGrow).toBe(0.5);
+      expect(primary.flexBasis).toBeUndefined();
+    });
   });
 
-  it('responds to drags at a normal size', async () => {
-    const onResizing = jest.fn();
+  describe('pixel sizing', () => {
+    it('pins the secondary pane by default', () => {
+      const { result } = renderHook(() => useSplitter({ direction: 'row', usePixels: true, initialSize: 330 }));
+      const { style: primary } = result.current.primaryProps;
+      const { style: secondary } = result.current.secondaryProps;
 
-    render(<TestSplitter direction="row" primaryWidth={400} containerWidth={1000} onResizing={onResizing} />);
+      expect(secondary.flexBasis).toBe('330px');
+      expect(secondary.flexGrow).toBe('unset');
+      expect(primary.flexGrow).toBe(1);
+      expect(primary.flexBasis).toBeUndefined();
+    });
 
-    await dragSplitterBy(50);
+    it('pins the primary pane when pixelPane is "primary"', () => {
+      const { result } = renderHook(() =>
+        useSplitter({ direction: 'row', usePixels: true, pixelPane: 'primary', initialSize: 330 })
+      );
+      const { style: primary } = result.current.primaryProps;
+      const { style: secondary } = result.current.secondaryProps;
 
-    expect(onResizing).toHaveBeenCalled();
+      expect(primary.flexBasis).toBe('330px');
+      expect(primary.flexGrow).toBe('unset');
+      expect(secondary.flexGrow).toBe(1);
+      expect(secondary.flexBasis).toBeUndefined();
+    });
+
+    // A primary-pixel pane's handle sits after its width, so an oversized basis would push the
+    // handle outside the container's clipped edge and leave nothing to drag it back with.
+    it('caps the primary pane so its handle stays inside the container', () => {
+      const { result } = renderHook(() =>
+        useSplitter({ direction: 'row', usePixels: true, pixelPane: 'primary', initialSize: 1800 })
+      );
+      const { style: primary } = result.current.primaryProps;
+
+      expect(primary.maxWidth).toBe('calc(100% - 16px)');
+      expect(primary.maxHeight).toBeUndefined();
+    });
+
+    it('caps along the cross axis for a column splitter', () => {
+      const { result } = renderHook(() =>
+        useSplitter({ direction: 'column', usePixels: true, pixelPane: 'primary', initialSize: 1800 })
+      );
+      const { style: primary } = result.current.primaryProps;
+
+      expect(primary.maxHeight).toBe('calc(100% - 16px)');
+      expect(primary.maxWidth).toBeUndefined();
+    });
+
+    // The secondary pane's handle sits before its width, so it stays reachable without a cap.
+    it('does not cap a secondary-pixel pane', () => {
+      const { result } = renderHook(() => useSplitter({ direction: 'row', usePixels: true, initialSize: 1800 }));
+      const { style: secondary } = result.current.secondaryProps;
+
+      expect(secondary.maxWidth).toBeUndefined();
+    });
+  });
+
+  // Double-click resets the panes by writing styles straight to the DOM. It has to report that reset
+  // too: a consumer holding the size outside the DOM (to survive a remount, say) would otherwise
+  // keep the pre-reset value and put it back on the next render.
+  describe('double-click reset', () => {
+    const CONTAINER = 1000;
+    const HANDLE = 16;
+
+    /** jsdom has no layout, so give the container and the panes fixed sizes to measure. */
+    function stubLayout(containerEl: Element, paneSize: number) {
+      jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+        const size = this === containerEl ? CONTAINER : paneSize;
+        return { width: size, height: size } as DOMRect;
+      });
+    }
+
+    function mountSplitter(options: UseSplitterOptions, paneSize: number) {
+      const { container } = render(<Splitter {...options} />);
+      stubLayout(container.firstElementChild!, paneSize);
+
+      return screen.getByRole('separator');
+    }
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('reports the even split for a flex-sized splitter', () => {
+      const onSizeChanged = jest.fn();
+      const halfPane = (CONTAINER - HANDLE) / 2;
+      const separator = mountSplitter({ direction: 'row', initialSize: 0.8, onSizeChanged }, halfPane);
+
+      fireEvent.doubleClick(separator);
+
+      expect(onSizeChanged).toHaveBeenCalledWith(0.5, halfPane, halfPane);
+    });
+
+    // The branch the options pane takes. It is not behind a feature flag, so this is the reset that
+    // reaches every user — the pane it reports must clear its own collapse threshold.
+    it('reports the configured size for a secondary-pixel splitter', () => {
+      const onSizeChanged = jest.fn();
+      const primaryPane = CONTAINER - 330 - HANDLE;
+      const separator = mountSplitter(
+        { direction: 'row', usePixels: true, initialSize: 330, onSizeChanged },
+        primaryPane
+      );
+
+      fireEvent.doubleClick(separator);
+
+      // Primary keeps flexGrow 1 in this mode, so the reported ratio is 1 and the pinned pane is 330.
+      expect(onSizeChanged).toHaveBeenCalledWith(1, primaryPane, 330);
+    });
+
+    it('reports the configured size for a primary-pixel splitter', () => {
+      const onSizeChanged = jest.fn();
+      const separator = mountSplitter(
+        { direction: 'row', usePixels: true, pixelPane: 'primary', initialSize: 330, onSizeChanged },
+        330
+      );
+
+      fireEvent.doubleClick(separator);
+
+      expect(onSizeChanged).toHaveBeenCalledWith(330 / (CONTAINER - HANDLE), 330, CONTAINER - 330 - HANDLE);
+    });
+  });
+
+  // A pane with its min size unset can be dragged fully closed. The drag handler reads a measured
+  // size where 0 is legitimate, so it must not treat a collapsed pane as an unmeasured one.
+  describe('dragging', () => {
+    it('keeps responding to drags when the primary pane has been collapsed to zero', async () => {
+      const onResizing = jest.fn();
+
+      render(<TestSplitter direction="row" primaryWidth={0} containerWidth={1000} onResizing={onResizing} />);
+
+      await dragSplitterBy(200);
+
+      expect(onResizing).toHaveBeenCalled();
+    });
+
+    it('responds to drags at a normal size', async () => {
+      const onResizing = jest.fn();
+
+      render(<TestSplitter direction="row" primaryWidth={400} containerWidth={1000} onResizing={onResizing} />);
+
+      await dragSplitterBy(50);
+
+      expect(onResizing).toHaveBeenCalled();
+    });
   });
 });
