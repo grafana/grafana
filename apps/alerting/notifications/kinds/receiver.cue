@@ -71,7 +71,7 @@ CreateReceiverTestRequestBody: {
 }
 
 CreateReceiverTestRequestBodyV1beta1: {
-	integration: v1beta1.#Integration
+	integration: v1beta1.#IntegrationInput
 	alert:       #Alert
 }
 
