@@ -14,11 +14,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -29,7 +27,7 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api/webassets")
 var logger = log.New("webassets")
 
 const (
-	// BuildDir is served at the public/build URL prefix; both bundlers write inside it.
+	// BuildDir is served at the public/build URL prefix; the rspack build writes inside it.
 	BuildDir       = "build"
 	RspackBuildDir = BuildDir + "/rspack"
 
@@ -40,15 +38,6 @@ const (
 // match the bundler's output.publicPath.
 func PublicPathFor(buildDir string) string {
 	return path.Join("public", buildDir) + "/"
-}
-
-// ResolveBuildDir returns the directory holding the manifest and boot script to read.
-// Call it per request; resolving at startup pins the rollout to process lifetime.
-func ResolveBuildDir(ctx context.Context) string {
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx)) {
-		return RspackBuildDir
-	}
-	return BuildDir
 }
 
 type ManifestInfo struct {
@@ -133,8 +122,8 @@ const devServerManifestTimeout = 10 * time.Second
 // readDevServerAssets reads the manifest from a running bundler dev server, which stands in for
 // the CDN: the browser then fetches bundles straight from it, which is what lets it hot-replace
 // modules, and the dev server never has to write a build to disk. Returns nil when there is no
-// dev server to read from, leaving the caller to use the build on disk. Only the rspack build
-// has a dev server; `yarn start` compiles to disk.
+// dev server to read from, leaving the caller to use the build on disk. Only the main build
+// has a dev server; the swagger build compiles to disk.
 func readDevServerAssets(ctx context.Context, buildDir string, cfg *setting.Cfg) *dtos.EntryPointAssets {
 	if cfg.Env != setting.Dev || cfg.FrontendDevServerURL == "" || buildDir != RspackBuildDir {
 		return nil
