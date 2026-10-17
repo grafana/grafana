@@ -15894,6 +15894,9 @@
         "description": "Description",
         "filters": "Filters"
       },
+      "popover": {
+        "close": "Close"
+      },
       "title": "Select scopes"
     },
     "tree": {
