@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { type Field, type SelectableValue, valueMatchers } from '@grafana/data';
+import { type Field, type SelectableValue, ValueMatcherID, valueMatchers } from '@grafana/data';
 import { type FilterByValueFilter } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -26,9 +26,11 @@ export const FilterByValueFilterEditor = (props: Props) => {
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
   const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
   const field = fieldByDisplayName[fieldName];
-  const matcherOptions = field ? getMatcherOptions(field) : [];
-  const matcherId = getSelectedMatcherId(filter, matcherOptions);
-  const editor = valueMatchersUI.getIfExists(matcherId);
+  const readOnlyMatcher =
+    filter.config.id === ValueMatcherID.inSet ? valueMatchers.get(ValueMatcherID.inSet) : undefined;
+  const matcherOptions = field && !readOnlyMatcher ? getMatcherOptions(field) : [];
+  const matcherId = readOnlyMatcher ? undefined : getSelectedMatcherId(filter, matcherOptions);
+  const editor = matcherId ? valueMatchersUI.getIfExists(matcherId) : undefined;
 
   const onChangeField = useCallback(
     (selectable?: SelectableValue<string>) => {
@@ -74,7 +76,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
     [onChange, filter]
   );
 
-  if (!field || !editor || !editor.component) {
+  if (!field || (!readOnlyMatcher && !editor?.component)) {
     return null;
   }
 
@@ -91,18 +93,26 @@ export const FilterByValueFilterEditor = (props: Props) => {
         />
       </InlineField>
       <InlineField label={t('transformers.filter-by-value-filter-editor.label-match', 'Match')}>
-        <Select
-          className="width-12"
-          placeholder={t('transformers.filter-by-value-filter-editor.placeholder-select-test', 'Select test')}
-          options={matcherOptions}
-          value={matcherId}
-          onChange={onChangeMatcher}
-          data-testid={selectors.components.Transforms.FilterByValue.matchSelect(String(index))}
-        />
+        {readOnlyMatcher ? (
+          <span>
+            {readOnlyMatcher.getOptionsDisplayText?.(filter.config.options ?? readOnlyMatcher.getDefaultOptions(field))}
+          </span>
+        ) : (
+          <Select
+            className="width-12"
+            placeholder={t('transformers.filter-by-value-filter-editor.placeholder-select-test', 'Select test')}
+            options={matcherOptions}
+            value={matcherId}
+            onChange={onChangeMatcher}
+            data-testid={selectors.components.Transforms.FilterByValue.matchSelect(String(index))}
+          />
+        )}
       </InlineField>
-      <InlineField label={t('transformers.filter-by-value-filter-editor.label-value', 'Value')} grow>
-        <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
-      </InlineField>
+      {!readOnlyMatcher && editor?.component && (
+        <InlineField label={t('transformers.filter-by-value-filter-editor.label-value', 'Value')} grow>
+          <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
+        </InlineField>
+      )}
       <Box marginBottom={0.5}>
         <Button
           aria-label={t('transformers.filter-by-value-filter-editor.aria-label-remove-filter', 'Remove filter')}
