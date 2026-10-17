@@ -69,6 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -518,6 +519,12 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 // Historic Jobs:
 //   - Read-only: historicjobs:read
 //
+// Bundles:
+//   - CRUD: bundles:create/read/write/delete
+//
+// Bundle Files:
+//   - CRUD: bundlefiles:create/read/write/delete (written by the provisioning pipeline)
+//
 // Settings:
 //   - settings:read - granted to Viewer (all logged-in users)
 //
@@ -534,6 +541,26 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.JobResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+	case provisioning.BundleResourceInfo.GetName():
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.BundleResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+	case provisioning.BundleFileResourceInfo.GetName():
+		// Bundle files are derived from the repository and written by the provisioning
+		// pipeline, which authorizes through this same path -- so writes cannot be
+		// denied outright here without blocking the reconciler. Confining writes to the
+		// provisioning identity belongs in an admission validator; see the follow-ups.
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.BundleFileResourceInfo.GetName(),
 			Name:      a.GetName(),
 			Namespace: a.GetNamespace(),
 		}, ""))
@@ -763,6 +790,8 @@ func (b *APIBuilder) GetResourceInfos(schema.GroupVersion) []apiutils.ResourceIn
 		provisioning.RepositoryResourceInfo,
 		provisioning.ConnectionResourceInfo,
 		provisioning.JobResourceInfo,
+		provisioning.BundleResourceInfo,
+		provisioning.BundleFileResourceInfo,
 	}
 	if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
 		infos = append(infos, provisioning.HistoricJobResourceInfo)
@@ -878,6 +907,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
+	b.admissionHandler.RegisterValidator(provisioning.BundleResourceInfo.GetName(), newBundleAdmissionValidator())
+	b.admissionHandler.RegisterValidator(provisioning.BundleFileResourceInfo.GetName(), newBundleFileAdmissionValidator())
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -908,6 +939,25 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	if err != nil {
 		return fmt.Errorf("failed to create connection storage: %w", err)
 	}
+
+	bundlesStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.BundleResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return fmt.Errorf("failed to create bundle storage: %w", err)
+	}
+	bundleStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, bundlesStore)
+
+	// A bundle's files are placed in a folder named after the bundle, so the unified storage
+	// backend has to accept the grafana.app/folder annotation. Without this they default to
+	// EnableFolderSupport=false and every write is rejected with "folders are not supported".
+	// The folder is not required -- a file is still a file before its folder exists -- so
+	// RequireFolder stays false.
+	bundleFilesStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.BundleFileResourceInfo,
+		opts.StorageOptsGetterFor(provisioning.BundleFileResourceInfo, apistore.StorageOptions{
+			EnableFolderSupport: true,
+		}))
+	if err != nil {
+		return fmt.Errorf("failed to create bundle file storage: %w", err)
+	}
 	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
 
 	// When serving a non-storage version (e.g. v1beta1), wrap the CRUD stores
@@ -917,16 +967,21 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.RepositoryResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
 		storage[provisioning.ConnectionResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
 		storage[provisioning.JobResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(jobStore, b.gv)
+		storage[provisioning.BundleResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(bundlesStore, b.gv)
+		storage[provisioning.BundleFileResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(bundleFilesStore, b.gv)
 		b.repoStore = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
 		b.connectionStore = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
 	} else {
 		storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 		storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 		storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
+		storage[provisioning.BundleResourceInfo.StoragePath()] = bundlesStore
+		storage[provisioning.BundleFileResourceInfo.StoragePath()] = bundleFilesStore
 		b.repoStore = repositoryStorage
 		b.connectionStore = connectionsStore
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
+	storage[provisioning.BundleResourceInfo.StoragePath("status")] = bundleStatusStorage
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = WithTimeout(NewConnectionRepositoriesConnector(b), 30*time.Second)
