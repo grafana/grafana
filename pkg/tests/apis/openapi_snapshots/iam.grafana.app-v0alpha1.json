@@ -4367,6 +4367,43 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamLBACUsageResponse": {
+        "type": "object",
+        "required": [
+          "counts"
+        ],
+        "properties": {
+          "counts": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamLBACUsageV0alpha1ResponseCounts": {
+        "type": "object",
+        "required": [
+          "datasources",
+          "teams",
+          "filters"
+        ],
+        "properties": {
+          "datasources": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "filters": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "teams": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamMembersBody": {
         "type": "object",
         "required": [
