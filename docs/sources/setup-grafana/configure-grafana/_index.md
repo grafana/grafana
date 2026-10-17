@@ -419,6 +419,19 @@ The database user's password (not applicable for `sqlite3`). If the password con
 Use either URL or the previous fields to configure the database
 Example: `type://user:password@host:port/name`
 
+#### `connection_string`
+
+Optional.
+The full connection string that Grafana passes directly to the database driver. When you set it, Grafana uses it instead of building a connection string from `host`, `port`, `name`, `user`, `password`, and the SSL settings. Use it when those settings can't express the connection you need, for example a PostgreSQL connection over a Unix socket:
+
+```ini
+[database]
+type = postgres
+connection_string = host=/var/run/postgresql user=grafana dbname=grafana sslmode=disable
+```
+
+You must still set `type`. Grafana ignores `connection_string` when `url` is set. For MySQL, Grafana appends `parseTime=true` to the connection string when it's missing.
+
 #### `max_idle_conn`
 
 The maximum number of connections in the idle connection pool.
