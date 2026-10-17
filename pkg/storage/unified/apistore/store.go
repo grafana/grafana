@@ -334,7 +334,30 @@ func (s *Storage) Versioner() storage.Versioner {
 func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
 	ctx, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
-	return s.serializer.Decode(ctx, data, obj)
+	return s.decodeObject(ctx, data, obj)
+}
+
+// decodeObject is convertToObject without a span, for the watch path where a span per event
+// would pile children onto the long-lived watch context.
+func (s *Storage) decodeObject(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
+	obj, err := s.serializer.Decode(ctx, data, obj)
+	if err != nil {
+		return obj, err
+	}
+
+	// Objects written before root normalization (and migrated legacy rows) have no folder
+	// annotation; expose the canonical sentinel. An explicit "" is left as written so applied
+	// manifests round-trip without drift.
+	if s.opts.EnableFolderSupport {
+		m, _ := utils.MetaAccessor(obj)
+		if m != nil {
+			if _, found := m.GetAnnotations()[utils.AnnoKeyFolder]; !found {
+				m.SetFolder(generalFolderUID)
+			}
+		}
+	}
+
+	return obj, nil
 }
 
 // cleanupSecretsAfterFailedPreparation deletes inline secrets a failed preparation created, but only
@@ -582,7 +605,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-	decoder := newStreamDecoder(client, s.newFunc, predicate, s.serializer, cancelWatch, cmd.SendInitialEvents)
+	decoder := newStreamDecoder(client, s.newFunc, predicate, s.decodeObject, cancelWatch, cmd.SendInitialEvents)
 
 	return watch.NewStreamWatcher(decoder, reporter), nil
 }
