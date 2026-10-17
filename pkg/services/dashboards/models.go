@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -348,6 +349,18 @@ type GetDashboardQuery struct {
 	OrgID     int64
 	// k8s version to try first when loading (e.g. v1beta1). empty uses the default. on error, falls back to default
 	K8sGetAPIVersion string
+	// K8sUseStoredAPIVersion returns the dashboard in the API version it was stored with. The first read
+	// (in K8sGetAPIVersion or the default) is repeated in status.conversion.storedVersion only when that is
+	// a v2 or later version different from the one read, so a v2beta1 dashboard is not returned
+	// down-converted to v0alpha1. Dashboards stored as v0 or v1 are read once, since those versions convert
+	// without loss. Use it when the payload must keep the schema the author saved, such as public dashboards.
+	K8sUseStoredAPIVersion bool
+}
+
+// IsV2OrLaterAPIVersion reports whether a dashboard API version (e.g. v2beta1) uses the v2 schema.
+// v0 and v1 versions, and an empty version (legacy v1), use the panels schema.
+func IsV2OrLaterAPIVersion(version string) bool {
+	return version != "" && !strings.HasPrefix(version, "v0") && !strings.HasPrefix(version, "v1")
 }
 
 type DashboardTagCloudItem struct {
