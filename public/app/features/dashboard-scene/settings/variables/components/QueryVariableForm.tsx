@@ -10,7 +10,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
-import { type QueryVariable, type VariableValueOption } from '@grafana/scenes';
+import { type QueryVariable, SafeSerializableSceneObject, type VariableValueOption } from '@grafana/scenes';
 import { type DataSourceRef, type VariableRefresh, type VariableSort } from '@grafana/schema';
 import { Field, FieldSet } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
@@ -31,6 +31,7 @@ import { VariableLegend } from './VariableLegend';
 type VariableQueryType = QueryVariable['state']['query'];
 
 interface QueryVariableEditorFormProps {
+  variable: QueryVariable;
   datasource?: DataSourceRef;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings, preserveQuery?: boolean) => void;
   query: VariableQueryType;
@@ -61,6 +62,7 @@ interface QueryVariableEditorFormProps {
 }
 
 export function QueryVariableEditorForm({
+  variable,
   datasource: datasourceRef,
   onDataSourceChange,
   query,
@@ -90,7 +92,7 @@ export function QueryVariableEditorForm({
   options,
 }: QueryVariableEditorFormProps) {
   const { value: dsConfig } = useAsync(async () => {
-    const datasource = await getDataSourceInstance(datasourceRef ?? '');
+    const datasource = await getDataSourceInstance(datasourceRef ?? '', { __sceneObject: new SafeSerializableSceneObject(variable) });
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
     const defaultQuery = datasource?.variables?.getDefaultQuery?.();
 
@@ -112,7 +114,7 @@ export function QueryVariableEditorForm({
     }
 
     return { datasource, VariableQueryEditor };
-  }, [datasourceRef]);
+  }, [datasourceRef, variable]);
 
   // adjusting type miss match between DataSourcePicker onChange and onDataSourceChange
   const datasourceChangeHandler = useCallback(
