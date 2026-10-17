@@ -3858,6 +3858,37 @@
           }
         }
       },
+      "GetTeamLBACUsageResponse": {
+        "type": "object",
+        "required": ["counts"],
+        "properties": {
+          "counts": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "GetTeamLBACUsageV0alpha1ResponseCounts": {
+        "type": "object",
+        "required": ["datasources", "teams", "filters"],
+        "properties": {
+          "datasources": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "filters": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "teams": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
       "GetTeamMembersBody": {
         "type": "object",
         "required": ["items"],
