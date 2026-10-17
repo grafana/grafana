@@ -131,6 +131,12 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 	}
 	if cmd.NewParentUID != nil {
 		meta.SetFolder(*cmd.NewParentUID)
+		if folder.IsRootFolderUID(*cmd.NewParentUID) {
+			// A folder moved to the root loses the parent it inherited access from. The folder
+			// API server grants the default permissions on an update only for a move into the
+			// root; the annotation itself is never persisted.
+			meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+		}
 	} else {
 		// only compare versions if not moving the folder
 		if !cmd.Overwrite && (cmd.Version != int(obj.GetGeneration())) {

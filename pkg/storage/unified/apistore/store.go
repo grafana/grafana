@@ -934,6 +934,12 @@ func (s *Storage) GuaranteedUpdate(
 			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
 
+		v.permissionCreator, err = afterMoveToRootPermissionCreator(ctx, req.Key, v.grantPermissions, updatedObj, s.opts.Permissions, v.inheritedFrom)
+		if err != nil {
+			// Nothing has been written yet, so clean up any inline secrets preparation created.
+			return v.finish(ctx, err, s.opts.SecureValues)
+		}
+
 		req.Value = v.raw
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check

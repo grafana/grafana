@@ -349,6 +349,112 @@ spec:
 	})
 }
 
+func TestParser_RootLevelDashboardRequestsDefaultPermissions(t *testing.T) {
+	playlistGVK := schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v0alpha1", Kind: "Playlist"}
+	playlistGVR := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v0alpha1", Resource: "playlists"}
+
+	supported := []SupportedResource{
+		{GroupKind: dashboardV0.DashboardResourceInfo.GroupVersionKind().GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+		{GroupKind: playlistGVK.GroupKind(), Capabilities: sets.New[string]()},
+	}
+
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("ForKind", mock.Anything, playlistGVK).Return(nil, playlistGVR, nil).Maybe()
+	clients.On("SupportedResources").Return(supported).Maybe()
+
+	newParser := func(target provisioning.SyncTargetType) *parser {
+		return &parser{
+			repo: provisioning.ResourceRepositoryInfo{
+				Type:      provisioning.LocalRepositoryType,
+				Namespace: "xxx",
+				Name:      "repo",
+			},
+			clients: clients,
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Sync: provisioning.SyncOptions{Target: target},
+				},
+			},
+		}
+	}
+
+	const dashboardYAML = `apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test-dashboard
+spec:
+  title: Test dashboard
+`
+
+	tests := []struct {
+		name      string
+		target    provisioning.SyncTargetType
+		path      string
+		data      string
+		wantGrant bool
+	}{
+		{
+			name:      "root-level dashboard in a folderless repository requests default permissions",
+			target:    provisioning.SyncTargetTypeFolderless,
+			path:      "test-dashboard.json",
+			data:      dashboardYAML,
+			wantGrant: true,
+		},
+		{
+			name:      "root-level dashboard in an instance repository requests default permissions",
+			target:    provisioning.SyncTargetTypeInstance,
+			path:      "test-dashboard.json",
+			data:      dashboardYAML,
+			wantGrant: true,
+		},
+		{
+			name:      "nested dashboard inherits from its folder",
+			target:    provisioning.SyncTargetTypeFolderless,
+			path:      "team-a/test-dashboard.json",
+			data:      dashboardYAML,
+			wantGrant: false,
+		},
+		{
+			name:      "top-level file in a folder repository lives in the repository folder",
+			target:    provisioning.SyncTargetTypeFolder,
+			path:      "test-dashboard.json",
+			data:      dashboardYAML,
+			wantGrant: false,
+		},
+		{
+			name:   "org-scoped resources never request default permissions",
+			target: provisioning.SyncTargetTypeFolderless,
+			path:   "my-playlist.json",
+			data: `apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+metadata:
+  name: my-playlist
+spec:
+  title: My playlist
+`,
+			wantGrant: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parsed, err := newParser(tt.target).Parse(context.Background(), &repository.FileInfo{Path: tt.path, Data: []byte(tt.data)})
+			require.NoError(t, err)
+
+			grant := parsed.Meta.GetAnnotation(utils.AnnoKeyGrantPermissions)
+			if tt.wantGrant {
+				require.Equal(t, utils.AnnoGrantPermissionsDefault, grant)
+			} else {
+				require.Empty(t, grant)
+			}
+		})
+	}
+}
+
 func TestParser_FolderMetadataRefFallback(t *testing.T) {
 	clients := NewMockResourceClients(t)
 	clients.On("ForKind", mock.Anything, mock.Anything).
