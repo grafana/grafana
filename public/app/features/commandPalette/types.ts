@@ -16,6 +16,7 @@ type RootCommandPaletteAction = Omit<Action, 'parent'> & {
   target?: React.HTMLAttributeAnchorTarget;
   url?: string | URLCallback;
   managedBy?: ManagerKind;
+  tags?: string[];
   /** Stable, language-agnostic section id for analytics (see SECTION_* in values.ts). */
   sectionId?: string;
 };

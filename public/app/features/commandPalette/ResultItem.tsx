@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { TagList, useStyles2 } from '@grafana/ui';
 import { type ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
@@ -42,6 +42,8 @@ export const ResultItem = React.forwardRef(
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const managedBy = (action as ActionImpl & { managedBy?: ManagerKind }).managedBy;
     const showProvisionedBadge = config.provisioningEnabled && Boolean(managedBy);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const tags = (action as ActionImpl & { tags?: string[] }).tags;
 
     let name = action.name;
 
@@ -72,6 +74,7 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
+          {tags && tags.length > 0 && <TagList tags={tags} displayMax={3} className={styles.tagList} />}
           {showProvisionedBadge && <ManagedBadge managerKind={managedBy} />}
         </div>
       </div>
@@ -140,6 +143,12 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+    }),
+    tagList: css({
+      // Keep tags on the row's single line so the virtualized list's row height doesn't change
+      flexWrap: 'nowrap',
+      flexShrink: 0,
+      justifyContent: 'flex-end',
     }),
   };
 };

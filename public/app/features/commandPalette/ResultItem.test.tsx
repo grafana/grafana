@@ -1,5 +1,5 @@
 import { ActionImpl } from 'kbar';
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { ManagerKind } from 'app/features/apiserver/types';
@@ -65,6 +65,33 @@ describe('ResultItem', () => {
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+  });
+
+  it('renders the dashboard tags of the action', () => {
+    const action = createActionImpl({ tags: ['prod', 'team-a'] });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+    const tagList = screen.getByRole('list', { name: 'Tags' });
+    expect(within(tagList).getByText('prod')).toBeInTheDocument();
+    expect(within(tagList).getByText('team-a')).toBeInTheDocument();
+  });
+
+  it('shows the first three tags and collapses the rest into a "+ 2" label', () => {
+    const action = createActionImpl({ tags: ['a', 'b', 'c', 'd', 'e'] });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+    const tagList = screen.getByRole('list', { name: 'Tags' });
+    expect(within(tagList).getByText('c')).toBeInTheDocument();
+    expect(within(tagList).getByText('+ 2')).toBeInTheDocument();
+    expect(within(tagList).queryByText('d')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { desc: 'an empty tag array', tags: [] },
+    { desc: 'no tags property', tags: undefined },
+  ])('does not render a tag list for an action with $desc', ({ tags }) => {
+    const action = createActionImpl({ tags });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+    expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Tags' })).not.toBeInTheDocument();
   });
 
   it('appends an ellipsis to a parent action that has children but no command or link', () => {

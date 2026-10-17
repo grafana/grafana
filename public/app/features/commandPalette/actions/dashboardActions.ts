@@ -43,7 +43,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
   const recentResults = await getRecentlyViewedDashboards(MAX_RECENT_DASHBOARDS);
 
   const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item) => {
-    const { url, name, managedBy } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name, managedBy, tags } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `recent-dashboards${url}`,
       name: `${name}`,
@@ -52,6 +52,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
       priority: RECENT_DASHBOARDS_PRIORITY,
       url,
       managedBy: extractManagerKind(managedBy),
+      tags,
     };
   });
 
@@ -125,7 +126,7 @@ async function getClassicSearchResultActions(
   });
 
   const goToSearchResultActions: CommandPaletteAction[] = data.view.map((item) => {
-    const { url, name, kind, location, managedBy } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name, kind, location, managedBy, tags } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `go/${kind}${url}`,
       name: `${name}`,
@@ -138,6 +139,7 @@ async function getClassicSearchResultActions(
       url,
       subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
       managedBy: extractManagerKind(managedBy),
+      tags,
     };
   });
 
@@ -194,6 +196,7 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
       url,
       subtitle: hit.folderTitle || locationInfo[location]?.name,
       managedBy: extractManagerKind(hit.managedBy),
+      // No tags: the hybrid endpoint doesn't return them for its hits
     };
   });
 }
