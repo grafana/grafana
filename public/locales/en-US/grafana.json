@@ -5821,7 +5821,8 @@
       "variable-hide": "Change variable hide option",
       "variable-label": "Change variable label",
       "variable-name": "Change variable name",
-      "variable-type": "Change variable type"
+      "variable-type": "Change variable type",
+      "view-panel-options": "Change panel quick toggle"
     },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",

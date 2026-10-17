@@ -7,6 +7,8 @@ import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEdit
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
+import { changeViewPanelOptions, changeViewPanelFieldConfig } from '../actions/panel/changeViewPanelOptions';
+
 export interface Props {
   panel: VizPanel;
   plugin: PanelPlugin;
@@ -29,6 +31,8 @@ export function ViewPanelQuickToggles({ panel, plugin }: Props) {
       currentOptions: options,
       currentFieldConfig: fieldConfig,
       reportInteractionUI: 'view-panel',
+      onOptionsChange: (newOptions) => changeViewPanelOptions(panel, newOptions),
+      onFieldConfigChange: (newFieldConfig) => changeViewPanelFieldConfig(panel, newFieldConfig),
     });
 
     const toggles: OptionsPaneItemDescriptor[] = [];
