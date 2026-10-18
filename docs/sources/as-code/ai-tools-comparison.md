@@ -58,7 +58,8 @@ See the following scenarios to better understand when to use each tool:
 |I... | Use | Why? |
 |---|---|---|
 |Want an answer, a query, or a dashboard fast from the Grafana UI | Assistant | No setup, and Grafana manages context. |
-|Want to allow an LLM to interact with my OSS Grafana instance | OSS MCP | It offers the deepest server-side tuning.| 
+|Want to allow my own LLM to interact with my OSS Grafana instance for common tasks | OSS MCP | mcp-grafana has a suite of tools for common tasks| 
+|I dont have an AI subscription, but I want to interact with my on-prem Grafana instance using natural language | Grafana Assistant on-prem |It lets you bring the power of Grafana Assistant to your self-hosted Grafana instance|
 |Have CI pipelines, GitOps, dashboards as code, or work across several stacks | `gcx` | Explicit commands, exit codes, and named contexts make changes repeatable and reviewable.|
 |Want conversational diagnosis followed by a reviewed change | MCP for diagnosis, `gcx` for the change | Refer to Use them together. | 
 |Use a coding agent needs flexibility to build its own workflows | `gcx` | `gcx` is as a broader, less opinionated toolset. | 
