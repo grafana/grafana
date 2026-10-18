@@ -2,6 +2,7 @@ package pluginconfig
 
 import (
 	"context"
+	"encoding/json"
 	"slices"
 	"sort"
 	"strconv"
@@ -59,6 +60,21 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		}
 		sort.Strings(features)
 		m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
+	}
+
+	if providerURL := s.cfg.openFeatureProviderURL(); s.cfg.OpenFeature.ProviderType != "" && providerURL != "" {
+		m[openFeatureProviderURLKey] = providerURL
+		m[openFeatureProviderTypeKey] = string(s.cfg.OpenFeature.ProviderType)
+		m[openFeatureCacheTTLKey] = s.cfg.openFeatureCacheTTLSeconds()
+
+		if len(s.cfg.OpenFeature.ContextAttrs) > 0 {
+			attrs, err := json.Marshal(s.cfg.OpenFeature.ContextAttrs)
+			if err != nil {
+				s.logger.Error("Failed to marshal OpenFeature context attributes", "error", err)
+			} else {
+				m[openFeatureContextKey] = string(attrs)
+			}
+		}
 	}
 
 	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
@@ -182,6 +198,28 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 
 	if s.cfg.DataProxyRowLimit != 0 {
 		m[backend.SQLRowLimit] = strconv.FormatInt(s.cfg.DataProxyRowLimit, 10)
+	}
+
+	// Forward [dataproxy] timeout settings so out-of-process plugins (Loki, Prometheus,
+	// Tempo, …) inherit them as fallbacks when no jsonData.timeout is set on the datasource.
+	// Without this, plugins use the SDK's own 30 s default regardless of the Grafana config.
+	if s.cfg.DataProxyTimeout > 0 {
+		m[backend.DataProxyTimeout] = strconv.Itoa(s.cfg.DataProxyTimeout)
+	}
+	if s.cfg.DataProxyDialTimeout > 0 {
+		m[backend.DataProxyDialTimeout] = strconv.Itoa(s.cfg.DataProxyDialTimeout)
+	}
+	if s.cfg.DataProxyKeepAlive > 0 {
+		m[backend.DataProxyKeepAlive] = strconv.Itoa(s.cfg.DataProxyKeepAlive)
+	}
+	if s.cfg.DataProxyTLSHandshakeTimeout > 0 {
+		m[backend.DataProxyTLSHandshakeTimeout] = strconv.Itoa(s.cfg.DataProxyTLSHandshakeTimeout)
+	}
+	if s.cfg.DataProxyExpectContinueTimeout > 0 {
+		m[backend.DataProxyExpectContinueTimeout] = strconv.Itoa(s.cfg.DataProxyExpectContinueTimeout)
+	}
+	if s.cfg.DataProxyIdleConnTimeout > 0 {
+		m[backend.DataProxyIdleConnTimeout] = strconv.Itoa(s.cfg.DataProxyIdleConnTimeout)
 	}
 
 	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxOpenConnsDefault)
