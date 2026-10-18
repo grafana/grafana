@@ -32,7 +32,6 @@ import {
   config,
   type FetchError,
   type FetchResponse,
-  logError,
 } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -658,12 +657,8 @@ export class BackendSrv implements BackendService {
           this.dependencies.logout();
         } else {
           // The ping is a background session check, so the user can't act on its failure. Marking it
-          // handled also stops the request that triggered the ping from alerting with this error.
+          // handled stops the request that triggered the ping from alerting with this error.
           err.isHandled = true;
-          logError(new Error(`Login ping failed with status ${err.status}`), {
-            status: String(err.status),
-            traceId: err.data?.traceID ?? '',
-          });
         }
         return throwError(() => err);
       }),
