@@ -874,6 +874,23 @@ describe('NotebookLayoutManager', () => {
       expect(trailing.state.body?.state.pluginId).toBe('timeseries');
     });
 
+    it('keeps the untitled header visible when a block becomes a visualization during editing', () => {
+      const manager = buildManager(buildNarrativeCells(['a']));
+      const history = attachHistory(manager);
+      const cell = manager.state.cells[0];
+      manager.editModeChanged(true);
+
+      manager.convertCell(cell, 'visualization');
+
+      expect(cell.state.body?.state.hoverHeader).toBe(false);
+      act(() => history.undo());
+      expect(cell.state.body).toBeUndefined();
+      act(() => history.redo());
+      expect(cell.state.body?.state.hoverHeader).toBe(false);
+      manager.editModeChanged(false);
+      expect(cell.state.body?.state.hoverHeader).toBe(true);
+    });
+
     // Two cells may legally share one elementName (see NotebookCellItem.onContentChange); converting
     // only one of them must not leave both pointing at the same `elements` map key.
     it('gives the converted cell a fresh element name when it shares one with a sibling', () => {
