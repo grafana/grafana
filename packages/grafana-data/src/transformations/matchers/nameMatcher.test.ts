@@ -484,6 +484,14 @@ it('Should only match the field named time when the frame has more time fields',
   expect(namesMatcher(frame.fields[0], frame, [frame])).toBeTruthy();
   expect(namesMatcher(frame.fields[1], frame, [frame])).toBeFalsy();
   expect(namesMatcher(frame.fields[2], frame, [frame])).toBeTruthy();
+
+  const aliasMatcher = getFieldMatcher({
+    id: FieldMatcherID.byName,
+    options: 'Time',
+  });
+  expect(aliasMatcher(frame.fields[0], frame, [frame])).toBeTruthy();
+  expect(aliasMatcher(frame.fields[1], frame, [frame])).toBeFalsy();
+  expect(aliasMatcher(frame.fields[2], frame, [frame])).toBeFalsy();
 });
 
 describe('Fields returned by query with refId', () => {
