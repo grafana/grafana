@@ -144,10 +144,10 @@ function PanelCell({
   return (
     <Stack direction="column" gap={1}>
       {hasTimeRange && (
-        <Box display="flex">
+        <Box display="flex" justifyContent="flex-end">
           <NotebookCellTimeRangeControl
             cell={cell}
-            popoverAlign="start"
+            popoverAlign="end"
             isEditing={isEditing}
             onClear={() => {
               focusClockOnMount.current = true;
