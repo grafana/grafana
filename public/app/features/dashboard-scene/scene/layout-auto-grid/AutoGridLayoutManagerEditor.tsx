@@ -10,6 +10,18 @@ import { Button, Combobox, type ComboboxOption, Field, InlineSwitch, Input, Stac
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import {
+  changeAutoGridColumnWidth,
+  changeAutoGridFillScreen,
+  changeAutoGridFitContent,
+  changeAutoGridMatchRowHeights,
+  changeAutoGridMaxColumnCount,
+  changeAutoGridMaxHeightCustom,
+  changeAutoGridMaxHeightMode,
+  changeAutoGridMinHeight,
+  changeAutoGridRowHeight,
+} from '../../actions/layout/changeAutoGridOption';
+
+import {
   type AutoGridColumnWidth,
   type AutoGridMaxHeightMode,
   type AutoGridMinHeight,
@@ -55,6 +67,8 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
     }
   }, [focusInput, inputRef]);
 
+  useSyncUncontrolledInput(inputRef, typeof columnWidth === 'number' ? columnWidth : undefined);
+
   const minWidthOptions: Array<ComboboxOption<AutoGridColumnWidth>> = [
     'narrow' as const,
     'standard' as const,
@@ -81,14 +95,16 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
       setCustomMinWidthError(false);
     }
 
-    layoutManager.onColumnWidthChanged(pixels);
+    if (pixels !== columnWidth) {
+      changeAutoGridColumnWidth(layoutManager, pixels);
+    }
   };
 
   const onNamedMinWidthChanged = (value: ComboboxOption<AutoGridColumnWidth>) => {
     if (value.value === 'custom') {
       setFocusInput(true);
     }
-    layoutManager.onColumnWidthChanged(value.value);
+    changeAutoGridColumnWidth(layoutManager, value.value);
   };
 
   const onClearCustomMinWidth = () => {
@@ -96,7 +112,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
       setCustomMinWidthError(false);
     }
 
-    layoutManager.onColumnWidthChanged('standard');
+    changeAutoGridColumnWidth(layoutManager, 'standard');
   };
 
   return (
@@ -162,7 +178,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
             id="max-columns"
             options={colOptions}
             value={String(maxColumnCount)}
-            onChange={({ value }) => layoutManager.onMaxColumnCountChanged(parseInt(value, 10))}
+            onChange={({ value }) => changeAutoGridMaxColumnCount(layoutManager, parseInt(value, 10))}
             width={6.5}
             data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns}
           />
@@ -221,15 +237,15 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
           isCustom={typeof rowHeight === 'number'}
           value={rowHeight}
           options={namedHeightOptions}
-          onModeChange={(value) => layoutManager.onRowHeightChanged(value)}
+          onModeChange={(value) => changeAutoGridRowHeight(layoutManager, value)}
           customValue={typeof rowHeight === 'number' ? rowHeight : undefined}
           min={50}
           max={2000}
           errorText={t('dashboard.auto-grid.options.min-height-error', 'A number between 50 and 2000 is required')}
-          onCustomChange={(pixels) => layoutManager.onRowHeightChanged(pixels)}
+          onCustomChange={(pixels) => changeAutoGridRowHeight(layoutManager, pixels)}
           clearTooltip={t('dashboard.auto-grid.options.row-height-custom-clear', 'Back to standard row height')}
           clearLabel={t('dashboard.auto-grid.options.custom-min-height.clear', 'Clear')}
-          onClear={() => layoutManager.onRowHeightChanged('standard')}
+          onClear={() => changeAutoGridRowHeight(layoutManager, 'standard')}
           comboboxTestId={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight}
           inputTestId={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight}
           clearTestId={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomRowHeight}
@@ -243,7 +259,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             <InlineSwitch
               id="fill-screen-toggle"
               value={fillScreen}
-              onChange={() => layoutManager.onFillScreenChanged(!fillScreen)}
+              onChange={() => changeAutoGridFillScreen(layoutManager, !fillScreen)}
               data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen}
             />
           </Field>
@@ -257,7 +273,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             <InlineSwitch
               id="fit-content-toggle"
               value={fitContentOn}
-              onChange={() => layoutManager.onFitContentChanged(!fitContent)}
+              onChange={() => changeAutoGridFitContent(layoutManager, !fitContent)}
             />
           </Field>
         )}
@@ -273,15 +289,15 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             isCustom={typeof minHeightValue === 'number'}
             value={minHeightValue}
             options={minHeightOptions}
-            onModeChange={(value) => layoutManager.onMinHeightChanged(value)}
+            onModeChange={(value) => changeAutoGridMinHeight(layoutManager, value)}
             customValue={typeof minHeightValue === 'number' ? minHeightValue : undefined}
             min={50}
             max={2000}
             errorText={t('dashboard.auto-grid.options.min-height-error', 'A number between 50 and 2000 is required')}
-            onCustomChange={(pixels) => layoutManager.onMinHeightChanged(pixels)}
+            onCustomChange={(pixels) => changeAutoGridMinHeight(layoutManager, pixels)}
             clearTooltip={t('dashboard.auto-grid.options.min-height-custom-clear', 'Back to standard min height')}
             clearLabel={t('dashboard.auto-grid.options.custom-min-height.clear', 'Clear')}
-            onClear={() => layoutManager.onMinHeightChanged('standard')}
+            onClear={() => changeAutoGridMinHeight(layoutManager, 'standard')}
           />
           <NamedOrCustomSizeField
             id="max-height"
@@ -291,15 +307,15 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             isCustom={maxHeightMode === 'custom'}
             value={maxHeightMode ?? 'unlimited'}
             options={maxHeightOptions}
-            onModeChange={(value) => layoutManager.onMaxHeightModeChanged(value)}
+            onModeChange={(value) => changeAutoGridMaxHeightMode(layoutManager, value)}
             customValue={maxHeight}
             min={50}
             max={10000}
             errorText={t('dashboard.auto-grid.options.max-height-error', 'A number between 50 and 10000 is required')}
-            onCustomChange={(pixels) => layoutManager.onMaxHeightCustomChanged(pixels)}
+            onCustomChange={(pixels) => changeAutoGridMaxHeightCustom(layoutManager, pixels)}
             clearTooltip={t('dashboard.auto-grid.options.max-height-clear', 'Back to unlimited')}
             clearLabel={t('dashboard.auto-grid.options.max-height-clear-label', 'Clear')}
-            onClear={() => layoutManager.onMaxHeightModeChanged('unlimited')}
+            onClear={() => changeAutoGridMaxHeightMode(layoutManager, 'unlimited')}
           />
           <Field
             label={t('dashboard.auto-grid.options.match-row-heights', 'Match row heights')}
@@ -309,7 +325,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             <InlineSwitch
               id="match-row-heights-toggle"
               value={matchRowHeightsOn}
-              onChange={() => layoutManager.onMatchRowHeightsChanged(!matchRowHeightsOn)}
+              onChange={() => changeAutoGridMatchRowHeights(layoutManager, !matchRowHeightsOn)}
             />
           </Field>
         </Stack>
@@ -342,6 +358,18 @@ interface NamedOrCustomSizeFieldProps<T extends string | number> {
   comboboxTestId?: string;
   inputTestId?: string;
   clearTestId?: string;
+}
+
+/**
+ * Shows values changed outside of the uncontrolled input (e.g. by undo/redo). Remounting the input instead
+ * would swallow a click on its clear button when the blur before that click commits a new value.
+ */
+function useSyncUncontrolledInput(input: HTMLInputElement | null, value: number | undefined) {
+  useEffect(() => {
+    if (input && value !== undefined && input.ownerDocument.activeElement !== input) {
+      input.value = String(value);
+    }
+  }, [input, value]);
 }
 
 /**
@@ -381,6 +409,8 @@ function NamedOrCustomSizeField<T extends string | number>({
     }
   }, [focusInput, inputRef]);
 
+  useSyncUncontrolledInput(inputRef, customValue);
+
   return (
     <Field
       label={isCustom ? customLabel : label}
@@ -400,7 +430,9 @@ function NamedOrCustomSizeField<T extends string | number>({
               return;
             }
             setError(false);
-            onCustomChange(pixels);
+            if (pixels !== customValue) {
+              onCustomChange(pixels);
+            }
           }}
           ref={(ref) => {
             setInputRef(ref);
