@@ -1,11 +1,16 @@
+import { HttpResponse, delay, http } from 'msw';
 import { useState } from 'react';
 
+import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
+import { store } from '../../../../../tests/provider';
 import { render, screen } from '../../../../../tests/test-utils';
+import { notificationsAPI } from '../../../api/notifications';
+import { getAPIBaseURLForMocks } from '../../../mocks/util';
 import { type RoutingTreeView } from '../../routingTreeView';
 import {
   simpleRoutingTreesList,
@@ -44,6 +49,21 @@ describe('default (collapsed) state', () => {
     await user.click(screen.getByRole('button', { name: 'Change notification policy' }));
 
     expect(screen.getByRole('combobox', { name: 'Select notification policy' })).toHaveValue('Default policy');
+  });
+
+  it('does not show the raw default tree name while the policy list is still loading', async () => {
+    store.dispatch(notificationsAPI.util.resetApiState());
+    server.use(
+      http.get(getAPIBaseURLForMocks(API_GROUP, API_VERSION, '/routingtrees'), async () => {
+        await delay('infinite');
+        return new HttpResponse(null);
+      })
+    );
+    const { user } = render(<RoutingTreePicker value={null} onChange={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Change notification policy' }));
+
+    expect(screen.getByRole('combobox', { name: 'Select notification policy' })).not.toHaveValue('user-defined');
   });
 
   it('collapses back to the badge when Collapse is clicked, without calling onChange', async () => {

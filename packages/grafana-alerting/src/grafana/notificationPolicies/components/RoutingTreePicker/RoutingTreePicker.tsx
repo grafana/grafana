@@ -6,7 +6,6 @@ import { Badge, Button, Stack, Text, TextLink } from '@grafana/ui';
 
 import { type RoutingTree } from '../../../api/notifications';
 import { type Label } from '../../../matchers/types';
-import { USER_DEFINED_TREE_NAME } from '../../routingTree.utils';
 import { type RoutingTreeView, toRoutingTreeView } from '../../routingTreeView';
 import { RoutingTreePreview } from '../RoutingTreePreview/RoutingTreePreview';
 import { RoutingTreeSelector } from '../RoutingTreeSelector/RoutingTreeSelector';
@@ -67,7 +66,8 @@ export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPol
           <Stack direction="row" gap={1} alignItems="center">
             <RoutingTreeSelector
               isClearable={false}
-              value={value ? value.name : USER_DEFINED_TREE_NAME}
+              // "" is the default tree; the selector shows its friendly label once the list loads, not the raw name.
+              value={value ? value.name : ''}
               onChange={handleRoutingTreeSelectorChange}
               aria-label={t('alerting.routing-tree-picker.selector-aria', 'Select notification policy')}
             />
